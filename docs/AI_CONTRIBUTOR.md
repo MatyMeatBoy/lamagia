@@ -118,3 +118,83 @@ pruebas faltantes. Requiere configurar el secreto `OPENAI_API_KEY` en GitHub.
 El debugger es de solo lectura respecto al PR: diagnostica y propone, pero no
 comete ni fusiona cambios. El workflow `verify.yml` sigue siendo la barrera
 obligatoria de compilación y pruebas.
+
+## Entrega segura del worker e integración
+
+El worker no entrega una carpeta modificada: entrega un commit reproducible.
+Esto permite que el integrador revise exactamente el cambio y lo aplique con
+`cherry-pick`, incluso si otro worker ya terminó un cluster distinto.
+
+### Instrucción para copiar al fork
+
+```text
+Trabaja únicamente en el claim [CLAIM_KEY] y en estos archivos/cartas:
+[SCOPE]. No toques otros claims ni archivos generados.
+
+Antes de editar:
+1. Lee AGENTS.md, docs/HANDOFF_TO_CLAUDE.md y docs/WORK_CLAIMS.md.
+2. Confirma que tu rama parte de la rama integradora publicada:
+   feat/activated-abilities-and-triggers.
+3. Publica o confirma tu claim antes de implementar.
+
+Antes de entregar:
+1. Añade escenarios de reglas y cita la Comprehensive Rule aplicable.
+2. Ejecuta npm run check, npm test y npm run simulate:engine.
+3. Comprueba git diff --check y revisa git diff --stat.
+4. No incluyas cambios no relacionados, ChromaKey/ ni apps/client/public/.
+5. Haz un único commit pequeño y no cambies su historial después de publicarlo.
+
+Entrega solo este informe: claim key, base SHA, commit SHA, archivos,
+escenarios, comandos/resultados y límites pendientes. Si algo falla, no digas
+que está listo: explica el fallo y deja la rama sin un commit engañoso.
+```
+
+### Comando de entrega del worker
+
+Después de revisar que los archivos son los del claim, el worker puede usar
+este comando en PowerShell 7 o Git Bash. Sustituye las rutas por archivos
+explícitos; nunca uses `git add -A` ni `git add .`:
+
+```text
+git add -- <archivo-1> <archivo-2> && git diff --cached --check && git commit -m "feat(rules): implement <cluster>" && git push -u origin HEAD
+```
+
+Antes de ese comando debe haber ejecutado las pruebas. El mensaje de entrega
+obligatorio es:
+
+```text
+CLAIM: rules-example
+BASE: <sha de la rama integradora usada>
+COMMIT: <sha exacto publicado>
+FILES: <lista explícita>
+TESTS: check=PASS; test=PASS; simulate=PASS
+SCENARIOS: <lista breve>
+LIMITS: <lo que sigue sin soportar>
+```
+
+Una vez publicado el commit, el worker no debe hacer `rebase`, `reset` ni
+`push --force`: el SHA es el contrato que usa el integrador. Si necesita
+corregir algo, entrega un commit posterior claramente relacionado.
+
+### Comando del integrador
+
+El integrador verifica el commit antes de aplicarlo y no copia cambios a mano:
+
+```text
+git fetch origin <worker-branch>
+git show --stat --oneline <commit-sha>
+git diff <base-sha>..<commit-sha> --check
+git cherry-pick <commit-sha>
+npm run check && npm test && npm run simulate:engine
+```
+
+Si el `cherry-pick` tiene conflicto, se conserva la semántica de ambos claims,
+se resuelve de forma explícita y se repiten las tres validaciones. Si no puede
+resolverse con seguridad: `git cherry-pick --abort`, se devuelve el SHA al
+worker y no se fuerza la integración. Tras una integración verde, se cambia el
+claim a `merged` en `docs/WORK_CLAIMS.md`, anotando el SHA integrado, y se
+actualiza `docs/HANDOFF_TO_CLAUDE.md`.
+
+Codex permite revisar una rama, un commit o los cambios preparados sin alterar
+el árbol; el panel de revisión también permite preparar solo los fragmentos
+aceptados. Ver la [guía oficial de revisión de código de Codex](https://learn.chatgpt.com/es-419/docs/code-review).

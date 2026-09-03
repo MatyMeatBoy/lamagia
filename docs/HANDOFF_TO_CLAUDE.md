@@ -352,6 +352,11 @@ supports deterministic bounded card/primitives batches.
   template, and a Codex read-only PR debugger in
   `.github/workflows/codex-debug.yml`; claims must be published before code so
   workers do not duplicate a primitive.
+- Worker delivery is now deterministic: each fork reports its base SHA and
+  exact commit SHA, stages only explicit claim files, and is integrated with
+  `git cherry-pick` followed by the full check/test/simulation gate. See
+  `docs/AI_CONTRIBUTOR.md` for the copy-paste worker prompt and recovery path
+  for conflicts.
 
 Validation: 155 rules tests, workspace TypeScript checks, simulator smoke tests
 and 9 Python compiler regressions pass. C13 is 119/356 unique cards implemented
