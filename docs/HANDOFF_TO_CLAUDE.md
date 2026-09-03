@@ -649,6 +649,17 @@ excludes multi-card costs, opponent graveyards and replacement effects.
 Validation: targeted engine tests PASS (167 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: X-scaled opponent life loss
+
+The branch extends `Each opponent loses X life` to use the spell's announced X
+value at resolution. Each opponent receives life-loss semantics and the shared
+`life-lost` event, without routing through damage. This follows CR 107.3 and
+119.4. Scenario coverage verifies X payment and that only opponents lose life.
+The scope excludes variable costs with additional non-mana effects.
+
+Validation: targeted engine tests PASS (168 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals
