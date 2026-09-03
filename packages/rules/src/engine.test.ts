@@ -41,6 +41,7 @@ const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_
 const UNTAP_SPELL = () => make({ name: "Tactical Untap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Untap target permanent." });
 const MILL_SPELL = () => make({ name: "Gravewind", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player mills three cards." });
 const EACH_MILL_SPELL = () => make({ name: "Shared Gravewind", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Each opponent mills two cards." });
+const EACH_DRAW_SPELL = () => make({ name: "Shared Insight", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Each opponent draws two cards." });
 const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target creature spell." });
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
@@ -1398,6 +1399,16 @@ describe("activated abilities", () => {
     expect(game.players[1]!.library).toHaveLength(1);
     expect(game.players[1]!.graveyard.slice(-2).map((entry) => entry.name)).toEqual(["Grizzly Bears", "Forest"]);
     expect(game.players[0]!.library).toHaveLength(before);
+  });
+
+  it("draws for each opponent without changing the controller's hand", () => {
+    let game = readyOnBoard([ISLAND(), ISLAND(), ISLAND()], { hold: true });
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [EACH_DRAW_SPELL()], "each-draw-hand") }));
+    game = stage(game, 1, (player) => ({ hand: [], library: toHand(1, [BEAR(), FOREST()], "each-draw-library") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "each-draw-hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears", "Forest"]);
+    expect(game.players[0]!.hand).toHaveLength(0);
   });
 
   it("puts Equip on the stack, grants Behemoth Sledge bonuses, and detaches when the creature leaves", () => {
