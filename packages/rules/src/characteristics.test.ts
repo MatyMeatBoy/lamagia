@@ -138,6 +138,7 @@ describe("effect recognition", () => {
     }));
     expect(profile.effects).toEqual([{ kind: "destroy-all-creatures" }]);
     expect(profile.fullyImplemented).toBe(false);
+    expect(profile.unimplementedText).toEqual(["Draw a card for each creature destroyed this way."]);
   });
 });
 

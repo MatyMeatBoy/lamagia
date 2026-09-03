@@ -40,6 +40,23 @@ def pending_family(card: dict[str, Any]) -> str:
     return "other"
 
 
+def clause_templates(clauses: list[str]) -> list[str]:
+    """Canonicalize Oracle clauses so repeated missing mechanics are visible.
+
+    This is a planning signal only: it never determines whether a card works.
+    Mana symbols and numeric values vary frequently while the rule structure
+    does not, so those operands are masked before grouping.
+    """
+    templates: list[str] = []
+    for clause in clauses:
+        normalized = re.sub(r"\{[^}]+\}", "{cost}", clause.strip())
+        normalized = re.sub(r"\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|X|\d+)\b", "<n>", normalized, flags=re.I)
+        normalized = re.sub(r"\s+", " ", normalized).strip().rstrip(".")
+        if normalized:
+            templates.append(normalized)
+    return templates
+
+
 def report(decks_path: Path, profiles_path: Path, set_code: str) -> str:
     decks = load(decks_path)["decks"]
     profiles = {}
@@ -57,6 +74,7 @@ def report(decks_path: Path, profiles_path: Path, set_code: str) -> str:
             all_cards.setdefault(card["scryfall_id"], card)
     implemented = 0
     pending_families: dict[str, int] = {}
+    pending_templates: dict[str, set[str]] = {}
     for deck in selected:
         ids = {card["scryfall_id"] for card in deck["cards"]}
         done = sum(bool(profiles.get(card_id, profiles.get(next((card.get("oracle_id") for card in deck["cards"] if card["scryfall_id"] == card_id), ""), {})).get("fullyImplemented")) for card_id in ids)
@@ -69,6 +87,11 @@ def report(decks_path: Path, profiles_path: Path, set_code: str) -> str:
             continue
         family = pending_family(card)
         pending_families[family] = pending_families.get(family, 0) + 1
+        uncovered = profile.get("unimplementedText")
+        if not isinstance(uncovered, list):
+            uncovered = re.split(r"(?<=[.!?])\s+|\n+", str(profile.get("oracle_text") or card.get("oracle_text") or ""))
+        for template in clause_templates([str(clause) for clause in uncovered]):
+            pending_templates.setdefault(template, set()).add(card["name"])
         lines.append("") if len(lines) == 3 else None
         lines.append(f"- [ ] {card['name']} — `{card_id}`")
     total = len(all_cards)
@@ -76,6 +99,11 @@ def report(decks_path: Path, profiles_path: Path, set_code: str) -> str:
     summary = ["", "## Pending families", ""]
     summary.extend(f"- **{family}**: {count}" for family, count in sorted(pending_families.items(), key=lambda item: (-item[1], item[0])))
     lines[5:5] = summary
+    clusters = ["", "## Reusable pending templates", ""]
+    for template, names in sorted(pending_templates.items(), key=lambda item: (-len(item[1]), item[0]))[:15]:
+        examples = ", ".join(sorted(names)[:3])
+        clusters.append(f"- **{len(names)} cards** — `{template}` — e.g. {examples}")
+    lines[5 + len(summary):5 + len(summary)] = clusters
     return "\n".join(lines) + "\n"
 
 

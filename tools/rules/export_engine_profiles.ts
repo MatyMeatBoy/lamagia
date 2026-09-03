@@ -57,7 +57,8 @@ for (const row of rows) {
     effects: profile.effects,
     triggers: profile.triggers,
     targetKind: profile.targetKind,
-    entersTapped: profile.entersTapped
+    entersTapped: profile.entersTapped,
+    unimplementedText: profile.unimplementedText
   });
 }
 

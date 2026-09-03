@@ -48,6 +48,11 @@ const PLANT_SPELL = () => make({ name: "Plant Ritual", type_line: "Sorcery", man
 const PYROCLASM = () => make({ name: "Pyroclasm", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Pyroclasm deals 2 damage to each creature." });
 const DEEP_STUDY = () => make({ name: "Deep Study", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Target player draws two cards." });
 const VISION_SKEINS = () => make({ name: "Vision Skeins", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Each player draws two cards." });
+const GRAVE_PURGE = () => make({ name: "Grave Purge", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target player's graveyard." });
+const BOOMERANG = () => make({ name: "Boomerang", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Return target permanent to its owner's hand." });
+const AZORIUS_CHANCERY = () => make({ name: "Azorius Chancery", type_line: "Land", oracle_text: "Azorius Chancery enters tapped.\nWhen Azorius Chancery enters, return a land you control to its owner's hand.\n{T}: Add {W}{U}.", produced_mana: ["W", "U"] });
+const AZORIUS_SPELL = () => make({ name: "Azorius Lesson", type_line: "Sorcery", mana_cost: "{W}{U}", cmc: 2, oracle_text: "Draw a card." });
+const AZORIUS_RELIC = () => make({ name: "Azorius Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{T}: Add {W}{U}.", produced_mana: ["W", "U"] });
 const SOL_RING = () => make({ name: "Sol Ring", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "{T}: Add {C}{C}.", produced_mana: ["C"] });
 const ELVES = () => make({ name: "Llanowar Elves", type_line: "Creature — Elf Druid", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1", oracle_text: "{T}: Add {G}.", produced_mana: ["G"] });
 const DELTA = () => make({
@@ -384,6 +389,14 @@ describe("casting", () => {
     expect(game.players[0]!.hand).toHaveLength(0);
   });
 
+  it("uses a fixed multicolor mana ability as its full printed output", () => {
+    let game = readyToCast([AZORIUS_SPELL()], [AZORIUS_RELIC()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azorius Relic")?.tapped).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Azorius Lesson")).toBe(true);
+    expect(game.players[0]!.hand).toHaveLength(1);
+  });
+
   it("creates deterministic creature tokens and keeps them out of graveyards", () => {
     let game = readyToCast([PLANT_SPELL()], [FOREST(), FOREST(), FOREST(), FOREST()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
@@ -520,6 +533,20 @@ describe("casting", () => {
     const bounceId = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.instance_id;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bounceId }] });
     expect(game.players[1]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("exiles a selected graveyard and returns any selected permanent to its owner", () => {
+    let game = readyToCast([GRAVE_PURGE()], [SWAMP()]);
+    game = stage(game, 1, (player) => ({ graveyard: toHand(1, [BEAR()], "fallen") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.graveyard).toHaveLength(0);
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+
+    game = readyToCast([BOOMERANG()], [ISLAND(), ISLAND()], [], [SOL_RING()]);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
+    expect(game.players[1]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
   });
 
   it("offers legal X values and uses the chosen value when Fireball resolves", () => {
@@ -822,6 +849,21 @@ describe("activated abilities", () => {
     expect(own.librarySearch?.candidates.map((card) => card.name)).not.toContain("Mountain");
     expect(own.librarySearch?.allCards.map((card) => card.name)).toContain("Mountain");
     expect(projectGame(game, 1).librarySearch).toBeNull();
+  });
+
+  it("resolves a bounce land's ETB by returning a land its controller chose", () => {
+    expect(profileOf(AZORIUS_CHANCERY()).fullyImplemented).toBe(true);
+    let game = readyOnBoard([PLAINS()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [AZORIUS_CHANCERY()], "bounce") }));
+    game = applyAction(game, 0, { type: "play-land", cardId: "bounce-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", targetKind: "land-you-control" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const plains = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Plains")!;
+    expect(choice.options).toContainEqual({ kind: "permanent", instanceId: plains.instance_id });
+
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "permanent", instanceId: plains.instance_id } });
+    expect(game.players[0]!.hand.some((card) => card.name === "Plains")).toBe(true);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azorius Chancery")?.tapped).toBe(true);
   });
 
   it("pays the mana part of an activation cost and puts the ability on the stack", () => {

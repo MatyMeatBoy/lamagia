@@ -326,6 +326,7 @@ export interface ManaSource {
   readonly name: string;
   readonly options: readonly ManaType[];
   readonly amount: number;
+  readonly fixedProduces?: readonly ManaType[];
   readonly lifeCost: number;
   readonly requiresTap: boolean;
 }
@@ -349,6 +350,7 @@ export function manaSources(player: PlayerState): ManaSource[] {
         name: permanent.card.name,
         options: ability.produces,
         amount: ability.amount,
+        ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
         lifeCost: ability.lifeCost,
         requiresTap: ability.requiresTap
       });
@@ -385,7 +387,12 @@ function coloredRequirements(cost: ManaCost): ManaType[][] {
 }
 
 function sourceSignature(source: ManaSource): string {
-  return `${[...source.options].sort().join("")}|${source.amount}|${source.lifeCost}`;
+  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${source.lifeCost}`;
+}
+
+function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType): ManaPool {
+  if (!source.fixedProduces) return addMana(pool, chosen, source.amount);
+  return source.fixedProduces.reduce((current, mana) => addMana(current, mana, 1), pool);
 }
 
 /**
@@ -438,7 +445,7 @@ export function planManaPayment(
       if (player.life - currentLife - source.lifeCost <= 0) continue;
       // Prefer a colour the cost still asks for; otherwise any option works for generic.
       const type = source.options.find((candidate) => wanted.has(candidate)) ?? source.options[0]!;
-      currentPool = addMana(currentPool, type, source.amount);
+      currentPool = addSourceOutput(currentPool, source, type);
       currentTaps = [...currentTaps, { permanentId: source.permanentId, type, amount: source.amount, lifeCost: source.lifeCost }];
       currentLife += source.lifeCost;
     }
@@ -474,7 +481,7 @@ export function planManaPayment(
         if (!source.options.includes(type)) continue;
         const result = solve(
           index + 1,
-          addMana(produced, type, source.amount),
+          addSourceOutput(produced, source, type),
           { ...reserved, [type]: reserved[type] + 1 },
           new Set([...used, source.permanentId]),
           [...taps, { permanentId: source.permanentId, type, amount: source.amount, lifeCost: source.lifeCost }],
@@ -914,11 +921,40 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? movePermanentToZone(state, permanent, "exile") : state;
     }
+    case "exile-target-graveyard": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "player") return state;
+      const player = playerAt(state, target.seat);
+      const next = withPlayer(state, target.seat, (current) => ({ ...current, graveyard: [], exile: [...current.exile, ...current.graveyard] }));
+      return logged(next, controller, `${sourceName} exilia el cementerio de ${player.name}.`);
+    }
     case "return-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent) return state;
+      const next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
+    }
+    case "return-target-permanent": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
+    }
+    case "return-target-land": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || permanent.controller !== controller || !isLand(cardProfile(permanent.card))) return state;
       const next = withPlayer(state, permanent.controller, (player) => ({
         ...player,
         battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
@@ -1590,10 +1626,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability)) continue;
-      for (const mana of ability.produces) {
+      const activations = ability.fixedProduces ? [ability.fixedProduces[0]!] : ability.produces;
+      for (const mana of activations) {
+        const produced = ability.fixedProduces ? ability.fixedProduces.map((type) => `{${type}}`).join("") : `${ability.amount > 1 ? ability.amount : ""}{${mana}}`;
         actions.push({
           action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana },
-          label: `${permanent.card.name}: agregar ${ability.amount > 1 ? ability.amount : ""}{${mana}}`,
+          label: `${permanent.card.name}: agregar ${produced}`,
           cardId: permanent.instance_id,
           ...(ability.lifeCost ? { note: `Cuesta ${ability.lifeCost} de vida.` } : {})
         });
@@ -1626,6 +1664,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
     if (kind === "creature" || kind === "nonartifact-creature") return isCreature(profile) && (kind === "creature" || !profile.types.includes("Artifact"));
+    if (kind === "land-you-control") return isLand(profile) && permanent.controller === seat;
     if (kind === "artifact-or-enchantment") return profile.types.includes("Artifact") || profile.types.includes("Enchantment");
     if (kind === "artifact-creature-or-planeswalker") return profile.types.some((type) => ["Artifact", "Creature", "Planeswalker"].includes(type));
     if (kind === "nonland") return !isLand(profile);
@@ -1681,16 +1720,20 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
   const ability = cardProfile(source.card).manaAbilities.find((candidate) => candidate.index === action.abilityIndex);
   if (!ability || !ability.produces.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
+  if (ability.fixedProduces && action.mana !== ability.fixedProduces[0]) throw new Error("Esa habilidad de maná produce un conjunto fijo.");
   if (!canUseManaAbility(player, source, ability)) throw new Error("No puedes activar esa habilidad de maná ahora.");
   const next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost,
-    manaPool: addMana(current.manaPool, action.mana, ability.amount),
+    manaPool: ability.fixedProduces
+      ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
+      : addMana(current.manaPool, action.mana, ability.amount),
     battlefield: current.battlefield.map((permanent) =>
       permanent.instance_id === source.instance_id && ability.requiresTap ? { ...permanent, tapped: true } : permanent)
   }));
   const tapped = raiseTapEvents(next, state, [source.instance_id]);
-  return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${ability.amount > 1 ? ability.amount : ""}{${action.mana}}.`);
+  const output = ability.fixedProduces ? ability.fixedProduces.map((mana) => `{${mana}}`).join("") : `${ability.amount > 1 ? ability.amount : ""}{${action.mana}}`;
+  return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
 }
 
 function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cycle" }>): GameState {

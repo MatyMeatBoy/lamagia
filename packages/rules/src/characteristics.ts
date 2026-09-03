@@ -50,6 +50,8 @@ export interface ManaAbility {
   /** The mana types the controller may choose between for each mana produced. */
   readonly produces: readonly ManaType[];
   readonly amount: number;
+  /** Fixed mixed output, such as `{T}: Add {W}{U}`, rather than a choice. */
+  readonly fixedProduces?: readonly ManaType[];
   readonly requiresTap: boolean;
   /** Life the ability costs (pain and filter lands). */
   readonly lifeCost: number;
@@ -96,7 +98,10 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-permanent" }
   | { readonly kind: "exile-target-permanent" }
+  | { readonly kind: "exile-target-graveyard" }
   | { readonly kind: "return-target-creature" }
+  | { readonly kind: "return-target-permanent" }
+  | { readonly kind: "return-target-land" }
   | { readonly kind: "destroy-all-creatures" }
   | { readonly kind: "counter-target-spell" }
   | { readonly kind: "create-token"; readonly amount: number | "X"; readonly token: TokenDefinition }
@@ -175,7 +180,7 @@ export interface TriggerDefinition {
 
 export type TargetKind =
   | "any" | "player" | "creature" | "spell" | "permanent" | "artifact-or-enchantment"
-  | "artifact-creature-or-planeswalker" | "nonland" | "nonartifact-creature" | "none";
+  | "artifact-creature-or-planeswalker" | "nonland" | "nonartifact-creature" | "land-you-control" | "none";
 
 export interface CardProfile {
   readonly name: string;
@@ -203,6 +208,8 @@ export interface CardProfile {
   readonly castableFromHand: boolean;
   /** True when every printed instruction is covered by the engine. */
   readonly fullyImplemented: boolean;
+  /** Normalized clauses preventing the card from being marked implemented. */
+  readonly unimplementedText: readonly string[];
   readonly oracleText: string;
 }
 
@@ -306,7 +313,7 @@ function symbolsIn(text: string): ManaType[] {
  * board-dependent ability, and reading it as five free colours would let the
  * table pay costs it cannot actually pay.
  */
-function parseAddClause(effect: string): { produces: ManaType[]; amount: number } | null {
+function parseAddClause(effect: string): { produces: ManaType[]; amount: number; fixedProduces?: ManaType[] } | null {
   const clause = effect.trim().replace(/\.$/, "");
   const anyColor = /^add\s+(\w+)\s+mana\s+of\s+any\s+(?:one\s+)?colors?$/i.exec(clause);
   if (anyColor) {
@@ -326,7 +333,7 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number 
   // `Add {G}{G}` is two of one type; `Add {W} or {U}` is one mana with a choice.
   const isChoice = /\bor\b/i.test(explicit[1]!) && distinct.length > 1;
   if (isChoice) return { produces: distinct, amount: 1 };
-  if (distinct.length > 1) return null; // Mixed fixed output like `Add {W}{U}` needs a multi-type pool entry.
+  if (distinct.length > 1) return { produces: distinct, amount: symbols.length, fixedProduces: symbols };
   return { produces: distinct, amount: symbols.length };
 }
 
@@ -353,7 +360,11 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // structured `produced_mana` entry.
     const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
     if (!produced) continue;
-    abilities.push({ index: abilities.length, produces: produced.produces, amount: produced.amount, requiresTap, lifeCost, text: line.trim() });
+    abilities.push({
+      index: abilities.length, produces: produced.produces, amount: produced.amount,
+      ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
+      requiresTap, lifeCost, text: line.trim()
+    });
   }
   if (abilities.length) return abilities;
 
@@ -457,6 +468,8 @@ interface RecognizedText {
   readonly triggers: TriggerDefinition[];
   readonly activatedAbilities: ActivatedAbility[];
   readonly targetKind: TargetKind;
+  /** Exact normalized clauses the closed engine intentionally does not execute. */
+  readonly unimplementedText: readonly string[];
   readonly covered: boolean;
 }
 
@@ -625,7 +638,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       : /nonland/i.test(text) ? "nonland" : /creature$/i.test(text) ? "creature" : "permanent";
     return { effect: { kind: "exile-target-permanent" }, target };
   }
+  if (/^Exile target player's graveyard$/i.test(text)) return { effect: { kind: "exile-target-graveyard" }, target: "player" };
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
+  if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
+  if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   const token = parseCreateToken(text);
@@ -646,7 +662,7 @@ function isIgnorableSentence(sentence: string): boolean {
 
 function recognizeText(text: string): RecognizedText {
   const body = text.split("\n").map((line) => line.trim()).filter(Boolean);
-  if (!body.length) return { effects: [], triggers: [], activatedAbilities: [], targetKind: "none", covered: true };
+  if (!body.length) return { effects: [], triggers: [], activatedAbilities: [], targetKind: "none", unimplementedText: [], covered: true };
 
   // Enlightened Tutor-style searches are one resolution instruction spread
   // over two sentences. Recognise the complete sequence before the generic
@@ -655,7 +671,7 @@ function recognizeText(text: string): RecognizedText {
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library\.$/i.test(joined)) {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
-      triggers: [], activatedAbilities: [], targetKind: "none", covered: true
+      triggers: [], activatedAbilities: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
 
@@ -663,7 +679,7 @@ function recognizeText(text: string): RecognizedText {
   const triggers: TriggerDefinition[] = [];
   const activatedAbilities: ActivatedAbility[] = [];
   let targetKind: TargetKind = "none";
-  let unmatched = 0;
+  const unimplementedText: string[] = [];
 
   for (const line of body) {
     // Replacement text for entering tapped is executed by `parseEntersTapped`
@@ -678,7 +694,7 @@ function recognizeText(text: string): RecognizedText {
     // `produced_mana` fallback, but the card must not claim its text is executed.
     const manaLine = /^([^:]{1,80}):\s*(add\b.*)$/i.exec(line);
     if (manaLine) {
-      if (!parseAddClause(manaLine[2]!)) unmatched += 1;
+      if (!parseAddClause(manaLine[2]!)) unimplementedText.push(line);
       continue;
     }
 
@@ -708,26 +724,23 @@ function recognizeText(text: string): RecognizedText {
           sourceText: line
         });
       } else {
-        unmatched += 1;
+        unimplementedText.push(line);
       }
       continue;
     }
 
-    let lineCovered = false;
     for (const sentence of line.split(SENTENCE_SPLIT)) {
       if (!sentence.trim()) continue;
       const recognized = recognizeSentence(sentence);
       if (!recognized) {
-        if (!isIgnorableSentence(sentence)) unmatched += 1;
+        if (!isIgnorableSentence(sentence)) unimplementedText.push(sentence.trim());
         continue;
       }
       effects.push(recognized.effect);
-      lineCovered = true;
       if (recognized.target !== "none") targetKind = recognized.target;
     }
-    if (!lineCovered && !line.split(SENTENCE_SPLIT).some(isIgnorableSentence)) unmatched += 1;
   }
-  return { effects, triggers, activatedAbilities, targetKind, covered: unmatched === 0 };
+  return { effects, triggers, activatedAbilities, targetKind, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -776,6 +789,7 @@ export function cardProfile(card: CardData): CardProfile {
     // A permanent whose extra text is unmatched still plays as a real body with real
     // combat keywords; a spell whose text is unmatched would resolve doing nothing.
     fullyImplemented: recognized.covered,
+    unimplementedText: recognized.unimplementedText,
     oracleText: text
   };
   profileCache.set(card.scryfall_id, profile);

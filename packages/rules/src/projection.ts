@@ -293,7 +293,8 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
       "artifact-or-enchantment": legalTargets(state, viewerSeat, "artifact-or-enchantment"),
       "artifact-creature-or-planeswalker": legalTargets(state, viewerSeat, "artifact-creature-or-planeswalker"),
       nonland: legalTargets(state, viewerSeat, "nonland"),
-      "nonartifact-creature": legalTargets(state, viewerSeat, "nonartifact-creature")
+      "nonartifact-creature": legalTargets(state, viewerSeat, "nonartifact-creature"),
+      "land-you-control": legalTargets(state, viewerSeat, "land-you-control")
     },
     waitingOn: mustDeclareAttackers ? state.activeSeat : mustDeclareBlockers ? (awaitingBlockers[0] ?? null) : state.priorityOpen ? state.prioritySeat : null
   };
