@@ -15,6 +15,15 @@ debe seguir siendo puro, determinista y sin red.
 | [XMage](XMAGE_REFERENCE.md) | Implementación open source y tests de comportamiento | Comparar contratos, casos borde y orden de eventos |
 | [Ability Icon wiki](ABILITY_ICON_REFERENCE.md) | Referencia visual de iconos de habilidades | Solo estudiar UX; no importar assets de Arena |
 
+## Compilación masiva de Oracle
+
+`npm run rules:oracle:compile` transforma todas las cartas únicas del catálogo
+en `data/rules/oracle-effects.json`, un IR determinista con cláusulas,
+familias, objetivos, cantidades y texto no reconocido. También genera
+`data/rules/oracle-review.md` como cola para revisión asistida por IA. El IR no
+se ejecuta directamente: cada vector aprobado debe convertirse en un tipo
+cerrado de `characteristics.ts`, citar CR y recibir un escenario de prueba.
+
 ## Flujo para un efecto nuevo
 
 1. Buscar el texto Oracle y su familia en la CR local/API.

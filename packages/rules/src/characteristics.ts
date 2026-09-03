@@ -332,7 +332,11 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       .replace(/pay\s+\d+\s+life/gi, "")
       .replace(/[,\s]/g, "");
     if (leftovers.length) continue;
-    const produced = parseAddClause(effectText);
+    // Restrictions follow the first sentence in Oracle text. Parse the
+    // production clause independently so cards such as Delighted Halfling
+    // keep both printed mana abilities instead of falling back to one
+    // structured `produced_mana` entry.
+    const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
     if (!produced) continue;
     abilities.push({ index: abilities.length, produces: produced.produces, amount: produced.amount, requiresTap, lifeCost, text: line.trim() });
   }

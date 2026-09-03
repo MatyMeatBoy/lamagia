@@ -672,6 +672,7 @@ function handHtml(player: PlayerView): string {
     return `<button class="${classes.join(" ")}" type="button" data-hand="${escapeHtml(card.instance_id)}"
       data-preview="${escapeHtml(card.instance_id)}" title="${escapeHtml(card.name)}">
       ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="" draggable="false" loading="lazy" decoding="async"/>` : ""}
+      ${card.mana_cost ? `<span class="hand-cost" aria-label="Coste de maná">${manaHtml(card.mana_cost)}</span>` : ""}
       <span class="tile-name">${escapeHtml(card.name)}</span>
     </button>`;
   }).join("");

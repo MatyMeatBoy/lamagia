@@ -59,6 +59,18 @@ describe("mana abilities", () => {
     const profile = cardProfile(card({ name: "Flooded Strand", type_line: "Land", oracle_text: "{T}, Pay 1 life, Sacrifice Flooded Strand: Search your library for an Island or Plains card.", produced_mana: [] }));
     expect(profile.manaAbilities).toHaveLength(0);
   });
+
+  it("keeps multiple mana abilities when a restriction follows production", () => {
+    const profile = cardProfile(card({
+      name: "Delighted Halfling",
+      type_line: "Creature — Halfling",
+      oracle_text: "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a legendary spell, and that spell can't be countered.",
+      produced_mana: ["B", "C", "G", "R", "U", "W"]
+    }));
+    expect(profile.manaAbilities).toHaveLength(2);
+    expect(profile.manaAbilities[0]!.produces).toEqual(["C"]);
+    expect(profile.manaAbilities[1]!.produces).toEqual(["W", "U", "B", "R", "G"]);
+  });
 });
 
 describe("enters tapped", () => {
