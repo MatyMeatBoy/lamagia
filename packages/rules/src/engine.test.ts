@@ -82,6 +82,7 @@ const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_c
 const ELADAMRI = () => make({ name: "Eladamri's Call", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Search your library for a creature card, reveal that card, put it into your hand, then shuffle." });
 const ENTOMB = () => make({ name: "Entomb", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Search your library for a card, put that card into your graveyard, then shuffle." });
 const PLANT_SPELL = () => make({ name: "Plant Ritual", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4, oracle_text: "Create three 0/1 green Plant creature tokens." });
+const TAPPED_ZOMBIES = () => make({ name: "Army of the Dead", type_line: "Sorcery", mana_cost: "{5}{B}{B}", cmc: 7, oracle_text: "Create thirteen tapped 2/2 black Zombie creature tokens." });
 const PYROCLASM = () => make({ name: "Pyroclasm", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Pyroclasm deals 2 damage to each creature." });
 const INFEST = () => make({ name: "Infest", type_line: "Sorcery", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "All creatures get -2/-2 until end of turn." });
 const GIANT = () => make({ name: "Hill Giant", type_line: "Creature — Giant", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3" });
@@ -490,6 +491,16 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Plant")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Plant")).toBe(false);
+  });
+
+  it("preserves the tapped instruction on created tokens", () => {
+    const profile = profileOf(TAPPED_ZOMBIES());
+    expect(profile.effects[0]).toMatchObject({ kind: "create-token", amount: 13, token: { name: "Zombie", power: 2, toughness: 2, tapped: true } });
+    let game = readyToCast([TAPPED_ZOMBIES()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const zombies = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Zombie");
+    expect(zombies).toHaveLength(13);
+    expect(zombies.every((permanent) => permanent.tapped)).toBe(true);
   });
 
   it("registers a required ETB trigger after the permanent enters", () => {

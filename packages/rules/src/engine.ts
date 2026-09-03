@@ -1325,7 +1325,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           colors: effect.token.colors,
           keywords: effect.token.keywords
         };
-        next = putOntoBattlefield(next, controller, token, false);
+        next = putOntoBattlefield(next, controller, token, false, effect.token.tapped);
       }
       return logged(next, controller, `${playerAt(next, controller).name} crea ${amount} ${effect.token.name}${amount === 1 ? "" : "s"}.`);
     }

@@ -16,6 +16,7 @@
 | `rules-each-life-loss` | `codex/c13-equipment-cluster` | Living-player global life loss, distinct from damage | Ready for integrator review |
 | `rules-self-life-loss` | `codex/c13-equipment-cluster` | Controller life loss, distinct from damage | Ready for integrator review |
 | `rules-life-lost-trigger` | `codex/c13-equipment-cluster` | Life-lost event bus for effects and damage | Ready for integrator review |
+| `rules-token-creation` | `codex/c13-equipment-cluster` | Token creation preserves tapped state for C13 token family | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.

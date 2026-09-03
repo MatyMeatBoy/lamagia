@@ -123,6 +123,7 @@ export interface TokenDefinition {
   readonly toughness: number | null;
   readonly colors: readonly string[];
   readonly keywords: readonly EnforcedKeyword[];
+  readonly tapped: boolean;
 }
 
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
@@ -741,7 +742,7 @@ function parseCreateToken(text: string): SpellEffect | null {
   return {
     kind: "create-token",
     amount,
-    token: { name, typeLine, power, toughness, colors, keywords }
+    token: { name, typeLine, power, toughness, colors, keywords, tapped: /\btapped\b/i.test(match[4]!) }
   };
 }
 

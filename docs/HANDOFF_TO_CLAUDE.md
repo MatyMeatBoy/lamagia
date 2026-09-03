@@ -584,3 +584,16 @@ replacement/prevention effects and intervening-if conditions.
 
 Validation: targeted engine tests PASS (162 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
+
+### Cooperative C13 cluster: token creation
+
+The branch extends the reusable token compiler with the `tapped` instruction
+and carries it into the battlefield permanent. This covers text such as
+`Create thirteen tapped 2/2 black Zombie creature tokens` without a card-name
+special case; existing color, type, stats, and keyword extraction remain
+shared. This follows CR 111.2 and 701.6. Scenario coverage verifies all
+thirteen generated tokens enter tapped. The scope excludes copy tokens,
+replacement effects that multiply tokens, and variable-count costs.
+
+Validation: targeted engine tests PASS (163 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
