@@ -1038,6 +1038,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "gain-life-target-player": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const amount = effectAmount(effect.amount, object);
+      const next = withPlayer(state, target.seat, (player) => ({ ...player, life: player.life + amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: target.seat, amount }), controller, `${playerAt(next, target.seat).name} gana ${amount} vidas.`);
+    }
     case "each-opponent-loses-life": {
       let next = state;
       for (const seat of opponentsOf(state, controller)) next = dealDamageToPlayer(next, seat, effectAmount(effect.amount, object), sourceName);

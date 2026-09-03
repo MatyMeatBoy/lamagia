@@ -10,6 +10,7 @@
 | `rules-plus-counters` | `codex/c13-equipment-cluster` | Put +1/+1 or -1/-1 counters on a target creature | Ready for integrator review |
 | `rules-target-discard` | `codex/c13-equipment-cluster` | Target-player discard with an explicit hand-card choice | Ready for integrator review |
 | `rules-life-gained` | `codex/c13-equipment-cluster` | Life-gained trigger event and source +1/+1/-1/-1 counter effect | Ready for integrator review |
+| `rules-target-life` | `codex/c13-equipment-cluster` | Target-player life gain with event propagation | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.
