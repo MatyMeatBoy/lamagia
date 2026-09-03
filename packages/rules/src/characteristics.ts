@@ -151,6 +151,7 @@ export type SpellEffect =
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
+  | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-permanent" }
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
@@ -196,7 +197,8 @@ export type TriggerEvent =
   | "spell-cast"
   | "upkeep"
   | "draw-step"
-  | "end-step";
+  | "end-step"
+  | "life-gained";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -226,7 +228,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "spell-cast": "habilidad de lanzamiento",
   upkeep: "habilidad de mantenimiento",
   "draw-step": "habilidad del paso de robo",
-  "end-step": "habilidad del paso final"
+  "end-step": "habilidad del paso final",
+  "life-gained": "life-gain trigger"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -778,6 +781,7 @@ const TRIGGER_TEMPLATES: readonly {
   readonly subject: TriggerSubject;
   readonly pattern: RegExp;
 }[] = [
+  { event: "life-gained", subject: "you", pattern: /^whenever\s+you\s+gain\s+life,?\s*(.+)$/i },
   // The permanent that carries the ability is the object the event is about.
   { event: "enters-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+dies,?\s*(.+)$/i },
@@ -899,6 +903,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };
+  }
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on ~$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "add-counter-source", counter: match[2]!, amount }, target: "none" };
   }
   if ((match = /^~ deals (\w+) damage to target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
