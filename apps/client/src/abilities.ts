@@ -203,6 +203,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     rule: "Triggers when the indicated player gains life.",
     enforced: "Triggers once for each life-gain event.",
     path: "M12 21S4 16.5 4 10a4 4 0 0 1 8-2 4 4 0 0 1 8 2c0 6.5-8 11-8 11z"
+  },
+  "life-lost": {
+    label: "Al perder vida",
+    rule: "Se dispara cuando el jugador indicado pierde vida.",
+    enforced: "Se dispara una vez por cada evento de pérdida de vida.",
+    path: "M5 12h14"
   }
 };
 

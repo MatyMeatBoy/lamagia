@@ -203,7 +203,8 @@ export type TriggerEvent =
   | "upkeep"
   | "draw-step"
   | "end-step"
-  | "life-gained";
+  | "life-gained"
+  | "life-lost";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -234,7 +235,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   upkeep: "habilidad de mantenimiento",
   "draw-step": "habilidad del paso de robo",
   "end-step": "habilidad del paso final",
-  "life-gained": "life-gain trigger"
+  "life-gained": "life-gain trigger",
+  "life-lost": "life-loss trigger"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -787,6 +789,7 @@ const TRIGGER_TEMPLATES: readonly {
   readonly pattern: RegExp;
 }[] = [
   { event: "life-gained", subject: "you", pattern: /^whenever\s+you\s+gain\s+life,?\s*(.+)$/i },
+  { event: "life-lost", subject: "you", pattern: /^whenever\s+you\s+lose\s+life,?\s*(.+)$/i },
   // The permanent that carries the ability is the object the event is about.
   { event: "enters-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+dies,?\s*(.+)$/i },
