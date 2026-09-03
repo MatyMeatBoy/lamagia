@@ -671,6 +671,17 @@ The scope excludes variable draw replacement effects and hand-size choices.
 Validation: targeted engine tests PASS (169 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: each-opponent mill
+
+The branch adds `Each opponent mills N cards` as a non-targeted zone effect.
+It resolves independently for each living opponent through the existing ordered
+mill primitive, leaving the controller's library untouched. This follows CR
+701.13 and 608.2c. Scenario coverage verifies count, order and zone isolation.
+The scope excludes replacement effects and opponent-specific choices.
+
+Validation: targeted engine tests PASS (170 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals

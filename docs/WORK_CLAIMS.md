@@ -24,6 +24,7 @@
 | `rules-graveyard-exile` | `codex/c13-equipment-cluster` | Exile a targeted card from own graveyard | Ready for integrator review |
 | `rules-x-opponent-loss` | `codex/c13-equipment-cluster` | X-scaled life loss for each opponent | Ready for integrator review |
 | `rules-x-draw` | `codex/c13-equipment-cluster` | X-scaled self draw effect | Ready for integrator review |
+| `rules-each-opponent-mill` | `codex/c13-equipment-cluster` | Global mill for each opponent | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.
