@@ -1,0 +1,43 @@
+# ProsshTCG — kit de consulta de reglas
+
+Índice rápido para investigar rulings complejos antes de añadir una familia al
+motor. Las partidas no dependen de ninguna fuente externa: `packages/rules`
+debe seguir siendo puro, determinista y sin red.
+
+## Fuentes y uso
+
+| Fuente | Para qué sirve | Cómo usarla |
+|---|---|---|
+| [Wizards Rules](https://magic.wizards.com/en/rules) | Fuente normativa oficial y versiones vigentes de CR/MTR | Confirmar el número de regla y cambios recientes |
+| [Comprehensive Rules local](docs/COMPREHENSIVE_RULES.md) | Consulta offline en Markdown | Buscar por `702.x`, `603.x`, `608.x`, etc. |
+| [Academy Ruins API](ACADEMY_RUINS_API.md) | CR estructurada, glosario, trazas y diferencias | Consultar JSON; refrescar el Markdown con `npm run rules:cr:sync` |
+| [French-Vanilla](FRENCH_VANILLA_REFERENCE.md) | Navegador/buscador de CR y parser de reglas | Estudiar organización, búsqueda y datos locales |
+| [XMage](XMAGE_REFERENCE.md) | Implementación open source y tests de comportamiento | Comparar contratos, casos borde y orden de eventos |
+| [Ability Icon wiki](ABILITY_ICON_REFERENCE.md) | Referencia visual de iconos de habilidades | Solo estudiar UX; no importar assets de Arena |
+
+## Flujo para un efecto nuevo
+
+1. Buscar el texto Oracle y su familia en la CR local/API.
+2. Confirmar reglas de anuncio, costes, objetivos, zonas, capas y SBAs.
+3. Revisar cómo XMage y French-Vanilla modelan el caso, sin copiar código.
+4. Crear una definición estructurada en `characteristics.ts`.
+5. Implementar el evento/efecto como función pura en `engine.ts`.
+6. Añadir un escenario de reglas y una prueba de privacidad si hay información oculta.
+7. Ejecutar `npm run check`, `npm test` y `npm run simulate:engine`.
+8. Actualizar `docs/RULES_RESEARCH.md` y el export de cobertura.
+
+## Prioridades actuales
+
+- Búsquedas de biblioteca y reemplazos de entrada al campo.
+- Tokens, contadores y efectos continuos.
+- Habilidades de palabra clave en familias pequeñas, empezando por 702.2–702.21.
+- Costes alternativos y habilidades activadas complejas.
+- Capas y dependencias.
+
+## Licencias y límites
+
+- XMage es MIT; French-Vanilla es GPLv3. Son referencias, no dependencias del
+  motor actual.
+- Academy Ruins es una API de consulta; se conserva el enlace y no se usa en runtime.
+- Las reglas se consultan y resumen; no se debe convertir una fuente externa en
+  una afirmación de que todas las cartas están implementadas.

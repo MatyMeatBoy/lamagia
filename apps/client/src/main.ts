@@ -60,6 +60,7 @@ interface UiState {
   actionsOpen: boolean;
   /** The permanent whose ability menu is open, Arena-style. */
   abilityMenu: string | null;
+  showFullLibrary: boolean;
   /** The keyword or ability glyph whose help card is open. */
   glyphHelp: AbilityGlyph | null;
   /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
@@ -72,7 +73,7 @@ let avatarChoices: AvatarChoice[] = [];
 let selectedAvatar = window.localStorage.getItem("prossh.avatar") ?? "";
 const ui: UiState = {
   pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, glyphHelp: null,
-  notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1",
+  notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", showFullLibrary: false,
   // A table should arrive at the first meaningful decision, not wait for two
   // empty priority passes in upkeep and draw. Players can turn this off.
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
@@ -251,6 +252,7 @@ function applyView(next: GameView): void {
   ui.pendingTarget = null;
   ui.selectedBlocker = null;
   ui.abilityMenu = null;
+  ui.showFullLibrary = false;
   if (!next.combat.awaitingAttackers) ui.attackers.clear();
   if (!next.combat.awaitingBlockersFrom.includes(next.viewerSeat)) ui.blockers.clear();
   render();
@@ -772,6 +774,23 @@ function actionMenuHtml(): string {
   </details>`;
 }
 
+function librarySearchHtml(): string {
+  const search = view?.librarySearch;
+  if (!search) return "";
+  const cards = ui.showFullLibrary ? search.allCards : search.candidates;
+  const title = ui.showFullLibrary ? "Mazo completo" : `Objetivos posibles · ${search.candidates.length}`;
+  return `<section class="library-search-overlay" aria-label="Buscar en biblioteca">
+    <header><div><b>${escapeHtml(search.sourceName)}</b><span>${escapeHtml(title)}</span></div>
+      <button id="toggle-full-library" class="text-button" type="button">${ui.showFullLibrary ? "Ver objetivos" : "Ver todo el mazo"}</button></header>
+    <form class="library-search-overlay-form" id="library-search-overlay-form">
+      <input id="library-search-overlay-query" name="query" autocomplete="off" placeholder="Nombre exacto o elige una carta" required/>
+      <button class="choice-action" type="submit">Buscar</button>
+    </form>
+    <div class="library-search-cards">${cards.length ? cards.map((card) => `${(() => { const legal = search.candidates.some((candidate) => candidate.instance_id === card.instance_id); return `<button type="button" class="library-card${legal ? " legal" : ""}"${legal ? ` data-library-card="${escapeHtml(card.name)}"` : " disabled"} title="${escapeHtml(card.name)}">`; })()}
+      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="" loading="lazy"/>` : ""}<b>${escapeHtml(card.name)}</b><small>${escapeHtml(card.type_line)}</small></button>`).join("") : `<p class="zone-private">No hay cartas que cumplan esta búsqueda.</p>`}</div>
+  </section>`;
+}
+
 function landingHtml(): string {
   return `<main class="shell landing">
     <header class="topbar"><a class="brand" href="#">PROSSH<span>TCG</span></a><span class="turn-readout">Simulador de Commander</span></header>
@@ -869,6 +888,7 @@ function render(): void {
       </section>
     </div>
   </main>
+  ${librarySearchHtml()}
   ${abilityMenuHtml()}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
@@ -948,12 +968,18 @@ function wireBoard(): void {
   document.querySelector<HTMLDetailsElement>(".action-menu")?.addEventListener("toggle", (event) => {
     ui.actionsOpen = (event.target as HTMLDetailsElement).open;
   });
-  document.querySelector<HTMLFormElement>("#library-search-form")?.addEventListener("submit", (event) => {
+  document.querySelectorAll<HTMLFormElement>("#library-search-form, #library-search-overlay-form").forEach((form) => form.addEventListener("submit", (event) => {
     event.preventDefault();
     const search = view?.legalActions.find((entry) => entry.action.type === "choose-library-card");
-    const query = document.querySelector<HTMLInputElement>("#library-search-query")?.value.trim();
+    const input = form.querySelector<HTMLInputElement>("input[name=query]");
+    const query = input?.value.trim();
     if (search?.action.type === "choose-library-card" && query) void submit({ ...search.action, query });
-  });
+  }));
+  on("#toggle-full-library", () => { ui.showFullLibrary = !ui.showFullLibrary; render(); });
+  document.querySelectorAll<HTMLElement>("[data-library-card]").forEach((card) => card.addEventListener("click", () => {
+    const search = view?.legalActions.find((entry) => entry.action.type === "choose-library-card");
+    if (search?.action.type === "choose-library-card") void submit({ ...search.action, query: card.dataset.libraryCard ?? "" });
+  }));
   on("#close-log", () => { ui.logOpen = false; window.localStorage.setItem("prossh.log", "0"); render(); });
   on("#confirm-attack", () => void submit({ type: "declare-attackers", attackers: [...ui.attackers.entries()].map(([instanceId, defender]) => ({ instanceId, defender })) }));
   on("#confirm-block", () => void submit({ type: "declare-blockers", blockers: [...ui.blockers.entries()].map(([instanceId, attackerId]) => ({ instanceId, attackerId })) }));

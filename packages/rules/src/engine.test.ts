@@ -50,6 +50,9 @@ const DELTA = () => make({
   name: "Polluted Delta", type_line: "Land",
   oracle_text: "{T}, Pay 1 life, Sacrifice Polluted Delta: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle."
 });
+const WATERY_GRAVE = () => make({
+  name: "Watery Grave", type_line: "Land — Island Swamp", oracle_text: "({T}: Add {U} or {B}.)"
+});
 const ETB_BOLTER = () => make({
   name: "Flame Herald", type_line: "Creature — Dragon", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3",
   oracle_text: "When Flame Herald enters the battlefield, Flame Herald deals 2 damage to any target."
@@ -745,6 +748,18 @@ describe("activated abilities", () => {
     // The sacrificed land is not added to the graveyard a second time by the search.
     expect(game.players[0]!.graveyard.filter((card) => card.name === "Polluted Delta")).toHaveLength(1);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Island")).toBe(false);
+  });
+
+  it("projects every legal fetch target and the full library only to the searching player", () => {
+    let game = readyOnBoard([DELTA()], { library: [ISLAND(), WATERY_GRAVE(), MOUNTAIN()] });
+    const delta = permanentNamed(game, 0, "Polluted Delta")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: delta.instance_id, abilityIndex: 0 });
+
+    const own = projectGame(game, 0);
+    expect(own.librarySearch?.candidates.map((card) => card.name)).toEqual(expect.arrayContaining(["Island", "Watery Grave"]));
+    expect(own.librarySearch?.candidates.map((card) => card.name)).not.toContain("Mountain");
+    expect(own.librarySearch?.allCards.map((card) => card.name)).toContain("Mountain");
+    expect(projectGame(game, 1).librarySearch).toBeNull();
   });
 
   it("pays the mana part of an activation cost and puts the ability on the stack", () => {

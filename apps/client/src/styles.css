@@ -481,6 +481,27 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .library-search button { padding: 5px 8px; border: 1px solid var(--gold-dim); border-radius: 6px; background: #183c22; color: var(--gold); font-size: .62rem; }
 .library-search small { color: var(--text-faint); font-size: .56rem; line-height: 1.25; }
 
+.library-search-overlay {
+  position: fixed; z-index: 25; left: 50%; top: 9vh; transform: translateX(-50%);
+  width: min(760px, 92vw); max-height: 68vh; overflow: auto; padding: 12px;
+  border: 1px solid var(--gold-dim); border-radius: var(--radius); background: #09140ff7;
+  box-shadow: 0 18px 50px #000d;
+}
+.library-search-overlay > header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.library-search-overlay > header > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.library-search-overlay header b { color: var(--gold); }
+.library-search-overlay header span { color: var(--text-dim); font-size: .66rem; }
+.library-search-overlay-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; margin-bottom: 9px; }
+.library-search-overlay-form input { min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: #060d09; }
+.library-search-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 7px; }
+.library-card { min-width: 0; padding: 4px; display: grid; gap: 3px; border: 1px solid var(--line-soft); border-radius: 7px; background: #0e1d14; text-align: left; }
+.library-card.legal { border-color: #9a7c32; }
+.library-card:not(.legal) { opacity: .65; }
+.library-card:hover { border-color: var(--gold); opacity: 1; }
+.library-card img { width: 100%; aspect-ratio: 0.72; object-fit: cover; border-radius: 4px; }
+.library-card b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .63rem; }
+.library-card small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-faint); font-size: .52rem; }
+
 .stack-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 3px 0; }
 .stack-strip > b { color: var(--gold); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; }
 .stack-chip { display: flex; align-items: center; gap: 5px; padding: 2px 7px 2px 2px; border: 1px solid var(--gold-dim); border-radius: 99px; background: #141004; }

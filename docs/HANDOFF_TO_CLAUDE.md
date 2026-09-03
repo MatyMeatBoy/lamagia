@@ -122,6 +122,26 @@ Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
 The "before" numbers come from the previous handoff; the increase is net of the
 two honesty corrections above, which *removed* cards that were over-claiming.
 
+### Library search UX and rules references
+
+The active search projection now exposes the searching player’s legal candidates
+and, separately, the complete remaining library. The client shows candidates in
+a centered search panel with one-click selection and a `Ver todo el mazo` toggle;
+the complete list is never included in an opponent’s projection. This fixes the
+previous fetch-land dead end where the player had to guess a hidden card name.
+`Polluted Delta` therefore lists every card whose subtype includes Island or
+Swamp, including nonbasic duals such as Watery Grave.
+
+The root-level rules toolkit now documents Wizards CR, Academy Ruins API, XMage,
+French-Vanilla and the Ability Icon reference. The full structured CR snapshot
+is regenerated with `npm run rules:cr:sync`; those sources are for research only,
+never runtime dependencies.
+
+`docs/RULES_SOURCES.md` records Academy Ruins as the structured CR/MTR/IPG
+reference and XMage/French-Vanilla as behavioural references. Run
+`npm run rules:cr:sync` to refresh the local `docs/COMPREHENSIVE_RULES.md`
+snapshot. The rules engine itself never calls that API.
+
 ## Current verified state
 
 | Area | Implemented now | Evidence |
@@ -140,6 +160,7 @@ two honesty corrections above, which *removed* cards that were over-claiming.
 | Bot | Plays only from the same `legalActions` list a human receives: lands, castables, attack and block heuristics, target selection. | `packages/rules/src/bot.ts` |
 | Server | Match registry with seat-bound secret tokens, bots driven between human decisions, per-seat projections, Socket.IO update notifications. | `services/match-server/src/matches.ts` |
 | Client | Full-viewport table: three opponents share one seamless band at full width, the local player owns the lower band, and the stack, legal actions, zones and priority all live in the player dock so nothing floats over a board. Land/nonland rows are oriented per seat, the hand fans and lifts, drag-to-play gives the card a 3D-tilted ghost, a hover preview shows Oracle text plus rules coverage, the log is a toggleable drawer with per-seat colours and linked card names, mana renders as pips, and cards open an internal page. Hidden library searches use a name input rather than leaking candidate identities. Every permanent shows an original SVG icon per enforced keyword, activation family and trigger event; an icon opens a help card with the rule and what the engine enforces, and a permanent with several activations opens an ability menu. | `apps/client/src/main.ts`, `abilities.ts`, `styles.css` |
+| Library search | While resolving a search, the controller sees every legal candidate as a card grid and can click one or type its name. A local toggle reveals the full own library for inspection; opponents receive `null`. | `LibrarySearchView` in `packages/rules/src/projection.ts`, `librarySearchHtml` in `apps/client/src/main.ts` |
 | Touch layout | Landscape-first for Android and tablets: same shape, but the board shrinks and the hand grows past it, tap targets clear 34–44px and the hover preview is disabled. Portrait stacks the boards and asks the player to rotate. A topbar toggle forces it on a desktop. | `styles.css` touch section; `docs/ANDROID.md` |
 | Rulings | 78,912 Wizards rulings keyed by `oracle_id`, served from the local catalog on the card page. | `tools/card_catalog/sync_rulings.py`, `/api/catalog/card/:id` |
 | Card data | 117,621 printings with rules fields (power/toughness/loyalty, produced mana, faces) and printing fields (promo, frame, finishes, set type) plus a precomputed `printing_rank`. | `tools/card_catalog/sync_scryfall.py` |
@@ -154,6 +175,7 @@ npm test                Vitest 5 files / 121 tests + Python smoke tests    PASS
 npm run simulate:engine 200 seeded games in 7.22s                          PASS
                         finished 141, unfinished 59, avg 51.63 turns
                         0 invariant failures, 0 projection leaks
+npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
 npm run rules:engine:export  38,711 cards; 5,355 fully implemented         PASS
 ```
 
@@ -178,6 +200,7 @@ keyword help card, and the hand honestly marks partially implemented cards.
 8. **The Python simulators (`simulate_cedh_pod.py`, `run_ai_matrix.py`) are metadata heuristics, not the game engine.** `npm run simulate:engine` is the real regression matrix; prefer it. The Python ones are kept only as cheap deck-plumbing smoke tests.
 9. **Ability icons are this project's own artwork.** `apps/client/src/abilities.ts` contains original SVG paths. MTG Arena was studied only as a reference for where an icon helps; its icons are Wizards of the Coast game assets, are not redistributable, and a fandom wiki hosting them does not make them free. Do not import them.
 10. **Forge integration has not happened.** `docs/FORGE_INTEGRATION.md` records the GPLv3 review and the separate-component option; the local unsigned permission note is not treated as a source licence or as a reason to bypass the repository policy.
+11. **The full-library search view is intentional information disclosure.** It is only projected to the player resolving their own search, and only while that pending choice exists. It must not be generalized to ordinary library viewing or opponent projections.
 
 ## Repository map
 
@@ -207,6 +230,7 @@ tools/simulator/
 tools/rules/
   compile_card_rules.py         local 38k-card rules inventory compiler
   export_engine_profiles.ts      actual profile export through packages/rules
+  sync_comprehensive_rules.py    Academy Ruins structured CR -> local Markdown
 data/                           generated, gitignored
 ```
 

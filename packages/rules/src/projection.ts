@@ -87,6 +87,17 @@ export interface StackView {
   readonly countered: boolean;
 }
 
+/** Cards the viewer is allowed to inspect during an active library search. */
+export interface LibrarySearchView {
+  readonly sourceId: string;
+  readonly sourceName: string;
+  readonly destination: "top" | "hand" | "graveyard" | "battlefield";
+  /** Every card matching the effect's type/subtype restriction. */
+  readonly candidates: readonly CardView[];
+  /** The complete library, available only to the searching player. */
+  readonly allCards: readonly CardView[];
+}
+
 export interface GameView {
   readonly viewerSeat: SeatId;
   readonly version: number;
@@ -100,6 +111,8 @@ export interface GameView {
   readonly winnerSeat: SeatId | null;
   readonly players: readonly PlayerView[];
   readonly stack: readonly StackView[];
+  /** Present only for the player currently resolving a library search. */
+  readonly librarySearch: LibrarySearchView | null;
   readonly combat: {
     readonly attackers: readonly { readonly instanceId: string; readonly name: string; readonly defender: SeatId }[];
     readonly blockers: readonly { readonly instanceId: string; readonly name: string; readonly attackerId: string }[];
@@ -218,6 +231,21 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
   const mustDeclareAttackers = state.step === "declare-attackers" && !state.combat.attackersDeclared;
   const mustDeclareBlockers = state.step === "declare-blockers" && !state.combat.blockersDeclared;
 
+  const pendingSearch = state.pendingChoice?.type === "search-library" && state.pendingChoice.seat === viewerSeat
+    ? state.pendingChoice
+    : null;
+  const librarySearch: LibrarySearchView | null = pendingSearch
+    ? {
+        sourceId: pendingSearch.sourceId,
+        sourceName: pendingSearch.sourceCard.name,
+        destination: pendingSearch.search.destination,
+        candidates: state.players[viewerSeat]!.library
+          .filter((card) => pendingSearch.optionIds.includes(card.instance_id))
+          .map(cardView),
+        allCards: state.players[viewerSeat]!.library.map(cardView)
+      }
+    : null;
+
   return {
     viewerSeat,
     version: state.version,
@@ -241,6 +269,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
             : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo"),
       countered: object.countered
     })),
+    librarySearch,
     combat: {
       attackers: state.combat.attackers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), defender: entry.defender })),
       blockers: state.combat.blockers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), attackerId: entry.attackerId })),

@@ -25,6 +25,7 @@
     "rules:pool:sync": "python tools/card_catalog/build_popular_pool.py --catalog data/catalog/prossh.sqlite --output data/rules/popular-card-pool.json --count 1500",
     "rules:compile": "python tools/rules/compile_card_rules.py --catalog data/catalog/prossh.sqlite --output data/rules/card-rules.json",
     "rules:engine:export": "tsx tools/rules/export_engine_profiles.ts --catalog data/catalog/prossh.sqlite --output data/rules/engine-card-profiles.json",
+    "rules:cr:sync": "python tools/rules/sync_comprehensive_rules.py",
     "decks:enrich": "python tools/decks/enrich_decks.py --catalog data/catalog/prossh.sqlite --deck data/decks/cedh-pod.json --deck data/decks/commander-precons.json",
     "simulate:engine": "tsx tools/simulator/run_engine_matrix.ts --games 200 --max-turns 60",
     "rulings:sync": "python tools/card_catalog/sync_rulings.py --catalog data/catalog/prossh.sqlite"
