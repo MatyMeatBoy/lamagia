@@ -555,3 +555,14 @@ effects and simultaneous-event batching beyond the per-recipient events.
 
 Validation after integration: `npm run check` PASS; `npm test` PASS (166 rules
 tests, simulator and 11 Python compiler tests).
+
+### Cooperative C13 cluster: target-player life loss
+
+The branch adds `Target player loses N life` as a reusable player-targeted
+effect. It changes only the target's life total and deliberately does not use
+the damage pipeline, matching CR 118.2 and 119.4. Scenario coverage verifies
+target selection and distinguishes life loss from damage. The scope excludes
+life-loss triggers, replacement/prevention effects, and multi-player variants.
+
+Validation after integration: `npm run check` PASS; `npm test` PASS (167 rules
+tests, simulator and 11 Python compiler tests).
