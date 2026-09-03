@@ -49,6 +49,7 @@ const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery
 const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Target player gains 2 life." });
 const EACH_LIFE_SPELL = () => make({ name: "Common Blessing", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Each player gains 1 life." });
 const TARGET_LOSS_SPELL = () => make({ name: "Shared Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player loses 3 life." });
+const EACH_LOSS_SPELL = () => make({ name: "Common Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Each player loses 1 life." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
@@ -948,6 +949,17 @@ describe("triggered abilities", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.life).toBe(40);
     expect(game.players[1]!.life).toBe(37);
+  });
+
+  it("makes each living player lose life", () => {
+    const profile = profileOf(EACH_LOSS_SPELL());
+    expect(profile.effects[0]).toMatchObject({ kind: "each-player-loses-life", amount: 1 });
+    let game = readyToCast([EACH_LOSS_SPELL()], [SWAMP()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players.map((player) => player.life)).toEqual([39, 39]);
   });
 
   it("keeps a trigger's target out of the cost of casting its source", () => {
