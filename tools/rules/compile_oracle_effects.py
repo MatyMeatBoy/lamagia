@@ -19,11 +19,15 @@ import argparse
 import json
 import re
 import sqlite3
+from math import ceil
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+
+DEFAULT_COMMIT_CARD_LIMIT = 20
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -298,7 +302,12 @@ def primitive_cluster_inventory(cards: list[dict[str, Any]]) -> list[dict[str, A
                 "name": str(card["name"]),
             }
     inventory = [
-        {"cluster": cluster, "card_count": len(entries), "cards": sorted(entries.values(), key=lambda item: (item["name"].casefold(), item["oracle_id"]))}
+        {
+            "cluster": cluster,
+            "card_count": len(entries),
+            "commit_batches": ceil(len(entries) / DEFAULT_COMMIT_CARD_LIMIT),
+            "cards": sorted(entries.values(), key=lambda item: (item["name"].casefold(), item["oracle_id"])),
+        }
         for cluster, entries in clusters.items()
     ]
     return sorted(inventory, key=lambda item: (-item["card_count"], item["cluster"]))
@@ -374,13 +383,14 @@ def main() -> None:
     worker_count = effective_worker_count(args.workers, args.memory_budget_gb, args.estimated_worker_mb)
     cards = compile_catalog(args.catalog, args.workers, args.memory_budget_gb, args.estimated_worker_mb, args.backend, args.batch_size)
     counts = Counter(card["status"] for card in cards)
+    clusters = primitive_cluster_inventory(cards)
     payload = {
         "format": "prossh-oracle-effect-ir/v2",
         "generated_at": datetime.now(UTC).isoformat(),
         "source": "local normalized catalog; Oracle text is display data, not executable code",
         "card_count": len(cards),
         "status_counts": dict(sorted(counts.items())),
-        "primitive_cluster_count": len(primitive_cluster_inventory(cards)),
+        "primitive_cluster_count": len(clusters),
         "cards": cards,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -393,8 +403,8 @@ def main() -> None:
         args.cluster_output.write_text(json.dumps({
             "format": "prossh-primitive-cluster-queue/v1",
             "source": "oracle-effects.json unresolved clauses",
-            "cluster_count": len(primitive_cluster_inventory(cards)),
-            "clusters": primitive_cluster_inventory(cards),
+            "cluster_count": len(clusters),
+            "clusters": clusters,
         }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Oracle IR written: {len(cards):,} cards -> {args.output} (workers={worker_count}, backend={args.backend}, budget={args.memory_budget_gb:g}GB)")
     print(f"Statuses: {dict(sorted(counts.items()))}")

@@ -9,16 +9,22 @@ one good primitive improves every printing and set.
 Read [AGENTS.md](AGENTS.md), [docs/HANDOFF_TO_CLAUDE.md](docs/HANDOFF_TO_CLAUDE.md)
 and [docs/WORK_CLAIMS.md](docs/WORK_CLAIMS.md). Claim one unused primitive,
 work from the current `HEAD`, add scenario tests and CR citations, then publish
-one focused commit containing at most five new `oracle_id`s:
+one focused local commit containing at most twenty new `oracle_id`s; the
+integrator batches pushes:
 
 ```powershell
-git add packages/rules/src tools/rules docs/HANDOFF_TO_CLAUDE.md docs/WORK_CLAIMS.md docs/SET_COVERAGE.md IMPLEMENTATION_CLUSTERS.md; git diff --cached --check; npm run check; npm test; git commit -m "feat(rules): implement <cluster> batch <nn>"; git push -u origin HEAD
+git add packages/rules/src tools/rules docs/HANDOFF_TO_CLAUDE.md docs/WORK_CLAIMS.md docs/SET_COVERAGE.md IMPLEMENTATION_CLUSTERS.md; git diff --cached --check; npm run check; npm test; git commit -m "feat(rules): implement <cluster> batch <nn>"
 ```
 
 Report `CLAIM`, `BASE SHA`, `COMMIT SHA`, `FILES`, `TESTS`, `SCENARIOS`, and
 `LIMITS`. Never stage `data/`, assets, secrets, or unrelated changes. Full
 instructions: [CONTRIBUTING.md](CONTRIBUTING.md) and
 [IMPLEMENTATION_CLUSTERS.md](IMPLEMENTATION_CLUSTERS.md).
+
+To refresh the reusable work queue, run `npm run rules:oracle:compile` and claim
+one entry from `data/rules/oracle-clusters.json`; it already carries stable
+`oracle_id`s and twenty-card commit batch counts. To measure the local speedup,
+run `npm run rules:oracle:benchmark`.
 
 Coverage map: [docs/SET_COVERAGE.md](docs/SET_COVERAGE.md) and the web
 “Implementation by set” view. The project is being renamed from `ProsshTCG`

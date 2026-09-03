@@ -32,10 +32,10 @@ el mismo `oracle_id`.
 | Ejecutar texto Oracle directamente | Parece rápido al principio, pero convierte ambigüedad en reglas falsas y rompe determinismo | Rechazado |
 | Resolver carta por carta | Repite el mismo análisis de `Equipment`, `battlefield`, `library`, etc. | Rechazado; los workers reciben clusters |
 
-La prueba local confirmó el beneficio operativo: la compilación completa usa cinco
-workers bajo el presupuesto de 2 GB, produce una salida estable y genera
-`data/rules/oracle-clusters.json` para repartir primitivas sin volver a leer
-cada carta desde cero.
+La prueba local confirmó el beneficio operativo: sobre 38.711 cartas, cinco
+workers tardaron 5,62 s frente a 10,37 s con uno (1,85x), bajo el presupuesto
+de 2 GB. La salida es estable y genera `data/rules/oracle-clusters.json` para
+repartir primitivas sin volver a leer cada carta desde cero.
 
 ## Qué no hacemos
 

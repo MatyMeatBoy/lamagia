@@ -8,12 +8,14 @@ You are contributing one isolated rules batch to lamagia (formerly ProsshTCG).
 
 CLAIM: [unique claim id; reserve it in docs/WORK_CLAIMS.md]
 SCOPE: [one reusable primitive; process as many matching cards as useful,
-        but publish at most five new oracle_id values per commit]
+        but publish at most twenty new oracle_id values per commit]
 BASE: start from the current branch HEAD; do not assume prior chat context.
 
 1. Read AGENTS.md, docs/HANDOFF_TO_CLAUDE.md, docs/WORK_CLAIMS.md, the
    relevant rules source, and existing scenario tests.
-2. Confirm the claim is disjoint from active claims. Add your claim and scope
+2. Read `data/rules/oracle-clusters.json` when available. Select one exact
+   `primitive_cluster`; its listed `oracle_id`s are the reusable batch queue.
+   Confirm the claim is disjoint from active claims. Add your claim and scope
    to docs/WORK_CLAIMS.md before editing. If another worker owns it, choose a
    different primitive instead of duplicating work.
 3. Extract the reusable rule from oracle text. Do not hard-code card names;
@@ -29,7 +31,8 @@ BASE: start from the current branch HEAD; do not assume prior chat context.
 8. Create exactly one focused commit for this batch and report CLAIM, BASE SHA,
    COMMIT SHA, FILES, TESTS, SCENARIOS, and LIMITS. The integrator cherry-picks
    the SHA, reruns full coverage, and marks the claim merged. Continue with the
-   next disjoint batch only after publishing the previous one.
+   next disjoint batch only after recording the previous one. Do not push unless
+   the integrator explicitly requests a grouped publication.
 ```
 
 This prevents workers from relying on stale conversation context and makes

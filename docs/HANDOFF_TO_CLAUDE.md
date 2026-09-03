@@ -132,7 +132,7 @@ never remove a card's own printed one.
 | Cards with a payable, resolvable activated ability | 0 (feature did not run) | 670 |
 | Cards with a recognised triggered ability | 87 | 1,185 |
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
-| Catalog cards fully implemented | 5,151 | 6,345 |
+| Catalog cards fully implemented | 5,151 | 6,427 |
 | …of those, with non-empty Oracle text | 2,090 | 2,981 |
 | C13 unique cards fully implemented | — | 124 / 356 (232 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
@@ -187,6 +187,10 @@ loads pending IDs only when an edition is opened.
   compiler also writes `data/rules/oracle-clusters.json`; the latest full run
   produced 11,072 deterministic unresolved clusters from the 18,254 pending
   clauses.
+- The reproducible full-catalog benchmark is 10.37s with one worker versus
+  5.62s with five workers (1.85x). The queue now advertises up to 20 new
+  `oracle_id` values per commit; the claim ledger still prevents overlapping
+  clusters between forks.
 - Supported keyword-only clauses are removed from the review queue; the latest
   full IR therefore reduced actionable pending entries from 22,678 to 18,254
   without changing executable-card coverage.
@@ -222,16 +226,16 @@ loads pending IDs only when an edition is opened.
 
 ```text
 npm run check           rules build + rules/client/server typecheck        PASS
-npm test                Vitest 5 files / 166 tests + Python smoke tests    PASS
-npm run simulate:engine 200 seeded games in 25.41s                         PASS
+npm test                Vitest 5 files / 168 tests + Python smoke tests    PASS
+npm run simulate:engine 200 seeded games in 19.62s                         PASS
                         finished 160, unfinished 40, avg 51.09 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 6,418 fully implemented         PASS
+npm run rules:engine:export  38,711 cards; 6,427 fully implemented         PASS
 npm run rules:set:coverage  708 editions; 14.4% membership coverage        PASS
 ```
 
-The matrix now finishes 158 of 200 games (was 105 before activations and 100
+The matrix now finishes 160 of 200 games (was 105 before activations and 100
 before this pass): fetch lands, ramp and death triggers actually run, so games
 reach a real result more often.
 
@@ -401,7 +405,7 @@ unbounded pool.
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
 general; what limits coverage is the **effect vocabulary** they resolve into.
 1,185 cards have a recognised trigger and 670 a recognised activation, but only
-6,418 of 38,711 cards are fully implemented, because most printed effects are
+6,427 of 38,711 cards are fully implemented, because most printed effects are
 still outside `SpellEffect`.
 
 1. **Widen `SpellEffect`, one template plus one test at a time.** The highest
@@ -564,5 +568,5 @@ the damage pipeline, matching CR 118.2 and 119.4. Scenario coverage verifies
 target selection and distinguishes life loss from damage. The scope excludes
 life-loss triggers, replacement/prevention effects, and multi-player variants.
 
-Validation after integration: `npm run check` PASS; `npm test` PASS (167 rules
+Validation after integration: `npm run check` PASS; `npm test` PASS (168 rules
 tests, simulator and 11 Python compiler tests).
