@@ -2129,6 +2129,17 @@ export function hasRealChoice(state: GameState, seat: SeatId): boolean {
   });
 }
 
+function shouldAutoPass(state: GameState, seat: SeatId): boolean {
+  const player = playerAt(state, seat);
+  if (!player.autoPass) return false;
+  // Keep the active player's main phase as a playable checkpoint. This avoids
+  // collapsing an empty human turn together with every bot turn in one action
+  // response, while still skipping upkeep/combat/end-step windows with no
+  // relevant response.
+  if (state.stack.length === 0 && state.activeSeat === seat && MAIN_STEPS.includes(state.step)) return false;
+  return !hasRealChoice(state, seat);
+}
+
 /**
  * Drives the game forward until a player actually has to choose something.
  *
@@ -2184,7 +2195,7 @@ export function settle(state: GameState): GameState {
 
     const seat = next.prioritySeat;
     const player = playerAt(next, seat);
-    if (player.autoPass && !hasRealChoice(next, seat)) { next = applyPass(next, seat); continue; }
+    if (shouldAutoPass(next, seat)) { next = applyPass(next, seat); continue; }
     return next;
   }
   throw new Error("El motor no pudo estabilizar la partida; posible bucle de reglas.");

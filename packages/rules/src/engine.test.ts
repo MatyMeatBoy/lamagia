@@ -239,6 +239,25 @@ describe("turn structure", () => {
     expect(["precombat-main", "postcombat-main"]).toContain(game.step);
   });
 
+  it("keeps the active player's empty main phase as a playable checkpoint", () => {
+    let game = twoSeatGame([], []);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) };
+    expect(game.step).toBe("precombat-main");
+    expect(game.activeSeat).toBe(0);
+    expect(game.prioritySeat).toBe(0);
+    expect(game.turn).toBe(1);
+  });
+
+  it("does not skip the rest of the active turn after playing the only land", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [FOREST()], "checkpoint-forest"), autoPass: true }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "play-land", cardId: "checkpoint-forest-0" });
+    expect(game.turn).toBe(1);
+    expect(game.step).toBe("precombat-main");
+    expect(game.prioritySeat).toBe(0);
+  });
+
   it("skips the opening draw only for the starting player", () => {
     const game = twoSeatGame([], []);
     expect(game.players[0]!.hand).toHaveLength(7);
