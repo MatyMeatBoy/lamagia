@@ -6,4 +6,4 @@
 - Represent cards by stable Scryfall IDs and normalized metadata. Names are display/search fields, never identity.
 - Before implementing a card interaction, add a scenario test for rules behavior. Validate Comprehensive Rules citations from the official Wizards rules source.
 
-- Keep assistant output short. Work through the tools, do not narrate each step, and explain only every so often: a brief summary at real checkpoints (a milestone finished, a decision that needs the user, a failing validation) instead of a running commentary.
+- Keep assistant output as short as possible to save context. Work through the tools silently; report only substantive changes, blockers, validation failures, or a needed decision.

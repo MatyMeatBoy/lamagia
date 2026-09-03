@@ -42,6 +42,8 @@ VERB_PATTERNS: tuple[tuple[str, str], ...] = (
     ("modify-stats", r"\bgets?\b.*[+-]\d+|[+-]\d+\/+[+-]\d+"),
 )
 
+FAMILY_ORDER = ("search-library", "create-token", "damage", "counter", "modify-stats", "draw", "discard", "mill", "gain-life", "lose-life", "destroy", "exile", "return", "sacrifice")
+
 TRIGGER_RE = re.compile(r"\b(?:when(?:ever)?|at the beginning of|at the end of)\b", re.I)
 ACTIVATED_RE = re.compile(r"^[^:\n]{1,160}:\s*", re.I)
 TARGET_RE = re.compile(r"\btarget\s+([^.,;]+)", re.I)
@@ -87,6 +89,7 @@ def classify(clause: str) -> dict[str, Any]:
         "text": clause,
         "kind": kind,
         "families": families,
+        "primary_family": next((family for family in FAMILY_ORDER if family in families), "other"),
         "amount": number_hint(clause),
         "target_text": target.group(1).strip() if target else None,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),

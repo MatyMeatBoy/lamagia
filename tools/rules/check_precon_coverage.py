@@ -10,12 +10,34 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 
+FAMILY_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("tokens", r"\bcreate\b.*\btoken"),
+    ("search", r"\bsearch your library\b"),
+    ("combat-damage", r"\bdeal(?:s)?\b.*\bdamage\b|\bdamage\b"),
+    ("counters-stats", r"\+1/\+1|counter|gets? [+-]\d"),
+    ("zones", r"\b(?:exile|return|put .*graveyard|shuffle)\b"),
+    ("draw-discard", r"\b(?:draw|discard)\b"),
+    ("removal", r"\b(?:destroy|sacrifice)\b"),
+    ("activated", r"^[^:\n]{1,160}:"),
+    ("triggered", r"\b(?:when(?:ever)?|at the beginning of)\b"),
+)
+
+
 def load(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def pending_family(card: dict[str, Any]) -> str:
+    text = str(card.get("oracle_text") or "")
+    for family, pattern in FAMILY_PATTERNS:
+        if re.search(pattern, text, re.I):
+            return family
+    return "other"
 
 
 def report(decks_path: Path, profiles_path: Path, set_code: str) -> str:
@@ -34,6 +56,7 @@ def report(decks_path: Path, profiles_path: Path, set_code: str) -> str:
         for card in deck["cards"]:
             all_cards.setdefault(card["scryfall_id"], card)
     implemented = 0
+    pending_families: dict[str, int] = {}
     for deck in selected:
         ids = {card["scryfall_id"] for card in deck["cards"]}
         done = sum(bool(profiles.get(card_id, profiles.get(next((card.get("oracle_id") for card in deck["cards"] if card["scryfall_id"] == card_id), ""), {})).get("fullyImplemented")) for card_id in ids)
@@ -44,10 +67,15 @@ def report(decks_path: Path, profiles_path: Path, set_code: str) -> str:
         if profile.get("fullyImplemented"):
             implemented += 1
             continue
+        family = pending_family(card)
+        pending_families[family] = pending_families.get(family, 0) + 1
         lines.append("") if len(lines) == 3 else None
         lines.append(f"- [ ] {card['name']} — `{card_id}`")
     total = len(all_cards)
     lines[2:2] = [f"Unique cards: **{total}**; implemented: **{implemented}**; pending: **{total - implemented}**", ""]
+    summary = ["", "## Pending families", ""]
+    summary.extend(f"- **{family}**: {count}" for family, count in sorted(pending_families.items(), key=lambda item: (-item[1], item[0])))
+    lines[5:5] = summary
     return "\n".join(lines) + "\n"
 
 
