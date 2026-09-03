@@ -142,6 +142,7 @@ export type SpellEffect =
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
+  | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
@@ -880,6 +881,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "gain-life-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "gain-life-target-player", amount: "X" }, target: "player" };
+  }
+  if ((match = /^Each player gains (\w+) life$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount) return { effect: { kind: "each-player-gains-life", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-player-gains-life", amount: "X" }, target: "none" };
   }
   if ((match = /^Target player discards (a|an|one|two|three|four|five|\d+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);

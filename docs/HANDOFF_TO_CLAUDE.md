@@ -543,3 +543,15 @@ effects.
 
 Validation after integration: `npm run check` PASS; `npm test` PASS (165 rules
 tests, simulator and 11 Python compiler tests).
+
+### Cooperative C13 cluster: each-player life gain
+
+The branch adds `Each player gains N life` as a reusable global effect. It
+skips eliminated players and raises one `life-gained` event per living
+recipient, preserving the trigger bus semantics for dependent abilities. This
+follows CR 119.3 and 608.2c. Scenario coverage verifies both players receive
+life and the effect is recognised. The scope excludes replacement/prevention
+effects and simultaneous-event batching beyond the per-recipient events.
+
+Validation after integration: `npm run check` PASS; `npm test` PASS (166 rules
+tests, simulator and 11 Python compiler tests).
