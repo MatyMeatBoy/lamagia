@@ -50,6 +50,9 @@ const DELTA = () => make({
   name: "Polluted Delta", type_line: "Land",
   oracle_text: "{T}, Pay 1 life, Sacrifice Polluted Delta: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle."
 });
+const CYCLING_LAND = () => make({
+  name: "Barren Moor", type_line: "Land", oracle_text: "This land enters tapped.\n{T}: Add {B}.\nCycling {B} ({B}, Discard this card: Draw a card.)"
+});
 const WATERY_GRAVE = () => make({
   name: "Watery Grave", type_line: "Land — Island Swamp", oracle_text: "({T}: Add {U} or {B}.)"
 });
@@ -812,6 +815,27 @@ describe("activated abilities", () => {
   it("keeps non-mana activated abilities as smart-priority stops", () => {
     const game = readyOnBoard([SIGNAL_PEST(), ISLAND(), ISLAND()]);
     expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(true);
+  });
+
+  it("cycles a card from hand, pays mana, and draws", () => {
+    let game = twoSeatGame([CYCLING_LAND()], []);
+    game = stage(game, 0, (player) => ({
+      autoPass: false,
+      hand: toHand(0, [CYCLING_LAND()], "cycle-hand")
+    }));
+    game = putOnBattlefield(game, 0, [SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const cycling = game.players[0]!.hand[0]!;
+    const libraryBefore = game.players[0]!.library.length;
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === cycling.instance_id);
+    expect(offered).toBeDefined();
+
+    game = applyAction(game, 0, offered!.action);
+    expect(game.players[0]!.hand).toHaveLength(1);
+    expect(game.players[0]!.library).toHaveLength(libraryBefore - 1);
+    expect(game.players[0]!.graveyard.some((card) => card.instance_id === cycling.instance_id)).toBe(true);
+    expect(game.log.at(-1)?.text).toMatch(/cicla Barren Moor/i);
   });
 });
 

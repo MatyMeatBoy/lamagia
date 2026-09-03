@@ -179,6 +179,8 @@ export interface CardProfile {
   readonly toughness: number | null;
   readonly loyalty: number | null;
   readonly manaAbilities: readonly ManaAbility[];
+  /** Generic cycling from hand; specialized landcycling remains review-only. */
+  readonly cyclingCost: ManaCost | null;
   readonly activatedAbilities: readonly ActivatedAbility[];
   readonly effects: readonly SpellEffect[];
   readonly triggers: readonly TriggerDefinition[];
@@ -347,6 +349,16 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
   const produced = (card.produced_mana ?? []).filter((symbol) => MANA_LETTERS.has(symbol)) as ManaType[];
   if (!produced.length) return [];
   return [{ index: 0, produces: produced, amount: 1, requiresTap: true, lifeCost: 0, text: `{T}: Add one mana (${produced.join("/")}).` }];
+}
+
+function parseCyclingCost(text: string): ManaCost | null {
+  for (const line of text.split("\n")) {
+    const match = /^cycling\s+(.+)$/i.exec(line.trim().replace(/\.$/, ""));
+    if (!match || /landcycling|typecycling/i.test(line)) continue;
+    const cost = parseManaCost(match[1]!.trim());
+    if (cost && !cost.hasVariable) return cost;
+  }
+  return null;
 }
 
 /**
@@ -598,6 +610,7 @@ function recognizeText(text: string): RecognizedText {
     // Replacement text for entering tapped is executed by `parseEntersTapped`
     // before priority opens; it is not an unresolved spell effect.
     if (/^~\s+enters\s+tapped(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
+    if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -672,6 +685,7 @@ export function cardProfile(card: CardData): CardProfile {
   const cost = parseManaCost(face.mana_cost);
   const recognized = recognizeText(text);
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
+  const cyclingCost = parseCyclingCost(text);
 
   const profile: CardProfile = {
     name: card.name,
@@ -688,6 +702,7 @@ export function cardProfile(card: CardData): CardProfile {
     toughness: numeric(face.toughness),
     loyalty: numeric(face.loyalty),
     manaAbilities,
+    cyclingCost,
     activatedAbilities: isPermanent ? recognized.activatedAbilities : [],
     effects: recognized.effects,
     triggers: recognized.triggers,

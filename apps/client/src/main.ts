@@ -264,7 +264,7 @@ function applyView(next: GameView): void {
 function seatOf(seat: number): PlayerView | undefined { return view?.players.find((player) => player.seat === seat); }
 function actionForCard(cardId: string): LegalAction | undefined {
   const choices = view?.legalActions.filter((entry) => entry.cardId === cardId &&
-    (entry.action.type === "cast" || entry.action.type === "play-land" || entry.action.type === "choose-reveal"));
+    (entry.action.type === "cast" || entry.action.type === "cycle" || entry.action.type === "play-land" || entry.action.type === "choose-reveal"));
   return [...(choices ?? [])].sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0))[0];
 }
 function passAction(): LegalAction | undefined { return view?.legalActions.find((entry) => entry.action.type === "pass"); }

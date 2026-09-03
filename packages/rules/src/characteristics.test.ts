@@ -71,6 +71,12 @@ describe("mana abilities", () => {
     expect(profile.manaAbilities[0]!.produces).toEqual(["C"]);
     expect(profile.manaAbilities[1]!.produces).toEqual(["W", "U", "B", "R", "G"]);
   });
+
+  it("recognises generic cycling from hand", () => {
+    const profile = cardProfile(card({ name: "Barren Moor", type_line: "Land", oracle_text: "This land enters tapped.\n{T}: Add {B}.\nCycling {B} ({B}, Discard this card: Draw a card.)" }));
+    expect(profile.cyclingCost?.raw).toBe("{B}");
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("enters tapped", () => {

@@ -225,6 +225,7 @@ export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number }
+  | { readonly type: "cycle"; readonly cardId: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[] }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
@@ -1521,6 +1522,18 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
   }
 
+  for (const card of player.hand) {
+    const cost = cardProfile(card).cyclingCost;
+    if (!cost || !planManaPayment(cost, player)) continue;
+    actions.push({
+      action: { type: "cycle", cardId: card.instance_id },
+      label: `Ciclar ${card.name}`,
+      cardId: card.instance_id,
+      manaValue: cost.manaValue,
+      note: `Cycling ${cost.raw}`
+    });
+  }
+
   // Abilities of permanents this seat controls. Mana abilities resolve
   // immediately and never use the stack (rule 605.3a); everything else is
   // announced like a spell and waits for priority to pass.
@@ -1628,6 +1641,27 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   }));
   const tapped = raiseTapEvents(next, state, [source.instance_id]);
   return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${ability.amount > 1 ? ability.amount : ""}{${action.mana}}.`);
+}
+
+function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cycle" }>): GameState {
+  if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para ciclar esa carta.");
+  const player = playerAt(state, seat);
+  const card = player.hand.find((candidate) => candidate.instance_id === action.cardId);
+  const cost = card ? cardProfile(card).cyclingCost : null;
+  if (!card || !cost) throw new Error("Esa carta no tiene un coste de cycling válido.");
+  const plan = planManaPayment(cost, player);
+  if (!plan) throw new Error(`No tienes maná suficiente para ciclar ${card.name}.`);
+  let next = applyManaPlan(state, seat, plan);
+  const payment = payCost(cost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+  if (!payment) throw new Error(`No se pudo pagar el cycling de ${card.name}.`);
+  next = withPlayer(next, seat, (current) => ({
+    ...current,
+    manaPool: payment.remaining,
+    hand: current.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
+    graveyard: [...current.graveyard, card]
+  }));
+  next = drawCards(next, seat, 1);
+  return logged(next, seat, `${player.name} cicla ${card.name}.`);
 }
 
 /**
@@ -2085,6 +2119,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "pass": next = applyPass(state, seat); break;
     case "play-land": next = applyPlayLand(state, seat, action.cardId); break;
     case "cast": next = applyCast(state, seat, action); break;
+    case "cycle": next = applyCycle(state, seat, action); break;
     case "activate-mana": next = applyActivateMana(state, seat, action); break;
     case "activate": next = applyActivate(state, seat, action); break;
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
