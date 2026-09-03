@@ -59,6 +59,16 @@ CARD_TYPES = {"land", "creature", "artifact", "enchantment", "instant", "sorcery
 CRITERION_NOISE = {"basic", "card", "permanent", "spell", "with", "that", "whose", "where", "named", "converted", "mana", "power", "toughness"}
 SUPPORTED_KEYWORDS = ("flying", "reach", "first strike", "double strike", "deathtouch", "trample", "vigilance", "lifelink", "menace", "defender", "haste", "indestructible", "hexproof", "shroud", "flash")
 KEYWORD_ONLY_RE = re.compile(r"^(?:" + "|".join(re.escape(keyword) for keyword in SUPPORTED_KEYWORDS) + r")(?:\s*,\s*(?:" + "|".join(re.escape(keyword) for keyword in SUPPORTED_KEYWORDS) + r"))*\.?$", re.I)
+ZONE_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("library", r"\blibrar(?:y|ies)\b"),
+    ("hand", r"\bhand\b"),
+    ("battlefield", r"\bbattlefield\b"),
+    ("graveyard", r"\bgraveyard\b"),
+    # The verb "Exile target ..." is an action, not a zone reference.
+    ("exile", r"\bexiled\b|\b(?:from|in|to|into|the)\s+(?:the\s+)?exile\b"),
+    ("stack", r"\bstack\b"),
+    ("command", r"\bcommand zone\b"),
+)
 
 
 def mana_ability_hint(line: str) -> dict[str, Any] | None:
@@ -136,6 +146,26 @@ def search_criterion_hint(clause: str) -> dict[str, list[str]] | None:
     return {"types": types, "subtypes": subtypes}
 
 
+def operand_hints(clause: str, target_text: str | None, search_criterion: dict[str, list[str]] | None) -> dict[str, list[str]]:
+    """Preserve reusable nouns/locations so later workers do not re-parse text.
+
+    This is intentionally an inventory, not a legality decision. ``Equipment``
+    remains a subtype while ``artifact`` remains a card type; a future closed
+    TypeScript primitive decides what those operands permit in a given effect.
+    """
+    zones = [name for name, pattern in ZONE_PATTERNS if re.search(pattern, clause, re.I)]
+    card_types = sorted({word.title() for word in CARD_TYPES if re.search(rf"\b{re.escape(word)}\b", clause, re.I)})
+    subtypes = list((search_criterion or {}).get("subtypes", []))
+    if target_text:
+        target_operand = re.sub(r"\s+(?:from|on|in)\s+(?:the\s+)?(?:battlefield|graveyard|hand|exile|library|stack)\b.*$", "", target_text, flags=re.I).strip()
+        if (re.fullmatch(r"[A-Za-z][A-Za-z'’/-]*", target_operand)
+                and target_operand.lower() not in CARD_TYPES
+                and target_operand.lower() not in {value.casefold() for value in subtypes}):
+            subtypes.append(target_operand)
+    return {"actions": [name for name, _ in VERB_PATTERNS if re.search(_, clause, re.I)],
+            "zones": zones, "card_types": card_types, "subtypes": sorted(subtypes, key=str.casefold)}
+
+
 def cluster_text(clause: str) -> str:
     """Return a bounded, name-independent-ish shape for an open clause."""
     normalized = re.sub(r"(?:\{[^}]+\})+", "{cost}", clause.lower())
@@ -159,6 +189,7 @@ def classify(clause: str) -> dict[str, Any]:
         target_zone = "graveyard" if re.search(r"\bgraveyard\b", target_text, re.I) else "hand" if re.search(r"\bhand\b", target_text, re.I) else "battlefield"
     modal = bool(re.search(r"\bchoose (?:one|two|three|one or more)\b", lower))
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
+    operands = operand_hints(clause, target_text, search_criterion)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
         cluster_parts.append("shape:" + cluster_text(clause))
@@ -183,6 +214,7 @@ def classify(clause: str) -> dict[str, Any]:
         "target_types": target_types,
         "target_zone": target_zone,
         "search_criterion": search_criterion,
+        "operands": operands,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),
         "modal": modal,
         "conditional": bool(re.search(r"\b(?:if|unless|as long as|whenever)\b", lower)),

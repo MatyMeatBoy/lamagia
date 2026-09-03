@@ -2,7 +2,7 @@
 
 import unittest
 
-from compile_oracle_effects import classify, cluster_text, effective_worker_count, mana_ability_hint, search_criterion_hint
+from compile_oracle_effects import classify, cluster_text, effective_worker_count, mana_ability_hint, operand_hints, search_criterion_hint
 from export_set_coverage import product_group
 
 
@@ -20,6 +20,19 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(result["target_subtype"], "Equipment")
         self.assertEqual(result["target_types"], [])
         self.assertEqual(result["target_zone"], "battlefield")
+
+    def test_reuses_action_zone_type_and_subtype_operands(self) -> None:
+        result = classify("Exile target Equipment from the battlefield.")
+        self.assertEqual(result["operands"], {
+            "actions": ["exile"],
+            "zones": ["battlefield"],
+            "card_types": [],
+            "subtypes": ["Equipment"],
+        })
+        self.assertEqual(
+            operand_hints("Search your library for an Equipment card.", None, {"types": [], "subtypes": ["Equipment"]}),
+            {"actions": ["search-library"], "zones": ["library"], "card_types": [], "subtypes": ["Equipment"]},
+        )
 
     def test_keeps_multiple_target_types(self) -> None:
         result = classify("Destroy target artifact, enchantment, or land.")
