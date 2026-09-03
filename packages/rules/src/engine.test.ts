@@ -45,6 +45,7 @@ const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: 
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
 const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
 const LIFE_SPELL = () => make({ name: "Simple Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain 1 life." });
+const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "You lose 2 life." });
 const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Target player gains 2 life." });
 const EACH_LIFE_SPELL = () => make({ name: "Common Blessing", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Each player gains 1 life." });
 const TARGET_LOSS_SPELL = () => make({ name: "Shared Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player loses 3 life." });
@@ -891,6 +892,18 @@ describe("triggered abilities", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.life).toBe(40);
     expect(game.players[1]!.life).toBe(42);
+  });
+
+  it("applies self life loss without entering the damage pipeline", () => {
+    const profile = profileOf(SELF_LOSS_SPELL());
+    expect(profile.effects[0]).toMatchObject({ kind: "lose-life", amount: 2 });
+    let game = readyToCast([SELF_LOSS_SPELL()], [SWAMP()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.life).toBe(38);
+    expect(game.players[1]!.life).toBe(40);
   });
 
   it("gains life for every living player", () => {

@@ -561,3 +561,14 @@ replacement/prevention effects, and conditional recipients.
 
 Validation: targeted engine tests PASS (160 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
+
+### Cooperative C13 cluster: self life loss
+
+The branch adds `You lose N life` as a reusable non-targeted life-loss effect.
+It changes only the spell controller's life total and remains outside the
+damage pipeline. This follows CR 118.2 and 119.4. Scenario coverage verifies
+recognition, resolution, and that the opponent is unchanged. The scope
+excludes payment costs and life-loss replacement/prevention effects.
+
+Validation: targeted engine tests PASS (161 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
