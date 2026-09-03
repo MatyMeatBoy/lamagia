@@ -867,6 +867,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       for (const seat of opponentsOf(state, controller)) next = dealDamageToPlayer(next, seat, effectAmount(effect.amount, object), sourceName);
       return next;
     }
+    case "damage-all-creatures": {
+      let next = state;
+      const amount = effectAmount(effect.amount, object);
+      for (const permanent of allPermanents(state)) {
+        if (!isCreature(cardProfile(permanent.card))) continue;
+        if (effect.excludeSource && permanent.instance_id === object.card.instance_id) continue;
+        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+      }
+      return next;
+    }
     case "damage-any-target": {
       const target = object.targets[0];
       if (!target) return state;

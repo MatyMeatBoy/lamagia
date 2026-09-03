@@ -90,6 +90,7 @@ export type SpellEffect =
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
+  | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean }
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-permanent" }
   | { readonly kind: "exile-target-permanent" }
@@ -592,6 +593,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-each-opponent", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-each-opponent", amount: "X" }, target: "none" };
   }
+  if ((match = /^~ deals (\w+) damage to each (other )?creature$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-all-creatures", amount, excludeSource: Boolean(match[2]) }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-all-creatures", amount: "X", excludeSource: Boolean(match[2]) }, target: "none" };
+  }
   if ((match = /^~ deals (\w+) damage to target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "creature" };
@@ -620,6 +626,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // Purely cosmetic trailing clauses do not change the outcome the engine produces.
   if (/^(It|They) can't be regenerated$/i.test(text)) return null;
   return null;
+}
+
+function isIgnorableSentence(sentence: string): boolean {
+  return /^(It|They) can't be regenerated\.?$/i.test(sentence.trim());
 }
 
 function recognizeText(text: string): RecognizedText {
@@ -695,12 +705,15 @@ function recognizeText(text: string): RecognizedText {
     for (const sentence of line.split(SENTENCE_SPLIT)) {
       if (!sentence.trim()) continue;
       const recognized = recognizeSentence(sentence);
-      if (!recognized) continue;
+      if (!recognized) {
+        if (!isIgnorableSentence(sentence)) unmatched += 1;
+        continue;
+      }
       effects.push(recognized.effect);
       lineCovered = true;
       if (recognized.target !== "none") targetKind = recognized.target;
     }
-    if (!lineCovered) unmatched += 1;
+    if (!lineCovered && !line.split(SENTENCE_SPLIT).some(isIgnorableSentence)) unmatched += 1;
   }
   return { effects, triggers, activatedAbilities, targetKind, covered: unmatched === 0 };
 }

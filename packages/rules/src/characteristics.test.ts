@@ -130,6 +130,15 @@ describe("effect recognition", () => {
     expect(profile.effects).toHaveLength(0);
     expect(profile.fullyImplemented).toBe(false);
   });
+
+  it("does not claim a partially recognised multi-sentence spell is complete", () => {
+    const profile = cardProfile(card({
+      name: "Partial Wrath", type_line: "Sorcery", mana_cost: "{4}{B}{B}",
+      oracle_text: "Destroy all creatures. Draw a card for each creature destroyed this way."
+    }));
+    expect(profile.effects).toEqual([{ kind: "destroy-all-creatures" }]);
+    expect(profile.fullyImplemented).toBe(false);
+  });
 });
 
 describe("faces and oracle normalisation", () => {
