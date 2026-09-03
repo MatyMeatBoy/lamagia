@@ -233,7 +233,7 @@ export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number }
-  | { readonly type: "cycle"; readonly cardId: string }
+  | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[] }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
@@ -1740,15 +1740,20 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   }
 
   for (const card of player.hand) {
-    const cost = cardProfile(card).cyclingCost;
-    if (!cost || !planManaPayment(cost, player)) continue;
-    actions.push({
-      action: { type: "cycle", cardId: card.instance_id },
-      label: `Ciclar ${card.name}`,
-      cardId: card.instance_id,
-      manaValue: cost.manaValue,
-      note: `Cycling ${cost.raw}`
-    });
+    const profile = cardProfile(card);
+    const cyclingOptions = profile.cyclingCost
+      ? [{ cost: profile.cyclingCost, index: undefined, label: `Cycle ${card.name}`, note: `Cycling ${profile.cyclingCost.raw}` }]
+      : profile.cyclingSearches.map((ability) => ({ cost: ability.cost, index: ability.index, label: `${ability.text} ${card.name}`, note: ability.text }));
+    for (const option of cyclingOptions) {
+      if (!planManaPayment(option.cost, player)) continue;
+      actions.push({
+        action: { type: "cycle", cardId: card.instance_id, ...(option.index === undefined ? {} : { cyclingIndex: option.index }) },
+        label: option.label,
+        cardId: card.instance_id,
+        manaValue: option.cost.manaValue,
+        note: option.note
+      });
+    }
   }
 
   // Abilities of permanents this seat controls. Mana abilities resolve
@@ -1902,7 +1907,12 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para ciclar esa carta.");
   const player = playerAt(state, seat);
   const card = player.hand.find((candidate) => candidate.instance_id === action.cardId);
-  const cost = card ? cardProfile(card).cyclingCost : null;
+  const profile = card ? cardProfile(card) : null;
+  const searchAbility = profile && action.cyclingIndex !== undefined ? profile.cyclingSearches[action.cyclingIndex] : undefined;
+  if (action.cyclingIndex !== undefined && !searchAbility) {
+    throw new Error("Esa opción de cycling no existe para la carta.");
+  }
+  const cost = searchAbility?.cost ?? profile?.cyclingCost ?? null;
   if (!card || !cost) throw new Error("Esa carta no tiene un coste de cycling válido.");
   const plan = planManaPayment(cost, player);
   if (!plan) throw new Error(`No tienes maná suficiente para ciclar ${card.name}.`);
@@ -1915,8 +1925,30 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     hand: current.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
     graveyard: [...current.graveyard, card]
   }));
-  next = drawCards(next, seat, 1);
-  return logged(next, seat, `${player.name} cicla ${card.name}.`);
+  if (!searchAbility) return logged(drawCards(next, seat, 1), seat, `${player.name} cicla ${card.name}.`);
+
+  const search: Extract<import("./characteristics.js").SpellEffect, { kind: "search-library" }> = {
+    kind: "search-library", types: ["Land"], subtypes: searchAbility.subtypes, destination: "hand", reveal: true
+  };
+  const optionIds = playerAt(next, seat).library.filter((candidate) => {
+    const candidateProfile = cardProfile(candidate);
+    return candidateProfile.types.includes("Land") && search.subtypes?.some((subtype) =>
+      subtype.toLowerCase() === "basic"
+        ? candidateProfile.supertypes.some((supertype) => supertype.toLowerCase() === "basic")
+        : candidateProfile.subtypes.some((candidateSubtype) => candidateSubtype.toLowerCase() === subtype.toLowerCase()));
+  }).map((candidate) => candidate.instance_id);
+  if (!optionIds.length) {
+    const shuffled = shuffle(playerAt(next, seat).library, next.rngState);
+    const shuffledState = withPlayer({ ...next, rngState: shuffled.state }, seat, (current) => ({ ...current, library: shuffled.items }));
+    return logged(shuffledState, seat, `${player.name} cicla ${card.name}, pero no encuentra una tierra válida.`);
+  }
+  return logged({
+    ...next,
+    pendingChoice: {
+      type: "search-library", seat, sourceId: `cycle:${next.version}:${card.instance_id}`,
+      optionIds, sourceCard: card, search, returnSourceToGraveyard: false
+    }
+  }, seat, `${player.name} usa ${searchAbility.text} de ${card.name}.`);
 }
 
 /**

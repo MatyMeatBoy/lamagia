@@ -132,9 +132,9 @@ never remove a card's own printed one.
 | Cards with a payable, resolvable activated ability | 0 (feature did not run) | 670 |
 | Cards with a recognised triggered ability | 87 | 1,185 |
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
-| Catalog cards fully implemented | 5,151 | 6,067 |
+| Catalog cards fully implemented | 5,151 | 6,112 |
 | …of those, with non-empty Oracle text | 2,090 | 2,981 |
-| C13 unique cards fully implemented | — | 118 / 356 (238 pending) |
+| C13 unique cards fully implemented | — | 119 / 356 (237 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
 
 Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
@@ -219,13 +219,13 @@ loads pending IDs only when an edition is opened.
 
 ```text
 npm run check           rules build + rules/client/server typecheck        PASS
-npm test                Vitest 5 files / 152 tests + Python smoke tests    PASS
+npm test                Vitest 5 files / 155 tests + Python smoke tests    PASS
 npm run simulate:engine 200 seeded games in 7.22s                          PASS
                         finished 141, unfinished 59, avg 51.63 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 6,067 fully implemented         PASS
-npm run rules:set:coverage  708 editions; 14.3% membership coverage        PASS
+npm run rules:engine:export  38,711 cards; 6,112 fully implemented         PASS
+npm run rules:set:coverage  708 editions; 14.4% membership coverage        PASS
 ```
 
 The matrix now finishes 141 of 200 games (was 105 before activations and 100
@@ -345,10 +345,17 @@ The current batch adds reusable modal choices, exact artifact/enchantment/land
 target restrictions, player-or-planeswalker targets, and the
 artifact/creature/enchantment board sweep. `compile_oracle_effects.py` also
 supports deterministic bounded card/primitives batches.
+- Landcycling is now a first-class cycling variant: each printed subtype cost
+  becomes its own legal action, searches only matching lands, reveals and puts
+  the chosen land into hand, and correctly discards the cycling card first.
+- Parallel work now has a scope protocol in `docs/WORK_CLAIMS.md`, a PR claim
+  template, and a Codex read-only PR debugger in
+  `.github/workflows/codex-debug.yml`; claims must be published before code so
+  workers do not duplicate a primitive.
 
-Validation: 152 rules tests, workspace TypeScript checks, simulator smoke tests
-and 9 Python compiler regressions pass. C13 is 118/356 unique cards implemented
-(33.1%); generated coverage remains in `data/rules/coverage-c13.md`.
+Validation: 155 rules tests, workspace TypeScript checks, simulator smoke tests
+and 9 Python compiler regressions pass. C13 is 119/356 unique cards implemented
+(33.4%); generated coverage remains in `data/rules/coverage-c13.md`.
 
 The Oracle compiler now accepts `--workers`, `--backend`, `--batch-size`,
 `--memory-budget-gb`, and `--estimated-worker-mb`. Its default five-process
@@ -363,7 +370,7 @@ unbounded pool.
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
 general; what limits coverage is the **effect vocabulary** they resolve into.
 1,185 cards have a recognised trigger and 670 a recognised activation, but only
-6,067 of 38,711 cards are fully implemented, because most printed effects are
+6,112 of 38,711 cards are fully implemented, because most printed effects are
 still outside `SpellEffect`.
 
 1. **Widen `SpellEffect`, one template plus one test at a time.** The highest

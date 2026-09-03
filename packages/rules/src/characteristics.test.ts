@@ -78,6 +78,17 @@ describe("mana abilities", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises multiple landcycling variants as reusable searches", () => {
+    const profile = cardProfile(card({
+      name: "Valley Rannet", type_line: "Creature — Beast", mana_cost: "{3}{R}{G}",
+      oracle_text: "Mountaincycling {2}, forestcycling {2} ({2}, Discard this card: Search your library for a Mountain or Forest card, reveal it, put it into your hand, then shuffle.)"
+    }));
+    expect(profile.cyclingSearches.map((ability) => ability.subtypes)).toEqual([["Mountain"], ["Forest"]]);
+    expect(profile.cyclingSearches.map((ability) => ability.cost.raw)).toEqual(["{2}", "{2}"]);
+    expect(profile.cyclingSearches.map((ability) => ability.text)).toEqual(["Mountaincycling {2}", "Forestcycling {2}"]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("preserves an open-ended subtype in Steelshaper's Gift", () => {
     const profile = cardProfile(card({
       name: "Steelshaper's Gift", type_line: "Sorcery", mana_cost: "{W}",

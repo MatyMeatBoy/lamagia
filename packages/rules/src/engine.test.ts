@@ -58,6 +58,10 @@ const LANDFALL_BEAST = () => make({
   name: "Landfall Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "4", toughness: "4",
   oracle_text: "Landfall — Whenever a land you control enters, create a 4/4 green Beast creature token."
 });
+const VALLEY_RANNET = () => make({
+  name: "Valley Rannet", type_line: "Creature — Beast", mana_cost: "{3}{R}{G}", cmc: 5, power: "6", toughness: "3",
+  oracle_text: "Mountaincycling {2}, forestcycling {2} ({2}, Discard this card: Search your library for a Mountain or Forest card, reveal it, put it into your hand, then shuffle.)"
+});
 const UNSUMMON = () => make({ name: "Unsummon", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Return target creature to its owner's hand." });
 const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Fireball deals X damage to any target. It costs {1} more to cast for each target beyond the first." });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
@@ -671,6 +675,24 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Beast")).toHaveLength(1);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Beast")?.card).toMatchObject({ power: "4", toughness: "4", type_line: "Creature — Beast" });
+  });
+
+  it("offers each landcycling variant and searches the matching subtype", () => {
+    let game = readyToCast([VALLEY_RANNET()], [MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 0, (player) => ({ library: toHand(0, [MOUNTAIN(), FOREST()], "library") }));
+    const options = legalActions(game, 0).filter((entry) => entry.action.type === "cycle");
+    expect(options).toHaveLength(2);
+    expect(options.map((entry) => entry.label)).toEqual(["Mountaincycling {2} Valley Rannet", "Forestcycling {2} Valley Rannet"]);
+    game = applyAction(game, 0, { type: "cycle", cardId: "hand-0", cyclingIndex: 0 });
+    expect(game.pendingChoice).toMatchObject({ type: "search-library", sourceCard: { name: "Valley Rannet" } });
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Mountain" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Mountain")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Valley Rannet")).toBe(true);
+  });
+
+  it("rejects a forged landcycling option", () => {
+    const game = readyToCast([VALLEY_RANNET()], [MOUNTAIN(), MOUNTAIN()]);
+    expect(() => applyAction(game, 0, { type: "cycle", cardId: "hand-0", cyclingIndex: 99 })).toThrow("no existe");
   });
 
   it("exiles a selected graveyard and returns any selected permanent to its owner", () => {

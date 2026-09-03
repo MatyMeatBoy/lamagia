@@ -95,3 +95,26 @@ implementado”.
 - [ ] `npm run check`, `npm test` y `npm run simulate:engine` tienen resultado
       reproducible.
 - [ ] El handoff declara honestamente qué sigue sin ejecutarse.
+
+## Paralelizar y depurar automáticamente
+
+Un fork de esta tarea conserva el contexto terminado hasta el momento del fork,
+pero no comparte memoria viva ni integra cambios automáticamente. Para avanzar
+varias primitivas, usa tareas/worktrees separados con alcance sin solapamiento:
+
+- consulta y actualiza `docs/WORK_CLAIMS.md` antes de editar; publica el claim
+  primero para que otro worker lo vea rápidamente;
+- un worker por cluster reutilizable o por lote de cartas;
+- cada worker lee este documento y `docs/HANDOFF_TO_CLAUDE.md`, añade escenarios,
+  actualiza el mapa de cobertura y deja un commit pequeño;
+- este task actúa como integrador: revisa el diff, ejecuta las pruebas y fusiona
+  solo cambios verdes;
+- nunca permitas que dos workers editen simultáneamente la misma primitiva,
+  fixture o archivo generado.
+
+El workflow `.github/workflows/codex-debug.yml` ejecuta un diagnóstico de Codex
+en cada PR y publica un comentario con fallos reproducibles, causa probable y
+pruebas faltantes. Requiere configurar el secreto `OPENAI_API_KEY` en GitHub.
+El debugger es de solo lectura respecto al PR: diagnostica y propone, pero no
+comete ni fusiona cambios. El workflow `verify.yml` sigue siendo la barrera
+obligatoria de compilación y pruebas.

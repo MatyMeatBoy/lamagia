@@ -96,6 +96,14 @@ export interface ModalChoice {
   readonly targetKind: TargetKind;
 }
 
+/** A landcycling variant: discard from hand to search a land subtype. */
+export interface CyclingSearchAbility {
+  readonly index: number;
+  readonly cost: ManaCost;
+  readonly subtypes: readonly string[];
+  readonly text: string;
+}
+
 export interface TokenDefinition {
   readonly name: string;
   readonly typeLine: string;
@@ -227,8 +235,9 @@ export interface CardProfile {
   readonly toughness: number | null;
   readonly loyalty: number | null;
   readonly manaAbilities: readonly ManaAbility[];
-  /** Generic cycling from hand; specialized landcycling remains review-only. */
+  /** Generic cycling from hand. */
   readonly cyclingCost: ManaCost | null;
+  readonly cyclingSearches: readonly CyclingSearchAbility[];
   readonly activatedAbilities: readonly ActivatedAbility[];
   readonly modalChoices: readonly ModalChoice[];
   readonly effects: readonly SpellEffect[];
@@ -455,6 +464,28 @@ function parseCyclingCost(text: string): ManaCost | null {
     if (cost && !cost.hasVariable) return cost;
   }
   return null;
+}
+
+function parseCyclingSearches(text: string): CyclingSearchAbility[] {
+  const abilities: CyclingSearchAbility[] = [];
+  for (const line of text.split("\n")) {
+    const matches = [...line.matchAll(/([A-Za-z][A-Za-z ]*)cycling\s+((?:\{[^}]+\})+)/gi)];
+    for (const match of matches) {
+      const subtype = match[1]!.trim().replace(/\s+land$/i, "");
+      const cost = parseManaCost(match[2]!);
+      if (!cost || cost.hasVariable || !subtype) continue;
+      const displaySubtype = subtype.toLowerCase() === "basic"
+        ? "Basic land"
+        : `${subtype[0]!.toUpperCase()}${subtype.slice(1).toLowerCase()}`;
+      abilities.push({
+        index: abilities.length,
+        cost,
+        subtypes: [displaySubtype.replace(/ land$/i, "")],
+        text: `${displaySubtype}cycling ${match[2]}`
+      });
+    }
+  }
+  return abilities;
 }
 
 /**
@@ -856,7 +887,7 @@ function recognizeText(text: string): RecognizedText {
     // Replacement text for entering tapped is executed by `parseEntersTapped`
     // before priority opens; it is not an unresolved spell effect.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
-    if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -932,6 +963,7 @@ export function cardProfile(card: CardData): CardProfile {
   const recognized = recognizeText(text);
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
+  const cyclingSearches = parseCyclingSearches(text);
 
   const profile: CardProfile = {
     name: card.name,
@@ -949,6 +981,7 @@ export function cardProfile(card: CardData): CardProfile {
     loyalty: numeric(face.loyalty),
     manaAbilities,
     cyclingCost,
+    cyclingSearches,
     activatedAbilities: isPermanent ? recognized.activatedAbilities : [],
     modalChoices: recognized.modalChoices,
     effects: recognized.effects,
