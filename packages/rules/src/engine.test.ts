@@ -42,6 +42,18 @@ const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
+const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
+const ENCHANTMENT_REMOVAL = () => make({ name: "Demolish Enchantment", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Destroy target enchantment." });
+const LAND_REMOVAL = () => make({ name: "Stone Rain", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target land." });
+const DISK = () => make({ name: "Nevinyrral's Disk", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{1}, {T}: Destroy all artifacts, creatures, and enchantments." });
+const DROMARS_CHARM = () => make({
+  name: "Dromar's Charm", type_line: "Instant", mana_cost: "{W}{U}{B}", cmc: 3,
+  oracle_text: "Choose one —\n• You gain 5 life.\n• Counter target spell.\n• Target creature gets -2/-2 until end of turn."
+});
+const CROSIS_CHARM = () => make({
+  name: "Crosis's Charm", type_line: "Instant", mana_cost: "{U}{B}{R}", cmc: 3,
+  oracle_text: "Choose one —\n• Return target permanent to its owner's hand.\n• Destroy target nonblack creature. It can't be regenerated.\n• Destroy target artifact."
+});
 const UNSUMMON = () => make({ name: "Unsummon", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Return target creature to its owner's hand." });
 const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Fireball deals X damage to any target. It costs {1} more to cast for each target beyond the first." });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
@@ -603,6 +615,49 @@ describe("casting", () => {
     const bounceId = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.instance_id;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bounceId }] });
     expect(game.players[1]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("keeps artifact, enchantment, and land removal targets separate", () => {
+    expect(profileOf(ARTIFACT_REMOVAL()).fullyImplemented).toBe(true);
+    expect(profileOf(ENCHANTMENT_REMOVAL()).fullyImplemented).toBe(true);
+    expect(profileOf(LAND_REMOVAL()).fullyImplemented).toBe(true);
+
+    let game = readyToCast([ARTIFACT_REMOVAL()], [MOUNTAIN(), MOUNTAIN()], [], [SOL_RING(), BEAR()]);
+    const artifact = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    expect(legalTargets(game, 0, "artifact")).toContainEqual({ kind: "permanent", instanceId: artifact.instance_id });
+    expect(legalTargets(game, 0, "artifact")).not.toContainEqual(expect.objectContaining({ kind: "permanent", instanceId: expect.stringContaining("Grizzly") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: artifact.instance_id }] });
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+
+  it("resolves the artifact-creature-enchantment board sweep", () => {
+    expect(profileOf(DISK()).fullyImplemented).toBe(true);
+    let game = readyToCast([], [FOREST(), FOREST(), DISK(), BEAR(), SOL_RING()]);
+    const disk = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Nevinyrral's Disk")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: disk.instance_id, abilityIndex: 0 });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Nevinyrral's Disk")).toBe(false);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Forest")).toBe(true);
+  });
+
+  it("offers and resolves each supported Choose one mode", () => {
+    const dromar = DROMARS_CHARM();
+    expect(profileOf(dromar).fullyImplemented).toBe(true);
+    expect(profileOf(dromar).modalChoices).toHaveLength(3);
+    let game = readyToCast([dromar], [PLAINS(), ISLAND(), SWAMP()], [], [BEAR()]);
+    const modes = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(modes).toHaveLength(2);
+    expect(modes.some((entry) => entry.label.includes("You gain 5 life"))).toBe(true);
+    expect(modes.some((entry) => entry.label.includes("Target creature gets -2/-2"))).toBe(true);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 0 });
+    expect(game.players[0]!.life).toBe(45);
+
+    game = readyToCast([CROSIS_CHARM()], [ISLAND(), SWAMP(), MOUNTAIN()], [], [SOL_RING()]);
+    const ring = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    const destroy = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode === 2);
+    expect(destroy?.requiresTarget).toBe("artifact");
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 2, targets: [{ kind: "permanent", instanceId: ring.instance_id }] });
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
   });
 
   it("exiles a selected graveyard and returns any selected permanent to its owner", () => {

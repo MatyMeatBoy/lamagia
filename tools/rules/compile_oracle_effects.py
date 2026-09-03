@@ -20,6 +20,7 @@ import json
 import re
 import sqlite3
 from collections import Counter
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -204,19 +205,56 @@ def review_markdown(cards: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def compile_catalog(catalog: Path) -> list[dict[str, Any]]:
+def effective_worker_count(workers: int, memory_budget_gb: float, estimated_worker_mb: int) -> int:
+    """Return a bounded worker count for the local parser scheduler.
+
+    This is a conservative scheduler budget, not an OS-level memory limit. A
+    future model runner can replace the estimate with measured per-process
+    usage or a container/Job Object hard cap.
+    """
+    if memory_budget_gb <= 0 or estimated_worker_mb <= 0:
+        raise ValueError("El presupuesto de memoria y la estimación por worker deben ser positivos.")
+    budget_workers = int((memory_budget_gb * 1024) // estimated_worker_mb)
+    return max(1, min(int(workers), 8, budget_workers))
+
+
+def compile_catalog(
+    catalog: Path,
+    workers: int = 5,
+    memory_budget_gb: float = 2.0,
+    estimated_worker_mb: int = 256,
+    backend: str = "processes",
+    batch_size: int = 256,
+) -> list[dict[str, Any]]:
     database = sqlite3.connect(f"file:{catalog}?mode=ro", uri=True)
     database.row_factory = sqlite3.Row
     rows = database.execute("SELECT id, oracle_id, name, mana_cost, type_line, oracle_text FROM cards ORDER BY printing_rank DESC, released_at DESC, id")
-    result: list[dict[str, Any]] = []
     seen: set[str] = set()
+    # Detach rows from SQLite before handing them to worker processes.
+    unique_rows: list[dict[str, Any]] = []
     for row in rows:
         identity = str(row["oracle_id"] or row["id"])
         if identity in seen:
             continue
         seen.add(identity)
-        result.append(compile_card(row))
+        unique_rows.append(dict(row))
     database.close()
+    worker_count = effective_worker_count(workers, memory_budget_gb, estimated_worker_mb)
+    if worker_count == 1 or len(unique_rows) < 2:
+        return [compile_card(row) for row in unique_rows]
+    if batch_size <= 0:
+        raise ValueError("El tamaño del lote debe ser positivo.")
+    executor_type = ProcessPoolExecutor if backend == "processes" else ThreadPoolExecutor
+    executor_kwargs: dict[str, Any] = {"max_workers": worker_count}
+    if backend == "threads": executor_kwargs["thread_name_prefix"] = "oracle"
+    # Keep only one bounded batch in flight. `map` preserves catalog order, so
+    # parallel classification remains deterministic for generated IR and AI
+    # review queues.
+    result: list[dict[str, Any]] = []
+    with executor_type(**executor_kwargs) as pool:
+        for start in range(0, len(unique_rows), batch_size):
+            batch = unique_rows[start:start + batch_size]
+            result.extend(pool.map(compile_card, batch, chunksize=32) if backend == "processes" else pool.map(compile_card, batch))
     return result
 
 
@@ -225,10 +263,16 @@ def main() -> None:
     parser.add_argument("--catalog", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--prompt-output", type=Path)
+    parser.add_argument("--workers", type=int, default=5, help="Workers for independent card classification (1-8; default: 5).")
+    parser.add_argument("--memory-budget-gb", type=float, default=2.0, help="Conservative local worker budget in GB (default: 2).")
+    parser.add_argument("--estimated-worker-mb", type=int, default=256, help="Memory reserved per worker for scheduling (default: 256).")
+    parser.add_argument("--backend", choices=("processes", "threads"), default="processes", help="Parallel backend; processes use CPU cores, threads share one process.")
+    parser.add_argument("--batch-size", type=int, default=256, help="Cards submitted per bounded batch (default: 256).")
     args = parser.parse_args()
     if not args.catalog.exists():
         raise SystemExit("No existe el catálogo local; ejecuta npm run catalog:sync primero.")
-    cards = compile_catalog(args.catalog)
+    worker_count = effective_worker_count(args.workers, args.memory_budget_gb, args.estimated_worker_mb)
+    cards = compile_catalog(args.catalog, args.workers, args.memory_budget_gb, args.estimated_worker_mb, args.backend, args.batch_size)
     counts = Counter(card["status"] for card in cards)
     payload = {
         "format": "prossh-oracle-effect-ir/v2",
@@ -243,7 +287,7 @@ def main() -> None:
     if args.prompt_output:
         args.prompt_output.parent.mkdir(parents=True, exist_ok=True)
         args.prompt_output.write_text(review_markdown(cards), encoding="utf-8")
-    print(f"Oracle IR written: {len(cards):,} cards -> {args.output}")
+    print(f"Oracle IR written: {len(cards):,} cards -> {args.output} (workers={worker_count}, backend={args.backend}, budget={args.memory_budget_gb:g}GB)")
     print(f"Statuses: {dict(sorted(counts.items()))}")
 
 

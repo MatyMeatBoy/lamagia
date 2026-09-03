@@ -24,6 +24,21 @@ familias, objetivos, cantidades y texto no reconocido. También genera
 se ejecuta directamente: cada vector aprobado debe convertirse en un tipo
 cerrado de `characteristics.ts`, citar CR y recibir un escenario de prueba.
 
+La clasificación puede procesar muchas cartas/primitivas independientes en
+lotes con `--workers 5 --memory-budget-gb 2 --batch-size 256` (se puede bajar a
+`--workers 1 --backend threads` para depurar). El backend por defecto usa
+procesos para aprovechar varios núcleos, conserva el orden determinista y
+reserva 256 MB por worker para no superar el presupuesto configurado. Es un
+límite conservador del scheduler, no un hard cap del sistema operativo; un
+runner local de modelos deberá añadir aislamiento/Job Objects. La VRAM no se
+usa en esta fase: solo aplicará si se ejecuta un modelo local en GPU.
+
+Medición del catálogo completo (38.711 cartas, Windows, 2026-09-03): 1 worker
+usó aproximadamente 484 MB de RSS y tardó 8,2 s; 5 workers usaron 484–500 MB y
+tardaron 8,0–8,9 s según el tamaño del lote. La salida fue determinista. La
+clasificación actual es ligera; el paralelismo quedará reservado para cuando
+cada carta incluya más primitivas o una revisión asistida costosa.
+
 El compilador conserva restricciones reutilizables (`types`, `subtypes` y
 `target_zone`). En el motor, un objetivo de subtipo usa `subtype:<Subtype>`;
 Equipment, Aura, Goblin y los subtipos futuros comparten la misma primitiva.

@@ -253,7 +253,8 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
   const targetKinds = new Set<string>([
     "any", "player", "creature", "spell", "permanent", "artifact-or-enchantment",
     "artifact-creature-or-planeswalker", "artifact-enchantment-or-land", "artifact",
-    "nonland", "nonartifact-creature", "land-you-control",
+    "nonland", "nonartifact-creature", "land-you-control", "enchantment", "land",
+    "player-or-planeswalker",
     ...viewerActions.flatMap((action) => action.requiresTarget ? [action.requiresTarget] : [])
   ]);
   const targetOptions = Object.fromEntries([...targetKinds].map((kind) => [kind, legalTargets(state, viewerSeat, kind as Exclude<import("./characteristics.js").TargetKind, "none">)]));

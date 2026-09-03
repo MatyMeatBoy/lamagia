@@ -132,9 +132,9 @@ never remove a card's own printed one.
 | Cards with a payable, resolvable activated ability | 0 (feature did not run) | 670 |
 | Cards with a recognised triggered ability | 87 | 1,185 |
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
-| Catalog cards fully implemented | 5,151 | 5,908 |
-| …of those, with non-empty Oracle text | 2,090 | 2,823 |
-| C13 unique cards fully implemented | — | 107 / 356 (249 pending) |
+| Catalog cards fully implemented | 5,151 | 6,050 |
+| …of those, with non-empty Oracle text | 2,090 | 2,964 |
+| C13 unique cards fully implemented | — | 116 / 356 (240 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
 
 Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
@@ -167,6 +167,19 @@ Secret Lair and other sets, and lists each edition’s pending cards for
 contributors. The client exposes the same report as the “Cobertura” chart and
 loads pending IDs only when an edition is opened.
 
+### 7. Bounded primitive batches and modal removal effects
+
+- `tools/rules/compile_oracle_effects.py` splits independent card/primitives
+  into deterministic bounded process batches. The review profile is 5 workers
+  with a 2 GB scheduler budget; workers are capped from the requested memory
+  estimate.
+- Supported `Choose one` modes become reusable `ModalChoice` entries. The
+  engine publishes one legal cast action per mode, applies the selected effect
+  on resolution, and filters its targets normally.
+- Added reusable exact target families for artifact, enchantment, land and
+  player-or-planeswalker removal, plus the artifact/creature/enchantment board
+  sweep. Crosis Charm and Dromar’s Charm are scenario-tested.
+
 ## Current verified state
 
 | Area | Implemented now | Evidence |
@@ -198,13 +211,13 @@ loads pending IDs only when an edition is opened.
 
 ```text
 npm run check           rules build + rules/client/server typecheck        PASS
-npm test                Vitest 5 files / 144 tests + Python smoke tests    PASS
+npm test                Vitest 5 files / 150 tests + Python smoke tests    PASS
 npm run simulate:engine 200 seeded games in 7.22s                          PASS
                         finished 141, unfinished 59, avg 51.63 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 5,908 fully implemented         PASS
-npm run rules:set:coverage  708 editions; 13.5% membership coverage        PASS
+npm run rules:engine:export  38,711 cards; 6,050 fully implemented         PASS
+npm run rules:set:coverage  708 editions; 14.2% membership coverage        PASS
 ```
 
 The matrix now finishes 141 of 200 games (was 105 before activations and 100
@@ -330,6 +343,14 @@ activation choices and a visible per-colour mana reserve.
 Validation: 147 rules tests, workspace TypeScript checks, and 5 Python compiler
 regressions pass. C13 is 112/356 unique cards implemented (31.5%); generated
 coverage remains in `data/rules/coverage-c13.md`.
+
+The Oracle compiler now accepts `--workers`, `--backend`, `--batch-size`,
+`--memory-budget-gb`, and `--estimated-worker-mb`. Its default five-process
+batch stays below the 2 GB scheduler budget, preserves deterministic order,
+and was measured at roughly 484–500 MB RSS for the full 38,711-card catalog.
+Five workers are not automatically faster for the current lightweight parser;
+the budget is ready for heavier primitive/review tasks without spawning an
+unbounded pool.
 
 ## Recommended next sequence
 

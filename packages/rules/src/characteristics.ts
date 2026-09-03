@@ -88,6 +88,14 @@ export interface ActivatedAbility {
   readonly text: string;
 }
 
+/** One independently selectable mode of a supported `Choose one` spell. */
+export interface ModalChoice {
+  readonly index: number;
+  readonly text: string;
+  readonly effect: SpellEffect;
+  readonly targetKind: TargetKind;
+}
+
 export interface TokenDefinition {
   readonly name: string;
   readonly typeLine: string;
@@ -114,6 +122,7 @@ export type SpellEffect =
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-permanent" }
+  | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
   | { readonly kind: "exile-target-permanent" }
   | { readonly kind: "exile-target-graveyard" }
   | { readonly kind: "return-target-creature" }
@@ -197,7 +206,8 @@ export interface TriggerDefinition {
 
 export type TargetKind =
   | "any" | "player" | "creature" | "spell" | "permanent" | "artifact-or-enchantment"
-  | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "artifact" | "nonland" | "nonartifact-creature"
+  | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
+  | "enchantment" | "land"
   | "nonblack-creature" | "creature-with-flying" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | `subtype:${string}` | "none";
 
 export interface CardProfile {
@@ -218,6 +228,7 @@ export interface CardProfile {
   /** Generic cycling from hand; specialized landcycling remains review-only. */
   readonly cyclingCost: ManaCost | null;
   readonly activatedAbilities: readonly ActivatedAbility[];
+  readonly modalChoices: readonly ModalChoice[];
   readonly effects: readonly SpellEffect[];
   readonly triggers: readonly TriggerDefinition[];
   readonly targetKind: TargetKind;
@@ -526,6 +537,7 @@ interface RecognizedText {
   readonly effects: SpellEffect[];
   readonly triggers: TriggerDefinition[];
   readonly activatedAbilities: ActivatedAbility[];
+  readonly modalChoices: ModalChoice[];
   readonly targetKind: TargetKind;
   /** Exact normalized clauses the closed engine intentionally does not execute. */
   readonly unimplementedText: readonly string[];
@@ -691,6 +703,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-each-opponent", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-each-opponent", amount: "X" }, target: "none" };
   }
+  if ((match = /^~ deals (\w+) damage to target player or planeswalker$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "player-or-planeswalker" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "player-or-planeswalker" };
+  }
   if ((match = /^~ deals (\w+) damage to each creature and each player$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-each-creature-and-player", amount }, target: "none" };
@@ -729,6 +746,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
+  if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
+  if (/^Destroy target enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "enchantment" };
+  if (/^Destroy target land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "land" };
   if (/^Destroy target artifact, creature, or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-creature-or-planeswalker" };
   if (/^Destroy target artifact, enchantment, or land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-enchantment-or-land" };
   if (/^Destroy target nonland permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonland" };
@@ -752,6 +772,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
+  if (/^Destroy all artifacts, creatures, and enchantments$/i.test(text)) {
+    return { effect: { kind: "destroy-all-artifacts-creatures-enchantments" }, target: "none" };
+  }
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   const token = parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
@@ -770,27 +793,59 @@ function isIgnorableSentence(sentence: string): boolean {
 }
 
 function recognizeText(text: string): RecognizedText {
-  const body = text.split("\n").map((line) => line.trim()).filter(Boolean);
-  if (!body.length) return { effects: [], triggers: [], activatedAbilities: [], targetKind: "none", unimplementedText: [], covered: true };
+  const body = text.split("\n")
+    // Scryfall uses `•`; a few imported historical rows contain U+FFFD in its
+    // place. Both are presentation markers, never part of Oracle semantics.
+    .map((raw) => {
+      const line = raw.trim();
+      return { text: line.replace(/^[•�]\s*/u, ""), bullet: /^[•�]\s*/u.test(line) };
+    })
+    .filter(Boolean);
+  if (!body.length) return { effects: [], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
 
   // Enlightened Tutor-style searches are one resolution instruction spread
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
-  const joined = body.join(" ").replace(/\s+/g, " ").trim();
+  const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library\.$/i.test(joined)) {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
-      triggers: [], activatedAbilities: [], targetKind: "none", unimplementedText: [], covered: true
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
 
   const effects: SpellEffect[] = [];
   const triggers: TriggerDefinition[] = [];
   const activatedAbilities: ActivatedAbility[] = [];
+  const modalChoices: ModalChoice[] = [];
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
 
-  for (const line of body) {
+  for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
+    const lineEntry = body[lineIndex]!;
+    const line = lineEntry.text;
+    if (/^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
+      const start = lineIndex + 1;
+      const choices: ModalChoice[] = [];
+      let cursor = start;
+      let invalid = false;
+      while (cursor < body.length && body[cursor]!.bullet) {
+        const entry = body[cursor]!;
+        const choiceText = entry.text;
+        const executableText = choiceText.replace(/\s+It can(?:not|'t) be regenerated\.?$/i, "");
+        const recognized = recognizeSentence(executableText);
+        if (!recognized) invalid = true;
+        else choices.push({ index: choices.length, text: choiceText, effect: recognized.effect, targetKind: recognized.target });
+        cursor += 1;
+      }
+      if (!invalid && choices.length > 0 && choices.length === cursor - start) {
+        modalChoices.push(...choices);
+      } else {
+        unimplementedText.push(line);
+      }
+      lineIndex = Math.max(lineIndex, cursor - 1);
+      continue;
+    }
     // Replacement text for entering tapped is executed by `parseEntersTapped`
     // before priority opens; it is not an unresolved spell effect.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
@@ -849,7 +904,7 @@ function recognizeText(text: string): RecognizedText {
       if (recognized.target !== "none") targetKind = recognized.target;
     }
   }
-  return { effects, triggers, activatedAbilities, targetKind, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -888,6 +943,7 @@ export function cardProfile(card: CardData): CardProfile {
     manaAbilities,
     cyclingCost,
     activatedAbilities: isPermanent ? recognized.activatedAbilities : [],
+    modalChoices: recognized.modalChoices,
     effects: recognized.effects,
     triggers: recognized.triggers,
     targetKind: recognized.targetKind,

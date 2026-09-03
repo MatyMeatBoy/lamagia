@@ -2,7 +2,7 @@
 
 import unittest
 
-from compile_oracle_effects import classify, mana_ability_hint, search_criterion_hint
+from compile_oracle_effects import classify, effective_worker_count, mana_ability_hint, search_criterion_hint
 from export_set_coverage import product_group
 
 
@@ -40,6 +40,10 @@ class OracleCompilerTests(unittest.TestCase):
         result = mana_ability_hint("{T}: Add {C}{C}. Activate only if you control five or more lands.")
         self.assertEqual(result["produced_symbols"], ["C", "C"])
         self.assertEqual(result["restrictions"], [{"kind": "control-lands", "minimum": 5}])
+
+    def test_bounds_parallel_batch_to_memory_budget(self) -> None:
+        self.assertEqual(effective_worker_count(5, 2, 256), 5)
+        self.assertEqual(effective_worker_count(8, 1, 256), 4)
 
     def test_groups_supplemental_products_by_name_and_type(self) -> None:
         self.assertEqual(product_group("draft_innovation", "Jumpstart 2022", "2022-12-02"), "jumpstart")
