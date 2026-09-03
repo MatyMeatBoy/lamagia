@@ -172,20 +172,45 @@ function namedLocalCard(name: string): CatalogCard | null {
   } finally { database.close(); }
 }
 
-function catalogCardById(id: string): (CatalogCard & { printings_list: { set_code: string; set_name: string; released_at: string }[] }) | null {
+interface CardPage extends CatalogCard {
+  readonly printings_list: { set_code: string; set_name: string; released_at: string }[];
+  /** Wizards' published clarifications, the same body Gatherer shows. */
+  readonly rulings: { published_at: string; comment: string }[];
+}
+
+let rulingsTableChecked = false;
+let hasRulingsTable = false;
+function catalogHasRulings(database: DatabaseSync): boolean {
+  if (!rulingsTableChecked) {
+    hasRulingsTable = database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='card_rulings'").get() !== undefined;
+    rulingsTableChecked = true;
+  }
+  return hasRulingsTable;
+}
+
+function catalogCardById(id: string): CardPage | null {
   const database = openCatalog();
   if (!database) return null;
   try {
     const row = database.prepare(`SELECT ${CARD_COLUMNS.join(", ")} FROM cards WHERE id = ?`).get(id) as Record<string, unknown> | undefined;
     if (!row) return null;
-    const printings = row.oracle_id
-      ? database.prepare("SELECT DISTINCT set_code, set_name, released_at FROM cards WHERE oracle_id = ? ORDER BY released_at DESC").all(String(row.oracle_id))
+    const oracleId = row.oracle_id ? String(row.oracle_id) : "";
+    const printings = oracleId
+      ? database.prepare("SELECT DISTINCT set_code, set_name, released_at FROM cards WHERE oracle_id = ? ORDER BY released_at DESC").all(oracleId)
+      : [];
+    // Rulings are keyed by oracle_id, so they hold across every printing.
+    const rulings = oracleId && catalogHasRulings(database)
+      ? database.prepare("SELECT published_at, comment FROM card_rulings WHERE oracle_id = ? ORDER BY published_at").all(oracleId)
       : [];
     return {
       ...mapCatalogRow(row),
       printings_list: printings.map((entry) => {
         const record = entry as Record<string, unknown>;
         return { set_code: String(record.set_code ?? ""), set_name: String(record.set_name ?? ""), released_at: String(record.released_at ?? "") };
+      }),
+      rulings: rulings.map((entry) => {
+        const record = entry as Record<string, unknown>;
+        return { published_at: String(record.published_at ?? ""), comment: String(record.comment ?? "") };
       })
     };
   } finally { database.close(); }

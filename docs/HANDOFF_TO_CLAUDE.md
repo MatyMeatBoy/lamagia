@@ -35,7 +35,9 @@ All four are fixed by a rewritten engine. `commander-game.ts` and `commander-ai.
 | Privacy | A projection contains the viewer's hand and nothing hidden from any other seat — not the cards, not their identifiers. | `packages/rules/src/projection.ts`; asserted in `engine.test.ts`, `real-decks.test.ts` and the engine matrix |
 | Bot | Plays only from the same `legalActions` list a human receives: lands, castables, attack and block heuristics, target selection. | `packages/rules/src/bot.ts` |
 | Server | Match registry with seat-bound secret tokens, bots driven between human decisions, per-seat projections, Socket.IO update notifications. | `services/match-server/src/matches.ts` |
-| Client | Full-viewport table, side rail (stack + legal actions), three opponents at full width, land/nonland rows oriented per seat, fanned hand, hover preview with Oracle text and coverage, toggleable log with per-seat colours and card links, mana pips, internal card pages. | `apps/client/src/main.ts`, `styles.css` |
+| Client | Full-viewport table: three opponents share one seamless band at full width, the local player owns the lower band, and the stack, legal actions, zones and priority all live in the player dock so nothing floats over a board. Land/nonland rows are oriented per seat, the hand fans and lifts, a hover preview shows Oracle text plus rules coverage, the log is a toggleable drawer with per-seat colours and linked card names, mana renders as pips, and cards open an internal page. | `apps/client/src/main.ts`, `styles.css` |
+| Touch layout | Landscape-first for Android and tablets: same shape, but the board shrinks and the hand grows past it, tap targets clear 34–44px and the hover preview is disabled. Portrait stacks the boards and asks the player to rotate. A topbar toggle forces it on a desktop. | `styles.css` touch section; `docs/ANDROID.md` |
+| Rulings | 78,912 Wizards rulings keyed by `oracle_id`, served from the local catalog on the card page. | `tools/card_catalog/sync_rulings.py`, `/api/catalog/card/:id` |
 | Card data | 117,621 printings with rules fields (power/toughness/loyalty, produced mana, faces) and printing fields (promo, frame, finishes, set type) plus a precomputed `printing_rank`. | `tools/card_catalog/sync_scryfall.py` |
 | Catalog search | One row per card — the current plain reprint — with the printing count. Relevance: exact name, whole-word, then substring, ordered by reprint count. | `bestPrintingSelect` in `services/match-server/src/index.ts` |
 | Precons | 192 Commander deck products (2009–2026) grouped by set with set icons. Each card resolves to **that product's own printing** via MTGJSON's `scryfallId`. | `tools/decks/import_commander_precons.py`, `/api/decks/precons?grouped=1` |
@@ -111,6 +113,7 @@ npm run catalog:sync      # ~117k printings into data/catalog/prossh.sqlite
 npm run decks:sync        # cEDH DDB profiles (supporting source)
 npm run decks:pod:sync    # the four-deck cEDH pod
 npm run precons:sync      # all 192 Commander precon products
+npm run rulings:sync      # ~79k Wizards rulings, keyed by oracle_id
 ```
 
 `catalog:enrich` and `decks:enrich` exist only to upgrade data produced by the pre-2026-09-03 catalog schema. After a fresh `catalog:sync` they are unnecessary — the importers read the new columns directly.
@@ -121,7 +124,7 @@ npm run precons:sync      # all 192 Commander precon products
 | --- | --- | --- |
 | `GET /health` | liveness and match count | no auth |
 | `GET /api/catalog/search?q=` | one row per card, best printing; `t:type` supported | local catalog only unless it is missing |
-| `GET /api/catalog/card/:id` | internal card page with its printing list | falls back to Scryfall on a local miss |
+| `GET /api/catalog/card/:id` | internal card page: printings list and rulings | falls back to Scryfall on a local miss |
 | `GET /api/catalog/named?name=` | one printing by exact name | provider fallback only |
 | `GET /api/catalog/status` | catalog availability | exposes a local path; development only |
 | `GET /api/decks/active-pod` | imported cEDH pod summary | no ownership or legality checks |
@@ -148,7 +151,7 @@ npm run precons:sync      # all 192 Commander precon products
 4. **Persistence and identity.** Replace the in-memory registry with PostgreSQL/Redis, authenticated seats, event streams with versions, reconnects, and server-side priority timeouts.
 5. **Deck construction and the collection.** Build on `oracle_id`/`scryfall_id` and the structured columns; wishlist pricing is a separate opt-in feature and must always carry a source and refresh timestamp.
 6. **Precon box art.** Find a rights-cleared or licensed source, store provenance and licence per asset, and swap only `cover_art_uri`.
-7. **Rulings text.** Scryfall exposes `/cards/:id/rulings`; if the preview should show current rulings, add a rulings table to the catalog sync and serve it locally rather than calling out per hover.
+7. **Android build.** The client is landscape-ready and the touch layout is implemented, but no Capacitor project has been generated. `docs/ANDROID.md` has the setup, the orientation lock and the four things that must be settled first — chiefly a configurable server base URL, since a packaged app has no Vite proxy.
 
 ## Working style constraints
 

@@ -19,10 +19,13 @@ type PreconSummary = {
   released_at: string; cover_art_uri?: string; cover_art_kind: string; set_icon_uri?: string;
 };
 type PreconGroup = { set_code: string; set_name: string; released_at: string; set_icon_uri?: string; decks: PreconSummary[] };
+type CardRuling = { published_at: string; comment: string };
 type CatalogCard = {
   id: string; name: string; type_line: string; mana_cost: string; oracle_text: string;
   set_code: string; set_name: string; released_at: string; rarity: string; scryfall_uri: string;
   power: string | null; toughness: string | null; printings?: number;
+  printings_list?: { set_code: string; set_name: string; released_at: string }[];
+  rulings?: CardRuling[];
   image_uris: { small?: string; normal?: string; art_crop?: string };
 };
 type AvatarChoice = { name: string; image: string };
@@ -48,6 +51,9 @@ interface UiState {
   busy: boolean;
   logOpen: boolean;
   autoPass: boolean;
+  actionsOpen: boolean;
+  /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
+  layout: "auto" | "mobile";
 }
 
 let session: MatchSession | null = null;
@@ -56,7 +62,9 @@ let avatarChoices: AvatarChoice[] = [];
 let selectedAvatar = window.localStorage.getItem("prossh.avatar") ?? "";
 const ui: UiState = {
   pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null,
-  notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", autoPass: true
+  notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", autoPass: true,
+  actionsOpen: false,
+  layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
 };
 
 const root = document.querySelector<HTMLDivElement>("#app");
@@ -416,21 +424,31 @@ function logDrawerHtml(): string {
   </aside>`;
 }
 
-function stackPanelHtml(): string {
+/** The stack rides just above the hand so it is impossible to miss mid-combat. */
+function stackStripHtml(): string {
   if (!view?.stack.length) return "";
-  return `<section class="rail-panel stack"><h2>Pila (${view.stack.length})</h2>
-    ${[...view.stack].reverse().map((object) => `<div class="stack-item${object.countered ? " countered" : ""}">
+  return `<div class="stack-strip"><b>Pila</b>${[...view.stack].reverse().map((object) =>
+    `<span class="stack-chip${object.countered ? " countered" : ""}">
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" alt=""/>` : ""}
-      <div><b>${escapeHtml(object.name)}</b><span style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}</span>
-      ${object.targets.length ? `<span>→ ${escapeHtml(object.targets.join(", "))}</span>` : ""}</div>
-    </div>`).join("")}</section>`;
+      <span><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i></span>
+    </span>`).join("")}</div>`;
 }
 
-function actionTrayHtml(): string {
-  if (!view?.legalActions.length) return "";
-  return `<section class="rail-panel"><h2>Acciones legales</h2><div class="action-list">
-    ${view.legalActions.map((entry, index) => `<button class="action-row" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
-      <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`).join("")}</div></section>`;
+/**
+ * Every legal action, as a compact menu inside the dock.
+ *
+ * Most plays are made by clicking a card, so this stays collapsed and exists for
+ * the actions that have no card to click.
+ */
+function actionMenuHtml(): string {
+  const actions = view?.legalActions ?? [];
+  const beyondPassing = actions.filter((entry) => entry.action.type !== "pass" && entry.action.type !== "concede");
+  if (!actions.length) return "";
+  return `<details class="action-menu"${ui.actionsOpen ? " open" : ""}>
+    <summary>Acciones legales <i>${beyondPassing.length}</i></summary>
+    <div class="action-list">${actions.map((entry, index) => `<button class="action-row" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
+      <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`).join("")}</div>
+  </details>`;
 }
 
 function landingHtml(): string {
@@ -458,7 +476,7 @@ function render(): void {
   const currentIndex = STEP_ORDER.indexOf(view.step);
   const winner = view.finished ? seatOf(view.winnerSeat ?? -1) : undefined;
 
-  root!.innerHTML = `<main class="shell${ui.busy ? " busy" : ""}">
+  root!.innerHTML = `<main class="shell${ui.busy ? " busy" : ""}" data-layout="${ui.layout}">
     <header class="topbar">
       <a class="brand" href="#">PROSSH<span>TCG</span></a>
       <span class="turn-readout"><span class="badge-pill">Turno <b>${view.turn}</b></span>
@@ -468,6 +486,7 @@ function render(): void {
         <button id="new-cedh" class="text-button">Nueva cEDH</button>
         <button id="new-precon" class="text-button">Precons</button>
         <button id="search" class="text-button">Catálogo</button>
+        <button id="toggle-layout" class="icon-button${ui.layout === "mobile" ? " on" : ""}" type="button" title="Alternar la disposición táctil de Android" aria-label="Disposición táctil">▭</button>
         <button id="toggle-log" class="icon-button${ui.logOpen ? " on" : ""}" type="button" title="Registro" aria-label="Registro">≡</button>
         <button id="profile" class="profile-avatar" aria-label="Perfil">${selectedAvatar ? `<img src="${escapeHtml(selectedAvatar)}" alt=""/>` : "MP"}</button>
       </span>
@@ -479,39 +498,39 @@ function render(): void {
       <span class="priority-readout"><span class="pulse${myTurn ? "" : " muted"}"></span>Decide: <b style="color: var(--seat-${view.waitingOn ?? 0})">${escapeHtml(seatOf(view.waitingOn ?? -1)?.name ?? "nadie")}</b></span>
     </nav>
 
-    <div class="play-area">
-      <aside class="side-rail" aria-label="Pila y acciones">${stackPanelHtml()}${actionTrayHtml()}</aside>
-      <div class="table">
+    <div class="table">
+      <p class="rotate-hint">Gira el dispositivo: la mesa está pensada para horizontal.</p>
       <section class="opponent-row seats-${opponents.length}" aria-label="Campos de los oponentes">${opponents.map(seatPanelHtml).join("")}</section>
       ${combatBarHtml()}
       <section class="self-area" aria-label="Tu campo de batalla">
         <div class="self-board">${boardHtml(me, true)}</div>
         <div class="self-dock">
-          <div class="self-identity">
-            <span class="seat-avatar" style="border-color: var(--seat-${me.seat})${selectedAvatar ? `;background-image:url('${escapeHtml(selectedAvatar)}')` : ""}">${escapeHtml(me.name.slice(0, 1))}</span>
-            <div>
+          <div class="dock-left">
+            <div class="self-identity">
+              <span class="seat-avatar" style="border-color: var(--seat-${me.seat})${selectedAvatar ? `;background-image:url('${escapeHtml(selectedAvatar)}')` : ""}">${escapeHtml(me.name.slice(0, 1))}</span>
               <button class="self-life" type="button" data-target-player="${me.seat}"><b>${me.lost ? "✕" : me.life}</b><small>vidas</small></button>
-              <div class="self-zones">
-                <button class="zone-chip" type="button" data-zone="library" data-seat="${me.seat}">Biblioteca <b>${me.libraryCount}</b></button>
-                <button class="zone-chip" type="button" data-zone="graveyard" data-seat="${me.seat}">Cementerio <b>${me.graveyard.length}</b></button>
-                <button class="zone-chip" type="button" data-zone="exile" data-seat="${me.seat}">Exilio <b>${me.exile.length}</b></button>
-                <button class="zone-chip" type="button" data-zone="command" data-seat="${me.seat}">Mando <b>${me.commandZone.length}</b></button>
-                <span class="mana-chip" title="Maná que aún puedes producir">◇ <b>${me.availableMana}</b></span>
-              </div>
+              <span class="mana-chip" title="Maná que aún puedes producir">◇ <b>${me.availableMana}</b></span>
+            </div>
+            <div class="self-zones">
+              <button class="zone-chip" type="button" data-zone="library" data-seat="${me.seat}"><i>Biblioteca</i><b>${me.libraryCount}</b></button>
+              <button class="zone-chip" type="button" data-zone="graveyard" data-seat="${me.seat}"><i>Cementerio</i><b>${me.graveyard.length}</b></button>
+              <button class="zone-chip" type="button" data-zone="exile" data-seat="${me.seat}"><i>Exilio</i><b>${me.exile.length}</b></button>
+              <button class="zone-chip" type="button" data-zone="command" data-seat="${me.seat}"><i>Mando</i><b>${me.commandZone.length}</b></button>
             </div>
           </div>
           <div class="hand-wrap">
+            ${stackStripHtml()}
             <div class="hand-label"><b>Tu mano · ${me.handCount}</b><span class="hint">${escapeHtml(ui.notice || (myTurn ? "Las cartas con borde dorado se pueden jugar ahora." : "Esperando a los demás jugadores…"))}</span></div>
             <div class="hand">${handHtml(me)}</div>
           </div>
           <div class="dock-actions">
+            ${actionMenuHtml()}
             ${ui.pendingTarget ? `<button id="cancel-target" class="text-button">Cancelar objetivo</button>` : ""}
             <button id="pass" class="primary-button" ${pass ? "" : "disabled"}>${escapeHtml(pass?.label ?? "Sin prioridad")}<kbd>Espacio</kbd></button>
-            <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar sin jugadas</label>
+            <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar</label>
           </div>
         </div>
       </section>
-      </div>
     </div>
   </main>
   ${logDrawerHtml()}
@@ -569,6 +588,15 @@ function wireBoard(): void {
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
   on("#toggle-log", () => { ui.logOpen = !ui.logOpen; window.localStorage.setItem("prossh.log", ui.logOpen ? "1" : "0"); render(); });
+  on("#toggle-layout", () => {
+    ui.layout = ui.layout === "mobile" ? "auto" : "mobile";
+    window.localStorage.setItem("prossh.layout", ui.layout);
+    render();
+  });
+  // Remember whether the action menu was open so a re-render does not close it.
+  document.querySelector<HTMLDetailsElement>(".action-menu")?.addEventListener("toggle", (event) => {
+    ui.actionsOpen = (event.target as HTMLDetailsElement).open;
+  });
   on("#close-log", () => { ui.logOpen = false; window.localStorage.setItem("prossh.log", "0"); render(); });
   on("#confirm-attack", () => void submit({ type: "declare-attackers", attackers: [...ui.attackers.entries()].map(([instanceId, defender]) => ({ instanceId, defender })) }));
   on("#confirm-block", () => void submit({ type: "declare-blockers", blockers: [...ui.blockers.entries()].map(([instanceId, attackerId]) => ({ instanceId, attackerId })) }));
@@ -636,10 +664,16 @@ function fillDialog(id: string, html: string): void {
   if (!element.open) element.showModal();
 }
 
-function showCardDetail(instanceId: string): void {
-  const card = visibleCards().get(instanceId);
-  if (!card) return;
-  fillDialog("card-dialog", panelHtml("card-dialog", card.name, `<div class="card-detail">
+/** Rulings are the clarifications Wizards publishes, served from the local catalog. */
+function rulingsHtml(rulings: readonly CardRuling[] | undefined): string {
+  if (!rulings) return `<p class="rulings-loading">Buscando rulings…</p>`;
+  if (!rulings.length) return `<p class="rulings-loading">Esta carta no tiene rulings publicados.</p>`;
+  return `<div class="rulings"><h3>Rulings oficiales</h3>${rulings.map((ruling) =>
+    `<p><i>${escapeHtml(ruling.published_at)}</i>${escapeHtml(ruling.comment)}</p>`).join("")}</div>`;
+}
+
+function cardDetailHtml(card: CardView, extra?: CatalogCard): string {
+  return `<div class="card-detail">
     ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="${escapeHtml(card.name)}"/>` : ""}
     <div class="detail-body">
       <div class="detail-type">${escapeHtml(card.type_line)} ${manaHtml(card.mana_cost)}</div>
@@ -648,8 +682,26 @@ function showCardDetail(instanceId: string): void {
       <div class="coverage ${card.fullyImplemented ? "ok" : "partial"}">${card.fullyImplemented
         ? "El motor ejecuta todo el texto impreso de esta carta."
         : "El motor todavía no ejecuta este texto. La carta entra al juego con su cuerpo, tipos y palabras clave de combate."}</div>
+      ${extra ? `<div class="detail-type">${escapeHtml(extra.set_name)} · ${escapeHtml(extra.released_at)} · ${escapeHtml(extra.rarity)}${extra.printings ? ` · ${extra.printings} impresiones` : ""}</div>` : ""}
+      ${rulingsHtml(extra?.rulings)}
       <a class="external-link" href="https://scryfall.com/card/${escapeHtml(card.scryfall_id)}" target="_blank" rel="noreferrer">Ver la impresión en Scryfall ↗</a>
-    </div></div>`));
+    </div></div>`;
+}
+
+function showCardDetail(instanceId: string): void {
+  const card = visibleCards().get(instanceId);
+  if (!card) return;
+  fillDialog("card-dialog", panelHtml("card-dialog", card.name, cardDetailHtml(card)));
+  // The board projection has no rulings; fetch them for the printing in play.
+  void api<CatalogCard>(`/api/catalog/card/${encodeURIComponent(card.scryfall_id)}`)
+    .then((extra) => {
+      const body = document.querySelector<HTMLElement>("#card-dialog .panel-body");
+      if (body && dialog("card-dialog")?.open) body.innerHTML = cardDetailHtml(card, { ...extra, rulings: extra.rulings ?? [] });
+    })
+    .catch(() => {
+      const body = document.querySelector<HTMLElement>("#card-dialog .panel-body");
+      if (body && dialog("card-dialog")?.open) body.innerHTML = cardDetailHtml(card, undefined);
+    });
 }
 
 function showZone(seat: number, zone: "library" | "hand" | "graveyard" | "exile" | "command"): void {
@@ -728,7 +780,7 @@ async function searchCards(query: string): Promise<void> {
 /** Opens the internal card page. Scryfall stays a deliberate opt-in link. */
 async function showCatalogCard(id: string): Promise<void> {
   try {
-    const card = await api<CatalogCard & { printings_list?: { set_code: string; set_name: string; released_at: string }[] }>(`/api/catalog/card/${encodeURIComponent(id)}`);
+    const card = await api<CatalogCard>(`/api/catalog/card/${encodeURIComponent(id)}`);
     fillDialog("card-dialog", panelHtml("card-dialog", card.name, `<div class="card-detail">
       ${card.image_uris.normal ? `<img src="${escapeHtml(card.image_uris.normal)}" alt="${escapeHtml(card.name)}"/>` : ""}
       <div class="detail-body">
@@ -738,6 +790,7 @@ async function showCatalogCard(id: string): Promise<void> {
         <div class="detail-type">${escapeHtml(card.set_name)} · ${escapeHtml(card.released_at)} · ${escapeHtml(card.rarity)}</div>
         ${card.printings_list?.length ? `<div class="printings">${card.printings_list.slice(0, 24).map((printing) =>
           `<span title="${escapeHtml(printing.set_name)}">${escapeHtml(printing.set_code.toUpperCase())} ${escapeHtml(printing.released_at.slice(0, 4))}</span>`).join("")}</div>` : ""}
+        ${rulingsHtml(card.rulings ?? [])}
         <a class="external-link" href="${escapeHtml(card.scryfall_uri)}" target="_blank" rel="noreferrer">Ver en Scryfall ↗</a>
       </div></div>`));
   } catch (error) { ui.notice = error instanceof Error ? error.message : "No se pudo abrir la carta."; render(); }
