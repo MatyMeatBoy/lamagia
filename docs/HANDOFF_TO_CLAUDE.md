@@ -625,6 +625,18 @@ other zones.
 Validation: targeted engine tests PASS (165 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: subtype-wide counters
+
+The branch adds `Put a +1/+1 counter on each [subtype] creature you control`
+as a reusable effect. It filters by current controller, creature type and
+subtype, then updates the public counter map used by P/T calculation. This
+follows CR 122.1 and 701.4. Scenario coverage verifies Plant matching and that
+an unrelated creature is unchanged. The scope excludes multiple subtypes,
+opponent-wide effects and counter replacement effects.
+
+Validation: targeted engine tests PASS (166 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals
