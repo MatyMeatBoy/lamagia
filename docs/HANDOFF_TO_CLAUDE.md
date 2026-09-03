@@ -682,6 +682,17 @@ The scope excludes replacement effects and opponent-specific choices.
 Validation: targeted engine tests PASS (170 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: each-opponent draw
+
+The branch adds `Each opponent draws N cards` as a non-targeted effect. It
+reuses the deterministic draw path for each living opponent while leaving the
+controller's hand and library untouched in the scenario. This follows CR
+121.1 and 608.2c. The scope excludes hand-size choices, replacement effects
+and opponent-specific draw decisions.
+
+Validation: targeted engine tests PASS (171 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals

@@ -1019,6 +1019,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       for (const player of state.players) if (!player.lost) next = drawCards(next, player.seat, effectAmount(effect.amount, object));
       return next;
     }
+    case "each-opponent-draw": {
+      let next = state;
+      const amount = effectAmount(effect.amount, object);
+      for (const seat of opponentsOf(state, controller)) next = drawCards(next, seat, amount);
+      return next;
+    }
     case "discard-target-player": {
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
