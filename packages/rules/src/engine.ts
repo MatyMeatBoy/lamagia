@@ -105,6 +105,7 @@ export interface PlayerState {
 export type Target =
   | { readonly kind: "player"; readonly seat: SeatId }
   | { readonly kind: "permanent"; readonly instanceId: string }
+  | { readonly kind: "graveyard-card"; readonly seat: SeatId; readonly instanceId: string }
   | { readonly kind: "spell"; readonly stackId: string };
 
 export interface StackObject {
@@ -1219,6 +1220,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
     }
+    case "return-target-card-from-graveyard": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card) return state;
+      return withPlayer(state, target.seat, (current) => ({
+        ...current,
+        hand: [...current.hand, card],
+        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
+      }));
+    }
     case "untap-equipped-creature": {
       const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       const attachedId = equipment?.attachedTo;
@@ -1373,6 +1386,7 @@ function resolveTop(state: GameState): GameState {
   // A target that left the battlefield makes the spell fizzle (rule 608.2b).
   const targetsGone = object.targets.some((target) =>
     (target.kind === "permanent" && !findPermanent(next, target.instanceId)) ||
+    (target.kind === "graveyard-card" && !playerAt(next, target.seat).graveyard.some((card) => card.instance_id === target.instanceId)) ||
     (target.kind === "spell" && !next.stack.some((entry) => entry.id === target.stackId)) ||
     (target.kind === "player" && playerAt(next, target.seat).lost));
   if (object.targets.length && targetsGone) {
@@ -2068,6 +2082,11 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 /** Targets a spell could legally choose right now. */
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
+  if (kind === "card-in-your-graveyard" || kind === "creature-card-in-your-graveyard") {
+    return playerAt(state, seat).graveyard
+      .filter((card) => kind === "card-in-your-graveyard" || isCreature(cardProfile(card)))
+      .map((card) => ({ kind: "graveyard-card", seat, instanceId: card.instance_id }) as Target);
+  }
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   if (kind === "creature-spell" || kind === "noncreature-spell") {
     return state.stack
@@ -2611,6 +2630,7 @@ function applyPass(state: GameState, seat: SeatId): GameState {
 function targetLabel(state: GameState, target: Target): string {
   if (target.kind === "player") return playerAt(state, target.seat).name;
   if (target.kind === "permanent") return findPermanent(state, target.instanceId)?.card.name ?? "permanente";
+  if (target.kind === "graveyard-card") return playerAt(state, target.seat).graveyard.find((card) => card.instance_id === target.instanceId)?.name ?? "carta del cementerio";
   return state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo";
 }
 
