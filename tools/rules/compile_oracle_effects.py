@@ -285,7 +285,10 @@ def review_markdown(cards: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def primitive_cluster_inventory(cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def primitive_cluster_inventory(
+    cards: list[dict[str, Any]],
+    commit_card_limit: int = DEFAULT_COMMIT_CARD_LIMIT,
+) -> list[dict[str, Any]]:
     """Build a deterministic, card-name-independent work queue.
 
     This is the cluster-first part of the compiler: a worker receives one
@@ -293,6 +296,8 @@ def primitive_cluster_inventory(cards: list[dict[str, Any]]) -> list[dict[str, A
     the same nouns and zones for every card. Only unresolved clauses are
     included, so solved primitives naturally disappear from the queue.
     """
+    if commit_card_limit <= 0:
+        raise ValueError("El límite de cartas por commit debe ser positivo.")
     clusters: dict[str, dict[str, dict[str, str]]] = {}
     for card in cards:
         for cluster in card.get("primitive_clusters", []):
@@ -305,7 +310,7 @@ def primitive_cluster_inventory(cards: list[dict[str, Any]]) -> list[dict[str, A
         {
             "cluster": cluster,
             "card_count": len(entries),
-            "commit_batches": ceil(len(entries) / DEFAULT_COMMIT_CARD_LIMIT),
+            "commit_batches": ceil(len(entries) / commit_card_limit),
             "cards": sorted(entries.values(), key=lambda item: (item["name"].casefold(), item["oracle_id"])),
         }
         for cluster, entries in clusters.items()
@@ -377,13 +382,14 @@ def main() -> None:
     parser.add_argument("--estimated-worker-mb", type=int, default=256, help="Memory reserved per worker for scheduling (default: 256).")
     parser.add_argument("--backend", choices=("processes", "threads"), default="processes", help="Parallel backend; processes use CPU cores, threads share one process.")
     parser.add_argument("--batch-size", type=int, default=256, help="Cards submitted per bounded batch (default: 256).")
+    parser.add_argument("--commit-card-limit", type=int, default=DEFAULT_COMMIT_CARD_LIMIT, help="Maximum new oracle_id values per generated commit batch (default: 20).")
     args = parser.parse_args()
     if not args.catalog.exists():
         raise SystemExit("No existe el catálogo local; ejecuta npm run catalog:sync primero.")
     worker_count = effective_worker_count(args.workers, args.memory_budget_gb, args.estimated_worker_mb)
     cards = compile_catalog(args.catalog, args.workers, args.memory_budget_gb, args.estimated_worker_mb, args.backend, args.batch_size)
     counts = Counter(card["status"] for card in cards)
-    clusters = primitive_cluster_inventory(cards)
+    clusters = primitive_cluster_inventory(cards, args.commit_card_limit)
     payload = {
         "format": "prossh-oracle-effect-ir/v2",
         "generated_at": datetime.now(UTC).isoformat(),

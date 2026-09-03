@@ -89,6 +89,13 @@ class OracleCompilerTests(unittest.TestCase):
             ])[0]["commit_batches"],
             2,
         )
+        self.assertEqual(
+            primitive_cluster_inventory([
+                {"oracle_id": str(index), "scryfall_id": str(index), "name": str(index), "primitive_clusters": ["batch"]}
+                for index in range(21)
+            ], commit_card_limit=10)[0]["commit_batches"],
+            3,
+        )
 
     def test_groups_supplemental_products_by_name_and_type(self) -> None:
         self.assertEqual(product_group("draft_innovation", "Jumpstart 2022", "2022-12-02"), "jumpstart")

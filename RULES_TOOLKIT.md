@@ -44,7 +44,8 @@ trabajo por primitiva, no de crear workers ilimitados.
 
 La misma ejecución produjo 18.254 cartas pendientes agrupadas en 11.072
 clusters, con hasta veinte `oracle_id` por commit (`commit_batches` en el
-manifiesto). El resultado es determinista y permite que varios forks tomen
+manifiesto). El límite se puede ajustar con `--commit-card-limit` si una tanda
+mayor sigue siendo revisable. El resultado es determinista y permite que varios forks tomen
 clusters disjuntos sin repetir el análisis de cada carta.
 
 El compilador conserva restricciones reutilizables (`types`, `subtypes` y
