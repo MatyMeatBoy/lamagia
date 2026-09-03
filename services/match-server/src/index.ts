@@ -46,59 +46,179 @@ async function readPrecons(): Promise<ImportedPrecons> {
 
 interface CatalogCard {
   readonly id: string;
+  readonly oracle_id: string;
   readonly name: string;
   readonly type_line: string;
   readonly mana_cost: string;
   readonly oracle_text: string;
+  readonly set_code: string;
+  readonly set_name: string;
+  readonly released_at: string;
+  readonly rarity: string;
   readonly scryfall_uri: string;
   readonly power: string | null;
   readonly toughness: string | null;
+  readonly printings?: number;
   readonly image_uris: { readonly small?: string; readonly normal?: string; readonly art_crop?: string };
 }
 
+const CARD_COLUMNS = [
+  "id", "oracle_id", "name", "type_line", "mana_cost", "oracle_text",
+  "set_code", "set_name", "released_at", "rarity", "scryfall_uri",
+  "power", "toughness", "image_small", "image_normal", "image_art_crop"
+];
+
 function mapCatalogRow(row: Record<string, unknown>): CatalogCard {
+  const text = (key: string) => (row[key] === null || row[key] === undefined ? "" : String(row[key]));
   return {
-    id: String(row.id),
-    name: String(row.name),
-    type_line: String(row.type_line ?? ""),
-    mana_cost: String(row.mana_cost ?? ""),
-    oracle_text: String(row.oracle_text ?? ""),
-    scryfall_uri: String(row.scryfall_uri ?? ""),
+    id: text("id"),
+    oracle_id: text("oracle_id"),
+    name: text("name"),
+    type_line: text("type_line"),
+    mana_cost: text("mana_cost"),
+    oracle_text: text("oracle_text"),
+    set_code: text("set_code"),
+    set_name: text("set_name"),
+    released_at: text("released_at"),
+    rarity: text("rarity"),
+    scryfall_uri: text("scryfall_uri"),
     power: row.power === null || row.power === undefined ? null : String(row.power),
     toughness: row.toughness === null || row.toughness === undefined ? null : String(row.toughness),
-    image_uris: { small: String(row.image_small ?? ""), normal: String(row.image_normal ?? ""), art_crop: String(row.image_art_crop ?? "") }
+    ...(row.printings === undefined ? {} : { printings: Number(row.printings) }),
+    image_uris: { small: text("image_small"), normal: text("image_normal"), art_crop: text("image_art_crop") }
   };
 }
 
-function catalogColumns(database: DatabaseSync): string {
-  const columns = new Set(database.prepare("SELECT name FROM pragma_table_info('cards')").all().map((row) => String((row as Record<string, unknown>).name)));
-  const optional = ["power", "toughness"].filter((column) => columns.has(column));
-  return ["id", "name", "type_line", "mana_cost", "oracle_text", "scryfall_uri", "image_small", "image_normal", "image_art_crop", ...optional].join(", ");
+let schemaColumns: Set<string> | null = null;
+function catalogHasPrintingRank(database: DatabaseSync): boolean {
+  if (!schemaColumns) {
+    schemaColumns = new Set(database.prepare("SELECT name FROM pragma_table_info('cards')").all()
+      .map((row) => String((row as Record<string, unknown>).name)));
+  }
+  return schemaColumns.has("printing_rank");
+}
+
+/** Products that are not playable cards: tokens, art series, emblems, memorabilia. */
+const PLAYABLE_ONLY = `layout NOT IN ('token','double_faced_token','emblem','art_series','scheme','planar','vanguard','reversible_card')
+  AND (set_type IS NULL OR set_type NOT IN ('token','memorabilia','minigame','vanguard'))`;
+
+/**
+ * One row per distinct card, not per printing.
+ *
+ * `printing_rank` is precomputed by the importer: 0 is a plain paper printing in
+ * a normal frame, and every promo, foil-only, showcase, oversized or digital
+ * treatment scores higher. Picking the lowest rank and then the newest release
+ * gives the version a player actually recognises, while `printings` still
+ * reports how many exist so the card page can list them.
+ */
+function bestPrintingSelect(database: DatabaseSync, where: string): string {
+  const modern = catalogHasPrintingRank(database);
+  const ranked = modern ? "printing_rank ASC," : "";
+  const playable = modern ? `(${PLAYABLE_ONLY}) AND ` : "";
+  return `
+    WITH matched AS (SELECT * FROM cards WHERE ${playable}(${where})),
+         best AS (
+           SELECT *, ROW_NUMBER() OVER (
+             PARTITION BY COALESCE(oracle_id, name)
+             ORDER BY ${ranked} released_at DESC, set_code ASC
+           ) AS pick,
+           COUNT(*) OVER (PARTITION BY COALESCE(oracle_id, name)) AS printings
+           FROM matched
+         )
+    SELECT ${CARD_COLUMNS.join(", ")}, printings FROM best WHERE pick = 1`;
+}
+
+function openCatalog(): DatabaseSync | null {
+  if (!existsSync(catalogDbPath)) return null;
+  return new DatabaseSync(catalogDbPath, { readOnly: true });
 }
 
 function queryLocalCatalog(query: string): CatalogCard[] | null {
-  if (!existsSync(catalogDbPath)) return null;
-  const database = new DatabaseSync(catalogDbPath, { readOnly: true });
+  const database = openCatalog();
+  if (!database) return null;
   try {
-    const columns = catalogColumns(database);
-    const typeQuery = /^t:(.+)$/i.exec(query.trim());
-    const statement = typeQuery
-      ? database.prepare(`SELECT DISTINCT ${columns.split(", ").map((column) => `c.${column}`).join(", ")} FROM cards c JOIN card_terms t ON t.card_id = c.id WHERE t.kind = 'type' AND t.term = ? ORDER BY c.released_at DESC LIMIT 24`)
-      : database.prepare(`SELECT ${columns} FROM cards WHERE name LIKE ? OR normalized_name LIKE ? ORDER BY released_at DESC LIMIT 24`);
-    const rows = typeQuery
-      ? statement.all(typeQuery[1]!.trim().toLocaleLowerCase())
-      : statement.all(`%${query.trim()}%`, `%${query.trim().toLocaleLowerCase()}%`);
-    return rows.map((row) => mapCatalogRow(row as Record<string, unknown>));
+    const term = query.trim();
+    const typeQuery = /^t:(.+)$/i.exec(term);
+    if (typeQuery) {
+      const statement = database.prepare(
+        `${bestPrintingSelect(database, "id IN (SELECT card_id FROM card_terms WHERE kind = 'type' AND term = ?)")} ORDER BY name LIMIT 60`);
+      return statement.all(typeQuery[1]!.trim().toLocaleLowerCase()).map((row) => mapCatalogRow(row as Record<string, unknown>));
+    }
+    // Relevance: exact name, then a whole-word hit anywhere in the name ("bolt"
+    // has to reach both Bolt Bend and Lightning Bolt), then any substring. Within
+    // a tier, reprint count is the popularity signal that floats the card the
+    // player actually meant; name length breaks the remaining ties.
+    // Numbered placeholders keep the CTE filter and the ORDER BY on one binding set.
+    const statement = database.prepare(
+      `${bestPrintingSelect(database, "normalized_name LIKE ?2")}
+       ORDER BY CASE
+           WHEN normalized_name = ?1 THEN 0
+           WHEN normalized_name LIKE ?3 OR normalized_name LIKE ?4 OR normalized_name LIKE ?5 THEN 1
+           ELSE 2 END,
+         printings DESC, LENGTH(name), name
+       LIMIT 60`);
+    const lower = term.toLocaleLowerCase();
+    return statement.all(lower, `%${lower}%`, `${lower} %`, `% ${lower} %`, `% ${lower}`)
+      .map((row) => mapCatalogRow(row as Record<string, unknown>));
   } finally { database.close(); }
 }
 
 function namedLocalCard(name: string): CatalogCard | null {
-  if (!existsSync(catalogDbPath)) return null;
-  const database = new DatabaseSync(catalogDbPath, { readOnly: true });
+  const database = openCatalog();
+  if (!database) return null;
   try {
-    const row = database.prepare(`SELECT ${catalogColumns(database)} FROM cards WHERE normalized_name = ? ORDER BY released_at DESC LIMIT 1`).get(name.toLocaleLowerCase());
+    const row = database.prepare(`${bestPrintingSelect(database, "normalized_name = ?")} LIMIT 1`).get(name.toLocaleLowerCase());
     return row ? mapCatalogRow(row as Record<string, unknown>) : null;
   } finally { database.close(); }
+}
+
+function catalogCardById(id: string): (CatalogCard & { printings_list: { set_code: string; set_name: string; released_at: string }[] }) | null {
+  const database = openCatalog();
+  if (!database) return null;
+  try {
+    const row = database.prepare(`SELECT ${CARD_COLUMNS.join(", ")} FROM cards WHERE id = ?`).get(id) as Record<string, unknown> | undefined;
+    if (!row) return null;
+    const printings = row.oracle_id
+      ? database.prepare("SELECT DISTINCT set_code, set_name, released_at FROM cards WHERE oracle_id = ? ORDER BY released_at DESC").all(String(row.oracle_id))
+      : [];
+    return {
+      ...mapCatalogRow(row),
+      printings_list: printings.map((entry) => {
+        const record = entry as Record<string, unknown>;
+        return { set_code: String(record.set_code ?? ""), set_name: String(record.set_name ?? ""), released_at: String(record.released_at ?? "") };
+      })
+    };
+  } finally { database.close(); }
+}
+
+/** Set display names and icons, read from the local catalog and Scryfall's set list. */
+let setIndexCache: Map<string, { name: string; icon?: string; released_at: string }> | null = null;
+async function setIndex(): Promise<Map<string, { name: string; icon?: string; released_at: string }>> {
+  if (setIndexCache) return setIndexCache;
+  const index = new Map<string, { name: string; icon?: string; released_at: string }>();
+  const database = openCatalog();
+  if (database) {
+    try {
+      for (const row of database.prepare("SELECT set_code, set_name, MIN(released_at) AS released_at FROM cards GROUP BY set_code").all()) {
+        const record = row as Record<string, unknown>;
+        index.set(String(record.set_code ?? "").toLowerCase(), { name: String(record.set_name ?? ""), released_at: String(record.released_at ?? "") });
+      }
+    } finally { database.close(); }
+  }
+  try {
+    const sets = await fetchScryfall("/sets") as { data?: { code?: string; name?: string; icon_svg_uri?: string; released_at?: string }[] };
+    for (const entry of sets.data ?? []) {
+      if (!entry.code) continue;
+      const existing = index.get(entry.code.toLowerCase());
+      index.set(entry.code.toLowerCase(), {
+        name: entry.name ?? existing?.name ?? entry.code.toUpperCase(),
+        ...(entry.icon_svg_uri ? { icon: entry.icon_svg_uri } : {}),
+        released_at: entry.released_at ?? existing?.released_at ?? ""
+      });
+    }
+  } catch { /* Offline is fine: the catalog already supplies names and dates. */ }
+  setIndexCache = index;
+  return index;
 }
 
 async function fetchScryfall(path: string): Promise<unknown> {
@@ -144,6 +264,13 @@ app.get<{ Querystring: { name?: string } }>("/api/catalog/named", async (request
   catch { return reply.code(502).send({ error: "El proveedor de catálogo no está disponible." }); }
 });
 
+app.get<{ Params: { id: string } }>("/api/catalog/card/:id", async (request, reply) => {
+  const card = catalogCardById(request.params.id);
+  if (card) return card;
+  try { return await fetchScryfall(`/cards/${encodeURIComponent(request.params.id)}`); }
+  catch { return reply.code(404).send({ error: "No se encontró esa carta." }); }
+});
+
 app.get("/api/catalog/status", async () => ({ localCatalog: existsSync(catalogDbPath), catalogDbPath }));
 
 app.get("/api/simulations/engine-matrix", async (_request, reply) => {
@@ -159,20 +286,48 @@ app.get("/api/decks/active-pod", async (_request, reply) => {
   } catch (error) { return reply.code(404).send({ error: failure(error, "Pod no disponible.") }); }
 });
 
-app.get<{ Querystring: { q?: string; offset?: string; limit?: string } }>("/api/decks/precons", async (request, reply) => {
+app.get<{ Querystring: { q?: string; offset?: string; limit?: string; grouped?: string } }>("/api/decks/precons", async (request, reply) => {
   try {
     const precons = await readPrecons();
+    const sets = await setIndex();
     const query = request.query.q?.trim().toLocaleLowerCase() ?? "";
-    const filtered = query
-      ? precons.decks.filter((deck) => `${deck.name} ${deck.commanders.join(" ")} ${deck.set_code}`.toLocaleLowerCase().includes(query))
-      : precons.decks;
-    const offset = Math.max(0, Number(request.query.offset ?? 0));
-    const limit = Math.min(48, Math.max(1, Number(request.query.limit ?? 24)));
-    return {
-      total: filtered.length, offset, source: precons.source,
-      data: filtered.slice(offset, offset + limit).map(({ id, name, commanders, set_code, released_at, cover_art_uri, cover_art_kind }) =>
-        ({ id, name, commanders, set_code, released_at, cover_art_uri, cover_art_kind }))
+    const decorate = (deck: ImportedPrecon) => {
+      const meta = sets.get(deck.set_code.toLowerCase());
+      return {
+        id: deck.id, name: deck.name, commanders: deck.commanders, set_code: deck.set_code,
+        set_name: meta?.name ?? deck.set_code.toUpperCase(),
+        released_at: deck.released_at || meta?.released_at || "",
+        cover_art_uri: deck.cover_art_uri, cover_art_kind: deck.cover_art_kind,
+        ...(meta?.icon ? { set_icon_uri: meta.icon } : {})
+      };
     };
+    const matches = (deck: ImportedPrecon) => {
+      if (!query) return true;
+      const setName = sets.get(deck.set_code.toLowerCase())?.name ?? "";
+      return `${deck.name} ${deck.commanders.join(" ")} ${deck.set_code} ${setName}`.toLocaleLowerCase().includes(query);
+    };
+    const filtered = precons.decks.filter(matches).map(decorate);
+
+    // Grouped mode is what the deck browser uses: one section per Commander product.
+    if (request.query.grouped === "1") {
+      const groups = new Map<string, { set_code: string; set_name: string; released_at: string; set_icon_uri?: string; decks: typeof filtered }>();
+      for (const deck of filtered) {
+        const existing = groups.get(deck.set_code);
+        if (existing) { existing.decks.push(deck); continue; }
+        groups.set(deck.set_code, {
+          set_code: deck.set_code, set_name: deck.set_name, released_at: deck.released_at,
+          ...(deck.set_icon_uri ? { set_icon_uri: deck.set_icon_uri } : {}),
+          decks: [deck]
+        });
+      }
+      const ordered = [...groups.values()].sort((left, right) => right.released_at.localeCompare(left.released_at) || left.set_name.localeCompare(right.set_name));
+      for (const group of ordered) group.decks.sort((left, right) => left.name.localeCompare(right.name));
+      return { total: filtered.length, source: precons.source, groups: ordered };
+    }
+
+    const offset = Math.max(0, Number(request.query.offset ?? 0));
+    const limit = Math.min(96, Math.max(1, Number(request.query.limit ?? 24)));
+    return { total: filtered.length, offset, source: precons.source, data: filtered.slice(offset, offset + limit) };
   } catch (error) { return reply.code(404).send({ error: failure(error, "Precons no disponibles.") }); }
 });
 
@@ -192,7 +347,12 @@ app.post<{ Body: CreateBody }>("/api/matches", async (request, reply) => {
       const precons = await readPrecons();
       const start = request.body?.deckId ? precons.decks.findIndex((deck) => deck.id === request.body!.deckId) : 0;
       if (start < 0) throw new Error("No se encontró ese mazo precon.");
-      decks = Array.from({ length: 4 }, (_, offset) => precons.decks[(start + offset) % precons.decks.length]!);
+      const chosen = precons.decks[start]!;
+      // Fill the table from the same product first: a Commander 2014 pod should be
+      // four Commander 2014 decks, not the next four rows of the whole catalogue.
+      const sameProduct = precons.decks.filter((deck) => deck.set_code === chosen.set_code && deck.id !== chosen.id);
+      const filler = precons.decks.filter((deck) => deck.set_code !== chosen.set_code);
+      decks = [chosen, ...sameProduct, ...filler].slice(0, 4);
       source = precons.source;
     } else {
       const pod = await readActivePod();

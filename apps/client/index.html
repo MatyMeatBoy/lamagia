@@ -3,39 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#101916" />
+    <meta name="theme-color" content="#060c09" />
     <title>ProsshTCG · Commander</title>
   </head>
   <body>
     <div id="app"></div>
 
     <dialog id="catalog">
-      <section class="catalog">
-        <div class="catalog-top"><h2>Catálogo de cartas</h2><button type="button" data-close="catalog" aria-label="Cerrar catálogo">×</button></div>
-        <label>Nombre, tipo o sintaxis <code>t:</code><input id="card-query" placeholder="Ej. t:elf o Llanowar Elves" autocomplete="off" /></label>
-        <div id="results" class="results"><p>Busca por nombre, tipo, subtipos y metadatos indexados.</p></div>
-      </section>
+      <div class="panel">
+        <div class="panel-head"><h2>Catálogo de cartas</h2><button class="close" type="button" data-close="catalog" aria-label="Cerrar">×</button></div>
+        <div class="panel-body">
+          <label class="panel-search">Nombre, o <code>t:</code> para buscar por tipo<input id="card-query" placeholder="Ej. Elvish Mystic o t:elf" autocomplete="off" /></label>
+          <p class="panel-note">Se muestra una impresión por carta: la reimpresión normal más reciente, sin versiones promocionales ni tratamientos especiales.</p>
+          <div id="catalog-results"><p class="zone-private">Escribe al menos dos caracteres.</p></div>
+        </div>
+      </div>
     </dialog>
 
-    <dialog id="precon-dialog">
-      <section class="precon-panel">
-        <div class="catalog-top"><h2>Mazos precon de Commander</h2><button type="button" data-close="precon-dialog" aria-label="Cerrar">×</button></div>
-        <label>Buscar mazo, comandante o edición<input id="precon-query" placeholder="Ej. Ghave, 40K, Doctor" autocomplete="off" /></label>
-        <p class="precon-note">Inicia una mesa de cuatro precons empezando por el mazo elegido. Los otros tres asientos los juega la IA.</p>
-        <div id="precon-results" class="precon-grid">Cargando mazos precon…</div>
-      </section>
-    </dialog>
-
-    <dialog id="zone-view" class="zone-dialog"><section class="zone-panel" id="zone-body"></section></dialog>
-
-    <dialog id="card-dialog" class="zone-dialog"><section class="zone-panel" id="card-body"></section></dialog>
+    <dialog id="precon-dialog"></dialog>
+    <dialog id="zone-view"></dialog>
+    <dialog id="card-dialog"></dialog>
 
     <dialog id="profile-dialog">
-      <section class="profile-panel">
-        <div class="catalog-top"><h2>Avatar del jugador</h2><button type="button" data-close="profile-dialog" aria-label="Cerrar">×</button></div>
-        <p>Elige un recorte de arte guardado localmente. No sube ninguna imagen ni cambia a otro jugador.</p>
-        <div id="avatar-grid" class="avatar-grid">Cargando opciones…</div>
-      </section>
+      <div class="panel">
+        <div class="panel-head"><h2>Avatar del jugador</h2><button class="close" type="button" data-close="profile-dialog" aria-label="Cerrar">×</button></div>
+        <div class="panel-body">
+          <p class="panel-note">Elige un recorte de arte. Se guarda solo en este navegador y no cambia lo que ven los demás.</p>
+          <div id="avatar-grid" class="avatar-grid">Cargando…</div>
+        </div>
+      </div>
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>

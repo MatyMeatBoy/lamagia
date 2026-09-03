@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import sqlite3
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -26,17 +27,43 @@ def fetch_json(url: str) -> dict[str, Any]:
         return json.load(response)
 
 
+SELECT_COLUMNS = """id, oracle_id, name, mana_cost, cmc, type_line, oracle_text,
+                     image_normal, image_art_crop, power, toughness, loyalty,
+                     produced_mana_json, colors_json, color_identity_json, keywords_json, card_faces_json"""
+RESOLVED_KEYS = ("scryfall_id", "oracle_id", "name", "mana_cost", "cmc", "type_line", "oracle_text",
+                 "image_normal", "image_art_crop", "power", "toughness", "loyalty",
+                 "produced_mana", "colors", "color_identity", "keywords", "card_faces")
+JSON_KEYS = {"produced_mana", "colors", "color_identity", "keywords", "card_faces"}
+
+
+def shape(row: tuple[Any, ...]) -> dict[str, Any]:
+    card = dict(zip(RESOLVED_KEYS, row))
+    for key in JSON_KEYS:
+        raw = card.get(key)
+        card[key] = json.loads(raw) if raw else ([] if key != "card_faces" else None)
+    return {key: value for key, value in card.items() if value not in (None, [])
+            or key in ("mana_cost", "oracle_text")}
+
+
 def resolve(connection: sqlite3.Connection, scryfall_id: str, name: str) -> dict[str, Any] | None:
+    """Resolves the printing this product actually shipped.
+
+    MTGJSON gives the exact `scryfallId` for each card in the deck, so that id
+    wins outright: a Commander 2013 deck must show its 2013 art, not the newest
+    reprint. Only when the id is missing or absent from the catalog does the
+    lookup fall back to the best printing of that name.
+    """
+    if scryfall_id:
+        row = connection.execute(f"SELECT {SELECT_COLUMNS} FROM cards WHERE id = ?", (scryfall_id,)).fetchone()
+        if row:
+            return shape(row)
+    has_rank = any(column[1] == "printing_rank" for column in connection.execute("PRAGMA table_info(cards)"))
+    order = "printing_rank ASC, released_at DESC" if has_rank else "released_at DESC"
     row = connection.execute(
-        """SELECT id, oracle_id, name, mana_cost, cmc, type_line, oracle_text,
-                  image_normal, image_art_crop
-           FROM cards WHERE id = ? OR normalized_name = ? ORDER BY released_at DESC LIMIT 1""",
-        (scryfall_id, name.lower()),
+        f"SELECT {SELECT_COLUMNS} FROM cards WHERE normalized_name = ? ORDER BY {order} LIMIT 1",
+        (name.lower(),),
     ).fetchone()
-    if not row:
-        return None
-    keys = ("scryfall_id", "oracle_id", "name", "mana_cost", "cmc", "type_line", "oracle_text", "image_normal", "image_art_crop")
-    return dict(zip(keys, row))
+    return shape(row) if row else None
 
 
 def expand_cards(items: list[dict[str, Any]], connection: sqlite3.Connection, deck_name: str) -> list[dict[str, Any]]:
@@ -79,7 +106,8 @@ if __name__ == "__main__":
     if not arguments.catalog.exists():
         raise SystemExit("Run npm run catalog:sync before importing Commander precons.")
     index = fetch_json(f"{API}/DeckList.json")["data"]
-    entries = [entry for entry in index if entry.get("type") == "Commander Deck"]
+    # Every product line whose decks are legal 100-card Commander decks.
+    entries = [entry for entry in index if entry.get("type") in ("Commander Deck", "MTGO Commander Deck")]
     imported: list[dict[str, Any]] = []
     failures: list[str] = []
     with ThreadPoolExecutor(max_workers=max(1, min(arguments.workers, 8))) as pool:

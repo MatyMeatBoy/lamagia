@@ -13,12 +13,29 @@ SELECTION = (
     "Black Hole Son",
 )
 
-def resolve(connection: sqlite3.Connection, name: str) -> dict[str, str] | None:
-    row = connection.execute("""SELECT id, oracle_id, name, mana_cost, cmc, type_line, oracle_text,
-      image_normal, image_art_crop FROM cards WHERE normalized_name = ? ORDER BY released_at DESC LIMIT 1""", (name.lower(),)).fetchone()
+COLUMNS = """id, oracle_id, name, mana_cost, cmc, type_line, oracle_text, image_normal, image_art_crop,
+             power, toughness, loyalty, produced_mana_json, colors_json, color_identity_json,
+             keywords_json, card_faces_json"""
+KEYS = ("scryfall_id", "oracle_id", "name", "mana_cost", "cmc", "type_line", "oracle_text",
+        "image_normal", "image_art_crop", "power", "toughness", "loyalty",
+        "produced_mana", "colors", "color_identity", "keywords", "card_faces")
+JSON_KEYS = {"produced_mana", "colors", "color_identity", "keywords", "card_faces"}
+
+
+def resolve(connection: sqlite3.Connection, name: str) -> dict[str, object] | None:
+    """Picks the printing a player recognises: lowest `printing_rank`, newest release."""
+    has_rank = any(column[1] == "printing_rank" for column in connection.execute("PRAGMA table_info(cards)"))
+    order = "printing_rank ASC, released_at DESC" if has_rank else "released_at DESC"
+    row = connection.execute(
+        f"SELECT {COLUMNS} FROM cards WHERE normalized_name = ? ORDER BY {order} LIMIT 1",
+        (name.lower(),),
+    ).fetchone()
     if not row: return None
-    keys = ("scryfall_id", "oracle_id", "name", "mana_cost", "cmc", "type_line", "oracle_text", "image_normal", "image_art_crop")
-    return dict(zip(keys, row))
+    card = dict(zip(KEYS, row))
+    for key in JSON_KEYS:
+        raw = card.get(key)
+        card[key] = json.loads(raw) if raw else ([] if key != "card_faces" else None)
+    return {key: value for key, value in card.items() if value not in (None, []) or key in ("mana_cost", "oracle_text")}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
