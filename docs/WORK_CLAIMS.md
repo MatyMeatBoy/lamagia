@@ -12,6 +12,7 @@
 | `rules-life-gained` | `codex/c13-equipment-cluster` | Life-gained trigger event and source +1/+1/-1/-1 counter effect | Ready for integrator review |
 | `rules-target-life` | `codex/c13-equipment-cluster` | Target-player life gain with event propagation | Ready for integrator review |
 | `rules-each-life` | `codex/c13-equipment-cluster` | Living-player life gain with one event per recipient | Ready for integrator review |
+| `rules-target-life-loss` | `codex/c13-equipment-cluster` | Target-player life loss, distinct from damage | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.
