@@ -21,7 +21,8 @@ debe seguir siendo puro, determinista y sin red.
 `npm run rules:oracle:compile` transforma todas las cartas únicas del catálogo
 en `data/rules/oracle-effects.json`, un IR determinista con cláusulas,
 familias, objetivos, cantidades y texto no reconocido. También genera
-`data/rules/oracle-review.md` como cola para revisión asistida por IA. El IR no
+`data/rules/oracle-review.md` como cola para revisión asistida por IA y
+`data/rules/oracle-clusters.json` como cola agrupada por primitiva. El IR no
 se ejecuta directamente: cada vector aprobado debe convertirse en un tipo
 cerrado de `characteristics.ts`, citar CR y recibir un escenario de prueba.
 

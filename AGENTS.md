@@ -1,4 +1,4 @@
-# ProsshTCG engineering rules
+# lamagia engineering rules
 
 - Use `trl-retrieve` / `explain_symbol` for cross-file inspection when the project-scoped MCP is available; use exact file reads for small, known files. Do not repeatedly retrieve the same context.
 - The match server is authoritative. Clients submit intents and render only a player-specific projection; never send hidden zones or legal actions belonging to another player.

@@ -281,6 +281,29 @@ def review_markdown(cards: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def primitive_cluster_inventory(cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Build a deterministic, card-name-independent work queue.
+
+    This is the cluster-first part of the compiler: a worker receives one
+    reusable rule shape plus stable card identities, instead of rediscovering
+    the same nouns and zones for every card. Only unresolved clauses are
+    included, so solved primitives naturally disappear from the queue.
+    """
+    clusters: dict[str, dict[str, dict[str, str]]] = {}
+    for card in cards:
+        for cluster in card.get("primitive_clusters", []):
+            clusters.setdefault(cluster, {})[str(card["oracle_id"])] = {
+                "oracle_id": str(card["oracle_id"]),
+                "scryfall_id": str(card["scryfall_id"]),
+                "name": str(card["name"]),
+            }
+    inventory = [
+        {"cluster": cluster, "card_count": len(entries), "cards": sorted(entries.values(), key=lambda item: (item["name"].casefold(), item["oracle_id"]))}
+        for cluster, entries in clusters.items()
+    ]
+    return sorted(inventory, key=lambda item: (-item["card_count"], item["cluster"]))
+
+
 def effective_worker_count(workers: int, memory_budget_gb: float, estimated_worker_mb: int) -> int:
     """Return a bounded worker count for the local parser scheduler.
 
@@ -339,6 +362,7 @@ def main() -> None:
     parser.add_argument("--catalog", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--prompt-output", type=Path)
+    parser.add_argument("--cluster-output", type=Path, help="Optional deterministic JSON queue grouped by reusable primitive cluster.")
     parser.add_argument("--workers", type=int, default=5, help="Workers for independent card classification (1-8; default: 5).")
     parser.add_argument("--memory-budget-gb", type=float, default=2.0, help="Conservative local worker budget in GB (default: 2).")
     parser.add_argument("--estimated-worker-mb", type=int, default=256, help="Memory reserved per worker for scheduling (default: 256).")
@@ -356,6 +380,7 @@ def main() -> None:
         "source": "local normalized catalog; Oracle text is display data, not executable code",
         "card_count": len(cards),
         "status_counts": dict(sorted(counts.items())),
+        "primitive_cluster_count": len(primitive_cluster_inventory(cards)),
         "cards": cards,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -363,6 +388,14 @@ def main() -> None:
     if args.prompt_output:
         args.prompt_output.parent.mkdir(parents=True, exist_ok=True)
         args.prompt_output.write_text(review_markdown(cards), encoding="utf-8")
+    if args.cluster_output:
+        args.cluster_output.parent.mkdir(parents=True, exist_ok=True)
+        args.cluster_output.write_text(json.dumps({
+            "format": "prossh-primitive-cluster-queue/v1",
+            "source": "oracle-effects.json unresolved clauses",
+            "cluster_count": len(primitive_cluster_inventory(cards)),
+            "clusters": primitive_cluster_inventory(cards),
+        }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Oracle IR written: {len(cards):,} cards -> {args.output} (workers={worker_count}, backend={args.backend}, budget={args.memory_budget_gb:g}GB)")
     print(f"Statuses: {dict(sorted(counts.items()))}")
 

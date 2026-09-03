@@ -12,7 +12,8 @@ el mismo `oracle_id`.
 ## Aplicación en este repositorio
 
 - `tools/rules/compile_oracle_effects.py` es nuestro inventario local y
-  conserva cláusulas, familias, operandos, zonas y `primitive_cluster`.
+  conserva cláusulas, familias, operandos, zonas y `primitive_cluster`; su
+  salida `oracle-clusters.json` es la cola determinista para repartir trabajo.
 - `packages/rules/src/characteristics.ts` es el límite de entrada: solo una
   forma estructurada cerrada puede declararse ejecutable.
 - `packages/rules/src/engine.ts` aplica esa forma de manera pura y
@@ -21,6 +22,20 @@ el mismo `oracle_id`.
   difieren los datos (cantidades, tipos, subtipos, zonas y costes).
 - Las cláusulas ambiguas o únicas permanecen en la cola de revisión para una
   implementación manual con cita de Comprehensive Rules y escenario.
+
+## Comparación y decisión
+
+| Enfoque | Ventaja | Decisión en lamagia |
+|---|---|---|
+| Parser local actual | Corre offline sobre todo el catálogo, conserva `oracle_id`, operandos, zonas y estado de revisión | Adoptado para inventario, regresiones y cola de trabajo |
+| IR tipada estilo mtgish | Hace explícita la separación entre sintaxis, datos y semántica ejecutable | Adoptado como dirección del IR; las primitivas aprobadas siguen cerradas en TypeScript |
+| Ejecutar texto Oracle directamente | Parece rápido al principio, pero convierte ambigüedad en reglas falsas y rompe determinismo | Rechazado |
+| Resolver carta por carta | Repite el mismo análisis de `Equipment`, `battlefield`, `library`, etc. | Rechazado; los workers reciben clusters |
+
+La prueba local confirmó el beneficio operativo: la compilación completa usa cinco
+workers bajo el presupuesto de 2 GB, produce una salida estable y genera
+`data/rules/oracle-clusters.json` para repartir primitivas sin volver a leer
+cada carta desde cero.
 
 ## Qué no hacemos
 
@@ -31,7 +46,8 @@ solo sirven para contrastar comportamiento y casos borde.
 
 ## Estrategia de velocidad
 
-1. Compilar una vez el catálogo y agrupar por `primitive_cluster`.
+1. Compilar una vez el catálogo y generar `oracle-clusters.json`, agrupado por
+   `primitive_cluster`.
 2. Asignar un worker a cada cluster, no a cada nombre de carta.
 3. Añadir una prueba representativa y reutilizar la primitiva para el resto.
 4. Exportar perfiles y cobertura C13; solo las cartas con todas sus cláusulas

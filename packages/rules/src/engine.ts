@@ -1829,9 +1829,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       for (const card of player.hand) {
         actions.push({
           action: { type: "choose-discard", sourceId: choice.sourceId, cardId: card.instance_id },
-          label: `Descartar ${card.name}`,
+          label: `Discard ${card.name}`,
           cardId: card.instance_id,
-          note: `${choice.sourceCard.name}: elige una carta (${choice.remaining} restante(s)).`
+          note: `${choice.sourceCard.name}: choose a card (${choice.remaining} remaining).`
         });
       }
       return actions;

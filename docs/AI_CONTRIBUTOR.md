@@ -1,7 +1,8 @@
 # Contribuir una carta con tu LLM
 
 Este documento es el equivalente de la idea “Contribute a Card with Your LLM”
-de [Phase](https://github.com/phase-rs/phase), adaptado a ProsshTCG. Copia el
+de [Phase](https://github.com/phase-rs/phase), adaptado a lamagia (antes
+ProsshTCG). Copia el
 prompt de abajo en otro LLM desde la raíz del repositorio. Puede usarse para
 pedir una propuesta o una implementación; el resultado siempre debe pasar por
 revisión humana.
@@ -9,7 +10,7 @@ revisión humana.
 ## Prompt para copiar
 
 ```text
-Actúa como ingeniero de reglas y TypeScript en el repositorio ProsshTCG.
+Actúa como ingeniero de reglas y TypeScript en el repositorio lamagia.
 
 Objetivo de esta tarea:
 - Carta: [NOMBRE DE LA CARTA]

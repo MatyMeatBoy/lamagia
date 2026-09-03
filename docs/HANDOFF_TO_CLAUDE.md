@@ -1,8 +1,8 @@
-# ProsshTCG — implementation handoff
+# lamagia — implementation handoff
 
 **Read this before changing the project.** It is an honest snapshot of the working tree as of 2026-09-03, separating what is implemented and verified from what is still product intent. Do not present anything below the "Truth boundaries" line as working.
 
-Repository: <https://github.com/MatyMeatBoy/ProsshTCG> (private).
+Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ## Product objective
 
@@ -132,9 +132,9 @@ never remove a card's own printed one.
 | Cards with a payable, resolvable activated ability | 0 (feature did not run) | 670 |
 | Cards with a recognised triggered ability | 87 | 1,185 |
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
-| Catalog cards fully implemented | 5,151 | 6,277 |
+| Catalog cards fully implemented | 5,151 | 6,345 |
 | …of those, with non-empty Oracle text | 2,090 | 2,981 |
-| C13 unique cards fully implemented | — | 122 / 356 (234 pending) |
+| C13 unique cards fully implemented | — | 123 / 356 (233 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
 
 Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
@@ -183,7 +183,10 @@ loads pending IDs only when an edition is opened.
   enters/deals-damage event bus; Rampaging Baloths and Grazing Gladehart are
   now covered by the same trigger subject rather than card-specific code.
 - The Python IR emits stable `primitive_cluster` keys and a grouped review
-  queue so contributors can implement one primitive across many cards.
+  queue so contributors can implement one primitive across many cards. The
+  compiler also writes `data/rules/oracle-clusters.json`; the latest full run
+  produced 11,072 deterministic unresolved clusters from the 18,254 pending
+  clauses.
 - Supported keyword-only clauses are removed from the review queue; the latest
   full IR therefore reduced actionable pending entries from 22,678 to 18,254
   without changing executable-card coverage.
@@ -219,12 +222,12 @@ loads pending IDs only when an edition is opened.
 
 ```text
 npm run check           rules build + rules/client/server typecheck        PASS
-npm test                Vitest 5 files / 160 tests + Python smoke tests    PASS
+npm test                Vitest 5 files / 163 tests + Python smoke tests    PASS
 npm run simulate:engine 200 seeded games in 7.22s                          PASS
                         finished 158, unfinished 42, avg 51.18 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 6,277 fully implemented         PASS
+npm run rules:engine:export  38,711 cards; 6,345 fully implemented         PASS
 npm run rules:set:coverage  708 editions; 14.4% membership coverage        PASS
 ```
 
@@ -265,7 +268,7 @@ packages/rules/                 authoritative engine (pure, deterministic)
   src/projection.ts             the per-seat security boundary
   src/bot.ts                    bot policy over legal actions only
   src/simulator.ts              coarse metadata simulator (legacy tooling)
-  src/*.test.ts                 160 Vitest specs
+  src/*.test.ts                 163 Vitest specs
 services/match-server/
   src/matches.ts                match registry, seat tokens, bot driving
   src/index.ts                  REST + Socket.IO, catalog and deck endpoints
@@ -492,7 +495,7 @@ CR 601.2c and 608.2b. Scenario coverage verifies both filters against a
 creature spell and an instant on the stack.
 
 Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules -- --run
-packages/rules/src/engine.test.ts` PASS (153 passed, 6 skipped).
+packages/rules/src/engine.test.ts` PASS (163 passed).
 
 ### Cooperative C13 cluster: counters on target creatures
 
@@ -502,8 +505,7 @@ P/T calculation and state-based actions immediately see the result. This
 follows CR 122.1 and 701.4. Scenario coverage verifies parsing, target
 resolution, and both P/T values after a resolved counter.
 
-Validation: `npm run check` PASS; targeted engine tests PASS (154 passed, 6
-skipped). Full `npm test` should be rerun by the integrator after merge.
+Validation: `npm run check` PASS; targeted engine tests PASS (163 passed).
 
 ### Cooperative C13 cluster: target-player discard
 
@@ -514,5 +516,4 @@ selection is hidden behind the UI. This follows CR 701.8 and 400.1. Scenario
 coverage verifies the pending seat, both visible choices, selected-card
 movement, and completion of the choice.
 
-Validation: `npm run check` PASS; targeted engine tests PASS (155 passed, 6
-skipped). Full `npm test` should be rerun by the integrator after merge.
+Validation: `npm run check` PASS; targeted engine tests PASS (163 passed).

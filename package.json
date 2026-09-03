@@ -24,7 +24,7 @@
     "catalog:enrich": "python tools/card_catalog/enrich_catalog.py --catalog data/catalog/prossh.sqlite --ids-from data/decks/cedh-pod.json --ids-from data/decks/commander-precons.json",
     "rules:pool:sync": "python tools/card_catalog/build_popular_pool.py --catalog data/catalog/prossh.sqlite --output data/rules/popular-card-pool.json --count 1500",
     "rules:compile": "python tools/rules/compile_card_rules.py --catalog data/catalog/prossh.sqlite --output data/rules/card-rules.json",
-    "rules:oracle:compile": "python tools/rules/compile_oracle_effects.py --catalog data/catalog/prossh.sqlite --output data/rules/oracle-effects.json --prompt-output data/rules/oracle-review.md",
+    "rules:oracle:compile": "python tools/rules/compile_oracle_effects.py --catalog data/catalog/prossh.sqlite --output data/rules/oracle-effects.json --prompt-output data/rules/oracle-review.md --cluster-output data/rules/oracle-clusters.json",
     "rules:test:oracle": "python tools/rules/test_compile_oracle_effects.py",
     "rules:coverage:c13": "python tools/rules/check_precon_coverage.py --set-code C13 --output data/rules/coverage-c13.md",
     "rules:engine:export": "tsx tools/rules/export_engine_profiles.ts --catalog data/catalog/prossh.sqlite --output data/rules/engine-card-profiles.json",
