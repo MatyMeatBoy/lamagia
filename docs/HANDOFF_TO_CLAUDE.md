@@ -549,3 +549,15 @@ life-loss triggers, replacement/prevention effects, and multi-player variants.
 
 Validation: targeted engine tests PASS (159 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
+
+### Cooperative C13 cluster: each-player life loss
+
+The branch adds `Each player loses N life` as a reusable global life-loss
+effect. Eliminated players are skipped and the effect remains distinct from
+damage, so damage prevention and damage triggers do not apply. This follows CR
+118.2 and 119.4. Scenario coverage verifies both living players lose life and
+the parser emits the dedicated effect. The scope excludes life-loss triggers,
+replacement/prevention effects, and conditional recipients.
+
+Validation: targeted engine tests PASS (160 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
