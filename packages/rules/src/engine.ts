@@ -1286,6 +1286,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           : permanent)
       }));
     }
+    case "add-counter-creatures-subtype": {
+      const subtype = effect.subtype.toLowerCase();
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => {
+          const profile = cardProfile(permanent.card);
+          if (!isCreature(profile) || !profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype)) return permanent;
+          return { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } };
+        })
+      }));
+    }
     case "level-up": {
       const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       if (!source || source.controller !== controller || !isCreature(cardProfile(source.card))) return state;
