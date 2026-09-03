@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sqlite3
 from collections import defaultdict
 from datetime import UTC, datetime
@@ -32,10 +33,22 @@ def category(set_type: str, set_name: str) -> str:
     return "other"
 
 
-def product_group(set_type: str, set_name: str) -> str:
-    """Choose a contributor-facing product family without trusting set codes."""
+def _release_year(set_name: str, released_at: str) -> str:
+    match = re.search(r"\b(19|20)\d{2}\b", set_name)
+    return match.group(0) if match else (released_at[:4] if released_at[:4].isdigit() else "undated")
+
+
+def _slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.casefold()).strip("-")[:48] or "other"
+
+
+def product_group(set_type: str, set_name: str, released_at: str = "") -> str:
+    """Choose a stable top-level product family; detail belongs in subgroup."""
     name = set_name.casefold()
     kind = set_type.casefold()
+
+    if kind in {"core", "expansion"}:
+        return kind
     if "jumpstart" in name:
         return "jumpstart"
     if "duel deck" in name or kind == "duel_deck":
@@ -56,7 +69,28 @@ def product_group(set_type: str, set_name: str) -> str:
         return "anthologies"
     if "secret lair" in name:
         return "secret-lair"
-    if "promo" in name or kind == "promo":
+    if kind == "promo" or "promo" in name:
+        promo_groups = (
+            ("friday night magic", "promos-fnm"),
+            ("judge gift", "promos-judge"),
+            ("wizards play network", "promos-wpn"),
+            ("magicfest", "promos-magicfest"),
+            ("regional championship", "promos-regional"),
+            ("comic-con", "promos-comic-con"),
+            ("standard showdown", "promos-standard-showdown"),
+            ("magic player rewards", "promos-player-rewards"),
+            ("arena", "promos-arena"),
+            ("love your lgs", "promos-lgs"),
+            ("guru", "promos-guru"),
+            ("champions and states", "promos-championship"),
+            ("world championship", "promos-championship"),
+            ("junior", "promos-junior"),
+        )
+        for token, group in promo_groups:
+            if token in name:
+                return "promos"
+        if name.endswith(" promos") or " promos" in name:
+            return "promos"
         return "promos"
     if kind == "funny" or any(token in name for token in ("un-", "unstable", "unfinity", "heroes of the realm")):
         return "funny-special"
@@ -75,6 +109,63 @@ def product_group(set_type: str, set_name: str) -> str:
     if kind == "eternal":
         return "eternal"
     return kind.replace("_", "-") or "other"
+
+
+# Expansion blocks keep the historical map navigable: Ravnica, Mirrodin,
+# Theros, etc. This is presentation metadata only; rules still key by oracle_id.
+EXPANSION_BLOCKS = (
+    ("ravnica", "Ravnica"), ("mirrodin", "Mirrodin"), ("phyrexia", "Phyrexia"),
+    ("theros", "Theros"), ("zendikar", "Zendikar"), ("innistrad", "Innistrad"),
+    ("dominaria", "Dominaria"), ("tarkir", "Tarkir"), ("ixalan", "Ixalan"),
+    ("eldraine", "Eldraine"), ("kamigawa", "Kamigawa"), ("lorwyn", "Lorwyn"),
+    ("alara", "Alara"), ("kaladesh", "Kaladesh"), ("amonkhet", "Amonkhet"),
+    ("strixhaven", "Strixhaven"), ("kaldheim", "Kaldheim"), ("capenna", "Capenna"),
+    ("bloomburrow", "Bloomburrow"), ("thunder junction", "Thunder Junction"),
+    ("ice age", "Ice Age"), ("mirage", "Mirage"), ("tempest", "Tempest"),
+    ("urza", "Urza"), ("mercadian", "Masques"), ("masques", "Masques"),
+    ("invasion", "Invasion"), ("odyssey", "Odyssey"), ("onslaught", "Onslaught"),
+    ("time spiral", "Time Spiral"), ("arcavios", "Strixhaven"),
+    ("wilds of eldraine", "Eldraine"), ("march of the machine", "Phyrexia"),
+    ("new phyrexia", "Phyrexia"), ("scars of mirrodin", "Mirrodin"),
+)
+
+
+def product_subgroup(set_type: str, set_name: str, released_at: str = "") -> str:
+    """Return the navigable subgroup nested under product_group()."""
+    name = set_name.casefold()
+    kind = set_type.casefold()
+    year = _release_year(set_name, released_at)
+    decade = f"{year[:3]}0s" if year.isdigit() else "undated"
+    if kind in {"core", "expansion"}:
+        for token, block in EXPANSION_BLOCKS:
+            if token in name:
+                return _slug(block)
+        return decade
+    if kind == "commander" or "commander" in name:
+        return year
+    if "secret lair" in name or kind == "secret_lair":
+        return _slug(set_name)
+    if kind == "promo" or "promo" in name:
+        promo_groups = (
+            ("friday night magic", "fnm"), ("judge gift", "judge"),
+            ("wizards play network", "wpn"), ("magicfest", "magicfest"),
+            ("regional championship", "regional"), ("comic-con", "comic-con"),
+            ("standard showdown", "standard-showdown"), ("magic player rewards", "player-rewards"),
+            ("arena", "arena"), ("love your lgs", "lgs"), ("guru", "guru"),
+            ("champions and states", "championship"), ("world championship", "championship"),
+            ("junior", "junior"),
+        )
+        for token, label in promo_groups:
+            if token in name:
+                return f"{label}-{year}"
+        if " promos" in name:
+            return _slug(re.sub(r"\s+promos?", "", name).strip())
+        return _slug(set_name)
+    if "jumpstart" in name or "duel deck" in name or "planechase" in name:
+        return _slug(set_name)
+    if kind in {"box", "draft_innovation", "masters", "masterpiece", "funny", "alchemy"}:
+        return _slug(set_name)
+    return decade
 
 
 def load_profiles(path: Path) -> dict[str, dict[str, Any]]:
@@ -128,7 +219,8 @@ def build(catalog: Path, profiles_path: Path) -> dict[str, Any]:
         sets.append({
             **meta,
             "category": category(meta["setType"], meta["name"]),
-            "group": product_group(meta["setType"], meta["name"]),
+            "group": product_group(meta["setType"], meta["name"], meta["releasedAt"]),
+            "subgroup": product_subgroup(meta["setType"], meta["name"], meta["releasedAt"]),
             "uniqueCards": len(entries),
             "implemented": implemented,
             "pending": len(entries) - implemented,
@@ -161,24 +253,24 @@ def markdown(payload: dict[str, Any]) -> str:
         "",
         "## Resumen cronológico",
         "",
-        "| Fecha | Edición | Grupo | Categoría | Cartas únicas | Implementadas | Pendientes | % |",
-        "|---|---|---|---|---:|---:|---:|---:|",
+        "| Fecha | Edición | Grupo | Subgrupo | Categoría | Cartas únicas | Implementadas | Pendientes | % |",
+        "|---|---|---|---|---:|---:|---:|---:|---:|",
     ]
     for entry in payload["sets"]:
-        lines.append(f"| {entry['releasedAt'] or '—'} | {entry['name']} (`{entry['code'].upper()}`) | {entry['group']} | {entry['category']} | {entry['uniqueCards']} | {entry['implemented']} | {entry['pending']} | {entry['percentage']}% |")
-    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        lines.append(f"| {entry['releasedAt'] or '—'} | {entry['name']} (`{entry['code'].upper()}`) | {entry['group']} | {entry['subgroup']} | {entry['category']} | {entry['uniqueCards']} | {entry['implemented']} | {entry['pending']} | {entry['percentage']}% |")
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for entry in payload["sets"]:
-        grouped[entry["group"]].append(entry)
-    lines.extend(["", "## Resumen por grupo", "", "| Grupo | Ediciones | Cartas únicas | Implementadas | Pendientes | % |", "|---|---:|---:|---:|---:|---:|"])
-    for group, entries in sorted(grouped.items()):
+        grouped[(entry["group"], entry["subgroup"])].append(entry)
+    lines.extend(["", "## Resumen por grupo y subgrupo", "", "| Grupo | Subgrupo | Ediciones | Cartas únicas | Implementadas | Pendientes | % |", "|---|---|---:|---:|---:|---:|---:|"])
+    for (group, subgroup), entries in sorted(grouped.items()):
         unique = sum(entry["uniqueCards"] for entry in entries)
         done = sum(entry["implemented"] for entry in entries)
-        lines.append(f"| {group} | {len(entries)} | {unique} | {done} | {unique - done} | {round(done / unique * 100, 1) if unique else 100.0}% |")
+        lines.append(f"| {group} | {subgroup} | {len(entries)} | {unique} | {done} | {unique - done} | {round(done / unique * 100, 1) if unique else 100.0}% |")
     lines.extend(["", "## Pendientes por edición", ""])
     for entry in payload["sets"]:
         if not entry["pendingCards"]:
             continue
-        lines.extend([f"### {entry['group']} · {entry['name']} (`{entry['code'].upper()}`)", ""])
+        lines.extend([f"### {entry['group']} / {entry['subgroup']} · {entry['name']} (`{entry['code'].upper()}`)", ""])
         for card in entry["pendingCards"]:
             lines.append(f"- [ ] {card['name']} — `{card['oracleId']}`")
         lines.append("")

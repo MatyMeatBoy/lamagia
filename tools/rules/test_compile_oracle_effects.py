@@ -27,9 +27,9 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertIsNone(result["target_subtype"])
 
     def test_groups_supplemental_products_by_name_and_type(self) -> None:
-        self.assertEqual(product_group("draft_innovation", "Jumpstart 2022"), "jumpstart")
-        self.assertEqual(product_group("duel_deck", "Duel Decks: Elves vs. Goblins"), "duel-decks")
-        self.assertEqual(product_group("promo", "Friday Night Magic 2013"), "promos")
+        self.assertEqual(product_group("draft_innovation", "Jumpstart 2022", "2022-12-02"), "jumpstart")
+        self.assertEqual(product_group("duel_deck", "Duel Decks: Elves vs. Goblins", "2007-11-16"), "duel-decks")
+        self.assertEqual(product_group("promo", "Friday Night Magic 2013", "2013-01-01"), "promos")
 
 
 if __name__ == "__main__":

@@ -36,7 +36,7 @@ type CatalogPrinting = {
 };
 type CoverageCard = { oracleId: string; scryfallId: string; name: string; implemented: boolean };
 type CoverageSet = {
-  code: string; name: string; setType: string; category: "main" | "commander" | "secret-lair" | "other"; group: string;
+  code: string; name: string; setType: string; category: "main" | "commander" | "secret-lair" | "other"; group: string; subgroup: string;
   releasedAt: string; uniqueCards: number; implemented: number; pending: number; percentage: number;
   pendingCards?: CoverageCard[];
 };
@@ -83,6 +83,7 @@ let avatarChoices: AvatarChoice[] = [];
 let selectedAvatar = window.localStorage.getItem("prossh.avatar") ?? "";
 let coverageFilter: CoverageSet["category"] | "all" = "main";
 let coverageGroup = "all";
+let coverageSubgroup = "all";
 let coverageQuery = "";
 const ui: UiState = {
   pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, glyphHelp: null,
@@ -1248,14 +1249,34 @@ const COVERAGE_GROUP_LABELS: Record<string, string> = {
   "spellbooks": "Spellbooks", "anthologies": "Anthologies", "secret-lair": "Secret Lair", "promos": "Promos",
   "funny-special": "Un / especiales", "alchemy": "Alchemy", "commander": "Commander", "deck-products": "Deck products",
   "boxed-products": "Boxed products", "supplemental": "Supplemental", "masterpieces": "Masterpieces", "eternal": "Eternal",
-  "core": "Core sets", "expansion": "Expansion sets", "from-the-vault": "From the Vault", "archenemy": "Archenemy", "treasure-chest": "Treasure Chests", "other": "Otros"
+  "core": "Core sets", "expansion": "Expansion sets", "from-the-vault": "From the Vault", "archenemy": "Archenemy", "treasure-chest": "Treasure Chests",
+  "promos-fnm": "Promos · FNM", "promos-judge": "Promos · Judge", "promos-wpn": "Promos · WPN", "promos-magicfest": "Promos · MagicFest",
+  "promos-regional": "Promos · Regional", "promos-comic-con": "Promos · Comic-Con", "promos-standard-showdown": "Promos · Standard Showdown",
+  "promos-player-rewards": "Promos · Player Rewards", "promos-arena": "Promos · Arena", "promos-lgs": "Promos · Love Your LGS",
+  "promos-guru": "Promos · Guru", "promos-championship": "Promos · Championship", "promos-junior": "Promos · Junior",
+  "promos-set": "Promos de set", "promos-other": "Otras promos", "other": "Otros"
 };
+
+function coverageGroupLabel(group: string): string {
+  return COVERAGE_GROUP_LABELS[group] ?? group.replace(/-/g, " ");
+}
+
+function coverageSubgroupLabel(group: string, subgroup: string): string {
+  if (subgroup === "all") return "Todos los subgrupos";
+  const promo = /^(fnm|judge|wpn|magicfest|regional|comic-con|standard-showdown|player-rewards|arena|lgs|guru|championship|junior)-(\d{4})$/.exec(subgroup);
+  if (group === "promos" && promo) {
+    const labels: Record<string, string> = { fnm: "FNM", judge: "Judge", wpn: "WPN", magicfest: "MagicFest", regional: "Regional", "comic-con": "Comic-Con", "standard-showdown": "Standard Showdown", "player-rewards": "Player Rewards", arena: "Arena", lgs: "Love Your LGS", guru: "Guru", championship: "Championship", junior: "Junior" };
+    return `${labels[promo[1]!] ?? promo[1]} · ${promo[2]}`;
+  }
+  if (group === "commander" && /^\d{4}$/.test(subgroup)) return `Commander ${subgroup}`;
+  return subgroup.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
 function coverageSetRows(sets: readonly CoverageSet[]): string {
   return sets.length ? sets.map((set) => {
     const percentage = Math.max(0, Math.min(100, set.percentage));
     return `<button class="coverage-row" type="button" data-coverage-set="${escapeHtml(set.code)}">
-      <span class="coverage-row-title"><b>${escapeHtml(set.name)}</b><small>${escapeHtml(set.code.toUpperCase())} · ${escapeHtml(set.releasedAt.slice(0, 4) || "—")} · ${escapeHtml(COVERAGE_GROUP_LABELS[set.group] ?? set.group)}</small></span>
+      <span class="coverage-row-title"><b>${escapeHtml(set.name)}</b><small>${escapeHtml(set.code.toUpperCase())} · ${escapeHtml(set.releasedAt.slice(0, 4) || "—")} · ${escapeHtml(coverageGroupLabel(set.group))} / ${escapeHtml(coverageSubgroupLabel(set.group, set.subgroup))}</small></span>
       <span class="coverage-track"><i style="width:${percentage}%"></i></span>
       <span class="coverage-number"><b>${percentage}%</b><small>${set.implemented}/${set.uniqueCards}</small></span>
     </button>`;
@@ -1266,13 +1287,16 @@ function renderCoverageReport(report: SetCoverageReport): void {
   const body = document.querySelector<HTMLElement>("#coverage-dialog .panel-body");
   if (!body) return;
   const groups = [...new Set(report.sets.map((set) => set.group))].sort((left, right) => left.localeCompare(right));
+  const subgroups = [...new Set(report.sets.filter((set) => coverageGroup === "all" || set.group === coverageGroup).map((set) => set.subgroup))].sort((left, right) => left.localeCompare(right));
   const filtered = report.sets.filter((set) => (coverageFilter === "all" || set.category === coverageFilter)
     && (coverageGroup === "all" || set.group === coverageGroup)
+    && (coverageSubgroup === "all" || set.subgroup === coverageSubgroup)
     && (!coverageQuery || `${set.name} ${set.code}`.toLocaleLowerCase().includes(coverageQuery.toLocaleLowerCase())));
   body.innerHTML = `<div class="coverage-toolbar">
       <div class="coverage-filters">${(["all", "main", "commander", "secret-lair", "other"] as const).map((category) =>
         `<button type="button" class="text-button${coverageFilter === category ? " selected" : ""}" data-coverage-filter="${category}">${COVERAGE_LABELS[category]}</button>`).join("")}</div>
-      <select id="coverage-group" aria-label="Grupo de edición"><option value="all">Todos los grupos</option>${groups.map((group) => `<option value="${escapeHtml(group)}"${coverageGroup === group ? " selected" : ""}>${escapeHtml(COVERAGE_GROUP_LABELS[group] ?? group)}</option>`).join("")}</select>
+      <select id="coverage-group" aria-label="Grupo de edición"><option value="all">Todos los grupos</option>${groups.map((group) => `<option value="${escapeHtml(group)}"${coverageGroup === group ? " selected" : ""}>${escapeHtml(coverageGroupLabel(group))}</option>`).join("")}</select>
+      <select id="coverage-subgroup" aria-label="Subgrupo de edición"><option value="all">Todos los subgrupos</option>${subgroups.map((subgroup) => `<option value="${escapeHtml(subgroup)}"${coverageSubgroup === subgroup ? " selected" : ""}>${escapeHtml(coverageSubgroupLabel(coverageGroup === "all" ? "" : coverageGroup, subgroup))}</option>`).join("")}</select>
       <input id="coverage-query" value="${escapeHtml(coverageQuery)}" placeholder="Filtrar edición" autocomplete="off"/>
     </div>
     <div class="coverage-total"><b>${report.percentage}% global</b><span>${report.setCount} ediciones · ${report.implementedMembershipCount.toLocaleString()} / ${report.membershipCount.toLocaleString()} cartas únicas por edición</span></div>
@@ -1284,12 +1308,21 @@ function renderCoverageReport(report: SetCoverageReport): void {
   }));
   body.querySelector<HTMLSelectElement>("#coverage-group")?.addEventListener("change", (event) => {
     coverageGroup = (event.target as HTMLSelectElement).value;
+    coverageSubgroup = "all";
     renderCoverageReport(report);
   });
   body.querySelector<HTMLInputElement>("#coverage-query")?.addEventListener("input", (event) => {
-    coverageQuery = (event.target as HTMLInputElement).value;
+    const input = event.target as HTMLInputElement;
+    const caret = input.selectionStart ?? input.value.length;
+    coverageQuery = input.value;
     renderCoverageReport(report);
-    document.querySelector<HTMLInputElement>("#coverage-query")?.focus();
+    const refreshed = document.querySelector<HTMLInputElement>("#coverage-query");
+    refreshed?.focus();
+    refreshed?.setSelectionRange(caret, caret);
+  });
+  body.querySelector<HTMLSelectElement>("#coverage-subgroup")?.addEventListener("change", (event) => {
+    coverageSubgroup = (event.target as HTMLSelectElement).value;
+    renderCoverageReport(report);
   });
   body.querySelectorAll<HTMLButtonElement>("[data-coverage-set]").forEach((button) => button.addEventListener("click", () => void loadCoverageSet(button.dataset.coverageSet!)));
 }
@@ -1301,7 +1334,7 @@ async function loadCoverageSet(code: string): Promise<void> {
   try {
     const set = await api<CoverageSet>(`/api/rules/coverage/sets/${encodeURIComponent(code)}`);
     body.innerHTML = `<button type="button" class="text-button" data-coverage-back>← Volver al mapa</button>
-      <div class="coverage-detail-head"><div><h3>${escapeHtml(set.name)}</h3><small>${escapeHtml(set.code.toUpperCase())} · ${escapeHtml(set.releasedAt)} · ${escapeHtml(COVERAGE_GROUP_LABELS[set.group] ?? set.group)}</small></div><b>${set.percentage}%</b></div>
+      <div class="coverage-detail-head"><div><h3>${escapeHtml(set.name)}</h3><small>${escapeHtml(set.code.toUpperCase())} · ${escapeHtml(set.releasedAt)} · ${escapeHtml(coverageGroupLabel(set.group))} / ${escapeHtml(coverageSubgroupLabel(set.group, set.subgroup))}</small></div><b>${set.percentage}%</b></div>
       <div class="coverage-track large"><i style="width:${Math.max(0, Math.min(100, set.percentage))}%"></i></div>
       <p class="panel-note">${set.implemented} implementadas · ${set.pending} pendientes. Cada pendiente identifica su lógica con <code>oracle_id</code>.</p>
       <div class="coverage-pending">${set.pendingCards?.length ? set.pendingCards.map((card) => `<div><span>□ ${escapeHtml(card.name)}</span><code>${escapeHtml(card.oracleId)}</code></div>`).join("") : `<p class="zone-private">Edición completa.</p>`}</div>`;
@@ -1320,6 +1353,7 @@ async function loadCoverage(): Promise<void> {
 function openCoverage(): void {
   coverageFilter = "main";
   coverageGroup = "all";
+  coverageSubgroup = "all";
   coverageQuery = "";
   fillDialog("coverage-dialog", panelHtml("coverage-dialog", "Implementación por edición", "Cargando mapa de implementación…"));
   void loadCoverage();

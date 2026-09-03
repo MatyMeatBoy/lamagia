@@ -25,7 +25,7 @@ interface ImportedPrecon extends ImportedDeck { readonly set_code: string; reado
 interface ImportedPrecons { readonly source: string; readonly synced_at: string; readonly decks: readonly ImportedPrecon[] }
 interface CoverageCard { readonly oracleId: string; readonly scryfallId: string; readonly name: string; readonly implemented: boolean }
 interface CoverageSet {
-  readonly code: string; readonly setType: string; readonly category: string; readonly group: string; readonly releasedAt: string;
+  readonly code: string; readonly setType: string; readonly category: string; readonly group: string; readonly subgroup: string; readonly releasedAt: string;
   readonly uniqueCards: number; readonly implemented: number; readonly pending: number; readonly percentage: number;
   readonly pendingCards: readonly CoverageCard[];
 }
