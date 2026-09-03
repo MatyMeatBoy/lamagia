@@ -20,7 +20,10 @@
     "build": "npm run build --workspace=@prossh/rules && npm run build --workspace=@prossh/client && npm run build --workspace=@prossh/match-server",
     "test": "npm run test --workspace=@prossh/rules && npm run test:simulator",
     "test:simulator": "python tools/simulator/test_simulate_cedh_pod.py && python tools/simulator/test_run_ai_matrix.py",
-    "check": "npm run build --workspace=@prossh/rules && npm run check --workspace=@prossh/rules && npm run check --workspace=@prossh/client && npm run check --workspace=@prossh/match-server"
+    "check": "npm run build --workspace=@prossh/rules && npm run check --workspace=@prossh/rules && npm run check --workspace=@prossh/client && npm run check --workspace=@prossh/match-server",
+    "catalog:enrich": "python tools/card_catalog/enrich_catalog.py --catalog data/catalog/prossh.sqlite --ids-from data/decks/cedh-pod.json --ids-from data/decks/commander-precons.json",
+    "decks:enrich": "python tools/decks/enrich_decks.py --catalog data/catalog/prossh.sqlite --deck data/decks/cedh-pod.json --deck data/decks/commander-precons.json",
+    "simulate:engine": "tsx tools/simulator/run_engine_matrix.ts --games 200 --max-turns 60"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

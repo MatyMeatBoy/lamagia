@@ -70,6 +70,16 @@ function toHand(seat: SeatId, cards: readonly CardData[], prefix = "hand"): Game
   return cards.map((card, index) => ({ ...card, instance_id: `${prefix}-${index}`, owner: seat }));
 }
 
+/** Every `instance_id` reachable in a projection, compared as a whole value. */
+function exposedInstanceIds(value: unknown, found = new Set<string>()): Set<string> {
+  if (Array.isArray(value)) { for (const entry of value) exposedInstanceIds(entry, found); return found; }
+  if (!value || typeof value !== "object") return found;
+  const record = value as Record<string, unknown>;
+  if (typeof record.instance_id === "string") found.add(record.instance_id);
+  for (const entry of Object.values(record)) exposedInstanceIds(entry, found);
+  return found;
+}
+
 function passUntil(state: GameState, predicate: (state: GameState) => boolean, limit = 400): GameState {
   let current = state;
   for (let index = 0; index < limit; index += 1) {
@@ -546,9 +556,11 @@ describe("projection privacy", () => {
     expect(view.players[0]!.hand).toHaveLength(7);
     expect(view.players[1]!.hand).toBeUndefined();
     expect(view.players[1]!.handCount).toBe(7);
-    const serialized = JSON.stringify(view);
-    for (const card of game.players[1]!.hand) expect(serialized).not.toContain(card.instance_id);
-    for (const card of game.players[1]!.library.slice(0, 10)) expect(serialized).not.toContain(card.instance_id);
+    // Identifiers are compared as whole values: one id can be a prefix of another.
+    const exposed = exposedInstanceIds(view);
+    for (const card of game.players[1]!.hand) expect(exposed.has(card.instance_id)).toBe(false);
+    for (const card of game.players[1]!.library) expect(exposed.has(card.instance_id)).toBe(false);
+    for (const card of game.players[0]!.hand) expect(exposed.has(card.instance_id)).toBe(true);
   });
 
   it("reports zero available mana for opponents", () => {

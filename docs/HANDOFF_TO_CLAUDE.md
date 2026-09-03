@@ -1,154 +1,159 @@
 # ProsshTCG — implementation handoff
 
-**Read this first before changing the project.** This is an honest snapshot of the working tree as of 2026-09-03. It distinguishes implemented behavior from product intent so the next agent does not accidentally present a prototype as a complete Magic rules engine.
+**Read this before changing the project.** It is an honest snapshot of the working tree as of 2026-09-03, separating what is implemented and verified from what is still product intent. Do not present anything below the "Truth boundaries" line as working.
+
+Repository: <https://github.com/MatyMeatBoy/ProsshTCG> (private).
 
 ## Product objective
 
-ProsshTCG is a fast, high-legibility Commander simulator, designed first for four players but architected for pods of 2–8. It targets the browser initially, with Android (Capacitor) and desktop (Tauri) planned from the same client. The desired visual reference is a modernized MTGO: three opponents use the upper table area, the local player owns the lower area, phases/priorities are explicit, and public zones can be inspected without leaking hidden information.
+ProsshTCG is a Commander simulator built for a four-player pod but architected for 2–8 seats. It targets the browser first, with Android (Capacitor) and desktop (Tauri) planned from the same client. The visual reference is a modernised MTGO: three opponents share the upper band, the local player owns the lower band, phases and priority are explicit, and public zones can be inspected without leaking hidden information.
 
-The required long-term product includes online rooms, profiles, avatars, rewards/tournaments, deck construction, a fully navigable card catalog, preconstructed Commander decks, wishlists/prices, and an authoritative rules engine. **It is not complete.**
+The long-term product still needs online rooms, profiles, rewards/tournaments, deck construction, a wishlist/price gallery and far more rules coverage. **It is not complete.**
+
+## What changed in this pass
+
+The previous build could not be played. Four defects made it unusable, all confirmed by running it:
+
+1. Priority was closed during `untap` and `cleanup` with no way to reopen it, so `passCommanderPriority` threw and the table **deadlocked twice per turn**. The only escape was a debug button that skipped a step outright.
+2. `advanceStep` set `stack: []`, so any spell on the stack vanished on a step change while `pendingSpells` kept its entry — a permanent desync.
+3. Only fully generic mana costs could be cast. In a real Commander deck that is almost nothing, so a hand was effectively dead.
+4. There was no combat, no damage, no state-based actions and no winner: 16 simulated turns left every player on 40 life. The bot in `commander-ai.ts` was never wired to the server.
+
+All four are fixed by a rewritten engine. `commander-game.ts` and `commander-ai.ts` were replaced by the modules below.
 
 ## Current verified state
 
 | Area | Implemented now | Evidence |
 | --- | --- | --- |
-| Client table | Four-seat layout: three public opponent battlefields on top; player commander, battlefield, hand and phase controls below. Responsive breakpoints exist. | `apps/client/src/main.ts`, `apps/client/src/styles.css` |
-| Card art | Actual card image URLs from linked Scryfall metadata render for hand, battlefield, commander, catalog and avatars. The app does not bundle/card-cache art files. | `data/catalog/prossh.sqlite` (generated, ignored) and `services/match-server/src/index.ts` |
-| Privacy | A player sees their own hand; opponents' library/hand contents are never present in the projected game view. Opponent public zones are visible. | `projectCommanderGame` in `packages/rules/src/commander-game.ts`; regression test |
-| Rules slice | 2–8 seats, 40 life, 100-card deck validation, commander removed to command zone, opening 7, draw handling, one land/main phase, generic-only spell casting, stack and all-player passing. | `packages/rules/src/commander-game.ts` and `commander-game.test.ts` |
-| Engine bot | A deterministic TypeScript bot advances full turns through the exact authoritative action functions, logs seed/action traces and asserts 100-card / command-zone / stack invariants. | `packages/rules/src/commander-ai.ts` and `commander-ai.test.ts` |
-| cEDH data | Local Scryfall catalog has previously imported 117,621 default-card printings; a verified four-deck cEDH pod exists when generated. | `tools/card_catalog/`, `tools/decks/import_cedh_pod.py` |
-| Precons | 190 Commander products / 19,000 card entries imported from MTGJSON and selectable in the UI to start a deterministic four-precon pod. | `tools/decks/import_commander_precons.py`, `/api/decks/precons`, `/api/matches/demo/precon` |
-| Regression matrix | 1,000 seeded, seat-rotated games were executed successfully in about 9 seconds. It asserts card conservation and commander-zone invariants. | `data/simulations/ai-matrix-last.json` (generated, ignored); `tools/simulator/run_ai_matrix.py` |
-| Current checks | `npm run check` and `npm test` passed after the current changes. Browser verification confirmed real card art, the AI status label, and a four-precon start. | Re-run the commands below; do not treat this table as a future guarantee. |
+| Turn structure | All twelve steps, with `untap` and `cleanup` resolving their turn-based actions automatically. A seat whose only legal move is passing is passed for it, so no window can stall. | `settle` in `packages/rules/src/engine.ts`; `engine.test.ts` → "never leaves the table without somebody able to act" |
+| Priority and stack | Circular passing, resolution one object at a time, priority back to the controller after casting, no step advance while the stack is occupied. | `applyPass` / `resolveTop`; `engine.test.ts` → "holds the spell on the stack while an opponent can still respond" |
+| Mana | Generic, colored, colorless, hybrid, monocolored hybrid, Phyrexian (life payment), snow-as-generic and `{X}` parsing. A backtracking solver decides which permanents to tap. | `packages/rules/src/mana.ts`, `planManaPayment`; `mana.test.ts` (12 cases) |
+| Casting | Any card whose printed cost the board can pay, at sorcery or instant speed, with targeting and fizzling when targets leave. | `applyCast`, `legalTargets`; `engine.test.ts` → "casting" |
+| Commander | Command-zone start, `{2}` tax per previous cast, return-to-command-zone on death, 21-damage elimination tracked per commander. | `commanderTax`, `movePermanentToZone`; `engine.test.ts` → "commander rules" |
+| Combat | Attack declaration with per-attacker defender choice, blocks, first/double strike sub-step, deathtouch, trample, lifelink, vigilance, menace, flying/reach restrictions, defender, haste, summoning sickness. | `computeCombatDamage`; `engine.test.ts` → "combat" (11 cases) |
+| State-based actions | Lethal damage, zero toughness, indestructible, legend rule, 0 life, empty-library draw, 21 commander damage, last player standing. | `applyStateBasedActions`; `engine.test.ts` → "state-based actions" |
+| Privacy | A projection contains the viewer's hand and nothing hidden from any other seat — not the cards, not their identifiers. | `packages/rules/src/projection.ts`; asserted in `engine.test.ts`, `real-decks.test.ts` and the engine matrix |
+| Bot | Plays only from the same `legalActions` list a human receives: lands, castables, attack and block heuristics, target selection. | `packages/rules/src/bot.ts` |
+| Server | Match registry with seat-bound secret tokens, bots driven between human decisions, per-seat projections, Socket.IO update notifications. | `services/match-server/src/matches.ts` |
+| Client | Full-viewport table, side rail (stack + legal actions), three opponents at full width, land/nonland rows oriented per seat, fanned hand, hover preview with Oracle text and coverage, toggleable log with per-seat colours and card links, mana pips, internal card pages. | `apps/client/src/main.ts`, `styles.css` |
+| Card data | 117,621 printings with rules fields (power/toughness/loyalty, produced mana, faces) and printing fields (promo, frame, finishes, set type) plus a precomputed `printing_rank`. | `tools/card_catalog/sync_scryfall.py` |
+| Catalog search | One row per card — the current plain reprint — with the printing count. Relevance: exact name, whole-word, then substring, ordered by reprint count. | `bestPrintingSelect` in `services/match-server/src/index.ts` |
+| Precons | 192 Commander deck products (2009–2026) grouped by set with set icons. Each card resolves to **that product's own printing** via MTGJSON's `scryfallId`. | `tools/decks/import_commander_precons.py`, `/api/decks/precons?grouped=1` |
 
-## Critical truth boundaries
+### Last verification run
 
-1. The client demo is a development test table, **not a legal public multiplayer game**. The Socket.IO transport only has a room-join skeleton. There is no auth, persistence, matchmaking, reconnect protocol, tournament system, or real remote player control yet.
-2. The authoritative TypeScript game slice only supports fully generic mana costs. It does not execute arbitrary Oracle text, colored mana, targets, responses, replacement effects, continuous effects/layers, state-based actions, combat assignment/blocking, commander tax/damage, or mulligans.
-3. `tools/simulator/simulate_cedh_pod.py` and `run_ai_matrix.py` use metadata/heuristic behavior. They are excellent regression pressure tests but do **not** prove that a real card effect was resolved correctly. Never report their win rates as meaningful game balance data.
-4. The precon `cover_art_uri` is a linked display-commander's Scryfall art crop, **not official product box art**. MTGJSON supplies no canonical distributable box-art URL in the imported deck feed. Preserve `cover_art_kind: "display_commander_art_crop"` until a licensed source is selected.
-5. Card data/images remain subject to upstream terms. The current strategy links to provider-hosted images on demand; do not bulk download, transform to WebP, mirror, or redistribute art without a rights review and provider permission.
+```text
+npm run check          rules build + rules/client/server typecheck   PASS
+npm run test           Vitest 5 files / 89 tests                     PASS
+npm run simulate:engine 200 seeded games in 5.99s                    PASS
+                       finished 115, unfinished 85, avg 54.34 turns
+                       0 invariant failures, 0 projection leaks
+```
+
+Browser smoke test at `http://localhost:5173`: a cEDH pod starts, lands and spells are cast from the hand, bots take their turns, combat resolves, the log shows coloured seat names and linked card names, and the card preview reports per-card rules coverage.
+
+## Truth boundaries — do not overstate these
+
+1. **Card text is mostly not executed.** `characteristics.ts` recognises a closed set of templates: draw N, gain N life, each opponent loses N life, "~ deals N damage to any target", damage to each opponent, destroy target creature, destroy all creatures, counter target spell. Over the current cEDH pod that is **83 of 400 cards fully covered**. Every other card plays as a real body with real types, power/toughness and combat keywords, and both the hand tooltip and the card page say so. Never claim "all cards work".
+2. **No activated abilities beyond mana, no triggered abilities, no ETB effects, no static/continuous effects, no layers, no counters on permanents, no tokens, no planeswalker loyalty, no mulligans.**
+3. **The bot is a heuristic, not a strong opponent.** Its win rates are not balance data.
+4. **There is no authentication, persistence, matchmaking or reconnect.** Matches live in one process's memory and are lost on restart. Seat tokens stop a client from claiming another seat; they are not a security system.
+5. **`cover_art_uri` on a precon is the display commander's Scryfall art crop, not official product box art.** MTGJSON publishes no distributable box-art URL and no rights-cleared source has been selected. Keep `cover_art_kind: "display_commander_art_crop"` until one is. The deck browser shows the set's Scryfall icon as the product mark for the same reason.
+6. **Only 100-card Commander deck products are imported.** "Commander Arsenal", "Commander Anthology" and similar are MTGJSON *Box Sets* — collections of singles, not decks — so they have no deck to play and are correctly absent.
+7. **Card data and images remain subject to upstream terms.** Images are linked from the provider on demand. Do not bulk download, re-encode or mirror art without a rights review.
+8. **The Python simulators (`simulate_cedh_pod.py`, `run_ai_matrix.py`) are metadata heuristics, not the game engine.** `npm run simulate:engine` is the real regression matrix; prefer it. The Python ones are kept only as cheap deck-plumbing smoke tests.
 
 ## Repository map
 
 ```text
-apps/client/                    Vite TypeScript client and board UI
-packages/rules/                 Pure deterministic TypeScript engine primitives
-  src/index.ts                  turn/priority/stack state
-  src/commander-game.ts         zones, projections, land/generic spell actions
-  src/*.test.ts                 Vitest regression suite
-services/match-server/          Fastify + Socket.IO server
-  src/index.ts                  REST APIs plus demo-table state
-tools/card_catalog/             Scryfall SQLite sync
-tools/decks/                    cEDH and MTGJSON Commander deck importers
-tools/simulator/                Python metadata regressions and AI matrix
-data/                           generated local catalog/decks/reports; gitignored
-docs/                           product, data, MTGO, AI and rules decisions
-.codex/config.toml              project-scoped TRL token-reduction configuration
+apps/client/                    Vite TypeScript client
+  src/main.ts                   table rendering, interaction, dialogs
+  src/styles.css                full-viewport layout and card styling
+packages/rules/                 authoritative engine (pure, deterministic)
+  src/mana.ts                   symbols, pools, payment solver
+  src/characteristics.ts        card profiles + the closed Oracle template set
+  src/engine.ts                 state, legal actions, stack, combat, SBAs
+  src/projection.ts             the per-seat security boundary
+  src/bot.ts                    bot policy over legal actions only
+  src/simulator.ts              coarse metadata simulator (legacy tooling)
+  src/*.test.ts                 89 Vitest specs
+services/match-server/
+  src/matches.ts                match registry, seat tokens, bot driving
+  src/index.ts                  REST + Socket.IO, catalog and deck endpoints
+tools/card_catalog/
+  sync_scryfall.py              full bulk import with rules + printing fields
+  enrich_catalog.py             backfill for a catalog built by the old schema
+tools/decks/                    cEDH and MTGJSON Commander importers, deck enricher
+tools/simulator/
+  run_engine_matrix.ts          seeded regression over the real engine
+  *.py                          legacy metadata smoke tests
+data/                           generated, gitignored
 ```
 
 ## Commands
 
-Run from repository root (`C:\Users\MP\Documents\00 Claude\ProsshTCG` on the current Windows host):
+From the repository root:
 
 ```powershell
 npm install
-npm run dev:server        # Fastify server, default http://localhost:8787
-npm run dev               # Vite client, default http://localhost:5173
-npm run check             # TypeScript checks (build rules first)
-npm test                  # 12 rules tests + Python simulator tests at last verification
+npm run dev:server        # Fastify + Socket.IO on http://localhost:8787
+npm run dev               # Vite client on http://localhost:5173
+npm run check             # build rules, then typecheck rules/client/server
+npm test                  # 89 Vitest specs + Python smoke tests
+npm run simulate:engine   # 200 seeded games through the real engine
 npm run build             # production builds
 ```
 
-Generate/rebuild data in this dependency order:
+Generate data in this order (a fresh clone has none):
 
 ```powershell
-npm run catalog:sync      # downloads/indexes Scryfall default_cards to data/catalog/prossh.sqlite
-npm run decks:sync        # 56 cEDH DDB profiles (supporting source)
-npm run decks:pod:sync    # actual four-deck cEDH pod resolved against local catalog
-npm run precons:sync      # all MTGJSON Commander Deck products resolved against catalog
-npm run simulate:cedh     # one real-list metadata smoke run
-npm run simulate:ai       # 1,000 seeded regression games; writes ai-matrix-last.json
+npm run catalog:sync      # ~117k printings into data/catalog/prossh.sqlite
+npm run decks:sync        # cEDH DDB profiles (supporting source)
+npm run decks:pod:sync    # the four-deck cEDH pod
+npm run precons:sync      # all 192 Commander precon products
 ```
 
-`data/` is deliberately ignored by Git due to size and generated provenance. A fresh clone needs the catalog sync before the deck/precon imports. If a service cannot find data, follow the order above instead of adding fake placeholders.
+`catalog:enrich` and `decks:enrich` exist only to upgrade data produced by the pre-2026-09-03 catalog schema. After a fresh `catalog:sync` they are unnecessary — the importers read the new columns directly.
 
-## HTTP surface implemented today
+## HTTP surface
 
-| Endpoint | Purpose | Important limitation |
+| Endpoint | Purpose | Limitation |
 | --- | --- | --- |
-| `GET /health` | server liveness | no auth |
-| `GET /api/catalog/search?q=` | local full-text-ish name/type lookup; falls back to Scryfall | minimum query length 2 |
-| `GET /api/catalog/named?name=` | one printing/linked image metadata | provider fallback only if local miss |
-| `GET /api/catalog/status` | local catalog availability | exposes local path for development only |
-| `GET /api/decks/active-pod` | imported 4-deck cEDH data | no player ownership/deck legality enforcement |
-| `GET /api/decks/precons` | paginated/searchable precon summaries | artwork is commander art crop, not a box image |
-| `GET /api/matches/demo?seat=0` | filtered table projection | one in-memory demo game only |
-| `POST /api/matches/demo/reset` | reset cEDH demo | deterministic dev seed |
-| `POST /api/matches/demo/precon` | `{ deckId? }`, start selected + next three precons | deterministic dev seed |
-| `POST /api/matches/demo/autopilot` | `{ turns? }`, at most 32 turn simulations | primitive-only heuristic, not a bot opponent service |
-| `POST /api/matches/demo/action` | `advance`, `pass`, `play-land`, `cast-generic` | unauthenticated seat 0 prototype only |
-| `GET /api/simulations/ai-matrix` | returns latest generated AI report | report must have been generated locally |
+| `GET /health` | liveness and match count | no auth |
+| `GET /api/catalog/search?q=` | one row per card, best printing; `t:type` supported | local catalog only unless it is missing |
+| `GET /api/catalog/card/:id` | internal card page with its printing list | falls back to Scryfall on a local miss |
+| `GET /api/catalog/named?name=` | one printing by exact name | provider fallback only |
+| `GET /api/catalog/status` | catalog availability | exposes a local path; development only |
+| `GET /api/decks/active-pod` | imported cEDH pod summary | no ownership or legality checks |
+| `GET /api/decks/precons?grouped=1` | products with set icons and their decks | cover art is commander art, not box art |
+| `POST /api/matches` | `{ mode: "cedh" \| "precon", deckId?, seed? }` → `{ matchId, seat, token, view }` | in-memory, unauthenticated |
+| `GET /api/matches/:id?token=` | that seat's projection | wrong token → 404 |
+| `POST /api/matches/:id/action` | `{ token, action }`; rejected unless that seat owes the decision | |
+| `POST /api/matches/:id/settings` | `{ token, autoPass }` | |
+| `GET /api/simulations/engine-matrix` | latest matrix report | must be generated locally |
 
-## How the current turn model works
+## How the engine is put together
 
-`packages/rules/src/index.ts` owns `MatchState`: ordered seats, active seat, priority seat, turn step, pass sequence, priority flag and public stack entries. `untap` and `cleanup` do not open priority. At other supported steps, each pass advances priority circularly. All seats passing with an empty stack advances the step; all passing with stack contents resolves only the top object and returns priority to the active player.
+`GameState` is immutable; every change goes through `applyAction(state, seat, action)`, which validates against `legalActions(state, seat)` and then calls `settle`.
 
-`packages/rules/src/commander-game.ts` wraps it in Commander zones. `createCommanderGame` requires exact 100-card inputs, removes a declared commander from the library and draws a private seven. `projectCommanderGame` is the security boundary: it exposes only the viewer's hand and counts for opponents' hidden zones.
+`settle` is the piece that makes the table playable. It loops until a player genuinely owes a decision: it applies state-based actions, prunes combat, resolves steps that never open priority, auto-submits attack/block declarations nobody can make, and auto-passes any seat whose only legal action is to pass. That is why the deadlocks are gone and why a spell nobody can respond to resolves without asking for four empty clicks.
 
-The present action set is intentionally narrow:
+`planManaPayment` decides which permanents to tap. Colored requirements are satisfied first from the floating pool, then from the least flexible untapped source that can produce the colour, so a dual land stays free for the requirement only it can cover; the rest is paid by tapping further sources until `payCost` validates the whole cost. Interchangeable sources share one search branch and a node budget guarantees termination.
 
-- `playLand`: active player, main phase, one land per turn.
-- `castGenericSpell`: active player, main phase, all mana symbols numeric only, taps sufficient generic sources and creates a stack object.
-- `passCommanderPriority`: resolves a supported spell to battlefield if permanent, or graveyard otherwise, after every player passes.
+## Recommended next sequence
 
-Do not extend this by parsing free-form Oracle text in the client. Add structured primitives and server-side legal action validation, then focused regression tests first.
+1. **Triggered abilities and ETB effects.** They are the single largest coverage gap: most Commander cards do something on entry. Model them as structured triggers with a real trigger queue, not text parsing, and grow the template set with a test per template.
+2. **Activated abilities beyond mana**, then counters on permanents and tokens.
+3. **Continuous effects and layers.** Needed before anything that pumps, grants keywords, or changes types can be trusted.
+4. **Persistence and identity.** Replace the in-memory registry with PostgreSQL/Redis, authenticated seats, event streams with versions, reconnects, and server-side priority timeouts.
+5. **Deck construction and the collection.** Build on `oracle_id`/`scryfall_id` and the structured columns; wishlist pricing is a separate opt-in feature and must always carry a source and refresh timestamp.
+6. **Precon box art.** Find a rights-cleared or licensed source, store provenance and licence per asset, and swap only `cover_art_uri`.
+7. **Rulings text.** Scryfall exposes `/cards/:id/rulings`; if the preview should show current rulings, add a rulings table to the catalog sync and serve it locally rather than calling out per hover.
 
-`packages/rules/src/commander-ai.ts` is the first production-shaped bot seam. `runCommanderBotTurn` advances only via the real action functions, and `simulateCommanderBots` replays a multi-seat game from an explicit seed. Its policy is deliberately narrow: play one legal land, cast supported fully-generic cards, otherwise pass. It produces serializable action traces and checks 100-card ownership, one-command-zone object per player, life integrity and stack/pending-spell agreement before each decision. It is **not yet connected to the HTTP demo endpoint** and it does not understand unsupported card mechanics.
+## Working style constraints
 
-## Recommended next implementation sequence
-
-1. **Finish an authoritative action framework.** Model action intents, legal-action generation per seat, event log/versioning, costs, choices and deterministic replay. Bind it to authenticated server seats before building more UI buttons.
-2. **Add a real deterministic bot policy inside `packages/rules`.** It must select only from the exact legal-action list used by human players, and emit a seed + action trace. Do not use the Python metadata test as the game bot.
-3. **Build rules by small verified primitives.** Begin with colored mana/value pools, mana abilities, casting costs, permanent/instant resolution, state-based actions, triggers, then targeting and combat. Every primitive needs focused tests plus matrix coverage. Cards whose effects lack coverage must remain disabled or clearly flagged.
-4. **Replace demo in-memory state with persistent rooms.** Add authenticated identities, PostgreSQL/Redis, match versions/event streams, seat assignment/randomization, reconnects and server-side timeout/priority policies. Never allow the client to supply an arbitrary seat.
-5. **Continue UI from the current MTGO-inspired foundation.** Preserve three opponent fields above and the player area below. Improve card density with overlap/zoom/expand controls, graveyard/exile rails, responsive orientation and accessible touch interactions. Do not reintroduce a giant empty central game panel.
-6. **Implement deck and collection features.** Card relationships should use structured metadata (`oracle_id`, `scryfall_id`, types, subtypes, colors, set, artist) rather than text scraping. Wishlist pricing is a separate, opt-in data feature and must never be shown as a live price guarantee without source/refresh timestamps.
-7. **Precon artwork decision.** Find a rights-cleared or officially licensed product-art source. Store provenance/license per asset and swap only `cover_art_uri`; do not scrape/mirror random web images.
-
-## Data provenance and design references
-
-- Cards: Scryfall bulk/default-card data, via `tools/card_catalog/sync_scryfall.py`. See `docs/CARD_CATALOG.md`.
-- Competitive decks: cEDH Decklist Database import/profile data; active four-deck list comes from the importer. See `docs/CEDH_DECKS.md`.
-- Commander precons: MTGJSON `DeckList` + individual deck files. See `docs/PRECONS.md`.
-- MTGO layout: use only as interaction/layout inspiration. See `docs/MTGO_LAYOUT.md`.
-- MTGO SDK: do not promise account sync. It is not an OAuth/browser integration and should not be used for game automation. See `docs/MTGO_INTEGRATION.md`.
-- XMage/Argentum: study as implementation references; do not copy code/data blindly or claim their AI is embeddable in this architecture.
-- AI regression limitations: `docs/AI_TESTING.md` and `docs/SIMULATION.md`.
-
-## Last verification snapshot
-
-After adding the AI matrix endpoint/status label, the following all passed:
-
-```text
-npm run simulate:ai
-  AI matrix passed: 1000 games in 9.089s; unfinished=72
-
-npm test
-  Vitest: 4 files / 14 tests passed
-  Python: simulator tests 2 passed, AI matrix test 1 passed
-
-npm run check
-  rules build, client TypeScript check, match-server TypeScript check passed
-```
-
-Browser smoke test at `http://localhost:5173` confirmed 24 real image elements in the cEDH table, `AI 1000/1000 passed`, and that selecting **Counterpunch** starts a four-precon pod with Counterpunch and Devour for Power present. Repeat this test after UI/server changes; an old Vite page can briefly show a stale failed request after server hot reload, so reload before diagnosing a data regression.
-
-## Working style constraints for continuation
-
-- Keep user-facing final/status replies in Spanish unless the user asks otherwise. English is okay inside code/docs.
-- Use `apply_patch` for edits. Do not discard uncommitted changes; the whole project is currently untracked/initial in Git, so `git diff` does not represent the actual work.
-- Prefer `rg` for file search. Keep generated `data/` outside source control unless the repository owner changes that policy.
-- Do not claim the game is "fully playable" or cards "all work" until the rules coverage and authenticated online flows actually prove it.
-- Treat new card images and external data as legal/provenance decisions, not merely implementation conveniences.
+- Keep user-facing status and final replies in Spanish. English is fine inside code and docs.
+- Update this file after every material functional change: source location, verified behaviour, remaining boundary, exact validation command and result.
+- Generated `data/` stays out of Git. If a service cannot find data, run the sync order above instead of adding placeholders.
+- Do not claim the game is "fully playable" or that "all cards work" until rules coverage and authenticated online flows actually prove it.
+- Treat new card images and external data as licence and provenance decisions, not implementation conveniences.

@@ -74,10 +74,19 @@ describe.skipIf(!hasPod)("imported cEDH pod", () => {
 
   it("never puts an opponent's hidden cards into a projection", () => {
     const game = createGame(toInputs(load(podPath)), { seed: 5 });
-    const serialized = JSON.stringify(projectGame(game, 0));
+    const exposed = new Set<string>();
+    const collect = (value: unknown): void => {
+      if (Array.isArray(value)) { for (const entry of value) collect(entry); return; }
+      if (!value || typeof value !== "object") return;
+      const record = value as Record<string, unknown>;
+      if (typeof record.instance_id === "string") exposed.add(record.instance_id);
+      for (const entry of Object.values(record)) collect(entry);
+    };
+    collect(projectGame(game, 0));
     for (let seat = 1; seat < game.players.length; seat += 1) {
-      for (const card of game.players[seat]!.hand) expect(serialized).not.toContain(card.instance_id);
-      for (const card of game.players[seat]!.library.slice(0, 20)) expect(serialized).not.toContain(card.instance_id);
+      for (const card of [...game.players[seat]!.hand, ...game.players[seat]!.library]) {
+        expect(exposed.has(card.instance_id)).toBe(false);
+      }
     }
   });
 });
