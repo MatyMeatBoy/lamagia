@@ -376,6 +376,10 @@ supports deterministic bounded card/primitives batches.
   `git cherry-pick` followed by the full check/test/simulation gate. See
   `docs/AI_CONTRIBUTOR.md` for the copy-paste worker prompt and recovery path
   for conflicts.
+- `docs/COOPERATIVE_BATCH_PROMPT.md` is the short prompt for fresh workers.
+  The Oracle IR now persists reusable `operands` (actions, zones, card types
+  and subtypes), so Equipment, battlefield and similar nouns are not re-learned
+  for every card; its Python regression suite passes 10 tests.
 
 Validation: 158 rules tests, workspace TypeScript checks, simulator smoke tests
 and 9 Python compiler regressions pass. C13 is 119/356 unique cards implemented
