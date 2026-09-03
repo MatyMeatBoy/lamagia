@@ -26,6 +26,9 @@ one entry from `data/rules/oracle-clusters.json`; it already carries stable
 `oracle_id`s and twenty-card commit batch counts. To measure the local speedup,
 run `npm run rules:oracle:benchmark`.
 
+For the current C13 sprint, use `npm run rules:oracle:c13` to generate the same
+queue from only the 356 cards in that set.
+
 Coverage map: [docs/SET_COVERAGE.md](docs/SET_COVERAGE.md) and the web
 “Implementation by set” view. The project is being renamed from `ProsshTCG`
 to `lamagia`; use the new repository slug once GitHub finishes the rename.

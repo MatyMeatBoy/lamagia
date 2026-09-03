@@ -26,6 +26,11 @@ familias, objetivos, cantidades y texto no reconocido. También genera
 se ejecuta directamente: cada vector aprobado debe convertirse en un tipo
 cerrado de `characteristics.ts`, citar CR y recibir un escenario de prueba.
 
+Para avanzar C13 sin recompilar todo el histórico usa
+`npm run rules:oracle:c13`. El mismo parser genera una IR y cola aisladas de
+las 356 cartas del set; las primitivas aprobadas siguen siendo globales y no se
+duplican por edición.
+
 La clasificación puede procesar muchas cartas/primitivas independientes en
 lotes con `--workers 8 --memory-budget-gb 2 --batch-size 256` (se puede bajar a
 `--workers 1 --backend threads` para depurar). El backend por defecto usa

@@ -338,10 +338,17 @@ def compile_catalog(
     estimated_worker_mb: int = 256,
     backend: str = "processes",
     batch_size: int = 256,
+    set_code: str | None = None,
 ) -> list[dict[str, Any]]:
     database = sqlite3.connect(f"file:{catalog}?mode=ro", uri=True)
     database.row_factory = sqlite3.Row
-    rows = database.execute("SELECT id, oracle_id, name, mana_cost, type_line, oracle_text FROM cards ORDER BY printing_rank DESC, released_at DESC, id")
+    query = "SELECT id, oracle_id, name, mana_cost, type_line, oracle_text FROM cards"
+    parameters: tuple[str, ...] = ()
+    if set_code:
+        query += " WHERE lower(set_code) = lower(?)"
+        parameters = (set_code.strip(),)
+    query += " ORDER BY printing_rank DESC, released_at DESC, id"
+    rows = database.execute(query, parameters)
     seen: set[str] = set()
     # Detach rows from SQLite before handing them to worker processes.
     unique_rows: list[dict[str, Any]] = []
@@ -374,6 +381,7 @@ def compile_catalog(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalog", type=Path, required=True)
+    parser.add_argument("--set-code", help="Optional set code to compile only that edition (for example: c13).")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--prompt-output", type=Path)
     parser.add_argument("--cluster-output", type=Path, help="Optional deterministic JSON queue grouped by reusable primitive cluster.")
@@ -387,13 +395,14 @@ def main() -> None:
     if not args.catalog.exists():
         raise SystemExit("No existe el catálogo local; ejecuta npm run catalog:sync primero.")
     worker_count = effective_worker_count(args.workers, args.memory_budget_gb, args.estimated_worker_mb)
-    cards = compile_catalog(args.catalog, args.workers, args.memory_budget_gb, args.estimated_worker_mb, args.backend, args.batch_size)
+    cards = compile_catalog(args.catalog, args.workers, args.memory_budget_gb, args.estimated_worker_mb, args.backend, args.batch_size, args.set_code)
     counts = Counter(card["status"] for card in cards)
     clusters = primitive_cluster_inventory(cards, args.commit_card_limit)
     payload = {
         "format": "prossh-oracle-effect-ir/v2",
         "generated_at": datetime.now(UTC).isoformat(),
         "source": "local normalized catalog; Oracle text is display data, not executable code",
+        "set_code": args.set_code,
         "card_count": len(cards),
         "status_counts": dict(sorted(counts.items())),
         "primitive_cluster_count": len(clusters),

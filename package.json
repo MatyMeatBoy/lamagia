@@ -25,6 +25,7 @@
     "rules:pool:sync": "python tools/card_catalog/build_popular_pool.py --catalog data/catalog/prossh.sqlite --output data/rules/popular-card-pool.json --count 1500",
     "rules:compile": "python tools/rules/compile_card_rules.py --catalog data/catalog/prossh.sqlite --output data/rules/card-rules.json",
     "rules:oracle:compile": "python tools/rules/compile_oracle_effects.py --catalog data/catalog/prossh.sqlite --output data/rules/oracle-effects.json --prompt-output data/rules/oracle-review.md --cluster-output data/rules/oracle-clusters.json",
+    "rules:oracle:c13": "python tools/rules/compile_oracle_effects.py --catalog data/catalog/prossh.sqlite --set-code c13 --output data/rules/oracle-effects-c13.json --prompt-output data/rules/oracle-review-c13.md --cluster-output data/rules/oracle-clusters-c13.json",
     "rules:oracle:benchmark": "python tools/rules/benchmark_oracle_workflow.py --catalog data/catalog/prossh.sqlite --output data/rules/oracle-benchmark.json",
     "rules:test:oracle": "python tools/rules/test_compile_oracle_effects.py",
     "rules:coverage:c13": "python tools/rules/check_precon_coverage.py --set-code C13 --output data/rules/coverage-c13.md",
