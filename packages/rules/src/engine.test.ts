@@ -39,6 +39,7 @@ const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature —
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
 const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Tap target creature." });
 const UNTAP_SPELL = () => make({ name: "Tactical Untap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Untap target permanent." });
+const MILL_SPELL = () => make({ name: "Gravewind", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player mills three cards." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
@@ -1117,6 +1118,21 @@ describe("activated abilities", () => {
     game = applyAction(game, 0, { type: "cast", cardId: untapCard.instance_id, targets: [{ kind: "permanent", instanceId: creature.instance_id }] });
     game = applyAction(game, 0, { type: "pass" });
     expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(false);
+  });
+
+  it("mills only the chosen player's library and preserves library order", () => {
+    let game = readyOnBoard([SWAMP(), SWAMP()], { hold: true });
+    const top = [BEAR(), FOREST(), ISLAND()];
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [MILL_SPELL()], "mill-hand") }));
+    game = stage(game, 1, (player) => ({ library: toHand(1, top, "mill-library") }));
+    const card = game.players[0]!.hand[0]!;
+    expect(cardProfile(card).effects).toContainEqual({ kind: "mill-target-player", amount: 3 });
+    const before = game.players[1]!.library.length;
+    game = applyAction(game, 0, { type: "cast", cardId: card.instance_id, targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.library).toHaveLength(before - 3);
+    expect(game.players[1]!.graveyard.slice(-3).map((entry) => entry.name)).toEqual(["Grizzly Bears", "Forest", "Island"]);
+    expect(game.players[0]!.graveyard).toHaveLength(1);
   });
 
   it("puts Equip on the stack, grants Behemoth Sledge bonuses, and detaches when the creature leaves", () => {

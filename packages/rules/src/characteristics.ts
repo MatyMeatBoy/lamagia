@@ -130,6 +130,7 @@ export type SpellEffect =
   | { readonly kind: "draw"; readonly amount: number }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
+  | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
@@ -836,6 +837,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-player-draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-player-draw", amount: "X" }, target: "none" };
+  }
+  if ((match = /^Target player mills (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "mill-target-player", amount }, target: "player" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "mill-target-player", amount: "X" }, target: "player" };
   }
   if ((match = /^~ deals (\w+) damage to each (other )?creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
