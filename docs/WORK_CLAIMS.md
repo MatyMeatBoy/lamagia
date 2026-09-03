@@ -18,7 +18,8 @@ feature name.
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
 | `rules-land-search` | Landcycling variants and land-subtype search resolution | `feat/activated-abilities-and-triggers` | active | 2026-09-03 |
-| `rules-equipment` | Equip actions, attachment state, and Equipment static bonuses | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `rules-equipment` | Equip actions, attachment state, and Equipment static bonuses | `codex/c13-equipment-cluster` | merged (`f61a096`) | 2026-09-03 |
+| `rules-next-batch` | Reserved for the next disjoint C13 primitive assigned after Equipment | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 
 ## Claim format
 
