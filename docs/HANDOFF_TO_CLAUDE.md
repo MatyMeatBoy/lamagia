@@ -467,3 +467,16 @@ resolution, untap resolution, and reuse of the generic cast path.
 
 Validation: `npm run check` PASS; `npm test` PASS (151 rules tests, 6 skipped,
 simulator and oracle tests PASS).
+
+### Cooperative C13 cluster: targeted Mill
+
+The branch adds `Target player mills N cards` as a reusable zone-change
+primitive. It moves only the selected player's top cards to that player's
+graveyard, preserves order, and uses the existing player target and stack
+resolution path. The scope excludes milling each opponent, replacement
+effects, and cards that inspect the milled cards. This follows CR 701.13.
+Scenario coverage verifies the target metadata, exact count, order, and that
+the caster's zones are untouched.
+
+Validation: `npm test --workspace=@prossh/rules -- --run
+packages/rules/src/engine.test.ts` PASS (152 passed, 6 skipped).

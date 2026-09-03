@@ -711,6 +711,19 @@ function drawCards(state: GameState, seat: SeatId, amount: number): GameState {
   return next;
 }
 
+/** Moves up to `amount` cards from the top of a library to its owner's graveyard (CR 701.13). */
+function millCards(state: GameState, seat: SeatId, amount: number): GameState {
+  if (amount <= 0) return state;
+  const player = playerAt(state, seat);
+  const milled = player.library.slice(0, amount);
+  if (!milled.length) return logged(state, seat, `${player.name} no tiene cartas para moler.`);
+  return withPlayer(logged(state, seat, `${player.name} muele ${milled.length} carta(s).`), seat, (current) => ({
+    ...current,
+    library: current.library.slice(milled.length),
+    graveyard: [...current.graveyard, ...milled]
+  }));
+}
+
 /** Moves a permanent off the battlefield, honouring the commander-zone replacement. */
 function movePermanentToZone(state: GameState, permanent: Permanent, zone: "graveyard" | "exile"): GameState {
   const ownerSeat = permanent.card.owner;
@@ -982,6 +995,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       let next = state;
       for (const player of state.players) if (!player.lost) next = drawCards(next, player.seat, effectAmount(effect.amount, object));
       return next;
+    }
+    case "mill-target-player": {
+      const target = object.targets[0];
+      return target?.kind === "player" ? millCards(state, target.seat, effectAmount(effect.amount, object)) : state;
     }
     case "gain-life": {
       const amount = effectAmount(effect.amount, object);
