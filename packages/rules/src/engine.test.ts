@@ -52,6 +52,7 @@ const EACH_LIFE_SPELL = () => make({ name: "Common Blessing", type_line: "Sorcer
 const TARGET_LOSS_SPELL = () => make({ name: "Shared Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player loses 3 life." });
 const EACH_LOSS_SPELL = () => make({ name: "Common Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Each player loses 1 life." });
 const X_OPPONENT_LOSS = () => make({ name: "Scalable Burden", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Each opponent loses X life." });
+const X_DRAW = () => make({ name: "Scalable Insight", type_line: "Sorcery", mana_cost: "{X}{U}", cmc: 1, oracle_text: "Draw X cards." });
 const GRAVEYARD_RETURN = () => make({ name: "Unearth Memory", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Return target creature card from your graveyard to your hand." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
@@ -1030,6 +1031,14 @@ describe("triggered abilities", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 3 });
     expect(game.players[0]!.life).toBe(40);
     expect(game.players[1]!.life).toBe(37);
+  });
+
+  it("scales its draw effect from the spell's X value", () => {
+    const profile = profileOf(X_DRAW());
+    expect(profile.effects[0]).toMatchObject({ kind: "draw", amount: "X" });
+    let game = readyToCast([X_DRAW()], [ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
+    expect(game.players[0]!.hand).toHaveLength(2);
   });
 
   it("keeps a trigger's target out of the cost of casting its source", () => {

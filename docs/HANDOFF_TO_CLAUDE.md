@@ -660,6 +660,17 @@ The scope excludes variable costs with additional non-mana effects.
 Validation: targeted engine tests PASS (168 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: X-scaled draw
+
+The branch extends the base `Draw X cards` primitive to consume the announced
+spell X value at resolution. It reuses the existing deterministic draw path
+and keeps the spell card out of the drawn hand. This follows CR 107.3 and
+121.1. Scenario coverage verifies parser metadata and a resolved X=2 draw.
+The scope excludes variable draw replacement effects and hand-size choices.
+
+Validation: targeted engine tests PASS (169 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals

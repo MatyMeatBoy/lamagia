@@ -128,7 +128,7 @@ export interface TokenDefinition {
 
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
-  | { readonly kind: "draw"; readonly amount: number }
+  | { readonly kind: "draw"; readonly amount: number | "X" }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number }
@@ -824,6 +824,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Draw (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "draw", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw", amount: "X" }, target: "none" };
   }
   if ((match = /^You gain (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);

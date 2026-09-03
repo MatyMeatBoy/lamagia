@@ -1009,7 +1009,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
   const controller = object.controller;
   const sourceName = object.card.name;
   switch (effect.kind) {
-    case "draw": return drawCards(state, controller, effect.amount);
+    case "draw": return drawCards(state, controller, effectAmount(effect.amount, object));
     case "draw-target-player": {
       const target = object.targets[0];
       return target?.kind === "player" ? drawCards(state, target.seat, effectAmount(effect.amount, object)) : state;
