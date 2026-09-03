@@ -789,6 +789,11 @@ describe("activated abilities", () => {
     // ...but adding mana is never the decision that stops the game.
     expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(false);
   });
+
+  it("keeps non-mana activated abilities as smart-priority stops", () => {
+    const game = readyOnBoard([SIGNAL_PEST(), ISLAND(), ISLAND()]);
+    expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(true);
+  });
 });
 
 

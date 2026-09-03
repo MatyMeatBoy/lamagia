@@ -2109,23 +2109,22 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
 /**
  * True when the seat has something to decide beyond passing.
  *
- * Two activation families are deliberately excluded from "something to decide",
+ * Mana abilities are deliberately excluded from "something to decide",
  * because counting them would stop the table in every priority window:
  *
  * - Mana abilities. Floating mana achieves nothing on its own, and the payment
  *   solver taps sources automatically when a cost is actually paid, so holding
  *   priority to add mana is never the decision a player owes.
- * - Non-mana activations outside the controller's own sorcery-speed window.
- *   They stay listed in `legalActions` and remain legal at instant speed, but a
- *   seat with `autoPass` on is not interrupted for them. This is a pacing
- *   heuristic, not a rules restriction, and it is why a bot with a fetch land
- *   is asked in its main phase instead of at every opponent step.
+ * Non-mana activations are real smart-priority stops even outside sorcery
+ * speed. This preserves narrow response windows such as cracking a fetch land
+ * or activating a permanent in response to an opponent's spell (CR 117.1b,
+ * 602.1), while mana is still produced by the payment solver when needed.
  */
 export function hasRealChoice(state: GameState, seat: SeatId): boolean {
   return legalActions(state, seat).some((entry) => {
     if (entry.action.type === "pass" || entry.action.type === "concede") return false;
     if (entry.action.type === "activate-mana") return false;
-    if (entry.action.type === "activate") return sorcerySpeed(state, seat);
+    if (entry.action.type === "activate") return true;
     return true;
   });
 }
