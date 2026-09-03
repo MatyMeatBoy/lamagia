@@ -43,6 +43,7 @@ const MILL_SPELL = () => make({ name: "Gravewind", type_line: "Sorcery", mana_co
 const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target creature spell." });
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
+const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
@@ -624,6 +625,20 @@ describe("casting", () => {
     expect(grown.counters["+1/+1"]).toBe(1);
     expect(powerOf(grown, game)).toBe(3);
     expect(toughnessOf(grown, game)).toBe(3);
+  });
+
+  it("lets the targeted player choose the card discarded from their hand", () => {
+    let game = readyToCast([DISCARD_SPELL()], [SWAMP(), SWAMP()], [BEAR(), FLIER()]);
+    expect(profileOf(DISCARD_SPELL()).effects).toContainEqual({ kind: "discard-target-player", amount: 1 });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 1, remaining: 1 });
+    const options = legalActions(game, 1).filter((entry) => entry.action.type === "choose-discard");
+    expect(options.map((entry) => entry.cardId)).toEqual(expect.arrayContaining(["foe-0", "foe-1"]));
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "foe-1" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears"]);
+    expect(game.players[1]!.graveyard.at(-1)?.name).toBe("Storm Crow");
   });
 
   it("lets Lightning Bolt target a creature as well as a player", () => {

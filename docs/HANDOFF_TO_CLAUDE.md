@@ -504,3 +504,15 @@ resolution, and both P/T values after a resolved counter.
 
 Validation: `npm run check` PASS; targeted engine tests PASS (154 passed, 6
 skipped). Full `npm test` should be rerun by the integrator after merge.
+
+### Cooperative C13 cluster: target-player discard
+
+The branch adds `Target player discards a card` with a server-side pending
+choice. The affected player sees only their own hand and chooses the card;
+the chosen card then moves to that player's graveyard. No deterministic card
+selection is hidden behind the UI. This follows CR 701.8 and 400.1. Scenario
+coverage verifies the pending seat, both visible choices, selected-card
+movement, and completion of the choice.
+
+Validation: `npm run check` PASS; targeted engine tests PASS (155 passed, 6
+skipped). Full `npm test` should be rerun by the integrator after merge.
