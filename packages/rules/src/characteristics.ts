@@ -595,6 +595,9 @@ function recognizeText(text: string): RecognizedText {
   let unmatched = 0;
 
   for (const line of body) {
+    // Replacement text for entering tapped is executed by `parseEntersTapped`
+    // before priority opens; it is not an unresolved spell effect.
+    if (/^~\s+enters\s+tapped(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;

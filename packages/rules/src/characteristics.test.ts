@@ -80,6 +80,10 @@ describe("enters tapped", () => {
   it("detects a plain tapped land", () => { expect(rule("Test Land enters tapped.\n{T}: Add {W} or {U}.").kind).toBe("tapped"); });
   it("detects a fast land condition", () => { expect(rule("Test Land enters tapped unless you control two or fewer other lands.")).toEqual({ kind: "unless-few-lands", max: 2 }); });
   it("detects a shock land condition", () => { expect(rule("As Test Land enters, you may pay 2 life. If you don't, it enters tapped.")).toEqual({ kind: "unless-pay-life", life: 2 }); });
+  it("does not flag an entering-tapped replacement already handled by the profile", () => {
+    const profile = cardProfile(card({ name: "Test Guildgate", type_line: "Land — Gate", oracle_text: "This land enters tapped.\n{T}: Add {W} or {U}." }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("effect recognition", () => {
