@@ -611,3 +611,15 @@ replacement effects.
 
 Validation: targeted engine tests PASS (164 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
+
+### Cooperative C13 cluster: any-creature combat damage triggers
+
+The branch adds the reusable trigger grammar for `Whenever a creature deals
+combat damage to a player`. It maps to the existing combat-damage event and
+the existing `any-creature` subject, so no card-name exception or second damage
+pipeline is introduced. This follows CR 603.2 and 510.2. Scenario coverage
+verifies the printed line resolves to a draw effect. The scope excludes
+noncombat damage and conditional/intervening-if clauses.
+
+Validation: targeted engine tests PASS (164 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.

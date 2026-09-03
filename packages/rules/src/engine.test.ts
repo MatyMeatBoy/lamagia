@@ -141,6 +141,10 @@ const RAIDER = () => make({
   name: "Bloodthirst Raider", type_line: "Creature — Orc", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2",
   oracle_text: "Whenever Bloodthirst Raider attacks, Bloodthirst Raider deals 1 damage to any target."
 });
+const CREATURE_COMBAT_DRAWER = () => make({
+  name: "Combat Chronicler", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
+  oracle_text: "Whenever a creature deals combat damage to a player, draw a card."
+});
 const UPKEEP_SAGE = () => make({
   name: "Dawn Sage", type_line: "Creature — Human Wizard", mana_cost: "{2}{W}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "At the beginning of your upkeep, you gain 2 life."
@@ -890,6 +894,7 @@ describe("triggered abilities", () => {
     expect(profileOf(WATCHER()).triggers[0]).toMatchObject({ event: "dies", subject: "another-creature-you-control" });
     expect(profileOf(RAIDER()).triggers[0]).toMatchObject({ event: "attacks", subject: "self", targetKind: "any" });
     expect(profileOf(UPKEEP_SAGE()).triggers[0]).toMatchObject({ event: "upkeep", subject: "you" });
+    expect(profileOf(CREATURE_COMBAT_DRAWER()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", effect: { kind: "draw", amount: 1 } });
   });
 
   it("raises life-gained once and resolves a source counter trigger", () => {

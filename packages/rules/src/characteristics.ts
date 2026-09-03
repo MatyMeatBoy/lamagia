@@ -781,6 +781,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", pattern: /^whenever\s+an\s+artifact\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
+  { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
 
   // A player is the subject.
   { event: "spell-cast", subject: "you", pattern: /^whenever\s+you\s+cast\s+a\s+spell,?\s*(.+)$/i },
