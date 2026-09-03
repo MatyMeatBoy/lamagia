@@ -54,6 +54,10 @@ const CROSIS_CHARM = () => make({
   name: "Crosis's Charm", type_line: "Instant", mana_cost: "{U}{B}{R}", cmc: 3,
   oracle_text: "Choose one —\n• Return target permanent to its owner's hand.\n• Destroy target nonblack creature. It can't be regenerated.\n• Destroy target artifact."
 });
+const LANDFALL_BEAST = () => make({
+  name: "Landfall Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "4", toughness: "4",
+  oracle_text: "Landfall — Whenever a land you control enters, create a 4/4 green Beast creature token."
+});
 const UNSUMMON = () => make({ name: "Unsummon", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Return target creature to its owner's hand." });
 const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Fireball deals X damage to any target. It costs {1} more to cast for each target beyond the first." });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
@@ -658,6 +662,15 @@ describe("casting", () => {
     expect(destroy?.requiresTarget).toBe("artifact");
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 2, targets: [{ kind: "permanent", instanceId: ring.instance_id }] });
     expect(game.players[1]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+
+  it("reuses the landfall trigger subject when a land enters", () => {
+    let game = readyToCast([LANDFALL_BEAST(), FOREST()], [FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Landfall Beast")).toBe(true);
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Beast")).toHaveLength(1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Beast")?.card).toMatchObject({ power: "4", toughness: "4", type_line: "Creature — Beast" });
   });
 
   it("exiles a selected graveyard and returns any selected permanent to its owner", () => {

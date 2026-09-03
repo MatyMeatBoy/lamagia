@@ -132,9 +132,9 @@ never remove a card's own printed one.
 | Cards with a payable, resolvable activated ability | 0 (feature did not run) | 670 |
 | Cards with a recognised triggered ability | 87 | 1,185 |
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
-| Catalog cards fully implemented | 5,151 | 6,050 |
-| …of those, with non-empty Oracle text | 2,090 | 2,964 |
-| C13 unique cards fully implemented | — | 116 / 356 (240 pending) |
+| Catalog cards fully implemented | 5,151 | 6,067 |
+| …of those, with non-empty Oracle text | 2,090 | 2,981 |
+| C13 unique cards fully implemented | — | 118 / 356 (238 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
 
 Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
@@ -167,7 +167,7 @@ Secret Lair and other sets, and lists each edition’s pending cards for
 contributors. The client exposes the same report as the “Cobertura” chart and
 loads pending IDs only when an edition is opened.
 
-### 7. Bounded primitive batches and modal removal effects
+### 7. Bounded primitive batches and reusable trigger/modal effects
 
 - `tools/rules/compile_oracle_effects.py` splits independent card/primitives
   into deterministic bounded process batches. The review profile is 5 workers
@@ -179,6 +179,14 @@ loads pending IDs only when an edition is opened.
 - Added reusable exact target families for artifact, enchantment, land and
   player-or-planeswalker removal, plus the artifact/creature/enchantment board
   sweep. Crosis Charm and Dromar’s Charm are scenario-tested.
+- Landfall and artifact-creature combat-damage triggers reuse the existing
+  enters/deals-damage event bus; Rampaging Baloths and Grazing Gladehart are
+  now covered by the same trigger subject rather than card-specific code.
+- The Python IR emits stable `primitive_cluster` keys and a grouped review
+  queue so contributors can implement one primitive across many cards.
+- Supported keyword-only clauses are removed from the review queue; the latest
+  full IR therefore reduced actionable pending entries from 22,678 to 18,254
+  without changing executable-card coverage.
 
 ## Current verified state
 
@@ -211,13 +219,13 @@ loads pending IDs only when an edition is opened.
 
 ```text
 npm run check           rules build + rules/client/server typecheck        PASS
-npm test                Vitest 5 files / 150 tests + Python smoke tests    PASS
+npm test                Vitest 5 files / 152 tests + Python smoke tests    PASS
 npm run simulate:engine 200 seeded games in 7.22s                          PASS
                         finished 141, unfinished 59, avg 51.63 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 6,050 fully implemented         PASS
-npm run rules:set:coverage  708 editions; 14.2% membership coverage        PASS
+npm run rules:engine:export  38,711 cards; 6,067 fully implemented         PASS
+npm run rules:set:coverage  708 editions; 14.3% membership coverage        PASS
 ```
 
 The matrix now finishes 141 of 200 games (was 105 before activations and 100
@@ -338,9 +346,9 @@ target restrictions, player-or-planeswalker targets, and the
 artifact/creature/enchantment board sweep. `compile_oracle_effects.py` also
 supports deterministic bounded card/primitives batches.
 
-Validation: 150 rules tests, workspace TypeScript checks, simulator smoke tests
-and 6 Python compiler regressions pass. C13 is 116/356 unique cards implemented
-(32.6%); generated coverage remains in `data/rules/coverage-c13.md`.
+Validation: 152 rules tests, workspace TypeScript checks, simulator smoke tests
+and 9 Python compiler regressions pass. C13 is 118/356 unique cards implemented
+(33.1%); generated coverage remains in `data/rules/coverage-c13.md`.
 
 The Oracle compiler now accepts `--workers`, `--backend`, `--batch-size`,
 `--memory-budget-gb`, and `--estimated-worker-mb`. Its default five-process
@@ -355,7 +363,7 @@ unbounded pool.
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
 general; what limits coverage is the **effect vocabulary** they resolve into.
 1,185 cards have a recognised trigger and 670 a recognised activation, but only
-6,050 of 38,711 cards are fully implemented, because most printed effects are
+6,067 of 38,711 cards are fully implemented, because most printed effects are
 still outside `SpellEffect`.
 
 1. **Widen `SpellEffect`, one template plus one test at a time.** The highest

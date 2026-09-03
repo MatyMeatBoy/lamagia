@@ -57,6 +57,8 @@ WORD_NUMBERS = {
 }
 CARD_TYPES = {"land", "creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "battle", "kindred"}
 CRITERION_NOISE = {"basic", "card", "permanent", "spell", "with", "that", "whose", "where", "named", "converted", "mana", "power", "toughness"}
+SUPPORTED_KEYWORDS = ("flying", "reach", "first strike", "double strike", "deathtouch", "trample", "vigilance", "lifelink", "menace", "defender", "haste", "indestructible", "hexproof", "shroud", "flash")
+KEYWORD_ONLY_RE = re.compile(r"^(?:" + "|".join(re.escape(keyword) for keyword in SUPPORTED_KEYWORDS) + r")(?:\s*,\s*(?:" + "|".join(re.escape(keyword) for keyword in SUPPORTED_KEYWORDS) + r"))*\.?$", re.I)
 
 
 def mana_ability_hint(line: str) -> dict[str, Any] | None:
@@ -134,6 +136,14 @@ def search_criterion_hint(clause: str) -> dict[str, list[str]] | None:
     return {"types": types, "subtypes": subtypes}
 
 
+def cluster_text(clause: str) -> str:
+    """Return a bounded, name-independent-ish shape for an open clause."""
+    normalized = re.sub(r"(?:\{[^}]+\})+", "{cost}", clause.lower())
+    normalized = re.sub(r"\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b", "<n>", normalized)
+    normalized = re.sub(r"\s+", " ", normalized).strip().rstrip(".")
+    return normalized[:160]
+
+
 def classify(clause: str) -> dict[str, Any]:
     lower = clause.lower()
     families = [name for name, pattern in VERB_PATTERNS if re.search(pattern, clause, re.I)]
@@ -147,6 +157,21 @@ def classify(clause: str) -> dict[str, Any]:
     target_zone = None
     if target_text:
         target_zone = "graveyard" if re.search(r"\bgraveyard\b", target_text, re.I) else "hand" if re.search(r"\bhand\b", target_text, re.I) else "battlefield"
+    modal = bool(re.search(r"\bchoose (?:one|two|three|one or more)\b", lower))
+    keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
+    cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
+    if not families:
+        cluster_parts.append("shape:" + cluster_text(clause))
+    if search_criterion:
+        cluster_parts.append("search:" + ",".join(search_criterion["types"] + search_criterion["subtypes"]))
+    if target_subtype:
+        cluster_parts.append("target-subtype:" + target_subtype)
+    elif target_types:
+        cluster_parts.append("target-types:" + ",".join(target_types))
+    if target_zone:
+        cluster_parts.append("zone:" + target_zone)
+    if modal:
+        cluster_parts.append("modal")
     return {
         "text": clause,
         "kind": kind,
@@ -159,9 +184,13 @@ def classify(clause: str) -> dict[str, Any]:
         "target_zone": target_zone,
         "search_criterion": search_criterion,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),
-        "modal": bool(re.search(r"\bchoose (?:one|two|three|one or more)\b", lower)),
+        "modal": modal,
         "conditional": bool(re.search(r"\b(?:if|unless|as long as|whenever)\b", lower)),
-        "candidate": bool(families or kind != "static-or-spell"),
+        # Stable grouping key for AI/contributor batches. It preserves the
+        # reusable mechanic constraints without using card names as identity.
+        "primitive_cluster": "|".join(cluster_parts),
+        "keyword_only": keyword_only,
+        "candidate": bool(families or kind != "static-or-spell" or keyword_only),
     }
 
 
@@ -170,6 +199,10 @@ def compile_card(row: sqlite3.Row) -> dict[str, Any]:
     parsed = [classify(clause) for clause in clauses(text)]
     unmatched = [entry["text"] for entry in parsed if not entry["candidate"]]
     mana_abilities = [hint for line in text.split("\n") if (hint := mana_ability_hint(line))]
+    # Only unresolved clauses belong in the review queue. A supported keyword
+    # on a card with another missing effect must not pollute that effect's
+    # cluster or make every worker revisit a solved primitive.
+    primitive_clusters = sorted({entry["primitive_cluster"] for entry in parsed if not entry["candidate"]})
     return {
         "oracle_id": row["oracle_id"],
         "scryfall_id": row["id"],
@@ -178,6 +211,7 @@ def compile_card(row: sqlite3.Row) -> dict[str, Any]:
         "mana_cost": row["mana_cost"],
         "oracle_text": text,
         "clauses": parsed,
+        "primitive_clusters": primitive_clusters,
         "mana_abilities": mana_abilities,
         "unmatched": unmatched,
         "status": "candidate" if parsed and not unmatched else "needs-review" if parsed else "vanilla",
@@ -196,6 +230,16 @@ def review_markdown(cards: list[dict[str, Any]]) -> str:
         f"Pending cards: **{len(pending):,}** / {len(cards):,}",
         "",
     ]
+    clusters: dict[str, set[str]] = {}
+    for card in pending:
+        for cluster in card.get("primitive_clusters", []):
+            clusters.setdefault(cluster, set()).add(card["name"])
+    if clusters:
+        lines.extend(["## Reusable primitive clusters", ""])
+        for cluster, names in sorted(clusters.items(), key=lambda item: (-len(item[1]), item[0])):
+            examples = ", ".join(sorted(names, key=str.casefold)[:5])
+            lines.append(f"- **{len(names):,} cards** — `{cluster}` — {examples}")
+        lines.append("")
     for card in pending:
         lines.extend([f"## {card['name']} ({card['scryfall_id']})", "", f"```text\n{card['oracle_text']}\n```", ""])
         for clause in card["unmatched"]:

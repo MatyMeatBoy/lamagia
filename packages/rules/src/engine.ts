@@ -804,6 +804,11 @@ function triggerMatches(
     // Rule 109.5: "another" excludes the object the ability is printed on.
     case "another-creature-you-control": return !isSelf && objectIsCreature && object.controller === watcher.controller;
     case "creature-you-control": return objectIsCreature && object.controller === watcher.controller;
+    case "artifact-creature-you-control": {
+      const profile = cardProfile(object.card);
+      return objectIsCreature && profile.types.includes("Artifact") && object.controller === watcher.controller;
+    }
+    case "land-you-control": return isLand(cardProfile(object.card)) && object.controller === watcher.controller;
     case "another-creature": return !isSelf && objectIsCreature;
     case "any-creature": return objectIsCreature;
     default: return false;

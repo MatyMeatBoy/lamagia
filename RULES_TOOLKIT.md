@@ -42,6 +42,10 @@ cada carta incluya más primitivas o una revisión asistida costosa.
 El compilador conserva restricciones reutilizables (`types`, `subtypes` y
 `target_zone`). En el motor, un objetivo de subtipo usa `subtype:<Subtype>`;
 Equipment, Aura, Goblin y los subtipos futuros comparten la misma primitiva.
+Cada cláusula también recibe un `primitive_cluster` estable y cada carta una
+lista `primitive_clusters`; la cola Markdown agrupa cartas por esos clusters
+para que un worker resuelva una primitiva una sola vez y la reutilice en todas
+las cartas compatibles.
 
 ## Flujo para un efecto nuevo
 

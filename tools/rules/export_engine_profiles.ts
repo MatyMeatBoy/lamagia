@@ -54,6 +54,7 @@ for (const row of rows) {
     keywords: profile.keywords,
     manaAbilities: profile.manaAbilities,
     activatedAbilities: profile.activatedAbilities,
+    modalChoices: profile.modalChoices,
     effects: profile.effects,
     triggers: profile.triggers,
     targetKind: profile.targetKind,

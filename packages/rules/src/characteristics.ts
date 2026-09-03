@@ -170,6 +170,8 @@ export type TriggerSubject =
   | "self"
   | "another-creature-you-control"
   | "creature-you-control"
+  | "artifact-creature-you-control"
+  | "land-you-control"
   | "another-creature"
   | "any-creature"
   | "you"
@@ -646,11 +648,13 @@ const TRIGGER_TEMPLATES: readonly {
   // Another object triggers it. `another` excludes the source itself (CR 109.5).
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
+  { event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", pattern: /^whenever\s+an\s+artifact\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
 
   // A player is the subject.
@@ -668,8 +672,11 @@ const TRIGGER_TEMPLATES: readonly {
 ];
 
 function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string } | null {
+  // Landfall is a keyword ability word; its rules-bearing trigger follows the
+  // dash and uses the same enters-battlefield event (CR 603.1, 603.2).
+  const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
-    const match = template.pattern.exec(line);
+    const match = template.pattern.exec(normalized);
     if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim() };
   }
   return null;

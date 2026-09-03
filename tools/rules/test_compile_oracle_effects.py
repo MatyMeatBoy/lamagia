@@ -2,7 +2,7 @@
 
 import unittest
 
-from compile_oracle_effects import classify, effective_worker_count, mana_ability_hint, search_criterion_hint
+from compile_oracle_effects import classify, cluster_text, effective_worker_count, mana_ability_hint, search_criterion_hint
 from export_set_coverage import product_group
 
 
@@ -25,6 +25,19 @@ class OracleCompilerTests(unittest.TestCase):
         result = classify("Destroy target artifact, enchantment, or land.")
         self.assertEqual(result["target_types"], ["Artifact", "Enchantment", "Land"])
         self.assertIsNone(result["target_subtype"])
+        self.assertEqual(result["primitive_cluster"], "destroy|static-or-spell|target-types:Artifact,Enchantment,Land|zone:battlefield")
+
+    def test_emits_reusable_search_cluster_for_many_cards(self) -> None:
+        result = classify("Search your library for an Equipment card, reveal it, then shuffle.")
+        self.assertEqual(result["primitive_cluster"], "search-library|static-or-spell|search:Equipment")
+
+    def test_bounds_open_cluster_shape(self) -> None:
+        self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
+
+    def test_treats_supported_keyword_lines_as_known_primitives(self) -> None:
+        result = classify("Flying, vigilance")
+        self.assertTrue(result["keyword_only"])
+        self.assertTrue(result["candidate"])
 
     def test_reuses_mana_side_effect_and_restriction_primitives(self) -> None:
         self.assertEqual(

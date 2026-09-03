@@ -146,6 +146,22 @@ describe("effect recognition", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises reusable landfall and artifact-creature trigger subjects", () => {
+    const landfall = cardProfile(card({
+      name: "Landfall Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", power: "4", toughness: "4",
+      oracle_text: "Landfall — Whenever a land you control enters, create a 4/4 green Beast creature token."
+    }));
+    expect(landfall.triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "land-you-control", effect: { kind: "create-token", amount: 1 } });
+    expect(landfall.fullyImplemented).toBe(true);
+
+    const sphinx = cardProfile(card({
+      name: "Artifact Sphinx", type_line: "Creature — Sphinx", mana_cost: "{4}{U}", power: "4", toughness: "4",
+      oracle_text: "Whenever an artifact creature you control deals combat damage to a player, you may create a 1/1 blue Thopter artifact creature token with flying."
+    }));
+    expect(sphinx.triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", optional: true });
+    expect(sphinx.fullyImplemented).toBe(true);
+  });
+
   it("treats a keyword-only body as fully covered", () => {
     const profile = cardProfile(card({ name: "Serra Angel", type_line: "Creature — Angel", mana_cost: "{3}{W}{W}", oracle_text: "Flying, vigilance", keywords: ["Flying", "Vigilance"], power: "4", toughness: "4" }));
     expect(profile.keywords).toEqual(["flying", "vigilance"]);
