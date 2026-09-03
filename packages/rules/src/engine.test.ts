@@ -40,6 +40,8 @@ const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cos
 const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Tap target creature." });
 const UNTAP_SPELL = () => make({ name: "Tactical Untap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Untap target permanent." });
 const MILL_SPELL = () => make({ name: "Gravewind", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player mills three cards." });
+const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target creature spell." });
+const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
@@ -776,6 +778,23 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.log.some((entry) => entry.text.includes("sus objetivos ya no son legales"))).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+  });
+
+  it("filters creature and noncreature counterspell targets by the spell on the stack", () => {
+    const game = readyToCast([CREATURE_COUNTER(), NONCREATURE_COUNTER()], [ISLAND(), ISLAND()]);
+    const creatureCard = { ...BEAR(), instance_id: "stack-creature", owner: 1 };
+    const instantCard = { ...BOLT(), instance_id: "stack-instant", owner: 1 };
+    const withStack = {
+      ...game,
+      stack: [
+        { id: "creature-stack", controller: 1, card: creatureCard, label: creatureCard.name, targets: [], fromCommandZone: false, variableValue: 0, countered: false },
+        { id: "instant-stack", controller: 1, card: instantCard, label: instantCard.name, targets: [], fromCommandZone: false, variableValue: 0, countered: false }
+      ]
+    };
+    expect(profileOf(CREATURE_COUNTER()).targetKind).toBe("creature-spell");
+    expect(profileOf(NONCREATURE_COUNTER()).targetKind).toBe("noncreature-spell");
+    expect(legalTargets(withStack, 0, "creature-spell")).toEqual([{ kind: "spell", stackId: "creature-stack" }]);
+    expect(legalTargets(withStack, 0, "noncreature-spell")).toEqual([{ kind: "spell", stackId: "instant-stack" }]);
   });
 
   it("refuses an illegal target", () => {
