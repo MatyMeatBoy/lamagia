@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.tooling/
+.trl/
+data/catalog/
+data/decks/
+data/simulations/
+__pycache__/
+coverage/
+*.tsbuildinfo

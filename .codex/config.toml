@@ -1,0 +1,6 @@
+# Project-scoped AST retrieval for Codex. Restart Codex after this file is added.
+[mcp_servers.trl-retrieve]
+command = "C:\\Users\\MP\\Documents\\00 Claude\\ProsshTCG\\.tooling\\trl\\Scripts\\python.exe"
+args = ["-m", "plugin.mcp_server"]
+env = { TRL_REPO = "C:\\Users\\MP\\Documents\\00 Claude\\ProsshTCG" }
+

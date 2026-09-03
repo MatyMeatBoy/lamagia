@@ -1,0 +1,29 @@
+{
+  "name": "prossh-tcg",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@prossh/client",
+    "dev:server": "npm run dev --workspace=@prossh/match-server",
+    "catalog:sync": "python tools/card_catalog/sync_scryfall.py --dataset default_cards --output data/catalog/prossh.sqlite",
+    "decks:sync": "python tools/decks/import_cedh_ddb.py --output data/decks/cedh-ddb.json",
+    "decks:pod:sync": "python tools/decks/import_cedh_pod.py --catalog data/catalog/prossh.sqlite --output data/decks/cedh-pod.json",
+    "precons:sync": "python tools/decks/import_commander_precons.py --catalog data/catalog/prossh.sqlite --output data/decks/commander-precons.json",
+    "simulate:cedh": "python tools/simulator/simulate_cedh_pod.py --pod data/decks/cedh-pod.json --output data/simulations/cedh-last.json --max-turns 160",
+    "simulate:ai": "python tools/simulator/run_ai_matrix.py --pod data/decks/cedh-pod.json --output data/simulations/ai-matrix-last.json --games 1000 --max-turns 80",
+    "build": "npm run build --workspace=@prossh/rules && npm run build --workspace=@prossh/client && npm run build --workspace=@prossh/match-server",
+    "test": "npm run test --workspace=@prossh/rules && npm run test:simulator",
+    "test:simulator": "python tools/simulator/test_simulate_cedh_pod.py && python tools/simulator/test_run_ai_matrix.py",
+    "check": "npm run build --workspace=@prossh/rules && npm run check --workspace=@prossh/rules && npm run check --workspace=@prossh/client && npm run check --workspace=@prossh/match-server"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  }
+}

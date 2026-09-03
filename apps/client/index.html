@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101916" />
+    <title>ProsshTCG · Commander</title>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <dialog id="catalog">
+      <section class="catalog">
+        <div class="catalog-top"><h2>Catálogo de cartas</h2><button type="button" data-close="catalog" aria-label="Cerrar catálogo">×</button></div>
+        <label>Nombre, tipo o sintaxis <code>t:</code><input id="card-query" placeholder="Ej. t:elf o Llanowar Elves" autocomplete="off" /></label>
+        <div id="results" class="results"><p>Busca por nombre, tipo, subtipos y metadatos indexados.</p></div>
+      </section>
+    </dialog>
+
+    <dialog id="precon-dialog">
+      <section class="precon-panel">
+        <div class="catalog-top"><h2>Mazos precon de Commander</h2><button type="button" data-close="precon-dialog" aria-label="Cerrar">×</button></div>
+        <label>Buscar mazo, comandante o edición<input id="precon-query" placeholder="Ej. Ghave, 40K, Doctor" autocomplete="off" /></label>
+        <p class="precon-note">Inicia una mesa de cuatro precons empezando por el mazo elegido. Los otros tres asientos los juega la IA.</p>
+        <div id="precon-results" class="precon-grid">Cargando mazos precon…</div>
+      </section>
+    </dialog>
+
+    <dialog id="zone-view" class="zone-dialog"><section class="zone-panel" id="zone-body"></section></dialog>
+
+    <dialog id="card-dialog" class="zone-dialog"><section class="zone-panel" id="card-body"></section></dialog>
+
+    <dialog id="profile-dialog">
+      <section class="profile-panel">
+        <div class="catalog-top"><h2>Avatar del jugador</h2><button type="button" data-close="profile-dialog" aria-label="Cerrar">×</button></div>
+        <p>Elige un recorte de arte guardado localmente. No sube ninguna imagen ni cambia a otro jugador.</p>
+        <div id="avatar-grid" class="avatar-grid">Cargando opciones…</div>
+      </section>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

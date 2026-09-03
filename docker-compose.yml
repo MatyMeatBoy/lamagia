@@ -1,0 +1,12 @@
+services:
+  match-server:
+    build:
+      context: .
+      dockerfile: services/match-server/Dockerfile
+    environment:
+      PORT: 8787
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:5173}
+      CATALOG_CONTACT: ${CATALOG_CONTACT:-contact@example.com}
+    ports:
+      - "8787:8787"
+

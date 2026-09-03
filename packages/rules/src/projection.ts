@@ -1,0 +1,232 @@
+/**
+ * The security boundary between the authoritative state and one seat's client.
+ *
+ * A projection is the only shape that ever leaves the server. Hidden zones are
+ * reduced to counts for every seat except the viewer, so an opponent's hand and
+ * library contents are structurally absent rather than merely hidden in the UI.
+ */
+
+import { cardProfile } from "./characteristics.js";
+import {
+  STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSources,
+  type GameCard, type GameState, type LegalAction, type LogEntry, type Permanent, type SeatId, type Target, type TurnStep
+} from "./engine.js";
+import { emptyPool, type ManaPool } from "./mana.js";
+
+export interface CardView {
+  readonly instance_id: string;
+  readonly scryfall_id: string;
+  readonly name: string;
+  readonly mana_cost: string;
+  readonly manaValue: number;
+  readonly type_line: string;
+  readonly oracle_text: string;
+  readonly image_normal?: string;
+  readonly image_art_crop?: string;
+  readonly power: number | null;
+  readonly toughness: number | null;
+  readonly keywords: readonly string[];
+  readonly colors: readonly string[];
+  readonly isPermanent: boolean;
+  readonly fullyImplemented: boolean;
+}
+
+export interface PermanentView extends CardView {
+  readonly controller: SeatId;
+  readonly tapped: boolean;
+  readonly summoningSick: boolean;
+  readonly damage: number;
+  readonly isCommander: boolean;
+  readonly attacking: SeatId | null;
+  readonly blocking: string | null;
+  readonly blockedBy: readonly string[];
+  readonly producesMana: boolean;
+}
+
+export interface PlayerView {
+  readonly seat: SeatId;
+  readonly name: string;
+  readonly deckName: string;
+  readonly kind: "human" | "bot";
+  readonly life: number;
+  readonly lost: boolean;
+  readonly lossReason?: string;
+  readonly libraryCount: number;
+  readonly handCount: number;
+  /** Present only for the viewer's own seat. */
+  readonly hand?: readonly CardView[];
+  readonly battlefield: readonly PermanentView[];
+  readonly graveyard: readonly CardView[];
+  readonly exile: readonly CardView[];
+  readonly commandZone: readonly CardView[];
+  readonly commanderDamage: Readonly<Record<string, number>>;
+  readonly landsPlayedThisTurn: number;
+  readonly manaPool: ManaPool;
+  /** Untapped mana the viewer could still produce; opponents report zero. */
+  readonly availableMana: number;
+}
+
+export interface StackView {
+  readonly id: string;
+  readonly controller: SeatId;
+  readonly name: string;
+  readonly image_normal?: string;
+  readonly targets: readonly string[];
+  readonly countered: boolean;
+}
+
+export interface GameView {
+  readonly viewerSeat: SeatId;
+  readonly version: number;
+  readonly turn: number;
+  readonly step: TurnStep;
+  readonly stepLabel: string;
+  readonly activeSeat: SeatId;
+  readonly prioritySeat: SeatId;
+  readonly priorityOpen: boolean;
+  readonly finished: boolean;
+  readonly winnerSeat: SeatId | null;
+  readonly players: readonly PlayerView[];
+  readonly stack: readonly StackView[];
+  readonly combat: {
+    readonly attackers: readonly { readonly instanceId: string; readonly name: string; readonly defender: SeatId }[];
+    readonly blockers: readonly { readonly instanceId: string; readonly name: string; readonly attackerId: string }[];
+    readonly awaitingAttackers: boolean;
+    readonly awaitingBlockersFrom: readonly SeatId[];
+  };
+  readonly log: readonly LogEntry[];
+  /** What this viewer may do right now. Empty when it is not their decision. */
+  readonly legalActions: readonly LegalAction[];
+  readonly selectableAttackers: readonly string[];
+  readonly selectableBlockers: readonly string[];
+  /** Targets this viewer may pick, grouped by what a spell asks for. */
+  readonly targetOptions: {
+    readonly any: readonly Target[];
+    readonly creature: readonly Target[];
+    readonly spell: readonly Target[];
+  };
+  readonly waitingOn: SeatId | null;
+}
+
+function cardView(card: GameCard): CardView {
+  const profile = cardProfile(card);
+  return {
+    instance_id: card.instance_id,
+    scryfall_id: card.scryfall_id,
+    name: card.name,
+    mana_cost: card.mana_cost ?? "",
+    manaValue: profile.manaValue,
+    type_line: card.type_line,
+    oracle_text: card.oracle_text ?? "",
+    ...(card.image_normal ? { image_normal: card.image_normal } : {}),
+    ...(card.image_art_crop ? { image_art_crop: card.image_art_crop } : {}),
+    power: profile.power,
+    toughness: profile.toughness,
+    keywords: profile.keywords,
+    colors: profile.colors,
+    isPermanent: profile.isPermanent,
+    fullyImplemented: profile.fullyImplemented
+  };
+}
+
+function permanentView(state: GameState, permanent: Permanent): PermanentView {
+  const attacking = state.combat.attackers.find((entry) => entry.instanceId === permanent.instance_id);
+  const blocking = state.combat.blockers.find((entry) => entry.instanceId === permanent.instance_id);
+  const blockedBy = state.combat.blockers.filter((entry) => entry.attackerId === permanent.instance_id).map((entry) => entry.instanceId);
+  return {
+    ...cardView(permanent.card),
+    controller: permanent.controller,
+    tapped: permanent.tapped,
+    summoningSick: permanent.summoningSick,
+    damage: permanent.damage,
+    isCommander: permanent.isCommander,
+    attacking: attacking ? attacking.defender : null,
+    blocking: blocking ? blocking.attackerId : null,
+    blockedBy,
+    producesMana: cardProfile(permanent.card).manaAbilities.length > 0
+  };
+}
+
+function nameOf(state: GameState, instanceId: string): string {
+  for (const player of state.players) {
+    const found = player.battlefield.find((permanent) => permanent.instance_id === instanceId);
+    if (found) return found.card.name;
+  }
+  return "criatura";
+}
+
+/** Builds the filtered view one seat is allowed to receive. */
+export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
+  if (viewerSeat < 0 || viewerSeat >= state.players.length) throw new Error("Ese asiento no participa en esta partida.");
+  const awaitingBlockers = defendersAwaitingBlocks(state);
+  const viewer = state.players[viewerSeat]!;
+
+  const players: PlayerView[] = state.players.map((player) => ({
+    seat: player.seat,
+    name: player.name,
+    deckName: player.deckName,
+    kind: player.kind,
+    life: player.life,
+    lost: player.lost,
+    ...(player.lossReason ? { lossReason: player.lossReason } : {}),
+    libraryCount: player.library.length,
+    handCount: player.hand.length,
+    ...(player.seat === viewerSeat ? { hand: player.hand.map(cardView) } : {}),
+    battlefield: player.battlefield.map((permanent) => permanentView(state, permanent)),
+    graveyard: player.graveyard.map(cardView),
+    exile: player.exile.map(cardView),
+    commandZone: player.commandZone.map(cardView),
+    commanderDamage: player.commanderDamage,
+    landsPlayedThisTurn: player.landsPlayedThisTurn,
+    manaPool: player.seat === viewerSeat ? player.manaPool : emptyPool(),
+    availableMana: player.seat === viewerSeat ? manaSources(player).reduce((total, source) => total + source.amount, 0) : 0
+  }));
+
+  const mustDeclareAttackers = state.step === "declare-attackers" && !state.combat.attackersDeclared;
+  const mustDeclareBlockers = state.step === "declare-blockers" && !state.combat.blockersDeclared;
+
+  return {
+    viewerSeat,
+    version: state.version,
+    turn: state.turn,
+    step: state.step,
+    stepLabel: STEP_LABELS[state.step],
+    activeSeat: state.activeSeat,
+    prioritySeat: state.prioritySeat,
+    priorityOpen: state.priorityOpen,
+    finished: state.finished,
+    winnerSeat: state.winnerSeat,
+    players,
+    stack: state.stack.map((object) => ({
+      id: object.id,
+      controller: object.controller,
+      name: object.card.name,
+      ...(object.card.image_normal ? { image_normal: object.card.image_normal } : {}),
+      targets: object.targets.map((target) =>
+        target.kind === "player" ? state.players[target.seat]!.name
+          : target.kind === "permanent" ? nameOf(state, target.instanceId)
+            : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo"),
+      countered: object.countered
+    })),
+    combat: {
+      attackers: state.combat.attackers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), defender: entry.defender })),
+      blockers: state.combat.blockers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), attackerId: entry.attackerId })),
+      awaitingAttackers: mustDeclareAttackers,
+      awaitingBlockersFrom: awaitingBlockers
+    },
+    log: state.log.slice(-60),
+    legalActions: legalActions(state, viewerSeat),
+    selectableAttackers: mustDeclareAttackers && state.activeSeat === viewerSeat && !viewer.lost
+      ? legalAttackers(state, viewerSeat).map((permanent) => permanent.instance_id)
+      : [],
+    selectableBlockers: mustDeclareBlockers && awaitingBlockers.includes(viewerSeat)
+      ? legalBlockers(state, viewerSeat).map((permanent) => permanent.instance_id)
+      : [],
+    targetOptions: {
+      any: legalTargets(state, viewerSeat, "any"),
+      creature: legalTargets(state, viewerSeat, "creature"),
+      spell: legalTargets(state, viewerSeat, "spell")
+    },
+    waitingOn: mustDeclareAttackers ? state.activeSeat : mustDeclareBlockers ? (awaitingBlockers[0] ?? null) : state.priorityOpen ? state.prioritySeat : null
+  };
+}

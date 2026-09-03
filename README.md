@@ -1,0 +1,41 @@
+# ProsshTCG
+
+Simulador social de Commander, diseñado primero para una mesa de cuatro jugadores y adaptable a pods de 2–8. El objetivo no es clonar Arena ni MTGO: es una experiencia rápida, legible y mobile-first, con un motor de reglas verificable y un servidor autoritativo.
+
+## Estado inicial
+
+Este primer corte ya incluye:
+
+- una mesa responsive de 4 jugadores con prioridad, registro de acciones, pase automático y stop de upkeep;
+- un núcleo de turnos puro y testeado para puestos 2–8, rotación de prioridad y stop points;
+- un simulador determinista de pods para regresiones de zonas/turnos, con ejecución en CI;
+- servidor WebSocket preparado para salas, proyecciones por jugador y una pasarela de catálogo con caché/rate limit;
+- 117.621 impresiones inglesas indexadas localmente desde Scryfall, con metadatos y enlaces de imagen; un buscador por nombre/tipo con tags navegables;
+- 56 perfiles de mazos cEDH competitivos importados desde la cEDH Decklist Database, con URL de la lista original;
+- configuración de TRL, limitada al proyecto, para que Codex recupere trozos AST de código en vez de volcar archivos enteros.
+
+## Ejecutar
+
+1. Copia `.env.example` a `.env` y cambia `CATALOG_CONTACT` por un contacto real antes de publicar.
+2. `npm install`
+3. En una terminal: `npm run dev:server`
+4. En otra terminal: `npm run dev`
+
+Abre `http://localhost:5173`. Verificación: `npm run check`, `npm test`, `npm run build`.
+
+Para refrescar los datos locales: `npm run catalog:sync` y `npm run decks:sync`. El catálogo se guarda en `data/` y se excluye de Git por su tamaño.
+
+## Estructura
+
+```text
+apps/client/            UI web/PWA; futura envoltura Capacitor (Android) y Tauri (escritorio)
+packages/rules/         reglas puras, deterministas y sin dependencias de red
+services/match-server/  Fastify + Socket.IO; autoridad del estado y catálogo
+docs/                   decisiones de producto, datos y licencias
+```
+
+Lee [el handoff de implementación](docs/HANDOFF_TO_CLAUDE.md), [la arquitectura](docs/ARCHITECTURE.md), [el plan de producto](docs/PRODUCT.md) y [la política del catálogo](docs/CARD_CATALOG.md) antes de ampliar el sistema.
+
+## Uso de referencias externas
+
+XMage y Argentum son referencias técnicas, no dependencias ni fuentes para copiar. Todas las imágenes y datos de cartas permanecen bajo los términos del proveedor. La app no trae arte de cartas ni lo transforma a WebP: el catálogo conserva IDs y URLs atribuidas, y el cliente solicita la imagen desde su host al verla. Cualquier mirror, precarga masiva o caché distribuida exige revisión jurídica y permiso del titular/proveedor.
