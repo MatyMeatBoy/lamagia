@@ -346,6 +346,17 @@ function chooseTarget(target: Target): void {
   void submit({ ...action, targets: [target] });
 }
 
+function graveyardTargetHtml(): string {
+  const options = ui.pendingTarget?.options.filter((target) => target.kind === "graveyard-card") ?? [];
+  if (!options.length) return "";
+  return `<div class="target-picker"><small>Elige una carta del cementerio</small><div class="target-cards">${options.map((target) => {
+    if (target.kind !== "graveyard-card") return "";
+    const card = seatOf(target.seat)?.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+    if (!card) return "";
+    return `<button class="target-card" type="button" data-graveyard-target="${escapeHtml(target.instanceId)}" data-graveyard-seat="${target.seat}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt=""/>` : ""}<b>${escapeHtml(card.name)}</b></button>`;
+  }).join("")}</div></div>`;
+}
+
 /** Starts the target flow for one action, or submits it when it needs no target. */
 function runAction(entry: LegalAction, subject: string): void {
   if (entry.requiresTarget && view) {
@@ -915,6 +926,7 @@ function render(): void {
           </div>
           <div class="dock-actions">
             ${actionMenuHtml()}
+            ${graveyardTargetHtml()}
             ${ui.pendingTarget ? `<button id="cancel-target" class="text-button">Cancelar objetivo</button>` : ""}
             <button id="pass" class="primary-button" ${pass ? "" : "disabled"}>${escapeHtml(pass?.label ?? "Sin prioridad")}<kbd>Espacio</kbd></button>
             <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar</label>
@@ -982,6 +994,8 @@ function wireBoard(): void {
   on("#coverage", () => openCoverage());
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
+  document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
+    button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
   on("#close-ability-menu", () => { ui.abilityMenu = null; render(); });
   on("#close-glyph-help", () => { ui.glyphHelp = null; render(); });
   document.querySelectorAll<HTMLElement>("[data-glyph]").forEach((element) =>
