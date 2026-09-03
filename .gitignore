@@ -9,3 +9,4 @@ data/simulations/
 __pycache__/
 coverage/
 *.tsbuildinfo
+data/rules/

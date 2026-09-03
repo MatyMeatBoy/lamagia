@@ -10,16 +10,117 @@ ProsshTCG is a Commander simulator built for a four-player pod but architected f
 
 The long-term product still needs online rooms, profiles, rewards/tournaments, deck construction, a wishlist/price gallery and far more rules coverage. **It is not complete.**
 
-## What changed in this pass
+## What changed in this pass (activated abilities, general triggers, ability icons)
 
-The previous build could not be played. Four defects made it unusable, all confirmed by running it:
+The tree that this pass started from **did not compile**: `applyActivate` and
+`applyActivateMana` existed but were never routed or published, so
+`packages/rules` failed to build. That is fixed, and three larger pieces landed
+on top of it.
 
-1. Priority was closed during `untap` and `cleanup` with no way to reopen it, so `passCommanderPriority` threw and the table **deadlocked twice per turn**. The only escape was a debug button that skipped a step outright.
-2. `advanceStep` set `stack: []`, so any spell on the stack vanished on a step change while `pendingSpells` kept its entry — a permanent desync.
-3. Only fully generic mana costs could be cast. In a real Commander deck that is almost nothing, so a hand was effectively dead.
-4. There was no combat, no damage, no state-based actions and no winner: 16 simulated turns left every player on 40 life. The bot in `commander-ai.ts` was never wired to the server.
+### 1. Activated abilities are a real player intent
 
-All four are fixed by a rewritten engine. `commander-game.ts` and `commander-ai.ts` were replaced by the modules below.
+- `legalActions` now publishes one action per producible mana type of every
+  `manaAbility`, and one action per legal `activatedAbility`, both keyed to
+  `permanent.instance_id`.
+- `applyAction` routes `activate-mana` and `activate`.
+- `activatableAbility` in `packages/rules/src/engine.ts` is the single legality
+  check shared by `legalActions` and `applyActivate`, so the client is never
+  offered an activation the authoritative path would refuse.
+- Activation costs now cover **mana** as well as `{T}`, paying life and
+  sacrificing the source. `{Q}`, loyalty, energy, discard, removing counters and
+  sacrificing *other* permanents still leave the ability out of the profile.
+- The cost is checked against the board the payment will actually see: a land
+  that taps for the ability is removed from its own mana sources first. The
+  200-game matrix caught this as a real double-count (Inventors' Fair, Mount
+  Doom) before it shipped.
+- `hasRealChoice` deliberately ignores `activate-mana` always, and `activate`
+  outside the controller's own sorcery-speed window. Both stay legal and listed;
+  this only stops a seat with `autoPass` from being interrupted in every window.
+- The bot activates only self-limiting abilities (`{T}` or sacrifice-self) in its
+  own main phase, because it has no way to decide when to stop paying a
+  repeatable cost.
+
+### 2. Triggered abilities are event-driven
+
+Rebuilt as an event bus rather than a hard-coded ETB hook. XMage and Forge were
+used as behavioural references for the shape of the system; no code or asset from
+either was copied, and the repository policy in `docs/RULES_RESEARCH.md` is
+unchanged.
+
+- `GameEvent` + `raiseEvent` in `engine.ts` raise ten event families at the
+  moment the rules say they happen: `enters-battlefield`, `dies`, `attacks`,
+  `blocks`, `deals-combat-damage-to-player`, `becomes-tapped`, `spell-cast`,
+  `upkeep`, `draw-step`, `end-step`.
+- `TriggerDefinition` now carries a `subject` (`self`,
+  `another-creature-you-control`, `creature-you-control`, `another-creature`,
+  `any-creature`, `you`, `each-player`, `opponent`), so
+  "whenever **another** creature you control dies" no longer fires for the source
+  itself (rule 109.5).
+- `dies` looks back at the permanent that just left the battlefield (CR 603.6d),
+  which is what makes a creature's own death trigger work.
+- **APNAP ordering** (CR 603.3b): `apnapOrder` sorts the queue from the active
+  player outward, and triggers are pushed in that order, so the active player's
+  resolve last.
+- Triggers no longer wait for an empty stack; they go on top of whatever is
+  there the next time a player would receive priority (CR 603.3).
+- **Trigger targets** are chosen as the ability is put on the stack (CR 603.3d):
+  automatically when exactly one is legal, through the new `trigger-target`
+  pending choice when several are, and by removing the ability from the stack
+  when none is. A trigger's target no longer leaks into the card-level
+  `targetKind`, so a creature with a targeted ETB is castable with an empty board.
+
+### 3. Modern Oracle self-reference
+
+`normalizedOracle` now maps "this land", "this creature", "this artifact" and the
+rest of the current templating to `~` alongside the printed name. Wizards stopped
+repeating card names, so the previous parser missed most reprints — including
+every fetch land. `this turn` / `this way` / `this game` / `this player` are
+explicitly not self references.
+
+Ramp templates that say "onto the battlefield **tapped**" now enter tapped;
+`putOntoBattlefield` takes an explicit override that can only add tapped-ness,
+never remove a card's own printed one.
+
+### 4. Two honesty corrections
+
+- `parseAddClause` now has to consume the whole clause. "Add one mana of any
+  color **that a land an opponent controls could produce**" was being read as five
+  unrestricted colours. Cards like Exotic Orchard still play through the
+  structured `produced_mana` fallback, but they no longer claim their text is
+  executed.
+- A mana ability whose printed output the parser cannot read now counts as
+  uncovered, so the hand tooltip and card page stop over-claiming.
+
+### 5. Ability iconography on the table
+
+- `apps/client/src/abilities.ts` is an **original** SVG set: fifteen enforced
+  keywords, two activation families and ten trigger events. Each glyph carries
+  the printed rule *and* a statement of what this engine actually does with it.
+- MTG Arena was studied only for where icons help. Its icons are Wizards of the
+  Coast game assets and are not redistributable, whatever a wiki mirror implies,
+  so nothing from it is used.
+- The projection exposes `PermanentView.abilities`, with availability read from
+  `legalActions` rather than recomputed, so an icon is never lit for something the
+  server would refuse.
+- Clicking a permanent with one legal activation fires it; with several it opens
+  an ability menu. Clicking an icon opens its help card. Both close on Escape.
+- Targetable permanents and seats also glow while a triggered ability is being
+  aimed.
+
+### Measured effect
+
+| Metric | Before | After |
+| --- | --- | --- |
+| Cards with a payable, resolvable activated ability | 0 (feature did not run) | 409 |
+| Cards with a recognised triggered ability | 87 | 526 |
+| Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
+| Catalog cards fully implemented | 5,151 | 5,355 |
+| …of those, with non-empty Oracle text | 2,090 | 2,290 |
+| cEDH pod (400 copies) fully implemented | 83 | 106 |
+
+Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
+The "before" numbers come from the previous handoff; the increase is net of the
+two honesty corrections above, which *removed* cards that were over-claiming.
 
 ## Current verified state
 
@@ -28,42 +129,55 @@ All four are fixed by a rewritten engine. `commander-game.ts` and `commander-ai.
 | Turn structure | All twelve steps, with `untap` and `cleanup` resolving their turn-based actions automatically. A seat whose only legal move is passing is passed for it, so no window can stall. | `settle` in `packages/rules/src/engine.ts`; `engine.test.ts` → "never leaves the table without somebody able to act" |
 | Priority and stack | Circular passing, resolution one object at a time, priority back to the controller after casting, no step advance while the stack is occupied. | `applyPass` / `resolveTop`; `engine.test.ts` → "holds the spell on the stack while an opponent can still respond" |
 | Mana | Generic, colored, colorless, hybrid, monocolored hybrid, Phyrexian (life payment), snow-as-generic and `{X}` parsing. A backtracking solver decides which permanents to tap. | `packages/rules/src/mana.ts`, `planManaPayment`; `mana.test.ts` (12 cases) |
-| Casting | Any card whose printed cost the board can pay, at sorcery or instant speed, with targeting and fizzling when targets leave. | `applyCast`, `legalTargets`; `engine.test.ts` → "casting" |
+| Casting | Any card whose printed cost the board can pay, at sorcery or instant speed, with targeting and fizzling when targets leave. Variable `{X}` costs expose legal values and retain the selected value; Fireball is covered as its first-target/X damage behavior, while its multi-target additional-cost clause remains outside the current model. Target restrictions include creatures, permanents, nonlands, artifact/enchantment, artifact/creature/planeswalker and nonartifact creatures. | `applyCast`, `legalTargets`, `planManaPayment`; `engine.test.ts` → "casting" |
+| Triggered abilities | Ten event families raised where the rules say they happen (`enters-battlefield`, `dies`, `attacks`, `blocks`, `deals-combat-damage-to-player`, `becomes-tapped`, `spell-cast`, `upkeep`, `draw-step`, `end-step`), each with a subject so "another creature you control" excludes the source. Queued triggers are ordered APNAP, go on top of a non-empty stack, and choose their targets as they are put on it — auto when one is legal, as a real choice when several are, removed when none is. Optional effects still pause on a server-side yes/no choice. | `GameEvent`/`raiseEvent`/`apnapOrder`/`putNextTriggerOnStack` in `packages/rules/src/engine.ts`, `TRIGGER_TEMPLATES` in `characteristics.ts`; `engine.test.ts` → "triggered abilities" (9 cases) |
+| Activated abilities | Mana abilities resolve immediately and never use the stack; non-mana activations are announced, paid and put on the stack like a spell. Costs cover mana, `{T}`, paying life and sacrificing the source, and a source that taps for its own ability is removed from its mana sources first. | `activatableAbility`/`applyActivate`/`applyActivateMana` in `engine.ts`, `parseActivatedAbility` in `characteristics.ts`; `engine.test.ts` → "activated abilities" (6 cases) |
+| Oracle reading | The printed name **and** the modern "this land" / "this creature" self reference both normalise to `~`, so current reprints parse. A mana clause must consume its whole sentence, so a restricted "any color that a land an opponent controls could produce" is not read as five free colours. | `normalizedOracle`, `parseAddClause`; `characteristics.test.ts` → "faces and oracle normalisation" |
 | Commander | Command-zone start, `{2}` tax per previous cast, return-to-command-zone on death, 21-damage elimination tracked per commander. | `commanderTax`, `movePermanentToZone`; `engine.test.ts` → "commander rules" |
 | Combat | Attack declaration with per-attacker defender choice, blocks, first/double strike sub-step, deathtouch, trample, lifelink, vigilance, menace, flying/reach restrictions, defender, haste, summoning sickness. | `computeCombatDamage`; `engine.test.ts` → "combat" (11 cases) |
 | State-based actions | Lethal damage, zero toughness, indestructible, legend rule, 0 life, empty-library draw, 21 commander damage, last player standing. | `applyStateBasedActions`; `engine.test.ts` → "state-based actions" |
 | Privacy | A projection contains the viewer's hand and nothing hidden from any other seat — not the cards, not their identifiers. | `packages/rules/src/projection.ts`; asserted in `engine.test.ts`, `real-decks.test.ts` and the engine matrix |
 | Bot | Plays only from the same `legalActions` list a human receives: lands, castables, attack and block heuristics, target selection. | `packages/rules/src/bot.ts` |
 | Server | Match registry with seat-bound secret tokens, bots driven between human decisions, per-seat projections, Socket.IO update notifications. | `services/match-server/src/matches.ts` |
-| Client | Full-viewport table: three opponents share one seamless band at full width, the local player owns the lower band, and the stack, legal actions, zones and priority all live in the player dock so nothing floats over a board. Land/nonland rows are oriented per seat, the hand fans and lifts, a hover preview shows Oracle text plus rules coverage, the log is a toggleable drawer with per-seat colours and linked card names, mana renders as pips, and cards open an internal page. | `apps/client/src/main.ts`, `styles.css` |
+| Client | Full-viewport table: three opponents share one seamless band at full width, the local player owns the lower band, and the stack, legal actions, zones and priority all live in the player dock so nothing floats over a board. Land/nonland rows are oriented per seat, the hand fans and lifts, drag-to-play gives the card a 3D-tilted ghost, a hover preview shows Oracle text plus rules coverage, the log is a toggleable drawer with per-seat colours and linked card names, mana renders as pips, and cards open an internal page. Hidden library searches use a name input rather than leaking candidate identities. Every permanent shows an original SVG icon per enforced keyword, activation family and trigger event; an icon opens a help card with the rule and what the engine enforces, and a permanent with several activations opens an ability menu. | `apps/client/src/main.ts`, `abilities.ts`, `styles.css` |
 | Touch layout | Landscape-first for Android and tablets: same shape, but the board shrinks and the hand grows past it, tap targets clear 34–44px and the hover preview is disabled. Portrait stacks the boards and asks the player to rotate. A topbar toggle forces it on a desktop. | `styles.css` touch section; `docs/ANDROID.md` |
 | Rulings | 78,912 Wizards rulings keyed by `oracle_id`, served from the local catalog on the card page. | `tools/card_catalog/sync_rulings.py`, `/api/catalog/card/:id` |
 | Card data | 117,621 printings with rules fields (power/toughness/loyalty, produced mana, faces) and printing fields (promo, frame, finishes, set type) plus a precomputed `printing_rank`. | `tools/card_catalog/sync_scryfall.py` |
-| Catalog search | One row per card — the current plain reprint — with the printing count. Relevance: exact name, whole-word, then substring, ordered by reprint count. | `bestPrintingSelect` in `services/match-server/src/index.ts` |
-| Precons | 192 Commander deck products (2009–2026) grouped by set with set icons. Each card resolves to **that product's own printing** via MTGJSON's `scryfallId`. | `tools/decks/import_commander_precons.py`, `/api/decks/precons?grouped=1` |
+| Catalog search | One row per card — the latest regular core/expansion printing by default, excluding promo/variation treatments — with a clickable gallery of all documented printings grouped into main and special/promotional sets. | `bestPrintingSelect` and `printings_list` in `services/match-server/src/index.ts`; `main.ts` gallery |
+| Precons | Commander deck products grouped by set with set icons; collector-labelled deck variants are filtered from the selectable list. The two requested box-render overrides are wired for Mind Seize and Power Hungry; other products retain their documented fallback until an approved source is added. | `tools/decks/import_commander_precons.py`, `/api/decks/precons?grouped=1` |
 
 ### Last verification run
 
 ```text
-npm run check          rules build + rules/client/server typecheck   PASS
-npm run test           Vitest 5 files / 89 tests                     PASS
-npm run simulate:engine 200 seeded games in 5.99s                    PASS
-                       finished 115, unfinished 85, avg 54.34 turns
-                       0 invariant failures, 0 projection leaks
+npm run check           rules build + rules/client/server typecheck        PASS
+npm test                Vitest 5 files / 121 tests + Python smoke tests    PASS
+npm run simulate:engine 200 seeded games in 7.22s                          PASS
+                        finished 141, unfinished 59, avg 51.63 turns
+                        0 invariant failures, 0 projection leaks
+npm run rules:engine:export  38,711 cards; 5,355 fully implemented         PASS
 ```
 
-Browser smoke test at `http://localhost:5173`: a cEDH pod starts, lands and spells are cast from the hand, bots take their turns, combat resolves, the log shows coloured seat names and linked card names, and the card preview reports per-card rules coverage.
+The matrix now finishes 141 of 200 games (was 105 before activations and 100
+before this pass): fetch lands, ramp and death triggers actually run, so games
+reach a real result more often.
+
+Browser smoke test at `http://localhost:5173` against the local server on
+`http://localhost:8787`: a cEDH pod starts, a land is played, its mana ability
+menu opens with one row per producible colour, clicking an ability icon opens the
+keyword help card, and the hand honestly marks partially implemented cards.
 
 ## Truth boundaries — do not overstate these
 
-1. **Card text is mostly not executed.** `characteristics.ts` recognises a closed set of templates: draw N, gain N life, each opponent loses N life, "~ deals N damage to any target", damage to each opponent, destroy target creature, destroy all creatures, counter target spell. Over the current cEDH pod that is **83 of 400 cards fully covered**. Every other card plays as a real body with real types, power/toughness and combat keywords, and both the hand tooltip and the card page say so. Never claim "all cards work".
-2. **No activated abilities beyond mana, no triggered abilities, no ETB effects, no static/continuous effects, no layers, no counters on permanents, no tokens, no planeswalker loyalty, no mulligans.**
+1. **Card text is mostly not executed.** `characteristics.ts` recognises a closed set of templates: draw N, gain N life, each opponent loses N life, "~ deals N/X damage to any target", damage to each opponent, target destruction/exile/bounce restrictions, destroy all creatures, counter target spell, common library searches to top/hand/graveyard/battlefield, plus the Frostboil-style replacement choice. Over the current cEDH pod that is **106 of 400 cards fully covered** (49 of its 249 distinct cards); that figure must be remeasured as new structured definitions land. Fireball's first-target/X branch is tested, but its additional-target cost and damage distribution are not. Every other card plays as a real body with real types, power/toughness and combat keywords, and both the hand tooltip and the card page say so. Never claim "all cards work".
+2. **What triggers and activations still do not cover.** Activated abilities exist for costs made of mana, `{T}`, paying life and sacrificing the source — 409 catalog cards. Everything else is left out of the profile rather than approximated: `{Q}`, loyalty, energy, discarding, removing counters, exiling, and sacrificing *other* permanents. Triggers cover ten events and seven subjects — 526 catalog cards — with APNAP ordering and targets, but there are still **no intervening-if conditions**, no player-ordering choice between two of one player's own simultaneous triggers (they keep event order), no delayed or state triggers, and no trigger on zone changes other than entering and dying. Also still absent: static/continuous effects, layers, counters on permanents, tokens, planeswalker loyalty and mulligans. Frostboil Snarl remains a separate entering replacement effect documented in `docs/RULES_RESEARCH.md`.
 3. **The bot is a heuristic, not a strong opponent.** Its win rates are not balance data.
 4. **There is no authentication, persistence, matchmaking or reconnect.** Matches live in one process's memory and are lost on restart. Seat tokens stop a client from claiming another seat; they are not a security system.
-5. **`cover_art_uri` on a precon is the display commander's Scryfall art crop, not official product box art.** MTGJSON publishes no distributable box-art URL and no rights-cleared source has been selected. Keep `cover_art_kind: "display_commander_art_crop"` until one is. The deck browser shows the set's Scryfall icon as the product mark for the same reason.
+5. **Precon cover art is mixed by provenance.** Mind Seize and Power Hungry use the user-provided product-render URLs and are marked `product_box_render`; other products may still use the display commander's Scryfall art crop until an approved product image is added. Do not present the fallback as box art.
 6. **Only 100-card Commander deck products are imported.** "Commander Arsenal", "Commander Anthology" and similar are MTGJSON *Box Sets* — collections of singles, not decks — so they have no deck to play and are correctly absent.
 7. **Card data and images remain subject to upstream terms.** Images are linked from the provider on demand. Do not bulk download, re-encode or mirror art without a rights review.
 8. **The Python simulators (`simulate_cedh_pod.py`, `run_ai_matrix.py`) are metadata heuristics, not the game engine.** `npm run simulate:engine` is the real regression matrix; prefer it. The Python ones are kept only as cheap deck-plumbing smoke tests.
+9. **Ability icons are this project's own artwork.** `apps/client/src/abilities.ts` contains original SVG paths. MTG Arena was studied only as a reference for where an icon helps; its icons are Wizards of the Coast game assets, are not redistributable, and a fandom wiki hosting them does not make them free. Do not import them.
+10. **Forge integration has not happened.** `docs/FORGE_INTEGRATION.md` records the GPLv3 review and the separate-component option; the local unsigned permission note is not treated as a source licence or as a reason to bypass the repository policy.
 
 ## Repository map
 
@@ -71,6 +185,7 @@ Browser smoke test at `http://localhost:5173`: a cEDH pod starts, lands and spel
 apps/client/                    Vite TypeScript client
   src/main.ts                   table rendering, interaction, dialogs
   src/styles.css                full-viewport layout and card styling
+  src/abilities.ts              original keyword/ability SVG set + rule help text
 packages/rules/                 authoritative engine (pure, deterministic)
   src/mana.ts                   symbols, pools, payment solver
   src/characteristics.ts        card profiles + the closed Oracle template set
@@ -78,7 +193,7 @@ packages/rules/                 authoritative engine (pure, deterministic)
   src/projection.ts             the per-seat security boundary
   src/bot.ts                    bot policy over legal actions only
   src/simulator.ts              coarse metadata simulator (legacy tooling)
-  src/*.test.ts                 89 Vitest specs
+  src/*.test.ts                 121 Vitest specs
 services/match-server/
   src/matches.ts                match registry, seat tokens, bot driving
   src/index.ts                  REST + Socket.IO, catalog and deck endpoints
@@ -89,6 +204,9 @@ tools/decks/                    cEDH and MTGJSON Commander importers, deck enric
 tools/simulator/
   run_engine_matrix.ts          seeded regression over the real engine
   *.py                          legacy metadata smoke tests
+tools/rules/
+  compile_card_rules.py         local 38k-card rules inventory compiler
+  export_engine_profiles.ts      actual profile export through packages/rules
 data/                           generated, gitignored
 ```
 
@@ -101,8 +219,11 @@ npm install
 npm run dev:server        # Fastify + Socket.IO on http://localhost:8787
 npm run dev               # Vite client on http://localhost:5173
 npm run check             # build rules, then typecheck rules/client/server
-npm test                  # 89 Vitest specs + Python smoke tests
+npm test                  # 121 Vitest specs + Python smoke tests
 npm run simulate:engine   # 200 seeded games through the real engine
+npm run rules:pool:sync   # 1,500-card EDHREC popularity pool in data/rules
+npm run rules:compile     # 38k-card rules-family inventory in data/rules
+npm run rules:engine:export # actual engine profile for each unique card
 npm run build             # production builds
 ```
 
@@ -145,13 +266,43 @@ npm run rulings:sync      # ~79k Wizards rulings, keyed by oracle_id
 
 ## Recommended next sequence
 
-1. **Triggered abilities and ETB effects.** They are the single largest coverage gap: most Commander cards do something on entry. Model them as structured triggers with a real trigger queue, not text parsing, and grow the template set with a test per template.
-2. **Activated abilities beyond mana**, then counters on permanents and tokens.
-3. **Continuous effects and layers.** Needed before anything that pumps, grants keywords, or changes types can be trusted.
-4. **Persistence and identity.** Replace the in-memory registry with PostgreSQL/Redis, authenticated seats, event streams with versions, reconnects, and server-side priority timeouts.
-5. **Deck construction and the collection.** Build on `oracle_id`/`scryfall_id` and the structured columns; wishlist pricing is a separate opt-in feature and must always carry a source and refresh timestamp.
-6. **Precon box art.** Find a rights-cleared or licensed source, store provenance and licence per asset, and swap only `cover_art_uri`.
-7. **Android build.** The client is landscape-ready and the touch layout is implemented, but no Capacitor project has been generated. `docs/ANDROID.md` has the setup, the orientation lock and the four things that must be settled first — chiefly a configurable server base URL, since a packaged app has no Vite proxy.
+The bottleneck has moved. Trigger *conditions* and activation *costs* are now
+general; what limits coverage is the **effect vocabulary** they resolve into.
+526 cards have a recognised trigger and 409 a recognised activation, but only
+5,355 of 38,711 cards are fully implemented, because most printed effects are
+still outside `SpellEffect`.
+
+1. **Widen `SpellEffect`, one template plus one test at a time.** The highest
+   value families, in order of how often they appear in the local catalog: put a
+   +1/+1 counter, create a token, target player draws/discards, mill N, tap or
+   untap target permanent, return target card from a graveyard, scry N, and
+   "target creature gets +N/+N until end of turn". The first three need new state
+   (counters and tokens); the rest do not.
+2. **Counters on permanents and tokens.** Needed by the families above, and by
+   the state-based actions that check them.
+3. **Intervening-if conditions and trigger ordering choices.** `TriggerDefinition`
+   has the shape for a condition; the missing piece is checking it both on trigger
+   and on resolution (CR 603.4), plus letting a player order two of their own
+   simultaneous triggers instead of keeping event order.
+4. **More activation costs.** Discarding, exiling from a graveyard, removing a
+   counter and sacrificing another permanent are the four that unlock the most
+   cards; each needs a real cost-payment choice, not an approximation.
+5. **Continuous effects and layers.** Needed before anything that pumps, grants
+   keywords, or changes types can be trusted.
+6. **Persistence and identity.** Replace the in-memory registry with
+   PostgreSQL/Redis, authenticated seats, event streams with versions, reconnects,
+   and server-side priority timeouts.
+7. **Deck construction and the collection.** Build on `oracle_id`/`scryfall_id`
+   and the structured columns; wishlist pricing is a separate opt-in feature and
+   must always carry a source and refresh timestamp.
+8. **Precon box art.** Continue adding approved product renders with
+   provenance/licence; the ChromaKey cleanup must only be applied to those
+   box-render assets, never broadly to card art.
+9. **Android build.** The client is landscape-ready and the touch layout is
+   implemented, but no Capacitor project has been generated. `docs/ANDROID.md` has
+   the setup, the orientation lock and the four things that must be settled first
+   — chiefly a configurable server base URL, since a packaged app has no Vite
+   proxy.
 
 ## Working style constraints
 

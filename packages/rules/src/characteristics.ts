@@ -10,6 +10,7 @@
 
 import { MANA_COLORS, parseManaCost, type ManaCost, type ManaType } from "./mana.js";
 
+
 export interface CardData {
   readonly scryfall_id: string;
   readonly oracle_id?: string;
@@ -55,18 +56,113 @@ export interface ManaAbility {
   readonly text: string;
 }
 
+/**
+ * A non-mana activated ability whose cost and effect both fit an explicit,
+ * deterministic template.  This deliberately does not try to interpret all
+ * Oracle prose: an ability appears here only when the engine can pay every
+ * cost and resolve every instruction it exposes.
+ */
+export interface ActivatedAbility {
+  readonly index: number;
+  readonly requiresTap: boolean;
+  readonly sacrificesSelf: boolean;
+  readonly lifeCost: number;
+  /** Mana part of the activation cost, or null when the ability needs none. */
+  readonly manaCost: ManaCost | null;
+  readonly effect: SpellEffect;
+  readonly targetKind: TargetKind;
+  readonly text: string;
+}
+
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
   | { readonly kind: "draw"; readonly amount: number }
   | { readonly kind: "gain-life"; readonly amount: number }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number }
-  | { readonly kind: "damage-any-target"; readonly amount: number }
-  | { readonly kind: "damage-each-opponent"; readonly amount: number }
+  | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "destroy-target-creature" }
+  | { readonly kind: "destroy-target-permanent" }
+  | { readonly kind: "exile-target-permanent" }
+  | { readonly kind: "return-target-creature" }
   | { readonly kind: "destroy-all-creatures" }
-  | { readonly kind: "counter-target-spell" };
+  | { readonly kind: "counter-target-spell" }
+  | {
+      readonly kind: "search-library";
+      readonly types: readonly CardType[];
+      readonly subtypes?: readonly string[];
+      readonly destination: "top" | "hand" | "graveyard" | "battlefield";
+      /** Ramp templates put the found land onto the battlefield tapped. */
+      readonly tapped?: boolean;
+      readonly reveal: boolean;
+    };
 
-export type TargetKind = "any" | "creature" | "spell" | "none";
+/**
+ * Game events the engine raises for triggered abilities.
+ *
+ * The vocabulary is closed on purpose: an event only appears here once the
+ * engine actually raises it at the right moment, so a recognised trigger is
+ * always a trigger that fires.
+ */
+export type TriggerEvent =
+  | "enters-battlefield"
+  | "dies"
+  | "attacks"
+  | "blocks"
+  | "deals-combat-damage-to-player"
+  | "becomes-tapped"
+  | "spell-cast"
+  | "upkeep"
+  | "draw-step"
+  | "end-step";
+
+/**
+ * Which object or player the event has to involve for the ability to trigger.
+ *
+ * This is what separates "when ~ dies" from "whenever another creature you
+ * control dies" without needing a general rules language.
+ */
+export type TriggerSubject =
+  | "self"
+  | "another-creature-you-control"
+  | "creature-you-control"
+  | "another-creature"
+  | "any-creature"
+  | "you"
+  | "each-player"
+  | "opponent";
+
+export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
+  "enters-battlefield": "habilidad de entrada",
+  dies: "habilidad de muerte",
+  attacks: "habilidad de ataque",
+  blocks: "habilidad de bloqueo",
+  "deals-combat-damage-to-player": "habilidad de daño de combate",
+  "becomes-tapped": "habilidad de giro",
+  "spell-cast": "habilidad de lanzamiento",
+  upkeep: "habilidad de mantenimiento",
+  "draw-step": "habilidad del paso de robo",
+  "end-step": "habilidad del paso final"
+};
+
+/** A triggered ability whose source is already on the battlefield. */
+export interface TriggerDefinition {
+  readonly event: TriggerEvent;
+  readonly subject: TriggerSubject;
+  readonly effect: SpellEffect;
+  readonly optional: boolean;
+  /**
+   * What the ability targets. Targets for a trigger are chosen when it is put
+   * onto the stack (CR 603.3d), never when the source is cast, so this is kept
+   * apart from the card-level `targetKind` used by spells.
+   */
+  readonly targetKind: TargetKind;
+  readonly sourceText: string;
+}
+
+export type TargetKind =
+  | "any" | "creature" | "spell" | "permanent" | "artifact-or-enchantment"
+  | "artifact-creature-or-planeswalker" | "nonland" | "nonartifact-creature" | "none";
 
 export interface CardProfile {
   readonly name: string;
@@ -83,7 +179,9 @@ export interface CardProfile {
   readonly toughness: number | null;
   readonly loyalty: number | null;
   readonly manaAbilities: readonly ManaAbility[];
+  readonly activatedAbilities: readonly ActivatedAbility[];
   readonly effects: readonly SpellEffect[];
+  readonly triggers: readonly TriggerDefinition[];
   readonly targetKind: TargetKind;
   readonly entersTapped: EntersTappedRule;
   readonly isPermanent: boolean;
@@ -98,7 +196,9 @@ export type EntersTappedRule =
   | { readonly kind: "tapped" }
   | { readonly kind: "unless-few-lands"; readonly max: number }
   | { readonly kind: "unless-many-lands"; readonly min: number }
-  | { readonly kind: "unless-pay-life"; readonly life: number };
+  | { readonly kind: "unless-pay-life"; readonly life: number }
+  /** The controller may reveal a card with one of these subtypes to avoid entering tapped. */
+  | { readonly kind: "unless-reveal-card"; readonly subtypes: readonly string[] };
 
 const WORD_NUMBERS: Record<string, number> = {
   a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
@@ -148,13 +248,33 @@ function numeric(value: string | null | undefined): number | null {
   return /\*/.test(trimmed) ? 0 : null;
 }
 
-/** Removes reminder text and normalises the card's own name to `~` for template matching. */
+/**
+ * Nouns Wizards uses when a card refers to itself in current Oracle text.
+ *
+ * Modern templating writes "Sacrifice this land" and "When this creature
+ * enters" instead of repeating the card's name, so a parser that only knows the
+ * printed name silently misses most reprints. The list is explicit on purpose:
+ * "this turn", "this way", "this game" and "this player" are not self
+ * references and must never be rewritten.
+ */
+const SELF_NOUNS = [
+  "creature", "land", "artifact", "enchantment", "permanent", "planeswalker",
+  "battle", "token", "card", "spell", "Vehicle", "Equipment", "Aura", "Saga"
+] as const;
+
+/**
+ * Removes reminder text and normalises every way a card names itself to `~`,
+ * so one template can match both the printed name and the modern "this land"
+ * phrasing of the same ability.
+ */
 export function normalizedOracle(card: CardData): string {
   const raw = (card.oracle_text ?? "").replace(/\([^)]*\)/g, " ");
   const shortName = card.name.split(",")[0]!.split("//")[0]!.trim();
   const escaped = [card.name, shortName].filter(Boolean).map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   let text = raw;
   for (const pattern of escaped) text = text.replace(new RegExp(pattern, "g"), "~");
+  const selfReference = new RegExp(`\\bthis (?:${SELF_NOUNS.join("|")})\\b`, "gi");
+  text = text.replace(selfReference, "~");
   return text.replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").trim();
 }
 
@@ -163,21 +283,27 @@ const MANA_LETTERS = new Set(["W", "U", "B", "R", "G", "C"]);
 function symbolsIn(text: string): ManaType[] {
   return [...text.matchAll(/\{([WUBRGC])\}/g)].map((match) => match[1] as ManaType);
 }
-
-/** Recognises the mana an `Add …` clause produces. Returns null for variable or unmodeled output. */
+/**
+ * Recognises the mana an `Add` clause produces, or null when it is unmodeled.
+ *
+ * Every pattern must consume the whole clause. A restrictive tail such as
+ * "of any color that a land an opponent controls could produce" is a different,
+ * board-dependent ability, and reading it as five free colours would let the
+ * table pay costs it cannot actually pay.
+ */
 function parseAddClause(effect: string): { produces: ManaType[]; amount: number } | null {
-  const clause = effect.trim();
-  const anyColor = /^add\s+(\w+)\s+mana\s+of\s+any\s+(?:one\s+)?colors?\b/i.exec(clause);
+  const clause = effect.trim().replace(/\.$/, "");
+  const anyColor = /^add\s+(\w+)\s+mana\s+of\s+any\s+(?:one\s+)?colors?$/i.exec(clause);
   if (anyColor) {
     const amount = toNumber(anyColor[1]);
     return amount ? { produces: [...MANA_COLORS], amount } : null;
   }
-  const anyCombination = /^add\s+(\w+)\s+mana\s+in\s+any\s+combination\s+of\s+colors/i.exec(clause);
+  const anyCombination = /^add\s+(\w+)\s+mana\s+in\s+any\s+combination\s+of\s+colors$/i.exec(clause);
   if (anyCombination) {
     const amount = toNumber(anyCombination[1]);
     return amount ? { produces: [...MANA_COLORS], amount } : null;
   }
-  const explicit = /^add\s+((?:\{[WUBRGC]\}|\s|,|or|and)+)/i.exec(clause);
+  const explicit = /^add\s+((?:\{[WUBRGC]\}|\s|,|or|and)+)$/i.exec(clause);
   if (!explicit) return null;
   const symbols = symbolsIn(explicit[1]!);
   if (!symbols.length) return null;
@@ -219,7 +345,67 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
   return [{ index: 0, produces: produced, amount: 1, requiresTap: true, lifeCost: 0, text: `{T}: Add one mana (${produced.join("/")}).` }];
 }
 
+/**
+ * Parses an activation cost made from mana, tapping, paying life and
+ * sacrificing its own source, plus an effect the engine can resolve.
+ *
+ * Everything else — untapping ({Q}), loyalty, energy, exiling or sacrificing
+ * other permanents, discarding, removing counters — leaves the ability out of
+ * the profile rather than letting the table activate a cost it cannot pay.
+ */
+function parseActivatedAbility(line: string, index: number): ActivatedAbility | null {
+  const activated = /^([^:]{1,120}):\s*(.+)$/.exec(line.trim());
+  if (!activated) return null;
+  const [, costText, effectText] = activated as unknown as [string, string, string];
+  // Mana abilities have their own immediate-resolution path (CR 605.1a).
+  if (/^add\b/i.test(effectText.trim())) return null;
+  // Loyalty abilities are a separate cost system the engine does not model yet.
+  if (/^\s*[+\u2212\u2013-]?\d+\s*:/.test(line)) return null;
+  const recognized = recognizeSentence(effectText);
+  if (!recognized) return null;
+
+  const symbols = costText.match(/\{[^}]+\}/g) ?? [];
+  const requiresTap = symbols.some((symbol) => symbol.toUpperCase() === "{T}");
+  // `{Q}` (untap) and every other non-mana symbol are outside the payable set.
+  if (symbols.some((symbol) => /^\{Q\}$/i.test(symbol))) return null;
+  const manaSymbols = symbols.filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
+  const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
+  // A cost the mana parser rejects, or one carrying `{X}`, is not payable here.
+  if (manaSymbols.length && (!manaCost || manaCost.hasVariable)) return null;
+
+  const sacrificesSelf = /sacrifice\s+~/i.test(costText);
+  const lifeMatch = /pay\s+(\d+)\s+life/i.exec(costText);
+  const lifeCost = lifeMatch ? Number(lifeMatch[1]) : 0;
+  const leftovers = costText
+    .replace(/\{[^}]*\}/g, "")
+    .replace(/pay\s+\d+\s+life/gi, "")
+    .replace(/sacrifice\s+~/gi, "")
+    .replace(/[,\s]/g, "");
+  if (leftovers.length) return null;
+  return {
+    index,
+    requiresTap,
+    sacrificesSelf,
+    lifeCost,
+    manaCost,
+    effect: recognized.effect,
+    targetKind: recognized.target,
+    text: line.trim()
+  };
+}
+
 function parseEntersTapped(text: string, typeLine: string): EntersTappedRule {
+  // This is the current Oracle template used by Frostboil Snarl and the
+  // allied reveal lands: the reveal is a replacement-effect choice made as
+  // the land enters, not a triggered ability after it is already in play.
+  const reveal = /as\s+~\s+enters,?\s+you\s+may\s+reveal\s+(?:an?\s+)?(.+?)\s+card\s+from\s+your\s+hand[\s\S]*?if\s+you\s+don[’']t,?\s+~\s+enters\s+tapped/i.exec(text);
+  if (reveal) {
+    const subtypes = reveal[1]!
+      .split(/\s*(?:,|\bor\b|\band\b)\s*/i)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (subtypes.length) return { kind: "unless-reveal-card", subtypes };
+  }
   if (!/enters\s+tapped/i.test(text)) return { kind: "untapped" };
   const fewLands = /unless\s+you\s+control\s+(\w+)\s+or\s+fewer\s+other\s+lands/i.exec(text);
   if (fewLands) {
@@ -237,9 +423,96 @@ function parseEntersTapped(text: string, typeLine: string): EntersTappedRule {
   return { kind: "tapped" };
 }
 
-interface RecognizedText { readonly effects: SpellEffect[]; readonly targetKind: TargetKind; readonly covered: boolean }
+interface RecognizedText {
+  readonly effects: SpellEffect[];
+  readonly triggers: TriggerDefinition[];
+  readonly activatedAbilities: ActivatedAbility[];
+  readonly targetKind: TargetKind;
+  readonly covered: boolean;
+}
 
 const SENTENCE_SPLIT = /(?<=\.)\s+(?=[A-Z~])/;
+
+function searchCriterion(text: string): { types: CardType[]; subtypes: string[] } {
+  const types = CARD_TYPES.filter((type) => new RegExp(`\\b${type}\\b`, "i").test(text));
+  const supertypes = /\bbasic\b/i.test(text) ? ["Basic"] : [];
+  const knownSubtypes = ["Plains", "Island", "Swamp", "Mountain", "Forest", "Desert", "Gate", "Lair", "Shrine"];
+  const subtypes = knownSubtypes.filter((subtype) => new RegExp(`\\b${subtype}\\b`, "i").test(text));
+  return { types, subtypes: [...supertypes, ...subtypes] };
+}
+
+function parseLibrarySearch(text: string): SpellEffect | null {
+  const match = /^Search your library for (?:a |an |up to (?:one|two|three|five) )?(.+?) card, (.+)$/i.exec(text);
+  if (!match) return null;
+  const criterion = searchCriterion(match[1]!);
+  const instructions = match[2]!;
+  const selected = "(?:(?:that|the) card|it)";
+  const destination = new RegExp(`(?:put|place) ${selected} on top(?: of your library)?`, "i").test(instructions) ? "top"
+    : new RegExp(`put ${selected} into your hand`, "i").test(instructions) ? "hand"
+    : new RegExp(`put ${selected} into your graveyard`, "i").test(instructions) ? "graveyard"
+    : new RegExp(`put ${selected} onto the battlefield`, "i").test(instructions) ? "battlefield" : null;
+  if (!destination) return null;
+  return {
+    kind: "search-library",
+    types: criterion.types,
+    ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+    destination,
+    ...(destination === "battlefield" && /onto the battlefield tapped/i.test(instructions) ? { tapped: true } : {}),
+    reveal: /reveal/i.test(instructions)
+  };
+}
+
+/**
+ * Recognises the trigger condition of one printed line.
+ *
+ * Each entry pairs an Oracle template with the event the engine raises and the
+ * subject the event must involve. Anything outside this table is left unmatched
+ * and reported as uncovered rather than attributed to the wrong permanent.
+ */
+const TRIGGER_TEMPLATES: readonly {
+  readonly event: TriggerEvent;
+  readonly subject: TriggerSubject;
+  readonly pattern: RegExp;
+}[] = [
+  // The permanent that carries the ability is the object the event is about.
+  { event: "enters-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+dies,?\s*(.+)$/i },
+  { event: "attacks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+attacks(?:\s+for\s+the\s+first\s+time)?,?\s*(.+)$/i },
+  { event: "blocks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+blocks(?:\s+a\s+creature)?,?\s*(.+)$/i },
+  { event: "deals-combat-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
+  { event: "becomes-tapped", subject: "self", pattern: /^(?:when|whenever)\s+~\s+becomes\s+tapped,?\s*(.+)$/i },
+
+  // Another object triggers it. `another` excludes the source itself (CR 109.5).
+  { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
+  { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
+  { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
+  { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },
+  { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
+  { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
+  { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
+
+  // A player is the subject.
+  { event: "spell-cast", subject: "you", pattern: /^whenever\s+you\s+cast\s+a\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+spell,?\s*(.+)$/i },
+
+  // Turn-structure triggers (CR 603.2b).
+  { event: "upkeep", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+upkeep,?\s*(.+)$/i },
+  { event: "upkeep", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+upkeep,?\s*(.+)$/i },
+  { event: "upkeep", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+upkeep,?\s*(.+)$/i },
+  { event: "draw-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+draw\s+step,?\s*(.+)$/i },
+  { event: "end-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+end\s+step,?\s*(.+)$/i },
+  { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+end\s+step,?\s*(.+)$/i },
+  { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i }
+];
+
+function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string } | null {
+  for (const template of TRIGGER_TEMPLATES) {
+    const match = template.pattern.exec(line);
+    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim() };
+  }
+  return null;
+}
 
 /** Matches one sentence against the closed effect templates. */
 function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind } | null {
@@ -260,15 +533,37 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if ((match = /^~ deals (\w+) damage to any target$/i.exec(text))) {
     const amount = toNumber(match[1]);
-    if (amount) return { effect: { kind: "damage-any-target", amount }, target: "any" };
+    if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
   }
   if ((match = /^~ deals (\w+) damage to (?:each opponent|each of your opponents)$/i.exec(text))) {
     const amount = toNumber(match[1]);
-    if (amount) return { effect: { kind: "damage-each-opponent", amount }, target: "none" };
+    if (amount !== null) return { effect: { kind: "damage-each-opponent", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-each-opponent", amount: "X" }, target: "none" };
+  }
+  if ((match = /^~ deals (\w+) damage to target creature$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "creature" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "creature" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
+  if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
+  if (/^Destroy target artifact, creature, or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-creature-or-planeswalker" };
+  if (/^Destroy target nonland permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonland" };
+  if (/^Destroy target nonartifact creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-creature" };
+  if (/^Exile target (?:artifact or enchantment|nonland permanent|permanent|creature)$/i.test(text)) {
+    const target = /artifact or enchantment/i.test(text) ? "artifact-or-enchantment"
+      : /nonland/i.test(text) ? "nonland" : /creature$/i.test(text) ? "creature" : "permanent";
+    return { effect: { kind: "exile-target-permanent" }, target };
+  }
+  if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
+  const genericSearch = parseLibrarySearch(text);
+  if (genericSearch) return { effect: genericSearch, target: "none" };
+  if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library$/i.test(text)) {
+    return { effect: { kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }, target: "none" };
+  }
   // Purely cosmetic trailing clauses do not change the outcome the engine produces.
   if (/^(It|They) can't be regenerated$/i.test(text)) return null;
   return null;
@@ -276,9 +571,22 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 
 function recognizeText(text: string): RecognizedText {
   const body = text.split("\n").map((line) => line.trim()).filter(Boolean);
-  if (!body.length) return { effects: [], targetKind: "none", covered: true };
+  if (!body.length) return { effects: [], triggers: [], activatedAbilities: [], targetKind: "none", covered: true };
+
+  // Enlightened Tutor-style searches are one resolution instruction spread
+  // over two sentences. Recognise the complete sequence before the generic
+  // sentence splitter can mark the second half as unknown.
+  const joined = body.join(" ").replace(/\s+/g, " ").trim();
+  if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library\.$/i.test(joined)) {
+    return {
+      effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
+      triggers: [], activatedAbilities: [], targetKind: "none", covered: true
+    };
+  }
 
   const effects: SpellEffect[] = [];
+  const triggers: TriggerDefinition[] = [];
+  const activatedAbilities: ActivatedAbility[] = [];
   let targetKind: TargetKind = "none";
   let unmatched = 0;
 
@@ -286,7 +594,45 @@ function recognizeText(text: string): RecognizedText {
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
-    if (/^[^:]{1,80}:/.test(line) && /^[^:]*:\s*add\b/i.test(line)) continue; // Mana ability, handled separately.
+    // A mana ability counts as covered only when its printed output is really
+    // recognised. One the parser cannot read still plays through the structured
+    // `produced_mana` fallback, but the card must not claim its text is executed.
+    const manaLine = /^([^:]{1,80}):\s*(add\b.*)$/i.exec(line);
+    if (manaLine) {
+      if (!parseAddClause(manaLine[2]!)) unmatched += 1;
+      continue;
+    }
+
+    const activated = parseActivatedAbility(line, activatedAbilities.length);
+    if (activated) {
+      activatedAbilities.push(activated);
+      continue;
+    }
+
+    // Triggered abilities whose source is the permanent itself. The event is
+    // raised by the engine, the ability is queued, ordered by APNAP and then
+    // resolved through the normal stack. A trigger's own target is chosen when
+    // it goes on the stack (CR 603.3d), so it never leaks into the card-level
+    // `targetKind` a spell uses when it is cast.
+    const triggered = matchTriggerLine(line);
+    if (triggered) {
+      const effectText = triggered.effectText;
+      const optional = /^you\s+may\b/i.test(effectText);
+      const recognized = recognizeSentence(optional ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
+      if (recognized) {
+        triggers.push({
+          event: triggered.event,
+          subject: triggered.subject,
+          effect: recognized.effect,
+          optional,
+          targetKind: recognized.target,
+          sourceText: line
+        });
+      } else {
+        unmatched += 1;
+      }
+      continue;
+    }
 
     let lineCovered = false;
     for (const sentence of line.split(SENTENCE_SPLIT)) {
@@ -299,7 +645,7 @@ function recognizeText(text: string): RecognizedText {
     }
     if (!lineCovered) unmatched += 1;
   }
-  return { effects, targetKind, covered: unmatched === 0 };
+  return { effects, triggers, activatedAbilities, targetKind, covered: unmatched === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -335,7 +681,9 @@ export function cardProfile(card: CardData): CardProfile {
     toughness: numeric(face.toughness),
     loyalty: numeric(face.loyalty),
     manaAbilities,
+    activatedAbilities: isPermanent ? recognized.activatedAbilities : [],
     effects: recognized.effects,
+    triggers: recognized.triggers,
     targetKind: recognized.targetKind,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     isPermanent,

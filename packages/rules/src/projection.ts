@@ -6,7 +6,7 @@
  * library contents are structurally absent rather than merely hidden in the UI.
  */
 
-import { cardProfile } from "./characteristics.js";
+import { cardProfile, type TriggerEvent } from "./characteristics.js";
 import {
   STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSources,
   type GameCard, type GameState, type LegalAction, type LogEntry, type Permanent, type SeatId, type Target, type TurnStep
@@ -31,7 +31,19 @@ export interface CardView {
   readonly fullyImplemented: boolean;
 }
 
+/** One printed ability of a permanent, as the table needs to show it. */
+export interface AbilityView {
+  readonly index: number;
+  readonly kind: "mana" | "activated" | "triggered";
+  readonly text: string;
+  /** Set for triggered abilities so the client can pick the right icon. */
+  readonly event?: TriggerEvent;
+  /** True when the viewer can activate it right now. */
+  readonly available: boolean;
+}
+
 export interface PermanentView extends CardView {
+  readonly abilities: readonly AbilityView[];
   readonly controller: SeatId;
   readonly tapped: boolean;
   readonly summoningSick: boolean;
@@ -100,11 +112,7 @@ export interface GameView {
   readonly selectableAttackers: readonly string[];
   readonly selectableBlockers: readonly string[];
   /** Targets this viewer may pick, grouped by what a spell asks for. */
-  readonly targetOptions: {
-    readonly any: readonly Target[];
-    readonly creature: readonly Target[];
-    readonly spell: readonly Target[];
-  };
+  readonly targetOptions: Record<Exclude<import("./characteristics.js").TargetKind, "none">, readonly Target[]>;
   readonly waitingOn: SeatId | null;
 }
 
@@ -129,12 +137,36 @@ function cardView(card: GameCard): CardView {
   };
 }
 
-function permanentView(state: GameState, permanent: Permanent): PermanentView {
+/**
+ * The printed abilities of one permanent.
+ *
+ * Availability is read from `legalActions` rather than recomputed, so an icon
+ * is never lit for something the authoritative path would refuse.
+ */
+function abilitiesOf(permanent: Permanent, available: readonly LegalAction[]): AbilityView[] {
+  const profile = cardProfile(permanent.card);
+  const canActivate = (kind: "activate" | "activate-mana", index: number) => available.some((entry) =>
+    entry.action.type === kind && entry.action.sourceId === permanent.instance_id && entry.action.abilityIndex === index);
+  return [
+    ...profile.manaAbilities.map((ability): AbilityView => ({
+      index: ability.index, kind: "mana", text: ability.text, available: canActivate("activate-mana", ability.index)
+    })),
+    ...profile.activatedAbilities.map((ability): AbilityView => ({
+      index: ability.index, kind: "activated", text: ability.text, available: canActivate("activate", ability.index)
+    })),
+    ...profile.triggers.map((trigger, index): AbilityView => ({
+      index, kind: "triggered", text: trigger.sourceText, event: trigger.event, available: false
+    }))
+  ];
+}
+
+function permanentView(state: GameState, permanent: Permanent, available: readonly LegalAction[]): PermanentView {
   const attacking = state.combat.attackers.find((entry) => entry.instanceId === permanent.instance_id);
   const blocking = state.combat.blockers.find((entry) => entry.instanceId === permanent.instance_id);
   const blockedBy = state.combat.blockers.filter((entry) => entry.attackerId === permanent.instance_id).map((entry) => entry.instanceId);
   return {
     ...cardView(permanent.card),
+    abilities: abilitiesOf(permanent, available),
     controller: permanent.controller,
     tapped: permanent.tapped,
     summoningSick: permanent.summoningSick,
@@ -160,6 +192,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
   if (viewerSeat < 0 || viewerSeat >= state.players.length) throw new Error("Ese asiento no participa en esta partida.");
   const awaitingBlockers = defendersAwaitingBlocks(state);
   const viewer = state.players[viewerSeat]!;
+  const viewerActions = legalActions(state, viewerSeat);
 
   const players: PlayerView[] = state.players.map((player) => ({
     seat: player.seat,
@@ -172,7 +205,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     libraryCount: player.library.length,
     handCount: player.hand.length,
     ...(player.seat === viewerSeat ? { hand: player.hand.map(cardView) } : {}),
-    battlefield: player.battlefield.map((permanent) => permanentView(state, permanent)),
+    battlefield: player.battlefield.map((permanent) => permanentView(state, permanent, player.seat === viewerSeat ? viewerActions : [])),
     graveyard: player.graveyard.map(cardView),
     exile: player.exile.map(cardView),
     commandZone: player.commandZone.map(cardView),
@@ -215,7 +248,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
       awaitingBlockersFrom: awaitingBlockers
     },
     log: state.log.slice(-60),
-    legalActions: legalActions(state, viewerSeat),
+    legalActions: viewerActions,
     selectableAttackers: mustDeclareAttackers && state.activeSeat === viewerSeat && !viewer.lost
       ? legalAttackers(state, viewerSeat).map((permanent) => permanent.instance_id)
       : [],
@@ -225,7 +258,12 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     targetOptions: {
       any: legalTargets(state, viewerSeat, "any"),
       creature: legalTargets(state, viewerSeat, "creature"),
-      spell: legalTargets(state, viewerSeat, "spell")
+      spell: legalTargets(state, viewerSeat, "spell"),
+      permanent: legalTargets(state, viewerSeat, "permanent"),
+      "artifact-or-enchantment": legalTargets(state, viewerSeat, "artifact-or-enchantment"),
+      "artifact-creature-or-planeswalker": legalTargets(state, viewerSeat, "artifact-creature-or-planeswalker"),
+      nonland: legalTargets(state, viewerSeat, "nonland"),
+      "nonartifact-creature": legalTargets(state, viewerSeat, "nonartifact-creature")
     },
     waitingOn: mustDeclareAttackers ? state.activeSeat : mustDeclareBlockers ? (awaitingBlockers[0] ?? null) : state.priorityOpen ? state.prioritySeat : null
   };

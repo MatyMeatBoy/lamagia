@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Import every MTGJSON Commander Deck product and resolve each printing locally.
 
-MTGJSON supplies deck contents and commander/display-commander print IDs. It does
-not provide a canonical product-box image URL, so `cover_art_uri` deliberately
-uses the display commander's linked Scryfall art crop and records that provenance.
+MTGJSON supplies deck contents and commander/display-commander print IDs. Product
+box art is therefore an explicit, reviewable override; products without an
+approved URL retain the commander-art fallback and say so in their provenance.
 """
 from __future__ import annotations
 
@@ -19,6 +19,20 @@ from typing import Any
 
 API = "https://mtgjson.com/api/v5"
 USER_AGENT = "ProsshTCG/0.1 (contact@example.com)"
+
+# Product-render URLs supplied/reviewed for the first gallery pass. Keep these
+# as data, not card identity; the deck still resolves every printing by ID.
+# More products can be added after their image source and redistribution terms
+# have been reviewed.
+PRODUCT_BOX_ART = {
+    "MindSeize_C13": "https://m.media-amazon.com/images/I/71oIylvF4fL.jpg",
+    "PowerHungry_C13": "https://m.media-amazon.com/images/I/61uQke4LCKL._AC_UF350,350_QL50_.jpg",
+}
+
+
+def is_collector_edition(entry: dict[str, Any]) -> bool:
+    key = f"{entry.get('fileName', '')} {entry.get('name', '')}".lower()
+    return "collector" in key
 
 
 def fetch_json(url: str) -> dict[str, Any]:
@@ -91,7 +105,8 @@ def import_deck(entry: dict[str, Any], catalog: Path) -> dict[str, Any]:
             "id": entry["fileName"], "name": entry["name"], "set_code": entry["code"],
             "released_at": entry.get("releaseDate"), "commanders": [card["name"] for card in commanders],
             "cards": cards, "source_url": entry.get("source"), "sealed_product_uuids": remote.get("sealedProductUuids") or [],
-            "cover_art_uri": display.get("image_art_crop"), "cover_art_kind": "display_commander_art_crop",
+            "cover_art_uri": PRODUCT_BOX_ART.get(entry["fileName"], display.get("image_art_crop")),
+            "cover_art_kind": "product_box_render" if entry["fileName"] in PRODUCT_BOX_ART else "display_commander_art_crop",
         }
     finally:
         connection.close()
@@ -107,7 +122,9 @@ if __name__ == "__main__":
         raise SystemExit("Run npm run catalog:sync before importing Commander precons.")
     index = fetch_json(f"{API}/DeckList.json")["data"]
     # Every product line whose decks are legal 100-card Commander decks.
-    entries = [entry for entry in index if entry.get("type") in ("Commander Deck", "MTGO Commander Deck")]
+    entries = [entry for entry in index
+               if entry.get("type") in ("Commander Deck", "MTGO Commander Deck")
+               and not is_collector_edition(entry)]
     imported: list[dict[str, Any]] = []
     failures: list[str] = []
     with ThreadPoolExecutor(max_workers=max(1, min(arguments.workers, 8))) as pool:

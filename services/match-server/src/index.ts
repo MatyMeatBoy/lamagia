@@ -26,6 +26,15 @@ interface ImportedPrecons { readonly source: string; readonly synced_at: string;
 let podCache: ImportedPod | null = null;
 let preconCache: ImportedPrecons | null = null;
 
+const PRODUCT_BOX_ART: Readonly<Record<string, string>> = {
+  MindSeize_C13: "https://m.media-amazon.com/images/I/71oIylvF4fL.jpg",
+  PowerHungry_C13: "https://m.media-amazon.com/images/I/61uQke4LCKL._AC_UF350,350_QL50_.jpg"
+};
+
+function isCollectorEdition(deck: ImportedPrecon): boolean {
+  return `${deck.id} ${deck.name}`.toLocaleLowerCase().includes("collector");
+}
+
 async function readActivePod(): Promise<ImportedPod> {
   if (podCache) return podCache;
   if (!existsSync(activePodPath)) throw new Error("Ejecuta npm run decks:pod:sync para cargar el pod cEDH.");
@@ -36,7 +45,10 @@ async function readActivePod(): Promise<ImportedPod> {
 async function readPrecons(): Promise<ImportedPrecons> {
   if (preconCache) return preconCache;
   if (!existsSync(preconsPath)) throw new Error("Ejecuta npm run precons:sync para importar los mazos precon.");
-  preconCache = JSON.parse(await readFile(preconsPath, "utf8")) as ImportedPrecons;
+  const imported = JSON.parse(await readFile(preconsPath, "utf8")) as ImportedPrecons;
+  // Keep collector variants documented in the source file, but do not expose
+  // them as selectable Commander products in the normal deck browser.
+  preconCache = { ...imported, decks: imported.decks.filter((deck) => !isCollectorEdition(deck)) };
   return preconCache;
 }
 
@@ -53,20 +65,47 @@ interface CatalogCard {
   readonly oracle_text: string;
   readonly set_code: string;
   readonly set_name: string;
+  readonly set_type: string;
   readonly released_at: string;
   readonly rarity: string;
   readonly scryfall_uri: string;
   readonly power: string | null;
   readonly toughness: string | null;
+  readonly promo: boolean;
+  readonly variation: boolean;
+  readonly main_set: boolean;
   readonly printings?: number;
   readonly image_uris: { readonly small?: string; readonly normal?: string; readonly art_crop?: string };
 }
 
+interface CatalogPrinting {
+  readonly id: string;
+  readonly set_code: string;
+  readonly set_name: string;
+  readonly set_type: string;
+  readonly released_at: string;
+  readonly rarity: string;
+  readonly collector_number: string;
+  readonly promo: boolean;
+  readonly variation: boolean;
+  readonly main_set: boolean;
+  readonly image_normal?: string;
+}
+
 const CARD_COLUMNS = [
   "id", "oracle_id", "name", "type_line", "mana_cost", "oracle_text",
-  "set_code", "set_name", "released_at", "rarity", "scryfall_uri",
-  "power", "toughness", "image_small", "image_normal", "image_art_crop"
+  "set_code", "set_name", "set_type", "released_at", "rarity", "collector_number",
+  "scryfall_uri", "power", "toughness", "promo", "variation", "frame_effects_json",
+  "image_small", "image_normal", "image_art_crop"
 ];
+
+/** Only regular Core/Expansion printings are the default gallery version. */
+function isMainSetPrinting(row: Record<string, unknown>): boolean {
+  const setType = String(row.set_type ?? "");
+  const frameEffects = String(row.frame_effects_json ?? "[]");
+  return (setType === "core" || setType === "expansion")
+    && !Boolean(row.promo) && !Boolean(row.variation) && frameEffects === "[]";
+}
 
 function mapCatalogRow(row: Record<string, unknown>): CatalogCard {
   const text = (key: string) => (row[key] === null || row[key] === undefined ? "" : String(row[key]));
@@ -79,11 +118,15 @@ function mapCatalogRow(row: Record<string, unknown>): CatalogCard {
     oracle_text: text("oracle_text"),
     set_code: text("set_code"),
     set_name: text("set_name"),
+    set_type: text("set_type"),
     released_at: text("released_at"),
     rarity: text("rarity"),
     scryfall_uri: text("scryfall_uri"),
     power: row.power === null || row.power === undefined ? null : String(row.power),
     toughness: row.toughness === null || row.toughness === undefined ? null : String(row.toughness),
+    promo: Boolean(row.promo),
+    variation: Boolean(row.variation),
+    main_set: isMainSetPrinting(row),
     ...(row.printings === undefined ? {} : { printings: Number(row.printings) }),
     image_uris: { small: text("image_small"), normal: text("image_normal"), art_crop: text("image_art_crop") }
   };
@@ -113,6 +156,12 @@ const PLAYABLE_ONLY = `layout NOT IN ('token','double_faced_token','emblem','art
  */
 function bestPrintingSelect(database: DatabaseSync, where: string): string {
   const modern = catalogHasPrintingRank(database);
+  // Prefer a regular Core/Expansion printing even when a Secret Lair or a
+  // supplemental product is newer. If a card has no main-set printing, the
+  // second branch still gives it the best documented non-promo version.
+  const preferred = modern
+    ? "CASE WHEN set_type IN ('core','expansion') AND COALESCE(promo,0) = 0 AND COALESCE(variation,0) = 0 AND COALESCE(frame_effects_json,'[]') = '[]' THEN 0 ELSE 1 END,"
+    : "";
   const ranked = modern ? "printing_rank ASC," : "";
   const playable = modern ? `(${PLAYABLE_ONLY}) AND ` : "";
   return `
@@ -120,7 +169,7 @@ function bestPrintingSelect(database: DatabaseSync, where: string): string {
          best AS (
            SELECT *, ROW_NUMBER() OVER (
              PARTITION BY COALESCE(oracle_id, name)
-             ORDER BY ${ranked} released_at DESC, set_code ASC
+             ORDER BY ${preferred} ${ranked} released_at DESC, set_code ASC
            ) AS pick,
            COUNT(*) OVER (PARTITION BY COALESCE(oracle_id, name)) AS printings
            FROM matched
@@ -173,7 +222,7 @@ function namedLocalCard(name: string): CatalogCard | null {
 }
 
 interface CardPage extends CatalogCard {
-  readonly printings_list: { set_code: string; set_name: string; released_at: string }[];
+  readonly printings_list: CatalogPrinting[];
   /** Wizards' published clarifications, the same body Gatherer shows. */
   readonly rulings: { published_at: string; comment: string }[];
 }
@@ -196,7 +245,7 @@ function catalogCardById(id: string): CardPage | null {
     if (!row) return null;
     const oracleId = row.oracle_id ? String(row.oracle_id) : "";
     const printings = oracleId
-      ? database.prepare("SELECT DISTINCT set_code, set_name, released_at FROM cards WHERE oracle_id = ? ORDER BY released_at DESC").all(oracleId)
+      ? database.prepare("SELECT id, set_code, set_name, set_type, released_at, rarity, collector_number, promo, variation, frame_effects_json, image_normal FROM cards WHERE oracle_id = ? ORDER BY released_at DESC, set_code ASC, collector_number ASC").all(oracleId)
       : [];
     // Rulings are keyed by oracle_id, so they hold across every printing.
     const rulings = oracleId && catalogHasRulings(database)
@@ -206,7 +255,12 @@ function catalogCardById(id: string): CardPage | null {
       ...mapCatalogRow(row),
       printings_list: printings.map((entry) => {
         const record = entry as Record<string, unknown>;
-        return { set_code: String(record.set_code ?? ""), set_name: String(record.set_name ?? ""), released_at: String(record.released_at ?? "") };
+        return {
+          id: String(record.id ?? ""), set_code: String(record.set_code ?? ""), set_name: String(record.set_name ?? ""),
+          set_type: String(record.set_type ?? ""), released_at: String(record.released_at ?? ""), rarity: String(record.rarity ?? ""),
+          collector_number: String(record.collector_number ?? ""), promo: Boolean(record.promo), variation: Boolean(record.variation),
+          main_set: isMainSetPrinting(record), ...(record.image_normal ? { image_normal: String(record.image_normal) } : {})
+        } satisfies CatalogPrinting;
       }),
       rulings: rulings.map((entry) => {
         const record = entry as Record<string, unknown>;
@@ -322,7 +376,8 @@ app.get<{ Querystring: { q?: string; offset?: string; limit?: string; grouped?: 
         id: deck.id, name: deck.name, commanders: deck.commanders, set_code: deck.set_code,
         set_name: meta?.name ?? deck.set_code.toUpperCase(),
         released_at: deck.released_at || meta?.released_at || "",
-        cover_art_uri: deck.cover_art_uri, cover_art_kind: deck.cover_art_kind,
+        cover_art_uri: PRODUCT_BOX_ART[deck.id] ?? deck.cover_art_uri,
+        cover_art_kind: PRODUCT_BOX_ART[deck.id] ? "product_box_render" : deck.cover_art_kind,
         ...(meta?.icon ? { set_icon_uri: meta.icon } : {})
       };
     };
@@ -335,8 +390,11 @@ app.get<{ Querystring: { q?: string; offset?: string; limit?: string; grouped?: 
 
     // Grouped mode is what the deck browser uses: one section per Commander product.
     if (request.query.grouped === "1") {
+      const offset = Math.max(0, Number(request.query.offset ?? 0));
+      const limit = Math.min(96, Math.max(1, Number(request.query.limit ?? 48)));
+      const page = filtered.slice(offset, offset + limit);
       const groups = new Map<string, { set_code: string; set_name: string; released_at: string; set_icon_uri?: string; decks: typeof filtered }>();
-      for (const deck of filtered) {
+      for (const deck of page) {
         const existing = groups.get(deck.set_code);
         if (existing) { existing.decks.push(deck); continue; }
         groups.set(deck.set_code, {
@@ -347,7 +405,7 @@ app.get<{ Querystring: { q?: string; offset?: string; limit?: string; grouped?: 
       }
       const ordered = [...groups.values()].sort((left, right) => right.released_at.localeCompare(left.released_at) || left.set_name.localeCompare(right.set_name));
       for (const group of ordered) group.decks.sort((left, right) => left.name.localeCompare(right.name));
-      return { total: filtered.length, source: precons.source, groups: ordered };
+      return { total: filtered.length, offset, limit, hasMore: offset + limit < filtered.length, source: precons.source, groups: ordered };
     }
 
     const offset = Math.max(0, Number(request.query.offset ?? 0));

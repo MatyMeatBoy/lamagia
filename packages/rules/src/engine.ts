@@ -13,7 +13,7 @@
  */
 
 import {
-  cardProfile, isCreature, isLand, type CardData, type CardProfile, type EnforcedKeyword, type SpellEffect
+  cardProfile, isCreature, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type EnforcedKeyword, type ManaAbility, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, payCost, poolTotal, type ManaCost, type ManaPool, type ManaType
@@ -108,7 +108,38 @@ export interface StackObject {
   readonly fromCommandZone: boolean;
   readonly variableValue: number;
   readonly countered: boolean;
+  /** Present when this is a triggered ability rather than a spell. */
+  readonly trigger?: TriggerInstance;
+  /** Present when this is a non-mana activated ability rather than a spell. */
+  readonly activated?: ActivatedAbility;
 }
+
+export interface TriggerInstance {
+  readonly id: string;
+  readonly controller: SeatId;
+  readonly sourcePermanentId: string;
+  readonly sourceCard: GameCard;
+  readonly definition: TriggerDefinition;
+  /** What raised it, for the log and for the client's stack strip. */
+  readonly cause: string;
+}
+
+/**
+ * One thing that happened in the game.
+ *
+ * Events are raised at the moment the rules say they happen; triggered
+ * abilities that match are queued and only reach the stack the next time a
+ * player would receive priority (CR 603.3).
+ */
+export type GameEvent =
+  | { readonly kind: "enters-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
+  | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
 export interface BlockerDeclaration { readonly instanceId: string; readonly attackerId: string }
@@ -138,6 +169,8 @@ export interface GameState {
   readonly priorityOpen: boolean;
   readonly passedSeats: readonly SeatId[];
   readonly stack: readonly StackObject[];
+  /** Triggered abilities waiting to be put onto the stack. */
+  readonly triggerQueue: readonly TriggerInstance[];
   readonly combat: CombatState;
   readonly log: readonly LogEntry[];
   readonly winnerSeat: SeatId | null;
@@ -146,12 +179,59 @@ export interface GameState {
   readonly rngState: number;
   readonly version: number;
   readonly startingSeat: SeatId;
+  /** A replacement-effect choice that must be completed before priority resumes. */
+  readonly pendingChoice: PendingChoice | null;
 }
+
+export type PendingChoice =
+  | {
+      readonly type: "reveal-card";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly stage: "confirm" | "card";
+      readonly optionIds: readonly string[];
+    }
+  | {
+      readonly type: "optional-trigger";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly triggerEffect: SpellEffect;
+      readonly sourceCard: GameCard;
+    }
+  | {
+      /**
+       * A triggered ability needs a target. Targets are chosen as the ability
+       * is put onto the stack (CR 603.3d), before anyone receives priority.
+       */
+      readonly type: "trigger-target";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly trigger: TriggerInstance;
+      readonly targetKind: Exclude<TargetKind, "none">;
+      readonly options: readonly Target[];
+    }
+  | {
+      readonly type: "search-library";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly optionIds: readonly string[];
+      readonly sourceCard: GameCard;
+      readonly search: Extract<SpellEffect, { kind: "search-library" }>;
+      /** Spells move to the graveyard after resolving; activated sources already paid their costs. */
+      readonly returnSourceToGraveyard: boolean;
+    };
 
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number }
+  | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[] }
+  | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
+  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
+  | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
+  /** The query is a player intent; the library instance id never leaves the server. */
+  | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -161,7 +241,7 @@ export interface LegalAction {
   readonly action: GameAction;
   readonly label: string;
   readonly cardId?: string;
-  readonly requiresTarget?: "any" | "creature" | "spell";
+  readonly requiresTarget?: Exclude<TargetKind, "none">;
   readonly manaValue?: number;
   readonly note?: string;
 }
@@ -248,16 +328,20 @@ export interface ManaSource {
   readonly requiresTap: boolean;
 }
 
+/** Rule 302.6 applies to a creature's own tap ability, including Llanowar Elves. */
+function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: ManaAbility): boolean {
+  if (ability.requiresTap && permanent.tapped) return false;
+  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return false;
+  return ability.lifeCost < player.life;
+}
+
 /** Untapped permanents this player can currently tap for mana. */
 export function manaSources(player: PlayerState): ManaSource[] {
   const sources: ManaSource[] = [];
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
-      if (ability.requiresTap && permanent.tapped) continue;
-      // A creature's `{T}` ability needs it to have been controlled since the turn began.
-      if (ability.requiresTap && permanent.summoningSick && isCreature(profile)) continue;
-      if (ability.lifeCost >= player.life) continue;
+      if (!canUseManaAbility(player, permanent, ability)) continue;
       sources.push({
         permanentId: permanent.instance_id,
         name: permanent.card.name,
@@ -405,12 +489,13 @@ export function planManaPayment(
 
 function applyManaPlan(state: GameState, seat: SeatId, plan: ManaPlan): GameState {
   const tapped = new Set(plan.taps.map((tap) => tap.permanentId));
-  return withPlayer(state, seat, (player) => ({
+  const next = withPlayer(state, seat, (player) => ({
     ...player,
     life: player.life - plan.lifeCost,
     battlefield: player.battlefield.map((permanent) => (tapped.has(permanent.instance_id) ? { ...permanent, tapped: true } : permanent)),
     manaPool: plan.pool
   }));
+  return raiseTapEvents(next, state, tapped);
 }
 
 // ---------------------------------------------------------------------------
@@ -459,12 +544,13 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     rngState = shuffled.state;
     const library = shuffled.items;
     const hand = library.splice(0, Math.min(openingHand, library.length));
+    const kind = deck.kind ?? (seat === 0 ? "human" : "bot");
     return {
       seat,
       id: deck.id,
       name: deck.playerName ?? deck.name,
       deckName: deck.name,
-      kind: deck.kind ?? (seat === 0 ? "human" : "bot"),
+      kind,
       life: startingLife,
       library,
       hand,
@@ -479,7 +565,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       manaPool: emptyPool(),
       lost: false,
       drewFromEmptyLibrary: false,
-      autoPass: true
+      autoPass: kind === "bot"
     } satisfies PlayerState;
   });
 
@@ -492,6 +578,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     priorityOpen: false,
     passedSeats: [],
     stack: [],
+    triggerQueue: [],
     combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false },
     log: [],
     winnerSeat: null,
@@ -499,7 +586,8 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     seed,
     rngState,
     version: 0,
-    startingSeat: 0
+    startingSeat: 0,
+    pendingChoice: null
   };
   const opened = logged(base, null, `Partida creada con ${players.length} jugadores · ${startingLife} vidas · mano inicial de ${openingHand}.`);
   return settle(opened);
@@ -540,7 +628,13 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
     return logged(next, ownerSeat, `${permanent.card.name} vuelve a la zona de mando.`);
   }
   next = withPlayer(next, ownerSeat, (player) => ({ ...player, [zone]: [...player[zone], permanent.card] }));
-  return logged(next, permanent.controller, `${permanent.card.name} va ${zone === "graveyard" ? "al cementerio" : "al exilio"}.`);
+  next = logged(next, permanent.controller, `${permanent.card.name} va ${zone === "graveyard" ? "al cementerio" : "al exilio"}.`);
+  // "Dies" is specifically battlefield → graveyard (rule 700.4). A commander
+  // redirected to the command zone above never reaches this point.
+  if (zone === "graveyard" && isCreature(cardProfile(permanent.card))) {
+    next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card }, [permanent]);
+  }
+  return next;
 }
 
 function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { tapped: boolean; lifeCost: number } {
@@ -560,12 +654,19 @@ function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { t
     case "unless-pay-life":
       // Paying is the standard line whenever the life total can afford it comfortably.
       return player.life > rule.life + 1 ? { tapped: false, lifeCost: rule.life } : { tapped: true, lifeCost: 0 };
+    case "unless-reveal-card":
+      // The land is provisionally tapped until the controller completes the
+      // replacement-effect choice (CR 614.1c).
+      return { tapped: true, lifeCost: 0 };
   }
 }
 
-function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean): GameState {
+function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false): GameState {
   const profile = cardProfile(card);
-  const enters = entersTapped(state, seat, profile);
+  const printed = entersTapped(state, seat, profile);
+  // An effect that says "onto the battlefield tapped" overrides the card's own
+  // printed entry rule; it never makes a tapped-by-default land enter untapped.
+  const enters = forceTapped ? { tapped: true, lifeCost: 0 } : printed;
   const permanent: Permanent = {
     instance_id: card.instance_id,
     card,
@@ -582,7 +683,130 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     battlefield: [...player.battlefield, permanent]
   }));
   if (enters.lifeCost) next = logged(next, seat, `${playerAt(next, seat).name} paga ${enters.lifeCost} vidas para que ${card.name} entre enderezada.`);
+  const entered = playerAt(next, seat).battlefield.find((candidate) => candidate.instance_id === card.instance_id);
+  if (entered) next = raiseEvent(next, { kind: "enters-battlefield", permanentId: entered.instance_id, controller: seat, card: entered.card });
   return next;
+}
+
+/** The object an event is about, when it is about an object at all. */
+function eventObject(event: GameEvent): { permanentId: string; controller: SeatId; card: GameCard } | null {
+  return "permanentId" in event
+    ? { permanentId: event.permanentId, controller: event.controller, card: event.card }
+    : null;
+}
+
+/**
+ * Whether one printed trigger condition matches one event.
+ *
+ * `watcher` is the permanent carrying the ability, which is what makes
+ * "another" and "you control" mean anything.
+ */
+function triggerMatches(
+  state: GameState,
+  watcher: { readonly instanceId: string; readonly controller: SeatId },
+  definition: TriggerDefinition,
+  event: GameEvent
+): boolean {
+  if (definition.event !== event.kind) return false;
+  const subject = definition.subject;
+
+  // Turn-structure triggers are about a player, not an object.
+  if (event.kind === "upkeep" || event.kind === "draw-step" || event.kind === "end-step") {
+    if (subject === "you") return event.activeSeat === watcher.controller;
+    if (subject === "each-player") return true;
+    if (subject === "opponent") return event.activeSeat !== watcher.controller;
+    return false;
+  }
+
+  if (event.kind === "spell-cast") {
+    if (subject === "you") return event.controller === watcher.controller;
+    if (subject === "opponent") return event.controller !== watcher.controller;
+    if (subject === "each-player") return true;
+    return false;
+  }
+
+  const object = eventObject(event);
+  if (!object) return false;
+  const isSelf = object.permanentId === watcher.instanceId;
+  const objectIsCreature = isCreature(cardProfile(object.card));
+  switch (subject) {
+    case "self": return isSelf;
+    // Rule 109.5: "another" excludes the object the ability is printed on.
+    case "another-creature-you-control": return !isSelf && objectIsCreature && object.controller === watcher.controller;
+    case "creature-you-control": return objectIsCreature && object.controller === watcher.controller;
+    case "another-creature": return !isSelf && objectIsCreature;
+    case "any-creature": return objectIsCreature;
+    default: return false;
+  }
+}
+
+function causeOf(state: GameState, event: GameEvent): string {
+  const object = eventObject(event);
+  switch (event.kind) {
+    case "enters-battlefield": return `${object!.card.name} entra al campo de batalla`;
+    case "dies": return `${object!.card.name} muere`;
+    case "attacks": return `${object!.card.name} ataca`;
+    case "blocks": return `${object!.card.name} bloquea`;
+    case "deals-combat-damage-to-player": return `${object!.card.name} hace daño de combate a ${playerAt(state, event.victim).name}`;
+    case "becomes-tapped": return `${object!.card.name} se gira`;
+    case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
+    default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
+  }
+}
+
+/**
+ * Raises one event and queues every triggered ability that matches it.
+ *
+ * `extraWatchers` exists for leave-the-battlefield events: a creature's own
+ * "when this dies" ability triggers from the moment it left, so the engine has
+ * to look back at a permanent that is no longer on the battlefield (CR 603.6d).
+ */
+function raiseEvent(
+  state: GameState,
+  event: GameEvent,
+  extraWatchers: readonly Permanent[] = []
+): GameState {
+  const watchers = [...allPermanents(state), ...extraWatchers];
+  const queued: TriggerInstance[] = [];
+  for (const watcher of watchers) {
+    const definitions = cardProfile(watcher.card).triggers;
+    for (const [index, definition] of definitions.entries()) {
+      if (!triggerMatches(state, { instanceId: watcher.instance_id, controller: watcher.controller }, definition, event)) continue;
+      queued.push({
+        id: `trigger:${state.version}:${state.triggerQueue.length + queued.length}:${watcher.instance_id}:${index}`,
+        controller: watcher.controller,
+        sourcePermanentId: watcher.instance_id,
+        sourceCard: watcher.card,
+        definition,
+        cause: causeOf(state, event)
+      });
+    }
+  }
+  return queued.length ? { ...state, triggerQueue: [...state.triggerQueue, ...queued] } : state;
+}
+
+/** Raises `becomes-tapped` for each permanent that went from untapped to tapped. */
+function raiseTapEvents(state: GameState, before: GameState, ids: Iterable<string>): GameState {
+  let next = state;
+  for (const id of ids) {
+    const previous = findPermanent(before, id);
+    const current = findPermanent(next, id);
+    if (!previous || !current || previous.tapped || !current.tapped) continue;
+    next = raiseEvent(next, { kind: "becomes-tapped", permanentId: id, controller: current.controller, card: current.card });
+  }
+  return next;
+}
+
+function revealOptions(player: PlayerState, subtypes: readonly string[]): GameCard[] {
+  const wanted = new Set(subtypes.map((subtype) => subtype.toLowerCase()));
+  return player.hand.filter((card) => cardProfile(card).subtypes.some((subtype) => wanted.has(subtype.toLowerCase())));
+}
+
+function pendingRevealFor(state: GameState, seat: SeatId, sourceId: string, subtypes: readonly string[]): PendingChoice {
+  return {
+    type: "reveal-card", seat, sourceId, stage: "confirm",
+    optionIds: revealOptions(playerAt(state, seat), subtypes).map((card) => card.instance_id)
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -591,6 +815,10 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
 
 function opponentsOf(state: GameState, seat: SeatId): SeatId[] {
   return state.players.filter((player) => player.seat !== seat && !player.lost).map((player) => player.seat);
+}
+
+function effectAmount(amount: number | "X", object: StackObject): number {
+  return amount === "X" ? object.variableValue : amount;
 }
 
 function dealDamageToPlayer(state: GameState, seat: SeatId, amount: number, sourceName: string): GameState {
@@ -623,19 +851,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     }
     case "each-opponent-loses-life": {
       let next = state;
-      for (const seat of opponentsOf(state, controller)) next = dealDamageToPlayer(next, seat, effect.amount, sourceName);
+      for (const seat of opponentsOf(state, controller)) next = dealDamageToPlayer(next, seat, effectAmount(effect.amount, object), sourceName);
       return next;
     }
     case "damage-each-opponent": {
       let next = state;
-      for (const seat of opponentsOf(state, controller)) next = dealDamageToPlayer(next, seat, effect.amount, sourceName);
+      for (const seat of opponentsOf(state, controller)) next = dealDamageToPlayer(next, seat, effectAmount(effect.amount, object), sourceName);
       return next;
     }
     case "damage-any-target": {
       const target = object.targets[0];
       if (!target) return state;
-      if (target.kind === "player") return dealDamageToPlayer(state, target.seat, effect.amount, sourceName);
-      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, effect.amount, false, sourceName);
+      const amount = effectAmount(effect.amount, object);
+      if (target.kind === "player") return dealDamageToPlayer(state, target.seat, amount, sourceName);
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
       return state;
     }
     case "destroy-target-creature": {
@@ -644,6 +873,30 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent || keywordOf(permanent, "indestructible")) return state;
       return movePermanentToZone(state, permanent, "graveyard");
+    }
+    case "destroy-target-permanent": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || keywordOf(permanent, "indestructible")) return state;
+      return movePermanentToZone(state, permanent, "graveyard");
+    }
+    case "exile-target-permanent": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      return permanent ? movePermanentToZone(state, permanent, "exile") : state;
+    }
+    case "return-target-creature": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
     }
     case "destroy-all-creatures": {
       let next = state;
@@ -658,6 +911,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
     }
+    case "search-library":
+      // Search is resolved through the explicit library-choice action below.
+      return state;
   }
 }
 
@@ -672,6 +928,8 @@ function resolveTop(state: GameState): GameState {
   const profile = cardProfile(object.card);
 
   if (object.countered) {
+    if (object.trigger) return logged(next, object.controller, `Se contrarresta la habilidad disparada de ${object.card.name}.`);
+    if (object.activated) return logged(next, object.controller, `Se contrarresta la habilidad activada de ${object.card.name}.`);
     next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
   }
@@ -682,14 +940,70 @@ function resolveTop(state: GameState): GameState {
     (target.kind === "spell" && !next.stack.some((entry) => entry.id === target.stackId)) ||
     (target.kind === "player" && playerAt(next, target.seat).lost));
   if (object.targets.length && targetsGone) {
+    if (object.trigger) return logged(next, object.controller, `La habilidad de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
+    if (object.activated) return logged(next, object.controller, `La habilidad activada de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
     next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
     return logged(next, object.controller, `${object.card.name} se contrarresta: sus objetivos ya no son legales.`);
+  }
+
+  if (object.trigger) {
+    if (object.trigger.definition.optional) {
+      return {
+        ...next,
+        pendingChoice: {
+          type: "optional-trigger",
+          seat: object.controller,
+          sourceId: object.trigger.id,
+          triggerEffect: object.trigger.definition.effect,
+          sourceCard: object.trigger.sourceCard
+        }
+      };
+    }
+    const nextEffect = applyEffect(next, object, object.trigger.definition.effect);
+    return logged(nextEffect, object.controller,
+      `Se resuelve la ${TRIGGER_EVENT_LABELS[object.trigger.definition.event]} de ${object.card.name}.`);
+  }
+
+  const activatedEffect = object.activated?.effect;
+  const search = activatedEffect?.kind === "search-library"
+    ? activatedEffect
+    : profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "search-library" }> => effect.kind === "search-library");
+  if (search) {
+    const options = playerAt(next, object.controller).library
+      .filter((card) => {
+        const profile = cardProfile(card);
+        const typeMatches = !search.types.length || search.types.some((type) => profile.types.includes(type));
+        const subtypeMatches = !search.subtypes?.length || search.subtypes.some((subtype) =>
+          subtype === "Basic" ? profile.supertypes.includes("Basic") : profile.subtypes.includes(subtype));
+        return typeMatches && subtypeMatches;
+      })
+      .map((card) => card.instance_id);
+    if (!options.length) {
+      if (!object.activated) next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+      return logged(next, object.controller, `${object.card.name} se resuelve: no hay una carta válida en la biblioteca.`);
+    }
+    return {
+      ...next,
+      pendingChoice: {
+        type: "search-library",
+        seat: object.controller,
+        sourceId: object.id,
+        optionIds: options,
+        sourceCard: object.card,
+        search,
+        returnSourceToGraveyard: !object.activated
+      }
+    };
+  }
+
+  if (activatedEffect) {
+    const resolved = applyEffect(next, object, activatedEffect);
+    return logged(resolved, object.controller, `Se resuelve la habilidad activada de ${object.card.name}.`);
   }
 
   if (profile.isPermanent) {
     next = putOntoBattlefield(next, object.controller, object.card, object.fromCommandZone || playerAt(next, object.card.owner).commanderIds.includes(object.card.instance_id));
     next = logged(next, object.controller, `${playerAt(next, object.controller).name} resuelve ${object.card.name} al campo de batalla.`);
-    for (const effect of profile.effects) next = applyEffect(next, object, effect);
     return next;
   }
 
@@ -819,18 +1133,20 @@ export function defendersAwaitingBlocks(state: GameState): SeatId[] {
 }
 
 function tapAttackers(state: GameState, attackers: readonly AttackerDeclaration[]): GameState {
+  const before = state;
   const ids = new Set(attackers.filter((entry) => {
     const permanent = findPermanent(state, entry.instanceId);
     return permanent ? !keywordOf(permanent, "vigilance") : false;
   }).map((entry) => entry.instanceId));
   if (!ids.size) return state;
-  return {
+  const tappedState: GameState = {
     ...state,
     players: state.players.map((player) => ({
       ...player,
       battlefield: player.battlefield.map((permanent) => (ids.has(permanent.instance_id) ? { ...permanent, tapped: true } : permanent))
     }))
   };
+  return raiseTapEvents(tappedState, before, ids);
 }
 
 function dealsDamageInStep(permanent: Permanent, firstStrikeStep: boolean): boolean {
@@ -847,7 +1163,7 @@ function needsFirstStrikeStep(state: GameState): boolean {
   return combatants.some((permanent) => keywordOf(permanent, "first strike") || keywordOf(permanent, "double strike"));
 }
 
-interface DamageBatch { readonly toPlayers: { seat: SeatId; amount: number; commanderId?: string; sourceName: string }[]; readonly toPermanents: { instanceId: string; amount: number; deathtouch: boolean; sourceName: string }[]; readonly lifelink: { seat: SeatId; amount: number }[] }
+interface DamageBatch { readonly toPlayers: { seat: SeatId; amount: number; commanderId?: string; sourceName: string; sourceId: string }[]; readonly toPermanents: { instanceId: string; amount: number; deathtouch: boolean; sourceName: string }[]; readonly lifelink: { seat: SeatId; amount: number }[] }
 
 function computeCombatDamage(state: GameState, firstStrikeStep: boolean): DamageBatch {
   const toPlayers: DamageBatch["toPlayers"] = [];
@@ -873,7 +1189,8 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
         seat: entry.defender,
         amount: power,
         ...(attacker.isCommander ? { commanderId: attacker.instance_id } : {}),
-        sourceName: attacker.card.name
+        sourceName: attacker.card.name,
+        sourceId: attacker.instance_id
       });
       if (keywordOf(attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: power });
       continue;
@@ -894,7 +1211,8 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
         seat: entry.defender,
         amount: remaining,
         ...(attacker.isCommander ? { commanderId: attacker.instance_id } : {}),
-        sourceName: attacker.card.name
+        sourceName: attacker.card.name,
+        sourceId: attacker.instance_id
       });
       if (keywordOf(attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: remaining });
     }
@@ -919,6 +1237,13 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
   for (const hit of batch.toPermanents) next = dealDamageToPermanent(next, hit.instanceId, hit.amount, hit.deathtouch, hit.sourceName);
   for (const hit of batch.toPlayers) {
     next = dealDamageToPlayer(next, hit.seat, hit.amount, hit.sourceName);
+    const dealer = findPermanent(next, hit.sourceId);
+    if (dealer && hit.amount > 0) {
+      next = raiseEvent(next, {
+        kind: "deals-combat-damage-to-player",
+        permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card, victim: hit.seat
+      });
+    }
     if (hit.commanderId) {
       const commanderId = hit.commanderId;
       next = withPlayer(next, hit.seat, (player) => ({
@@ -1006,6 +1331,12 @@ function beginStep(state: GameState, step: TurnStep): GameState {
     default: break;
   }
 
+  // Turn-structure triggers are raised as the step begins, before priority
+  // opens, so they are already queued when a player would first receive it.
+  if (step === "upkeep") next = raiseEvent(next, { kind: "upkeep", activeSeat: next.activeSeat });
+  if (step === "draw") next = raiseEvent(next, { kind: "draw-step", activeSeat: next.activeSeat });
+  if (step === "end") next = raiseEvent(next, { kind: "end-step", activeSeat: next.activeSeat });
+
   const opensPriority = !NO_PRIORITY_STEPS.includes(step) && !next.finished;
   next = { ...next, priorityOpen: opensPriority };
   if (opensPriority) next = { ...next, prioritySeat: playerAt(next, next.activeSeat).lost ? nextLivingSeat(next, next.activeSeat) : next.activeSeat };
@@ -1033,21 +1364,22 @@ function sorcerySpeed(state: GameState, seat: SeatId): boolean {
   return state.activeSeat === seat && MAIN_STEPS.includes(state.step) && state.stack.length === 0;
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean): { legal: boolean; note?: string; targetKind?: "any" | "creature" | "spell" } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none"> } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (!profile.castableFromHand || !profile.cost) return { legal: false };
+  if (!Number.isInteger(variableValue) || variableValue < 0) return { legal: false, note: "El valor de X debe ser un entero no negativo." };
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
-  if (profile.cost.hasVariable) return { legal: false, note: "Los costes con {X} todavía no se pueden pagar." };
   const additionalGeneric = fromCommandZone ? commanderTax(player, card.instance_id) : 0;
-  const plan = planManaPayment(profile.cost, player, { additionalGeneric });
+  const plan = planManaPayment(profile.cost, player, { additionalGeneric, variableValue });
   if (!plan) return { legal: false };
-  if (profile.targetKind === "creature" && !allPermanents(state).some((permanent) => isCreature(cardProfile(permanent.card)))) return { legal: false };
-  if (profile.targetKind === "spell" && !state.stack.length) return { legal: false };
+  const targetKind = profile.targetKind;
+  if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind).length) return { legal: false };
+  if (targetKind === "spell" && !state.stack.length) return { legal: false };
   return {
     legal: true,
-    ...(profile.targetKind !== "none" ? { targetKind: profile.targetKind } : {}),
+    ...(targetKind !== "none" ? { targetKind } : {}),
     ...(profile.fullyImplemented ? {} : { note: "Su texto todavía no está implementado; entra al juego pero no ejecuta su efecto." })
   };
 }
@@ -1058,6 +1390,69 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   const player = playerAt(state, seat);
   if (player.lost) return [];
   const actions: LegalAction[] = [];
+
+  if (state.pendingChoice) {
+    if (state.pendingChoice.seat !== seat) return actions;
+    const choice = state.pendingChoice;
+    if (choice.type === "optional-trigger") {
+      actions.push({
+        action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true },
+        label: "Sí, resolver habilidad",
+        note: "La habilidad opcional se resuelve ahora."
+      });
+      actions.push({
+        action: { type: "choose-trigger", sourceId: choice.sourceId, accept: false },
+        label: "No, no hacerlo",
+        note: "No eliges realizar el efecto opcional."
+      });
+      return actions;
+    }
+    if (choice.type === "trigger-target") {
+      for (const option of choice.options) {
+        actions.push({
+          action: { type: "choose-trigger-target", sourceId: choice.sourceId, target: option },
+          label: `Objetivo: ${targetLabel(state, option)}`,
+          ...(option.kind === "permanent" ? { cardId: option.instanceId } : {}),
+          note: `${choice.trigger.sourceCard.name}: ${choice.trigger.definition.sourceText}`
+        });
+      }
+      return actions;
+    }
+    if (choice.type === "search-library") {
+      actions.push({
+        action: { type: "choose-library-card", sourceId: choice.sourceId, query: "" },
+        label: "Elegir carta de la biblioteca",
+        note: "Escribe el nombre de una carta legal de tu biblioteca. La biblioteca permanece oculta hasta la elección."
+      });
+      return actions;
+    }
+    if (choice.stage === "confirm") {
+      actions.push({
+        action: { type: "choose-reveal", sourceId: choice.sourceId, reveal: false },
+        label: "No, entra girada",
+        note: "No revelas una carta y la tierra entra girada."
+      });
+      if (choice.optionIds.length) {
+        actions.push({
+          action: { type: "choose-reveal", sourceId: choice.sourceId, reveal: true },
+          label: "Sí, revelar una carta",
+          note: "Después elegirás un tipo de tierra válido de tu mano."
+        });
+      }
+      return actions;
+    }
+    for (const cardId of choice.optionIds) {
+      const card = player.hand.find((candidate) => candidate.instance_id === cardId);
+      if (!card) continue;
+      actions.push({
+        action: { type: "choose-reveal", sourceId: choice.sourceId, reveal: true, cardId },
+        label: `Revelar ${card.name}`,
+        cardId,
+        note: "La carta se revela y permanece en tu mano."
+      });
+    }
+    return actions;
+  }
 
   if (state.step === "declare-attackers" && !state.combat.attackersDeclared && seat === state.activeSeat) {
     const attackers = legalAttackers(state, seat);
@@ -1092,30 +1487,67 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   }
 
   for (const card of player.hand) {
-    const check = castableCard(state, seat, card, false);
-    if (!check.legal) continue;
-    actions.push({
-      action: { type: "cast", cardId: card.instance_id },
-      label: `Lanzar ${card.name}`,
-      cardId: card.instance_id,
-      manaValue: cardProfile(card).manaValue,
-      ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
-      ...(check.note ? { note: check.note } : {})
-    });
+    const profile = cardProfile(card);
+    const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
+    for (const variableValue of values) {
+      const check = castableCard(state, seat, card, false, variableValue);
+      if (!check.legal) continue;
+      actions.push({
+        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}) },
+        label: profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`,
+        cardId: card.instance_id,
+        manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0),
+        ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.note ? { note: check.note } : {})
+      });
+    }
   }
 
   for (const card of player.commandZone) {
-    const check = castableCard(state, seat, card, true);
-    if (!check.legal) continue;
     const tax = commanderTax(player, card.instance_id);
-    actions.push({
-      action: { type: "cast", cardId: card.instance_id },
-      label: `Lanzar comandante ${card.name}${tax ? ` (+${tax} impuesto)` : ""}`,
-      cardId: card.instance_id,
-      manaValue: cardProfile(card).manaValue + tax,
-      ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
-      ...(check.note ? { note: check.note } : {})
-    });
+    const profile = cardProfile(card);
+    const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
+    for (const variableValue of values) {
+      const check = castableCard(state, seat, card, true, variableValue);
+      if (!check.legal) continue;
+      actions.push({
+        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}) },
+        label: `Lanzar comandante ${card.name}${tax ? ` (+${tax} impuesto)` : ""}${profile.cost?.hasVariable ? ` (X=${variableValue})` : ""}`,
+        cardId: card.instance_id,
+        manaValue: cardProfile(card).manaValue + tax + (profile.cost?.hasVariable ? variableValue : 0),
+        ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.note ? { note: check.note } : {})
+      });
+    }
+  }
+
+  // Abilities of permanents this seat controls. Mana abilities resolve
+  // immediately and never use the stack (rule 605.3a); everything else is
+  // announced like a spell and waits for priority to pass.
+  for (const permanent of player.battlefield) {
+    const profile = cardProfile(permanent.card);
+    for (const ability of profile.manaAbilities) {
+      if (!canUseManaAbility(player, permanent, ability)) continue;
+      for (const mana of ability.produces) {
+        actions.push({
+          action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana },
+          label: `${permanent.card.name}: agregar ${ability.amount > 1 ? ability.amount : ""}{${mana}}`,
+          cardId: permanent.instance_id,
+          ...(ability.lifeCost ? { note: `Cuesta ${ability.lifeCost} de vida.` } : {})
+        });
+      }
+    }
+    for (const ability of profile.activatedAbilities) {
+      const check = activatableAbility(state, seat, permanent, ability);
+      if (!check.legal) continue;
+      actions.push({
+        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index },
+        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}`,
+        cardId: permanent.instance_id,
+        ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        note: ability.text
+      });
+    }
   }
 
   actions.push({ action: { type: "concede" }, label: "Conceder" });
@@ -1123,15 +1555,26 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 }
 
 /** Targets a spell could legally choose right now. */
-export function legalTargets(state: GameState, seat: SeatId, kind: "any" | "creature" | "spell"): Target[] {
+export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
-  const creatures = allPermanents(state)
-    .filter((permanent) => isCreature(cardProfile(permanent.card)))
+  const permanents = allPermanents(state)
     .filter((permanent) => !keywordOf(permanent, "hexproof") || permanent.controller === seat)
-    .filter((permanent) => !keywordOf(permanent, "shroud"))
-    .map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
-  if (kind === "creature") return creatures;
-  return [...state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target), ...creatures];
+    .filter((permanent) => !keywordOf(permanent, "shroud"));
+  const filtered = permanents.filter((permanent) => {
+    const profile = cardProfile(permanent.card);
+    if (kind === "creature" || kind === "nonartifact-creature") return isCreature(profile) && (kind === "creature" || !profile.types.includes("Artifact"));
+    if (kind === "artifact-or-enchantment") return profile.types.includes("Artifact") || profile.types.includes("Enchantment");
+    if (kind === "artifact-creature-or-planeswalker") return profile.types.some((type) => ["Artifact", "Creature", "Planeswalker"].includes(type));
+    if (kind === "nonland") return !isLand(profile);
+    return true;
+  }).map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
+  if (kind === "any") {
+    return [...state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target), ...filtered.filter((target) => {
+      const permanent = findPermanent(state, target.kind === "permanent" ? target.instanceId : "");
+      return permanent ? isCreature(cardProfile(permanent.card)) : false;
+    })];
+  }
+  return filtered;
 }
 
 // ---------------------------------------------------------------------------
@@ -1153,18 +1596,150 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
 }
 
+function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent, ability: ActivatedAbility, targets: readonly Target[]): GameState {
+  const object: StackObject = {
+    id: `ability:${state.version}:${source.instance_id}:${ability.index}`,
+    controller: seat,
+    card: source.card,
+    label: `${source.card.name} · habilidad activada`,
+    targets,
+    fromCommandZone: false,
+    variableValue: 0,
+    countered: false,
+    activated: ability
+  };
+  return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
+}
+
+function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate-mana" }>): GameState {
+  if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para activar esa habilidad de maná.");
+  const player = playerAt(state, seat);
+  const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+  if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
+  const ability = cardProfile(source.card).manaAbilities.find((candidate) => candidate.index === action.abilityIndex);
+  if (!ability || !ability.produces.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
+  if (!canUseManaAbility(player, source, ability)) throw new Error("No puedes activar esa habilidad de maná ahora.");
+  const next = withPlayer(state, seat, (current) => ({
+    ...current,
+    life: current.life - ability.lifeCost,
+    manaPool: addMana(current.manaPool, action.mana, ability.amount),
+    battlefield: current.battlefield.map((permanent) =>
+      permanent.instance_id === source.instance_id && ability.requiresTap ? { ...permanent, tapped: true } : permanent)
+  }));
+  const tapped = raiseTapEvents(next, state, [source.instance_id]);
+  return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${ability.amount > 1 ? ability.amount : ""}{${action.mana}}.`);
+}
+
+/**
+ * Whether a seat may activate one printed non-mana ability right now.
+ *
+ * This is the single source of truth shared by `legalActions` and
+ * `applyActivate`, so the client is never offered an activation the
+ * authoritative path would then refuse.
+ */
+function activatableAbility(
+  state: GameState,
+  seat: SeatId,
+  permanent: Permanent,
+  ability: ActivatedAbility
+): { legal: boolean; targetKind?: Exclude<TargetKind, "none">; note?: string } {
+  const player = playerAt(state, seat);
+  if (permanent.controller !== seat) return { legal: false };
+  if (ability.requiresTap && permanent.tapped) return { legal: false };
+  // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
+  // the turn began. Non-creature permanents are unaffected by summoning sickness.
+  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return { legal: false };
+  if (ability.lifeCost >= player.life) return { legal: false };
+  if (ability.manaCost && ability.manaCost.symbols.length) {
+    // The cost is paid as one lump, so the check has to look at the board the
+    // payment will actually see: life already spent on the ability, and the
+    // source no longer available as a mana source when it taps for the ability
+    // itself. A land that taps for both would otherwise be counted twice.
+    const budget: PlayerState = {
+      ...player,
+      life: player.life - ability.lifeCost,
+      battlefield: ability.requiresTap
+        ? player.battlefield.map((candidate) =>
+            candidate.instance_id === permanent.instance_id ? { ...candidate, tapped: true } : candidate)
+        : player.battlefield
+    };
+    if (!planManaPayment(ability.manaCost, budget)) return { legal: false };
+  }
+  const targetKind = ability.targetKind;
+  if (targetKind === "none") return { legal: true };
+  if (targetKind === "spell" && !state.stack.length) return { legal: false };
+  if (!legalTargets(state, seat, targetKind).length) return { legal: false };
+  return { legal: true, targetKind };
+}
+
+function applyActivate(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate" }>): GameState {
+  if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para activar esa habilidad.");
+  const player = playerAt(state, seat);
+  const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+  if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
+  const ability = cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
+  if (!ability) throw new Error("Esa habilidad activada no existe.");
+  const check = activatableAbility(state, seat, source, ability);
+  if (!check.legal) throw new Error(`No puedes activar la habilidad de ${source.card.name} ahora.`);
+
+  // Targets are chosen while the ability is announced, before any cost is paid
+  // (rule 601.2c applied to activations through 602.2b).
+  let targets: readonly Target[] = action.targets ?? [];
+  if (check.targetKind) {
+    const allowed = legalTargets(state, seat, check.targetKind);
+    const chosen = targets.length ? targets : allowed.slice(0, 1);
+    if (!chosen.length) throw new Error(`${source.card.name} necesita un objetivo legal.`);
+    const valid = chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
+    if (!valid) throw new Error(`Objetivo ilegal para ${source.card.name}.`);
+    targets = chosen;
+  }
+
+  // Costs are paid in one lump: tap, life, mana, then the sacrifice.
+  let next = withPlayer(state, seat, (current) => ({
+    ...current,
+    life: current.life - ability.lifeCost,
+    battlefield: current.battlefield.map((permanent) =>
+      permanent.instance_id === source.instance_id && ability.requiresTap ? { ...permanent, tapped: true } : permanent)
+  }));
+  if (ability.requiresTap) next = raiseTapEvents(next, state, [source.instance_id]);
+  if (ability.lifeCost) next = logged(next, seat, `${player.name} paga ${ability.lifeCost} de vida por ${source.card.name}.`);
+
+  if (ability.manaCost && ability.manaCost.symbols.length) {
+    const plan = planManaPayment(ability.manaCost, playerAt(next, seat));
+    if (!plan) throw new Error(`No tienes maná suficiente para la habilidad de ${source.card.name}.`);
+    next = applyManaPlan(next, seat, plan);
+    const payment = payCost(ability.manaCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+    if (!payment) throw new Error(`No se pudo pagar el coste de la habilidad de ${source.card.name}.`);
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      manaPool: payment.remaining,
+      life: current.life - payment.lifePaid
+    }));
+  }
+
+  if (ability.sacrificesSelf) {
+    const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
+    if (!paid) throw new Error(`${source.card.name} ya no está en el campo para sacrificarse.`);
+    next = movePermanentToZone(next, paid, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${source.card.name}.`);
+  }
+
+  next = pushActivatedOnStack(next, seat, source, ability, targets);
+  return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
+}
+
 function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast" }>): GameState {
   const player = playerAt(state, seat);
   const fromHand = player.hand.find((card) => card.instance_id === action.cardId);
   const fromCommand = player.commandZone.find((card) => card.instance_id === action.cardId);
   const card = fromHand ?? fromCommand;
   if (!card) throw new Error("Esa carta no está en tu mano ni en tu zona de mando.");
-  const check = castableCard(state, seat, card, Boolean(fromCommand));
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
   const additionalGeneric = fromCommand ? commanderTax(player, card.instance_id) : 0;
-  const plan = planManaPayment(profile.cost!, player, { additionalGeneric });
+  const plan = planManaPayment(profile.cost!, player, { additionalGeneric, variableValue: action.variableValue ?? 0 });
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
@@ -1189,6 +1764,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     ...(fromCommand ? { commanderCasts: { ...current.commanderCasts, [card.instance_id]: (current.commanderCasts[card.instance_id] ?? 0) + 1 } } : {})
   }));
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0);
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card });
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}.`);
 }
 
@@ -1204,7 +1780,102 @@ function applyPlayLand(state: GameState, seat: SeatId, cardId: string): GameStat
     landsPlayedThisTurn: current.landsPlayedThisTurn + 1
   }));
   next = putOntoBattlefield(next, seat, card, false);
-  return logged(next, seat, `${player.name} juega ${card.name}.`);
+  next = logged(next, seat, `${player.name} juega ${card.name}.`);
+  const rule = cardProfile(card).entersTapped;
+  if (rule.kind === "unless-reveal-card") {
+    return {
+      ...next,
+      priorityOpen: false,
+      pendingChoice: pendingRevealFor(next, seat, card.instance_id, rule.subtypes)
+    };
+  }
+  return next;
+}
+
+function applyChooseReveal(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-reveal" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "reveal-card" || choice.seat !== seat) throw new Error("No tienes una decisión de revelación pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa decisión ya no corresponde a la tierra en juego.");
+
+  const source = playerAt(state, seat).battlefield.find((permanent) => permanent.instance_id === choice.sourceId);
+  if (!source) throw new Error("La tierra que esperaba esta decisión ya no está en el campo.");
+
+  if (choice.stage === "confirm") {
+    if (!action.reveal) {
+      return logged({ ...state, pendingChoice: null }, seat, `${playerAt(state, seat).name} no revela una carta; ${source.card.name} entra girada.`);
+    }
+    if (!choice.optionIds.length) throw new Error("No tienes una carta válida para revelar.");
+    return { ...state, pendingChoice: { ...choice, stage: "card" } };
+  }
+
+  if (!action.reveal || !action.cardId || !choice.optionIds.includes(action.cardId)) {
+    throw new Error("Debes elegir una carta válida para revelar.");
+  }
+  const revealed = playerAt(state, seat).hand.find((card) => card.instance_id === action.cardId);
+  if (!revealed) throw new Error("Esa carta ya no está en tu mano.");
+  const next = withPlayer({ ...state, pendingChoice: null }, seat, (player) => ({
+    ...player,
+    battlefield: player.battlefield.map((permanent) =>
+      permanent.instance_id === source.instance_id ? { ...permanent, tapped: false } : permanent)
+  }));
+  // Revealing does not move the card out of the hand (CR 701.16a-b).
+  return logged(next, seat, `${playerAt(next, seat).name} revela ${revealed.name}; ${source.card.name} entra enderezada.`);
+}
+
+function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "optional-trigger" || choice.seat !== seat) throw new Error("No tienes una elección de trigger pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa elección de trigger ya no está pendiente.");
+  let next: GameState = { ...state, pendingChoice: null };
+  if (!action.accept) return logged(next, seat, `${playerAt(state, seat).name} no realiza la habilidad opcional de ${choice.sourceCard.name}.`);
+  const source: StackObject = {
+    id: choice.sourceId,
+    controller: seat,
+    card: choice.sourceCard,
+    label: `${choice.sourceCard.name} · habilidad opcional`,
+    targets: [],
+    fromCommandZone: false,
+    variableValue: 0,
+    countered: false
+  };
+  next = applyEffect(next, source, choice.triggerEffect);
+  return logged(next, seat, `Se resuelve la habilidad opcional de ${choice.sourceCard.name}.`);
+}
+
+function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-library-card" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "search-library" || choice.seat !== seat) throw new Error("No tienes una búsqueda de biblioteca pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes elegir una carta de la búsqueda pendiente.");
+  const player = playerAt(state, seat);
+  const query = action.query.trim().toLocaleLowerCase();
+  if (!query) throw new Error("Escribe el nombre de la carta que quieres buscar.");
+  const candidates = player.library.filter((card) => choice.optionIds.includes(card.instance_id));
+  const matches = candidates.filter((card) => card.name.trim().toLocaleLowerCase() === query);
+  // Copies with the same name are interchangeable for a name-based search;
+  // choose the first stable library entry without exposing its instance id.
+  const selected = matches[0];
+  if (!selected) throw new Error("La carta elegida ya no está en la biblioteca.");
+  const remaining = player.library.filter((card) => card.instance_id !== selected.instance_id);
+  const shuffled = shuffle(remaining, state.rngState);
+  const nextLibrary = [selected, ...shuffled.items];
+  let next: GameState = { ...state, pendingChoice: null, rngState: shuffled.state };
+  next = withPlayer(next, seat, (current) => ({
+    ...current,
+    library: choice.search.destination === "top" ? nextLibrary : shuffled.items,
+    hand: choice.search.destination === "hand" ? [...current.hand, selected] : current.hand,
+    graveyard: [
+      ...current.graveyard,
+      ...(choice.search.destination === "graveyard" ? [selected] : []),
+      ...(choice.returnSourceToGraveyard ? [choice.sourceCard] : [])
+    ]
+  }));
+  if (choice.search.destination === "battlefield") {
+    next = putOntoBattlefield(next, seat, selected, false, choice.search.tapped === true);
+  }
+  const destination = choice.search.destination === "top" ? "la parte superior de su biblioteca"
+    : choice.search.destination === "hand" ? "su mano"
+    : choice.search.destination === "graveyard" ? "su cementerio" : "el campo de batalla";
+  return logged(next, seat, `${player.name} ${choice.search.reveal ? `revela ${selected.name} y la pone en ${destination}` : `pone ${selected.name} en ${destination}`}.`);
 }
 
 function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readonly AttackerDeclaration[]): GameState {
@@ -1221,6 +1892,11 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
 
   let next: GameState = { ...state, combat: { ...state.combat, attackers: [...attackers], attackersDeclared: true } };
   next = tapAttackers(next, attackers);
+  // Attack triggers fire once the whole declaration is made (CR 508.1i).
+  for (const entry of attackers) {
+    const attacker = findPermanent(next, entry.instanceId);
+    if (attacker) next = raiseEvent(next, { kind: "attacks", permanentId: attacker.instance_id, controller: attacker.controller, card: attacker.card });
+  }
   next = { ...next, passedSeats: [], prioritySeat: seat, priorityOpen: true };
   if (attackers.length) {
     const names = attackers.map((entry) => findPermanent(next, entry.instanceId)?.card.name ?? "criatura").join(", ");
@@ -1264,6 +1940,11 @@ function applyDeclareBlockers(state: GameState, seat: SeatId, blockers: readonly
       blockersDeclared: remaining.length === 0
     }
   };
+  // Block triggers fire once this defender's declaration is complete (CR 509.1h).
+  for (const entry of blockers) {
+    const blocker = findPermanent(next, entry.instanceId);
+    if (blocker) next = raiseEvent(next, { kind: "blocks", permanentId: blocker.instance_id, controller: blocker.controller, card: blocker.card });
+  }
   if (blockers.length) {
     const names = blockers.map((entry) => findPermanent(next, entry.instanceId)?.card.name ?? "criatura").join(", ");
     next = logged(next, seat, `${playerAt(next, seat).name} bloquea con ${names}.`);
@@ -1288,6 +1969,111 @@ function applyPass(state: GameState, seat: SeatId): GameState {
   return advanceStep({ ...state, passedSeats: [] });
 }
 
+/** Places one waiting required trigger on the stack before priority resumes. */
+/** Human-readable name of one target, used by the log and the client. */
+function targetLabel(state: GameState, target: Target): string {
+  if (target.kind === "player") return playerAt(state, target.seat).name;
+  if (target.kind === "permanent") return findPermanent(state, target.instanceId)?.card.name ?? "permanente";
+  return state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo";
+}
+
+function triggerStackObject(trigger: TriggerInstance, targets: readonly Target[]): StackObject {
+  return {
+    id: trigger.id,
+    controller: trigger.controller,
+    card: trigger.sourceCard,
+    label: `${trigger.sourceCard.name} · ${TRIGGER_EVENT_LABELS[trigger.definition.event]}`,
+    targets,
+    fromCommandZone: false,
+    variableValue: 0,
+    countered: false,
+    trigger
+  };
+}
+
+/**
+ * Order the queued triggers in APNAP order (CR 603.3b).
+ *
+ * The active player puts theirs onto the stack first, then each other player in
+ * turn order. Because the stack is last-in first-out, that means the active
+ * player's triggers resolve last. Ties inside one seat keep the order the
+ * events happened in, which keeps the whole engine deterministic.
+ */
+function apnapOrder(state: GameState): readonly TriggerInstance[] {
+  const seats = state.players.length;
+  const distance = (seat: SeatId) => (seat - state.activeSeat + seats) % seats;
+  return [...state.triggerQueue]
+    .map((trigger, index) => ({ trigger, index }))
+    .sort((left, right) => distance(left.trigger.controller) - distance(right.trigger.controller) || left.index - right.index)
+    .map((entry) => entry.trigger);
+}
+
+/**
+ * Puts the next queued trigger onto the stack.
+ *
+ * Triggers do not wait for an empty stack: they go on top of whatever is there
+ * the next time a player would receive priority. A trigger that needs a target
+ * gets one here, before anybody can respond — automatically when exactly one is
+ * legal, through a real choice when several are, and by being removed from the
+ * stack entirely when none is (CR 603.3d).
+ */
+function putNextTriggerOnStack(state: GameState): GameState {
+  const ordered = apnapOrder(state);
+  const trigger = ordered[0];
+  if (!trigger) return state;
+  const remaining = state.triggerQueue.filter((candidate) => candidate.id !== trigger.id);
+  const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+  const opened = { prioritySeat: active, priorityOpen: true, passedSeats: [] as SeatId[] };
+
+  // A trigger whose source's controller has already lost never reaches the stack.
+  if (playerAt(state, trigger.controller).lost) return { ...state, triggerQueue: remaining };
+
+  const targetKind = trigger.definition.targetKind;
+  if (targetKind === "none") {
+    return { ...state, triggerQueue: remaining, stack: [...state.stack, triggerStackObject(trigger, [])], ...opened };
+  }
+
+  const options = legalTargets(state, trigger.controller, targetKind);
+  if (!options.length) {
+    const dropped = logged({ ...state, triggerQueue: remaining }, trigger.controller,
+      `La habilidad disparada de ${trigger.sourceCard.name} se retira de la pila: no hay objetivo legal.`);
+    return dropped;
+  }
+  if (options.length === 1) {
+    return { ...state, triggerQueue: remaining, stack: [...state.stack, triggerStackObject(trigger, options)], ...opened };
+  }
+  return {
+    ...state,
+    triggerQueue: remaining,
+    pendingChoice: {
+      type: "trigger-target",
+      seat: trigger.controller,
+      sourceId: trigger.id,
+      trigger,
+      targetKind,
+      options
+    }
+  };
+}
+
+function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger-target" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "trigger-target" || choice.seat !== seat) throw new Error("No tienes un objetivo de habilidad pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa habilidad ya no espera un objetivo.");
+  const valid = choice.options.some((option) => JSON.stringify(option) === JSON.stringify(action.target));
+  if (!valid) throw new Error(`Objetivo ilegal para ${choice.trigger.sourceCard.name}.`);
+  const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+  const next: GameState = {
+    ...state,
+    pendingChoice: null,
+    stack: [...state.stack, triggerStackObject(choice.trigger, [action.target])],
+    prioritySeat: active,
+    priorityOpen: true,
+    passedSeats: []
+  };
+  return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
+}
+
 /** Applies one action for one seat, then settles the game to its next decision point. */
 export function applyAction(state: GameState, seat: SeatId, action: GameAction): GameState {
   if (state.finished) throw new Error("La partida ya terminó.");
@@ -1299,6 +2085,12 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "pass": next = applyPass(state, seat); break;
     case "play-land": next = applyPlayLand(state, seat, action.cardId); break;
     case "cast": next = applyCast(state, seat, action); break;
+    case "activate-mana": next = applyActivateMana(state, seat, action); break;
+    case "activate": next = applyActivate(state, seat, action); break;
+    case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
+    case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
+    case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
+    case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {
@@ -1314,9 +2106,28 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
 // Settling: turn-based actions, state-based actions and automatic passes
 // ---------------------------------------------------------------------------
 
-/** True when the seat has something to decide beyond passing. */
+/**
+ * True when the seat has something to decide beyond passing.
+ *
+ * Two activation families are deliberately excluded from "something to decide",
+ * because counting them would stop the table in every priority window:
+ *
+ * - Mana abilities. Floating mana achieves nothing on its own, and the payment
+ *   solver taps sources automatically when a cost is actually paid, so holding
+ *   priority to add mana is never the decision a player owes.
+ * - Non-mana activations outside the controller's own sorcery-speed window.
+ *   They stay listed in `legalActions` and remain legal at instant speed, but a
+ *   seat with `autoPass` on is not interrupted for them. This is a pacing
+ *   heuristic, not a rules restriction, and it is why a bot with a fetch land
+ *   is asked in its main phase instead of at every opponent step.
+ */
 export function hasRealChoice(state: GameState, seat: SeatId): boolean {
-  return legalActions(state, seat).some((entry) => entry.action.type !== "pass" && entry.action.type !== "concede");
+  return legalActions(state, seat).some((entry) => {
+    if (entry.action.type === "pass" || entry.action.type === "concede") return false;
+    if (entry.action.type === "activate-mana") return false;
+    if (entry.action.type === "activate") return sorcerySpeed(state, seat);
+    return true;
+  });
 }
 
 /**
@@ -1332,6 +2143,18 @@ export function settle(state: GameState): GameState {
     next = applyStateBasedActions(next);
     next = pruneCombat(next);
     if (next.finished) return next;
+
+    // A land's "as it enters" choice is resolved before the game can open
+    // priority again. It is a real decision, so leave it projected to the
+    // controller instead of advancing the turn while it is pending.
+    if (next.pendingChoice) return next;
+
+    // Triggers reach the stack before priority, on top of whatever is already
+    // there (CR 603.3), so an ETB never has to wait for the stack to empty.
+    if (next.triggerQueue.length) {
+      next = putNextTriggerOnStack(next);
+      continue;
+    }
 
     if (!next.priorityOpen) { next = advanceStep(next); continue; }
 
@@ -1371,6 +2194,7 @@ export function settle(state: GameState): GameState {
 /** Seats that currently owe a decision. */
 export function seatsToAct(state: GameState): SeatId[] {
   if (state.finished) return [];
+  if (state.pendingChoice) return [state.pendingChoice.seat];
   if (state.step === "declare-attackers" && !state.combat.attackersDeclared) return [state.activeSeat];
   if (state.step === "declare-blockers" && !state.combat.blockersDeclared) return defendersAwaitingBlocks(state);
   return state.priorityOpen ? [state.prioritySeat] : [];

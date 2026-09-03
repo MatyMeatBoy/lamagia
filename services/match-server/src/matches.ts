@@ -9,7 +9,7 @@
 
 import { randomUUID } from "node:crypto";
 import {
-  applyAction, createGame, pendingSeat, projectGame, runBots,
+  applyAction, createGame, pendingSeat, projectGame, runBots, settle,
   type CardData, type DeckInput, type GameAction, type GameState, type GameView, type SeatId
 } from "@prossh/rules";
 
@@ -132,6 +132,9 @@ export function setAutoPass(matchId: string, token: string | undefined, autoPass
     ...match.state,
     players: match.state.players.map((player) => (player.seat === seat ? { ...player, autoPass } : player))
   };
+  // Enabling auto-pass must immediately consume empty priority windows. Without
+  // this settle call, a new match stays visibly parked in upkeep until a click.
+  match.state = settle(match.state);
   driveBots(match);
   return projectGame(match.state, seat);
 }

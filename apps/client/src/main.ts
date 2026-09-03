@@ -11,7 +11,8 @@
  * the card preview float over the table so they never steal board space.
  */
 
-import type { CardView, GameView, LegalAction, PermanentView, PlayerView, Target, TurnStep } from "@prossh/rules";
+import type { AbilityView, CardView, GameView, LegalAction, PermanentView, PlayerView, Target, TurnStep } from "@prossh/rules";
+import { ACTIVATION_GLYPHS, KEYWORD_GLYPHS, TRIGGER_GLYPHS, glyphSvg, keywordGlyph, type AbilityGlyph } from "./abilities.js";
 import "./styles.css";
 
 type PreconSummary = {
@@ -22,11 +23,16 @@ type PreconGroup = { set_code: string; set_name: string; released_at: string; se
 type CardRuling = { published_at: string; comment: string };
 type CatalogCard = {
   id: string; name: string; type_line: string; mana_cost: string; oracle_text: string;
-  set_code: string; set_name: string; released_at: string; rarity: string; scryfall_uri: string;
+  set_code: string; set_name: string; set_type: string; released_at: string; rarity: string; scryfall_uri: string;
   power: string | null; toughness: string | null; printings?: number;
-  printings_list?: { set_code: string; set_name: string; released_at: string }[];
+  promo: boolean; variation: boolean; main_set: boolean;
+  printings_list?: CatalogPrinting[];
   rulings?: CardRuling[];
   image_uris: { small?: string; normal?: string; art_crop?: string };
+};
+type CatalogPrinting = {
+  id: string; set_code: string; set_name: string; set_type: string; released_at: string; rarity: string;
+  collector_number: string; promo: boolean; variation: boolean; main_set: boolean; image_normal?: string;
 };
 type AvatarChoice = { name: string; image: string };
 type MatchSession = { matchId: string; token: string; seat: number };
@@ -52,6 +58,10 @@ interface UiState {
   logOpen: boolean;
   autoPass: boolean;
   actionsOpen: boolean;
+  /** The permanent whose ability menu is open, Arena-style. */
+  abilityMenu: string | null;
+  /** The keyword or ability glyph whose help card is open. */
+  glyphHelp: AbilityGlyph | null;
   /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
   layout: "auto" | "mobile";
 }
@@ -61,11 +71,42 @@ let view: GameView | null = null;
 let avatarChoices: AvatarChoice[] = [];
 let selectedAvatar = window.localStorage.getItem("prossh.avatar") ?? "";
 const ui: UiState = {
-  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null,
-  notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", autoPass: true,
+  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, glyphHelp: null,
+  notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1",
+  // A table should arrive at the first meaningful decision, not wait for two
+  // empty priority passes in upkeep and draw. Players can turn this off.
+  autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
   actionsOpen: false,
   layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
 };
+
+interface CardDragState {
+  readonly cardId: string;
+  readonly button: HTMLButtonElement;
+  readonly pointerId: number;
+  readonly startX: number;
+  readonly startY: number;
+  ghost: HTMLButtonElement | null;
+  moved: boolean;
+  longPressed: boolean;
+  longPressTimer: number | null;
+}
+
+let cardDrag: CardDragState | null = null;
+interface CardDetailPressState {
+  readonly cardId: string;
+  readonly button: HTMLButtonElement;
+  readonly pointerId: number;
+  readonly startX: number;
+  readonly startY: number;
+  timer: number | null;
+  longPressed: boolean;
+}
+
+let cardDetailPress: CardDetailPressState | null = null;
+/** Native click fires after pointerup; this prevents a long-press/drag from playing twice. */
+let suppressNextCardClick = false;
+let suppressNextPermanentClick = false;
 
 const root = document.querySelector<HTMLDivElement>("#app");
 if (!root) throw new Error("Falta el contenedor #app.");
@@ -78,22 +119,53 @@ const dialog = (id: string) => document.querySelector<HTMLDialogElement>(`#${id}
 // Mana symbols
 // ---------------------------------------------------------------------------
 
-/** Renders `{2}{G/W}{B/P}` as coloured pips; hybrids get a split background. */
+/** Local copies of the full-colour Magic symbol artwork supplied by the user. */
+const MANA_ASSET_IDS = new Set([
+  "W", "U", "B", "R", "G", "C", "S", "T", "X",
+  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+  "WU", "UB", "BR", "RG", "GW", "WB", "UR", "BG", "RW", "GU",
+  "WP", "UP", "BP", "RP", "GP", "2W", "2U", "2B", "2R", "2G", "CW", "CU", "CB", "CR", "CG"
+]);
+
+const HYBRID_ASSET_IDS: Record<string, string> = {
+  "W/U": "WU", "U/W": "WU", "U/B": "UB", "B/U": "UB", "B/R": "BR", "R/B": "BR", "R/G": "RG", "G/R": "RG",
+  "G/W": "GW", "W/G": "GW", "W/B": "WB", "B/W": "WB", "U/R": "UR", "R/U": "UR", "B/G": "BG", "G/B": "BG",
+  "R/W": "RW", "W/R": "RW", "G/U": "GU", "U/G": "GU",
+  "W/P": "WP", "P/W": "WP", "U/P": "UP", "P/U": "UP", "B/P": "BP", "P/B": "BP", "R/P": "RP", "P/R": "RP", "G/P": "GP", "P/G": "GP",
+  "2/W": "2W", "W/2": "2W", "2/U": "2U", "U/2": "2U", "2/B": "2B", "B/2": "2B", "2/R": "2R", "R/2": "2R", "2/G": "2G", "G/2": "2G",
+  "C/W": "CW", "W/C": "CW", "C/U": "CU", "U/C": "CU", "C/B": "CB", "B/C": "CB", "C/R": "CR", "R/C": "CR", "C/G": "CG", "G/C": "CG"
+};
+
+function manaAssetId(symbol: string): string | undefined {
+  const upper = symbol.toUpperCase();
+  return MANA_ASSET_IDS.has(upper) ? upper : HYBRID_ASSET_IDS[upper];
+}
+
+function manaSymbolHtml(symbol: string): string {
+  const upper = symbol.toUpperCase();
+  const asset = manaAssetId(upper);
+  if (asset) return `<i class="pip mana-asset" aria-label="${escapeHtml(upper)}"><img src="/assets/mana/${asset}.svg" alt="" draggable="false"/></i>`;
+  return `<i class="pip p-${escapeHtml(/^\d+$/.test(upper) ? "generic" : upper.toLowerCase())}" aria-label="${escapeHtml(upper)}">${escapeHtml(upper)}</i>`;
+}
+
+/** Renders `{2}{G/W}{B/P}` as Magic-like coloured symbols; hybrids split in two. */
 function manaHtml(cost: string | undefined): string {
   const symbols = [...(cost ?? "").matchAll(/\{([^}]+)\}/g)].map((match) => match[1]!);
   if (!symbols.length) return "";
-  const tone: Record<string, string> = { W: "#f8f4e3", U: "#a3cee6", B: "#4b4249", R: "#e79b86", G: "#96c69d", C: "#c8c8c4" };
-  return `<span class="mana">${symbols.map((symbol) => {
-    const upper = symbol.toUpperCase();
-    const hybrid = /^([WUBRGC0-9]+)\/([WUBRGCP])$/.exec(upper);
-    if (hybrid) {
-      const left = tone[hybrid[1]!] ?? "#b8b2a4";
-      const right = tone[hybrid[2]!] ?? "#c0b9a8";
-      return `<i class="pip hybrid" style="--pip-a:${left};--pip-b:${right}">${escapeHtml(upper)}</i>`;
-    }
-    const kind = /^\d+$/.test(upper) ? "generic" : upper.toLowerCase();
-    return `<i class="pip p-${escapeHtml(kind)}">${escapeHtml(upper)}</i>`;
-  }).join("")}</span>`;
+  return `<span class="mana">${symbols.map(manaSymbolHtml).join("")}</span>`;
+}
+
+/** Replaces Oracle mana tokens while keeping the rules text and line breaks. */
+function oracleHtml(text: string): string {
+  let html = "";
+  let last = 0;
+  for (const match of text.matchAll(/\{([^}]+)\}/g)) {
+    const index = match.index ?? 0;
+    html += escapeHtml(text.slice(last, index));
+    html += manaHtml(`{${match[1]!}}`);
+    last = index + match[0].length;
+  }
+  return html + escapeHtml(text.slice(last));
 }
 
 // ---------------------------------------------------------------------------
@@ -119,6 +191,18 @@ async function startMatch(mode: "cedh" | "precon", deckId?: string): Promise<voi
     window.sessionStorage.setItem("prossh.match", JSON.stringify(session));
     ui.notice = "";
     applyView(created.view);
+    if (ui.autoPass) {
+      try {
+        const settled = await api<GameView>(`/api/matches/${session.matchId}/settings`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: session.token, autoPass: true })
+        });
+        applyView(settled);
+      } catch (error) {
+        ui.notice = error instanceof Error ? error.message : "No se pudo activar el auto-paso.";
+        render();
+      }
+    }
   } catch (error) {
     ui.notice = error instanceof Error ? error.message : "No se pudo crear la partida.";
     render();
@@ -153,6 +237,7 @@ async function submit(action: LegalAction["action"]): Promise<void> {
 async function setAutoPass(autoPass: boolean): Promise<void> {
   if (!session) return;
   ui.autoPass = autoPass;
+  window.localStorage.setItem("prossh.auto-pass", autoPass ? "1" : "0");
   try {
     applyView(await api<GameView>(`/api/matches/${session.matchId}/settings`, {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -165,6 +250,7 @@ function applyView(next: GameView): void {
   view = next;
   ui.pendingTarget = null;
   ui.selectedBlocker = null;
+  ui.abilityMenu = null;
   if (!next.combat.awaitingAttackers) ui.attackers.clear();
   if (!next.combat.awaitingBlockersFrom.includes(next.viewerSeat)) ui.blockers.clear();
   render();
@@ -176,14 +262,32 @@ function applyView(next: GameView): void {
 
 function seatOf(seat: number): PlayerView | undefined { return view?.players.find((player) => player.seat === seat); }
 function actionForCard(cardId: string): LegalAction | undefined {
-  return view?.legalActions.find((entry) => entry.cardId === cardId && (entry.action.type === "cast" || entry.action.type === "play-land"));
+  const choices = view?.legalActions.filter((entry) => entry.cardId === cardId &&
+    (entry.action.type === "cast" || entry.action.type === "play-land" || entry.action.type === "choose-reveal"));
+  return [...(choices ?? [])].sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0))[0];
 }
 function passAction(): LegalAction | undefined { return view?.legalActions.find((entry) => entry.action.type === "pass"); }
+
+/** Every activation this viewer may take with one permanent, in menu order. */
+function activationsFor(instanceId: string): LegalAction[] {
+  return (view?.legalActions ?? []).filter((entry) =>
+    (entry.action.type === "activate" || entry.action.type === "activate-mana") && entry.action.sourceId === instanceId);
+}
+
+/** True while the engine is waiting for this viewer to aim a triggered ability. */
+function triggerTargetActions(): LegalAction[] {
+  return (view?.legalActions ?? []).filter((entry) => entry.action.type === "choose-trigger-target");
+}
 function isLandCard(card: { type_line: string }): boolean { return /\bLand\b/.test(card.type_line.split("//")[0]!); }
+function isChoosingReveal(): boolean { return Boolean(view?.legalActions.some((entry) => entry.action.type === "choose-reveal")); }
 function isTargetable(instanceId: string): boolean {
+  if (triggerTargetActions().some((entry) =>
+    entry.action.type === "choose-trigger-target" && entry.action.target.kind === "permanent" && entry.action.target.instanceId === instanceId)) return true;
   return Boolean(ui.pendingTarget?.options.some((target) => target.kind === "permanent" && target.instanceId === instanceId));
 }
 function isPlayerTargetable(seat: number): boolean {
+  if (triggerTargetActions().some((entry) =>
+    entry.action.type === "choose-trigger-target" && entry.action.target.kind === "player" && entry.action.target.seat === seat)) return true;
   return Boolean(ui.pendingTarget?.options.some((target) => target.kind === "player" && target.seat === seat));
 }
 
@@ -199,24 +303,154 @@ function visibleCards(): Map<string, CardView> {
 }
 
 function chooseTarget(target: Target): void {
+  // A triggered ability being aimed is its own pending decision, so it wins
+  // over any spell or activation the player had started.
+  const trigger = triggerTargetActions().find((entry) =>
+    entry.action.type === "choose-trigger-target" && JSON.stringify(entry.action.target) === JSON.stringify(target));
+  if (trigger) { ui.pendingTarget = null; void submit(trigger.action); return; }
+
   const pending = ui.pendingTarget;
-  if (!pending || pending.action.action.type !== "cast") return;
+  if (!pending) return;
+  const action = pending.action.action;
+  if (action.type !== "cast" && action.type !== "activate") return;
   ui.pendingTarget = null;
-  void submit({ ...pending.action.action, targets: [target] });
+  void submit({ ...action, targets: [target] });
 }
 
-function onCardClick(cardId: string): void {
-  const action = actionForCard(cardId);
-  if (!action) { showCardDetail(cardId); return; }
-  if (action.requiresTarget && view) {
-    const options = view.targetOptions[action.requiresTarget];
-    if (!options.length) { ui.notice = "No hay objetivos legales para esa carta."; render(); return; }
-    ui.pendingTarget = { action, options };
-    ui.notice = `Elige un objetivo para ${action.label.replace(/^Lanzar /, "")}.`;
+/** Starts the target flow for one action, or submits it when it needs no target. */
+function runAction(entry: LegalAction, subject: string): void {
+  if (entry.requiresTarget && view) {
+    const options = view.targetOptions[entry.requiresTarget];
+    if (!options.length) { ui.notice = `No hay objetivos legales para ${subject}.`; render(); return; }
+    ui.pendingTarget = { action: entry, options };
+    ui.notice = `Elige un objetivo para ${subject}.`;
     render();
     return;
   }
-  void submit(action.action);
+  void submit(entry.action);
+}
+
+function onCardClick(cardId: string, forcedAction?: LegalAction): void {
+  const action = forcedAction ?? actionForCard(cardId);
+  if (!action) {
+    if (isChoosingReveal()) {
+      ui.notice = "Solo puedes elegir una carta compatible para la revelación.";
+      render();
+      return;
+    }
+    ui.notice = "Esa carta no tiene una acción legal ahora. Manténla pulsada o usa el botón derecho para ver sus detalles.";
+    render();
+    return;
+  }
+  if (action.action.type === "choose-reveal") { void submit(action.action); return; }
+  runAction(action, action.label.replace(/^Lanzar /, ""));
+}
+
+function updateCardDrag(event: PointerEvent): void {
+  if (!cardDrag || cardDrag.pointerId !== event.pointerId) return;
+  const distance = Math.hypot(event.clientX - cardDrag.startX, event.clientY - cardDrag.startY);
+  if (!cardDrag.moved && distance < 7) return;
+  if (!cardDrag.moved) {
+    cardDrag.moved = true;
+    if (cardDrag.longPressTimer !== null) {
+      window.clearTimeout(cardDrag.longPressTimer);
+      cardDrag.longPressTimer = null;
+    }
+    cardDrag.ghost = cardDrag.button.cloneNode(true) as HTMLButtonElement;
+    cardDrag.ghost.classList.add("drag-ghost");
+    document.body.append(cardDrag.ghost);
+    document.body.classList.add("dragging-card");
+    cardDrag.button.classList.add("drag-source");
+  }
+  event.preventDefault();
+  const tiltX = Math.max(-12, Math.min(12, (event.clientY - cardDrag.startY) * -0.08));
+  const tiltY = Math.max(-14, Math.min(14, (event.clientX - cardDrag.startX) * 0.08));
+  cardDrag.ghost!.style.left = `${event.clientX}px`;
+  cardDrag.ghost!.style.top = `${event.clientY}px`;
+  cardDrag.ghost!.style.transform = `translate3d(-50%, -72%, 0) rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(${tiltY * .18}deg)`;
+}
+
+function endCardDrag(event: PointerEvent): void {
+  if (!cardDrag || cardDrag.pointerId !== event.pointerId) return;
+  const drag = cardDrag;
+  cardDrag = null;
+  if (drag.longPressTimer !== null) window.clearTimeout(drag.longPressTimer);
+  if (drag.button.hasPointerCapture(event.pointerId)) drag.button.releasePointerCapture(event.pointerId);
+  const droppedOnBoard = drag.moved && Boolean(document.elementFromPoint(event.clientX, event.clientY)?.closest(".self-board"));
+  drag.ghost?.remove();
+  drag.button.classList.remove("drag-source");
+  document.body.classList.remove("dragging-card");
+  if (drag.moved || drag.longPressed) suppressNextCardClick = true;
+  if (droppedOnBoard) onCardClick(drag.cardId);
+}
+
+function wireCardDrag(button: HTMLButtonElement): void {
+  button.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || ui.busy) return;
+    const cardId = button.dataset.hand!;
+    cardDrag = {
+      cardId, button, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
+      ghost: null, moved: false, longPressed: false, longPressTimer: window.setTimeout(() => {
+        if (!cardDrag || cardDrag.pointerId !== event.pointerId || cardDrag.moved || ui.busy) return;
+        cardDrag.longPressed = true;
+        showCardDetail(cardId);
+      }, 520)
+    };
+    button.setPointerCapture(event.pointerId);
+  });
+  button.addEventListener("pointermove", updateCardDrag);
+  button.addEventListener("pointerup", endCardDrag);
+  button.addEventListener("pointercancel", endCardDrag);
+  button.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    if (cardDrag?.button === button) {
+      cardDrag.longPressed = true;
+      if (cardDrag.longPressTimer !== null) window.clearTimeout(cardDrag.longPressTimer);
+    }
+    showCardDetail(button.dataset.hand!);
+  });
+}
+
+function endCardDetailPress(event: PointerEvent): void {
+  if (!cardDetailPress || cardDetailPress.pointerId !== event.pointerId) return;
+  const press = cardDetailPress;
+  cardDetailPress = null;
+  if (press.timer !== null) window.clearTimeout(press.timer);
+  if (press.button.hasPointerCapture(event.pointerId)) press.button.releasePointerCapture(event.pointerId);
+  if (press.longPressed) suppressNextPermanentClick = true;
+}
+
+function wirePermanentPress(button: HTMLButtonElement): void {
+  button.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || ui.busy) return;
+    const cardId = button.dataset.permanent!;
+    cardDetailPress = {
+      cardId, button, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
+      longPressed: false, timer: window.setTimeout(() => {
+        if (!cardDetailPress || cardDetailPress.pointerId !== event.pointerId) return;
+        cardDetailPress.longPressed = true;
+        showCardDetail(cardId);
+      }, 520)
+    };
+    button.setPointerCapture(event.pointerId);
+  });
+  button.addEventListener("pointermove", (event) => {
+    if (!cardDetailPress || cardDetailPress.pointerId !== event.pointerId) return;
+    if (Math.hypot(event.clientX - cardDetailPress.startX, event.clientY - cardDetailPress.startY) >= 7 && cardDetailPress.timer !== null) {
+      window.clearTimeout(cardDetailPress.timer);
+      cardDetailPress.timer = null;
+    }
+  });
+  button.addEventListener("pointerup", endCardDetailPress);
+  button.addEventListener("pointercancel", endCardDetailPress);
+  button.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    if (cardDetailPress?.button === button) {
+      cardDetailPress.longPressed = true;
+      if (cardDetailPress.timer !== null) window.clearTimeout(cardDetailPress.timer);
+    }
+    showCardDetail(button.dataset.permanent!);
+  });
 }
 
 function toggleAttacker(instanceId: string): void {
@@ -259,7 +493,77 @@ function onPermanentClick(instanceId: string): void {
     }
     if (view.combat.attackers.some((entry) => entry.instanceId === instanceId)) { assignBlock(instanceId); return; }
   }
-  showCardDetail(instanceId);
+
+  // Arena-style: a permanent with exactly one legal activation fires it, and a
+  // permanent with several opens a menu instead of guessing which one you meant.
+  const activations = activationsFor(instanceId);
+  if (activations.length === 1) {
+    const only = activations[0]!;
+    runAction(only, only.label);
+    return;
+  }
+  if (activations.length > 1) {
+    ui.abilityMenu = ui.abilityMenu === instanceId ? null : instanceId;
+    ui.notice = "";
+    render();
+    return;
+  }
+
+  ui.notice = "Ese permanente no tiene una acción legal ahora. Manténlo pulsado o usa el botón derecho para ver sus detalles.";
+  render();
+}
+
+/** The floating list of activations for one permanent. */
+function abilityMenuHtml(): string {
+  if (!ui.abilityMenu) return "";
+  const entries = activationsFor(ui.abilityMenu);
+  if (!entries.length) return "";
+  const owner = view?.players.flatMap((player) => player.battlefield).find((permanent) => permanent.instance_id === ui.abilityMenu);
+  return `<div class="ability-menu" role="dialog" aria-label="Habilidades de ${escapeHtml(owner?.name ?? "permanente")}">
+    <div class="ability-menu-head"><b>${escapeHtml(owner?.name ?? "Permanente")}</b>
+      <button class="close" type="button" id="close-ability-menu" aria-label="Cerrar">×</button></div>
+    ${entries.map((entry) => {
+      const index = view!.legalActions.indexOf(entry);
+      const glyph = entry.action.type === "activate-mana" ? ACTIVATION_GLYPHS.mana : ACTIVATION_GLYPHS.activated;
+      return `<button class="ability-row" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
+        <span class="ability-glyph">${glyphSvg(glyph, 16)}</span>
+        <span>${escapeHtml(entry.label.replace(/^[^:]+:\s*/, ""))}</span></button>`;
+    }).join("")}
+  </div>`;
+}
+
+/** The help card behind every icon: the printed rule and what the engine does. */
+function glyphHelpHtml(): string {
+  const glyph = ui.glyphHelp;
+  if (!glyph) return "";
+  return `<div class="glyph-help" role="dialog" aria-label="${escapeHtml(glyph.label)}">
+    <div class="glyph-help-head"><span class="ability-glyph">${glyphSvg(glyph, 20)}</span><b>${escapeHtml(glyph.label)}</b>
+      <button class="close" type="button" id="close-glyph-help" aria-label="Cerrar">×</button></div>
+    <p class="glyph-rule">${escapeHtml(glyph.rule)}</p>
+    <p class="glyph-enforced"><b>En este motor:</b> ${escapeHtml(glyph.enforced)}</p>
+  </div>`;
+}
+
+/** The keyword and ability icons shown on a card face. */
+function abilityIconsHtml(permanent: PermanentView): string {
+  const icons: string[] = [];
+  for (const keyword of permanent.keywords) {
+    const glyph = keywordGlyph(keyword);
+    if (glyph) icons.push(`<i class="ability-icon" data-glyph="keyword:${escapeHtml(keyword)}" title="${escapeHtml(glyph.label)}">${glyphSvg(glyph)}</i>`);
+  }
+  const seen = new Set<string>();
+  for (const ability of permanent.abilities as readonly AbilityView[]) {
+    const key = ability.kind === "triggered" ? `trigger:${ability.event}` : `activation:${ability.kind}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const glyph = ability.kind === "triggered"
+      ? (ability.event ? TRIGGER_GLYPHS[ability.event] : undefined)
+      : ACTIVATION_GLYPHS[ability.kind];
+    if (!glyph) continue;
+    const live = ability.kind !== "triggered" && permanent.abilities.some((candidate) => candidate.kind === ability.kind && candidate.available);
+    icons.push(`<i class="ability-icon${live ? " live" : ""}" data-glyph="${escapeHtml(key)}" title="${escapeHtml(glyph.label)}">${glyphSvg(glyph)}</i>`);
+  }
+  return icons.length ? `<span class="ability-icons">${icons.join("")}</span>` : "";
 }
 
 // ---------------------------------------------------------------------------
@@ -278,6 +582,9 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
   if (own && ui.blockers.has(permanent.instance_id)) classes.push("assigned-blocker");
   if (view?.selectableAttackers.includes(permanent.instance_id)) classes.push("can-attack");
   if (view?.selectableBlockers.includes(permanent.instance_id)) classes.push("can-block");
+  const activations = own ? activationsFor(permanent.instance_id) : [];
+  if (activations.some((entry) => entry.action.type === "activate")) classes.push("can-activate");
+  if (ui.abilityMenu === permanent.instance_id) classes.push("menu-open");
 
   const stats = permanent.power !== null && permanent.toughness !== null
     ? `<b class="pt">${permanent.power}/${permanent.toughness}${permanent.damage ? `<i> -${permanent.damage}</i>` : ""}</b>` : "";
@@ -288,18 +595,19 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
     permanent.blocking ? `<i class="tile-badge blk" title="Bloqueando">◈</i>` : "",
     permanent.producesMana && !permanent.tapped ? `<i class="tile-badge mana" title="Puede producir maná">◇</i>` : ""
   ].join("");
+  const icons = abilityIconsHtml(permanent);
 
   return `<button class="${classes.join(" ")}" type="button" data-permanent="${escapeHtml(permanent.instance_id)}"
     data-preview="${escapeHtml(permanent.instance_id)}" title="${escapeHtml(permanent.name)}">
-    ${permanent.image_normal ? `<img src="${escapeHtml(permanent.image_normal)}" alt="" loading="lazy" decoding="async"/>` : ""}
-    <span class="tile-name">${escapeHtml(permanent.name)}</span>${stats}<span class="tile-badges">${badges}</span>
+    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" alt="" loading="lazy" decoding="async"/>` : ""}
+    <span class="tile-name">${escapeHtml(permanent.name)}</span>${stats}<span class="tile-badges">${badges}</span>${icons}
   </button>`;
 }
 
 /**
  * Splits a battlefield into a land row and a nonland row, laid out the way a
- * paper table reads: each player's lands sit on their own edge and their
- * creatures sit toward the middle, where combat happens.
+ * paper table reads: lands are always anchored to the lower edge of each
+ * player board, while other permanents occupy the combat-facing area.
  */
 function boardHtml(player: PlayerView, own: boolean): string {
   const lands = player.battlefield.filter((permanent) => isLandCard(permanent));
@@ -313,7 +621,7 @@ function boardHtml(player: PlayerView, own: boolean): string {
   const landRow = `<div class="board-row lands">${lands.length
     ? sort(lands).map((permanent) => tileHtml(permanent, own)).join("")
     : `<p class="board-empty">Sin tierras</p>`}</div>`;
-  return own ? `${nonlandRow}${landRow}` : `${landRow}${nonlandRow}`;
+  return `${nonlandRow}${landRow}`;
 }
 
 function seatPanelHtml(player: PlayerView): string {
@@ -354,11 +662,15 @@ function handHtml(player: PlayerView): string {
   return ordered.map((card) => {
     const action = actionForCard(card.instance_id);
     const classes = ["hand-card"];
-    if (action) classes.push("playable");
+    const isRevealOption = action?.action.type === "choose-reveal";
+    const revealOptions = view?.legalActions.some((entry) => entry.action.type === "choose-reveal" && Boolean(entry.cardId));
+    if (action && !isRevealOption) classes.push("playable");
+    if (isRevealOption) classes.push("choice-option");
+    if (revealOptions && !isRevealOption) classes.push("choice-muted");
     if (!card.fullyImplemented) classes.push("partial");
     return `<button class="${classes.join(" ")}" type="button" data-hand="${escapeHtml(card.instance_id)}"
       data-preview="${escapeHtml(card.instance_id)}" title="${escapeHtml(card.name)}">
-      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="" loading="lazy" decoding="async"/>` : ""}
+      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="" draggable="false" loading="lazy" decoding="async"/>` : ""}
       <span class="tile-name">${escapeHtml(card.name)}</span>
     </button>`;
   }).join("");
@@ -444,10 +756,19 @@ function actionMenuHtml(): string {
   const actions = view?.legalActions ?? [];
   const beyondPassing = actions.filter((entry) => entry.action.type !== "pass" && entry.action.type !== "concede");
   if (!actions.length) return "";
+  const search = actions.find((entry) => entry.action.type === "choose-library-card");
+  const rows = actions.filter((entry) => entry.action.type !== "choose-library-card");
   return `<details class="action-menu"${ui.actionsOpen ? " open" : ""}>
     <summary>Acciones legales <i>${beyondPassing.length}</i></summary>
-    <div class="action-list">${actions.map((entry, index) => `<button class="action-row" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
-      <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`).join("")}</div>
+    <div class="action-list">${search ? `<form class="library-search" id="library-search-form">
+      <label for="library-search-query">${escapeHtml(search.label)}</label>
+      <div><input id="library-search-query" name="query" autocomplete="off" placeholder="Nombre exacto de la carta" required/><button class="choice-action" type="submit">Buscar</button></div>
+      <small>${escapeHtml(search.note ?? "La biblioteca permanece oculta hasta confirmar la elección.")}</small>
+    </form>` : ""}${rows.map((entry) => {
+      const index = actions.indexOf(entry);
+      return `<button class="action-row${entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger" ? " choice-action" : ""}" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
+      <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
+    }).join("")}</div>
   </details>`;
 }
 
@@ -475,6 +796,21 @@ function render(): void {
   const myTurn = view.waitingOn === view.viewerSeat;
   const currentIndex = STEP_ORDER.indexOf(view.step);
   const winner = view.finished ? seatOf(view.winnerSeat ?? -1) : undefined;
+  const revealChoice = view.legalActions.find((entry) => entry.action.type === "choose-reveal");
+  const triggerChoice = view.legalActions.find((entry) => entry.action.type === "choose-trigger");
+  const searchChoice = view.legalActions.find((entry) => entry.action.type === "choose-library-card");
+  const triggerTargets = triggerTargetActions();
+  const handHint = triggerTargets.length
+    ? `Elige el objetivo de ${triggerTargets[0]?.note?.split(":")[0] ?? "la habilidad disparada"}.`
+    : searchChoice
+    ? "Elige en la biblioteca la carta que quieres poner arriba."
+    : triggerChoice
+    ? "Elige si quieres resolver la habilidad opcional."
+    : revealChoice
+    ? (revealChoice.action.type === "choose-reveal" && revealChoice.action.reveal
+      ? "Elige en tu mano la carta compatible que quieres revelar."
+      : "¿Quieres revelar una Isla o Montaña para que entre enderezada?")
+    : (myTurn ? "Las cartas con borde dorado se pueden jugar ahora." : "Esperando a los demás jugadores…");
 
   root!.innerHTML = `<main class="shell${ui.busy ? " busy" : ""}" data-layout="${ui.layout}">
     <header class="topbar">
@@ -520,7 +856,7 @@ function render(): void {
           </div>
           <div class="hand-wrap">
             ${stackStripHtml()}
-            <div class="hand-label"><b>Tu mano · ${me.handCount}</b><span class="hint">${escapeHtml(ui.notice || (myTurn ? "Las cartas con borde dorado se pueden jugar ahora." : "Esperando a los demás jugadores…"))}</span></div>
+            <div class="hand-label"><b>Tu mano · ${me.handCount}</b><span class="hint">${escapeHtml(ui.notice || handHint)}</span></div>
             <div class="hand">${handHtml(me)}</div>
           </div>
           <div class="dock-actions">
@@ -533,6 +869,8 @@ function render(): void {
       </section>
     </div>
   </main>
+  ${abilityMenuHtml()}
+  ${glyphHelpHtml()}
   ${logDrawerHtml()}
   <div class="card-preview" id="card-preview"></div>
   ${view.finished ? `<div class="winner-banner"><div class="winner-card">
@@ -544,7 +882,7 @@ function render(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Hover preview
+// Detail preview
 // ---------------------------------------------------------------------------
 
 function showPreview(card: CardView, anchor: HTMLElement): void {
@@ -556,7 +894,7 @@ function showPreview(card: CardView, anchor: HTMLElement): void {
     <div class="preview-body">
       <div class="preview-type">${escapeHtml(card.type_line)} ${manaHtml(card.mana_cost)}</div>
       ${card.power !== null ? `<div class="preview-type">${card.power}/${card.toughness}</div>` : ""}
-      <pre class="preview-rules">${escapeHtml(card.oracle_text || "Sin texto de reglas.")}</pre>
+      <div class="preview-rules">${oracleHtml(card.oracle_text || "Sin texto de reglas.")}</div>
       <div class="preview-cover ${card.fullyImplemented ? "ok" : "partial"}">${card.fullyImplemented
         ? "El motor ejecuta todo el texto de esta carta."
         : "El motor todavía no ejecuta este texto: la carta juega como cuerpo, tipos y palabras clave de combate."}</div>
@@ -587,6 +925,19 @@ function wireBoard(): void {
   on("#search", () => { dialog("catalog")?.showModal(); document.querySelector<HTMLInputElement>("#card-query")?.focus(); });
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
+  on("#close-ability-menu", () => { ui.abilityMenu = null; render(); });
+  on("#close-glyph-help", () => { ui.glyphHelp = null; render(); });
+  document.querySelectorAll<HTMLElement>("[data-glyph]").forEach((element) =>
+    element.addEventListener("click", (event) => {
+      // The icon lives inside the card button, so opening help must not also
+      // play the card underneath it.
+      event.stopPropagation();
+      const [group, key] = element.dataset.glyph!.split(":");
+      ui.glyphHelp = group === "keyword" ? KEYWORD_GLYPHS[key ?? ""] ?? null
+        : group === "trigger" ? TRIGGER_GLYPHS[(key ?? "") as keyof typeof TRIGGER_GLYPHS] ?? null
+        : ACTIVATION_GLYPHS[(key ?? "") as keyof typeof ACTIVATION_GLYPHS] ?? null;
+      render();
+    }));
   on("#toggle-log", () => { ui.logOpen = !ui.logOpen; window.localStorage.setItem("prossh.log", ui.logOpen ? "1" : "0"); render(); });
   on("#toggle-layout", () => {
     ui.layout = ui.layout === "mobile" ? "auto" : "mobile";
@@ -597,6 +948,12 @@ function wireBoard(): void {
   document.querySelector<HTMLDetailsElement>(".action-menu")?.addEventListener("toggle", (event) => {
     ui.actionsOpen = (event.target as HTMLDetailsElement).open;
   });
+  document.querySelector<HTMLFormElement>("#library-search-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const search = view?.legalActions.find((entry) => entry.action.type === "choose-library-card");
+    const query = document.querySelector<HTMLInputElement>("#library-search-query")?.value.trim();
+    if (search?.action.type === "choose-library-card" && query) void submit({ ...search.action, query });
+  });
   on("#close-log", () => { ui.logOpen = false; window.localStorage.setItem("prossh.log", "0"); render(); });
   on("#confirm-attack", () => void submit({ type: "declare-attackers", attackers: [...ui.attackers.entries()].map(([instanceId, defender]) => ({ instanceId, defender })) }));
   on("#confirm-block", () => void submit({ type: "declare-blockers", blockers: [...ui.blockers.entries()].map(([instanceId, attackerId]) => ({ instanceId, attackerId })) }));
@@ -604,10 +961,20 @@ function wireBoard(): void {
   document.querySelector<HTMLInputElement>("#auto-pass")?.addEventListener("change", (event) =>
     void setAutoPass((event.target as HTMLInputElement).checked));
 
-  document.querySelectorAll<HTMLButtonElement>("[data-hand]").forEach((button) =>
-    button.addEventListener("click", () => onCardClick(button.dataset.hand!)));
-  document.querySelectorAll<HTMLButtonElement>("[data-permanent]").forEach((button) =>
-    button.addEventListener("click", () => onPermanentClick(button.dataset.permanent!)));
+  document.querySelectorAll<HTMLButtonElement>("[data-hand]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (suppressNextCardClick) { suppressNextCardClick = false; return; }
+      onCardClick(button.dataset.hand!);
+    });
+    wireCardDrag(button);
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-permanent]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (suppressNextPermanentClick) { suppressNextPermanentClick = false; return; }
+      onPermanentClick(button.dataset.permanent!);
+    });
+    wirePermanentPress(button);
+  });
   document.querySelectorAll<HTMLButtonElement>("[data-target-player]").forEach((button) =>
     button.addEventListener("click", () => {
       const seat = Number(button.dataset.targetPlayer);
@@ -619,13 +986,15 @@ function wireBoard(): void {
     button.addEventListener("click", () => {
       const entry = view?.legalActions[Number(button.dataset.actionIndex)];
       if (!entry) return;
-      if (entry.requiresTarget && entry.cardId) { onCardClick(entry.cardId); return; }
+      if (entry.requiresTarget && entry.cardId) { onCardClick(entry.cardId, entry); return; }
       void submit(entry.action);
     }));
   document.querySelectorAll<HTMLButtonElement>("[data-zone]").forEach((button) =>
     button.addEventListener("click", () => showZone(Number(button.dataset.seat), button.dataset.zone as never)));
 
   const index = visibleCards();
+  // The light hover preview never captures pointer events, so it can coexist
+  // with normal click-to-play and drag-to-battlefield interactions.
   document.querySelectorAll<HTMLElement>("[data-preview]").forEach((element) => {
     element.addEventListener("mouseenter", () => {
       const card = index.get(element.dataset.preview!);
@@ -677,8 +1046,8 @@ function cardDetailHtml(card: CardView, extra?: CatalogCard): string {
     ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="${escapeHtml(card.name)}"/>` : ""}
     <div class="detail-body">
       <div class="detail-type">${escapeHtml(card.type_line)} ${manaHtml(card.mana_cost)}</div>
-      ${card.power !== null ? `<div class="detail-type">Fuerza/resistencia ${card.power}/${card.toughness}</div>` : ""}
-      <pre>${escapeHtml(card.oracle_text || "Sin texto de reglas.")}</pre>
+      ${card.power !== null ? `<div class="detail-type stats">${card.power}/${card.toughness}</div>` : ""}
+      <div class="oracle-text">${oracleHtml(card.oracle_text || "Sin texto de reglas.")}</div>
       <div class="coverage ${card.fullyImplemented ? "ok" : "partial"}">${card.fullyImplemented
         ? "El motor ejecuta todo el texto impreso de esta carta."
         : "El motor todavía no ejecuta este texto. La carta entra al juego con su cuerpo, tipos y palabras clave de combate."}</div>
@@ -686,6 +1055,33 @@ function cardDetailHtml(card: CardView, extra?: CatalogCard): string {
       ${rulingsHtml(extra?.rulings)}
       <a class="external-link" href="https://scryfall.com/card/${escapeHtml(card.scryfall_id)}" target="_blank" rel="noreferrer">Ver la impresión en Scryfall ↗</a>
     </div></div>`;
+}
+
+function printingGalleryHtml(card: CatalogCard): string {
+  const printings = card.printings_list ?? [];
+  if (!printings.length) return "";
+  const group = (title: string, entries: CatalogPrinting[]) => entries.length
+    ? `<section class="printing-group"><h4>${title}</h4><div class="printings">${entries.map((printing) =>
+      `<button class="printing-choice${printing.id === card.id ? " selected" : ""}" type="button" data-printing-id="${escapeHtml(printing.id)}" title="${escapeHtml(printing.set_name)}">
+        ${printing.image_normal ? `<img src="${escapeHtml(printing.image_normal)}" alt="" loading="lazy"/>` : ""}
+        <span>${escapeHtml(printing.set_code.toUpperCase())} · ${escapeHtml(printing.released_at.slice(0, 4))}</span></button>`).join("")}</div></section>`
+    : "";
+  return `<section class="printing-gallery"><h3>Galería de impresiones · ${printings.length}</h3>
+    ${group("Ediciones principales", printings.filter((printing) => printing.main_set))}
+    ${group("Sets especiales y promocionales", printings.filter((printing) => !printing.main_set))}</section>`;
+}
+
+function wirePrintingGallery(card: CatalogCard): void {
+  const panel = dialog("card-dialog");
+  const image = panel?.querySelector<HTMLImageElement>(".gallery-main");
+  const meta = panel?.querySelector<HTMLElement>("[data-gallery-meta]");
+  panel?.querySelectorAll<HTMLButtonElement>("[data-printing-id]").forEach((button) => button.addEventListener("click", () => {
+    const printing = card.printings_list?.find((entry) => entry.id === button.dataset.printingId);
+    if (!printing) return;
+    if (image && printing.image_normal) image.src = printing.image_normal;
+    if (meta) meta.textContent = `${printing.set_name} · ${printing.released_at} · ${printing.rarity}`;
+    panel.querySelectorAll(".printing-choice").forEach((choice) => choice.classList.toggle("selected", choice === button));
+  }));
 }
 
 function showCardDetail(instanceId: string): void {
@@ -723,13 +1119,15 @@ function showZone(seat: number, zone: "library" | "hand" | "graveyard" | "exile"
 // ---------------------------------------------------------------------------
 
 let preconQuery = "";
+let preconLimit = 48;
 
 function openPrecons(): void {
+  preconLimit = 48;
   fillDialog("precon-dialog", panelHtml("precon-dialog", "Mazos precon de Commander",
-    `<p class="panel-note">Agrupados por producto y ordenados del más reciente al más antiguo. Al empezar, los otros tres asientos juegan mazos del mismo producto.</p><div id="precon-results">Cargando…</div>`,
+    `<p class="panel-note">Ediciones principales primero, ordenadas por lanzamiento. Las variantes Collector no aparecen aquí; las impresiones de cartas siguen documentadas en el catálogo.</p><div id="precon-results">Cargando…</div>`,
     { label: "Buscar mazo, comandante o producto", value: preconQuery, placeholder: "Ej. Ghave, 40K, Commander 2014" }));
   const input = document.querySelector<HTMLInputElement>("#precon-dialog-query");
-  input?.addEventListener("input", () => { preconQuery = input.value; void loadPrecons(preconQuery); });
+  input?.addEventListener("input", () => { preconQuery = input.value; preconLimit = 48; void loadPrecons(preconQuery); });
   input?.focus();
   void loadPrecons(preconQuery);
 }
@@ -738,7 +1136,7 @@ async function loadPrecons(query = ""): Promise<void> {
   const container = document.querySelector<HTMLElement>("#precon-results");
   if (!container) return;
   try {
-    const payload = await api<{ groups?: PreconGroup[]; total?: number }>(`/api/decks/precons?grouped=1&q=${encodeURIComponent(query)}`);
+    const payload = await api<{ groups?: PreconGroup[]; total?: number; offset?: number; hasMore?: boolean }>(`/api/decks/precons?grouped=1&limit=${preconLimit}&q=${encodeURIComponent(query)}`);
     const groups = payload.groups ?? [];
     container.innerHTML = groups.length
       ? groups.map((group) => `<section class="set-group">
@@ -749,6 +1147,10 @@ async function loadPrecons(query = ""): Promise<void> {
             <span class="deck-meta"><b>${escapeHtml(deck.name)}</b><small>${escapeHtml(deck.commanders.join(" / "))}</small></span></button>`).join("")}</div>
         </section>`).join("")
       : "<p class='zone-private'>Sin resultados.</p>";
+    if (groups.length && payload.hasMore) {
+      container.insertAdjacentHTML("beforeend", `<button type="button" class="load-more" id="load-more-precons">Mostrar más mazos</button>`);
+      container.querySelector<HTMLButtonElement>("#load-more-precons")?.addEventListener("click", () => { preconLimit += 48; void loadPrecons(query); });
+    }
     container.querySelectorAll<HTMLButtonElement>("[data-precon]").forEach((button) =>
       button.addEventListener("click", () => { dialog("precon-dialog")?.close(); void startMatch("precon", button.dataset.precon!); }));
   } catch (error) {
@@ -782,17 +1184,17 @@ async function showCatalogCard(id: string): Promise<void> {
   try {
     const card = await api<CatalogCard>(`/api/catalog/card/${encodeURIComponent(id)}`);
     fillDialog("card-dialog", panelHtml("card-dialog", card.name, `<div class="card-detail">
-      ${card.image_uris.normal ? `<img src="${escapeHtml(card.image_uris.normal)}" alt="${escapeHtml(card.name)}"/>` : ""}
+      ${card.image_uris.normal ? `<img class="gallery-main" src="${escapeHtml(card.image_uris.normal)}" alt="${escapeHtml(card.name)}"/>` : ""}
       <div class="detail-body">
         <div class="detail-type">${escapeHtml(card.type_line)} ${manaHtml(card.mana_cost)}</div>
-        ${card.power !== null ? `<div class="detail-type">Fuerza/resistencia ${escapeHtml(card.power ?? "")}/${escapeHtml(card.toughness ?? "")}</div>` : ""}
-        <pre>${escapeHtml(card.oracle_text || "Sin texto de reglas.")}</pre>
-        <div class="detail-type">${escapeHtml(card.set_name)} · ${escapeHtml(card.released_at)} · ${escapeHtml(card.rarity)}</div>
-        ${card.printings_list?.length ? `<div class="printings">${card.printings_list.slice(0, 24).map((printing) =>
-          `<span title="${escapeHtml(printing.set_name)}">${escapeHtml(printing.set_code.toUpperCase())} ${escapeHtml(printing.released_at.slice(0, 4))}</span>`).join("")}</div>` : ""}
+        ${card.power !== null ? `<div class="detail-type stats">${escapeHtml(card.power ?? "")}/${escapeHtml(card.toughness ?? "")}</div>` : ""}
+        <div class="oracle-text">${oracleHtml(card.oracle_text || "Sin texto de reglas.")}</div>
+        <div class="detail-type" data-gallery-meta>${escapeHtml(card.set_name)} · ${escapeHtml(card.released_at)} · ${escapeHtml(card.rarity)}</div>
+        ${printingGalleryHtml(card)}
         ${rulingsHtml(card.rulings ?? [])}
         <a class="external-link" href="${escapeHtml(card.scryfall_uri)}" target="_blank" rel="noreferrer">Ver en Scryfall ↗</a>
       </div></div>`));
+    wirePrintingGallery(card);
   } catch (error) { ui.notice = error instanceof Error ? error.message : "No se pudo abrir la carta."; render(); }
 }
 
@@ -833,7 +1235,9 @@ document.querySelector<HTMLInputElement>("#card-query")?.addEventListener("input
 window.addEventListener("keydown", (event) => {
   if (event.target instanceof HTMLInputElement) return;
   if (event.code === "Space") { event.preventDefault(); document.querySelector<HTMLButtonElement>("#pass")?.click(); }
-  if (event.code === "Escape" && ui.pendingTarget) { ui.pendingTarget = null; ui.notice = ""; render(); }
+  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.glyphHelp)) {
+    ui.pendingTarget = null; ui.abilityMenu = null; ui.glyphHelp = null; ui.notice = ""; render();
+  }
   if (event.code === "KeyL") { ui.logOpen = !ui.logOpen; render(); }
 });
 

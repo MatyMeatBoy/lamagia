@@ -98,7 +98,7 @@ describe("effect recognition", () => {
   });
 
   it("reports unmatched text instead of guessing at it", () => {
-    const profile = cardProfile(card({ name: "Complex Card", type_line: "Sorcery", mana_cost: "{2}{G}", oracle_text: "Search your library for a creature card, put it onto the battlefield, then shuffle." }));
+    const profile = cardProfile(card({ name: "Complex Card", type_line: "Sorcery", mana_cost: "{2}{G}", oracle_text: "Search your library for a creature card, then do something strange." }));
     expect(profile.effects).toHaveLength(0);
     expect(profile.fullyImplemented).toBe(false);
   });
@@ -117,5 +117,55 @@ describe("faces and oracle normalisation", () => {
   it("replaces the card's own name with ~ and strips reminder text", () => {
     const text = normalizedOracle(card({ name: "Atraxa, Grand Unifier", type_line: "Creature", oracle_text: "When Atraxa enters, draw a card. (Reminder.)" }));
     expect(text).toBe("When ~ enters, draw a card.");
+  });
+
+  it("treats the modern \"this land\" phrasing as a self reference", () => {
+    // Current Oracle text stopped repeating the card's name; a parser that only
+    // knows the printed name misses most reprints.
+    const text = normalizedOracle(card({
+      name: "Polluted Delta", type_line: "Land",
+      oracle_text: "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle."
+    }));
+    expect(text).toContain("Sacrifice ~:");
+  });
+
+  it("leaves phrases that only look like self references alone", () => {
+    const text = normalizedOracle(card({
+      name: "Test", type_line: "Sorcery",
+      oracle_text: "Draw a card. You gain 2 life this turn. Each player chooses this way."
+    }));
+    expect(text).toBe("Draw a card. You gain 2 life this turn. Each player chooses this way.");
+  });
+
+  it("reads a fetch land's whole ability through the modern phrasing", () => {
+    const profile = cardProfile(card({
+      name: "Polluted Delta", type_line: "Land",
+      oracle_text: "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle."
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities).toHaveLength(1);
+    expect(profile.activatedAbilities[0]).toMatchObject({ requiresTap: true, sacrificesSelf: true, lifeCost: 1 });
+  });
+
+  it("reads both halves of a modern enters/dies creature", () => {
+    const profile = cardProfile(card({
+      name: "Solemn Simulacrum", type_line: "Artifact Creature — Golem", mana_cost: "{4}", power: "2", toughness: "2",
+      oracle_text: "When this creature enters, you may search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.\nWhen this creature dies, you may draw a card."
+    }));
+    expect(profile.triggers.map((trigger) => trigger.event)).toEqual(["enters-battlefield", "dies"]);
+    expect(profile.triggers.every((trigger) => trigger.optional)).toBe(true);
+    // The land arrives tapped because the effect says so, not because of its own text.
+    expect(profile.triggers[0]!.effect).toMatchObject({ kind: "search-library", destination: "battlefield", tapped: true });
+  });
+
+  it("refuses to read a restricted mana clause as five free colours", () => {
+    const profile = cardProfile(card({
+      name: "Exotic Orchard", type_line: "Land", produced_mana: ["W", "U", "B", "R", "G"],
+      oracle_text: "{T}: Add one mana of any color that a land an opponent controls could produce."
+    }));
+    // It still plays through the structured fallback, but it must not claim the
+    // text is executed, because the colours it can really make are conditional.
+    expect(profile.manaAbilities).toHaveLength(1);
+    expect(profile.fullyImplemented).toBe(false);
   });
 });

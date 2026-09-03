@@ -11,6 +11,7 @@ import {
   applyAction, defendersAwaitingBlocks, legalAttackers, legalBlockers, legalTargets, legalActions,
   type AttackerDeclaration, type BlockerDeclaration, type GameAction, type GameState, type Permanent, type SeatId
 } from "./engine.js";
+import type { TargetKind } from "./characteristics.js";
 
 export interface BotDecision {
   readonly turn: number;
@@ -89,7 +90,7 @@ function passOr(available: readonly { action: GameAction; label: string }[]): { 
 }
 
 /** Aims removal and burn at opponents, never at the bot's own board. */
-function pickTargets(state: GameState, seat: SeatId, kind: "any" | "creature" | "spell") {
+function pickTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">) {
   const all = legalTargets(state, seat, kind);
   const board = state.players.flatMap((player) => player.battlefield);
   const hostile = all.filter((target) => {
@@ -113,6 +114,47 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
   const available = legalActions(state, seat);
   if (!available.length) return null;
 
+  if (state.pendingChoice?.type === "reveal-card" && state.pendingChoice.seat === seat) {
+    // The deterministic policy reveals the first valid card when possible;
+    // otherwise it accepts the tapped default.
+    const reveal = available.find((entry) => entry.action.type === "choose-reveal" && entry.action.reveal);
+    const decline = available.find((entry) => entry.action.type === "choose-reveal" && !entry.action.reveal);
+    const chosen = reveal ?? decline;
+    if (chosen) {
+      if (chosen.action.type === "choose-reveal" && chosen.action.reveal && !chosen.action.cardId) {
+        const card = available.find((entry) => entry.action.type === "choose-reveal" && entry.action.reveal && entry.action.cardId);
+        if (card) return { action: card.action, label: card.label };
+      }
+      return { action: chosen.action, label: chosen.label };
+    }
+  }
+  if (state.pendingChoice?.type === "optional-trigger" && state.pendingChoice.seat === seat) {
+    const accept = available.find((entry) => entry.action.type === "choose-trigger" && entry.action.accept);
+    const decline = available.find((entry) => entry.action.type === "choose-trigger" && !entry.action.accept);
+    const chosen = accept ?? decline;
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
+  if (state.pendingChoice?.type === "trigger-target" && state.pendingChoice.seat === seat) {
+    // Same preference as a spell: point the ability at an opponent's board when
+    // the effect is hostile, otherwise take the first legal option.
+    const hostile = pickTargets(state, seat, state.pendingChoice.targetKind);
+    const wanted = hostile[0];
+    const chosen = wanted
+      ? available.find((entry) => entry.action.type === "choose-trigger-target" && JSON.stringify(entry.action.target) === JSON.stringify(wanted))
+      : undefined;
+    const fallback = available.find((entry) => entry.action.type === "choose-trigger-target");
+    const pick = chosen ?? fallback;
+    if (pick) return { action: pick.action, label: pick.label };
+  }
+  const searchChoice = state.pendingChoice?.type === "search-library" ? state.pendingChoice : null;
+  if (searchChoice && searchChoice.seat === seat) {
+    const chosen = available.find((entry) => entry.action.type === "choose-library-card");
+    const card = state.players[seat]!.library.find((candidate) => searchChoice.optionIds.includes(candidate.instance_id));
+    if (chosen && card && chosen.action.type === "choose-library-card") {
+      return { action: { ...chosen.action, query: card.name }, label: `busca ${card.name}` };
+    }
+  }
+
   if (state.step === "declare-attackers" && !state.combat.attackersDeclared && seat === state.activeSeat) {
     return { action: { type: "declare-attackers", attackers: chooseAttackers(state, seat) }, label: "declara atacantes" };
   }
@@ -124,6 +166,30 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
   const isMyMain = state.activeSeat === seat && (state.step === "precombat-main" || state.step === "postcombat-main");
 
   if (isMyMain) {
+    // Self-limiting activations come before anything else: a fetch land that
+    // sacrifices itself, or a `{T}` ability, can only be used once, and using it
+    // first means the mana or the fixing is available for the rest of the turn.
+    //
+    // Abilities whose cost is repeatable (pay life, pay mana, no tap) are left
+    // alone on purpose: this policy has no way to know when to stop paying, and
+    // a bot that drains itself is worse than a bot that never activates.
+    if (!state.stack.length) {
+      const activation = available.find((entry) => {
+        const action = entry.action;
+        if (action.type !== "activate") return false;
+        const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+        if (!source) return false;
+        const ability = cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
+        return Boolean(ability && (ability.requiresTap || ability.sacrificesSelf));
+      });
+      if (activation && activation.action.type === "activate") {
+        const targets = activation.requiresTarget ? pickTargets(state, seat, activation.requiresTarget) : undefined;
+        if (!activation.requiresTarget || targets?.length) {
+          return { action: targets ? { ...activation.action, targets } : activation.action, label: activation.label };
+        }
+      }
+    }
+
     // A land first: it is free and unlocks everything else this turn.
     const land = available.find((entry) => entry.action.type === "play-land");
     if (land) {
@@ -177,6 +243,7 @@ export function runBots(state: GameState, isBot: (seat: SeatId) => boolean, budg
 /** The single seat that owes the next decision, or null when nobody does. */
 export function pendingSeat(state: GameState): SeatId | null {
   if (state.finished) return null;
+  if (state.pendingChoice) return state.pendingChoice.seat;
   if (state.step === "declare-attackers" && !state.combat.attackersDeclared) return state.activeSeat;
   if (state.step === "declare-blockers" && !state.combat.blockersDeclared) return defendersAwaitingBlocks(state)[0] ?? null;
   return state.priorityOpen ? state.prioritySeat : null;
