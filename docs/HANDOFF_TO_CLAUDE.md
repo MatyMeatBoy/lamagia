@@ -705,6 +705,18 @@ and replacement effects.
 Validation: targeted engine tests PASS (172 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: all controlled creature counters
+
+The branch adds `Put a +1/+1 counter on each creature you control` as a
+reusable board-wide effect. It updates only creatures controlled by the
+resolving player, while preserving noncreatures and opposing creatures. This
+follows CR 122.1 and 701.4. Scenario coverage verifies the parser and all
+controlled-creature filtering. The scope excludes subtype filters, counters
+on permanents other than creatures, and replacement effects.
+
+Validation: targeted engine tests PASS (173 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals
