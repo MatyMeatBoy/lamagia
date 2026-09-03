@@ -331,6 +331,8 @@ h1, h2, h3 { margin: 0; }
 }
 .ability-row:hover { border-color: var(--gold-dim); background: #16261a; }
 .ability-glyph { display: grid; place-items: center; color: var(--gold); }
+.ability-label { display: inline-flex; align-items: center; gap: 5px; }
+.ability-label .mana { flex-shrink: 0; }
 .glyph-rule { margin: 8px 2px 4px; color: var(--text); font-size: .72rem; line-height: 1.45; }
 .glyph-enforced { margin: 0 2px; color: var(--text-dim); font-size: .68rem; line-height: 1.45; }
 .glyph-enforced b { color: var(--good); }
@@ -401,6 +403,11 @@ button.chip:hover { border-color: var(--gold); }
 .self-zones .zone-chip b { font-size: .86rem; }
 .mana-chip { display: flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid #2f6a49; border-radius: 7px; background: #0a1a12; color: var(--good); font-size: .62rem; }
 .mana-chip b { font-size: .82rem; }
+.mana-reserve { display: inline-flex; align-items: center; gap: 5px; min-height: 26px; padding: 3px 7px; border: 1px solid #7b6432; border-radius: 7px; background: #17170d; color: var(--gold); }
+.mana-reserve > small { margin-right: 1px; color: var(--muted); font-size: .58rem; text-transform: uppercase; letter-spacing: .04em; }
+.mana-reserve-item { display: inline-flex; align-items: center; gap: 2px; font-size: .68rem; }
+.mana-reserve-item .pip { width: 17px; min-width: 17px; height: 17px; }
+.mana-reserve-empty { color: var(--muted); font-size: .8rem; }
 
 /* Hand ---------------------------------------------------------------- */
 

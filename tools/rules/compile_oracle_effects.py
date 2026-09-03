@@ -47,6 +47,7 @@ FAMILY_ORDER = ("search-library", "create-token", "damage", "counter", "modify-s
 TRIGGER_RE = re.compile(r"\b(?:when(?:ever)?|at the beginning of|at the end of)\b", re.I)
 ACTIVATED_RE = re.compile(r"^[^:\n]{1,160}:\s*", re.I)
 TARGET_RE = re.compile(r"\btarget\s+([^.;]+)", re.I)
+MANA_ABILITY_RE = re.compile(r"^(?P<cost>[^:\n]{1,160}):\s*(?P<effect>add\b.+)$", re.I)
 SEARCH_RE = re.compile(r"\bsearch your library for (?:an? |up to (?:one|two|three|five) )?(.+?) card\b", re.I)
 NUMBER_RE = re.compile(r"\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b", re.I)
 WORD_NUMBERS = {
@@ -55,6 +56,32 @@ WORD_NUMBERS = {
 }
 CARD_TYPES = {"land", "creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "battle", "kindred"}
 CRITERION_NOISE = {"basic", "card", "permanent", "spell", "with", "that", "whose", "where", "named", "converted", "mana", "power", "toughness"}
+
+
+def mana_ability_hint(line: str) -> dict[str, Any] | None:
+    """Extract reusable mana-ability structure without declaring it executable."""
+    match = MANA_ABILITY_RE.match(line.strip())
+    if not match:
+        return None
+    effect = match.group("effect").strip()
+    side_effects: list[dict[str, Any]] = []
+    gain = re.search(r"\byou gain (\w+) life\b", effect, re.I)
+    if gain:
+        side_effects.append({"kind": "gain-life", "amount": number_hint(gain.group(1))})
+    restrictions: list[dict[str, Any]] = []
+    land_gate = re.search(r"\bactivate only if you control (\w+) or more lands\b", effect, re.I)
+    if land_gate:
+        restrictions.append({"kind": "control-lands", "minimum": number_hint(land_gate.group(1))})
+    spend_limit = re.search(r"\bthis mana (?:can't|cannot) be spent ([^.]+)", effect, re.I)
+    if spend_limit:
+        restrictions.append({"kind": "spend-limit", "text": spend_limit.group(0).strip()})
+    return {
+        "text": line.strip(),
+        "cost": match.group("cost").strip(),
+        "produced_symbols": re.findall(r"\{([^}]+)\}", effect.split(".", 1)[0]),
+        "side_effects": side_effects,
+        "restrictions": restrictions,
+    }
 
 
 def clean_text(text: str) -> str:
@@ -141,6 +168,7 @@ def compile_card(row: sqlite3.Row) -> dict[str, Any]:
     text = str(row["oracle_text"] or "")
     parsed = [classify(clause) for clause in clauses(text)]
     unmatched = [entry["text"] for entry in parsed if not entry["candidate"]]
+    mana_abilities = [hint for line in text.split("\n") if (hint := mana_ability_hint(line))]
     return {
         "oracle_id": row["oracle_id"],
         "scryfall_id": row["id"],
@@ -149,6 +177,7 @@ def compile_card(row: sqlite3.Row) -> dict[str, Any]:
         "mana_cost": row["mana_cost"],
         "oracle_text": text,
         "clauses": parsed,
+        "mana_abilities": mana_abilities,
         "unmatched": unmatched,
         "status": "candidate" if parsed and not unmatched else "needs-review" if parsed else "vanilla",
     }

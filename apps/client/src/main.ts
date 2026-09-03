@@ -169,6 +169,14 @@ function manaHtml(cost: string | undefined): string {
   return `<span class="mana">${symbols.map(manaSymbolHtml).join("")}</span>`;
 }
 
+const MANA_POOL_ORDER = ["W", "U", "B", "R", "G", "C"] as const;
+
+function manaReserveHtml(pool: Readonly<Record<string, number>>): string {
+  const entries = MANA_POOL_ORDER.filter((symbol) => (pool[symbol] ?? 0) > 0);
+  if (!entries.length) return `<span class="mana-reserve-empty">—</span>`;
+  return entries.map((symbol) => `<span class="mana-reserve-item">${manaSymbolHtml(symbol)}<b>${pool[symbol] ?? 0}</b></span>`).join("");
+}
+
 /** Replaces Oracle mana tokens while keeping the rules text and line breaks. */
 function oracleHtml(text: string): string {
   let html = "";
@@ -540,9 +548,13 @@ function abilityMenuHtml(): string {
     ${entries.map((entry) => {
       const index = view!.legalActions.indexOf(entry);
       const glyph = entry.action.type === "activate-mana" ? ACTIVATION_GLYPHS.mana : ACTIVATION_GLYPHS.activated;
+      const manaTokens = entry.action.type === "activate-mana" ? (entry.label.match(/\{[^}]+\}/g) ?? []).join("") : "";
+      const actionLabel = entry.action.type === "activate-mana"
+        ? entry.label.replace(/^[^:]+:\s*/, "").replace(/\s*(?:\{[^}]+\})+\s*$/, "").trim()
+        : entry.label.replace(/^[^:]+:\s*/, "");
       return `<button class="ability-row" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
         <span class="ability-glyph">${glyphSvg(glyph, 16)}</span>
-        <span>${escapeHtml(entry.label.replace(/^[^:]+:\s*/, ""))}</span></button>`;
+        <span class="ability-label">${escapeHtml(actionLabel)}${manaTokens ? ` ${manaHtml(manaTokens)}` : ""}</span></button>`;
     }).join("")}
   </div>`;
 }
@@ -881,6 +893,7 @@ function render(): void {
               <span class="seat-avatar" style="border-color: var(--seat-${me.seat})${selectedAvatar ? `;background-image:url('${escapeHtml(selectedAvatar)}')` : ""}">${escapeHtml(me.name.slice(0, 1))}</span>
               <button class="self-life" type="button" data-target-player="${me.seat}"><b>${me.lost ? "✕" : me.life}</b><small>vidas</small></button>
               <span class="mana-chip" title="Maná que aún puedes producir">◇ <b>${me.availableMana}</b></span>
+              <span class="mana-reserve" title="Reserva de maná"><small>Reserva</small>${manaReserveHtml(me.manaPool)}</span>
             </div>
             <div class="self-zones">
               <button class="zone-chip" type="button" data-zone="library" data-seat="${me.seat}"><i>Biblioteca</i><b>${me.libraryCount}</b></button>

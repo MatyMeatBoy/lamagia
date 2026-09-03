@@ -2,7 +2,7 @@
 
 import unittest
 
-from compile_oracle_effects import classify, search_criterion_hint
+from compile_oracle_effects import classify, mana_ability_hint, search_criterion_hint
 from export_set_coverage import product_group
 
 
@@ -25,6 +25,21 @@ class OracleCompilerTests(unittest.TestCase):
         result = classify("Destroy target artifact, enchantment, or land.")
         self.assertEqual(result["target_types"], ["Artifact", "Enchantment", "Land"])
         self.assertIsNone(result["target_subtype"])
+
+    def test_reuses_mana_side_effect_and_restriction_primitives(self) -> None:
+        self.assertEqual(
+            mana_ability_hint("{T}: Add {C}. You gain 1 life."),
+            {
+                "text": "{T}: Add {C}. You gain 1 life.",
+                "cost": "{T}",
+                "produced_symbols": ["C"],
+                "side_effects": [{"kind": "gain-life", "amount": 1}],
+                "restrictions": [],
+            },
+        )
+        result = mana_ability_hint("{T}: Add {C}{C}. Activate only if you control five or more lands.")
+        self.assertEqual(result["produced_symbols"], ["C", "C"])
+        self.assertEqual(result["restrictions"], [{"kind": "control-lands", "minimum": 5}])
 
     def test_groups_supplemental_products_by_name_and_type(self) -> None:
         self.assertEqual(product_group("draft_innovation", "Jumpstart 2022", "2022-12-02"), "jumpstart")

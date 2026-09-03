@@ -2,6 +2,38 @@
 
 Fecha: 2026-09-03
 
+## Iteración actual: cinco primitivas reutilizables
+
+Se completó y verificó un lote de cinco primitivas distintas, para que las
+cartas siguientes reutilicen el mismo vocabulario en vez de añadir casos
+aislados:
+
+- objetivos restringidos: criatura que no sea negra, criatura con flying,
+  tierra no básica y permanente no criatura;
+- daño a cada criatura y jugador;
+- ganar X vidas;
+- efecto adicional de una habilidad de maná (ganar vida);
+- restricción de habilidad de maná por cantidad mínima de tierras.
+
+El compilador Python (`tools/rules/compile_oracle_effects.py`) ahora exporta
+`mana_abilities` con coste, símbolos producidos, efectos secundarios y
+restricciones. Esto conserva tipos abiertos como `Equipment` sin convertirlos
+en búsquedas genéricas. La referencia normativa local es CR 605 para maná y
+CR 601/113 para costes, objetivos y resolución.
+
+Validado: `npm run test --workspace=@prossh/rules` (147),
+`npm run check`, `python tools/rules/test_compile_oracle_effects.py` (5).
+Cobertura C13: **112/356 (31.5%)**, 244 pendientes.
+
+La UI muestra símbolos SVG reales en cada opción de maná y una reserva visible
+por color en la mesa. El modelo sigue separado para poder añadir restricciones
+de gasto, buffs o habilidades disparadas al usar una fuente.
+
+Medición local del compilador Python sobre las mismas cinco primitivas: un solo
+worker 80 KB de RSS incremental máximo; cinco workers compartiendo proceso
+156 KB (≈76 KB extra), con el coste de cinco workers prácticamente liviano.
+Esto mide el compilador, no cinco modelos de IA independientes.
+
 ## Hallazgo confirmado: Polluted Delta
 
 `Polluted Delta` no fallaba por el selector de biblioteca ni por su texto Oracle. El defecto estaba en el modelo de acciones:
@@ -65,4 +97,3 @@ Propuesta para la siguiente iteración:
 - Reglas puras en `packages/rules`; ninguna interacción DOM/I/O allí.
 - Cada nueva interacción de carta debe empezar por escenario de reglas y citar las Comprehensive Rules oficiales aplicables.
 - Usar los enlaces de Arena sólo como referencia visual; crear iconografía propia.
-

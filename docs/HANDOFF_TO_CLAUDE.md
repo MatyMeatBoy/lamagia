@@ -318,6 +318,19 @@ npm run rulings:sync      # ~79k Wizards rulings, keyed by oracle_id
 
 `planManaPayment` decides which permanents to tap. Colored requirements are satisfied first from the floating pool, then from the least flexible untapped source that can produce the colour, so a dual land stays free for the requirement only it can cover; the rest is paid by tapping further sources until `payCost` validates the whole cost. Interchangeable sources share one search branch and a node budget guarantees termination.
 
+## Latest verified batch
+
+The current five-primitive batch is reusable restricted targeting, damage to
+each creature/player, variable life gain, mana-ability side effects, and
+land-count activation gates. `compile_oracle_effects.py` now emits a stable
+`mana_abilities` IR (cost, produced symbols, side effects, restrictions), so
+future cards can map to existing primitives. The client renders mana assets in
+activation choices and a visible per-colour mana reserve.
+
+Validation: 147 rules tests, workspace TypeScript checks, and 5 Python compiler
+regressions pass. C13 is 112/356 unique cards implemented (31.5%); generated
+coverage remains in `data/rules/coverage-c13.md`.
+
 ## Recommended next sequence
 
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now

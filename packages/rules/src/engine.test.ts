@@ -36,6 +36,11 @@ const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — S
 const LIFELINKER = () => make({ name: "Kind Knight", type_line: "Creature — Knight", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink" });
 const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature — Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["First strike"], oracle_text: "First strike" });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
+const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
+const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
+const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
+const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
+const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const UNSUMMON = () => make({ name: "Unsummon", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Return target creature to its owner's hand." });
 const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Fireball deals X damage to any target. It costs {1} more to cast for each target beyond the first." });
@@ -60,6 +65,8 @@ const AZORIUS_CHANCERY = () => make({ name: "Azorius Chancery", type_line: "Land
 const AZORIUS_SPELL = () => make({ name: "Azorius Lesson", type_line: "Sorcery", mana_cost: "{W}{U}", cmc: 2, oracle_text: "Draw a card." });
 const AZORIUS_RELIC = () => make({ name: "Azorius Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{T}: Add {W}{U}.", produced_mana: ["W", "U"] });
 const SOL_RING = () => make({ name: "Sol Ring", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "{T}: Add {C}{C}.", produced_mana: ["C"] });
+const PRISTINE_TALISMAN = () => make({ name: "Pristine Talisman", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{T}: Add {C}. You gain 1 life.", produced_mana: ["C"] });
+const TEMPLE_OF_FALSE_GOD = () => make({ name: "Temple of the False God", type_line: "Land", oracle_text: "{T}: Add {C}{C}. Activate only if you control five or more lands.", produced_mana: ["C"] });
 const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
 const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
 const ELVES = () => make({ name: "Llanowar Elves", type_line: "Creature — Elf Druid", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1", oracle_text: "{T}: Add {G}.", produced_mana: ["G"] });
@@ -349,6 +356,29 @@ describe("playing lands", () => {
 });
 
 describe("mana payment", () => {
+  it("keeps five independent primitives executable in the same card batch", () => {
+    expect(profileOf(PRISTINE_TALISMAN()).fullyImplemented).toBe(true);
+    expect(profileOf(PRISTINE_TALISMAN()).manaAbilities[0]).toMatchObject({ gainLife: 1 });
+    expect(profileOf(TEMPLE_OF_FALSE_GOD()).fullyImplemented).toBe(true);
+    expect(profileOf(TEMPLE_OF_FALSE_GOD()).manaAbilities[0]).toMatchObject({ requiresLands: 5 });
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [PRISTINE_TALISMAN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const talisman = game.players[0]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: talisman.instance_id, abilityIndex: 0, mana: "C" });
+    expect(game.players[0]!.life).toBe(41);
+    expect(game.players[0]!.manaPool.C).toBe(1);
+
+    game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [TEMPLE_OF_FALSE_GOD(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === game.players[0]!.battlefield[0]!.instance_id)).toBe(false);
+    game = putOnBattlefield(game, 0, [FOREST()]);
+    const temple = game.players[0]!.battlefield[0]!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === temple.instance_id)).toBe(true);
+  });
+
   it("finds the lands that pay a colored cost", () => {
     let game = twoSeatGame([], []);
     game = putOnBattlefield(game, 0, [FOREST(), FOREST(), PLAINS()]);
@@ -519,6 +549,24 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Pyroclasm")).toBe(true);
+  });
+
+  it("compiles the five-card damage and restricted-target batch", () => {
+    expect(profileOf(ANNIHILATE()).fullyImplemented).toBe(true);
+    expect(profileOf(FAMINE()).fullyImplemented).toBe(true);
+    expect(profileOf(DEATH_GRASP()).fullyImplemented).toBe(true);
+    expect(profileOf(FLYING_REMOVAL()).fullyImplemented).toBe(true);
+    expect(profileOf(NONBASIC_REMOVAL()).fullyImplemented).toBe(true);
+
+    let game = readyToCast([FAMINE()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.life).toBe(37);
+    expect(game.players[1]!.life).toBe(37);
+
+    game = readyToCast([DEATH_GRASP()], [SWAMP(), SWAMP(), PLAINS(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.life).toBe(38);
+    expect(game.players[0]!.life).toBe(42);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
@@ -962,7 +1010,8 @@ describe("activated abilities", () => {
   it("keeps mana abilities out of the decision the table waits on", () => {
     const game = readyOnBoard([FOREST()]);
     // The action exists for a player who wants it...
-    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana")).toBe(true);
+    const manaAction = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana");
+    expect(manaAction).toMatchObject({ label: "Forest: Add {G}" });
     // ...but adding mana is never the decision that stops the game.
     expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(false);
   });

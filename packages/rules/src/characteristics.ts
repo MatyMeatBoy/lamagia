@@ -57,6 +57,10 @@ export interface ManaAbility {
   readonly lifeCost: number;
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
+  /** Some mana abilities have a small immediate side effect (CR 605). */
+  readonly gainLife?: number;
+  /** Static activation restriction such as Temple of the False God. */
+  readonly requiresLands?: number;
   readonly text: string;
 }
 
@@ -98,11 +102,12 @@ export type SpellEffect =
   | { readonly kind: "draw"; readonly amount: number }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
-  | { readonly kind: "gain-life"; readonly amount: number }
+  | { readonly kind: "gain-life"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean }
+  | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
@@ -192,7 +197,8 @@ export interface TriggerDefinition {
 
 export type TargetKind =
   | "any" | "player" | "creature" | "spell" | "permanent" | "artifact-or-enchantment"
-  | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "artifact" | "nonland" | "nonartifact-creature" | "land-you-control" | `subtype:${string}` | "none";
+  | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "artifact" | "nonland" | "nonartifact-creature"
+  | "nonblack-creature" | "creature-with-flying" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | `subtype:${string}` | "none";
 
 export interface CardProfile {
   readonly name: string;
@@ -351,6 +357,28 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
+function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number } | null {
+  let remainder = effect.trim().replace(/\.$/, "");
+  let gainLife: number | undefined;
+  let requiresLands: number | undefined;
+  const gain = /\.\s*You gain (\w+) life$/i.exec(remainder);
+  if (gain) {
+    const amount = toNumber(gain[1]);
+    if (amount === null) return null;
+    gainLife = amount;
+    remainder = remainder.slice(0, gain.index).trim();
+  }
+  const restriction = /\.\s*Activate only if you control (\w+) or more lands$/i.exec(remainder);
+  if (restriction) {
+    const amount = toNumber(restriction[1]);
+    if (amount === null) return null;
+    requiresLands = amount;
+    remainder = remainder.slice(0, restriction.index).trim();
+  }
+  const produced = parseAddClause(remainder);
+  return produced ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }) } : null;
+}
+
 function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
   const abilities: ManaAbility[] = [];
   const lines = text.split("\n");
@@ -379,12 +407,21 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // production clause independently so cards such as Delighted Halfling
     // keep both printed mana abilities instead of falling back to one
     // structured `produced_mana` entry.
-    const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
-    if (!produced) continue;
+    // `manaAbilities` may still expose a production choice whose restriction
+    // is not executable yet; `recognizeText` below remains strict so coverage
+    // does not claim that trailing restriction is enforced.
+    const instruction = parseManaInstruction(effectText) ?? (() => {
+      const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
+      return produced ? { produced, gainLife: undefined, requiresLands: undefined } : null;
+    })();
+    if (!instruction?.produced) continue;
+    const produced = instruction.produced;
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
       ...(removeCounters.length ? { removeCounters } : {}),
+      ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
+      ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
       requiresTap, lifeCost, text: line.trim()
     });
   }
@@ -638,6 +675,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^You gain (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "gain-life", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "gain-life", amount: "X" }, target: "none" };
   }
   if ((match = /^Each opponent loses (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
@@ -652,6 +690,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-each-opponent", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-each-opponent", amount: "X" }, target: "none" };
+  }
+  if ((match = /^~ deals (\w+) damage to each creature and each player$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-each-creature-and-player", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-each-creature-and-player", amount: "X" }, target: "none" };
   }
   if ((match = /^Target player draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
@@ -690,6 +733,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target artifact, enchantment, or land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-enchantment-or-land" };
   if (/^Destroy target nonland permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonland" };
   if (/^Destroy target nonartifact creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-creature" };
+  if (/^Destroy target nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonblack-creature" };
+  if (/^Destroy target creature with flying$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-flying" };
+  if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };
+  if (/^Destroy target noncreature permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "noncreature-permanent" };
   if (/^Exile target (?:artifact or enchantment|nonland permanent|permanent|creature)$/i.test(text)) {
     const target = /artifact or enchantment/i.test(text) ? "artifact-or-enchantment"
       : /nonland/i.test(text) ? "nonland" : /creature$/i.test(text) ? "creature" : "permanent";
@@ -756,7 +803,7 @@ function recognizeText(text: string): RecognizedText {
     // `produced_mana` fallback, but the card must not claim its text is executed.
     const manaLine = /^([^:]{1,80}):\s*(add\b.*)$/i.exec(line);
     if (manaLine) {
-      if (!parseAddClause(manaLine[2]!)) unimplementedText.push(line);
+      if (!parseManaInstruction(manaLine[2]!)) unimplementedText.push(line);
       continue;
     }
 

@@ -350,6 +350,7 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
   if (ability.requiresTap && permanent.tapped) return false;
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return false;
   if (ability.lifeCost >= player.life) return false;
+  if (ability.requiresLands !== undefined && player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))).length < ability.requiresLands) return false;
   return (ability.removeCounters ?? []).every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount);
 }
 
@@ -941,8 +942,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return next;
     }
     case "gain-life": {
-      const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + effect.amount }));
-      return logged(next, controller, `${playerAt(next, controller).name} gana ${effect.amount} vidas.`);
+      const amount = effectAmount(effect.amount, object);
+      const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
+      return logged(next, controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
     case "each-opponent-loses-life": {
       let next = state;
@@ -961,6 +963,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         if (!isCreature(cardProfile(permanent.card))) continue;
         if (effect.excludeSource && permanent.instance_id === object.card.instance_id) continue;
         next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+      }
+      return next;
+    }
+    case "damage-each-creature-and-player": {
+      const amount = effectAmount(effect.amount, object);
+      let next = state;
+      for (const permanent of allPermanents(state)) {
+        if (isCreature(cardProfile(permanent.card))) next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+      }
+      for (const player of state.players) {
+        if (!player.lost) next = dealDamageToPlayer(next, player.seat, amount, sourceName);
       }
       return next;
     }
@@ -1718,7 +1731,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         const produced = ability.fixedProduces ? ability.fixedProduces.map((type) => `{${type}}`).join("") : `${ability.amount > 1 ? ability.amount : ""}{${mana}}`;
         actions.push({
           action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana },
-          label: `${permanent.card.name}: agregar ${produced}`,
+          label: `${permanent.card.name}: Add ${produced}`,
           cardId: permanent.instance_id,
           ...(ability.lifeCost ? { note: `Cuesta ${ability.lifeCost} de vida.` } : {})
         });
@@ -1750,8 +1763,15 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     .filter((permanent) => !keywordOf(permanent, "shroud"));
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
-    if (kind === "creature" || kind === "nonartifact-creature") return isCreature(profile) && (kind === "creature" || !profile.types.includes("Artifact"));
+    if (kind === "creature" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "creature-with-flying") {
+      if (!isCreature(profile)) return false;
+      if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
+      if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
+      if (kind === "creature-with-flying" && !profile.keywords.includes("flying")) return false;
+      return true;
+    }
     if (kind === "land-you-control") return isLand(profile) && permanent.controller === seat;
+    if (kind === "nonbasic-land") return isLand(profile) && !profile.supertypes.some((value) => value.toLowerCase() === "basic");
     if (kind === "artifact-or-enchantment") return profile.types.includes("Artifact") || profile.types.includes("Enchantment");
     if (kind === "artifact-enchantment-or-land") return profile.types.includes("Artifact") || profile.types.includes("Enchantment") || isLand(profile);
     if (kind === "artifact") return profile.types.includes("Artifact");
@@ -1761,6 +1781,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     }
     if (kind === "artifact-creature-or-planeswalker") return profile.types.some((type) => ["Artifact", "Creature", "Planeswalker"].includes(type));
     if (kind === "nonland") return !isLand(profile);
+    if (kind === "noncreature-permanent") return !isCreature(profile);
     return true;
   }).map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
   if (kind === "any") {
@@ -1817,7 +1838,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   if (!canUseManaAbility(player, source, ability)) throw new Error("No puedes activar esa habilidad de maná ahora.");
   const next = withPlayer(state, seat, (current) => ({
     ...current,
-    life: current.life - ability.lifeCost,
+    life: current.life - ability.lifeCost + (ability.gainLife ?? 0),
     manaPool: ability.fixedProduces
       ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
       : addMana(current.manaPool, action.mana, ability.amount),
