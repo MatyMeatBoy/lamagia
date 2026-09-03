@@ -1247,7 +1247,7 @@ const COVERAGE_GROUP_LABELS: Record<string, string> = {
   "planechase": "Planechase", "conspiracy": "Conspiracy", "starter": "Starter", "premium-decks": "Premium Decks",
   "spellbooks": "Spellbooks", "anthologies": "Anthologies", "secret-lair": "Secret Lair", "promos": "Promos",
   "funny-special": "Un / especiales", "alchemy": "Alchemy", "commander": "Commander", "deck-products": "Deck products",
-  "boxed-products": "Boxed products", "deck-products": "Deck products", "supplemental": "Supplemental", "masterpieces": "Masterpieces", "eternal": "Eternal",
+  "boxed-products": "Boxed products", "supplemental": "Supplemental", "masterpieces": "Masterpieces", "eternal": "Eternal",
   "core": "Core sets", "expansion": "Expansion sets", "from-the-vault": "From the Vault", "archenemy": "Archenemy", "treasure-chest": "Treasure Chests", "other": "Otros"
 };
 
