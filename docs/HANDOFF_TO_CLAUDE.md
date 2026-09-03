@@ -333,16 +333,14 @@ npm run rulings:sync      # ~79k Wizards rulings, keyed by oracle_id
 
 ## Latest verified batch
 
-The current five-primitive batch is reusable restricted targeting, damage to
-each creature/player, variable life gain, mana-ability side effects, and
-land-count activation gates. `compile_oracle_effects.py` now emits a stable
-`mana_abilities` IR (cost, produced symbols, side effects, restrictions), so
-future cards can map to existing primitives. The client renders mana assets in
-activation choices and a visible per-colour mana reserve.
+The current batch adds reusable modal choices, exact artifact/enchantment/land
+target restrictions, player-or-planeswalker targets, and the
+artifact/creature/enchantment board sweep. `compile_oracle_effects.py` also
+supports deterministic bounded card/primitives batches.
 
-Validation: 147 rules tests, workspace TypeScript checks, and 5 Python compiler
-regressions pass. C13 is 112/356 unique cards implemented (31.5%); generated
-coverage remains in `data/rules/coverage-c13.md`.
+Validation: 150 rules tests, workspace TypeScript checks, simulator smoke tests
+and 6 Python compiler regressions pass. C13 is 116/356 unique cards implemented
+(32.6%); generated coverage remains in `data/rules/coverage-c13.md`.
 
 The Oracle compiler now accepts `--workers`, `--backend`, `--batch-size`,
 `--memory-budget-gb`, and `--estimated-worker-mb`. Its default five-process
@@ -357,7 +355,7 @@ unbounded pool.
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
 general; what limits coverage is the **effect vocabulary** they resolve into.
 1,185 cards have a recognised trigger and 670 a recognised activation, but only
-5,908 of 38,711 cards are fully implemented, because most printed effects are
+6,050 of 38,711 cards are fully implemented, because most printed effects are
 still outside `SpellEffect`.
 
 1. **Widen `SpellEffect`, one template plus one test at a time.** The highest
