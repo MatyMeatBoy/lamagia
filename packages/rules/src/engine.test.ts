@@ -159,6 +159,10 @@ const CREATURE_COMBAT_DRAWER = () => make({
   name: "Combat Chronicler", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "Whenever a creature deals combat damage to a player, draw a card."
 });
+const CREATURE_CAST_DRAWER = () => make({
+  name: "Creature Scholar", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
+  oracle_text: "Whenever you cast a creature spell, draw a card."
+});
 const UPKEEP_SAGE = () => make({
   name: "Dawn Sage", type_line: "Creature — Human Wizard", mana_cost: "{2}{W}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "At the beginning of your upkeep, you gain 2 life."
@@ -979,6 +983,14 @@ describe("triggered abilities", () => {
     expect(profileOf(RAIDER()).triggers[0]).toMatchObject({ event: "attacks", subject: "self", targetKind: "any" });
     expect(profileOf(UPKEEP_SAGE()).triggers[0]).toMatchObject({ event: "upkeep", subject: "you" });
     expect(profileOf(CREATURE_COMBAT_DRAWER()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", effect: { kind: "draw", amount: 1 } });
+    expect(profileOf(CREATURE_CAST_DRAWER()).triggers[0]).toMatchObject({ event: "spell-cast", subject: "you", spellType: "creature" });
+  });
+
+  it("fires creature-spell triggers only for creature spells", () => {
+    let game = readyToCast([BEAR()], [FOREST(), FOREST(), CREATURE_CAST_DRAWER()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.stack.at(-1)?.trigger?.definition.spellType).toBe("creature");
   });
 
   it("raises life-gained once and resolves a source counter trigger", () => {
