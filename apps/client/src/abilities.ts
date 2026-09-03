@@ -197,6 +197,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     rule: "Se dispara al comenzar el paso final indicado.",
     enforced: "Se encola antes de que se abra la prioridad de ese paso.",
     path: "M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zm-4 9h8"
+  },
+  "life-gained": {
+    label: "Al ganar vida",
+    rule: "Se dispara cuando el jugador indicado gana vida.",
+    enforced: "Se dispara una vez por cada evento de ganancia de vida.",
+    path: "M12 21S4 16.5 4 10a4 4 0 0 1 8-2 4 4 0 0 1 8 2c0 6.5-8 11-8 11z"
   }
 };
 

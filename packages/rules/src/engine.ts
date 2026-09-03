@@ -151,7 +151,8 @@ export type GameEvent =
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId };
+  | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
+  | { readonly kind: "life-gained"; readonly seat: SeatId; readonly amount: number };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
 export interface BlockerDeclaration { readonly instanceId: string; readonly attackerId: string }
@@ -852,6 +853,10 @@ function triggerMatches(
     return false;
   }
 
+  if (event.kind === "life-gained") {
+    return subject === "you" && event.seat === watcher.controller;
+  }
+
   const object = eventObject(event);
   if (!object) return false;
   const isSelf = object.permanentId === watcher.instanceId;
@@ -882,6 +887,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "deals-combat-damage-to-player": return `${object!.card.name} hace daño de combate a ${playerAt(state, event.victim).name}`;
     case "becomes-tapped": return `${object!.card.name} se gira`;
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
+    case "life-gained": return `${playerAt(state, event.seat).name} gana ${event.amount} vidas`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -1030,7 +1036,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "gain-life": {
       const amount = effectAmount(effect.amount, object);
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
-      return logged(next, controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
+      return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
     case "each-opponent-loses-life": {
       let next = state;
@@ -1206,6 +1212,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
+    }
+    case "add-counter-source": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const source = findPermanent(state, sourceId);
+      if (!source) return state;
+      return withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } }
+          : permanent)
+      }));
     }
     case "level-up": {
       const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
@@ -1651,6 +1668,7 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
   }
   for (const gain of batch.lifelink) {
     next = withPlayer(next, gain.seat, (player) => ({ ...player, life: player.life + gain.amount }));
+    next = raiseEvent(next, { kind: "life-gained", seat: gain.seat, amount: gain.amount });
     next = logged(next, gain.seat, `${playerAt(next, gain.seat).name} gana ${gain.amount} vidas por vínculo vital.`);
   }
   return next;

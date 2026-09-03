@@ -500,3 +500,16 @@ movement, and completion of the choice.
 
 Validation: `npm run check` PASS; targeted engine tests PASS (155 passed, 6
 skipped). Full `npm test` should be rerun by the integrator after merge.
+
+### Cooperative C13 cluster: life-gained triggers
+
+The branch adds a reusable `life-gained` event raised by explicit life-gain
+effects and lifelink. It recognizes `Whenever you gain life` and resolves a
+source counter effect such as `put a +1/+1 counter on ~`; the source is tracked
+by permanent instance ID, not display name. This follows CR 603.2, 119.3 and
+122.1. Scenario coverage verifies one event, stack ordering, and the counter
+after resolution. The scope excludes replacement/prevention effects, batches
+of simultaneous gains, and printed triggers with additional costs.
+
+Validation: targeted engine tests PASS (156 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
