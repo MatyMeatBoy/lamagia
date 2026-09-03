@@ -8,7 +8,7 @@
 
 import { cardProfile, type TriggerEvent } from "./characteristics.js";
 import {
-  STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSources,
+  STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSourcePotential,
   type GameCard, type GameState, type LegalAction, type LogEntry, type Permanent, type SeatId, type Target, type TurnStep
 } from "./engine.js";
 import { emptyPool, type ManaPool } from "./mana.js";
@@ -48,6 +48,7 @@ export interface PermanentView extends CardView {
   readonly tapped: boolean;
   readonly summoningSick: boolean;
   readonly damage: number;
+  readonly counters: Readonly<Record<string, number>>;
   readonly isCommander: boolean;
   readonly attacking: SeatId | null;
   readonly blocking: string | null;
@@ -184,6 +185,7 @@ function permanentView(state: GameState, permanent: Permanent, available: readon
     tapped: permanent.tapped,
     summoningSick: permanent.summoningSick,
     damage: permanent.damage,
+    counters: permanent.counters,
     isCommander: permanent.isCommander,
     attacking: attacking ? attacking.defender : null,
     blocking: blocking ? blocking.attackerId : null,
@@ -225,7 +227,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     commanderDamage: player.commanderDamage,
     landsPlayedThisTurn: player.landsPlayedThisTurn,
     manaPool: player.seat === viewerSeat ? player.manaPool : emptyPool(),
-    availableMana: player.seat === viewerSeat ? manaSources(player).reduce((total, source) => total + source.amount, 0) : 0
+    availableMana: player.seat === viewerSeat ? manaSourcePotential(player) : 0
   }));
 
   const mustDeclareAttackers = state.step === "declare-attackers" && !state.combat.attackersDeclared;

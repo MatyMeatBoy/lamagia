@@ -54,6 +54,8 @@ const AZORIUS_CHANCERY = () => make({ name: "Azorius Chancery", type_line: "Land
 const AZORIUS_SPELL = () => make({ name: "Azorius Lesson", type_line: "Sorcery", mana_cost: "{W}{U}", cmc: 2, oracle_text: "Draw a card." });
 const AZORIUS_RELIC = () => make({ name: "Azorius Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{T}: Add {W}{U}.", produced_mana: ["W", "U"] });
 const SOL_RING = () => make({ name: "Sol Ring", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "{T}: Add {C}{C}.", produced_mana: ["C"] });
+const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
+const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
 const ELVES = () => make({ name: "Llanowar Elves", type_line: "Creature — Elf Druid", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1", oracle_text: "{T}: Add {G}.", produced_mana: ["G"] });
 const DELTA = () => make({
   name: "Polluted Delta", type_line: "Land",
@@ -123,6 +125,7 @@ function putOnBattlefield(state: GameState, seat: SeatId, cards: CardData[], opt
     summoningSick: options.sick ?? false,
     damage: 0,
     deathtouched: false,
+    counters: Object.fromEntries(profileOf(card).entersWithCounters.map((counter) => [counter.kind, counter.amount])),
     isCommander: false
   }));
   return stage(state, seat, (player) => ({ battlefield: [...player.battlefield, ...permanents] }));
@@ -839,6 +842,25 @@ describe("activated abilities", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Island")).toBe(false);
   });
 
+  it("spends entry counters for Vivid mana, including automatic coloured payment", () => {
+    const profile = profileOf(VIVID_CREEK());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.entersTapped).toEqual({ kind: "tapped" });
+    expect(profile.entersWithCounters).toEqual([{ kind: "charge", amount: 2 }]);
+    expect(profile.manaAbilities[1]).toMatchObject({ produces: ["W", "U", "B", "R", "G"], removeCounters: [{ kind: "charge", amount: 1 }] });
+
+    let game = readyOnBoard([VIVID_CREEK()], { hold: true });
+    game = stage(game, 0, () => ({ hand: toHand(0, [VIVID_SPELL()], "vivid") }));
+    const vivid = permanentNamed(game, 0, "Vivid Creek")!;
+    expect(vivid.counters).toMatchObject({ charge: 2 });
+
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "vivid-0");
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, cast!.action);
+    expect(permanentNamed(game, 0, "Vivid Creek")?.counters.charge).toBe(1);
+    expect(permanentNamed(game, 0, "Vivid Creek")?.tapped).toBe(true);
+  });
+
   it("projects every legal fetch target and the full library only to the searching player", () => {
     let game = readyOnBoard([DELTA()], { library: [ISLAND(), WATERY_GRAVE(), MOUNTAIN()] });
     const delta = permanentNamed(game, 0, "Polluted Delta")!;
@@ -955,7 +977,7 @@ describe("commander rules", () => {
       commandZone: [],
       battlefield: [{
         instance_id: commanderCard.instance_id, card: commanderCard, controller: 0,
-        tapped: false, summoningSick: false, damage: 99, deathtouched: false, isCommander: true
+        tapped: false, summoningSick: false, damage: 99, deathtouched: false, counters: {}, isCommander: true
       }]
     }));
     game = applyAction(game, pendingSeat(game)!, { type: "pass" });
@@ -1104,7 +1126,7 @@ describe("combat", () => {
       commandZone: [],
       battlefield: [{
         instance_id: commanderCard.instance_id, card: commanderCard, controller: 0,
-        tapped: false, summoningSick: false, damage: 0, deathtouched: false, isCommander: true
+        tapped: false, summoningSick: false, damage: 0, deathtouched: false, counters: {}, isCommander: true
       }]
     }));
     game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);

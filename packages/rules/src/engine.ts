@@ -13,7 +13,7 @@
  */
 
 import {
-  cardProfile, isCreature, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type EnforcedKeyword, type ManaAbility, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
+  cardProfile, isCreature, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, payCost, poolTotal, type ManaCost, type ManaPool, type ManaType
@@ -58,6 +58,8 @@ export interface Permanent {
   readonly summoningSick: boolean;
   readonly damage: number;
   readonly deathtouched: boolean;
+  /** Public counters on this permanent, by normalized counter name. */
+  readonly counters: Readonly<Record<string, number>>;
   readonly isCommander: boolean;
 }
 
@@ -323,19 +325,22 @@ function keywordOf(permanent: Permanent, keyword: EnforcedKeyword): boolean {
 
 export interface ManaSource {
   readonly permanentId: string;
+  readonly abilityIndex: number;
   readonly name: string;
   readonly options: readonly ManaType[];
   readonly amount: number;
   readonly fixedProduces?: readonly ManaType[];
   readonly lifeCost: number;
   readonly requiresTap: boolean;
+  readonly removeCounters?: readonly CounterCost[];
 }
 
 /** Rule 302.6 applies to a creature's own tap ability, including Llanowar Elves. */
 function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: ManaAbility): boolean {
   if (ability.requiresTap && permanent.tapped) return false;
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return false;
-  return ability.lifeCost < player.life;
+  if (ability.lifeCost >= player.life) return false;
+  return (ability.removeCounters ?? []).every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount);
 }
 
 /** Untapped permanents this player can currently tap for mana. */
@@ -347,31 +352,46 @@ export function manaSources(player: PlayerState): ManaSource[] {
       if (!canUseManaAbility(player, permanent, ability)) continue;
       sources.push({
         permanentId: permanent.instance_id,
+        abilityIndex: ability.index,
         name: permanent.card.name,
         options: ability.produces,
         amount: ability.amount,
         ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
+        ...(ability.removeCounters ? { removeCounters: ability.removeCounters } : {}),
         lifeCost: ability.lifeCost,
         requiresTap: ability.requiresTap
       });
-      break; // One mana ability per permanent keeps automatic tapping unambiguous.
     }
   }
   return sources;
 }
 
+/** At most one mana ability on a permanent can be used for one payment. */
+function manaSourceCapacity(sources: readonly ManaSource[]): number {
+  const byPermanent = new Map<string, number>();
+  for (const source of sources) {
+    byPermanent.set(source.permanentId, Math.max(byPermanent.get(source.permanentId) ?? 0, source.amount));
+  }
+  return [...byPermanent.values()].reduce((total, amount) => total + amount, 0);
+}
+
+/** Maximum mana currently available from untapped sources, excluding the pool. */
+export function manaSourcePotential(player: PlayerState): number {
+  return manaSourceCapacity(manaSources(player));
+}
+
 export interface ManaPlan {
-  readonly taps: readonly { readonly permanentId: string; readonly type: ManaType; readonly amount: number; readonly lifeCost: number }[];
+  readonly taps: readonly { readonly permanentId: string; readonly abilityIndex: number; readonly type: ManaType; readonly amount: number; readonly lifeCost: number; readonly requiresTap: boolean; readonly removeCounters?: readonly CounterCost[] }[];
   readonly pool: ManaPool;
   readonly lifeCost: number;
 }
 
 /** Upper bound on mana available, used for quick "can I afford anything?" filtering. */
 export function potentialMana(player: PlayerState): number {
-  return manaSources(player).reduce((total, source) => total + source.amount, 0) + poolTotal(player.manaPool);
+  return manaSourcePotential(player) + poolTotal(player.manaPool);
 }
 
-type Tap = { readonly permanentId: string; readonly type: ManaType; readonly amount: number; readonly lifeCost: number };
+type Tap = ManaPlan["taps"][number];
 
 /** Colored requirements a cost imposes; each entry lists the types that satisfy it. */
 function coloredRequirements(cost: ManaCost): ManaType[][] {
@@ -387,7 +407,20 @@ function coloredRequirements(cost: ManaCost): ManaType[][] {
 }
 
 function sourceSignature(source: ManaSource): string {
-  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${source.lifeCost}`;
+  const counters = (source.removeCounters ?? []).map((cost) => `${cost.amount}:${cost.kind}`).join(",");
+  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${source.lifeCost}|${counters}`;
+}
+
+function sourceTap(source: ManaSource, type: ManaType): Tap {
+  return {
+    permanentId: source.permanentId,
+    abilityIndex: source.abilityIndex,
+    type,
+    amount: source.amount,
+    lifeCost: source.lifeCost,
+    requiresTap: source.requiresTap,
+    ...(source.removeCounters ? { removeCounters: source.removeCounters } : {})
+  };
 }
 
 function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType): ManaPool {
@@ -416,7 +449,7 @@ export function planManaPayment(
   const additionalGeneric = options.additionalGeneric ?? 0;
   const variableCount = cost.symbols.filter((symbol) => symbol.kind === "variable").length;
   const needed = cost.manaValue + variableValue * variableCount + additionalGeneric;
-  if (poolTotal(startingPool) + sources.reduce((total, source) => total + source.amount, 0) < needed) return null;
+  if (poolTotal(startingPool) + manaSourceCapacity(sources) < needed) return null;
 
   const payOptions = (lifeSpent: number) => ({ variableValue, additionalGeneric, availableLife: player.life - lifeSpent });
   const ordered = [...sources].sort((left, right) =>
@@ -446,7 +479,7 @@ export function planManaPayment(
       // Prefer a colour the cost still asks for; otherwise any option works for generic.
       const type = source.options.find((candidate) => wanted.has(candidate)) ?? source.options[0]!;
       currentPool = addSourceOutput(currentPool, source, type);
-      currentTaps = [...currentTaps, { permanentId: source.permanentId, type, amount: source.amount, lifeCost: source.lifeCost }];
+      currentTaps = [...currentTaps, sourceTap(source, type)];
       currentLife += source.lifeCost;
     }
   };
@@ -484,7 +517,7 @@ export function planManaPayment(
           addSourceOutput(produced, source, type),
           { ...reserved, [type]: reserved[type] + 1 },
           new Set([...used, source.permanentId]),
-          [...taps, { permanentId: source.permanentId, type, amount: source.amount, lifeCost: source.lifeCost }],
+          [...taps, sourceTap(source, type)],
           lifeSpent + source.lifeCost
         );
         if (result) return result;
@@ -497,11 +530,17 @@ export function planManaPayment(
 }
 
 function applyManaPlan(state: GameState, seat: SeatId, plan: ManaPlan): GameState {
-  const tapped = new Set(plan.taps.map((tap) => tap.permanentId));
+  const tapped = new Set(plan.taps.filter((tap) => tap.requiresTap).map((tap) => tap.permanentId));
   const next = withPlayer(state, seat, (player) => ({
     ...player,
     life: player.life - plan.lifeCost,
-    battlefield: player.battlefield.map((permanent) => (tapped.has(permanent.instance_id) ? { ...permanent, tapped: true } : permanent)),
+    battlefield: player.battlefield.map((permanent) => {
+      const tap = plan.taps.find((candidate) => candidate.permanentId === permanent.instance_id);
+      if (!tap) return permanent;
+      const counters = { ...permanent.counters };
+      for (const cost of tap.removeCounters ?? []) counters[cost.kind] = (counters[cost.kind] ?? 0) - cost.amount;
+      return { ...permanent, ...(tap.requiresTap ? { tapped: true } : {}), counters };
+    }),
     manaPool: plan.pool
   }));
   return raiseTapEvents(next, state, tapped);
@@ -690,6 +729,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     summoningSick: true,
     damage: 0,
     deathtouched: false,
+    counters: Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
     isCommander
   };
   let next = withPlayer(state, seat, (player) => ({
@@ -1728,10 +1768,14 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     manaPool: ability.fixedProduces
       ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
       : addMana(current.manaPool, action.mana, ability.amount),
-    battlefield: current.battlefield.map((permanent) =>
-      permanent.instance_id === source.instance_id && ability.requiresTap ? { ...permanent, tapped: true } : permanent)
+    battlefield: current.battlefield.map((permanent) => {
+      if (permanent.instance_id !== source.instance_id) return permanent;
+      const counters = { ...permanent.counters };
+      for (const cost of ability.removeCounters ?? []) counters[cost.kind] = (counters[cost.kind] ?? 0) - cost.amount;
+      return { ...permanent, ...(ability.requiresTap ? { tapped: true } : {}), counters };
+    })
   }));
-  const tapped = raiseTapEvents(next, state, [source.instance_id]);
+  const tapped = ability.requiresTap ? raiseTapEvents(next, state, [source.instance_id]) : next;
   const output = ability.fixedProduces ? ability.fixedProduces.map((mana) => `{${mana}}`).join("") : `${ability.amount > 1 ? ability.amount : ""}{${action.mana}}`;
   return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
 }

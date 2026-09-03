@@ -55,7 +55,15 @@ export interface ManaAbility {
   readonly requiresTap: boolean;
   /** Life the ability costs (pain and filter lands). */
   readonly lifeCost: number;
+  /** Counters removed from the source as an activation cost. */
+  readonly removeCounters?: readonly CounterCost[];
   readonly text: string;
+}
+
+/** A counter cost or entry quantity. Counter names stay normalized and public. */
+export interface CounterCost {
+  readonly kind: string;
+  readonly amount: number;
 }
 
 /**
@@ -204,6 +212,8 @@ export interface CardProfile {
   readonly triggers: readonly TriggerDefinition[];
   readonly targetKind: TargetKind;
   readonly entersTapped: EntersTappedRule;
+  /** Counters with which this permanent enters the battlefield. */
+  readonly entersWithCounters: readonly CounterCost[];
   readonly isPermanent: boolean;
   readonly castableFromHand: boolean;
   /** True when every printed instruction is covered by the engine. */
@@ -348,10 +358,17 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const requiresTap = /\{T\}/.test(costText);
     const lifeMatch = /pay\s+(\d+)\s+life/i.exec(costText);
     const lifeCost = lifeMatch ? Number(lifeMatch[1]) : 0;
-    // Costs beyond tapping and paying life (mana, sacrifice, discard) are not modeled.
+    const counterMatch = /remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+([+\-\w ]+?)\s+counters?\s+from\s+~/i.exec(costText);
+    const counterAmount = counterMatch ? toNumber(counterMatch[0].match(/remove\s+(\w+)/i)?.[1]) : null;
+    const removeCounters = counterMatch && counterAmount
+      ? [{ kind: counterMatch[1]!.trim().replace(/\s+/g, " ").toLowerCase(), amount: counterAmount }]
+      : [];
+    // Costs beyond tapping, life, and counters on the source (mana, sacrifice,
+    // discard) are not modeled.
     const leftovers = costText
       .replace(/\{T\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
+      .replace(/remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w ]+?\s+counters?\s+from\s+~/gi, "")
       .replace(/[,\s]/g, "");
     if (leftovers.length) continue;
     // Restrictions follow the first sentence in Oracle text. Parse the
@@ -363,6 +380,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
+      ...(removeCounters.length ? { removeCounters } : {}),
       requiresTap, lifeCost, text: line.trim()
     });
   }
@@ -390,7 +408,7 @@ function parseCyclingCost(text: string): ManaCost | null {
  * sacrificing its own source, plus an effect the engine can resolve.
  *
  * Everything else — untapping ({Q}), loyalty, energy, exiling or sacrificing
- * other permanents, discarding, removing counters — leaves the ability out of
+ * other permanents or discarding — leaves the ability out of
  * the profile rather than letting the table activate a cost it cannot pay.
  */
 function parseActivatedAbility(line: string, index: number): ActivatedAbility | null {
@@ -446,7 +464,7 @@ function parseEntersTapped(text: string, typeLine: string): EntersTappedRule {
       .filter(Boolean);
     if (subtypes.length) return { kind: "unless-reveal-card", subtypes };
   }
-  if (!/enters\s+tapped/i.test(text)) return { kind: "untapped" };
+  if (!/enters(?:\s+the\s+battlefield)?\s+tapped/i.test(text)) return { kind: "untapped" };
   const fewLands = /unless\s+you\s+control\s+(\w+)\s+or\s+fewer\s+other\s+lands/i.exec(text);
   if (fewLands) {
     const max = toNumber(fewLands[1]);
@@ -471,6 +489,17 @@ interface RecognizedText {
   /** Exact normalized clauses the closed engine intentionally does not execute. */
   readonly unimplementedText: readonly string[];
   readonly covered: boolean;
+}
+
+/** Handles the closed “enters ... with N <kind> counters” Oracle template. */
+function parseEntersWithCounters(text: string): CounterCost[] {
+  const counters: CounterCost[] = [];
+  for (const match of text.matchAll(/(?:~|this [^.]+)\s+enters(?:\s+the\s+battlefield)?(?:\s+tapped)?\s+with\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+([+\-\w ]+?)\s+counters?\s+on\s+it/gi)) {
+    const amount = toNumber(match[1]);
+    const kind = match[2]?.trim().replace(/\s+/g, " ").toLowerCase();
+    if (amount && kind) counters.push({ kind, amount });
+  }
+  return counters;
 }
 
 const SENTENCE_SPLIT = /(?<=\.)\s+(?=[A-Z~])/;
@@ -684,7 +713,7 @@ function recognizeText(text: string): RecognizedText {
   for (const line of body) {
     // Replacement text for entering tapped is executed by `parseEntersTapped`
     // before priority opens; it is not an unresolved spell effect.
-    if (/^~\s+enters\s+tapped(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
+    if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
@@ -783,6 +812,7 @@ export function cardProfile(card: CardData): CardProfile {
     triggers: recognized.triggers,
     targetKind: recognized.targetKind,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
+    entersWithCounters: isPermanent ? parseEntersWithCounters(text) : [],
     isPermanent,
     // Lands are played, not cast; everything else needs a payable printed cost.
     castableFromHand: !types.includes("Land") && cost !== null && cost.symbols.length > 0,

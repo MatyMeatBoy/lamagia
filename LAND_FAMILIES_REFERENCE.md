@@ -39,7 +39,8 @@ atajos de diseño, no tipos de carta ni reglas por sí mismos.
 | Check, bond, tainted y verge | condición por permanentes/tierras para producir maná | Pendiente | Predicados genéricos sobre permanentes |
 | Pain lands | pagar vida al producir maná coloreado | Parcial | Coste de vida en planificación automática |
 | Filter lands | pagar/filtrar maná para producir combinaciones | Pendiente | Costes de maná dentro de habilidades de maná |
-| Scry / storage / depletion / Vivid | contadores y retirada/adición de contadores | Pendiente | Contadores genéricos en permanentes y costes |
+| Vivid | entra con contadores de carga; retirarlos para cualquier color | Soportado | — |
+| Storage / depletion | contadores, acumulación y/o retirada para maná | Parcial | Añadir/mover contadores y coste de maná en habilidad |
 | Manlands | activarse y volverse criatura | Pendiente | Efectos continuos de tipo/P/T/capas |
 | Striplands | destruir tierra objetivo | Parcial: objetivo y destrucción; falta revisar cada texto | Restricciones de objetivo y costes |
 | Pathways y MDFC | elegir cara al jugar | Pendiente | Selección de cara y características por zona |
