@@ -57,6 +57,7 @@ const X_OPPONENT_LOSS = () => make({ name: "Scalable Burden", type_line: "Sorcer
 const X_DRAW = () => make({ name: "Scalable Insight", type_line: "Sorcery", mana_cost: "{X}{U}", cmc: 1, oracle_text: "Draw X cards." });
 const GRAVEYARD_RETURN = () => make({ name: "Unearth Memory", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Return target creature card from your graveyard to your hand." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
+const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on top of your library." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
@@ -530,6 +531,19 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[0]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("puts the chosen graveyard card on top of its owner's library", () => {
+    const profile = profileOf(GRAVEYARD_TOP());
+    expect(profile).toMatchObject({ targetKind: "card-in-your-graveyard", effects: [{ kind: "return-target-card-to-library-top" }] });
+    let game = readyToCast([GRAVEYARD_TOP()], [FOREST()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, graveyard: toHand(0, [BEAR()], "top-yard"), library: toHand(0, [ISLAND()], "top-library") }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "graveyard-card", seat: 0, instanceId: "top-yard-0" }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.library[0]!.name).toBe("Grizzly Bears");
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
   });
 
   it("preserves the tapped instruction on created tokens", () => {

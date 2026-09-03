@@ -693,6 +693,18 @@ and opponent-specific draw decisions.
 Validation: targeted engine tests PASS (171 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: graveyard to library top
+
+The branch adds `Put target card from your graveyard on top of your library`
+using the stable graveyard-card target and existing zone projection. Resolution
+removes exactly that card and prepends it to its owner's library. This follows
+CR 400.1, 401.4 and 601.2c. Scenario coverage verifies target metadata and
+zone/order transition. The scope excludes shuffle effects, opponent graveyards
+and replacement effects.
+
+Validation: targeted engine tests PASS (172 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals

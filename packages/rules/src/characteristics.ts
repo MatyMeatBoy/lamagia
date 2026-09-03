@@ -163,6 +163,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
   | { readonly kind: "exile-target-card-from-graveyard" }
+  | { readonly kind: "return-target-card-to-library-top" }
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures" }
@@ -975,6 +976,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target creature card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "creature-card-in-your-graveyard" };
   if (/^Return target card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
   if (/^Exile target card from your graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
+  if (/^Put target card from your graveyard on top of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-top" }, target: "card-in-your-graveyard" };
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
