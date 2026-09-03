@@ -4,6 +4,7 @@ import unittest
 
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, classify, cluster_text, effective_worker_count, mana_ability_hint, operand_hints, primitive_cluster_inventory, search_criterion_hint
 from export_set_coverage import product_group
+from plan_primitive_workers import plan_workers
 
 
 class OracleCompilerTests(unittest.TestCase):
@@ -46,6 +47,7 @@ class OracleCompilerTests(unittest.TestCase):
 
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
+        self.assertEqual(cluster_text("Choose one �"), "choose <n> <mode>")
 
     def test_treats_supported_keyword_lines_as_known_primitives(self) -> None:
         result = classify("Flying, vigilance")
@@ -102,6 +104,16 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(product_group("draft_innovation", "Jumpstart 2022", "2022-12-02"), "jumpstart")
         self.assertEqual(product_group("duel_deck", "Duel Decks: Elves vs. Goblins", "2007-11-16"), "duel-decks")
         self.assertEqual(product_group("promo", "Friday Night Magic 2013", "2013-01-01"), "promos")
+
+    def test_plans_disjoint_worker_clusters(self) -> None:
+        clusters = [
+            {"cluster": "a", "card_count": 4, "commit_batches": 1, "examples": ["A"], "cards": []},
+            {"cluster": "b", "card_count": 3, "commit_batches": 1, "examples": ["B"], "cards": []},
+            {"cluster": "c", "card_count": 2, "commit_batches": 1, "examples": ["C"], "cards": []},
+        ]
+        plan = plan_workers(clusters, worker_count=2)
+        self.assertEqual([entry["cluster"] for entry in plan], ["a", "b"])
+        self.assertEqual(plan_workers(clusters, worker_count=2, offset=2)[0]["cluster"], "c")
 
 
 if __name__ == "__main__":

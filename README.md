@@ -27,7 +27,8 @@ one entry from `data/rules/oracle-clusters.json`; it already carries stable
 run `npm run rules:oracle:benchmark`.
 
 For the current C13 sprint, use `npm run rules:oracle:c13` to generate the same
-queue from only the 356 cards in that set.
+queue from only the 356 cards in that set, then
+`npm run rules:oracle:plan:c13` to assign five disjoint primitive clusters.
 
 Coverage map: [docs/SET_COVERAGE.md](docs/SET_COVERAGE.md) and the web
 “Implementation by set” view. The project is being renamed from `ProsshTCG`

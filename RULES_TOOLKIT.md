@@ -32,6 +32,10 @@ Para avanzar C13 sin recompilar todo el histórico usa
 las 356 cartas del set; las primitivas aprobadas siguen siendo globales y no se
 duplican por edición.
 
+Después ejecuta `npm run rules:oracle:plan:c13`: asigna los cinco clusters más
+grandes a cinco workers disjuntos. Usa `--offset 5` para la siguiente tanda;
+cada worker conserva sus commits de hasta 20 cartas.
+
 La clasificación puede procesar muchas cartas/primitivas independientes en
 lotes con `--workers 8 --memory-budget-gb 2 --batch-size 256` (se puede bajar a
 `--workers 1 --backend threads` para depurar). El backend por defecto usa

@@ -173,6 +173,10 @@ def operand_hints(clause: str, target_text: str | None, search_criterion: dict[s
 def cluster_text(clause: str) -> str:
     """Return a bounded, name-independent-ish shape for an open clause."""
     normalized = re.sub(r"(?:\{[^}]+\})+", "{cost}", clause.lower())
+    # Some local catalog rows contain a replacement character where Oracle
+    # uses an em dash (typically after a lossy import). Keep the queue key
+    # stable without changing the raw clause shown to a reviewer.
+    normalized = normalized.replace("\ufffd", "<mode>").replace("—", "-").replace("–", "-")
     normalized = re.sub(r"\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b", "<n>", normalized)
     normalized = re.sub(r"\s+", " ", normalized).strip().rstrip(".")
     return normalized[:160]
