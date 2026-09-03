@@ -80,6 +80,7 @@ class OracleCompilerTests(unittest.TestCase):
         result = primitive_cluster_inventory(cards)
         self.assertEqual([item["cluster"] for item in result], ["search|subtype:Equipment", "destroy|target-types:Artifact"])
         self.assertEqual(result[0]["commit_batches"], 1)
+        self.assertEqual(result[0]["examples"], [])
         self.assertEqual([item["name"] for item in result[0]["cards"]], ["Alpha", "Beta"])
         self.assertEqual(DEFAULT_COMMIT_CARD_LIMIT, 20)
         self.assertEqual(

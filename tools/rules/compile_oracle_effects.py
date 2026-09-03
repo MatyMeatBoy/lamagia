@@ -254,7 +254,7 @@ def compile_card(row: sqlite3.Row) -> dict[str, Any]:
     }
 
 
-def review_markdown(cards: list[dict[str, Any]]) -> str:
+def review_markdown(cards: list[dict[str, Any]], inventory: list[dict[str, Any]] | None = None) -> str:
     pending = [card for card in cards if card["status"] == "needs-review"]
     lines = [
         "# Oracle effect review queue",
@@ -266,15 +266,14 @@ def review_markdown(cards: list[dict[str, Any]]) -> str:
         f"Pending cards: **{len(pending):,}** / {len(cards):,}",
         "",
     ]
-    clusters: dict[str, set[str]] = {}
-    for card in pending:
-        for cluster in card.get("primitive_clusters", []):
-            clusters.setdefault(cluster, set()).add(card["name"])
+    clusters = inventory if inventory is not None else primitive_cluster_inventory(cards)
     if clusters:
         lines.extend(["## Reusable primitive clusters", ""])
-        for cluster, names in sorted(clusters.items(), key=lambda item: (-len(item[1]), item[0])):
-            examples = ", ".join(sorted(names, key=str.casefold)[:5])
-            lines.append(f"- **{len(names):,} cards** — `{cluster}` — {examples}")
+        for entry in clusters:
+            names = ", ".join(card["name"] for card in entry["cards"][:5])
+            lines.append(f"- **{entry['card_count']:,} cards** — `{entry['cluster']}` — {names}")
+            for example in entry.get("examples", []):
+                lines.append(f"  - Example: `{example}`")
         lines.append("")
     for card in pending:
         lines.extend([f"## {card['name']} ({card['scryfall_id']})", "", f"```text\n{card['oracle_text']}\n```", ""])
@@ -298,22 +297,27 @@ def primitive_cluster_inventory(
     """
     if commit_card_limit <= 0:
         raise ValueError("El límite de cartas por commit debe ser positivo.")
-    clusters: dict[str, dict[str, dict[str, str]]] = {}
+    clusters: dict[str, dict[str, Any]] = {}
     for card in cards:
         for cluster in card.get("primitive_clusters", []):
-            clusters.setdefault(cluster, {})[str(card["oracle_id"])] = {
+            entry = clusters.setdefault(cluster, {"cards": {}, "examples": set()})
+            entry["cards"][str(card["oracle_id"])] = {
                 "oracle_id": str(card["oracle_id"]),
                 "scryfall_id": str(card["scryfall_id"]),
                 "name": str(card["name"]),
             }
+            for clause in card.get("clauses", []):
+                if not clause.get("candidate") and clause.get("primitive_cluster") == cluster:
+                    entry["examples"].add(str(clause["text"]))
     inventory = [
         {
             "cluster": cluster,
-            "card_count": len(entries),
-            "commit_batches": ceil(len(entries) / commit_card_limit),
-            "cards": sorted(entries.values(), key=lambda item: (item["name"].casefold(), item["oracle_id"])),
+            "card_count": len(entry["cards"]),
+            "commit_batches": ceil(len(entry["cards"]) / commit_card_limit),
+            "examples": sorted(entry["examples"], key=str.casefold)[:3],
+            "cards": sorted(entry["cards"].values(), key=lambda item: (item["name"].casefold(), item["oracle_id"])),
         }
-        for cluster, entries in clusters.items()
+        for cluster, entry in clusters.items()
     ]
     return sorted(inventory, key=lambda item: (-item["card_count"], item["cluster"]))
 
@@ -412,7 +416,7 @@ def main() -> None:
     args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.prompt_output:
         args.prompt_output.parent.mkdir(parents=True, exist_ok=True)
-        args.prompt_output.write_text(review_markdown(cards), encoding="utf-8")
+        args.prompt_output.write_text(review_markdown(cards, clusters), encoding="utf-8")
     if args.cluster_output:
         args.cluster_output.parent.mkdir(parents=True, exist_ok=True)
         args.cluster_output.write_text(json.dumps({
