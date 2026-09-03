@@ -74,6 +74,15 @@ export interface ActivatedAbility {
   readonly text: string;
 }
 
+export interface TokenDefinition {
+  readonly name: string;
+  readonly typeLine: string;
+  readonly power: number | null;
+  readonly toughness: number | null;
+  readonly colors: readonly string[];
+  readonly keywords: readonly EnforcedKeyword[];
+}
+
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
   | { readonly kind: "draw"; readonly amount: number }
@@ -87,6 +96,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "destroy-all-creatures" }
   | { readonly kind: "counter-target-spell" }
+  | { readonly kind: "create-token"; readonly amount: number | "X"; readonly token: TokenDefinition }
   | {
       readonly kind: "search-library";
       readonly types: readonly CardType[];
@@ -478,6 +488,31 @@ function parseLibrarySearch(text: string): SpellEffect | null {
   };
 }
 
+function parseCreateToken(text: string): SpellEffect | null {
+  const match = /^Create\s+(?:(a|an|one|two|three|four|five|six|seven|eight|nine|ten|thirteen|X|\d+)\s+)?(?:(\d+)\/(\d+)\s+)?(.+?)\s+token(?:s)?(?:\s+named\s+([^,]+))?(?:\s+with\s+(.+))?$/i.exec(text.trim().replace(/\.$/, ""));
+  if (!match) return null;
+  const amount = /^X$/i.test(match[1] ?? "") ? "X" : toNumber(match[1]) ?? 1;
+  const inlineStats = /^(\d+)\/(\d+)\s+/.exec(match[4]!.trim().replace(/\btapped\s+/i, ""));
+  const power = match[2] ? Number(match[2]) : inlineStats ? Number(inlineStats[1]) : null;
+  const toughness = match[3] ? Number(match[3]) : inlineStats ? Number(inlineStats[2]) : null;
+  const descriptor = match[4]!.trim().replace(/\btapped\s+/i, "").replace(/^\d+\/\d+\s+/, "");
+  const words = descriptor.split(/\s+/).filter(Boolean);
+  const colorWords: Readonly<Record<string, string>> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
+  const colors = words.filter((word) => colorWords[word.toLowerCase()]).map((word) => colorWords[word.toLowerCase()]!);
+  const artifact = /\bartifact\b/i.test(descriptor);
+  const creature = /\bcreature\b/i.test(descriptor);
+  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature)$/i.test(word)).join(" ");
+  const name = (match[5]?.trim() || (subtype || (artifact ? "Treasure" : "Token"))).replace(/\s+token$/i, "");
+  const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud/gi) ?? [])
+    .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
+  const typeLine = subtype ? `${artifact ? "Artifact " : ""}${creature ? "Creature" : "Artifact"} — ${subtype}` : `${artifact ? "Artifact" : "Creature"}`;
+  return {
+    kind: "create-token",
+    amount,
+    token: { name, typeLine, power, toughness, colors, keywords }
+  };
+}
+
 /**
  * Recognises the trigger condition of one printed line.
  *
@@ -575,6 +610,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
+  const token = parseCreateToken(text);
+  if (token) return { effect: token, target: "none" };
   const genericSearch = parseLibrarySearch(text);
   if (genericSearch) return { effect: genericSearch, target: "none" };
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library$/i.test(text)) {

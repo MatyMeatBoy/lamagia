@@ -46,6 +46,7 @@ export const STEP_LABELS: Readonly<Record<TurnStep, string>> = {
 export interface GameCard extends CardData {
   readonly instance_id: string;
   readonly owner: SeatId;
+  readonly token?: boolean;
 }
 
 export interface Permanent {
@@ -628,6 +629,12 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
     next = withPlayer(next, ownerSeat, (player) => ({ ...player, commandZone: [...player.commandZone, permanent.card] }));
     return logged(next, ownerSeat, `${permanent.card.name} vuelve a la zona de mando.`);
   }
+  if (permanent.card.token) {
+    if (zone === "graveyard" && isCreature(cardProfile(permanent.card))) {
+      next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card }, [permanent]);
+    }
+    return logged(next, permanent.controller, `${permanent.card.name} deja el campo de batalla.`);
+  }
   next = withPlayer(next, ownerSeat, (player) => ({ ...player, [zone]: [...player[zone], permanent.card] }));
   next = logged(next, permanent.controller, `${permanent.card.name} va ${zone === "graveyard" ? "al cementerio" : "al exilio"}.`);
   // "Dies" is specifically battlefield → graveyard (rule 700.4). A commander
@@ -911,6 +918,29 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
+    }
+    case "create-token": {
+      const amount = effectAmount(effect.amount, object);
+      let next = state;
+      for (let index = 0; index < amount; index += 1) {
+        const token: GameCard = {
+          scryfall_id: `token:${object.id}:${index}`,
+          instance_id: `token:${object.id}:${index}`,
+          owner: controller,
+          token: true,
+          name: effect.token.name,
+          type_line: effect.token.typeLine,
+          mana_cost: "",
+          cmc: 0,
+          oracle_text: effect.token.keywords.join(", "),
+          power: effect.token.power === null ? null : String(effect.token.power),
+          toughness: effect.token.toughness === null ? null : String(effect.token.toughness),
+          colors: effect.token.colors,
+          keywords: effect.token.keywords
+        };
+        next = putOntoBattlefield(next, controller, token, false);
+      }
+      return logged(next, controller, `${playerAt(next, controller).name} crea ${amount} ${effect.token.name}${amount === 1 ? "" : "s"}.`);
     }
     case "search-library":
       // Search is resolved through the explicit library-choice action below.

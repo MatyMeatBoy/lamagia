@@ -100,6 +100,12 @@ describe("effect recognition", () => {
     expect(profile.targetKind).toBe("none");
   });
 
+  it("recognizes a token creation effect", () => {
+    const profile = cardProfile(card({ name: "Plant Maker", type_line: "Sorcery", mana_cost: "{3}{G}", oracle_text: "Create three 0/1 green Plant creature tokens." }));
+    expect(profile.effects[0]).toMatchObject({ kind: "create-token", amount: 3, token: { name: "Plant", power: 0, toughness: 1, colors: ["G"] } });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("recognizes targeted damage and its target kind", () => {
     const profile = cardProfile(card({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", oracle_text: "Lightning Bolt deals 3 damage to any target." }));
     expect(profile.effects).toEqual([{ kind: "damage-any-target", amount: 3 }]);
