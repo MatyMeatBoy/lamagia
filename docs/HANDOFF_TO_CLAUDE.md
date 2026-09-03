@@ -637,6 +637,18 @@ opponent-wide effects and counter replacement effects.
 Validation: targeted engine tests PASS (166 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: graveyard card exile
+
+The branch adds `Exile target card from your graveyard` using the existing
+stable graveyard-card target and client picker. Resolution moves only the
+chosen card to its owner's exile zone; target loss is handled by the shared
+608.2b check. This follows CR 400.1, 406.1 and 601.2c. Scenario coverage
+verifies target metadata and the graveyard-to-exile zone transition. The scope
+excludes multi-card costs, opponent graveyards and replacement effects.
+
+Validation: targeted engine tests PASS (167 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals

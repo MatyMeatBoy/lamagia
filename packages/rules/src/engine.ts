@@ -1232,6 +1232,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
       }));
     }
+    case "exile-target-card-from-graveyard": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card) return state;
+      return withPlayer(state, target.seat, (current) => ({
+        ...current,
+        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id),
+        exile: [...current.exile, card]
+      }));
+    }
     case "untap-equipped-creature": {
       const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       const attachedId = equipment?.attachedTo;

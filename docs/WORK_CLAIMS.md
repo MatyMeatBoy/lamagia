@@ -21,6 +21,7 @@
 | `rules-combat-damage-any-creature` | `codex/c13-equipment-cluster` | Combat-damage trigger for any creature source | Ready for integrator review |
 | `rules-token-scaling` | `codex/c13-equipment-cluster` | Token creation scaled by lands controlled | Ready for integrator review |
 | `rules-subtype-counters` | `codex/c13-equipment-cluster` | Counters on all controlled creatures of a subtype | Ready for integrator review |
+| `rules-graveyard-exile` | `codex/c13-equipment-cluster` | Exile a targeted card from own graveyard | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.
