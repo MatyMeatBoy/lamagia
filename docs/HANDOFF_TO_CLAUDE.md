@@ -597,3 +597,17 @@ replacement effects that multiply tokens, and variable-count costs.
 
 Validation: targeted engine tests PASS (163 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
+
+### Cooperative C13 cluster: graveyard card return
+
+The branch adds explicit card targets for `Return target creature card from
+your graveyard to your hand` and the generic card variant. Legal targets are
+limited to the resolving player's own graveyard and filtered by card type;
+resolution moves the stable `instance_id` card to hand, and a card leaving the
+graveyard makes the spell fail its target check. This follows CR 400.1,
+601.2c and 608.2b. Scenario coverage verifies filtering, target identity and
+zone movement. The scope excludes opponent graveyards, multi-card returns and
+replacement effects.
+
+Validation: targeted engine tests PASS (164 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.

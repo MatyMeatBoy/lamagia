@@ -96,6 +96,7 @@ function pickTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "
   const hostile = all.filter((target) => {
     if (target.kind === "player") return target.seat !== seat;
     if (target.kind === "permanent") return board.find((permanent) => permanent.instance_id === target.instanceId)?.controller !== seat;
+    if (target.kind === "graveyard-card") return target.seat === seat;
     return state.stack.find((entry) => entry.id === target.stackId)?.controller !== seat;
   });
   if (!hostile.length) return [];

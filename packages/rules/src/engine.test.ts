@@ -51,6 +51,7 @@ const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Inst
 const EACH_LIFE_SPELL = () => make({ name: "Common Blessing", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Each player gains 1 life." });
 const TARGET_LOSS_SPELL = () => make({ name: "Shared Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player loses 3 life." });
 const EACH_LOSS_SPELL = () => make({ name: "Common Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Each player loses 1 life." });
+const GRAVEYARD_RETURN = () => make({ name: "Unearth Memory", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Return target creature card from your graveyard to your hand." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
@@ -491,6 +492,19 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Plant")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Plant")).toBe(false);
+  });
+
+  it("returns a targeted creature card from its controller's graveyard", () => {
+    const profile = profileOf(GRAVEYARD_RETURN());
+    expect(profile).toMatchObject({ targetKind: "creature-card-in-your-graveyard", effects: [{ kind: "return-target-card-from-graveyard" }] });
+    let game = readyToCast([GRAVEYARD_RETURN()], [SWAMP()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, graveyard: toHand(0, [BEAR()], "yard") }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "graveyard-card", seat: 0, instanceId: "yard-0" }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
   });
 
   it("preserves the tapped instruction on created tokens", () => {
