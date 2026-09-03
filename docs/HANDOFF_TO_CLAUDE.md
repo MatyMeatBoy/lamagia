@@ -717,6 +717,18 @@ on permanents other than creatures, and replacement effects.
 Validation: targeted engine tests PASS (173 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: creature-spell trigger filter
+
+The branch adds a typed `spellType: "creature"` trigger constraint for lines
+such as `Whenever you cast a creature spell`. The existing spell-cast event is
+reused, but noncreature spells no longer fire the constrained trigger. This
+follows CR 603.2 and 601.2. Scenario coverage verifies trigger metadata and
+stack placement for a creature spell. The scope excludes card-color filters,
+mana-value conditions and copied spells.
+
+Validation: targeted engine tests PASS (174 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals

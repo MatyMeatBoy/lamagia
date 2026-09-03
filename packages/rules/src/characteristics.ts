@@ -252,6 +252,7 @@ export interface TriggerDefinition {
    */
   readonly targetKind: TargetKind;
   readonly sourceText: string;
+  readonly spellType?: "creature";
 }
 
 export type TargetKind =
@@ -771,6 +772,7 @@ const TRIGGER_TEMPLATES: readonly {
   readonly event: TriggerEvent;
   readonly subject: TriggerSubject;
   readonly pattern: RegExp;
+  readonly spellType?: "creature";
 }[] = [
   { event: "life-gained", subject: "you", pattern: /^whenever\s+you\s+gain\s+life,?\s*(.+)$/i },
   { event: "life-lost", subject: "you", pattern: /^whenever\s+you\s+lose\s+life,?\s*(.+)$/i },
@@ -796,6 +798,8 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
 
   // A player is the subject.
+  { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", pattern: /^whenever\s+you\s+cast\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+spell,?\s*(.+)$/i },
 
@@ -809,13 +813,13 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i }
 ];
 
-function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string } | null {
+function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string; spellType?: "creature" } | null {
   // Landfall is a keyword ability word; its rules-bearing trigger follows the
   // dash and uses the same enters-battlefield event (CR 603.1, 603.2).
   const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
-    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim() };
+    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}) };
   }
   return null;
 }
@@ -1106,7 +1110,8 @@ function recognizeText(text: string): RecognizedText {
           effect: recognized.effect,
           optional,
           targetKind: recognized.target,
-          sourceText: line
+          sourceText: line,
+          ...(triggered.spellType ? { spellType: triggered.spellType } : {})
         });
       } else {
         unimplementedText.push(line);

@@ -28,6 +28,7 @@
 | `rules-each-opponent-draw` | `codex/c13-equipment-cluster` | Global draw for each opponent | Ready for integrator review |
 | `rules-graveyard-library-top` | `codex/c13-equipment-cluster` | Return own graveyard card to library top | Ready for integrator review |
 | `rules-all-creature-counters` | `codex/c13-equipment-cluster` | Counters on all creatures controlled by the caster | Ready for integrator review |
+| `rules-creature-spell-trigger` | `codex/c13-equipment-cluster` | Creature-spell filter for cast triggers | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.
