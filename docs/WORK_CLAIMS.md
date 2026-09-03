@@ -19,6 +19,7 @@
 | `rules-token-creation` | `codex/c13-equipment-cluster` | Token creation preserves tapped state for C13 token family | Ready for integrator review |
 | `rules-graveyard-return` | `codex/c13-equipment-cluster` | Targeted creature-card return from own graveyard to hand | Ready for integrator review |
 | `rules-combat-damage-any-creature` | `codex/c13-equipment-cluster` | Combat-damage trigger for any creature source | Ready for integrator review |
+| `rules-token-scaling` | `codex/c13-equipment-cluster` | Token creation scaled by lands controlled | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.

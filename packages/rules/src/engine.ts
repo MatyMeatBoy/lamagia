@@ -1320,7 +1320,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
     }
     case "create-token": {
-      const amount = effectAmount(effect.amount, object);
+      const amount = effect.amount === "lands-you-control"
+        ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
+        : effectAmount(effect.amount, object);
       let next = state;
       for (let index = 0; index < amount; index += 1) {
         const token: GameCard = {

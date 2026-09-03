@@ -612,6 +612,19 @@ replacement effects.
 Validation: targeted engine tests PASS (164 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: land-scaled token creation
+
+The branch adds the reusable `Create a token for each land you control`
+template. It evaluates the controller's current battlefield land count at
+resolution, including when the effect is a triggered ability, and shares the
+existing token definition compiler. This follows CR 111.2, 608.2h and 701.6.
+Scenario coverage verifies compiler metadata and the resolved count. The scope
+excludes copied tokens, token multipliers, and effects that count lands in
+other zones.
+
+Validation: targeted engine tests PASS (165 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals

@@ -84,6 +84,7 @@ const ELADAMRI = () => make({ name: "Eladamri's Call", type_line: "Instant", man
 const ENTOMB = () => make({ name: "Entomb", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Search your library for a card, put that card into your graveyard, then shuffle." });
 const PLANT_SPELL = () => make({ name: "Plant Ritual", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4, oracle_text: "Create three 0/1 green Plant creature tokens." });
 const TAPPED_ZOMBIES = () => make({ name: "Army of the Dead", type_line: "Sorcery", mana_cost: "{5}{B}{B}", cmc: 7, oracle_text: "Create thirteen tapped 2/2 black Zombie creature tokens." });
+const LAND_SCALED_TOKENS = () => make({ name: "Land Bloom", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Create a 0/1 green Plant creature token for each land you control." });
 const PYROCLASM = () => make({ name: "Pyroclasm", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Pyroclasm deals 2 damage to each creature." });
 const INFEST = () => make({ name: "Infest", type_line: "Sorcery", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "All creatures get -2/-2 until end of turn." });
 const GIANT = () => make({ name: "Hill Giant", type_line: "Creature — Giant", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3" });
@@ -519,6 +520,14 @@ describe("casting", () => {
     const zombies = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Zombie");
     expect(zombies).toHaveLength(13);
     expect(zombies.every((permanent) => permanent.tapped)).toBe(true);
+  });
+
+  it("scales token creation from the controller's current land count", () => {
+    const profile = profileOf(LAND_SCALED_TOKENS());
+    expect(profile.effects[0]).toMatchObject({ kind: "create-token", amount: "lands-you-control", token: { name: "Plant", power: 0, toughness: 1 } });
+    let game = readyToCast([LAND_SCALED_TOKENS()], [FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Plant")).toHaveLength(3);
   });
 
   it("registers a required ETB trigger after the permanent enters", () => {
