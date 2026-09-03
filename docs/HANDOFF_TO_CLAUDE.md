@@ -424,3 +424,18 @@ still outside `SpellEffect`.
 - Generated `data/` stays out of Git. If a service cannot find data, run the sync order above instead of adding placeholders.
 - Do not claim the game is "fully playable" or that "all cards work" until rules coverage and authenticated online flows actually prove it.
 - Treat new card images and external data as licence and provenance decisions, not implementation conveniences.
+
+## Cooperative C13 cluster: Level Up
+
+This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
+as a sorcery-speed activated ability, pays through the existing mana planner,
+uses the stack, and adds one public `level` counter only when it resolves.
+Level bands provide current P/T and enforced keywords through the normal
+state-aware characteristic functions; printed abilities inside those bands
+remain explicitly pending until their own primitives land. This follows CR
+702.87 and 711.2. The scenario covers payment, stack resolution, level 0/1
+versus level 2 characteristics, and level-granted hexproof target restriction.
+
+Validation for this isolated batch: `npm test --workspace=@prossh/rules --
+--run packages/rules/src/engine.test.ts` — 150 passed, 6 skipped. Full checks
+must be rerun after cherry-picking into the integrator branch.

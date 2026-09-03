@@ -74,6 +74,10 @@ const EQUIPMENT = () => make({ name: "Test Equipment", type_line: "Artifact — 
 const BEHEMOTH_SLEDGE = () => make({ name: "Behemoth Sledge", type_line: "Artifact — Equipment", mana_cost: "{3}", cmc: 3, oracle_text: "Equipped creature gets +2/+2 and has trample and lifelink.\nEquip {3}" });
 const SWIFTFOOT_BOOTS = () => make({ name: "Swiftfoot Boots", type_line: "Artifact — Equipment", mana_cost: "{2}", cmc: 2, oracle_text: "Equipped creature has hexproof and haste.\nEquip {1}" });
 const SWORD_OF_THE_PARUNS = () => make({ name: "Sword of the Paruns", type_line: "Artifact — Equipment", mana_cost: "{4}", cmc: 4, oracle_text: "Equipped creature gets +2/+0.\n{3}: Untap equipped creature.\n{3}: Untap all other creatures you control.\nEquip {3}" });
+const LEVELER = () => make({
+  name: "Test Leveler", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "1",
+  oracle_text: "Level up {1}{U}\nLEVEL 2-3\n2/3\nHexproof\nLEVEL 4+\n3/4\nFlying"
+});
 const STEELSHAPERS_GIFT = () => make({ name: "Steelshaper's Gift", type_line: "Sorcery", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an Equipment card, reveal it, put it into your hand, then shuffle." });
 const EXILE_EQUIPMENT = () => make({ name: "Exile Equipment", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Exile target Equipment." });
 const ACIDIC_SLIME = () => make({ name: "Acidic Slime", type_line: "Creature — Ooze", mana_cost: "{3}{G}{G}", cmc: 5, power: "2", toughness: "2", oracle_text: "When Acidic Slime enters, destroy target artifact, enchantment, or land." });
@@ -1147,6 +1151,34 @@ describe("activated abilities", () => {
     game = applyAction(game, 0, untapEquipped.action);
     game = applyAction(game, 0, { type: "pass" });
     expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(false);
+  });
+
+  it("uses one reusable Level up activation for counters, level stats, and keywords", () => {
+    let game = readyOnBoard([LEVELER(), ISLAND(), ISLAND(), ISLAND(), ISLAND()], { hold: true });
+    const leveler = permanentNamed(game, 0, "Test Leveler")!;
+    const profile = profileOf(leveler.card);
+    expect(profile.levelUpCost?.raw).toBe("{1}{U}");
+    expect(profile.levelDefinitions).toEqual([
+      expect.objectContaining({ minLevel: 2, maxLevel: 3, power: 2, toughness: 3, keywords: ["hexproof"] }),
+      expect.objectContaining({ minLevel: 4, power: 3, toughness: 4, keywords: ["flying"] })
+    ]);
+
+    const levelAction = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === leveler.instance_id);
+    expect(levelAction?.note).toBe("Level up {1}{U}");
+    expect(levelAction?.action).toMatchObject({ type: "activate", abilityIndex: 0 });
+    game = applyAction(game, 0, levelAction!.action);
+    expect(game.stack.at(-1)?.activated?.effect).toEqual({ kind: "level-up" });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(permanentNamed(game, 0, "Test Leveler")?.counters.level).toBe(1);
+    expect(powerOf(permanentNamed(game, 0, "Test Leveler")!, game)).toBe(1);
+
+    game = applyAction(game, 0, levelAction!.action);
+    game = applyAction(game, 0, { type: "pass" });
+    const second = permanentNamed(game, 0, "Test Leveler")!;
+    expect(second.counters.level).toBe(2);
+    expect(powerOf(second, game)).toBe(2);
+    expect(toughnessOf(second, game)).toBe(3);
+    expect(legalTargets(game, 1, "permanent")).not.toContainEqual({ kind: "permanent", instanceId: second.instance_id });
   });
 
   it("cycles a card from hand, pays mana, and draws", () => {

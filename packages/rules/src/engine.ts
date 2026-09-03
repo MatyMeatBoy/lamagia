@@ -340,13 +340,29 @@ function equipmentBonus(state: GameState | undefined, creature: Permanent): { po
   }, { power: 0, toughness: 0 });
 }
 export function powerOf(permanent: Permanent, state?: GameState): number {
-  return (cardProfile(permanent.card).power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power;
+  const profile = cardProfile(permanent.card);
+  const level = state ? profile.levelDefinitions.filter((definition) => {
+    const count = permanent.counters.level ?? 0;
+    return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
+  }).at(-1) : undefined;
+  return (level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
-  return (cardProfile(permanent.card).toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness;
+  const profile = cardProfile(permanent.card);
+  const level = state ? profile.levelDefinitions.filter((definition) => {
+    const count = permanent.counters.level ?? 0;
+    return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
+  }).at(-1) : undefined;
+  return (level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
-  if (cardProfile(permanent.card).keywords.includes(keyword)) return true;
+  const profile = cardProfile(permanent.card);
+  if (profile.keywords.includes(keyword)) return true;
+  const level = profile.levelDefinitions.filter((definition) => {
+    const count = permanent.counters.level ?? 0;
+    return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
+  }).at(-1);
+  if (level?.keywords.includes(keyword)) return true;
   return attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword));
 }
 
@@ -1128,6 +1144,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
+    }
+    case "level-up": {
+      const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
+      if (!source || source.controller !== controller || !isCreature(cardProfile(source.card))) return state;
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, level: (permanent.counters.level ?? 0) + 1 } }
+          : permanent)
+      }));
     }
     case "create-token": {
       const amount = effectAmount(effect.amount, object);
@@ -2050,6 +2076,7 @@ function activatableAbility(
 ): { legal: boolean; targetKind?: Exclude<TargetKind, "none">; note?: string } {
   const player = playerAt(state, seat);
   if (permanent.controller !== seat) return { legal: false };
+  if (ability.sorcerySpeed && !sorcerySpeed(state, seat)) return { legal: false };
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
   // the turn began. Non-creature permanents are unaffected by summoning sickness.

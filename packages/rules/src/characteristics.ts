@@ -85,6 +85,8 @@ export interface ActivatedAbility {
   readonly manaCost: ManaCost | null;
   readonly effect: SpellEffect;
   readonly targetKind: TargetKind;
+  /** Level up is an activated ability with a sorcery-speed restriction. */
+  readonly sorcerySpeed?: boolean;
   readonly text: string;
 }
 
@@ -98,6 +100,16 @@ export interface ModalChoice {
 
 /** Static bonuses granted by an Equipment to its equipped creature. */
 export interface EquipmentModification {
+  readonly power: number;
+  readonly toughness: number;
+  readonly keywords: readonly EnforcedKeyword[];
+  readonly text: string;
+}
+
+/** Characteristics printed in one level band of a leveler card (CR 711). */
+export interface LevelDefinition {
+  readonly minLevel: number;
+  readonly maxLevel?: number;
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
@@ -140,6 +152,8 @@ export type SpellEffect =
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures" }
   | { readonly kind: "counter-target-spell" }
+  /** Resolves a level-up activation by adding one level counter (CR 702.87). */
+  | { readonly kind: "level-up" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X"; readonly token: TokenDefinition }
   | {
@@ -243,6 +257,9 @@ export interface CardProfile {
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
+  /** Printed Level up cost and level bands, when present. */
+  readonly levelUpCost: ManaCost | null;
+  readonly levelDefinitions: readonly LevelDefinition[];
   readonly activatedAbilities: readonly ActivatedAbility[];
   readonly modalChoices: readonly ModalChoice[];
   readonly effects: readonly SpellEffect[];
@@ -479,6 +496,51 @@ function parseEquipCost(text: string): ManaCost | null {
     if (cost && !cost.hasVariable) return cost;
   }
   return null;
+}
+
+function parseLevelUpCost(text: string): ManaCost | null {
+  for (const line of text.split("\n")) {
+    const match = /^level up\s+(.+)$/i.exec(line.trim().replace(/\.$/, ""));
+    if (!match) continue;
+    const cost = parseManaCost(match[1]!.trim());
+    if (cost && !cost.hasVariable) return cost;
+  }
+  return null;
+}
+
+/**
+ * Reads only the characteristic bands of a leveler card. The ability text in
+ * each band remains outside this cluster until its own reusable primitive is
+ * implemented; P/T and keyword changes are deterministic layer-7 effects.
+ */
+function parseLevelDefinitions(text: string): LevelDefinition[] {
+  const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+  const definitions: LevelDefinition[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const marker = /^level\s+(\d+)(?:-(\d+)|(\+))?$/i.exec(lines[index]!);
+    if (!marker) continue;
+    const stats = /^(\d+)\/(\d+)$/.exec(lines[index + 1] ?? "");
+    if (!stats) continue;
+    const keywords: EnforcedKeyword[] = [];
+    let cursor = index + 2;
+    while (cursor < lines.length && !/^level\s+\d+(?:-\d+|\+)?$/i.test(lines[cursor]!)) {
+      const candidate = lines[cursor]!.replace(/\.$/, "").toLowerCase();
+      if ((ENFORCED_KEYWORDS as readonly string[]).includes(candidate)) {
+        keywords.push(candidate as EnforcedKeyword);
+      }
+      cursor += 1;
+    }
+    definitions.push({
+      minLevel: Number(marker[1]),
+      ...(marker[2] ? { maxLevel: Number(marker[2]) } : {}),
+      power: Number(stats[1]),
+      toughness: Number(stats[2]),
+      keywords,
+      text: lines.slice(index, cursor).join(" ")
+    });
+    index = cursor - 1;
+  }
+  return definitions;
 }
 
 function parseEquipmentModification(text: string): EquipmentModification | null {
@@ -903,6 +965,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^level\s+\d+(?:-\d+|\+)?$/i.test(line) || /^\d+\/\d+$/.test(line)) continue;
     if (parseEquipmentModification(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
@@ -982,6 +1046,8 @@ export function cardProfile(card: CardData): CardProfile {
   const equipCost = parseEquipCost(text);
   const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
     ? parseEquipmentModification(text) : null;
+  const levelUpCost = parseLevelUpCost(text);
+  const levelDefinitions = parseLevelDefinitions(text);
 
   const profile: CardProfile = {
     name: card.name,
@@ -1001,7 +1067,24 @@ export function cardProfile(card: CardData): CardProfile {
     cyclingCost,
     equipCost,
     equipmentModification,
-    activatedAbilities: isPermanent ? recognized.activatedAbilities : [],
+    levelUpCost,
+    levelDefinitions,
+    activatedAbilities: isPermanent
+      ? [
+          ...recognized.activatedAbilities,
+          ...(levelUpCost ? [{
+            index: recognized.activatedAbilities.length,
+            requiresTap: false,
+            sacrificesSelf: false,
+            lifeCost: 0,
+            manaCost: levelUpCost,
+            effect: { kind: "level-up" as const },
+            targetKind: "none" as const,
+            sorcerySpeed: true,
+            text: `Level up ${levelUpCost.raw}`
+          }] : [])
+        ]
+      : [],
     modalChoices: recognized.modalChoices,
     effects: recognized.effects,
     triggers: recognized.triggers,
