@@ -132,9 +132,9 @@ never remove a card's own printed one.
 | Cards with a payable, resolvable activated ability | 0 (feature did not run) | 670 |
 | Cards with a recognised triggered ability | 87 | 1,185 |
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
-| Catalog cards fully implemented | 5,151 | 6,226 |
+| Catalog cards fully implemented | 5,151 | 6,277 |
 | …of those, with non-empty Oracle text | 2,090 | 2,981 |
-| C13 unique cards fully implemented | — | 119 / 356 (237 pending) |
+| C13 unique cards fully implemented | — | 122 / 356 (234 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
 
 Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
@@ -219,12 +219,12 @@ loads pending IDs only when an edition is opened.
 
 ```text
 npm run check           rules build + rules/client/server typecheck        PASS
-npm test                Vitest 5 files / 158 tests + Python smoke tests    PASS
+npm test                Vitest 5 files / 160 tests + Python smoke tests    PASS
 npm run simulate:engine 200 seeded games in 7.22s                          PASS
                         finished 158, unfinished 42, avg 51.18 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 6,226 fully implemented         PASS
+npm run rules:engine:export  38,711 cards; 6,277 fully implemented         PASS
 npm run rules:set:coverage  708 editions; 14.4% membership coverage        PASS
 ```
 
@@ -265,7 +265,7 @@ packages/rules/                 authoritative engine (pure, deterministic)
   src/projection.ts             the per-seat security boundary
   src/bot.ts                    bot policy over legal actions only
   src/simulator.ts              coarse metadata simulator (legacy tooling)
-  src/*.test.ts                 158 Vitest specs
+  src/*.test.ts                 160 Vitest specs
 services/match-server/
   src/matches.ts                match registry, seat tokens, bot driving
   src/index.ts                  REST + Socket.IO, catalog and deck endpoints
@@ -357,7 +357,7 @@ after merging.
 Rules reference: Comprehensive Rules 301.5, 602.1, 608.2b and 704.5q;
 official source: `https://magic.wizards.com/en/rules`.
 
-Validation after integration: `npm run check` and `npm test` pass (158 rules
+Validation after integration: `npm run check` and `npm test` pass (160 rules
 tests; simulator and 9 Python compiler tests pass).
 
 The current batch adds reusable modal choices, exact artifact/enchantment/land
@@ -381,8 +381,8 @@ supports deterministic bounded card/primitives batches.
   and subtypes), so Equipment, battlefield and similar nouns are not re-learned
   for every card; its Python regression suite passes 10 tests.
 
-Validation: 158 rules tests, workspace TypeScript checks, simulator smoke tests
-and 9 Python compiler regressions pass. C13 is 119/356 unique cards implemented
+Validation: 160 rules tests, workspace TypeScript checks, simulator smoke tests
+and 9 Python compiler regressions pass. C13 is 122/356 unique cards implemented
 (33.4%); generated coverage remains in `data/rules/coverage-c13.md`.
 
 The Oracle compiler now accepts `--workers`, `--backend`, `--batch-size`,
@@ -398,7 +398,7 @@ unbounded pool.
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
 general; what limits coverage is the **effect vocabulary** they resolve into.
 1,185 cards have a recognised trigger and 670 a recognised activation, but only
-6,226 of 38,711 cards are fully implemented, because most printed effects are
+6,277 of 38,711 cards are fully implemented, because most printed effects are
 still outside `SpellEffect`.
 
 1. **Widen `SpellEffect`, one template plus one test at a time.** The highest
