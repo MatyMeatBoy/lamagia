@@ -1333,6 +1333,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         })
       }));
     }
+    case "add-counter-creatures-you-control": {
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } }
+          : permanent)
+      }));
+    }
     case "level-up": {
       const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       if (!source || source.controller !== controller || !isCreature(cardProfile(source.card))) return state;

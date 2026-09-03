@@ -96,6 +96,7 @@ const PLANT_SPELL = () => make({ name: "Plant Ritual", type_line: "Sorcery", man
 const TAPPED_ZOMBIES = () => make({ name: "Army of the Dead", type_line: "Sorcery", mana_cost: "{5}{B}{B}", cmc: 7, oracle_text: "Create thirteen tapped 2/2 black Zombie creature tokens." });
 const LAND_SCALED_TOKENS = () => make({ name: "Land Bloom", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Create a 0/1 green Plant creature token for each land you control." });
 const PLANT_COUNTERS = () => make({ name: "Verdant Rally", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put a +1/+1 counter on each Plant creature you control." });
+const CREATURE_COUNTERS = () => make({ name: "Creature Rally", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put a +1/+1 counter on each creature you control." });
 const PLANT = () => make({ name: "Plant", type_line: "Creature — Plant", mana_cost: "", cmc: 0, power: "0", toughness: "1" });
 const PYROCLASM = () => make({ name: "Pyroclasm", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Pyroclasm deals 2 damage to each creature." });
 const INFEST = () => make({ name: "Infest", type_line: "Sorcery", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "All creatures get -2/-2 until end of turn." });
@@ -576,6 +577,14 @@ describe("casting", () => {
     const plants = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Plant");
     expect(plants.every((permanent) => permanent.counters["+1/+1"] === 1)).toBe(true);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.counters["+1/+1"]).toBeUndefined();
+  });
+
+  it("adds counters to every creature the controller controls", () => {
+    const profile = profileOf(CREATURE_COUNTERS());
+    expect(profile.effects[0]).toMatchObject({ kind: "add-counter-creatures-you-control", counter: "+1/+1", amount: 1 });
+    let game = readyToCast([CREATURE_COUNTERS()], [FOREST(), PLANT(), BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.type_line.includes("Creature")).every((permanent) => permanent.counters["+1/+1"] === 1)).toBe(true);
   });
 
   it("registers a required ETB trigger after the permanent enters", () => {

@@ -161,6 +161,7 @@ export type SpellEffect =
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
+  | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-permanent" }
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
@@ -971,6 +972,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on each ([A-Za-z][A-Za-z'’/-]*) creature you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-creatures-subtype", counter: match[2]!, amount, subtype: match[3]! }, target: "none" };
+  }
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on each creature you control$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "add-counter-creatures-you-control", counter: match[2]!, amount }, target: "none" };
   }
   if ((match = /^~ deals (\w+) damage to target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
