@@ -14,6 +14,9 @@
 - **Referencia de comportamiento:** [XMage](https://github.com/magefree/mage) y
   [French-Vanilla](https://github.com/didymusbenson/French-Vanilla). Se estudian
   contratos y escenarios; no se copia código en `packages/rules`.
+- **Referencia de arquitectura de parser:** [mtgish](https://github.com/i5jb/mtgish).
+  Su separación texto → IR → intérprete respalda nuestro compilador Python por
+  clusters; no es dependencia ni fuente de código/datos.
 
 ## Cómo se usará Academy Ruins
 

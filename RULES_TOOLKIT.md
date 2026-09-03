@@ -12,6 +12,7 @@ debe seguir siendo puro, determinista y sin red.
 | [Comprehensive Rules local](docs/COMPREHENSIVE_RULES.md) | Consulta offline en Markdown | Buscar por `702.x`, `603.x`, `608.x`, etc. |
 | [Academy Ruins API](ACADEMY_RUINS_API.md) | CR estructurada, glosario, trazas y diferencias | Consultar JSON; refrescar el Markdown con `npm run rules:cr:sync` |
 | [French-Vanilla](FRENCH_VANILLA_REFERENCE.md) | Navegador/buscador de CR y parser de reglas | Estudiar organización, búsqueda y datos locales |
+| [mtgish](MTGISH_REFERENCE.md) | Gramática/IR tipada para convertir Oracle en estructuras reutilizables | Comparar formas de agrupar operandos y separar parser de engine; no copiar código/datos |
 | [XMage](XMAGE_REFERENCE.md) | Implementación open source y tests de comportamiento | Comparar contratos, casos borde y orden de eventos |
 | [Ability Icon wiki](ABILITY_ICON_REFERENCE.md) | Referencia visual de iconos de habilidades | Solo estudiar UX; no importar assets de Arena |
 

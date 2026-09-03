@@ -1,0 +1,43 @@
+# mtgish — referencia de parser e IR
+
+Referencia externa: <https://github.com/i5jb/mtgish>.
+
+`mtgish` representa el texto Oracle con una sintaxis intermedia tipada. Su
+flujo —texto normalizado → gramática reusable → IR → intérprete— es la
+alternativa que adoptamos para acelerar el trabajo histórico de La Magia:
+una primitiva como `SearchLibrary(subtype=Equipment, destination=Hand)` se
+define una vez y se reutiliza en todas las cartas y reimpresiones que tengan
+el mismo `oracle_id`.
+
+## Aplicación en este repositorio
+
+- `tools/rules/compile_oracle_effects.py` es nuestro inventario local y
+  conserva cláusulas, familias, operandos, zonas y `primitive_cluster`.
+- `packages/rules/src/characteristics.ts` es el límite de entrada: solo una
+  forma estructurada cerrada puede declararse ejecutable.
+- `packages/rules/src/engine.ts` aplica esa forma de manera pura y
+  determinista; el texto Oracle nunca se evalúa dinámicamente en una partida.
+- Las cartas que comparten una forma reciben la misma implementación; solo
+  difieren los datos (cantidades, tipos, subtipos, zonas y costes).
+- Las cláusulas ambiguas o únicas permanecen en la cola de revisión para una
+  implementación manual con cita de Comprehensive Rules y escenario.
+
+## Qué no hacemos
+
+No incorporamos `mtgish` como dependencia de runtime, no copiamos su código,
+gramáticas ni corpus y no tratamos su salida como autoridad normativa. La CR
+oficial de Wizards sigue siendo la fuente de reglas; XMage y French-Vanilla
+solo sirven para contrastar comportamiento y casos borde.
+
+## Estrategia de velocidad
+
+1. Compilar una vez el catálogo y agrupar por `primitive_cluster`.
+2. Asignar un worker a cada cluster, no a cada nombre de carta.
+3. Añadir una prueba representativa y reutilizar la primitiva para el resto.
+4. Exportar perfiles y cobertura C13; solo las cartas con todas sus cláusulas
+   cubiertas pasan a `fullyImplemented`.
+5. Reservar trabajo manual para excepciones, costes/elecciones complejas y
+   efectos que necesitan estado nuevo.
+
+Esto conserva la velocidad del parser automático sin convertir una inferencia
+de texto en una regla falsa.

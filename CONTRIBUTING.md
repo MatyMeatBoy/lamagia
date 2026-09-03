@@ -7,7 +7,8 @@ reimpresiones que comparten `oracle_id`.
 ## Encargo para una persona o IA
 
 Puede seguir trabajando mientras tenga contexto o tokens, descubriendo más
-cartas y reutilizando las primitivas existentes. El límite es del commit:
+cartas y reutilizando las primitivas existentes. Primero reserva el cluster en
+`docs/WORK_CLAIMS.md`; si ya está activo, elige otro. El límite es del commit:
 **cada commit contiene como máximo cinco `oracle_id` nuevos** del mismo cluster.
 
 ```text
@@ -16,6 +17,8 @@ contexto. No añadas excepciones por nombre o edición. Consulta la Comprehensiv
 Rules oficial, añade pruebas de escenario y conserva como pendiente cualquier
 cláusula no ejecutable. Divide el resultado en commits de máximo cinco
 oracle_id y ejecuta npm run check && npm test && npm run rules:set:coverage.
+Entrega cada commit con CLAIM, BASE SHA, COMMIT SHA, FILES, TESTS, SCENARIOS y
+LIMITS para que otro agente pueda integrarlo sin repetir trabajo.
 ```
 
 Las distintas ilustraciones, marcos y sets no requieren otra implementación.
