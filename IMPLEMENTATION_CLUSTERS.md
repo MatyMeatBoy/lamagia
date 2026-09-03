@@ -25,7 +25,10 @@ se reconoció una parte de su texto.
 `docs/SET_COVERAGE.md` y `data/rules/set-coverage.json` agrupan por edición.
 Las impresiones se deduplican por `oracle_id`: una mejora de una carta se
 propaga a sus reimpresiones, mientras los pendientes siguen listados bajo cada
-edición para repartir trabajo entre colaboradores.
+edición para repartir trabajo entre colaboradores. Cada edición también recibe
+un grupo de producto (Jumpstart, Duel Decks, Masters/Remastered, Commander,
+Secret Lair, promos, etc.) para que el mapa no mezcle productos distintos bajo
+un único “otras”.
 
 ## Clusters
 

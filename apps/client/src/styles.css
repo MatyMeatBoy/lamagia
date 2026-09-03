@@ -712,6 +712,7 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
 .coverage-filters { display: flex; flex-wrap: wrap; gap: 5px; }
 .coverage-filters .selected { border-color: var(--gold); color: var(--gold); }
 .coverage-toolbar input { width: min(360px, 100%); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #060d09; color: var(--text); }
+.coverage-toolbar select { width: min(360px, 100%); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #060d09; color: var(--text); }
 .coverage-total { display: flex; align-items: baseline; gap: 9px; margin: 5px 0 3px; }
 .coverage-total b, .coverage-detail-head b { color: var(--gold); font-size: 1rem; }
 .coverage-total span, .coverage-detail-head small { color: var(--text-faint); font-size: .66rem; }

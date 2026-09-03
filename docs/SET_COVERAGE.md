@@ -7,720 +7,749 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 
 ## Resumen cronológico
 
-| Fecha | Edición | Categoría | Cartas únicas | Implementadas | Pendientes | % |
-|---|---|---|---:|---:|---:|---:|
-| 1993-08-05 | Limited Edition Alpha (`LEA`) | main | 290 | 68 | 222 | 23.4% |
-| 1993-10-04 | Limited Edition Beta (`LEB`) | main | 292 | 69 | 223 | 23.6% |
-| 1993-12-01 | Unlimited Edition (`2ED`) | main | 292 | 69 | 223 | 23.6% |
-| 1993-12-17 | Arabian Nights (`ARN`) | main | 78 | 9 | 69 | 11.5% |
-| 1994-03-04 | Antiquities (`ATQ`) | main | 85 | 6 | 79 | 7.1% |
-| 1994-04-11 | Foreign Black Border (`FBB`) | main | 296 | 65 | 231 | 22.0% |
-| 1994-04-11 | Revised Edition (`3ED`) | main | 296 | 65 | 231 | 22.0% |
-| 1994-06-01 | Legends (`LEG`) | main | 310 | 43 | 267 | 13.9% |
-| 1994-06-21 | Summer Magic / Edgar (`SUM`) | main | 296 | 65 | 231 | 22.0% |
-| 1994-07-15 | Dragon Con (`PDRC`) | other | 1 | 0 | 1 | 0.0% |
-| 1994-08-01 | The Dark (`DRK`) | main | 119 | 16 | 103 | 13.4% |
-| 1994-11-01 | Fallen Empires (`FEM`) | main | 102 | 11 | 91 | 10.8% |
-| 1994-11-01 | HarperPrism Book Promos (`PHPR`) | other | 5 | 1 | 4 | 20.0% |
-| 1995-04-01 | Fourth Edition (`4ED`) | main | 368 | 66 | 302 | 17.9% |
-| 1995-04-01 | Fourth Edition Foreign Black Border (`4BB`) | main | 368 | 66 | 302 | 17.9% |
-| 1995-06-03 | Ice Age (`ICE`) | main | 373 | 28 | 345 | 7.5% |
-| 1995-07-01 | Chronicles (`CHR`) | other | 116 | 13 | 103 | 11.2% |
-| 1995-07-01 | Chronicles Foreign Black Border (`BCHR`) | other | 116 | 13 | 103 | 11.2% |
-| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | other | 94 | 14 | 80 | 14.9% |
-| 1995-08-01 | Renaissance (`REN`) | other | 122 | 15 | 107 | 12.3% |
-| 1995-08-01 | Rinascimento (`RIN`) | other | 60 | 4 | 56 | 6.7% |
-| 1995-10-01 | Homelands (`HML`) | main | 115 | 15 | 100 | 13.0% |
-| 1996-06-10 | Alliances (`ALL`) | main | 144 | 8 | 136 | 5.6% |
-| 1996-07-01 | DCI Legend Membership (`PLGM`) | other | 2 | 1 | 1 | 50.0% |
-| 1996-07-01 | Rivals Quick Start Set (`RQS`) | other | 56 | 21 | 35 | 37.5% |
-| 1996-08-02 | Arena League 1996 (`PARL`) | other | 7 | 6 | 1 | 85.7% |
-| 1996-10-01 | Redemption Program (`PRED`) | other | 1 | 0 | 1 | 0.0% |
-| 1996-10-08 | Mirage (`MIR`) | main | 335 | 46 | 289 | 13.7% |
-| 1996-11-01 | Multiverse Gift Box (`MGB`) | other | 10 | 1 | 9 | 10.0% |
-| 1996-12-31 | Introductory Two-Player Set (`ITP`) | other | 57 | 22 | 35 | 38.6% |
-| 1997-02-03 | Visions (`VIS`) | main | 167 | 15 | 152 | 9.0% |
-| 1997-03-24 | Fifth Edition (`5ED`) | main | 434 | 69 | 365 | 15.9% |
-| 1997-04-01 | Astral Cards (`PAST`) | other | 12 | 0 | 12 | 0.0% |
-| 1997-05-01 | Portal (`POR`) | other | 200 | 75 | 125 | 37.5% |
-| 1997-06-09 | Weatherlight (`WTH`) | main | 167 | 5 | 162 | 3.0% |
-| 1997-10-01 | Tempest Promos (`PTMP`) | other | 1 | 0 | 1 | 0.0% |
-| 1997-10-14 | Tempest (`TMP`) | main | 335 | 34 | 301 | 10.1% |
-| 1998-01-01 | Judge Gift Cards 1998 (`JGP`) | other | 3 | 2 | 1 | 66.7% |
-| 1998-02-01 | Stronghold Promos (`PSTH`) | other | 1 | 0 | 1 | 0.0% |
-| 1998-03-02 | Stronghold (`STH`) | main | 143 | 11 | 132 | 7.7% |
-| 1998-06-01 | Exodus Promos (`PEXO`) | other | 1 | 0 | 1 | 0.0% |
-| 1998-06-15 | Exodus (`EXO`) | main | 143 | 10 | 133 | 7.0% |
-| 1998-06-24 | Portal Second Age (`P02`) | other | 155 | 48 | 107 | 31.0% |
-| 1998-08-11 | Unglued (`UGL`) | other | 88 | 5 | 83 | 5.7% |
-| 1998-09-01 | Asia Pacific Land Program (`PALP`) | other | 5 | 5 | 0 | 100.0% |
-| 1998-09-26 | Urza's Saga Promos (`PUSG`) | other | 1 | 0 | 1 | 0.0% |
-| 1998-10-12 | Urza's Saga (`USG`) | main | 335 | 41 | 294 | 12.2% |
-| 1998-11-01 | Anthologies (`ATH`) | other | 81 | 28 | 53 | 34.6% |
-| 1999-01-01 | Arena League 1999 (`PAL99`) | other | 9 | 5 | 4 | 55.6% |
-| 1999-01-01 | Judge Gift Cards 1999 (`G99`) | other | 1 | 0 | 1 | 0.0% |
-| 1999-01-01 | Junior Super Series (`PSUS`) | other | 18 | 3 | 15 | 16.7% |
-| 1999-02-06 | Urza's Legacy Promos (`PULG`) | other | 1 | 0 | 1 | 0.0% |
-| 1999-02-15 | Urza's Legacy (`ULG`) | main | 143 | 11 | 132 | 7.7% |
-| 1999-04-21 | Classic Sixth Edition (`6ED`) | main | 335 | 97 | 238 | 29.0% |
-| 1999-04-29 | Portal Three Kingdoms Promos (`PPTK`) | other | 1 | 0 | 1 | 0.0% |
-| 1999-05-01 | Portal Three Kingdoms (`PTK`) | other | 170 | 33 | 137 | 19.4% |
-| 1999-05-29 | Urza's Destiny Promos (`PUDS`) | other | 1 | 0 | 1 | 0.0% |
-| 1999-06-07 | Urza's Destiny (`UDS`) | main | 143 | 21 | 122 | 14.7% |
-| 1999-07-01 | Starter 1999 (`S99`) | other | 158 | 71 | 87 | 44.9% |
-| 1999-07-12 | Guru (`PGRU`) | other | 5 | 5 | 0 | 100.0% |
-| 1999-08-04 | World Championship Promos (`PWOR`) | other | 2 | 0 | 2 | 0.0% |
-| 1999-09-04 | Wizards of the Coast Online Store (`PWOS`) | other | 1 | 1 | 0 | 100.0% |
-| 1999-09-25 | Mercadian Masques Promos (`PMMQ`) | other | 1 | 0 | 1 | 0.0% |
-| 1999-10-04 | Mercadian Masques (`MMQ`) | main | 335 | 31 | 304 | 9.3% |
-| 1999-11-12 | Battle Royale Box Set (`BRB`) | other | 105 | 30 | 75 | 28.6% |
-| 2000-01-01 | Arena League 2000 (`PAL00`) | other | 11 | 6 | 5 | 54.5% |
-| 2000-01-01 | Friday Night Magic 2000 (`FNM`) | other | 11 | 7 | 4 | 63.6% |
-| 2000-01-01 | Judge Gift Cards 2000 (`G00`) | other | 2 | 1 | 1 | 50.0% |
-| 2000-01-29 | Nemesis Promos (`PNEM`) | other | 1 | 0 | 1 | 0.0% |
-| 2000-02-05 | European Land Program (`PELP`) | other | 5 | 5 | 0 | 100.0% |
-| 2000-02-14 | Nemesis (`NEM`) | main | 143 | 7 | 136 | 4.9% |
-| 2000-04-01 | Starter 2000 (`S00`) | other | 20 | 14 | 6 | 70.0% |
-| 2000-05-27 | Prophecy Promos (`PPCY`) | other | 1 | 0 | 1 | 0.0% |
-| 2000-06-05 | Prophecy (`PCY`) | main | 143 | 5 | 138 | 3.5% |
-| 2000-09-23 | Invasion Promos (`PINV`) | other | 1 | 1 | 0 | 100.0% |
-| 2000-10-01 | Beatdown Box Set (`BTD`) | other | 82 | 32 | 50 | 39.0% |
-| 2000-10-02 | Invasion (`INV`) | main | 335 | 53 | 282 | 15.8% |
-| 2001-01-01 | Arena League 2001 (`PAL01`) | other | 11 | 7 | 4 | 63.6% |
-| 2001-01-01 | Friday Night Magic 2001 (`F01`) | other | 7 | 0 | 7 | 0.0% |
-| 2001-01-01 | Judge Gift Cards 2001 (`G01`) | other | 2 | 0 | 2 | 0.0% |
-| 2001-01-01 | Magic Player Rewards 2001 (`MPR`) | other | 1 | 0 | 1 | 0.0% |
-| 2001-01-27 | Planeshift Promos (`PPLS`) | other | 1 | 0 | 1 | 0.0% |
-| 2001-02-05 | Planeshift (`PLS`) | main | 143 | 6 | 137 | 4.2% |
-| 2001-04-11 | Seventh Edition (`7ED`) | main | 335 | 92 | 243 | 27.5% |
-| 2001-05-26 | Apocalypse Promos (`PAPC`) | other | 1 | 0 | 1 | 0.0% |
-| 2001-06-04 | Apocalypse (`APC`) | main | 143 | 15 | 128 | 10.5% |
-| 2001-06-28 | Sega Dreamcast Cards (`PSDG`) | other | 10 | 0 | 10 | 0.0% |
-| 2001-09-22 | Odyssey Promos (`PODY`) | other | 1 | 0 | 1 | 0.0% |
-| 2001-10-01 | Odyssey (`ODY`) | main | 335 | 33 | 302 | 9.9% |
-| 2001-12-01 | Deckmasters (`DKM`) | other | 44 | 7 | 37 | 15.9% |
-| 2002-01-01 | Arena League 2002 (`PAL02`) | other | 5 | 2 | 3 | 40.0% |
-| 2002-01-01 | Friday Night Magic 2002 (`F02`) | other | 12 | 1 | 11 | 8.3% |
-| 2002-01-01 | Judge Gift Cards 2002 (`G02`) | other | 2 | 0 | 2 | 0.0% |
-| 2002-01-26 | Torment Promos (`PTOR`) | other | 1 | 0 | 1 | 0.0% |
-| 2002-02-04 | Torment (`TOR`) | main | 143 | 2 | 141 | 1.4% |
-| 2002-05-18 | Judgment Promos (`PJUD`) | other | 1 | 0 | 1 | 0.0% |
-| 2002-05-27 | Judgment (`JUD`) | main | 143 | 9 | 134 | 6.3% |
-| 2002-07-01 | Hobby Japan Promos (`JP1`) | other | 5 | 0 | 5 | 0.0% |
-| 2002-09-28 | Onslaught Promos (`PONS`) | other | 1 | 0 | 1 | 0.0% |
-| 2002-10-07 | Onslaught (`ONS`) | main | 335 | 34 | 301 | 10.1% |
-| 2003-01-01 | Arena League 2003 (`PAL03`) | other | 8 | 5 | 3 | 62.5% |
-| 2003-01-01 | Friday Night Magic 2003 (`F03`) | other | 13 | 2 | 11 | 15.4% |
-| 2003-01-01 | Japan Junior Tournament (`PJJT`) | other | 12 | 3 | 9 | 25.0% |
-| 2003-01-01 | Judge Gift Cards 2003 (`G03`) | other | 3 | 0 | 3 | 0.0% |
-| 2003-01-01 | Magic Player Rewards 2003 (`P03`) | other | 1 | 0 | 1 | 0.0% |
-| 2003-01-25 | Legions Promos (`PLGN`) | other | 1 | 0 | 1 | 0.0% |
-| 2003-02-03 | Legions (`LGN`) | main | 145 | 15 | 130 | 10.3% |
-| 2003-05-17 | Scourge Promos (`PSCG`) | other | 1 | 0 | 1 | 0.0% |
-| 2003-05-26 | Scourge (`SCG`) | main | 143 | 3 | 140 | 2.1% |
-| 2003-07-26 | Eighth Edition Promos (`P8ED`) | other | 1 | 1 | 0 | 100.0% |
-| 2003-07-28 | Eighth Edition (`8ED`) | main | 342 | 100 | 242 | 29.2% |
-| 2003-09-20 | Mirrodin Promos (`PMRD`) | other | 1 | 0 | 1 | 0.0% |
-| 2003-10-02 | Mirrodin (`MRD`) | main | 291 | 50 | 241 | 17.2% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | other | 2689 | 246 | 2443 | 9.1% |
-| 2004-01-01 | Arena League 2004 (`PAL04`) | other | 14 | 6 | 8 | 42.9% |
-| 2004-01-01 | Friday Night Magic 2004 (`F04`) | other | 12 | 0 | 12 | 0.0% |
-| 2004-01-01 | Judge Gift Cards 2004 (`G04`) | other | 6 | 0 | 6 | 0.0% |
-| 2004-01-01 | Magic Player Rewards 2004 (`P04`) | other | 1 | 0 | 1 | 0.0% |
-| 2004-01-24 | Darksteel Promos (`PDST`) | other | 1 | 0 | 1 | 0.0% |
-| 2004-02-06 | Darksteel (`DST`) | main | 165 | 10 | 155 | 6.1% |
-| 2004-05-22 | Fifth Dawn Promos (`P5DN`) | other | 1 | 0 | 1 | 0.0% |
-| 2004-06-04 | Fifth Dawn (`5DN`) | main | 165 | 11 | 154 | 6.7% |
-| 2004-09-18 | Champions of Kamigawa Promos (`PCHK`) | other | 1 | 0 | 1 | 0.0% |
-| 2004-10-01 | Champions of Kamigawa (`CHK`) | main | 291 | 26 | 265 | 8.9% |
-| 2004-11-19 | Unhinged (`UNH`) | other | 141 | 7 | 134 | 5.0% |
-| 2004-11-20 | Unhinged Promos (`PUNH`) | other | 1 | 0 | 1 | 0.0% |
-| 2005-01-01 | Arena League 2005 (`PAL05`) | other | 8 | 6 | 2 | 75.0% |
-| 2005-01-01 | Friday Night Magic 2005 (`F05`) | other | 12 | 2 | 10 | 16.7% |
-| 2005-01-01 | Judge Gift Cards 2005 (`G05`) | other | 4 | 1 | 3 | 25.0% |
-| 2005-01-01 | Junior Series Europe (`PJSE`) | other | 8 | 1 | 7 | 12.5% |
-| 2005-01-01 | Magic Player Rewards 2005 (`P05`) | other | 6 | 0 | 6 | 0.0% |
-| 2005-01-22 | Betrayers of Kamigawa Promos (`PBOK`) | other | 2 | 0 | 2 | 0.0% |
-| 2005-02-04 | Betrayers of Kamigawa (`BOK`) | main | 165 | 4 | 161 | 2.4% |
-| 2005-05-21 | Saviors of Kamigawa Promos (`PSOK`) | other | 2 | 0 | 2 | 0.0% |
-| 2005-06-03 | Saviors of Kamigawa (`SOK`) | main | 165 | 4 | 161 | 2.4% |
-| 2005-07-29 | Ninth Edition (`9ED`) | main | 344 | 90 | 254 | 26.2% |
-| 2005-07-29 | Ninth Edition Promos (`P9ED`) | other | 2 | 0 | 2 | 0.0% |
-| 2005-08-22 | Salvat 2005 (`PSAL`) | other | 285 | 43 | 242 | 15.1% |
-| 2005-09-24 | Ravnica: City of Guilds Promos (`PRAV`) | other | 2 | 0 | 2 | 0.0% |
-| 2005-10-07 | Magic Premiere Shop 2005 (`PMPS`) | other | 5 | 5 | 0 | 100.0% |
-| 2005-10-07 | Ravnica: City of Guilds (`RAV`) | main | 291 | 35 | 256 | 12.0% |
-| 2005-12-09 | Two-Headed Giant Tournament (`P2HG`) | other | 1 | 0 | 1 | 0.0% |
-| 2006-01-01 | Arena League 2006 (`PAL06`) | other | 9 | 5 | 4 | 55.6% |
-| 2006-01-01 | Friday Night Magic 2006 (`F06`) | other | 12 | 1 | 11 | 8.3% |
-| 2006-01-01 | Hachette UK (`PHUK`) | other | 23 | 2 | 21 | 8.7% |
-| 2006-01-01 | Judge Gift Cards 2006 (`G06`) | other | 4 | 0 | 4 | 0.0% |
-| 2006-01-01 | Junior APAC Series (`PJAS`) | other | 6 | 1 | 5 | 16.7% |
-| 2006-01-01 | Magic Player Rewards 2006 (`P06`) | other | 7 | 2 | 5 | 28.6% |
-| 2006-01-01 | Magic Premiere Shop 2006 (`PMPS06`) | other | 5 | 5 | 0 | 100.0% |
-| 2006-01-21 | Guildpact Promos (`PGPT`) | other | 2 | 0 | 2 | 0.0% |
-| 2006-02-03 | Guildpact (`GPT`) | main | 165 | 11 | 154 | 6.7% |
-| 2006-03-18 | Champs and States (`PCMP`) | other | 12 | 1 | 11 | 8.3% |
-| 2006-04-22 | Dissension Promos (`PDIS`) | other | 2 | 0 | 2 | 0.0% |
-| 2006-05-05 | Dissension (`DIS`) | main | 180 | 16 | 164 | 8.9% |
-| 2006-07-08 | Coldsnap Promos (`PCSP`) | other | 1 | 0 | 1 | 0.0% |
-| 2006-07-21 | Coldsnap (`CSP`) | main | 155 | 14 | 141 | 9.0% |
-| 2006-07-21 | Coldsnap Theme Decks (`CST`) | other | 52 | 8 | 44 | 15.4% |
-| 2006-09-23 | Time Spiral Promos (`PTSP`) | other | 3 | 0 | 3 | 0.0% |
-| 2006-10-06 | Time Spiral (`TSP`) | main | 286 | 19 | 267 | 6.6% |
-| 2006-10-06 | Time Spiral Timeshifted (`TSB`) | main | 121 | 10 | 111 | 8.3% |
-| 2006-10-20 | Pro Tour Promos (`PPRO`) | other | 18 | 0 | 18 | 0.0% |
-| 2006-10-31 | DCI Promos (`DCI`) | other | 67 | 14 | 53 | 20.9% |
-| 2006-12-01 | Happy Holidays (`HHO`) | other | 20 | 0 | 20 | 0.0% |
-| 2007-01-01 | Friday Night Magic 2007 (`F07`) | other | 12 | 0 | 12 | 0.0% |
-| 2007-01-01 | Judge Gift Cards 2007 (`G07`) | other | 5 | 0 | 5 | 0.0% |
-| 2007-01-01 | Magic Player Rewards 2007 (`P07`) | other | 7 | 2 | 5 | 28.6% |
-| 2007-01-01 | Magic Premiere Shop 2007 (`PMPS07`) | other | 5 | 5 | 0 | 100.0% |
-| 2007-01-20 | Planar Chaos Promos (`PPLC`) | other | 2 | 0 | 2 | 0.0% |
-| 2007-02-02 | Planar Chaos (`PLC`) | main | 165 | 10 | 155 | 6.1% |
-| 2007-02-24 | Grand Prix Promos (`PGPX`) | other | 20 | 6 | 14 | 30.0% |
-| 2007-04-21 | Future Sight Promos (`PFUT`) | other | 2 | 0 | 2 | 0.0% |
-| 2007-05-04 | Future Sight (`FUT`) | main | 180 | 11 | 169 | 6.1% |
-| 2007-07-13 | Tenth Edition (`10E`) | main | 368 | 91 | 277 | 24.7% |
-| 2007-07-13 | Tenth Edition Promos (`P10E`) | other | 3 | 0 | 3 | 0.0% |
-| 2007-09-10 | Masters Edition (`ME1`) | other | 185 | 19 | 166 | 10.3% |
-| 2007-09-27 | Lorwyn Promos (`PLRW`) | other | 3 | 0 | 3 | 0.0% |
-| 2007-10-12 | Lorwyn (`LRW`) | main | 286 | 33 | 253 | 11.5% |
-| 2007-11-16 | Duel Decks: Elves vs. Goblins (`DD1`) | other | 56 | 15 | 41 | 26.8% |
-| 2008-01-01 | Friday Night Magic 2008 (`F08`) | other | 12 | 1 | 11 | 8.3% |
-| 2008-01-01 | Judge Gift Cards 2008 (`G08`) | other | 5 | 1 | 4 | 20.0% |
-| 2008-01-01 | Magic Player Rewards 2008 (`P08`) | other | 7 | 3 | 4 | 42.9% |
-| 2008-01-01 | Magic Premiere Shop 2008 (`PMPS08`) | other | 6 | 5 | 1 | 83.3% |
-| 2008-01-19 | Morningtide Promos (`PMOR`) | other | 2 | 0 | 2 | 0.0% |
-| 2008-02-01 | Morningtide (`MOR`) | main | 150 | 9 | 141 | 6.0% |
-| 2008-04-01 | 15th Anniversary Cards (`P15A`) | other | 2 | 1 | 1 | 50.0% |
-| 2008-04-19 | Shadowmoor Promos (`PSHM`) | other | 2 | 0 | 2 | 0.0% |
-| 2008-05-02 | Shadowmoor (`SHM`) | main | 286 | 21 | 265 | 7.3% |
-| 2008-07-12 | Eventide Promos (`PEVE`) | other | 2 | 0 | 2 | 0.0% |
-| 2008-07-25 | Eventide (`EVE`) | main | 180 | 14 | 166 | 7.8% |
-| 2008-08-29 | From the Vault: Dragons (`DRB`) | other | 15 | 0 | 15 | 0.0% |
-| 2008-09-22 | Masters Edition II (`ME2`) | other | 245 | 33 | 212 | 13.5% |
-| 2008-10-03 | Magic Player Rewards 2009 (`P09`) | other | 13 | 5 | 8 | 38.5% |
-| 2008-10-03 | Shards of Alara (`ALA`) | main | 234 | 50 | 184 | 21.4% |
-| 2008-10-03 | Shards of Alara Promos (`PALA`) | other | 2 | 1 | 1 | 50.0% |
-| 2008-11-07 | Duel Decks: Jace vs. Chandra (`DD2`) | other | 56 | 9 | 47 | 16.1% |
-| 2009-01-01 | Duels of the Planeswalkers 2009 Promos (`PDTP`) | other | 1 | 0 | 1 | 0.0% |
-| 2009-01-01 | Friday Night Magic 2009 (`F09`) | other | 12 | 2 | 10 | 16.7% |
-| 2009-01-01 | Judge Gift Cards 2009 (`G09`) | other | 10 | 5 | 5 | 50.0% |
-| 2009-01-01 | Magic Premiere Shop 2009 (`PMPS09`) | other | 5 | 5 | 0 | 100.0% |
-| 2009-01-01 | URL/Convention Promos (`PURL`) | other | 18 | 4 | 14 | 22.2% |
-| 2009-01-31 | Conflux Promos (`PCON`) | other | 2 | 0 | 2 | 0.0% |
-| 2009-02-06 | Conflux (`CON`) | main | 145 | 14 | 131 | 9.7% |
-| 2009-04-10 | Duel Decks: Divine vs. Demonic (`DDC`) | other | 56 | 13 | 43 | 23.2% |
-| 2009-04-25 | Alara Reborn Promos (`PARB`) | other | 3 | 1 | 2 | 33.3% |
-| 2009-04-30 | Alara Reborn (`ARB`) | main | 145 | 14 | 131 | 9.7% |
-| 2009-07-16 | Magic 2010 Promos (`PM10`) | other | 3 | 1 | 2 | 33.3% |
-| 2009-07-17 | Magic 2010 (`M10`) | main | 234 | 67 | 167 | 28.6% |
-| 2009-08-28 | From the Vault: Exiled (`V09`) | other | 15 | 2 | 13 | 13.3% |
-| 2009-09-04 | Planechase (`HOP`) | other | 146 | 38 | 108 | 26.0% |
-| 2009-09-07 | Masters Edition III (`ME3`) | other | 220 | 46 | 174 | 20.9% |
-| 2009-10-02 | Zendikar (`ZEN`) | main | 234 | 36 | 198 | 15.4% |
-| 2009-10-02 | Zendikar Promos (`PZEN`) | other | 5 | 1 | 4 | 20.0% |
-| 2009-10-30 | Duel Decks: Garruk vs. Liliana (`DDD`) | other | 57 | 11 | 46 | 19.3% |
-| 2009-11-20 | Premium Deck Series: Slivers (`H09`) | other | 41 | 10 | 31 | 24.4% |
-| 2010-01-01 | Duels of the Planeswalkers 2010 Promos (`PDP10`) | other | 2 | 0 | 2 | 0.0% |
-| 2010-01-01 | Friday Night Magic 2010 (`F10`) | other | 12 | 1 | 11 | 8.3% |
-| 2010-01-01 | Judge Gift Cards 2010 (`G10`) | other | 8 | 1 | 7 | 12.5% |
-| 2010-01-01 | Magic 2011 Promos (`PM11`) | other | 6 | 1 | 5 | 16.7% |
-| 2010-01-01 | Magic Player Rewards 2010 (`P10`) | other | 13 | 4 | 9 | 30.8% |
-| 2010-01-01 | Magic Premiere Shop 2010 (`PMPS10`) | other | 5 | 5 | 0 | 100.0% |
-| 2010-02-05 | Worldwake (`WWK`) | main | 145 | 14 | 131 | 9.7% |
-| 2010-02-05 | Worldwake Promos (`PWWK`) | other | 6 | 0 | 6 | 0.0% |
-| 2010-03-19 | Duel Decks: Phyrexia vs. the Coalition (`DDE`) | other | 67 | 15 | 52 | 22.4% |
-| 2010-04-23 | Rise of the Eldrazi (`ROE`) | main | 233 | 36 | 197 | 15.5% |
-| 2010-04-23 | Rise of the Eldrazi Promos (`PROE`) | other | 4 | 0 | 4 | 0.0% |
-| 2010-06-04 | Duels of the Planeswalkers (`DPA`) | other | 101 | 36 | 65 | 35.6% |
-| 2010-06-18 | Archenemy (`ARC`) | other | 141 | 37 | 104 | 26.2% |
-| 2010-07-16 | Magic 2011 (`M11`) | main | 234 | 63 | 171 | 26.9% |
-| 2010-08-27 | From the Vault: Relics (`V10`) | other | 15 | 1 | 14 | 6.7% |
-| 2010-09-03 | Duel Decks: Elspeth vs. Tezzeret (`DDF`) | other | 73 | 15 | 58 | 20.5% |
-| 2010-09-30 | Scars of Mirrodin Promos (`PSOM`) | other | 4 | 1 | 3 | 25.0% |
-| 2010-10-01 | Scars of Mirrodin (`SOM`) | main | 234 | 39 | 195 | 16.7% |
-| 2010-11-08 | Magic Online Theme Decks (`TD0`) | other | 174 | 44 | 130 | 25.3% |
-| 2010-11-19 | Premium Deck Series: Fire and Lightning (`PD2`) | other | 31 | 4 | 27 | 12.9% |
-| 2011-01-01 | Duels of the Planeswalkers 2012 Promos (`PDP12`) | other | 3 | 0 | 3 | 0.0% |
-| 2011-01-01 | Friday Night Magic 2011 (`F11`) | other | 12 | 6 | 6 | 50.0% |
-| 2011-01-01 | Judge Gift Cards 2011 (`G11`) | other | 8 | 1 | 7 | 12.5% |
-| 2011-01-01 | Magic Player Rewards 2011 (`P11`) | other | 7 | 1 | 6 | 14.3% |
-| 2011-01-01 | Magic Premiere Shop 2011 (`PMPS11`) | other | 5 | 5 | 0 | 100.0% |
-| 2011-01-01 | Salvat 2011 (`PS11`) | other | 209 | 70 | 139 | 33.5% |
-| 2011-01-10 | Masters Edition IV (`ME4`) | other | 260 | 44 | 216 | 16.9% |
-| 2011-02-03 | Mirrodin Besieged Promos (`PMBS`) | other | 4 | 0 | 4 | 0.0% |
-| 2011-02-04 | Mirrodin Besieged (`MBS`) | main | 150 | 18 | 132 | 12.0% |
-| 2011-04-01 | Duel Decks: Knights vs. Dragons (`DDG`) | other | 72 | 16 | 56 | 22.2% |
-| 2011-05-12 | New Phyrexia Promos (`PNPH`) | other | 4 | 0 | 4 | 0.0% |
-| 2011-05-13 | New Phyrexia (`NPH`) | main | 170 | 21 | 149 | 12.4% |
-| 2011-05-14 | Duel Decks: Mirrodin Pure vs. New Phyrexia (`TD2`) | other | 80 | 21 | 59 | 26.2% |
-| 2011-06-17 | Commander 2011 (`CMD`) | commander | 303 | 68 | 235 | 22.4% |
-| 2011-07-14 | Magic 2012 Promos (`PM12`) | other | 3 | 0 | 3 | 0.0% |
-| 2011-07-15 | Magic 2012 (`M12`) | main | 234 | 62 | 172 | 26.5% |
-| 2011-08-26 | From the Vault: Legends (`V11`) | other | 15 | 1 | 14 | 6.7% |
-| 2011-09-02 | Duel Decks: Ajani vs. Nicol Bolas (`DDH`) | other | 77 | 19 | 58 | 24.7% |
-| 2011-09-24 | Innistrad Promos (`PISD`) | other | 5 | 1 | 4 | 20.0% |
-| 2011-09-30 | Innistrad (`ISD`) | main | 254 | 36 | 218 | 14.2% |
-| 2011-09-30 | Wizards Play Network 2011 (`PW11`) | other | 3 | 0 | 3 | 0.0% |
-| 2011-11-18 | Premium Deck Series: Graveborn (`PD3`) | other | 27 | 6 | 21 | 22.2% |
-| 2012-01-01 | Duels of the Planeswalkers 2013 Promos (`PDP13`) | other | 3 | 0 | 3 | 0.0% |
-| 2012-01-01 | Friday Night Magic 2012 (`F12`) | other | 12 | 4 | 8 | 33.3% |
-| 2012-01-01 | Judge Gift Cards 2012 (`J12`) | other | 8 | 0 | 8 | 0.0% |
-| 2012-01-01 | Wizards Play Network 2012 (`PW12`) | other | 3 | 0 | 3 | 0.0% |
-| 2012-01-28 | Dark Ascension Promos (`PDKA`) | other | 5 | 0 | 5 | 0.0% |
-| 2012-02-01 | IDW Comics Inserts (`PIDW`) | other | 17 | 1 | 16 | 5.9% |
-| 2012-02-03 | Dark Ascension (`DKA`) | main | 158 | 13 | 145 | 8.2% |
-| 2012-03-30 | Duel Decks: Venser vs. Koth (`DDI`) | other | 70 | 17 | 53 | 24.3% |
-| 2012-04-28 | Avacyn Restored Promos (`PAVR`) | other | 6 | 0 | 6 | 0.0% |
-| 2012-05-04 | Avacyn Restored (`AVR`) | main | 234 | 26 | 208 | 11.1% |
-| 2012-06-01 | Planechase 2012 (`PC2`) | other | 136 | 29 | 107 | 21.3% |
-| 2012-07-12 | Magic 2013 Promos (`PM13`) | other | 6 | 1 | 5 | 16.7% |
-| 2012-07-13 | Magic 2013 (`M13`) | main | 234 | 59 | 175 | 25.2% |
-| 2012-08-31 | From the Vault: Realms (`V12`) | other | 15 | 2 | 13 | 13.3% |
-| 2012-09-07 | Duel Decks: Izzet vs. Golgari (`DDJ`) | other | 78 | 12 | 66 | 15.4% |
-| 2012-10-05 | Return to Ravnica (`RTR`) | main | 254 | 54 | 200 | 21.3% |
-| 2012-10-05 | Return to Ravnica Promos (`PRTR`) | other | 10 | 0 | 10 | 0.0% |
-| 2012-11-02 | Commander's Arsenal (`CM1`) | other | 18 | 1 | 17 | 5.6% |
-| 2013-01-01 | Duels of the Planeswalkers 2014 Promos (`PDP14`) | other | 3 | 0 | 3 | 0.0% |
-| 2013-01-01 | Friday Night Magic 2013 (`F13`) | other | 12 | 3 | 9 | 25.0% |
-| 2013-01-01 | Judge Gift Cards 2013 (`J13`) | other | 8 | 0 | 8 | 0.0% |
-| 2013-01-26 | Gatecrash Promos (`PGTC`) | other | 10 | 0 | 10 | 0.0% |
-| 2013-02-01 | Gatecrash (`GTC`) | main | 249 | 22 | 227 | 8.8% |
-| 2013-03-15 | Duel Decks: Sorin vs. Tibalt (`DDK`) | other | 71 | 17 | 54 | 23.9% |
-| 2013-04-06 | World Magic Cup Qualifiers (`WMC`) | other | 5 | 1 | 4 | 20.0% |
-| 2013-04-27 | Dragon's Maze Promos (`PDGM`) | other | 6 | 2 | 4 | 33.3% |
-| 2013-05-03 | Dragon's Maze (`DGM`) | main | 156 | 31 | 125 | 19.9% |
-| 2013-06-07 | Modern Masters (`MMA`) | other | 229 | 16 | 213 | 7.0% |
-| 2013-07-18 | Magic 2014 Promos (`PM14`) | other | 6 | 1 | 5 | 16.7% |
-| 2013-07-18 | San Diego Comic-Con 2013 (`PSDC`) | other | 5 | 0 | 5 | 0.0% |
-| 2013-07-19 | Magic 2014 (`M14`) | main | 234 | 53 | 181 | 22.6% |
-| 2013-08-23 | From the Vault: Twenty (`V13`) | other | 20 | 4 | 16 | 20.0% |
-| 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | other | 68 | 12 | 56 | 17.6% |
-| 2013-09-21 | Theros Promos (`PTHS`) | other | 10 | 1 | 9 | 10.0% |
-| 2013-09-27 | Theros (`THS`) | main | 234 | 30 | 204 | 12.8% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 341 | 92 | 249 | 27.0% |
-| 2014-01-01 | Friday Night Magic 2014 (`F14`) | other | 12 | 1 | 11 | 8.3% |
-| 2014-01-01 | Judge Gift Cards 2014 (`J14`) | other | 14 | 5 | 9 | 35.7% |
-| 2014-02-01 | Born of the Gods Promos (`PBNG`) | other | 9 | 0 | 9 | 0.0% |
-| 2014-02-07 | Born of the Gods (`BNG`) | main | 165 | 11 | 154 | 6.7% |
-| 2014-03-14 | Duel Decks: Jace vs. Vraska (`DDM`) | other | 76 | 10 | 66 | 13.2% |
-| 2014-04-26 | Journey into Nyx Promos (`PJOU`) | other | 10 | 0 | 10 | 0.0% |
-| 2014-05-02 | Journey into Nyx (`JOU`) | main | 165 | 19 | 146 | 11.5% |
-| 2014-05-30 | Modern Event Deck 2014 (`MD1`) | other | 26 | 6 | 20 | 23.1% |
-| 2014-06-06 | Conspiracy (`CNS`) | other | 210 | 17 | 193 | 8.1% |
-| 2014-06-06 | Conspiracy Promos (`PCNS`) | other | 1 | 0 | 1 | 0.0% |
-| 2014-06-16 | Vintage Masters (`VMA`) | other | 325 | 57 | 268 | 17.5% |
-| 2014-07-08 | San Diego Comic-Con 2014 (`PS14`) | other | 6 | 0 | 6 | 0.0% |
-| 2014-07-09 | Duels of the Planeswalkers 2015 Promos (`PDP15`) | other | 2 | 0 | 2 | 0.0% |
-| 2014-07-17 | Magic 2015 Promos (`PM15`) | other | 13 | 1 | 12 | 7.7% |
-| 2014-07-18 | Magic 2015 (`M15`) | main | 269 | 52 | 217 | 19.3% |
-| 2014-07-18 | Magic 2015 Clash Pack (`CP1`) | other | 6 | 1 | 5 | 16.7% |
-| 2014-08-22 | From the Vault: Annihilation (`V14`) | other | 15 | 1 | 14 | 6.7% |
-| 2014-09-05 | Duel Decks: Speed vs. Cunning (`DDN`) | other | 71 | 17 | 54 | 23.9% |
-| 2014-09-26 | Khans of Tarkir (`KTK`) | main | 254 | 52 | 202 | 20.5% |
-| 2014-09-26 | Khans of Tarkir Promos (`PKTK`) | other | 44 | 1 | 43 | 2.3% |
-| 2014-11-07 | Commander 2014 (`C14`) | commander | 322 | 62 | 260 | 19.3% |
-| 2014-12-05 | Duel Decks Anthology: Divine vs. Demonic (`DVD`) | other | 56 | 13 | 43 | 23.2% |
-| 2014-12-05 | Duel Decks Anthology: Elves vs. Goblins (`EVG`) | other | 56 | 15 | 41 | 26.8% |
-| 2014-12-05 | Duel Decks Anthology: Garruk vs. Liliana (`GVL`) | other | 57 | 11 | 46 | 19.3% |
-| 2014-12-05 | Duel Decks Anthology: Jace vs. Chandra (`JVC`) | other | 56 | 9 | 47 | 16.1% |
-| 2015-01-01 | Friday Night Magic 2015 (`F15`) | other | 12 | 1 | 11 | 8.3% |
-| 2015-01-01 | Judge Gift Cards 2015 (`J15`) | other | 8 | 1 | 7 | 12.5% |
-| 2015-01-17 | Ugin's Fate (`UGIN`) | other | 26 | 0 | 26 | 0.0% |
-| 2015-01-23 | Fate Reforged (`FRF`) | main | 180 | 24 | 156 | 13.3% |
-| 2015-01-23 | Fate Reforged Clash Pack (`CP2`) | other | 6 | 0 | 6 | 0.0% |
-| 2015-01-23 | Fate Reforged Promos (`PFRF`) | other | 33 | 0 | 33 | 0.0% |
-| 2015-02-27 | Duel Decks: Elspeth vs. Kiora (`DDO`) | other | 58 | 11 | 47 | 19.0% |
-| 2015-03-27 | Dragons of Tarkir (`DTK`) | main | 254 | 30 | 224 | 11.8% |
-| 2015-03-27 | Dragons of Tarkir Promos (`PDTK`) | other | 42 | 0 | 42 | 0.0% |
-| 2015-04-03 | Tarkir Dragonfury (`PTKDF`) | other | 4 | 2 | 2 | 50.0% |
-| 2015-05-06 | Tempest Remastered (`TPR`) | other | 254 | 35 | 219 | 13.8% |
-| 2015-05-22 | Modern Masters 2015 (`MM2`) | other | 249 | 36 | 213 | 14.5% |
-| 2015-07-09 | San Diego Comic-Con 2015 (`PS15`) | other | 5 | 0 | 5 | 0.0% |
-| 2015-07-17 | Magic Origins (`ORI`) | main | 273 | 42 | 231 | 15.4% |
-| 2015-07-17 | Magic Origins Clash Pack (`CP3`) | other | 6 | 1 | 5 | 16.7% |
-| 2015-07-17 | Magic Origins Promos (`PORI`) | other | 43 | 2 | 41 | 4.7% |
-| 2015-08-21 | From the Vault: Angels (`V15`) | other | 15 | 2 | 13 | 13.3% |
-| 2015-08-28 | Duel Decks: Zendikar vs. Eldrazi (`DDP`) | other | 67 | 18 | 49 | 26.9% |
-| 2015-10-02 | Battle for Zendikar (`BFZ`) | main | 254 | 38 | 216 | 15.0% |
-| 2015-10-02 | Battle for Zendikar Promos (`PBFZ`) | other | 70 | 5 | 65 | 7.1% |
-| 2015-10-02 | BFZ Standard Series (`PSS1`) | other | 5 | 5 | 0 | 100.0% |
-| 2015-10-02 | Zendikar Expeditions (`EXP`) | other | 45 | 27 | 18 | 60.0% |
-| 2015-11-13 | Commander 2015 (`C15`) | commander | 327 | 65 | 262 | 19.9% |
-| 2015-11-18 | Legendary Cube Prize Pack (`PZ1`) | other | 149 | 16 | 133 | 10.7% |
-| 2016-01-01 | Friday Night Magic 2016 (`F16`) | other | 12 | 2 | 10 | 16.7% |
-| 2016-01-01 | Judge Gift Cards 2016 (`J16`) | other | 8 | 0 | 8 | 0.0% |
-| 2016-01-22 | Oath of the Gatewatch (`OGW`) | main | 183 | 22 | 161 | 12.0% |
-| 2016-01-22 | Oath of the Gatewatch Promos (`POGW`) | other | 55 | 1 | 54 | 1.8% |
-| 2016-02-26 | Duel Decks: Blessed vs. Cursed (`DDQ`) | other | 67 | 13 | 54 | 19.4% |
-| 2016-04-08 | Shadows over Innistrad (`SOI`) | main | 287 | 27 | 260 | 9.4% |
-| 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | other | 79 | 0 | 79 | 0.0% |
-| 2016-04-08 | Welcome Deck 2016 (`W16`) | other | 16 | 2 | 14 | 12.5% |
-| 2016-06-10 | Eternal Masters (`EMA`) | other | 249 | 45 | 204 | 18.1% |
-| 2016-07-22 | Eldritch Moon (`EMN`) | main | 208 | 17 | 191 | 8.2% |
-| 2016-07-22 | Eldritch Moon Promos (`PEMN`) | other | 64 | 1 | 63 | 1.6% |
-| 2016-08-19 | From the Vault: Lore (`V16`) | other | 15 | 0 | 15 | 0.0% |
-| 2016-08-26 | Conspiracy: Take the Crown (`CN2`) | other | 221 | 30 | 191 | 13.6% |
-| 2016-09-02 | Duel Decks: Nissa vs. Ob Nixilis (`DDR`) | other | 62 | 13 | 49 | 21.0% |
-| 2016-09-30 | Kaladesh (`KLD`) | main | 264 | 40 | 224 | 15.2% |
-| 2016-09-30 | Kaladesh Inventions (`MPS`) | other | 54 | 6 | 48 | 11.1% |
-| 2016-09-30 | Kaladesh Promos (`PKLD`) | other | 70 | 5 | 65 | 7.1% |
-| 2016-10-01 | San Diego Comic-Con 2016 (`PS16`) | other | 5 | 0 | 5 | 0.0% |
-| 2016-11-11 | Commander 2016 (`C16`) | commander | 341 | 61 | 280 | 17.9% |
-| 2016-11-16 | Treasure Chest (`PZ2`) | other | 270 | 24 | 246 | 8.9% |
-| 2016-11-25 | Planechase Anthology (`PCA`) | other | 136 | 29 | 107 | 21.3% |
-| 2017-01-01 | Friday Night Magic 2017 (`F17`) | other | 9 | 1 | 8 | 11.1% |
-| 2017-01-01 | Judge Gift Cards 2017 (`J17`) | other | 9 | 0 | 9 | 0.0% |
-| 2017-01-20 | Aether Revolt (`AER`) | main | 194 | 16 | 178 | 8.2% |
-| 2017-01-20 | Aether Revolt Promos (`PAER`) | other | 55 | 1 | 54 | 1.8% |
-| 2017-03-17 | Modern Masters 2017 (`MM3`) | other | 249 | 69 | 180 | 27.7% |
-| 2017-03-31 | Duel Decks: Mind vs. Might (`DDS`) | other | 56 | 11 | 45 | 19.6% |
-| 2017-04-15 | Welcome Deck 2017 (`W17`) | other | 30 | 12 | 18 | 40.0% |
-| 2017-04-28 | Amonkhet (`AKH`) | main | 272 | 53 | 219 | 19.5% |
-| 2017-04-28 | Amonkhet Invocations (`MP2`) | other | 54 | 4 | 50 | 7.4% |
-| 2017-04-28 | Amonkhet Promos (`PAKH`) | other | 69 | 10 | 59 | 14.5% |
-| 2017-06-09 | Commander Anthology (`CMA`) | commander | 289 | 67 | 222 | 23.2% |
-| 2017-06-16 | Archenemy: Nicol Bolas (`E01`) | other | 101 | 21 | 80 | 20.8% |
-| 2017-07-14 | Hour of Devastation (`HOU`) | main | 199 | 38 | 161 | 19.1% |
-| 2017-07-14 | Hour of Devastation Promos (`PHOU`) | other | 55 | 0 | 55 | 0.0% |
-| 2017-07-20 | San Diego Comic-Con 2017 (`PS17`) | other | 6 | 0 | 6 | 0.0% |
-| 2017-08-25 | Commander 2017 (`C17`) | commander | 299 | 71 | 228 | 23.7% |
-| 2017-09-20 | 2016 Heroes of the Realm (`PHTR`) | other | 3 | 0 | 3 | 0.0% |
-| 2017-09-20 | HasCon 2017 (`H17`) | other | 3 | 0 | 3 | 0.0% |
-| 2017-09-29 | Ixalan (`XLN`) | main | 274 | 53 | 221 | 19.3% |
-| 2017-09-29 | Ixalan Promos (`PXLN`) | other | 80 | 6 | 74 | 7.5% |
-| 2017-09-29 | XLN Standard Showdown (`PSS2`) | other | 5 | 5 | 0 | 100.0% |
-| 2017-10-20 | 2017 Gift Pack (`G17`) | other | 5 | 5 | 0 | 100.0% |
-| 2017-10-24 | Duel Decks: Merfolk vs. Goblins (`DDT`) | other | 57 | 12 | 45 | 21.1% |
-| 2017-11-17 | Iconic Masters (`IMA`) | other | 249 | 39 | 210 | 15.7% |
-| 2017-11-24 | Explorers of Ixalan (`E02`) | other | 47 | 12 | 35 | 25.5% |
-| 2017-11-24 | From the Vault: Transform (`V17`) | other | 16 | 0 | 16 | 0.0% |
-| 2017-11-24 | XLN Treasure Chest (`PXTC`) | other | 10 | 0 | 10 | 0.0% |
-| 2017-12-08 | Unstable (`UST`) | other | 249 | 17 | 232 | 6.8% |
-| 2017-12-08 | Unstable Promos (`PUST`) | other | 1 | 0 | 1 | 0.0% |
-| 2018-01-01 | Judge Gift Cards 2018 (`J18`) | other | 8 | 1 | 7 | 12.5% |
-| 2018-01-19 | Rivals of Ixalan (`RIX`) | main | 205 | 43 | 162 | 21.0% |
-| 2018-01-19 | Rivals of Ixalan Promos (`PRIX`) | other | 63 | 3 | 60 | 4.8% |
-| 2018-01-25 | Nationals Promos (`PNAT`) | other | 1 | 1 | 0 | 100.0% |
-| 2018-03-16 | Masters 25 (`A25`) | other | 249 | 32 | 217 | 12.9% |
-| 2018-04-06 | Duel Decks: Elves vs. Inventors (`DDU`) | other | 71 | 18 | 53 | 25.4% |
-| 2018-04-27 | Dominaria (`DOM`) | main | 265 | 45 | 220 | 17.0% |
-| 2018-04-27 | Dominaria Promos (`PDOM`) | other | 93 | 10 | 83 | 10.8% |
-| 2018-06-08 | Battlebond (`BBD`) | other | 254 | 51 | 203 | 20.1% |
-| 2018-06-08 | Battlebond Promos (`PBBD`) | other | 22 | 0 | 22 | 0.0% |
-| 2018-06-08 | Commander Anthology Volume II (`CM2`) | commander | 279 | 58 | 221 | 20.8% |
-| 2018-06-15 | Signature Spellbook: Jace (`SS1`) | other | 8 | 2 | 6 | 25.0% |
-| 2018-06-22 | Global Series Jiang Yanggu & Mu Yanling (`GS1`) | other | 40 | 23 | 17 | 57.5% |
-| 2018-07-01 | Core Set 2019 Promos (`PM19`) | other | 74 | 6 | 68 | 8.1% |
-| 2018-07-13 | Core Set 2019 (`M19`) | main | 299 | 89 | 210 | 29.8% |
-| 2018-07-13 | M19 Standard Showdown (`PSS3`) | other | 5 | 5 | 0 | 100.0% |
-| 2018-07-14 | Arena New Player Experience (`ANA`) | other | 11 | 10 | 1 | 90.9% |
-| 2018-07-14 | Arena New Player Experience Cards (`OANA`) | other | 14 | 8 | 6 | 57.1% |
-| 2018-07-14 | MTG Arena Promos (`PANA`) | other | 23 | 12 | 11 | 52.2% |
-| 2018-07-19 | San Diego Comic-Con 2018 (`PS18`) | other | 5 | 0 | 5 | 0.0% |
-| 2018-08-01 | 2017 Heroes of the Realm (`PH17`) | other | 3 | 0 | 3 | 0.0% |
-| 2018-08-10 | Commander 2018 (`C18`) | commander | 297 | 73 | 224 | 24.6% |
-| 2018-10-05 | Guilds of Ravnica (`GRN`) | main | 268 | 47 | 221 | 17.5% |
-| 2018-10-05 | Guilds of Ravnica Promos (`PGRN`) | other | 60 | 3 | 57 | 5.0% |
-| 2018-10-05 | Mythic Edition (`MED`) | other | 24 | 0 | 24 | 0.0% |
-| 2018-11-02 | GRN Guild Kit (`GK1`) | other | 122 | 26 | 96 | 21.3% |
-| 2018-11-09 | GRN Ravnica Weekend (`PRWK`) | other | 5 | 5 | 0 | 100.0% |
-| 2018-11-16 | Game Night (`GNT`) | other | 63 | 24 | 39 | 38.1% |
-| 2018-11-16 | M19 Gift Pack (`G18`) | other | 5 | 0 | 5 | 0.0% |
-| 2018-12-07 | Ultimate Box Topper (`PUMA`) | other | 40 | 1 | 39 | 2.5% |
-| 2018-12-07 | Ultimate Masters (`UMA`) | other | 254 | 17 | 237 | 6.7% |
-| 2019-01-01 | MagicFest 2019 (`PF19`) | other | 7 | 7 | 0 | 100.0% |
-| 2019-01-25 | Ravnica Allegiance (`RNA`) | main | 268 | 38 | 230 | 14.2% |
-| 2019-01-25 | Ravnica Allegiance Promos (`PRNA`) | other | 59 | 3 | 56 | 5.1% |
-| 2019-02-15 | RNA Guild Kit (`GK2`) | other | 128 | 23 | 105 | 18.0% |
-| 2019-02-16 | RNA Ravnica Weekend (`PRW2`) | other | 5 | 5 | 0 | 100.0% |
-| 2019-04-10 | Judge Gift Cards 2019 (`J19`) | other | 8 | 0 | 8 | 0.0% |
-| 2019-05-03 | War of the Spark (`WAR`) | main | 266 | 25 | 241 | 9.4% |
-| 2019-05-03 | War of the Spark Promos (`PWAR`) | other | 92 | 0 | 92 | 0.0% |
-| 2019-06-14 | Modern Horizons (`MH1`) | other | 255 | 28 | 227 | 11.0% |
-| 2019-06-14 | Modern Horizons Promos (`PMH1`) | other | 2 | 0 | 2 | 0.0% |
-| 2019-06-28 | Signature Spellbook: Gideon (`SS2`) | other | 8 | 0 | 8 | 0.0% |
-| 2019-07-12 | Core Set 2020 (`M20`) | main | 330 | 81 | 249 | 24.5% |
-| 2019-07-12 | Core Set 2020 Promos (`PM20`) | other | 73 | 2 | 71 | 2.7% |
-| 2019-07-12 | M20 Promo Packs (`PPP1`) | other | 5 | 5 | 0 | 100.0% |
-| 2019-07-18 | San Diego Comic-Con 2019 (`PS19`) | other | 5 | 0 | 5 | 0.0% |
-| 2019-08-01 | 2018 Heroes of the Realm (`PH18`) | other | 4 | 0 | 4 | 0.0% |
-| 2019-08-23 | Commander 2019 (`C19`) | commander | 292 | 64 | 228 | 21.9% |
-| 2019-10-01 | Planeswalker Championship Promos (`PWCS`) | other | 46 | 1 | 45 | 2.2% |
-| 2019-10-04 | Throne of Eldraine (`ELD`) | main | 286 | 43 | 243 | 15.0% |
-| 2019-10-04 | Throne of Eldraine Promos (`PELD`) | other | 68 | 5 | 63 | 7.4% |
-| 2019-10-22 | Ponies: The Galloping (`PTG`) | other | 3 | 0 | 3 | 0.0% |
-| 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | other | 120 | 7 | 113 | 5.8% |
-| 2019-11-07 | The List (`PLST`) | other | 5221 | 600 | 4621 | 11.5% |
-| 2019-11-15 | Game Night 2019 (`GN2`) | other | 59 | 13 | 46 | 22.0% |
-| 2019-11-21 | Historic Anthology 1 (`HA1`) | other | 20 | 5 | 15 | 25.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | 1696 | 155 | 1541 | 9.1% |
-| 2020-01-01 | Judge Gift Cards 2020 (`J20`) | other | 10 | 4 | 6 | 40.0% |
-| 2020-01-01 | MagicFest 2020 (`PF20`) | other | 6 | 5 | 1 | 83.3% |
-| 2020-01-24 | Theros Beyond Death (`THB`) | main | 273 | 22 | 251 | 8.1% |
-| 2020-01-24 | Theros Beyond Death Promos (`PTHB`) | other | 68 | 1 | 67 | 1.5% |
-| 2020-02-29 | Unsanctioned (`UND`) | other | 91 | 10 | 81 | 11.0% |
-| 2020-03-12 | Historic Anthology 2 (`HA2`) | other | 25 | 7 | 18 | 28.0% |
-| 2020-04-17 | Commander 2020 (`C20`) | commander | 322 | 58 | 264 | 18.0% |
-| 2020-04-24 | Ikoria: Lair of Behemoths (`IKO`) | main | 266 | 45 | 221 | 16.9% |
-| 2020-04-24 | Ikoria: Lair of Behemoths Promos (`PIKO`) | other | 68 | 5 | 63 | 7.4% |
-| 2020-05-18 | Love Your LGS 2020 (`PLG20`) | other | 2 | 0 | 2 | 0.0% |
-| 2020-05-21 | Historic Anthology 3 (`HA3`) | other | 27 | 0 | 27 | 0.0% |
-| 2020-06-12 | Secret Lair: Ultimate Edition (`SLU`) | secret-lair | 16 | 15 | 1 | 93.8% |
-| 2020-06-26 | Signature Spellbook: Chandra (`SS3`) | other | 8 | 0 | 8 | 0.0% |
-| 2020-07-03 | Core Set 2021 (`M21`) | main | 285 | 51 | 234 | 17.9% |
-| 2020-07-03 | Core Set 2021 Promos (`PM21`) | other | 68 | 3 | 65 | 4.4% |
-| 2020-07-17 | Jumpstart (`JMP`) | other | 461 | 77 | 384 | 16.7% |
-| 2020-07-17 | Jumpstart Arena Exclusives (`AJMP`) | other | 18 | 1 | 17 | 5.6% |
-| 2020-08-01 | 2019 Heroes of the Realm (`PH19`) | other | 7 | 0 | 7 | 0.0% |
-| 2020-08-07 | Double Masters (`2XM`) | other | 337 | 38 | 299 | 11.3% |
-| 2020-08-13 | Amonkhet Remastered (`AKR`) | other | 309 | 45 | 264 | 14.6% |
-| 2020-08-13 | Arena Beginner Set (`ANB`) | other | 120 | 49 | 71 | 40.8% |
-| 2020-09-25 | Zendikar Rising (`ZNR`) | main | 285 | 28 | 257 | 9.8% |
-| 2020-09-25 | Zendikar Rising Commander (`ZNC`) | commander | 140 | 23 | 117 | 16.4% |
-| 2020-09-25 | Zendikar Rising Expeditions (`ZNE`) | other | 30 | 22 | 8 | 73.3% |
-| 2020-09-25 | Zendikar Rising Promos (`PZNR`) | other | 84 | 7 | 77 | 8.3% |
-| 2020-11-12 | Kaladesh Remastered (`KLR`) | other | 292 | 32 | 260 | 11.0% |
-| 2020-11-20 | Commander Legends (`CMR`) | other | 531 | 76 | 455 | 14.3% |
-| 2020-12-04 | Commander Collection: Green (`CC1`) | other | 8 | 2 | 6 | 25.0% |
-| 2021-01-01 | Judge Gift Cards 2021 (`PJ21`) | other | 10 | 0 | 10 | 0.0% |
-| 2021-01-01 | Love Your LGS 2021 (`PLG21`) | other | 9 | 0 | 9 | 0.0% |
-| 2021-01-25 | Year of the Ox 2021 (`PL21`) | other | 5 | 0 | 5 | 0.0% |
-| 2021-01-29 | Kaldheim Promos (`PKHM`) | other | 88 | 4 | 84 | 4.5% |
-| 2021-02-05 | Kaldheim (`KHM`) | main | 323 | 36 | 287 | 11.1% |
-| 2021-02-05 | Kaldheim Commander (`KHC`) | commander | 119 | 25 | 94 | 21.0% |
-| 2021-03-11 | Historic Anthology 4 (`HA4`) | other | 25 | 0 | 25 | 0.0% |
-| 2021-03-19 | Time Spiral Remastered (`TSR`) | other | 410 | 31 | 379 | 7.6% |
-| 2021-04-23 | Commander 2021 (`C21`) | commander | 329 | 40 | 289 | 12.2% |
-| 2021-04-23 | Strixhaven Mystical Archive (`STA`) | other | 63 | 9 | 54 | 14.3% |
-| 2021-04-23 | Strixhaven: School of Mages (`STX`) | main | 290 | 24 | 266 | 8.3% |
-| 2021-04-23 | Strixhaven: School of Mages Promos (`PSTX`) | other | 90 | 1 | 89 | 1.1% |
-| 2021-05-06 | Modern Horizons 2 Promos (`PMH2`) | other | 80 | 6 | 74 | 7.5% |
-| 2021-05-27 | Historic Anthology 5 (`HA5`) | other | 25 | 2 | 23 | 8.0% |
-| 2021-06-18 | Modern Horizons 1 Timeshifts (`H1R`) | other | 40 | 3 | 37 | 7.5% |
-| 2021-06-18 | Modern Horizons 2 (`MH2`) | other | 310 | 35 | 275 | 11.3% |
-| 2021-06-18 | Wizards Play Network 2021 (`PW21`) | other | 6 | 3 | 3 | 50.0% |
-| 2021-07-23 | Adventures in the Forgotten Realms (`AFR`) | main | 288 | 22 | 266 | 7.6% |
-| 2021-07-23 | Adventures in the Forgotten Realms Promos (`PAFR`) | other | 81 | 3 | 78 | 3.7% |
-| 2021-07-23 | Forgotten Realms Commander (`AFC`) | commander | 275 | 42 | 233 | 15.3% |
-| 2021-08-01 | 2020 Heroes of the Realm (`PH20`) | other | 3 | 0 | 3 | 0.0% |
-| 2021-08-20 | Mystery Booster Playtest Cards 2021 (`CMB2`) | other | 120 | 7 | 113 | 5.8% |
-| 2021-08-26 | Jumpstart: Historic Horizons (`J21`) | other | 389 | 32 | 357 | 8.2% |
-| 2021-09-24 | Innistrad: Midnight Hunt (`MID`) | main | 279 | 22 | 257 | 7.9% |
-| 2021-09-24 | Innistrad: Midnight Hunt Promos (`PMID`) | other | 84 | 5 | 79 | 6.0% |
-| 2021-09-24 | Midnight Hunt Commander (`MIC`) | commander | 149 | 14 | 135 | 9.4% |
-| 2021-10-15 | Pioneer Challenger Decks 2021 (`Q06`) | other | 10 | 0 | 10 | 0.0% |
-| 2021-11-19 | Crimson Vow Commander (`VOC`) | commander | 150 | 21 | 129 | 14.0% |
-| 2021-11-19 | Innistrad: Crimson Vow (`VOW`) | main | 283 | 19 | 264 | 6.7% |
-| 2021-11-19 | Innistrad: Crimson Vow Promos (`PVOW`) | other | 84 | 5 | 79 | 6.0% |
-| 2021-12-09 | Alchemy: Innistrad (`YMID`) | other | 63 | 0 | 63 | 0.0% |
-| 2021-12-25 | 2021 Heroes of the Realm (`PH21`) | other | 4 | 0 | 4 | 0.0% |
-| 2022-01-01 | Judge Gift Cards 2022 (`P22`) | other | 10 | 0 | 10 | 0.0% |
-| 2022-01-28 | Commander Collection: Black (`CC2`) | other | 8 | 1 | 7 | 12.5% |
-| 2022-01-28 | Innistrad: Double Feature (`DBL`) | other | 532 | 30 | 502 | 5.6% |
-| 2022-02-18 | Kamigawa: Neon Dynasty (`NEO`) | main | 304 | 21 | 283 | 6.9% |
-| 2022-02-18 | Kamigawa: Neon Dynasty Promos (`PNEO`) | other | 77 | 0 | 77 | 0.0% |
-| 2022-02-18 | Neon Dynasty Commander (`NEC`) | commander | 139 | 15 | 124 | 10.8% |
-| 2022-02-25 | Year of the Tiger 2022 (`PL22`) | other | 5 | 1 | 4 | 20.0% |
-| 2022-03-03 | Universes Within (`SLX`) | other | 30 | 0 | 30 | 0.0% |
-| 2022-03-05 | Wizards Play Network 2022 (`PW22`) | other | 6 | 1 | 5 | 16.7% |
-| 2022-03-17 | Alchemy: Kamigawa (`YNEO`) | other | 30 | 0 | 30 | 0.0% |
-| 2022-04-08 | Game Day Promos (`GDY`) | other | 9 | 0 | 9 | 0.0% |
-| 2022-04-29 | New Capenna Commander (`NCC`) | commander | 350 | 49 | 301 | 14.0% |
-| 2022-04-29 | New Capenna Commander Promos (`PNCC`) | other | 75 | 0 | 75 | 0.0% |
-| 2022-04-29 | Streets of New Capenna (`SNC`) | main | 310 | 29 | 281 | 9.4% |
-| 2022-04-29 | Streets of New Capenna Promos (`PSNC`) | other | 80 | 6 | 74 | 7.5% |
-| 2022-06-02 | Alchemy: New Capenna (`YSNC`) | other | 30 | 0 | 30 | 0.0% |
-| 2022-06-10 | Battle for Baldur's Gate Promos (`PCLB`) | other | 99 | 5 | 94 | 5.1% |
-| 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | other | 651 | 60 | 591 | 9.2% |
-| 2022-07-01 | Love Your LGS 2022 (`PLG22`) | other | 2 | 1 | 1 | 50.0% |
-| 2022-07-07 | Alchemy Horizons: Baldur's Gate (`HBG`) | other | 421 | 34 | 387 | 8.1% |
-| 2022-07-08 | Double Masters 2022 (`2X2`) | other | 332 | 33 | 299 | 9.9% |
-| 2022-07-09 | Store Championships (`SCH`) | other | 50 | 3 | 47 | 6.0% |
-| 2022-07-28 | Explorer Anthology 1 (`EA1`) | other | 20 | 2 | 18 | 10.0% |
-| 2022-07-28 | Historic Anthology 6 (`HA6`) | other | 20 | 10 | 10 | 50.0% |
-| 2022-08-01 | Summer Vacation Promos 2022 (`PSVC`) | other | 3 | 0 | 3 | 0.0% |
-| 2022-09-02 | 30th Anniversary Misc Promos (`P30M`) | other | 3 | 1 | 2 | 33.3% |
-| 2022-09-02 | 30th Anniversary Play Promos (`P30A`) | other | 30 | 5 | 25 | 16.7% |
-| 2022-09-09 | Dominaria United (`DMU`) | main | 288 | 28 | 260 | 9.7% |
-| 2022-09-09 | Dominaria United Commander (`DMC`) | commander | 192 | 42 | 150 | 21.9% |
-| 2022-09-09 | Dominaria United Promos (`PDMU`) | other | 81 | 2 | 79 | 2.5% |
-| 2022-10-01 | Regional Championship Qualifiers 2022 (`PRCQ`) | other | 3 | 0 | 3 | 0.0% |
-| 2022-10-05 | Alchemy: Dominaria (`YDMU`) | other | 39 | 7 | 32 | 17.9% |
-| 2022-10-07 | The List (Unfinity Foil Edition) (`ULST`) | other | 62 | 2 | 60 | 3.2% |
-| 2022-10-07 | Unfinity (`UNF`) | other | 266 | 5 | 261 | 1.9% |
-| 2022-10-07 | Unfinity Sticker Sheets (`SUNF`) | other | 48 | 0 | 48 | 0.0% |
-| 2022-10-07 | Warhammer 40,000 Commander (`40K`) | commander | 286 | 43 | 243 | 15.0% |
-| 2022-10-14 | Game Night: Free-for-All (`GN3`) | other | 125 | 22 | 103 | 17.6% |
-| 2022-11-01 | Secret Lair Countdown (`SLC`) | secret-lair | 58 | 5 | 53 | 8.6% |
-| 2022-11-18 | The Brothers' War (`BRO`) | main | 292 | 27 | 265 | 9.2% |
-| 2022-11-18 | The Brothers' War Commander (`BRC`) | commander | 176 | 44 | 132 | 25.0% |
-| 2022-11-18 | The Brothers' War Promos (`PBRO`) | other | 89 | 2 | 87 | 2.2% |
-| 2022-11-18 | The Brothers' War Retro Artifacts (`BRR`) | other | 63 | 7 | 56 | 11.1% |
-| 2022-11-18 | Transformers (`BOT`) | other | 15 | 0 | 15 | 0.0% |
-| 2022-11-26 | Eternal Weekend (`PEWK`) | other | 10 | 0 | 10 | 0.0% |
-| 2022-12-02 | Jumpstart 2022 (`J22`) | other | 819 | 110 | 709 | 13.4% |
-| 2022-12-02 | Starter Commander Decks (`SCD`) | commander | 337 | 68 | 269 | 20.2% |
-| 2022-12-13 | Alchemy: The Brothers' War (`YBRO`) | other | 31 | 0 | 31 | 0.0% |
-| 2022-12-13 | Explorer Anthology 2 (`EA2`) | other | 25 | 2 | 23 | 8.0% |
-| 2023-01-01 | Judge Gift Cards 2023 (`P23`) | other | 10 | 5 | 5 | 50.0% |
-| 2023-01-01 | Wizards Play Network 2023 (`PW23`) | other | 11 | 1 | 10 | 9.1% |
-| 2023-01-07 | Regional Championship Qualifiers 2023 (`PR23`) | other | 3 | 0 | 3 | 0.0% |
-| 2023-01-13 | Dominaria Remastered (`DMR`) | other | 266 | 51 | 215 | 19.2% |
-| 2023-02-03 | Phyrexia: All Will Be One (`ONE`) | main | 271 | 24 | 247 | 8.9% |
-| 2023-02-10 | Phyrexia: All Will Be One Commander (`ONC`) | commander | 144 | 18 | 126 | 12.5% |
-| 2023-02-10 | Phyrexia: All Will Be One Promos (`PONE`) | other | 80 | 5 | 75 | 6.2% |
-| 2023-02-10 | Year of the Rabbit 2023 (`PL23`) | other | 5 | 0 | 5 | 0.0% |
-| 2023-02-17 | Unknown Event (`UNK`) | other | 506 | 8 | 498 | 1.6% |
-| 2023-02-19 | Secret Lair Promo (`SLP`) | secret-lair | 52 | 7 | 45 | 13.5% |
-| 2023-02-28 | Alchemy: Phyrexia (`YONE`) | other | 31 | 0 | 31 | 0.0% |
-| 2023-03-21 | 30th Anniversary History Promos (`P30H`) | other | 5 | 2 | 3 | 40.0% |
-| 2023-03-21 | Shadows of the Past (`SIS`) | other | 76 | 7 | 69 | 9.2% |
-| 2023-03-21 | Shadows over Innistrad Remastered (`SIR`) | other | 284 | 22 | 262 | 7.7% |
-| 2023-04-21 | March of the Machine (`MOM`) | main | 296 | 25 | 271 | 8.4% |
-| 2023-04-21 | March of the Machine Commander (`MOC`) | commander | 338 | 40 | 298 | 11.8% |
-| 2023-04-21 | March of the Machine Promos (`PMOM`) | other | 80 | 1 | 79 | 1.2% |
-| 2023-04-21 | Multiverse Legends (`MUL`) | other | 66 | 1 | 65 | 1.5% |
-| 2023-05-12 | March of the Machine: The Aftermath (`MAT`) | main | 50 | 0 | 50 | 0.0% |
-| 2023-06-23 | Tales of Middle-earth Commander (`LTC`) | commander | 341 | 54 | 287 | 15.8% |
-| 2023-06-23 | Tales of Middle-earth Promos (`PLTR`) | other | 84 | 0 | 84 | 0.0% |
-| 2023-06-23 | The Lord of the Rings: Tales of Middle-earth (`LTR`) | other | 291 | 13 | 278 | 4.5% |
-| 2023-07-01 | MagicFest 2023 (`PF23`) | other | 4 | 1 | 3 | 25.0% |
-| 2023-07-18 | Explorer Anthology 3 (`EA3`) | other | 25 | 6 | 19 | 24.0% |
-| 2023-07-18 | Historic Anthology 7 (`HA7`) | other | 25 | 8 | 17 | 32.0% |
-| 2023-08-01 | 2022 Heroes of the Realm (`PH22`) | other | 5 | 0 | 5 | 0.0% |
-| 2023-08-04 | Commander Masters (`CMM`) | other | 737 | 91 | 646 | 12.3% |
-| 2023-09-01 | 30th Anniversary Celebration Tokyo (`P30T`) | other | 2 | 0 | 2 | 0.0% |
-| 2023-09-08 | Magic × Duel Masters Promos (`PMDA`) | other | 4 | 1 | 3 | 25.0% |
-| 2023-09-08 | Time Spiral Remastered Promos (`PTSR`) | other | 3 | 0 | 3 | 0.0% |
-| 2023-09-08 | Wilds of Eldraine (`WOE`) | main | 281 | 35 | 246 | 12.5% |
-| 2023-09-08 | Wilds of Eldraine Commander (`WOC`) | commander | 143 | 19 | 124 | 13.3% |
-| 2023-09-08 | Wilds of Eldraine Promos (`PWOE`) | other | 80 | 2 | 78 | 2.5% |
-| 2023-09-08 | Wilds of Eldraine: Enchanting Tales (`WOT`) | other | 63 | 0 | 63 | 0.0% |
-| 2023-10-01 | Wizards Play Network 2024 (`PW24`) | other | 18 | 2 | 16 | 11.1% |
-| 2023-10-10 | Alchemy: Wilds of Eldraine (`YWOE`) | other | 31 | 0 | 31 | 0.0% |
-| 2023-10-13 | Doctor Who (`WHO`) | commander | 318 | 48 | 270 | 15.1% |
-| 2023-11-17 | Jurassic World Collection (`REX`) | other | 20 | 0 | 20 | 0.0% |
-| 2023-11-17 | March of the Machine: The Aftermath Promos (`PMAT`) | other | 8 | 0 | 8 | 0.0% |
-| 2023-11-17 | Special Guests (`SPG`) | other | 139 | 15 | 124 | 10.8% |
-| 2023-11-17 | The Lost Caverns of Ixalan (`LCI`) | main | 292 | 20 | 272 | 6.8% |
-| 2023-11-17 | The Lost Caverns of Ixalan Commander (`LCC`) | commander | 313 | 33 | 280 | 10.5% |
-| 2023-11-17 | The Lost Caverns of Ixalan Promos (`PLCI`) | other | 68 | 0 | 68 | 0.0% |
-| 2023-12-05 | Alchemy: Ixalan (`YLCI`) | other | 31 | 0 | 31 | 0.0% |
-| 2024-01-12 | Ravnica Remastered (`RVR`) | other | 313 | 42 | 271 | 13.4% |
-| 2024-02-08 | Year of the Dragon 2024 (`PL24`) | other | 6 | 1 | 5 | 16.7% |
-| 2024-02-09 | Commander Legends Promos (`PCMR`) | other | 6 | 0 | 6 | 0.0% |
-| 2024-02-09 | Murders at Karlov Manor (`MKM`) | main | 279 | 8 | 271 | 2.9% |
-| 2024-02-09 | Murders at Karlov Manor Commander (`MKC`) | commander | 304 | 40 | 264 | 13.2% |
-| 2024-02-09 | Murders at Karlov Manor Promos (`PMKM`) | other | 90 | 0 | 90 | 0.0% |
-| 2024-02-10 | MKM Standard Showdown (`PSS4`) | other | 5 | 5 | 0 | 100.0% |
-| 2024-02-23 | MagicFest 2024 (`PF24`) | other | 2 | 1 | 1 | 50.0% |
-| 2024-02-23 | Ravnica: Clue Edition (`CLU`) | other | 268 | 55 | 213 | 20.5% |
-| 2024-03-05 | Alchemy: Murders at Karlov Manor (`YMKM`) | other | 30 | 0 | 30 | 0.0% |
-| 2024-03-08 | Fallout (`PIP`) | commander | 336 | 58 | 278 | 17.3% |
-| 2024-04-19 | Breaking News (`OTP`) | other | 65 | 3 | 62 | 4.6% |
-| 2024-04-19 | Love Your LGS 2024 (`PLG24`) | other | 5 | 1 | 4 | 20.0% |
-| 2024-04-19 | Outlaws of Thunder Junction (`OTJ`) | main | 276 | 20 | 256 | 7.2% |
-| 2024-04-19 | Outlaws of Thunder Junction Commander (`OTC`) | commander | 306 | 48 | 258 | 15.7% |
-| 2024-04-19 | Outlaws of Thunder Junction Promos (`POTJ`) | other | 80 | 5 | 75 | 6.2% |
-| 2024-04-19 | The Big Score (`BIG`) | main | 30 | 0 | 30 | 0.0% |
-| 2024-05-07 | Alchemy: Outlaws of Thunder Junction (`YOTJ`) | other | 30 | 0 | 30 | 0.0% |
-| 2024-06-14 | Modern Horizons 2 Timeshifts (`H2R`) | other | 16 | 0 | 16 | 0.0% |
-| 2024-06-14 | Modern Horizons 3 (`MH3`) | other | 313 | 28 | 285 | 8.9% |
-| 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 320 | 39 | 281 | 12.2% |
-| 2024-06-14 | Modern Horizons 3 Promos (`PMH3`) | other | 81 | 5 | 76 | 6.2% |
-| 2024-07-05 | Assassin's Creed (`ACR`) | other | 138 | 17 | 121 | 12.3% |
-| 2024-08-02 | Bloomburrow (`BLB`) | main | 280 | 25 | 255 | 8.9% |
-| 2024-08-02 | Bloomburrow Commander (`BLC`) | commander | 312 | 63 | 249 | 20.2% |
-| 2024-08-02 | Bloomburrow Promos (`PBLB`) | other | 80 | 2 | 78 | 2.5% |
-| 2024-08-02 | Cowboy Bebop (`PCBB`) | other | 5 | 2 | 3 | 40.0% |
-| 2024-08-02 | Mystery Booster 2 (`MB2`) | other | 384 | 31 | 353 | 8.1% |
-| 2024-08-20 | Alchemy: Bloomburrow (`YBLB`) | other | 30 | 0 | 30 | 0.0% |
-| 2024-09-27 | Duskmourn: House of Horror (`DSK`) | main | 278 | 26 | 252 | 9.4% |
-| 2024-09-27 | Duskmourn: House of Horror Commander (`DSC`) | commander | 306 | 47 | 259 | 15.4% |
-| 2024-09-27 | Duskmourn: House of Horror Promos (`PDSK`) | other | 80 | 0 | 80 | 0.0% |
-| 2024-10-15 | Alchemy: Duskmourn (`YDSK`) | other | 30 | 0 | 30 | 0.0% |
-| 2024-10-16 | Tales of Middle-earth Deluxe Commander Kit (`PLTC`) | other | 4 | 0 | 4 | 0.0% |
-| 2024-11-15 | Foundations (`FDN`) | main | 517 | 92 | 425 | 17.8% |
-| 2024-11-15 | Foundations Commander (`FDC`) | commander | 3 | 1 | 2 | 33.3% |
-| 2024-11-15 | Foundations Jumpstart (`J25`) | other | 768 | 106 | 662 | 13.8% |
-| 2024-11-15 | Foundations Promos (`PFDN`) | other | 81 | 5 | 76 | 6.2% |
-| 2024-12-10 | Pioneer Masters (`PIO`) | other | 398 | 29 | 369 | 7.3% |
-| 2025-01-01 | MagicFest 2025 (`PF25`) | other | 19 | 2 | 17 | 10.5% |
-| 2025-01-01 | Wizards Play Network 2025 (`PW25`) | other | 16 | 2 | 14 | 12.5% |
-| 2025-01-03 | Spotlight Series (`PSPL`) | other | 13 | 0 | 13 | 0.0% |
-| 2025-01-24 | Innistrad Remastered (`INR`) | other | 300 | 26 | 274 | 8.7% |
-| 2025-02-09 | Japan Standard Cup (`PJSC`) | other | 4 | 0 | 4 | 0.0% |
-| 2025-02-14 | Aetherdrift (`DFT`) | main | 276 | 34 | 242 | 12.3% |
-| 2025-02-14 | Aetherdrift Commander (`DRC`) | commander | 163 | 28 | 135 | 17.2% |
-| 2025-02-14 | Aetherdrift Promos (`PDFT`) | other | 80 | 0 | 80 | 0.0% |
-| 2025-02-14 | Year of the Snake 2025 (`PL25`) | other | 5 | 2 | 3 | 40.0% |
-| 2025-03-04 | Alchemy: Aetherdrift (`YDFT`) | other | 31 | 1 | 30 | 3.2% |
-| 2025-04-11 | Love Your LGS 2025 (`PLG25`) | other | 2 | 1 | 1 | 50.0% |
-| 2025-04-11 | Tarkir: Dragonstorm (`TDM`) | main | 277 | 28 | 249 | 10.1% |
-| 2025-04-11 | Tarkir: Dragonstorm Commander (`TDC`) | commander | 373 | 69 | 304 | 18.5% |
-| 2025-04-11 | Tarkir: Dragonstorm Promos (`PTDM`) | other | 80 | 0 | 80 | 0.0% |
-| 2025-04-29 | Alchemy: Tarkir (`YTDM`) | other | 30 | 0 | 30 | 0.0% |
-| 2025-05-05 | Pioneer Anthology 1 (`PA1`) | other | 11 | 0 | 11 | 0.0% |
-| 2025-06-13 | FIN Standard Showdown (`PSS5`) | other | 2 | 0 | 2 | 0.0% |
-| 2025-06-13 | Final Fantasy (`FIN`) | main | 313 | 35 | 278 | 11.2% |
-| 2025-06-13 | Final Fantasy Commander (`FIC`) | commander | 339 | 61 | 278 | 18.0% |
-| 2025-06-13 | Final Fantasy Promos (`PFIN`) | other | 94 | 7 | 87 | 7.4% |
-| 2025-06-13 | Final Fantasy Regional Promos (`RFIN`) | other | 2 | 0 | 2 | 0.0% |
-| 2025-06-13 | Final Fantasy: Through the Ages (`FCA`) | other | 65 | 4 | 61 | 6.2% |
-| 2025-08-01 | Edge of Eternities (`EOE`) | main | 266 | 17 | 249 | 6.4% |
-| 2025-08-01 | Edge of Eternities Commander (`EOC`) | commander | 171 | 36 | 135 | 21.1% |
-| 2025-08-01 | Edge of Eternities Promos (`PEOE`) | other | 80 | 0 | 80 | 0.0% |
-| 2025-08-01 | Edge of Eternities: Stellar Sights (`EOS`) | other | 45 | 3 | 42 | 6.7% |
-| 2025-08-01 | The Big Score Promos (`PBIG`) | other | 14 | 0 | 14 | 0.0% |
-| 2025-08-19 | Alchemy: Edge of Eternities (`YEOE`) | other | 41 | 10 | 31 | 24.4% |
-| 2025-08-19 | Arena Anthology 1 (`AA1`) | other | 26 | 10 | 16 | 38.5% |
-| 2025-08-19 | Arena Anthology 2 (`AA2`) | other | 25 | 6 | 19 | 24.0% |
-| 2025-08-24 | 2023 Heroes of the Realm (`PH23`) | other | 2 | 0 | 2 | 0.0% |
-| 2025-09-23 | Arena Anthology 3 (`AA3`) | other | 25 | 1 | 24 | 4.0% |
-| 2025-09-23 | Arena Anthology 4 (`AA4`) | other | 28 | 6 | 22 | 21.4% |
-| 2025-09-23 | Through the Omenpaths (`OM1`) | main | 188 | 11 | 177 | 5.9% |
-| 2025-09-23 | Through the Omenpaths Bonus Sheet (`OMB`) | other | 40 | 3 | 37 | 7.5% |
-| 2025-09-26 | Marvel Universe (`MAR`) | other | 94 | 5 | 89 | 5.3% |
-| 2025-09-26 | Marvel's Spider-Man (`SPM`) | main | 193 | 16 | 177 | 8.3% |
-| 2025-09-26 | Marvel's Spider-Man Eternal (`SPE`) | other | 26 | 2 | 24 | 7.7% |
-| 2025-09-26 | Marvel's Spider-Man Promos (`PSPM`) | other | 68 | 0 | 68 | 0.0% |
-| 2025-09-30 | Marvel Legends Series Inserts (`LMAR`) | other | 4 | 0 | 4 | 0.0% |
-| 2025-11-21 | Avatar: The Last Airbender (`TLA`) | main | 286 | 26 | 260 | 9.1% |
-| 2025-11-21 | Avatar: The Last Airbender Eternal (`TLE`) | other | 242 | 41 | 201 | 16.9% |
-| 2025-11-21 | Avatar: The Last Airbender Promos (`PTLA`) | other | 80 | 1 | 79 | 1.2% |
-| 2026-01-01 | Wizards Play Network 2026 (`PW26`) | other | 23 | 7 | 16 | 30.4% |
-| 2026-01-23 | Lorwyn Eclipsed (`ECL`) | main | 273 | 17 | 256 | 6.2% |
-| 2026-01-23 | Lorwyn Eclipsed Commander (`ECC`) | commander | 153 | 25 | 128 | 16.3% |
-| 2026-01-23 | Lorwyn Eclipsed Promos (`PECL`) | other | 80 | 0 | 80 | 0.0% |
-| 2026-02-03 | Alchemy: Lorwyn Eclipsed (`YECL`) | other | 33 | 1 | 32 | 3.0% |
-| 2026-02-17 | Year of the Horse 2026 (`PL26`) | other | 4 | 1 | 3 | 25.0% |
-| 2026-03-06 | Teenage Mutant Ninja Turtles (`TMT`) | main | 195 | 21 | 174 | 10.8% |
-| 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | other | 117 | 18 | 99 | 15.4% |
-| 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | other | 20 | 0 | 20 | 0.0% |
-| 2026-04-13 | MagicFest 2026 (`PF26`) | other | 13 | 4 | 9 | 30.8% |
-| 2026-04-24 | Secrets of Strixhaven (`SOS`) | main | 271 | 22 | 249 | 8.1% |
-| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 375 | 49 | 326 | 13.1% |
-| 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | other | 65 | 6 | 59 | 9.2% |
-| 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | other | 80 | 6 | 74 | 7.5% |
-| 2026-05-19 | Alchemy: Secrets of Strixhaven (`YSOS`) | other | 32 | 1 | 31 | 3.1% |
-| 2026-06-26 | Marvel Super Heroes (`MSH`) | main | 281 | 27 | 254 | 9.6% |
-| 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 616 | 72 | 544 | 11.7% |
-| 2026-08-14 | The Hobbit (`HOB`) | main | 193 | 20 | 173 | 10.4% |
-| 2026-08-14 | The Hobbit Eternal (`HOC`) | other | 117 | 6 | 111 | 5.1% |
-| 2026-09-02 | The Zeta Set (`SLZ`) | other | 121 | 20 | 101 | 16.5% |
-| 2026-10-02 | Reality Fracture (`FRA`) | main | 23 | 0 | 23 | 0.0% |
-| 2026-10-02 | Reality Fracture Commander (`FRC`) | commander | 1 | 0 | 1 | 0.0% |
-| 2026-11-09 | Mystery Booster Commander Edition (`MBC`) | other | 80 | 2 | 78 | 2.5% |
-| 2026-11-13 | Star Trek (`TRK`) | main | 91 | 8 | 83 | 8.8% |
-| 2026-11-13 | Star Trek Commander (`TRC`) | commander | 40 | 16 | 24 | 40.0% |
-| 2026-11-13 | Stardates (`SDS`) | other | 1 | 0 | 1 | 0.0% |
+| Fecha | Edición | Grupo | Categoría | Cartas únicas | Implementadas | Pendientes | % |
+|---|---|---|---|---:|---:|---:|---:|
+| 1993-08-05 | Limited Edition Alpha (`LEA`) | core | main | 290 | 68 | 222 | 23.4% |
+| 1993-10-04 | Limited Edition Beta (`LEB`) | core | main | 292 | 69 | 223 | 23.6% |
+| 1993-12-01 | Unlimited Edition (`2ED`) | core | main | 292 | 69 | 223 | 23.6% |
+| 1993-12-17 | Arabian Nights (`ARN`) | expansion | main | 78 | 9 | 69 | 11.5% |
+| 1994-03-04 | Antiquities (`ATQ`) | expansion | main | 85 | 6 | 79 | 7.1% |
+| 1994-04-11 | Foreign Black Border (`FBB`) | core | main | 296 | 65 | 231 | 22.0% |
+| 1994-04-11 | Revised Edition (`3ED`) | core | main | 296 | 65 | 231 | 22.0% |
+| 1994-06-01 | Legends (`LEG`) | expansion | main | 310 | 43 | 267 | 13.9% |
+| 1994-06-21 | Summer Magic / Edgar (`SUM`) | core | main | 296 | 65 | 231 | 22.0% |
+| 1994-07-15 | Dragon Con (`PDRC`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1994-08-01 | The Dark (`DRK`) | expansion | main | 119 | 16 | 103 | 13.4% |
+| 1994-11-01 | Fallen Empires (`FEM`) | expansion | main | 102 | 11 | 91 | 10.8% |
+| 1994-11-01 | HarperPrism Book Promos (`PHPR`) | promos | other | 5 | 1 | 4 | 20.0% |
+| 1995-04-01 | Fourth Edition (`4ED`) | core | main | 368 | 66 | 302 | 17.9% |
+| 1995-04-01 | Fourth Edition Foreign Black Border (`4BB`) | core | main | 368 | 66 | 302 | 17.9% |
+| 1995-06-03 | Ice Age (`ICE`) | expansion | main | 373 | 28 | 345 | 7.5% |
+| 1995-07-01 | Chronicles (`CHR`) | masters-remastered | other | 116 | 13 | 103 | 11.2% |
+| 1995-07-01 | Chronicles Foreign Black Border (`BCHR`) | masters-remastered | other | 116 | 13 | 103 | 11.2% |
+| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | other | 94 | 14 | 80 | 14.9% |
+| 1995-08-01 | Renaissance (`REN`) | masters-remastered | other | 122 | 15 | 107 | 12.3% |
+| 1995-08-01 | Rinascimento (`RIN`) | masters-remastered | other | 60 | 4 | 56 | 6.7% |
+| 1995-10-01 | Homelands (`HML`) | expansion | main | 115 | 15 | 100 | 13.0% |
+| 1996-06-10 | Alliances (`ALL`) | expansion | main | 144 | 8 | 136 | 5.6% |
+| 1996-07-01 | DCI Legend Membership (`PLGM`) | promos | other | 2 | 1 | 1 | 50.0% |
+| 1996-07-01 | Rivals Quick Start Set (`RQS`) | boxed-products | other | 56 | 21 | 35 | 37.5% |
+| 1996-08-02 | Arena League 1996 (`PARL`) | promos | other | 7 | 6 | 1 | 85.7% |
+| 1996-10-01 | Redemption Program (`PRED`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1996-10-08 | Mirage (`MIR`) | expansion | main | 335 | 46 | 289 | 13.7% |
+| 1996-11-01 | Multiverse Gift Box (`MGB`) | boxed-products | other | 10 | 1 | 9 | 10.0% |
+| 1996-12-31 | Introductory Two-Player Set (`ITP`) | starter | other | 57 | 22 | 35 | 38.6% |
+| 1997-02-03 | Visions (`VIS`) | expansion | main | 167 | 15 | 152 | 9.0% |
+| 1997-03-24 | Fifth Edition (`5ED`) | core | main | 434 | 69 | 365 | 15.9% |
+| 1997-04-01 | Astral Cards (`PAST`) | boxed-products | other | 12 | 0 | 12 | 0.0% |
+| 1997-05-01 | Portal (`POR`) | starter | other | 200 | 75 | 125 | 37.5% |
+| 1997-06-09 | Weatherlight (`WTH`) | expansion | main | 167 | 5 | 162 | 3.0% |
+| 1997-10-01 | Tempest Promos (`PTMP`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1997-10-14 | Tempest (`TMP`) | expansion | main | 335 | 34 | 301 | 10.1% |
+| 1998-01-01 | Judge Gift Cards 1998 (`JGP`) | promos | other | 3 | 2 | 1 | 66.7% |
+| 1998-02-01 | Stronghold Promos (`PSTH`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1998-03-02 | Stronghold (`STH`) | expansion | main | 143 | 11 | 132 | 7.7% |
+| 1998-06-01 | Exodus Promos (`PEXO`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1998-06-15 | Exodus (`EXO`) | expansion | main | 143 | 10 | 133 | 7.0% |
+| 1998-06-24 | Portal Second Age (`P02`) | starter | other | 155 | 48 | 107 | 31.0% |
+| 1998-08-11 | Unglued (`UGL`) | funny-special | other | 88 | 5 | 83 | 5.7% |
+| 1998-09-01 | Asia Pacific Land Program (`PALP`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 1998-09-26 | Urza's Saga Promos (`PUSG`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1998-10-12 | Urza's Saga (`USG`) | expansion | main | 335 | 41 | 294 | 12.2% |
+| 1998-11-01 | Anthologies (`ATH`) | boxed-products | other | 81 | 28 | 53 | 34.6% |
+| 1999-01-01 | Arena League 1999 (`PAL99`) | promos | other | 9 | 5 | 4 | 55.6% |
+| 1999-01-01 | Judge Gift Cards 1999 (`G99`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1999-01-01 | Junior Super Series (`PSUS`) | promos | other | 18 | 3 | 15 | 16.7% |
+| 1999-02-06 | Urza's Legacy Promos (`PULG`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1999-02-15 | Urza's Legacy (`ULG`) | expansion | main | 143 | 11 | 132 | 7.7% |
+| 1999-04-21 | Classic Sixth Edition (`6ED`) | core | main | 335 | 97 | 238 | 29.0% |
+| 1999-04-29 | Portal Three Kingdoms Promos (`PPTK`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1999-05-01 | Portal Three Kingdoms (`PTK`) | starter | other | 170 | 33 | 137 | 19.4% |
+| 1999-05-29 | Urza's Destiny Promos (`PUDS`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1999-06-07 | Urza's Destiny (`UDS`) | expansion | main | 143 | 21 | 122 | 14.7% |
+| 1999-07-01 | Starter 1999 (`S99`) | starter | other | 158 | 71 | 87 | 44.9% |
+| 1999-07-12 | Guru (`PGRU`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 1999-08-04 | World Championship Promos (`PWOR`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 1999-09-04 | Wizards of the Coast Online Store (`PWOS`) | promos | other | 1 | 1 | 0 | 100.0% |
+| 1999-09-25 | Mercadian Masques Promos (`PMMQ`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 1999-10-04 | Mercadian Masques (`MMQ`) | expansion | main | 335 | 31 | 304 | 9.3% |
+| 1999-11-12 | Battle Royale Box Set (`BRB`) | boxed-products | other | 105 | 30 | 75 | 28.6% |
+| 2000-01-01 | Arena League 2000 (`PAL00`) | promos | other | 11 | 6 | 5 | 54.5% |
+| 2000-01-01 | Friday Night Magic 2000 (`FNM`) | promos | other | 11 | 7 | 4 | 63.6% |
+| 2000-01-01 | Judge Gift Cards 2000 (`G00`) | promos | other | 2 | 1 | 1 | 50.0% |
+| 2000-01-29 | Nemesis Promos (`PNEM`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2000-02-05 | European Land Program (`PELP`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2000-02-14 | Nemesis (`NEM`) | expansion | main | 143 | 7 | 136 | 4.9% |
+| 2000-04-01 | Starter 2000 (`S00`) | starter | other | 20 | 14 | 6 | 70.0% |
+| 2000-05-27 | Prophecy Promos (`PPCY`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2000-06-05 | Prophecy (`PCY`) | expansion | main | 143 | 5 | 138 | 3.5% |
+| 2000-09-23 | Invasion Promos (`PINV`) | promos | other | 1 | 1 | 0 | 100.0% |
+| 2000-10-01 | Beatdown Box Set (`BTD`) | boxed-products | other | 82 | 32 | 50 | 39.0% |
+| 2000-10-02 | Invasion (`INV`) | expansion | main | 335 | 53 | 282 | 15.8% |
+| 2001-01-01 | Arena League 2001 (`PAL01`) | promos | other | 11 | 7 | 4 | 63.6% |
+| 2001-01-01 | Friday Night Magic 2001 (`F01`) | promos | other | 7 | 0 | 7 | 0.0% |
+| 2001-01-01 | Judge Gift Cards 2001 (`G01`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2001-01-01 | Magic Player Rewards 2001 (`MPR`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2001-01-27 | Planeshift Promos (`PPLS`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2001-02-05 | Planeshift (`PLS`) | expansion | main | 143 | 6 | 137 | 4.2% |
+| 2001-04-11 | Seventh Edition (`7ED`) | core | main | 335 | 92 | 243 | 27.5% |
+| 2001-05-26 | Apocalypse Promos (`PAPC`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2001-06-04 | Apocalypse (`APC`) | expansion | main | 143 | 15 | 128 | 10.5% |
+| 2001-06-28 | Sega Dreamcast Cards (`PSDG`) | boxed-products | other | 10 | 0 | 10 | 0.0% |
+| 2001-09-22 | Odyssey Promos (`PODY`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2001-10-01 | Odyssey (`ODY`) | expansion | main | 335 | 33 | 302 | 9.9% |
+| 2001-12-01 | Deckmasters (`DKM`) | masters-remastered | other | 44 | 7 | 37 | 15.9% |
+| 2002-01-01 | Arena League 2002 (`PAL02`) | promos | other | 5 | 2 | 3 | 40.0% |
+| 2002-01-01 | Friday Night Magic 2002 (`F02`) | promos | other | 12 | 1 | 11 | 8.3% |
+| 2002-01-01 | Judge Gift Cards 2002 (`G02`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2002-01-26 | Torment Promos (`PTOR`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2002-02-04 | Torment (`TOR`) | expansion | main | 143 | 2 | 141 | 1.4% |
+| 2002-05-18 | Judgment Promos (`PJUD`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2002-05-27 | Judgment (`JUD`) | expansion | main | 143 | 9 | 134 | 6.3% |
+| 2002-07-01 | Hobby Japan Promos (`JP1`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2002-09-28 | Onslaught Promos (`PONS`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2002-10-07 | Onslaught (`ONS`) | expansion | main | 335 | 34 | 301 | 10.1% |
+| 2003-01-01 | Arena League 2003 (`PAL03`) | promos | other | 8 | 5 | 3 | 62.5% |
+| 2003-01-01 | Friday Night Magic 2003 (`F03`) | promos | other | 13 | 2 | 11 | 15.4% |
+| 2003-01-01 | Japan Junior Tournament (`PJJT`) | promos | other | 12 | 3 | 9 | 25.0% |
+| 2003-01-01 | Judge Gift Cards 2003 (`G03`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2003-01-01 | Magic Player Rewards 2003 (`P03`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2003-01-25 | Legions Promos (`PLGN`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2003-02-03 | Legions (`LGN`) | expansion | main | 145 | 15 | 130 | 10.3% |
+| 2003-05-17 | Scourge Promos (`PSCG`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2003-05-26 | Scourge (`SCG`) | expansion | main | 143 | 3 | 140 | 2.1% |
+| 2003-07-26 | Eighth Edition Promos (`P8ED`) | promos | other | 1 | 1 | 0 | 100.0% |
+| 2003-07-28 | Eighth Edition (`8ED`) | core | main | 342 | 100 | 242 | 29.2% |
+| 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2003-10-02 | Mirrodin (`MRD`) | expansion | main | 291 | 50 | 241 | 17.2% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | other | 2689 | 246 | 2443 | 9.1% |
+| 2004-01-01 | Arena League 2004 (`PAL04`) | promos | other | 14 | 6 | 8 | 42.9% |
+| 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | other | 12 | 0 | 12 | 0.0% |
+| 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | other | 6 | 0 | 6 | 0.0% |
+| 2004-01-01 | Magic Player Rewards 2004 (`P04`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2004-01-24 | Darksteel Promos (`PDST`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2004-02-06 | Darksteel (`DST`) | expansion | main | 165 | 10 | 155 | 6.1% |
+| 2004-05-22 | Fifth Dawn Promos (`P5DN`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2004-06-04 | Fifth Dawn (`5DN`) | expansion | main | 165 | 11 | 154 | 6.7% |
+| 2004-09-18 | Champions of Kamigawa Promos (`PCHK`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2004-10-01 | Champions of Kamigawa (`CHK`) | expansion | main | 291 | 26 | 265 | 8.9% |
+| 2004-11-19 | Unhinged (`UNH`) | funny-special | other | 141 | 7 | 134 | 5.0% |
+| 2004-11-20 | Unhinged Promos (`PUNH`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2005-01-01 | Arena League 2005 (`PAL05`) | promos | other | 8 | 6 | 2 | 75.0% |
+| 2005-01-01 | Friday Night Magic 2005 (`F05`) | promos | other | 12 | 2 | 10 | 16.7% |
+| 2005-01-01 | Judge Gift Cards 2005 (`G05`) | promos | other | 4 | 1 | 3 | 25.0% |
+| 2005-01-01 | Junior Series Europe (`PJSE`) | promos | other | 8 | 1 | 7 | 12.5% |
+| 2005-01-01 | Magic Player Rewards 2005 (`P05`) | promos | other | 6 | 0 | 6 | 0.0% |
+| 2005-01-22 | Betrayers of Kamigawa Promos (`PBOK`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2005-02-04 | Betrayers of Kamigawa (`BOK`) | expansion | main | 165 | 4 | 161 | 2.4% |
+| 2005-05-21 | Saviors of Kamigawa Promos (`PSOK`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2005-06-03 | Saviors of Kamigawa (`SOK`) | expansion | main | 165 | 4 | 161 | 2.4% |
+| 2005-07-29 | Ninth Edition (`9ED`) | core | main | 344 | 90 | 254 | 26.2% |
+| 2005-07-29 | Ninth Edition Promos (`P9ED`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2005-08-22 | Salvat 2005 (`PSAL`) | boxed-products | other | 285 | 43 | 242 | 15.1% |
+| 2005-09-24 | Ravnica: City of Guilds Promos (`PRAV`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2005-10-07 | Magic Premiere Shop 2005 (`PMPS`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2005-10-07 | Ravnica: City of Guilds (`RAV`) | expansion | main | 291 | 35 | 256 | 12.0% |
+| 2005-12-09 | Two-Headed Giant Tournament (`P2HG`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2006-01-01 | Arena League 2006 (`PAL06`) | promos | other | 9 | 5 | 4 | 55.6% |
+| 2006-01-01 | Friday Night Magic 2006 (`F06`) | promos | other | 12 | 1 | 11 | 8.3% |
+| 2006-01-01 | Hachette UK (`PHUK`) | boxed-products | other | 23 | 2 | 21 | 8.7% |
+| 2006-01-01 | Judge Gift Cards 2006 (`G06`) | promos | other | 4 | 0 | 4 | 0.0% |
+| 2006-01-01 | Junior APAC Series (`PJAS`) | promos | other | 6 | 1 | 5 | 16.7% |
+| 2006-01-01 | Magic Player Rewards 2006 (`P06`) | promos | other | 7 | 2 | 5 | 28.6% |
+| 2006-01-01 | Magic Premiere Shop 2006 (`PMPS06`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2006-01-21 | Guildpact Promos (`PGPT`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2006-02-03 | Guildpact (`GPT`) | expansion | main | 165 | 11 | 154 | 6.7% |
+| 2006-03-18 | Champs and States (`PCMP`) | promos | other | 12 | 1 | 11 | 8.3% |
+| 2006-04-22 | Dissension Promos (`PDIS`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2006-05-05 | Dissension (`DIS`) | expansion | main | 180 | 16 | 164 | 8.9% |
+| 2006-07-08 | Coldsnap Promos (`PCSP`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2006-07-21 | Coldsnap (`CSP`) | expansion | main | 155 | 14 | 141 | 9.0% |
+| 2006-07-21 | Coldsnap Theme Decks (`CST`) | deck-products | other | 52 | 8 | 44 | 15.4% |
+| 2006-09-23 | Time Spiral Promos (`PTSP`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2006-10-06 | Time Spiral (`TSP`) | expansion | main | 286 | 19 | 267 | 6.6% |
+| 2006-10-06 | Time Spiral Timeshifted (`TSB`) | expansion | main | 121 | 10 | 111 | 8.3% |
+| 2006-10-20 | Pro Tour Promos (`PPRO`) | promos | other | 18 | 0 | 18 | 0.0% |
+| 2006-10-31 | DCI Promos (`DCI`) | promos | other | 67 | 14 | 53 | 20.9% |
+| 2006-12-01 | Happy Holidays (`HHO`) | funny-special | other | 20 | 0 | 20 | 0.0% |
+| 2007-01-01 | Friday Night Magic 2007 (`F07`) | promos | other | 12 | 0 | 12 | 0.0% |
+| 2007-01-01 | Judge Gift Cards 2007 (`G07`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2007-01-01 | Magic Player Rewards 2007 (`P07`) | promos | other | 7 | 2 | 5 | 28.6% |
+| 2007-01-01 | Magic Premiere Shop 2007 (`PMPS07`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2007-01-20 | Planar Chaos Promos (`PPLC`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2007-02-02 | Planar Chaos (`PLC`) | expansion | main | 165 | 10 | 155 | 6.1% |
+| 2007-02-24 | Grand Prix Promos (`PGPX`) | promos | other | 20 | 6 | 14 | 30.0% |
+| 2007-04-21 | Future Sight Promos (`PFUT`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2007-05-04 | Future Sight (`FUT`) | expansion | main | 180 | 11 | 169 | 6.1% |
+| 2007-07-13 | Tenth Edition (`10E`) | core | main | 368 | 91 | 277 | 24.7% |
+| 2007-07-13 | Tenth Edition Promos (`P10E`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2007-09-10 | Masters Edition (`ME1`) | masters-remastered | other | 185 | 19 | 166 | 10.3% |
+| 2007-09-27 | Lorwyn Promos (`PLRW`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2007-10-12 | Lorwyn (`LRW`) | expansion | main | 286 | 33 | 253 | 11.5% |
+| 2007-11-16 | Duel Decks: Elves vs. Goblins (`DD1`) | duel-decks | other | 56 | 15 | 41 | 26.8% |
+| 2008-01-01 | Friday Night Magic 2008 (`F08`) | promos | other | 12 | 1 | 11 | 8.3% |
+| 2008-01-01 | Judge Gift Cards 2008 (`G08`) | promos | other | 5 | 1 | 4 | 20.0% |
+| 2008-01-01 | Magic Player Rewards 2008 (`P08`) | promos | other | 7 | 3 | 4 | 42.9% |
+| 2008-01-01 | Magic Premiere Shop 2008 (`PMPS08`) | promos | other | 6 | 5 | 1 | 83.3% |
+| 2008-01-19 | Morningtide Promos (`PMOR`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2008-02-01 | Morningtide (`MOR`) | expansion | main | 150 | 9 | 141 | 6.0% |
+| 2008-04-01 | 15th Anniversary Cards (`P15A`) | promos | other | 2 | 1 | 1 | 50.0% |
+| 2008-04-19 | Shadowmoor Promos (`PSHM`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2008-05-02 | Shadowmoor (`SHM`) | expansion | main | 286 | 21 | 265 | 7.3% |
+| 2008-07-12 | Eventide Promos (`PEVE`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2008-07-25 | Eventide (`EVE`) | expansion | main | 180 | 14 | 166 | 7.8% |
+| 2008-08-29 | From the Vault: Dragons (`DRB`) | from-the-vault | other | 15 | 0 | 15 | 0.0% |
+| 2008-09-22 | Masters Edition II (`ME2`) | masters-remastered | other | 245 | 33 | 212 | 13.5% |
+| 2008-10-03 | Magic Player Rewards 2009 (`P09`) | promos | other | 13 | 5 | 8 | 38.5% |
+| 2008-10-03 | Shards of Alara (`ALA`) | expansion | main | 234 | 50 | 184 | 21.4% |
+| 2008-10-03 | Shards of Alara Promos (`PALA`) | promos | other | 2 | 1 | 1 | 50.0% |
+| 2008-11-07 | Duel Decks: Jace vs. Chandra (`DD2`) | duel-decks | other | 56 | 9 | 47 | 16.1% |
+| 2009-01-01 | Duels of the Planeswalkers 2009 Promos (`PDTP`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2009-01-01 | Friday Night Magic 2009 (`F09`) | promos | other | 12 | 2 | 10 | 16.7% |
+| 2009-01-01 | Judge Gift Cards 2009 (`G09`) | promos | other | 10 | 5 | 5 | 50.0% |
+| 2009-01-01 | Magic Premiere Shop 2009 (`PMPS09`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2009-01-01 | URL/Convention Promos (`PURL`) | promos | other | 18 | 4 | 14 | 22.2% |
+| 2009-01-31 | Conflux Promos (`PCON`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2009-02-06 | Conflux (`CON`) | expansion | main | 145 | 14 | 131 | 9.7% |
+| 2009-04-10 | Duel Decks: Divine vs. Demonic (`DDC`) | duel-decks | other | 56 | 13 | 43 | 23.2% |
+| 2009-04-25 | Alara Reborn Promos (`PARB`) | promos | other | 3 | 1 | 2 | 33.3% |
+| 2009-04-30 | Alara Reborn (`ARB`) | expansion | main | 145 | 14 | 131 | 9.7% |
+| 2009-07-16 | Magic 2010 Promos (`PM10`) | promos | other | 3 | 1 | 2 | 33.3% |
+| 2009-07-17 | Magic 2010 (`M10`) | core | main | 234 | 67 | 167 | 28.6% |
+| 2009-08-28 | From the Vault: Exiled (`V09`) | from-the-vault | other | 15 | 2 | 13 | 13.3% |
+| 2009-09-04 | Planechase (`HOP`) | planechase | other | 146 | 38 | 108 | 26.0% |
+| 2009-09-07 | Masters Edition III (`ME3`) | masters-remastered | other | 220 | 46 | 174 | 20.9% |
+| 2009-10-02 | Zendikar (`ZEN`) | expansion | main | 234 | 36 | 198 | 15.4% |
+| 2009-10-02 | Zendikar Promos (`PZEN`) | promos | other | 5 | 1 | 4 | 20.0% |
+| 2009-10-30 | Duel Decks: Garruk vs. Liliana (`DDD`) | duel-decks | other | 57 | 11 | 46 | 19.3% |
+| 2009-11-20 | Premium Deck Series: Slivers (`H09`) | premium-decks | other | 41 | 10 | 31 | 24.4% |
+| 2010-01-01 | Duels of the Planeswalkers 2010 Promos (`PDP10`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2010-01-01 | Friday Night Magic 2010 (`F10`) | promos | other | 12 | 1 | 11 | 8.3% |
+| 2010-01-01 | Judge Gift Cards 2010 (`G10`) | promos | other | 8 | 1 | 7 | 12.5% |
+| 2010-01-01 | Magic 2011 Promos (`PM11`) | promos | other | 6 | 1 | 5 | 16.7% |
+| 2010-01-01 | Magic Player Rewards 2010 (`P10`) | promos | other | 13 | 4 | 9 | 30.8% |
+| 2010-01-01 | Magic Premiere Shop 2010 (`PMPS10`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2010-02-05 | Worldwake (`WWK`) | expansion | main | 145 | 14 | 131 | 9.7% |
+| 2010-02-05 | Worldwake Promos (`PWWK`) | promos | other | 6 | 0 | 6 | 0.0% |
+| 2010-03-19 | Duel Decks: Phyrexia vs. the Coalition (`DDE`) | duel-decks | other | 67 | 15 | 52 | 22.4% |
+| 2010-04-23 | Rise of the Eldrazi (`ROE`) | expansion | main | 233 | 36 | 197 | 15.5% |
+| 2010-04-23 | Rise of the Eldrazi Promos (`PROE`) | promos | other | 4 | 0 | 4 | 0.0% |
+| 2010-06-04 | Duels of the Planeswalkers (`DPA`) | boxed-products | other | 101 | 36 | 65 | 35.6% |
+| 2010-06-18 | Archenemy (`ARC`) | archenemy | other | 141 | 37 | 104 | 26.2% |
+| 2010-07-16 | Magic 2011 (`M11`) | core | main | 234 | 63 | 171 | 26.9% |
+| 2010-08-27 | From the Vault: Relics (`V10`) | from-the-vault | other | 15 | 1 | 14 | 6.7% |
+| 2010-09-03 | Duel Decks: Elspeth vs. Tezzeret (`DDF`) | duel-decks | other | 73 | 15 | 58 | 20.5% |
+| 2010-09-30 | Scars of Mirrodin Promos (`PSOM`) | promos | other | 4 | 1 | 3 | 25.0% |
+| 2010-10-01 | Scars of Mirrodin (`SOM`) | expansion | main | 234 | 39 | 195 | 16.7% |
+| 2010-11-08 | Magic Online Theme Decks (`TD0`) | deck-products | other | 174 | 44 | 130 | 25.3% |
+| 2010-11-19 | Premium Deck Series: Fire and Lightning (`PD2`) | premium-decks | other | 31 | 4 | 27 | 12.9% |
+| 2011-01-01 | Duels of the Planeswalkers 2012 Promos (`PDP12`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2011-01-01 | Friday Night Magic 2011 (`F11`) | promos | other | 12 | 6 | 6 | 50.0% |
+| 2011-01-01 | Judge Gift Cards 2011 (`G11`) | promos | other | 8 | 1 | 7 | 12.5% |
+| 2011-01-01 | Magic Player Rewards 2011 (`P11`) | promos | other | 7 | 1 | 6 | 14.3% |
+| 2011-01-01 | Magic Premiere Shop 2011 (`PMPS11`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2011-01-01 | Salvat 2011 (`PS11`) | boxed-products | other | 209 | 70 | 139 | 33.5% |
+| 2011-01-10 | Masters Edition IV (`ME4`) | masters-remastered | other | 260 | 44 | 216 | 16.9% |
+| 2011-02-03 | Mirrodin Besieged Promos (`PMBS`) | promos | other | 4 | 0 | 4 | 0.0% |
+| 2011-02-04 | Mirrodin Besieged (`MBS`) | expansion | main | 150 | 18 | 132 | 12.0% |
+| 2011-04-01 | Duel Decks: Knights vs. Dragons (`DDG`) | duel-decks | other | 72 | 16 | 56 | 22.2% |
+| 2011-05-12 | New Phyrexia Promos (`PNPH`) | promos | other | 4 | 0 | 4 | 0.0% |
+| 2011-05-13 | New Phyrexia (`NPH`) | expansion | main | 170 | 21 | 149 | 12.4% |
+| 2011-05-14 | Duel Decks: Mirrodin Pure vs. New Phyrexia (`TD2`) | duel-decks | other | 80 | 21 | 59 | 26.2% |
+| 2011-06-17 | Commander 2011 (`CMD`) | commander | commander | 303 | 68 | 235 | 22.4% |
+| 2011-07-14 | Magic 2012 Promos (`PM12`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2011-07-15 | Magic 2012 (`M12`) | core | main | 234 | 62 | 172 | 26.5% |
+| 2011-08-26 | From the Vault: Legends (`V11`) | from-the-vault | other | 15 | 1 | 14 | 6.7% |
+| 2011-09-02 | Duel Decks: Ajani vs. Nicol Bolas (`DDH`) | duel-decks | other | 77 | 19 | 58 | 24.7% |
+| 2011-09-24 | Innistrad Promos (`PISD`) | promos | other | 5 | 1 | 4 | 20.0% |
+| 2011-09-30 | Innistrad (`ISD`) | expansion | main | 254 | 36 | 218 | 14.2% |
+| 2011-09-30 | Wizards Play Network 2011 (`PW11`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2011-11-18 | Premium Deck Series: Graveborn (`PD3`) | premium-decks | other | 27 | 6 | 21 | 22.2% |
+| 2012-01-01 | Duels of the Planeswalkers 2013 Promos (`PDP13`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2012-01-01 | Friday Night Magic 2012 (`F12`) | promos | other | 12 | 4 | 8 | 33.3% |
+| 2012-01-01 | Judge Gift Cards 2012 (`J12`) | promos | other | 8 | 0 | 8 | 0.0% |
+| 2012-01-01 | Wizards Play Network 2012 (`PW12`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2012-01-28 | Dark Ascension Promos (`PDKA`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2012-02-01 | IDW Comics Inserts (`PIDW`) | promos | other | 17 | 1 | 16 | 5.9% |
+| 2012-02-03 | Dark Ascension (`DKA`) | expansion | main | 158 | 13 | 145 | 8.2% |
+| 2012-03-30 | Duel Decks: Venser vs. Koth (`DDI`) | duel-decks | other | 70 | 17 | 53 | 24.3% |
+| 2012-04-28 | Avacyn Restored Promos (`PAVR`) | promos | other | 6 | 0 | 6 | 0.0% |
+| 2012-05-04 | Avacyn Restored (`AVR`) | expansion | main | 234 | 26 | 208 | 11.1% |
+| 2012-06-01 | Planechase 2012 (`PC2`) | planechase | other | 136 | 29 | 107 | 21.3% |
+| 2012-07-12 | Magic 2013 Promos (`PM13`) | promos | other | 6 | 1 | 5 | 16.7% |
+| 2012-07-13 | Magic 2013 (`M13`) | core | main | 234 | 59 | 175 | 25.2% |
+| 2012-08-31 | From the Vault: Realms (`V12`) | from-the-vault | other | 15 | 2 | 13 | 13.3% |
+| 2012-09-07 | Duel Decks: Izzet vs. Golgari (`DDJ`) | duel-decks | other | 78 | 12 | 66 | 15.4% |
+| 2012-10-05 | Return to Ravnica (`RTR`) | expansion | main | 254 | 54 | 200 | 21.3% |
+| 2012-10-05 | Return to Ravnica Promos (`PRTR`) | promos | other | 10 | 0 | 10 | 0.0% |
+| 2012-11-02 | Commander's Arsenal (`CM1`) | commander | other | 18 | 1 | 17 | 5.6% |
+| 2013-01-01 | Duels of the Planeswalkers 2014 Promos (`PDP14`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2013-01-01 | Friday Night Magic 2013 (`F13`) | promos | other | 12 | 3 | 9 | 25.0% |
+| 2013-01-01 | Judge Gift Cards 2013 (`J13`) | promos | other | 8 | 0 | 8 | 0.0% |
+| 2013-01-26 | Gatecrash Promos (`PGTC`) | promos | other | 10 | 0 | 10 | 0.0% |
+| 2013-02-01 | Gatecrash (`GTC`) | expansion | main | 249 | 22 | 227 | 8.8% |
+| 2013-03-15 | Duel Decks: Sorin vs. Tibalt (`DDK`) | duel-decks | other | 71 | 17 | 54 | 23.9% |
+| 2013-04-06 | World Magic Cup Qualifiers (`WMC`) | promos | other | 5 | 1 | 4 | 20.0% |
+| 2013-04-27 | Dragon's Maze Promos (`PDGM`) | promos | other | 6 | 2 | 4 | 33.3% |
+| 2013-05-03 | Dragon's Maze (`DGM`) | expansion | main | 156 | 31 | 125 | 19.9% |
+| 2013-06-07 | Modern Masters (`MMA`) | masters-remastered | other | 229 | 16 | 213 | 7.0% |
+| 2013-07-18 | Magic 2014 Promos (`PM14`) | promos | other | 6 | 1 | 5 | 16.7% |
+| 2013-07-18 | San Diego Comic-Con 2013 (`PSDC`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2013-07-19 | Magic 2014 (`M14`) | core | main | 234 | 53 | 181 | 22.6% |
+| 2013-08-23 | From the Vault: Twenty (`V13`) | from-the-vault | other | 20 | 4 | 16 | 20.0% |
+| 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | other | 68 | 12 | 56 | 17.6% |
+| 2013-09-21 | Theros Promos (`PTHS`) | promos | other | 10 | 1 | 9 | 10.0% |
+| 2013-09-27 | Theros (`THS`) | expansion | main | 234 | 30 | 204 | 12.8% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | commander | 341 | 92 | 249 | 27.0% |
+| 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | other | 12 | 1 | 11 | 8.3% |
+| 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | other | 14 | 5 | 9 | 35.7% |
+| 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | other | 9 | 0 | 9 | 0.0% |
+| 2014-02-07 | Born of the Gods (`BNG`) | expansion | main | 165 | 11 | 154 | 6.7% |
+| 2014-03-14 | Duel Decks: Jace vs. Vraska (`DDM`) | duel-decks | other | 76 | 10 | 66 | 13.2% |
+| 2014-04-26 | Journey into Nyx Promos (`PJOU`) | promos | other | 10 | 0 | 10 | 0.0% |
+| 2014-05-02 | Journey into Nyx (`JOU`) | expansion | main | 165 | 19 | 146 | 11.5% |
+| 2014-05-30 | Modern Event Deck 2014 (`MD1`) | deck-products | other | 26 | 6 | 20 | 23.1% |
+| 2014-06-06 | Conspiracy (`CNS`) | conspiracy | other | 210 | 17 | 193 | 8.1% |
+| 2014-06-06 | Conspiracy Promos (`PCNS`) | conspiracy | other | 1 | 0 | 1 | 0.0% |
+| 2014-06-16 | Vintage Masters (`VMA`) | masters-remastered | other | 325 | 57 | 268 | 17.5% |
+| 2014-07-08 | San Diego Comic-Con 2014 (`PS14`) | promos | other | 6 | 0 | 6 | 0.0% |
+| 2014-07-09 | Duels of the Planeswalkers 2015 Promos (`PDP15`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2014-07-17 | Magic 2015 Promos (`PM15`) | promos | other | 13 | 1 | 12 | 7.7% |
+| 2014-07-18 | Magic 2015 (`M15`) | core | main | 269 | 52 | 217 | 19.3% |
+| 2014-07-18 | Magic 2015 Clash Pack (`CP1`) | starter | other | 6 | 1 | 5 | 16.7% |
+| 2014-08-22 | From the Vault: Annihilation (`V14`) | from-the-vault | other | 15 | 1 | 14 | 6.7% |
+| 2014-09-05 | Duel Decks: Speed vs. Cunning (`DDN`) | duel-decks | other | 71 | 17 | 54 | 23.9% |
+| 2014-09-26 | Khans of Tarkir (`KTK`) | expansion | main | 254 | 52 | 202 | 20.5% |
+| 2014-09-26 | Khans of Tarkir Promos (`PKTK`) | promos | other | 44 | 1 | 43 | 2.3% |
+| 2014-11-07 | Commander 2014 (`C14`) | commander | commander | 322 | 62 | 260 | 19.3% |
+| 2014-12-05 | Duel Decks Anthology: Divine vs. Demonic (`DVD`) | duel-decks | other | 56 | 13 | 43 | 23.2% |
+| 2014-12-05 | Duel Decks Anthology: Elves vs. Goblins (`EVG`) | duel-decks | other | 56 | 15 | 41 | 26.8% |
+| 2014-12-05 | Duel Decks Anthology: Garruk vs. Liliana (`GVL`) | duel-decks | other | 57 | 11 | 46 | 19.3% |
+| 2014-12-05 | Duel Decks Anthology: Jace vs. Chandra (`JVC`) | duel-decks | other | 56 | 9 | 47 | 16.1% |
+| 2015-01-01 | Friday Night Magic 2015 (`F15`) | promos | other | 12 | 1 | 11 | 8.3% |
+| 2015-01-01 | Judge Gift Cards 2015 (`J15`) | promos | other | 8 | 1 | 7 | 12.5% |
+| 2015-01-17 | Ugin's Fate (`UGIN`) | promos | other | 26 | 0 | 26 | 0.0% |
+| 2015-01-23 | Fate Reforged (`FRF`) | expansion | main | 180 | 24 | 156 | 13.3% |
+| 2015-01-23 | Fate Reforged Clash Pack (`CP2`) | starter | other | 6 | 0 | 6 | 0.0% |
+| 2015-01-23 | Fate Reforged Promos (`PFRF`) | promos | other | 33 | 0 | 33 | 0.0% |
+| 2015-02-27 | Duel Decks: Elspeth vs. Kiora (`DDO`) | duel-decks | other | 58 | 11 | 47 | 19.0% |
+| 2015-03-27 | Dragons of Tarkir (`DTK`) | expansion | main | 254 | 30 | 224 | 11.8% |
+| 2015-03-27 | Dragons of Tarkir Promos (`PDTK`) | promos | other | 42 | 0 | 42 | 0.0% |
+| 2015-04-03 | Tarkir Dragonfury (`PTKDF`) | promos | other | 4 | 2 | 2 | 50.0% |
+| 2015-05-06 | Tempest Remastered (`TPR`) | masters-remastered | other | 254 | 35 | 219 | 13.8% |
+| 2015-05-22 | Modern Masters 2015 (`MM2`) | masters-remastered | other | 249 | 36 | 213 | 14.5% |
+| 2015-07-09 | San Diego Comic-Con 2015 (`PS15`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2015-07-17 | Magic Origins (`ORI`) | core | main | 273 | 42 | 231 | 15.4% |
+| 2015-07-17 | Magic Origins Clash Pack (`CP3`) | starter | other | 6 | 1 | 5 | 16.7% |
+| 2015-07-17 | Magic Origins Promos (`PORI`) | promos | other | 43 | 2 | 41 | 4.7% |
+| 2015-08-21 | From the Vault: Angels (`V15`) | from-the-vault | other | 15 | 2 | 13 | 13.3% |
+| 2015-08-28 | Duel Decks: Zendikar vs. Eldrazi (`DDP`) | duel-decks | other | 67 | 18 | 49 | 26.9% |
+| 2015-10-02 | Battle for Zendikar (`BFZ`) | expansion | main | 254 | 38 | 216 | 15.0% |
+| 2015-10-02 | Battle for Zendikar Promos (`PBFZ`) | promos | other | 70 | 5 | 65 | 7.1% |
+| 2015-10-02 | BFZ Standard Series (`PSS1`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2015-10-02 | Zendikar Expeditions (`EXP`) | masterpieces | other | 45 | 27 | 18 | 60.0% |
+| 2015-11-13 | Commander 2015 (`C15`) | commander | commander | 327 | 65 | 262 | 19.9% |
+| 2015-11-18 | Legendary Cube Prize Pack (`PZ1`) | treasure-chest | other | 149 | 16 | 133 | 10.7% |
+| 2016-01-01 | Friday Night Magic 2016 (`F16`) | promos | other | 12 | 2 | 10 | 16.7% |
+| 2016-01-01 | Judge Gift Cards 2016 (`J16`) | promos | other | 8 | 0 | 8 | 0.0% |
+| 2016-01-22 | Oath of the Gatewatch (`OGW`) | expansion | main | 183 | 22 | 161 | 12.0% |
+| 2016-01-22 | Oath of the Gatewatch Promos (`POGW`) | promos | other | 55 | 1 | 54 | 1.8% |
+| 2016-02-26 | Duel Decks: Blessed vs. Cursed (`DDQ`) | duel-decks | other | 67 | 13 | 54 | 19.4% |
+| 2016-04-08 | Shadows over Innistrad (`SOI`) | expansion | main | 287 | 27 | 260 | 9.4% |
+| 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | promos | other | 79 | 0 | 79 | 0.0% |
+| 2016-04-08 | Welcome Deck 2016 (`W16`) | starter | other | 16 | 2 | 14 | 12.5% |
+| 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | other | 249 | 45 | 204 | 18.1% |
+| 2016-07-22 | Eldritch Moon (`EMN`) | expansion | main | 208 | 17 | 191 | 8.2% |
+| 2016-07-22 | Eldritch Moon Promos (`PEMN`) | promos | other | 64 | 1 | 63 | 1.6% |
+| 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | other | 15 | 0 | 15 | 0.0% |
+| 2016-08-26 | Conspiracy: Take the Crown (`CN2`) | conspiracy | other | 221 | 30 | 191 | 13.6% |
+| 2016-09-02 | Duel Decks: Nissa vs. Ob Nixilis (`DDR`) | duel-decks | other | 62 | 13 | 49 | 21.0% |
+| 2016-09-30 | Kaladesh (`KLD`) | expansion | main | 264 | 40 | 224 | 15.2% |
+| 2016-09-30 | Kaladesh Inventions (`MPS`) | masterpieces | other | 54 | 6 | 48 | 11.1% |
+| 2016-09-30 | Kaladesh Promos (`PKLD`) | promos | other | 70 | 5 | 65 | 7.1% |
+| 2016-10-01 | San Diego Comic-Con 2016 (`PS16`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2016-11-11 | Commander 2016 (`C16`) | commander | commander | 341 | 61 | 280 | 17.9% |
+| 2016-11-16 | Treasure Chest (`PZ2`) | treasure-chest | other | 270 | 24 | 246 | 8.9% |
+| 2016-11-25 | Planechase Anthology (`PCA`) | planechase | other | 136 | 29 | 107 | 21.3% |
+| 2017-01-01 | Friday Night Magic 2017 (`F17`) | promos | other | 9 | 1 | 8 | 11.1% |
+| 2017-01-01 | Judge Gift Cards 2017 (`J17`) | promos | other | 9 | 0 | 9 | 0.0% |
+| 2017-01-20 | Aether Revolt (`AER`) | expansion | main | 194 | 16 | 178 | 8.2% |
+| 2017-01-20 | Aether Revolt Promos (`PAER`) | promos | other | 55 | 1 | 54 | 1.8% |
+| 2017-03-17 | Modern Masters 2017 (`MM3`) | masters-remastered | other | 249 | 69 | 180 | 27.7% |
+| 2017-03-31 | Duel Decks: Mind vs. Might (`DDS`) | duel-decks | other | 56 | 11 | 45 | 19.6% |
+| 2017-04-15 | Welcome Deck 2017 (`W17`) | starter | other | 30 | 12 | 18 | 40.0% |
+| 2017-04-28 | Amonkhet (`AKH`) | expansion | main | 272 | 53 | 219 | 19.5% |
+| 2017-04-28 | Amonkhet Invocations (`MP2`) | masterpieces | other | 54 | 4 | 50 | 7.4% |
+| 2017-04-28 | Amonkhet Promos (`PAKH`) | promos | other | 69 | 10 | 59 | 14.5% |
+| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | commander | 289 | 67 | 222 | 23.2% |
+| 2017-06-16 | Archenemy: Nicol Bolas (`E01`) | archenemy | other | 101 | 21 | 80 | 20.8% |
+| 2017-07-14 | Hour of Devastation (`HOU`) | expansion | main | 199 | 38 | 161 | 19.1% |
+| 2017-07-14 | Hour of Devastation Promos (`PHOU`) | promos | other | 55 | 0 | 55 | 0.0% |
+| 2017-07-20 | San Diego Comic-Con 2017 (`PS17`) | promos | other | 6 | 0 | 6 | 0.0% |
+| 2017-08-25 | Commander 2017 (`C17`) | commander | commander | 299 | 71 | 228 | 23.7% |
+| 2017-09-20 | 2016 Heroes of the Realm (`PHTR`) | funny-special | other | 3 | 0 | 3 | 0.0% |
+| 2017-09-20 | HasCon 2017 (`H17`) | funny-special | other | 3 | 0 | 3 | 0.0% |
+| 2017-09-29 | Ixalan (`XLN`) | expansion | main | 274 | 53 | 221 | 19.3% |
+| 2017-09-29 | Ixalan Promos (`PXLN`) | promos | other | 80 | 6 | 74 | 7.5% |
+| 2017-09-29 | XLN Standard Showdown (`PSS2`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2017-10-20 | 2017 Gift Pack (`G17`) | boxed-products | other | 5 | 5 | 0 | 100.0% |
+| 2017-10-24 | Duel Decks: Merfolk vs. Goblins (`DDT`) | duel-decks | other | 57 | 12 | 45 | 21.1% |
+| 2017-11-17 | Iconic Masters (`IMA`) | masters-remastered | other | 249 | 39 | 210 | 15.7% |
+| 2017-11-24 | Explorers of Ixalan (`E02`) | boxed-products | other | 47 | 12 | 35 | 25.5% |
+| 2017-11-24 | From the Vault: Transform (`V17`) | from-the-vault | other | 16 | 0 | 16 | 0.0% |
+| 2017-11-24 | XLN Treasure Chest (`PXTC`) | promos | other | 10 | 0 | 10 | 0.0% |
+| 2017-12-08 | Unstable (`UST`) | funny-special | other | 249 | 17 | 232 | 6.8% |
+| 2017-12-08 | Unstable Promos (`PUST`) | promos | other | 1 | 0 | 1 | 0.0% |
+| 2018-01-01 | Judge Gift Cards 2018 (`J18`) | promos | other | 8 | 1 | 7 | 12.5% |
+| 2018-01-19 | Rivals of Ixalan (`RIX`) | expansion | main | 205 | 43 | 162 | 21.0% |
+| 2018-01-19 | Rivals of Ixalan Promos (`PRIX`) | promos | other | 63 | 3 | 60 | 4.8% |
+| 2018-01-25 | Nationals Promos (`PNAT`) | promos | other | 1 | 1 | 0 | 100.0% |
+| 2018-03-16 | Masters 25 (`A25`) | masters-remastered | other | 249 | 32 | 217 | 12.9% |
+| 2018-04-06 | Duel Decks: Elves vs. Inventors (`DDU`) | duel-decks | other | 71 | 18 | 53 | 25.4% |
+| 2018-04-27 | Dominaria (`DOM`) | expansion | main | 265 | 45 | 220 | 17.0% |
+| 2018-04-27 | Dominaria Promos (`PDOM`) | promos | other | 93 | 10 | 83 | 10.8% |
+| 2018-06-08 | Battlebond (`BBD`) | supplemental | other | 254 | 51 | 203 | 20.1% |
+| 2018-06-08 | Battlebond Promos (`PBBD`) | promos | other | 22 | 0 | 22 | 0.0% |
+| 2018-06-08 | Commander Anthology Volume II (`CM2`) | anthologies | commander | 279 | 58 | 221 | 20.8% |
+| 2018-06-15 | Signature Spellbook: Jace (`SS1`) | spellbooks | other | 8 | 2 | 6 | 25.0% |
+| 2018-06-22 | Global Series Jiang Yanggu & Mu Yanling (`GS1`) | duel-decks | other | 40 | 23 | 17 | 57.5% |
+| 2018-07-01 | Core Set 2019 Promos (`PM19`) | promos | other | 74 | 6 | 68 | 8.1% |
+| 2018-07-13 | Core Set 2019 (`M19`) | core | main | 299 | 89 | 210 | 29.8% |
+| 2018-07-13 | M19 Standard Showdown (`PSS3`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2018-07-14 | Arena New Player Experience (`ANA`) | starter | other | 11 | 10 | 1 | 90.9% |
+| 2018-07-14 | Arena New Player Experience Cards (`OANA`) | starter | other | 14 | 8 | 6 | 57.1% |
+| 2018-07-14 | MTG Arena Promos (`PANA`) | promos | other | 23 | 12 | 11 | 52.2% |
+| 2018-07-19 | San Diego Comic-Con 2018 (`PS18`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2018-08-01 | 2017 Heroes of the Realm (`PH17`) | funny-special | other | 3 | 0 | 3 | 0.0% |
+| 2018-08-10 | Commander 2018 (`C18`) | commander | commander | 297 | 73 | 224 | 24.6% |
+| 2018-10-05 | Guilds of Ravnica (`GRN`) | expansion | main | 268 | 47 | 221 | 17.5% |
+| 2018-10-05 | Guilds of Ravnica Promos (`PGRN`) | promos | other | 60 | 3 | 57 | 5.0% |
+| 2018-10-05 | Mythic Edition (`MED`) | masterpieces | other | 24 | 0 | 24 | 0.0% |
+| 2018-11-02 | GRN Guild Kit (`GK1`) | boxed-products | other | 122 | 26 | 96 | 21.3% |
+| 2018-11-09 | GRN Ravnica Weekend (`PRWK`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2018-11-16 | Game Night (`GNT`) | boxed-products | other | 63 | 24 | 39 | 38.1% |
+| 2018-11-16 | M19 Gift Pack (`G18`) | boxed-products | other | 5 | 0 | 5 | 0.0% |
+| 2018-12-07 | Ultimate Box Topper (`PUMA`) | masterpieces | other | 40 | 1 | 39 | 2.5% |
+| 2018-12-07 | Ultimate Masters (`UMA`) | masters-remastered | other | 254 | 17 | 237 | 6.7% |
+| 2019-01-01 | MagicFest 2019 (`PF19`) | promos | other | 7 | 7 | 0 | 100.0% |
+| 2019-01-25 | Ravnica Allegiance (`RNA`) | expansion | main | 268 | 38 | 230 | 14.2% |
+| 2019-01-25 | Ravnica Allegiance Promos (`PRNA`) | promos | other | 59 | 3 | 56 | 5.1% |
+| 2019-02-15 | RNA Guild Kit (`GK2`) | boxed-products | other | 128 | 23 | 105 | 18.0% |
+| 2019-02-16 | RNA Ravnica Weekend (`PRW2`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2019-04-10 | Judge Gift Cards 2019 (`J19`) | promos | other | 8 | 0 | 8 | 0.0% |
+| 2019-05-03 | War of the Spark (`WAR`) | expansion | main | 266 | 25 | 241 | 9.4% |
+| 2019-05-03 | War of the Spark Promos (`PWAR`) | promos | other | 92 | 0 | 92 | 0.0% |
+| 2019-06-14 | Modern Horizons (`MH1`) | supplemental | other | 255 | 28 | 227 | 11.0% |
+| 2019-06-14 | Modern Horizons Promos (`PMH1`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2019-06-28 | Signature Spellbook: Gideon (`SS2`) | spellbooks | other | 8 | 0 | 8 | 0.0% |
+| 2019-07-12 | Core Set 2020 (`M20`) | core | main | 330 | 81 | 249 | 24.5% |
+| 2019-07-12 | Core Set 2020 Promos (`PM20`) | promos | other | 73 | 2 | 71 | 2.7% |
+| 2019-07-12 | M20 Promo Packs (`PPP1`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2019-07-18 | San Diego Comic-Con 2019 (`PS19`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2019-08-01 | 2018 Heroes of the Realm (`PH18`) | funny-special | other | 4 | 0 | 4 | 0.0% |
+| 2019-08-23 | Commander 2019 (`C19`) | commander | commander | 292 | 64 | 228 | 21.9% |
+| 2019-10-01 | Planeswalker Championship Promos (`PWCS`) | promos | other | 46 | 1 | 45 | 2.2% |
+| 2019-10-04 | Throne of Eldraine (`ELD`) | expansion | main | 286 | 43 | 243 | 15.0% |
+| 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | other | 68 | 5 | 63 | 7.4% |
+| 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | other | 3 | 0 | 3 | 0.0% |
+| 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | other | 120 | 7 | 113 | 5.8% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | other | 5221 | 600 | 4621 | 11.5% |
+| 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | other | 59 | 13 | 46 | 22.0% |
+| 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | other | 20 | 5 | 15 | 25.0% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair | 1696 | 155 | 1541 | 9.1% |
+| 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | other | 10 | 4 | 6 | 40.0% |
+| 2020-01-01 | MagicFest 2020 (`PF20`) | promos | other | 6 | 5 | 1 | 83.3% |
+| 2020-01-24 | Theros Beyond Death (`THB`) | expansion | main | 273 | 22 | 251 | 8.1% |
+| 2020-01-24 | Theros Beyond Death Promos (`PTHB`) | promos | other | 68 | 1 | 67 | 1.5% |
+| 2020-02-29 | Unsanctioned (`UND`) | funny-special | other | 91 | 10 | 81 | 11.0% |
+| 2020-03-12 | Historic Anthology 2 (`HA2`) | anthologies | other | 25 | 7 | 18 | 28.0% |
+| 2020-04-17 | Commander 2020 (`C20`) | commander | commander | 322 | 58 | 264 | 18.0% |
+| 2020-04-24 | Ikoria: Lair of Behemoths (`IKO`) | expansion | main | 266 | 45 | 221 | 16.9% |
+| 2020-04-24 | Ikoria: Lair of Behemoths Promos (`PIKO`) | promos | other | 68 | 5 | 63 | 7.4% |
+| 2020-05-18 | Love Your LGS 2020 (`PLG20`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2020-05-21 | Historic Anthology 3 (`HA3`) | anthologies | other | 27 | 0 | 27 | 0.0% |
+| 2020-06-12 | Secret Lair: Ultimate Edition (`SLU`) | secret-lair | secret-lair | 16 | 15 | 1 | 93.8% |
+| 2020-06-26 | Signature Spellbook: Chandra (`SS3`) | spellbooks | other | 8 | 0 | 8 | 0.0% |
+| 2020-07-03 | Core Set 2021 (`M21`) | core | main | 285 | 51 | 234 | 17.9% |
+| 2020-07-03 | Core Set 2021 Promos (`PM21`) | promos | other | 68 | 3 | 65 | 4.4% |
+| 2020-07-17 | Jumpstart (`JMP`) | jumpstart | other | 461 | 77 | 384 | 16.7% |
+| 2020-07-17 | Jumpstart Arena Exclusives (`AJMP`) | jumpstart | other | 18 | 1 | 17 | 5.6% |
+| 2020-08-01 | 2019 Heroes of the Realm (`PH19`) | funny-special | other | 7 | 0 | 7 | 0.0% |
+| 2020-08-07 | Double Masters (`2XM`) | masters-remastered | other | 337 | 38 | 299 | 11.3% |
+| 2020-08-13 | Amonkhet Remastered (`AKR`) | masters-remastered | other | 309 | 45 | 264 | 14.6% |
+| 2020-08-13 | Arena Beginner Set (`ANB`) | starter | other | 120 | 49 | 71 | 40.8% |
+| 2020-09-25 | Zendikar Rising (`ZNR`) | expansion | main | 285 | 28 | 257 | 9.8% |
+| 2020-09-25 | Zendikar Rising Commander (`ZNC`) | commander | commander | 140 | 23 | 117 | 16.4% |
+| 2020-09-25 | Zendikar Rising Expeditions (`ZNE`) | masterpieces | other | 30 | 22 | 8 | 73.3% |
+| 2020-09-25 | Zendikar Rising Promos (`PZNR`) | promos | other | 84 | 7 | 77 | 8.3% |
+| 2020-11-12 | Kaladesh Remastered (`KLR`) | masters-remastered | other | 292 | 32 | 260 | 11.0% |
+| 2020-11-20 | Commander Legends (`CMR`) | commander | other | 531 | 76 | 455 | 14.3% |
+| 2020-12-04 | Commander Collection: Green (`CC1`) | commander | other | 8 | 2 | 6 | 25.0% |
+| 2021-01-01 | Judge Gift Cards 2021 (`PJ21`) | promos | other | 10 | 0 | 10 | 0.0% |
+| 2021-01-01 | Love Your LGS 2021 (`PLG21`) | promos | other | 9 | 0 | 9 | 0.0% |
+| 2021-01-25 | Year of the Ox 2021 (`PL21`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2021-01-29 | Kaldheim Promos (`PKHM`) | promos | other | 88 | 4 | 84 | 4.5% |
+| 2021-02-05 | Kaldheim (`KHM`) | expansion | main | 323 | 36 | 287 | 11.1% |
+| 2021-02-05 | Kaldheim Commander (`KHC`) | commander | commander | 119 | 25 | 94 | 21.0% |
+| 2021-03-11 | Historic Anthology 4 (`HA4`) | anthologies | other | 25 | 0 | 25 | 0.0% |
+| 2021-03-19 | Time Spiral Remastered (`TSR`) | masters-remastered | other | 410 | 31 | 379 | 7.6% |
+| 2021-04-23 | Commander 2021 (`C21`) | commander | commander | 329 | 40 | 289 | 12.2% |
+| 2021-04-23 | Strixhaven Mystical Archive (`STA`) | masterpieces | other | 63 | 9 | 54 | 14.3% |
+| 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | main | 290 | 24 | 266 | 8.3% |
+| 2021-04-23 | Strixhaven: School of Mages Promos (`PSTX`) | promos | other | 90 | 1 | 89 | 1.1% |
+| 2021-05-06 | Modern Horizons 2 Promos (`PMH2`) | promos | other | 80 | 6 | 74 | 7.5% |
+| 2021-05-27 | Historic Anthology 5 (`HA5`) | anthologies | other | 25 | 2 | 23 | 8.0% |
+| 2021-06-18 | Modern Horizons 1 Timeshifts (`H1R`) | supplemental | other | 40 | 3 | 37 | 7.5% |
+| 2021-06-18 | Modern Horizons 2 (`MH2`) | supplemental | other | 310 | 35 | 275 | 11.3% |
+| 2021-06-18 | Wizards Play Network 2021 (`PW21`) | promos | other | 6 | 3 | 3 | 50.0% |
+| 2021-07-23 | Adventures in the Forgotten Realms (`AFR`) | expansion | main | 288 | 22 | 266 | 7.6% |
+| 2021-07-23 | Adventures in the Forgotten Realms Promos (`PAFR`) | promos | other | 81 | 3 | 78 | 3.7% |
+| 2021-07-23 | Forgotten Realms Commander (`AFC`) | commander | commander | 275 | 42 | 233 | 15.3% |
+| 2021-08-01 | 2020 Heroes of the Realm (`PH20`) | funny-special | other | 3 | 0 | 3 | 0.0% |
+| 2021-08-20 | Mystery Booster Playtest Cards 2021 (`CMB2`) | funny-special | other | 120 | 7 | 113 | 5.8% |
+| 2021-08-26 | Jumpstart: Historic Horizons (`J21`) | jumpstart | other | 389 | 32 | 357 | 8.2% |
+| 2021-09-24 | Innistrad: Midnight Hunt (`MID`) | expansion | main | 279 | 22 | 257 | 7.9% |
+| 2021-09-24 | Innistrad: Midnight Hunt Promos (`PMID`) | promos | other | 84 | 5 | 79 | 6.0% |
+| 2021-09-24 | Midnight Hunt Commander (`MIC`) | commander | commander | 149 | 14 | 135 | 9.4% |
+| 2021-10-15 | Pioneer Challenger Decks 2021 (`Q06`) | deck-products | other | 10 | 0 | 10 | 0.0% |
+| 2021-11-19 | Crimson Vow Commander (`VOC`) | commander | commander | 150 | 21 | 129 | 14.0% |
+| 2021-11-19 | Innistrad: Crimson Vow (`VOW`) | expansion | main | 283 | 19 | 264 | 6.7% |
+| 2021-11-19 | Innistrad: Crimson Vow Promos (`PVOW`) | promos | other | 84 | 5 | 79 | 6.0% |
+| 2021-12-09 | Alchemy: Innistrad (`YMID`) | alchemy | other | 63 | 0 | 63 | 0.0% |
+| 2021-12-25 | 2021 Heroes of the Realm (`PH21`) | funny-special | other | 4 | 0 | 4 | 0.0% |
+| 2022-01-01 | Judge Gift Cards 2022 (`P22`) | promos | other | 10 | 0 | 10 | 0.0% |
+| 2022-01-28 | Commander Collection: Black (`CC2`) | commander | other | 8 | 1 | 7 | 12.5% |
+| 2022-01-28 | Innistrad: Double Feature (`DBL`) | supplemental | other | 532 | 30 | 502 | 5.6% |
+| 2022-02-18 | Kamigawa: Neon Dynasty (`NEO`) | expansion | main | 304 | 21 | 283 | 6.9% |
+| 2022-02-18 | Kamigawa: Neon Dynasty Promos (`PNEO`) | promos | other | 77 | 0 | 77 | 0.0% |
+| 2022-02-18 | Neon Dynasty Commander (`NEC`) | commander | commander | 139 | 15 | 124 | 10.8% |
+| 2022-02-25 | Year of the Tiger 2022 (`PL22`) | promos | other | 5 | 1 | 4 | 20.0% |
+| 2022-03-03 | Universes Within (`SLX`) | masters-remastered | other | 30 | 0 | 30 | 0.0% |
+| 2022-03-05 | Wizards Play Network 2022 (`PW22`) | promos | other | 6 | 1 | 5 | 16.7% |
+| 2022-03-17 | Alchemy: Kamigawa (`YNEO`) | alchemy | other | 30 | 0 | 30 | 0.0% |
+| 2022-04-08 | Game Day Promos (`GDY`) | promos | other | 9 | 0 | 9 | 0.0% |
+| 2022-04-29 | New Capenna Commander (`NCC`) | commander | commander | 350 | 49 | 301 | 14.0% |
+| 2022-04-29 | New Capenna Commander Promos (`PNCC`) | promos | other | 75 | 0 | 75 | 0.0% |
+| 2022-04-29 | Streets of New Capenna (`SNC`) | expansion | main | 310 | 29 | 281 | 9.4% |
+| 2022-04-29 | Streets of New Capenna Promos (`PSNC`) | promos | other | 80 | 6 | 74 | 7.5% |
+| 2022-06-02 | Alchemy: New Capenna (`YSNC`) | alchemy | other | 30 | 0 | 30 | 0.0% |
+| 2022-06-10 | Battle for Baldur's Gate Promos (`PCLB`) | promos | other | 99 | 5 | 94 | 5.1% |
+| 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | commander | other | 651 | 60 | 591 | 9.2% |
+| 2022-07-01 | Love Your LGS 2022 (`PLG22`) | promos | other | 2 | 1 | 1 | 50.0% |
+| 2022-07-07 | Alchemy Horizons: Baldur's Gate (`HBG`) | alchemy | other | 421 | 34 | 387 | 8.1% |
+| 2022-07-08 | Double Masters 2022 (`2X2`) | masters-remastered | other | 332 | 33 | 299 | 9.9% |
+| 2022-07-09 | Store Championships (`SCH`) | promos | other | 50 | 3 | 47 | 6.0% |
+| 2022-07-28 | Explorer Anthology 1 (`EA1`) | anthologies | other | 20 | 2 | 18 | 10.0% |
+| 2022-07-28 | Historic Anthology 6 (`HA6`) | anthologies | other | 20 | 10 | 10 | 50.0% |
+| 2022-08-01 | Summer Vacation Promos 2022 (`PSVC`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2022-09-02 | 30th Anniversary Misc Promos (`P30M`) | promos | other | 3 | 1 | 2 | 33.3% |
+| 2022-09-02 | 30th Anniversary Play Promos (`P30A`) | promos | other | 30 | 5 | 25 | 16.7% |
+| 2022-09-09 | Dominaria United (`DMU`) | expansion | main | 288 | 28 | 260 | 9.7% |
+| 2022-09-09 | Dominaria United Commander (`DMC`) | commander | commander | 192 | 42 | 150 | 21.9% |
+| 2022-09-09 | Dominaria United Promos (`PDMU`) | promos | other | 81 | 2 | 79 | 2.5% |
+| 2022-10-01 | Regional Championship Qualifiers 2022 (`PRCQ`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2022-10-05 | Alchemy: Dominaria (`YDMU`) | alchemy | other | 39 | 7 | 32 | 17.9% |
+| 2022-10-07 | The List (Unfinity Foil Edition) (`ULST`) | funny-special | other | 62 | 2 | 60 | 3.2% |
+| 2022-10-07 | Unfinity (`UNF`) | funny-special | other | 266 | 5 | 261 | 1.9% |
+| 2022-10-07 | Unfinity Sticker Sheets (`SUNF`) | funny-special | other | 48 | 0 | 48 | 0.0% |
+| 2022-10-07 | Warhammer 40,000 Commander (`40K`) | commander | commander | 286 | 43 | 243 | 15.0% |
+| 2022-10-14 | Game Night: Free-for-All (`GN3`) | boxed-products | other | 125 | 22 | 103 | 17.6% |
+| 2022-11-01 | Secret Lair Countdown (`SLC`) | secret-lair | secret-lair | 58 | 5 | 53 | 8.6% |
+| 2022-11-18 | The Brothers' War (`BRO`) | expansion | main | 292 | 27 | 265 | 9.2% |
+| 2022-11-18 | The Brothers' War Commander (`BRC`) | commander | commander | 176 | 44 | 132 | 25.0% |
+| 2022-11-18 | The Brothers' War Promos (`PBRO`) | promos | other | 89 | 2 | 87 | 2.2% |
+| 2022-11-18 | The Brothers' War Retro Artifacts (`BRR`) | masterpieces | other | 63 | 7 | 56 | 11.1% |
+| 2022-11-18 | Transformers (`BOT`) | eternal | other | 15 | 0 | 15 | 0.0% |
+| 2022-11-26 | Eternal Weekend (`PEWK`) | promos | other | 10 | 0 | 10 | 0.0% |
+| 2022-12-02 | Jumpstart 2022 (`J22`) | jumpstart | other | 819 | 110 | 709 | 13.4% |
+| 2022-12-02 | Starter Commander Decks (`SCD`) | starter | commander | 337 | 68 | 269 | 20.2% |
+| 2022-12-13 | Alchemy: The Brothers' War (`YBRO`) | alchemy | other | 31 | 0 | 31 | 0.0% |
+| 2022-12-13 | Explorer Anthology 2 (`EA2`) | anthologies | other | 25 | 2 | 23 | 8.0% |
+| 2023-01-01 | Judge Gift Cards 2023 (`P23`) | promos | other | 10 | 5 | 5 | 50.0% |
+| 2023-01-01 | Wizards Play Network 2023 (`PW23`) | promos | other | 11 | 1 | 10 | 9.1% |
+| 2023-01-07 | Regional Championship Qualifiers 2023 (`PR23`) | promos | other | 3 | 0 | 3 | 0.0% |
+| 2023-01-13 | Dominaria Remastered (`DMR`) | masters-remastered | other | 266 | 51 | 215 | 19.2% |
+| 2023-02-03 | Phyrexia: All Will Be One (`ONE`) | expansion | main | 271 | 24 | 247 | 8.9% |
+| 2023-02-10 | Phyrexia: All Will Be One Commander (`ONC`) | commander | commander | 144 | 18 | 126 | 12.5% |
+| 2023-02-10 | Phyrexia: All Will Be One Promos (`PONE`) | promos | other | 80 | 5 | 75 | 6.2% |
+| 2023-02-10 | Year of the Rabbit 2023 (`PL23`) | promos | other | 5 | 0 | 5 | 0.0% |
+| 2023-02-17 | Unknown Event (`UNK`) | funny-special | other | 506 | 8 | 498 | 1.6% |
+| 2023-02-19 | Secret Lair Promo (`SLP`) | secret-lair | secret-lair | 52 | 7 | 45 | 13.5% |
+| 2023-02-28 | Alchemy: Phyrexia (`YONE`) | alchemy | other | 31 | 0 | 31 | 0.0% |
+| 2023-03-21 | 30th Anniversary History Promos (`P30H`) | promos | other | 5 | 2 | 3 | 40.0% |
+| 2023-03-21 | Shadows of the Past (`SIS`) | masters-remastered | other | 76 | 7 | 69 | 9.2% |
+| 2023-03-21 | Shadows over Innistrad Remastered (`SIR`) | masters-remastered | other | 284 | 22 | 262 | 7.7% |
+| 2023-04-21 | March of the Machine (`MOM`) | expansion | main | 296 | 25 | 271 | 8.4% |
+| 2023-04-21 | March of the Machine Commander (`MOC`) | commander | commander | 338 | 40 | 298 | 11.8% |
+| 2023-04-21 | March of the Machine Promos (`PMOM`) | promos | other | 80 | 1 | 79 | 1.2% |
+| 2023-04-21 | Multiverse Legends (`MUL`) | masterpieces | other | 66 | 1 | 65 | 1.5% |
+| 2023-05-12 | March of the Machine: The Aftermath (`MAT`) | expansion | main | 50 | 0 | 50 | 0.0% |
+| 2023-06-23 | Tales of Middle-earth Commander (`LTC`) | commander | commander | 341 | 54 | 287 | 15.8% |
+| 2023-06-23 | Tales of Middle-earth Promos (`PLTR`) | promos | other | 84 | 0 | 84 | 0.0% |
+| 2023-06-23 | The Lord of the Rings: Tales of Middle-earth (`LTR`) | supplemental | other | 291 | 13 | 278 | 4.5% |
+| 2023-07-01 | MagicFest 2023 (`PF23`) | promos | other | 4 | 1 | 3 | 25.0% |
+| 2023-07-18 | Explorer Anthology 3 (`EA3`) | anthologies | other | 25 | 6 | 19 | 24.0% |
+| 2023-07-18 | Historic Anthology 7 (`HA7`) | anthologies | other | 25 | 8 | 17 | 32.0% |
+| 2023-08-01 | 2022 Heroes of the Realm (`PH22`) | funny-special | other | 5 | 0 | 5 | 0.0% |
+| 2023-08-04 | Commander Masters (`CMM`) | masters-remastered | other | 737 | 91 | 646 | 12.3% |
+| 2023-09-01 | 30th Anniversary Celebration Tokyo (`P30T`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2023-09-08 | Magic × Duel Masters Promos (`PMDA`) | masters-remastered | other | 4 | 1 | 3 | 25.0% |
+| 2023-09-08 | Time Spiral Remastered Promos (`PTSR`) | masters-remastered | other | 3 | 0 | 3 | 0.0% |
+| 2023-09-08 | Wilds of Eldraine (`WOE`) | expansion | main | 281 | 35 | 246 | 12.5% |
+| 2023-09-08 | Wilds of Eldraine Commander (`WOC`) | commander | commander | 143 | 19 | 124 | 13.3% |
+| 2023-09-08 | Wilds of Eldraine Promos (`PWOE`) | promos | other | 80 | 2 | 78 | 2.5% |
+| 2023-09-08 | Wilds of Eldraine: Enchanting Tales (`WOT`) | masterpieces | other | 63 | 0 | 63 | 0.0% |
+| 2023-10-01 | Wizards Play Network 2024 (`PW24`) | promos | other | 18 | 2 | 16 | 11.1% |
+| 2023-10-10 | Alchemy: Wilds of Eldraine (`YWOE`) | alchemy | other | 31 | 0 | 31 | 0.0% |
+| 2023-10-13 | Doctor Who (`WHO`) | commander | commander | 318 | 48 | 270 | 15.1% |
+| 2023-11-17 | Jurassic World Collection (`REX`) | eternal | other | 20 | 0 | 20 | 0.0% |
+| 2023-11-17 | March of the Machine: The Aftermath Promos (`PMAT`) | promos | other | 8 | 0 | 8 | 0.0% |
+| 2023-11-17 | Special Guests (`SPG`) | masterpieces | other | 139 | 15 | 124 | 10.8% |
+| 2023-11-17 | The Lost Caverns of Ixalan (`LCI`) | expansion | main | 292 | 20 | 272 | 6.8% |
+| 2023-11-17 | The Lost Caverns of Ixalan Commander (`LCC`) | commander | commander | 313 | 33 | 280 | 10.5% |
+| 2023-11-17 | The Lost Caverns of Ixalan Promos (`PLCI`) | promos | other | 68 | 0 | 68 | 0.0% |
+| 2023-12-05 | Alchemy: Ixalan (`YLCI`) | alchemy | other | 31 | 0 | 31 | 0.0% |
+| 2024-01-12 | Ravnica Remastered (`RVR`) | masters-remastered | other | 313 | 42 | 271 | 13.4% |
+| 2024-02-08 | Year of the Dragon 2024 (`PL24`) | promos | other | 6 | 1 | 5 | 16.7% |
+| 2024-02-09 | Commander Legends Promos (`PCMR`) | promos | other | 6 | 0 | 6 | 0.0% |
+| 2024-02-09 | Murders at Karlov Manor (`MKM`) | expansion | main | 279 | 8 | 271 | 2.9% |
+| 2024-02-09 | Murders at Karlov Manor Commander (`MKC`) | commander | commander | 304 | 40 | 264 | 13.2% |
+| 2024-02-09 | Murders at Karlov Manor Promos (`PMKM`) | promos | other | 90 | 0 | 90 | 0.0% |
+| 2024-02-10 | MKM Standard Showdown (`PSS4`) | promos | other | 5 | 5 | 0 | 100.0% |
+| 2024-02-23 | MagicFest 2024 (`PF24`) | promos | other | 2 | 1 | 1 | 50.0% |
+| 2024-02-23 | Ravnica: Clue Edition (`CLU`) | supplemental | other | 268 | 55 | 213 | 20.5% |
+| 2024-03-05 | Alchemy: Murders at Karlov Manor (`YMKM`) | alchemy | other | 30 | 0 | 30 | 0.0% |
+| 2024-03-08 | Fallout (`PIP`) | commander | commander | 336 | 58 | 278 | 17.3% |
+| 2024-04-19 | Breaking News (`OTP`) | masterpieces | other | 65 | 3 | 62 | 4.6% |
+| 2024-04-19 | Love Your LGS 2024 (`PLG24`) | promos | other | 5 | 1 | 4 | 20.0% |
+| 2024-04-19 | Outlaws of Thunder Junction (`OTJ`) | expansion | main | 276 | 20 | 256 | 7.2% |
+| 2024-04-19 | Outlaws of Thunder Junction Commander (`OTC`) | commander | commander | 306 | 48 | 258 | 15.7% |
+| 2024-04-19 | Outlaws of Thunder Junction Promos (`POTJ`) | promos | other | 80 | 5 | 75 | 6.2% |
+| 2024-04-19 | The Big Score (`BIG`) | expansion | main | 30 | 0 | 30 | 0.0% |
+| 2024-05-07 | Alchemy: Outlaws of Thunder Junction (`YOTJ`) | alchemy | other | 30 | 0 | 30 | 0.0% |
+| 2024-06-14 | Modern Horizons 2 Timeshifts (`H2R`) | supplemental | other | 16 | 0 | 16 | 0.0% |
+| 2024-06-14 | Modern Horizons 3 (`MH3`) | supplemental | other | 313 | 28 | 285 | 8.9% |
+| 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | commander | 320 | 39 | 281 | 12.2% |
+| 2024-06-14 | Modern Horizons 3 Promos (`PMH3`) | promos | other | 81 | 5 | 76 | 6.2% |
+| 2024-07-05 | Assassin's Creed (`ACR`) | supplemental | other | 138 | 17 | 121 | 12.3% |
+| 2024-08-02 | Bloomburrow (`BLB`) | expansion | main | 280 | 25 | 255 | 8.9% |
+| 2024-08-02 | Bloomburrow Commander (`BLC`) | commander | commander | 312 | 63 | 249 | 20.2% |
+| 2024-08-02 | Bloomburrow Promos (`PBLB`) | promos | other | 80 | 2 | 78 | 2.5% |
+| 2024-08-02 | Cowboy Bebop (`PCBB`) | promos | other | 5 | 2 | 3 | 40.0% |
+| 2024-08-02 | Mystery Booster 2 (`MB2`) | masters-remastered | other | 384 | 31 | 353 | 8.1% |
+| 2024-08-20 | Alchemy: Bloomburrow (`YBLB`) | alchemy | other | 30 | 0 | 30 | 0.0% |
+| 2024-09-27 | Duskmourn: House of Horror (`DSK`) | expansion | main | 278 | 26 | 252 | 9.4% |
+| 2024-09-27 | Duskmourn: House of Horror Commander (`DSC`) | commander | commander | 306 | 47 | 259 | 15.4% |
+| 2024-09-27 | Duskmourn: House of Horror Promos (`PDSK`) | promos | other | 80 | 0 | 80 | 0.0% |
+| 2024-10-15 | Alchemy: Duskmourn (`YDSK`) | alchemy | other | 30 | 0 | 30 | 0.0% |
+| 2024-10-16 | Tales of Middle-earth Deluxe Commander Kit (`PLTC`) | promos | other | 4 | 0 | 4 | 0.0% |
+| 2024-11-15 | Foundations (`FDN`) | core | main | 517 | 92 | 425 | 17.8% |
+| 2024-11-15 | Foundations Commander (`FDC`) | commander | commander | 3 | 1 | 2 | 33.3% |
+| 2024-11-15 | Foundations Jumpstart (`J25`) | jumpstart | other | 768 | 106 | 662 | 13.8% |
+| 2024-11-15 | Foundations Promos (`PFDN`) | promos | other | 81 | 5 | 76 | 6.2% |
+| 2024-12-10 | Pioneer Masters (`PIO`) | masters-remastered | other | 398 | 29 | 369 | 7.3% |
+| 2025-01-01 | MagicFest 2025 (`PF25`) | promos | other | 19 | 2 | 17 | 10.5% |
+| 2025-01-01 | Wizards Play Network 2025 (`PW25`) | promos | other | 16 | 2 | 14 | 12.5% |
+| 2025-01-03 | Spotlight Series (`PSPL`) | promos | other | 13 | 0 | 13 | 0.0% |
+| 2025-01-24 | Innistrad Remastered (`INR`) | masters-remastered | other | 300 | 26 | 274 | 8.7% |
+| 2025-02-09 | Japan Standard Cup (`PJSC`) | promos | other | 4 | 0 | 4 | 0.0% |
+| 2025-02-14 | Aetherdrift (`DFT`) | expansion | main | 276 | 34 | 242 | 12.3% |
+| 2025-02-14 | Aetherdrift Commander (`DRC`) | commander | commander | 163 | 28 | 135 | 17.2% |
+| 2025-02-14 | Aetherdrift Promos (`PDFT`) | promos | other | 80 | 0 | 80 | 0.0% |
+| 2025-02-14 | Year of the Snake 2025 (`PL25`) | promos | other | 5 | 2 | 3 | 40.0% |
+| 2025-03-04 | Alchemy: Aetherdrift (`YDFT`) | alchemy | other | 31 | 1 | 30 | 3.2% |
+| 2025-04-11 | Love Your LGS 2025 (`PLG25`) | promos | other | 2 | 1 | 1 | 50.0% |
+| 2025-04-11 | Tarkir: Dragonstorm (`TDM`) | expansion | main | 277 | 28 | 249 | 10.1% |
+| 2025-04-11 | Tarkir: Dragonstorm Commander (`TDC`) | commander | commander | 373 | 69 | 304 | 18.5% |
+| 2025-04-11 | Tarkir: Dragonstorm Promos (`PTDM`) | promos | other | 80 | 0 | 80 | 0.0% |
+| 2025-04-29 | Alchemy: Tarkir (`YTDM`) | alchemy | other | 30 | 0 | 30 | 0.0% |
+| 2025-05-05 | Pioneer Anthology 1 (`PA1`) | anthologies | other | 11 | 0 | 11 | 0.0% |
+| 2025-06-13 | FIN Standard Showdown (`PSS5`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2025-06-13 | Final Fantasy (`FIN`) | expansion | main | 313 | 35 | 278 | 11.2% |
+| 2025-06-13 | Final Fantasy Commander (`FIC`) | commander | commander | 339 | 61 | 278 | 18.0% |
+| 2025-06-13 | Final Fantasy Promos (`PFIN`) | promos | other | 94 | 7 | 87 | 7.4% |
+| 2025-06-13 | Final Fantasy Regional Promos (`RFIN`) | promos | other | 2 | 0 | 2 | 0.0% |
+| 2025-06-13 | Final Fantasy: Through the Ages (`FCA`) | masterpieces | other | 65 | 4 | 61 | 6.2% |
+| 2025-08-01 | Edge of Eternities (`EOE`) | expansion | main | 266 | 17 | 249 | 6.4% |
+| 2025-08-01 | Edge of Eternities Commander (`EOC`) | commander | commander | 171 | 36 | 135 | 21.1% |
+| 2025-08-01 | Edge of Eternities Promos (`PEOE`) | promos | other | 80 | 0 | 80 | 0.0% |
+| 2025-08-01 | Edge of Eternities: Stellar Sights (`EOS`) | masterpieces | other | 45 | 3 | 42 | 6.7% |
+| 2025-08-01 | The Big Score Promos (`PBIG`) | promos | other | 14 | 0 | 14 | 0.0% |
+| 2025-08-19 | Alchemy: Edge of Eternities (`YEOE`) | alchemy | other | 41 | 10 | 31 | 24.4% |
+| 2025-08-19 | Arena Anthology 1 (`AA1`) | anthologies | other | 26 | 10 | 16 | 38.5% |
+| 2025-08-19 | Arena Anthology 2 (`AA2`) | anthologies | other | 25 | 6 | 19 | 24.0% |
+| 2025-08-24 | 2023 Heroes of the Realm (`PH23`) | funny-special | other | 2 | 0 | 2 | 0.0% |
+| 2025-09-23 | Arena Anthology 3 (`AA3`) | anthologies | other | 25 | 1 | 24 | 4.0% |
+| 2025-09-23 | Arena Anthology 4 (`AA4`) | anthologies | other | 28 | 6 | 22 | 21.4% |
+| 2025-09-23 | Through the Omenpaths (`OM1`) | expansion | main | 188 | 11 | 177 | 5.9% |
+| 2025-09-23 | Through the Omenpaths Bonus Sheet (`OMB`) | masterpieces | other | 40 | 3 | 37 | 7.5% |
+| 2025-09-26 | Marvel Universe (`MAR`) | masterpieces | other | 94 | 5 | 89 | 5.3% |
+| 2025-09-26 | Marvel's Spider-Man (`SPM`) | expansion | main | 193 | 16 | 177 | 8.3% |
+| 2025-09-26 | Marvel's Spider-Man Eternal (`SPE`) | eternal | other | 26 | 2 | 24 | 7.7% |
+| 2025-09-26 | Marvel's Spider-Man Promos (`PSPM`) | promos | other | 68 | 0 | 68 | 0.0% |
+| 2025-09-30 | Marvel Legends Series Inserts (`LMAR`) | promos | other | 4 | 0 | 4 | 0.0% |
+| 2025-11-21 | Avatar: The Last Airbender (`TLA`) | expansion | main | 286 | 26 | 260 | 9.1% |
+| 2025-11-21 | Avatar: The Last Airbender Eternal (`TLE`) | eternal | other | 242 | 41 | 201 | 16.9% |
+| 2025-11-21 | Avatar: The Last Airbender Promos (`PTLA`) | promos | other | 80 | 1 | 79 | 1.2% |
+| 2026-01-01 | Wizards Play Network 2026 (`PW26`) | promos | other | 23 | 7 | 16 | 30.4% |
+| 2026-01-23 | Lorwyn Eclipsed (`ECL`) | expansion | main | 273 | 17 | 256 | 6.2% |
+| 2026-01-23 | Lorwyn Eclipsed Commander (`ECC`) | commander | commander | 153 | 25 | 128 | 16.3% |
+| 2026-01-23 | Lorwyn Eclipsed Promos (`PECL`) | promos | other | 80 | 0 | 80 | 0.0% |
+| 2026-02-03 | Alchemy: Lorwyn Eclipsed (`YECL`) | alchemy | other | 33 | 1 | 32 | 3.0% |
+| 2026-02-17 | Year of the Horse 2026 (`PL26`) | promos | other | 4 | 1 | 3 | 25.0% |
+| 2026-03-06 | Teenage Mutant Ninja Turtles (`TMT`) | expansion | main | 195 | 21 | 174 | 10.8% |
+| 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | eternal | other | 117 | 18 | 99 | 15.4% |
+| 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | other | 20 | 0 | 20 | 0.0% |
+| 2026-04-13 | MagicFest 2026 (`PF26`) | promos | other | 13 | 4 | 9 | 30.8% |
+| 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | main | 271 | 22 | 249 | 8.1% |
+| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | commander | 375 | 49 | 326 | 13.1% |
+| 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | other | 65 | 6 | 59 | 9.2% |
+| 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | other | 80 | 6 | 74 | 7.5% |
+| 2026-05-19 | Alchemy: Secrets of Strixhaven (`YSOS`) | alchemy | other | 32 | 1 | 31 | 3.1% |
+| 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | main | 281 | 27 | 254 | 9.6% |
+| 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | commander | 616 | 72 | 544 | 11.7% |
+| 2026-08-14 | The Hobbit (`HOB`) | expansion | main | 193 | 20 | 173 | 10.4% |
+| 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | other | 117 | 6 | 111 | 5.1% |
+| 2026-09-02 | The Zeta Set (`SLZ`) | boxed-products | other | 121 | 20 | 101 | 16.5% |
+| 2026-10-02 | Reality Fracture (`FRA`) | expansion | main | 23 | 0 | 23 | 0.0% |
+| 2026-10-02 | Reality Fracture Commander (`FRC`) | commander | commander | 1 | 0 | 1 | 0.0% |
+| 2026-11-09 | Mystery Booster Commander Edition (`MBC`) | commander | other | 80 | 2 | 78 | 2.5% |
+| 2026-11-13 | Star Trek (`TRK`) | expansion | main | 91 | 8 | 83 | 8.8% |
+| 2026-11-13 | Star Trek Commander (`TRC`) | commander | commander | 40 | 16 | 24 | 40.0% |
+| 2026-11-13 | Stardates (`SDS`) | masterpieces | other | 1 | 0 | 1 | 0.0% |
+
+## Resumen por grupo
+
+| Grupo | Ediciones | Cartas únicas | Implementadas | Pendientes | % |
+|---|---:|---:|---:|---:|---:|
+| alchemy | 18 | 994 | 54 | 940 | 5.4% |
+| anthologies | 17 | 920 | 190 | 730 | 20.7% |
+| archenemy | 2 | 242 | 58 | 184 | 24.0% |
+| boxed-products | 20 | 1649 | 408 | 1241 | 24.7% |
+| commander | 48 | 12160 | 1978 | 10182 | 16.3% |
+| conspiracy | 3 | 432 | 47 | 385 | 10.9% |
+| core | 25 | 7799 | 1783 | 6016 | 22.9% |
+| deck-products | 4 | 262 | 58 | 204 | 22.1% |
+| duel-decks | 27 | 1731 | 386 | 1345 | 22.3% |
+| eternal | 6 | 537 | 67 | 470 | 12.5% |
+| expansion | 119 | 26290 | 2774 | 23516 | 10.6% |
+| from-the-vault | 10 | 156 | 13 | 143 | 8.3% |
+| funny-special | 21 | 1748 | 68 | 1680 | 3.9% |
+| jumpstart | 5 | 2455 | 326 | 2129 | 13.3% |
+| masterpieces | 19 | 1036 | 116 | 920 | 11.2% |
+| masters-remastered | 35 | 13371 | 1619 | 11752 | 12.1% |
+| planechase | 3 | 418 | 96 | 322 | 23.0% |
+| premium-decks | 3 | 99 | 20 | 79 | 20.2% |
+| promos | 289 | 8532 | 758 | 7774 | 8.9% |
+| secret-lair | 4 | 1822 | 182 | 1640 | 10.0% |
+| spellbooks | 3 | 24 | 2 | 22 | 8.3% |
+| starter | 15 | 1306 | 414 | 892 | 31.7% |
+| supplemental | 10 | 2417 | 260 | 2157 | 10.8% |
+| treasure-chest | 2 | 419 | 40 | 379 | 9.5% |
 
 ## Pendientes por edición
 
-### Limited Edition Alpha (`LEA`)
+### core · Limited Edition Alpha (`LEA`)
 
 - [ ] Animate Artifact — `2dd7a4dc-902a-4e85-8a3b-c96a898fba86`
 - [ ] Animate Dead — `c0d8fef4-65f4-4769-982d-b397d2b7e977`
@@ -945,233 +974,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Word of Command — `e8ad3a77-b293-4d69-b080-27ca9f95d443`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Limited Edition Beta (`LEB`)
-
-- [ ] Animate Artifact — `2dd7a4dc-902a-4e85-8a3b-c96a898fba86`
-- [ ] Animate Dead — `c0d8fef4-65f4-4769-982d-b397d2b7e977`
-- [ ] Animate Wall — `c7a6a165-b709-46e0-ae42-6f69a17c0621`
-- [ ] Ankh of Mishra — `63c1eda1-3e6f-4e9c-adf3-a43164df98bb`
-- [ ] Armageddon — `c9ed8b01-959a-47d6-891e-0abbdccf6e4f`
-- [ ] Aspect of Wolf — `77b7277d-90a1-4774-a998-8c35c3f94e4a`
-- [ ] Bad Moon — `fc5d3341-cbce-49e5-93cc-8add92479dca`
-- [ ] Balance — `17fa98cd-ed8f-483f-9525-7e989a82ebb2`
-- [ ] Basalt Monolith — `6b8cf2a0-b045-4d91-9d91-c602d40c6237`
-- [ ] Benalish Hero — `4c81cfb7-8765-4e28-ae33-4287fa9a86cc`
-- [ ] Berserk — `8b67d192-9a05-4a47-82ae-5fc4b7834d88`
-- [ ] Black Knight — `9456c5b6-946d-403a-8ed0-dff9f921d98c`
-- [ ] Black Vise — `de7839fb-7040-48ab-a6d4-d1952972943d`
-- [ ] Black Ward — `7861ac9b-3024-4935-804c-2ca4c5a46bf4`
-- [ ] Blaze of Glory — `b330ac89-790e-4cc9-96a5-532c48252088`
-- [ ] Blessing — `5c84d8da-2bfb-4618-89a0-7d9ed604e854`
-- [ ] Blue Elemental Blast — `65e1558c-6b09-4ddc-b520-f19f4fb972af`
-- [ ] Blue Ward — `fc0bf1d0-46a2-4305-ab2e-466d79d60ab2`
-- [ ] Bog Wraith — `508248d1-09a4-4e41-a4c9-286618e5061e`
-- [ ] Burrowing — `d6b9b88b-e31b-4b88-9d53-3df5687804ba`
-- [ ] Camouflage — `9cf44db4-627a-4197-9588-6da72e41f03d`
-- [ ] Castle — `f3179c3c-7e53-44d2-b579-b9e677efe9d9`
-- [ ] Channel — `d1b815d1-2848-40d4-a555-66822d1becbc`
-- [ ] Chaos Orb — `edb455f4-8dc9-4b7c-b25c-cb51b7dfbb41`
-- [ ] Chaoslace — `08842aa3-f923-46e9-a106-f542331e9cc1`
-- [ ] Circle of Protection: Black — `7a5a8414-4da4-4dd0-93ae-210d50f4d6f6`
-- [ ] Circle of Protection: Blue — `d7572f17-f85d-45c0-ac64-43aac760eafe`
-- [ ] Circle of Protection: Green — `41b0f347-1398-4778-bf3f-4007d8a77162`
-- [ ] Circle of Protection: Red — `df2738fe-9cd1-4347-8808-105fcfde1190`
-- [ ] Circle of Protection: White — `5f46f86a-9779-4ed3-99cb-76a03d380598`
-- [ ] Clockwork Beast — `eb97c8db-ac6c-476c-b14d-87785e9c82f0`
-- [ ] Clone — `42226b87-0746-4ebf-9fd0-108d508462af`
-- [ ] Cockatrice — `af354337-424c-4c7e-8ca5-6149261368d2`
-- [ ] Consecrate Land — `4627691c-4ed4-4add-9cc3-2e019be2f9fd`
-- [ ] Conservator — `1940e56d-0972-4ca4-946c-bbd42dde1dcb`
-- [ ] Contract from Below — `9e0ed4b0-28b5-44be-ab83-f1e8eb07138d`
-- [ ] Control Magic — `cd0d7141-46d2-4aa3-bc77-6b3b4513803e`
-- [ ] Conversion — `a24e05fb-dffb-4400-b4ca-22fdde45e7a7`
-- [ ] Copper Tablet — `16d1023b-2162-4010-8bf4-218dbe7c99a0`
-- [ ] Copy Artifact — `80bc56a9-40e0-48da-ae86-190e39c8a4a3`
-- [ ] Creature Bond — `70492e32-ba4d-4314-b016-892fb15f7a23`
-- [ ] Crusade — `4692740f-be90-459f-8d90-c4ae71771595`
-- [ ] Crystal Rod — `e68bc048-1009-46a5-97d6-ec77a18067da`
-- [ ] Cursed Land — `0d61239f-28e4-4adb-8f6e-b56e9c8699af`
-- [ ] Cyclopean Tomb — `1edee40f-d153-4d67-aee7-ef08e11e4a79`
-- [ ] Dark Ritual — `53f7c868-b03e-4fc2-8dcf-a75bbfa3272b`
-- [ ] Darkpact — `74f10b9a-a286-49b2-bfa1-a427ff041bd4`
-- [ ] Death Ward — `0544b707-ec67-43e3-a25d-fd7005ab673d`
-- [ ] Deathgrip — `20ae75a7-14ca-4366-af0a-3f3f02159f3f`
-- [ ] Deathlace — `fb80aaba-352a-4b58-8db2-1e02d542819c`
-- [ ] Demonic Attorney — `65a9f643-063f-406a-8d5a-5ebbe0f04c3d`
-- [ ] Demonic Hordes — `2847c8a0-f6aa-4e4a-a7b8-fc116436a264`
-- [ ] Dingus Egg — `1973f1e9-aa14-49dc-bafe-be17b30ba288`
-- [ ] Disintegrate — `92d6af2f-728e-4e41-87cb-5c90878a2f2f`
-- [ ] Disrupting Scepter — `cd30a128-4b23-476e-8066-2272fdc395d9`
-- [ ] Dragon Whelp — `705a1985-ed39-4a4b-812e-a677170b596e`
-- [ ] Drain Life — `e75ba79f-4cc2-4ede-8641-559ab94e7e36`
-- [ ] Drain Power — `0669172d-396b-4f5a-9703-129c5c849b55`
-- [ ] Drudge Skeletons — `c180ed02-07f4-4538-9bea-8c249234a8e2`
-- [ ] Dwarven Warriors — `cfc553cd-3b4c-47a9-bffb-e5790befb32c`
-- [ ] Earthbind — `e8e35b49-8cfb-4fb5-89aa-8050f15b11bf`
-- [ ] Earthquake — `9a40614b-50a3-422c-849e-53c8b7d3d204`
-- [ ] Evil Presence — `3d8ac41c-0566-48b2-a744-39db2f72272c`
-- [ ] False Orders — `38c5c952-8153-4d98-89b5-a75260383345`
-- [ ] Farmstead — `0d71b157-09a0-4fd4-beb9-103117a784ad`
-- [ ] Fastbond — `e27193b7-1a47-4555-865d-b1fd4c6d597f`
-- [ ] Fear — `355bbe9b-59bf-470f-8600-410af4c7fe18`
-- [ ] Feedback — `2ff92886-5c17-47a4-a02b-a97432d9203e`
-- [ ] Fireball — `aa7714b0-2bfb-458a-8ebf-37ec2c53383e`
-- [ ] Firebreathing — `8603bf74-faab-4910-8e45-0f2e3b318efb`
-- [ ] Flashfires — `c281f436-8c77-48f7-b31c-d40cd7f9ed6a`
-- [ ] Flight — `6a4068b0-fb4f-429c-a94e-47849f3eb7ef`
-- [ ] Fog — `27e9db49-7af7-4bef-ad4c-bf5dfb92030d`
-- [ ] Force of Nature — `e3c4c27d-f263-4c69-a4fe-2928136ff68b`
-- [ ] Forcefield — `bd6823fb-a696-4e6d-9c5e-3b55dfe03730`
-- [ ] Fork — `50c53ae0-51ba-4046-ac74-87c65e688032`
-- [ ] Frozen Shade — `f75f9006-217d-4ec8-9c35-ceefe1c5ae4e`
-- [ ] Fungusaur — `3e771f5b-2de3-4a1b-8281-ab1f7491e5a1`
-- [ ] Gaea's Liege — `8d134a60-e1e5-4163-8bdc-36af91567185`
-- [ ] Gauntlet of Might — `d38ad188-515e-4865-a0ed-5d0fd4c7b453`
-- [ ] Glasses of Urza — `af7fabf4-8d55-4b06-9c21-472f4a5775b4`
-- [ ] Gloom — `4d022f53-b1fb-4071-afcc-0af3214fe604`
-- [ ] Goblin Balloon Brigade — `10bc98b0-3fdc-46d1-8d3b-6d160e9dd62f`
-- [ ] Goblin King — `d236b3fc-0d3f-4d99-875d-e32a33fe5767`
-- [ ] Granite Gargoyle — `ef5248d4-4cd1-447c-bdcc-78a09a67d923`
-- [ ] Green Ward — `727ab7f2-741e-4442-b5cb-e3032549fa87`
-- [ ] Guardian Angel — `1a91ca69-e890-41dc-866b-3aabf10c9a9c`
-- [ ] Healing Salve — `8da8644c-75a1-4fe9-8e94-900d948d631c`
-- [ ] Helm of Chatzuk — `948e3bb7-8265-4e95-acd1-a0c4f22441df`
-- [ ] Holy Armor — `912164c2-b4d4-42e3-a10e-903b8c7b2e6d`
-- [ ] Holy Strength — `9357de36-f8be-4f49-b2c8-9fe9eaf82b07`
-- [ ] Howl from Beyond — `403cf6ae-48a9-4ea9-894e-7135cfca4e1b`
-- [ ] Howling Mine — `d26b27db-a567-4631-b4b6-7294222fbdd1`
-- [ ] Hurricane — `9c021685-4017-49c7-9f58-2ae0243361a0`
-- [ ] Hypnotic Specter — `759af941-f6a3-4726-91f2-9b1e4e55ea71`
-- [ ] Ice Storm — `a0b97e33-2d0c-4800-a9f5-9cd9be651ea8`
-- [ ] Icy Manipulator — `3608f1f7-8dc5-4dd1-ae91-c830e1de9529`
-- [ ] Illusionary Mask — `05ac866d-0405-4d25-986a-c10fcfc097e6`
-- [ ] Instill Energy — `8695c3c1-fb4b-4429-ae33-ec186f68796b`
-- [ ] Invisibility — `de26b0c6-dfb7-45a8-9d7f-f8d45522d675`
-- [ ] Iron Star — `e9ec67e1-7064-44d4-a1ed-04b7893ffb15`
-- [ ] Ironclaw Orcs — `c645a616-0d7d-416c-b5f3-057b3a1666a0`
-- [ ] Island Sanctuary — `7d1769d0-d942-45b3-a31c-2bbe45e68661`
-- [ ] Ivory Cup — `8e2017c3-057d-4e30-bd60-f486fddbc6ca`
-- [ ] Jade Monolith — `1e105ab7-fb10-4cfd-ac2f-5e11488cf1b0`
-- [ ] Jade Statue — `96162b22-41e7-4559-aa1b-c18f42abcb52`
-- [ ] Juggernaut — `4ac9116f-36bc-4d71-b696-d6ee064e1d58`
-- [ ] Jump — `f7518456-45ed-41d4-bd3c-5aacea28eb35`
-- [ ] Karma — `fac4da47-f0b2-4b57-9703-e0ed100d3499`
-- [ ] Keldon Warlord — `acc869f8-dcbe-4d57-baa0-3eef4aceb251`
-- [ ] Kormus Bell — `d2d477a5-f055-4d47-a852-26e8239f2a01`
-- [ ] Kudzu — `51ca5965-ae39-4e51-8948-9a230a03f906`
-- [ ] Lance — `5960dd01-6797-4c73-b48a-f637b9c288cc`
-- [ ] Ley Druid — `a4ae41c7-9631-407d-8fd3-04f403d940a8`
-- [ ] Library of Leng — `867def48-4be8-4056-bcf1-d6b00450b9a3`
-- [ ] Lich — `5b7515f2-7a5a-4e2a-9784-6cbacd768172`
-- [ ] Lifeforce — `07ae1fe5-5c3e-4d94-b809-8defd2ef44e3`
-- [ ] Lifelace — `eec1de80-4b3d-481d-a235-c299e0381830`
-- [ ] Lifetap — `52ac09af-2aa7-4d80-be26-3e6a6efd5c23`
-- [ ] Living Artifact — `4ff9af56-ac18-4966-9e48-183e1ca1c2d0`
-- [ ] Living Lands — `8f0179fe-6d7d-49cc-ab06-d3b402c6fc8d`
-- [ ] Living Wall — `4844312c-3c9d-4ca1-986d-4ad35e68454e`
-- [ ] Lord of Atlantis — `cc7f290f-ca00-4285-9bdb-4b4402444f30`
-- [ ] Lord of the Pit — `ea152809-85a2-4fde-8251-3b1f267e4443`
-- [ ] Lure — `7a7425ba-4478-4bc4-855f-abf947ea4fa2`
-- [ ] Magical Hack — `cba229fa-9035-405b-b091-3798898a37ee`
-- [ ] Mana Flare — `97159138-c34b-416e-b079-5c952383a243`
-- [ ] Mana Short — `48207d1c-448a-4e1b-974a-642dfea75933`
-- [ ] Mana Vault — `736892cb-a34b-4bb9-b56c-e26e3db207a2`
-- [ ] Manabarbs — `0f1afedd-c60f-454f-b84a-c8117aec0128`
-- [ ] Meekstone — `5ba73182-30a7-4bad-9cb6-c0feecc2db33`
-- [ ] Mesa Pegasus — `8161f5b8-6aab-4133-ba2c-2e7b5774153e`
-- [ ] Mind Twist — `78f9c223-9982-4282-a496-a6f892f0a5bf`
-- [ ] Natural Selection — `57f90b30-bcb0-447e-8788-5c5ded187207`
-- [ ] Nether Shadow — `c358b9e2-524c-434b-b3fa-74d2aa6d1df7`
-- [ ] Nettling Imp — `c58dfcbf-49e6-4ef0-bd31-ebd81b0cfa41`
-- [ ] Nevinyrral's Disk — `96230edf-568a-47dd-b877-9d92aa58fac8`
-- [ ] Nightmare — `375932e6-1b3e-48dc-8154-9b664c3add34`
-- [ ] Northern Paladin — `f5975294-508a-453e-893a-2fbea2487d17`
-- [ ] Orcish Artillery — `c000811e-bde7-4840-a3bb-9714d5c977eb`
-- [ ] Orcish Oriflamme — `0b16a650-68b0-44dc-a9e1-15b7966e0b18`
-- [ ] Paralyze — `e9b4e857-39e5-4a06-89ad-3dd94b3f252a`
-- [ ] Personal Incarnation — `6e49a5b8-6bc4-4c7b-82c1-957f1fb0ca5f`
-- [ ] Pestilence — `dafe63ef-f3d6-45e7-877a-573da92ba85e`
-- [ ] Phantasmal Forces — `06a158c6-7e36-49f8-a8e0-a7b7df5fd7ed`
-- [ ] Phantasmal Terrain — `7dcbce46-2973-4a9f-93df-95ac41ce668a`
-- [ ] Pirate Ship — `c6b3f924-806d-47d3-b044-72b48470196c`
-- [ ] Plague Rats — `16cf1cf9-6900-406c-a5b4-0e5750f530e0`
-- [ ] Power Leak — `dc2f0000-870b-487f-9623-618fc8eb9765`
-- [ ] Power Sink — `39412e6d-2837-4729-abf9-e64a5ba87e40`
-- [ ] Power Surge — `156b2228-f7b2-4816-b894-c4953a32c05f`
-- [ ] Psionic Blast — `7f221ad6-7ec4-483d-a6b5-1456c95c1cad`
-- [ ] Psychic Venom — `a60422e8-f2f4-4c37-a0f4-eedad27eb08c`
-- [ ] Purelace — `3773001a-8868-49ec-a406-298cf72359c2`
-- [ ] Raging River — `a2310312-6e1e-4e34-a351-9aef499a810f`
-- [ ] Raise Dead — `cbc9c731-181a-4f00-a7b0-eb7e56eac2ea`
-- [ ] Red Elemental Blast — `bb329a5c-b9f9-4973-a53f-090024146325`
-- [ ] Red Ward — `73f84440-425f-4cf5-b01a-3ae89f1f6e37`
-- [ ] Regeneration — `89390a33-b289-4edd-a114-6616e49a49c2`
-- [ ] Regrowth — `e6e4a8bd-5c40-4654-8de1-0da9afed90fd`
-- [ ] Resurrection — `837417d8-8260-486d-a3ed-3b5711eaf34a`
-- [ ] Reverse Damage — `eaaf7c30-f463-4115-a40e-7dc717063413`
-- [ ] Righteousness — `3f6b2f76-0364-415e-a6a2-e9e5bf31b745`
-- [ ] Rock Hydra — `aff84707-f5f8-4f53-869e-feec78da8d8d`
-- [ ] Royal Assassin — `9ed6f28f-a3db-48c5-9ab0-b90a7fba5f57`
-- [ ] Sacrifice — `068b3692-411b-44d4-a7e9-005262760cfc`
-- [ ] Samite Healer — `95a0ca48-d924-47f4-86ed-42c673ee778c`
-- [ ] Scavenging Ghoul — `68c0c04e-b0d5-4721-83bf-bf18e8b7e680`
-- [ ] Sea Serpent — `c16495fc-784d-4bac-9a68-ed437008df73`
-- [ ] Sedge Troll — `a6a43190-cca2-4f07-afe9-8af681d777da`
-- [ ] Sengir Vampire — `749141aa-f6c4-4ad8-b146-406e68ae9b0b`
-- [ ] Shanodin Dryads — `998484cc-fefc-4da5-9987-5d6e89599c34`
-- [ ] Shatter — `84d32e68-72b9-432d-a023-7bc6a26b8ad0`
-- [ ] Shivan Dragon — `711eea87-0fa3-46e0-a42b-fa5a86455f04`
-- [ ] Simulacrum — `20d69989-7250-40c7-a064-8ed78ccbe556`
-- [ ] Sinkhole — `5a46ad2a-35b1-4dd5-b7c3-fec36b7c67ab`
-- [ ] Siren's Call — `269fc857-a052-4f0a-9759-467ccf42bebb`
-- [ ] Sleight of Mind — `99dba614-40d3-41c1-a3b2-edc8777b010f`
-- [ ] Smoke — `8aa97d25-cd51-4ceb-b7eb-af64f0914a8c`
-- [ ] Soul Net — `6021c2d6-d098-4de2-9c7e-4c571f9238f6`
-- [ ] Spell Blast — `04477339-7ed5-4770-9e5c-6e481ffcc858`
-- [ ] Stasis — `a8cf1379-0195-4e11-b994-481ef1284245`
-- [ ] Steal Artifact — `cd8ae9f2-edac-473a-8846-c08219e617c3`
-- [ ] Stone Giant — `0b8e3f9b-a4da-49a3-8545-ce7a265e5856`
-- [ ] Stone Rain — `6e880df6-fc00-43d2-a9c8-f575f40b78c6`
-- [ ] Stream of Life — `9eb2912d-2130-49f2-9529-b58fa5a97a15`
-- [ ] Sunglasses of Urza — `eea64b1f-d6a9-4f72-8612-efab4b124b63`
-- [ ] Swords to Plowshares — `b1544f21-7e98-461b-aed5-e748b0168c52`
-- [ ] Terror — `b81f041d-98db-4408-9472-c483e4a502bc`
-- [ ] Thicket Basilisk — `c4822813-cd81-465d-9fe8-3a4c2dcd31ef`
-- [ ] Thoughtlace — `6452b6a6-6235-46a3-a712-a26592450438`
-- [ ] Throne of Bone — `f73c7edf-ed2c-41e8-ac83-c83ddd543f14`
-- [ ] Timber Wolves — `35d07ac9-b184-4b5f-8192-34b1db042f69`
-- [ ] Time Vault — `99d4d99d-cf56-45aa-aa39-a250695612f2`
-- [ ] Time Walk — `d0209d3f-3f7e-4fd5-bce5-10bce6f29c86`
-- [ ] Timetwister — `c823e687-6311-4c99-974b-fd77d204141a`
-- [ ] Tranquility — `f671e3c3-cd59-4d06-a1af-5d04892cf74d`
-- [ ] Tsunami — `ef2b1565-7b02-4cab-9031-beb1701ee929`
-- [ ] Twiddle — `773ad2ef-5acc-49ea-8d85-056330e87039`
-- [ ] Two-Headed Giant of Foriys — `38aa31bd-7145-43b9-9409-463d9ad6cd69`
-- [ ] Unholy Strength — `090d88a9-7f2d-4bd1-a30a-7c48d05068be`
-- [ ] Uthden Troll — `d6329dcc-b450-482a-8ee3-45449f7a4b3d`
-- [ ] Verduran Enchantress — `cd98a31b-cc7e-43f9-982e-109ad9850908`
-- [ ] Vesuvan Doppelganger — `aeaccab9-3e2c-4a40-a483-52c4972b2014`
-- [ ] Veteran Bodyguard — `d29078c0-1fb8-437a-81d1-bb319f646941`
-- [ ] Volcanic Eruption — `4c15889e-3172-413b-b805-a2b7ad05f636`
-- [ ] Wall of Bone — `8ffe4986-9e09-4421-ad26-296a4c0df9e4`
-- [ ] Wall of Brambles — `f8d82a00-c10e-4b9e-9642-d05706900a97`
-- [ ] Wall of Fire — `f38c8b47-e8e0-4d2f-b1da-d8d986805a48`
-- [ ] Wall of Water — `608cc65c-f99a-4ca3-be24-190d2556b411`
-- [ ] Wanderlust — `73bddfdb-d1fb-4038-b676-201f6b82beb0`
-- [ ] Warp Artifact — `f4b18451-1f40-48bd-8ca9-eec784ad5dd7`
-- [ ] Weakness — `f07a24c0-bf3c-4733-9473-c6be3b16950e`
-- [ ] Web — `5aa12aff-db3c-4be5-822b-3afdf536b33e`
-- [ ] Wheel of Fortune — `a8abd966-de7b-46a3-8ac7-8747ab35653a`
-- [ ] White Knight — `ddb021df-ae4a-4ac1-8353-d0b375761714`
-- [ ] White Ward — `860468b3-625a-4663-a5ae-336ae10fc7d0`
-- [ ] Wild Growth — `706ae742-1807-44b7-a4fa-f2e26f61519a`
-- [ ] Will-o'-the-Wisp — `8b60fcfe-fb90-4a00-a708-25b59bfc9b5a`
-- [ ] Winter Orb — `1dcbd583-3388-4b34-a7cd-131648aa6abd`
-- [ ] Wooden Sphere — `0bd8917c-bec4-4603-bc3f-8e0c2afae56a`
-- [ ] Word of Command — `e8ad3a77-b293-4d69-b080-27ca9f95d443`
-- [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
-
-### Unlimited Edition (`2ED`)
+### core · Limited Edition Beta (`LEB`)
 
 - [ ] Animate Artifact — `2dd7a4dc-902a-4e85-8a3b-c96a898fba86`
 - [ ] Animate Dead — `c0d8fef4-65f4-4769-982d-b397d2b7e977`
@@ -1397,7 +1200,233 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Word of Command — `e8ad3a77-b293-4d69-b080-27ca9f95d443`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Arabian Nights (`ARN`)
+### core · Unlimited Edition (`2ED`)
+
+- [ ] Animate Artifact — `2dd7a4dc-902a-4e85-8a3b-c96a898fba86`
+- [ ] Animate Dead — `c0d8fef4-65f4-4769-982d-b397d2b7e977`
+- [ ] Animate Wall — `c7a6a165-b709-46e0-ae42-6f69a17c0621`
+- [ ] Ankh of Mishra — `63c1eda1-3e6f-4e9c-adf3-a43164df98bb`
+- [ ] Armageddon — `c9ed8b01-959a-47d6-891e-0abbdccf6e4f`
+- [ ] Aspect of Wolf — `77b7277d-90a1-4774-a998-8c35c3f94e4a`
+- [ ] Bad Moon — `fc5d3341-cbce-49e5-93cc-8add92479dca`
+- [ ] Balance — `17fa98cd-ed8f-483f-9525-7e989a82ebb2`
+- [ ] Basalt Monolith — `6b8cf2a0-b045-4d91-9d91-c602d40c6237`
+- [ ] Benalish Hero — `4c81cfb7-8765-4e28-ae33-4287fa9a86cc`
+- [ ] Berserk — `8b67d192-9a05-4a47-82ae-5fc4b7834d88`
+- [ ] Black Knight — `9456c5b6-946d-403a-8ed0-dff9f921d98c`
+- [ ] Black Vise — `de7839fb-7040-48ab-a6d4-d1952972943d`
+- [ ] Black Ward — `7861ac9b-3024-4935-804c-2ca4c5a46bf4`
+- [ ] Blaze of Glory — `b330ac89-790e-4cc9-96a5-532c48252088`
+- [ ] Blessing — `5c84d8da-2bfb-4618-89a0-7d9ed604e854`
+- [ ] Blue Elemental Blast — `65e1558c-6b09-4ddc-b520-f19f4fb972af`
+- [ ] Blue Ward — `fc0bf1d0-46a2-4305-ab2e-466d79d60ab2`
+- [ ] Bog Wraith — `508248d1-09a4-4e41-a4c9-286618e5061e`
+- [ ] Burrowing — `d6b9b88b-e31b-4b88-9d53-3df5687804ba`
+- [ ] Camouflage — `9cf44db4-627a-4197-9588-6da72e41f03d`
+- [ ] Castle — `f3179c3c-7e53-44d2-b579-b9e677efe9d9`
+- [ ] Channel — `d1b815d1-2848-40d4-a555-66822d1becbc`
+- [ ] Chaos Orb — `edb455f4-8dc9-4b7c-b25c-cb51b7dfbb41`
+- [ ] Chaoslace — `08842aa3-f923-46e9-a106-f542331e9cc1`
+- [ ] Circle of Protection: Black — `7a5a8414-4da4-4dd0-93ae-210d50f4d6f6`
+- [ ] Circle of Protection: Blue — `d7572f17-f85d-45c0-ac64-43aac760eafe`
+- [ ] Circle of Protection: Green — `41b0f347-1398-4778-bf3f-4007d8a77162`
+- [ ] Circle of Protection: Red — `df2738fe-9cd1-4347-8808-105fcfde1190`
+- [ ] Circle of Protection: White — `5f46f86a-9779-4ed3-99cb-76a03d380598`
+- [ ] Clockwork Beast — `eb97c8db-ac6c-476c-b14d-87785e9c82f0`
+- [ ] Clone — `42226b87-0746-4ebf-9fd0-108d508462af`
+- [ ] Cockatrice — `af354337-424c-4c7e-8ca5-6149261368d2`
+- [ ] Consecrate Land — `4627691c-4ed4-4add-9cc3-2e019be2f9fd`
+- [ ] Conservator — `1940e56d-0972-4ca4-946c-bbd42dde1dcb`
+- [ ] Contract from Below — `9e0ed4b0-28b5-44be-ab83-f1e8eb07138d`
+- [ ] Control Magic — `cd0d7141-46d2-4aa3-bc77-6b3b4513803e`
+- [ ] Conversion — `a24e05fb-dffb-4400-b4ca-22fdde45e7a7`
+- [ ] Copper Tablet — `16d1023b-2162-4010-8bf4-218dbe7c99a0`
+- [ ] Copy Artifact — `80bc56a9-40e0-48da-ae86-190e39c8a4a3`
+- [ ] Creature Bond — `70492e32-ba4d-4314-b016-892fb15f7a23`
+- [ ] Crusade — `4692740f-be90-459f-8d90-c4ae71771595`
+- [ ] Crystal Rod — `e68bc048-1009-46a5-97d6-ec77a18067da`
+- [ ] Cursed Land — `0d61239f-28e4-4adb-8f6e-b56e9c8699af`
+- [ ] Cyclopean Tomb — `1edee40f-d153-4d67-aee7-ef08e11e4a79`
+- [ ] Dark Ritual — `53f7c868-b03e-4fc2-8dcf-a75bbfa3272b`
+- [ ] Darkpact — `74f10b9a-a286-49b2-bfa1-a427ff041bd4`
+- [ ] Death Ward — `0544b707-ec67-43e3-a25d-fd7005ab673d`
+- [ ] Deathgrip — `20ae75a7-14ca-4366-af0a-3f3f02159f3f`
+- [ ] Deathlace — `fb80aaba-352a-4b58-8db2-1e02d542819c`
+- [ ] Demonic Attorney — `65a9f643-063f-406a-8d5a-5ebbe0f04c3d`
+- [ ] Demonic Hordes — `2847c8a0-f6aa-4e4a-a7b8-fc116436a264`
+- [ ] Dingus Egg — `1973f1e9-aa14-49dc-bafe-be17b30ba288`
+- [ ] Disintegrate — `92d6af2f-728e-4e41-87cb-5c90878a2f2f`
+- [ ] Disrupting Scepter — `cd30a128-4b23-476e-8066-2272fdc395d9`
+- [ ] Dragon Whelp — `705a1985-ed39-4a4b-812e-a677170b596e`
+- [ ] Drain Life — `e75ba79f-4cc2-4ede-8641-559ab94e7e36`
+- [ ] Drain Power — `0669172d-396b-4f5a-9703-129c5c849b55`
+- [ ] Drudge Skeletons — `c180ed02-07f4-4538-9bea-8c249234a8e2`
+- [ ] Dwarven Warriors — `cfc553cd-3b4c-47a9-bffb-e5790befb32c`
+- [ ] Earthbind — `e8e35b49-8cfb-4fb5-89aa-8050f15b11bf`
+- [ ] Earthquake — `9a40614b-50a3-422c-849e-53c8b7d3d204`
+- [ ] Evil Presence — `3d8ac41c-0566-48b2-a744-39db2f72272c`
+- [ ] False Orders — `38c5c952-8153-4d98-89b5-a75260383345`
+- [ ] Farmstead — `0d71b157-09a0-4fd4-beb9-103117a784ad`
+- [ ] Fastbond — `e27193b7-1a47-4555-865d-b1fd4c6d597f`
+- [ ] Fear — `355bbe9b-59bf-470f-8600-410af4c7fe18`
+- [ ] Feedback — `2ff92886-5c17-47a4-a02b-a97432d9203e`
+- [ ] Fireball — `aa7714b0-2bfb-458a-8ebf-37ec2c53383e`
+- [ ] Firebreathing — `8603bf74-faab-4910-8e45-0f2e3b318efb`
+- [ ] Flashfires — `c281f436-8c77-48f7-b31c-d40cd7f9ed6a`
+- [ ] Flight — `6a4068b0-fb4f-429c-a94e-47849f3eb7ef`
+- [ ] Fog — `27e9db49-7af7-4bef-ad4c-bf5dfb92030d`
+- [ ] Force of Nature — `e3c4c27d-f263-4c69-a4fe-2928136ff68b`
+- [ ] Forcefield — `bd6823fb-a696-4e6d-9c5e-3b55dfe03730`
+- [ ] Fork — `50c53ae0-51ba-4046-ac74-87c65e688032`
+- [ ] Frozen Shade — `f75f9006-217d-4ec8-9c35-ceefe1c5ae4e`
+- [ ] Fungusaur — `3e771f5b-2de3-4a1b-8281-ab1f7491e5a1`
+- [ ] Gaea's Liege — `8d134a60-e1e5-4163-8bdc-36af91567185`
+- [ ] Gauntlet of Might — `d38ad188-515e-4865-a0ed-5d0fd4c7b453`
+- [ ] Glasses of Urza — `af7fabf4-8d55-4b06-9c21-472f4a5775b4`
+- [ ] Gloom — `4d022f53-b1fb-4071-afcc-0af3214fe604`
+- [ ] Goblin Balloon Brigade — `10bc98b0-3fdc-46d1-8d3b-6d160e9dd62f`
+- [ ] Goblin King — `d236b3fc-0d3f-4d99-875d-e32a33fe5767`
+- [ ] Granite Gargoyle — `ef5248d4-4cd1-447c-bdcc-78a09a67d923`
+- [ ] Green Ward — `727ab7f2-741e-4442-b5cb-e3032549fa87`
+- [ ] Guardian Angel — `1a91ca69-e890-41dc-866b-3aabf10c9a9c`
+- [ ] Healing Salve — `8da8644c-75a1-4fe9-8e94-900d948d631c`
+- [ ] Helm of Chatzuk — `948e3bb7-8265-4e95-acd1-a0c4f22441df`
+- [ ] Holy Armor — `912164c2-b4d4-42e3-a10e-903b8c7b2e6d`
+- [ ] Holy Strength — `9357de36-f8be-4f49-b2c8-9fe9eaf82b07`
+- [ ] Howl from Beyond — `403cf6ae-48a9-4ea9-894e-7135cfca4e1b`
+- [ ] Howling Mine — `d26b27db-a567-4631-b4b6-7294222fbdd1`
+- [ ] Hurricane — `9c021685-4017-49c7-9f58-2ae0243361a0`
+- [ ] Hypnotic Specter — `759af941-f6a3-4726-91f2-9b1e4e55ea71`
+- [ ] Ice Storm — `a0b97e33-2d0c-4800-a9f5-9cd9be651ea8`
+- [ ] Icy Manipulator — `3608f1f7-8dc5-4dd1-ae91-c830e1de9529`
+- [ ] Illusionary Mask — `05ac866d-0405-4d25-986a-c10fcfc097e6`
+- [ ] Instill Energy — `8695c3c1-fb4b-4429-ae33-ec186f68796b`
+- [ ] Invisibility — `de26b0c6-dfb7-45a8-9d7f-f8d45522d675`
+- [ ] Iron Star — `e9ec67e1-7064-44d4-a1ed-04b7893ffb15`
+- [ ] Ironclaw Orcs — `c645a616-0d7d-416c-b5f3-057b3a1666a0`
+- [ ] Island Sanctuary — `7d1769d0-d942-45b3-a31c-2bbe45e68661`
+- [ ] Ivory Cup — `8e2017c3-057d-4e30-bd60-f486fddbc6ca`
+- [ ] Jade Monolith — `1e105ab7-fb10-4cfd-ac2f-5e11488cf1b0`
+- [ ] Jade Statue — `96162b22-41e7-4559-aa1b-c18f42abcb52`
+- [ ] Juggernaut — `4ac9116f-36bc-4d71-b696-d6ee064e1d58`
+- [ ] Jump — `f7518456-45ed-41d4-bd3c-5aacea28eb35`
+- [ ] Karma — `fac4da47-f0b2-4b57-9703-e0ed100d3499`
+- [ ] Keldon Warlord — `acc869f8-dcbe-4d57-baa0-3eef4aceb251`
+- [ ] Kormus Bell — `d2d477a5-f055-4d47-a852-26e8239f2a01`
+- [ ] Kudzu — `51ca5965-ae39-4e51-8948-9a230a03f906`
+- [ ] Lance — `5960dd01-6797-4c73-b48a-f637b9c288cc`
+- [ ] Ley Druid — `a4ae41c7-9631-407d-8fd3-04f403d940a8`
+- [ ] Library of Leng — `867def48-4be8-4056-bcf1-d6b00450b9a3`
+- [ ] Lich — `5b7515f2-7a5a-4e2a-9784-6cbacd768172`
+- [ ] Lifeforce — `07ae1fe5-5c3e-4d94-b809-8defd2ef44e3`
+- [ ] Lifelace — `eec1de80-4b3d-481d-a235-c299e0381830`
+- [ ] Lifetap — `52ac09af-2aa7-4d80-be26-3e6a6efd5c23`
+- [ ] Living Artifact — `4ff9af56-ac18-4966-9e48-183e1ca1c2d0`
+- [ ] Living Lands — `8f0179fe-6d7d-49cc-ab06-d3b402c6fc8d`
+- [ ] Living Wall — `4844312c-3c9d-4ca1-986d-4ad35e68454e`
+- [ ] Lord of Atlantis — `cc7f290f-ca00-4285-9bdb-4b4402444f30`
+- [ ] Lord of the Pit — `ea152809-85a2-4fde-8251-3b1f267e4443`
+- [ ] Lure — `7a7425ba-4478-4bc4-855f-abf947ea4fa2`
+- [ ] Magical Hack — `cba229fa-9035-405b-b091-3798898a37ee`
+- [ ] Mana Flare — `97159138-c34b-416e-b079-5c952383a243`
+- [ ] Mana Short — `48207d1c-448a-4e1b-974a-642dfea75933`
+- [ ] Mana Vault — `736892cb-a34b-4bb9-b56c-e26e3db207a2`
+- [ ] Manabarbs — `0f1afedd-c60f-454f-b84a-c8117aec0128`
+- [ ] Meekstone — `5ba73182-30a7-4bad-9cb6-c0feecc2db33`
+- [ ] Mesa Pegasus — `8161f5b8-6aab-4133-ba2c-2e7b5774153e`
+- [ ] Mind Twist — `78f9c223-9982-4282-a496-a6f892f0a5bf`
+- [ ] Natural Selection — `57f90b30-bcb0-447e-8788-5c5ded187207`
+- [ ] Nether Shadow — `c358b9e2-524c-434b-b3fa-74d2aa6d1df7`
+- [ ] Nettling Imp — `c58dfcbf-49e6-4ef0-bd31-ebd81b0cfa41`
+- [ ] Nevinyrral's Disk — `96230edf-568a-47dd-b877-9d92aa58fac8`
+- [ ] Nightmare — `375932e6-1b3e-48dc-8154-9b664c3add34`
+- [ ] Northern Paladin — `f5975294-508a-453e-893a-2fbea2487d17`
+- [ ] Orcish Artillery — `c000811e-bde7-4840-a3bb-9714d5c977eb`
+- [ ] Orcish Oriflamme — `0b16a650-68b0-44dc-a9e1-15b7966e0b18`
+- [ ] Paralyze — `e9b4e857-39e5-4a06-89ad-3dd94b3f252a`
+- [ ] Personal Incarnation — `6e49a5b8-6bc4-4c7b-82c1-957f1fb0ca5f`
+- [ ] Pestilence — `dafe63ef-f3d6-45e7-877a-573da92ba85e`
+- [ ] Phantasmal Forces — `06a158c6-7e36-49f8-a8e0-a7b7df5fd7ed`
+- [ ] Phantasmal Terrain — `7dcbce46-2973-4a9f-93df-95ac41ce668a`
+- [ ] Pirate Ship — `c6b3f924-806d-47d3-b044-72b48470196c`
+- [ ] Plague Rats — `16cf1cf9-6900-406c-a5b4-0e5750f530e0`
+- [ ] Power Leak — `dc2f0000-870b-487f-9623-618fc8eb9765`
+- [ ] Power Sink — `39412e6d-2837-4729-abf9-e64a5ba87e40`
+- [ ] Power Surge — `156b2228-f7b2-4816-b894-c4953a32c05f`
+- [ ] Psionic Blast — `7f221ad6-7ec4-483d-a6b5-1456c95c1cad`
+- [ ] Psychic Venom — `a60422e8-f2f4-4c37-a0f4-eedad27eb08c`
+- [ ] Purelace — `3773001a-8868-49ec-a406-298cf72359c2`
+- [ ] Raging River — `a2310312-6e1e-4e34-a351-9aef499a810f`
+- [ ] Raise Dead — `cbc9c731-181a-4f00-a7b0-eb7e56eac2ea`
+- [ ] Red Elemental Blast — `bb329a5c-b9f9-4973-a53f-090024146325`
+- [ ] Red Ward — `73f84440-425f-4cf5-b01a-3ae89f1f6e37`
+- [ ] Regeneration — `89390a33-b289-4edd-a114-6616e49a49c2`
+- [ ] Regrowth — `e6e4a8bd-5c40-4654-8de1-0da9afed90fd`
+- [ ] Resurrection — `837417d8-8260-486d-a3ed-3b5711eaf34a`
+- [ ] Reverse Damage — `eaaf7c30-f463-4115-a40e-7dc717063413`
+- [ ] Righteousness — `3f6b2f76-0364-415e-a6a2-e9e5bf31b745`
+- [ ] Rock Hydra — `aff84707-f5f8-4f53-869e-feec78da8d8d`
+- [ ] Royal Assassin — `9ed6f28f-a3db-48c5-9ab0-b90a7fba5f57`
+- [ ] Sacrifice — `068b3692-411b-44d4-a7e9-005262760cfc`
+- [ ] Samite Healer — `95a0ca48-d924-47f4-86ed-42c673ee778c`
+- [ ] Scavenging Ghoul — `68c0c04e-b0d5-4721-83bf-bf18e8b7e680`
+- [ ] Sea Serpent — `c16495fc-784d-4bac-9a68-ed437008df73`
+- [ ] Sedge Troll — `a6a43190-cca2-4f07-afe9-8af681d777da`
+- [ ] Sengir Vampire — `749141aa-f6c4-4ad8-b146-406e68ae9b0b`
+- [ ] Shanodin Dryads — `998484cc-fefc-4da5-9987-5d6e89599c34`
+- [ ] Shatter — `84d32e68-72b9-432d-a023-7bc6a26b8ad0`
+- [ ] Shivan Dragon — `711eea87-0fa3-46e0-a42b-fa5a86455f04`
+- [ ] Simulacrum — `20d69989-7250-40c7-a064-8ed78ccbe556`
+- [ ] Sinkhole — `5a46ad2a-35b1-4dd5-b7c3-fec36b7c67ab`
+- [ ] Siren's Call — `269fc857-a052-4f0a-9759-467ccf42bebb`
+- [ ] Sleight of Mind — `99dba614-40d3-41c1-a3b2-edc8777b010f`
+- [ ] Smoke — `8aa97d25-cd51-4ceb-b7eb-af64f0914a8c`
+- [ ] Soul Net — `6021c2d6-d098-4de2-9c7e-4c571f9238f6`
+- [ ] Spell Blast — `04477339-7ed5-4770-9e5c-6e481ffcc858`
+- [ ] Stasis — `a8cf1379-0195-4e11-b994-481ef1284245`
+- [ ] Steal Artifact — `cd8ae9f2-edac-473a-8846-c08219e617c3`
+- [ ] Stone Giant — `0b8e3f9b-a4da-49a3-8545-ce7a265e5856`
+- [ ] Stone Rain — `6e880df6-fc00-43d2-a9c8-f575f40b78c6`
+- [ ] Stream of Life — `9eb2912d-2130-49f2-9529-b58fa5a97a15`
+- [ ] Sunglasses of Urza — `eea64b1f-d6a9-4f72-8612-efab4b124b63`
+- [ ] Swords to Plowshares — `b1544f21-7e98-461b-aed5-e748b0168c52`
+- [ ] Terror — `b81f041d-98db-4408-9472-c483e4a502bc`
+- [ ] Thicket Basilisk — `c4822813-cd81-465d-9fe8-3a4c2dcd31ef`
+- [ ] Thoughtlace — `6452b6a6-6235-46a3-a712-a26592450438`
+- [ ] Throne of Bone — `f73c7edf-ed2c-41e8-ac83-c83ddd543f14`
+- [ ] Timber Wolves — `35d07ac9-b184-4b5f-8192-34b1db042f69`
+- [ ] Time Vault — `99d4d99d-cf56-45aa-aa39-a250695612f2`
+- [ ] Time Walk — `d0209d3f-3f7e-4fd5-bce5-10bce6f29c86`
+- [ ] Timetwister — `c823e687-6311-4c99-974b-fd77d204141a`
+- [ ] Tranquility — `f671e3c3-cd59-4d06-a1af-5d04892cf74d`
+- [ ] Tsunami — `ef2b1565-7b02-4cab-9031-beb1701ee929`
+- [ ] Twiddle — `773ad2ef-5acc-49ea-8d85-056330e87039`
+- [ ] Two-Headed Giant of Foriys — `38aa31bd-7145-43b9-9409-463d9ad6cd69`
+- [ ] Unholy Strength — `090d88a9-7f2d-4bd1-a30a-7c48d05068be`
+- [ ] Uthden Troll — `d6329dcc-b450-482a-8ee3-45449f7a4b3d`
+- [ ] Verduran Enchantress — `cd98a31b-cc7e-43f9-982e-109ad9850908`
+- [ ] Vesuvan Doppelganger — `aeaccab9-3e2c-4a40-a483-52c4972b2014`
+- [ ] Veteran Bodyguard — `d29078c0-1fb8-437a-81d1-bb319f646941`
+- [ ] Volcanic Eruption — `4c15889e-3172-413b-b805-a2b7ad05f636`
+- [ ] Wall of Bone — `8ffe4986-9e09-4421-ad26-296a4c0df9e4`
+- [ ] Wall of Brambles — `f8d82a00-c10e-4b9e-9642-d05706900a97`
+- [ ] Wall of Fire — `f38c8b47-e8e0-4d2f-b1da-d8d986805a48`
+- [ ] Wall of Water — `608cc65c-f99a-4ca3-be24-190d2556b411`
+- [ ] Wanderlust — `73bddfdb-d1fb-4038-b676-201f6b82beb0`
+- [ ] Warp Artifact — `f4b18451-1f40-48bd-8ca9-eec784ad5dd7`
+- [ ] Weakness — `f07a24c0-bf3c-4733-9473-c6be3b16950e`
+- [ ] Web — `5aa12aff-db3c-4be5-822b-3afdf536b33e`
+- [ ] Wheel of Fortune — `a8abd966-de7b-46a3-8ac7-8747ab35653a`
+- [ ] White Knight — `ddb021df-ae4a-4ac1-8353-d0b375761714`
+- [ ] White Ward — `860468b3-625a-4663-a5ae-336ae10fc7d0`
+- [ ] Wild Growth — `706ae742-1807-44b7-a4fa-f2e26f61519a`
+- [ ] Will-o'-the-Wisp — `8b60fcfe-fb90-4a00-a708-25b59bfc9b5a`
+- [ ] Winter Orb — `1dcbd583-3388-4b34-a7cd-131648aa6abd`
+- [ ] Wooden Sphere — `0bd8917c-bec4-4603-bc3f-8e0c2afae56a`
+- [ ] Word of Command — `e8ad3a77-b293-4d69-b080-27ca9f95d443`
+- [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
+
+### expansion · Arabian Nights (`ARN`)
 
 - [ ] Abu Ja'far — `a2404d88-0621-49ae-9908-052c23a96ac6`
 - [ ] Aladdin — `9a410f83-ed92-4b55-834a-c7cec8f5d1e2`
@@ -1469,7 +1498,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] War Elephant — `2b7c9fe0-5a23-4172-b31f-b0d85cd465f6`
 - [ ] Ydwen Efreet — `15b9b0cc-47ef-4147-aba7-a7adae41921b`
 
-### Antiquities (`ATQ`)
+### expansion · Antiquities (`ATQ`)
 
 - [ ] Amulet of Kroog — `8eca999e-f7f8-4354-b419-2df4249c4361`
 - [ ] Argivian Archaeologist — `4b889ec0-6130-4e31-bb02-03fdabd28bee`
@@ -1551,7 +1580,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xenic Poltergeist — `fb8f80cc-6214-4ab9-a9a9-1873ab9feb0c`
 - [ ] Yawgmoth Demon — `6c54fc14-2af8-46e8-a4dc-b2a0a88ef2e1`
 
-### Foreign Black Border (`FBB`)
+### core · Foreign Black Border (`FBB`)
 
 - [ ] Aladdin's Lamp — `2aa2f96b-5784-4767-b9ea-b8d9222cb1de`
 - [ ] Animate Artifact — `2dd7a4dc-902a-4e85-8a3b-c96a898fba86`
@@ -1785,7 +1814,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wooden Sphere — `0bd8917c-bec4-4603-bc3f-8e0c2afae56a`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Revised Edition (`3ED`)
+### core · Revised Edition (`3ED`)
 
 - [ ] Aladdin's Lamp — `2aa2f96b-5784-4767-b9ea-b8d9222cb1de`
 - [ ] Animate Artifact — `2dd7a4dc-902a-4e85-8a3b-c96a898fba86`
@@ -2019,7 +2048,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wooden Sphere — `0bd8917c-bec4-4603-bc3f-8e0c2afae56a`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Legends (`LEG`)
+### expansion · Legends (`LEG`)
 
 - [ ] Abomination — `2c57c4e9-0a46-45d6-92db-9203fb722b60`
 - [ ] Acid Rain — `6ae3c3a2-bd17-4fea-ae27-9d2d1eaf8cc0`
@@ -2289,7 +2318,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wolverine Pack — `d67d9d82-2786-48fc-8107-11d12c5813d0`
 - [ ] Wood Elemental — `2b6da458-e075-4696-a74f-c8846e0cc370`
 
-### Summer Magic / Edgar (`SUM`)
+### core · Summer Magic / Edgar (`SUM`)
 
 - [ ] Aladdin's Lamp — `2aa2f96b-5784-4767-b9ea-b8d9222cb1de`
 - [ ] Animate Artifact — `2dd7a4dc-902a-4e85-8a3b-c96a898fba86`
@@ -2523,11 +2552,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wooden Sphere — `0bd8917c-bec4-4603-bc3f-8e0c2afae56a`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Dragon Con (`PDRC`)
+### promos · Dragon Con (`PDRC`)
 
 - [ ] Nalathni Dragon — `0887dc95-3e75-4f72-bf05-4067d3785376`
 
-### The Dark (`DRK`)
+### expansion · The Dark (`DRK`)
 
 - [ ] Amnesia — `8345187a-a210-49d7-bdce-10fb2909e050`
 - [ ] Angry Mob — `967c2c79-7e49-448d-8d30-b2eb08b21d0a`
@@ -2633,7 +2662,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Worms of the Earth — `9638ec0c-c8bf-4aa5-a7ca-8677e4b9f241`
 - [ ] Wormwood Treefolk — `2a014ef1-0450-4485-8a8c-8210a985be4c`
 
-### Fallen Empires (`FEM`)
+### expansion · Fallen Empires (`FEM`)
 
 - [ ] Aeolipile — `0897adea-2759-40e8-a05a-c722473e1cf3`
 - [ ] Armor Thrull — `35453c9e-e1ae-4fe9-926d-75724deb0555`
@@ -2727,14 +2756,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vodalian War Machine — `f72511b0-9993-4998-b646-65a855cb8170`
 - [ ] Zelyon Sword — `991038e0-f8d6-42e6-b8a2-3d77aae7a256`
 
-### HarperPrism Book Promos (`PHPR`)
+### promos · HarperPrism Book Promos (`PHPR`)
 
 - [ ] Arena — `12326d23-1fb5-4084-a23a-d6e2c90ea36c`
 - [ ] Giant Badger — `a4109138-5d69-4510-a228-7c1f88c0c8c0`
 - [ ] Mana Crypt — `2c63e4e1-89d2-4bc6-a232-94e75c4b1c8a`
 - [ ] Sewers of Estark — `2482f98a-eadf-450d-9e73-fc441b572862`
 
-### Fourth Edition (`4ED`)
+### core · Fourth Edition (`4ED`)
 
 - [ ] Abomination — `2c57c4e9-0a46-45d6-92db-9203fb722b60`
 - [ ] Alabaster Potion — `2fcca686-03c8-4407-9f9f-2b7462470044`
@@ -3039,7 +3068,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xenic Poltergeist — `fb8f80cc-6214-4ab9-a9a9-1873ab9feb0c`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Fourth Edition Foreign Black Border (`4BB`)
+### core · Fourth Edition Foreign Black Border (`4BB`)
 
 - [ ] Abomination — `2c57c4e9-0a46-45d6-92db-9203fb722b60`
 - [ ] Alabaster Potion — `2fcca686-03c8-4407-9f9f-2b7462470044`
@@ -3344,7 +3373,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xenic Poltergeist — `fb8f80cc-6214-4ab9-a9a9-1873ab9feb0c`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Ice Age (`ICE`)
+### expansion · Ice Age (`ICE`)
 
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
 - [ ] Adarkar Sentinel — `bd372a53-48f9-4e9a-ab00-0f9c4606d452`
@@ -3692,7 +3721,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zuran Enchanter — `ee0f883f-d7c9-4acf-a78f-f733b6f268d3`
 - [ ] Zuran Orb — `08cb8a30-9cb4-4517-bee5-8848aa60d1a2`
 
-### Chronicles (`CHR`)
+### masters-remastered · Chronicles (`CHR`)
 
 - [ ] Abu Ja'far — `a2404d88-0621-49ae-9908-052c23a96ac6`
 - [ ] Active Volcano — `205ffa76-ff8e-4405-b21a-42358a9883c2`
@@ -3798,7 +3827,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Witch Hunter — `5fc1f04a-2c39-4b3a-b62e-6e30c3d8a583`
 - [ ] Yawgmoth Demon — `6c54fc14-2af8-46e8-a4dc-b2a0a88ef2e1`
 
-### Chronicles Foreign Black Border (`BCHR`)
+### masters-remastered · Chronicles Foreign Black Border (`BCHR`)
 
 - [ ] Abu Ja'far — `a2404d88-0621-49ae-9908-052c23a96ac6`
 - [ ] Active Volcano — `205ffa76-ff8e-4405-b21a-42358a9883c2`
@@ -3904,7 +3933,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Witch Hunter — `5fc1f04a-2c39-4b3a-b62e-6e30c3d8a583`
 - [ ] Yawgmoth Demon — `6c54fc14-2af8-46e8-a4dc-b2a0a88ef2e1`
 
-### Media and Collaboration Promos (`PMEI`)
+### promos · Media and Collaboration Promos (`PMEI`)
 
 - [ ] Aang, Air Nomad — `e46b2ac6-97d6-48f2-aba3-cd92f8e092c6`
 - [ ] Ajani, Mentor of Heroes — `a612bd38-069f-4bdc-9aa6-c172435e3841`
@@ -3987,7 +4016,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zhalfirin Knight — `a534f06e-dae4-4d1a-96e9-7693bbb21e12`
 - [ ] Zidane, Tantalus Thief — `f267fb54-1881-464c-81af-9e03c3f3b41d`
 
-### Renaissance (`REN`)
+### masters-remastered · Renaissance (`REN`)
 
 - [ ] Abomination — `2c57c4e9-0a46-45d6-92db-9203fb722b60`
 - [ ] Alabaster Potion — `2fcca686-03c8-4407-9f9f-2b7462470044`
@@ -4097,7 +4126,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Word of Binding — `8bbc9f21-2b4d-4d03-aef1-f5bf0b79257c`
 - [ ] Xenic Poltergeist — `fb8f80cc-6214-4ab9-a9a9-1873ab9feb0c`
 
-### Rinascimento (`RIN`)
+### masters-remastered · Rinascimento (`RIN`)
 
 - [ ] Abu Ja'far — `a2404d88-0621-49ae-9908-052c23a96ac6`
 - [ ] Aladdin — `9a410f83-ed92-4b55-834a-c7cec8f5d1e2`
@@ -4156,7 +4185,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xenic Poltergeist — `fb8f80cc-6214-4ab9-a9a9-1873ab9feb0c`
 - [ ] Yawgmoth Demon — `6c54fc14-2af8-46e8-a4dc-b2a0a88ef2e1`
 
-### Homelands (`HML`)
+### expansion · Homelands (`HML`)
 
 - [ ] Abbey Gargoyles — `c208b959-d0e4-4a9a-8255-2c7cc7596767`
 - [ ] Abbey Matron — `62e3f285-886c-414e-b4ff-403a7c01c23a`
@@ -4259,7 +4288,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Willow Priestess — `630eab2b-c1fd-46bb-8ae0-ff837e46db1c`
 - [ ] Winter Sky — `fb150d6a-5f81-4fd8-92b2-22a9615bfd4f`
 
-### Alliances (`ALL`)
+### expansion · Alliances (`ALL`)
 
 - [ ] Aesthir Glider — `99dcde0b-4f4d-4d7a-89aa-8a89c256e38f`
 - [ ] Arcane Denial — `ab1cc360-b9de-48d9-9983-4dfe4a7d2a37`
@@ -4398,11 +4427,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Ancients — `0e91a873-a680-4ca2-b073-26aa39376d77`
 - [ ] Yavimaya Ants — `3f5bbfaa-cbd7-47af-9aa2-abb49d672734`
 
-### DCI Legend Membership (`PLGM`)
+### promos · DCI Legend Membership (`PLGM`)
 
 - [ ] Incinerate — `d8fd7a34-8418-4e98-b79b-119c4348c667`
 
-### Rivals Quick Start Set (`RQS`)
+### boxed-products · Rivals Quick Start Set (`RQS`)
 
 - [ ] Alabaster Potion — `2fcca686-03c8-4407-9f9f-2b7462470044`
 - [ ] Battering Ram — `e7b91fba-8d96-4040-95e8-f0023b65c497`
@@ -4440,15 +4469,15 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Whirling Dervish — `43f89524-4b22-4707-9aba-6eb4c01d75dc`
 - [ ] Winter Blast — `594827de-e85f-4aac-b0e6-d92878f0f26c`
 
-### Arena League 1996 (`PARL`)
+### promos · Arena League 1996 (`PARL`)
 
 - [ ] Fireball — `aa7714b0-2bfb-458a-8ebf-37ec2c53383e`
 
-### Redemption Program (`PRED`)
+### promos · Redemption Program (`PRED`)
 
 - [ ] Nalathni Dragon — `0887dc95-3e75-4f72-bf05-4067d3785376`
 
-### Mirage (`MIR`)
+### expansion · Mirage (`MIR`)
 
 - [ ] Abyssal Hunter — `b96ccc2f-88e5-4522-924e-76fc76dc3b39`
 - [ ] Acidic Dagger — `bf034a20-e362-4f38-9bf9-857777c62598`
@@ -4740,7 +4769,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombie Mob — `c56f0f4c-c85a-4931-b22a-42dc5d1dc7dd`
 - [ ] Zuberi, Golden Feather — `5a43b164-61a4-4dcb-9397-45356ad4260e`
 
-### Multiverse Gift Box (`MGB`)
+### boxed-products · Multiverse Gift Box (`MGB`)
 
 - [ ] Bull Elephant — `4ed04ece-64d2-41a4-bf36-b993cbbf2aac`
 - [ ] Dark Privilege — `29f4c69a-ca59-4e9f-a808-87ba85b34f2f`
@@ -4752,7 +4781,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Viashino Sandstalker — `cbfccfc0-3117-4ca0-b7ce-8e2d67ec49ab`
 - [ ] Wicked Reward — `7aad0a80-cf7b-4224-8e72-d611e0be3383`
 
-### Introductory Two-Player Set (`ITP`)
+### starter · Introductory Two-Player Set (`ITP`)
 
 - [ ] Alabaster Potion — `2fcca686-03c8-4407-9f9f-2b7462470044`
 - [ ] Battering Ram — `e7b91fba-8d96-4040-95e8-f0023b65c497`
@@ -4790,7 +4819,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Whirling Dervish — `43f89524-4b22-4707-9aba-6eb4c01d75dc`
 - [ ] Winter Blast — `594827de-e85f-4aac-b0e6-d92878f0f26c`
 
-### Visions (`VIS`)
+### expansion · Visions (`VIS`)
 
 - [ ] Aku Djinn — `233c6686-ead8-4569-941d-3bfa768ff270`
 - [ ] Anvil of Bogardan — `9deb2a0b-f40c-4d13-8321-41dc41448d24`
@@ -4945,7 +4974,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wind Shear — `fa683059-b9de-4063-ae71-597ed4e2df30`
 - [ ] Zhalfirin Crusader — `9e60c102-412e-4956-a7bb-a2cd737d6692`
 
-### Fifth Edition (`5ED`)
+### core · Fifth Edition (`5ED`)
 
 - [ ] Abbey Gargoyles — `c208b959-d0e4-4a9a-8255-2c7cc7596767`
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
@@ -5313,7 +5342,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 - [ ] Zur's Weirding — `c6eaa147-3566-43a9-999a-d58b877496f5`
 
-### Astral Cards (`PAST`)
+### boxed-products · Astral Cards (`PAST`)
 
 - [ ] Aswan Jaguar — `9ab97610-76ad-4631-825e-8596dc9cfd4c`
 - [ ] Call from the Grave — `252ff28e-3ea7-4e2c-a30c-3cb80aa278d0`
@@ -5328,7 +5357,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Rainbow Knights — `5ae62bf3-ab1e-4968-ad7d-6f06a7254cfa`
 - [ ] Whimsy — `e7922402-e759-4607-a11e-284d737baa53`
 
-### Portal (`POR`)
+### starter · Portal (`POR`)
 
 - [ ] Alabaster Dragon — `2392a41a-59d3-4749-be94-4d9df0af9c4c`
 - [ ] Alluring Scent — `ad218276-a44b-4a61-8e42-26a27929bbbb`
@@ -5456,7 +5485,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winter's Grasp — `e9b8679d-52a9-4f0f-9365-f3e4b7a69805`
 - [ ] Withering Gaze — `9225016d-adfd-43c6-99cd-d41a7e0d35d6`
 
-### Weatherlight (`WTH`)
+### expansion · Weatherlight (`WTH`)
 
 - [ ] Abduction — `d0e1904e-1a37-41f6-8582-b9ea794bb886`
 - [ ] Abeyance — `6300de53-6e71-4f0e-87e1-b0acd25c59a8`
@@ -5621,11 +5650,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xanthic Statue — `a8de92c4-84cb-40e7-8e34-428380726ed4`
 - [ ] Zombie Scavengers — `8c5298da-6759-444e-8870-6c96d226c940`
 
-### Tempest Promos (`PTMP`)
+### promos · Tempest Promos (`PTMP`)
 
 - [ ] Dirtcowl Wurm — `608293f1-34aa-4e55-8389-73f975858de6`
 
-### Tempest (`TMP`)
+### expansion · Tempest (`TMP`)
 
 - [ ] Abandon Hope — `8adbba6e-03ef-4278-aec5-8a4496b377a8`
 - [ ] Advance Scout — `831e2185-0bb2-45bb-99cd-d2091bad86f0`
@@ -5929,15 +5958,15 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wood Sage — `6fde7bb3-2539-411f-8733-36ce9595dfd5`
 - [ ] Worthy Cause — `b24063f7-157f-47c0-919a-33856d53b902`
 
-### Judge Gift Cards 1998 (`JGP`)
+### promos · Judge Gift Cards 1998 (`JGP`)
 
 - [ ] Gaea's Cradle — `7c427c3d-ecd8-45ef-bebd-8f10f4a311db`
 
-### Stronghold Promos (`PSTH`)
+### promos · Stronghold Promos (`PSTH`)
 
 - [ ] Revenant — `05fc62d3-9b3c-409a-a623-9f81f395a5a0`
 
-### Stronghold (`STH`)
+### expansion · Stronghold (`STH`)
 
 - [ ] Acidic Sliver — `a149eeb1-007c-435d-9d55-34af205090e0`
 - [ ] Amok — `2ddbbe65-f928-4b8e-8c4c-a9ce82e2594d`
@@ -6072,11 +6101,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Warrior Angel — `97140551-341a-40a1-93fe-0fcaa0c3be33`
 - [ ] Warrior en-Kor — `1245b165-e26f-4839-8468-2e95148fc6f6`
 
-### Exodus Promos (`PEXO`)
+### promos · Exodus Promos (`PEXO`)
 
 - [ ] Monstrous Hound — `97589fbb-3bd9-49c9-b8d8-bdc895a7f1e6`
 
-### Exodus (`EXO`)
+### expansion · Exodus (`EXO`)
 
 - [ ] Aether Tide — `2fbf95b4-bcf4-4b5e-b5dc-0294f2b48d3e`
 - [ ] Allay — `664d982a-5cd8-4289-afb8-fa2e083042c9`
@@ -6212,7 +6241,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Workhorse — `bb4ab425-3da7-455d-b217-3d585d476113`
 - [ ] Zealots en-Dal — `3fa67c92-6328-4d0a-95e3-656d447ab20e`
 
-### Portal Second Age (`P02`)
+### starter · Portal Second Age (`P02`)
 
 - [ ] Abyssal Nightstalker — `10733767-1c97-4e2e-b02b-54bf346f6583`
 - [ ] Alaborn Cavalier — `f8273146-f2e5-40ec-ba96-c0a4192caec8`
@@ -6322,7 +6351,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wildfire — `0da68ca2-07fd-4359-95a9-fb2f815e6ed0`
 - [ ] Wind Sail — `c7fb6ff0-4555-4bd1-b00d-ba2ed1cb4afc`
 
-### Unglued (`UGL`)
+### funny-special · Unglued (`UGL`)
 
 - [ ] Ashnod's Coupon — `4d4b7108-5287-4d52-94a1-a0f99c14c969`
 - [ ] B.F.M. (Big Furry Monster) — `8fd7503b-e722-49a7-a8ac-786e7354bc95`
@@ -6408,11 +6437,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Urza's Science Fair Project — `d071d5ca-64a4-47bc-aeb1-dd2dbc46a6a3`
 - [ ] Volrath's Motion Sensor — `1759f6c0-3ad5-4d15-b841-14ef00114994`
 
-### Urza's Saga Promos (`PUSG`)
+### promos · Urza's Saga Promos (`PUSG`)
 
 - [ ] Lightning Dragon — `be0fc708-b205-4307-85f3-f8fd1efd4cf6`
 
-### Urza's Saga (`USG`)
+### expansion · Urza's Saga (`USG`)
 
 - [ ] Absolute Grace — `41785f7b-3d02-4b7f-86ff-b381f626142e`
 - [ ] Absolute Law — `f4aa8391-34d5-4ad2-a981-9aa08f8229db`
@@ -6709,7 +6738,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yawgmoth's Will — `322f0459-f394-44f0-977b-55fd0cbe0712`
 - [ ] Zephid's Embrace — `2f8b07ef-9d00-4eb6-a395-b5033aa3f80e`
 
-### Anthologies (`ATH`)
+### boxed-products · Anthologies (`ATH`)
 
 - [ ] Aesthir Glider — `99dcde0b-4f4d-4d7a-89aa-8a89c256e38f`
 - [ ] Armageddon — `c9ed8b01-959a-47d6-891e-0abbdccf6e4f`
@@ -6765,18 +6794,18 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] White Knight — `ddb021df-ae4a-4ac1-8353-d0b375761714`
 - [ ] Woolly Spider — `811c6f52-03cb-49a9-a3c7-7f4ae40e7155`
 
-### Arena League 1999 (`PAL99`)
+### promos · Arena League 1999 (`PAL99`)
 
 - [ ] Karn, Silver Golem — `8a7c6391-020a-4d7a-8abb-702631bbee56`
 - [ ] Pouncing Jaguar — `70a2b5ea-dae4-46e8-87eb-8c8d8dfb242b`
 - [ ] Rewind — `bb27bfdf-fe8d-45bd-ad62-8118dce06eda`
 - [ ] Skittering Skirge — `fae1d5d9-a50e-423e-8692-3e41f39df081`
 
-### Judge Gift Cards 1999 (`G99`)
+### promos · Judge Gift Cards 1999 (`G99`)
 
 - [ ] Memory Lapse — `bbfb3e4a-b389-4391-8141-13b68c0ef2e0`
 
-### Junior Super Series (`PSUS`)
+### promos · Junior Super Series (`PSUS`)
 
 - [ ] City of Brass — `f25351e3-539b-4bbc-b92d-6480acf4d722`
 - [ ] Crusade — `4692740f-be90-459f-8d90-c4ae71771595`
@@ -6794,11 +6823,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Two-Headed Dragon — `a4fa3052-d1ec-4442-a832-15ba36c500ee`
 - [ ] Whirling Dervish — `43f89524-4b22-4707-9aba-6eb4c01d75dc`
 
-### Urza's Legacy Promos (`PULG`)
+### promos · Urza's Legacy Promos (`PULG`)
 
 - [ ] Beast of Burden — `67389ccc-dacc-4ce3-a9a2-f551a0d6e9d3`
 
-### Urza's Legacy (`ULG`)
+### expansion · Urza's Legacy (`ULG`)
 
 - [ ] About Face — `8a810017-06ac-4824-bc2f-a7d303d58ad7`
 - [ ] Angel's Trumpet — `f187f766-3696-419e-9865-58023a46446b`
@@ -6933,7 +6962,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Granger — `fac9ff8d-8342-4099-b224-d48a044bcc9a`
 - [ ] Yavimaya Scion — `6e06b5cc-444c-49c9-b08a-81ef8d97c9ab`
 
-### Classic Sixth Edition (`6ED`)
+### core · Classic Sixth Edition (`6ED`)
 
 - [ ] Abduction — `d0e1904e-1a37-41f6-8582-b9ea794bb886`
 - [ ] Abyssal Hunter — `b96ccc2f-88e5-4522-924e-76fc76dc3b39`
@@ -7174,11 +7203,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 - [ ] Zur's Weirding — `c6eaa147-3566-43a9-999a-d58b877496f5`
 
-### Portal Three Kingdoms Promos (`PPTK`)
+### promos · Portal Three Kingdoms Promos (`PPTK`)
 
 - [ ] Lu Bu, Master-at-Arms — `ff959f1f-0982-4761-a6b0-3044dff1d617`
 
-### Portal Three Kingdoms (`PTK`)
+### starter · Portal Three Kingdoms (`PTK`)
 
 - [ ] Ambition's Cost — `84de4fec-2f38-4293-93d3-b3882c5aac14`
 - [ ] Balance of Power — `c57ee68e-6832-4d4c-b710-fc03a2c10a9c`
@@ -7318,11 +7347,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zodiac Tiger — `79aba9a7-b957-4139-8d50-f1c91fa17793`
 - [ ] Zuo Ci, the Mocking Sage — `ae8773a3-05f2-4074-9a53-033b0c127235`
 
-### Urza's Destiny Promos (`PUDS`)
+### promos · Urza's Destiny Promos (`PUDS`)
 
 - [ ] False Prophet — `87c44c23-f209-494a-ab66-c9f5cf7bb4ea`
 
-### Urza's Destiny (`UDS`)
+### expansion · Urza's Destiny (`UDS`)
 
 - [ ] Academy Rector — `e3c85068-b4b6-40b9-a16c-5c3b2d059ec4`
 - [ ] Aether Sting — `61105cb5-d7a1-4021-a006-dd1b947dfa68`
@@ -7447,7 +7476,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Hollow — `53d6113d-acdb-4754-9641-f7991a96c7b9`
 - [ ] Yawgmoth's Bargain — `f7f76f39-a0de-4bda-86b6-0f291892fcec`
 
-### Starter 1999 (`S99`)
+### starter · Starter 1999 (`S99`)
 
 - [ ] Abyssal Horror — `6b60422a-765b-4168-a37b-68109103385a`
 - [ ] Alluring Scent — `ad218276-a44b-4a61-8e42-26a27929bbbb`
@@ -7537,16 +7566,16 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wild Ox — `a6aa245c-b620-486c-864b-0ea4e9bc4048`
 - [ ] Wind Sail — `c7fb6ff0-4555-4bd1-b00d-ba2ed1cb4afc`
 
-### World Championship Promos (`PWOR`)
+### promos · World Championship Promos (`PWOR`)
 
 - [ ] Balduvian Horde — `fd2a94d3-901d-4b46-aa9b-a30ed6dea6bd`
 - [ ] Crucible of Worlds — `33c722cf-b4bf-431f-aefd-ee96241a7fbf`
 
-### Mercadian Masques Promos (`PMMQ`)
+### promos · Mercadian Masques Promos (`PMMQ`)
 
 - [ ] Overtaker — `71668016-cefb-43d2-a84c-47956cffd71e`
 
-### Mercadian Masques (`MMQ`)
+### expansion · Mercadian Masques (`MMQ`)
 
 - [ ] Aerial Caravan — `d13aff7c-f0ee-44e2-ae1c-62cd86ad46a6`
 - [ ] Afterlife — `4c13e2b5-961a-4031-84b1-15bd19b94286`
@@ -7853,7 +7882,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Word of Blasting — `8b391f24-992f-4cc0-ac4d-31456983fc03`
 - [ ] Worry Beads — `ab050d55-a47d-4880-b65a-29f562773d7a`
 
-### Battle Royale Box Set (`BRB`)
+### boxed-products · Battle Royale Box Set (`BRB`)
 
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
 - [ ] Advance Scout — `831e2185-0bb2-45bb-99cd-d2091bad86f0`
@@ -7931,7 +7960,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wildfire Emissary — `8fb44b03-017f-4cf3-a79b-8f6cc33570ca`
 - [ ] Windfall — `08becc07-28bc-4a2f-a6b0-28a2998d2f50`
 
-### Arena League 2000 (`PAL00`)
+### promos · Arena League 2000 (`PAL00`)
 
 - [ ] Chill — `70a93d0f-9a02-4e60-a2b8-827fd2410604`
 - [ ] Duress — `33d405ea-7a9a-4970-b70f-9c05d90dd6f0`
@@ -7939,22 +7968,22 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Stupor — `c19e3560-d304-4d91-aa2a-463d7dbb35bb`
 - [ ] Uktabi Orangutan — `6cc07a7e-e70c-45c5-83c5-a2704e57dbc5`
 
-### Friday Night Magic 2000 (`FNM`)
+### promos · Friday Night Magic 2000 (`FNM`)
 
 - [ ] Mind Warp — `5109aa76-ca40-44d1-abb4-5e7a23a2c274`
 - [ ] River Boa — `86187aed-77ce-4b2d-aab0-0a8f807a9451`
 - [ ] Stone Rain — `6e880df6-fc00-43d2-a9c8-f575f40b78c6`
 - [ ] Terror — `b81f041d-98db-4408-9472-c483e4a502bc`
 
-### Judge Gift Cards 2000 (`G00`)
+### promos · Judge Gift Cards 2000 (`G00`)
 
 - [ ] Vampiric Tutor — `ededbdae-d9dc-4206-9335-d7158f2d7700`
 
-### Nemesis Promos (`PNEM`)
+### promos · Nemesis Promos (`PNEM`)
 
 - [ ] Rathi Assassin — `1ea0c775-fde0-4a21-b4c2-8bcec0e4f4f8`
 
-### Nemesis (`NEM`)
+### expansion · Nemesis (`NEM`)
 
 - [ ] Accumulated Knowledge — `1ca25379-d194-4670-a7bf-525ad11cf436`
 - [ ] Aether Barrier — `0fe602b7-9f88-4d3d-af24-7790df867ed5`
@@ -8093,7 +8122,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wild Mammoth — `29ef65bf-1066-44a5-a2eb-e3670b076647`
 - [ ] Woodripper — `d0653734-9eb7-48c6-9042-65ffdd50fd2a`
 
-### Starter 2000 (`S00`)
+### starter · Starter 2000 (`S00`)
 
 - [ ] Angelic Blessing — `d3758fca-0522-4b5a-a1cc-3b2b3ab299ba`
 - [ ] Breath of Life — `30d9e200-b944-43ff-89b8-a550a788ae03`
@@ -8102,11 +8131,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Rhox — `f6f4c684-2915-4a58-9c4b-487387f7cf73`
 - [ ] Time Ebb — `30cc8f7b-3c28-40f5-8f8f-157e8212280b`
 
-### Prophecy Promos (`PPCY`)
+### promos · Prophecy Promos (`PPCY`)
 
 - [ ] Avatar of Hope — `e2f22cef-9494-4356-aa5c-619aecd7e74d`
 
-### Prophecy (`PCY`)
+### expansion · Prophecy (`PCY`)
 
 - [ ] Abolish — `d6d7faa8-ecc9-408b-9c46-a0f62c74f567`
 - [ ] Agent of Shauku — `d2e0d739-b441-4173-a8f1-b831a19ea98e`
@@ -8247,7 +8276,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Withdraw — `626882c5-15a8-43ea-ab08-33a7e949c88c`
 - [ ] Zerapa Minotaur — `4520c630-3650-462f-ab01-215eb2bdbbf5`
 
-### Beatdown Box Set (`BTD`)
+### boxed-products · Beatdown Box Set (`BTD`)
 
 - [ ] Balduvian Horde — `fd2a94d3-901d-4b46-aa9b-a30ed6dea6bd`
 - [ ] Ball Lightning — `7485cf25-eb41-4397-be13-7f0b8c10c70a`
@@ -8300,7 +8329,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wild Growth — `706ae742-1807-44b7-a4fa-f2e26f61519a`
 - [ ] Woolly Spider — `811c6f52-03cb-49a9-a3c7-7f4ae40e7155`
 
-### Invasion (`INV`)
+### expansion · Invasion (`INV`)
 
 - [ ] Addle — `3745aea4-4455-4859-9772-bcfd14e4067b`
 - [ ] Aether Rift — `2577ef8e-d85e-47af-ac34-629f31992751`
@@ -8585,14 +8614,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yawgmoth's Agenda — `72177c93-ed1f-47bd-99a6-ad229a292d46`
 - [ ] Zanam Djinn — `049fc248-4e46-43de-986d-fa023a3e8792`
 
-### Arena League 2001 (`PAL01`)
+### promos · Arena League 2001 (`PAL01`)
 
 - [ ] Diabolic Edict — `058917c1-21ab-488a-9f9c-591c55f3c596`
 - [ ] Empyrial Armor — `ec9e8611-e785-4d5d-b6e1-bf63daf408df`
 - [ ] Fling — `24227761-b50e-4b9e-93a2-e82d053b3e3d`
 - [ ] Gaea's Blessing — `bd5478df-3854-404b-8634-9debcef69b99`
 
-### Friday Night Magic 2001 (`F01`)
+### promos · Friday Night Magic 2001 (`F01`)
 
 - [ ] Carnophage — `9ac77cfd-7d78-4c8a-bffc-17649a852114`
 - [ ] Fireblast — `9dd7f27a-e862-47d7-9158-034cf4d353b8`
@@ -8602,20 +8631,20 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Quirion Ranger — `3ecaefc8-ead2-47a3-a7ea-b030faab65a7`
 - [ ] Swords to Plowshares — `b1544f21-7e98-461b-aed5-e748b0168c52`
 
-### Judge Gift Cards 2001 (`G01`)
+### promos · Judge Gift Cards 2001 (`G01`)
 
 - [ ] Ball Lightning — `7485cf25-eb41-4397-be13-7f0b8c10c70a`
 - [ ] Oath of Druids — `cf0dcb27-f02e-4065-81dc-75fbbb09ea3f`
 
-### Magic Player Rewards 2001 (`MPR`)
+### promos · Magic Player Rewards 2001 (`MPR`)
 
 - [ ] Wasteland — `09a70ae8-3859-4a09-901d-dce063fa3b5f`
 
-### Planeshift Promos (`PPLS`)
+### promos · Planeshift Promos (`PPLS`)
 
 - [ ] Questing Phelddagrif — `97f3afdb-dcee-44da-b210-c8d20030baff`
 
-### Planeshift (`PLS`)
+### expansion · Planeshift (`PLS`)
 
 - [ ] Allied Strategies — `a5ce2ccd-8c78-4749-8854-cb5fa5f4738e`
 - [ ] Alpha Kavu — `f1a76cca-829a-4576-a560-f1af34b80b87`
@@ -8755,7 +8784,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Warped Devotion — `22c49415-e8d2-4b4c-b021-57ee54670f86`
 - [ ] Waterspout Elemental — `f86b8c03-9f1e-4d42-ac45-907c46e9e1c0`
 
-### Seventh Edition (`7ED`)
+### core · Seventh Edition (`7ED`)
 
 - [ ] Abyssal Horror — `6b60422a-765b-4168-a37b-68109103385a`
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
@@ -9001,11 +9030,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Enchantress — `495fc654-7986-4d76-9d5c-bc1484e98de2`
 - [ ] Yawgmoth's Edict — `544eca0d-63cd-4cc5-9318-c2006cdec170`
 
-### Apocalypse Promos (`PAPC`)
+### promos · Apocalypse Promos (`PAPC`)
 
 - [ ] Fungal Shambler — `9991941e-436f-42d4-8b0c-1ee84234774b`
 
-### Apocalypse (`APC`)
+### expansion · Apocalypse (`APC`)
 
 - [ ] Aether Mutation — `6697fe5b-90ac-4321-aa2f-cdc6ec283cb4`
 - [ ] Ana Disciple — `f543dfcd-015e-48bc-851d-08002d0241fa`
@@ -9136,7 +9165,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya's Embrace — `d5cb0370-a6f0-40c0-8b8f-553fca23778d`
 - [ ] Zombie Boa — `c4949d62-c2f9-4425-a77e-444824955ecc`
 
-### Sega Dreamcast Cards (`PSDG`)
+### boxed-products · Sega Dreamcast Cards (`PSDG`)
 
 - [ ] Arden Angel — `82d51c8a-d42b-48b3-a726-3a8d28d057e5`
 - [ ] Ashuza's Breath — `9ccbc379-05bc-4359-b1f6-3a022ae37a1e`
@@ -9149,11 +9178,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tornellan Protector — `a232b511-b521-47e6-a3b7-e4eff0392c22`
 - [ ] Velukan Dragon — `667aef37-a47a-4593-a252-807c02416863`
 
-### Odyssey Promos (`PODY`)
+### promos · Odyssey Promos (`PODY`)
 
 - [ ] Stone-Tongue Basilisk — `c38efbe5-7ace-41fa-b874-72e3702a833c`
 
-### Odyssey (`ODY`)
+### expansion · Odyssey (`ODY`)
 
 - [ ] Aboshan's Desire — `95db05eb-2c25-43f2-8e18-dfc64f490634`
 - [ ] Aboshan, Cephalid Emperor — `d4d44264-b276-4bd7-8fbe-6af292b08773`
@@ -9458,7 +9487,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombify — `bb95db4d-5017-4121-bf79-d68476602d8c`
 - [ ] Zoologist — `878e4e3b-c546-4174-906e-6fe8e64d9d41`
 
-### Deckmasters (`DKM`)
+### masters-remastered · Deckmasters (`DKM`)
 
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
 - [ ] Balduvian Horde — `fd2a94d3-901d-4b46-aa9b-a30ed6dea6bd`
@@ -9498,13 +9527,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Ancients — `0e91a873-a680-4ca2-b073-26aa39376d77`
 - [ ] Yavimaya Ants — `3f5bbfaa-cbd7-47af-9aa2-abb49d672734`
 
-### Arena League 2002 (`PAL02`)
+### promos · Arena League 2002 (`PAL02`)
 
 - [ ] Arc Lightning — `5acc8b39-3c3e-4012-8cfd-ac3c2c4ca982`
 - [ ] Dauthi Slayer — `c1d0537b-954f-4d3b-b9fe-1dd7ffaa1197`
 - [ ] Mana Leak — `c61fe162-2202-4e56-9ba0-393547f9875f`
 
-### Friday Night Magic 2002 (`F02`)
+### promos · Friday Night Magic 2002 (`F02`)
 
 - [ ] Albino Troll — `02079e18-ac14-4255-95c4-741eb76c4799`
 - [ ] Aura of Silence — `e7faf8eb-e829-4109-8dfe-42865a23ba86`
@@ -9518,16 +9547,16 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Spike Feeder — `5b147eab-39dd-4c2a-8f59-d778037788aa`
 - [ ] White Knight — `ddb021df-ae4a-4ac1-8353-d0b375761714`
 
-### Judge Gift Cards 2002 (`G02`)
+### promos · Judge Gift Cards 2002 (`G02`)
 
 - [ ] Hammer of Bogardan — `3089bdd7-87e6-4d0e-ad98-c32e6f861c30`
 - [ ] Tradewind Rider — `d0314da0-da24-4f6e-b1f6-0d50617bcaaa`
 
-### Torment Promos (`PTOR`)
+### promos · Torment Promos (`PTOR`)
 
 - [ ] Laquatus's Champion — `693ddb18-00d2-4784-90a0-701a64195034`
 
-### Torment (`TOR`)
+### expansion · Torment (`TOR`)
 
 - [ ] Accelerate — `79189464-9645-4411-8886-68fd40a588ed`
 - [ ] Acorn Harvest — `6aeba615-2d37-4eb8-a377-41a517e95aa3`
@@ -9671,11 +9700,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Waste Away — `d7f25f7f-3fa2-47ba-be33-ba0b08f26c94`
 - [ ] Zombie Trailblazer — `5cd96cf2-c1c6-4982-8cf8-70c16704e387`
 
-### Judgment Promos (`PJUD`)
+### promos · Judgment Promos (`PJUD`)
 
 - [ ] Glory — `3853ef6a-6771-4708-8ed5-d667f646de5a`
 
-### Judgment (`JUD`)
+### expansion · Judgment (`JUD`)
 
 - [ ] Ancestor's Chosen — `fc2ccab7-cab1-4463-b73d-898070136d74`
 - [ ] Anger — `eaabd151-2160-4bff-82c0-3fa88659be98`
@@ -9812,7 +9841,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wormfang Newt — `be014a79-5550-4f79-8789-b4d6783d7ec8`
 - [ ] Wormfang Turtle — `771f9ba4-6c65-4497-ad48-869994435556`
 
-### Hobby Japan Promos (`JP1`)
+### promos · Hobby Japan Promos (`JP1`)
 
 - [ ] Goblin Mutant — `540e1371-baa9-412f-a17a-22ea833ea3e8`
 - [ ] Ihsan's Shade — `5eb29367-4ec3-4bd2-887e-13eeeecae8fa`
@@ -9820,11 +9849,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Surge of Strength — `bd3e55cf-ffca-402c-91ea-2420035a9dd1`
 - [ ] Yavimaya Ants — `3f5bbfaa-cbd7-47af-9aa2-abb49d672734`
 
-### Onslaught Promos (`PONS`)
+### promos · Onslaught Promos (`PONS`)
 
 - [ ] Silent Specter — `49e70569-b0bc-4705-927e-eb1504925210`
 
-### Onslaught (`ONS`)
+### expansion · Onslaught (`ONS`)
 
 - [ ] Accursed Centaur — `b1e6921e-e460-4e58-82b0-d98ee31c279d`
 - [ ] Aether Charge — `15e83068-6253-4c65-8679-7295f3dc2075`
@@ -10128,13 +10157,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Words of Worship — `f1fad5ab-d087-4912-b1b9-42733fa34707`
 - [ ] Wretched Anurid — `f8beeb0a-750f-4afa-a244-10011342bbeb`
 
-### Arena League 2003 (`PAL03`)
+### promos · Arena League 2003 (`PAL03`)
 
 - [ ] Bonesplitter — `452e3f5f-ce17-4682-966b-5cc100210aee`
 - [ ] Elvish Aberration — `1d25b831-c1de-4f79-bbb3-1582eda96452`
 - [ ] Skirk Marauder — `8ba0e831-054a-4e01-92ed-2845bd2fa12f`
 
-### Friday Night Magic 2003 (`F03`)
+### promos · Friday Night Magic 2003 (`F03`)
 
 - [ ] Capsize — `77637eff-2963-4402-88f3-ca346f762fc8`
 - [ ] Crystalline Sliver — `ba3aa1eb-722a-47d3-83be-96daddb50265`
@@ -10148,7 +10177,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Whipcorder — `4a4c187e-e10b-4fd2-b70b-6401bb0595c5`
 - [ ] Withered Wretch — `29e13ec1-a239-4217-a2bd-24ff90745ec0`
 
-### Japan Junior Tournament (`PJJT`)
+### promos · Japan Junior Tournament (`PJJT`)
 
 - [ ] Elvish Champion — `7e40f37c-9a0c-40e0-b195-7ea94b12f798`
 - [ ] Glorious Anthem — `e3886fe8-9b76-4613-8891-4ec74657c087`
@@ -10160,21 +10189,21 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Two-Headed Dragon — `a4fa3052-d1ec-4442-a832-15ba36c500ee`
 - [ ] Whirling Dervish — `43f89524-4b22-4707-9aba-6eb4c01d75dc`
 
-### Judge Gift Cards 2003 (`G03`)
+### promos · Judge Gift Cards 2003 (`G03`)
 
 - [ ] Argothian Enchantress — `11f17f85-ca97-4551-838f-7cb32f0e5f10`
 - [ ] Intuition — `3c9faba7-f2d3-4978-be94-020dc8003dc0`
 - [ ] Living Death — `9e6a3df4-67a3-452e-a6ef-f04dbadb21ef`
 
-### Magic Player Rewards 2003 (`P03`)
+### promos · Magic Player Rewards 2003 (`P03`)
 
 - [ ] Voidmage Prodigy — `7e2cacae-2934-4ff5-81c6-dfce7a2820ef`
 
-### Legions Promos (`PLGN`)
+### promos · Legions Promos (`PLGN`)
 
 - [ ] Feral Throwback — `edb2d86f-d2c6-4230-a37d-b01210a99a32`
 
-### Legions (`LGN`)
+### expansion · Legions (`LGN`)
 
 - [ ] Akroma's Devoted — `d264903b-d23e-48c8-95f1-cb1606a705a2`
 - [ ] Akroma, Angel of Wrath — `107f204c-9fd3-490d-8887-be63d14fc6a4`
@@ -10307,11 +10336,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Withered Wretch — `29e13ec1-a239-4217-a2bd-24ff90745ec0`
 - [ ] Zombie Brute — `377177f3-65e5-4909-bf12-48a473b1861d`
 
-### Scourge Promos (`PSCG`)
+### promos · Scourge Promos (`PSCG`)
 
 - [ ] Soul Collector — `7b7b3a34-13ff-45d4-ad0d-ac4bad9d0581`
 
-### Scourge (`SCG`)
+### expansion · Scourge (`SCG`)
 
 - [ ] Accelerated Mutation — `f8a9c279-0f11-4a22-8651-f9caf013ca3c`
 - [ ] Ageless Sentinels — `9023c530-f329-4301-8b24-4cf676194265`
@@ -10454,7 +10483,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zealous Inquisitor — `e85f6251-8801-414b-adc9-5488794e7456`
 - [ ] Zombie Cutthroat — `a0b6aa7d-a8cd-4af7-8fb2-d2fa0861e123`
 
-### Eighth Edition (`8ED`)
+### core · Eighth Edition (`8ED`)
 
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
 - [ ] Ambition's Cost — `84de4fec-2f38-4293-93d3-b3882c5aac14`
@@ -10699,11 +10728,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombify — `bb95db4d-5017-4121-bf79-d68476602d8c`
 - [ ] Zur's Weirding — `c6eaa147-3566-43a9-999a-d58b877496f5`
 
-### Mirrodin Promos (`PMRD`)
+### promos · Mirrodin Promos (`PMRD`)
 
 - [ ] Sword of Kaldra — `35f63c60-b0a1-459d-bf51-a8549fb06930`
 
-### Mirrodin (`MRD`)
+### expansion · Mirrodin (`MRD`)
 
 - [ ] Altar of Shadows — `4b34a324-d939-453a-97e3-a21c584a0c74`
 - [ ] Annul — `d08e9784-75f7-4164-ac48-d06160f8c56b`
@@ -10947,7 +10976,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wrench Mind — `484eeb13-fe74-45fe-b089-7beec87cfcdb`
 - [ ] Wurmskin Forger — `c94332ac-982a-4c0f-85d4-43e950ac3069`
 
-### Magic Online Promos (`PRM`)
+### promos · Magic Online Promos (`PRM`)
 
 - [ ] Abbot of Keral Keep — `09be0f69-9c7f-491f-964d-bfbbc2d4251f`
 - [ ] Abhorrent Overlord — `13f63240-a6bb-4333-a3dd-818725c6fb73`
@@ -13393,7 +13422,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zuran Orb — `08cb8a30-9cb4-4517-bee5-8848aa60d1a2`
 - [ ] Zurgo Helmsmasher — `6c48d888-9f5d-43f4-adbd-61dbdba09260`
 
-### Arena League 2004 (`PAL04`)
+### promos · Arena League 2004 (`PAL04`)
 
 - [ ] Ashnod's Coupon — `4d4b7108-5287-4d52-94a1-a0f99c14c969`
 - [ ] Booster Tutor — `a6eab631-77d8-4fc2-9305-a299ecf33e46`
@@ -13404,7 +13433,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Mise — `ee8de564-9c46-437e-92e6-829f002e181d`
 - [ ] Serum Visions — `56956afd-db53-4542-816b-490c8b0bbcf7`
 
-### Friday Night Magic 2004 (`F04`)
+### promos · Friday Night Magic 2004 (`F04`)
 
 - [ ] Accumulated Knowledge — `1ca25379-d194-4670-a7bf-525ad11cf436`
 - [ ] Avalanche Riders — `c9048d35-aff7-45ae-ae97-db89397b3e74`
@@ -13419,7 +13448,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Treetop Village — `b53f216d-1592-4eee-b204-502a805fbc8c`
 - [ ] Willbender — `0aae277e-e58e-4115-b5fd-0459451e17ec`
 
-### Judge Gift Cards 2004 (`G04`)
+### promos · Judge Gift Cards 2004 (`G04`)
 
 - [ ] Armageddon — `c9ed8b01-959a-47d6-891e-0abbdccf6e4f`
 - [ ] Balance — `17fa98cd-ed8f-483f-9525-7e989a82ebb2`
@@ -13428,15 +13457,15 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Phyrexian Negator — `f22fcd17-bc24-41df-81ce-6d11208861b9`
 - [ ] Time Warp — `dbd6a94b-62ff-4a10-9d52-bdd90b26e425`
 
-### Magic Player Rewards 2004 (`P04`)
+### promos · Magic Player Rewards 2004 (`P04`)
 
 - [ ] Powder Keg — `ca1144c2-49a3-49b4-9085-3094141769ea`
 
-### Darksteel Promos (`PDST`)
+### promos · Darksteel Promos (`PDST`)
 
 - [ ] Shield of Kaldra — `4fdd570f-dbe0-486f-9843-f77f80956307`
 
-### Darksteel (`DST`)
+### expansion · Darksteel (`DST`)
 
 - [ ] Aether Snap — `1a1a16e5-ce4f-42b8-a1c6-05dd635d83cc`
 - [ ] Aether Vial — `fc148e1e-dff0-448e-9f16-625341754356`
@@ -13594,11 +13623,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wirefly Hive — `846bedc3-a1e0-4f11-a095-85b60ad482da`
 - [ ] Wurm's Tooth — `69476326-fda5-48c8-a506-e71eb7c81c2f`
 
-### Fifth Dawn Promos (`P5DN`)
+### promos · Fifth Dawn Promos (`P5DN`)
 
 - [ ] Helm of Kaldra — `38a3c87f-006e-4fc2-8c67-77b5bbb0471f`
 
-### Fifth Dawn (`5DN`)
+### expansion · Fifth Dawn (`5DN`)
 
 - [ ] Abuna's Chant — `2d4721f1-1a49-45aa-99d5-ab8c6f3f3ab6`
 - [ ] Acquire — `f1c3d749-5cdb-4af2-967f-6413d6cb04fe`
@@ -13755,11 +13784,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Viridian Lorebearers — `080c0557-59ee-4c46-afd9-5baabf0dc3d3`
 - [ ] Viridian Scout — `c5b4bc25-0f32-4e1d-b6fe-f122140f2207`
 
-### Champions of Kamigawa Promos (`PCHK`)
+### promos · Champions of Kamigawa Promos (`PCHK`)
 
 - [ ] Ryusei, the Falling Star — `5e99ba3b-dc2b-4c3c-84ce-228d4772cfee`
 
-### Champions of Kamigawa (`CHK`)
+### expansion · Champions of Kamigawa (`CHK`)
 
 - [ ] Akki Avalanchers — `5a98decb-30ba-4c34-a88a-424b7f4e03bc`
 - [ ] Akki Coalflinger — `96de29a1-3178-4c8b-a67b-ab0262442cb6`
@@ -14027,7 +14056,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yosei, the Morning Star — `5c2d0ead-8bfc-4ca7-9b38-2fc07af1c1d5`
 - [ ] Zo-Zu the Punisher — `0e412b68-9179-4094-960a-95692428855b`
 
-### Unhinged (`UNH`)
+### funny-special · Unhinged (`UNH`)
 
 - [ ] "Ach! Hans, Run!" — `a2c5ee76-6084-413c-bb70-45490d818374`
 - [ ] _____ — `4e536142-4ebe-4062-887b-5dd123c41d39`
@@ -14164,16 +14193,16 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombie Fanboy — `3c813e0b-2454-4096-b314-6fc6ffd3eddc`
 - [ ] Zzzyxas's Abyss — `0f863bb9-d73a-485b-b620-fb23510ff6d1`
 
-### Unhinged Promos (`PUNH`)
+### promos · Unhinged Promos (`PUNH`)
 
 - [ ] Ass Whuppin' — `630fd1ec-0d1a-45b7-84ae-0b00a6112685`
 
-### Arena League 2005 (`PAL05`)
+### promos · Arena League 2005 (`PAL05`)
 
 - [ ] Genju of the Spires — `c040882e-48ba-469e-9fc6-02e8b68dd58c`
 - [ ] Okina Nightwatch — `d1c222fe-0ca7-415b-a28a-3b704df53d66`
 
-### Friday Night Magic 2005 (`F05`)
+### promos · Friday Night Magic 2005 (`F05`)
 
 - [ ] Blastoderm — `d6ee8bd6-0207-46ee-9892-c1d1b23b934e`
 - [ ] Cabal Therapy — `018107d1-ebf7-4657-bc91-c8374af55cc5`
@@ -14186,13 +14215,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Kird Ape — `fbbc3acb-c917-44ff-ac6f-9dd6ebe3f4ad`
 - [ ] Rancor — `9d2d6479-531c-4ce1-b52b-00e36fa63b64`
 
-### Judge Gift Cards 2005 (`G05`)
+### promos · Judge Gift Cards 2005 (`G05`)
 
 - [ ] Gemstone Mine — `0c828f10-4775-492f-9224-1e2814ad2cad`
 - [ ] Mishra's Factory — `5963e0ef-e0bc-4611-ad4f-813a4c0eacfb`
 - [ ] Regrowth — `e6e4a8bd-5c40-4654-8de1-0da9afed90fd`
 
-### Junior Series Europe (`PJSE`)
+### promos · Junior Series Europe (`PJSE`)
 
 - [ ] Elvish Champion — `7e40f37c-9a0c-40e0-b195-7ea94b12f798`
 - [ ] Glorious Anthem — `e3886fe8-9b76-4613-8891-4ec74657c087`
@@ -14202,7 +14231,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Soltari Priest — `f8c9cb9f-3a37-4004-9cde-f51ca5579e1a`
 - [ ] Whirling Dervish — `43f89524-4b22-4707-9aba-6eb4c01d75dc`
 
-### Magic Player Rewards 2005 (`P05`)
+### promos · Magic Player Rewards 2005 (`P05`)
 
 - [ ] Fireball — `aa7714b0-2bfb-458a-8ebf-37ec2c53383e`
 - [ ] Mana Leak — `c61fe162-2202-4e56-9ba0-393547f9875f`
@@ -14211,12 +14240,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Reciprocate — `ebdd29c0-2c33-4410-a05c-80ced58c7b81`
 - [ ] Terror — `b81f041d-98db-4408-9472-c483e4a502bc`
 
-### Betrayers of Kamigawa Promos (`PBOK`)
+### promos · Betrayers of Kamigawa Promos (`PBOK`)
 
 - [ ] Budoka Pupil // Ichiga, Who Topples Oaks — `6f571092-7244-4223-aa14-f5133cc000d8`
 - [ ] Ink-Eyes, Servant of Oni — `5d520476-740a-4005-801e-472b24fa6497`
 
-### Betrayers of Kamigawa (`BOK`)
+### expansion · Betrayers of Kamigawa (`BOK`)
 
 - [ ] Akki Blizzard-Herder — `16fe1f04-9bbf-43a3-ab14-395fdf4a3a43`
 - [ ] Akki Raider — `bf9c5c0d-86a5-467a-863c-653279f2e6e7`
@@ -14380,12 +14409,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yomiji, Who Bars the Way — `438be2fa-5f8d-42ff-894a-671ba4221196`
 - [ ] Yukora, the Prisoner — `10026343-a8cd-4a99-b4d9-ff7611f52052`
 
-### Saviors of Kamigawa Promos (`PSOK`)
+### promos · Saviors of Kamigawa Promos (`PSOK`)
 
 - [ ] Ghost-Lit Raider — `3d772c44-a756-406d-a83f-f671a81513b0`
 - [ ] Kiyomaro, First to Stand — `340ec369-1761-4134-a96d-5537b4e08703`
 
-### Saviors of Kamigawa (`SOK`)
+### expansion · Saviors of Kamigawa (`SOK`)
 
 - [ ] Adamaro, First to Desire — `18f34bfd-7675-49df-91ea-695c510cd3c3`
 - [ ] Aether Shockwave — `e9db79fd-a5b6-4d59-9176-e713e2e9c708`
@@ -14549,7 +14578,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wine of Blood and Iron — `22d85711-485b-47a2-b161-eaed135f1ddc`
 - [ ] Yuki-Onna — `8f867a2c-f17b-4608-bca7-5b49d1387bc7`
 
-### Ninth Edition (`9ED`)
+### core · Ninth Edition (`9ED`)
 
 - [ ] Adarkar Wastes — `d5ad26cc-2bdb-46b7-b8bf-dd099d5fa09b`
 - [ ] Anaconda — `3eff03f1-2c5f-4c59-b465-a8c4cd05e1ba`
@@ -14806,12 +14835,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombify — `bb95db4d-5017-4121-bf79-d68476602d8c`
 - [ ] Zur's Weirding — `c6eaa147-3566-43a9-999a-d58b877496f5`
 
-### Ninth Edition Promos (`P9ED`)
+### promos · Ninth Edition Promos (`P9ED`)
 
 - [ ] Force of Nature — `e3c4c27d-f263-4c69-a4fe-2928136ff68b`
 - [ ] Shivan Dragon — `711eea87-0fa3-46e0-a42b-fa5a86455f04`
 
-### Salvat 2005 (`PSAL`)
+### boxed-products · Salvat 2005 (`PSAL`)
 
 - [ ] Aether Shockwave — `e9db79fd-a5b6-4d59-9176-e713e2e9c708`
 - [ ] Alpha Status — `839fb071-6585-4f3e-a13e-1c14779b401a`
@@ -15056,12 +15085,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wojek Apothecary — `23ea480c-99e3-4cbf-8d24-9ea92230f57b`
 - [ ] Yuki-Onna — `8f867a2c-f17b-4608-bca7-5b49d1387bc7`
 
-### Ravnica: City of Guilds Promos (`PRAV`)
+### promos · Ravnica: City of Guilds Promos (`PRAV`)
 
 - [ ] Dimir Guildmage — `1b6c67e5-5913-4db9-85d9-8dae57da02ee`
 - [ ] Gleancrawler — `bb7389fa-ab01-4ca2-bd18-03cf5b4cedf6`
 
-### Ravnica: City of Guilds (`RAV`)
+### expansion · Ravnica: City of Guilds (`RAV`)
 
 - [ ] Agrus Kos, Wojek Veteran — `e758aecd-6ce1-42f6-9716-32871e3bfa41`
 - [ ] Auratouched Mage — `3c7ffc6c-88be-4127-a673-fba8c1aa5fa1`
@@ -15320,18 +15349,18 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woodwraith Strangler — `c72ab66b-2011-449c-93a6-1808669653f0`
 - [ ] Zephyr Spirit — `ff640343-6980-4668-a41f-0f01b0bbc0f2`
 
-### Two-Headed Giant Tournament (`P2HG`)
+### promos · Two-Headed Giant Tournament (`P2HG`)
 
 - [ ] Underworld Dreams — `967cf377-ae26-464d-85ac-8448b5a911f7`
 
-### Arena League 2006 (`PAL06`)
+### promos · Arena League 2006 (`PAL06`)
 
 - [ ] Castigate — `28a972a6-cf67-4ee3-aa91-f7b2549f6c48`
 - [ ] Coiling Oracle — `69fd4ddf-9ed8-4c56-bef3-9944daf05e4f`
 - [ ] Surging Flame — `3c51b991-f6fa-44d2-81a3-0894939f3c22`
 - [ ] Wee Dragonauts — `e9e56b1d-5ad2-4807-8c4c-1a1a6a25ecbf`
 
-### Friday Night Magic 2006 (`F06`)
+### promos · Friday Night Magic 2006 (`F06`)
 
 - [ ] Armadillo Cloak — `15397a59-70a8-441f-abf7-230405a1602b`
 - [ ] Arrogant Wurm — `dc7f0c33-80ea-453e-a237-473f077f038e`
@@ -15345,7 +15374,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Lobotomy — `a7ebe748-c3de-402f-8a6e-236a6413c0f8`
 - [ ] Wild Mongrel — `e9441ab3-7a17-4f9b-a873-e5e82f6e9690`
 
-### Hachette UK (`PHUK`)
+### boxed-products · Hachette UK (`PHUK`)
 
 - [ ] Betrayal of Flesh — `43cee9b6-9853-4337-869a-45540c9db10f`
 - [ ] Carrion Rats — `1aa6b31b-cd30-4741-abc6-2ef72e445630`
@@ -15369,14 +15398,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Suppress — `b39651ad-1c05-45f8-b036-536c4d7324c0`
 - [ ] Swarm of Rats — `7fe21ade-01f1-45ff-9b70-bc6302c3d284`
 
-### Judge Gift Cards 2006 (`G06`)
+### promos · Judge Gift Cards 2006 (`G06`)
 
 - [ ] Exalted Angel — `2f6e9ab8-6951-4c5f-bcde-0e96e0fe87f2`
 - [ ] Grim Lavamancer — `37445e06-88a1-4e2e-a432-383736c9b977`
 - [ ] Meddling Mage — `a5d02339-9f6d-486e-87d8-5ec2274cf680`
 - [ ] Pernicious Deed — `62e44e0d-eda0-4275-8367-49dab9a087c3`
 
-### Junior APAC Series (`PJAS`)
+### promos · Junior APAC Series (`PJAS`)
 
 - [ ] Elvish Champion — `7e40f37c-9a0c-40e0-b195-7ea94b12f798`
 - [ ] Glorious Anthem — `e3886fe8-9b76-4613-8891-4ec74657c087`
@@ -15384,7 +15413,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Soltari Priest — `f8c9cb9f-3a37-4004-9cde-f51ca5579e1a`
 - [ ] Whirling Dervish — `43f89524-4b22-4707-9aba-6eb4c01d75dc`
 
-### Magic Player Rewards 2006 (`P06`)
+### promos · Magic Player Rewards 2006 (`P06`)
 
 - [ ] Hinder — `c9db6b94-a7b1-4b93-b454-4dead8f85e34`
 - [ ] Hypnotic Specter — `759af941-f6a3-4726-91f2-9b1e4e55ea71`
@@ -15392,12 +15421,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Putrefy — `9b271430-f53d-42d6-a547-2f286dd9bcb6`
 - [ ] Zombify — `bb95db4d-5017-4121-bf79-d68476602d8c`
 
-### Guildpact Promos (`PGPT`)
+### promos · Guildpact Promos (`PGPT`)
 
 - [ ] Djinn Illuminatus — `d7dcf1be-2779-419d-8c90-03800f9e7ea2`
 - [ ] Gruul Guildmage — `75645b1f-0e12-4a05-b47f-0d2e2616c3ca`
 
-### Guildpact (`GPT`)
+### expansion · Guildpact (`GPT`)
 
 - [ ] Absolver Thrull — `a9002245-0f33-48cb-96d3-fde884236eb5`
 - [ ] Abyssal Nocturnus — `b79c4066-66a9-4a53-8716-23f7a340a85f`
@@ -15554,7 +15583,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wurmweaver Coil — `83419229-c266-4022-8297-d1b05ec5ee20`
 - [ ] Yore-Tiller Nephilim — `7e9d61d3-6ba7-45ac-a55c-a2f36595c5d2`
 
-### Champs and States (`PCMP`)
+### promos · Champs and States (`PCMP`)
 
 - [ ] Blood Knight — `67fba605-9cfa-499c-83e0-4fbd023bcfa0`
 - [ ] Bramblewood Paragon — `be455184-c57d-4504-8c34-3be42bc3f04b`
@@ -15568,12 +15597,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Serra Avenger — `b91b65b3-b35c-460e-a49b-333000a9a519`
 - [ ] Voidslime — `c4851768-e210-4aaf-935e-715942e198f9`
 
-### Dissension Promos (`PDIS`)
+### promos · Dissension Promos (`PDIS`)
 
 - [ ] Avatar of Discord — `3f806353-592e-431c-a7dd-a4c64034f94d`
 - [ ] Azorius Guildmage — `16f61f69-cdde-4b6c-b855-c74db9038ceb`
 
-### Dissension (`DIS`)
+### expansion · Dissension (`DIS`)
 
 - [ ] Aethermage's Touch — `15692698-ef57-4672-bf76-5fe4a00c693a`
 - [ ] Anthem of Rakdos — `aba0f637-2d8d-43df-9002-08541ab42944`
@@ -15740,11 +15769,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wrecking Ball — `0a1b0910-3b0c-4aa3-b47f-8eb069122743`
 - [ ] Writ of Passage — `1ea7f839-e3b8-4aff-b850-c0a98b06ae14`
 
-### Coldsnap Promos (`PCSP`)
+### promos · Coldsnap Promos (`PCSP`)
 
 - [ ] Allosaurus Rider — `176508ba-c107-4694-8dd7-ea34fca3b299`
 
-### Coldsnap (`CSP`)
+### expansion · Coldsnap (`CSP`)
 
 - [ ] Adarkar Valkyrie — `2932baae-bdf1-455a-9ac4-23ba1f83e7e1`
 - [ ] Adarkar Windform — `dd66b8ab-14a9-455b-98f6-5356df72a522`
@@ -15888,7 +15917,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombie Musher — `89f87341-c18f-4dc7-ba2e-81305383231e`
 - [ ] Zur the Enchanter — `d7950018-d744-48a8-81aa-0d8384703f48`
 
-### Coldsnap Theme Decks (`CST`)
+### deck-products · Coldsnap Theme Decks (`CST`)
 
 - [ ] Arcum's Weathervane — `b4e57fba-5fa3-4fd5-8f0a-7b61593ade72`
 - [ ] Ashen Ghoul — `46fbcbdf-73d0-4fa2-8db7-3b19bfc7ac22`
@@ -15935,13 +15964,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wings of Aesthir — `06413d87-d119-4c04-93d5-5ced7ad4a858`
 - [ ] Woolly Mammoths — `6e5f1088-a5ab-48ec-be27-c88eb164cf63`
 
-### Time Spiral Promos (`PTSP`)
+### promos · Time Spiral Promos (`PTSP`)
 
 - [ ] Jaya Ballard, Task Mage — `cbbad3da-695e-4527-9678-0942f3751287`
 - [ ] Lotus Bloom — `04cf02dc-f053-414e-87d8-1537f25bcbf4`
 - [ ] Sudden Shock — `7b139231-dcd2-4b03-bcf2-fcb040617b69`
 
-### Time Spiral (`TSP`)
+### expansion · Time Spiral (`TSP`)
 
 - [ ] Academy Ruins — `a3da7d5b-2c2b-45fe-b9c5-413b8c8fc0a2`
 - [ ] Aether Web — `97e7778f-971c-4425-8f6d-f4ff3fae000f`
@@ -16211,7 +16240,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Dryad — `6d1a1ea3-6d83-4bee-a7fe-0ddd0f3019cf`
 - [ ] Zealot il-Vec — `4107d0e3-608b-4024-b433-40c5d8b63549`
 
-### Time Spiral Timeshifted (`TSB`)
+### expansion · Time Spiral Timeshifted (`TSB`)
 
 - [ ] Akroma, Angel of Wrath — `107f204c-9fd3-490d-8887-be63d14fc6a4`
 - [ ] Arena — `12326d23-1fb5-4084-a23a-d6e2c90ea36c`
@@ -16325,7 +16354,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Withered Wretch — `29e13ec1-a239-4217-a2bd-24ff90745ec0`
 - [ ] Zhalfirin Commander — `1053a778-da6a-4b8e-81fb-537a355d4bfe`
 
-### Pro Tour Promos (`PPRO`)
+### promos · Pro Tour Promos (`PPRO`)
 
 - [ ] Aerith Gainsborough — `dd9a6f6b-f9b7-4292-bc80-b7da326de032`
 - [ ] Aether Vial — `fc148e1e-dff0-448e-9f16-625341754356`
@@ -16346,7 +16375,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Teferi, Hero of Dominaria — `f2f165b6-ef0a-42ad-9352-ba68be8248b0`
 - [ ] Treva, the Renewer — `72524f3c-674b-4ebf-9526-18737b354010`
 
-### DCI Promos (`DCI`)
+### promos · DCI Promos (`DCI`)
 
 - [ ] Auramancer — `bd5eb181-6a69-4dc2-93a0-fa000291bc3d`
 - [ ] Black Sun's Zenith — `038c0165-32b6-4e81-8180-604b49905207`
@@ -16402,7 +16431,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yixlid Jailer — `1f55303e-1369-4e42-9ed4-36609887c7c1`
 - [ ] Zoetic Cavern — `3763de30-28e1-4689-a71c-07d2fea3a466`
 
-### Happy Holidays (`HHO`)
+### funny-special · Happy Holidays (`HHO`)
 
 - [ ] Bog Humbugs — `047d95cb-3de4-4299-9b8e-ae6dd24395d9`
 - [ ] Chaos Wrap — `c091bb18-3132-4606-a731-0868d8ea7c49`
@@ -16425,7 +16454,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Topdeck the Halls — `ea8ed790-bd4e-403e-9f50-10c068db00c6`
 - [ ] Yule Ooze — `a01cab88-0874-4b2d-8fbc-a9601a0572f3`
 
-### Friday Night Magic 2007 (`F07`)
+### promos · Friday Night Magic 2007 (`F07`)
 
 - [ ] Basking Rootwalla — `b2ec080f-ad5d-4274-91e3-bc6ac89fc3e4`
 - [ ] Cabal Coffers — `7358e164-5704-4e78-9b21-6a9bf2a968ce`
@@ -16440,7 +16469,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wing Shards — `b302bce5-d7ad-46d8-9dbf-8159e8709b4f`
 - [ ] Wonder — `232284f7-c623-4895-9ab9-8b1a39926830`
 
-### Judge Gift Cards 2007 (`G07`)
+### promos · Judge Gift Cards 2007 (`G07`)
 
 - [ ] Cunning Wish — `bdf80a55-b524-4d17-9be8-a0005403a0e7`
 - [ ] Decree of Justice — `67a98359-6f02-4556-ad47-c01b643686d6`
@@ -16448,7 +16477,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vindicate — `63c1ac21-e3d8-40c2-8c09-3f31c52992ef`
 - [ ] Yawgmoth's Will — `322f0459-f394-44f0-977b-55fd0cbe0712`
 
-### Magic Player Rewards 2007 (`P07`)
+### promos · Magic Player Rewards 2007 (`P07`)
 
 - [ ] Condemn — `377d31b5-0a48-4d5b-91bd-b5a62d4f7899`
 - [ ] Cruel Edict — `10c585c4-bf5b-4d8f-94a9-e9a5036a688f`
@@ -16456,12 +16485,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Psionic Blast — `7f221ad6-7ec4-483d-a6b5-1456c95c1cad`
 - [ ] Recollect — `5b38fafb-3999-46dc-928b-1677625c1943`
 
-### Planar Chaos Promos (`PPLC`)
+### promos · Planar Chaos Promos (`PPLC`)
 
 - [ ] Hedge Troll — `500663c1-390c-4598-b614-4168c4f7debe`
 - [ ] Oros, the Avenger — `454b898f-b134-4d63-ae7b-1e736964cd48`
 
-### Planar Chaos (`PLC`)
+### expansion · Planar Chaos (`PLC`)
 
 - [ ] Aeon Chronicler — `a1399cb8-f22a-487e-b539-2db47b09a790`
 - [ ] Aether Membrane — `5efea57b-937d-46ac-999e-490316e0f820`
@@ -16619,7 +16648,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wild Pair — `4fdde84f-4103-4209-a296-60d1bf94af65`
 - [ ] Wistful Thinking — `a936b84c-c350-4a1f-b4a7-86316f11c67f`
 
-### Grand Prix Promos (`PGPX`)
+### promos · Grand Prix Promos (`PGPX`)
 
 - [ ] All Is Dust — `14693689-d087-43b6-9c3f-63ab0648fc20`
 - [ ] Batterskull — `d12e5ce0-5705-4c35-9a93-b883db52c80c`
@@ -16636,12 +16665,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sword of Feast and Famine — `d0901053-6de0-46d0-9ee3-8d40510236c1`
 - [ ] Umezawa's Jitte — `1da10d5c-36a8-473f-a5d4-782ad61d8057`
 
-### Future Sight Promos (`PFUT`)
+### promos · Future Sight Promos (`PFUT`)
 
 - [ ] Korlash, Heir to Blackblade — `09f99b5a-66cf-4178-ae64-29f2004fe899`
 - [ ] Storm Entity — `6c3b9136-5e4b-4bb5-bef5-17887d7211dd`
 
-### Future Sight (`FUT`)
+### expansion · Future Sight (`FUT`)
 
 - [ ] Akroma's Memorial — `967e8b3f-8266-4d9a-a38b-d0e10184e1e4`
 - [ ] Angel of Salvation — `27b945ad-92a9-4615-87ec-790682e8c3e7`
@@ -16813,7 +16842,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yixlid Jailer — `1f55303e-1369-4e42-9ed4-36609887c7c1`
 - [ ] Zoetic Cavern — `3763de30-28e1-4689-a71c-07d2fea3a466`
 
-### Tenth Edition (`10E`)
+### core · Tenth Edition (`10E`)
 
 - [ ] Abundance — `eccc9a54-2b56-4a02-9926-258d5b2e25fb`
 - [ ] Academy Researchers — `df2d2c52-475b-4057-9cf8-7886700f0fae`
@@ -17093,13 +17122,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Coast — `40b36bc6-c185-4bda-99e7-0118953c2c97`
 - [ ] Yavimaya Enchantress — `495fc654-7986-4d76-9d5c-bc1484e98de2`
 
-### Tenth Edition Promos (`P10E`)
+### promos · Tenth Edition Promos (`P10E`)
 
 - [ ] Faerie Conclave — `0c25f6b1-8fb3-4406-9605-0282d2dbbcec`
 - [ ] Reya Dawnbringer — `08d1a5d1-141d-48e3-ac22-c2529191cb13`
 - [ ] Treetop Village — `b53f216d-1592-4eee-b204-502a805fbc8c`
 
-### Masters Edition (`ME1`)
+### masters-remastered · Masters Edition (`ME1`)
 
 - [ ] Adun Oakenshield — `aefd49a4-ecec-42cb-b882-e5db7f81eff8`
 - [ ] Amnesia — `8345187a-a210-49d7-bdce-10fb2909e050`
@@ -17268,13 +17297,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ydwen Efreet — `15b9b0cc-47ef-4147-aba7-a7adae41921b`
 - [ ] Zuran Orb — `08cb8a30-9cb4-4517-bee5-8848aa60d1a2`
 
-### Lorwyn Promos (`PLRW`)
+### promos · Lorwyn Promos (`PLRW`)
 
 - [ ] Brion Stoutarm — `b816b3cc-ae4b-4fb7-8b1a-e01ab83459a3`
 - [ ] Shriekmaw — `717bbb9d-0a5b-4979-a24b-9d54aac7657a`
 - [ ] Wren's Run Packmaster — `d4d27fef-e86b-4dd3-a15e-a0db8d0725ee`
 
-### Lorwyn (`LRW`)
+### expansion · Lorwyn (`LRW`)
 
 - [ ] Adder-Staff Boggart — `c95e75fb-2bf2-431c-b7ca-d84236bffe5c`
 - [ ] Aethersnipe — `3e0be003-4f42-4917-b85d-46baf2afd734`
@@ -17530,7 +17559,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wydwen, the Biting Gale — `7891ec87-8d1c-42fc-b00a-4c64ee5edbff`
 - [ ] Zephyr Net — `cd510cf2-df54-4024-919b-e4377cdb2be1`
 
-### Duel Decks: Elves vs. Goblins (`DD1`)
+### duel-decks · Duel Decks: Elves vs. Goblins (`DD1`)
 
 - [ ] Akki Coalflinger — `96de29a1-3178-4c8b-a67b-ab0262442cb6`
 - [ ] Allosaurus Rider — `176508ba-c107-4694-8dd7-ea34fca3b299`
@@ -17574,7 +17603,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wirewood Symbiote — `67a52a74-9474-4f4e-8785-6ff54078a8ca`
 - [ ] Wren's Run Vanquisher — `fe9cdd15-a390-4a1e-bae9-474ce8d355b8`
 
-### Friday Night Magic 2008 (`F08`)
+### promos · Friday Night Magic 2008 (`F08`)
 
 - [ ] Desert — `195107ad-879d-4b02-a44a-a3ba70fedf88`
 - [ ] Eternal Witness — `30b24e8e-3b0e-4d8e-90f3-f66eb7c1858c`
@@ -17588,30 +17617,30 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Thirst for Knowledge — `939e6f71-185e-41f2-9d54-72cce06f1dce`
 - [ ] Wall of Roots — `3a21a6ae-b2f2-4f0c-acfd-5f3e8d63fd2f`
 
-### Judge Gift Cards 2008 (`G08`)
+### promos · Judge Gift Cards 2008 (`G08`)
 
 - [ ] Goblin Piledriver — `4d74d12b-1ffb-482f-8bac-635a8d4d32e9`
 - [ ] Living Wish — `b9d186f5-1c92-4539-a5b5-e7fbd4b726fe`
 - [ ] Mind's Desire — `b3739b5a-5731-4c64-a244-815a363b0d5c`
 - [ ] Orim's Chant — `26d3a818-7faf-443a-a6bd-9773edaedf17`
 
-### Magic Player Rewards 2008 (`P08`)
+### promos · Magic Player Rewards 2008 (`P08`)
 
 - [ ] Corrupt — `a88a1c53-7de3-423a-a95a-24ed5666ab96`
 - [ ] Incinerate — `d8fd7a34-8418-4e98-b79b-119c4348c667`
 - [ ] Mana Tithe — `948217ac-289e-455f-8c7c-519aa75fa345`
 - [ ] Ponder — `02090581-61aa-4348-ad57-451be8ee91c2`
 
-### Magic Premiere Shop 2008 (`PMPS08`)
+### promos · Magic Premiere Shop 2008 (`PMPS08`)
 
 - [ ] Jaya Ballard, Task Mage — `cbbad3da-695e-4527-9678-0942f3751287`
 
-### Morningtide Promos (`PMOR`)
+### promos · Morningtide Promos (`PMOR`)
 
 - [ ] Door of Destinies — `9b6d3dcf-aa5a-4516-bd48-a0723e86bfd1`
 - [ ] Earwig Squad — `f8526509-2e14-4ac0-b1de-cf4ee7d4f875`
 
-### Morningtide (`MOR`)
+### expansion · Morningtide (`MOR`)
 
 - [ ] Auntie's Snitch — `d2964a68-36d9-4b05-8f34-540969b410bf`
 - [ ] Ballyrush Banneret — `0ad27d0e-b6c3-4c3f-a389-285d889b6a65`
@@ -17755,16 +17784,16 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winnower Patrol — `41618227-a1c9-41e2-b567-7dfb493974c4`
 - [ ] Wolf-Skull Shaman — `c29724c7-dc2e-4a66-8371-449fd012d429`
 
-### 15th Anniversary Cards (`P15A`)
+### promos · 15th Anniversary Cards (`P15A`)
 
 - [ ] Char — `e57d90ad-2f54-46ca-8237-aa383353a0de`
 
-### Shadowmoor Promos (`PSHM`)
+### promos · Shadowmoor Promos (`PSHM`)
 
 - [ ] Demigod of Revenge — `602ce676-380d-4c3c-b97a-9234ccdc2904`
 - [ ] Vexing Shusher — `a20a7cf8-2075-47ad-9229-36264b112e61`
 
-### Shadowmoor (`SHM`)
+### expansion · Shadowmoor (`SHM`)
 
 - [ ] Advice from the Fae — `5063f015-bd1c-4e14-9888-63e202be2ac8`
 - [ ] Aethertow — `dd0cac88-0a78-408f-8eb0-080f79150180`
@@ -18032,12 +18061,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wort, the Raidmother — `d6b67c7e-3b24-4f60-8e3a-c6ca45229d7f`
 - [ ] Wound Reflection — `b09206a4-8b73-4125-8b79-53f6fd511b16`
 
-### Eventide Promos (`PEVE`)
+### promos · Eventide Promos (`PEVE`)
 
 - [ ] Figure of Destiny — `cd51cc2d-0d39-4aba-b0ea-70e8118149bc`
 - [ ] Overbeing of Myth — `5391f601-b778-413f-a31f-9f8b23b40f5c`
 
-### Eventide (`EVE`)
+### expansion · Eventide (`EVE`)
 
 - [ ] Aerie Ouphes — `70cdd24a-8dc5-47b5-8729-9ebf486f4821`
 - [ ] Altar Golem — `ac143b8e-f993-4989-8833-e26dc9faffa4`
@@ -18206,7 +18235,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woodlurker Mimic — `5f4ddd52-4940-4557-8531-40c66857d4cd`
 - [ ] Worm Harvest — `b2223f1c-e607-43e0-86dd-5e3225330066`
 
-### From the Vault: Dragons (`DRB`)
+### from-the-vault · From the Vault: Dragons (`DRB`)
 
 - [ ] Bladewing the Risen — `c22cc70a-9533-4bfc-b3ce-b2d43a73f0c1`
 - [ ] Bogardan Hellkite — `699bc130-2f1f-4bc8-a25f-9329e40efbb1`
@@ -18224,7 +18253,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Thunder Dragon — `70d9579f-c8a6-4406-afe1-9291fe5ee736`
 - [ ] Two-Headed Dragon — `a4fa3052-d1ec-4442-a832-15ba36c500ee`
 
-### Masters Edition II (`ME2`)
+### masters-remastered · Masters Edition II (`ME2`)
 
 - [ ] Abbey Gargoyles — `c208b959-d0e4-4a9a-8255-2c7cc7596767`
 - [ ] Adarkar Sentinel — `bd372a53-48f9-4e9a-ab00-0f9c4606d452`
@@ -18439,7 +18468,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woolly Spider — `811c6f52-03cb-49a9-a3c7-7f4ae40e7155`
 - [ ] Yavimaya Ancients — `0e91a873-a680-4ca2-b073-26aa39376d77`
 
-### Magic Player Rewards 2009 (`P09`)
+### promos · Magic Player Rewards 2009 (`P09`)
 
 - [ ] Blightning — `a6496440-dc0c-4d9b-bf37-f537b6f0187b`
 - [ ] Cryptic Command — `a3e51a35-09df-4189-b131-08a21e6a557d`
@@ -18450,7 +18479,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Remove Soul — `b13c0f76-fbda-4911-9442-c3d7e97f1aac`
 - [ ] Spellbreaker Behemoth — `cba07472-7212-4411-a9f9-38a48870ad69`
 
-### Shards of Alara (`ALA`)
+### expansion · Shards of Alara (`ALA`)
 
 - [ ] Ad Nauseam — `981b0e21-e5e6-4a1e-bfde-679d56623f7f`
 - [ ] Ajani Vengeant — `f953afdf-96f7-4851-994c-1617e8f5e5c9`
@@ -18637,11 +18666,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wild Nacatl — `35d3d96a-d303-4bf5-b972-f311331ec07a`
 - [ ] Windwright Mage — `2f051ee4-9f2e-414d-b763-5fd78f2d4e1b`
 
-### Shards of Alara Promos (`PALA`)
+### promos · Shards of Alara Promos (`PALA`)
 
 - [ ] Ajani Vengeant — `f953afdf-96f7-4851-994c-1617e8f5e5c9`
 
-### Duel Decks: Jace vs. Chandra (`DD2`)
+### duel-decks · Duel Decks: Jace vs. Chandra (`DD2`)
 
 - [ ] Aethersnipe — `3e0be003-4f42-4917-b85d-46baf2afd734`
 - [ ] Ancestral Vision — `9728dec9-d482-4c7a-8cdc-44d010dc878d`
@@ -18691,11 +18720,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Waterspout Djinn — `050dac46-9ba0-4b8a-b61b-1c7ec6f3723a`
 - [ ] Willbender — `0aae277e-e58e-4115-b5fd-0459451e17ec`
 
-### Duels of the Planeswalkers 2009 Promos (`PDTP`)
+### promos · Duels of the Planeswalkers 2009 Promos (`PDTP`)
 
 - [ ] Garruk Wildspeaker — `186b4def-4fff-4a2b-bcbf-5318b0ac5fa9`
 
-### Friday Night Magic 2009 (`F09`)
+### promos · Friday Night Magic 2009 (`F09`)
 
 - [ ] Browbeat — `11cd0c42-4148-4d82-9172-b1a1967fe319`
 - [ ] Kitchen Finks — `5470dcfa-4eff-43da-abf7-19922841f719`
@@ -18708,7 +18737,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Oblivion Ring — `bd9b9772-f5f9-4c6b-913e-7193bea5d0a7`
 - [ ] Wren's Run Vanquisher — `fe9cdd15-a390-4a1e-bae9-474ce8d355b8`
 
-### Judge Gift Cards 2009 (`G09`)
+### promos · Judge Gift Cards 2009 (`G09`)
 
 - [ ] Burning Wish — `13a884b5-8970-4d71-9082-a8b6c8db9a01`
 - [ ] Dark Ritual — `53f7c868-b03e-4fc2-8dcf-a75bbfa3272b`
@@ -18716,7 +18745,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Stifle — `b3b00911-ece7-4484-bc36-f211ce72b6cc`
 - [ ] Survival of the Fittest — `119d719d-e965-45b4-9bc9-ac03211b10c2`
 
-### URL/Convention Promos (`PURL`)
+### promos · URL/Convention Promos (`PURL`)
 
 - [ ] Aeronaut Tinkerer — `a15bb807-ea31-4bff-b573-c249c4c78dd6`
 - [ ] Behold the Sinister Six! — `6fa27f8a-bade-460f-853a-abc1c05c946a`
@@ -18733,12 +18762,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Unbreakable Formation — `97435e03-2fff-4fe0-8fa9-69ab0a046a33`
 - [ ] White Orchid Phantom — `6edd2a36-3d65-4bf9-bd82-b6d03a7e8fea`
 
-### Conflux Promos (`PCON`)
+### promos · Conflux Promos (`PCON`)
 
 - [ ] Malfegor — `52e1546a-63eb-48d7-acc4-81b912aabc90`
 - [ ] Obelisk of Alara — `75fcb9ce-ac01-4048-82b7-9100143e3b07`
 
-### Conflux (`CON`)
+### expansion · Conflux (`CON`)
 
 - [ ] Absorb Vis — `04ea7e88-7ea5-4b4c-9a7c-2a6ac0bc0682`
 - [ ] Aerie Mystics — `12134f7d-433a-416a-b668-c1a21984c94b`
@@ -18872,7 +18901,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yoke of the Damned — `af08dae2-ba32-4a34-b8c1-b49d45ce0b6b`
 - [ ] Zombie Outlander — `857524d5-9b5c-42ac-a6cf-2d9bfebd7015`
 
-### Duel Decks: Divine vs. Demonic (`DDC`)
+### duel-decks · Duel Decks: Divine vs. Demonic (`DDC`)
 
 - [ ] Abyssal Gatekeeper — `4954181c-cb46-4cac-adc3-2c8b7693a211`
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
@@ -18918,12 +18947,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Twilight Shepherd — `eff736bc-d311-4bef-9c7e-de4ebe32e46f`
 - [ ] Unholy Strength — `090d88a9-7f2d-4bd1-a30a-7c48d05068be`
 
-### Alara Reborn Promos (`PARB`)
+### promos · Alara Reborn Promos (`PARB`)
 
 - [ ] Knight of New Alara — `170856f4-7c9d-494b-9bae-20e4d9eba0da`
 - [ ] Retaliator Griffin — `dd4b9e5a-b3ab-4b70-b200-228c8add9f52`
 
-### Alara Reborn (`ARB`)
+### expansion · Alara Reborn (`ARB`)
 
 - [ ] Anathemancer — `137b5708-50a9-4f4c-84e6-9043be9f1989`
 - [ ] Architects of Will — `79d290ea-c095-4135-9711-f3ce089dae43`
@@ -19057,12 +19086,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wildfield Borderpost — `b8141489-00fa-4aba-85d0-4c883196fece`
 - [ ] Zealous Persecution — `ccf8d919-1399-4bef-94ac-04c67f122828`
 
-### Magic 2010 Promos (`PM10`)
+### promos · Magic 2010 Promos (`PM10`)
 
 - [ ] Honor of the Pure — `eb4188bb-62df-4309-bde1-f66318fe2f05`
 - [ ] Vampire Nocturnus — `2109c49e-dc81-4a10-8265-3cf8c90db523`
 
-### Magic 2010 (`M10`)
+### core · Magic 2010 (`M10`)
 
 - [ ] Acolyte of Xathrid — `62dca41b-58b0-45eb-ada7-568e80a2abec`
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
@@ -19232,7 +19261,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xathrid Demon — `dd2bbc90-0474-42b7-afe4-3655a120ab02`
 - [ ] Yawning Fissure — `634ec9d3-24c9-4090-a087-2624b6d5bf5b`
 
-### From the Vault: Exiled (`V09`)
+### from-the-vault · From the Vault: Exiled (`V09`)
 
 - [ ] Balance — `17fa98cd-ed8f-483f-9525-7e989a82ebb2`
 - [ ] Berserk — `8b67d192-9a05-4a47-82ae-5fc4b7834d88`
@@ -19248,7 +19277,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tinker — `254878f0-be90-4653-a395-0c41258fceaf`
 - [ ] Trinisphere — `69d994f2-b8f6-425f-9655-977c2144d40c`
 
-### Planechase (`HOP`)
+### planechase · Planechase (`HOP`)
 
 - [ ] Akroma's Vengeance — `ae19dce5-c9fc-4fbe-99b5-dc6a12124a68`
 - [ ] Arc Lightning — `5acc8b39-3c3e-4012-8cfd-ac3c2c4ca982`
@@ -19359,7 +19388,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Withered Wretch — `29e13ec1-a239-4217-a2bd-24ff90745ec0`
 - [ ] Wizard Replica — `0ba3b1e0-1790-4247-93ab-72a43e8fb580`
 
-### Masters Edition III (`ME3`)
+### masters-remastered · Masters Edition III (`ME3`)
 
 - [ ] Active Volcano — `205ffa76-ff8e-4405-b21a-42358a9883c2`
 - [ ] Akron Legionnaire — `c5f50a78-9dc4-4f3c-aa11-b41c8278bc16`
@@ -19536,7 +19565,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zhang Fei, Fierce Warrior — `f3f815b8-75c6-40e0-9716-872f0f5c9d46`
 - [ ] Zodiac Dragon — `e5c2cf0f-c1c0-4fd6-9b5f-7d4aa25246a7`
 
-### Zendikar (`ZEN`)
+### expansion · Zendikar (`ZEN`)
 
 - [ ] Adventuring Gear — `17042684-7af4-43a6-88c7-885032cfb27c`
 - [ ] Aether Figment — `15fee0bd-ede2-4f65-a9a1-2da4623679d5`
@@ -19737,14 +19766,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zektar Shrine Expedition — `45bd5e97-f34e-47bc-ad21-da42d3444431`
 - [ ] Zendikar Farguide — `01ab37a4-21d2-49f4-9b85-cb522a4d04ad`
 
-### Zendikar Promos (`PZEN`)
+### promos · Zendikar Promos (`PZEN`)
 
 - [ ] Oran-Rief, the Vastwood — `e88027a6-24cc-4a8b-86db-734f26149ea8`
 - [ ] Rampaging Baloths — `2d3e6549-6cc6-434f-a189-ba3b55e64c34`
 - [ ] Terra Stomper — `d688baac-0574-4d88-b7eb-a7384c298ef5`
 - [ ] Valakut, the Molten Pinnacle — `1bc44216-4e06-4f66-89b7-5c327004604e`
 
-### Duel Decks: Garruk vs. Liliana (`DDD`)
+### duel-decks · Duel Decks: Garruk vs. Liliana (`DDD`)
 
 - [ ] Albino Troll — `02079e18-ac14-4255-95c4-741eb76c4799`
 - [ ] Bad Moon — `fc5d3341-cbce-49e5-93cc-8add92479dca`
@@ -19793,7 +19822,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Windstorm — `9969b822-2ead-4956-bac2-875ffd90e872`
 - [ ] Wirewood Savage — `45579312-499f-41de-b16e-a231d65a2053`
 
-### Premium Deck Series: Slivers (`H09`)
+### premium-decks · Premium Deck Series: Slivers (`H09`)
 
 - [ ] Acidic Sliver — `a149eeb1-007c-435d-9d55-34af205090e0`
 - [ ] Amoeboid Changeling — `68865793-daeb-4c55-80cb-12853f9f96c4`
@@ -19827,12 +19856,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wild Pair — `4fdde84f-4103-4209-a296-60d1bf94af65`
 - [ ] Winged Sliver — `24e96682-14ca-4a62-a920-2d686c8a5dbf`
 
-### Duels of the Planeswalkers 2010 Promos (`PDP10`)
+### promos · Duels of the Planeswalkers 2010 Promos (`PDP10`)
 
 - [ ] Liliana Vess — `a6c05941-2cfb-4dac-a7c0-ab808187eb7c`
 - [ ] Nissa Revane — `113fc13a-6df9-4eed-b9d4-002a85a036a1`
 
-### Friday Night Magic 2010 (`F10`)
+### promos · Friday Night Magic 2010 (`F10`)
 
 - [ ] Anathemancer — `137b5708-50a9-4f4c-84e6-9043be9f1989`
 - [ ] Ancient Ziggurat — `0baabe39-72ae-47bd-a095-cbf7eb8a6361`
@@ -19846,7 +19875,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tidehollow Sculler — `51b55057-8b14-4277-894b-4813b4f7eb39`
 - [ ] Wild Nacatl — `35d3d96a-d303-4bf5-b972-f311331ec07a`
 
-### Judge Gift Cards 2010 (`G10`)
+### promos · Judge Gift Cards 2010 (`G10`)
 
 - [ ] Land Tax — `d2d9ecea-7925-420e-98b9-2f87f41f387c`
 - [ ] Morphling — `19f233b2-8be6-4172-abf9-b132fc3393d9`
@@ -19856,7 +19885,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wasteland — `09a70ae8-3859-4a09-901d-dce063fa3b5f`
 - [ ] Wheel of Fortune — `a8abd966-de7b-46a3-8ac7-8747ab35653a`
 
-### Magic 2011 Promos (`PM11`)
+### promos · Magic 2011 Promos (`PM11`)
 
 - [ ] Ancient Hellkite — `de672a4b-07eb-4be8-a03f-23dfbb7ac0fa`
 - [ ] Goblin Chieftain — `368b4052-174e-4458-a6e6-eaf8093aa0fe`
@@ -19864,7 +19893,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Relentless Rats — `104ea189-14cd-420f-afdc-57b0f827ab8e`
 - [ ] Sun Titan — `b2e950fb-cb7e-40a0-a311-5bbdd0477b29`
 
-### Magic Player Rewards 2010 (`P10`)
+### promos · Magic Player Rewards 2010 (`P10`)
 
 - [ ] Bituminous Blast — `d291d8f7-bb67-470c-8794-cd553c91e5cc`
 - [ ] Burst Lightning — `ac2086fe-98ee-4280-9c7c-c5c2d6548a8b`
@@ -19876,7 +19905,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sun Titan — `b2e950fb-cb7e-40a0-a311-5bbdd0477b29`
 - [ ] Volcanic Fallout — `bd6ce147-c991-40ac-b276-65b630fad8b6`
 
-### Worldwake (`WWK`)
+### expansion · Worldwake (`WWK`)
 
 - [ ] Abyssal Persecutor — `7282f643-191b-41be-9f6f-82360c915d6d`
 - [ ] Admonition Angel — `78a7bb30-fc60-410c-b086-862b5521c1aa`
@@ -20010,7 +20039,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wolfbriar Elemental — `2f8872fe-84dc-4cda-a253-e7503a5c96a3`
 - [ ] Wrexial, the Risen Deep — `fd36cc16-d3d9-4c9d-9d28-bbe7e5459d75`
 
-### Worldwake Promos (`PWWK`)
+### promos · Worldwake Promos (`PWWK`)
 
 - [ ] Celestial Colonnade — `876ac6f6-74de-4666-84c6-83d81f054723`
 - [ ] Comet Storm — `9c2b262b-53c0-41a1-8f1a-0c336453d4bf`
@@ -20019,7 +20048,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ruthless Cullblade — `b7748ad6-a8cd-45e7-a4d6-4ee747722657`
 - [ ] Terastodon — `17975a20-2c13-4325-be1e-0bcda5063a2d`
 
-### Duel Decks: Phyrexia vs. the Coalition (`DDE`)
+### duel-decks · Duel Decks: Phyrexia vs. the Coalition (`DDE`)
 
 - [ ] Allied Strategies — `a5ce2ccd-8c78-4749-8854-cb5fa5f4738e`
 - [ ] Armadillo Cloak — `15397a59-70a8-441f-abf7-230405a1602b`
@@ -20074,7 +20103,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Whispersilk Cloak — `9ad4f730-a18e-4a7c-a468-a926c718c741`
 - [ ] Yavimaya Elder — `7fd4c452-07f2-492c-9c78-d1c6362d9eec`
 
-### Rise of the Eldrazi (`ROE`)
+### expansion · Rise of the Eldrazi (`ROE`)
 
 - [ ] Akoum Boulderfoot — `c16367eb-1c0a-4197-8e2f-2d74e4381024`
 - [ ] All Is Dust — `14693689-d087-43b6-9c3f-63ab0648fc20`
@@ -20274,14 +20303,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zof Shade — `8e4b8fe8-882c-4d0f-8fec-0256c62a0df0`
 - [ ] Zulaport Enforcer — `0ab5fde8-e7db-4265-81c6-2a6488ba56c4`
 
-### Rise of the Eldrazi Promos (`PROE`)
+### promos · Rise of the Eldrazi Promos (`PROE`)
 
 - [ ] Emrakul, the Aeons Torn — `900ca697-ad38-4b2b-bc74-2ff7eb6ea951`
 - [ ] Guul Draz Assassin — `c6fb6971-112b-4c82-a0a3-4acdde970b30`
 - [ ] Lord of Shatterskull Pass — `d369a02b-c282-454a-9f89-480f4f5d838c`
 - [ ] Pestilence Demon — `2572add6-c0b1-44bd-8713-1e94e3fe69d6`
 
-### Duels of the Planeswalkers (`DPA`)
+### boxed-products · Duels of the Planeswalkers (`DPA`)
 
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
@@ -20349,7 +20378,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vigor — `70787d8b-0a40-43ea-837a-9617dc13e7e5`
 - [ ] Wurm's Tooth — `69476326-fda5-48c8-a506-e71eb7c81c2f`
 
-### Archenemy (`ARC`)
+### archenemy · Archenemy (`ARC`)
 
 - [ ] Architects of Will — `79d290ea-c095-4135-9711-f3ce089dae43`
 - [ ] Armadillo Cloak — `15397a59-70a8-441f-abf7-230405a1602b`
@@ -20456,7 +20485,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombie Infestation — `bdce1af0-3643-4e77-88f9-320206a191d4`
 - [ ] Zombify — `bb95db4d-5017-4121-bf79-d68476602d8c`
 
-### Magic 2011 (`M11`)
+### core · Magic 2011 (`M11`)
 
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
 - [ ] Air Servant — `49638d96-e83e-4aab-bafb-d6183a6e3ff6`
@@ -20630,7 +20659,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wild Evocation — `9cf1af53-ab9f-4cce-bdb5-2c13b805523d`
 - [ ] Wurm's Tooth — `69476326-fda5-48c8-a506-e71eb7c81c2f`
 
-### From the Vault: Relics (`V10`)
+### from-the-vault · From the Vault: Relics (`V10`)
 
 - [ ] Aether Vial — `fc148e1e-dff0-448e-9f16-625341754356`
 - [ ] Black Vise — `de7839fb-7040-48ab-a6d4-d1952972943d`
@@ -20647,7 +20676,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sword of Body and Mind — `fac42229-4f5f-4d04-85dd-5031d4e435aa`
 - [ ] Zuran Orb — `08cb8a30-9cb4-4517-bee5-8848aa60d1a2`
 
-### Duel Decks: Elspeth vs. Tezzeret (`DDF`)
+### duel-decks · Duel Decks: Elspeth vs. Tezzeret (`DDF`)
 
 - [ ] Abolish — `d6d7faa8-ecc9-408b-9c46-a0f62c74f567`
 - [ ] Angel of Salvation — `27b945ad-92a9-4615-87ec-790682e8c3e7`
@@ -20708,13 +20737,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Trip Noose — `456f2991-ab64-41bc-9bd1-a1b1e7993ed6`
 - [ ] Triskelion — `74f67dcf-5afb-45aa-8d4b-3cdb23f6f2a1`
 
-### Scars of Mirrodin Promos (`PSOM`)
+### promos · Scars of Mirrodin Promos (`PSOM`)
 
 - [ ] Memoricide — `deeb942b-cf50-43f7-90a9-bdce4e42123a`
 - [ ] Steel Hellkite — `6e64f1e0-ddd6-4ee7-8797-086e234b02e8`
 - [ ] Sunblast Angel — `8b34d1df-4024-497d-bd28-a7caa8c3fa24`
 
-### Scars of Mirrodin (`SOM`)
+### expansion · Scars of Mirrodin (`SOM`)
 
 - [ ] Abuna Acolyte — `cf082161-47ff-46b9-926d-3fa5e5727861`
 - [ ] Accorder's Shield — `dd70d439-bd60-43d1-ac26-13b744cc4a37`
@@ -20912,7 +20941,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wing Puncture — `5de32ec7-3085-4b6b-a52e-5a1b3fdf07d3`
 - [ ] Withstand Death — `c462adf3-4ade-4b90-bdec-7247b080471f`
 
-### Magic Online Theme Decks (`TD0`)
+### deck-products · Magic Online Theme Decks (`TD0`)
 
 - [ ] Abyssal Gatekeeper — `4954181c-cb46-4cac-adc3-2c8b7693a211`
 - [ ] Aether Vial — `fc148e1e-dff0-448e-9f16-625341754356`
@@ -21045,7 +21074,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Elder — `7fd4c452-07f2-492c-9c78-d1c6362d9eec`
 - [ ] Yavimaya Enchantress — `495fc654-7986-4d76-9d5c-bc1484e98de2`
 
-### Premium Deck Series: Fire and Lightning (`PD2`)
+### premium-decks · Premium Deck Series: Fire and Lightning (`PD2`)
 
 - [ ] Ball Lightning — `7485cf25-eb41-4397-be13-7f0b8c10c70a`
 - [ ] Barbarian Ring — `eeb9377b-72c1-4214-9a66-0f55577c17d1`
@@ -21075,13 +21104,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sudden Impact — `2bf65e7d-6d31-4ad6-93cd-623612d3175d`
 - [ ] Thunderbolt — `6ffae2fa-511a-45bf-93c4-5d53c85324f5`
 
-### Duels of the Planeswalkers 2012 Promos (`PDP12`)
+### promos · Duels of the Planeswalkers 2012 Promos (`PDP12`)
 
 - [ ] Frost Titan — `4c5a2443-a038-44d3-83a4-5e9a6db7b1a7`
 - [ ] Grave Titan — `f3abd4d1-a975-4e85-8684-aa0fce029670`
 - [ ] Inferno Titan — `0ce47c8b-1e1f-463f-94f0-35ca00be89e6`
 
-### Friday Night Magic 2011 (`F11`)
+### promos · Friday Night Magic 2011 (`F11`)
 
 - [ ] Artisan of Kozilek — `19409704-09c4-4a4b-a5a7-f95120b425db`
 - [ ] Contagion Clasp — `43f2d81e-aa01-4fa9-9046-6a27a05dbd2d`
@@ -21090,7 +21119,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Spellstutter Sprite — `32e60fb4-e841-4f82-9c83-5e63766e8e6f`
 - [ ] Squadron Hawk — `00ab9841-934f-4a66-a98d-68d01661b1c9`
 
-### Judge Gift Cards 2011 (`G11`)
+### promos · Judge Gift Cards 2011 (`G11`)
 
 - [ ] Bitterblossom — `fb868840-09fa-49b1-85cb-b08ad065e972`
 - [ ] Dark Confidant — `2068185c-1b50-47d0-aa3f-bf505d199428`
@@ -21100,7 +21129,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sword of Fire and Ice — `2ccdc60a-49a9-44b9-a7af-0ebf18b26785`
 - [ ] Vendilion Clique — `244d4807-0802-41bc-9460-55ac38a28a72`
 
-### Magic Player Rewards 2011 (`P11`)
+### promos · Magic Player Rewards 2011 (`P11`)
 
 - [ ] Brave the Elements — `9d73a51a-1c8e-40cd-8124-aeff406a0884`
 - [ ] Doom Blade — `59e7f2ae-4535-4191-98be-3e65b6b2befa`
@@ -21109,7 +21138,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Searing Blaze — `74b08a70-b0bb-4340-98a0-b1d5b7c9d2cc`
 - [ ] Treasure Hunt — `05079479-86a6-4041-a395-83d325b6ddb7`
 
-### Salvat 2011 (`PS11`)
+### boxed-products · Salvat 2011 (`PS11`)
 
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
 - [ ] Acolyte of Xathrid — `62dca41b-58b0-45eb-ada7-568e80a2abec`
@@ -21251,7 +21280,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wurm's Tooth — `69476326-fda5-48c8-a506-e71eb7c81c2f`
 - [ ] Zombify — `bb95db4d-5017-4121-bf79-d68476602d8c`
 
-### Masters Edition IV (`ME4`)
+### masters-remastered · Masters Edition IV (`ME4`)
 
 - [ ] Acid Rain — `6ae3c3a2-bd17-4fea-ae27-9d2d1eaf8cc0`
 - [ ] Aesthir Glider — `99dcde0b-4f4d-4d7a-89aa-8a89c256e38f`
@@ -21470,14 +21499,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xenic Poltergeist — `fb8f80cc-6214-4ab9-a9a9-1873ab9feb0c`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Mirrodin Besieged Promos (`PMBS`)
+### promos · Mirrodin Besieged Promos (`PMBS`)
 
 - [ ] Glissa, the Traitor — `cafacba9-195c-44ea-ba80-3e489274759c`
 - [ ] Hero of Bladehold — `454a8902-8120-4373-96ee-bbf352b04e8d`
 - [ ] Mirran Crusader — `fe69d9bd-2a60-4b33-a0d8-1ca18c2b6705`
 - [ ] Thopter Assembly — `007c110d-4364-41e5-a8bc-6ac05ecbbd00`
 
-### Mirrodin Besieged (`MBS`)
+### expansion · Mirrodin Besieged (`MBS`)
 
 - [ ] Accorder Paladin — `6891c8b7-7112-40dc-8b94-b84ad1885e5e`
 - [ ] Ardent Recruit — `9275108c-7eaf-4edd-aa6d-e5263d5ac7fd`
@@ -21612,7 +21641,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vivisection — `46f78c42-85d1-4cd4-9fc3-d5fdec04a4c8`
 - [ ] White Sun's Zenith — `ea4a9299-c2b3-4092-89dd-28142b203d60`
 
-### Duel Decks: Knights vs. Dragons (`DDG`)
+### duel-decks · Duel Decks: Knights vs. Dragons (`DDG`)
 
 - [ ] Alaborn Cavalier — `f8273146-f2e5-40ec-ba96-c0a4192caec8`
 - [ ] Armillary Sphere — `3963140c-da67-43e6-9514-fe9dc0a43c4d`
@@ -21671,14 +21700,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] White Knight — `ddb021df-ae4a-4ac1-8353-d0b375761714`
 - [ ] Zhalfirin Commander — `1053a778-da6a-4b8e-81fb-537a355d4bfe`
 
-### New Phyrexia Promos (`PNPH`)
+### promos · New Phyrexia Promos (`PNPH`)
 
 - [ ] Phyrexian Metamorph — `340bbe8b-e987-4c3e-ab4e-9dee63e57d4f`
 - [ ] Pristine Talisman — `1b3d7fce-e9fe-4176-9d9a-472415826cdd`
 - [ ] Sheoldred, Whispering One — `9218b56d-aaec-482f-99e9-d95d227bfe25`
 - [ ] Surgical Extraction — `3bfa088c-9a47-4123-aee5-4de44e355bef`
 
-### New Phyrexia (`NPH`)
+### expansion · New Phyrexia (`NPH`)
 
 - [ ] Act of Aggression — `9d7624ea-ffff-470b-928b-bbac66ddbd1c`
 - [ ] Apostle's Blessing — `ea393815-0202-4edc-aa1e-6885fe9b20ab`
@@ -21830,7 +21859,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wing Splicer — `7fbf6afc-8a16-447b-bdef-b7d0b640f76c`
 - [ ] Xenograft — `76642e7a-3c8f-45b8-9cd7-dac8086bea87`
 
-### Duel Decks: Mirrodin Pure vs. New Phyrexia (`TD2`)
+### duel-decks · Duel Decks: Mirrodin Pure vs. New Phyrexia (`TD2`)
 
 - [ ] Ardent Recruit — `9275108c-7eaf-4edd-aa6d-e5263d5ac7fd`
 - [ ] Argent Sphinx — `7220c391-8d0e-4f43-94fc-ff77ffa2ee8d`
@@ -21892,7 +21921,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Viridian Corrupter — `8ba5e97b-3eac-4291-8674-4b402a5554bc`
 - [ ] White Sun's Zenith — `ea4a9299-c2b3-4092-89dd-28142b203d60`
 
-### Commander 2011 (`CMD`)
+### commander · Commander 2011 (`CMD`)
 
 - [ ] Acorn Catapult — `56d13879-2dc5-4d84-918b-4bd1a5fc2a33`
 - [ ] Aethersnipe — `3e0be003-4f42-4917-b85d-46baf2afd734`
@@ -22130,13 +22159,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zedruu the Greathearted — `514179c0-a50b-4565-8e71-9dad256edd85`
 - [ ] Zoetic Cavern — `3763de30-28e1-4689-a71c-07d2fea3a466`
 
-### Magic 2012 Promos (`PM12`)
+### promos · Magic 2012 Promos (`PM12`)
 
 - [ ] Bloodlord of Vaasgoth — `d8560ee9-8cbb-440b-a132-e102a1eb3e89`
 - [ ] Chandra's Phoenix — `65ddd04c-7207-4f6c-ae1b-c5e02a520a51`
 - [ ] Garruk's Horde — `b9da511e-a57f-43c2-aa97-902f3b4c55fb`
 
-### Magic 2012 (`M12`)
+### core · Magic 2012 (`M12`)
 
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
 - [ ] Adaptive Automaton — `53c730c6-2f8c-4af8-b400-b9d573a71e60`
@@ -22311,7 +22340,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wurm's Tooth — `69476326-fda5-48c8-a506-e71eb7c81c2f`
 - [ ] Zombie Infestation — `bdce1af0-3643-4e77-88f9-320206a191d4`
 
-### From the Vault: Legends (`V11`)
+### from-the-vault · From the Vault: Legends (`V11`)
 
 - [ ] Cao Cao, Lord of Wei — `81a98b14-e827-4241-a401-64890def51af`
 - [ ] Doran, the Siege Tower — `a46d96d9-8e59-4777-8208-7730b9e33240`
@@ -22328,7 +22357,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ulamog, the Infinite Gyre — `b817bc56-9b4d-4c50-bafa-3c652b99578f`
 - [ ] Visara the Dreadful — `79b999bc-2d4b-41e1-b64e-f0c080a9a2c5`
 
-### Duel Decks: Ajani vs. Nicol Bolas (`DDH`)
+### duel-decks · Duel Decks: Ajani vs. Nicol Bolas (`DDH`)
 
 - [ ] Ageless Entity — `2a93236d-f182-4826-8112-4048bb3cbaf9`
 - [ ] Agonizing Demise — `41681a1f-0777-4b96-8c7e-d6a5d1b1c8fc`
@@ -22389,14 +22418,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vapor Snag — `a1408bae-ed5f-4837-a1a7-438dc30a2786`
 - [ ] Wild Nacatl — `35d3d96a-d303-4bf5-b972-f311331ec07a`
 
-### Innistrad Promos (`PISD`)
+### promos · Innistrad Promos (`PISD`)
 
 - [ ] Devil's Play — `ee9f0b29-8a54-4cb8-8e2c-7bd67c2184ba`
 - [ ] Elite Inquisitor — `4f7e865b-6ab0-4361-b864-63c38cdb2fed`
 - [ ] Ludevic's Test Subject // Ludevic's Abomination — `53175678-1f5c-4889-9086-66381b3ddc3a`
 - [ ] Mayor of Avabruck // Howlpack Alpha — `6e638587-30b3-4c4b-b463-fb415ea048f7`
 
-### Innistrad (`ISD`)
+### expansion · Innistrad (`ISD`)
 
 - [ ] Abattoir Ghoul — `2b211adb-de44-4468-b65d-907a09aa7e9d`
 - [ ] Altar's Reap — `6a125750-2b8c-4f9d-8173-ac8d14c91ddb`
@@ -22617,13 +22646,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woodland Sleuth — `8bca5627-27c2-4d10-85c5-2451daa94c5d`
 - [ ] Wreath of Geists — `b11c31ac-9a52-4faa-b03e-5a78129fd43f`
 
-### Wizards Play Network 2011 (`PW11`)
+### promos · Wizards Play Network 2011 (`PW11`)
 
 - [ ] Bloodcrazed Neonate — `7319eec8-48ba-4238-bce1-450abcae73a6`
 - [ ] Boneyard Wurm — `6e5f908a-f4f1-4718-ac39-34176e401756`
 - [ ] Curse of the Bloody Tome — `5480f855-80b7-45c7-94a9-071c7b5d5ccf`
 
-### Premium Deck Series: Graveborn (`PD3`)
+### premium-decks · Premium Deck Series: Graveborn (`PD3`)
 
 - [ ] Animate Dead — `c0d8fef4-65f4-4769-982d-b397d2b7e977`
 - [ ] Avatar of Woe — `2da5aa33-3794-4f83-936c-9d8640833d86`
@@ -22647,13 +22676,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Twisted Abomination — `139af10d-a3e5-4ade-b876-87324e6c8017`
 - [ ] Zombie Infestation — `bdce1af0-3643-4e77-88f9-320206a191d4`
 
-### Duels of the Planeswalkers 2013 Promos (`PDP13`)
+### promos · Duels of the Planeswalkers 2013 Promos (`PDP13`)
 
 - [ ] Primordial Hydra — `1c36ed3a-c806-47e5-83f9-e44999c67fe5`
 - [ ] Serra Avatar — `c363725f-15cf-4955-aaf1-536b1f8daaed`
 - [ ] Vampire Nocturnus — `2109c49e-dc81-4a10-8265-3cf8c90db523`
 
-### Friday Night Magic 2012 (`F12`)
+### promos · Friday Night Magic 2012 (`F12`)
 
 - [ ] Ancient Grudge — `306593b0-6ea8-476f-a3f2-e17876c1bab4`
 - [ ] Despise — `b13b40f1-1b1f-40e8-989b-ef24dc05007a`
@@ -22664,7 +22693,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Pillar of Flame — `468cfc88-a493-44dc-9d0a-63d9cc89c114`
 - [ ] Tectonic Edge — `4927150d-7ff6-4232-b20e-d2ea245ac710`
 
-### Judge Gift Cards 2012 (`J12`)
+### promos · Judge Gift Cards 2012 (`J12`)
 
 - [ ] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
 - [ ] Flusterstorm — `86bf58f2-7f25-4e10-b797-25e0e8e67769`
@@ -22675,13 +22704,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sword of Light and Shadow — `01c8a554-45a6-46ca-b40a-af0fd4529e40`
 - [ ] Xiahou Dun, the One-Eyed — `9602f262-62cb-4c1e-91b6-d94780e571cf`
 
-### Wizards Play Network 2012 (`PW12`)
+### promos · Wizards Play Network 2012 (`PW12`)
 
 - [ ] Curse of Thirst — `ffe3ad06-50d8-4ca3-a1f7-aa31dc2c486e`
 - [ ] Gather the Townsfolk — `ff45677d-977e-4ef5-859c-52393ed71a6c`
 - [ ] Nearheath Stalker — `c804157e-2911-4973-83bf-f5befc09065d`
 
-### Dark Ascension Promos (`PDKA`)
+### promos · Dark Ascension Promos (`PDKA`)
 
 - [ ] Gravecrawler — `09ff28b1-b6c9-48e6-b12e-2f0e644f709f`
 - [ ] Mondronen Shaman // Tovolar's Magehunter — `f94cb722-7e46-4569-b474-9654ecf7ec14`
@@ -22689,7 +22718,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Strangleroot Geist — `af12758f-4a7b-4156-8942-de4716aa0623`
 - [ ] Zombie Apocalypse — `8241277d-654f-4985-9d49-a22c1e59eec2`
 
-### IDW Comics Inserts (`PIDW`)
+### promos · IDW Comics Inserts (`PIDW`)
 
 - [ ] Acquire — `f1c3d749-5cdb-4af2-967f-6413d6cb04fe`
 - [ ] Arrest — `81728b98-8cf9-4734-a318-69184bb4d15c`
@@ -22708,7 +22737,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Voidmage Husher — `cdb1f944-a5ac-4683-a4eb-eebb82feea8d`
 - [ ] Wash Out — `54748cb1-d92a-4212-ad76-417ee79b5ef1`
 
-### Dark Ascension (`DKA`)
+### expansion · Dark Ascension (`DKA`)
 
 - [ ] Afflicted Deserter // Werewolf Ransacker — `52adc761-1a0a-43d1-a706-41a92bb7880c`
 - [ ] Alpha Brawl — `cfc023e0-9e9d-48ac-bfb5-74bfd5977dee`
@@ -22856,7 +22885,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Young Wolf — `8b492764-10b6-4506-be11-22daa9220a91`
 - [ ] Zombie Apocalypse — `8241277d-654f-4985-9d49-a22c1e59eec2`
 
-### Duel Decks: Venser vs. Koth (`DDI`)
+### duel-decks · Duel Decks: Venser vs. Koth (`DDI`)
 
 - [ ] Aether Membrane — `5efea57b-937d-46ac-999e-490316e0f820`
 - [ ] Angelic Shield — `05b020fd-21be-495d-ae45-7de3b1224e6d`
@@ -22912,7 +22941,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Whitemane Lion — `e8d6084b-9b72-438e-a30a-851b888f3e4d`
 - [ ] Windreaver — `d6b6c27e-8028-49b1-90c6-ae0907159f85`
 
-### Avacyn Restored Promos (`PAVR`)
+### promos · Avacyn Restored Promos (`PAVR`)
 
 - [ ] Angel of Glory's Rise — `c6a606af-ea08-4cd9-bfd9-60d76e232e85`
 - [ ] Killing Wave — `69d6b906-5461-4eba-8667-dbb8c0ce3fcb`
@@ -22921,7 +22950,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Restoration Angel — `dfbd3afc-9905-4cff-a4f4-df08a4d0a7fa`
 - [ ] Silverblade Paladin — `ded0316f-5eed-4a80-91ad-ca236fd16f01`
 
-### Avacyn Restored (`AVR`)
+### expansion · Avacyn Restored (`AVR`)
 
 - [ ] Abundant Growth — `947a2665-2f4d-4193-8768-118f85334549`
 - [ ] Aggravate — `192aa7b2-a819-4ffd-bfbf-a270271898e6`
@@ -23132,7 +23161,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zealous Conscripts — `1dae6f39-2cbd-485c-b190-017a26401fd4`
 - [ ] Zealous Strike — `d820ddf4-315d-470a-8d66-663a76a240c6`
 
-### Planechase 2012 (`PC2`)
+### planechase · Planechase 2012 (`PC2`)
 
 - [ ] Arc Trail — `f1c26b25-371e-4fbf-a43d-7fd59a364d3a`
 - [ ] Armillary Sphere — `3963140c-da67-43e6-9514-fe9dc0a43c4d`
@@ -23242,7 +23271,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Whirlpool Warrior — `b7a1c54b-bb2f-4423-865a-ad114cd18c76`
 - [ ] Whispersilk Cloak — `9ad4f730-a18e-4a7c-a468-a926c718c741`
 
-### Magic 2013 Promos (`PM13`)
+### promos · Magic 2013 Promos (`PM13`)
 
 - [ ] Cathedral of War — `5ff647e4-730a-498f-8f2c-5bd64d5a9780`
 - [ ] Hamletback Goliath — `ae45b04e-c52d-45e1-a752-0b76f64d7c8d`
@@ -23250,7 +23279,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Mwonvuli Beast Tracker — `b6265654-84c3-469b-9afa-f752fd64abe0`
 - [ ] Xathrid Gorgon — `1e65fac0-23fc-4a32-bd36-4e3f7ebfe33d`
 
-### Magic 2013 (`M13`)
+### core · Magic 2013 (`M13`)
 
 - [ ] Ajani, Caller of the Pride — `1d5ff280-7f4d-4801-aefd-9b6e6b1f2818`
 - [ ] Akroma's Memorial — `967e8b3f-8266-4d9a-a38b-d0e10184e1e4`
@@ -23428,7 +23457,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xathrid Gorgon — `1e65fac0-23fc-4a32-bd36-4e3f7ebfe33d`
 - [ ] Yeva, Nature's Herald — `2d513c3e-bd27-479e-af32-7f66d96d0de0`
 
-### From the Vault: Realms (`V12`)
+### from-the-vault · From the Vault: Realms (`V12`)
 
 - [ ] Ancient Tomb — `23467047-6dba-4498-b783-1ebc4f74b8c2`
 - [ ] Boseiju, Who Shelters All — `36937483-30cb-449a-8028-75017a124922`
@@ -23444,7 +23473,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vesuva — `4001b868-ada1-43f4-92e2-27ab0e80c913`
 - [ ] Windbrisk Heights — `3589bcfc-42b0-414a-adce-bc690dc631c8`
 
-### Duel Decks: Izzet vs. Golgari (`DDJ`)
+### duel-decks · Duel Decks: Izzet vs. Golgari (`DDJ`)
 
 - [ ] Boneyard Wurm — `6e5f908a-f4f1-4718-ac39-34176e401756`
 - [ ] Brain Weevil — `dfa8de88-9222-435f-a56e-c32e91fd5289`
@@ -23513,7 +23542,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wee Dragonauts — `e9e56b1d-5ad2-4807-8c4c-1a1a6a25ecbf`
 - [ ] Yoke of the Damned — `af08dae2-ba32-4a34-b8c1-b49d45ce0b6b`
 
-### Return to Ravnica (`RTR`)
+### expansion · Return to Ravnica (`RTR`)
 
 - [ ] Abrupt Decay — `1c747fe2-289e-492a-a846-aa77707e2dc3`
 - [ ] Aerial Predation — `6bac1495-16cf-4e1e-9126-482f85322c78`
@@ -23716,7 +23745,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Worldspine Wurm — `254f87cc-e0c2-484d-b5e8-1ea8c366990c`
 - [ ] Zanikev Locust — `e29012bb-4a1d-409e-8db9-50920fdf68a2`
 
-### Return to Ravnica Promos (`PRTR`)
+### promos · Return to Ravnica Promos (`PRTR`)
 
 - [ ] Archon of the Triumvirate — `27ecb717-6251-4066-b57e-7070e9e44bbf`
 - [ ] Carnival Hellsteed — `34ae5b49-f8bf-4aa8-bb62-92d6d3118b26`
@@ -23729,7 +23758,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Hypersonic Dragon — `e1bf20b0-2bd7-4a0f-9a02-41e43bd44641`
 - [ ] Supreme Verdict — `0230de18-8d15-4cfa-9d42-7ccddd9f9570`
 
-### Commander's Arsenal (`CM1`)
+### commander · Commander's Arsenal (`CM1`)
 
 - [ ] Chaos Warp — `07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8`
 - [ ] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
@@ -23749,13 +23778,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] The Mimeoplasm — `55123455-d435-46d4-b0cd-0c1614343be2`
 - [ ] Vela the Night-Clad — `185e34f0-60ae-4b07-94ac-96cef11b1604`
 
-### Duels of the Planeswalkers 2014 Promos (`PDP14`)
+### promos · Duels of the Planeswalkers 2014 Promos (`PDP14`)
 
 - [ ] Bonescythe Sliver — `1d95ad32-768f-40a1-a461-e0562326b2b7`
 - [ ] Ogre Battledriver — `c834c4b5-c122-4c63-81c7-884ca4c0dc3b`
 - [ ] Scavenging Ooze — `1ff25f67-36a7-4cfa-a2b1-2135b5b6fb67`
 
-### Friday Night Magic 2013 (`F13`)
+### promos · Friday Night Magic 2013 (`F13`)
 
 - [ ] Dimir Charm — `4d99e786-585d-4026-9253-19741fb357de`
 - [ ] Experiment One — `8520ee67-439b-4f15-838b-420bacbb8b13`
@@ -23767,7 +23796,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Reliquary Tower — `c23e5b80-08d2-4e24-9908-fe2aa4f30f6f`
 - [ ] Sin Collector — `6bef2904-1ebe-4e7e-879a-79f4968174fb`
 
-### Judge Gift Cards 2013 (`J13`)
+### promos · Judge Gift Cards 2013 (`J13`)
 
 - [ ] Bribery — `6d194882-ca37-49bb-ac9f-a751c53850a8`
 - [ ] Crucible of Worlds — `33c722cf-b4bf-431f-aefd-ee96241a7fbf`
@@ -23778,7 +23807,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Swords to Plowshares — `b1544f21-7e98-461b-aed5-e748b0168c52`
 - [ ] Vindicate — `63c1ac21-e3d8-40c2-8c09-3f31c52992ef`
 
-### Gatecrash Promos (`PGTC`)
+### promos · Gatecrash Promos (`PGTC`)
 
 - [ ] Angelic Skirmisher — `29e07d57-0f05-441c-844f-cf1d71102b2d`
 - [ ] Consuming Aberration — `9b55fb72-237d-4935-b645-8ebc6eb4140e`
@@ -23791,7 +23820,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Treasury Thrull — `34161ec4-5d99-45e6-b43c-c8d28958660a`
 - [ ] Zameck Guildmage — `98250fad-7fd0-431e-a87e-551185d26ec1`
 
-### Gatecrash (`GTC`)
+### expansion · Gatecrash (`GTC`)
 
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
 - [ ] Adaptive Snapjaw — `0a56e2ad-684d-45a7-9145-479d1505bba2`
@@ -24021,7 +24050,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zameck Guildmage — `98250fad-7fd0-431e-a87e-551185d26ec1`
 - [ ] Zhur-Taa Swine — `dcc31cbf-f75d-4584-a97b-aa9d19d7b142`
 
-### Duel Decks: Sorin vs. Tibalt (`DDK`)
+### duel-decks · Duel Decks: Sorin vs. Tibalt (`DDK`)
 
 - [ ] Absorb Vis — `04ea7e88-7ea5-4b4c-9a7c-2a6ac0bc0682`
 - [ ] Ancient Craving — `78725353-9274-420a-b722-add0f43c444e`
@@ -24078,21 +24107,21 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vithian Stinger — `1c329131-bef2-41c6-823a-136c110ff0ad`
 - [ ] Zealous Persecution — `ccf8d919-1399-4bef-94ac-04c67f122828`
 
-### World Magic Cup Qualifiers (`WMC`)
+### promos · World Magic Cup Qualifiers (`WMC`)
 
 - [ ] Abrupt Decay — `1c747fe2-289e-492a-a846-aa77707e2dc3`
 - [ ] Inkmoth Nexus — `675281ff-b81f-4e5e-9f85-9f8cd202b50b`
 - [ ] Thalia, Guardian of Thraben — `9b7f1d05-707c-4ed3-9f0e-8ced1232c2ee`
 - [ ] Vengevine — `7ed52301-81ea-4e7f-b985-cfab0593cae4`
 
-### Dragon's Maze Promos (`PDGM`)
+### promos · Dragon's Maze Promos (`PDGM`)
 
 - [ ] Breaking // Entering — `043370fd-9cfe-47ce-8019-e915cee1ae95`
 - [ ] Maze's End — `49479778-c4c0-43ba-a7b7-45f00d067462`
 - [ ] Melek, Izzet Paragon — `095d9719-0db6-43de-8e4f-a0035a4c65ed`
 - [ ] Render Silent — `3966bd03-a98e-43b6-a0c0-10d4d81c173c`
 
-### Dragon's Maze (`DGM`)
+### expansion · Dragon's Maze (`DGM`)
 
 - [ ] Aetherling — `b980bf11-9e12-4ee9-83c1-45706d9ae344`
 - [ ] Alive // Well — `57ad3c3a-6ac7-4a35-bc07-00f6ea0988c5`
@@ -24220,7 +24249,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zhur-Taa Ancient — `6543b60c-12b0-4e69-9074-6a2b468c5234`
 - [ ] Zhur-Taa Druid — `5979310e-38c8-489f-ab9e-2723af98a3a5`
 
-### Modern Masters (`MMA`)
+### masters-remastered · Modern Masters (`MMA`)
 
 - [ ] Absorb Vis — `04ea7e88-7ea5-4b4c-9a7c-2a6ac0bc0682`
 - [ ] Academy Ruins — `a3da7d5b-2c2b-45fe-b9c5-413b8c8fc0a2`
@@ -24436,7 +24465,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Worm Harvest — `b2223f1c-e607-43e0-86dd-5e3225330066`
 - [ ] Yosei, the Morning Star — `5c2d0ead-8bfc-4ca7-9b38-2fc07af1c1d5`
 
-### Magic 2014 Promos (`PM14`)
+### promos · Magic 2014 Promos (`PM14`)
 
 - [ ] Colossal Whale — `cd04b735-125f-47b5-a68e-ab2a008100b9`
 - [ ] Goblin Diplomats — `84b55e6b-5ce3-49af-95fe-46c029e0260c`
@@ -24444,7 +24473,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ratchet Bomb — `255d752a-8251-4e4c-99d6-4a1648de1474`
 - [ ] Xathrid Necromancer — `a6b38874-c8be-47f7-a656-ba49ec9e967f`
 
-### San Diego Comic-Con 2013 (`PSDC`)
+### promos · San Diego Comic-Con 2013 (`PSDC`)
 
 - [ ] Ajani, Caller of the Pride — `1d5ff280-7f4d-4801-aefd-9b6e6b1f2818`
 - [ ] Chandra, Pyromaster — `68e12748-9a7b-4e99-a6de-be097a269342`
@@ -24452,7 +24481,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Jace, Memory Adept — `4a4dc133-541f-456b-a95f-3d707e1c95e9`
 - [ ] Liliana of the Dark Realms — `92301066-8904-41bc-84bd-4aa286cbab9c`
 
-### Magic 2014 (`M14`)
+### core · Magic 2014 (`M14`)
 
 - [ ] Academy Raider — `75131d75-0703-44d0-b503-35190be8e66f`
 - [ ] Accorder's Shield — `dd70d439-bd60-43d1-ac26-13b744cc4a37`
@@ -24636,7 +24665,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Young Pyromancer — `5fac139a-07d3-4e6c-98e3-d98b199f7a6f`
 - [ ] Zephyr Charge — `576128ba-28aa-4ef9-9e72-8ca13f42c9b4`
 
-### From the Vault: Twenty (`V13`)
+### from-the-vault · From the Vault: Twenty (`V13`)
 
 - [ ] Akroma's Vengeance — `ae19dce5-c9fc-4fbe-99b5-dc6a12124a68`
 - [ ] Chainer's Edict — `7975cb9d-d37e-44f8-9614-86d2ad453c35`
@@ -24655,7 +24684,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tangle Wire — `c4ea0931-43e0-4214-9e0b-213eee3a7e69`
 - [ ] Venser, Shaper Savant — `0f41cefc-d6ff-4db7-ba35-502b7e081de1`
 
-### Duel Decks: Heroes vs. Monsters (`DDL`)
+### duel-decks · Duel Decks: Heroes vs. Monsters (`DDL`)
 
 - [ ] Anax and Cymede — `9c4219db-1a7a-4d61-bb8b-7998cfed1faf`
 - [ ] Armory Guard — `96c67950-df59-430c-94fd-234086c6c8f2`
@@ -24714,7 +24743,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winds of Rath — `a6fd90dc-0ec3-4dce-a77a-4d04f5e254bf`
 - [ ] Zhur-Taa Druid — `5979310e-38c8-489f-ab9e-2723af98a3a5`
 
-### Theros Promos (`PTHS`)
+### promos · Theros Promos (`PTHS`)
 
 - [ ] Abhorrent Overlord — `13f63240-a6bb-4333-a3dd-818725c6fb73`
 - [ ] Anthousa, Setessan Hero — `141f952b-9e9f-48c5-9c88-b1504dfa73bc`
@@ -24726,7 +24755,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Phalanx Leader — `857db7e0-254a-4920-a71d-9bab6555342f`
 - [ ] Shipbreaker Kraken — `dda7a088-61e3-4c47-b9e0-529fc047f77e`
 
-### Theros (`THS`)
+### expansion · Theros (`THS`)
 
 - [ ] Abhorrent Overlord — `13f63240-a6bb-4333-a3dd-818725c6fb73`
 - [ ] Agent of Horizons — `668a6a9d-80fc-437b-99b8-6807e92eabca`
@@ -24933,7 +24962,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Witches' Eye — `c8d479b8-b96c-4382-97d3-68d85cf371ba`
 - [ ] Xenagos, the Reveler — `942a318e-90eb-4f10-bb30-2e10f5cc922a`
 
-### Commander 2013 (`C13`)
+### commander · Commander 2013 (`C13`)
 
 - [ ] Act of Authority — `c12b8e31-5702-4d3c-80c9-56c87e50679d`
 - [ ] Aerie Mystics — `12134f7d-433a-416a-b668-c1a21984c94b`
@@ -25185,7 +25214,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Witch Hunt — `e86bd38f-7804-449d-af29-21e96a56ab30`
 - [ ] Wonder — `232284f7-c623-4895-9ab9-8b1a39926830`
 
-### Friday Night Magic 2014 (`F14`)
+### promos · Friday Night Magic 2014 (`F14`)
 
 - [ ] Banisher Priest — `9f560b83-32d4-4bb4-a956-8f5db18599db`
 - [ ] Banishing Light — `f28b21a6-f7ce-437a-8c5b-0423cb55cefb`
@@ -25199,7 +25228,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tormented Hero — `47fbb4f0-565b-4682-9971-0735210c76e5`
 - [ ] Warleader's Helix — `b1ea88f5-162b-4f08-bec3-be1f06dec392`
 
-### Judge Gift Cards 2014 (`J14`)
+### promos · Judge Gift Cards 2014 (`J14`)
 
 - [ ] Elesh Norn, Grand Cenobite — `958d71ff-c9f7-46f0-96ca-79e7f4d65a16`
 - [ ] Force of Will — `956381ba-6d37-4a8a-846c-bad79222dbee`
@@ -25211,7 +25240,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Riku of Two Reflections — `f697c78d-7e4f-4320-bfc6-2a25e6d7dc94`
 - [ ] Sword of Feast and Famine — `d0901053-6de0-46d0-9ee3-8d40510236c1`
 
-### Born of the Gods Promos (`PBNG`)
+### promos · Born of the Gods Promos (`PBNG`)
 
 - [ ] Arbiter of the Ideal — `a6cefecd-459e-439a-a62c-689c2919b689`
 - [ ] Eater of Hope — `3055381a-fb6b-47a3-8e77-a44768808e27`
@@ -25223,7 +25252,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Silent Sentinel — `26396b80-e5b7-44f5-916c-56a9215a7a49`
 - [ ] Tromokratis — `9aa2f27b-4c00-44c1-8bc4-014350f05b6d`
 
-### Born of the Gods (`BNG`)
+### expansion · Born of the Gods (`BNG`)
 
 - [ ] Acolyte's Reward — `944689b2-f9f7-45c3-952c-54287b9824d5`
 - [ ] Aerie Worshippers — `674c34eb-1080-4811-8f2a-5006e08d98b8`
@@ -25380,7 +25409,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Whims of the Fates — `7d359434-eb1b-478e-a745-10e2c564d89f`
 - [ ] Xenagos, God of Revels — `cb15a8dd-57fe-466f-847e-66476b690a1f`
 
-### Duel Decks: Jace vs. Vraska (`DDM`)
+### duel-decks · Duel Decks: Jace vs. Vraska (`DDM`)
 
 - [ ] Aeon Chronicler — `a1399cb8-f22a-487e-b539-2db47b09a790`
 - [ ] Aether Figment — `15fee0bd-ede2-4f65-a9a1-2da4623679d5`
@@ -25449,7 +25478,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vraska the Unseen — `0d2bbce0-8c27-4b82-ab62-51a0c3cfc9b0`
 - [ ] Wight of Precinct Six — `6397c046-4c59-4f0b-9b44-2a804eb95edf`
 
-### Journey into Nyx Promos (`PJOU`)
+### promos · Journey into Nyx Promos (`PJOU`)
 
 - [ ] Dawnbringer Charioteers — `29263d48-cb28-478b-a99e-5a18dbc924f0`
 - [ ] Dictate of Kruphix — `be74a4c1-d569-4203-b28a-3e2ac6a82990`
@@ -25462,7 +25491,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Spawn of Thraxes — `52289774-d292-4028-91fb-8826fa004dc8`
 - [ ] Squelching Leeches — `662a2158-4176-4b4a-be6a-13f4501d22f9`
 
-### Journey into Nyx (`JOU`)
+### expansion · Journey into Nyx (`JOU`)
 
 - [ ] Aegis of the Gods — `c5bfc1b9-a55d-4608-a6f7-bb62cb8dc3c6`
 - [ ] Aerial Formation — `b0168b7e-a8b8-4ce3-af12-a43f3818b6a1`
@@ -25611,7 +25640,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wildfire Cerberus — `2e6be9ad-d726-4598-92a7-1ba7eda317a5`
 - [ ] Worst Fears — `face0a43-6604-4508-b511-81ab0bef7b18`
 
-### Modern Event Deck 2014 (`MD1`)
+### deck-products · Modern Event Deck 2014 (`MD1`)
 
 - [ ] Burrenton Forge-Tender — `70bb275b-3458-4690-a50f-b231fbf0bccb`
 - [ ] Caves of Koilos — `33de01e9-ce5a-42d4-afcb-343cd54a6d80`
@@ -25634,7 +25663,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Windbrisk Heights — `3589bcfc-42b0-414a-adce-bc690dc631c8`
 - [ ] Zealous Persecution — `ccf8d919-1399-4bef-94ac-04c67f122828`
 
-### Conspiracy (`CNS`)
+### conspiracy · Conspiracy (`CNS`)
 
 - [ ] Academy Elite — `ba6c3c72-c014-45c6-a0b4-59eb9a65303e`
 - [ ] Advantageous Proclamation — `86373537-7424-416a-8d89-cc38f6538458`
@@ -25830,11 +25859,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wrap in Flames — `b46efd59-eda7-4fe6-ace7-67ca8f6c088d`
 - [ ] Wrap in Vigor — `39da2aa8-f4d9-44f6-a446-488beaec821f`
 
-### Conspiracy Promos (`PCNS`)
+### conspiracy · Conspiracy Promos (`PCNS`)
 
 - [ ] Magister of Worth — `0429d146-332f-4fb0-8273-c73679ca6d47`
 
-### Vintage Masters (`VMA`)
+### masters-remastered · Vintage Masters (`VMA`)
 
 - [ ] Academy Elite — `ba6c3c72-c014-45c6-a0b4-59eb9a65303e`
 - [ ] Addle — `3745aea4-4455-4859-9772-bcfd14e4067b`
@@ -26105,7 +26134,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yawgmoth's Will — `322f0459-f394-44f0-977b-55fd0cbe0712`
 - [ ] Zhalfirin Crusader — `9e60c102-412e-4956-a7bb-a2cd737d6692`
 
-### San Diego Comic-Con 2014 (`PS14`)
+### promos · San Diego Comic-Con 2014 (`PS14`)
 
 - [ ] Ajani Steadfast — `90249526-1875-450a-882d-bf6f6bfd37a6`
 - [ ] Chandra, Pyromaster — `68e12748-9a7b-4e99-a6de-be097a269342`
@@ -26114,12 +26143,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Liliana Vess — `a6c05941-2cfb-4dac-a7c0-ab808187eb7c`
 - [ ] Nissa, Worldwaker — `468f9b8e-4423-4131-8611-d34b0aa3d96f`
 
-### Duels of the Planeswalkers 2015 Promos (`PDP15`)
+### promos · Duels of the Planeswalkers 2015 Promos (`PDP15`)
 
 - [ ] Soul of Ravnica — `eb014442-5935-4333-8078-ee4896dce653`
 - [ ] Soul of Zendikar — `87217160-0687-4482-b9a3-91bad8527675`
 
-### Magic 2015 Promos (`PM15`)
+### promos · Magic 2015 Promos (`PM15`)
 
 - [ ] Chasm Skulker — `69facbc7-3859-4716-b627-5199571fb3cf`
 - [ ] Chief Engineer — `02dbb6f8-ef84-4156-87dc-34033e64fdb7`
@@ -26134,7 +26163,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Siege Dragon — `206539a6-0e60-4986-bc57-c2b89e08b9f2`
 - [ ] Soul of New Phyrexia — `add500e1-8eeb-45d7-a10d-2fae2cc69233`
 
-### Magic 2015 (`M15`)
+### core · Magic 2015 (`M15`)
 
 - [ ] Accursed Spirit — `0e20afd2-507b-4878-a78c-f23b51ec071f`
 - [ ] Act on Impulse — `19ad338a-c89f-406d-ad1a-222c22044e1b`
@@ -26354,7 +26383,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yisan, the Wanderer Bard — `7f4b0233-a2b0-41a2-8448-2df1f845148c`
 - [ ] Zof Shade — `8e4b8fe8-882c-4d0f-8fec-0256c62a0df0`
 
-### Magic 2015 Clash Pack (`CP1`)
+### starter · Magic 2015 Clash Pack (`CP1`)
 
 - [ ] Fated Intervention — `6f85342b-b55b-461b-a3dc-17815e02d04d`
 - [ ] Hydra Broodmaster — `9e4fb4b1-9b28-4a49-b4ac-d5549c08594d`
@@ -26362,7 +26391,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Prophet of Kruphix — `372351fd-58f7-4cb8-8644-5fbc94ccb145`
 - [ ] Temple of Mystery — `7e26f0b7-20e6-46d5-8130-d98c14d6aa29`
 
-### From the Vault: Annihilation (`V14`)
+### from-the-vault · From the Vault: Annihilation (`V14`)
 
 - [ ] Armageddon — `c9ed8b01-959a-47d6-891e-0abbdccf6e4f`
 - [ ] Burning of Xinye — `3a3cec13-4766-40d2-88e0-41bcdd5249e9`
@@ -26379,7 +26408,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Upheaval — `7cafc972-a6f5-4cac-a3d3-8a3ae36ffb1e`
 - [ ] Virtue's Ruin — `fc070e97-73ac-4028-9432-ff2012f2e778`
 
-### Duel Decks: Speed vs. Cunning (`DDN`)
+### duel-decks · Duel Decks: Speed vs. Cunning (`DDN`)
 
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
 - [ ] Aquamorph Entity — `ed47dd31-f7cd-4ecb-960f-470cb8f4ed3c`
@@ -26436,7 +26465,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Willbender — `0aae277e-e58e-4115-b5fd-0459451e17ec`
 - [ ] Zurgo Helmsmasher — `6c48d888-9f5d-43f4-adbd-61dbdba09260`
 
-### Khans of Tarkir (`KTK`)
+### expansion · Khans of Tarkir (`KTK`)
 
 - [ ] Abomination of Gudul — `3d98af5f-7a0b-4a5a-b3e4-f3c9d150c993`
 - [ ] Abzan Ascendancy — `3b7d4206-0d88-407b-ace5-d5d28881bf95`
@@ -26641,7 +26670,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woolly Loxodon — `b588df7a-64d8-449e-b573-13badc8cdf56`
 - [ ] Zurgo Helmsmasher — `6c48d888-9f5d-43f4-adbd-61dbdba09260`
 
-### Khans of Tarkir Promos (`PKTK`)
+### promos · Khans of Tarkir Promos (`PKTK`)
 
 - [ ] Abzan Ascendancy — `3b7d4206-0d88-407b-ace5-d5d28881bf95`
 - [ ] Anafenza, the Foremost — `ebfafabc-5255-4024-be59-7403bdb16ee4`
@@ -26687,7 +26716,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Villainous Wealth — `f2fae95d-074b-4c0c-99cd-f9385a424c05`
 - [ ] Zurgo Helmsmasher — `6c48d888-9f5d-43f4-adbd-61dbdba09260`
 
-### Commander 2014 (`C14`)
+### commander · Commander 2014 (`C14`)
 
 - [ ] Abyssal Persecutor — `7282f643-191b-41be-9f6f-82360c915d6d`
 - [ ] Adarkar Valkyrie — `2932baae-bdf1-455a-9ac4-23ba1f83e7e1`
@@ -26950,7 +26979,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xathrid Demon — `dd2bbc90-0474-42b7-afe4-3655a120ab02`
 - [ ] Zoetic Cavern — `3763de30-28e1-4689-a71c-07d2fea3a466`
 
-### Duel Decks Anthology: Divine vs. Demonic (`DVD`)
+### duel-decks · Duel Decks Anthology: Divine vs. Demonic (`DVD`)
 
 - [ ] Abyssal Gatekeeper — `4954181c-cb46-4cac-adc3-2c8b7693a211`
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
@@ -26996,7 +27025,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Twilight Shepherd — `eff736bc-d311-4bef-9c7e-de4ebe32e46f`
 - [ ] Unholy Strength — `090d88a9-7f2d-4bd1-a30a-7c48d05068be`
 
-### Duel Decks Anthology: Elves vs. Goblins (`EVG`)
+### duel-decks · Duel Decks Anthology: Elves vs. Goblins (`EVG`)
 
 - [ ] Akki Coalflinger — `96de29a1-3178-4c8b-a67b-ab0262442cb6`
 - [ ] Allosaurus Rider — `176508ba-c107-4694-8dd7-ea34fca3b299`
@@ -27040,7 +27069,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wirewood Symbiote — `67a52a74-9474-4f4e-8785-6ff54078a8ca`
 - [ ] Wren's Run Vanquisher — `fe9cdd15-a390-4a1e-bae9-474ce8d355b8`
 
-### Duel Decks Anthology: Garruk vs. Liliana (`GVL`)
+### duel-decks · Duel Decks Anthology: Garruk vs. Liliana (`GVL`)
 
 - [ ] Albino Troll — `02079e18-ac14-4255-95c4-741eb76c4799`
 - [ ] Bad Moon — `fc5d3341-cbce-49e5-93cc-8add92479dca`
@@ -27089,7 +27118,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Windstorm — `9969b822-2ead-4956-bac2-875ffd90e872`
 - [ ] Wirewood Savage — `45579312-499f-41de-b16e-a231d65a2053`
 
-### Duel Decks Anthology: Jace vs. Chandra (`JVC`)
+### duel-decks · Duel Decks Anthology: Jace vs. Chandra (`JVC`)
 
 - [ ] Aethersnipe — `3e0be003-4f42-4917-b85d-46baf2afd734`
 - [ ] Ancestral Vision — `9728dec9-d482-4c7a-8cdc-44d010dc878d`
@@ -27139,7 +27168,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Waterspout Djinn — `050dac46-9ba0-4b8a-b61b-1c7ec6f3723a`
 - [ ] Willbender — `0aae277e-e58e-4115-b5fd-0459451e17ec`
 
-### Friday Night Magic 2015 (`F15`)
+### promos · Friday Night Magic 2015 (`F15`)
 
 - [ ] Abzan Beastmaster — `aab463bb-e790-403b-a88d-06ef81c7302b`
 - [ ] Anticipate — `a97da5a9-17fc-4367-81e1-17ff81601a63`
@@ -27153,7 +27182,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Suspension Field — `baf8310f-5baf-459e-95ae-6b43a1d47e24`
 - [ ] Ultimate Price — `d740453b-d8f8-48d0-8c50-72a7cdb791b5`
 
-### Judge Gift Cards 2015 (`J15`)
+### promos · Judge Gift Cards 2015 (`J15`)
 
 - [ ] Dualcaster Mage — `8eb7c0a5-6190-40de-b473-2d1daa3bbe28`
 - [ ] Feldon of the Third Path — `be094704-5232-4b10-beeb-aa9bbfae063d`
@@ -27163,7 +27192,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Temporal Manipulation — `6b6ac99a-7548-4cad-9fe5-ea611618ab9e`
 - [ ] Wasteland — `09a70ae8-3859-4a09-901d-dce063fa3b5f`
 
-### Ugin's Fate (`UGIN`)
+### promos · Ugin's Fate (`UGIN`)
 
 - [ ] Ainok Tracker — `bf84a598-12d3-406d-8eeb-40592e782b87`
 - [ ] Altar of the Brood — `c3aafcdd-c890-4971-b8a9-5bfcad794c0b`
@@ -27192,7 +27221,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wildcall — `d96ac790-428b-4a64-8dbd-6baa73eb6210`
 - [ ] Write into Being — `4fc69345-4c1f-4113-8e1c-15b8e2e597fc`
 
-### Fate Reforged (`FRF`)
+### expansion · Fate Reforged (`FRF`)
 
 - [ ] Abzan Advantage — `e7b2f844-2ba2-4465-bb80-358a4d915f36`
 - [ ] Abzan Beastmaster — `aab463bb-e790-403b-a88d-06ef81c7302b`
@@ -27351,7 +27380,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Write into Being — `4fc69345-4c1f-4113-8e1c-15b8e2e597fc`
 - [ ] Yasova Dragonclaw — `75dc0995-f89e-4a2c-b30b-9b5a07c21183`
 
-### Fate Reforged Clash Pack (`CP2`)
+### starter · Fate Reforged Clash Pack (`CP2`)
 
 - [ ] Courser of Kruphix — `46779609-4fa7-4fd2-b5b4-7d4d749339e6`
 - [ ] Hero's Downfall — `03df6a57-37c9-46d3-83b3-4a6240100714`
@@ -27360,7 +27389,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sultai Ascendancy — `06e92ab3-c781-4f32-9ada-09a388047067`
 - [ ] Whip of Erebos — `53987a39-c18c-4c13-b1ea-fd1b2a369f9e`
 
-### Fate Reforged Promos (`PFRF`)
+### promos · Fate Reforged Promos (`PFRF`)
 
 - [ ] Alesha, Who Smiles at Death — `6969a7e2-6866-4001-a139-24b3be13deae`
 - [ ] Arcbond — `01790829-cc03-430f-a899-2f274b7dbf62`
@@ -27396,7 +27425,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wildcall — `d96ac790-428b-4a64-8dbd-6baa73eb6210`
 - [ ] Yasova Dragonclaw — `75dc0995-f89e-4a2c-b30b-9b5a07c21183`
 
-### Duel Decks: Elspeth vs. Kiora (`DDO`)
+### duel-decks · Duel Decks: Elspeth vs. Kiora (`DDO`)
 
 - [ ] Accumulated Knowledge — `1ca25379-d194-4670-a7bf-525ad11cf436`
 - [ ] Aetherize — `7c779721-cd1b-4696-9ae9-68ccc284ed2a`
@@ -27446,7 +27475,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Veteran Swordsmith — `cc71b6c4-09d4-423b-a134-2f2f2fd7b533`
 - [ ] Whelming Wave — `e510eaaf-6497-480f-baa8-f4796b5f1086`
 
-### Dragons of Tarkir (`DTK`)
+### expansion · Dragons of Tarkir (`DTK`)
 
 - [ ] Acid-Spewer Dragon — `f4378682-359f-48b0-adb7-b996b8d972db`
 - [ ] Aerie Bowmasters — `43ace4d5-9006-4bad-bd17-3d368c20564d`
@@ -27673,7 +27702,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zephyr Scribe — `a1841bcc-738e-4f4b-a88f-571a93c59ad7`
 - [ ] Zurgo Bellstriker — `46808926-d95b-4313-89d1-6bdfe13fcb77`
 
-### Dragons of Tarkir Promos (`PDTK`)
+### promos · Dragons of Tarkir Promos (`PDTK`)
 
 - [ ] Anafenza, Kin-Tree Spirit — `f7fa6ac0-70db-4586-b881-5a19db644dfb`
 - [ ] Arashin Foremost — `581c2fb6-fcce-42c1-b198-1f8d62e862b1`
@@ -27718,12 +27747,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Volcanic Vision — `fe3b4c74-2bf8-464a-8f55-9de401a8c4b9`
 - [ ] Zurgo Bellstriker — `46808926-d95b-4313-89d1-6bdfe13fcb77`
 
-### Tarkir Dragonfury (`PTKDF`)
+### promos · Tarkir Dragonfury (`PTKDF`)
 
 - [ ] Dragonlord's Servant — `faf81ae0-0b35-45ef-a50d-6cecf0c0eeeb`
 - [ ] Foe-Razer Regent — `e7dd3e2c-34a5-4097-b6d1-2ccd097fe57f`
 
-### Tempest Remastered (`TPR`)
+### masters-remastered · Tempest Remastered (`TPR`)
 
 - [ ] Acidic Sliver — `a149eeb1-007c-435d-9d55-34af205090e0`
 - [ ] Aftershock — `e6bef0c4-3dfc-49a8-8fec-22b2570b704b`
@@ -27945,7 +27974,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winged Sliver — `24e96682-14ca-4a62-a920-2d686c8a5dbf`
 - [ ] Wood Sage — `6fde7bb3-2539-411f-8733-36ce9595dfd5`
 
-### Modern Masters 2015 (`MM2`)
+### masters-remastered · Modern Masters 2015 (`MM2`)
 
 - [ ] Aethersnipe — `3e0be003-4f42-4917-b85d-46baf2afd734`
 - [ ] Air Servant — `49638d96-e83e-4aab-bafb-d6183a6e3ff6`
@@ -28161,7 +28190,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wrap in Flames — `b46efd59-eda7-4fe6-ace7-67ca8f6c088d`
 - [ ] Wrecking Ball — `0a1b0910-3b0c-4aa3-b47f-8eb069122743`
 
-### San Diego Comic-Con 2015 (`PS15`)
+### promos · San Diego Comic-Con 2015 (`PS15`)
 
 - [ ] Chandra, Fire of Kaladesh // Chandra, Roaring Flame — `6f6b8e14-c247-4dfd-8b39-38c7a5f2f354`
 - [ ] Jace, Vryn's Prodigy // Jace, Telepath Unbound — `594f6881-c059-46f8-aa4e-7151d502de73`
@@ -28169,7 +28198,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Liliana, Heretical Healer // Liliana, Defiant Necromancer — `b96a8ad2-3d86-459b-a34f-19c9dc07c3c4`
 - [ ] Nissa, Vastwood Seer // Nissa, Sage Animist — `35754a21-9fba-4370-a254-292918a777ba`
 
-### Magic Origins (`ORI`)
+### core · Magic Origins (`ORI`)
 
 - [ ] Abbot of Keral Keep — `09be0f69-9c7f-491f-964d-bfbbc2d4251f`
 - [ ] Acolyte of the Inferno — `35bf67e0-8141-4664-b762-2c613353e1eb`
@@ -28403,7 +28432,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zendikar Incarnate — `ecd307e6-9096-401f-bd82-ad190532d389`
 - [ ] Zendikar's Roil — `a842cc2b-52eb-4dc5-86c6-6575c2ed913d`
 
-### Magic Origins Clash Pack (`CP3`)
+### starter · Magic Origins Clash Pack (`CP3`)
 
 - [ ] Dromoka, the Eternal — `73520b5a-3d55-40c9-af60-90fdd811934f`
 - [ ] Honored Hierarch — `ae42fa8a-b0f6-43dc-a4c6-e2531890ca3a`
@@ -28411,7 +28440,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Siege Rhino — `e1087ce2-e3c2-4ab1-bd08-1dc9ab70f12f`
 - [ ] Valorous Stance — `1f938353-9081-4dc1-b8e7-d18ece038bd4`
 
-### Magic Origins Promos (`PORI`)
+### promos · Magic Origins Promos (`PORI`)
 
 - [ ] Abbot of Keral Keep — `09be0f69-9c7f-491f-964d-bfbbc2d4251f`
 - [ ] Alhammarret, High Arbiter — `c2531360-61f8-4edc-886b-408811a0639d`
@@ -28455,7 +28484,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vryn Wingmare — `c7c241f2-d3cc-4032-a9da-149de73c2539`
 - [ ] Willbreaker — `7c365041-806f-42d6-a2ff-40e20dd8e9f0`
 
-### From the Vault: Angels (`V15`)
+### from-the-vault · From the Vault: Angels (`V15`)
 
 - [ ] Akroma, Angel of Fury — `2b80faaf-92fd-4fa0-a3f6-8bb263e7ff1d`
 - [ ] Akroma, Angel of Wrath — `107f204c-9fd3-490d-8887-be63d14fc6a4`
@@ -28471,7 +28500,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Platinum Angel — `b148578c-c0bf-4785-b97c-4b6f83028008`
 - [ ] Tariel, Reckoner of Souls — `9c00b503-ae5e-4ce3-ad6a-92b541b2e3cd`
 
-### Duel Decks: Zendikar vs. Eldrazi (`DDP`)
+### duel-decks · Duel Decks: Zendikar vs. Eldrazi (`DDP`)
 
 - [ ] Artisan of Kozilek — `19409704-09c4-4a4b-a5a7-f95120b425db`
 - [ ] Avenger of Zendikar — `4ba5b3f6-503b-43e6-b66e-4f8c55cffed7`
@@ -28523,7 +28552,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Veteran Warleader — `784bda96-5bc1-47bc-a69e-e38b047ed914`
 - [ ] Wildheart Invoker — `ff8fb796-af5d-4d64-ab3c-7f2469dfa6bf`
 
-### Battle for Zendikar (`BFZ`)
+### expansion · Battle for Zendikar (`BFZ`)
 
 - [ ] Adverse Conditions — `7a5a81f7-1597-4972-8565-fd2a5667df99`
 - [ ] Akoum Firebird — `10ab3102-43a3-4c60-8641-2c5a7c1e29c2`
@@ -28742,7 +28771,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zada, Hedron Grinder — `9f7d5e1c-bf5b-4ab9-bd6e-2627b4d22b36`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### Battle for Zendikar Promos (`PBFZ`)
+### promos · Battle for Zendikar Promos (`PBFZ`)
 
 - [ ] Akoum Firebird — `10ab3102-43a3-4c60-8641-2c5a7c1e29c2`
 - [ ] Akoum Hellkite — `05b6f9e3-9acd-43a6-acff-caa811aaf0a1`
@@ -28810,7 +28839,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woodland Wanderer — `d5f3c711-edfa-4105-9844-e3f444942a03`
 - [ ] Zada, Hedron Grinder — `9f7d5e1c-bf5b-4ab9-bd6e-2627b4d22b36`
 
-### Zendikar Expeditions (`EXP`)
+### masterpieces · Zendikar Expeditions (`EXP`)
 
 - [ ] Ancient Tomb — `23467047-6dba-4498-b783-1ebc4f74b8c2`
 - [ ] Blood Crypt — `43985bbc-a0f6-4812-984e-392bc8562633`
@@ -28831,7 +28860,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wasteland — `09a70ae8-3859-4a09-901d-dce063fa3b5f`
 - [ ] Watery Grave — `fc9ec820-4245-4a96-b009-5308a818ca58`
 
-### Commander 2015 (`C15`)
+### commander · Commander 2015 (`C15`)
 
 - [ ] Act of Aggression — `9d7624ea-ffff-470b-928b-bbac66ddbd1c`
 - [ ] Aetherize — `7c779721-cd1b-4696-9ae9-68ccc284ed2a`
@@ -29096,7 +29125,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wretched Confluence — `fb430640-81b6-4720-84d6-b8ec3af6a2c3`
 - [ ] Zoetic Cavern — `3763de30-28e1-4689-a71c-07d2fea3a466`
 
-### Legendary Cube Prize Pack (`PZ1`)
+### treasure-chest · Legendary Cube Prize Pack (`PZ1`)
 
 - [ ] Abyssal Persecutor — `7282f643-191b-41be-9f6f-82360c915d6d`
 - [ ] Aethersnatch — `45892ec2-8996-444f-a61c-5151926baa0b`
@@ -29232,7 +29261,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wretched Confluence — `fb430640-81b6-4720-84d6-b8ec3af6a2c3`
 - [ ] Zedruu the Greathearted — `514179c0-a50b-4565-8e71-9dad256edd85`
 
-### Friday Night Magic 2016 (`F16`)
+### promos · Friday Night Magic 2016 (`F16`)
 
 - [ ] Blighted Fen — `b8f3da11-7c8f-4846-98a6-204bfd8d572b`
 - [ ] Call the Bloodline — `8e90300b-c0da-4484-b065-e2fafa4e1b15`
@@ -29245,7 +29274,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Rise from the Tides — `390b862a-2a85-44bd-832c-f5bbd3eb4ea0`
 - [ ] Smash to Smithereens — `e0583f29-c344-4b56-b0dc-bef1089a95c7`
 
-### Judge Gift Cards 2016 (`J16`)
+### promos · Judge Gift Cards 2016 (`J16`)
 
 - [ ] Azusa, Lost but Seeking — `6c2c8bf3-9bf8-4a86-89d3-3bb36260dc51`
 - [ ] Command Beacon — `7e8c2a18-e404-40ff-a9e0-ec3eeb6d576e`
@@ -29256,7 +29285,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Stoneforge Mystic — `358789f9-7d87-411d-919e-d597da665cbd`
 - [ ] Zur the Enchanter — `d7950018-d744-48a8-81aa-0d8384703f48`
 
-### Oath of the Gatewatch (`OGW`)
+### expansion · Oath of the Gatewatch (`OGW`)
 
 - [ ] Abstruse Interference — `e8ebf5cb-3a26-4bbd-812b-414c129e4bb7`
 - [ ] Akoum Flameseeker — `efae637f-3232-46f2-9839-f3386e2f447d`
@@ -29420,7 +29449,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zendikar Resurgent — `a0af158b-f42a-4022-a438-e0a2e1fd6d9e`
 - [ ] Zulaport Chainmage — `017f4471-db5a-4ad0-97b3-b1f12b52578a`
 
-### Oath of the Gatewatch Promos (`POGW`)
+### promos · Oath of the Gatewatch Promos (`POGW`)
 
 - [ ] Ayli, Eternal Pilgrim — `e6a35729-edee-4a8c-9aa1-041114d66c69`
 - [ ] Bearer of Silence — `d69c8c55-6433-4cc5-bdc7-9722f121b8e2`
@@ -29477,7 +29506,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] World Breaker — `deeb7e22-b207-42de-b9d4-f790403d52a9`
 - [ ] Zendikar Resurgent — `a0af158b-f42a-4022-a438-e0a2e1fd6d9e`
 
-### Duel Decks: Blessed vs. Cursed (`DDQ`)
+### duel-decks · Duel Decks: Blessed vs. Cursed (`DDQ`)
 
 - [ ] Abattoir Ghoul — `2b211adb-de44-4468-b65d-907a09aa7e9d`
 - [ ] Appetite for Brains — `4ffc16e0-1778-4aba-ade3-58146c800f5f`
@@ -29534,7 +29563,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Victim of Night — `d92b9f63-17b6-4ed2-b6ae-083a8161863e`
 - [ ] Village Bell-Ringer — `d7b50175-b473-452a-bb30-19a71c42e649`
 
-### Shadows over Innistrad (`SOI`)
+### expansion · Shadows over Innistrad (`SOI`)
 
 - [ ] Aberrant Researcher // Perfected Form — `722ee05f-6815-41b7-9813-5ec3902c1e9f`
 - [ ] Accursed Witch // Infectious Curse — `80b07882-e144-4815-8b6f-04b3ab343d97`
@@ -29797,7 +29826,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wild-Field Scarecrow — `f6a07af3-e54b-4dcb-ae2a-3dfdac386bab`
 - [ ] Wolf of Devil's Breach — `453e72bf-a682-4ec8-9cdd-799f2acb3862`
 
-### Shadows over Innistrad Promos (`PSOI`)
+### promos · Shadows over Innistrad Promos (`PSOI`)
 
 - [ ] Altered Ego — `7c35f3fd-c64e-4944-a4d5-37ce916d23c3`
 - [ ] Always Watching — `c2153115-bc12-458d-baeb-538ec61e1242`
@@ -29879,7 +29908,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Westvale Abbey // Ormendahl, Profane Prince — `04eeb9ad-5c59-411b-8809-db8349838588`
 - [ ] Wolf of Devil's Breach — `453e72bf-a682-4ec8-9cdd-799f2acb3862`
 
-### Welcome Deck 2016 (`W16`)
+### starter · Welcome Deck 2016 (`W16`)
 
 - [ ] Aegis Angel — `5902e074-7154-4fc7-8776-b87e8b1925e7`
 - [ ] Air Servant — `49638d96-e83e-4aab-bafb-d6183a6e3ff6`
@@ -29896,7 +29925,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Soul of the Harvest — `6b9194dd-2296-4879-ac5e-f89b18431df6`
 - [ ] Sphinx of Magosi — `1c9cf20c-51e4-4a87-b9f8-231b6baf5d6b`
 
-### Eternal Masters (`EMA`)
+### masters-remastered · Eternal Masters (`EMA`)
 
 - [ ] Abundant Growth — `947a2665-2f4d-4193-8768-118f85334549`
 - [ ] Ancestral Mask — `db5380ed-ba28-4ea2-abc3-4998e2022903`
@@ -30103,7 +30132,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Young Pyromancer — `5fac139a-07d3-4e6c-98e3-d98b199f7a6f`
 - [ ] Zealous Persecution — `ccf8d919-1399-4bef-94ac-04c67f122828`
 
-### Eldritch Moon (`EMN`)
+### expansion · Eldritch Moon (`EMN`)
 
 - [ ] Abandon Reason — `fa43793d-a215-4a64-a09c-ed9799f745a4`
 - [ ] Abundant Maw — `3676b745-001d-46e6-880f-2fe26476a38d`
@@ -30297,7 +30326,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woodcutter's Grit — `7756d2b9-7b10-4d05-8ad3-8d8f39c1eb23`
 - [ ] Wretched Gryff — `83d0c4bc-aab9-4c14-a7dc-a344fcce4fea`
 
-### Eldritch Moon Promos (`PEMN`)
+### promos · Eldritch Moon Promos (`PEMN`)
 
 - [ ] Assembled Alphas — `151a681d-a350-4d1d-86cd-b80d58602810`
 - [ ] Bedlam Reveler — `01a7e0ce-c98f-4cf2-aba3-360aa0a9b9a7`
@@ -30363,7 +30392,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Voldaren Pariah // Abolisher of Bloodlines — `4399c284-e3fe-46b1-aa1f-15a2846858f5`
 - [ ] Wharf Infiltrator — `ac88975c-fb2c-441a-bdd4-e7de6ba865e7`
 
-### From the Vault: Lore (`V16`)
+### from-the-vault · From the Vault: Lore (`V16`)
 
 - [ ] Beseech the Queen — `cf94cafc-527e-4b27-8a28-7807435aaccf`
 - [ ] Cabal Ritual — `5b5bf1fa-6502-4790-b66b-f0f8504ebc7c`
@@ -30381,7 +30410,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Umezawa's Jitte — `1da10d5c-36a8-473f-a5d4-782ad61d8057`
 - [ ] Unmask — `1a3a274d-41da-47db-ad41-5720f36a7963`
 
-### Conspiracy: Take the Crown (`CN2`)
+### conspiracy · Conspiracy: Take the Crown (`CN2`)
 
 - [ ] Absorb Vis — `04ea7e88-7ea5-4b4c-9a7c-2a6ac0bc0682`
 - [ ] Adriana's Valor — `512a9ab9-ddd4-4872-b4f4-dee56f9f5575`
@@ -30575,7 +30604,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wings of the Guard — `73c0a809-fb0e-4773-a385-a6e32feb03cd`
 - [ ] Zealous Strike — `d820ddf4-315d-470a-8d66-663a76a240c6`
 
-### Duel Decks: Nissa vs. Ob Nixilis (`DDR`)
+### duel-decks · Duel Decks: Nissa vs. Ob Nixilis (`DDR`)
 
 - [ ] Abundance — `eccc9a54-2b56-4a02-9926-258d5b2e25fb`
 - [ ] Altar's Reap — `6a125750-2b8c-4f9d-8173-ac8d14c91ddb`
@@ -30627,7 +30656,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Walker of the Grove — `02d69413-e040-46b1-8f58-69bde666329d`
 - [ ] Woodborn Behemoth — `9bc458ac-5566-4978-aeaa-73b600d4ec29`
 
-### Kaladesh (`KLD`)
+### expansion · Kaladesh (`KLD`)
 
 - [ ] Accomplished Automaton — `f5af0d1b-531e-4053-848a-5e0fa1022f9a`
 - [ ] Acrobatic Maneuver — `1aa1cf50-ee79-4bef-826b-5f1a9e1aa1a5`
@@ -30854,7 +30883,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woodweaver's Puzzleknot — `3334b218-01e3-47a3-8a28-5cc2decbedea`
 - [ ] Workshop Assistant — `319ee221-bace-41e9-b386-6b528bd780c1`
 
-### Kaladesh Inventions (`MPS`)
+### masterpieces · Kaladesh Inventions (`MPS`)
 
 - [ ] Aether Vial — `fc148e1e-dff0-448e-9f16-625341754356`
 - [ ] Arcbound Ravager — `62e7e7b1-9887-4d15-b0e5-a8ddc711bd88`
@@ -30905,7 +30934,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vedalken Shackles — `fddac567-c42c-453b-9c82-c3140b374a06`
 - [ ] Verdurous Gearhulk — `3765e8bb-e70d-4503-b8dc-1e684e434c18`
 
-### Kaladesh Promos (`PKLD`)
+### promos · Kaladesh Promos (`PKLD`)
 
 - [ ] Aetherflux Reservoir — `5f15125e-ae89-471e-b055-226a783bc7c1`
 - [ ] Aethersquall Ancient — `47c685b1-6e1e-4e08-8a52-9da6902df113`
@@ -30973,7 +31002,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Verdurous Gearhulk — `3765e8bb-e70d-4503-b8dc-1e684e434c18`
 - [ ] Wildest Dreams — `0a25a72e-5603-4b50-ac20-36b286cc1a2b`
 
-### San Diego Comic-Con 2016 (`PS16`)
+### promos · San Diego Comic-Con 2016 (`PS16`)
 
 - [ ] Chandra, Flamecaller — `0c2a9131-f3d7-4f71-8bcc-3c169574b2e3`
 - [ ] Gideon, Ally of Zendikar — `51eae7ff-fed9-4afe-8053-7690379449dd`
@@ -30981,7 +31010,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Liliana, the Last Hope — `64a9a6b4-26b5-4d23-be86-85c54e9c4727`
 - [ ] Nissa, Voice of Zendikar — `b0f36bf7-bdde-4576-9eca-ec02d41326ab`
 
-### Commander 2016 (`C16`)
+### commander · Commander 2016 (`C16`)
 
 - [ ] Abzan Charm — `4137a22c-f793-4e27-a9b2-72740a6e2121`
 - [ ] Abzan Falconer — `8b972819-507a-40a9-ab1f-1a674ea56083`
@@ -31264,7 +31293,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zedruu the Greathearted — `514179c0-a50b-4565-8e71-9dad256edd85`
 - [ ] Zhur-Taa Druid — `5979310e-38c8-489f-ab9e-2723af98a3a5`
 
-### Treasure Chest (`PZ2`)
+### treasure-chest · Treasure Chest (`PZ2`)
 
 - [ ] Adriana, Captain of the Guard — `de23275e-e9c1-4151-aed8-f79ead03d5d4`
 - [ ] Aggressive Instinct — `d1c8f14b-7977-488a-8bd9-cefd6687f017`
@@ -31513,7 +31542,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yuriko, the Tiger's Shadow — `a7043fbd-1dfd-42cf-be4b-cc343d0949e5`
 - [ ] Zuo Ci, the Mocking Sage — `ae8773a3-05f2-4074-9a53-033b0c127235`
 
-### Planechase Anthology (`PCA`)
+### planechase · Planechase Anthology (`PCA`)
 
 - [ ] Arc Trail — `f1c26b25-371e-4fbf-a43d-7fd59a364d3a`
 - [ ] Armillary Sphere — `3963140c-da67-43e6-9514-fe9dc0a43c4d`
@@ -31623,7 +31652,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Whirlpool Warrior — `b7a1c54b-bb2f-4423-865a-ad114cd18c76`
 - [ ] Whispersilk Cloak — `9ad4f730-a18e-4a7c-a468-a926c718c741`
 
-### Friday Night Magic 2017 (`F17`)
+### promos · Friday Night Magic 2017 (`F17`)
 
 - [ ] Aether Hub — `61c89b11-65c9-4fda-bbcd-d84de25df801`
 - [ ] Fatal Push — `16437a83-be52-44cd-a768-a767c9347eb2`
@@ -31634,7 +31663,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Reverse Engineer — `f56596be-e12f-4ab6-af61-3ef8dc87134c`
 - [ ] Unlicensed Disintegration — `eaa2ff39-c3cf-428b-a2f1-a6a99a2c806b`
 
-### Judge Gift Cards 2017 (`J17`)
+### promos · Judge Gift Cards 2017 (`J17`)
 
 - [ ] Avacyn, Angel of Hope — `216cb26e-8da9-478b-bfbc-8030f7adee72`
 - [ ] Capture of Jingzhou — `89aa65d9-2502-40b0-90b6-b25a8e9f6155`
@@ -31646,7 +31675,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Rules Lawyer — `0a3d3d5e-fb77-4940-9ece-7ed62bd6413e`
 - [ ] Spellskite — `e0aa6ce0-ca31-433b-ac6c-32b8675cdb71`
 
-### Aether Revolt (`AER`)
+### expansion · Aether Revolt (`AER`)
 
 - [ ] Aegis Automaton — `727f4734-53cc-4279-ba51-dfa26c4ceb1d`
 - [ ] Aerial Modification — `290cd0b1-55d6-4b30-962d-075a6f75d562`
@@ -31827,7 +31856,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yahenni's Expertise — `692babfa-9b74-415e-a560-abae4ccb006b`
 - [ ] Yahenni, Undying Partisan — `fdba89eb-1cf5-46e6-9d09-1adb9bc40fcd`
 
-### Aether Revolt Promos (`PAER`)
+### promos · Aether Revolt Promos (`PAER`)
 
 - [ ] Aethergeode Miner — `92045f6c-9ec2-4bf0-826c-e21ef253011c`
 - [ ] Aethersphere Harvester — `7b3e74ad-0179-480b-871c-9e3bc30a43ff`
@@ -31884,7 +31913,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yahenni's Expertise — `692babfa-9b74-415e-a560-abae4ccb006b`
 - [ ] Yahenni, Undying Partisan — `fdba89eb-1cf5-46e6-9d09-1adb9bc40fcd`
 
-### Modern Masters 2017 (`MM3`)
+### masters-remastered · Modern Masters 2017 (`MM3`)
 
 - [ ] Abrupt Decay — `1c747fe2-289e-492a-a846-aa77707e2dc3`
 - [ ] Abyssal Specter — `51833cff-6519-4806-8d91-0040e9a02189`
@@ -32067,7 +32096,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zealous Conscripts — `1dae6f39-2cbd-485c-b190-017a26401fd4`
 - [ ] Zur the Enchanter — `d7950018-d744-48a8-81aa-0d8384703f48`
 
-### Duel Decks: Mind vs. Might (`DDS`)
+### duel-decks · Duel Decks: Mind vs. Might (`DDS`)
 
 - [ ] Beacon of Destruction — `15feb59b-bbbe-462a-8d38-d20735bbc2f3`
 - [ ] Beacon of Tomorrows — `85909caa-d2ad-4487-b9b7-6ac60a14b833`
@@ -32115,7 +32144,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Young Pyromancer — `5fac139a-07d3-4e6c-98e3-d98b199f7a6f`
 - [ ] Zo-Zu the Punisher — `0e412b68-9179-4094-960a-95692428855b`
 
-### Welcome Deck 2017 (`W17`)
+### starter · Welcome Deck 2017 (`W17`)
 
 - [ ] Bloodhunter Bat — `7e3e09a2-b45c-4897-ba10-02628cca3f4c`
 - [ ] Certain Death — `1d4b8a31-6500-4e3d-bcaf-f6f184d7743e`
@@ -32136,7 +32165,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Victory's Herald — `e410f80f-cf67-46ff-aeb3-da0204237d66`
 - [ ] Wing Snare — `61ce6ec1-79d8-4dc9-ab2d-1623ed1459c1`
 
-### Amonkhet (`AKH`)
+### expansion · Amonkhet (`AKH`)
 
 - [ ] Ahn-Crop Champion — `c03d073e-ea59-4873-952a-bcf2730f1115`
 - [ ] Ahn-Crop Crasher — `5b3ef91a-5804-43cc-a947-f25f33b7b88c`
@@ -32358,7 +32387,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winds of Rebuke — `6840a63d-d627-4a18-afa9-018406767642`
 - [ ] Zenith Seeker — `a0fdc716-31b9-47f6-8639-de8bb7e3629f`
 
-### Amonkhet Invocations (`MP2`)
+### masterpieces · Amonkhet Invocations (`MP2`)
 
 - [ ] Aggravated Assault — `20129459-a386-41eb-899d-1aede3427300`
 - [ ] Armageddon — `c9ed8b01-959a-47d6-891e-0abbdccf6e4f`
@@ -32411,7 +32440,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vindicate — `63c1ac21-e3d8-40c2-8c09-3f31c52992ef`
 - [ ] Worship — `99f9a4c8-b59f-4a41-8577-6c1e4684b240`
 
-### Amonkhet Promos (`PAKH`)
+### promos · Amonkhet Promos (`PAKH`)
 
 - [ ] Angel of Sanctions — `3c49e98d-d33b-47fa-8b07-b38b367de2c7`
 - [ ] Anointed Procession — `7246d45b-2185-4cdd-981b-5419b7d52bce`
@@ -32473,7 +32502,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vizier of Many Faces — `55bceb83-bbba-477f-98ce-6e0a80b91080`
 - [ ] Vizier of the Menagerie — `4f890d42-e4f1-4eed-aa6c-718865de8927`
 
-### Commander Anthology (`CMA`)
+### anthologies · Commander Anthology (`CMA`)
 
 - [ ] Aerie Mystics — `12134f7d-433a-416a-b668-c1a21984c94b`
 - [ ] Aethermage's Touch — `15692698-ef57-4672-bf76-5fe4a00c693a`
@@ -32698,7 +32727,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wretched Confluence — `fb430640-81b6-4720-84d6-b8ec3af6a2c3`
 - [ ] Zoetic Cavern — `3763de30-28e1-4689-a71c-07d2fea3a466`
 
-### Archenemy: Nicol Bolas (`E01`)
+### archenemy · Archenemy: Nicol Bolas (`E01`)
 
 - [ ] Aegis Angel — `5902e074-7154-4fc7-8776-b87e8b1925e7`
 - [ ] Anointer of Champions — `f74ef5b0-9222-43d0-a919-aaf28dc21b59`
@@ -32781,7 +32810,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Windrider Eel — `9a3b16ae-210b-4d9b-83db-2801edfba394`
 - [ ] Woodborn Behemoth — `9bc458ac-5566-4978-aeaa-73b600d4ec29`
 
-### Hour of Devastation (`HOU`)
+### expansion · Hour of Devastation (`HOU`)
 
 - [ ] Abandoned Sarcophagus — `a051dee0-60c8-4f58-84cb-55460c097115`
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
@@ -32945,7 +32974,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wretched Camel — `525d1562-4fb6-4df3-ab6d-ab6a94c866e0`
 - [ ] Zealot of the God-Pharaoh — `2911d52f-7faf-455a-acdf-77269c9ee8ce`
 
-### Hour of Devastation Promos (`PHOU`)
+### promos · Hour of Devastation Promos (`PHOU`)
 
 - [ ] Abandoned Sarcophagus — `a051dee0-60c8-4f58-84cb-55460c097115`
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
@@ -33003,7 +33032,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Unesh, Criosphinx Sovereign — `7492ea06-24d5-4a1f-a6ac-c33743e91aa7`
 - [ ] Wildfire Eternal — `195736a9-d8b0-4c74-abe9-0289aa83c67d`
 
-### San Diego Comic-Con 2017 (`PS17`)
+### promos · San Diego Comic-Con 2017 (`PS17`)
 
 - [ ] Chandra, Torch of Defiance — `12cc800c-c7be-4811-8207-fd01a99cc892`
 - [ ] Gideon of the Trials — `a9bbaad7-c016-4908-a6a7-2c26112a6bf6`
@@ -33012,7 +33041,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Nicol Bolas, God-Pharaoh — `cb33e07b-9599-4979-991f-df0c43ddac31`
 - [ ] Nissa, Steward of Elements — `fdb96b5c-ecac-4db3-8b9a-24f824149f91`
 
-### Commander 2017 (`C17`)
+### commander · Commander 2017 (`C17`)
 
 - [ ] Abundance — `eccc9a54-2b56-4a02-9926-258d5b2e25fb`
 - [ ] Alms Collector — `278e51fe-3cd9-4c82-bd81-2164771f8611`
@@ -33243,19 +33272,19 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wing Shards — `b302bce5-d7ad-46d8-9dbf-8159e8709b4f`
 - [ ] Zendikar Resurgent — `a0af158b-f42a-4022-a438-e0a2e1fd6d9e`
 
-### 2016 Heroes of the Realm (`PHTR`)
+### funny-special · 2016 Heroes of the Realm (`PHTR`)
 
 - [ ] Chandra, Gremlin Wrangler — `486757df-23c0-4b53-97c3-c38c4eb32a56`
 - [ ] Dungeon Master — `6bbd0bf6-cb22-431f-be1b-e76febf68cfc`
 - [ ] Nira, Hellkite Duelist — `4fc8d905-8aeb-4a62-a99f-5d888da30f2f`
 
-### HasCon 2017 (`H17`)
+### funny-special · HasCon 2017 (`H17`)
 
 - [ ] Grimlock, Dinobot Leader // Grimlock, Ferocious King — `41221db7-6161-449d-bac0-2f785d6020c2`
 - [ ] Nerf War — `9db260cd-d6f9-4efc-b9a8-84bdc00a21ca`
 - [ ] Sword of Dungeons & Dragons — `8e0b725c-b27a-4aa2-8e4b-6ab47e73927d`
 
-### Ixalan (`XLN`)
+### expansion · Ixalan (`XLN`)
 
 - [ ] Adanto Vanguard — `91c380f6-2c41-48b7-9f07-104e8659e397`
 - [ ] Admiral Beckett Brass — `43b5e462-d860-473d-828f-6c513fc7768a`
@@ -33479,7 +33508,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Watertrap Weaver — `ef0ed1b1-d092-46f0-beb2-444e3645d273`
 - [ ] Wildgrowth Walker — `d80562c2-cf90-43a4-9721-28da40fdfeed`
 
-### Ixalan Promos (`PXLN`)
+### promos · Ixalan Promos (`PXLN`)
 
 - [ ] Admiral Beckett Brass — `43b5e462-d860-473d-828f-6c513fc7768a`
 - [ ] Angrath's Marauders — `2d4976d4-649c-4d42-ac5a-ada4b46a480c`
@@ -33556,7 +33585,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Waker of the Wilds — `ebf6ef9f-97b2-48cf-855e-d68dc7b11de4`
 - [ ] Walk the Plank — `9093e6f1-12bc-4dfb-bc78-6ead0752ad61`
 
-### Duel Decks: Merfolk vs. Goblins (`DDT`)
+### duel-decks · Duel Decks: Merfolk vs. Goblins (`DDT`)
 
 - [ ] Aquitect's Will — `d02befcb-3e2c-4cfe-a913-9bb648e5bb2c`
 - [ ] Battle Squadron — `5783e71e-2497-4241-9d1a-8bced4745b1d`
@@ -33604,7 +33633,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wake Thrasher — `f2d1e991-e13a-43c7-85aa-d53dd14822e6`
 - [ ] Warren Instigator — `47f75e25-8a52-4452-a3a8-bf1bd00942d1`
 
-### Iconic Masters (`IMA`)
+### masters-remastered · Iconic Masters (`IMA`)
 
 - [ ] Abyssal Persecutor — `7282f643-191b-41be-9f6f-82360c915d6d`
 - [ ] Abzan Battle Priest — `1b44fe0a-4a99-4166-b0b3-102b36b54ffa`
@@ -33817,7 +33846,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wrench Mind — `484eeb13-fe74-45fe-b089-7beec87cfcdb`
 - [ ] Yosei, the Morning Star — `5c2d0ead-8bfc-4ca7-9b38-2fc07af1c1d5`
 
-### Explorers of Ixalan (`E02`)
+### boxed-products · Explorers of Ixalan (`E02`)
 
 - [ ] Adaptive Automaton — `53c730c6-2f8c-4af8-b400-b9d573a71e60`
 - [ ] Aether Gale — `b21d6482-1b3a-47e6-98a5-3067f5f3818b`
@@ -33855,7 +33884,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vow of Wildness — `569a65fb-e35f-4388-ab49-f57be46b4889`
 - [ ] Zealous Persecution — `ccf8d919-1399-4bef-94ac-04c67f122828`
 
-### From the Vault: Transform (`V17`)
+### from-the-vault · From the Vault: Transform (`V17`)
 
 - [ ] Archangel Avacyn // Avacyn, the Purifier — `432b37a5-d32a-4b78-91ab-860aa026b7cc`
 - [ ] Arguel's Blood Fast // Temple of Aclazotz — `be2a4bc4-8af6-48c5-9421-32d26272e71a`
@@ -33874,7 +33903,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Liliana, Heretical Healer // Liliana, Defiant Necromancer — `b96a8ad2-3d86-459b-a34f-19c9dc07c3c4`
 - [ ] Nissa, Vastwood Seer // Nissa, Sage Animist — `35754a21-9fba-4370-a254-292918a777ba`
 
-### XLN Treasure Chest (`PXTC`)
+### promos · XLN Treasure Chest (`PXTC`)
 
 - [ ] Arguel's Blood Fast // Temple of Aclazotz — `be2a4bc4-8af6-48c5-9421-32d26272e71a`
 - [ ] Conqueror's Galleon // Conqueror's Foothold — `88b18901-50cd-461c-b1bc-be900210be8e`
@@ -33887,7 +33916,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Treasure Map // Treasure Cove — `0b55eac6-a745-4bf4-8926-5ce83bc38d7d`
 - [ ] Vance's Blasting Cannons // Spitfire Bastion — `5e7eca9c-a7b8-4b7b-a0a0-e8937530145a`
 
-### Unstable (`UST`)
+### funny-special · Unstable (`UST`)
 
 - [ ] "Rumors of My Death . . ." — `38bcba8b-2838-4ac8-9976-f9ccaa94fdba`
 - [ ] Accessories to Murder — `fe6726a1-2aa9-492d-82f8-9e9b3125a991`
@@ -34122,11 +34151,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] X — `ef10c6c6-8e84-46f6-8e11-cd35a2b8fbf1`
 - [ ] Zombified — `54250eb8-6e77-437e-b8af-94690352c8d9`
 
-### Unstable Promos (`PUST`)
+### promos · Unstable Promos (`PUST`)
 
 - [ ] Earl of Squirrel — `edc4d1fb-f482-4f2b-985e-1e4d5941e574`
 
-### Judge Gift Cards 2018 (`J18`)
+### promos · Judge Gift Cards 2018 (`J18`)
 
 - [ ] Commander's Sphere — `0b67c4e2-f88b-4e01-85a1-9d5f5b8db13b`
 - [ ] Food Chain — `5c8e5092-962e-49ef-ab82-8434e475e4e7`
@@ -34136,7 +34165,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Teferi's Protection — `0d4ecdb1-ec90-497f-a7a4-1c68092b8757`
 - [ ] Vampiric Tutor — `ededbdae-d9dc-4206-9335-d7158f2d7700`
 
-### Rivals of Ixalan (`RIX`)
+### expansion · Rivals of Ixalan (`RIX`)
 
 - [ ] Admiral's Order — `ae4fe5e0-408d-4398-84d7-a901b836df2a`
 - [ ] Angrath's Ambusher — `85791f11-44ab-4405-b284-1d91c7e0afbb`
@@ -34301,7 +34330,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] World Shaper — `3c075bb6-1831-4521-bd8d-4ed2825ae796`
 - [ ] Zacama, Primal Calamity — `23270e4a-a222-4ffb-a946-d0e20d665187`
 
-### Rivals of Ixalan Promos (`PRIX`)
+### promos · Rivals of Ixalan Promos (`PRIX`)
 
 - [ ] Admiral's Order — `ae4fe5e0-408d-4398-84d7-a901b836df2a`
 - [ ] Angrath, the Flame-Chained — `092ceffb-1ee4-452c-b15e-5b79267d42a6`
@@ -34364,7 +34393,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] World Shaper — `3c075bb6-1831-4521-bd8d-4ed2825ae796`
 - [ ] Zacama, Primal Calamity — `23270e4a-a222-4ffb-a946-d0e20d665187`
 
-### Masters 25 (`A25`)
+### masters-remastered · Masters 25 (`A25`)
 
 - [ ] Accumulated Knowledge — `1ca25379-d194-4670-a7bf-525ad11cf436`
 - [ ] Act of Heroism — `25edb501-11b5-4617-8a65-2eb4869cccd5`
@@ -34584,7 +34613,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombify — `bb95db4d-5017-4121-bf79-d68476602d8c`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### Duel Decks: Elves vs. Inventors (`DDU`)
+### duel-decks · Duel Decks: Elves vs. Inventors (`DDU`)
 
 - [ ] Artificer's Epiphany — `ed10bb4c-f7ef-4046-8dde-465041b55078`
 - [ ] Barrage Ogre — `d556c71e-ce16-4229-880b-744790f93797`
@@ -34640,7 +34669,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wildheart Invoker — `ff8fb796-af5d-4d64-ab3c-7f2469dfa6bf`
 - [ ] Yeva, Nature's Herald — `2d513c3e-bd27-479e-af32-7f66d96d0de0`
 
-### Dominaria (`DOM`)
+### expansion · Dominaria (`DOM`)
 
 - [ ] Academy Drake — `65f3ebeb-1ca5-4923-b681-032579991c8a`
 - [ ] Academy Journeymage — `b400700c-1d82-4721-a166-56f88ba6ad19`
@@ -34863,7 +34892,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zahid, Djinn of the Lamp — `89b07037-64df-4e66-acd8-87d97df61e3a`
 - [ ] Zhalfirin Void — `13aab4fc-4c89-45e6-8275-b074b00d0ee9`
 
-### Dominaria Promos (`PDOM`)
+### promos · Dominaria Promos (`PDOM`)
 
 - [ ] Adeliz, the Cinder Wind — `850eb3c3-029b-49b0-91a9-6daeb1b3a9e8`
 - [ ] Arvad the Cursed — `d561dcff-0a19-46ac-9dee-f374c840d532`
@@ -34949,7 +34978,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zahid, Djinn of the Lamp — `89b07037-64df-4e66-acd8-87d97df61e3a`
 - [ ] Zhalfirin Void — `13aab4fc-4c89-45e6-8275-b074b00d0ee9`
 
-### Battlebond (`BBD`)
+### supplemental · Battlebond (`BBD`)
 
 - [ ] Aim High — `c169929a-850b-4d46-9f14-a922f4465d85`
 - [ ] Angelic Chorus — `e66b12ff-45da-46dc-9148-bd8ea9b7fde0`
@@ -35155,7 +35184,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zndrsplt's Judgment — `7aacfc42-be6c-46a8-b474-f43a1b6b2ef8`
 - [ ] Zndrsplt, Eye of Wisdom — `502849a6-8e65-40f3-b348-a41c4f939768`
 
-### Battlebond Promos (`PBBD`)
+### promos · Battlebond Promos (`PBBD`)
 
 - [ ] Blaring Captain — `1675476c-25b1-46c2-81ce-fef9a2360bcc`
 - [ ] Blaring Recruiter — `33e9db5a-986d-4731-88c9-87de6f967db4`
@@ -35180,7 +35209,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Will Kenrith — `20dbfc9a-172e-4065-bfde-d40de3131787`
 - [ ] Zndrsplt, Eye of Wisdom — `502849a6-8e65-40f3-b348-a41c4f939768`
 
-### Commander Anthology Volume II (`CM2`)
+### anthologies · Commander Anthology Volume II (`CM2`)
 
 - [ ] Abzan Falconer — `8b972819-507a-40a9-ab1f-1a674ea56083`
 - [ ] Ancient Amphitheater — `7211221d-d4d8-4bbe-9d2a-b82e005bfe8a`
@@ -35404,7 +35433,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wrexial, the Risen Deep — `fd36cc16-d3d9-4c9d-9d28-bbe7e5459d75`
 - [ ] Yavimaya Elder — `7fd4c452-07f2-492c-9c78-d1c6362d9eec`
 
-### Signature Spellbook: Jace (`SS1`)
+### spellbooks · Signature Spellbook: Jace (`SS1`)
 
 - [ ] Blue Elemental Blast — `65e1558c-6b09-4ddc-b520-f19f4fb972af`
 - [ ] Brainstorm — `36cd2364-d113-47d1-b2c4-b088d9eb88dd`
@@ -35413,7 +35442,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Negate — `3407fe41-fdd3-4119-8f70-4bc4590a379f`
 - [ ] Threads of Disloyalty — `9d86735c-12e5-457a-beb4-057ab220d18b`
 
-### Global Series Jiang Yanggu & Mu Yanling (`GS1`)
+### duel-decks · Global Series Jiang Yanggu & Mu Yanling (`GS1`)
 
 - [ ] Aggressive Instinct — `d1c8f14b-7977-488a-8bd9-cefd6687f017`
 - [ ] Ancestor Dragon — `60b03a44-a7bd-48fa-8c8f-1704aed02cd7`
@@ -35433,7 +35462,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vivid Flying Fish — `e8ec9ba4-dc6b-437d-863f-5ec37f4ae9cd`
 - [ ] Welkin Tern — `010c660a-a67b-48f0-a63a-15470eb89f69`
 
-### Core Set 2019 Promos (`PM19`)
+### promos · Core Set 2019 Promos (`PM19`)
 
 - [ ] Ajani's Last Stand — `17c4807c-158e-4a86-90f1-d8fb2ebe892a`
 - [ ] Ajani, Adversary of Tyrants — `b25bea73-7444-4ee2-8022-611461506117`
@@ -35504,7 +35533,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vivien's Invocation — `5e2b30d2-81e9-40cd-86dd-3ec5dd06ced0`
 - [ ] Windreader Sphinx — `5e038a3a-fbab-46c2-8773-1327d953da16`
 
-### Core Set 2019 (`M19`)
+### core · Core Set 2019 (`M19`)
 
 - [ ] Abnormal Endurance — `edbf1b87-2d1e-47e6-a04e-a2b1646af7d9`
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
@@ -35717,11 +35746,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Waterknot — `002100cd-1ab1-44da-93a0-1269d47a712a`
 - [ ] Windreader Sphinx — `5e038a3a-fbab-46c2-8773-1327d953da16`
 
-### Arena New Player Experience (`ANA`)
+### starter · Arena New Player Experience (`ANA`)
 
 - [ ] Encroaching Wastes — `43144f06-079b-4515-a03a-01ea3e90d586`
 
-### Arena New Player Experience Cards (`OANA`)
+### starter · Arena New Player Experience Cards (`OANA`)
 
 - [ ] Angelic Reward — `699380f9-a032-4838-baf1-1575f37eb642`
 - [ ] Confront the Assault — `beb3f812-da58-4f03-915b-dc473cd01554`
@@ -35730,7 +35759,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] River's Favor — `0a576352-ed10-4a54-b886-d664432277c2`
 - [ ] Tactical Advantage — `1e3f31cc-a295-4688-abd1-c7d543fe6f7a`
 
-### MTG Arena Promos (`PANA`)
+### promos · MTG Arena Promos (`PANA`)
 
 - [ ] Bladewing the Risen — `c22cc70a-9533-4bfc-b3ce-b2d43a73f0c1`
 - [ ] Duress — `33d405ea-7a9a-4970-b70f-9c05d90dd6f0`
@@ -35744,7 +35773,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] The Gitrog Monster — `a5e54d2b-aad8-4ddd-af4b-13668913762b`
 - [ ] Vraska, Golgari Queen — `131096a3-2d53-4ec2-96d3-fcb58e698a13`
 
-### San Diego Comic-Con 2018 (`PS18`)
+### promos · San Diego Comic-Con 2018 (`PS18`)
 
 - [ ] Chandra, Torch of Defiance — `12cc800c-c7be-4811-8207-fd01a99cc892`
 - [ ] Gideon of the Trials — `a9bbaad7-c016-4908-a6a7-2c26112a6bf6`
@@ -35752,13 +35781,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Liliana, Untouched by Death — `4f66489c-5a19-40ad-9126-461fa8231f1b`
 - [ ] Nissa, Vital Force — `31d4d8ce-36ba-4297-8c7a-34a83ba25255`
 
-### 2017 Heroes of the Realm (`PH17`)
+### funny-special · 2017 Heroes of the Realm (`PH17`)
 
 - [ ] Diabolical Salvation — `255bd94e-119e-4fc2-ad3b-8b74762ed3f6`
 - [ ] Inzerva, Master of Insights — `bbc6c518-40f7-4010-a6fe-c4a73ed80305`
 - [ ] M'Odo, the Gnarled Oracle — `8579ff4f-6e23-47dd-bae6-06e827644b20`
 
-### Commander 2018 (`C18`)
+### commander · Commander 2018 (`C18`)
 
 - [ ] Adarkar Valkyrie — `2932baae-bdf1-455a-9ac4-23ba1f83e7e1`
 - [ ] Aether Gale — `b21d6482-1b3a-47e6-98a5-3067f5f3818b`
@@ -35985,7 +36014,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yuriko, the Tiger's Shadow — `a7043fbd-1dfd-42cf-be4b-cc343d0949e5`
 - [ ] Zendikar Incarnate — `ecd307e6-9096-401f-bd82-ad190532d389`
 
-### Guilds of Ravnica (`GRN`)
+### expansion · Guilds of Ravnica (`GRN`)
 
 - [ ] Affectionate Indrik — `88aa032d-dc11-4cae-81f3-ce66353963e0`
 - [ ] Arboretum Elemental — `1708d60d-30af-4184-bc95-2f7a7aed4a6e`
@@ -36209,7 +36238,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wojek Bodyguard — `8de57b66-cb97-44e4-8c0d-8ecf3202c299`
 - [ ] Worldsoul Colossus — `6970f285-dc2b-437b-b099-ca1d3ef106ab`
 
-### Guilds of Ravnica Promos (`PGRN`)
+### promos · Guilds of Ravnica Promos (`PGRN`)
 
 - [ ] Arclight Phoenix — `a80ea391-54d1-4b61-95a3-f8deb4cbe842`
 - [ ] Assassin's Trophy — `ac10d218-f9a6-4058-9cda-a15ca1b0b7b5`
@@ -36269,7 +36298,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vraska, Golgari Queen — `131096a3-2d53-4ec2-96d3-fcb58e698a13`
 - [ ] Watery Grave — `fc9ec820-4245-4a96-b009-5308a818ca58`
 
-### Mythic Edition (`MED`)
+### masterpieces · Mythic Edition (`MED`)
 
 - [ ] Ajani, Mentor of Heroes — `a612bd38-069f-4bdc-9aa6-c172435e3841`
 - [ ] Dack Fayden — `9d4b1e44-3c66-4b1b-8a1d-308aa4f841f8`
@@ -36296,7 +36325,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ugin, the Spirit Dragon — `eecb3047-a563-441a-9175-200421981ac3`
 - [ ] Vraska, Golgari Queen — `131096a3-2d53-4ec2-96d3-fcb58e698a13`
 
-### GRN Guild Kit (`GK1`)
+### boxed-products · GRN Guild Kit (`GK1`)
 
 - [ ] Abrupt Decay — `1c747fe2-289e-492a-a846-aa77707e2dc3`
 - [ ] Agrus Kos, Wojek Veteran — `e758aecd-6ce1-42f6-9716-32871e3bfa41`
@@ -36395,7 +36424,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vigor Mortis — `6de27cba-5500-4448-abef-68e69fe519dc`
 - [ ] Warped Physique — `f45fdef0-15b1-472b-9485-465c49a48a85`
 
-### Game Night (`GNT`)
+### boxed-products · Game Night (`GNT`)
 
 - [ ] Advanced Stitchwing — `7e5d2801-873f-4318-9c23-9a73e00e31a4`
 - [ ] Always Watching — `c2153115-bc12-458d-baeb-538ec61e1242`
@@ -36437,7 +36466,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zahid, Djinn of the Lamp — `89b07037-64df-4e66-acd8-87d97df61e3a`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### M19 Gift Pack (`G18`)
+### boxed-products · M19 Gift Pack (`G18`)
 
 - [ ] Angelic Guardian — `2f959c67-2b0b-4ba8-a8aa-90c25a3806ec`
 - [ ] Angler Turtle — `a09da13e-f8a3-410e-941a-9912d2cfe7de`
@@ -36445,7 +36474,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Rampaging Brontodon — `bfea2229-a1ca-40c1-aaad-5f97add3f079`
 - [ ] Vengeant Vampire — `e9f4d669-d915-4984-bd3c-12202c366e9b`
 
-### Ultimate Box Topper (`PUMA`)
+### masterpieces · Ultimate Box Topper (`PUMA`)
 
 - [ ] Ancient Tomb — `23467047-6dba-4498-b783-1ebc4f74b8c2`
 - [ ] Balefire Dragon — `3d783beb-9ca6-4681-9276-fc3ad13b993f`
@@ -36487,7 +36516,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Urborg, Tomb of Yawgmoth — `db6174d7-211d-4817-b8e4-8384594c83f9`
 - [ ] Vengevine — `7ed52301-81ea-4e7f-b985-cfab0593cae4`
 
-### Ultimate Masters (`UMA`)
+### masters-remastered · Ultimate Masters (`UMA`)
 
 - [ ] Aethersnipe — `3e0be003-4f42-4917-b85d-46baf2afd734`
 - [ ] Akroan Crusader — `d981d85c-e97b-4fe7-b415-6e73a3e7e35c`
@@ -36727,7 +36756,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woodfall Primus — `2f70f1bb-29fa-4abb-afc2-653acd0a08b9`
 - [ ] Young Pyromancer — `5fac139a-07d3-4e6c-98e3-d98b199f7a6f`
 
-### Ravnica Allegiance (`RNA`)
+### expansion · Ravnica Allegiance (`RNA`)
 
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
 - [ ] Aeromunculus — `a0cd19c1-9125-4627-83ba-d42c489b4e7d`
@@ -36960,7 +36989,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zegana, Utopian Speaker — `04260930-ff38-4b35-9ec4-e89196a4f2c7`
 - [ ] Zhur-Taa Goblin — `1003304f-af01-4235-af82-6ef901bd00bf`
 
-### Ravnica Allegiance Promos (`PRNA`)
+### promos · Ravnica Allegiance Promos (`PRNA`)
 
 - [ ] Amplifire — `c6861c50-d336-4352-a76d-ec22a86ec09e`
 - [ ] Awaken the Erstwhile — `06fa6719-aa4f-4857-8029-e42d01232645`
@@ -37019,7 +37048,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Unbreakable Formation — `97435e03-2fff-4fe0-8fa9-69ab0a046a33`
 - [ ] Zegana, Utopian Speaker — `04260930-ff38-4b35-9ec4-e89196a4f2c7`
 
-### RNA Guild Kit (`GK2`)
+### boxed-products · RNA Guild Kit (`GK2`)
 
 - [ ] Angel of Despair — `02520741-d7f0-46e6-acbe-010b65fc24c0`
 - [ ] Archon of the Triumvirate — `27ecb717-6251-4066-b57e-7070e9e44bbf`
@@ -37127,7 +37156,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zhur-Taa Druid — `5979310e-38c8-489f-ab9e-2723af98a3a5`
 - [ ] Zhur-Taa Swine — `dcc31cbf-f75d-4584-a97b-aa9d19d7b142`
 
-### Judge Gift Cards 2019 (`J19`)
+### promos · Judge Gift Cards 2019 (`J19`)
 
 - [ ] Chalice of the Void — `74027ba4-a6ba-4696-baf1-60ef0b27ee0a`
 - [ ] Isolated Watchtower — `3893f320-47fd-49ec-a78c-80bfb607a279`
@@ -37138,7 +37167,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sliver Legion — `47657df2-0e58-46c8-87e2-cc752708a612`
 - [ ] Yuriko, the Tiger's Shadow — `a7043fbd-1dfd-42cf-be4b-cc343d0949e5`
 
-### War of the Spark (`WAR`)
+### expansion · War of the Spark (`WAR`)
 
 - [ ] A-Teferi, Time Raveler — `1e019acb-0ab9-4f6e-9e44-f4e61f681597`
 - [ ] Ahn-Crop Invader — `d7d163a7-6f3f-40ab-a47c-ed497df92244`
@@ -37382,7 +37411,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] War Screecher — `4617739e-4e3e-4d06-b074-8f836261a870`
 - [ ] Widespread Brutality — `3a06f4c1-2af1-495f-914f-1ac4e26f87d4`
 
-### War of the Spark Promos (`PWAR`)
+### promos · War of the Spark Promos (`PWAR`)
 
 - [ ] Ajani, the Greathearted — `f5d9be71-91d0-4166-ba58-cbbf5d490c40`
 - [ ] Angrath, Captain of Chaos — `de08f5d4-8868-4d0f-8c0e-d0d3a2105581`
@@ -37477,7 +37506,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vraska, Swarm's Eminence — `cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb`
 - [ ] Widespread Brutality — `3a06f4c1-2af1-495f-914f-1ac4e26f87d4`
 
-### Modern Horizons (`MH1`)
+### supplemental · Modern Horizons (`MH1`)
 
 - [ ] Abominable Treefolk — `9d341ed4-4f9b-40df-9bd9-3bfeaf0fe595`
 - [ ] Alpine Guide — `55b12241-2495-45e6-b618-3746d5521291`
@@ -37707,12 +37736,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yawgmoth, Thran Physician — `a1e232c0-dc38-47be-a5a0-f68bc1d86a29`
 - [ ] Zhalfirin Decoy — `b22e55ef-fb74-4991-a43b-9d3ce06c23e5`
 
-### Modern Horizons Promos (`PMH1`)
+### promos · Modern Horizons Promos (`PMH1`)
 
 - [ ] Astral Drift — `7aa5db50-5057-45fd-bce9-fb4a5e874263`
 - [ ] Morophon, the Boundless — `bf418a2f-e639-4e52-9cad-5a0713a1829b`
 
-### Signature Spellbook: Gideon (`SS2`)
+### spellbooks · Signature Spellbook: Gideon (`SS2`)
 
 - [ ] Blackblade Reforged — `dca51281-fb21-45b6-beb4-1f13397caee2`
 - [ ] Gideon Jura — `7340dbcb-4b26-4038-be8c-a89e76294221`
@@ -37723,7 +37752,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] True Conviction — `fc299c1c-50f3-492a-b6b8-a3664bb72ab7`
 - [ ] Worship — `99f9a4c8-b59f-4a41-8577-6c1e4684b240`
 
-### Core Set 2020 (`M20`)
+### core · Core Set 2020 (`M20`)
 
 - [ ] A-Sorin, Imperious Bloodlord — `10d1d908-6e62-48a4-9c87-c355cfe66dc5`
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
@@ -37975,7 +38004,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yarok, the Desecrated — `95b53836-18aa-451a-992d-2a111deeeab2`
 - [ ] Zephyr Charge — `576128ba-28aa-4ef9-9e72-8ca13f42c9b4`
 
-### Core Set 2020 Promos (`PM20`)
+### promos · Core Set 2020 Promos (`PM20`)
 
 - [ ] Agent of Treachery — `4cd82c7a-86df-4d29-b578-c009208c0d4b`
 - [ ] Ajani, Strength of the Pride — `c3974ec7-7af0-4b65-baf6-4c1c4fe8a5c4`
@@ -38049,7 +38078,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wakeroot Elemental — `edc6db57-3519-4649-9c4a-5cf264cce26f`
 - [ ] Yarok, the Desecrated — `95b53836-18aa-451a-992d-2a111deeeab2`
 
-### San Diego Comic-Con 2019 (`PS19`)
+### promos · San Diego Comic-Con 2019 (`PS19`)
 
 - [ ] God-Eternal Bontu — `183891b0-b5ec-47f4-8d09-b9d3cfc4e7f1`
 - [ ] God-Eternal Kefnet — `41d11144-32fc-4e45-a8db-3edb9dc0ce80`
@@ -38057,14 +38086,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] God-Eternal Rhonas — `fc4f2cdb-966c-4576-8b37-b3d138f5710e`
 - [ ] Nicol Bolas, Dragon-God — `581eedc4-efe4-4ae4-baf2-88071e7e6f6d`
 
-### 2018 Heroes of the Realm (`PH18`)
+### funny-special · 2018 Heroes of the Realm (`PH18`)
 
 - [ ] Kharis & The Beholder — `329f84dd-889c-4d03-a0bb-d96712ebcad8`
 - [ ] Optimus Prime, Inspiring Leader — `9cf22aee-0f97-4bf6-8941-22c7e0dcafd7`
 - [ ] Sol, Advocate Eternal — `3191ef26-eeeb-419b-acbd-f4b496eea0db`
 - [ ] The Legend of Arena — `51dddde5-c826-4adc-8fca-0a7f9b6cf17f`
 
-### Commander 2019 (`C19`)
+### commander · Commander 2019 (`C19`)
 
 - [ ] Aeon Engine — `af471455-6b9f-4c14-bb90-a74a44ecd247`
 - [ ] Ainok Survivalist — `7a5dae5f-29ab-4996-b236-c754de8769bc`
@@ -38295,7 +38324,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Coast — `40b36bc6-c185-4bda-99e7-0118953c2c97`
 - [ ] Zombie Infestation — `bdce1af0-3643-4e77-88f9-320206a191d4`
 
-### Planeswalker Championship Promos (`PWCS`)
+### promos · Planeswalker Championship Promos (`PWCS`)
 
 - [ ] Aven Interrupter — `d31fd12f-b4dd-4bc3-ace4-703dabd0f607`
 - [ ] Banishing Slash — `2800830c-73c6-4097-be7b-d698c6813c38`
@@ -38343,7 +38372,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Voice of Victory — `b12cbda1-ac09-49eb-96b3-a4df27bc37ea`
 - [ ] Vraska, Golgari Queen — `131096a3-2d53-4ec2-96d3-fcb58e698a13`
 
-### Throne of Eldraine (`ELD`)
+### expansion · Throne of Eldraine (`ELD`)
 
 - [ ] A-Cauldron Familiar — `6a94fb8a-c0bf-40d9-ad78-de9695797888`
 - [ ] Acclaimed Contender — `35df179a-c0e6-4ac1-a861-e6e9b4d1614d`
@@ -38589,7 +38618,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Worthy Knight — `37733e29-3ade-4bfd-89c9-efd13b548a53`
 - [ ] Yorvo, Lord of Garenbrig — `00a15abc-bdac-4977-90a0-f08d41941d01`
 
-### Throne of Eldraine Promos (`PELD`)
+### promos · Throne of Eldraine Promos (`PELD`)
 
 - [ ] Acclaimed Contender — `35df179a-c0e6-4ac1-a861-e6e9b4d1614d`
 - [ ] Ayara, First of Locthwain — `388168b3-ec68-4af2-b88c-6a5ec88c15f6`
@@ -38655,13 +38684,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Worthy Knight — `37733e29-3ade-4bfd-89c9-efd13b548a53`
 - [ ] Yorvo, Lord of Garenbrig — `00a15abc-bdac-4977-90a0-f08d41941d01`
 
-### Ponies: The Galloping (`PTG`)
+### funny-special · Ponies: The Galloping (`PTG`)
 
 - [ ] Nightmare Moon // Princess Luna — `e724bddb-6195-4943-b9c6-decc96717998`
 - [ ] Princess Twilight Sparkle — `f430f7b6-6392-4921-a20b-38fa542a49c1`
 - [ ] Rarity — `d7d46d09-eadf-4e82-8a4e-86ce981a7b0f`
 
-### Mystery Booster Playtest Cards 2019 (`CMB1`)
+### funny-special · Mystery Booster Playtest Cards 2019 (`CMB1`)
 
 - [ ] A Good Thing — `9cfdc604-71de-44e4-8ba7-2a3ee03aab68`
 - [ ] Abian, Luvion Usurper — `2df37779-2ec0-48ac-8be9-5d3b0e9679e6`
@@ -38777,7 +38806,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] You're in Command — `2234989f-270e-4d4c-9800-4fbf3176939d`
 - [ ] Zyym, Mesmeric Lord — `fbd4ffd6-1ffb-4822-9ee8-ee2133e03b4b`
 
-### The List (`PLST`)
+### masters-remastered · The List (`PLST`)
 
 - [ ] A Killer Among Us — `79d577a8-53c0-4220-bc0e-70764d72d5fd`
 - [ ] Aboleth Spawn — `d6ae77b3-59e7-475c-800c-930a5cb2e0ca`
@@ -43401,7 +43430,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zulaport Enforcer — `0ab5fde8-e7db-4265-81c6-2a6488ba56c4`
 - [ ] Zur's Weirding — `c6eaa147-3566-43a9-999a-d58b877496f5`
 
-### Game Night 2019 (`GN2`)
+### boxed-products · Game Night 2019 (`GN2`)
 
 - [ ] Accursed Horde — `8f3cba20-e7a4-47f4-8bce-90168ce9cc5c`
 - [ ] Akoum Hellkite — `05b6f9e3-9acd-43a6-acff-caa811aaf0a1`
@@ -43450,7 +43479,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Voldaren Duelist — `a96d0496-babc-4774-9b72-bea9d2b22743`
 - [ ] Zealot of the God-Pharaoh — `2911d52f-7faf-455a-acdf-77269c9ee8ce`
 
-### Historic Anthology 1 (`HA1`)
+### anthologies · Historic Anthology 1 (`HA1`)
 
 - [ ] Burning-Tree Emissary — `327d9679-0049-4401-8dab-e0fb362306bd`
 - [ ] Cryptbreaker — `16f75a65-d067-4f79-81b9-833c373cf4d2`
@@ -43468,7 +43497,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tendrils of Corruption — `84ee0da2-d886-4603-9aaa-bc5326a424d7`
 - [ ] Treasure Hunt — `05079479-86a6-4041-a395-83d325b6ddb7`
 
-### Secret Lair Drop (`SLD`)
+### secret-lair · Secret Lair Drop (`SLD`)
 
 - [ ] Abby, Merciless Soldier — `e05efd01-0202-4bd6-bac6-c6210819d463`
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
@@ -45012,7 +45041,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zuran Orb — `08cb8a30-9cb4-4517-bee5-8848aa60d1a2`
 - [ ] Zurgo Helmsmasher — `6c48d888-9f5d-43f4-adbd-61dbdba09260`
 
-### Judge Gift Cards 2020 (`J20`)
+### promos · Judge Gift Cards 2020 (`J20`)
 
 - [ ] Arena Rector — `6a23963c-21dc-4d21-8d28-5abad7f859a1`
 - [ ] Birthing Pod — `f8b9dd54-0837-47f4-ad14-7a0322d46d5f`
@@ -45021,11 +45050,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Spellseeker — `47a785ed-8095-4685-8daa-02c4e2b0ffcd`
 - [ ] Sterling Grove — `2c275a85-5a15-46cd-a6e7-add63f9b853d`
 
-### MagicFest 2020 (`PF20`)
+### promos · MagicFest 2020 (`PF20`)
 
 - [ ] Path to Exile — `d683d985-9888-4d21-8b5f-69e69ce4a03b`
 
-### Theros Beyond Death (`THB`)
+### expansion · Theros Beyond Death (`THB`)
 
 - [ ] Acolyte of Affliction — `d57c246f-18e5-4523-898c-1509db738363`
 - [ ] Agonizing Remorse — `1267dfda-eb1a-4963-9fe3-fa619d924d7a`
@@ -45279,7 +45308,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wolfwillow Haven — `7579f57d-c76e-4703-a030-34fb7160cb23`
 - [ ] Wrap in Flames — `b46efd59-eda7-4fe6-ace7-67ca8f6c088d`
 
-### Theros Beyond Death Promos (`PTHB`)
+### promos · Theros Beyond Death Promos (`PTHB`)
 
 - [ ] Allure of the Unknown — `252d9b25-45a1-40ca-b563-4cdefc791a44`
 - [ ] Aphemia, the Cacophony — `820dab0f-3b6b-437c-ba4b-2311437709c3`
@@ -45349,7 +45378,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wavebreak Hippocamp — `3405c8a9-a8d6-4b45-9b64-94141076603b`
 - [ ] Woe Strider — `3adbd963-e85d-4569-963a-4472594f06f9`
 
-### Unsanctioned (`UND`)
+### funny-special · Unsanctioned (`UND`)
 
 - [ ] Abstract Iguanart — `87a4806e-8d5e-473b-8d6d-665e45a5e042`
 - [ ] Acornelia, Fashionable Filcher — `c4edcdc0-91de-410c-95dd-219efcef692a`
@@ -45433,7 +45462,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Who // What // When // Where // Why — `adfe1b07-dd82-4c39-a7a6-ded0b1c39761`
 - [ ] Yet Another Aether Vortex — `77d1489b-e7c1-4185-9269-766ca554f0e8`
 
-### Historic Anthology 2 (`HA2`)
+### anthologies · Historic Anthology 2 (`HA2`)
 
 - [ ] Ancestral Mask — `db5380ed-ba28-4ea2-abc3-4998e2022903`
 - [ ] Brain Maggot — `419b5b4f-cac7-44bf-b1e2-655b5a5d37b1`
@@ -45454,7 +45483,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Virulent Plague — `adfba95e-c73c-415d-adea-edcd04372ba4`
 - [ ] Waste Not — `00fdcc19-88ed-46c3-91f0-095806228105`
 
-### Commander 2020 (`C20`)
+### commander · Commander 2020 (`C20`)
 
 - [ ] Abandoned Sarcophagus — `a051dee0-60c8-4f58-84cb-55460c097115`
 - [ ] Abzan Ascendancy — `3b7d4206-0d88-407b-ace5-d5d28881bf95`
@@ -45721,7 +45750,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zaxara, the Exemplary — `a9946ea0-bf0e-4c9c-a3c6-21337a5029ab`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### Ikoria: Lair of Behemoths (`IKO`)
+### expansion · Ikoria: Lair of Behemoths (`IKO`)
 
 - [ ] A-Winota, Joiner of Forces — `533edec1-ba88-409a-9e51-9138b85d000f`
 - [ ] Adaptive Shimmerer — `8003ca2d-0c1d-47c1-bcd1-4609615c7a82`
@@ -45945,7 +45974,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zilortha, Strength Incarnate — `2dba8d8d-891e-482e-8014-879f701d0619`
 - [ ] Zirda, the Dawnwaker — `7b515c56-7b1e-42a8-82b0-1b30201fb162`
 
-### Ikoria: Lair of Behemoths Promos (`PIKO`)
+### promos · Ikoria: Lair of Behemoths Promos (`PIKO`)
 
 - [ ] Bonders' Enclave — `f33ce38a-34ec-4b65-a0fc-160484a02007`
 - [ ] Brokkos, Apex of Forever — `e9137b54-3464-4f57-95e3-f94bf2ac854e`
@@ -46011,12 +46040,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yorion, Sky Nomad — `e15504a7-2b67-4185-b916-172145f10b19`
 - [ ] Zirda, the Dawnwaker — `7b515c56-7b1e-42a8-82b0-1b30201fb162`
 
-### Love Your LGS 2020 (`PLG20`)
+### promos · Love Your LGS 2020 (`PLG20`)
 
 - [ ] Hangarback Walker — `dde55256-5259-44e7-a267-fca45a7f0d04`
 - [ ] Reliquary Tower — `c23e5b80-08d2-4e24-9908-fe2aa4f30f6f`
 
-### Historic Anthology 3 (`HA3`)
+### anthologies · Historic Anthology 3 (`HA3`)
 
 - [ ] Akroma's Memorial — `967e8b3f-8266-4d9a-a38b-d0e10184e1e4`
 - [ ] Ancient Ziggurat — `0baabe39-72ae-47bd-a095-cbf7eb8a6361`
@@ -46046,11 +46075,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ulamog, the Ceaseless Hunger — `0bfa4512-e35a-4c93-b324-80ec659f5a97`
 - [ ] Unburial Rites — `d48e1545-7997-45ed-83a1-aee45b3d3d20`
 
-### Secret Lair: Ultimate Edition (`SLU`)
+### secret-lair · Secret Lair: Ultimate Edition (`SLU`)
 
 - [ ] Blast Zone — `393a254f-be31-431a-9341-a51286f8cbce`
 
-### Signature Spellbook: Chandra (`SS3`)
+### spellbooks · Signature Spellbook: Chandra (`SS3`)
 
 - [ ] Cathartic Reunion — `0f3c3e5f-6af3-4af2-8703-4ccc8ed8f675`
 - [ ] Chandra, Torch of Defiance — `12cc800c-c7be-4811-8207-fd01a99cc892`
@@ -46061,7 +46090,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Rite of Flame — `8a2e53f9-8100-488f-8504-b59e9bd1cc29`
 - [ ] Young Pyromancer — `5fac139a-07d3-4e6c-98e3-d98b199f7a6f`
 
-### Core Set 2021 (`M21`)
+### core · Core Set 2021 (`M21`)
 
 - [ ] Adherent of Hope — `b5f5400e-f341-40e3-b935-36d9cf983a20`
 - [ ] Alchemist's Gift — `4e698713-6203-44f2-b438-1b26b951536d`
@@ -46298,7 +46327,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wildwood Scourge — `b9dec104-c636-4770-a7fc-7a3331face15`
 - [ ] Witch's Cauldron — `cb65ee08-bfdb-4c18-8967-8bcf31fcabfa`
 
-### Core Set 2021 Promos (`PM21`)
+### promos · Core Set 2021 Promos (`PM21`)
 
 - [ ] Animal Sanctuary — `f3c40943-1d7c-4ea2-b34f-8df8b6775701`
 - [ ] Azusa, Lost but Seeking — `6c2c8bf3-9bf8-4a86-89d3-3bb36260dc51`
@@ -46366,7 +46395,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vito, Thorn of the Dusk Rose — `7336a541-3ae9-4ab2-acb8-f574c0a5b3a9`
 - [ ] Volcanic Salvo — `9c2fd3a3-96f2-4e84-85a9-77698c2f83aa`
 
-### Jumpstart (`JMP`)
+### jumpstart · Jumpstart (`JMP`)
 
 - [ ] A-Blood Artist — `1d96c049-d747-4c98-a5fe-a0c94b6a899c`
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
@@ -46753,7 +46782,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombie Infestation — `bdce1af0-3643-4e77-88f9-320206a191d4`
 - [ ] Zurzoth, Chaos Rider — `a7da9ec5-f82f-4a6d-9737-06a1556e2dd6`
 
-### Jumpstart Arena Exclusives (`AJMP`)
+### jumpstart · Jumpstart Arena Exclusives (`AJMP`)
 
 - [ ] Archon of Sun's Grace — `48a99dce-0aa9-4aac-81df-cec5f94c639d`
 - [ ] Audacious Thief — `5905c55a-f1d1-4021-a9af-f85b02ae21f3`
@@ -46773,7 +46802,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Weight of Memory — `826c5feb-9e82-49e0-bc6f-6c29004f8151`
 - [ ] Woe Strider — `3adbd963-e85d-4569-963a-4472594f06f9`
 
-### 2019 Heroes of the Realm (`PH19`)
+### funny-special · 2019 Heroes of the Realm (`PH19`)
 
 - [ ] Champions of Archery // Join the Group — `4e658c56-ebf7-449c-909c-86053f8eaba6`
 - [ ] Collectigull // Only the Best — `23146975-7ba4-4c64-96a5-1cd54090f367`
@@ -46783,7 +46812,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] The Cinematic Phoenix — `35358853-7443-4f3f-8922-fbcfc88bbd81`
 - [ ] War of the Spark — `9bb259d0-09f6-4564-8cd1-73b4d0e5b4fc`
 
-### Double Masters (`2XM`)
+### masters-remastered · Double Masters (`2XM`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Academy Ruins — `a3da7d5b-2c2b-45fe-b9c5-413b8c8fc0a2`
@@ -47085,7 +47114,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wound Reflection — `b09206a4-8b73-4125-8b79-53f6fd511b16`
 - [ ] Yavimaya's Embrace — `d5cb0370-a6f0-40c0-8b8f-553fca23778d`
 
-### Amonkhet Remastered (`AKR`)
+### masters-remastered · Amonkhet Remastered (`AKR`)
 
 - [ ] Abandoned Sarcophagus — `a051dee0-60c8-4f58-84cb-55460c097115`
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
@@ -47352,7 +47381,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winds of Rebuke — `6840a63d-d627-4a18-afa9-018406767642`
 - [ ] Zealot of the God-Pharaoh — `2911d52f-7faf-455a-acdf-77269c9ee8ce`
 
-### Arena Beginner Set (`ANB`)
+### starter · Arena Beginner Set (`ANB`)
 
 - [ ] Affectionate Indrik — `88aa032d-dc11-4cae-81f3-ce66353963e0`
 - [ ] Angel of Vitality — `635fe908-6f58-4c9e-ac55-0775a7c6f278`
@@ -47426,7 +47455,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winged Words — `c623aeb1-e6d4-48fe-bd2a-a7a6729aa4df`
 - [ ] World Shaper — `3c075bb6-1831-4521-bd8d-4ed2825ae796`
 
-### Zendikar Rising (`ZNR`)
+### expansion · Zendikar Rising (`ZNR`)
 
 - [ ] A-Base Camp — `fb6b271f-689e-46e0-97b8-044aaf582898`
 - [ ] A-Gnarlid Colony — `bef4e061-52cf-4b19-bd03-0c8c99371312`
@@ -47686,7 +47715,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zof Consumption // Zof Bloodbog — `d9f11985-e460-425d-b083-9cb0edf1983a`
 - [ ] Zulaport Duelist — `e8237d12-2860-4cc8-85a4-458e4c68e69a`
 
-### Zendikar Rising Commander (`ZNC`)
+### commander · Zendikar Rising Commander (`ZNC`)
 
 - [ ] Abundance — `eccc9a54-2b56-4a02-9926-258d5b2e25fb`
 - [ ] Abzan Falconer — `8b972819-507a-40a9-ab1f-1a674ea56083`
@@ -47806,7 +47835,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zendikar's Roil — `a842cc2b-52eb-4dc5-86c6-6575c2ed913d`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### Zendikar Rising Expeditions (`ZNE`)
+### masterpieces · Zendikar Rising Expeditions (`ZNE`)
 
 - [ ] Ancient Tomb — `23467047-6dba-4498-b783-1ebc4f74b8c2`
 - [ ] Cavern of Souls — `89ca686a-7c72-4d8f-9290-e89635624a83`
@@ -47817,7 +47846,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Valakut, the Molten Pinnacle — `1bc44216-4e06-4f66-89b7-5c327004604e`
 - [ ] Wasteland — `09a70ae8-3859-4a09-901d-dce063fa3b5f`
 
-### Zendikar Rising Promos (`PZNR`)
+### promos · Zendikar Rising Promos (`PZNR`)
 
 - [ ] Agadeem's Awakening // Agadeem, the Undercrypt — `562d71b9-1646-474e-9293-55da6947a758`
 - [ ] Akiri, Fearless Voyager — `c03ae426-2536-4c20-a73a-a24e816f76b0`
@@ -47897,7 +47926,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zagras, Thief of Heartbeats — `a2375a23-a1f0-4514-87a0-e699f91acd7d`
 - [ ] Zareth San, the Trickster — `a316b0ce-1f63-4a8e-9a6e-bfbe03ca4e9e`
 
-### Kaladesh Remastered (`KLR`)
+### masters-remastered · Kaladesh Remastered (`KLR`)
 
 - [ ] Aeronaut Admiral — `dcde1a62-33a5-4454-a389-9bf7a3521a4c`
 - [ ] Aether Chaser — `8aab0b55-2779-43c7-a3ee-151b8e5c72f3`
@@ -48160,7 +48189,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yahenni's Expertise — `692babfa-9b74-415e-a560-abae4ccb006b`
 - [ ] Yahenni, Undying Partisan — `fdba89eb-1cf5-46e6-9d09-1adb9bc40fcd`
 
-### Commander Legends (`CMR`)
+### commander · Commander Legends (`CMR`)
 
 - [ ] Abomination of Llanowar — `5146ba3f-2c5f-4a86-95d7-a34ce1e842b0`
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
@@ -48618,7 +48647,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zedruu the Greathearted — `514179c0-a50b-4565-8e71-9dad256edd85`
 - [ ] Zur the Enchanter — `d7950018-d744-48a8-81aa-0d8384703f48`
 
-### Commander Collection: Green (`CC1`)
+### commander · Commander Collection: Green (`CC1`)
 
 - [ ] Bane of Progress — `51f9a6cc-8eb2-44ed-a2d9-913ac514ad67`
 - [ ] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
@@ -48627,7 +48656,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Seedborn Muse — `463865bc-087e-477b-9e86-84e77f1ad931`
 - [ ] Sylvan Library — `92eed395-62ca-4293-882b-8565c40daab5`
 
-### Judge Gift Cards 2021 (`PJ21`)
+### promos · Judge Gift Cards 2021 (`PJ21`)
 
 - [ ] Edgar Markov — `41e2790d-49f5-4e98-b8d9-04179f47f13a`
 - [ ] Ezuri, Claw of Progress — `40eacdae-fae5-46b9-a9e5-9211469f74fc`
@@ -48640,7 +48669,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] The Gitrog Monster — `a5e54d2b-aad8-4ddd-af4b-13668913762b`
 - [ ] Zacama, Primal Calamity — `23270e4a-a222-4ffb-a946-d0e20d665187`
 
-### Love Your LGS 2021 (`PLG21`)
+### promos · Love Your LGS 2021 (`PLG21`)
 
 - [ ] Aven Mindcensor — `d9517c5d-66d0-4178-96fb-a8c04f311ad8`
 - [ ] Bolas's Citadel — `2bd111bb-ce02-414c-b5b7-e0e037d8d96b`
@@ -48652,7 +48681,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xantcha, Sleeper Agent — `0f0f3712-8d13-41a5-b332-2ab34e48d79d`
 - [ ] Yuriko, the Tiger's Shadow — `a7043fbd-1dfd-42cf-be4b-cc343d0949e5`
 
-### Year of the Ox 2021 (`PL21`)
+### promos · Year of the Ox 2021 (`PL21`)
 
 - [ ] Angrath, the Flame-Chained — `092ceffb-1ee4-452c-b15e-5b79267d42a6`
 - [ ] Moraug, Fury of Akoum — `6288c0cb-cf32-4ae9-abf0-104ec71654fa`
@@ -48660,7 +48689,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sethron, Hurloon General — `561c1ce9-41e7-474a-9476-bb9a7d24f0d5`
 - [ ] Tahngarth, First Mate — `1a8a41a1-6fc5-4dc8-bd28-9bf404c777d7`
 
-### Kaldheim Promos (`PKHM`)
+### promos · Kaldheim Promos (`PKHM`)
 
 - [ ] Alrund's Epiphany — `bc842838-1993-4480-b8fe-f9d9f2dee7a4`
 - [ ] Alrund, God of the Cosmos // Hakka, Whispering Raven — `0a69c3dd-52a3-4ef6-b53f-b0780e0dc5f8`
@@ -48747,7 +48776,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vorinclex, Monstrous Raider — `5a3fdf5a-bff8-4896-b288-3f43f9a72d9b`
 - [ ] Waking the Trolls — `c8cdabc4-e147-491b-9c44-96e57f6ec3b4`
 
-### Kaldheim (`KHM`)
+### expansion · Kaldheim (`KHM`)
 
 - [ ] A-Alrund, God of the Cosmos // A-Hakka, Whispering Raven — `2d6186a6-5236-4fb9-bcb6-f6825b148886`
 - [ ] A-Bretagard Stronghold — `34b9e436-7db0-4820-a780-46cc0bd901bc`
@@ -49037,7 +49066,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Withercrown — `bc700a38-7467-41fd-861f-940e0e5982bd`
 - [ ] Youthful Valkyrie — `6d37ba4b-ff56-4eec-9dc2-2d7f357dc9c9`
 
-### Kaldheim Commander (`KHC`)
+### commander · Kaldheim Commander (`KHC`)
 
 - [ ] Abomination of Llanowar — `5146ba3f-2c5f-4a86-95d7-a34ce1e842b0`
 - [ ] Ambition's Cost — `84de4fec-2f38-4293-93d3-b3882c5aac14`
@@ -49134,7 +49163,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wirewood Channeler — `8badfd34-9b63-4ada-8012-b8cddaf5b492`
 - [ ] Wolverine Riders — `09070db6-01f6-4a8a-b167-a7825e6959f4`
 
-### Historic Anthology 4 (`HA4`)
+### anthologies · Historic Anthology 4 (`HA4`)
 
 - [ ] Abomination of Llanowar — `5146ba3f-2c5f-4a86-95d7-a34ce1e842b0`
 - [ ] Adorned Pouncer — `80b8ee3d-4174-4f47-a533-a3db1e703382`
@@ -49162,7 +49191,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Torment of Scarabs — `4ba5bcee-fc95-4d05-965e-b1762529ec5f`
 - [ ] Triumphant Reckoning — `0d3e0b38-a9ff-489b-8c00-4ca89deb4869`
 
-### Time Spiral Remastered (`TSR`)
+### masters-remastered · Time Spiral Remastered (`TSR`)
 
 - [ ] Abrupt Decay — `1c747fe2-289e-492a-a846-aa77707e2dc3`
 - [ ] Aeon Chronicler — `a1399cb8-f22a-487e-b539-2db47b09a790`
@@ -49544,7 +49573,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zealous Conscripts — `1dae6f39-2cbd-485c-b190-017a26401fd4`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### Commander 2021 (`C21`)
+### commander · Commander 2021 (`C21`)
 
 - [ ] Adrix and Nev, Twincasters — `12a6cad9-eb42-43bd-9e68-aaf862cd83db`
 - [ ] Aether Gale — `b21d6482-1b3a-47e6-98a5-3067f5f3818b`
@@ -49836,7 +49865,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yedora, Grave Gardener — `1fa20b05-cc06-4fb7-ae76-677a29e2185a`
 - [ ] Zaffai, Thunder Conductor — `02d529df-6299-4e8f-9794-70c8061efdc4`
 
-### Strixhaven Mystical Archive (`STA`)
+### masterpieces · Strixhaven Mystical Archive (`STA`)
 
 - [ ] Abundant Harvest — `34841228-31ac-48ac-b6d6-486b5e1e07dd`
 - [ ] Adventurous Impulse — `5bf49f39-b3d5-4148-8dc2-b5b5011769d2`
@@ -49893,7 +49922,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Weather the Storm — `3a091f7b-efc9-4aaa-9da8-157ef8099a36`
 - [ ] Whirlwind Denial — `ba9e129d-a3cf-431c-93af-f2e4902d40a0`
 
-### Strixhaven: School of Mages (`STX`)
+### expansion · Strixhaven: School of Mages (`STX`)
 
 - [ ] A-Ardent Dustspeaker — `dc22be73-1d72-4455-9a7a-871b75ecc4c7`
 - [ ] A-Dueling Coach — `ce7f8cef-f76f-41ff-a8e0-7164412d2757`
@@ -50162,7 +50191,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zephyr Boots — `02f3b9c3-f611-4f05-ab3e-b296916efdad`
 - [ ] Zimone, Quandrix Prodigy — `ee2ef1e0-6803-4eb5-8664-605438c67505`
 
-### Strixhaven: School of Mages Promos (`PSTX`)
+### promos · Strixhaven: School of Mages Promos (`PSTX`)
 
 - [ ] Academic Probation — `400b2e17-ee48-4e22-a8a6-a607c215d1a2`
 - [ ] Accomplished Alchemist — `97e18a8d-9068-4782-a744-280d28c68228`
@@ -50254,7 +50283,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wandering Archaic // Explore the Vastlands — `6556c4c0-b10d-4208-821b-0c0a49abd188`
 - [ ] Witherbloom Command — `7cc81fb3-495c-47cd-8c56-96197d87e9e0`
 
-### Modern Horizons 2 Promos (`PMH2`)
+### promos · Modern Horizons 2 Promos (`PMH2`)
 
 - [ ] Academy Manufactor — `f36d1d8b-8303-44a9-ab56-531931641ea2`
 - [ ] Aeve, Progenitor Ooze — `44600a74-9584-488b-a342-2fccd8fa7599`
@@ -50331,7 +50360,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yusri, Fortune's Flame — `2c0a0a7d-b12f-47c8-a6a6-d046f999ec6b`
 - [ ] Zabaz, the Glimmerwasp — `549dc9f3-1fda-4ad3-87bc-8a990800380b`
 
-### Historic Anthology 5 (`HA5`)
+### anthologies · Historic Anthology 5 (`HA5`)
 
 - [ ] Ancient Grudge — `306593b0-6ea8-476f-a3f2-e17876c1bab4`
 - [ ] Atarka's Command — `1943cbb0-2b12-4450-90af-060b8c8627c3`
@@ -50357,7 +50386,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vorinclex, Voice of Hunger — `dbf0ad03-ab31-49d2-89b1-05b45948a61f`
 - [ ] Whirler Rogue — `7060f2c8-fca0-4b7a-bddf-37682f434596`
 
-### Modern Horizons 1 Timeshifts (`H1R`)
+### supplemental · Modern Horizons 1 Timeshifts (`H1R`)
 
 - [ ] Archmage's Charm — `85cbb035-25df-43bb-ae06-ab098f448b02`
 - [ ] Ayula, Queen Among Bears — `a79d2fc8-467f-464d-9e73-2dae4b059628`
@@ -50397,7 +50426,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Urza, Lord High Artificer — `e87906d2-db1a-4e19-b910-adb4eb339945`
 - [ ] Weather the Storm — `3a091f7b-efc9-4aaa-9da8-157ef8099a36`
 
-### Modern Horizons 2 (`MH2`)
+### supplemental · Modern Horizons 2 (`MH2`)
 
 - [ ] A-Dragon's Rage Channeler — `0fe21567-badf-4e55-98bb-cc014fef2eb0`
 - [ ] Abiding Grace — `f4e7bc58-336d-4670-84cb-a46ca1f48671`
@@ -50675,13 +50704,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zabaz, the Glimmerwasp — `549dc9f3-1fda-4ad3-87bc-8a990800380b`
 - [ ] Zuran Orb — `08cb8a30-9cb4-4517-bee5-8848aa60d1a2`
 
-### Wizards Play Network 2021 (`PW21`)
+### promos · Wizards Play Network 2021 (`PW21`)
 
 - [ ] Arbor Elf — `4567a528-75f0-4ea6-b927-3a500caf76ac`
 - [ ] Collected Company — `0bbcb563-09b3-499d-a9cc-3a6d7501dd81`
 - [ ] Conjurer's Closet — `cd1eda60-53e4-44d0-9b2c-7a57395e291f`
 
-### Adventures in the Forgotten Realms (`AFR`)
+### expansion · Adventures in the Forgotten Realms (`AFR`)
 
 - [ ] +2 Mace — `629fe1be-272d-465f-b9b1-2ce177410f13`
 - [ ] A-Acererak the Archlich — `f0cc4b7d-3b52-4a16-8ae7-4e64a682e43d`
@@ -50950,7 +50979,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zariel, Archduke of Avernus — `04ddb495-e9b0-47bf-b892-c7ae7b87c10c`
 - [ ] Zombie Ogre — `0898fb77-d304-496c-8f2e-1cfe50cc5507`
 
-### Adventures in the Forgotten Realms Promos (`PAFR`)
+### promos · Adventures in the Forgotten Realms Promos (`PAFR`)
 
 - [ ] Acererak the Archlich — `31b4e85d-89fc-4712-8f05-7ec097b1d3b6`
 - [ ] Asmodeus the Archfiend — `1e4032f6-9741-4845-9325-781c9e489172`
@@ -51031,7 +51060,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zalto, Fire Giant Duke — `fb1c507d-ef94-438e-bee5-29eb48dc8e70`
 - [ ] Zariel, Archduke of Avernus — `04ddb495-e9b0-47bf-b892-c7ae7b87c10c`
 
-### Forgotten Realms Commander (`AFC`)
+### commander · Forgotten Realms Commander (`AFC`)
 
 - [ ] Abundant Growth — `947a2665-2f4d-4193-8768-118f85334549`
 - [ ] Angelic Gift — `e5e04968-d9b7-4bd5-b826-be9502360cd3`
@@ -51267,13 +51296,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wulfgar of Icewind Dale — `b19d1459-eb08-4e75-95f4-402d86371a78`
 - [ ] Zhalfirin Void — `13aab4fc-4c89-45e6-8275-b074b00d0ee9`
 
-### 2020 Heroes of the Realm (`PH20`)
+### funny-special · 2020 Heroes of the Realm (`PH20`)
 
 - [ ] Euroakus — `e11a022c-140d-4b7f-84b0-17885f76faa6`
 - [ ] Mountain Mover — `5801dc62-dfc7-47bb-b824-7ca33021869e`
 - [ ] The Secret Lair — `06eec4d7-ee11-44c9-8c5c-a16ecd5ecd84`
 
-### Mystery Booster Playtest Cards 2021 (`CMB2`)
+### funny-special · Mystery Booster Playtest Cards 2021 (`CMB2`)
 
 - [ ] A Good Thing — `9cfdc604-71de-44e4-8ba7-2a3ee03aab68`
 - [ ] Abian, Luvion Usurper — `2df37779-2ec0-48ac-8be9-5d3b0e9679e6`
@@ -51389,7 +51418,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] You're in Command — `2234989f-270e-4d4c-9800-4fbf3176939d`
 - [ ] Zyym, Mesmeric Lord — `fbd4ffd6-1ffb-4822-9ee8-ee2133e03b4b`
 
-### Jumpstart: Historic Horizons (`J21`)
+### jumpstart · Jumpstart: Historic Horizons (`J21`)
 
 - [ ] Abiding Grace — `f4e7bc58-336d-4670-84cb-a46ca1f48671`
 - [ ] Abzan Battle Priest — `1b44fe0a-4a99-4166-b0b3-102b36b54ffa`
@@ -51749,7 +51778,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zabaz, the Glimmerwasp — `549dc9f3-1fda-4ad3-87bc-8a990800380b`
 - [ ] Zhalfirin Decoy — `b22e55ef-fb74-4991-a43b-9d3ce06c23e5`
 
-### Innistrad: Midnight Hunt (`MID`)
+### expansion · Innistrad: Midnight Hunt (`MID`)
 
 - [ ] A-Devoted Grafkeeper // A-Departed Soulkeeper — `35f53871-203a-41da-930e-76540c62d3da`
 - [ ] A-Falcon Abomination — `3adb972d-8c06-43a6-aac8-cb0109676e98`
@@ -52009,7 +52038,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winterthorn Blessing — `4b4bdbdc-3934-471b-9027-31277e7765ab`
 - [ ] Wrenn and Seven — `63a509ea-cedc-40e9-b4e8-0ff4fc356485`
 
-### Innistrad: Midnight Hunt Promos (`PMID`)
+### promos · Innistrad: Midnight Hunt Promos (`PMID`)
 
 - [ ] Adeline, Resplendent Cathar — `38515f89-348b-4cf3-b7bd-1f6fe4ce2fba`
 - [ ] Angelfire Ignition — `29e1c6e3-d76e-4388-b4e9-f732fdec4338`
@@ -52091,7 +52120,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Willow Geist — `7a7096a7-ef1b-4015-b1eb-5c2174d7ec9a`
 - [ ] Wrenn and Seven — `63a509ea-cedc-40e9-b4e8-0ff4fc356485`
 
-### Midnight Hunt Commander (`MIC`)
+### commander · Midnight Hunt Commander (`MIC`)
 
 - [ ] Abzan Falconer — `8b972819-507a-40a9-ab1f-1a674ea56083`
 - [ ] Aetherspouts — `48369aec-a991-4bef-8554-01c84302b063`
@@ -52229,7 +52258,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Elder — `7fd4c452-07f2-492c-9c78-d1c6362d9eec`
 - [ ] Zombie Apocalypse — `8241277d-654f-4985-9d49-a22c1e59eec2`
 
-### Pioneer Challenger Decks 2021 (`Q06`)
+### deck-products · Pioneer Challenger Decks 2021 (`Q06`)
 
 - [ ] Approach of the Second Sun — `e4125377-34c0-4b54-bdf8-4e88f5d24565`
 - [ ] Chandra, Torch of Defiance — `12cc800c-c7be-4811-8207-fd01a99cc892`
@@ -52242,7 +52271,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Spell Queller — `135135f2-1643-40db-91f2-bb7b956d212c`
 - [ ] Wild Slash — `f76a0e5b-74c1-4ee8-b502-e8b988086de4`
 
-### Crimson Vow Commander (`VOC`)
+### commander · Crimson Vow Commander (`VOC`)
 
 - [ ] Ancient Craving — `78725353-9274-420a-b722-add0f43c444e`
 - [ ] Angel of Flight Alabaster — `9b6a74fb-c48f-4d85-b4b3-96eb80b9efc7`
@@ -52374,7 +52403,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wedding Ring — `0c34e962-99d9-4163-b852-4f61886546aa`
 - [ ] Windborn Muse — `75e09ac6-d789-4c4d-9aca-845d68f3899f`
 
-### Innistrad: Crimson Vow (`VOW`)
+### expansion · Innistrad: Crimson Vow (`VOW`)
 
 - [ ] A-Binding Geist // A-Spectral Binding — `ee12e2e0-7eda-4f5e-9373-d4c029995adb`
 - [ ] A-Brine Comber // A-Brinebound Gift — `55717e47-c1ab-4218-bc1c-10e58e91fa87`
@@ -52641,7 +52670,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wolfkin Outcast // Wedding Crasher — `ac3d07cd-88c4-4e22-9d86-f92d34f406d4`
 - [ ] Wretched Throng — `7e484372-a052-4df6-a6b2-2c6accccabef`
 
-### Innistrad: Crimson Vow Promos (`PVOW`)
+### promos · Innistrad: Crimson Vow Promos (`PVOW`)
 
 - [ ] Alchemist's Gambit — `271d8db6-8606-46d7-9812-75aa22fcfd8e`
 - [ ] Anje, Maid of Dishonor — `1829f1dc-1fa9-4361-b318-d4dee280e6fd`
@@ -52723,7 +52752,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Welcoming Vampire — `605c1ee0-5e8a-4e0a-a99b-42a38873f822`
 - [ ] Winged Portent — `378567f8-7aef-42b6-853e-8591641052e8`
 
-### Alchemy: Innistrad (`YMID`)
+### alchemy · Alchemy: Innistrad (`YMID`)
 
 - [ ] Absorb Energy — `3010f11c-8ee1-4854-96d2-ae33ea3fe4e8`
 - [ ] Angel of Eternal Dawn — `9fb2f004-96a4-49ba-9f62-ba60fa27c895`
@@ -52789,14 +52818,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Veteran Ghoulcaller — `95886816-e0b7-40a6-a631-6ba62ccc54cb`
 - [ ] Wickerwing Effigy — `3449b0e5-532c-4b4b-9d1b-1b6672f560d7`
 
-### 2021 Heroes of the Realm (`PH21`)
+### funny-special · 2021 Heroes of the Realm (`PH21`)
 
 - [ ] Andrios, Roaming Explorer — `e1c8c6bf-09e2-49de-9de0-17174b3b8a59`
 - [ ] Arteeoh, Dread Scavenger — `7c0cd1ae-3c13-443e-b9c2-1e26fba29cae`
 - [ ] Byode, Inverse Sun — `892abda5-f2c4-478c-ab43-938785abb5a6`
 - [ ] Ersta, Friend to All — `9d54827a-5f7a-4907-bee5-276e92a95500`
 
-### Judge Gift Cards 2022 (`P22`)
+### promos · Judge Gift Cards 2022 (`P22`)
 
 - [ ] Animate Dead — `c0d8fef4-65f4-4769-982d-b397d2b7e977`
 - [ ] Greater Auramancy — `e6e888ea-9935-4df2-a344-c54637e55f43`
@@ -52809,7 +52838,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Stranglehold — `b66c6e3a-daed-43a3-95d6-4f9d6223bbf1`
 - [ ] Training Grounds — `8de3eabe-9a8f-4865-beef-a4888c081d39`
 
-### Commander Collection: Black (`CC2`)
+### commander · Commander Collection: Black (`CC2`)
 
 - [ ] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
 - [ ] Ghoulcaller Gisa — `0dd894cb-1968-471c-af08-ea7ec5ce8428`
@@ -52819,7 +52848,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Reanimate — `a044474a-cd72-4e9d-bd8d-a08f2de9cdc0`
 - [ ] Toxic Deluge — `afaef788-34d1-460b-b884-9d7ae6ddeb18`
 
-### Innistrad: Double Feature (`DBL`)
+### supplemental · Innistrad: Double Feature (`DBL`)
 
 - [ ] Abandon the Post — `5404c6a5-399d-4237-b03c-41b6a1b79050`
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
@@ -53324,7 +53353,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wrenn and Seven — `63a509ea-cedc-40e9-b4e8-0ff4fc356485`
 - [ ] Wretched Throng — `7e484372-a052-4df6-a6b2-2c6accccabef`
 
-### Kamigawa: Neon Dynasty (`NEO`)
+### expansion · Kamigawa: Neon Dynasty (`NEO`)
 
 - [ ] A-Akki Ronin — `1be31774-decb-4d33-900c-5ec6e725d803`
 - [ ] A-Ancestral Katana — `6c7d22e4-2607-4cf5-a939-28361f38f3b6`
@@ -53610,7 +53639,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] When We Were Young — `1f27aa69-d17e-4f1f-9aba-cee205036f93`
 - [ ] You Are Already Dead — `c1157d79-38ea-4a88-b346-7b12614ff78a`
 
-### Kamigawa: Neon Dynasty Promos (`PNEO`)
+### promos · Kamigawa: Neon Dynasty Promos (`PNEO`)
 
 - [ ] Ao, the Dawn Sky — `697ac261-263b-4879-bf45-6d10d23312ae`
 - [ ] Atsushi, the Blazing Sky — `535f405d-94df-4f45-aedc-b331103720b7`
@@ -53690,7 +53719,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tribute to Horobi // Echo of Death's Wail — `81622cf6-3021-4ad4-933d-a7e3d8ac817f`
 - [ ] Weaver of Harmony — `494b31b2-27ef-4ca1-ac72-c2fcfc8a23a1`
 
-### Neon Dynasty Commander (`NEC`)
+### commander · Neon Dynasty Commander (`NEC`)
 
 - [ ] Aerial Surveyor — `92c9b2fd-95d6-4937-aee2-67b4bb8ca29d`
 - [ ] Aeronaut Admiral — `dcde1a62-33a5-4454-a389-9bf7a3521a4c`
@@ -53817,14 +53846,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Whirler Rogue — `7060f2c8-fca0-4b7a-bddf-37682f434596`
 - [ ] Yoshimaru, Ever Faithful — `963834c8-42df-4ee6-9b45-b9de88ce2eac`
 
-### Year of the Tiger 2022 (`PL22`)
+### promos · Year of the Tiger 2022 (`PL22`)
 
 - [ ] Herald's Horn — `c02c5547-b9c9-4b2d-9d12-e87bfba8f2d2`
 - [ ] Snapdax, Apex of the Hunt — `b2b78623-5a10-4ef7-b983-3d82478269c3`
 - [ ] Temur Sabertooth — `8bf8e846-9d10-4dbc-a379-df37bb9fb6d4`
 - [ ] Yuriko, the Tiger's Shadow — `a7043fbd-1dfd-42cf-be4b-cc343d0949e5`
 
-### Universes Within (`SLX`)
+### masters-remastered · Universes Within (`SLX`)
 
 - [ ] Aisha of Sparks and Smoke — `eae3e762-dacd-4bd2-923c-3abb5ceb729a`
 - [ ] Arvinox, the Mind Flail — `9abecd23-a2d9-43c7-8d01-f8afdc53026e`
@@ -53857,7 +53886,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wernog, Rider's Chaplain — `6cd03270-54cc-43e1-9b86-70c76960c841`
 - [ ] Zethi, Arcane Blademaster — `ac136d46-32b7-4222-a840-b8be011c1872`
 
-### Wizards Play Network 2022 (`PW22`)
+### promos · Wizards Play Network 2022 (`PW22`)
 
 - [ ] Atsushi, the Blazing Sky — `535f405d-94df-4f45-aedc-b331103720b7`
 - [ ] Consider — `4c9bcba6-87b5-4fb3-97ee-6fe5b739337d`
@@ -53865,7 +53894,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Psychosis Crawler — `2876e74f-a242-4995-9702-0b737a1ab67a`
 - [ ] Swiftfoot Boots — `c8b143ad-43ec-4e0d-a440-e348daa31391`
 
-### Alchemy: Kamigawa (`YNEO`)
+### alchemy · Alchemy: Kamigawa (`YNEO`)
 
 - [ ] Artillery Enthusiast — `43e5050f-e94c-4df5-a4a7-19935724c63f`
 - [ ] Bellowsbreath Ogre — `7eb3d5af-c455-441b-9b8c-1bce45ea4b46`
@@ -53898,7 +53927,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Swarm Saboteur — `4426edf7-5fbb-41a2-83b9-80bf9f04651b`
 - [ ] Undercity Plunder — `6c41f596-dde3-43d3-aca9-2ad0543d60cc`
 
-### Game Day Promos (`GDY`)
+### promos · Game Day Promos (`GDY`)
 
 - [ ] All-Seeing Arbiter — `f15460d9-0133-436c-b0fe-1661989124f0`
 - [ ] Braids, Arisen Nightmare — `e0445c80-fa53-4c3e-881e-940e9fce7f57`
@@ -53910,7 +53939,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Touch the Spirit Realm — `52f0dcbd-ccf3-4525-8e55-2d38b4991834`
 - [ ] Workshop Warchief — `0695af85-7405-4512-bb97-42517a532ada`
 
-### New Capenna Commander (`NCC`)
+### commander · New Capenna Commander (`NCC`)
 
 - [ ] Aerial Extortionist — `7e7d7f4d-2c22-4803-ba5e-5eb653c25b5e`
 - [ ] Aether Snap — `1a1a16e5-ce4f-42b8-a1c6-05dd635d83cc`
@@ -54214,7 +54243,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zndrsplt's Judgment — `7aacfc42-be6c-46a8-b474-f43a1b6b2ef8`
 - [ ] Zurzoth, Chaos Rider — `a7da9ec5-f82f-4a6d-9737-06a1556e2dd6`
 
-### New Capenna Commander Promos (`PNCC`)
+### promos · New Capenna Commander Promos (`PNCC`)
 
 - [ ] Aerial Extortionist — `7e7d7f4d-2c22-4803-ba5e-5eb653c25b5e`
 - [ ] Agent's Toolkit — `a87abe7a-fee9-45fd-b3d8-896e43ed6b3c`
@@ -54292,7 +54321,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Writ of Return — `47735ef2-fc4c-4634-83ab-715b1e86da0c`
 - [ ] Xander's Pact — `3df11e5c-19aa-441c-a889-6b40eb3fdabf`
 
-### Streets of New Capenna (`SNC`)
+### expansion · Streets of New Capenna (`SNC`)
 
 - [ ] A Little Chat — `1167fe30-32b8-4381-8067-a05cd345977b`
 - [ ] A-Buy Your Silence — `cdf8d38c-8c80-483d-92be-7d35fcd0f2e5`
@@ -54576,7 +54605,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ziatora's Envoy — `93fe1d5b-3ab3-431a-9d78-175550ba9d43`
 - [ ] Ziatora, the Incinerator — `d46c3fb6-f1c7-4a96-ae42-5bce17fc7c1d`
 
-### Streets of New Capenna Promos (`PSNC`)
+### promos · Streets of New Capenna Promos (`PSNC`)
 
 - [ ] All-Seeing Arbiter — `f15460d9-0133-436c-b0fe-1661989124f0`
 - [ ] Angel of Suffering — `92380c57-0a92-48eb-b562-2be149b5792a`
@@ -54653,7 +54682,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ziatora's Envoy — `93fe1d5b-3ab3-431a-9d78-175550ba9d43`
 - [ ] Ziatora, the Incinerator — `d46c3fb6-f1c7-4a96-ae42-5bce17fc7c1d`
 
-### Alchemy: New Capenna (`YSNC`)
+### alchemy · Alchemy: New Capenna (`YSNC`)
 
 - [ ] Agent of Raffine — `0fc93bc8-b3d4-4161-b6a8-385fac1525b4`
 - [ ] Arming Gala — `78d42196-999c-449b-9b9c-b10f03f51273`
@@ -54686,7 +54715,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Traumatic Prank — `a7b28e04-7a82-43cc-b14e-6f1bc1cf0adb`
 - [ ] Xander's Wake — `a085fea3-ea32-4c84-9276-eab164c03cc5`
 
-### Battle for Baldur's Gate Promos (`PCLB`)
+### promos · Battle for Baldur's Gate Promos (`PCLB`)
 
 - [ ] Alaundo the Seer — `1e048c15-50d6-4313-880a-e04348952a51`
 - [ ] Altar of Bhaal // Bone Offering — `0a364b66-95df-480b-a733-e90f6d5c4d2b`
@@ -54783,7 +54812,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wyll, Blade of Frontiers — `4fb254cf-b60c-4a3e-b753-4213cb572837`
 - [ ] Zevlor, Elturel Exile — `0c85a577-db82-4a36-bc42-49644eba1cf2`
 
-### Commander Legends: Battle for Baldur's Gate (`CLB`)
+### commander · Commander Legends: Battle for Baldur's Gate (`CLB`)
 
 - [ ] Aarakocra Sneak — `c1882cb4-f69e-441e-8871-743ed636cad0`
 - [ ] Abdel Adrian, Gorion's Ward — `cab092f9-b7ff-43b9-935f-310869a4daf8`
@@ -55377,11 +55406,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zhentarim Bandit — `86a7f685-05d0-4167-b5bb-8f6943c23087`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### Love Your LGS 2022 (`PLG22`)
+### promos · Love Your LGS 2022 (`PLG22`)
 
 - [ ] Thought Vessel — `9965d9c5-2ebf-4a6c-930e-55c5890979be`
 
-### Alchemy Horizons: Baldur's Gate (`HBG`)
+### alchemy · Alchemy Horizons: Baldur's Gate (`HBG`)
 
 - [ ] A-Baleful Beholder — `9ffed3f8-31c8-4671-8357-e0ab23b21551`
 - [ ] A-Blessed Hippogriff // A-Tyr's Blessing — `4264cf22-8823-4bb9-b414-15e8e10c011b`
@@ -55771,7 +55800,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Young Red Dragon // Bathe in Gold — `2f865ae9-9328-4f6f-924f-d5e0a65aaa96`
 - [ ] Yuan-Ti Scaleshield — `95b337ae-e15c-457d-bcc2-0c738cb94b1e`
 
-### Double Masters 2022 (`2X2`)
+### masters-remastered · Double Masters 2022 (`2X2`)
 
 - [ ] Abbot of Keral Keep — `09be0f69-9c7f-491f-964d-bfbbc2d4251f`
 - [ ] Abzan Ascendancy — `3b7d4206-0d88-407b-ace5-d5d28881bf95`
@@ -56073,7 +56102,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Young Pyromancer — `5fac139a-07d3-4e6c-98e3-d98b199f7a6f`
 - [ ] Zur the Enchanter — `d7950018-d744-48a8-81aa-0d8384703f48`
 
-### Store Championships (`SCH`)
+### promos · Store Championships (`SCH`)
 
 - [ ] Abhorrent Oculus — `b1a0e129-27f0-4a09-b00d-497e18777306`
 - [ ] Aether Channeler — `fb220f46-f8b8-4804-baa4-e7d50b4871f7`
@@ -56123,7 +56152,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Virtue of Persistence // Locthwain Scorn — `fae36da0-bf9c-484f-b2fe-dd8ab2effc5c`
 - [ ] Void Winnower — `70ac902e-1eb5-4f83-a5a6-00ac89cfe50f`
 
-### Explorer Anthology 1 (`EA1`)
+### anthologies · Explorer Anthology 1 (`EA1`)
 
 - [ ] Alesha, Who Smiles at Death — `6969a7e2-6866-4001-a139-24b3be13deae`
 - [ ] Back to Nature — `b8d8ece6-397e-4bc9-b86c-7caa1d675d0f`
@@ -56144,7 +56173,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tireless Tracker — `e6555cca-e608-4c87-b835-9cd47fd1f543`
 - [ ] Titan's Strength — `b0206b34-68b4-4b1f-ae79-6e2d0432ad4b`
 
-### Historic Anthology 6 (`HA6`)
+### anthologies · Historic Anthology 6 (`HA6`)
 
 - [ ] Avacyn, Angel of Hope — `216cb26e-8da9-478b-bfbc-8030f7adee72`
 - [ ] Chalice of the Void — `74027ba4-a6ba-4696-baf1-60ef0b27ee0a`
@@ -56157,18 +56186,18 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Retrofitter Foundry — `aaadfe41-b2be-4183-b45e-a70e53a59d2e`
 - [ ] Tarmogoyf — `45900b2f-f6a9-4c42-9642-008f3c1cf6dd`
 
-### Summer Vacation Promos 2022 (`PSVC`)
+### promos · Summer Vacation Promos 2022 (`PSVC`)
 
 - [ ] Arcane Signet — `0bc7f093-bef0-4f1a-852c-4b75ebf54838`
 - [ ] Ephemerate — `0fd57894-b917-41c8-a394-360d1d31b236`
 - [ ] Infernal Grasp — `94f0a572-e91c-4b56-a5d1-6cbbeabd210d`
 
-### 30th Anniversary Misc Promos (`P30M`)
+### promos · 30th Anniversary Misc Promos (`P30M`)
 
 - [ ] Arcane Signet — `0bc7f093-bef0-4f1a-852c-4b75ebf54838`
 - [ ] Richard Garfield, Ph.D. — `f2a71b45-85dd-448c-9dc0-6564b3411adf`
 
-### 30th Anniversary Play Promos (`P30A`)
+### promos · 30th Anniversary Play Promos (`P30A`)
 
 - [ ] Ball Lightning — `7485cf25-eb41-4397-be13-7f0b8c10c70a`
 - [ ] Beast Whisperer — `5da7eea8-bb9e-47ce-a554-8a1ee058bd7a`
@@ -56196,7 +56225,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wall of Roots — `3a21a6ae-b2f2-4f0c-acfd-5f3e8d63fd2f`
 - [ ] Windfall — `08becc07-28bc-4a2f-a6b0-28a2998d2f50`
 
-### Dominaria United (`DMU`)
+### expansion · Dominaria United (`DMU`)
 
 - [ ] A-Briar Hydra — `8a7dbc4c-c378-466c-8e05-be644faf1bd0`
 - [ ] A-Karn, Living Legacy — `a2edc11f-c838-4550-91b8-2b2d11843d03`
@@ -56459,7 +56488,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zar Ojanen, Scion of Efrava — `1402c792-6e2f-4a85-8a0c-8db3c8ce5f1f`
 - [ ] Zur, Eternal Schemer — `cfc5dc9c-6f26-460b-a624-3681b8584eb3`
 
-### Dominaria United Commander (`DMC`)
+### commander · Dominaria United Commander (`DMC`)
 
 - [ ] Abundant Growth — `947a2665-2f4d-4193-8768-118f85334549`
 - [ ] Abzan Charm — `4137a22c-f793-4e27-a9b2-72740a6e2121`
@@ -56612,7 +56641,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zaxara, the Exemplary — `a9946ea0-bf0e-4c9c-a3c6-21337a5029ab`
 - [ ] Zeriam, Golden Wind — `fa1dc21d-f7f6-425f-a4ae-2b0f143091e3`
 
-### Dominaria United Promos (`PDMU`)
+### promos · Dominaria United Promos (`PDMU`)
 
 - [ ] Academy Loremaster — `7d540860-ae94-4773-a526-aaffca3eb057`
 - [ ] Adarkar Wastes — `d5ad26cc-2bdb-46b7-b8bf-dd099d5fa09b`
@@ -56694,13 +56723,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Coast — `40b36bc6-c185-4bda-99e7-0118953c2c97`
 - [ ] Zur, Eternal Schemer — `cfc5dc9c-6f26-460b-a624-3681b8584eb3`
 
-### Regional Championship Qualifiers 2022 (`PRCQ`)
+### promos · Regional Championship Qualifiers 2022 (`PRCQ`)
 
 - [ ] Gideon, Ally of Zendikar — `51eae7ff-fed9-4afe-8053-7690379449dd`
 - [ ] Selfless Spirit — `71d785a9-ddc8-472e-a778-a551b444a4bd`
 - [ ] Thraben Inspector — `caa02547-66e3-4e27-a2d3-5e94f3e7a069`
 
-### Alchemy: Dominaria (`YDMU`)
+### alchemy · Alchemy: Dominaria (`YDMU`)
 
 - [ ] Arvad, Weatherlight Smuggler — `67e8800b-9b74-4010-af04-d619cafedaa6`
 - [ ] Benalish Knight-Counselor — `e792e7d3-43c3-4a99-be04-318af41399b0`
@@ -56735,7 +56764,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vodalian Tide Mage — `45c55ddc-0aec-421c-9c72-75f968372b40`
 - [ ] Wandering Treefolk — `f515cdc8-c39f-4c98-a970-faafad458ec2`
 
-### The List (Unfinity Foil Edition) (`ULST`)
+### funny-special · The List (Unfinity Foil Edition) (`ULST`)
 
 - [ ] Acornelia, Fashionable Filcher — `c4edcdc0-91de-410c-95dd-219efcef692a`
 - [ ] Alexander Clamilton — `60875e8e-fc71-4eb3-8c2d-70f2fd1f11ae`
@@ -56798,7 +56827,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] X — `ef10c6c6-8e84-46f6-8e11-cd35a2b8fbf1`
 - [ ] Yet Another Aether Vortex — `77d1489b-e7c1-4185-9269-766ca554f0e8`
 
-### Unfinity (`UNF`)
+### funny-special · Unfinity (`UNF`)
 
 - [ ] "Brims" Barone, Midway Mobster — `c64c31f2-c1be-414e-9dff-c3b77ba97545`
 - [ ] "Lifetime" Pass Holder — `7bf6f13a-3c90-4bda-bc84-e026828bf4d1`
@@ -57062,7 +57091,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wolf in _____ Clothing — `58c9454b-7027-48f4-9e17-310e27b916d1`
 - [ ] Xenosquirrels — `d5c54df9-437e-46e1-94cf-91d9f1d343b6`
 
-### Unfinity Sticker Sheets (`SUNF`)
+### funny-special · Unfinity Sticker Sheets (`SUNF`)
 
 - [ ] Ancestral Hot Dog Minotaur — `481c3bfe-2293-447d-aa03-3ea6ed9321aa`
 - [ ] Carnival Elephant Meteor — `7e06b7b4-22c1-4e5b-81ee-54ab5ac756eb`
@@ -57113,7 +57142,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yawgmoth Merfolk Soul — `4c02ee30-8681-45ed-adb5-edf06409eee4`
 - [ ] Zombie Cheese Magician — `786bdf20-b1f1-40f7-acd0-8dcb46da2bb0`
 
-### Warhammer 40,000 Commander (`40K`)
+### commander · Warhammer 40,000 Commander (`40K`)
 
 - [ ] Abaddon the Despoiler — `8dedb9a7-0afa-4dff-b124-2344c170f11a`
 - [ ] Aberrant — `46b5f12e-9fe5-44f6-b895-ee8c33205521`
@@ -57359,7 +57388,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zephyrim — `d29551ab-e314-4872-9fc5-fe9a442dc8a9`
 - [ ] Zoanthrope — `e7d79fbe-b02c-41c7-8b0a-6477feb1da7a`
 
-### Game Night: Free-for-All (`GN3`)
+### boxed-products · Game Night: Free-for-All (`GN3`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Ancestral Blade — `ab28a801-6ab1-4db2-8ae2-c24bb4c10ebb`
@@ -57465,7 +57494,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wirewood Pride — `ff19f10c-777c-4688-b1ab-99e53afaf629`
 - [ ] Zamriel, Seraph of Steel — `acb0fa6a-89c8-4957-881e-c61659e86f97`
 
-### Secret Lair Countdown (`SLC`)
+### secret-lair · Secret Lair Countdown (`SLC`)
 
 - [ ] Alhammarret's Archive — `d5c4d36c-54b3-4149-906b-a57a670260fc`
 - [ ] Altar of the Brood — `c3aafcdd-c890-4971-b8a9-5bfcad794c0b`
@@ -57521,7 +57550,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yarok, the Desecrated — `95b53836-18aa-451a-992d-2a111deeeab2`
 - [ ] Zo-Zu the Punisher — `0e412b68-9179-4094-960a-95692428855b`
 
-### The Brothers' War (`BRO`)
+### expansion · The Brothers' War (`BRO`)
 
 - [ ] A-Excavation Explosion — `dfe59362-7f14-4cb2-8dd8-2a7de7f7723f`
 - [ ] A-Geology Enthusiast — `85e552d4-811f-4fea-a456-5c19352d106f`
@@ -57789,7 +57818,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yotian Tactician — `0d9d7f04-6319-4596-8b74-de5a794936e5`
 - [ ] Zephyr Sentinel — `dcddd143-a7d9-4a38-a2da-dd6bd2e48205`
 
-### The Brothers' War Commander (`BRC`)
+### commander · The Brothers' War Commander (`BRC`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Alela, Artful Provocateur — `936ae5dc-9838-47f3-ba1f-66523a7f5b76`
@@ -57924,7 +57953,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Workshop Elders — `9e9164be-3534-4445-bfad-00d16a50575c`
 - [ ] Wreck Hunter — `08dcda8e-704d-444e-a7ca-34586a7f42a7`
 
-### The Brothers' War Promos (`PBRO`)
+### promos · The Brothers' War Promos (`PBRO`)
 
 - [ ] Arcane Proxy — `792f8235-f23b-4858-bdd4-c7a186b7a470`
 - [ ] Argoth, Sanctum of Nature — `62648946-1708-48f4-ba40-c057563ab11b`
@@ -58014,7 +58043,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Urza, Prince of Kroog — `6a448862-e8d8-4a08-8e3d-5460afa29b4d`
 - [ ] Visions of Phyrexia — `634b46a6-ec8b-41f0-8eb6-1e9144035847`
 
-### The Brothers' War Retro Artifacts (`BRR`)
+### masterpieces · The Brothers' War Retro Artifacts (`BRR`)
 
 - [ ] Adaptive Automaton — `53c730c6-2f8c-4af8-b400-b9d573a71e60`
 - [ ] Aetherflux Reservoir — `5f15125e-ae89-471e-b055-226a783bc7c1`
@@ -58073,7 +58102,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Unwinding Clock — `153fac93-5d2b-4348-a468-a5eef6a12da3`
 - [ ] Well of Lost Dreams — `b0394cf2-12a0-4d4f-87e0-fe8937e6faff`
 
-### Transformers (`BOT`)
+### eternal · Transformers (`BOT`)
 
 - [ ] Arcee, Sharpshooter // Arcee, Acrobatic Coupe — `9fba3097-d53f-4ea4-b5d2-8adddaa09524`
 - [ ] Blaster, Combat DJ // Blaster, Morale Booster — `59c2af34-a2e5-4c67-af2d-a782e41a8e1e`
@@ -58091,7 +58120,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Starscream, Power Hungry // Starscream, Seeker Leader — `3e924a35-0e08-4050-b33a-a143d2ab5aea`
 - [ ] Ultra Magnus, Tactician // Ultra Magnus, Armored Carrier — `48e913c0-efeb-47f5-9dcb-b795751e6b6d`
 
-### Eternal Weekend (`PEWK`)
+### promos · Eternal Weekend (`PEWK`)
 
 - [ ] Crop Rotation — `28b46183-c62f-47b1-9fee-3ba148202cab`
 - [ ] Dragon's Rage Channeler — `0c016ccc-a341-4b76-87ba-69c639d2746d`
@@ -58104,7 +58133,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Treasure Cruise — `5b6bdf5a-2742-4851-92cd-a857a3852836`
 - [ ] Trinisphere — `69d994f2-b8f6-425f-9655-977c2144d40c`
 
-### Jumpstart 2022 (`J22`)
+### jumpstart · Jumpstart 2022 (`J22`)
 
 - [ ] Academy Journeymage — `b400700c-1d82-4721-a166-56f88ba6ad19`
 - [ ] Acrobatic Maneuver — `1aa1cf50-ee79-4bef-826b-5f1a9e1aa1a5`
@@ -58816,7 +58845,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zask, Skittering Swarmlord — `3c4966b9-26f9-46ff-8d41-7fd01c70986d`
 - [ ] Zendikar's Roil — `a842cc2b-52eb-4dc5-86c6-6575c2ed913d`
 
-### Starter Commander Decks (`SCD`)
+### starter · Starter Commander Decks (`SCD`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Aetherize — `7c779721-cd1b-4696-9ae9-68ccc284ed2a`
@@ -59088,7 +59117,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Withered Wretch — `29e13ec1-a239-4217-a2bd-24ff90745ec0`
 - [ ] Zombie Apocalypse — `8241277d-654f-4985-9d49-a22c1e59eec2`
 
-### Alchemy: The Brothers' War (`YBRO`)
+### alchemy · Alchemy: The Brothers' War (`YBRO`)
 
 - [ ] Argivian Welcome — `eee0e016-8529-45b3-ab3d-0651ce08b6bd`
 - [ ] Argothian Uprooting — `497cdd11-989c-49a3-9953-7a982470d459`
@@ -59122,7 +59151,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Warzone Duplicator — `3a5b8972-7e50-42aa-a922-fa476260fafd`
 - [ ] Yotian Courier — `d5d719c0-d82c-4a84-a161-ebf66bd80f7a`
 
-### Explorer Anthology 2 (`EA2`)
+### anthologies · Explorer Anthology 2 (`EA2`)
 
 - [ ] Brave the Elements — `9d73a51a-1c8e-40cd-8124-aeff406a0884`
 - [ ] Clever Impersonator — `d4ec0df9-a4a3-48cf-a0aa-b1aea5c49142`
@@ -59148,7 +59177,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] World Breaker — `deeb7e22-b207-42de-b9d4-f790403d52a9`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### Judge Gift Cards 2023 (`P23`)
+### promos · Judge Gift Cards 2023 (`P23`)
 
 - [ ] Grindstone — `97560adc-814e-450c-9ca7-f9364e910a0b`
 - [ ] Mycosynth Lattice — `ae1f2ab5-c6a5-4d49-a746-3cb4668bf805`
@@ -59156,7 +59185,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Retrofitter Foundry — `aaadfe41-b2be-4183-b45e-a70e53a59d2e`
 - [ ] Sword of War and Peace — `b10ad415-0aae-4d70-82e6-a4055a40cbe4`
 
-### Wizards Play Network 2023 (`PW23`)
+### promos · Wizards Play Network 2023 (`PW23`)
 
 - [ ] Beast Within — `7735eeba-693b-47e2-bd51-414379cf1016`
 - [ ] Cultivate — `8b755881-a72d-4e21-a369-d2924eb4585a`
@@ -59169,13 +59198,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Syr Konrad, the Grim — `14c3ff84-1e82-4606-a433-869fc52cc382`
 - [ ] Unclaimed Territory — `584b15f2-6ae9-413a-8b8d-9244dbea4878`
 
-### Regional Championship Qualifiers 2023 (`PR23`)
+### promos · Regional Championship Qualifiers 2023 (`PR23`)
 
 - [ ] Mystical Dispute — `48390b8d-db41-48a5-9bac-316660ab7252`
 - [ ] Snapcaster Mage — `2bb2eda7-3b38-4c56-870f-c3218a1056f5`
 - [ ] Thing in the Ice // Awoken Horror — `f2c10591-4c0c-4286-af91-e8d8d10a4c9d`
 
-### Dominaria Remastered (`DMR`)
+### masters-remastered · Dominaria Remastered (`DMR`)
 
 - [ ] Aquamoeba — `55de434c-0fb9-4127-81b6-47c1c0b088fe`
 - [ ] Arboria — `acb3e93c-a1d3-458f-b8c3-c426cd359fa4`
@@ -59393,7 +59422,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombie Infestation — `bdce1af0-3643-4e77-88f9-320206a191d4`
 - [ ] Zur the Enchanter — `d7950018-d744-48a8-81aa-0d8384703f48`
 
-### Phyrexia: All Will Be One (`ONE`)
+### expansion · Phyrexia: All Will Be One (`ONE`)
 
 - [ ] Adaptive Sporesinger — `f6311b7a-7482-4b13-9f8f-13e80c98e98e`
 - [ ] Against All Odds — `f4a73cde-58bf-4719-8eb0-e039fdde4f62`
@@ -59643,7 +59672,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zenith Chronicler — `9fed6494-3bdd-4bc6-901f-da5fb623b152`
 - [ ] Zopandrel, Hunger Dominus — `b168e4e6-f572-4d9f-b98f-95b2611354cb`
 
-### Phyrexia: All Will Be One Commander (`ONC`)
+### commander · Phyrexia: All Will Be One Commander (`ONC`)
 
 - [ ] Adriana, Captain of the Guard — `de23275e-e9c1-4151-aed8-f79ead03d5d4`
 - [ ] Arcane Signet — `0bc7f093-bef0-4f1a-852c-4b75ebf54838`
@@ -59772,7 +59801,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Windbrisk Heights — `3589bcfc-42b0-414a-adce-bc690dc631c8`
 - [ ] Wurmquake — `0eeb9a62-1b36-42f5-8820-3331fa5ca3a6`
 
-### Phyrexia: All Will Be One Promos (`PONE`)
+### promos · Phyrexia: All Will Be One Promos (`PONE`)
 
 - [ ] All Will Be One — `477374dc-042c-48f7-9ebe-99c15d8ae04f`
 - [ ] Archfiend of the Dross — `9188031e-1c24-4981-a3d2-461a2bf917b6`
@@ -59850,7 +59879,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zenith Chronicler — `9fed6494-3bdd-4bc6-901f-da5fb623b152`
 - [ ] Zopandrel, Hunger Dominus — `b168e4e6-f572-4d9f-b98f-95b2611354cb`
 
-### Year of the Rabbit 2023 (`PL23`)
+### promos · Year of the Rabbit 2023 (`PL23`)
 
 - [ ] Arcbound Ravager — `62e7e7b1-9887-4d15-b0e5-a8ddc711bd88`
 - [ ] Ethereal Armor — `dbba75f5-2404-4bd5-982b-f6c4effa5316`
@@ -59858,7 +59887,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Rabbit Battery — `c739e180-2f14-41ed-8e7e-50b7df985f35`
 - [ ] Swiftfoot Boots — `c8b143ad-43ec-4e0d-a440-e348daa31391`
 
-### Unknown Event (`UNK`)
+### funny-special · Unknown Event (`UNK`)
 
 - [ ] 17-Year Cicadas — `dcbf8d0d-a5a8-4dc2-828f-25ccfe87fe0f`
 - [ ] ______ — `571ccaf0-d2a0-46d3-af4b-14245a9a79ff`
@@ -60359,7 +60388,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Your Mana Rock — `5fb2aa71-0be9-44af-b5c1-02ab1c9c1733`
 - [ ] Zimone's Homework — `6998608e-a9bd-48a5-bca3-665dbb0acd7e`
 
-### Secret Lair Promo (`SLP`)
+### secret-lair · Secret Lair Promo (`SLP`)
 
 - [ ] An Offer You Can't Refuse — `234a734b-ba28-4f1b-9d01-3c3e7d516590`
 - [ ] Ancient Stirrings — `82f18e7d-5c42-47c4-8e74-3fccc9b7b1f0`
@@ -60407,7 +60436,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Valakut, the Molten Pinnacle — `1bc44216-4e06-4f66-89b7-5c327004604e`
 - [ ] Wrenn and Six — `108ae90a-50fa-4cfd-b751-d630e41425fe`
 
-### Alchemy: Phyrexia (`YONE`)
+### alchemy · Alchemy: Phyrexia (`YONE`)
 
 - [ ] Arek, False Goldwarden — `ea1130c0-0bf1-47e6-a475-c5eaeddbbba1`
 - [ ] Bladehold Cleaver — `36b86a7c-fcd3-4636-9118-0d07da210fdd`
@@ -60441,13 +60470,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tezzeret's Reckoning — `4f0f32c0-6869-4319-a871-d1f5894d8cc9`
 - [ ] Vexyr, Ich-Tekik's Heir — `b82f236d-76cf-4ec5-8521-a073c16e4176`
 
-### 30th Anniversary History Promos (`P30H`)
+### promos · 30th Anniversary History Promos (`P30H`)
 
 - [ ] Lord of Atlantis — `cc7f290f-ca00-4285-9bdb-4b4402444f30`
 - [ ] Sengir Vampire — `749141aa-f6c4-4ad8-b146-406e68ae9b0b`
 - [ ] Shivan Dragon — `711eea87-0fa3-46e0-a42b-fa5a86455f04`
 
-### Shadows of the Past (`SIS`)
+### masters-remastered · Shadows of the Past (`SIS`)
 
 - [ ] Angel of Flight Alabaster — `9b6a74fb-c48f-4d85-b4b3-96eb80b9efc7`
 - [ ] Avacyn's Collar — `842e3835-fff3-4684-bfd1-e7064a1fd2e6`
@@ -60519,7 +60548,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Young Wolf — `8b492764-10b6-4506-be11-22daa9220a91`
 - [ ] Zealous Conscripts — `1dae6f39-2cbd-485c-b190-017a26401fd4`
 
-### Shadows over Innistrad Remastered (`SIR`)
+### masters-remastered · Shadows over Innistrad Remastered (`SIR`)
 
 - [ ] Abundant Maw — `3676b745-001d-46e6-880f-2fe26476a38d`
 - [ ] Accursed Witch // Infectious Curse — `80b07882-e144-4815-8b6f-04b3ab343d97`
@@ -60784,7 +60813,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wolfkin Bond — `49e22e88-d4d9-4781-81e3-bf77b76b132b`
 - [ ] Wretched Gryff — `83d0c4bc-aab9-4c14-a7dc-a344fcce4fea`
 
-### March of the Machine (`MOM`)
+### expansion · March of the Machine (`MOM`)
 
 - [ ] Aerial Boost — `d7fa5c42-7cd5-42e7-a42e-724c1a3df96a`
 - [ ] Aetherblade Agent // Gitaxian Mindstinger — `80ecb069-36e2-490d-9f6c-ef553c00e997`
@@ -61058,7 +61087,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zimone and Dina — `5bc66b18-22ac-4138-b527-fa711116e298`
 - [ ] Zurgo and Ojutai — `941c9acd-2773-456a-88d5-0537735f93c6`
 
-### March of the Machine Commander (`MOC`)
+### commander · March of the Machine Commander (`MOC`)
 
 - [ ] Abzan Battle Priest — `1b44fe0a-4a99-4166-b0b3-102b36b54ffa`
 - [ ] Abzan Falconer — `8b972819-507a-40a9-ab1f-1a674ea56083`
@@ -61359,7 +61388,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Worthy Knight — `37733e29-3ade-4bfd-89c9-efd13b548a53`
 - [ ] Yawgmoth's Vile Offering — `740f9ab2-fc94-4abc-82b4-6b53116bf1a4`
 
-### March of the Machine Promos (`PMOM`)
+### promos · March of the Machine Promos (`PMOM`)
 
 - [ ] Ancient Imperiosaur — `3fe95820-cd7f-4f28-82bf-eb4350ea4179`
 - [ ] Archangel Elspeth — `0b2481d6-97a0-4f92-b7e5-3451863fd7fb`
@@ -61441,7 +61470,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zimone and Dina — `5bc66b18-22ac-4138-b527-fa711116e298`
 - [ ] Zurgo and Ojutai — `941c9acd-2773-456a-88d5-0537735f93c6`
 
-### Multiverse Legends (`MUL`)
+### masterpieces · Multiverse Legends (`MUL`)
 
 - [ ] A-Radha, Coalition Warlord — `93af4772-dc82-4f91-b5e4-1dc05511e600`
 - [ ] Aegar, the Freezing Flame — `592d847e-e3f3-425d-89f9-01ab533ad581`
@@ -61509,7 +61538,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zada, Hedron Grinder — `9f7d5e1c-bf5b-4ab9-bd6e-2627b4d22b36`
 - [ ] Zirda, the Dawnwaker — `7b515c56-7b1e-42a8-82b0-1b30201fb162`
 
-### March of the Machine: The Aftermath (`MAT`)
+### expansion · March of the Machine: The Aftermath (`MAT`)
 
 - [ ] Animist's Might — `4940783f-2534-41c1-b614-5dabb0dff405`
 - [ ] Arni Metalbrow — `d799e58a-0032-4df8-a77f-0d824ec15214`
@@ -61562,7 +61591,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Urborg Scavengers — `d27f3338-4900-49eb-9d8b-994afd524abe`
 - [ ] Vesuvan Drifter — `727ef984-1643-4a09-8283-a665508e85dd`
 
-### Tales of Middle-earth Commander (`LTC`)
+### commander · Tales of Middle-earth Commander (`LTC`)
 
 - [ ] Abyssal Persecutor — `7282f643-191b-41be-9f6f-82360c915d6d`
 - [ ] Access Tunnel — `ed9cc560-f30b-4b60-a094-ccf93ed656a7`
@@ -61852,7 +61881,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Éomer, King of Rohan — `4f8191e6-a6aa-4426-9014-eff4e0efee9e`
 - [ ] Éowyn, Shieldmaiden — `98a2a642-a30a-43e7-b47f-4776c22d1cb0`
 
-### Tales of Middle-earth Promos (`PLTR`)
+### promos · Tales of Middle-earth Promos (`PLTR`)
 
 - [ ] Andúril, Flame of the West — `e6521404-8474-4727-b2d0-537d15d8a63f`
 - [ ] Aragorn, Company Leader — `1b841e8f-9484-4737-bd37-dfa11bd06883`
@@ -61939,7 +61968,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Éomer, Marshal of Rohan — `b2d95950-18b3-463f-94f4-299e420751dc`
 - [ ] Éowyn, Fearless Knight — `dcc349e9-399d-4f33-8131-d1801272466a`
 
-### The Lord of the Rings: Tales of Middle-earth (`LTR`)
+### supplemental · The Lord of the Rings: Tales of Middle-earth (`LTR`)
 
 - [ ] A-Orcish Bowmasters — `4f16c8ea-84f6-4706-8b3d-5848aba1b9bb`
 - [ ] A-The One Ring — `5f5d6f2d-2793-4355-b3f6-6eba42603756`
@@ -62220,13 +62249,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Éowyn, Fearless Knight — `dcc349e9-399d-4f33-8131-d1801272466a`
 - [ ] Éowyn, Lady of Rohan — `1ee3753c-3b6e-4182-9305-2ab757f485f0`
 
-### MagicFest 2023 (`PF23`)
+### promos · MagicFest 2023 (`PF23`)
 
 - [ ] Gandalf, Friend of the Shire — `7f7c917b-f940-4f43-bafa-31f50a6d9d6f`
 - [ ] Reliquary Tower — `c23e5b80-08d2-4e24-9908-fe2aa4f30f6f`
 - [ ] TARDIS — `9167a585-b742-427d-b840-e024f6878a5c`
 
-### Explorer Anthology 3 (`EA3`)
+### anthologies · Explorer Anthology 3 (`EA3`)
 
 - [ ] Abbot of Keral Keep — `09be0f69-9c7f-491f-964d-bfbbc2d4251f`
 - [ ] Accorder's Shield — `dd70d439-bd60-43d1-ac26-13b744cc4a37`
@@ -62248,7 +62277,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Worldspine Wurm — `254f87cc-e0c2-484d-b5e8-1ea8c366990c`
 - [ ] Xenagos, God of Revels — `cb15a8dd-57fe-466f-847e-66476b690a1f`
 
-### Historic Anthology 7 (`HA7`)
+### anthologies · Historic Anthology 7 (`HA7`)
 
 - [ ] Bloodbraid Elf — `3f0c9466-5ab9-4205-a84f-b4b27b5a678e`
 - [ ] Bloodghast — `e97f9c2b-b41e-4f36-9245-77c0ac125647`
@@ -62268,7 +62297,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vendilion Clique — `244d4807-0802-41bc-9460-55ac38a28a72`
 - [ ] Wild Nacatl — `35d3d96a-d303-4bf5-b972-f311331ec07a`
 
-### 2022 Heroes of the Realm (`PH22`)
+### funny-special · 2022 Heroes of the Realm (`PH22`)
 
 - [ ] Elusen, the Giving — `9c47d2ab-a7df-4c3c-81d4-462d2637cbae`
 - [ ] Heroes of Kamigawa — `720614e0-a94a-44e0-b937-b0a6e28b386d`
@@ -62276,7 +62305,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Treizeci, Sun of Serra — `87d5b9d0-3fb3-4554-a27c-0862d59dd59d`
 - [ ] Wizard from Beyond — `605fb066-5b1b-402a-aece-b2970c80caba`
 
-### Commander Masters (`CMM`)
+### masters-remastered · Commander Masters (`CMM`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Abstruse Archaic — `0727dc95-03df-4a2c-aed5-73fb840f3db7`
@@ -62925,24 +62954,24 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zhulodok, Void Gorger — `ec726c54-987b-48ed-8ffa-ec73a5e35333`
 - [ ] Zilortha, Strength Incarnate — `2dba8d8d-891e-482e-8014-879f701d0619`
 
-### 30th Anniversary Celebration Tokyo (`P30T`)
+### promos · 30th Anniversary Celebration Tokyo (`P30T`)
 
 - [ ] Destroy Evil — `b75e667a-1ceb-445a-acf4-ae1fd2dae9e7`
 - [ ] Shivan Dragon — `711eea87-0fa3-46e0-a42b-fa5a86455f04`
 
-### Magic × Duel Masters Promos (`PMDA`)
+### masters-remastered · Magic × Duel Masters Promos (`PMDA`)
 
 - [ ] Earthquake — `9a40614b-50a3-422c-849e-53c8b7d3d204`
 - [ ] Nicol Bolas — `e26bf6a9-b31c-4bc0-b55b-c01f2f69be6b`
 - [ ] Pouncing Jaguar — `70a2b5ea-dae4-46e8-87eb-8c8d8dfb242b`
 
-### Time Spiral Remastered Promos (`PTSR`)
+### masters-remastered · Time Spiral Remastered Promos (`PTSR`)
 
 - [ ] Angel's Grace — `66ca8a60-e028-4a5f-8177-860b888cb9d1`
 - [ ] Swarmyard — `4b508087-99da-4eb1-8b12-29162f2ec85d`
 - [ ] Wheel of Fate — `15e4938d-1cd3-4670-9de5-2dc10abe4c19`
 
-### Wilds of Eldraine (`WOE`)
+### expansion · Wilds of Eldraine (`WOE`)
 
 - [ ] A Tale for the Ages — `682a0770-8fe0-4142-aa0c-b60af3628a33`
 - [ ] Agatha of the Vile Cauldron — `f398d222-f8e7-4983-9a77-267adef7f551`
@@ -63191,7 +63220,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Witchstalker Frenzy — `f46befcb-6a7f-4f5e-8634-393cbf4b3308`
 - [ ] Yenna, Redtooth Regent — `0adede77-5181-4190-8066-4797cefe0189`
 
-### Wilds of Eldraine Commander (`WOC`)
+### commander · Wilds of Eldraine Commander (`WOC`)
 
 - [ ] Ajani's Chosen — `9c77eb0a-543a-41db-ba1f-aa0163837ae0`
 - [ ] Alela, Cunning Conqueror — `1cae5752-b4af-4a8f-8c8c-2493e163083b`
@@ -63318,7 +63347,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Warbriar Blessing — `4a58954a-1d20-48b8-847c-3615de67e122`
 - [ ] Winds of Rath — `a6fd90dc-0ec3-4dce-a77a-4d04f5e254bf`
 
-### Wilds of Eldraine Promos (`PWOE`)
+### promos · Wilds of Eldraine Promos (`PWOE`)
 
 - [ ] A Tale for the Ages — `682a0770-8fe0-4142-aa0c-b60af3628a33`
 - [ ] Agatha of the Vile Cauldron — `f398d222-f8e7-4983-9a77-267adef7f551`
@@ -63399,7 +63428,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Will, Scion of Peace — `4ecb8653-db8c-468a-853d-420ff62a7a8a`
 - [ ] Yenna, Redtooth Regent — `0adede77-5181-4190-8066-4797cefe0189`
 
-### Wilds of Eldraine: Enchanting Tales (`WOT`)
+### masterpieces · Wilds of Eldraine: Enchanting Tales (`WOT`)
 
 - [ ] Aggravated Assault — `20129459-a386-41eb-899d-1aede3427300`
 - [ ] As Foretold — `e4b3e0af-5caa-47c1-b5be-c56a875cbb15`
@@ -63465,7 +63494,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vampiric Rites — `660de988-b6fb-4f36-8006-42af3e7f908d`
 - [ ] Waste Not — `00fdcc19-88ed-46c3-91f0-095806228105`
 
-### Wizards Play Network 2024 (`PW24`)
+### promos · Wizards Play Network 2024 (`PW24`)
 
 - [ ] Chaos Warp — `07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8`
 - [ ] Commander's Sphere — `0b67c4e2-f88b-4e01-85a1-9d5f5b8db13b`
@@ -63484,7 +63513,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Underworld Connections — `39c10798-9dfc-47a2-9da3-b4038509aebe`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Alchemy: Wilds of Eldraine (`YWOE`)
+### alchemy · Alchemy: Wilds of Eldraine (`YWOE`)
 
 - [ ] A Golden Opportunity — `4e0854f8-de38-4574-9fc9-b340c88b2945`
 - [ ] Accident-Prone Apprentice // Amphibian Accident — `71724015-e313-46a0-a8bc-d4ad9b86c126`
@@ -63518,7 +63547,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Underbridge Warlock — `aacc4245-25f7-4eff-894a-322132eb9c32`
 - [ ] Victory of the Pyrohammer — `72a32d3b-0a7f-469b-9dbb-5bae25917d5a`
 
-### Doctor Who (`WHO`)
+### commander · Doctor Who (`WHO`)
 
 - [ ] Ace's Baseball Bat — `3f47ec32-4ee9-4bc0-96f2-310a939cb973`
 - [ ] Ace, Fearless Rebel — `50d0d870-fe3d-44a2-ad6e-93307a1fb468`
@@ -63791,7 +63820,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yasmin Khan — `93637599-d9b4-4f7e-a5c0-5a92656e941e`
 - [ ] Zygon Infiltrator — `693c071a-d6b5-4a96-8fe3-8c61fa9406bc`
 
-### Jurassic World Collection (`REX`)
+### eternal · Jurassic World Collection (`REX`)
 
 - [ ] Blue, Loyal Raptor — `4f13ed2e-7790-499f-87bf-07480b567811`
 - [ ] Compy Swarm — `f5bd96dd-0d1f-4923-a014-6c8dcb3b2266`
@@ -63814,7 +63843,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Swooping Pteranodon — `0b1f6e77-55db-4638-9030-3f4e4d37eb1b`
 - [ ] Welcome to . . . // Jurassic Park — `a4b37d16-95b3-4143-a0b2-ad9f2aba91f8`
 
-### March of the Machine: The Aftermath Promos (`PMAT`)
+### promos · March of the Machine: The Aftermath Promos (`PMAT`)
 
 - [ ] Drannith Ruins — `d1f10cca-8dfa-4ea5-b227-4446cd8514a8`
 - [ ] Metropolis Reformer — `baec04a1-3bc9-4618-afab-e42013e36648`
@@ -63825,7 +63854,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] The Kenriths' Royal Funeral — `b4b0a4b7-b36f-4c96-b07b-a86c1efd333e`
 - [ ] Training Grounds — `8de3eabe-9a8f-4865-beef-a4888c081d39`
 
-### Special Guests (`SPG`)
+### masterpieces · Special Guests (`SPG`)
 
 - [ ] Adrix and Nev, Twincasters — `12a6cad9-eb42-43bd-9e68-aaf862cd83db`
 - [ ] Akroma's Memorial — `967e8b3f-8266-4d9a-a38b-d0e10184e1e4`
@@ -63952,7 +63981,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Warping Wail — `c8b9fa02-0a0c-4a87-9a00-3c1c7e2f4bfd`
 - [ ] Whir of Invention — `152b91c9-cc07-4ca8-944f-9bc2242a2283`
 
-### The Lost Caverns of Ixalan (`LCI`)
+### expansion · The Lost Caverns of Ixalan (`LCI`)
 
 - [ ] A-Geological Appraiser — `e2615d61-64f3-48ef-9be0-d86c386d54ee`
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
@@ -64227,7 +64256,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zoyowa Lava-Tongue — `e90f298f-c54b-4fe8-82db-5b9153a57712`
 - [ ] Zoyowa's Justice — `17e11f0c-4ac7-4060-9e0b-27cd5c151e50`
 
-### The Lost Caverns of Ixalan Commander (`LCC`)
+### commander · The Lost Caverns of Ixalan Commander (`LCC`)
 
 - [ ] Admiral Beckett Brass — `43b5e462-d860-473d-828f-6c513fc7768a`
 - [ ] Admiral Brass, Unsinkable — `4df179b4-7c6b-4e63-9d7d-62f4df377989`
@@ -64510,7 +64539,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zara, Renegade Recruiter — `cd2720c2-522c-4fdc-9cef-9c5ce250fe7b`
 - [ ] Zegana, Utopian Speaker — `04260930-ff38-4b35-9ec4-e89196a4f2c7`
 
-### The Lost Caverns of Ixalan Promos (`PLCI`)
+### promos · The Lost Caverns of Ixalan Promos (`PLCI`)
 
 - [ ] Abuelo's Awakening — `2b22cf44-7b03-4919-9812-6796bf193484`
 - [ ] Abuelo, Ancestral Echo — `eaa9baac-72f2-4bde-9146-860878d9860b`
@@ -64581,7 +64610,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wail of the Forgotten — `030b5408-f216-43e4-8593-f78d22821876`
 - [ ] Warden of the Inner Sky — `5268f772-5b42-4b5b-9e57-c32c662a42f3`
 
-### Alchemy: Ixalan (`YLCI`)
+### alchemy · Alchemy: Ixalan (`YLCI`)
 
 - [ ] Brazen Boarding — `123d002c-0004-4e0e-80f3-f0f9555201ac`
 - [ ] Caldera Breaker — `17dac131-8bf0-4851-bc98-15948e37276f`
@@ -64615,7 +64644,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Valiant Batrider — `22d7431e-0ae1-47e7-916e-f656880aec9c`
 - [ ] Wingbane Vantasaur — `ab96c929-f855-40c2-b726-11c4a0ffb59e`
 
-### Ravnica Remastered (`RVR`)
+### masters-remastered · Ravnica Remastered (`RVR`)
 
 - [ ] Act of Treason — `9d08af23-9f4a-4097-9abc-3b17475ab744`
 - [ ] Aetherize — `7c779721-cd1b-4696-9ae9-68ccc284ed2a`
@@ -64889,7 +64918,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wurmweaver Coil — `83419229-c266-4022-8297-d1b05ec5ee20`
 - [ ] Yeva, Nature's Herald — `2d513c3e-bd27-479e-af32-7f66d96d0de0`
 
-### Year of the Dragon 2024 (`PL24`)
+### promos · Year of the Dragon 2024 (`PL24`)
 
 - [ ] Dragon Tempest — `b9bacb46-fd1d-459b-81c2-d7d08fe73848`
 - [ ] Dragonlord's Servant — `faf81ae0-0b35-45ef-a50d-6cecf0c0eeeb`
@@ -64897,7 +64926,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Sarkhan Unbroken — `1d37b453-f10c-42f2-8390-626a8a8eb27c`
 - [ ] Steel Hellkite — `6e64f1e0-ddd6-4ee7-8797-086e234b02e8`
 
-### Commander Legends Promos (`PCMR`)
+### promos · Commander Legends Promos (`PCMR`)
 
 - [ ] Command Beacon — `7e8c2a18-e404-40ff-a9e0-ec3eeb6d576e`
 - [ ] Commander's Plate — `cae166de-e681-40a0-83a8-3c17cf40e2fc`
@@ -64906,7 +64935,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] War Room — `71c52bf5-2a5d-488e-8b15-7ef290e4b77d`
 - [ ] Wrong Turn — `d1cfbbcc-4aee-4400-b5a8-18713829ae72`
 
-### Murders at Karlov Manor (`MKM`)
+### expansion · Murders at Karlov Manor (`MKM`)
 
 - [ ] A Killer Among Us — `79d577a8-53c0-4220-bc0e-70764d72d5fd`
 - [ ] Absolving Lammasu — `dbedd45e-f76c-4be7-ad89-ff57bed6626f`
@@ -65180,7 +65209,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wrench — `fdbac0a7-18c0-48a5-a174-0d4d1473fd9c`
 - [ ] Yarus, Roar of the Old Gods — `30fd6171-3e57-4c05-a86b-e1c0479ba236`
 
-### Murders at Karlov Manor Commander (`MKC`)
+### commander · Murders at Karlov Manor Commander (`MKC`)
 
 - [ ] Academy Manufactor — `f36d1d8b-8303-44a9-ab56-531931641ea2`
 - [ ] Access Tunnel — `ed9cc560-f30b-4b60-a094-ccf93ed656a7`
@@ -65447,7 +65476,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yedora, Grave Gardener — `1fa20b05-cc06-4fb7-ae76-677a29e2185a`
 - [ ] Zoetic Cavern — `3763de30-28e1-4689-a71c-07d2fea3a466`
 
-### Murders at Karlov Manor Promos (`PMKM`)
+### promos · Murders at Karlov Manor Promos (`PMKM`)
 
 - [ ] Agrus Kos, Spirit of Justice — `11b7ee78-fca6-4b34-93e4-e60492583d50`
 - [ ] Alquist Proft, Master Sleuth — `dd79a994-7dad-49d4-8d8f-62dbedde4a38`
@@ -65540,11 +65569,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Worldsoul's Rage — `3b6ef144-bb98-4686-9718-204f1c3cf020`
 - [ ] Yarus, Roar of the Old Gods — `30fd6171-3e57-4c05-a86b-e1c0479ba236`
 
-### MagicFest 2024 (`PF24`)
+### promos · MagicFest 2024 (`PF24`)
 
 - [ ] Convention Maro — `4f3fbf2b-006e-4b3f-8a58-e9dc155f56d8`
 
-### Ravnica: Clue Edition (`CLU`)
+### supplemental · Ravnica: Clue Edition (`CLU`)
 
 - [ ] Aegis of the Legion — `99eb05eb-11ef-456f-9132-166a0691dd04`
 - [ ] Affectionate Indrik — `88aa032d-dc11-4cae-81f3-ce66353963e0`
@@ -65760,7 +65789,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wojek Bodyguard — `8de57b66-cb97-44e4-8c0d-8ecf3202c299`
 - [ ] Wrench — `fdbac0a7-18c0-48a5-a174-0d4d1473fd9c`
 
-### Alchemy: Murders at Karlov Manor (`YMKM`)
+### alchemy · Alchemy: Murders at Karlov Manor (`YMKM`)
 
 - [ ] Cackling Observer — `1532315b-dc7d-4fc5-ae86-e96ff6a02d5f`
 - [ ] Case of the Lost Witness — `2215d2f4-0b85-43f3-a0b1-19f89adea3ca`
@@ -65793,7 +65822,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Veko, Death's Doorkeeper — `b3e1f70a-b760-4b26-8f49-5777008a8e12`
 - [ ] Woodland Investigation — `556c82bf-eb33-4a51-8fe0-15b244ff16d3`
 
-### Fallout (`PIP`)
+### commander · Fallout (`PIP`)
 
 - [ ] Abundant Growth — `947a2665-2f4d-4193-8768-118f85334549`
 - [ ] Acquired Mutation — `9ecd53b0-4551-4505-b5d2-02ae49d4cbdb`
@@ -66074,7 +66103,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yes Man, Personal Securitron — `16b8eab0-ccbd-4dbf-9998-82a4d85d0f77`
 - [ ] Young Deathclaws — `f24fc213-6341-482c-a056-946d0f1dd76b`
 
-### Breaking News (`OTP`)
+### masterpieces · Breaking News (`OTP`)
 
 - [ ] Abrupt Decay — `1c747fe2-289e-492a-a846-aa77707e2dc3`
 - [ ] Anguished Unmaking — `ad09b3c3-c8e7-481c-8c45-e7f234935117`
@@ -66139,14 +66168,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Void Rend — `713f16db-95ec-479e-a48c-7a69f7668d7f`
 - [ ] Voidslime — `c4851768-e210-4aaf-935e-715942e198f9`
 
-### Love Your LGS 2024 (`PLG24`)
+### promos · Love Your LGS 2024 (`PLG24`)
 
 - [ ] Cut Down — `1b30210d-10e9-4703-8967-032063bb4f26`
 - [ ] Lay Down Arms — `aa91d092-7f4a-4e4d-85db-e200692f3d9d`
 - [ ] Sheoldred's Edict — `217062f5-96f1-454c-9507-17f34ef37070`
 - [ ] Sleight of Hand — `05a039ad-1689-4d13-b393-6c1219583b5d`
 
-### Outlaws of Thunder Junction (`OTJ`)
+### expansion · Outlaws of Thunder Junction (`OTJ`)
 
 - [ ] Abraded Bluffs — `ca7d093c-0533-493f-9ad3-8af30118fbfc`
 - [ ] Akul the Unrepentant — `d6b56d6d-e2f6-47f5-a9d1-cd0e17f94a0d`
@@ -66405,7 +66434,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wrangler of the Damned — `0d8fded4-0393-43c2-82a1-383f29de65ce`
 - [ ] Wylie Duke, Atiin Hero — `b3ac27d6-7e18-404d-9af2-b03897a5f1d9`
 
-### Outlaws of Thunder Junction Commander (`OTC`)
+### commander · Outlaws of Thunder Junction Commander (`OTC`)
 
 - [ ] Academy Manufactor — `f36d1d8b-8303-44a9-ab56-531931641ea2`
 - [ ] Access Tunnel — `ed9cc560-f30b-4b60-a094-ccf93ed656a7`
@@ -66666,7 +66695,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Young Pyromancer — `5fac139a-07d3-4e6c-98e3-d98b199f7a6f`
 - [ ] Yuma, Proud Protector — `b8a0b967-3b5b-46f5-830b-5c8f1037784a`
 
-### Outlaws of Thunder Junction Promos (`POTJ`)
+### promos · Outlaws of Thunder Junction Promos (`POTJ`)
 
 - [ ] Akul the Unrepentant — `d6b56d6d-e2f6-47f5-a9d1-cd0e17f94a0d`
 - [ ] Annie Flash, the Veteran — `858067f9-eb1f-4569-9831-30441cba5f90`
@@ -66744,7 +66773,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vraska, the Silencer — `e7c5a568-3855-4a20-9edf-01a8a6a4ba97`
 - [ ] Wylie Duke, Atiin Hero — `b3ac27d6-7e18-404d-9af2-b03897a5f1d9`
 
-### The Big Score (`BIG`)
+### expansion · The Big Score (`BIG`)
 
 - [ ] Ancient Cornucopia — `f0950c95-a297-489d-b166-74bba6af5376`
 - [ ] Bristlebud Farmer — `3e44226b-51a2-4099-aff8-a5befab720cb`
@@ -66777,7 +66806,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vaultborn Tyrant — `e8d0accc-b320-4c07-8a71-a09db860351e`
 - [ ] Worldwalker Helm — `9573c85a-e574-4b4e-aae0-2165c45fd27e`
 
-### Alchemy: Outlaws of Thunder Junction (`YOTJ`)
+### alchemy · Alchemy: Outlaws of Thunder Junction (`YOTJ`)
 
 - [ ] Albiorix, Goose Tyrant // Wild Goose Chase — `eac8af5d-3deb-409b-8519-e9a8c3bbd856`
 - [ ] Blooming Cactusfolk — `0b0fe873-78a5-4be9-bc32-a88bb6053f9e`
@@ -66810,7 +66839,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wagon Wrecker — `eeaa9ed6-c3a4-44f9-aa1d-74f213e853f8`
 - [ ] Weave the Nightmare — `bd581eb6-1a12-4985-9a41-65c5c322d849`
 
-### Modern Horizons 2 Timeshifts (`H2R`)
+### supplemental · Modern Horizons 2 Timeshifts (`H2R`)
 
 - [ ] Abiding Grace — `f4e7bc58-336d-4670-84cb-a46ca1f48671`
 - [ ] Dragon's Rage Channeler — `0c016ccc-a341-4b76-87ba-69c639d2746d`
@@ -66829,7 +66858,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Tireless Provisioner — `ab8d5f5c-1976-4f77-8ed2-8d28ee666741`
 - [ ] Unholy Heat — `b23cba46-6ed2-442d-bc39-7c4933f6b083`
 
-### Modern Horizons 3 (`MH3`)
+### supplemental · Modern Horizons 3 (`MH3`)
 
 - [ ] A-Galvanic Discharge — `172b405a-9ded-44a1-8483-c7416c423930`
 - [ ] A-Guide of Souls — `f05345d2-83ac-42d7-bd7a-66c9d390e91c`
@@ -67117,7 +67146,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Writhing Chrysalis — `d27bebc9-348d-4b8e-816a-a4da66fb5618`
 - [ ] Wumpus Aberration — `c116801e-9893-46e8-a967-352b5fa27e86`
 
-### Modern Horizons 3 Commander (`M3C`)
+### commander · Modern Horizons 3 Commander (`M3C`)
 
 - [ ] Adarkar Wastes — `d5ad26cc-2bdb-46b7-b8bf-dd099d5fa09b`
 - [ ] Aether Hub — `61c89b11-65c9-4fda-bbcd-d84de25df801`
@@ -67401,7 +67430,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya, Cradle of Growth — `8dd5f5af-d2d8-4356-8617-8381081b930c`
 - [ ] Ziatora, the Incinerator — `d46c3fb6-f1c7-4a96-ae42-5bce17fc7c1d`
 
-### Modern Horizons 3 Promos (`PMH3`)
+### promos · Modern Horizons 3 Promos (`PMH3`)
 
 - [ ] Abstruse Appropriation — `61a23402-3244-4b5e-9134-98e1f82eda65`
 - [ ] Aether Revolt — `b73661a6-d136-4c65-804c-461e83484f4b`
@@ -67480,7 +67509,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winter Moon — `b922f057-1c91-43eb-b74a-8a933b1be2d2`
 - [ ] Wrath of the Skies — `21efa6f2-3e7c-4576-b5a3-0b75b2843442`
 
-### Assassin's Creed (`ACR`)
+### supplemental · Assassin's Creed (`ACR`)
 
 - [ ] Abstergo Entertainment — `d06a8026-1657-4404-8dff-64e44f1a14f8`
 - [ ] Achilles Davenport — `b921a672-721e-4bd8-a10b-a6de8c13c7d8`
@@ -67604,7 +67633,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] What Must Be Done — `bd0df0a8-c2ec-4d1f-9ada-cc91f7a20e1a`
 - [ ] Yggdrasil, Rebirth Engine — `7617a6f7-c83b-4ee5-a681-c7e164456526`
 
-### Bloomburrow (`BLB`)
+### expansion · Bloomburrow (`BLB`)
 
 - [ ] A-Heartfire Hero — `eb5406e1-c3eb-4434-91f4-308622d3eab4`
 - [ ] Agate Assault — `7b89b7d2-c724-4d5d-9f0b-7d3302ad1168`
@@ -67862,7 +67891,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ygra, Eater of All — `62511d43-8eaf-405a-9c81-7bd593d3a01e`
 - [ ] Zoraline, Cosmos Caller — `5a775f50-20f8-4a8f-868c-8907305bfad6`
 
-### Bloomburrow Commander (`BLC`)
+### commander · Bloomburrow Commander (`BLC`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Academy Manufactor — `f36d1d8b-8303-44a9-ab56-531931641ea2`
@@ -68114,7 +68143,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zinnia, Valley's Voice — `d8c16a3a-dd9d-410c-a5d5-06339a89970f`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### Bloomburrow Promos (`PBLB`)
+### promos · Bloomburrow Promos (`PBLB`)
 
 - [ ] Alania, Divergent Storm — `63d50d5e-56de-44c4-b906-b2a21a56e3f3`
 - [ ] Artist's Talent — `ea734863-5793-49d6-b10e-109432aec0a3`
@@ -68195,13 +68224,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ygra, Eater of All — `62511d43-8eaf-405a-9c81-7bd593d3a01e`
 - [ ] Zoraline, Cosmos Caller — `5a775f50-20f8-4a8f-868c-8907305bfad6`
 
-### Cowboy Bebop (`PCBB`)
+### promos · Cowboy Bebop (`PCBB`)
 
 - [ ] Disdainful Stroke — `11e02134-7b1a-46a4-a89e-7539dd1efada`
 - [ ] Ossification — `e29bfd62-286f-4982-813f-7086573c333b`
 - [ ] Snakeskin Veil — `1e6a24be-8281-41c1-a5ba-b68f0ef1d7b8`
 
-### Mystery Booster 2 (`MB2`)
+### masters-remastered · Mystery Booster 2 (`MB2`)
 
 - [ ] A Girl and Her Dogs — `9dffded8-b11f-4460-97f0-f847dc92e41f`
 - [ ] Abbot of the Sacred Meeple — `9f318608-da70-438c-823a-a03b89d8c4ac`
@@ -68557,7 +68586,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 - [ ] Zone of Flame — `b5fb9366-8541-46d8-ac4a-f80d639bbdda`
 
-### Alchemy: Bloomburrow (`YBLB`)
+### alchemy · Alchemy: Bloomburrow (`YBLB`)
 
 - [ ] Ace Flockbringer — `1d15c566-d96d-454d-a4fe-eea8e6aed415`
 - [ ] Archival Whorl — `6c6abebe-1b42-49af-befd-02c29f71e5e2`
@@ -68590,7 +68619,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Traverse Valley — `6fe8ffff-29bc-451f-805f-ddf599e0d76d`
 - [ ] Vigorous Farming — `4c3ff272-5b0b-40dc-a585-9d52598c1e1b`
 
-### Duskmourn: House of Horror (`DSK`)
+### expansion · Duskmourn: House of Horror (`DSK`)
 
 - [ ] A-Kona, Rescue Beastie — `56735afa-8ad1-4a7c-a67b-f82b2ffbde7a`
 - [ ] A-Leyline of Resonance — `04c6aa4e-b328-44b8-9d47-3c0d10289048`
@@ -68845,7 +68874,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Withering Torment — `ffce81c5-1b58-4882-a4e7-6f8d7cb170de`
 - [ ] Zimone, All-Questioning — `6c044dd1-8938-4d62-a7b2-e2298de08f70`
 
-### Duskmourn: House of Horror Commander (`DSC`)
+### commander · Duskmourn: House of Horror Commander (`DSC`)
 
 - [ ] Adarkar Wastes — `d5ad26cc-2bdb-46b7-b8bf-dd099d5fa09b`
 - [ ] Aesi, Tyrant of Gyre Strait — `6511f317-bd38-46d0-b800-7125a3f420da`
@@ -69107,7 +69136,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zimone's Hypothesis — `ae27fa09-ab73-44b4-8e86-44d626ec221d`
 - [ ] Zimone, Mystery Unraveler — `75bf0f27-9df1-4ab4-97a8-94bb3223bdf9`
 
-### Duskmourn: House of Horror Promos (`PDSK`)
+### promos · Duskmourn: House of Horror Promos (`PDSK`)
 
 - [ ] Abhorrent Oculus — `b1a0e129-27f0-4a09-b00d-497e18777306`
 - [ ] Balustrade Wurm — `2dd32fec-5bc3-4cc0-a9b4-814229a64914`
@@ -69190,7 +69219,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winter, Misanthropic Guide — `5a9baafb-bffd-4e28-bbe1-b4154cd86bf3`
 - [ ] Zimone, All-Questioning — `6c044dd1-8938-4d62-a7b2-e2298de08f70`
 
-### Alchemy: Duskmourn (`YDSK`)
+### alchemy · Alchemy: Duskmourn (`YDSK`)
 
 - [ ] Anguished Recollection — `d55f4fed-5296-4d5d-a8d6-b1a434874a0e`
 - [ ] Chittering Illuminator — `4b824a46-8f23-47ac-b9c5-18a884162a41`
@@ -69223,14 +69252,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Welcome the Darkness — `c332e88d-5c18-4603-980b-d9b9649dec1c`
 - [ ] Wingbright Thief — `c70b2c10-f567-4493-9ce6-768f7362ec96`
 
-### Tales of Middle-earth Deluxe Commander Kit (`PLTC`)
+### promos · Tales of Middle-earth Deluxe Commander Kit (`PLTC`)
 
 - [ ] Frodo, Determined Hero — `ae50be07-c8bc-45db-b47d-701c5d9ee633`
 - [ ] Gandalf, White Rider — `7a80212a-aae3-483b-abb6-7271a62dff8a`
 - [ ] Gollum, Scheming Guide — `3fb5c9a6-3fab-4109-875b-83c92518c5eb`
 - [ ] The Balrog, Flame of Udûn — `de12ca82-4824-4975-9a31-309a6d9101a7`
 
-### Foundations (`FDN`)
+### core · Foundations (`FDN`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Abyssal Harvester — `68cc5065-0514-4adf-885f-da554e1db00a`
@@ -69658,12 +69687,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zombify — `bb95db4d-5017-4121-bf79-d68476602d8c`
 - [ ] Zul Ashur, Lich Lord — `a7c6c9b3-91f2-4ecf-b2b0-b0edd96974d9`
 
-### Foundations Commander (`FDC`)
+### commander · Foundations Commander (`FDC`)
 
 - [ ] Arcane Signet — `0bc7f093-bef0-4f1a-852c-4b75ebf54838`
 - [ ] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
 
-### Foundations Jumpstart (`J25`)
+### jumpstart · Foundations Jumpstart (`J25`)
 
 - [ ] Abandon Reason — `fa43793d-a215-4a64-a09c-ed9799f745a4`
 - [ ] Academy Journeymage — `b400700c-1d82-4721-a166-56f88ba6ad19`
@@ -70328,7 +70357,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zealot of the God-Pharaoh — `2911d52f-7faf-455a-acdf-77269c9ee8ce`
 - [ ] Zealous Conscripts — `1dae6f39-2cbd-485c-b190-017a26401fd4`
 
-### Foundations Promos (`PFDN`)
+### promos · Foundations Promos (`PFDN`)
 
 - [ ] Abyssal Harvester — `68cc5065-0514-4adf-885f-da554e1db00a`
 - [ ] Ajani, Caller of the Pride — `1d5ff280-7f4d-4801-aefd-9b6e6b1f2818`
@@ -70407,7 +70436,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zimone, Paradox Sculptor — `9dd674a7-becf-4106-b53f-bca88426d92d`
 - [ ] Zul Ashur, Lich Lord — `a7c6c9b3-91f2-4ecf-b2b0-b0edd96974d9`
 
-### Pioneer Masters (`PIO`)
+### masters-remastered · Pioneer Masters (`PIO`)
 
 - [ ] Abhorrent Overlord — `13f63240-a6bb-4333-a3dd-818725c6fb73`
 - [ ] Aetherling — `b980bf11-9e12-4ee9-83c1-45706d9ae344`
@@ -70779,7 +70808,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 - [ ] Zurgo Bellstriker — `46808926-d95b-4313-89d1-6bdfe13fcb77`
 
-### MagicFest 2025 (`PF25`)
+### promos · MagicFest 2025 (`PF25`)
 
 - [ ] All-You-Can-Eat Buffet — `b53be2ae-f5f3-4196-a13f-c1875192cdc8`
 - [ ] Arcane Signet — `0bc7f093-bef0-4f1a-852c-4b75ebf54838`
@@ -70799,7 +70828,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ugin, the Spirit Dragon — `eecb3047-a563-441a-9175-200421981ac3`
 - [ ] Yoshimaru, Ever Faithful — `963834c8-42df-4ee6-9b45-b9de88ce2eac`
 
-### Wizards Play Network 2025 (`PW25`)
+### promos · Wizards Play Network 2025 (`PW25`)
 
 - [ ] Carnage, Crimson Chaos — `c0efafc6-8ffb-4908-ae64-3f391722370a`
 - [ ] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
@@ -70816,7 +70845,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Unlucky Cabbage Merchant — `d8f7d4c8-bc50-4bcf-b930-797dcb3c2a21`
 - [ ] Yuna, Grand Summoner — `ba72d4a9-6f36-4796-bd71-2342fa9b4a30`
 
-### Spotlight Series (`PSPL`)
+### promos · Spotlight Series (`PSPL`)
 
 - [ ] Cloud, Midgar Mercenary — `33d2584b-bf29-4c22-bd45-14ba2fb98c0e`
 - [ ] Day of Black Sun — `dc857129-533c-41d1-8e8b-1c0443030d69`
@@ -70832,7 +70861,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Terror of the Peaks — `f8e17f4f-080d-4bba-bd05-ca27e94ccecc`
 - [ ] Vendilion Clique — `244d4807-0802-41bc-9460-55ac38a28a72`
 
-### Innistrad Remastered (`INR`)
+### masters-remastered · Innistrad Remastered (`INR`)
 
 - [ ] Aberrant Researcher // Perfected Form — `722ee05f-6815-41b7-9813-5ec3902c1e9f`
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
@@ -71109,14 +71138,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Young Wolf — `8b492764-10b6-4506-be11-22daa9220a91`
 - [ ] Zealous Conscripts — `1dae6f39-2cbd-485c-b190-017a26401fd4`
 
-### Japan Standard Cup (`PJSC`)
+### promos · Japan Standard Cup (`PJSC`)
 
 - [ ] Brotherhood's End — `fe7bf8ca-88ae-4c6d-8d71-ef170a87c0d0`
 - [ ] Sheltered by Ghosts — `d13fc657-c6fc-4394-bc70-691050550226`
 - [ ] Tishana's Tidebinder — `2993dc7d-723d-4a9b-94bd-4bb02a9f7243`
 - [ ] Unstoppable Slasher — `6662968e-ca9e-454c-be44-24ad10e43d3e`
 
-### Aetherdrift (`DFT`)
+### expansion · Aetherdrift (`DFT`)
 
 - [ ] Aatchik, Emerald Radian — `405c4a7b-dbb3-48a1-9205-7dbe6e2ad363`
 - [ ] Adrenaline Jockey — `c3dc6b0e-8790-4bd3-b166-63b2dc77488f`
@@ -71361,7 +71390,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wretched Doll — `628cf9ab-8f8b-49b6-b761-2450088ad03b`
 - [ ] Zahur, Glory's Past — `fb82cd81-0e71-43ab-88f9-b1fa158f5138`
 
-### Aetherdrift Commander (`DRC`)
+### commander · Aetherdrift Commander (`DRC`)
 
 - [ ] Academy Ruins — `a3da7d5b-2c2b-45fe-b9c5-413b8c8fc0a2`
 - [ ] Accursed Duneyard — `48edc348-93f6-4dce-9cc4-7244d76b6f4a`
@@ -71499,7 +71528,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yavimaya Coast — `40b36bc6-c185-4bda-99e7-0118953c2c97`
 - [ ] Zombie Master — `5446c92f-ff22-4e9b-a2f6-e64c8560c1e0`
 
-### Aetherdrift Promos (`PDFT`)
+### promos · Aetherdrift Promos (`PDFT`)
 
 - [ ] Aatchik, Emerald Radian — `405c4a7b-dbb3-48a1-9205-7dbe6e2ad363`
 - [ ] Afterburner Expert — `b4d19e3a-c2f8-4503-bcfa-1b46bde972e5`
@@ -71582,13 +71611,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winter, Cursed Rider — `343833c1-19fd-4e8f-b82e-0f20903caaff`
 - [ ] Zahur, Glory's Past — `fb82cd81-0e71-43ab-88f9-b1fa158f5138`
 
-### Year of the Snake 2025 (`PL25`)
+### promos · Year of the Snake 2025 (`PL25`)
 
 - [ ] Kaseto, Orochi Archmage — `198b6c6f-a480-4672-9d87-b0cb5d8ed1c0`
 - [ ] Lotus Cobra — `8ad91f64-ccab-4edc-bd54-b2ee9267d614`
 - [ ] Xyris, the Writhing Storm — `8687948c-456b-495b-9b31-f818c65624b6`
 
-### Alchemy: Aetherdrift (`YDFT`)
+### alchemy · Alchemy: Aetherdrift (`YDFT`)
 
 - [ ] Arius, Flyby Trawler — `a9efb84d-b19f-44b7-89a5-127c38b2ea6b`
 - [ ] Bail Out — `37e4b9fe-e90a-4c65-8ad7-8db603230a89`
@@ -71621,11 +71650,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Turbocharged Escape — `d9e3d52a-4b5f-499b-90e3-dd0712d13feb`
 - [ ] Unforgiving Overtake — `39d250a0-3605-4372-ad9d-bea7fa9308b0`
 
-### Love Your LGS 2025 (`PLG25`)
+### promos · Love Your LGS 2025 (`PLG25`)
 
 - [ ] Chromatic Lantern — `539f5396-d99a-417d-a84c-dff7930b5900`
 
-### Tarkir: Dragonstorm (`TDM`)
+### expansion · Tarkir: Dragonstorm (`TDM`)
 
 - [ ] A-Cori-Steel Cutter — `94ab54a2-a89d-4d70-90bd-95b9f4c61cf4`
 - [ ] Abzan Devotee — `3d02ee2f-b7bd-40b0-b9be-2420991b2be0`
@@ -71877,7 +71906,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zurgo's Vanguard — `d6fdfd94-cef5-482c-83ed-11c5ba40abe9`
 - [ ] Zurgo, Thunder's Decree — `393d0bf8-5f2e-4eaa-91a1-9132429a7371`
 
-### Tarkir: Dragonstorm Commander (`TDC`)
+### commander · Tarkir: Dragonstorm Commander (`TDC`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Access Tunnel — `ed9cc560-f30b-4b60-a094-ccf93ed656a7`
@@ -72184,7 +72213,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zenith Festival — `4dabba8c-0490-41ec-a03e-f7d0c9f0edb6`
 - [ ] Zurgo Stormrender — `0f93d88c-9d2e-416d-a10b-99483360b1fb`
 
-### Tarkir: Dragonstorm Promos (`PTDM`)
+### promos · Tarkir: Dragonstorm Promos (`PTDM`)
 
 - [ ] All-Out Assault — `de8c0e2d-3207-4bc6-83ef-91e33b26a981`
 - [ ] Ambling Stormshell — `75070eaf-c931-46e5-9aa1-b849e33580c6`
@@ -72267,7 +72296,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yathan Roadwatcher — `0c3d86b6-5dcd-4016-9b4a-d4f66b1e963f`
 - [ ] Zurgo, Thunder's Decree — `393d0bf8-5f2e-4eaa-91a1-9132429a7371`
 
-### Alchemy: Tarkir (`YTDM`)
+### alchemy · Alchemy: Tarkir (`YTDM`)
 
 - [ ] Amber-Plate Ainok — `2579d430-e22c-4cb2-b7a6-113e8f2e4519`
 - [ ] Audacious Knuckleblade — `e4751e45-8bb6-4f21-9659-cc8c1eb22456`
@@ -72300,7 +72329,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Waystone's Guidance — `d2b9d1a7-0a41-4635-86dd-5ceb1522ce54`
 - [ ] Xho Cai, Flickering Talon — `0988d2cd-4e1d-47c6-b0db-0ff0335b12e6`
 
-### Pioneer Anthology 1 (`PA1`)
+### anthologies · Pioneer Anthology 1 (`PA1`)
 
 - [ ] Battle at the Bridge — `3d63ad3a-4e9f-4968-a576-4be063f4ecbf`
 - [ ] Borborygmos Enraged — `b7505737-1fc8-4ee8-8b1d-5dde73b6a76d`
@@ -72314,12 +72343,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Triton Shorestalker — `71a60247-17e5-44bd-9fed-f7d550b09ef3`
 - [ ] Warping Wail — `c8b9fa02-0a0c-4a87-9a00-3c1c7e2f4bfd`
 
-### FIN Standard Showdown (`PSS5`)
+### promos · FIN Standard Showdown (`PSS5`)
 
 - [ ] Squall, SeeD Mercenary — `e2348e0e-eeca-47b5-9417-bf4470ec29bb`
 - [ ] Ultima — `c9a45c28-826e-4e6e-8adc-1368ea1af11a`
 
-### Final Fantasy (`FIN`)
+### expansion · Final Fantasy (`FIN`)
 
 - [ ] A Realm Reborn — `fd230ab5-874e-4827-9b5c-6d39d079cee6`
 - [ ] A-Vivi Ornitier — `995b4d53-8932-4739-a77d-2a1cae3f02ad`
@@ -72600,7 +72629,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zidane, Tantalus Thief — `f267fb54-1881-464c-81af-9e03c3f3b41d`
 - [ ] Zodiark, Umbral God — `f1190fb9-72a2-48f8-bc2d-61240f1e9119`
 
-### Final Fantasy Commander (`FIC`)
+### commander · Final Fantasy Commander (`FIC`)
 
 - [ ] Aerith, Last Ancient — `d6cba688-faff-4d9f-8148-37d389fa5fb3`
 - [ ] Alisaie Leveilleur — `4bd1d079-314e-4fb5-9b43-c9c83e5528bc`
@@ -72881,7 +72910,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yuna's Whistle — `39bf633c-41a6-496d-8aef-1ab7befb503d`
 - [ ] Yuna, Grand Summoner — `ba72d4a9-6f36-4796-bd71-2342fa9b4a30`
 
-### Final Fantasy Promos (`PFIN`)
+### promos · Final Fantasy Promos (`PFIN`)
 
 - [ ] A Realm Reborn — `fd230ab5-874e-4827-9b5c-6d39d079cee6`
 - [ ] Absolute Virtue — `d4fddf20-6b3a-42c3-a245-002dacbb4725`
@@ -72971,12 +73000,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zenos yae Galvus // Shinryu, Transcendent Rival — `8f52fc65-a914-421a-9426-21eb520d55d5`
 - [ ] Zodiark, Umbral God — `f1190fb9-72a2-48f8-bc2d-61240f1e9119`
 
-### Final Fantasy Regional Promos (`RFIN`)
+### promos · Final Fantasy Regional Promos (`RFIN`)
 
 - [ ] Arcane Denial — `ab1cc360-b9de-48d9-9983-4dfe4a7d2a37`
 - [ ] Force of Negation — `ac2173f9-f223-440a-9231-fd98762bdc6f`
 
-### Final Fantasy: Through the Ages (`FCA`)
+### masterpieces · Final Fantasy: Through the Ages (`FCA`)
 
 - [ ] A-Winota, Joiner of Forces — `533edec1-ba88-409a-9e51-9138b85d000f`
 - [ ] Adeline, Resplendent Cathar — `38515f89-348b-4cf3-b7bd-1f6fe4ce2fba`
@@ -73040,7 +73069,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yawgmoth, Thran Physician — `a1e232c0-dc38-47be-a5a0-f68bc1d86a29`
 - [ ] Yuriko, the Tiger's Shadow — `a7043fbd-1dfd-42cf-be4b-cc343d0949e5`
 
-### Edge of Eternities (`EOE`)
+### expansion · Edge of Eternities (`EOE`)
 
 - [ ] Adagia, Windswept Bastion — `70d35dbd-1d91-4a2a-a643-6870d168f4f5`
 - [ ] All-Fates Scroll — `cef5361a-a189-4e05-a8b8-fc764aed73b9`
@@ -73292,7 +73321,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zero Point Ballad — `835abd35-27ea-45fe-b55d-25081c57bd4a`
 - [ ] Zookeeper Mechan — `6d4d98a8-a5a3-4cc1-9277-c45dafe40ea0`
 
-### Edge of Eternities Commander (`EOC`)
+### commander · Edge of Eternities Commander (`EOC`)
 
 - [ ] Adarkar Wastes — `d5ad26cc-2bdb-46b7-b8bf-dd099d5fa09b`
 - [ ] Aftermath Analyst — `374e54d8-8e73-4268-9dde-c28c77bbbf32`
@@ -73430,7 +73459,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] World Breaker — `deeb7e22-b207-42de-b9d4-f790403d52a9`
 - [ ] Worldsoul's Rage — `3b6ef144-bb98-4686-9718-204f1c3cf020`
 
-### Edge of Eternities Promos (`PEOE`)
+### promos · Edge of Eternities Promos (`PEOE`)
 
 - [ ] Adagia, Windswept Bastion — `70d35dbd-1d91-4a2a-a643-6870d168f4f5`
 - [ ] Alpharael, Stonechosen — `ed43f1f9-ef96-47bc-8a54-e59154319f9d`
@@ -73513,7 +73542,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Xu-Ifit, Osteoharmonist — `39e32fdf-93bf-4390-8275-0d7d10ad7360`
 - [ ] Zero Point Ballad — `835abd35-27ea-45fe-b55d-25081c57bd4a`
 
-### Edge of Eternities: Stellar Sights (`EOS`)
+### masterpieces · Edge of Eternities: Stellar Sights (`EOS`)
 
 - [ ] Ancient Tomb — `23467047-6dba-4498-b783-1ebc4f74b8c2`
 - [ ] Blast Zone — `393a254f-be31-431a-9341-a51286f8cbce`
@@ -73558,7 +73587,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Thespian's Stage — `b01e698b-608a-4fc7-8073-b01d044743ec`
 - [ ] Wandering Fumarole — `741c51f1-cfbe-4c29-ac8f-ca6bcd2652f9`
 
-### The Big Score Promos (`PBIG`)
+### promos · The Big Score Promos (`PBIG`)
 
 - [ ] Fomori Vault — `622a53bd-d894-422c-a606-7126041afa02`
 - [ ] Generous Plunderer — `91c835d1-22ca-4c90-9ba6-c8e01bbc0347`
@@ -73575,7 +73604,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vaultborn Tyrant — `e8d0accc-b320-4c07-8a71-a09db860351e`
 - [ ] Worldwalker Helm — `9573c85a-e574-4b4e-aae0-2165c45fd27e`
 
-### Alchemy: Edge of Eternities (`YEOE`)
+### alchemy · Alchemy: Edge of Eternities (`YEOE`)
 
 - [ ] Ambassador of Evendo — `061e7077-115b-4a37-b574-8fd4757d4bce`
 - [ ] Axavar, Fate Thief — `161c6317-f4b6-45a2-98ac-6340a374eac5`
@@ -73609,7 +73638,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vv'viza, Orbital Overseer — `eef3d87e-82b6-4f3c-af1a-38e67133baa1`
 - [ ] Worldweave — `c8e634a3-b250-480e-9136-f630444a63ce`
 
-### Arena Anthology 1 (`AA1`)
+### anthologies · Arena Anthology 1 (`AA1`)
 
 - [ ] Champion's Helm — `c01aafb8-3da5-4eb1-8731-2a223e747d63`
 - [ ] Darksteel Plate — `b5b4cf54-ed5e-42d0-9d98-5fec76b0b0b8`
@@ -73628,7 +73657,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Talisman of Resilience — `42b8aa14-10bc-4bd6-88d9-4bb287eadd19`
 - [ ] Talisman of Unity — `e5fcc5d7-6a60-4a5b-9d02-6c30041a95b9`
 
-### Arena Anthology 2 (`AA2`)
+### anthologies · Arena Anthology 2 (`AA2`)
 
 - [ ] Barrowgoyf — `74c0164c-130f-4572-9066-626c77f6e2ff`
 - [ ] Control Magic — `cd0d7141-46d2-4aa3-bc77-6b3b4513803e`
@@ -73650,12 +73679,12 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Thought Scour — `83101ba8-a569-4827-8c53-9ca0dfcd59a7`
 - [ ] Wrenn and Six — `108ae90a-50fa-4cfd-b751-d630e41425fe`
 
-### 2023 Heroes of the Realm (`PH23`)
+### funny-special · 2023 Heroes of the Realm (`PH23`)
 
 - [ ] Mr. Monopoly, On the Go — `9537cca4-7c58-4f89-95f0-f5186d04c025`
 - [ ] Ormacar, Relic Wraith — `db957d57-d36d-4d7b-92ae-5a1385a1be97`
 
-### Arena Anthology 3 (`AA3`)
+### anthologies · Arena Anthology 3 (`AA3`)
 
 - [ ] Assault Strobe — `9bf4ee0f-6e28-4793-b251-f81ee444a119`
 - [ ] Batterskull — `d12e5ce0-5705-4c35-9a93-b883db52c80c`
@@ -73682,7 +73711,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Umezawa's Jitte — `1da10d5c-36a8-473f-a5d4-782ad61d8057`
 - [ ] Yavimaya, Cradle of Growth — `8dd5f5af-d2d8-4356-8617-8381081b930c`
 
-### Arena Anthology 4 (`AA4`)
+### anthologies · Arena Anthology 4 (`AA4`)
 
 - [ ] Baleful Force — `f26fa9e4-f528-4e22-8f7c-329fc3b633e4`
 - [ ] Blazing Archon — `82a70e4c-01ed-4280-80e4-86cb2bf6e63d`
@@ -73707,7 +73736,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Thing from the Deep — `9542bd7f-bb99-4b59-a4e3-b88ed9f798bf`
 - [ ] Wolf Pack — `ec58a82f-8c78-4f88-90d5-e32d83be7a48`
 
-### Through the Omenpaths (`OM1`)
+### expansion · Through the Omenpaths (`OM1`)
 
 - [ ] Agent Venom — `14c356aa-178d-4c14-a88e-fbe92ee6d89f`
 - [ ] Alien Symbiosis — `19504e19-2886-4d28-a813-b798a9a446a2`
@@ -73887,7 +73916,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] With Great Power . . . — `dfedb968-f27c-4117-aff6-da707dd43e82`
 - [ ] Wraith, Vicious Vigilante — `38684c31-e8c6-4825-8740-1a3d34b58b39`
 
-### Through the Omenpaths Bonus Sheet (`OMB`)
+### masterpieces · Through the Omenpaths Bonus Sheet (`OMB`)
 
 - [ ] Alibou, Ancient Witness — `e5e8e116-10fe-48b0-b3d8-6edb39bd5f90`
 - [ ] Arachnogenesis — `b655bee5-52d3-467e-b16c-cfc2edf2b1a1`
@@ -73927,7 +73956,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wedding Ring — `0c34e962-99d9-4163-b852-4f61886546aa`
 - [ ] Winds of Change — `f525cf10-e24c-4c46-9a13-6f8579d09d50`
 
-### Marvel Universe (`MAR`)
+### masterpieces · Marvel Universe (`MAR`)
 
 - [ ] Alibou, Ancient Witness — `e5e8e116-10fe-48b0-b3d8-6edb39bd5f90`
 - [ ] Anthem of Champions — `f1d8e9a6-1903-4be5-8609-1009a463f393`
@@ -74019,7 +74048,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winds of Change — `f525cf10-e24c-4c46-9a13-6f8579d09d50`
 - [ ] Wolverine, Best There Is — `6e53a43e-5a23-4057-9bb5-281508da57af`
 
-### Marvel's Spider-Man (`SPM`)
+### expansion · Marvel's Spider-Man (`SPM`)
 
 - [ ] Agent Venom — `14c356aa-178d-4c14-a88e-fbe92ee6d89f`
 - [ ] Alien Symbiosis — `19504e19-2886-4d28-a813-b798a9a446a2`
@@ -74199,7 +74228,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] With Great Power . . . — `dfedb968-f27c-4117-aff6-da707dd43e82`
 - [ ] Wraith, Vicious Vigilante — `38684c31-e8c6-4825-8740-1a3d34b58b39`
 
-### Marvel's Spider-Man Eternal (`SPE`)
+### eternal · Marvel's Spider-Man Eternal (`SPE`)
 
 - [ ] Alchemax Slayer-Bots — `cdc7356c-9621-4420-9fda-c8b91df0ec7c`
 - [ ] Amazing Alliance — `5a824aff-52fe-4402-b074-884afb5286d4`
@@ -74226,7 +74255,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Venom, Deadly Devourer — `f064fc04-28fb-423f-a4f3-bb567c71168f`
 - [ ] Venom, Eddie Brock — `9132d7e6-7190-45e1-9c57-8fe2e5d0f2f2`
 
-### Marvel's Spider-Man Promos (`PSPM`)
+### promos · Marvel's Spider-Man Promos (`PSPM`)
 
 - [ ] Agent Venom — `14c356aa-178d-4c14-a88e-fbe92ee6d89f`
 - [ ] Anti-Venom, Horrifying Healer — `3c7bafe9-80cd-48d0-bcae-e7910c9fb83b`
@@ -74297,14 +74326,14 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Web of Life and Destiny — `33d556c5-1bb4-49bb-88c2-627311eb8c9b`
 - [ ] With Great Power . . . — `dfedb968-f27c-4117-aff6-da707dd43e82`
 
-### Marvel Legends Series Inserts (`LMAR`)
+### promos · Marvel Legends Series Inserts (`LMAR`)
 
 - [ ] Anti-Venom, Horrifying Healer — `3c7bafe9-80cd-48d0-bcae-e7910c9fb83b`
 - [ ] Huntmaster of the Fells // Ravager of the Fells — `582328cd-660d-47a4-bb23-e91e80b9a907`
 - [ ] Iron Spider, Stark Upgrade — `e123fd7d-ace9-48a4-9510-eedcc837d8e8`
 - [ ] Spectacular Spider-Man — `eed5e0cc-8f88-4779-bf10-6a823c72df7f`
 
-### Avatar: The Last Airbender (`TLA`)
+### expansion · Avatar: The Last Airbender (`TLA`)
 
 - [ ] Aang's Iceberg — `646f9ad8-9d18-4b42-954a-e21a62e9f0e8`
 - [ ] Aang's Journey — `ddf461b9-a205-4dc7-a9c3-c047b1ff709f`
@@ -74567,7 +74596,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zuko, Conflicted — `b5fd82b9-77de-4358-9ce7-915cc809a889`
 - [ ] Zuko, Exiled Prince — `3231ce2e-d4f8-44fc-872d-aeafa59aed4b`
 
-### Avatar: The Last Airbender Eternal (`TLE`)
+### eternal · Avatar: The Last Airbender Eternal (`TLE`)
 
 - [ ] Aang and Katara — `481c3e14-b670-4fab-aa9f-6ce5b514096d`
 - [ ] Aang's Defense — `92b617f9-6e6b-42a0-9c45-6ff5f6193051`
@@ -74771,7 +74800,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zuko, Firebending Master — `33db6dc8-2c88-4a7f-8d4d-3bc9fb6544b2`
 - [ ] Zuko, Seeking Honor — `6e737c52-cbe0-493f-ae46-7bf068e04882`
 
-### Avatar: The Last Airbender Promos (`PTLA`)
+### promos · Avatar: The Last Airbender Promos (`PTLA`)
 
 - [ ] Aang's Iceberg — `646f9ad8-9d18-4b42-954a-e21a62e9f0e8`
 - [ ] Aang, at the Crossroads // Aang, Destined Savior — `96e5d4a1-e59f-4140-823f-a17e15ee5d8d`
@@ -74853,7 +74882,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zhao, the Moon Slayer — `94c64d41-d756-42b6-b0e7-0a351d64a68c`
 - [ ] Zuko, Conflicted — `b5fd82b9-77de-4358-9ce7-915cc809a889`
 
-### Wizards Play Network 2026 (`PW26`)
+### promos · Wizards Play Network 2026 (`PW26`)
 
 - [ ] Access Tunnel — `ed9cc560-f30b-4b60-a094-ccf93ed656a7`
 - [ ] An Unexpected Party // At the Door — `38503d34-f4f9-4eeb-9b1e-4fec1df921b3`
@@ -74872,7 +74901,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] The Eternal Wanderer — `20a1671d-e8a4-4cf1-87a7-f2f6319f4b9e`
 - [ ] Tragic Trajectory — `e5e19326-3e90-439c-a3b2-749d43a1af0c`
 
-### Lorwyn Eclipsed (`ECL`)
+### expansion · Lorwyn Eclipsed (`ECL`)
 
 - [ ] Abigale, Eloquent First-Year — `48a773d0-c433-4463-b50f-b6d4604a042c`
 - [ ] Adept Watershaper — `602cce3e-7033-47d6-aec1-d755f234f270`
@@ -75131,7 +75160,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winnowing — `8b834f83-951b-4b5c-b9f1-3d860baa3c0e`
 - [ ] Wistfulness — `e5e8fce4-c97a-4ae4-9583-003c565e3bd6`
 
-### Lorwyn Eclipsed Commander (`ECC`)
+### commander · Lorwyn Eclipsed Commander (`ECC`)
 
 - [ ] Aberrant Return — `3a92b235-196b-4f46-9d20-06f4d3653d36`
 - [ ] Abundant Countryside — `e3eb6f90-ccfc-41e7-bff6-0b378226bc7e`
@@ -75262,7 +75291,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wickersmith's Tools — `c89cd328-b4cc-4760-8b6c-59e82eed8dac`
 - [ ] Yarok, the Desecrated — `95b53836-18aa-451a-992d-2a111deeeab2`
 
-### Lorwyn Eclipsed Promos (`PECL`)
+### promos · Lorwyn Eclipsed Promos (`PECL`)
 
 - [ ] Abigale, Eloquent First-Year — `48a773d0-c433-4463-b50f-b6d4604a042c`
 - [ ] Adept Watershaper — `602cce3e-7033-47d6-aec1-d755f234f270`
@@ -75345,7 +75374,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winnowing — `8b834f83-951b-4b5c-b9f1-3d860baa3c0e`
 - [ ] Wistfulness — `e5e8fce4-c97a-4ae4-9583-003c565e3bd6`
 
-### Alchemy: Lorwyn Eclipsed (`YECL`)
+### alchemy · Alchemy: Lorwyn Eclipsed (`YECL`)
 
 - [ ] Adaptive Armorer — `2c4a0410-0dfc-461f-8dd5-2a91cf85ffef`
 - [ ] Adherent's Heirloom — `62f01e1e-0d4b-4944-9aec-a5c90e9675e8`
@@ -75380,13 +75409,13 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Volatile Rift — `e250906c-c8b7-4f31-8fc3-e98bf36a7f0a`
 - [ ] Wildgrove Summoner — `4125f0ff-db61-4284-b133-4c0d7b5acc9f`
 
-### Year of the Horse 2026 (`PL26`)
+### promos · Year of the Horse 2026 (`PL26`)
 
 - [ ] Calamity, Galloping Inferno — `eb37496e-374f-41b9-bd52-f52f37bdac31`
 - [ ] Caustic Bronco — `165bdc68-1da0-47db-a069-978fc4c04b3f`
 - [ ] Emiel the Blessed — `b11c250c-f191-4c52-ba02-a9176f163447`
 
-### Teenage Mutant Ninja Turtles (`TMT`)
+### expansion · Teenage Mutant Ninja Turtles (`TMT`)
 
 - [ ] Action News Crew — `a9d68cf5-3055-4ec9-9893-244bfd7046be`
 - [ ] Agent Bishop, Man in Black — `f33217cc-175f-45e8-bc69-801f41cb4495`
@@ -75563,7 +75592,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zog, Triceraton Castaway — `d944d33d-0a95-4d0d-96ce-49d02500227d`
 - [ ] Zoo Escapees — `107e9ada-4e2e-4032-addd-274bca956621`
 
-### Teenage Mutant Ninja Turtles Eternal (`TMC`)
+### eternal · Teenage Mutant Ninja Turtles Eternal (`TMC`)
 
 - [ ] April O'Neil, Human Element — `020963ef-24c0-48cc-8776-bc257df684bc`
 - [ ] April O'Neil, Live on the Scene — `4900c157-8d9f-4f92-aaca-5246b6e2832e`
@@ -75665,7 +75694,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wave Goodbye — `06ef46c6-00ba-40e6-b866-d0095ab83749`
 - [ ] Wooden Cane — `d41eec6c-de14-4809-abae-b94355674a33`
 
-### Teenage Mutant Ninja Turtles Source Material (`PZA`)
+### masterpieces · Teenage Mutant Ninja Turtles Source Material (`PZA`)
 
 - [ ] All Will Be One — `477374dc-042c-48f7-9ebe-99c15d8ae04f`
 - [ ] Arcbound Ravager — `62e7e7b1-9887-4d15-b0e5-a8ddc711bd88`
@@ -75688,7 +75717,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Underworld Breach — `27e0948b-9916-473b-8d8c-a51bdfbc7457`
 - [ ] Waves of Aggression — `10991b1a-7dd3-4fbf-a4c8-200dc62fc605`
 
-### MagicFest 2026 (`PF26`)
+### promos · MagicFest 2026 (`PF26`)
 
 - [ ] Atraxa, Praetors' Voice — `7e6b9b59-cd68-4e3c-827b-38833c92d6eb`
 - [ ] Bicycle Elemental — `0c4c37e4-3764-4b12-88ac-bb95a626b08f`
@@ -75700,7 +75729,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Prismatic Ending — `2cb98ca9-d7bb-416b-a17e-ee5f8e4d78f2`
 - [ ] Utopia Sprawl — `00d8efa6-a2d9-4249-8da7-b45173675329`
 
-### Secrets of Strixhaven (`SOS`)
+### expansion · Secrets of Strixhaven (`SOS`)
 
 - [ ] Aberrant Manawurm — `a0657586-0404-4bb0-a92d-25f040d560c1`
 - [ ] Abigale, Poet Laureate // Heroic Stanza — `2f5f46ed-b8aa-4864-bd20-17281d4632bf`
@@ -75952,7 +75981,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zealous Lorecaster — `f82265fd-e772-4347-a27f-37b00ccd416b`
 - [ ] Zimone's Experiment — `5faa9e54-1cc4-48c0-bbfa-a495087c36d6`
 
-### Secrets of Strixhaven Commander (`SOC`)
+### commander · Secrets of Strixhaven Commander (`SOC`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Abstract Performance — `3e0e3676-e634-4e64-bdfd-4aaa5885461f`
@@ -76281,7 +76310,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zimone, Quandrix Prodigy — `ee2ef1e0-6803-4eb5-8664-605438c67505`
 - [ ] Zulaport Cutthroat — `76b003e0-15af-4f22-bdf2-1ade5430964a`
 
-### Secrets of Strixhaven Mystical Archive (`SOA`)
+### masterpieces · Secrets of Strixhaven Mystical Archive (`SOA`)
 
 - [ ] Abrade — `f9db72dc-9a5b-48a4-a86e-7464d9a2166a`
 - [ ] Ad Nauseam — `981b0e21-e5e6-4a1e-bfde-679d56623f7f`
@@ -76343,7 +76372,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Winds of Abandon — `499a4715-6776-461b-bee4-22ed172d455e`
 - [ ] Zombify — `bb95db4d-5017-4121-bf79-d68476602d8c`
 
-### Secrets of Strixhaven Promos (`PSOS`)
+### promos · Secrets of Strixhaven Promos (`PSOS`)
 
 - [ ] Ambitious Augmenter — `d87f0e52-486e-49b4-9cf1-12e238857340`
 - [ ] Antiquities on the Loose — `9c45682f-48b5-4e58-9277-ff4211f389ae`
@@ -76420,7 +76449,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Withering Curse — `fddd1c39-bdf8-4aee-897c-666498cc4dd3`
 - [ ] Zaffai and the Tempests — `3f8a8650-0e38-4926-8f48-526351e6a863`
 
-### Alchemy: Secrets of Strixhaven (`YSOS`)
+### alchemy · Alchemy: Secrets of Strixhaven (`YSOS`)
 
 - [ ] Advanced Floral Invocations — `bedcb58e-7958-4364-8783-790ab52f92ea`
 - [ ] Algorithmic Ferocity — `e373097a-4456-44a5-bcb9-1d2235c73bb6`
@@ -76454,7 +76483,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Ursine Guide // Ranger's Merit — `96a861a4-f216-491d-975a-faf24d4f6f56`
 - [ ] Variable Solutions — `aa0ddcaa-3cf3-4c9f-bba9-20ad69caccda`
 
-### Marvel Super Heroes (`MSH`)
+### expansion · Marvel Super Heroes (`MSH`)
 
 - [ ] A.I.M. Scientists — `fa732888-5b7d-4087-a6e5-1db1c98fbd4c`
 - [ ] A.I.M. Synthoids — `10916f33-aaa6-43a1-9835-b60fd061161f`
@@ -76711,7 +76740,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Worlds Within Worlds — `e25062ba-7176-4d59-ac3e-26d19b26f02a`
 - [ ] Yellowjacket, Heartless Marauder — `0a364879-31bd-4760-833d-165cde1e96c6`
 
-### Marvel Super Heroes Commander (`MSC`)
+### commander · Marvel Super Heroes Commander (`MSC`)
 
 - [ ] Abomination, Irradiated Brute — `e7436d37-c331-4524-b5d4-861e9d25bfc5`
 - [ ] Abomination, World Ravager — `e0b12c48-7234-40b5-a84c-6901d2b4e5b0`
@@ -77258,7 +77287,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Zarda, the Power Princess — `c7b158b9-19f7-47b6-a97c-74023dfe73b9`
 - [ ] Zuri, Warrior of Wakanda — `aa792980-0811-4c08-8343-00fba0c5cf5e`
 
-### The Hobbit (`HOB`)
+### expansion · The Hobbit (`HOB`)
 
 - [ ] Along the Crooked Way — `f4437cb3-85f7-49b5-bb41-6a948549d987`
 - [ ] An Unexpected Party // At the Door — `38503d34-f4f9-4eeb-9b1e-4fec1df921b3`
@@ -77434,7 +77463,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Woodland Weavemaster — `28ffddca-a3c4-467d-a2dc-2c5e62393e11`
 - [ ] Óin the Brave — `a25ba5cc-6ff8-4215-b70d-7e86e15e3c1a`
 
-### The Hobbit Eternal (`HOC`)
+### eternal · The Hobbit Eternal (`HOC`)
 
 - [ ] Andúril, Flame of the West — `e6521404-8474-4727-b2d0-537d15d8a63f`
 - [ ] Andúril, Narsil Reforged — `b7d7c131-b628-4b35-b40b-1087589ebdd0`
@@ -77548,7 +77577,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Witch-king of Angmar — `2eb1b429-8d11-42f3-8815-5a60b6a4e2d5`
 - [ ] Witch-king, Bringer of Ruin — `afcb21bb-aeb3-4024-9ce1-68ba7fb64b2d`
 
-### The Zeta Set (`SLZ`)
+### boxed-products · The Zeta Set (`SLZ`)
 
 - [ ] All That Glitters — `a4d751e0-41c1-4e90-853d-512f385acd81`
 - [ ] An Offer You Can't Refuse — `234a734b-ba28-4f1b-9d01-3c3e7d516590`
@@ -77652,7 +77681,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Wild Nacatl — `35d3d96a-d303-4bf5-b972-f311331ec07a`
 - [ ] Windfall — `08becc07-28bc-4a2f-a6b0-28a2998d2f50`
 
-### Reality Fracture (`FRA`)
+### expansion · Reality Fracture (`FRA`)
 
 - [ ] Ajani Resolute — `0d60c095-4c6c-4618-8ef3-508f3d454efa`
 - [ ] Ajani Unrelenting — `71620e92-45a4-49cb-94d5-348013ecf886`
@@ -77678,11 +77707,11 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Vigorbloom Vanguard // Seed Suture — `bd416426-d037-45e3-9647-816bf982cbea`
 - [ ] Woodwork Prodigy // Soul Tether — `f3ed157f-a09b-405f-aec4-0e7a81d80fc8`
 
-### Reality Fracture Commander (`FRC`)
+### commander · Reality Fracture Commander (`FRC`)
 
 - [ ] Darksteel Angel — `d0259f7d-9bd7-4722-8fb9-439768308516`
 
-### Mystery Booster Commander Edition (`MBC`)
+### commander · Mystery Booster Commander Edition (`MBC`)
 
 - [ ] Arzakon — `a95d29b9-c30b-4e63-afcb-dec7ed522c5a`
 - [ ] Ashaya's Enduring Bond — `0339d25b-9591-49c0-bf31-4ba749ebd0b0`
@@ -77763,7 +77792,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Yume, Chronicler of Valor — `f6841a6f-7dd3-4976-9891-539189c0e148`
 - [ ] Zagorka, Mother of Sanctum — `e444c824-6b9c-4b72-8aa9-a86489c47cbe`
 
-### Star Trek (`TRK`)
+### expansion · Star Trek (`TRK`)
 
 - [ ] 70,000 Light-Years from Home — `9356aee1-3d2b-4d17-8863-663e1ddf56f3`
 - [ ] A Good Day to Die — `4c4559a5-a7a4-4a40-8a8f-e7375c741748`
@@ -77849,7 +77878,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Watery Grave — `fc9ec820-4245-4a96-b009-5308a818ca58`
 - [ ] Xindi Surveyors — `5fdff691-686d-4ce0-bd12-eea676a648b4`
 
-### Star Trek Commander (`TRC`)
+### commander · Star Trek Commander (`TRC`)
 
 - [ ] Badgey, Malicious Glitch — `227fb13b-0a07-4937-9048-7cf02efbc8e3`
 - [ ] Benjamin Sisko, Besieged — `f1416577-97d0-4d6c-afd2-455798556d4c`
@@ -77876,6 +77905,6 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **11,71
 - [ ] Trelane, Squire of Gothos — `3c516327-00a3-4d03-87a3-73b4a90719d3`
 - [ ] Will Riker, Assuming Command — `a479b8b6-79de-4810-9165-992a6a10dc1d`
 
-### Stardates (`SDS`)
+### masterpieces · Stardates (`SDS`)
 
 - [ ] Sheoldred, the Apocalypse — `34f34409-326d-4994-a0ea-1a69aa278f03`

@@ -32,6 +32,51 @@ def category(set_type: str, set_name: str) -> str:
     return "other"
 
 
+def product_group(set_type: str, set_name: str) -> str:
+    """Choose a contributor-facing product family without trusting set codes."""
+    name = set_name.casefold()
+    kind = set_type.casefold()
+    if "jumpstart" in name:
+        return "jumpstart"
+    if "duel deck" in name or kind == "duel_deck":
+        return "duel-decks"
+    if "planechase" in name or kind == "planechase":
+        return "planechase"
+    if "masters" in name or "remastered" in name or kind == "masters":
+        return "masters-remastered"
+    if "conspiracy" in name:
+        return "conspiracy"
+    if "starter" in name or kind == "starter":
+        return "starter"
+    if "premium deck" in name or kind == "premium_deck":
+        return "premium-decks"
+    if "spellbook" in name or kind == "spellbook":
+        return "spellbooks"
+    if "anthology" in name:
+        return "anthologies"
+    if "secret lair" in name:
+        return "secret-lair"
+    if "promo" in name or kind == "promo":
+        return "promos"
+    if kind == "funny" or any(token in name for token in ("un-", "unstable", "unfinity", "heroes of the realm")):
+        return "funny-special"
+    if "alchemy" in name or kind == "alchemy":
+        return "alchemy"
+    if kind == "commander" or "commander" in name:
+        return "commander"
+    if kind == "box" and "deck" in name:
+        return "deck-products"
+    if kind == "box":
+        return "boxed-products"
+    if kind == "draft_innovation":
+        return "supplemental"
+    if kind == "masterpiece":
+        return "masterpieces"
+    if kind == "eternal":
+        return "eternal"
+    return kind.replace("_", "-") or "other"
+
+
 def load_profiles(path: Path) -> dict[str, dict[str, Any]]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     profiles: dict[str, dict[str, Any]] = {}
@@ -83,6 +128,7 @@ def build(catalog: Path, profiles_path: Path) -> dict[str, Any]:
         sets.append({
             **meta,
             "category": category(meta["setType"], meta["name"]),
+            "group": product_group(meta["setType"], meta["name"]),
             "uniqueCards": len(entries),
             "implemented": implemented,
             "pending": len(entries) - implemented,
@@ -115,16 +161,24 @@ def markdown(payload: dict[str, Any]) -> str:
         "",
         "## Resumen cronológico",
         "",
-        "| Fecha | Edición | Categoría | Cartas únicas | Implementadas | Pendientes | % |",
-        "|---|---|---|---:|---:|---:|---:|",
+        "| Fecha | Edición | Grupo | Categoría | Cartas únicas | Implementadas | Pendientes | % |",
+        "|---|---|---|---|---:|---:|---:|---:|",
     ]
     for entry in payload["sets"]:
-        lines.append(f"| {entry['releasedAt'] or '—'} | {entry['name']} (`{entry['code'].upper()}`) | {entry['category']} | {entry['uniqueCards']} | {entry['implemented']} | {entry['pending']} | {entry['percentage']}% |")
+        lines.append(f"| {entry['releasedAt'] or '—'} | {entry['name']} (`{entry['code'].upper()}`) | {entry['group']} | {entry['category']} | {entry['uniqueCards']} | {entry['implemented']} | {entry['pending']} | {entry['percentage']}% |")
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for entry in payload["sets"]:
+        grouped[entry["group"]].append(entry)
+    lines.extend(["", "## Resumen por grupo", "", "| Grupo | Ediciones | Cartas únicas | Implementadas | Pendientes | % |", "|---|---:|---:|---:|---:|---:|"])
+    for group, entries in sorted(grouped.items()):
+        unique = sum(entry["uniqueCards"] for entry in entries)
+        done = sum(entry["implemented"] for entry in entries)
+        lines.append(f"| {group} | {len(entries)} | {unique} | {done} | {unique - done} | {round(done / unique * 100, 1) if unique else 100.0}% |")
     lines.extend(["", "## Pendientes por edición", ""])
     for entry in payload["sets"]:
         if not entry["pendingCards"]:
             continue
-        lines.extend([f"### {entry['name']} (`{entry['code'].upper()}`)", ""])
+        lines.extend([f"### {entry['group']} · {entry['name']} (`{entry['code'].upper()}`)", ""])
         for card in entry["pendingCards"]:
             lines.append(f"- [ ] {card['name']} — `{card['oracleId']}`")
         lines.append("")
