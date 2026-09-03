@@ -530,3 +530,16 @@ of simultaneous gains, and printed triggers with additional costs.
 
 Validation after integration: `npm run check` PASS; `npm test` PASS (164 rules
 tests, simulator and 11 Python compiler tests).
+
+### Cooperative C13 cluster: target-player life gain
+
+The branch adds `Target player gains N life` as a reusable targeted effect.
+It uses the normal player-target legality path and raises `life-gained` for the
+chosen seat, so dependent triggers observe the actual recipient rather than
+the spell controller. This follows CR 119.3 and 601.2c. Scenario coverage
+verifies target metadata and that only the chosen player's life changes. The
+scope excludes split effects, life-total setting, and replacement/prevention
+effects.
+
+Validation after integration: `npm run check` PASS; `npm test` PASS (165 rules
+tests, simulator and 11 Python compiler tests).
