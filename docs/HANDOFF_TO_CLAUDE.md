@@ -341,6 +341,25 @@ npm run rulings:sync      # ~79k Wizards rulings, keyed by oracle_id
 
 ## Latest verified batch
 
+### Cooperative C13 cluster: Equipment
+
+`codex/c13-equipment-cluster` adds the reusable Equipment primitive. The
+profile recognises `Equip {cost}` plus static bonuses and granted combat
+keywords for Behemoth Sledge, Swiftfoot Boots and Sword of the Paruns. The
+engine exposes `equip` as a targeted activated ability, pays the cost, puts it
+on the stack, attaches on resolution, applies the bonus through power/
+toughness and keyword calculation, and detaches it when its creature leaves or
+stops being a creature. The client can select the controlled creature through
+the normal target flow. Coverage counts are intentionally not regenerated in
+this isolated worktree; the integrator should run the C13 coverage exporter
+after merging.
+
+Rules reference: Comprehensive Rules 301.5, 602.1, 608.2b and 704.5q;
+official source: `https://magic.wizards.com/en/rules`.
+
+Validation on this branch: `npm run check` and `npm test` pass (149 rules
+tests, 6 skipped; simulator and 9 Python compiler tests pass).
+
 The current batch adds reusable modal choices, exact artifact/enchantment/land
 target restrictions, player-or-planeswalker targets, and the
 artifact/creature/enchantment board sweep. `compile_oracle_effects.py` also

@@ -54,6 +54,7 @@ export interface PermanentView extends CardView {
   readonly blocking: string | null;
   readonly blockedBy: readonly string[];
   readonly producesMana: boolean;
+  readonly attachedTo?: string;
 }
 
 export interface PlayerView {
@@ -174,14 +175,24 @@ function abilitiesOf(permanent: Permanent, available: readonly LegalAction[]): A
   ];
 }
 
+function effectiveKeywords(state: GameState, permanent: Permanent): readonly string[] {
+  const keywords = new Set<string>(cardProfile(permanent.card).keywords);
+  for (const equipment of state.players.flatMap((player) => player.battlefield).filter((candidate) => candidate.attachedTo === permanent.instance_id)) {
+    for (const keyword of cardProfile(equipment.card).equipmentModification?.keywords ?? []) keywords.add(keyword);
+  }
+  return [...keywords];
+}
+
 function permanentView(state: GameState, permanent: Permanent, available: readonly LegalAction[]): PermanentView {
   const attacking = state.combat.attackers.find((entry) => entry.instanceId === permanent.instance_id);
   const blocking = state.combat.blockers.find((entry) => entry.instanceId === permanent.instance_id);
   const blockedBy = state.combat.blockers.filter((entry) => entry.attackerId === permanent.instance_id).map((entry) => entry.instanceId);
   return {
     ...cardView(permanent.card),
-    power: powerOf(permanent),
-    toughness: toughnessOf(permanent),
+    instance_id: permanent.instance_id,
+    power: powerOf(permanent, state),
+    toughness: toughnessOf(permanent, state),
+    keywords: effectiveKeywords(state, permanent),
     abilities: abilitiesOf(permanent, available),
     controller: permanent.controller,
     tapped: permanent.tapped,
@@ -192,7 +203,8 @@ function permanentView(state: GameState, permanent: Permanent, available: readon
     attacking: attacking ? attacking.defender : null,
     blocking: blocking ? blocking.attackerId : null,
     blockedBy,
-    producesMana: cardProfile(permanent.card).manaAbilities.length > 0
+    producesMana: cardProfile(permanent.card).manaAbilities.length > 0,
+    ...(permanent.attachedTo ? { attachedTo: permanent.attachedTo } : {})
   };
 }
 
@@ -253,7 +265,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
   const targetKinds = new Set<string>([
     "any", "player", "creature", "spell", "permanent", "artifact-or-enchantment",
     "artifact-creature-or-planeswalker", "artifact-enchantment-or-land", "artifact",
-    "nonland", "nonartifact-creature", "land-you-control", "enchantment", "land",
+    "nonland", "nonartifact-creature", "creature-you-control", "land-you-control", "enchantment", "land",
     "player-or-planeswalker",
     ...viewerActions.flatMap((action) => action.requiresTarget ? [action.requiresTarget] : [])
   ]);

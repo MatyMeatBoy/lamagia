@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { cardProfile } from "./characteristics.js";
 import type { CardData } from "./characteristics.js";
 import {
   applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, manaSources, planManaPayment, powerOf, toughnessOf,
-  hasRealChoice, profileOf, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
+  hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
 } from "./engine.js";
 import { pendingSeat, playBotGame } from "./bot.js";
 import { projectGame } from "./projection.js";
@@ -70,6 +71,9 @@ const PYROCLASM = () => make({ name: "Pyroclasm", type_line: "Sorcery", mana_cos
 const INFEST = () => make({ name: "Infest", type_line: "Sorcery", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "All creatures get -2/-2 until end of turn." });
 const GIANT = () => make({ name: "Hill Giant", type_line: "Creature — Giant", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3" });
 const EQUIPMENT = () => make({ name: "Test Equipment", type_line: "Artifact — Equipment", mana_cost: "{1}", cmc: 1 });
+const BEHEMOTH_SLEDGE = () => make({ name: "Behemoth Sledge", type_line: "Artifact — Equipment", mana_cost: "{3}", cmc: 3, oracle_text: "Equipped creature gets +2/+2 and has trample and lifelink.\nEquip {3}" });
+const SWIFTFOOT_BOOTS = () => make({ name: "Swiftfoot Boots", type_line: "Artifact — Equipment", mana_cost: "{2}", cmc: 2, oracle_text: "Equipped creature has hexproof and haste.\nEquip {1}" });
+const SWORD_OF_THE_PARUNS = () => make({ name: "Sword of the Paruns", type_line: "Artifact — Equipment", mana_cost: "{4}", cmc: 4, oracle_text: "Equipped creature gets +2/+0.\n{3}: Untap equipped creature.\n{3}: Untap all other creatures you control.\nEquip {3}" });
 const STEELSHAPERS_GIFT = () => make({ name: "Steelshaper's Gift", type_line: "Sorcery", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an Equipment card, reveal it, put it into your hand, then shuffle." });
 const EXILE_EQUIPMENT = () => make({ name: "Exile Equipment", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Exile target Equipment." });
 const ACIDIC_SLIME = () => make({ name: "Acidic Slime", type_line: "Creature — Ooze", mana_cost: "{3}{G}{G}", cmc: 5, power: "2", toughness: "2", oracle_text: "When Acidic Slime enters, destroy target artifact, enchantment, or land." });
@@ -1087,6 +1091,62 @@ describe("activated abilities", () => {
   it("keeps non-mana activated abilities as smart-priority stops", () => {
     const game = readyOnBoard([SIGNAL_PEST(), ISLAND(), ISLAND()]);
     expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(true);
+  });
+
+  it("puts Equip on the stack, grants Behemoth Sledge bonuses, and detaches when the creature leaves", () => {
+    let game = readyOnBoard([BEHEMOTH_SLEDGE(), BEAR(), FOREST(), FOREST(), FOREST()], { hold: true });
+    const equipment = permanentNamed(game, 0, "Behemoth Sledge")!;
+    const creature = permanentNamed(game, 0, "Grizzly Bears")!;
+    const equip = legalActions(game, 0).find((entry) => entry.action.type === "equip" && entry.cardId === equipment.instance_id);
+    expect(equip).toMatchObject({ requiresTarget: "creature-you-control", note: "Equip {3}" });
+
+    game = applyAction(game, 0, { type: "equip", sourceId: equipment.instance_id, targetId: creature.instance_id });
+    expect(game.stack.at(-1)?.activated?.effect).toEqual({ kind: "attach-equipment" });
+    game = applyAction(game, 0, { type: "pass" });
+    const equipped = permanentNamed(game, 0, "Grizzly Bears")!;
+    const sledge = permanentNamed(game, 0, "Behemoth Sledge")!;
+    expect(sledge.attachedTo).toBe(equipped.instance_id);
+    expect(powerOf(equipped, game)).toBe(4);
+    expect(toughnessOf(equipped, game)).toBe(4);
+    expect(legalTargets(game, 0, "creature")).toContainEqual({ kind: "permanent", instanceId: equipped.instance_id });
+
+    game = settle(stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== equipped.instance_id) })));
+    expect(permanentNamed(game, 0, "Behemoth Sledge")?.attachedTo).toBeUndefined();
+  });
+
+  it("reuses Equip for Swiftfoot Boots and Sword of the Paruns", () => {
+    let game = readyOnBoard([SWIFTFOOT_BOOTS(), SWORD_OF_THE_PARUNS(), BEAR(), FLIER(), ...Array.from({ length: 13 }, () => FOREST())], { hold: true });
+    const creature = permanentNamed(game, 0, "Grizzly Bears")!;
+    const boots = permanentNamed(game, 0, "Swiftfoot Boots")!;
+    const bootsAction = legalActions(game, 0).find((entry) => entry.action.type === "equip" && entry.cardId === boots.instance_id)!;
+    game = applyAction(game, 0, { type: "equip", sourceId: boots.instance_id, targetId: creature.instance_id });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(powerOf(creature, game)).toBe(2);
+    expect(cardProfile(creature.card).keywords).not.toContain("haste");
+    expect(projectGame(game, 0).players[0]!.battlefield.find((permanent) => permanent.name === "Grizzly Bears")?.keywords)
+      .toEqual(expect.arrayContaining(["hexproof", "haste"]));
+
+    const sword = permanentNamed(game, 0, "Sword of the Paruns")!;
+    const swordAction = legalActions(game, 0).find((entry) => entry.action.type === "equip" && entry.cardId === sword.instance_id)!;
+    game = applyAction(game, 0, { type: "equip", sourceId: sword.instance_id, targetId: creature.instance_id });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(powerOf(creature, game)).toBe(4);
+    expect(permanentNamed(game, 0, "Sword of the Paruns")?.attachedTo).toBe(creature.instance_id);
+
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) =>
+      permanent.card.name === "Grizzly Bears" || permanent.card.name === "Storm Crow" ? { ...permanent, tapped: true } : permanent) }));
+    const untapOthers = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.cardId === sword.instance_id && entry.action.abilityIndex === 1)!;
+    game = applyAction(game, 0, untapOthers.action);
+    game = applyAction(game, 0, { type: "pass" });
+    expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(true);
+    expect(permanentNamed(game, 0, "Storm Crow")?.tapped).toBe(false);
+
+    const untapEquipped = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.cardId === sword.instance_id && entry.action.abilityIndex === 0)!;
+    game = applyAction(game, 0, untapEquipped.action);
+    game = applyAction(game, 0, { type: "pass" });
+    expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(false);
   });
 
   it("cycles a card from hand, pays mana, and draws", () => {

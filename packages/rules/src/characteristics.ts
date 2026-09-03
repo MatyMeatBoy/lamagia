@@ -96,6 +96,14 @@ export interface ModalChoice {
   readonly targetKind: TargetKind;
 }
 
+/** Static bonuses granted by an Equipment to its equipped creature. */
+export interface EquipmentModification {
+  readonly power: number;
+  readonly toughness: number;
+  readonly keywords: readonly EnforcedKeyword[];
+  readonly text: string;
+}
+
 export interface TokenDefinition {
   readonly name: string;
   readonly typeLine: string;
@@ -128,8 +136,11 @@ export type SpellEffect =
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "return-target-permanent" }
   | { readonly kind: "return-target-land" }
+  | { readonly kind: "untap-equipped-creature" }
+  | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures" }
   | { readonly kind: "counter-target-spell" }
+  | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X"; readonly token: TokenDefinition }
   | {
       readonly kind: "search-library";
@@ -210,7 +221,7 @@ export type TargetKind =
   | "any" | "player" | "creature" | "spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
-  | "nonblack-creature" | "creature-with-flying" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | `subtype:${string}` | "none";
+  | "nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | `subtype:${string}` | "none";
 
 export interface CardProfile {
   readonly name: string;
@@ -229,6 +240,9 @@ export interface CardProfile {
   readonly manaAbilities: readonly ManaAbility[];
   /** Generic cycling from hand; specialized landcycling remains review-only. */
   readonly cyclingCost: ManaCost | null;
+  /** The printed Equip cost, when this permanent is an Equipment. */
+  readonly equipCost: ManaCost | null;
+  readonly equipmentModification: EquipmentModification | null;
   readonly activatedAbilities: readonly ActivatedAbility[];
   readonly modalChoices: readonly ModalChoice[];
   readonly effects: readonly SpellEffect[];
@@ -453,6 +467,35 @@ function parseCyclingCost(text: string): ManaCost | null {
     if (!match || /landcycling|typecycling/i.test(line)) continue;
     const cost = parseManaCost(match[1]!.trim());
     if (cost && !cost.hasVariable) return cost;
+  }
+  return null;
+}
+
+function parseEquipCost(text: string): ManaCost | null {
+  for (const line of text.split("\n")) {
+    const match = /^equip\s+(.+)$/i.exec(line.trim().replace(/\.$/, ""));
+    if (!match) continue;
+    const cost = parseManaCost(match[1]!.trim());
+    if (cost && !cost.hasVariable) return cost;
+  }
+  return null;
+}
+
+function parseEquipmentModification(text: string): EquipmentModification | null {
+  for (const line of text.split("\n")) {
+    const clean = line.trim().replace(/\.$/, "");
+    let match = /^equipped creature gets ([+-]\d+)\/([+-]\d+)(?:\s+and\s+has\s+(.+))?$/i.exec(clean);
+    if (match) {
+      const keywords = (match[3] ?? "").split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
+        .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
+      return { power: Number(match[1]), toughness: Number(match[2]), keywords, text: line.trim() };
+    }
+    match = /^equipped creature has\s+(.+)$/i.exec(clean);
+    if (match) {
+      const keywords = match[1]!.split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
+        .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
+      if (keywords.length) return { power: 0, toughness: 0, keywords, text: line.trim() };
+    }
   }
   return null;
 }
@@ -778,6 +821,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
   if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
+  if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
+  if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Destroy all artifacts, creatures, and enchantments$/i.test(text)) {
     return { effect: { kind: "destroy-all-artifacts-creatures-enchantments" }, target: "none" };
@@ -857,6 +902,8 @@ function recognizeText(text: string): RecognizedText {
     // before priority opens; it is not an unresolved spell effect.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (parseEquipmentModification(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -932,6 +979,9 @@ export function cardProfile(card: CardData): CardProfile {
   const recognized = recognizeText(text);
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
+  const equipCost = parseEquipCost(text);
+  const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
+    ? parseEquipmentModification(text) : null;
 
   const profile: CardProfile = {
     name: card.name,
@@ -949,6 +999,8 @@ export function cardProfile(card: CardData): CardProfile {
     loyalty: numeric(face.loyalty),
     manaAbilities,
     cyclingCost,
+    equipCost,
+    equipmentModification,
     activatedAbilities: isPermanent ? recognized.activatedAbilities : [],
     modalChoices: recognized.modalChoices,
     effects: recognized.effects,
