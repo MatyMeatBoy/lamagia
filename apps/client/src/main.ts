@@ -294,7 +294,8 @@ function passAction(): LegalAction | undefined { return view?.legalActions.find(
 /** Every activation this viewer may take with one permanent, in menu order. */
 function activationsFor(instanceId: string): LegalAction[] {
   return (view?.legalActions ?? []).filter((entry) =>
-    (entry.action.type === "activate" || entry.action.type === "activate-mana") && entry.action.sourceId === instanceId);
+    (entry.action.type === "activate" || entry.action.type === "activate-mana" || entry.action.type === "equip")
+      && entry.action.sourceId === instanceId);
 }
 
 /** True while the engine is waiting for this viewer to aim a triggered ability. */
@@ -335,8 +336,13 @@ function chooseTarget(target: Target): void {
   const pending = ui.pendingTarget;
   if (!pending) return;
   const action = pending.action.action;
-  if (action.type !== "cast" && action.type !== "activate") return;
+  if (action.type !== "cast" && action.type !== "activate" && action.type !== "equip") return;
   ui.pendingTarget = null;
+  if (action.type === "equip") {
+    if (target.kind !== "permanent") return;
+    void submit({ ...action, targetId: target.instanceId });
+    return;
+  }
   void submit({ ...action, targets: [target] });
 }
 
@@ -610,7 +616,7 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
   if (view?.selectableAttackers.includes(permanent.instance_id)) classes.push("can-attack");
   if (view?.selectableBlockers.includes(permanent.instance_id)) classes.push("can-block");
   const activations = own ? activationsFor(permanent.instance_id) : [];
-  if (activations.some((entry) => entry.action.type === "activate")) classes.push("can-activate");
+  if (activations.some((entry) => entry.action.type === "activate" || entry.action.type === "equip")) classes.push("can-activate");
   if (ui.abilityMenu === permanent.instance_id) classes.push("menu-open");
 
   const stats = permanent.power !== null && permanent.toughness !== null

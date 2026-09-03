@@ -63,6 +63,8 @@ export interface Permanent {
   /** Layer 7c modifications that expire in the cleanup step. */
   readonly powerModifier: number;
   readonly toughnessModifier: number;
+  /** The creature this Equipment is attached to, when it is equipped. */
+  readonly attachedTo?: string;
   readonly isCommander: boolean;
 }
 
@@ -120,6 +122,8 @@ export interface StackObject {
   readonly trigger?: TriggerInstance;
   /** Present when this is a non-mana activated ability rather than a spell. */
   readonly activated?: ActivatedAbility;
+  /** Permanent source for activated abilities; unlike card identity, this is an in-play instance. */
+  readonly sourcePermanentId?: string;
 }
 
 export interface TriggerInstance {
@@ -234,6 +238,7 @@ export type GameAction =
   | { readonly type: "play-land"; readonly cardId: string }
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
+  | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[] }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
@@ -321,14 +326,28 @@ function findPermanent(state: GameState, instanceId: string): Permanent | null {
 function counterModifier(permanent: Permanent): number {
   return (permanent.counters["+1/+1"] ?? 0) - (permanent.counters["-1/-1"] ?? 0);
 }
-export function powerOf(permanent: Permanent): number {
-  return (cardProfile(permanent.card).power ?? 0) + counterModifier(permanent) + permanent.powerModifier;
+function attachedEquipment(state: GameState, creature: Permanent): Permanent[] {
+  return allPermanents(state).filter((candidate) => candidate.attachedTo === creature.instance_id
+    && cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === "equipment"));
 }
-export function toughnessOf(permanent: Permanent): number {
-  return (cardProfile(permanent.card).toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier;
+function equipmentBonus(state: GameState | undefined, creature: Permanent): { power: number; toughness: number } {
+  if (!state) return { power: 0, toughness: 0 };
+  return attachedEquipment(state, creature).reduce((total, equipment) => {
+    const modification = cardProfile(equipment.card).equipmentModification;
+    return modification
+      ? { power: total.power + modification.power, toughness: total.toughness + modification.toughness }
+      : total;
+  }, { power: 0, toughness: 0 });
 }
-function keywordOf(permanent: Permanent, keyword: EnforcedKeyword): boolean {
-  return cardProfile(permanent.card).keywords.includes(keyword);
+export function powerOf(permanent: Permanent, state?: GameState): number {
+  return (cardProfile(permanent.card).power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power;
+}
+export function toughnessOf(permanent: Permanent, state?: GameState): number {
+  return (cardProfile(permanent.card).toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness;
+}
+function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
+  if (cardProfile(permanent.card).keywords.includes(keyword)) return true;
+  return attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword));
 }
 
 // ---------------------------------------------------------------------------
@@ -1011,14 +1030,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
-      if (!permanent || keywordOf(permanent, "indestructible")) return state;
+      if (!permanent || keywordOf(state, permanent, "indestructible")) return state;
       return movePermanentToZone(state, permanent, "graveyard");
     }
     case "destroy-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
-      if (!permanent || keywordOf(permanent, "indestructible")) return state;
+      if (!permanent || keywordOf(state, permanent, "indestructible")) return state;
       return movePermanentToZone(state, permanent, "graveyard");
     }
     case "exile-target-permanent": {
@@ -1067,10 +1086,30 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
     }
+    case "untap-equipped-creature": {
+      const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
+      const attachedId = equipment?.attachedTo;
+      if (!attachedId) return state;
+      return withPlayer(state, equipment.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) =>
+          permanent.instance_id === attachedId ? { ...permanent, tapped: false } : permanent)
+      }));
+    }
+    case "untap-all-other-creatures-you-control": {
+      const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
+      const attachedId = equipment?.attachedTo;
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) =>
+          permanent.instance_id !== attachedId && isCreature(cardProfile(permanent.card))
+            ? { ...permanent, tapped: false } : permanent)
+      }));
+    }
     case "destroy-all-creatures": {
       let next = state;
       for (const permanent of allPermanents(state)) {
-        if (!isCreature(cardProfile(permanent.card)) || keywordOf(permanent, "indestructible")) continue;
+        if (!isCreature(cardProfile(permanent.card)) || keywordOf(state, permanent, "indestructible")) continue;
         next = movePermanentToZone(next, permanent, "graveyard");
       }
       return logged(next, controller, `${sourceName} destruye todas las criaturas.`);
@@ -1080,7 +1119,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       for (const permanent of allPermanents(state)) {
         const profile = cardProfile(permanent.card);
         const affected = profile.types.some((type) => ["Artifact", "Creature", "Enchantment"].includes(type));
-        if (!affected || keywordOf(permanent, "indestructible")) continue;
+        if (!affected || keywordOf(state, permanent, "indestructible")) continue;
         next = movePermanentToZone(next, permanent, "graveyard");
       }
       return logged(next, controller, `${sourceName} destruye artifacts, criaturas y encantamientos.`);
@@ -1116,6 +1155,24 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "search-library":
       // Search is resolved through the explicit library-choice action below.
       return state;
+    case "attach-equipment": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
+      const creature = findPermanent(state, target.instanceId);
+      if (!equipment || !creature || equipment.controller !== controller
+        || !cardProfile(equipment.card).subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
+        || !isCreature(cardProfile(creature.card))) return state;
+      const legal = legalTargets(state, controller, "creature-you-control")
+        .some((candidate) => candidate.kind === "permanent" && candidate.instanceId === creature.instance_id);
+      if (!legal) return state;
+      const next = withPlayer(state, equipment.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) =>
+          permanent.instance_id === equipment.instance_id ? { ...permanent, attachedTo: creature.instance_id } : permanent)
+      }));
+      return logged(next, controller, `${equipment.card.name} se anexa a ${creature.card.name}.`);
+    }
   }
 }
 
@@ -1239,14 +1296,31 @@ function applyStateBasedActions(state: GameState): GameState {
     changed = false;
     guard += 1;
 
+    // Rule 704.5q: an Equipment becomes unattached when its equipped object
+    // leaves the battlefield or is no longer a creature.
+    for (const equipment of allPermanents(next)) {
+      if (equipment.attachedTo === undefined) continue;
+      const target = findPermanent(next, equipment.attachedTo);
+      if (target && isCreature(cardProfile(target.card))) continue;
+      next = withPlayer(next, equipment.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => {
+          if (permanent.instance_id !== equipment.instance_id) return permanent;
+          const { attachedTo: _attachedTo, ...unattached } = permanent;
+          return unattached;
+        })
+      }));
+      changed = true;
+    }
+
     for (const permanent of allPermanents(next)) {
       const profile = cardProfile(permanent.card);
       if (!isCreature(profile)) continue;
-      const toughness = toughnessOf(permanent);
+      const toughness = toughnessOf(permanent, next);
       const lethal = toughness <= 0 || (permanent.damage > 0 && permanent.damage >= toughness) || permanent.deathtouched;
       if (!lethal) continue;
-      if (keywordOf(permanent, "indestructible") && toughness > 0 && permanent.damage < toughness && !permanent.deathtouched) continue;
-      if (keywordOf(permanent, "indestructible") && toughness > 0) continue;
+      if (keywordOf(next, permanent, "indestructible") && toughness > 0 && permanent.damage < toughness && !permanent.deathtouched) continue;
+      if (keywordOf(next, permanent, "indestructible") && toughness > 0) continue;
       next = movePermanentToZone(next, permanent, "graveyard");
       changed = true;
     }
@@ -1348,7 +1422,7 @@ function tapAttackers(state: GameState, attackers: readonly AttackerDeclaration[
   const before = state;
   const ids = new Set(attackers.filter((entry) => {
     const permanent = findPermanent(state, entry.instanceId);
-    return permanent ? !keywordOf(permanent, "vigilance") : false;
+    return permanent ? !keywordOf(state, permanent, "vigilance") : false;
   }).map((entry) => entry.instanceId));
   if (!ids.size) return state;
   const tappedState: GameState = {
@@ -1361,9 +1435,9 @@ function tapAttackers(state: GameState, attackers: readonly AttackerDeclaration[
   return raiseTapEvents(tappedState, before, ids);
 }
 
-function dealsDamageInStep(permanent: Permanent, firstStrikeStep: boolean): boolean {
-  const first = keywordOf(permanent, "first strike");
-  const double = keywordOf(permanent, "double strike");
+function dealsDamageInStep(state: GameState, permanent: Permanent, firstStrikeStep: boolean): boolean {
+  const first = keywordOf(state, permanent, "first strike");
+  const double = keywordOf(state, permanent, "double strike");
   return firstStrikeStep ? first || double : double || (!first && !double);
 }
 
@@ -1372,7 +1446,7 @@ function needsFirstStrikeStep(state: GameState): boolean {
     ...state.combat.attackers.map((entry) => findPermanent(state, entry.instanceId)),
     ...state.combat.blockers.map((entry) => findPermanent(state, entry.instanceId))
   ].filter((permanent): permanent is Permanent => permanent !== null);
-  return combatants.some((permanent) => keywordOf(permanent, "first strike") || keywordOf(permanent, "double strike"));
+  return combatants.some((permanent) => keywordOf(state, permanent, "first strike") || keywordOf(state, permanent, "double strike"));
 }
 
 interface DamageBatch { readonly toPlayers: { seat: SeatId; amount: number; commanderId?: string; sourceName: string; sourceId: string }[]; readonly toPermanents: { instanceId: string; amount: number; deathtouch: boolean; sourceName: string }[]; readonly lifelink: { seat: SeatId; amount: number }[] }
@@ -1384,10 +1458,10 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
 
   for (const entry of state.combat.attackers) {
     const attacker = findPermanent(state, entry.instanceId);
-    if (!attacker || !dealsDamageInStep(attacker, firstStrikeStep)) continue;
-    const power = powerOf(attacker);
+    if (!attacker || !dealsDamageInStep(state, attacker, firstStrikeStep)) continue;
+    const power = powerOf(attacker, state);
     if (power <= 0) continue;
-    const deathtouch = keywordOf(attacker, "deathtouch");
+    const deathtouch = keywordOf(state, attacker, "deathtouch");
     const blockers = state.combat.blockers
       .filter((block) => block.attackerId === entry.instanceId)
       .map((block) => findPermanent(state, block.instanceId))
@@ -1404,7 +1478,7 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
         sourceName: attacker.card.name,
         sourceId: attacker.instance_id
       });
-      if (keywordOf(attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: power });
+      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: power });
       continue;
     }
 
@@ -1412,13 +1486,13 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
     let remaining = power;
     for (const blocker of blockers) {
       if (remaining <= 0) break;
-      const lethal = deathtouch ? 1 : Math.max(1, toughnessOf(blocker) - blocker.damage);
+      const lethal = deathtouch ? 1 : Math.max(1, toughnessOf(blocker, state) - blocker.damage);
       const assigned = Math.min(remaining, lethal);
       toPermanents.push({ instanceId: blocker.instance_id, amount: assigned, deathtouch, sourceName: attacker.card.name });
-      if (keywordOf(attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: assigned });
+      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: assigned });
       remaining -= assigned;
     }
-    if (remaining > 0 && keywordOf(attacker, "trample")) {
+    if (remaining > 0 && keywordOf(state, attacker, "trample")) {
       toPlayers.push({
         seat: entry.defender,
         amount: remaining,
@@ -1426,18 +1500,18 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
         sourceName: attacker.card.name,
         sourceId: attacker.instance_id
       });
-      if (keywordOf(attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: remaining });
+      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: remaining });
     }
   }
 
   for (const block of state.combat.blockers) {
     const blocker = findPermanent(state, block.instanceId);
     const attacker = findPermanent(state, block.attackerId);
-    if (!blocker || !attacker || !dealsDamageInStep(blocker, firstStrikeStep)) continue;
-    const power = powerOf(blocker);
+    if (!blocker || !attacker || !dealsDamageInStep(state, blocker, firstStrikeStep)) continue;
+    const power = powerOf(blocker, state);
     if (power <= 0) continue;
-    toPermanents.push({ instanceId: attacker.instance_id, amount: power, deathtouch: keywordOf(blocker, "deathtouch"), sourceName: blocker.card.name });
-    if (keywordOf(blocker, "lifelink")) lifelink.push({ seat: blocker.controller, amount: power });
+    toPermanents.push({ instanceId: attacker.instance_id, amount: power, deathtouch: keywordOf(state, blocker, "deathtouch"), sourceName: blocker.card.name });
+    if (keywordOf(state, blocker, "lifelink")) lifelink.push({ seat: blocker.controller, amount: power });
   }
 
   return { toPlayers, toPermanents, lifelink };
@@ -1785,6 +1859,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         note: ability.text
       });
     }
+    if (profile.equipCost && profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
+      && planManaPayment(profile.equipCost, player)
+      && legalTargets(state, seat, "creature-you-control").length) {
+      actions.push({
+        action: { type: "equip", sourceId: permanent.instance_id },
+        label: `Equip ${permanent.card.name}`,
+        cardId: permanent.instance_id,
+        requiresTarget: "creature-you-control",
+        note: `Equip ${profile.equipCost.raw}`
+      });
+    }
   }
 
   actions.push({ action: { type: "concede" }, label: "Conceder" });
@@ -1796,12 +1881,13 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   const permanents = allPermanents(state)
-    .filter((permanent) => !keywordOf(permanent, "hexproof") || permanent.controller === seat)
-    .filter((permanent) => !keywordOf(permanent, "shroud"));
+    .filter((permanent) => !keywordOf(state, permanent, "hexproof") || permanent.controller === seat)
+    .filter((permanent) => !keywordOf(state, permanent, "shroud"));
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
-    if (kind === "creature" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "creature-with-flying") {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "creature-with-flying") {
       if (!isCreature(profile)) return false;
+      if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
       if (kind === "creature-with-flying" && !profile.keywords.includes("flying")) return false;
@@ -1871,7 +1957,8 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
     fromCommandZone: false,
     variableValue: 0,
     countered: false,
-    activated: ability
+    activated: ability,
+    sourcePermanentId: source.instance_id
   };
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
 }
@@ -1949,6 +2036,35 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
       optionIds, sourceCard: card, search, returnSourceToGraveyard: false
     }
   }, seat, `${player.name} usa ${searchAbility.text} de ${card.name}.`);
+}
+
+function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "equip" }>): GameState {
+  if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para equipar.");
+  const player = playerAt(state, seat);
+  const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+  if (!source) throw new Error("Ese equipo ya no está bajo tu control.");
+  const profile = cardProfile(source.card);
+  if (!profile.equipCost || !profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")) {
+    throw new Error("Ese permanente no tiene una habilidad de equipar válida.");
+  }
+  const targetId = action.targetId;
+  if (!targetId) throw new Error("Equip necesita un objetivo.");
+  const allowed = legalTargets(state, seat, "creature-you-control");
+  if (!allowed.some((target) => target.kind === "permanent" && target.instanceId === targetId)) {
+    throw new Error("Equip necesita una criatura que controles.");
+  }
+  const plan = planManaPayment(profile.equipCost, player);
+  if (!plan) throw new Error(`No tienes maná suficiente para equipar ${source.card.name}.`);
+  let next = applyManaPlan(state, seat, plan);
+  const payment = payCost(profile.equipCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+  if (!payment) throw new Error(`No se pudo pagar el coste de equipar ${source.card.name}.`);
+  next = withPlayer(next, seat, (current) => ({ ...current, manaPool: payment.remaining }));
+  const ability: ActivatedAbility = {
+    index: 0, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost: null,
+    effect: { kind: "attach-equipment" }, targetKind: "creature-you-control", text: `Equip ${profile.equipCost.raw}`
+  };
+  next = pushActivatedOnStack(next, seat, source, ability, [{ kind: "permanent", instanceId: targetId }]);
+  return logged(next, seat, `${player.name} activa equipar de ${source.card.name}.`);
 }
 
 /**
@@ -2249,7 +2365,7 @@ function applyDeclareBlockers(state: GameState, seat: SeatId, blockers: readonly
   // Menace needs at least two blockers, so a single-blocker assignment is illegal.
   for (const declaration of state.combat.attackers) {
     const attacker = findPermanent(state, declaration.instanceId);
-    if (!attacker || !keywordOf(attacker, "menace")) continue;
+    if (!attacker || !keywordOf(state, attacker, "menace")) continue;
     const assigned = blockers.filter((entry) => entry.attackerId === declaration.instanceId).length;
     if (assigned === 1) throw new Error(`${attacker.card.name} tiene amenaza y no puede ser bloqueada por una sola criatura.`);
   }
@@ -2409,6 +2525,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "play-land": next = applyPlayLand(state, seat, action.cardId); break;
     case "cast": next = applyCast(state, seat, action); break;
     case "cycle": next = applyCycle(state, seat, action); break;
+    case "equip": next = applyEquip(state, seat, action); break;
     case "activate-mana": next = applyActivateMana(state, seat, action); break;
     case "activate": next = applyActivate(state, seat, action); break;
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;

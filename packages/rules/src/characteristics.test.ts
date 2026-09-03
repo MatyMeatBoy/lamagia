@@ -97,6 +97,22 @@ describe("mana abilities", () => {
     expect(profile.effects[0]).toMatchObject({ kind: "search-library", types: [], subtypes: ["Equipment"], destination: "hand" });
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("recognises reusable Equipment equip and static modifications", () => {
+    const cases = [
+      card({ name: "Behemoth Sledge", type_line: "Artifact — Equipment", oracle_text: "Equipped creature gets +2/+2 and has trample and lifelink.\nEquip {3}" }),
+      card({ name: "Swiftfoot Boots", type_line: "Artifact — Equipment", oracle_text: "Equipped creature has hexproof and haste.\nEquip {1}" }),
+      card({ name: "Sword of the Paruns", type_line: "Artifact — Equipment", oracle_text: "Equipped creature gets +2/+0.\n{3}: Untap equipped creature.\n{3}: Untap all other creatures you control.\nEquip {3}" })
+    ].map(cardProfile);
+    expect(cases.map((profile) => profile.equipCost?.raw)).toEqual(["{3}", "{1}", "{3}"]);
+    expect(cases[0]!.equipmentModification).toMatchObject({ power: 2, toughness: 2, keywords: ["trample", "lifelink"] });
+    expect(cases[1]!.equipmentModification?.keywords).toEqual(["hexproof", "haste"]);
+    expect(cases[2]!.equipmentModification).toMatchObject({ power: 2, toughness: 0, keywords: [] });
+    expect(cases[2]!.activatedAbilities.map((ability) => ability.effect.kind)).toEqual([
+      "untap-equipped-creature", "untap-all-other-creatures-you-control"
+    ]);
+    expect(cases.every((profile) => profile.fullyImplemented)).toBe(true);
+  });
 });
 
 describe("enters tapped", () => {
