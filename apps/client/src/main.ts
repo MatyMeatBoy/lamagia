@@ -74,9 +74,8 @@ let selectedAvatar = window.localStorage.getItem("prossh.avatar") ?? "";
 const ui: UiState = {
   pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, glyphHelp: null,
   notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", showFullLibrary: false,
-  // A table should arrive at the first meaningful decision, not wait for two
-  // empty priority passes in upkeep and draw. Players can turn this off.
-  autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
+  // Priority windows remain visible by default; auto-pass is an explicit opt-in.
+  autoPass: window.localStorage.getItem("prossh.auto-pass") === "1",
   actionsOpen: false,
   layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
 };
