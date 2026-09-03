@@ -187,8 +187,9 @@ loads pending IDs only when an edition is opened.
   compiler also writes `data/rules/oracle-clusters.json`; the latest full run
   produced 11,072 deterministic unresolved clusters from the 18,254 pending
   clauses.
-- The reproducible full-catalog benchmark is 10.37s with one worker versus
-  5.62s with five workers (1.85x). The queue now advertises up to 20 new
+- The reproducible full-catalog benchmark is 13.43s with one process versus
+  3.75s with eight processes (3.58x); five processes took 4.43s and five
+  threads 10.25s. The queue now advertises up to 20 new
   `oracle_id` values per commit; the claim ledger still prevents overlapping
   clusters between forks.
 - Supported keyword-only clauses are removed from the review queue; the latest

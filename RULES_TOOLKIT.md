@@ -27,7 +27,7 @@ se ejecuta directamente: cada vector aprobado debe convertirse en un tipo
 cerrado de `characteristics.ts`, citar CR y recibir un escenario de prueba.
 
 La clasificación puede procesar muchas cartas/primitivas independientes en
-lotes con `--workers 5 --memory-budget-gb 2 --batch-size 256` (se puede bajar a
+lotes con `--workers 8 --memory-budget-gb 2 --batch-size 256` (se puede bajar a
 `--workers 1 --backend threads` para depurar). El backend por defecto usa
 procesos para aprovechar varios núcleos, conserva el orden determinista y
 reserva 256 MB por worker para no superar el presupuesto configurado. Es un
@@ -36,8 +36,9 @@ runner local de modelos deberá añadir aislamiento/Job Objects. La VRAM no se
 usa en esta fase: solo aplicará si se ejecuta un modelo local en GPU.
 
 Benchmark reproducible: `npm run rules:oracle:benchmark`. En la medición más
-reciente del catálogo completo (38.711 cartas, Windows, 2026-09-03), 1 worker
-tardó 10,37 s y 5 workers 5,62 s: aproximadamente 1,85x de throughput. El
+reciente del catálogo completo (38.711 cartas, Windows, 2026-09-03), 1 proceso
+tardó 13,43 s, 5 procesos 4,43 s, 8 procesos 3,75 s y 5 hilos 10,25 s:
+aproximadamente 3,58x con el perfil de 8 procesos. El
 parser sigue siendo ligero y la memoria depende del proceso/runtime; el límite
 del scheduler permanece en 2 GB. La ganancia principal viene de agrupar el
 trabajo por primitiva, no de crear workers ilimitados.

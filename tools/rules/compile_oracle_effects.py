@@ -333,7 +333,7 @@ def effective_worker_count(workers: int, memory_budget_gb: float, estimated_work
 
 def compile_catalog(
     catalog: Path,
-    workers: int = 5,
+    workers: int = 8,
     memory_budget_gb: float = 2.0,
     estimated_worker_mb: int = 256,
     backend: str = "processes",
@@ -377,7 +377,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--prompt-output", type=Path)
     parser.add_argument("--cluster-output", type=Path, help="Optional deterministic JSON queue grouped by reusable primitive cluster.")
-    parser.add_argument("--workers", type=int, default=5, help="Workers for independent card classification (1-8; default: 5).")
+    parser.add_argument("--workers", type=int, default=8, help="Workers for independent card classification (1-8; default: 8).")
     parser.add_argument("--memory-budget-gb", type=float, default=2.0, help="Conservative local worker budget in GB (default: 2).")
     parser.add_argument("--estimated-worker-mb", type=int, default=256, help="Memory reserved per worker for scheduling (default: 256).")
     parser.add_argument("--backend", choices=("processes", "threads"), default="processes", help="Parallel backend; processes use CPU cores, threads share one process.")
