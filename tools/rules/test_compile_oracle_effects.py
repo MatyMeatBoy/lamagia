@@ -2,7 +2,7 @@
 
 import unittest
 
-from compile_oracle_effects import classify, cluster_text, effective_worker_count, mana_ability_hint, search_criterion_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, classify, cluster_text, effective_worker_count, mana_ability_hint, operand_hints, primitive_cluster_inventory, search_criterion_hint
 from export_set_coverage import product_group
 
 
@@ -20,6 +20,19 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(result["target_subtype"], "Equipment")
         self.assertEqual(result["target_types"], [])
         self.assertEqual(result["target_zone"], "battlefield")
+
+    def test_reuses_action_zone_type_and_subtype_operands(self) -> None:
+        result = classify("Exile target Equipment from the battlefield.")
+        self.assertEqual(result["operands"], {
+            "actions": ["exile"],
+            "zones": ["battlefield"],
+            "card_types": [],
+            "subtypes": ["Equipment"],
+        })
+        self.assertEqual(
+            operand_hints("Search your library for an Equipment card.", None, {"types": [], "subtypes": ["Equipment"]}),
+            {"actions": ["search-library"], "zones": ["library"], "card_types": [], "subtypes": ["Equipment"]},
+        )
 
     def test_keeps_multiple_target_types(self) -> None:
         result = classify("Destroy target artifact, enchantment, or land.")
@@ -57,6 +70,25 @@ class OracleCompilerTests(unittest.TestCase):
     def test_bounds_parallel_batch_to_memory_budget(self) -> None:
         self.assertEqual(effective_worker_count(5, 2, 256), 5)
         self.assertEqual(effective_worker_count(8, 1, 256), 4)
+
+    def test_builds_deterministic_cluster_first_queue(self) -> None:
+        cards = [
+            {"oracle_id": "b", "scryfall_id": "2", "name": "Beta", "primitive_clusters": ["search|subtype:Equipment"]},
+            {"oracle_id": "a", "scryfall_id": "1", "name": "Alpha", "primitive_clusters": ["search|subtype:Equipment"]},
+            {"oracle_id": "c", "scryfall_id": "3", "name": "Gamma", "primitive_clusters": ["destroy|target-types:Artifact"]},
+        ]
+        result = primitive_cluster_inventory(cards)
+        self.assertEqual([item["cluster"] for item in result], ["search|subtype:Equipment", "destroy|target-types:Artifact"])
+        self.assertEqual(result[0]["commit_batches"], 1)
+        self.assertEqual([item["name"] for item in result[0]["cards"]], ["Alpha", "Beta"])
+        self.assertEqual(DEFAULT_COMMIT_CARD_LIMIT, 20)
+        self.assertEqual(
+            primitive_cluster_inventory([
+                {"oracle_id": str(index), "scryfall_id": str(index), "name": str(index), "primitive_clusters": ["batch"]}
+                for index in range(21)
+            ])[0]["commit_batches"],
+            2,
+        )
 
     def test_groups_supplemental_products_by_name_and_type(self) -> None:
         self.assertEqual(product_group("draft_innovation", "Jumpstart 2022", "2022-12-02"), "jumpstart")

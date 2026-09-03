@@ -1,17 +1,34 @@
 # La Magia
 
-Simulador social de Commander, diseñado primero para una mesa de cuatro jugadores y adaptable a pods de 2–8. Proyecto comunitario para implementar cartas históricas con un motor de reglas verificable, determinista y server-authoritative; cada contribución trabaja un cluster reutilizable y añade sus escenarios de reglas.
+Community Magic rules engine and Commander client. Implement reusable rules
+clusters, not one-off card names. Cards share logic by stable `oracle_id`, so
+one good primitive improves every printing and set.
 
-Las contribuciones de personas y otros modelos son bienvenidas: toma un cluster
-pendiente de [IMPLEMENTATION_CLUSTERS.md](IMPLEMENTATION_CLUSTERS.md), implementa
-la lógica común, añade pruebas con citas de Comprehensive Rules y abre un commit
-pequeño. El objetivo es que cada familia resuelta reduzca el trabajo de todas
-las cartas futuras.
+## AI contributor quick start
 
-Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para que los agentes sigan
-trabajando, pero publiquen en bloques de máximo cinco cartas por commit. El
-mapa por edición está en [docs/SET_COVERAGE.md](docs/SET_COVERAGE.md) y en la
-web bajo “Implementación por edición”.
+Read [AGENTS.md](AGENTS.md), [docs/HANDOFF_TO_CLAUDE.md](docs/HANDOFF_TO_CLAUDE.md)
+and [docs/WORK_CLAIMS.md](docs/WORK_CLAIMS.md). Claim one unused primitive,
+work from the current `HEAD`, add scenario tests and CR citations, then publish
+one focused local commit containing at most twenty new `oracle_id`s; the
+integrator batches pushes:
+
+```powershell
+git add packages/rules/src tools/rules docs/HANDOFF_TO_CLAUDE.md docs/WORK_CLAIMS.md docs/SET_COVERAGE.md IMPLEMENTATION_CLUSTERS.md; git diff --cached --check; npm run check; npm test; git commit -m "feat(rules): implement <cluster> batch <nn>"
+```
+
+Report `CLAIM`, `BASE SHA`, `COMMIT SHA`, `FILES`, `TESTS`, `SCENARIOS`, and
+`LIMITS`. Never stage `data/`, assets, secrets, or unrelated changes. Full
+instructions: [CONTRIBUTING.md](CONTRIBUTING.md) and
+[IMPLEMENTATION_CLUSTERS.md](IMPLEMENTATION_CLUSTERS.md).
+
+To refresh the reusable work queue, run `npm run rules:oracle:compile` and claim
+one entry from `data/rules/oracle-clusters.json`; it already carries stable
+`oracle_id`s and twenty-card commit batch counts. To measure the local speedup,
+run `npm run rules:oracle:benchmark`.
+
+Coverage map: [docs/SET_COVERAGE.md](docs/SET_COVERAGE.md) and the web
+“Implementation by set” view. The project is being renamed from `ProsshTCG`
+to `lamagia`; use the new repository slug once GitHub finishes the rename.
 
 ## Estado inicial
 

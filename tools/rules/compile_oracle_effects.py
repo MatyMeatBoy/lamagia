@@ -19,11 +19,15 @@ import argparse
 import json
 import re
 import sqlite3
+from math import ceil
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+
+DEFAULT_COMMIT_CARD_LIMIT = 20
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -59,6 +63,16 @@ CARD_TYPES = {"land", "creature", "artifact", "enchantment", "instant", "sorcery
 CRITERION_NOISE = {"basic", "card", "permanent", "spell", "with", "that", "whose", "where", "named", "converted", "mana", "power", "toughness"}
 SUPPORTED_KEYWORDS = ("flying", "reach", "first strike", "double strike", "deathtouch", "trample", "vigilance", "lifelink", "menace", "defender", "haste", "indestructible", "hexproof", "shroud", "flash")
 KEYWORD_ONLY_RE = re.compile(r"^(?:" + "|".join(re.escape(keyword) for keyword in SUPPORTED_KEYWORDS) + r")(?:\s*,\s*(?:" + "|".join(re.escape(keyword) for keyword in SUPPORTED_KEYWORDS) + r"))*\.?$", re.I)
+ZONE_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("library", r"\blibrar(?:y|ies)\b"),
+    ("hand", r"\bhand\b"),
+    ("battlefield", r"\bbattlefield\b"),
+    ("graveyard", r"\bgraveyard\b"),
+    # The verb "Exile target ..." is an action, not a zone reference.
+    ("exile", r"\bexiled\b|\b(?:from|in|to|into|the)\s+(?:the\s+)?exile\b"),
+    ("stack", r"\bstack\b"),
+    ("command", r"\bcommand zone\b"),
+)
 
 
 def mana_ability_hint(line: str) -> dict[str, Any] | None:
@@ -136,6 +150,26 @@ def search_criterion_hint(clause: str) -> dict[str, list[str]] | None:
     return {"types": types, "subtypes": subtypes}
 
 
+def operand_hints(clause: str, target_text: str | None, search_criterion: dict[str, list[str]] | None) -> dict[str, list[str]]:
+    """Preserve reusable nouns/locations so later workers do not re-parse text.
+
+    This is intentionally an inventory, not a legality decision. ``Equipment``
+    remains a subtype while ``artifact`` remains a card type; a future closed
+    TypeScript primitive decides what those operands permit in a given effect.
+    """
+    zones = [name for name, pattern in ZONE_PATTERNS if re.search(pattern, clause, re.I)]
+    card_types = sorted({word.title() for word in CARD_TYPES if re.search(rf"\b{re.escape(word)}\b", clause, re.I)})
+    subtypes = list((search_criterion or {}).get("subtypes", []))
+    if target_text:
+        target_operand = re.sub(r"\s+(?:from|on|in)\s+(?:the\s+)?(?:battlefield|graveyard|hand|exile|library|stack)\b.*$", "", target_text, flags=re.I).strip()
+        if (re.fullmatch(r"[A-Za-z][A-Za-z'’/-]*", target_operand)
+                and target_operand.lower() not in CARD_TYPES
+                and target_operand.lower() not in {value.casefold() for value in subtypes}):
+            subtypes.append(target_operand)
+    return {"actions": [name for name, _ in VERB_PATTERNS if re.search(_, clause, re.I)],
+            "zones": zones, "card_types": card_types, "subtypes": sorted(subtypes, key=str.casefold)}
+
+
 def cluster_text(clause: str) -> str:
     """Return a bounded, name-independent-ish shape for an open clause."""
     normalized = re.sub(r"(?:\{[^}]+\})+", "{cost}", clause.lower())
@@ -159,6 +193,7 @@ def classify(clause: str) -> dict[str, Any]:
         target_zone = "graveyard" if re.search(r"\bgraveyard\b", target_text, re.I) else "hand" if re.search(r"\bhand\b", target_text, re.I) else "battlefield"
     modal = bool(re.search(r"\bchoose (?:one|two|three|one or more)\b", lower))
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
+    operands = operand_hints(clause, target_text, search_criterion)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
         cluster_parts.append("shape:" + cluster_text(clause))
@@ -183,6 +218,7 @@ def classify(clause: str) -> dict[str, Any]:
         "target_types": target_types,
         "target_zone": target_zone,
         "search_criterion": search_criterion,
+        "operands": operands,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),
         "modal": modal,
         "conditional": bool(re.search(r"\b(?:if|unless|as long as|whenever)\b", lower)),
@@ -249,6 +285,34 @@ def review_markdown(cards: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def primitive_cluster_inventory(cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Build a deterministic, card-name-independent work queue.
+
+    This is the cluster-first part of the compiler: a worker receives one
+    reusable rule shape plus stable card identities, instead of rediscovering
+    the same nouns and zones for every card. Only unresolved clauses are
+    included, so solved primitives naturally disappear from the queue.
+    """
+    clusters: dict[str, dict[str, dict[str, str]]] = {}
+    for card in cards:
+        for cluster in card.get("primitive_clusters", []):
+            clusters.setdefault(cluster, {})[str(card["oracle_id"])] = {
+                "oracle_id": str(card["oracle_id"]),
+                "scryfall_id": str(card["scryfall_id"]),
+                "name": str(card["name"]),
+            }
+    inventory = [
+        {
+            "cluster": cluster,
+            "card_count": len(entries),
+            "commit_batches": ceil(len(entries) / DEFAULT_COMMIT_CARD_LIMIT),
+            "cards": sorted(entries.values(), key=lambda item: (item["name"].casefold(), item["oracle_id"])),
+        }
+        for cluster, entries in clusters.items()
+    ]
+    return sorted(inventory, key=lambda item: (-item["card_count"], item["cluster"]))
+
+
 def effective_worker_count(workers: int, memory_budget_gb: float, estimated_worker_mb: int) -> int:
     """Return a bounded worker count for the local parser scheduler.
 
@@ -307,6 +371,7 @@ def main() -> None:
     parser.add_argument("--catalog", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--prompt-output", type=Path)
+    parser.add_argument("--cluster-output", type=Path, help="Optional deterministic JSON queue grouped by reusable primitive cluster.")
     parser.add_argument("--workers", type=int, default=5, help="Workers for independent card classification (1-8; default: 5).")
     parser.add_argument("--memory-budget-gb", type=float, default=2.0, help="Conservative local worker budget in GB (default: 2).")
     parser.add_argument("--estimated-worker-mb", type=int, default=256, help="Memory reserved per worker for scheduling (default: 256).")
@@ -318,12 +383,14 @@ def main() -> None:
     worker_count = effective_worker_count(args.workers, args.memory_budget_gb, args.estimated_worker_mb)
     cards = compile_catalog(args.catalog, args.workers, args.memory_budget_gb, args.estimated_worker_mb, args.backend, args.batch_size)
     counts = Counter(card["status"] for card in cards)
+    clusters = primitive_cluster_inventory(cards)
     payload = {
         "format": "prossh-oracle-effect-ir/v2",
         "generated_at": datetime.now(UTC).isoformat(),
         "source": "local normalized catalog; Oracle text is display data, not executable code",
         "card_count": len(cards),
         "status_counts": dict(sorted(counts.items())),
+        "primitive_cluster_count": len(clusters),
         "cards": cards,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -331,6 +398,14 @@ def main() -> None:
     if args.prompt_output:
         args.prompt_output.parent.mkdir(parents=True, exist_ok=True)
         args.prompt_output.write_text(review_markdown(cards), encoding="utf-8")
+    if args.cluster_output:
+        args.cluster_output.parent.mkdir(parents=True, exist_ok=True)
+        args.cluster_output.write_text(json.dumps({
+            "format": "prossh-primitive-cluster-queue/v1",
+            "source": "oracle-effects.json unresolved clauses",
+            "cluster_count": len(clusters),
+            "clusters": clusters,
+        }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Oracle IR written: {len(cards):,} cards -> {args.output} (workers={worker_count}, backend={args.backend}, budget={args.memory_budget_gb:g}GB)")
     print(f"Statuses: {dict(sorted(counts.items()))}")
 

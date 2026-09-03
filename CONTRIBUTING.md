@@ -7,29 +7,35 @@ reimpresiones que comparten `oracle_id`.
 ## Encargo para una persona o IA
 
 Puede seguir trabajando mientras tenga contexto o tokens, descubriendo más
-cartas y reutilizando las primitivas existentes. El límite es del commit:
-**cada commit contiene como máximo cinco `oracle_id` nuevos** del mismo cluster.
+cartas y reutilizando las primitivas existentes. Primero reserva el cluster en
+`docs/WORK_CLAIMS.md`; si ya está activo, elige otro. El límite es del commit:
+**cada commit contiene como máximo veinte `oracle_id` nuevos** del mismo cluster.
 
 ```text
 Implementa el cluster [ID] y sigue con más cartas equivalentes mientras tengas
 contexto. No añadas excepciones por nombre o edición. Consulta la Comprehensive
 Rules oficial, añade pruebas de escenario y conserva como pendiente cualquier
-cláusula no ejecutable. Divide el resultado en commits de máximo cinco
+cláusula no ejecutable. Divide el resultado en commits de máximo veinte
 oracle_id y ejecuta npm run check && npm test && npm run rules:set:coverage.
+Entrega cada commit con CLAIM, BASE SHA, COMMIT SHA, FILES, TESTS, SCENARIOS y
+LIMITS para que otro agente pueda integrarlo sin repetir trabajo.
 ```
 
 Las distintas ilustraciones, marcos y sets no requieren otra implementación.
 Si una carta tiene varias funciones, cuenta como pendiente hasta cubrirlas
 todas.
 
-## Un commit por cada bloque de cinco
+## Un commit por cada bloque de veinte
 
 Después de revisar el diff, el contribuyente puede publicar cada bloque con un
 solo comando:
 
 ```powershell
-git add packages/rules/src tools/rules docs/SET_COVERAGE.md IMPLEMENTATION_CLUSTERS.md; git commit -m "feat(rules): implement [cluster] batch [01]"; git push -u origin HEAD
+git add packages/rules/src tools/rules docs/SET_COVERAGE.md IMPLEMENTATION_CLUSTERS.md; git commit -m "feat(rules): implement [cluster] batch [01]"
 ```
+
+No hagas push salvo que el integrador lo pida; los commits se acumulan y se
+publican juntos después de la revisión.
 
 No se deben añadir `data/`, secretos, imágenes no autorizadas ni carpetas de
 trabajo. Si el cambio toca cliente o servidor, inclúyelos explícitamente en

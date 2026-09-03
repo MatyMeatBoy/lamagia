@@ -33,11 +33,17 @@ límite conservador del scheduler, no un hard cap del sistema operativo; un
 runner local de modelos deberá añadir aislamiento/Job Objects. La VRAM no se
 usa en esta fase: solo aplicará si se ejecuta un modelo local en GPU.
 
-Medición del catálogo completo (38.711 cartas, Windows, 2026-09-03): 1 worker
-usó aproximadamente 484 MB de RSS y tardó 8,2 s; 5 workers usaron 484–500 MB y
-tardaron 8,0–8,9 s según el tamaño del lote. La salida fue determinista. La
-clasificación actual es ligera; el paralelismo quedará reservado para cuando
-cada carta incluya más primitivas o una revisión asistida costosa.
+Benchmark reproducible: `npm run rules:oracle:benchmark`. En la medición más
+reciente del catálogo completo (38.711 cartas, Windows, 2026-09-03), 1 worker
+tardó 10,37 s y 5 workers 5,62 s: aproximadamente 1,85x de throughput. El
+parser sigue siendo ligero y la memoria depende del proceso/runtime; el límite
+del scheduler permanece en 2 GB. La ganancia principal viene de agrupar el
+trabajo por primitiva, no de crear workers ilimitados.
+
+La misma ejecución produjo 18.254 cartas pendientes agrupadas en 11.072
+clusters, con hasta veinte `oracle_id` por commit (`commit_batches` en el
+manifiesto). El resultado es determinista y permite que varios forks tomen
+clusters disjuntos sin repetir el análisis de cada carta.
 
 El compilador conserva restricciones reutilizables (`types`, `subtypes` y
 `target_zone`). En el motor, un objetivo de subtipo usa `subtype:<Subtype>`;
