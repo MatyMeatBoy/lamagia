@@ -1730,7 +1730,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (profile.modalChoices.length && !modal) return { legal: false };
   const targetKind = modal?.targetKind ?? profile.targetKind;
   if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind).length) return { legal: false };
-  if (targetKind === "spell" && !state.stack.length) return { legal: false };
+  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind).length) return { legal: false };
   return {
     legal: true,
     ...(targetKind !== "none" ? { targetKind } : {}),
@@ -1941,6 +1941,14 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
+  if (kind === "creature-spell" || kind === "noncreature-spell") {
+    return state.stack
+      .filter((entry) => !entry.activated && !entry.trigger)
+      .filter((entry) => kind === "creature-spell"
+        ? isCreature(cardProfile(entry.card))
+        : !isCreature(cardProfile(entry.card)))
+      .map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
+  }
   const permanents = allPermanents(state)
     .filter((permanent) => !keywordOf(state, permanent, "hexproof") || permanent.controller === seat)
     .filter((permanent) => !keywordOf(state, permanent, "shroud"));
@@ -2139,7 +2147,7 @@ function activatableAbility(
   }
   const targetKind = ability.targetKind;
   if (targetKind === "none") return { legal: true };
-  if (targetKind === "spell" && !state.stack.length) return { legal: false };
+  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind).length) return { legal: false };
   if (!legalTargets(state, seat, targetKind).length) return { legal: false };
   return { legal: true, targetKind };
 }

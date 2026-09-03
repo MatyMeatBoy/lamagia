@@ -235,7 +235,7 @@ export interface TriggerDefinition {
 }
 
 export type TargetKind =
-  | "any" | "player" | "creature" | "spell" | "permanent" | "artifact-or-enchantment"
+  | "any" | "player" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
   | "nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | `subtype:${string}` | "none";
@@ -900,6 +900,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "destroy-all-artifacts-creatures-enchantments" }, target: "none" };
   }
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
+  if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
+  if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
   const token = parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
   const genericSearch = parseLibrarySearch(text);

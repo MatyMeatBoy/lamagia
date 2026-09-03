@@ -464,3 +464,16 @@ the caster's zones are untouched.
 
 Validation: `npm test --workspace=@prossh/rules -- --run
 packages/rules/src/engine.test.ts` PASS (152 passed, 6 skipped).
+
+### Cooperative C13 cluster: counter target restrictions
+
+The parser and target resolver now share reusable `creature-spell` and
+`noncreature-spell` families for counterspells. They filter the current stack
+to cast spells (not activated or triggered abilities) and reuse the existing
+`counter-target-spell` resolution. The unrestricted `spell` family remains
+backward-compatible for the existing ability-counter scenario. This follows
+CR 601.2c and 608.2b. Scenario coverage verifies both filters against a
+creature spell and an instant on the stack.
+
+Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules -- --run
+packages/rules/src/engine.test.ts` PASS (153 passed, 6 skipped).
