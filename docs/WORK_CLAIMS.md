@@ -8,6 +8,7 @@
 | `rules-mill` | `codex/c13-equipment-cluster` | Target player mills a bounded number of cards into their graveyard | Ready for integrator review |
 | `rules-counter-restrictions` | `codex/c13-equipment-cluster` | Creature-spell and noncreature-spell counter target families | Ready for integrator review |
 | `rules-plus-counters` | `codex/c13-equipment-cluster` | Put +1/+1 or -1/-1 counters on a target creature | Ready for integrator review |
+| `rules-target-discard` | `codex/c13-equipment-cluster` | Target-player discard with an explicit hand-card choice | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.

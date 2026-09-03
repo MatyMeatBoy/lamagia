@@ -231,6 +231,14 @@ export type PendingChoice =
       readonly search: Extract<SpellEffect, { kind: "search-library" }>;
       /** Spells move to the graveyard after resolving; activated sources already paid their costs. */
       readonly returnSourceToGraveyard: boolean;
+    }
+  | {
+      readonly type: "discard-cards";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly amount: number;
+      readonly remaining: number;
     };
 
 export type GameAction =
@@ -246,6 +254,7 @@ export type GameAction =
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
+  | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -995,6 +1004,24 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       let next = state;
       for (const player of state.players) if (!player.lost) next = drawCards(next, player.seat, effectAmount(effect.amount, object));
       return next;
+    }
+    case "discard-target-player": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const amount = Math.min(effect.amount, playerAt(state, target.seat).hand.length);
+      if (amount <= 0) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "discard-cards",
+          seat: target.seat,
+          sourceId: object.id,
+          sourceCard: object.card,
+          amount,
+          remaining: amount
+        }
+      };
     }
     case "mill-target-player": {
       const target = object.targets[0];
@@ -1798,6 +1825,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
       return actions;
     }
+    if (choice.type === "discard-cards") {
+      for (const card of player.hand) {
+        actions.push({
+          action: { type: "choose-discard", sourceId: choice.sourceId, cardId: card.instance_id },
+          label: `Descartar ${card.name}`,
+          cardId: card.instance_id,
+          note: `${choice.sourceCard.name}: elige una carta (${choice.remaining} restante(s)).`
+        });
+      }
+      return actions;
+    }
     if (choice.stage === "confirm") {
       actions.push({
         action: { type: "choose-reveal", sourceId: choice.sourceId, reveal: false },
@@ -2574,6 +2612,24 @@ function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extrac
   return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
 }
 
+function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-discard" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "discard-cards" || choice.seat !== seat) throw new Error("No tienes una elección de descarte pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Ese descarte ya no corresponde a la habilidad pendiente.");
+  const card = playerAt(state, seat).hand.find((candidate) => candidate.instance_id === action.cardId);
+  if (!card) throw new Error("Debes elegir una carta de tu mano.");
+  const remaining = choice.remaining - 1;
+  const next = withPlayer({
+    ...state,
+    pendingChoice: remaining > 0 ? { ...choice, remaining } : null
+  }, seat, (player) => ({
+    ...player,
+    hand: player.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
+    graveyard: [...player.graveyard, card]
+  }));
+  return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
+}
+
 /** Applies one action for one seat, then settles the game to its next decision point. */
 export function applyAction(state: GameState, seat: SeatId, action: GameAction): GameState {
   if (state.finished) throw new Error("La partida ya terminó.");
@@ -2593,6 +2649,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
+    case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {
