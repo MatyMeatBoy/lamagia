@@ -134,7 +134,7 @@ never remove a card's own printed one.
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
 | Catalog cards fully implemented | 5,151 | 6,345 |
 | …of those, with non-empty Oracle text | 2,090 | 2,981 |
-| C13 unique cards fully implemented | — | 123 / 356 (233 pending) |
+| C13 unique cards fully implemented | — | 124 / 356 (232 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
 
 Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
@@ -222,12 +222,12 @@ loads pending IDs only when an edition is opened.
 
 ```text
 npm run check           rules build + rules/client/server typecheck        PASS
-npm test                Vitest 5 files / 163 tests + Python smoke tests    PASS
-npm run simulate:engine 200 seeded games in 7.22s                          PASS
-                        finished 158, unfinished 42, avg 51.18 turns
+npm test                Vitest 5 files / 166 tests + Python smoke tests    PASS
+npm run simulate:engine 200 seeded games in 25.41s                         PASS
+                        finished 160, unfinished 40, avg 51.09 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 6,345 fully implemented         PASS
+npm run rules:engine:export  38,711 cards; 6,418 fully implemented         PASS
 npm run rules:set:coverage  708 editions; 14.4% membership coverage        PASS
 ```
 
@@ -382,11 +382,11 @@ supports deterministic bounded card/primitives batches.
 - `docs/COOPERATIVE_BATCH_PROMPT.md` is the short prompt for fresh workers.
   The Oracle IR now persists reusable `operands` (actions, zones, card types
   and subtypes), so Equipment, battlefield and similar nouns are not re-learned
-  for every card; its Python regression suite passes 10 tests.
+  for every card; its Python regression suite passes 11 tests.
 
-Validation: 160 rules tests, workspace TypeScript checks, simulator smoke tests
-and 9 Python compiler regressions pass. C13 is 122/356 unique cards implemented
-(33.4%); generated coverage remains in `data/rules/coverage-c13.md`.
+Validation: 166 rules tests, workspace TypeScript checks, simulator smoke tests
+and 11 Python compiler regressions pass. C13 is 124/356 unique cards implemented
+(34.8%); generated coverage remains in `data/rules/coverage-c13.md`.
 
 The Oracle compiler now accepts `--workers`, `--backend`, `--batch-size`,
 `--memory-budget-gb`, and `--estimated-worker-mb`. Its default five-process
@@ -401,7 +401,7 @@ unbounded pool.
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
 general; what limits coverage is the **effect vocabulary** they resolve into.
 1,185 cards have a recognised trigger and 670 a recognised activation, but only
-6,277 of 38,711 cards are fully implemented, because most printed effects are
+6,418 of 38,711 cards are fully implemented, because most printed effects are
 still outside `SpellEffect`.
 
 1. **Widen `SpellEffect`, one template plus one test at a time.** The highest
