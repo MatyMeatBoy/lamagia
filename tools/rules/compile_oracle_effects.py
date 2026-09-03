@@ -46,12 +46,15 @@ FAMILY_ORDER = ("search-library", "create-token", "damage", "counter", "modify-s
 
 TRIGGER_RE = re.compile(r"\b(?:when(?:ever)?|at the beginning of|at the end of)\b", re.I)
 ACTIVATED_RE = re.compile(r"^[^:\n]{1,160}:\s*", re.I)
-TARGET_RE = re.compile(r"\btarget\s+([^.,;]+)", re.I)
+TARGET_RE = re.compile(r"\btarget\s+([^.;]+)", re.I)
+SEARCH_RE = re.compile(r"\bsearch your library for (?:an? |up to (?:one|two|three|five) )?(.+?) card\b", re.I)
 NUMBER_RE = re.compile(r"\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b", re.I)
 WORD_NUMBERS = {
     "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4,
     "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
 }
+CARD_TYPES = {"land", "creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "battle", "kindred"}
+CRITERION_NOISE = {"basic", "card", "permanent", "spell", "with", "that", "whose", "where", "named", "converted", "mana", "power", "toughness"}
 
 
 def clean_text(text: str) -> str:
@@ -80,18 +83,53 @@ def number_hint(text: str) -> int | str | None:
     return WORD_NUMBERS.get(token, int(token) if token.isdigit() else None)
 
 
+def search_criterion_hint(clause: str) -> dict[str, list[str]] | None:
+    """Extract type/subtype operands without pretending the search is executable.
+
+    Oracle has an open-ended subtype vocabulary (Equipment, Aura, Goblin, ...),
+    so a generic inventory must preserve the raw operand instead of treating an
+    unknown word as an unrestricted search. Compound descriptions remain a
+    review item for the TypeScript closed parser.
+    """
+    match = SEARCH_RE.search(clause)
+    if not match:
+        return None
+    criterion = re.sub(r"\s+", " ", match.group(1).strip())
+    types = sorted({word.lower() for word in CARD_TYPES if re.search(rf"\b{re.escape(word)}\b", criterion, re.I)})
+    subtypes: list[str] = ["Basic"] if re.search(r"\bbasic\b", criterion, re.I) else []
+    for part in re.split(r"\s+(?:or|and)\s+", criterion, flags=re.I):
+        candidate = re.sub(r"\b(?:basic|land|creature|artifact|enchantment|instant|sorcery|planeswalker|battle|kindred)\b", "", part, flags=re.I).strip()
+        if (re.fullmatch(r"[A-Za-z][A-Za-z'’/-]*", candidate)
+                and candidate.lower() not in CRITERION_NOISE
+                and candidate.casefold() not in {value.casefold() for value in subtypes}):
+            subtypes.append(candidate)
+    return {"types": types, "subtypes": subtypes}
+
+
 def classify(clause: str) -> dict[str, Any]:
     lower = clause.lower()
     families = [name for name, pattern in VERB_PATTERNS if re.search(pattern, clause, re.I)]
     kind = "triggered" if TRIGGER_RE.search(clause) else "activated" if ACTIVATED_RE.match(clause) else "static-or-spell"
     target = TARGET_RE.search(clause)
+    search_criterion = search_criterion_hint(clause)
+    target_text = target.group(1).strip() if target else None
+    target_operand = re.sub(r"\s+(?:from|on|in)\s+(?:the\s+)?(?:battlefield|graveyard|hand)\b.*$", "", target_text or "", flags=re.I).strip()
+    target_subtype = target_operand if target_operand and re.fullmatch(r"[A-Za-z][A-Za-z'’/-]*", target_operand) and target_operand.lower() not in CARD_TYPES else None
+    target_types = sorted({word.title() for word in CARD_TYPES if target_operand and re.search(rf"\b{re.escape(word)}\b", target_operand, re.I)})
+    target_zone = None
+    if target_text:
+        target_zone = "graveyard" if re.search(r"\bgraveyard\b", target_text, re.I) else "hand" if re.search(r"\bhand\b", target_text, re.I) else "battlefield"
     return {
         "text": clause,
         "kind": kind,
         "families": families,
         "primary_family": next((family for family in FAMILY_ORDER if family in families), "other"),
         "amount": number_hint(clause),
-        "target_text": target.group(1).strip() if target else None,
+        "target_text": target_text,
+        "target_subtype": target_subtype,
+        "target_types": target_types,
+        "target_zone": target_zone,
+        "search_criterion": search_criterion,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),
         "modal": bool(re.search(r"\bchoose (?:one|two|three|one or more)\b", lower)),
         "conditional": bool(re.search(r"\b(?:if|unless|as long as|whenever)\b", lower)),
@@ -164,7 +202,7 @@ def main() -> None:
     cards = compile_catalog(args.catalog)
     counts = Counter(card["status"] for card in cards)
     payload = {
-        "format": "prossh-oracle-effect-ir/v1",
+        "format": "prossh-oracle-effect-ir/v2",
         "generated_at": datetime.now(UTC).isoformat(),
         "source": "local normalized catalog; Oracle text is display data, not executable code",
         "card_count": len(cards),

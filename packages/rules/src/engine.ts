@@ -60,6 +60,9 @@ export interface Permanent {
   readonly deathtouched: boolean;
   /** Public counters on this permanent, by normalized counter name. */
   readonly counters: Readonly<Record<string, number>>;
+  /** Layer 7c modifications that expire in the cleanup step. */
+  readonly powerModifier: number;
+  readonly toughnessModifier: number;
   readonly isCommander: boolean;
 }
 
@@ -313,8 +316,15 @@ function findPermanent(state: GameState, instanceId: string): Permanent | null {
   return allPermanents(state).find((permanent) => permanent.instance_id === instanceId) ?? null;
 }
 
-function powerOf(permanent: Permanent): number { return cardProfile(permanent.card).power ?? 0; }
-function toughnessOf(permanent: Permanent): number { return cardProfile(permanent.card).toughness ?? 0; }
+function counterModifier(permanent: Permanent): number {
+  return (permanent.counters["+1/+1"] ?? 0) - (permanent.counters["-1/-1"] ?? 0);
+}
+export function powerOf(permanent: Permanent): number {
+  return (cardProfile(permanent.card).power ?? 0) + counterModifier(permanent) + permanent.powerModifier;
+}
+export function toughnessOf(permanent: Permanent): number {
+  return (cardProfile(permanent.card).toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier;
+}
 function keywordOf(permanent: Permanent, keyword: EnforcedKeyword): boolean {
   return cardProfile(permanent.card).keywords.includes(keyword);
 }
@@ -730,6 +740,8 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     damage: 0,
     deathtouched: false,
     counters: Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
+    powerModifier: 0,
+    toughnessModifier: 0,
     isCommander
   };
   let next = withPlayer(state, seat, (player) => ({
@@ -895,6 +907,25 @@ function dealDamageToPermanent(state: GameState, instanceId: string, amount: num
   return logged(next, permanent.controller, `${sourceName} hace ${amount} de daño a ${permanent.card.name}.`);
 }
 
+/** Applies a layer 7c P/T modifier which cleanup removes (CR 613.4c, 514.2). */
+function modifyCreatures(
+  state: GameState,
+  power: number,
+  toughness: number,
+  predicate: (permanent: Permanent) => boolean
+): GameState {
+  return {
+    ...state,
+    players: state.players.map((player) => ({
+      ...player,
+      battlefield: player.battlefield.map((permanent) =>
+        isCreature(cardProfile(permanent.card)) && predicate(permanent)
+          ? { ...permanent, powerModifier: permanent.powerModifier + power, toughnessModifier: permanent.toughnessModifier + toughness }
+          : permanent)
+    }))
+  };
+}
+
 function applyEffect(state: GameState, object: StackObject, effect: SpellEffect): GameState {
   const controller = object.controller;
   const sourceName = object.card.name;
@@ -940,6 +971,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (target.kind === "player") return dealDamageToPlayer(state, target.seat, amount, sourceName);
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
       return state;
+    }
+    case "modify-all-creatures": {
+      const next = modifyCreatures(state, effect.power, effect.toughness, () => true);
+      return logged(next, controller, `${sourceName} modifica a todas las criaturas hasta el final del turno.`);
+    }
+    case "modify-creatures-you-control": {
+      const next = modifyCreatures(state, effect.power, effect.toughness, (permanent) => permanent.controller === controller);
+      return logged(next, controller, `${sourceName} modifica tus criaturas hasta el final del turno.`);
+    }
+    case "modify-target-creature": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === permanent.instance_id);
     }
     case "destroy-target-creature": {
       const target = object.targets[0];
@@ -1100,7 +1146,8 @@ function resolveTop(state: GameState): GameState {
         const profile = cardProfile(card);
         const typeMatches = !search.types.length || search.types.some((type) => profile.types.includes(type));
         const subtypeMatches = !search.subtypes?.length || search.subtypes.some((subtype) =>
-          subtype === "Basic" ? profile.supertypes.includes("Basic") : profile.subtypes.includes(subtype));
+          subtype.toLowerCase() === "basic" ? profile.supertypes.some((value) => value.toLowerCase() === "basic")
+            : profile.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase()));
         return typeMatches && subtypeMatches;
       })
       .map((card) => card.instance_id);
@@ -1449,7 +1496,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         ...next,
         players: next.players.map((current) => ({
           ...current,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0 }))
         }))
       };
       break;
@@ -1706,6 +1753,12 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "creature" || kind === "nonartifact-creature") return isCreature(profile) && (kind === "creature" || !profile.types.includes("Artifact"));
     if (kind === "land-you-control") return isLand(profile) && permanent.controller === seat;
     if (kind === "artifact-or-enchantment") return profile.types.includes("Artifact") || profile.types.includes("Enchantment");
+    if (kind === "artifact-enchantment-or-land") return profile.types.includes("Artifact") || profile.types.includes("Enchantment") || isLand(profile);
+    if (kind === "artifact") return profile.types.includes("Artifact");
+    if (kind.startsWith("subtype:")) {
+      const subtype = kind.slice("subtype:".length).toLowerCase();
+      return profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype);
+    }
     if (kind === "artifact-creature-or-planeswalker") return profile.types.some((type) => ["Artifact", "Creature", "Planeswalker"].includes(type));
     if (kind === "nonland") return !isLand(profile);
     return true;

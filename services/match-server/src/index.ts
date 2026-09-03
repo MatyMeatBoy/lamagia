@@ -2,7 +2,7 @@ import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { Server } from "socket.io";
 import { DatabaseSync } from "node:sqlite";
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { GameAction } from "@prossh/rules";
@@ -18,13 +18,32 @@ const catalogDbPath = process.env.CATALOG_DB_PATH ?? fileURLToPath(new URL("../.
 const activePodPath = process.env.ACTIVE_POD_PATH ?? fileURLToPath(new URL("../../../data/decks/cedh-pod.json", import.meta.url));
 const preconsPath = process.env.PRECONS_PATH ?? fileURLToPath(new URL("../../../data/decks/commander-precons.json", import.meta.url));
 const engineReportPath = process.env.ENGINE_REPORT_PATH ?? fileURLToPath(new URL("../../../data/simulations/engine-matrix-last.json", import.meta.url));
+const setCoveragePath = process.env.SET_COVERAGE_PATH ?? fileURLToPath(new URL("../../../data/rules/set-coverage.json", import.meta.url));
 
 interface ImportedPod { readonly source: string; readonly synced_at: string; readonly decks: readonly ImportedDeck[] }
 interface ImportedPrecon extends ImportedDeck { readonly set_code: string; readonly released_at: string; readonly cover_art_uri?: string; readonly cover_art_kind: string }
 interface ImportedPrecons { readonly source: string; readonly synced_at: string; readonly decks: readonly ImportedPrecon[] }
+interface CoverageCard { readonly oracleId: string; readonly scryfallId: string; readonly name: string; readonly implemented: boolean }
+interface CoverageSet {
+  readonly code: string; readonly setType: string; readonly category: string; readonly releasedAt: string;
+  readonly uniqueCards: number; readonly implemented: number; readonly pending: number; readonly percentage: number;
+  readonly pendingCards: readonly CoverageCard[];
+}
+interface SetCoverageReport { readonly format: string; readonly generatedAt: string; readonly setCount: number; readonly membershipCount: number; readonly implementedMembershipCount: number; readonly percentage: number; readonly sets: readonly CoverageSet[] }
 
 let podCache: ImportedPod | null = null;
 let preconCache: ImportedPrecons | null = null;
+let setCoverageCache: SetCoverageReport | null = null;
+let setCoverageMtime = 0;
+
+async function readSetCoverage(): Promise<SetCoverageReport> {
+  if (!existsSync(setCoveragePath)) throw new Error("Todavía no hay mapa de cobertura. Ejecuta npm run rules:set:coverage.");
+  const mtime = statSync(setCoveragePath).mtimeMs;
+  if (setCoverageCache && setCoverageMtime === mtime) return setCoverageCache;
+  setCoverageCache = JSON.parse(await readFile(setCoveragePath, "utf8")) as SetCoverageReport;
+  setCoverageMtime = mtime;
+  return setCoverageCache;
+}
 
 const PRODUCT_BOX_ART: Readonly<Record<string, string>> = {
   MindSeize_C13: "https://m.media-amazon.com/images/I/71oIylvF4fL.jpg",
@@ -356,6 +375,26 @@ app.get("/api/simulations/engine-matrix", async (_request, reply) => {
   if (!existsSync(engineReportPath)) return reply.code(404).send({ error: "Todavía no hay reporte. Ejecuta npm run simulate:engine." });
   try { return JSON.parse(await readFile(engineReportPath, "utf8")); }
   catch { return reply.code(500).send({ error: "No se pudo leer el reporte del motor." }); }
+});
+
+app.get("/api/rules/coverage/sets", async (_request, reply) => {
+  try {
+    const report = await readSetCoverage();
+    return {
+      ...report,
+      // The chart needs counts only. Pending IDs are available on the detail route
+      // so the normal response stays small even with hundreds of editions.
+      sets: report.sets.map(({ pendingCards: _pendingCards, ...summary }) => summary)
+    };
+  } catch (error) { return reply.code(404).send({ error: failure(error, "Cobertura no disponible.") }); }
+});
+
+app.get<{ Params: { code: string } }>("/api/rules/coverage/sets/:code", async (request, reply) => {
+  try {
+    const report = await readSetCoverage();
+    const found = report.sets.find((entry) => entry.code === request.params.code.toLowerCase());
+    return found ? found : reply.code(404).send({ error: "No se encontró esa edición." });
+  } catch (error) { return reply.code(404).send({ error: failure(error, "Cobertura no disponible.") }); }
 });
 
 app.get("/api/decks/active-pod", async (_request, reply) => {

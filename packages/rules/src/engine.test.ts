@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CardData } from "./characteristics.js";
 import {
-  applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, manaSources, planManaPayment,
+  applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, manaSources, planManaPayment, powerOf, toughnessOf,
   hasRealChoice, profileOf, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
 } from "./engine.js";
 import { pendingSeat, playBotGame } from "./bot.js";
@@ -46,6 +46,12 @@ const ELADAMRI = () => make({ name: "Eladamri's Call", type_line: "Instant", man
 const ENTOMB = () => make({ name: "Entomb", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Search your library for a card, put that card into your graveyard, then shuffle." });
 const PLANT_SPELL = () => make({ name: "Plant Ritual", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4, oracle_text: "Create three 0/1 green Plant creature tokens." });
 const PYROCLASM = () => make({ name: "Pyroclasm", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Pyroclasm deals 2 damage to each creature." });
+const INFEST = () => make({ name: "Infest", type_line: "Sorcery", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "All creatures get -2/-2 until end of turn." });
+const GIANT = () => make({ name: "Hill Giant", type_line: "Creature — Giant", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3" });
+const EQUIPMENT = () => make({ name: "Test Equipment", type_line: "Artifact — Equipment", mana_cost: "{1}", cmc: 1 });
+const STEELSHAPERS_GIFT = () => make({ name: "Steelshaper's Gift", type_line: "Sorcery", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an Equipment card, reveal it, put it into your hand, then shuffle." });
+const EXILE_EQUIPMENT = () => make({ name: "Exile Equipment", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Exile target Equipment." });
+const ACIDIC_SLIME = () => make({ name: "Acidic Slime", type_line: "Creature — Ooze", mana_cost: "{3}{G}{G}", cmc: 5, power: "2", toughness: "2", oracle_text: "When Acidic Slime enters, destroy target artifact, enchantment, or land." });
 const DEEP_STUDY = () => make({ name: "Deep Study", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Target player draws two cards." });
 const VISION_SKEINS = () => make({ name: "Vision Skeins", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Each player draws two cards." });
 const GRAVE_PURGE = () => make({ name: "Grave Purge", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target player's graveyard." });
@@ -126,6 +132,8 @@ function putOnBattlefield(state: GameState, seat: SeatId, cards: CardData[], opt
     damage: 0,
     deathtouched: false,
     counters: Object.fromEntries(profileOf(card).entersWithCounters.map((counter) => [counter.kind, counter.amount])),
+    powerModifier: 0,
+    toughnessModifier: 0,
     isCommander: false
   }));
   return stage(state, seat, (player) => ({ battlefield: [...player.battlefield, ...permanents] }));
@@ -513,6 +521,17 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Pyroclasm")).toBe(true);
   });
 
+  it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
+    expect(profileOf(INFEST()).fullyImplemented).toBe(true);
+    let game = readyToCast([INFEST()], [SWAMP(), SWAMP(), FOREST(), GIANT()], [], [GIANT()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const own = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Hill Giant")!;
+    const foe = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Hill Giant")!;
+    expect([powerOf(own), toughnessOf(own)]).toEqual([1, 1]);
+    expect([powerOf(foe), toughnessOf(foe)]).toEqual([1, 1]);
+    expect(own).toMatchObject({ powerModifier: -2, toughnessModifier: -2 });
+  });
+
   it("lets Lightning Bolt target a creature as well as a player", () => {
     let game = readyToCast([BOLT()], [MOUNTAIN()], [], [BEAR()]);
     const bearId = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.instance_id;
@@ -614,6 +633,24 @@ describe("casting", () => {
     const game = readyToCast([BOLT()], [MOUNTAIN()]);
     expect(() => applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: "ghost" }] })).toThrow(/Objetivo ilegal/);
   });
+
+  it("reuses the subtype search cluster for Steelshaper's Gift", () => {
+    let game = readyToCast([STEELSHAPERS_GIFT()], [PLAINS(), PLAINS()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [EQUIPMENT(), SOL_RING()], "equipment-library"), ...player.library] }));
+    expect(profileOf(STEELSHAPERS_GIFT()).effects[0]).toMatchObject({ subtypes: ["Equipment"] });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect((game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>).optionIds)
+      .toHaveLength(1);
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Equipment" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Test Equipment")).toBe(true);
+
+    game = readyToCast([EXILE_EQUIPMENT()], [PLAINS(), PLAINS()], [], [EQUIPMENT(), SOL_RING()]);
+    const equipment = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Test Equipment")!;
+    expect(legalTargets(game, 0, "subtype:Equipment")).toContainEqual({ kind: "permanent", instanceId: equipment.instance_id });
+    expect(legalTargets(game, 0, "subtype:Equipment")).toHaveLength(1);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: equipment.instance_id }] });
+    expect(game.players[1]!.exile.some((card) => card.name === "Test Equipment")).toBe(true);
+  });
 });
 
 describe("triggered abilities", () => {
@@ -625,6 +662,20 @@ describe("triggered abilities", () => {
     if (opponentBoard.length) game = putOnBattlefield(game, 1, opponentBoard);
     return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
   }
+
+  it("aims Acidic Slime at an artifact, enchantment, or land", () => {
+    const profile = profileOf(ACIDIC_SLIME());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]!.targetKind).toBe("artifact-enchantment-or-land");
+    let game = readyToCast([ACIDIC_SLIME()], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST()], [SOL_RING()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", targetKind: "artifact-enchantment-or-land" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const ring = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    expect(choice.options).toContainEqual({ kind: "permanent", instanceId: ring.instance_id });
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "permanent", instanceId: ring.instance_id } });
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
 
   it("reads the event and the subject of each recognised trigger line", () => {
     expect(profileOf(ETB_DRAWER()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "self", targetKind: "none" });
@@ -977,7 +1028,7 @@ describe("commander rules", () => {
       commandZone: [],
       battlefield: [{
         instance_id: commanderCard.instance_id, card: commanderCard, controller: 0,
-        tapped: false, summoningSick: false, damage: 99, deathtouched: false, counters: {}, isCommander: true
+        tapped: false, summoningSick: false, damage: 99, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0, isCommander: true
       }]
     }));
     game = applyAction(game, pendingSeat(game)!, { type: "pass" });
@@ -1126,7 +1177,7 @@ describe("combat", () => {
       commandZone: [],
       battlefield: [{
         instance_id: commanderCard.instance_id, card: commanderCard, controller: 0,
-        tapped: false, summoningSick: false, damage: 0, deathtouched: false, counters: {}, isCommander: true
+        tapped: false, summoningSick: false, damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0, isCommander: true
       }]
     }));
     game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);

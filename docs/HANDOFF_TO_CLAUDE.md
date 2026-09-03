@@ -91,7 +91,21 @@ never remove a card's own printed one.
 - A mana ability whose printed output the parser cannot read now counts as
   uncovered, so the hand tooltip and card page stop over-claiming.
 
-### 5. Ability iconography on the table
+### 5. Reusable counters and temporary P/T modifiers
+
+- Permanents carry public normalized counters and temporary layer-7c P/T
+  modifiers; cleanup removes the modifiers and combat damage.
+- The parser recognises entry counters and mana activation costs that remove
+  counters from the source. The automatic planner can choose between multiple
+  mana abilities on one permanent, enabling Vivid-style any-color payments.
+- `All creatures get -N/-N until end of turn`, `Creatures you control get` and
+  `Target creature gets` are structured effects. Modified toughness is used by
+  state-based actions, and projections expose current P/T and counters.
+- Vivid-style mana and Infest scenarios are covered. Proliferate, counter
+  annihilation, replacement effects and general layer dependencies remain
+  outside this cluster.
+
+### 6. Ability iconography on the table
 
 - `apps/client/src/abilities.ts` is an **original** SVG set: fifteen enforced
   keywords, two activation families and ten trigger events. Each glyph carries
@@ -111,11 +125,12 @@ never remove a card's own printed one.
 
 | Metric | Before | After |
 | --- | --- | --- |
-| Cards with a payable, resolvable activated ability | 0 (feature did not run) | 409 |
-| Cards with a recognised triggered ability | 87 | 526 |
+| Cards with a payable, resolvable activated ability | 0 (feature did not run) | 670 |
+| Cards with a recognised triggered ability | 87 | 1,185 |
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
-| Catalog cards fully implemented | 5,151 | 5,355 |
-| …of those, with non-empty Oracle text | 2,090 | 2,290 |
+| Catalog cards fully implemented | 5,151 | 5,908 |
+| …of those, with non-empty Oracle text | 2,090 | 2,823 |
+| C13 unique cards fully implemented | — | 107 / 356 (249 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
 
 Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
@@ -142,25 +157,33 @@ reference and XMage/French-Vanilla as behavioural references. Run
 `npm run rules:cr:sync` to refresh the local `docs/COMPREHENSIVE_RULES.md`
 snapshot. The rules engine itself never calls that API.
 
+Edition coverage is generated with `npm run rules:set:coverage`. It deduplicates
+by `oracle_id`, keeps Alpha-to-current chronology, separates main, Commander,
+Secret Lair and other sets, and lists each edition’s pending cards for
+contributors. The client exposes the same report as the “Cobertura” chart and
+loads pending IDs only when an edition is opened.
+
 ## Current verified state
 
 | Area | Implemented now | Evidence |
 | --- | --- | --- |
 | Turn structure | All twelve steps, with `untap` and `cleanup` resolving their turn-based actions automatically. A seat whose only legal move is passing is passed for it, so no window can stall. | `settle` in `packages/rules/src/engine.ts`; `engine.test.ts` → "never leaves the table without somebody able to act" |
 | Priority and stack | Circular passing, resolution one object at a time, priority back to the controller after casting, no step advance while the stack is occupied. | `applyPass` / `resolveTop`; `engine.test.ts` → "holds the spell on the stack while an opponent can still respond" |
-| Mana | Generic, colored, colorless, hybrid, monocolored hybrid, Phyrexian (life payment), snow-as-generic and `{X}` parsing. A backtracking solver decides which permanents to tap. | `packages/rules/src/mana.ts`, `planManaPayment`; `mana.test.ts` (12 cases) |
-| Casting | Any card whose printed cost the board can pay, at sorcery or instant speed, with targeting and fizzling when targets leave. Variable `{X}` costs expose legal values and retain the selected value; Fireball is covered as its first-target/X damage behavior, while its multi-target additional-cost clause remains outside the current model. Target restrictions include creatures, permanents, nonlands, artifact/enchantment, artifact/creature/planeswalker and nonartifact creatures. | `applyCast`, `legalTargets`, `planManaPayment`; `engine.test.ts` → "casting" |
+| Mana | Generic, colored, colorless, hybrid, monocolored hybrid, Phyrexian (life payment), snow-as-generic and `{X}` parsing. A backtracking solver decides which permanent and which mana ability to use; entry-counter costs are supported. | `packages/rules/src/mana.ts`, `planManaPayment`; `mana.test.ts` and `engine.test.ts` |
+| Casting | Any card whose printed cost the board can pay, at sorcery or instant speed, with targeting and fizzling when targets leave. Variable `{X}` costs expose legal values and retain the selected value; Fireball is covered as its first-target/X damage behavior, while its multi-target additional-cost clause remains outside the current model. Target restrictions include creatures, permanents, nonlands, artifact/enchantment, artifact/creature/planeswalker, nonartifact creatures and reusable `subtype:<Subtype>` constraints. | `applyCast`, `legalTargets`, `planManaPayment`; `engine.test.ts` → "casting" |
 | Triggered abilities | Ten event families raised where the rules say they happen (`enters-battlefield`, `dies`, `attacks`, `blocks`, `deals-combat-damage-to-player`, `becomes-tapped`, `spell-cast`, `upkeep`, `draw-step`, `end-step`), each with a subject so "another creature you control" excludes the source. Queued triggers are ordered APNAP, go on top of a non-empty stack, and choose their targets as they are put on it — auto when one is legal, as a real choice when several are, removed when none is. Optional effects still pause on a server-side yes/no choice. | `GameEvent`/`raiseEvent`/`apnapOrder`/`putNextTriggerOnStack` in `packages/rules/src/engine.ts`, `TRIGGER_TEMPLATES` in `characteristics.ts`; `engine.test.ts` → "triggered abilities" (9 cases) |
 | Activated abilities | Mana abilities resolve immediately and never use the stack; non-mana activations are announced, paid and put on the stack like a spell. Costs cover mana, `{T}`, paying life and sacrificing the source, and a source that taps for its own ability is removed from its mana sources first. | `activatableAbility`/`applyActivate`/`applyActivateMana` in `engine.ts`, `parseActivatedAbility` in `characteristics.ts`; `engine.test.ts` → "activated abilities" (6 cases) |
 | Oracle reading | The printed name **and** the modern "this land" / "this creature" self reference both normalise to `~`, so current reprints parse. A mana clause must consume its whole sentence, so a restricted "any color that a land an opponent controls could produce" is not read as five free colours. | `normalizedOracle`, `parseAddClause`; `characteristics.test.ts` → "faces and oracle normalisation" |
 | Commander | Command-zone start, `{2}` tax per previous cast, return-to-command-zone on death, 21-damage elimination tracked per commander. | `commanderTax`, `movePermanentToZone`; `engine.test.ts` → "commander rules" |
 | Combat | Attack declaration with per-attacker defender choice, blocks, first/double strike sub-step, deathtouch, trample, lifelink, vigilance, menace, flying/reach restrictions, defender, haste, summoning sickness. | `computeCombatDamage`; `engine.test.ts` → "combat" (11 cases) |
 | State-based actions | Lethal damage, zero toughness, indestructible, legend rule, 0 life, empty-library draw, 21 commander damage, last player standing. | `applyStateBasedActions`; `engine.test.ts` → "state-based actions" |
+| P/T and counters | Entry counters, counter costs on mana abilities, temporary creature P/T modifiers and cleanup expiration. | `CounterCost`, `powerOf`, `toughnessOf`, `applyEffect`; `engine.test.ts` → Vivid/Infest scenarios |
 | Privacy | A projection contains the viewer's hand and nothing hidden from any other seat — not the cards, not their identifiers. | `packages/rules/src/projection.ts`; asserted in `engine.test.ts`, `real-decks.test.ts` and the engine matrix |
 | Bot | Plays only from the same `legalActions` list a human receives: lands, castables, attack and block heuristics, target selection. | `packages/rules/src/bot.ts` |
 | Server | Match registry with seat-bound secret tokens, bots driven between human decisions, per-seat projections, Socket.IO update notifications. | `services/match-server/src/matches.ts` |
 | Client | Full-viewport table: three opponents share one seamless band at full width, the local player owns the lower band, and the stack, legal actions, zones and priority all live in the player dock so nothing floats over a board. Land/nonland rows are oriented per seat, the hand fans and lifts, drag-to-play gives the card a 3D-tilted ghost, a hover preview shows Oracle text plus rules coverage, the log is a toggleable drawer with per-seat colours and linked card names, mana renders as pips, and cards open an internal page. Hidden library searches use a name input rather than leaking candidate identities. Every permanent shows an original SVG icon per enforced keyword, activation family and trigger event; an icon opens a help card with the rule and what the engine enforces, and a permanent with several activations opens an ability menu. | `apps/client/src/main.ts`, `abilities.ts`, `styles.css` |
 | Library search | While resolving a search, the controller sees every legal candidate as a card grid and can click one or type its name. A local toggle reveals the full own library for inspection; opponents receive `null`. | `LibrarySearchView` in `packages/rules/src/projection.ts`, `librarySearchHtml` in `apps/client/src/main.ts` |
+| Edition coverage | All 708 catalog editions are ordered by release date and grouped as main, Commander, Secret Lair or other; the global chart is summary-only and an edition detail lists pending `oracle_id` cards. | `tools/rules/export_set_coverage.py`, `/api/rules/coverage/sets`, `openCoverage` |
 | Touch layout | Landscape-first for Android and tablets: same shape, but the board shrinks and the hand grows past it, tap targets clear 34–44px and the hover preview is disabled. Portrait stacks the boards and asks the player to rotate. A topbar toggle forces it on a desktop. | `styles.css` touch section; `docs/ANDROID.md` |
 | Rulings | 78,912 Wizards rulings keyed by `oracle_id`, served from the local catalog on the card page. | `tools/card_catalog/sync_rulings.py`, `/api/catalog/card/:id` |
 | Card data | 117,621 printings with rules fields (power/toughness/loyalty, produced mana, faces) and printing fields (promo, frame, finishes, set type) plus a precomputed `printing_rank`. | `tools/card_catalog/sync_scryfall.py` |
@@ -171,12 +194,13 @@ snapshot. The rules engine itself never calls that API.
 
 ```text
 npm run check           rules build + rules/client/server typecheck        PASS
-npm test                Vitest 5 files / 121 tests + Python smoke tests    PASS
+npm test                Vitest 5 files / 144 tests + Python smoke tests    PASS
 npm run simulate:engine 200 seeded games in 7.22s                          PASS
                         finished 141, unfinished 59, avg 51.63 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 5,355 fully implemented         PASS
+npm run rules:engine:export  38,711 cards; 5,908 fully implemented         PASS
+npm run rules:set:coverage  708 editions; 13.5% membership coverage        PASS
 ```
 
 The matrix now finishes 141 of 200 games (was 105 before activations and 100
@@ -190,8 +214,8 @@ keyword help card, and the hand honestly marks partially implemented cards.
 
 ## Truth boundaries — do not overstate these
 
-1. **Card text is mostly not executed.** `characteristics.ts` recognises a closed set of templates: draw N, gain N life, each opponent loses N life, "~ deals N/X damage to any target", damage to each opponent, target destruction/exile/bounce restrictions, destroy all creatures, counter target spell, common library searches to top/hand/graveyard/battlefield, plus the Frostboil-style replacement choice. Over the current cEDH pod that is **106 of 400 cards fully covered** (49 of its 249 distinct cards); that figure must be remeasured as new structured definitions land. Fireball's first-target/X branch is tested, but its additional-target cost and damage distribution are not. Every other card plays as a real body with real types, power/toughness and combat keywords, and both the hand tooltip and the card page say so. Never claim "all cards work".
-2. **What triggers and activations still do not cover.** Activated abilities exist for costs made of mana, `{T}`, paying life and sacrificing the source — 409 catalog cards. Everything else is left out of the profile rather than approximated: `{Q}`, loyalty, energy, discarding, removing counters, exiling, and sacrificing *other* permanents. Triggers cover ten events and seven subjects — 526 catalog cards — with APNAP ordering and targets, but there are still **no intervening-if conditions**, no player-ordering choice between two of one player's own simultaneous triggers (they keep event order), no delayed or state triggers, and no trigger on zone changes other than entering and dying. Also still absent: static/continuous effects, layers, counters on permanents, tokens, planeswalker loyalty and mulligans. Frostboil Snarl remains a separate entering replacement effect documented in `docs/RULES_RESEARCH.md`.
+1. **Card text is mostly not executed.** `characteristics.ts` recognises a closed set of templates: draw N, gain N life, each opponent loses N life, "~ deals N/X damage to any target", damage to each opponent, target destruction/exile/bounce restrictions, destroy all creatures, counter target spell, common library searches to top/hand/graveyard/battlefield, entry/cost counter templates and a small set of temporary P/T modifiers, plus the Frostboil-style replacement choice. The C13 report is the current queue and must be regenerated after changes. Fireball's first-target/X branch is tested, but its additional-target cost and damage distribution are not. Every other card plays as a real body with real types, power/toughness and combat keywords, and both the hand tooltip and the card page say so. Never claim "all cards work".
+2. **What triggers and activations still do not cover.** Activated abilities exist for costs made of mana, `{T}`, paying life, removing counters from the source and sacrificing the source. Everything else is left out of the profile rather than approximated: `{Q}`, loyalty, energy, discarding, exiling, and sacrificing *other* permanents. Triggers cover ten events and seven subjects with APNAP ordering and targets, but there are still **no intervening-if conditions**, no player-ordering choice between two of one player's own simultaneous triggers (they keep event order), no delayed or state triggers, and no trigger on zone changes other than entering and dying. Also still absent: general static/continuous effects, layer dependencies, counter addition/proliferation, tokens with copied characteristics, planeswalker loyalty and mulligans. Frostboil Snarl remains a separate entering replacement effect documented in `docs/RULES_RESEARCH.md`.
 3. **The bot is a heuristic, not a strong opponent.** Its win rates are not balance data.
 4. **There is no authentication, persistence, matchmaking or reconnect.** Matches live in one process's memory and are lost on restart. Seat tokens stop a client from claiming another seat; they are not a security system.
 5. **Precon cover art is mixed by provenance.** Mind Seize and Power Hungry use the user-provided product-render URLs and are marked `product_box_render`; other products may still use the display commander's Scryfall art crop until an approved product image is added. Do not present the fallback as box art.
@@ -216,7 +240,7 @@ packages/rules/                 authoritative engine (pure, deterministic)
   src/projection.ts             the per-seat security boundary
   src/bot.ts                    bot policy over legal actions only
   src/simulator.ts              coarse metadata simulator (legacy tooling)
-  src/*.test.ts                 121 Vitest specs
+  src/*.test.ts                 139 Vitest specs
 services/match-server/
   src/matches.ts                match registry, seat tokens, bot driving
   src/index.ts                  REST + Socket.IO, catalog and deck endpoints
@@ -279,6 +303,8 @@ npm run rulings:sync      # ~79k Wizards rulings, keyed by oracle_id
 | `POST /api/matches/:id/action` | `{ token, action }`; rejected unless that seat owes the decision | |
 | `POST /api/matches/:id/settings` | `{ token, autoPass }` | |
 | `GET /api/simulations/engine-matrix` | latest matrix report | must be generated locally |
+| `GET /api/rules/coverage/sets` | chronological set summaries for the web chart | regenerate with `npm run rules:set:coverage` |
+| `GET /api/rules/coverage/sets/:code` | one edition and its pending `oracle_id` cards | same generated report |
 
 ## How the engine is put together
 
@@ -292,8 +318,8 @@ npm run rulings:sync      # ~79k Wizards rulings, keyed by oracle_id
 
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
 general; what limits coverage is the **effect vocabulary** they resolve into.
-526 cards have a recognised trigger and 409 a recognised activation, but only
-5,355 of 38,711 cards are fully implemented, because most printed effects are
+1,185 cards have a recognised trigger and 670 a recognised activation, but only
+5,908 of 38,711 cards are fully implemented, because most printed effects are
 still outside `SpellEffect`.
 
 1. **Widen `SpellEffect`, one template plus one test at a time.** The highest

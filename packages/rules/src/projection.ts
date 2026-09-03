@@ -8,7 +8,7 @@
 
 import { cardProfile, type TriggerEvent } from "./characteristics.js";
 import {
-  STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSourcePotential,
+  STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSourcePotential, powerOf, toughnessOf,
   type GameCard, type GameState, type LegalAction, type LogEntry, type Permanent, type SeatId, type Target, type TurnStep
 } from "./engine.js";
 import { emptyPool, type ManaPool } from "./mana.js";
@@ -126,7 +126,7 @@ export interface GameView {
   readonly selectableAttackers: readonly string[];
   readonly selectableBlockers: readonly string[];
   /** Targets this viewer may pick, grouped by what a spell asks for. */
-  readonly targetOptions: Record<Exclude<import("./characteristics.js").TargetKind, "none">, readonly Target[]>;
+  readonly targetOptions: Readonly<Record<string, readonly Target[]>>;
   readonly waitingOn: SeatId | null;
 }
 
@@ -180,6 +180,8 @@ function permanentView(state: GameState, permanent: Permanent, available: readon
   const blockedBy = state.combat.blockers.filter((entry) => entry.attackerId === permanent.instance_id).map((entry) => entry.instanceId);
   return {
     ...cardView(permanent.card),
+    power: powerOf(permanent),
+    toughness: toughnessOf(permanent),
     abilities: abilitiesOf(permanent, available),
     controller: permanent.controller,
     tapped: permanent.tapped,
@@ -248,6 +250,14 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
       }
     : null;
 
+  const targetKinds = new Set<string>([
+    "any", "player", "creature", "spell", "permanent", "artifact-or-enchantment",
+    "artifact-creature-or-planeswalker", "artifact-enchantment-or-land", "artifact",
+    "nonland", "nonartifact-creature", "land-you-control",
+    ...viewerActions.flatMap((action) => action.requiresTarget ? [action.requiresTarget] : [])
+  ]);
+  const targetOptions = Object.fromEntries([...targetKinds].map((kind) => [kind, legalTargets(state, viewerSeat, kind as Exclude<import("./characteristics.js").TargetKind, "none">)]));
+
   return {
     viewerSeat,
     version: state.version,
@@ -286,18 +296,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     selectableBlockers: mustDeclareBlockers && awaitingBlockers.includes(viewerSeat)
       ? legalBlockers(state, viewerSeat).map((permanent) => permanent.instance_id)
       : [],
-    targetOptions: {
-      any: legalTargets(state, viewerSeat, "any"),
-      player: legalTargets(state, viewerSeat, "player"),
-      creature: legalTargets(state, viewerSeat, "creature"),
-      spell: legalTargets(state, viewerSeat, "spell"),
-      permanent: legalTargets(state, viewerSeat, "permanent"),
-      "artifact-or-enchantment": legalTargets(state, viewerSeat, "artifact-or-enchantment"),
-      "artifact-creature-or-planeswalker": legalTargets(state, viewerSeat, "artifact-creature-or-planeswalker"),
-      nonland: legalTargets(state, viewerSeat, "nonland"),
-      "nonartifact-creature": legalTargets(state, viewerSeat, "nonartifact-creature"),
-      "land-you-control": legalTargets(state, viewerSeat, "land-you-control")
-    },
+    targetOptions,
     waitingOn: mustDeclareAttackers ? state.activeSeat : mustDeclareBlockers ? (awaitingBlockers[0] ?? null) : state.priorityOpen ? state.prioritySeat : null
   };
 }

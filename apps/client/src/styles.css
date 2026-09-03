@@ -708,6 +708,30 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
 .avatar-choice.selected, .avatar-choice:hover { border-color: var(--gold); color: var(--gold); }
 .avatar-choice img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 5px; }
 
+.coverage-toolbar { display: grid; gap: 9px; margin-bottom: 10px; }
+.coverage-filters { display: flex; flex-wrap: wrap; gap: 5px; }
+.coverage-filters .selected { border-color: var(--gold); color: var(--gold); }
+.coverage-toolbar input { width: min(360px, 100%); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #060d09; color: var(--text); }
+.coverage-total { display: flex; align-items: baseline; gap: 9px; margin: 5px 0 3px; }
+.coverage-total b, .coverage-detail-head b { color: var(--gold); font-size: 1rem; }
+.coverage-total span, .coverage-detail-head small { color: var(--text-faint); font-size: .66rem; }
+.coverage-list { display: grid; gap: 4px; }
+.coverage-row { display: grid; grid-template-columns: minmax(150px, 1.15fr) minmax(110px, 2fr) 64px; align-items: center; gap: 9px; padding: 6px 7px; border: 1px solid transparent; border-radius: 7px; background: #0b1810; text-align: left; }
+.coverage-row:hover { border-color: var(--gold-dim); background: #12261a; }
+.coverage-row-title { display: grid; gap: 2px; min-width: 0; }
+.coverage-row-title b { overflow: hidden; color: var(--text); font-size: .67rem; text-overflow: ellipsis; white-space: nowrap; }
+.coverage-row-title small, .coverage-number small { color: var(--text-faint); font-size: .56rem; }
+.coverage-track { display: block; height: 8px; overflow: hidden; border: 1px solid var(--line-soft); border-radius: 99px; background: #07100a; }
+.coverage-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--gold-dim), var(--good)); }
+.coverage-track.large { margin: 9px 0; }
+.coverage-number { display: grid; justify-items: end; gap: 2px; }
+.coverage-number b { color: var(--good); font-size: .66rem; }
+.coverage-detail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 12px; }
+.coverage-detail-head h3 { color: var(--text); font-size: 1rem; }
+.coverage-pending { display: grid; gap: 3px; }
+.coverage-pending div { display: flex; justify-content: space-between; gap: 8px; padding: 5px 7px; border-bottom: 1px solid var(--line-soft); color: var(--text-dim); font-size: .67rem; }
+.coverage-pending code { color: var(--text-faint); font-size: .56rem; }
+
 /* --------------------------------------------------------------------- */
 /* Narrow screens                                                         */
 /* --------------------------------------------------------------------- */
@@ -725,6 +749,7 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
   .self-dock { grid-template-columns: 1fr; justify-items: center; }
   .card-detail { grid-template-columns: 1fr; }
   .log-drawer { top: 60px; width: min(90vw, 340px); }
+  .coverage-row { grid-template-columns: minmax(130px, 1fr) minmax(80px, 1fr) 58px; }
 }
 
 /* Rulings: Wizards' published clarifications, served from the local catalog. */

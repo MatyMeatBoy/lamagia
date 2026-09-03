@@ -103,6 +103,10 @@ export type SpellEffect =
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean }
+  /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
+  | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-permanent" }
   | { readonly kind: "exile-target-permanent" }
@@ -188,7 +192,7 @@ export interface TriggerDefinition {
 
 export type TargetKind =
   | "any" | "player" | "creature" | "spell" | "permanent" | "artifact-or-enchantment"
-  | "artifact-creature-or-planeswalker" | "nonland" | "nonartifact-creature" | "land-you-control" | "none";
+  | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "artifact" | "nonland" | "nonartifact-creature" | "land-you-control" | `subtype:${string}` | "none";
 
 export interface CardProfile {
   readonly name: string;
@@ -358,7 +362,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const requiresTap = /\{T\}/.test(costText);
     const lifeMatch = /pay\s+(\d+)\s+life/i.exec(costText);
     const lifeCost = lifeMatch ? Number(lifeMatch[1]) : 0;
-    const counterMatch = /remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+([+\-\w ]+?)\s+counters?\s+from\s+~/i.exec(costText);
+    const counterMatch = /remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+([+\-\w/ ]+?)\s+counters?\s+from\s+~/i.exec(costText);
     const counterAmount = counterMatch ? toNumber(counterMatch[0].match(/remove\s+(\w+)/i)?.[1]) : null;
     const removeCounters = counterMatch && counterAmount
       ? [{ kind: counterMatch[1]!.trim().replace(/\s+/g, " ").toLowerCase(), amount: counterAmount }]
@@ -368,7 +372,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const leftovers = costText
       .replace(/\{T\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
-      .replace(/remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w ]+?\s+counters?\s+from\s+~/gi, "")
+      .replace(/remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+from\s+~/gi, "")
       .replace(/[,\s]/g, "");
     if (leftovers.length) continue;
     // Restrictions follow the first sentence in Oracle text. Parse the
@@ -494,7 +498,7 @@ interface RecognizedText {
 /** Handles the closed “enters ... with N <kind> counters” Oracle template. */
 function parseEntersWithCounters(text: string): CounterCost[] {
   const counters: CounterCost[] = [];
-  for (const match of text.matchAll(/(?:~|this [^.]+)\s+enters(?:\s+the\s+battlefield)?(?:\s+tapped)?\s+with\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+([+\-\w ]+?)\s+counters?\s+on\s+it/gi)) {
+  for (const match of text.matchAll(/(?:~|this [^.]+)\s+enters(?:\s+the\s+battlefield)?(?:\s+tapped)?\s+with\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+([+\-\w/ ]+?)\s+counters?\s+on\s+it/gi)) {
     const amount = toNumber(match[1]);
     const kind = match[2]?.trim().replace(/\s+/g, " ").toLowerCase();
     if (amount && kind) counters.push({ kind, amount });
@@ -506,10 +510,22 @@ const SENTENCE_SPLIT = /(?<=\.)\s+(?=[A-Z~])/;
 
 function searchCriterion(text: string): { types: CardType[]; subtypes: string[] } {
   const types = CARD_TYPES.filter((type) => new RegExp(`\\b${type}\\b`, "i").test(text));
-  const supertypes = /\bbasic\b/i.test(text) ? ["Basic"] : [];
-  const knownSubtypes = ["Plains", "Island", "Swamp", "Mountain", "Forest", "Desert", "Gate", "Lair", "Shrine"];
-  const subtypes = knownSubtypes.filter((subtype) => new RegExp(`\\b${subtype}\\b`, "i").test(text));
-  return { types, subtypes: [...supertypes, ...subtypes] };
+  const subtypes: string[] = /\bbasic\b/i.test(text) ? ["Basic"] : [];
+  // Search criteria are open-ended in Oracle: Equipment, Aura, Goblin and
+  // future creature/artefact subtypes must not be reduced to “all cards”.
+  // Only collect a single lexical criterion after removing card-type words;
+  // compound descriptions ("land with ...", "card with ...") stay pending.
+  const criterion = text.replace(/\b(?:a|an|up to (?:one|two|three|five))\b/gi, "")
+    .replace(/\bcard\b/gi, "").replace(/\s+/g, " ").trim();
+  for (const part of criterion.split(/\s+(?:or|and)\s+/i)) {
+    const candidate = part.trim();
+    if (!candidate || /\b(?:with|that|whose|where|named|converted|mana|power|toughness)\b/i.test(candidate)) continue;
+    if (/^(?:basic|land|creature|artifact|enchantment|instant|sorcery|planeswalker|battle|kindred)$/i.test(candidate)) continue;
+    if (/^[A-Za-z][A-Za-z'’/-]*$/.test(candidate) && !subtypes.some((subtype) => subtype.toLowerCase() === candidate.toLowerCase())) {
+      subtypes.push(candidate);
+    }
+  }
+  return { types, subtypes };
 }
 
 function parseLibrarySearch(text: string): SpellEffect | null {
@@ -652,6 +668,17 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-all-creatures", amount, excludeSource: Boolean(match[2]) }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-all-creatures", amount: "X", excludeSource: Boolean(match[2]) }, target: "none" };
   }
+  if ((match = /^(All creatures|Creatures you control|Target creature) gets? ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
+    const power = Number(match[2]);
+    const toughness = Number(match[3]);
+    const kind = /^all/i.test(match[1]!) ? "modify-all-creatures"
+      : /^creatures you control/i.test(match[1]!) ? "modify-creatures-you-control"
+        : "modify-target-creature";
+    return {
+      effect: { kind, power, toughness } as SpellEffect,
+      target: kind === "modify-target-creature" ? "creature" : "none"
+    };
+  }
   if ((match = /^~ deals (\w+) damage to target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "creature" };
@@ -660,12 +687,18 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact, creature, or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-creature-or-planeswalker" };
+  if (/^Destroy target artifact, enchantment, or land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-enchantment-or-land" };
   if (/^Destroy target nonland permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonland" };
   if (/^Destroy target nonartifact creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-creature" };
   if (/^Exile target (?:artifact or enchantment|nonland permanent|permanent|creature)$/i.test(text)) {
     const target = /artifact or enchantment/i.test(text) ? "artifact-or-enchantment"
       : /nonland/i.test(text) ? "nonland" : /creature$/i.test(text) ? "creature" : "permanent";
     return { effect: { kind: "exile-target-permanent" }, target };
+  }
+  if (/^Exile target artifact$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "artifact" };
+  const subtypeTarget = /^(?:Destroy|Exile) target ([A-Za-z][A-Za-z'’/-]*)(?: from (?:the )?(?:battlefield|graveyard|hand))?$/i.exec(text);
+  if (subtypeTarget && !CARD_TYPES.some((type) => type.toLowerCase() === subtypeTarget[1]!.toLowerCase()) && !/^(?:permanent|nonland|spell|player|creature)$/i.test(subtypeTarget[1]!)) {
+    return { effect: { kind: /Destroy/i.test(text) ? "destroy-target-permanent" : "exile-target-permanent" }, target: `subtype:${subtypeTarget[1]!}` };
   }
   if (/^Exile target player's graveyard$/i.test(text)) return { effect: { kind: "exile-target-graveyard" }, target: "player" };
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };

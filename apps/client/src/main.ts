@@ -34,6 +34,16 @@ type CatalogPrinting = {
   id: string; set_code: string; set_name: string; set_type: string; released_at: string; rarity: string;
   collector_number: string; promo: boolean; variation: boolean; main_set: boolean; image_normal?: string;
 };
+type CoverageCard = { oracleId: string; scryfallId: string; name: string; implemented: boolean };
+type CoverageSet = {
+  code: string; name: string; setType: string; category: "main" | "commander" | "secret-lair" | "other";
+  releasedAt: string; uniqueCards: number; implemented: number; pending: number; percentage: number;
+  pendingCards?: CoverageCard[];
+};
+type SetCoverageReport = {
+  generatedAt: string; setCount: number; membershipCount: number; implementedMembershipCount: number;
+  percentage: number; sets: CoverageSet[];
+};
 type AvatarChoice = { name: string; image: string };
 type MatchSession = { matchId: string; token: string; seat: number };
 
@@ -71,6 +81,8 @@ let session: MatchSession | null = null;
 let view: GameView | null = null;
 let avatarChoices: AvatarChoice[] = [];
 let selectedAvatar = window.localStorage.getItem("prossh.avatar") ?? "";
+let coverageFilter: CoverageSet["category"] | "all" = "main";
+let coverageQuery = "";
 const ui: UiState = {
   pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, glyphHelp: null,
   notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", showFullLibrary: false,
@@ -321,7 +333,7 @@ function chooseTarget(target: Target): void {
 /** Starts the target flow for one action, or submits it when it needs no target. */
 function runAction(entry: LegalAction, subject: string): void {
   if (entry.requiresTarget && view) {
-    const options = view.targetOptions[entry.requiresTarget];
+    const options = view.targetOptions[entry.requiresTarget] ?? [];
     if (!options.length) { ui.notice = `No hay objetivos legales para ${subject}.`; render(); return; }
     ui.pendingTarget = { action: entry, options };
     ui.notice = `Elige un objetivo para ${subject}.`;
@@ -801,6 +813,7 @@ function landingHtml(): string {
         <button id="start-cedh" class="primary-button">Jugar pod cEDH</button>
         <button id="start-precon" class="text-button">Elegir mazo precon</button>
         <button id="open-catalog" class="text-button">Buscar cartas</button>
+        <button id="open-coverage" class="text-button">Implementación por edición</button>
       </div>
       <p class="landing-note">${escapeHtml(ui.notice || "El motor resuelve fases, prioridad, maná de todos los colores, la pila, combate y las condiciones de victoria. El texto de reglas complejo todavía no se ejecuta y cada carta lo indica.")}</p>
     </section>
@@ -841,6 +854,7 @@ function render(): void {
         <button id="new-cedh" class="text-button">Nueva cEDH</button>
         <button id="new-precon" class="text-button">Precons</button>
         <button id="search" class="text-button">Catálogo</button>
+        <button id="coverage" class="text-button">Cobertura</button>
         <button id="toggle-layout" class="icon-button${ui.layout === "mobile" ? " on" : ""}" type="button" title="Alternar la disposición táctil de Android" aria-label="Disposición táctil">▭</button>
         <button id="toggle-log" class="icon-button${ui.logOpen ? " on" : ""}" type="button" title="Registro" aria-label="Registro">≡</button>
         <button id="profile" class="profile-avatar" aria-label="Perfil">${selectedAvatar ? `<img src="${escapeHtml(selectedAvatar)}" alt=""/>` : "MP"}</button>
@@ -934,6 +948,7 @@ function wireLanding(): void {
   document.querySelector("#start-cedh")?.addEventListener("click", () => void startMatch("cedh"));
   document.querySelector("#start-precon")?.addEventListener("click", () => openPrecons());
   document.querySelector("#open-catalog")?.addEventListener("click", () => dialog("catalog")?.showModal());
+  document.querySelector("#open-coverage")?.addEventListener("click", () => openCoverage());
 }
 
 function wireBoard(): void {
@@ -943,6 +958,7 @@ function wireBoard(): void {
   on("#rematch", () => void startMatch("cedh"));
   on("#new-precon", () => openPrecons());
   on("#search", () => { dialog("catalog")?.showModal(); document.querySelector<HTMLInputElement>("#card-query")?.focus(); });
+  on("#coverage", () => openCoverage());
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
   on("#close-ability-menu", () => { ui.abilityMenu = null; render(); });
@@ -1222,6 +1238,74 @@ async function showCatalogCard(id: string): Promise<void> {
       </div></div>`));
     wirePrintingGallery(card);
   } catch (error) { ui.notice = error instanceof Error ? error.message : "No se pudo abrir la carta."; render(); }
+}
+
+const COVERAGE_LABELS: Record<string, string> = { all: "Todas", main: "Principales", commander: "Commander", "secret-lair": "Secret Lair", other: "Otras" };
+
+function coverageSetRows(sets: readonly CoverageSet[]): string {
+  return sets.length ? sets.map((set) => {
+    const percentage = Math.max(0, Math.min(100, set.percentage));
+    return `<button class="coverage-row" type="button" data-coverage-set="${escapeHtml(set.code)}">
+      <span class="coverage-row-title"><b>${escapeHtml(set.name)}</b><small>${escapeHtml(set.code.toUpperCase())} · ${escapeHtml(set.releasedAt.slice(0, 4) || "—")} · ${escapeHtml(COVERAGE_LABELS[set.category] ?? set.category)}</small></span>
+      <span class="coverage-track"><i style="width:${percentage}%"></i></span>
+      <span class="coverage-number"><b>${percentage}%</b><small>${set.implemented}/${set.uniqueCards}</small></span>
+    </button>`;
+  }).join("") : `<p class="zone-private">No hay ediciones para este filtro.</p>`;
+}
+
+function renderCoverageReport(report: SetCoverageReport): void {
+  const body = document.querySelector<HTMLElement>("#coverage-dialog .panel-body");
+  if (!body) return;
+  const filtered = report.sets.filter((set) => (coverageFilter === "all" || set.category === coverageFilter)
+    && (!coverageQuery || `${set.name} ${set.code}`.toLocaleLowerCase().includes(coverageQuery.toLocaleLowerCase())));
+  body.innerHTML = `<div class="coverage-toolbar">
+      <div class="coverage-filters">${(["all", "main", "commander", "secret-lair", "other"] as const).map((category) =>
+        `<button type="button" class="text-button${coverageFilter === category ? " selected" : ""}" data-coverage-filter="${category}">${COVERAGE_LABELS[category]}</button>`).join("")}</div>
+      <input id="coverage-query" value="${escapeHtml(coverageQuery)}" placeholder="Filtrar edición" autocomplete="off"/>
+    </div>
+    <div class="coverage-total"><b>${report.percentage}% global</b><span>${report.setCount} ediciones · ${report.implementedMembershipCount.toLocaleString()} / ${report.membershipCount.toLocaleString()} cartas únicas por edición</span></div>
+    <p class="panel-note">Orden cronológico: Alpha → ediciones nuevas. Las reimpresiones heredan el estado de su <code>oracle_id</code>; abre una edición para ver sus pendientes.</p>
+    <div class="coverage-list">${coverageSetRows(filtered)}</div>`;
+  body.querySelectorAll<HTMLButtonElement>("[data-coverage-filter]").forEach((button) => button.addEventListener("click", () => {
+    coverageFilter = button.dataset.coverageFilter as CoverageSet["category"] | "all";
+    renderCoverageReport(report);
+  }));
+  body.querySelector<HTMLInputElement>("#coverage-query")?.addEventListener("input", (event) => {
+    coverageQuery = (event.target as HTMLInputElement).value;
+    renderCoverageReport(report);
+    document.querySelector<HTMLInputElement>("#coverage-query")?.focus();
+  });
+  body.querySelectorAll<HTMLButtonElement>("[data-coverage-set]").forEach((button) => button.addEventListener("click", () => void loadCoverageSet(button.dataset.coverageSet!)));
+}
+
+async function loadCoverageSet(code: string): Promise<void> {
+  const body = document.querySelector<HTMLElement>("#coverage-dialog .panel-body");
+  if (!body) return;
+  body.innerHTML = `<p class="zone-private">Cargando pendientes…</p>`;
+  try {
+    const set = await api<CoverageSet>(`/api/rules/coverage/sets/${encodeURIComponent(code)}`);
+    body.innerHTML = `<button type="button" class="text-button" data-coverage-back>← Volver al mapa</button>
+      <div class="coverage-detail-head"><div><h3>${escapeHtml(set.name)}</h3><small>${escapeHtml(set.code.toUpperCase())} · ${escapeHtml(set.releasedAt)} · ${escapeHtml(COVERAGE_LABELS[set.category] ?? set.category)}</small></div><b>${set.percentage}%</b></div>
+      <div class="coverage-track large"><i style="width:${Math.max(0, Math.min(100, set.percentage))}%"></i></div>
+      <p class="panel-note">${set.implemented} implementadas · ${set.pending} pendientes. Cada pendiente identifica su lógica con <code>oracle_id</code>.</p>
+      <div class="coverage-pending">${set.pendingCards?.length ? set.pendingCards.map((card) => `<div><span>□ ${escapeHtml(card.name)}</span><code>${escapeHtml(card.oracleId)}</code></div>`).join("") : `<p class="zone-private">Edición completa.</p>`}</div>`;
+    body.querySelector("[data-coverage-back]")?.addEventListener("click", () => void loadCoverage());
+  } catch (error) { body.innerHTML = `<p class="zone-private">${escapeHtml(error instanceof Error ? error.message : "No se pudo cargar la edición.")}</p>`; }
+}
+
+async function loadCoverage(): Promise<void> {
+  const body = document.querySelector<HTMLElement>("#coverage-dialog .panel-body");
+  if (!body) return;
+  body.innerHTML = `<p class="zone-private">Cargando mapa de implementación…</p>`;
+  try { renderCoverageReport(await api<SetCoverageReport>("/api/rules/coverage/sets")); }
+  catch (error) { body.innerHTML = `<p class="zone-private">${escapeHtml(error instanceof Error ? error.message : "No se pudo cargar el mapa.")}</p>`; }
+}
+
+function openCoverage(): void {
+  coverageFilter = "main";
+  coverageQuery = "";
+  fillDialog("coverage-dialog", panelHtml("coverage-dialog", "Implementación por edición", "Cargando mapa de implementación…"));
+  void loadCoverage();
 }
 
 async function loadAvatars(): Promise<void> {

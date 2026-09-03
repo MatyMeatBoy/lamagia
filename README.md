@@ -1,6 +1,17 @@
-# ProsshTCG
+# La Magia
 
-Simulador social de Commander, diseñado primero para una mesa de cuatro jugadores y adaptable a pods de 2–8. El objetivo no es clonar Arena ni MTGO: es una experiencia rápida, legible y mobile-first, con un motor de reglas verificable y un servidor autoritativo.
+Simulador social de Commander, diseñado primero para una mesa de cuatro jugadores y adaptable a pods de 2–8. Proyecto comunitario para implementar cartas históricas con un motor de reglas verificable, determinista y server-authoritative; cada contribución trabaja un cluster reutilizable y añade sus escenarios de reglas.
+
+Las contribuciones de personas y otros modelos son bienvenidas: toma un cluster
+pendiente de [IMPLEMENTATION_CLUSTERS.md](IMPLEMENTATION_CLUSTERS.md), implementa
+la lógica común, añade pruebas con citas de Comprehensive Rules y abre un commit
+pequeño. El objetivo es que cada familia resuelta reduzca el trabajo de todas
+las cartas futuras.
+
+Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para que los agentes sigan
+trabajando, pero publiquen en bloques de máximo cinco cartas por commit. El
+mapa por edición está en [docs/SET_COVERAGE.md](docs/SET_COVERAGE.md) y en la
+web bajo “Implementación por edición”.
 
 ## Estado inicial
 

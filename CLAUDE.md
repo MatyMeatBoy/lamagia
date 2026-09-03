@@ -1,4 +1,4 @@
-# ProsshTCG continuation instructions
+# La Magia continuation instructions
 
 Read [`docs/HANDOFF_TO_CLAUDE.md`](docs/HANDOFF_TO_CLAUDE.md) completely before making implementation decisions. It contains the verified product state, command sequence, architecture, rule-engine boundaries, data provenance, current tests, and next milestones.
 

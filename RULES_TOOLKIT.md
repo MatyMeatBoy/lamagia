@@ -24,6 +24,10 @@ familias, objetivos, cantidades y texto no reconocido. También genera
 se ejecuta directamente: cada vector aprobado debe convertirse en un tipo
 cerrado de `characteristics.ts`, citar CR y recibir un escenario de prueba.
 
+El compilador conserva restricciones reutilizables (`types`, `subtypes` y
+`target_zone`). En el motor, un objetivo de subtipo usa `subtype:<Subtype>`;
+Equipment, Aura, Goblin y los subtipos futuros comparten la misma primitiva.
+
 ## Flujo para un efecto nuevo
 
 1. Buscar el texto Oracle y su familia en la CR local/API.

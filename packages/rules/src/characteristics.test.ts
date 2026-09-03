@@ -77,6 +77,15 @@ describe("mana abilities", () => {
     expect(profile.cyclingCost?.raw).toBe("{B}");
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("preserves an open-ended subtype in Steelshaper's Gift", () => {
+    const profile = cardProfile(card({
+      name: "Steelshaper's Gift", type_line: "Sorcery", mana_cost: "{W}",
+      oracle_text: "Search your library for an Equipment card, reveal it, put it into your hand, then shuffle."
+    }));
+    expect(profile.effects[0]).toMatchObject({ kind: "search-library", types: [], subtypes: ["Equipment"], destination: "hand" });
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("enters tapped", () => {
@@ -116,6 +125,25 @@ describe("effect recognition", () => {
     expect(cardProfile(card({ name: "Murder", type_line: "Instant", mana_cost: "{1}{B}{B}", oracle_text: "Destroy target creature." })).targetKind).toBe("creature");
     expect(cardProfile(card({ name: "Counterspell", type_line: "Instant", mana_cost: "{U}{U}", oracle_text: "Counter target spell." })).targetKind).toBe("spell");
     expect(cardProfile(card({ name: "Wrath of God", type_line: "Sorcery", mana_cost: "{2}{W}{W}", oracle_text: "Destroy all creatures. They can't be regenerated." })).effects).toEqual([{ kind: "destroy-all-creatures" }]);
+  });
+
+  it("recognises Equipment as an artifact subtype target on the battlefield", () => {
+    const profile = cardProfile(card({ name: "Exile Equipment", type_line: "Instant", mana_cost: "{1}{W}", oracle_text: "Exile target Equipment." }));
+    expect(profile.effects).toEqual([{ kind: "exile-target-permanent" }]);
+    expect(profile.targetKind).toBe("subtype:Equipment");
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises any simple subtype target through the same grammar", () => {
+    const profile = cardProfile(card({ name: "Goblin Removal", type_line: "Instant", mana_cost: "{1}{R}", oracle_text: "Destroy target Goblin." }));
+    expect(profile.targetKind).toBe("subtype:Goblin");
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises the artifact, enchantment, or land target union", () => {
+    const profile = cardProfile(card({ name: "Slime", type_line: "Creature — Ooze", oracle_text: "When Slime enters, destroy target artifact, enchantment, or land." }));
+    expect(profile.triggers[0]?.targetKind).toBe("artifact-enchantment-or-land");
+    expect(profile.fullyImplemented).toBe(true);
   });
 
   it("treats a keyword-only body as fully covered", () => {
