@@ -37,6 +37,8 @@ const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — S
 const LIFELINKER = () => make({ name: "Kind Knight", type_line: "Creature — Knight", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink" });
 const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature — Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["First strike"], oracle_text: "First strike" });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
+const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Tap target creature." });
+const UNTAP_SPELL = () => make({ name: "Tactical Untap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Untap target permanent." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
@@ -1095,6 +1097,26 @@ describe("activated abilities", () => {
   it("keeps non-mana activated abilities as smart-priority stops", () => {
     const game = readyOnBoard([SIGNAL_PEST(), ISLAND(), ISLAND()]);
     expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(true);
+  });
+
+  it("reuses targeted tap and untap effects through the normal stack target flow", () => {
+    let game = readyOnBoard([BEAR(), ISLAND(), ISLAND(), ISLAND(), ISLAND()], { hold: true });
+    const creature = permanentNamed(game, 0, "Grizzly Bears")!;
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [TAP_SPELL(), UNTAP_SPELL()], "tap-untap") }));
+
+    const tapCard = game.players[0]!.hand[0]!;
+    const tapAction = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === tapCard.instance_id)!;
+    expect(tapAction.requiresTarget).toBe("creature");
+    game = applyAction(game, 0, { type: "cast", cardId: tapCard.instance_id, targets: [{ kind: "permanent", instanceId: creature.instance_id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(true);
+
+    const untapCard = game.players[0]!.hand[0]!;
+    const untapAction = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === untapCard.instance_id)!;
+    expect(untapAction.requiresTarget).toBe("permanent");
+    game = applyAction(game, 0, { type: "cast", cardId: untapCard.instance_id, targets: [{ kind: "permanent", instanceId: creature.instance_id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(false);
   });
 
   it("puts Equip on the stack, grants Behemoth Sledge bonuses, and detaches when the creature leaves", () => {

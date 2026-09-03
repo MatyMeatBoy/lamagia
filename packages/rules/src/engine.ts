@@ -1155,6 +1155,29 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           : permanent)
       }));
     }
+    case "tap-target-permanent": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || permanent.tapped) return state;
+      const next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, tapped: true } : candidate)
+      }));
+      return raiseTapEvents(next, state, [permanent.instance_id]);
+    }
+    case "untap-target-permanent": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, tapped: false } : candidate)
+      }));
+    }
     case "create-token": {
       const amount = effectAmount(effect.amount, object);
       let next = state;

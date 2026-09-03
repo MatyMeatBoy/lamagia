@@ -439,3 +439,15 @@ versus level 2 characteristics, and level-granted hexproof target restriction.
 Validation for this isolated batch: `npm test --workspace=@prossh/rules --
 --run packages/rules/src/engine.test.ts` — 150 passed, 6 skipped. Full checks
 must be rerun after cherry-picking into the integrator branch.
+
+### Cooperative C13 cluster: targeted Tap and Untap
+
+The same branch adds reusable `Tap target creature` and `Untap target
+permanent` effects. Both use normal target legality, stack resolution, and
+the existing tap-event bus; the scope intentionally excludes mass effects,
+continuous “doesn't untap” restrictions, and multi-target costs. This follows
+CR 701.21 and 701.22. Scenario coverage verifies target metadata, tap
+resolution, untap resolution, and reuse of the generic cast path.
+
+Validation: `npm run check` PASS; `npm test` PASS (151 rules tests, 6 skipped,
+simulator and oracle tests PASS).

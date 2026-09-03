@@ -154,6 +154,8 @@ export type SpellEffect =
   | { readonly kind: "counter-target-spell" }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
+  | { readonly kind: "tap-target-permanent" }
+  | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X"; readonly token: TokenDefinition }
   | {
@@ -885,6 +887,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
+  if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
+  if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Destroy all artifacts, creatures, and enchantments$/i.test(text)) {
     return { effect: { kind: "destroy-all-artifacts-creatures-enchantments" }, target: "none" };
