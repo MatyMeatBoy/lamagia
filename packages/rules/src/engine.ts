@@ -152,7 +152,7 @@ export type GameEvent =
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
-  | { readonly kind: "life-gained"; readonly seat: SeatId; readonly amount: number };
+  | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
 export interface BlockerDeclaration { readonly instanceId: string; readonly attackerId: string }
@@ -853,7 +853,7 @@ function triggerMatches(
     return false;
   }
 
-  if (event.kind === "life-gained") {
+  if (event.kind === "life-gained" || event.kind === "life-lost") {
     return subject === "you" && event.seat === watcher.controller;
   }
 
@@ -888,6 +888,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "becomes-tapped": return `${object!.card.name} se gira`;
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
     case "life-gained": return `${playerAt(state, event.seat).name} gana ${event.amount} vidas`;
+    case "life-lost": return `${playerAt(state, event.seat).name} pierde ${event.amount} vidas`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -961,8 +962,14 @@ function effectAmount(amount: number | "X", object: StackObject): number {
 
 function dealDamageToPlayer(state: GameState, seat: SeatId, amount: number, sourceName: string): GameState {
   if (amount <= 0) return state;
-  const next = withPlayer(state, seat, (player) => ({ ...player, life: player.life - amount }));
+  const next = loseLife(state, seat, amount);
   return logged(next, seat, `${sourceName} hace ${amount} de daño a ${playerAt(next, seat).name}.`);
+}
+
+function loseLife(state: GameState, seat: SeatId, amount: number): GameState {
+  if (amount <= 0) return state;
+  const next = withPlayer(state, seat, (player) => ({ ...player, life: player.life - amount }));
+  return raiseEvent(next, { kind: "life-lost", seat, amount });
 }
 
 function dealDamageToPermanent(state: GameState, instanceId: string, amount: number, deathtouch: boolean, sourceName: string): GameState {
@@ -1040,7 +1047,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     }
     case "lose-life": {
       const amount = effectAmount(effect.amount, object);
-      const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life - amount }));
+      const next = loseLife(state, controller, amount);
       return logged(next, controller, `${playerAt(next, controller).name} pierde ${amount} vidas.`);
     }
     case "gain-life-target-player": {
@@ -1064,7 +1071,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
       const amount = effectAmount(effect.amount, object);
-      const next = withPlayer(state, target.seat, (player) => ({ ...player, life: player.life - amount }));
+      const next = loseLife(state, target.seat, amount);
       return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${amount} vidas.`);
     }
     case "each-player-loses-life": {
@@ -1072,13 +1079,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const amount = effectAmount(effect.amount, object);
       for (const player of state.players) {
         if (player.lost) continue;
-        next = withPlayer(next, player.seat, (current) => ({ ...current, life: current.life - amount }));
+        next = loseLife(next, player.seat, amount);
       }
       return logged(next, controller, `Cada jugador pierde ${amount} vidas.`);
     }
     case "each-opponent-loses-life": {
       let next = state;
-      for (const seat of opponentsOf(state, controller)) next = dealDamageToPlayer(next, seat, effectAmount(effect.amount, object), sourceName);
+      const amount = effectAmount(effect.amount, object);
+      for (const seat of opponentsOf(state, controller)) {
+        next = loseLife(next, seat, amount);
+        next = logged(next, controller, `${playerAt(next, seat).name} pierde ${amount} vidas.`);
+      }
       return next;
     }
     case "damage-each-opponent": {

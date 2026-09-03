@@ -46,6 +46,7 @@ const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant",
 const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
 const LIFE_SPELL = () => make({ name: "Simple Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain 1 life." });
 const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "You lose 2 life." });
+const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you lose life, put a +1/+1 counter on Pain Counter." });
 const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Target player gains 2 life." });
 const EACH_LIFE_SPELL = () => make({ name: "Common Blessing", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Each player gains 1 life." });
 const TARGET_LOSS_SPELL = () => make({ name: "Shared Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player loses 3 life." });
@@ -904,6 +905,22 @@ describe("triggered abilities", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.life).toBe(38);
     expect(game.players[1]!.life).toBe(40);
+  });
+
+  it("raises life-lost for life loss and resolves the matching source trigger", () => {
+    const profile = profileOf(LOSS_COUNTER());
+    expect(profile.triggers[0]).toMatchObject({ event: "life-lost", effect: { kind: "add-counter-source", counter: "+1/+1", amount: 1 } });
+    let game = readyToCast([SELF_LOSS_SPELL()], [SWAMP(), LOSS_COUNTER()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.life).toBe(38);
+    expect(game.stack.some((entry) => entry.trigger?.definition.event === "life-lost")).toBe(true);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    const countered = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Pain Counter")!;
+    expect(countered.counters["+1/+1"]).toBe(1);
   });
 
   it("gains life for every living player", () => {

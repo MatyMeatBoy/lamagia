@@ -572,3 +572,15 @@ excludes payment costs and life-loss replacement/prevention effects.
 
 Validation: targeted engine tests PASS (161 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
+
+### Cooperative C13 cluster: life-lost trigger bus
+
+The branch adds a reusable `life-lost` event and recognizes `Whenever you lose
+life`. Explicit life-loss effects and player damage now raise the event; the
+existing `Each opponent loses life` path also uses life loss rather than the
+damage logger. This follows CR 118.2, 119.4 and 603.2. Scenario coverage
+verifies a source counter trigger after life loss. The scope excludes
+replacement/prevention effects and intervening-if conditions.
+
+Validation: targeted engine tests PASS (162 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
