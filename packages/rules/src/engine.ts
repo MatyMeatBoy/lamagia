@@ -853,6 +853,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
   const sourceName = object.card.name;
   switch (effect.kind) {
     case "draw": return drawCards(state, controller, effect.amount);
+    case "draw-target-player": {
+      const target = object.targets[0];
+      return target?.kind === "player" ? drawCards(state, target.seat, effectAmount(effect.amount, object)) : state;
+    }
+    case "each-player-draw": {
+      let next = state;
+      for (const player of state.players) if (!player.lost) next = drawCards(next, player.seat, effectAmount(effect.amount, object));
+      return next;
+    }
     case "gain-life": {
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + effect.amount }));
       return logged(next, controller, `${playerAt(next, controller).name} gana ${effect.amount} vidas.`);
@@ -1609,6 +1618,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 
 /** Targets a spell could legally choose right now. */
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
+  if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   const permanents = allPermanents(state)
     .filter((permanent) => !keywordOf(permanent, "hexproof") || permanent.controller === seat)

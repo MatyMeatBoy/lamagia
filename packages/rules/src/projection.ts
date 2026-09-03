@@ -286,6 +286,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
       : [],
     targetOptions: {
       any: legalTargets(state, viewerSeat, "any"),
+      player: legalTargets(state, viewerSeat, "player"),
       creature: legalTargets(state, viewerSeat, "creature"),
       spell: legalTargets(state, viewerSeat, "spell"),
       permanent: legalTargets(state, viewerSeat, "permanent"),

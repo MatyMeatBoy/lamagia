@@ -86,6 +86,8 @@ export interface TokenDefinition {
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
   | { readonly kind: "draw"; readonly amount: number }
+  | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
+  | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
@@ -172,7 +174,7 @@ export interface TriggerDefinition {
 }
 
 export type TargetKind =
-  | "any" | "creature" | "spell" | "permanent" | "artifact-or-enchantment"
+  | "any" | "player" | "creature" | "spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "nonland" | "nonartifact-creature" | "none";
 
 export interface CardProfile {
@@ -592,6 +594,16 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-each-opponent", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-each-opponent", amount: "X" }, target: "none" };
+  }
+  if ((match = /^Target player draws (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "draw-target-player", amount }, target: "player" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw-target-player", amount: "X" }, target: "player" };
+  }
+  if ((match = /^Each player draws (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "each-player-draw", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-player-draw", amount: "X" }, target: "none" };
   }
   if ((match = /^~ deals (\w+) damage to each (other )?creature$/i.exec(text))) {
     const amount = toNumber(match[1]);

@@ -46,6 +46,8 @@ const ELADAMRI = () => make({ name: "Eladamri's Call", type_line: "Instant", man
 const ENTOMB = () => make({ name: "Entomb", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Search your library for a card, put that card into your graveyard, then shuffle." });
 const PLANT_SPELL = () => make({ name: "Plant Ritual", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4, oracle_text: "Create three 0/1 green Plant creature tokens." });
 const PYROCLASM = () => make({ name: "Pyroclasm", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Pyroclasm deals 2 damage to each creature." });
+const DEEP_STUDY = () => make({ name: "Deep Study", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Target player draws two cards." });
+const VISION_SKEINS = () => make({ name: "Vision Skeins", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Each player draws two cards." });
 const SOL_RING = () => make({ name: "Sol Ring", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "{T}: Add {C}{C}.", produced_mana: ["C"] });
 const ELVES = () => make({ name: "Llanowar Elves", type_line: "Creature — Elf Druid", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1", oracle_text: "{T}: Add {G}.", produced_mana: ["G"] });
 const DELTA = () => make({
@@ -472,6 +474,19 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.life).toBe(37);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+  });
+
+  it("draws for the chosen player and for every player when instructed", () => {
+    let game = readyToCast([DEEP_STUDY()], [ISLAND(), FOREST()]);
+    const opponentLibrary = game.players[1]!.library.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.hand).toHaveLength(2);
+    expect(game.players[1]!.library).toHaveLength(opponentLibrary - 2);
+
+    game = readyToCast([VISION_SKEINS()], [ISLAND(), FOREST()]);
+    const before = game.players.map((player) => player.library.length);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players.map((player, seat) => player.library.length)).toEqual(before.map((count, seat) => count - 2));
   });
 
   it("deals spell damage to every creature and lets state-based actions clear lethal damage", () => {
