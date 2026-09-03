@@ -1041,6 +1041,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       return target?.kind === "player" ? millCards(state, target.seat, effectAmount(effect.amount, object)) : state;
     }
+    case "mill-each-opponent": {
+      let next = state;
+      const amount = effectAmount(effect.amount, object);
+      for (const seat of opponentsOf(state, controller)) next = millCards(next, seat, amount);
+      return next;
+    }
     case "gain-life": {
       const amount = effectAmount(effect.amount, object);
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
