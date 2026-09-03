@@ -1059,6 +1059,24 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === permanent.instance_id);
     }
+    case "add-counter-target-creature": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? {
+              ...candidate,
+              counters: {
+                ...candidate.counters,
+                [effect.counter]: (candidate.counters[effect.counter] ?? 0) + effect.amount
+              }
+            }
+          : candidate)
+      }));
+    }
     case "destroy-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

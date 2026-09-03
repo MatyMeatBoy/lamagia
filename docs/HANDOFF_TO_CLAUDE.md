@@ -493,3 +493,14 @@ creature spell and an instant on the stack.
 
 Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules -- --run
 packages/rules/src/engine.test.ts` PASS (153 passed, 6 skipped).
+
+### Cooperative C13 cluster: counters on target creatures
+
+The branch adds the reusable `Put N +1/+1 or -1/-1 counter(s) on target
+creature` effect. It updates the existing public counter map, so the normal
+P/T calculation and state-based actions immediately see the result. This
+follows CR 122.1 and 701.4. Scenario coverage verifies parsing, target
+resolution, and both P/T values after a resolved counter.
+
+Validation: `npm run check` PASS; targeted engine tests PASS (154 passed, 6
+skipped). Full `npm test` should be rerun by the integrator after merge.

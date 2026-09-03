@@ -42,6 +42,7 @@ const UNTAP_SPELL = () => make({ name: "Tactical Untap", type_line: "Instant", m
 const MILL_SPELL = () => make({ name: "Gravewind", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player mills three cards." });
 const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target creature spell." });
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
+const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
@@ -611,6 +612,18 @@ describe("casting", () => {
     expect([powerOf(own), toughnessOf(own)]).toEqual([1, 1]);
     expect([powerOf(foe), toughnessOf(foe)]).toEqual([1, 1]);
     expect(own).toMatchObject({ powerModifier: -2, toughnessModifier: -2 });
+  });
+
+  it("adds a reusable +1/+1 counter to the chosen creature", () => {
+    let game = readyToCast([GROWTH_SPELL()], [FOREST(), FOREST()], [], [BEAR()]);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(profileOf(GROWTH_SPELL()).effects).toContainEqual({ kind: "add-counter-target-creature", counter: "+1/+1", amount: 1 });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    const grown = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
+    expect(grown.counters["+1/+1"]).toBe(1);
+    expect(powerOf(grown, game)).toBe(3);
+    expect(toughnessOf(grown, game)).toBe(3);
   });
 
   it("lets Lightning Bolt target a creature as well as a player", () => {
