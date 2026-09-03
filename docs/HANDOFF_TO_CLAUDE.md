@@ -132,9 +132,9 @@ never remove a card's own printed one.
 | Cards with a payable, resolvable activated ability | 0 (feature did not run) | 670 |
 | Cards with a recognised triggered ability | 87 | 1,185 |
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
-| Catalog cards fully implemented | 5,151 | 6,427 |
+| Catalog cards fully implemented | 5,151 | 6,500 |
 | …of those, with non-empty Oracle text | 2,090 | 2,981 |
-| C13 unique cards fully implemented | — | 124 / 356 (232 pending) |
+| C13 unique cards fully implemented | — | 125 / 356 (231 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
 
 Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
@@ -227,12 +227,12 @@ loads pending IDs only when an edition is opened.
 
 ```text
 npm run check           rules build + rules/client/server typecheck        PASS
-npm test                Vitest 5 files / 173 tests + Python smoke tests    PASS
-npm run simulate:engine 200 seeded games in 11.85s                         PASS
+npm test                Vitest 5 files / 182 tests + Python smoke tests    PASS
+npm run simulate:engine 200 seeded games in 12.99s                         PASS
                         finished 160, unfinished 40, avg 51.09 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 6,472 fully implemented         PASS
+npm run rules:engine:export  38,711 cards; 6,500 fully implemented         PASS
 npm run rules:set:coverage  708 editions; 14.4% membership coverage        PASS
 ```
 
@@ -406,7 +406,7 @@ unbounded pool.
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
 general; what limits coverage is the **effect vocabulary** they resolve into.
 1,185 cards have a recognised trigger and 670 a recognised activation, but only
-6,472 of 38,711 cards are fully implemented, because most printed effects are
+6,500 of 38,711 cards are fully implemented, because most printed effects are
 still outside `SpellEffect`.
 
 1. **Widen `SpellEffect`, one template plus one test at a time.** The highest
@@ -585,3 +585,18 @@ Integrated fork commits: `67f92db`, `6d128b6`, `3d4ab69`, `19ae957`, `ff80bd1`.
 Validation after the batch: `npm run check` PASS; `npm test` PASS (173 rules
 tests, simulator and 11 Python compiler tests). Limits remain replacement and
 prevention effects, opponent-graveyard selection and copy/multiplier tokens.
+
+### Batched fork integration: C13 zones, draw, mill, counters and combat
+
+The next 11 fork commits were processed as one batch. New reusable coverage
+includes graveyard card targets in the client, exiling/returning cards from a
+graveyard, returning to library top, X-scaled draw and life loss, opponent draw
+and mill, subtype-wide and all-creature counters, land-count token scaling, and
+any-creature combat-damage triggers. The changes remain type- and
+instance-aware; no card-name exceptions were added.
+
+Integrated commits: `c518638`, `d554c36`, `00be19b`, `015e495`, `85f46f8`,
+`1d6be6d`, `47e23f6`, `5311b7f`, `4b0fa92`, `fa5b4bd`, `160e3b4`.
+Validation: `npm run check` PASS; `npm test` PASS (182 rules tests, simulator
+and 12 Python compiler tests); `npm run simulate:engine` PASS (200 games,
+160 finished, 0 invariant/projection failures). C13 is now 125/356.
