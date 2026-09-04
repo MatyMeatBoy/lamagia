@@ -88,6 +88,8 @@ export interface ActivatedAbility {
   readonly sacrificesArtifact?: boolean;
   /** Discard a card as an activation cost (Trading Post, CR 602.1). */
   readonly discardsCard?: boolean;
+  /** Sacrifice a land you control as an activation cost (Sylvan Safekeeper). */
+  readonly sacrificesLand?: boolean;
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
   readonly lifeCost: number;
@@ -932,6 +934,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
   const sacrificesArtifact = /sacrifice\s+(?:a\s+|an\s+)?artifact/i.test(costText);
   const discardsCard = /discard\s+a\s+card/i.test(costText);
+  const sacrificesLand = /sacrifice\s+(?:a\s+|an\s+)?land/i.test(costText);
   const removedCounters: CounterCost[] = [];
   for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+~/gi)) {
     const amount = toNumber(match[1]);
@@ -947,6 +950,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:a\s+|an\s+)?artifact/gi, "")
     .replace(/discard\s+a\s+card/gi, "")
+    .replace(/sacrifice\s+(?:a\s+|an\s+)?land/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
     .replace(/[,\s]/g, "");
   if (leftovers.length) return null;
@@ -957,6 +961,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
     ...(sacrificesArtifact ? { sacrificesArtifact: true as const } : {}),
     ...(discardsCard ? { discardsCard: true as const } : {}),
+    ...(sacrificesLand ? { sacrificesLand: true as const } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     lifeCost,
     manaCost,
@@ -1426,6 +1431,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   const temporaryKeyword = /^Target creature gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear) until end of turn$/i.exec(text);
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };
+  const ownKeyword = /^Target creature you control gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear) until end of turn$/i.exec(text);
+  if (ownKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: ownKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature-you-control" };
   const globalKeyword = /^Permanents you control gain (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear) until end of turn$/i.exec(text);
   if (globalKeyword) return { effect: { kind: "grant-permanents-you-control-keyword", keyword: globalKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "none" };
   const allKeyword = /^All creatures gain (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear) until end of turn$/i.exec(text);

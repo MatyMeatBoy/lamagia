@@ -3050,6 +3050,7 @@ function activatableAbility(
     return { legal: false };
   }
   if (ability.discardsCard && player.hand.length === 0) return { legal: false };
+  if (ability.sacrificesLand && !player.battlefield.some((candidate) => isLand(cardProfile(candidate.card)))) return { legal: false };
   if (ability.removeCounters && !ability.removeCounters.every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) {
     return { legal: false };
   }
@@ -3176,6 +3177,13 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       graveyard: [...current.graveyard, discarded]
     }));
     next = logged(next, seat, `${player.name} descarta ${discarded.name}.`);
+  }
+  if (ability.sacrificesLand) {
+    const lands = playerAt(next, seat).battlefield.filter((permanent) => isLand(cardProfile(permanent.card)));
+    const paid = lands.find((permanent) => permanent.instance_id === action.sacrificeId) ?? lands[0];
+    if (!paid) throw new Error("No tienes una tierra para sacrificar.");
+    next = movePermanentToZone(next, paid, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
   if (sacrifice) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);

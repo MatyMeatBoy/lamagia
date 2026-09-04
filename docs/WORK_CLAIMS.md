@@ -78,6 +78,7 @@ feature name.
 | `c14-static-keyword-and-anthem-expansions` | Multi-keyword and subtype static grants; `another/any creature enters` triggers; `Other <Subtype> creatures you control get +N/+N` | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-subtype-scaled-life-and-enters` | `You gain N life for each <Subtype>`; `Whenever a creature you control enters` templates | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-spell-color-cast-trigger` | `Whenever a player casts a <color> spell, X` spell-cast trigger colour filter | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-sacrifice-land-cost` | `Sacrifice a land` activation cost; `Target creature you control gains <keyword> until end of turn` | `c14-batch2-clean` | active | 2026-09-04 |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |
