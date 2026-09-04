@@ -436,6 +436,24 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
   return (ability.removeCounters ?? []).every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount);
 }
 
+function commanderColorIdentity(state: GameState, seat: SeatId): readonly ManaType[] {
+  const player = playerAt(state, seat);
+  const commanderIds = new Set(player.commanderIds);
+  const cards = state.players.flatMap((candidate) => [
+    ...candidate.commandZone, ...candidate.library, ...candidate.hand,
+    ...candidate.graveyard, ...candidate.exile, ...candidate.battlefield.map((permanent) => permanent.card)
+  ]);
+  return [...new Set(cards
+    .filter((card) => card.owner === seat && commanderIds.has(card.instance_id))
+    .flatMap((card) => cardProfile(card).colorIdentity as ManaType[]))];
+}
+
+function manaOptionsForAbility(state: GameState, seat: SeatId, ability: ManaAbility): readonly ManaType[] {
+  if (!ability.commanderIdentityOnly) return ability.produces;
+  const identity = new Set(commanderColorIdentity(state, seat));
+  return ability.produces.filter((mana) => identity.has(mana));
+}
+
 /** Untapped permanents this player can currently tap for mana. */
 export function manaSources(player: PlayerState, state?: GameState): ManaSource[] {
   const sources: ManaSource[] = [];
@@ -445,14 +463,16 @@ export function manaSources(player: PlayerState, state?: GameState): ManaSource[
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability)) continue;
+      const options = state ? manaOptionsForAbility(state, player.seat, ability) : ability.produces;
+      if (!options.length) continue;
       sources.push({
         permanentId: permanent.instance_id,
         abilityIndex: ability.index,
         name: permanent.card.name,
-        options: ability.produces,
+        options,
         amount: ability.amount,
         ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
-        ...(doublesLandMana && isLand(profile) ? { bonusOptions: ability.produces } : {}),
+        ...(doublesLandMana && isLand(profile) ? { bonusOptions: options } : {}),
         ...(ability.removeCounters ? { removeCounters: ability.removeCounters } : {}),
         lifeCost: ability.lifeCost,
         requiresTap: ability.requiresTap
@@ -2491,10 +2511,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability)) continue;
-      const activations = ability.fixedProduces ? [ability.fixedProduces[0]!] : ability.produces;
+      const options = manaOptionsForAbility(state, seat, ability);
+      if (!options.length) continue;
+      const activations = ability.fixedProduces ? [ability.fixedProduces[0]!] : options;
       for (const mana of activations) {
         const bonusOptions = isLand(profile) && allPermanents(state).some((candidate) => candidate.controller === seat
-          && cardProfile(candidate.card).doublesLandMana) ? [...new Set(ability.produces)] : [undefined];
+          && cardProfile(candidate.card).doublesLandMana) ? [...new Set(options)] : [undefined];
         for (const manaBonus of bonusOptions) {
           const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: ability.amount }, () => mana);
           const produced = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((type) => `{${type}}`).join("");
@@ -2684,7 +2706,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
   const ability = cardProfile(source.card).manaAbilities.find((candidate) => candidate.index === action.abilityIndex);
-  if (!ability || !ability.produces.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
+  if (!ability || !manaOptionsForAbility(state, seat, ability).includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
   if (ability.fixedProduces && action.mana !== ability.fixedProduces[0]) throw new Error("Esa habilidad de maná produce un conjunto fijo.");
   if (!canUseManaAbility(player, source, ability)) throw new Error("No puedes activar esa habilidad de maná ahora.");
   const manaBonusOptions = isLand(cardProfile(source.card)) && allPermanents(state).some((candidate) => candidate.controller === seat

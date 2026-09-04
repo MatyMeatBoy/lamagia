@@ -61,6 +61,8 @@ export interface ManaAbility {
   readonly gainLife?: number;
   /** Static activation restriction such as Temple of the False God. */
   readonly requiresLands?: number;
+  /** Restricts output to colors in the controller's commander color identity. */
+  readonly commanderIdentityOnly?: boolean;
   readonly text: string;
 }
 
@@ -651,10 +653,13 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // `manaAbilities` may still expose a production choice whose restriction
     // is not executable yet; `recognizeText` below remains strict so coverage
     // does not claim that trailing restriction is enforced.
-    const instruction = parseManaInstruction(effectText) ?? (() => {
+    const commanderIdentityOnly = /^add one mana of any color in your commander's color identity\.?$/i.test(effectText.trim());
+    const instruction = parseManaInstruction(effectText) ?? (commanderIdentityOnly ? {
+      produced: { produces: [...MANA_COLORS], amount: 1 }, gainLife: undefined, requiresLands: undefined
+    } : (() => {
       const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
       return produced ? { produced, gainLife: undefined, requiresLands: undefined } : null;
-    })();
+    })());
     if (!instruction?.produced) continue;
     const produced = instruction.produced;
     abilities.push({
@@ -663,6 +668,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
+      ...(commanderIdentityOnly ? { commanderIdentityOnly: true } : {}),
       requiresTap, lifeCost, text: line.trim()
     });
   }
@@ -1464,7 +1470,7 @@ function recognizeText(text: string): RecognizedText {
     // `produced_mana` fallback, but the card must not claim its text is executed.
     const manaLine = /^([^:]{1,80}):\s*(add\b.*)$/i.exec(line);
     if (manaLine) {
-      if (!parseManaInstruction(manaLine[2]!)) unimplementedText.push(line);
+      if (!parseManaInstruction(manaLine[2]!) && !/^add one mana of any color in your commander's color identity\.?$/i.test(manaLine[2]!.trim())) unimplementedText.push(line);
       continue;
     }
 

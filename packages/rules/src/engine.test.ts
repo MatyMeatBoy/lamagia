@@ -279,6 +279,8 @@ const SIGNAL_PEST = () => make({
   oracle_text: "{1}{U}, {T}: Draw a card."
 });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
+const GREEN_COMMANDER = () => make({ name: "Green Commander", type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"], color_identity: ["G"] });
+const COMMAND_TOWER = () => make({ name: "Command Tower", type_line: "Land", oracle_text: "{T}: Add one mana of any color in your commander's color identity." });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
   const cards = [commander, ...contents];
@@ -968,6 +970,24 @@ describe("casting", () => {
     const game = readyToCast([BEAR()], [MIRARIS_WAKE(), FOREST()]);
     expect(legalActions(game, 0).some((candidate) => candidate.action.type === "cast"
       && candidate.action.cardId === game.players[0]!.hand[0]!.instance_id)).toBe(true);
+  });
+
+  it("restricts Command Tower to the commander's color identity", () => {
+    expect(cardProfile(COMMAND_TOWER()).fullyImplemented).toBe(true);
+    let game = createGame([
+      deck("tower", GREEN_COMMANDER(), [COMMAND_TOWER()]),
+      deck("opponent", COMMANDER("Blue Commander"), [])
+    ], { allowPartialDecks: true });
+    game = putOnBattlefield(game, 0, [COMMAND_TOWER()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const tower = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Command Tower")!;
+    const actions = legalActions(game, 0).filter((candidate) => candidate.action.type === "activate-mana" && candidate.action.sourceId === tower.instance_id);
+    expect(actions).toHaveLength(1);
+    if (actions[0]!.action.type !== "activate-mana") throw new Error("Command Tower action was not generated");
+    expect(actions[0]!.action.mana).toBe("G");
+    game = applyAction(game, 0, actions[0]!.action);
+    expect(game.players[0]!.manaPool.G).toBe(1);
+    expect(game.players[0]!.manaPool.U).toBe(0);
   });
 
   it("offers only generated tokens for a token sacrifice cost", () => {
