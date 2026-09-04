@@ -60,6 +60,7 @@ const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", 
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
 const HAND_MINUS_DAMAGE = () => make({ name: "Hand Minus Damage", type_line: "Creature — Artifact", mana_cost: "{5}", cmc: 5, power: "2", toughness: "2", oracle_text: "At the beginning of each opponent's upkeep, this creature deals X damage to that player, where X is the number of cards in their hand minus 4." });
 const HAND_EQUAL_DAMAGE = () => make({ name: "Hand Equal Damage", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of each opponent's upkeep, this creature deals damage to that player equal to the number of cards in that player's hand." });
+const EACH_HAND_DAMAGE = () => make({ name: "Shared Hand Damage", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Each player loses life equal to the number of cards in their hand." });
 const TAPPED_DRAW = () => make({ name: "Tapped Draw", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls." });
 const GLOBAL_FEAR = () => make({ name: "Global Fear", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain menace until end of turn." });
 const GLOBAL_REAL_FEAR = () => make({ name: "Global Real Fear", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn." });
@@ -848,6 +849,10 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [HAND_EQUAL_DAMAGE()]);
     game = passUntil(game, (state) => state.players[1]!.life < 40);
     expect(game.players[1]!.life).toBeLessThan(40);
+  });
+
+  it("resolves equal-hand life loss for every player", () => {
+    expect(profileOf(EACH_HAND_DAMAGE()).effects).toEqual([{ kind: "lose-life-each-player-equal-hand" }]);
   });
 
   it("gates a conditional upkeep token trigger on a controlled subtype", () => {
