@@ -686,6 +686,18 @@ continuous non-temporary effects, protection clauses and multi-keyword grammar.
 Validation: targeted engine tests PASS (181 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: combined temporary P/T and keyword
+
+The branch recognises `Target creature gets +/-N/+/-N and gains [keyword] until
+end of turn` as one atomic effect, applying both the layer-7c modifier and the
+temporary keyword through the same target. This follows CR 613.1f and 514.2.
+Scenario coverage verifies the Selesnya-style +2/+2 and trample combination.
+The scope excludes multiple targets, protection text and non-temporary
+continuous effects.
+
+Validation: targeted engine tests PASS (182 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: land-scaled token creation
 
 The branch adds the reusable `Create a token for each land you control`
