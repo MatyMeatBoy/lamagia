@@ -10,7 +10,7 @@
 | `rules-c13-shuffle-source` | `codex/c13-equipment-cluster` | Shuffle-self replacement for Blue Sun's Zenith after its target draw resolves | Ready for integrator review |
 | `rules-c13-scry` | `codex/c13-equipment-cluster` | Reusable Scry N primitive: private top-card projection, arbitrary top/bottom ordering, duplicate-name-safe ordinal choices, and C13 New Benalia Scry 1 | Ready for integrator review |
 | `rules-c13-landfall-pump` | `codex/c13-equipment-cluster` | Reusable trigger-self P/T plus temporary keyword effect for Landfall cards such as Baloth Woodcrasher | Ready for integrator review |
-| `rules-c13-basalt-untap` | `codex/c13-equipment-cluster` | Reusable source-untap activation and static “doesn't untap during your untap step” rule for Basalt Monolith | In progress |
+| `rules-c13-basalt-untap` | `codex/c13-equipment-cluster` | Reusable source-untap activation and static “doesn't untap during your untap step” rule for Basalt Monolith | Ready for integrator review |
 | `rules-level-up` | `codex/c13-equipment-cluster` | Level up activation, level counters, and level-band P/T/keyword characteristics | Ready for integrator review |
 | `rules-tap-untap` | `codex/c13-equipment-cluster` | Targeted Tap target creature and Untap target permanent effects | Ready for integrator review |
 | `rules-mill` | `codex/c13-equipment-cluster` | Target player mills a bounded number of cards into their graveyard | Ready for integrator review |
