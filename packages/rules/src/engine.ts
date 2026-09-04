@@ -2309,6 +2309,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
         : effect.amount === "creatures-you-control"
           ? playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
+        : effect.amount === "creatures-on-battlefield"
+          ? allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length
         : effectAmount(effect.amount, object);
       let next = state;
       for (let index = 0; index < amount; index += 1) {
