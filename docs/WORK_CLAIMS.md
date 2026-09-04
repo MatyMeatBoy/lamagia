@@ -79,6 +79,11 @@ feature name.
 | `c13-counted-effects-batch` | Reusable draw/life/damage/mill/discard/token primitives scaled by hand size, permanent type, creature count, lands, and power thresholds | `codex/c13-equipment-cluster` | merged (`77b235a`) | 2026-09-04 |
 | `c13-keyword-target-filters` | Target filters for fear, defender, deathtouch, lifelink, menace, haste, first/double strike, trample, vigilance, indestructible, hexproof, and shroud; continuous grants are respected | `codex/c13-equipment-cluster` | merged (`3b2f825`) | 2026-09-04 |
 | `rules-compound-sentence-order` | Parse multi-sentence destruction plus power/toughness life-loss effects before the generic destruction primitive | `feat/activated-abilities-and-triggers` | merged (`5e9f3cf`) | 2026-09-04 |
+| `c14-kicker` | Kicker/Multikicker cost (CR 702.33): kicked cast action, kicked-only effects and enters triggers | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-optional-pay-trigger` | `you may pay {cost}. If you do, X` optional-cost trigger effects | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-draw-then-discard` | `Draw N, then discard M` effect (spell + activated) + bot discard-cards policy | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-self-zone` | `Exile ~` / `Shuffle ~ into its owner's library` spell self-destination; graveyard `another target` + nonland-permanent bounce | `c14-batch2-clean` | active | 2026-09-04 |
+| `bot-fear-block` | Bot chooseBlockers respects fear (CR 702.36b) | `c14-batch2-clean` | active | 2026-09-04 |
 
 ## Claim format
 

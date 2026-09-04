@@ -1737,6 +1737,93 @@ describe("scry and combat-restricted damage", () => {
   });
 });
 
+describe("kicker and optional-cost triggers", () => {
+  const INTO_THE_ROIL = () => make({ name: "Into the Roil", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Kicker {1}{U} (You may pay an additional {1}{U} as you cast this spell.)\nReturn target nonland permanent to its owner's hand. If this spell was kicked, draw a card." });
+  const KOR_SANCTIFIERS = () => make({ name: "Kor Sanctifiers", type_line: "Creature — Kor Cleric", mana_cost: "{3}{W}", cmc: 4, power: "2", toughness: "3", oracle_text: "Kicker {W} (You may pay an additional {W} as you cast this spell.)\nWhen Kor Sanctifiers enters the battlefield, if it was kicked, destroy target artifact or enchantment." });
+  const JALUM_TOME = () => make({ name: "Jalum Tome", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Draw a card, then discard a card." });
+  const PAY_DRAWER = () => make({ name: "Ledger Keeper", type_line: "Creature — Human", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Ledger Keeper enters the battlefield, you may pay {1}. If you do, draw a card." });
+
+  function ready(cards: CardData[], battlefield: CardData[], opponentBoard: CardData[] = []) {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, cards) }));
+    game = stage(game, 1, () => ({ hand: [] }));
+    game = putOnBattlefield(game, 0, battlefield);
+    if (opponentBoard.length) game = putOnBattlefield(game, 1, opponentBoard);
+    return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+  }
+
+  it("parses the kicker cost and applies the kicked clause only when paid", () => {
+    const profile = profileOf(INTO_THE_ROIL());
+    expect(profile.kickerCost?.raw).toBe("{1}{U}");
+    expect(profile.effects).toContainEqual({ kind: "return-target-permanent" });
+    expect(profile.kickedEffects).toContainEqual({ kind: "draw", amount: 1 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = ready([INTO_THE_ROIL()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()], [BEAR()]);
+    const bearId = game.players[1]!.battlefield.find((p) => p.card.name === "Grizzly Bears")!.instance_id;
+    const kicked = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.kicked);
+    expect(kicked).toBeDefined();
+    const hb = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", kicked: true, targets: [{ kind: "permanent", instanceId: bearId }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.hand.some((c) => c.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.hand.length).toBe(hb - 1 + 1);
+  });
+
+  it("fires a kicked-only enters trigger only on the kicked cast", () => {
+    expect(profileOf(KOR_SANCTIFIERS()).fullyImplemented).toBe(true);
+    let game = ready([KOR_SANCTIFIERS()], [PLAINS(), PLAINS(), PLAINS(), PLAINS()], [IRON_BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.some((p) => p.card.name === "Kor Sanctifiers") && !state.stack.length && state.pendingChoice === null);
+    expect(game.players[1]!.battlefield.some((p) => p.card.name === "Iron Bear")).toBe(true);
+
+    game = ready([KOR_SANCTIFIERS()], [PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()], [IRON_BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", kicked: true });
+    game = passUntil(game, (state) => !state.players[1]!.battlefield.some((p) => p.card.name === "Iron Bear") || state.turn > 1);
+    expect(game.players[1]!.graveyard.some((c) => c.name === "Iron Bear")).toBe(true);
+  });
+
+  it("draws then discards for a {cost}: draw, then discard ability", () => {
+    const profile = profileOf(JALUM_TOME());
+    expect(profile.activatedAbilities[0]!.effect).toEqual({ kind: "draw-then-discard", draw: 1, discard: 1 });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = ready([], [JALUM_TOME(), ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR()], "jt"), ...player.library] }));
+    const tome = game.players[0]!.battlefield.find((p) => p.card.name === "Jalum Tome")!;
+    const hb = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "activate", sourceId: tome.instance_id, abilityIndex: 0 });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.pendingChoice?.type).toBe("discard-cards");
+    const drew = game.players[0]!.hand.find((c) => c.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: drew.instance_id });
+    expect(game.players[0]!.hand.length).toBe(hb);
+    expect(game.players[0]!.graveyard.some((c) => c.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("gates an optional trigger behind a payable mana cost", () => {
+    const profile = profileOf(PAY_DRAWER());
+    expect(profile.triggers[0]).toMatchObject({ optional: true, effect: { kind: "draw", amount: 1 } });
+    expect(profile.triggers[0]!.payCost?.raw).toBe("{1}");
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = ready([PAY_DRAWER()], [ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const accept = legalActions(game, 0).find((entry) => entry.action.type === "choose-trigger" && entry.action.accept);
+    expect(accept).toBeDefined();
+    const hb = game.players[0]!.hand.length;
+    game = applyAction(game, 0, accept!.action);
+    game = passUntil(game, (state) => state.players[0]!.hand.length !== hb || state.turn > 1);
+    expect(game.players[0]!.hand.length).toBe(hb + 1);
+
+    let broke = ready([PAY_DRAWER()], [ISLAND(), ISLAND()]);
+    broke = applyAction(broke, 0, { type: "cast", cardId: "hand-0" });
+    broke = passUntil(broke, (state) => state.pendingChoice?.type === "optional-trigger");
+    const opts = legalActions(broke, 0).filter((entry) => entry.action.type === "choose-trigger");
+    expect(opts.every((entry) => entry.action.type === "choose-trigger" && entry.action.accept === false)).toBe(true);
+  });
+});
+
 describe("triggered abilities", () => {
   function readyToCast(cards: CardData[], battlefield: CardData[], opponentBoard: CardData[] = []) {
     let game = twoSeatGame([], []);

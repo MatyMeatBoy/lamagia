@@ -801,3 +801,34 @@ Latest validation: `npm run check` PASS; `npm test` PASS (213 rules tests,
 simulator and 24 Python tests); `npm run simulate:engine` PASS (200 games,
 160 finished, 0 invariant/projection failures). The engine exports 7,284 fully
 implemented catalog cards; C13 is 141/356 (215 pending).
+
+### C14 batch2 (rebased onto the integrated branch)
+
+Re-applied after the integrator merged the first C14 batch. New reusable work:
+
+- **Kicker / Multikicker** (CR 702.33): `Kicker {cost}` / `Multikicker {cost}`
+  sets `profile.kickerCost`; `legalActions` offers a separate kicked cast whose
+  cost is `base + kicker`; `applyCast` marks the `StackObject` / `Permanent`
+  kicked. `If ~ was kicked, X` sentences become `profile.kickedEffects` (applied
+  only on a kicked cast), and an enters trigger reading `..., if it was kicked,
+  ...` carries `requiresKicked` so `raiseEvent` skips it otherwise. Multikicker
+  is a boolean; per-kick scaling is not modelled.
+- **`you may pay {cost}. If you do, X`** optional-cost triggers: the
+  `optional-trigger` choice carries `payCost`; the accept branch is offered only
+  when the mana can be planned, and `applyChooseTrigger` pays it first.
+- **`draw-then-discard`**: `Draw N cards, then discard M cards` (spell or
+  activated) draws, then opens the existing `discard-cards` choice for the
+  controller. Bot now resolves `discard-cards` (surplus land when flooded).
+- **`exile-self` / `shuffle-self-into-library`**: `Exile ~` / `Shuffle ~ into
+  its owner's library` route the spell card to that zone instead of the
+  graveyard.
+- **Graveyard recovery accepts "another"** (`Return another target ... card from
+  your graveyard`), and `Return target nonland permanent to its owner's hand`.
+- **Bot fear fix**: `chooseBlockers` now respects fear (CR 702.36b), clearing a
+  pre-existing 9/200 invariant failure on the integration branch.
+
+Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
+(270 rules tests); `npm run rules:test:oracle` PASS (25); `npm run
+simulate:engine` PASS (200 games, 162 finished, 0 invariant/projection
+failures). Engine catalog fully-implemented 7,529 -> 7,655; Commander 2014
+97 -> 104/337.
