@@ -2117,6 +2117,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
       return state;
     }
+    case "damage-triggered-creature-power": {
+      const target = object.targets[0];
+      const eventId = object.trigger?.eventPermanentId ?? object.triggeredPermanentId;
+      const creature = eventId ? findPermanent(state, eventId) : undefined;
+      if (!target || !creature || !isCreature(cardProfile(creature.card))) return state;
+      const amount = Math.max(0, powerOf(creature, state));
+      const source: DamageSource = { permanentId: creature.instance_id, controller: creature.controller, card: creature.card };
+      if (target.kind === "player") return dealDamageToPlayer(state, target.seat, amount, sourceName, source);
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, keywordOf(state, creature, "deathtouch"), sourceName, cardProfile(creature.card));
+      return state;
+    }
     case "incite-rebellion": {
       let next = state;
       for (const player of state.players) {
