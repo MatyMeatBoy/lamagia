@@ -25171,7 +25171,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Bane of Progress — `51f9a6cc-8eb2-44ed-a2d9-913ac514ad67`
 - [x] Basalt Monolith — `6b8cf2a0-b045-4d91-9d91-c602d40c6237`
 - [ ] Behemoth Sledge — `00573e77-8ff6-4acb-8683-8827d965288f`
-- [ ] Blood Rites — `69757aaf-182e-41a0-a5b4-4404e4c81c45`
+- [x] Blood Rites — `69757aaf-182e-41a0-a5b4-4404e4c81c45`
 - [x] Blue Sun's Zenith — `613a41b8-0b4f-4995-bf1e-ca41f96e6438`
 - [x] Boros Charm — `2679d0dd-ba30-4a1c-b6a0-b3ac6c790496`
 - [ ] Borrowing 100,000 Arrows — `a3f10772-d055-419d-a535-4f094eaf437c`
