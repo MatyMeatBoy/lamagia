@@ -32,7 +32,7 @@ from typing import Any
 DEFAULT_COMMIT_CARD_LIMIT = 20
 # Bump whenever the emitted IR schema or classification semantics change so
 # incremental runs cannot silently reuse cards compiled by an older parser.
-ORACLE_IR_PARSER_VERSION = "v9"
+ORACLE_IR_PARSER_VERSION = "v10"
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -60,6 +60,10 @@ TARGET_RE = re.compile(r"\btarget\s+([^.;]+)", re.I)
 MANA_ABILITY_RE = re.compile(r"^(?P<cost>[^:\n]{1,160}):\s*(?P<effect>add\b.+)$", re.I)
 ADDITIONAL_COST_RE = re.compile(r"\bas an additional cost to (?:cast|play)\b", re.I)
 SEARCH_RE = re.compile(r"\bsearch your library for (?:an? |up to (?:one|two|three|five) )?(.+?\bcard(?:s)?(?:\s+with\b[^.;]+)?)", re.I)
+LOOK_TOP_RE = re.compile(
+    r"\blook at the top (?P<amount>a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) cards? of your library\."
+    r"\s+you may reveal (?:an? )?(?P<types>.+?) card from among them and put it into your hand\."
+    r"\s+put the rest on the bottom of your library in any order\b", re.I)
 NUMBER_RE = re.compile(r"\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b", re.I)
 WORD_NUMBERS = {
     "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4,
@@ -77,6 +81,10 @@ KNOWN_STATIC_RE = re.compile(
     re.I,
 )
 KNOWN_STATIC_LINE_RE = re.compile(r"^(?:level\s+\d+(?:-\d+|\+)?|\d+\/\d+|choose\s+(?:one|two|one or both)\s+(?:-|—|–|�))\.?$", re.I)
+GRAVEYARD_STATIC_RE = re.compile(
+    r"^as long as (?:this card|~) is in your graveyard and you control (?:a|an) (?P<land>[A-Za-z][A-Za-z'’ -]*), creatures you control have (?P<keyword>[A-Za-z ]+?)\.?$",
+    re.I,
+)
 ZONE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("library", r"\blibrar(?:y|ies)\b"),
     ("hand", r"\bhand\b"),
@@ -98,6 +106,21 @@ TRIGGER_SUBJECT_PATTERNS: tuple[tuple[str, str], ...] = (
     ("enchantment-you-control", r"an\s+enchantment\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control"),
     ("land-you-control", r"a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?"),
 )
+
+TOP_CARD_TO_HAND_RE = re.compile(r"\breveal the top card of your library\b.*\bput that card into your hand\b", re.I)
+REVEAL_UNTIL_TYPE_RE = re.compile(r"\breveal cards from the top of your library until you reveal a[n]? (?P<type>[a-z]+) card\b.*\bput that card into your hand\b.*\brest into your graveyard\b", re.I)
+MANA_VALUE_RE = re.compile(r"\bmana value\b", re.I)
+
+
+def top_card_reveal_hint(clause: str) -> bool:
+    """Identify the reusable reveal-top-to-hand operand used by combat triggers."""
+    return bool(TOP_CARD_TO_HAND_RE.search(clause))
+
+
+def reveal_until_type_hint(clause: str) -> str | None:
+    """Extract the reusable type operand from reveal-until-found effects."""
+    match = REVEAL_UNTIL_TYPE_RE.search(clause)
+    return match.group("type").title() if match else None
 
 
 def mana_ability_hint(line: str) -> dict[str, Any] | None:
@@ -150,6 +173,18 @@ def number_hint(text: str) -> int | str | None:
         return "X" if re.search(r"\bX\b|\{X\}", text, re.I) else None
     token = match.group(0).lower()
     return WORD_NUMBERS.get(token, int(token) if token.isdigit() else None)
+
+
+def graveyard_static_hint(clause: str) -> dict[str, str] | None:
+    """Extract the zone and land-subtype operands from a Wonder-style grant."""
+    match = GRAVEYARD_STATIC_RE.fullmatch(clause.strip())
+    if not match:
+        return None
+    return {
+        "source_zone": "graveyard",
+        "requires_controlled_land_subtype": match.group("land").strip(),
+        "keyword": match.group("keyword").strip().lower(),
+    }
 
 
 def has_card_type(text: str, card_type: str) -> bool:
@@ -276,6 +311,21 @@ def delayed_draw_hint(clause: str) -> dict[str, Any] | None:
     return None
 
 
+def look_top_hint(clause: str) -> dict[str, Any] | None:
+    """Extract the reusable look-at-top-N/select-one/bottom-rest shape."""
+    match = LOOK_TOP_RE.search(re.sub(r"\s+", " ", clause.strip()))
+    if not match:
+        return None
+    raw_types = re.sub(r"\s+or\s+", ",", match.group("types"), flags=re.I)
+    types = sorted({part.strip().lower() for part in raw_types.split(",") if part.strip()}, key=str.casefold)
+    return {
+        "amount": number_hint(match.group("amount")),
+        "types": types,
+        "destination": "hand",
+        "rest_destination": "bottom",
+    }
+
+
 def return_target_hint(clause: str) -> str | None:
     """Preserve the closed parser's graveyard-return target family."""
     if re.search(r"\breturn\s+target\s+permanent\s+card\s+from\s+your\s+graveyard\s+to\s+the\s+battlefield\b", clause, re.I):
@@ -304,14 +354,20 @@ def classify(clause: str) -> dict[str, Any]:
     target_zone = None
     if target_text:
         target_zone = "graveyard" if re.search(r"\bgraveyard\b", target_text, re.I) else "hand" if re.search(r"\bhand\b", target_text, re.I) else "battlefield"
-    modal = bool(re.search(r"\bchoose (?:one|two|three|one or more)\b", lower))
+    modal_mode = "one-or-both" if re.search(r"\bchoose one or both\b", lower) else "one-or-more" if re.search(r"\bchoose one or more\b", lower) else "one" if re.search(r"\bchoose one\b", lower) else None
+    modal = modal_mode is not None or bool(re.search(r"\bchoose (?:two|three)\b", lower))
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
-    known_static = bool(KNOWN_STATIC_RE.fullmatch(clause.strip()) or KNOWN_STATIC_LINE_RE.fullmatch(clause.strip()))
+    graveyard_static = graveyard_static_hint(clause)
+    known_static = bool(KNOWN_STATIC_RE.fullmatch(clause.strip()) or KNOWN_STATIC_LINE_RE.fullmatch(clause.strip()) or graveyard_static)
     operands = operand_hints(clause, target_text, search_criterion)
     cost_text, _ = clause_cost_effect_parts(clause)
     cost_context = "activated-cost" if ACTIVATED_RE.match(clause.strip()) else "additional-cast-cost" if ADDITIONAL_COST_RE.search(clause) else None
     trigger_subject = trigger_subject_hint(clause)
     delayed_draw = delayed_draw_hint(clause)
+    top_card_reveal = top_card_reveal_hint(clause)
+    reveal_until_type = reveal_until_type_hint(clause)
+    mana_value_dependency = bool(MANA_VALUE_RE.search(clause))
+    look_top = look_top_hint(clause)
     return_target = return_target_hint(clause)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
@@ -338,13 +394,25 @@ def classify(clause: str) -> dict[str, Any]:
         amount = delayed_draw.get("max_amount", delayed_draw.get("amount"))
         mode = "optional" if delayed_draw.get("optional") else "mandatory"
         cluster_parts.append(f"delayed-draw:{mode}:{amount}")
+    if look_top:
+        cluster_parts.append(f"look-top:{look_top['amount']}:{','.join(look_top['types'])}:hand:bottom")
     cost_actions = operands.get("cost_actions", [])
     if cost_actions:
         cluster_parts.append("cost-actions:" + ",".join(cost_actions))
     if return_target:
         cluster_parts.append("return-target:" + return_target)
+    if top_card_reveal:
+        cluster_parts.append("reveal-top:hand")
+    if reveal_until_type:
+        cluster_parts.append("reveal-until:" + reveal_until_type + ":hand:graveyard")
+    if mana_value_dependency:
+        cluster_parts.append("amount:mana-value")
     if modal:
         cluster_parts.append("modal")
+    if modal_mode:
+        cluster_parts.append("modal-mode:" + modal_mode)
+    if graveyard_static:
+        cluster_parts.extend(["source-zone:graveyard", "requires-land-subtype:" + graveyard_static["requires_controlled_land_subtype"]])
     return {
         "text": clause,
         "kind": kind,
@@ -358,18 +426,24 @@ def classify(clause: str) -> dict[str, Any]:
         "trigger_subject": trigger_subject,
         "cost_context": cost_context,
         "delayed_draw": delayed_draw,
+        "look_top": look_top,
         "return_target": return_target,
+        "top_card_reveal": top_card_reveal,
+        "reveal_until_type": reveal_until_type,
+        "mana_value_dependency": mana_value_dependency,
         "search_criterion": search_criterion,
         "operands": operands,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),
         "modal": modal,
+        "modal_mode": modal_mode,
+        "graveyard_static": graveyard_static,
         "conditional": bool(re.search(r"\b(?:if|unless|as long as|whenever)\b", lower)),
         # Stable grouping key for AI/contributor batches. It preserves the
         # reusable mechanic constraints without using card names as identity.
         "primitive_cluster": "|".join(cluster_parts),
         "keyword_only": keyword_only,
         "known_static": known_static,
-        "candidate": bool(families or kind != "static-or-spell" or keyword_only or known_static),
+        "candidate": bool(families or kind != "static-or-spell" or keyword_only or known_static or top_card_reveal or reveal_until_type),
     }
 
 

@@ -302,6 +302,14 @@ export type PendingChoice =
       readonly options: readonly Target[];
     }
   | {
+      /** Tidal Force-style choice after a target has been selected (CR 701.21). */
+      readonly type: "tap-or-untap";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly target: Target;
+    }
+  | {
       readonly type: "search-library";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -355,6 +363,19 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /** Private top-of-library review for effects such as Augur of Bolas. */
+      readonly type: "look-top-select";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly types: readonly CardType[];
+      readonly lookedCount: number;
+      readonly remainingCards: readonly GameCard[];
+      readonly bottomCards: readonly GameCard[];
+      readonly stage: "select" | "bottom";
+      readonly selectedCardId?: string;
+    }
+  | {
       readonly type: "discard-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -381,11 +402,15 @@ export type GameAction =
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
+  | { readonly type: "choose-tap-or-untap"; readonly sourceId: string; readonly mode: "tap" | "untap" }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "resolve-library-pick"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
   | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean; readonly ordinal?: number }
+  | { readonly type: "choose-look-top"; readonly sourceId: string; readonly ordinal?: number }
+  | { readonly type: "finish-look-top"; readonly sourceId: string }
+  | { readonly type: "choose-look-top-bottom"; readonly sourceId: string; readonly ordinal?: number }
   | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
@@ -398,6 +423,8 @@ export interface LegalAction {
   readonly label: string;
   readonly cardId?: string;
   readonly requiresTarget?: Exclude<TargetKind, "none">;
+  /** Ordered target kinds for a synthetic modal that selects multiple branches. */
+  readonly requiresTargets?: readonly Exclude<TargetKind, "none">[];
   readonly manaValue?: number;
   readonly note?: string;
 }
@@ -525,8 +552,16 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
   if (level?.keywords.includes(keyword)) return true;
   if (permanent.temporaryKeywords?.includes(keyword)) return true;
   if (isCreature(profile) && allPermanents(state).some((source) => cardProfile(source.card).staticKeywordGrants.some((grant) => grant.keyword === keyword
+      && grant.sourceZone !== "graveyard"
       && (grant.scope === "all-creatures" || (source.controller === permanent.controller
         && (grant.scope === "creatures-you-control" || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))))))) return true;
+  if (isCreature(profile) && state.players.some((player) => player.seat === permanent.controller
+      && player.graveyard.some((card) => cardProfile(card).staticKeywordGrants.some((grant) => grant.sourceZone === "graveyard"
+        && grant.keyword === keyword
+        && grant.scope === "creatures-you-control"
+        && grant.requiresControlledLandSubtype
+        && player.battlefield.some((source) => isLand(cardProfile(source.card))
+          && hasSubtype(cardProfile(source.card), grant.requiresControlledLandSubtype!)))))) return true;
   return attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword));
 }
 
@@ -1015,6 +1050,20 @@ function destroyPermanent(state: GameState, permanent: Permanent): GameState {
   return logged(next, current.controller, `${current.card.name} regenera y permanece en el campo de batalla.`);
 }
 
+/** Moves an existing permanent between controller battlefields (CR 110.2). */
+function changePermanentController(state: GameState, permanent: Permanent, controller: SeatId): GameState {
+  if (permanent.controller === controller) return state;
+  let next = withPlayer(state, permanent.controller, (player) => ({
+    ...player,
+    battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+  }));
+  next = withPlayer(next, controller, (player) => ({
+    ...player,
+    battlefield: [...player.battlefield, { ...permanent, controller }]
+  }));
+  return next;
+}
+
 function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { tapped: boolean; lifeCost: number } {
   const rule = profile.entersTapped;
   const player = playerAt(state, seat);
@@ -1345,13 +1394,16 @@ function modifyCreatures(
   };
 }
 
-function applyEffect(state: GameState, object: StackObject, effect: SpellEffect): GameState {
+function applyEffect(state: GameState, object: StackObject, effect: SpellEffect, targetIndex = 0): GameState {
   const controller = object.controller;
   const sourceName = object.card.name;
   switch (effect.kind) {
     case "compound": {
       let next = state;
-      for (const child of effect.effects) next = applyEffect(next, object, child);
+      for (const [index, child] of effect.effects.entries()) {
+        const childTargetIndex = effect.targetOffsets?.[index] ?? targetIndex;
+        next = applyEffect(next, object, child, childTargetIndex ?? targetIndex);
+      }
       return next;
     }
     case "draw": return drawCards(state, controller, effectAmount(effect.amount, object));
@@ -2210,7 +2262,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return logged(next, controller, `${permanent.card.name} es destruida; su controlador crea ${spec.name}.`);
     }
     case "destroy-target-permanent": {
-      const target = object.targets[0];
+      const target = object.targets[targetIndex];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
@@ -2270,7 +2322,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
-      return permanent ? movePermanentToZone(state, permanent, "exile") : state;
+      if (!permanent) return state;
+      const targetController = permanent.controller;
+      let next = movePermanentToZone(state, permanent, "exile");
+      if (effect.gainSourceControl !== "target-controller") return next;
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const source = sourceId ? findPermanent(next, sourceId) : undefined;
+      return source ? changePermanentController(next, source, targetController) : next;
     }
     case "exile-target-nontoken-creature": {
       const target = object.targets[0];
@@ -2287,6 +2345,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           ? { ...permanent, exiledWith: creature.card }
           : permanent)
       }));
+    }
+    case "blink-target-creature": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const creature = findPermanent(state, target.instanceId);
+      if (!creature || creature.controller !== controller || creature.card.token || !isCreature(cardProfile(creature.card))) return state;
+      // The card changes zones, so it is a new object on the battlefield (CR
+      // 400.7), while retaining its stable instance identity for this engine.
+      const exiled = movePermanentToZone(state, creature, "exile");
+      return putOntoBattlefield(exiled, controller, creature.card, false);
     }
     case "exile-target-graveyard": {
       const target = object.targets[0];
@@ -2429,7 +2497,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
     }
     case "return-target-card-from-graveyard": {
-      const target = object.targets[0];
+      const target = object.targets[targetIndex];
       if (!target || target.kind !== "graveyard-card") return state;
       const player = playerAt(state, target.seat);
       const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
@@ -2450,6 +2518,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         ...current,
         graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
       }));
+      return putOntoBattlefield(next, object.controller, card, false);
+    }
+    case "return-target-creature-card-from-graveyard-threshold": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card || !isCreature(cardProfile(card))) return state;
+      const next = withPlayer(state, target.seat, (current) => ({
+        ...current,
+        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id),
+        ...(current.graveyard.length >= effect.threshold
+          ? {}
+          : { hand: [...current.hand, card] })
+      }));
+      if (player.graveyard.length < effect.threshold) return next;
       return putOntoBattlefield(next, object.controller, card, false);
     }
     case "return-target-land-card-from-graveyard-to-battlefield": {
@@ -2509,6 +2593,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
       }));
       return putOntoBattlefield(next, object.controller, card, false);
+    }
+    case "return-random-instant-or-sorcery-from-graveyard": {
+      const player = playerAt(state, controller);
+      let next = state;
+      for (let count = 0; count < effect.amount; count += 1) {
+        const candidates = playerAt(next, controller).graveyard.filter((card) => {
+          const profile = cardProfile(card);
+          return profile.types.includes("Instant") || profile.types.includes("Sorcery");
+        });
+        if (!candidates.length) break;
+        const rolled = nextRandom(next.rngState);
+        const selected = candidates[Math.floor(rolled.value * candidates.length)]!;
+        next = withPlayer({ ...next, rngState: rolled.state }, controller, (current) => ({
+          ...current,
+          graveyard: current.graveyard.filter((card) => card.instance_id !== selected.instance_id),
+          hand: [...current.hand, selected]
+        }));
+      }
+      const recovered = playerAt(next, controller).hand.length - player.hand.length;
+      return recovered > 0
+        ? logged(next, controller, `${playerAt(next, controller).name} recupera ${recovered} instantáneo(s) o conjuro(s).`)
+        : next;
     }
     case "exile-target-card-from-graveyard": {
       const target = object.targets[0];
@@ -2664,7 +2770,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return logged(next, controller, `${sourceName} destruye ${destroyed.length} artifact(s)/enchantment(s) y pone ${destroyed.length} contador(es).`);
     }
     case "counter-target-spell": {
-      const target = object.targets[0];
+      const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
     }
@@ -2798,6 +2904,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         manaPool: Object.entries(effect.pool).reduce((pool, [type, count]) => addMana(pool, type as ManaType, count), player.manaPool)
       }));
     }
+    case "tap-or-untap-target-permanent": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent" || !findPermanent(state, target.instanceId)) return state;
+      return {
+        ...state,
+        pendingChoice: {
+          type: "tap-or-untap",
+          seat: controller,
+          sourceId: object.id,
+          sourceCard: object.card,
+          target
+        }
+      };
+    }
     case "target-cant-block": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -2843,6 +2963,45 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (isLand(profile)) return putOntoBattlefield(next, controller, card, false);
       return applyEffect(next, object, { kind: "gain-life", amount: effect.fallbackLife });
     }
+    case "reveal-top-card-to-hand-and-gain-mana-value": {
+      const player = playerAt(state, controller);
+      const card = player.library[0];
+      if (!card) return logged(state, controller, `${player.name} revela la biblioteca vacía.`);
+      let next = withPlayer(state, controller, (current) => ({
+        ...current,
+        library: current.library.slice(1),
+        hand: [...current.hand, card]
+      }));
+      next = logged(next, controller, `${player.name} revela ${card.name} y la pone en su mano.`);
+      const amount = cardProfile(card).manaValue;
+      if (amount <= 0 || playersCantGainLife(next)) return next;
+      next = withPlayer(next, controller, (current) => ({ ...current, life: current.life + amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller,
+        `${playerAt(next, controller).name} gana ${amount} vidas.`);
+    }
+    case "reveal-until-type-to-hand": {
+      const player = playerAt(state, controller);
+      const foundIndex = player.library.findIndex((card) => cardProfile(card).types.includes(effect.type));
+      if (foundIndex < 0) {
+        if (!player.library.length) return logged(state, controller, `${player.name} no tiene cartas para revelar.`);
+        return logged(withPlayer(state, controller, (current) => ({
+          ...current,
+          library: [],
+          graveyard: [...current.graveyard, ...current.library]
+        })), controller, `${player.name} revela su biblioteca y no encuentra una carta de tipo ${effect.type}.`);
+      }
+      const revealed = player.library.slice(0, foundIndex + 1);
+      const selected = revealed[revealed.length - 1]!;
+      const rest = revealed.slice(0, -1);
+      const next = withPlayer(state, controller, (current) => ({
+        ...current,
+        library: current.library.slice(foundIndex + 1),
+        hand: [...current.hand, selected],
+        graveyard: [...current.graveyard, ...rest]
+      }));
+      return logged(next, controller,
+        `${player.name} revela ${revealed.map((card) => card.name).join(", ")}; pone ${selected.name} en su mano y el resto en su cementerio.`);
+    }
     case "create-token": {
       const amount = effect.amount === "lands-you-control"
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
@@ -2887,6 +3046,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return state;
     case "scry":
       // Scry is completed through the private top-card choice below.
+      return state;
+    case "look-top-select":
+      // Top-card selection is completed through the private choice below.
       return state;
     case "attach-equipment": {
       const target = object.targets[0];
@@ -2963,6 +3125,33 @@ function beginScry(
   };
 }
 
+function beginLookTopSelection(
+  state: GameState,
+  seat: SeatId,
+  sourceId: string,
+  sourceCard: GameCard,
+  amount: number,
+  types: readonly CardType[]
+): GameState {
+  const visible = playerAt(state, seat).library.slice(0, Math.max(0, amount));
+  if (!visible.length) return state;
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "look-top-select",
+      seat,
+      sourceId,
+      sourceCard,
+      types,
+      lookedCount: visible.length,
+      remainingCards: visible,
+      bottomCards: [],
+      stage: "select"
+    }
+  };
+}
+
 function resolveTop(state: GameState): GameState {
   const object = state.stack.at(-1);
   if (!object) return state;
@@ -3006,6 +3195,8 @@ function resolveTop(state: GameState): GameState {
   if (object.trigger) {
     const triggerScry = object.trigger.definition.effect.kind === "scry" ? object.trigger.definition.effect : null;
     if (triggerScry) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerScry.amount, false, false, triggerScry.thenDraw ?? 0);
+    const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
+    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types);
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,
@@ -3708,7 +3899,7 @@ function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean): Ma
   return withKicker(profile.cost!, kicked ? profile.kickerCost : null);
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none"> } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
@@ -3732,11 +3923,14 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
   const targetKind = modal?.targetKind ?? profile.targetKind;
+  const targetKinds = modal?.targetKinds;
+  if (targetKinds?.some((kind) => !legalTargets(state, seat, kind).length)) return { legal: false };
   if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind).length) return { legal: false };
   if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind).length) return { legal: false };
   return {
     legal: true,
     ...(targetKind !== "none" ? { targetKind } : {}),
+    ...(targetKinds?.length ? { targetKinds } : {}),
     ...(profile.fullyImplemented ? {} : { note: "Su texto todavía no está implementado; entra al juego pero no ejecuta su efecto." })
   };
 }
@@ -3781,6 +3975,13 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.trigger.sourceCard.name}: ${choice.trigger.definition.sourceText}`
         });
       }
+      return actions;
+    }
+    if (choice.type === "tap-or-untap") {
+      actions.push(
+        { action: { type: "choose-tap-or-untap", sourceId: choice.sourceId, mode: "tap" }, label: "Tap target permanent", note: `${choice.sourceCard.name}: tap the chosen permanent.` },
+        { action: { type: "choose-tap-or-untap", sourceId: choice.sourceId, mode: "untap" }, label: "Untap target permanent", note: `${choice.sourceCard.name}: untap the chosen permanent.` }
+      );
       return actions;
     }
     if (choice.type === "search-library") {
@@ -3830,6 +4031,33 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.sourceCard.name}: coloca esta carta en el fondo.`
         });
       });
+      return actions;
+    }
+    if (choice.type === "look-top-select") {
+      if (choice.stage === "select") {
+        choice.remainingCards.forEach((card, ordinal) => {
+          const profile = cardProfile(card);
+          if (!choice.types.some((type) => profile.types.includes(type))) return;
+          actions.push({
+            action: { type: "choose-look-top", sourceId: choice.sourceId, ordinal },
+            label: `Revelar ${card.name} y ponerla en la mano`,
+            cardId: card.instance_id,
+            note: `${choice.sourceCard.name}: carta válida entre las cartas superiores.`
+          });
+        });
+        actions.push({
+          action: { type: "finish-look-top", sourceId: choice.sourceId },
+          label: "No elegir carta",
+          note: "No eliges una carta válida; luego ordenas todas en el fondo."
+        });
+        return actions;
+      }
+      choice.remainingCards.forEach((card, ordinal) => actions.push({
+        action: { type: "choose-look-top-bottom", sourceId: choice.sourceId, ordinal },
+        label: `Poner ${card.name} en el fondo`,
+        cardId: card.instance_id,
+        note: `${choice.sourceCard.name}: ordena las cartas restantes.`
+      }));
       return actions;
     }
     if (choice.type === "draw-cards") {
@@ -3937,6 +4165,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         cardId: card.instance_id,
         manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
       });
     }
@@ -3958,6 +4187,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         cardId: card.instance_id,
         manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
       });
     }
@@ -3980,6 +4210,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         cardId: card.instance_id,
         manaValue: cardProfile(card).manaValue + tax + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
       });
     }
@@ -4704,7 +4935,15 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
-  if (check.targetKind) {
+  if (check.targetKinds?.length) {
+    const chosen = requested.length
+      ? requested
+      : check.targetKinds.flatMap((kind) => legalTargets(state, seat, kind).slice(0, 1));
+    if (chosen.length !== check.targetKinds.length) throw new Error(`${card.name} necesita ${check.targetKinds.length} objetivos legales.`);
+    const valid = chosen.every((target, index) => legalTargets(state, seat, check.targetKinds![index]!).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
+    if (!valid) throw new Error(`Objetivo ilegal para ${card.name}.`);
+    action = { ...action, targets: chosen };
+  } else if (check.targetKind) {
     const allowed = legalTargets(state, seat, check.targetKind);
     const chosen = requested.length ? requested : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${card.name} necesita un objetivo legal.`);
@@ -5024,6 +5263,67 @@ function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAct
   return logged(next, seat, `${player.name} termina de adivinar.`);
 }
 
+function finishLookTopSelection(
+  state: GameState,
+  seat: SeatId,
+  choice: Extract<PendingChoice, { type: "look-top-select" }>
+): GameState {
+  if (choice.remainingCards.length) throw new Error("Debes ordenar las cartas restantes en el fondo.");
+  const selected = choice.selectedCardId
+    ? playerAt(state, seat).library.find((card) => card.instance_id === choice.selectedCardId)
+    : undefined;
+  const bottom = choice.bottomCards;
+  const player = playerAt(state, seat);
+  const next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    library: [...current.library.slice(choice.lookedCount), ...bottom],
+    ...(selected ? { hand: [...current.hand, selected] } : {})
+  }));
+  return logged(next, seat, selected
+    ? `${player.name} pone ${selected.name} en su mano y ordena el resto en el fondo.`
+    : `${player.name} no elige una carta y ordena las cartas en el fondo.`);
+}
+
+function applyChooseLookTop(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-look-top" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "look-top-select" || choice.seat !== seat || choice.stage !== "select") {
+    throw new Error("No tienes una selección superior pendiente.");
+  }
+  if (choice.sourceId !== action.sourceId || action.ordinal === undefined) throw new Error("Debes elegir una carta visible de la selección superior.");
+  const selected = choice.remainingCards[action.ordinal];
+  if (!selected) throw new Error("Debes elegir una carta visible de la selección superior.");
+  if (!choice.types.some((type) => cardProfile(selected).types.includes(type))) throw new Error("Esa carta no cumple el tipo requerido.");
+  const remainingCards = choice.remainingCards.filter((card) => card.instance_id !== selected.instance_id);
+  const nextChoice = { ...choice, remainingCards, stage: "bottom" as const, selectedCardId: selected.instance_id };
+  if (!remainingCards.length) return finishLookTopSelection({ ...state, pendingChoice: nextChoice }, seat, nextChoice);
+  return logged({ ...state, pendingChoice: nextChoice }, seat, `${playerAt(state, seat).name} elige ${selected.name}.`);
+}
+
+function applyFinishLookTop(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-look-top" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "look-top-select" || choice.seat !== seat || choice.stage !== "select") {
+    throw new Error("No tienes una selección superior pendiente.");
+  }
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes terminar la selección superior pendiente.");
+  if (!choice.remainingCards.length) return finishLookTopSelection(state, seat, { ...choice, stage: "bottom" });
+  return logged({ ...state, pendingChoice: { ...choice, stage: "bottom" } }, seat,
+    `${playerAt(state, seat).name} no elige una carta.`);
+}
+
+function applyChooseLookTopBottom(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-look-top-bottom" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "look-top-select" || choice.seat !== seat || choice.stage !== "bottom") {
+    throw new Error("No tienes cartas superiores pendientes de ordenar.");
+  }
+  if (choice.sourceId !== action.sourceId || action.ordinal === undefined) throw new Error("Debes elegir una carta visible para el fondo.");
+  const selected = choice.remainingCards[action.ordinal];
+  if (!selected) throw new Error("Debes elegir una carta visible para el fondo.");
+  const remainingCards = choice.remainingCards.filter((card) => card.instance_id !== selected.instance_id);
+  const nextChoice = { ...choice, remainingCards, bottomCards: [...choice.bottomCards, selected] };
+  if (!remainingCards.length) return finishLookTopSelection({ ...state, pendingChoice: nextChoice }, seat, nextChoice);
+  return logged({ ...state, pendingChoice: nextChoice }, seat, `${playerAt(state, seat).name} coloca ${selected.name} en el fondo.`);
+}
+
 function applyChooseDraw(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-draw" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "draw-cards" || choice.seat !== seat) throw new Error("No tienes una elección de robo pendiente.");
@@ -5245,6 +5545,24 @@ function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extrac
   return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
 }
 
+function applyChooseTapOrUntap(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-tap-or-untap" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "tap-or-untap" || choice.seat !== seat) throw new Error("No tienes una elección de girar/enderezar pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa elección ya no corresponde a la habilidad pendiente.");
+  if (choice.target.kind !== "permanent") throw new Error("El objetivo no es un permanente.");
+  const permanent = findPermanent(state, choice.target.instanceId);
+  if (!permanent) throw new Error("El permanente objetivo ya no está en el campo de batalla.");
+  const tapped = action.mode === "tap";
+  const next = withPlayer({ ...state, pendingChoice: null }, permanent.controller, (player) => ({
+    ...player,
+    battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+      ? { ...candidate, tapped } : candidate)
+  }));
+  return tapped
+    ? raiseTapEvents(next, state, [permanent.instance_id])
+    : logged(next, seat, `${permanent.card.name} se endereza.`);
+}
+
 function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-discard" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "discard-cards" || choice.seat !== seat) throw new Error("No tienes una elección de descarte pendiente.");
@@ -5281,10 +5599,14 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
+    case "choose-tap-or-untap": next = applyChooseTapOrUntap(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "resolve-library-pick": next = applyResolveLibraryPick(state, seat, action); break;
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-scry": next = applyChooseScry(state, seat, action); break;
+    case "choose-look-top": next = applyChooseLookTop(state, seat, action); break;
+    case "finish-look-top": next = applyFinishLookTop(state, seat, action); break;
+    case "choose-look-top-bottom": next = applyChooseLookTopBottom(state, seat, action); break;
     case "choose-draw": next = applyChooseDraw(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;

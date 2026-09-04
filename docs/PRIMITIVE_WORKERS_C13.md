@@ -10,7 +10,7 @@ Each primitive is assigned to exactly one worker; jobs sharing an oracle_id are 
 
 ## Worker 1
 
-7 primitives / 8 unique cards
+8 primitives / 9 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
@@ -20,20 +20,23 @@ Cards: Crater Hellion [2d37c437-0d5c-400d-88ce-10d173b28eda], Karmic Guide [8c31
 | normal | `c13-flying-protection-from-black` | other | 1 | 0 | 1 | 1 |
 Cards: Karmic Guide [8c31fec9-e4b3-4761-990e-7be38eb05604]
 
-| normal | `c13-players-have-maximum-hand` | other | 1 | 0 | 1 | 1 |
-Cards: Price of Knowledge [1c586aa7-7a61-464f-abba-b33f9a525f0e]
+| normal | `c13-prevent-all-combat-damage` | other | 1 | 0 | 1 | 1 |
+Cards: Guard Gomazoa [7c565975-aebc-4599-ac32-5594c718e2cb]
 
-| normal | `c13-sacrifice-beast-you-gain` | activated | 1 | 0 | 1 | 1 |
-Cards: Ravenous Baloth [ee771e66-72f8-480f-9920-92c68ab93c3b]
-
-| normal | `c13-the-beginning-your-end-2` | triggered | 1 | 0 | 1 | 1 |
-Cards: Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
+| normal | `c13-sacrifice-creatures-create-red` | token | 1 | 0 | 1 | 1 |
+Cards: Tooth and Claw [587368eb-068c-44a3-ba8c-5ad0f59f880f]
 
 | normal | `c13-untap-all-green-and` | other | 1 | 0 | 1 | 1 |
 Cards: Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
 
-| normal | `c13-when-enters-look-the` | library-look | 1 | 0 | 1 | 1 |
-Cards: Augur of Bolas [be5d6779-ecc9-44b9-8c4d-97a243059d55]
+| normal | `c13-when-enters-return-target` | triggered | 1 | 0 | 1 | 1 |
+Cards: Razor Hippogriff [d121108e-f0bc-469b-bf94-e5e5308014a2]
+
+| normal | `c13-when-enters-you-may` | triggered | 1 | 0 | 1 | 1 |
+Cards: Mnemonic Wall [f2933616-211b-4d3f-8064-2be61c26079a]
+
+| normal | `c13-whenever-creature-dies-untap` | triggered | 1 | 0 | 1 | 1 |
+Cards: Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
 
 
 ## Worker 2
@@ -51,17 +54,17 @@ Cards: Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
 | normal | `c13-graft` | keyword-ability | 1 | 0 | 1 | 1 |
 Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
 
-| normal | `c13-prevent-all-combat-damage` | other | 1 | 0 | 1 | 1 |
-Cards: Guard Gomazoa [7c565975-aebc-4599-ac32-5594c718e2cb]
+| normal | `c13-put-target-nonland-permanent` | other | 1 | 0 | 1 | 1 |
+Cards: Unexpectedly Absent [e8d78a83-c932-4b55-8f75-7094c672c3a9]
 
-| normal | `c13-sacrifice-creatures-create-red` | token | 1 | 0 | 1 | 1 |
-Cards: Tooth and Claw [587368eb-068c-44a3-ba8c-5ad0f59f880f]
-
-| normal | `c13-the-beginning-your-upkeep` | triggered | 1 | 0 | 1 | 1 |
-Cards: Capricious Efreet [9abd2286-23e9-49cd-be53-39423890f35c]
+| normal | `c13-the-beginning-each-end` | triggered | 1 | 0 | 1 | 1 |
+Cards: Brooding Saurian [2fb7f844-edaf-43ef-9121-318baf9ec9ce]
 
 | normal | `c13-until-end-turn-creatures` | other | 1 | 0 | 1 | 1 |
 Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
+
+| normal | `c13-when-enters-return-target-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
 
 | normal | `c13-when-sharuum-enters-you` | triggered | 1 | 0 | 1 | 1 |
 Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
@@ -82,17 +85,17 @@ Cards: One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
 | normal | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 |
 Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
 
-| normal | `c13-put-target-nonland-permanent` | other | 1 | 0 | 1 | 1 |
-Cards: Unexpectedly Absent [e8d78a83-c932-4b55-8f75-7094c672c3a9]
+| normal | `c13-remove-counter-from-deals` | activated | 1 | 0 | 1 | 1 |
+Cards: Deathbringer Thoctar [2500a811-2435-4915-ac83-9bfe2887621a]
 
-| normal | `c13-the-beginning-each-end` | triggered | 1 | 0 | 1 | 1 |
-Cards: Brooding Saurian [2fb7f844-edaf-43ef-9121-318baf9ec9ce]
-
-| normal | `c13-the-beginning-your-upkeep-2` | triggered | 1 | 0 | 1 | 1 |
-Cards: Charmbreaker Devils [1b9df437-6988-4ddc-80c4-893e11076067]
+| normal | `c13-the-beginning-your-end` | triggered | 1 | 0 | 1 | 1 |
+Cards: Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
 
 | normal | `c13-was-kicked-has-split` | replacement | 1 | 0 | 1 | 1 |
 Cards: Molten Disaster [21390513-1ed0-48f2-a7fa-020da8f803c0]
+
+| normal | `c13-when-enters-sacrifice-unless` | triggered | 1 | 0 | 1 | 1 |
+Cards: Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
 
 | normal | `c13-when-you-cast-create` | triggered | 1 | 0 | 1 | 1 |
 Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
@@ -113,17 +116,17 @@ Cards: Sphinx of the Steel Wind [1c96772b-463c-4655-836b-cf6e9dc6319f]
 | normal | `c13-long-untapped-creature-would` | static-continuous | 1 | 0 | 1 | 1 |
 Cards: Thunderstaff [1a88a378-051c-42b4-bd0e-9c40ae8efea6]
 
-| normal | `c13-remove-counter-from-deals` | activated | 1 | 0 | 1 | 1 |
-Cards: Deathbringer Thoctar [2500a811-2435-4915-ac83-9bfe2887621a]
+| normal | `c13-return-all-permanents-the` | other | 1 | 0 | 1 | 1 |
+Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
 
-| normal | `c13-the-beginning-each-upkeep` | triggered | 1 | 0 | 1 | 1 |
-Cards: Tidal Force [1b25e262-e2df-4768-b55e-1b7b8d3ee993]
-
-| normal | `c13-the-beginning-your-upkeep-3` | triggered | 1 | 0 | 1 | 1 |
-Cards: Act of Authority [c12b8e31-5702-4d3c-80c9-56c87e50679d]
+| normal | `c13-the-beginning-your-upkeep` | triggered | 1 | 0 | 1 | 1 |
+Cards: Capricious Efreet [9abd2286-23e9-49cd-be53-39423890f35c]
 
 | normal | `c13-when-enters-destroy-all` | counters | 1 | 0 | 1 | 1 |
 Cards: Bane of Progress [51f9a6cc-8eb2-44ed-a2d9-913ac514ad67]
+
+| normal | `c13-when-enters-tap-target` | static-continuous | 1 | 0 | 1 | 1 |
+Cards: Dungeon Geists [ab5ebae2-cd77-4a7d-a93b-8042cd486429]
 
 | normal | `c13-when-you-cycle-you` | triggered | 1 | 0 | 1 | 1 |
 Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
@@ -141,14 +144,11 @@ Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 | normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
 Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
 
-| normal | `c13-long-your-graveyard-and` | static-continuous | 1 | 0 | 1 | 1 |
-Cards: Wonder [232284f7-c623-4895-9ab9-8b1a39926830]
+| normal | `c13-players-have-maximum-hand` | other | 1 | 0 | 1 | 1 |
+Cards: Price of Knowledge [1c586aa7-7a61-464f-abba-b33f9a525f0e]
 
-| normal | `c13-return-all-permanents-the` | other | 1 | 0 | 1 | 1 |
-Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
-
-| normal | `c13-the-beginning-your-end` | triggered | 1 | 0 | 1 | 1 |
-Cards: Conjurer's Closet [cd1eda60-53e4-44d0-9b2c-7a57395e291f]
+| normal | `c13-sacrifice-beast-you-gain` | activated | 1 | 0 | 1 | 1 |
+Cards: Ravenous Baloth [ee771e66-72f8-480f-9920-92c68ab93c3b]
 
 | normal | `c13-then-you-have-more` | other | 1 | 0 | 1 | 1 |
 Cards: Survival Cache [5fb8be5a-3666-4680-84e2-341cb269df07]
@@ -156,10 +156,8 @@ Cards: Survival Cache [5fb8be5a-3666-4680-84e2-341cb269df07]
 | normal | `c13-when-enters-exile-another` | triggered | 1 | 0 | 1 | 1 |
 Cards: Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
 
+| normal | `c13-when-enters-target-opponent` | triggered | 1 | 0 | 1 | 1 |
+Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
+
 | normal | `c13-when-you-cycle-you-2` | triggered | 1 | 0 | 1 | 1 |
 Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
-
-
-## Already claimed
-
-`c13-choose-both`

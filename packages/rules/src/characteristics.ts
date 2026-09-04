@@ -123,6 +123,8 @@ export interface ModalChoice {
   readonly text: string;
   readonly effect: SpellEffect;
   readonly targetKind: TargetKind;
+  /** Ordered target kinds when this synthetic mode selects multiple branches. */
+  readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
 }
 
 /** A landcycling variant: discard from hand to search a land subtype. */
@@ -248,6 +250,10 @@ export interface StaticKeywordGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures" | "subtype-creatures-you-control";
   readonly keyword: EnforcedKeyword;
   readonly subtype?: string;
+  /** Zone where the source supplies the static ability (battlefield by default). */
+  readonly sourceZone?: "battlefield" | "graveyard";
+  /** Land subtype required when the source ability is active in a graveyard. */
+  readonly requiresControlledLandSubtype?: string;
 }
 
 export interface StaticPowerToughnessGrant {
@@ -282,7 +288,7 @@ export interface TokenDefinition {
 
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
-  | { readonly kind: "compound"; readonly effects: readonly SpellEffect[] }
+  | { readonly kind: "compound"; readonly effects: readonly SpellEffect[]; readonly targetOffsets?: readonly (number | null)[] }
   | { readonly kind: "incite-rebellion" }
   | { readonly kind: "draw"; readonly amount: number | "X" }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
@@ -292,6 +298,9 @@ export type SpellEffect =
   | { readonly kind: "draw-equal-controlled-color-creature"; readonly color: string }
   | { readonly kind: "draw-equal-graveyard-creatures" }
   | { readonly kind: "draw-equal-greatest-mana-value-you-control" }
+  | { readonly kind: "scry"; readonly amount: number; readonly thenDraw?: number }
+  /** Look at the top N cards, optionally take one matching card, bottom the rest. */
+  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
@@ -367,7 +376,6 @@ export type SpellEffect =
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string; readonly anywhere?: boolean }
-  | { readonly kind: "scry"; readonly amount: number; readonly thenDraw?: number }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-triggered-creature-and-grant-keyword"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
@@ -394,15 +402,20 @@ export type SpellEffect =
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
   /** Destroy artifact/enchantment permanents, then count the ones destroyed. */
   | { readonly kind: "destroy-all-artifacts-enchantments-add-counters"; readonly counter: string }
- | { readonly kind: "exile-target-permanent" }
+  | { readonly kind: "exile-target-permanent"; readonly gainSourceControl?: "target-controller" }
   | { readonly kind: "exile-target-nontoken-creature" }
+  /** Exile a controlled creature, then return it under its controller's control (CR 400.7). */
+  | { readonly kind: "blink-target-creature" }
   | { readonly kind: "exile-target-graveyard" }
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "return-target-permanent" }
   | { readonly kind: "put-target-creature-on-library-top" }
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
+  /** Return N random instant/sorcery cards from your graveyard to hand. */
+  | { readonly kind: "return-random-instant-or-sorcery-from-graveyard"; readonly amount: number }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
+  | { readonly kind: "return-target-creature-card-from-graveyard-threshold"; readonly threshold: number }
   | { readonly kind: "return-target-legendary-creature-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-permanent-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-land-card-from-graveyard-to-battlefield" }
@@ -431,6 +444,8 @@ export type SpellEffect =
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
+  /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
+  | { readonly kind: "tap-or-untap-target-permanent" }
   | { readonly kind: "target-cant-block" }
   | { readonly kind: "add-mana"; readonly pool: Readonly<Record<string, number>> }
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
@@ -438,6 +453,10 @@ export type SpellEffect =
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
+  /** Reveals one library card, moves it to hand, then gains its mana value. */
+  | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
+  /** Reveals until a card type is found, then sends the rest to a zone. */
+  | { readonly kind: "reveal-until-type-to-hand"; readonly type: CardType; readonly restDestination: "graveyard" }
   | { readonly kind: "reveal-top-card-conditional"; readonly creatureToken: TokenDefinition; readonly landDestination: "battlefield"; readonly fallbackLife: number }
   | {
       readonly kind: "search-library";
@@ -1063,6 +1082,13 @@ function parseKeywordList(text: string): EnforcedKeyword[] {
 
 function parseStaticKeywordGrant(line: string): StaticKeywordGrant[] {
   const clean = line.trim().replace(/\.$/, "");
+  const graveyard = new RegExp(`^as long as (?:this card|~) is in your graveyard and you control (?:a|an) ([A-Za-z][A-Za-z'’ -]*), creatures you control have ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
+  if (graveyard) return parseKeywordList(graveyard[2]!).map((keyword) => ({
+    scope: "creatures-you-control" as const,
+    keyword,
+    sourceZone: "graveyard" as const,
+    requiresControlledLandSubtype: graveyard[1]!.trim()
+  }));
   const all = new RegExp(`^all creatures (?:have|gain) ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
   if (all) return parseKeywordList(all[1]!).map((keyword) => ({ scope: "all-creatures" as const, keyword }));
   const own = new RegExp(`^(other )?creatures you control (?:have|gain) ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
@@ -1137,12 +1163,15 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // duplicate card-text patterns in the activation-cost parser.
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
   const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
+  const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
   const recognized = selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
     ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
     : revealTopConditional
     ? { effect: revealTopConditional, target: "none" as TargetKind }
+    : revealTopToHand
+    ? { effect: revealTopToHand, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 
@@ -1352,6 +1381,36 @@ function parseLandScaledToken(text: string): SpellEffect | null {
   return base?.kind === "create-token" ? { ...base, amount: "lands-you-control" } : null;
 }
 
+/**
+ * Shared top-of-library selection primitive (CR 401.5, 401.4, 701.20e): disclose a
+ * bounded private slice, optionally select one card of the requested types,
+ * then order every other card on the bottom. The amount is deliberately a
+ * parameter so Augur of Bolas and future look-top templates share one rule.
+ */
+function parseLookTopSelection(text: string): SpellEffect | null {
+  const match = /^Look at the top (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) cards? of your library\. You may reveal (?:an? )?(.+?) card from among them and put it into your hand\. Put the rest on the bottom of your library in any order$/i.exec(text.trim().replace(/\.$/, ""));
+  if (!match) return null;
+  const amount = toNumber(match[1]);
+  if (amount === null || amount < 0) return null;
+  const types = match[2]!
+    .split(/\s+or\s+/i)
+    .map((type) => type.trim())
+    .filter((type): type is CardType => CARD_TYPES.some((cardType) => cardType.toLowerCase() === type.toLowerCase()))
+    .map((type) => CARD_TYPES.find((cardType) => cardType.toLowerCase() === type.toLowerCase())!);
+  if (!types.length) return null;
+  return { kind: "look-top-select", amount, types, destination: "hand" };
+}
+
+function parseExileAndTransferSource(text: string): SpellEffect | null {
+  if (/^Exile target artifact or enchantment$/i.test(text.trim().replace(/\.$/, ""))) {
+    return { kind: "exile-target-permanent" };
+  }
+  if (/^Exile target artifact or enchantment\. If you do, its controller gains control of (?:this enchantment|~)$/i.test(text.trim())) {
+    return { kind: "exile-target-permanent", gainSourceControl: "target-controller" };
+  }
+  return null;
+}
+
 function parseMultiBasicSearch(text: string): SpellEffect | null {
   const normalized = text.replace(/\s+/g, " ").trim();
   if (/^Search your library for up to two basic land cards, (?:reveal those cards, )?put one onto the battlefield tapped and (?:the other|the rest) into your hand, then shuffle\.?$/i.test(normalized)) {
@@ -1416,6 +1475,24 @@ function parseRevealTopCardConditional(text: string): SpellEffect | null {
     creatureToken: { name: "Saproling", typeLine: "Creature — Saproling", power: 1, toughness: 1, colors: ["G"], keywords: [], tapped: false },
     landDestination: "battlefield",
     fallbackLife: 2
+  };
+}
+
+function parseRevealTopCardToHandAndGainManaValue(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value\.?$/i.test(normalized)) return null;
+  return { kind: "reveal-top-card-to-hand-and-gain-mana-value" };
+}
+
+function parseRevealUntilTypeToHand(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const match = /^Reveal cards from the top of your library until you reveal a (artifact|creature|enchantment|instant|land|planeswalker|sorcery|battle) card\. Put that card into your hand and the rest into your graveyard\.?$/i.exec(normalized);
+  if (!match) return null;
+  const rawType = match[1]!;
+  return {
+    kind: "reveal-until-type-to-hand",
+    type: rawType[0]!.toUpperCase() + rawType.slice(1) as CardType,
+    restDestination: "graveyard"
   };
 }
 
@@ -1660,6 +1737,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^That player draws an additional card$/i.test(text)) {
     return { effect: { kind: "draw-active-player" }, target: "none" };
   }
+  if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
+    return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };
+  }
+  const revealUntil = parseRevealUntilTypeToHand(text);
+  if (revealUntil) return { effect: revealUntil, target: "none" };
   if (/^Draw a card for each tapped creature target opponent controls$/i.test(text)) {
     return { effect: { kind: "draw-equal-tapped-creatures" }, target: "opponent" };
   }
@@ -1997,6 +2079,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
   }
   if (/^(?:You may )?exile target nontoken creature$/i.test(text)) return { effect: { kind: "exile-target-nontoken-creature" }, target: "nontoken-creature" };
+  if (/^Exile target creature you control, then return that card to the battlefield under your control$/i.test(text)) {
+    return { effect: { kind: "blink-target-creature" }, target: "creature-you-control" };
+  }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
@@ -2049,6 +2134,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Exile target player's graveyard$/i.test(text)) return { effect: { kind: "exile-target-graveyard" }, target: "player" };
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
+  const randomSpellReturn = /^(?:Return|Put) (a|an|one|two|three|four|five|\d+) instant or sorcery cards? at random from your graveyard to your hand$/i.exec(text);
+  if (randomSpellReturn) {
+    const amount = toNumber(randomSpellReturn[1]!);
+    if (amount !== null && amount > 0) return { effect: { kind: "return-random-instant-or-sorcery-from-graveyard", amount }, target: "none" };
+  }
    if (/^Put target creature on top of its owner's library$/i.test(text)) return { effect: { kind: "put-target-creature-on-library-top" }, target: "creature" };
    if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
   if (/^Return target artifact to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "artifact" };
@@ -2104,6 +2194,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
+  if (/^Tap or untap target permanent$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
   if ((match = /^sacrifice it unless you return an untapped (Plains|Island|Swamp|Mountain|Forest) you control to its owner'?s hand$/i.exec(text))) {
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
@@ -2117,6 +2208,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Destroy all artifacts and enchantments, then put a (\+1\/\+1|-1\/-1) counter on ~ for each permanent destroyed this way$/i.exec(text))) {
     return { effect: { kind: "destroy-all-artifacts-enchantments-add-counters", counter: match[1]! }, target: "none" };
   }
+  const exileAndTransfer = parseExileAndTransferSource(text);
+  if (exileAndTransfer) return { effect: exileAndTransfer, target: "artifact-or-enchantment" };
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
@@ -2199,6 +2292,14 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  const thresholdReturn = /^Return target creature card from your graveyard to your hand\. Threshold [—–-] Return that card from your graveyard to the battlefield instead if there are (one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more cards in your graveyard\.?$/i.exec(joined);
+  const threshold = thresholdReturn ? toNumber(thresholdReturn[1]!) : null;
+  if (threshold !== null) {
+    return {
+      effects: [{ kind: "return-target-creature-card-from-graveyard-threshold", threshold }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature-card-in-your-graveyard", unimplementedText: [], covered: true
     };
   }
   if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness\.$/i.test(joined)) {
@@ -2307,7 +2408,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
     if (/^(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^instant and sorcery spells cost \{\d+\} less to cast\.?$/i.test(line)) continue;
-    if (/^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
+    const chooseOneOrBoth = /^Choose one or both(?:\s+[—–-�])?\s*$/i.test(line);
+    if (chooseOneOrBoth || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
       const unimplementedChoices: string[] = [];
@@ -2327,6 +2429,22 @@ function recognizeText(text: string): RecognizedText {
       }
       if (!invalid && choices.length > 0 && choices.length === cursor - start) {
         modalChoices.push(...choices);
+        if (chooseOneOrBoth) {
+          const targetKinds = choices.map((choice) => choice.targetKind)
+            .filter((kind): kind is Exclude<TargetKind, "none"> => kind !== "none");
+          let targetOffset = 0;
+          modalChoices.push({
+            index: choices.length,
+            text: "Choose both",
+            effect: {
+              kind: "compound",
+              effects: choices.map((choice) => choice.effect),
+              targetOffsets: choices.map((choice) => choice.targetKind === "none" ? null : targetOffset++)
+            },
+            targetKind: targetKinds[0] ?? "none",
+            ...(targetKinds.length ? { targetKinds } : {})
+          });
+        }
       } else {
         // Keep the unsupported branches, not only the modal heading. This makes
         // the primitive roadmap identify the real missing effects instead of
@@ -2500,7 +2618,11 @@ function recognizeText(text: string): RecognizedText {
       const recognized = (payCost && payCost.hasVariable) ? null
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
-        : recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
+        : (() => {
+          const executableText = optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
+          const lookTop = parseLookTopSelection(executableText);
+          return lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
+        })();
       if (recognized) {
         triggers.push({
           event: triggered.event,

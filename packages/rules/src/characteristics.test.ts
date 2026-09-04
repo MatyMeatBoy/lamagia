@@ -184,6 +184,22 @@ describe("shared charm parsing", () => {
     expect(profile.modalChoices[2]).toMatchObject({ effect: { kind: "tap-all-creatures-target-player" }, targetKind: "player" });
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("adds a reusable synthetic mode for Choose one or both", () => {
+    const profile = cardProfile(card({
+      name: "Soul Manipulation",
+      type_line: "Instant",
+      oracle_text: "Choose one or both —\n• Counter target creature spell.\n• Return target creature card from your graveyard to your hand."
+    }));
+    expect(profile.modalChoices).toHaveLength(3);
+    expect(profile.modalChoices[2]).toMatchObject({
+      text: "Choose both",
+      effect: { kind: "compound", targetOffsets: [0, 1] },
+      targetKind: "creature-spell",
+      targetKinds: ["creature-spell", "creature-card-in-your-graveyard"]
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("C13 sacrifice-card parsing", () => {
@@ -319,6 +335,20 @@ describe("self-shuffle replacement", () => {
   });
 });
 
+describe("threshold return", () => {
+  it("keeps Stitch Together's threshold as a reusable numeric operand", () => {
+    const profile = cardProfile(card({
+      name: "Stitch Together", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2,
+      oracle_text: "Return target creature card from your graveyard to your hand. Threshold — Return that card from your graveyard to the battlefield instead if there are seven or more cards in your graveyard."
+    }));
+    expect(profile).toMatchObject({
+      targetKind: "creature-card-in-your-graveyard",
+      effects: [{ kind: "return-target-creature-card-from-graveyard-threshold", threshold: 7 }],
+      fullyImplemented: true
+    });
+  });
+});
+
 describe("scry", () => {
   it("recognises the reusable Scry 1 effect", () => {
     const profile = cardProfile(card({
@@ -340,6 +370,36 @@ describe("scry", () => {
       expect(profile.effects).toEqual([{ kind: "scry", amount }]);
       expect(profile.fullyImplemented).toBe(true);
     }
+  });
+});
+
+describe("look-top selection", () => {
+  it("parameterizes Augur's top-three instant/sorcery selection", () => {
+    const profile = cardProfile(card({
+      name: "Augur of Bolas",
+      type_line: "Creature — Merfolk Wizard",
+      oracle_text: "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield",
+      effect: { kind: "look-top-select", amount: 3, types: ["Instant", "Sorcery"], destination: "hand" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
+describe("Act of Authority", () => {
+  it("reuses typed exile and transfers its source to the target controller", () => {
+    const profile = cardProfile(card({
+      name: "Act of Authority",
+      type_line: "Enchantment",
+      oracle_text: "When this enchantment enters, you may exile target artifact or enchantment.\nAt the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of this enchantment."
+    }));
+    expect(profile.triggers).toMatchObject([
+      { event: "enters-battlefield", optional: true, targetKind: "artifact-or-enchantment", effect: { kind: "exile-target-permanent" } },
+      { event: "upkeep", optional: true, targetKind: "artifact-or-enchantment", effect: { kind: "exile-target-permanent", gainSourceControl: "target-controller" } }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
   });
 });
 
@@ -547,6 +607,35 @@ describe("effect recognition", () => {
     }));
     expect(sphinx.triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", optional: true });
     expect(sphinx.fullyImplemented).toBe(true);
+  });
+
+  it("reuses the top-card reveal primitive with a mana-value amount", () => {
+    const profile = cardProfile(card({
+      name: "Augury Adept", type_line: "Creature — Kithkin Wizard", mana_cost: "{1}{W/U}{W/U}", cmc: 3,
+      power: "2", toughness: "2",
+      oracle_text: "Whenever this creature deals combat damage to a player, reveal the top card of your library and put that card into your hand. You gain life equal to its mana value."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "deals-combat-damage-to-player",
+      subject: "self",
+      effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("reuses the reveal-until type primitive for Foster", () => {
+    const profile = cardProfile(card({
+      name: "Foster", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3,
+      oracle_text: "Whenever a creature you control dies, you may pay {1}. If you do, reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest into your graveyard."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "dies",
+      subject: "creature-you-control",
+      optional: true,
+      payCost: { raw: "{1}" },
+      effect: { kind: "reveal-until-type-to-hand", type: "Creature", restDestination: "graveyard" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
   });
 
   it("treats a keyword-only body as fully covered", () => {
