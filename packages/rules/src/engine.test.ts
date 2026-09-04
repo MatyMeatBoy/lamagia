@@ -1170,6 +1170,17 @@ describe("casting", () => {
     expect(game.players[0]!.exile.some((card) => card.name === "Deep Analysis")).toBe(true);
   });
 
+  it("does not offer Flashback when its printed life payment is unavailable", () => {
+    let game = readyToCast([], [ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({
+      life: 2,
+      graveyard: toHand(0, [C13_DEEP_ANALYSIS()], "analysis-too-little-life")
+    }));
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast"
+      && entry.action.fromGraveyard
+      && entry.action.cardId === "analysis-too-little-life-0")).toBe(false);
+  });
+
   it("offers and pays a chosen untapped Wizard for Azami", () => {
     let game = readyToCast([], [C13_AZAMI(), AZAMI_WIZARD(), BEAR()]);
     const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;
