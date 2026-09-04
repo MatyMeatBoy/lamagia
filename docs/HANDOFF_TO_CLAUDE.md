@@ -1191,3 +1191,17 @@ is paid together with mana (CR 702.34, 118.8).
 
 Coverage after this refinement: **170/356 C13 cards (47.8%)** and
 **8,114/38,711 globally**.
+
+### Integrator checkpoint: C13 multi-basic search batch accepted (2026-09-04)
+
+Integrated the fork's 11-commit functional batch for multi-card basic-land
+searches. Cultivate can place one found land tapped onto the battlefield and
+the other into hand; Armillary Sphere and Burnished Hart can choose multiple
+basic lands, with deterministic ordering, optional early completion, private
+legal-candidate projection, and client search progress. Coverage was regenerated
+locally instead of importing stale snapshots.
+
+Validation: `npm run check` PASS; `npm test` PASS (**366 rules tests**,
+simulator, **38 Oracle Python tests**). C13 is **171/356 (48.0%)** and global
+export is **8,121/38,711**. The fork's client glyph warning was not reproduced
+on the integrator branch.
