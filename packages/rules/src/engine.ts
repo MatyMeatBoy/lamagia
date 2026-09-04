@@ -129,6 +129,8 @@ export interface StackObject {
   readonly label: string;
   readonly targets: readonly Target[];
   readonly fromCommandZone: boolean;
+  /** The spell was cast from a graveyard using Flashback (CR 702.34). */
+  readonly flashback?: boolean;
   readonly variableValue: number;
   readonly countered: boolean;
   /** Seat that countered this spell with a replacement-to-battlefield effect. */
@@ -261,6 +263,8 @@ export type PendingChoice =
       readonly search: Extract<SpellEffect, { kind: "search-library" }>;
       /** Spells move to the graveyard after resolving; activated sources already paid their costs. */
       readonly returnSourceToGraveyard: boolean;
+      /** Flashback replaces that destination with exile when the search choice finishes. */
+      readonly exileSourceAfterResolution: boolean;
     }
   | {
       readonly type: "discard-cards";
@@ -274,7 +278,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly fromGraveyard?: boolean }
   | { readonly type: "cycle"; readonly cardId: string }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType }
@@ -1942,6 +1946,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
 // Stack resolution
 // ---------------------------------------------------------------------------
 
+function sendSpellToOwnerZone(state: GameState, object: StackObject): GameState {
+  return withPlayer(state, object.card.owner, (player) => object.flashback
+    ? { ...player, exile: [...player.exile, object.card] }
+    : { ...player, graveyard: [...player.graveyard, object.card] });
+}
+
 function resolveTop(state: GameState): GameState {
   const object = state.stack.at(-1);
   if (!object) return state;
@@ -1956,7 +1966,7 @@ function resolveTop(state: GameState): GameState {
       const entered = putOntoBattlefield(next, object.counteredToBattlefieldController, object.card, false);
       return logged(entered, object.counteredToBattlefieldController, `${object.card.name} entra al campo de batalla bajo su control.`);
     }
-    next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+    next = sendSpellToOwnerZone(next, object);
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
   }
 
@@ -1969,7 +1979,7 @@ function resolveTop(state: GameState): GameState {
   if (object.targets.length && targetsGone) {
     if (object.trigger) return logged(next, object.controller, `La habilidad de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
     if (object.activated) return logged(next, object.controller, `La habilidad activada de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
-    next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+    next = sendSpellToOwnerZone(next, object);
     return logged(next, object.controller, `${object.card.name} se contrarresta: sus objetivos ya no son legales.`);
   }
 
@@ -2021,7 +2031,7 @@ function resolveTop(state: GameState): GameState {
       })
       .map((card) => card.instance_id);
     if (!options.length) {
-      if (!object.activated) next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+      if (!object.activated) next = sendSpellToOwnerZone(next, object);
       return logged(next, object.controller, `${object.card.name} se resuelve: no hay una carta válida en la biblioteca.`);
     }
     return {
@@ -2033,7 +2043,8 @@ function resolveTop(state: GameState): GameState {
         optionIds: options,
         sourceCard: object.card,
         search,
-        returnSourceToGraveyard: !object.activated
+        returnSourceToGraveyard: !object.activated,
+        exileSourceAfterResolution: object.flashback
       }
     };
   }
@@ -2046,7 +2057,7 @@ function resolveTop(state: GameState): GameState {
   if (selectedEffect) {
     const resolved = applyEffect(next, object, selectedEffect);
     next = logged(resolved, object.controller, `Se resuelve el modo elegido de ${object.card.name}.`);
-    return withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+    return sendSpellToOwnerZone(next, object);
   }
 
   if (profile.isPermanent) {
@@ -2059,8 +2070,7 @@ function resolveTop(state: GameState): GameState {
   if (!profile.effects.length) {
     next = logged(next, object.controller, `${object.card.name} se resuelve sin efecto: su texto todavía no está implementado.`);
   }
-  next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
-  return next;
+  return sendSpellToOwnerZone(next, object);
 }
 
 // ---------------------------------------------------------------------------
@@ -2467,15 +2477,18 @@ function sorcerySpeed(state: GameState, seat: SeatId): boolean {
   return state.activeSeat === seat && MAIN_STEPS.includes(state.step) && state.stack.length === 0;
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none"> } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, flashback = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none"> } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
-  if (!profile.castableFromHand || !profile.cost) return { legal: false };
+  const cost = flashback ? profile.flashbackCost : profile.cost;
+  if (flashback && (profile.isPermanent || !profile.flashbackCost)) return { legal: false };
+  if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
+  if (!cost) return { legal: false };
   if (!Number.isInteger(variableValue) || variableValue < 0) return { legal: false, note: "El valor de X debe ser un entero no negativo." };
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = fromCommandZone ? commanderTax(player, card.instance_id) : 0;
-  const plan = planManaPayment(profile.cost, player, { additionalGeneric, variableValue, state });
+  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state });
   if (!plan) return { legal: false };
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -2615,6 +2628,27 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         label: `${profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
         manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0),
+        ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.note ? { note: check.note } : {})
+      });
+    }
+  }
+
+  for (const card of player.graveyard) {
+    const profile = cardProfile(card);
+    const cost = profile.flashbackCost;
+    if (!cost || profile.isPermanent) continue;
+    const values = cost.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
+    const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
+    for (const variableValue of values) for (const mode of modes) {
+      const check = castableCard(state, seat, card, false, variableValue, mode, true);
+      if (!check.legal) continue;
+      const modal = mode === undefined ? undefined : profile.modalChoices[mode];
+      actions.push({
+        action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, ...(cost.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }) },
+        label: `Lanzar ${card.name} con Flashback${modal ? ` — ${modal.text}` : ""}`,
+        cardId: card.instance_id,
+        manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.note ? { note: check.note } : {})
       });
@@ -2818,7 +2852,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, flashback = false): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -2826,6 +2860,7 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     label: card.name,
     targets,
     fromCommandZone,
+    flashback,
     variableValue,
     countered: false,
     ...(selectedEffect ? { selectedEffect } : {})
@@ -2842,6 +2877,7 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
     label: `${source.card.name} · habilidad activada`,
     targets,
     fromCommandZone: false,
+    flashback: false,
     variableValue: 0,
     countered: false,
     activated: ability,
@@ -3121,16 +3157,20 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
 
 function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast" }>): GameState {
   const player = playerAt(state, seat);
-  const fromHand = player.hand.find((card) => card.instance_id === action.cardId);
-  const fromCommand = player.commandZone.find((card) => card.instance_id === action.cardId);
-  const card = fromHand ?? fromCommand;
-  if (!card) throw new Error("Esa carta no está en tu mano ni en tu zona de mando.");
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode);
+  const fromGraveyard = action.fromGraveyard === true;
+  const fromHand = fromGraveyard ? undefined : player.hand.find((card) => card.instance_id === action.cardId);
+  const fromCommand = fromGraveyard ? undefined : player.commandZone.find((card) => card.instance_id === action.cardId);
+  const fromYard = fromGraveyard ? player.graveyard.find((card) => card.instance_id === action.cardId) : undefined;
+  const card = fromHand ?? fromCommand ?? fromYard;
+  if (!card) throw new Error("Esa carta no está en tu mano, cementerio ni zona de mando.");
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, fromGraveyard);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
+  const cost = fromGraveyard ? profile.flashbackCost : profile.cost;
+  if (!cost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = fromCommand ? commanderTax(player, card.instance_id) : 0;
-  const plan = planManaPayment(profile.cost!, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state });
+  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state });
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
@@ -3144,19 +3184,20 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   }
 
   let next = applyManaPlan(state, seat, plan);
-  const payment = payCost(profile.cost!, playerAt(next, seat).manaPool, { additionalGeneric, availableLife: playerAt(next, seat).life });
+  const payment = payCost(cost, playerAt(next, seat).manaPool, { additionalGeneric, availableLife: playerAt(next, seat).life });
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
   next = withPlayer(next, seat, (current) => ({
     ...current,
     manaPool: payment.remaining,
     life: current.life - payment.lifePaid,
-    hand: current.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
-    commandZone: current.commandZone.filter((candidate) => candidate.instance_id !== card.instance_id),
+    hand: fromHand ? current.hand.filter((candidate) => candidate.instance_id !== card.instance_id) : current.hand,
+    graveyard: fromYard ? current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id) : current.graveyard,
+    commandZone: fromCommand ? current.commandZone.filter((candidate) => candidate.instance_id !== card.instance_id) : current.commandZone,
     ...(fromCommand ? { commanderCasts: { ...current.commanderCasts, [card.instance_id]: (current.commanderCasts[card.instance_id] ?? 0) + 1 } } : {})
   }));
   const selectedEffect = profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
-  next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect);
+  next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, fromGraveyard);
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card });
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}.`);
 }
@@ -3229,6 +3270,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
         label: choice.sourceCard.name + " · habilidad opcional",
         targets: choice.targets ?? [],
         fromCommandZone: false,
+        flashback: false,
         variableValue: 0,
         countered: false,
         sourcePermanentId: choice.sourcePermanentId
@@ -3261,6 +3303,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
    label: `${choice.sourceCard.name} · habilidad opcional`,
     targets: choice.targets ?? [],
    fromCommandZone: false,
+   flashback: false,
    variableValue: 0,
     countered: false,
    sourcePermanentId: choice.sourcePermanentId
@@ -3294,7 +3337,8 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
       ...current.graveyard,
       ...(choice.search.destination === "graveyard" ? [selected] : []),
       ...(choice.returnSourceToGraveyard ? [choice.sourceCard] : [])
-    ]
+    ],
+    exile: choice.exileSourceAfterResolution ? [...current.exile, choice.sourceCard] : current.exile
   }));
   if (choice.search.destination === "battlefield") {
     next = putOntoBattlefield(next, seat, selected, false, choice.search.tapped === true);
@@ -3416,6 +3460,7 @@ function triggerStackObject(trigger: TriggerInstance, targets: readonly Target[]
     label: `${trigger.sourceCard.name} · ${TRIGGER_EVENT_LABELS[trigger.definition.event]}`,
     targets,
     fromCommandZone: false,
+    flashback: false,
     variableValue: 0,
     countered: false,
     trigger
