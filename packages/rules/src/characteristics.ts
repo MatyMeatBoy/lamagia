@@ -326,6 +326,7 @@ export type SpellEffect =
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "modify-all-creatures-minus-X" }
   | { readonly kind: "modify-all-creatures-per-land"; readonly power: number; readonly toughness: number; readonly subtype: string }
+  | { readonly kind: "modify-target-creature-morbid"; readonly power: number; readonly toughness: number; readonly morbidPower: number; readonly morbidToughness: number }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
@@ -1922,6 +1923,14 @@ function recognizeText(text: string): RecognizedText {
     };
   }
   // "Destroy target creature. (It can't be regenerated.) Its controller creates <token>." (Pongify, Afterlife).
+  // "Target creature gets -1/-1 ... Morbid — that creature gets -13/-13 ... instead if a creature died this turn." (Tragic Slip).
+  const morbidPump = /^Target creature gets (-\d+)\/(-\d+) until end of turn\.\s*Morbid\s*[—–-]\s*That creature gets (-\d+)\/(-\d+) until end of turn instead if a creature died this turn\.$/i.exec(joined);
+  if (morbidPump) {
+    return {
+      effects: [{ kind: "modify-target-creature-morbid", power: Number(morbidPump[1]), toughness: Number(morbidPump[2]), morbidPower: Number(morbidPump[3]), morbidToughness: Number(morbidPump[4]) }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
+    };
+  }
   const destroyThenToken = /^Destroy target creature\.(?:\s+It can'?t be regenerated\.)?\s+Its controller creates (.+?)\.?$/i.exec(joined);
   if (destroyThenToken) {
     const token = parseCreateToken(`Create ${destroyThenToken[1]!}`);

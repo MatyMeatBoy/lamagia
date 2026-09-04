@@ -247,6 +247,8 @@ export interface GameState {
   readonly startingSeat: SeatId;
   /** A replacement-effect choice that must be completed before priority resumes. */
   readonly pendingChoice: PendingChoice | null;
+  /** Creatures that died (battlefield → graveyard) this turn — powers Morbid (CR 702.66). */
+  readonly creaturesDiedThisTurn: number;
 }
 
 export type PendingChoice =
@@ -879,7 +881,8 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     rngState,
     version: 0,
     startingSeat: 0,
-    pendingChoice: null
+    pendingChoice: null,
+    creaturesDiedThisTurn: 0
   };
   const opened = logged(base, null, `Partida creada con ${players.length} jugadores · ${startingLife} vidas · mano inicial de ${openingHand}.`);
   return settle(opened);
@@ -943,6 +946,7 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
   }
   if (permanent.card.token) {
     if (zone === "graveyard" && isCreature(cardProfile(permanent.card))) {
+      next = { ...next, creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1 };
       next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card }, [permanent]);
     }
     return logged(next, permanent.controller, `${permanent.card.name} deja el campo de batalla.`);
@@ -952,6 +956,7 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
   // "Dies" is specifically battlefield → graveyard (rule 700.4). A commander
   // redirected to the command zone above never reaches this point.
   if (zone === "graveyard" && isCreature(cardProfile(permanent.card))) {
+    next = { ...next, creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1 };
     next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card }, [permanent]);
   }
   return next;
@@ -1644,6 +1649,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === permanent.instance_id);
+    }
+    case "modify-target-creature-morbid": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      const morbid = state.creaturesDiedThisTurn > 0;
+      const power = morbid ? effect.morbidPower : effect.power;
+      const toughness = morbid ? effect.morbidToughness : effect.toughness;
+      return modifyCreatures(state, power, toughness, (candidate) => candidate.instance_id === permanent.instance_id);
     }
     case "modify-source-creature": {
       const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
@@ -3007,6 +3022,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
 
   switch (step) {
     case "untap": {
+      next = { ...next, creaturesDiedThisTurn: 0 };
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,
