@@ -577,6 +577,13 @@ silently falling back to another card. Python compilation preserves
 clusters. These behaviours follow CR 117.3b, 400.7, 602.2b, and 603.2–603.3;
 printed text outside the closed templates remains pending.
 
+The next incremental extension adds `permanent-card-in-your-graveyard` and
+`permanent-card-in-a-graveyard` target families. They accept only cards whose
+current characteristics are permanents and put the card onto the battlefield
+under the resolving effect's controller; ownership and graveyard removal stay
+with the original card owner. This keeps cross-graveyard visibility explicit
+and player-scoped.
+
 Validation: `npm run check --workspace=@prossh/rules`, `npm run
 test --workspace=@prossh/rules`, and `python
 tools/rules/test_compile_oracle_effects.py` PASS; latest rules result 274
