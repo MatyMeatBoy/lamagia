@@ -1680,6 +1680,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
     return { effect: { kind: "devotion-drain", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };
   }
+  if ((match = /^sacrifice a creature other than ~, then each opponent loses life equal to the sacrificed creature's power\.\s*if you can't sacrifice a creature, tap ~ and you lose (\d+) life$/i.exec(text))) {
+    return { effect: { kind: "xathrid-upkeep", fallbackLife: Number(match[1]) }, target: "none" };
+  }
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
   }
