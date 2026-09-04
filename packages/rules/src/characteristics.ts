@@ -434,6 +434,10 @@ export interface TriggerDefinition {
   readonly spellType?: "creature";
   /** Colour filter on a spell-cast trigger (Titania's Chosen). */
   readonly spellColor?: string;
+  /** Creature-subtype filter on a spell-cast trigger (Lys Alana Huntmaster). */
+  readonly spellSubtype?: string;
+  /** Only nontoken permanents fire this trigger (Soul of the Harvest). */
+  readonly nontoken?: boolean;
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
   /** "if its evoke cost was paid" gate on the sacrifice trigger (CR 702.34c). */
@@ -1127,6 +1131,8 @@ const TRIGGER_TEMPLATES: readonly {
   readonly pattern: RegExp;
   readonly spellType?: "creature";
   readonly spellColor?: string;
+  readonly spellSubtype?: string;
+  readonly nontoken?: boolean;
 }[] = [
   { event: "life-gained", subject: "you", pattern: /^whenever\s+you\s+gain\s+life,?\s*(.+)$/i },
   { event: "life-lost", subject: "you", pattern: /^whenever\s+you\s+lose\s+life,?\s*(.+)$/i },
@@ -1160,6 +1166,8 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
 
   // A player is the subject.
+  { event: "spell-cast", subject: "you", spellSubtype: "elf", pattern: /^whenever\s+you\s+cast\s+an\s+elf\s+spell,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellColor: "W", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+white\s+spell,?\s*(.+)$/i },
@@ -1181,13 +1189,13 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i }
 ];
 
-function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string; spellType?: "creature"; spellColor?: string } | null {
+function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string; spellType?: "creature"; spellColor?: string; spellSubtype?: string; nontoken?: boolean } | null {
   // Landfall is a keyword ability word; its rules-bearing trigger follows the
   // dash and uses the same enters-battlefield event (CR 603.1, 603.2).
   const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
-    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}) };
+    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}), ...(template.spellSubtype ? { spellSubtype: template.spellSubtype } : {}), ...(template.nontoken ? { nontoken: true } : {}) };
   }
   return null;
 }
@@ -1806,6 +1814,8 @@ function recognizeText(text: string): RecognizedText {
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
+          ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),
+          ...(triggered.nontoken ? { nontoken: true } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
           ...(payCost && payCost.symbols.length ? { payCost } : {})
         });
