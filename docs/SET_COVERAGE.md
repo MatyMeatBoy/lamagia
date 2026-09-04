@@ -22563,7 +22563,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,29
 - [ ] Murkfiend Liege — `61d28182-498f-4bbc-bb7a-c5e1ef872dda`
 - [ ] Myr Battlesphere — `c53ba31a-ba27-4e17-9a92-311acb1cab29`
 - [ ] Mystic Barrier — `0caf42f5-abff-48aa-9bbf-df6cba169ef3`
-- [ ] Naya Charm — `20cc0f3e-de69-4e5f-88b3-ae7e6c6b5996`
+- [x] Naya Charm — `20cc0f3e-de69-4e5f-88b3-ae7e6c6b5996`
 - [ ] Naya Soulbeast — `5ea0c608-2c56-4889-a5d3-d435df515950`
 - [ ] Nekusar, the Mindrazer — `8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6`
 - [ ] Night Soil — `3165fe8f-52d7-40f7-bb14-8f4300a564e6`
