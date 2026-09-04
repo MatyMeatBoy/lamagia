@@ -362,6 +362,7 @@ export type TriggerEvent =
   | "becomes-tapped"
   | "spell-cast"
   | "card-cycled"
+  | "card-drawn"
   | "upkeep"
   | "draw-step"
   | "end-step"
@@ -400,7 +401,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "deals-combat-damage-to-player": "habilidad de daño de combate",
   "becomes-tapped": "habilidad de giro",
   "spell-cast": "habilidad de lanzamiento",
-  "card-cycled": "habilidad de cycling",
+ "card-cycled": "habilidad de cycling",
+  "card-drawn": "habilidad de robo",
   upkeep: "habilidad de mantenimiento",
   "draw-step": "habilidad del paso de robo",
   "end-step": "habilidad del paso final",
@@ -422,6 +424,8 @@ export interface TriggerDefinition {
    */
   readonly targetKind: TargetKind;
   readonly sourceText: string;
+  /** Mana that must be paid when an optional trigger is accepted. */
+  readonly manaCost?: ManaCost;
   readonly condition?:
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number };
@@ -1050,7 +1054,8 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "spell-cast", subject: "each-player", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", pattern: /^whenever\s+you\s+cast\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+spell,?\s*(.+)$/i },
-  { event: "card-cycled", subject: "self", pattern: /^when\s+you\s+cycle\s+(?:this\s+card|~),?\s*(.+)$/i },
+ { event: "card-cycled", subject: "self", pattern: /^when\s+you\s+cycle\s+(?:this\s+card|~),?\s*(.+)$/i },
+  { event: "card-drawn", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+draws\s+a\s+card,?\s*(.+)$/i },
 
   // Turn-structure triggers (CR 603.2b).
   { event: "upkeep", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+upkeep,?\s*(.+)$/i },
@@ -1537,9 +1542,11 @@ function recognizeText(text: string): RecognizedText {
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
-      const effectText = powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? triggered.effectText;
-      const optional = /^you\s+may\b/i.test(effectText);
-      const recognized = recognizeSentence(optional ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
+      const conditionalPayment = /^you\s+may\s+pay\s+((?:\{[^}]+\})+)\.\s*if\s+you\s+do,\s*(.+)$/i.exec(triggered.effectText);
+      const paymentCost = conditionalPayment ? parseManaCost(conditionalPayment[1]!) : null;
+      const effectText = powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? conditionalPayment?.[2]?.trim() ?? triggered.effectText;
+      const optional = Boolean(conditionalPayment) || /^you\s+may\b/i.test(effectText);
+      const recognized = recognizeSentence(optional && !conditionalPayment ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {
         triggers.push({
           event: triggered.event,
@@ -1548,6 +1555,7 @@ function recognizeText(text: string): RecognizedText {
           optional,
           targetKind: recognized.target,
           sourceText: line,
+          ...(paymentCost ? { manaCost: paymentCost } : {}),
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {})
