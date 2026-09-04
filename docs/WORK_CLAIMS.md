@@ -17,6 +17,7 @@ feature name.
 
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
+| `c13-wonder-graveyard-static` | Graveyard static keyword grant conditioned on controlling an Island for Wonder (`232284f7-c623-4895-9ab9-8b1a39926830`) | `codex/c13-wonder-graveyard` | active | 2026-09-04 |
 | `rules-land-search` | Landcycling variants and land-subtype search resolution | `feat/activated-abilities-and-triggers` | merged (`7c7f77c`) | 2026-09-03 |
 | `rules-equipment` | Equip actions, attachment state, and Equipment static bonuses | `codex/c13-equipment-cluster` | merged (`f61a096`) | 2026-09-03 |
 | `rules-c13-reprint-equivalence` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | `codex/c13-equipment-cluster` | merged (`44d0e78`) | 2026-09-04 |
