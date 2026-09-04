@@ -729,10 +729,13 @@ Command Tower's commander-color-identity restriction, Chaos Warp's owner-library
 replacement, Decree of Pain's creature sweep/draw count plus cycling -2/-2
 trigger, Desertion's artifact/creature spell replacement to the battlefield,
 Edric's optional combat-damage draw trigger, and Vela the Night-Clad's
-intimidate/static grant plus leaves-the-battlefield trigger. These use stable
-card profiles, deterministic state transitions, and scenario tests; Maelstrom
-Wanderer's cascade remains explicitly unimplemented. See `docs/WORK_CLAIMS.md`
-for active claims and `docs/SET_COVERAGE.md` for the remaining Arsenal cards.
+intimidate/static grant plus leaves-the-battlefield trigger, Mind's Eye's
+opponent-draw payment trigger, and Duplicant's nontoken-creature ETB imprint
+and copied power/toughness. These use stable card profiles, deterministic state
+transitions, and scenario tests; Rhystic Study, Maelstrom Wanderer's cascade,
+and several other Arsenal cards remain explicitly unimplemented. See
+`docs/WORK_CLAIMS.md` for active claims and `docs/SET_COVERAGE.md` for the
+remaining Arsenal cards.
 
 The current upstream branch also contains newly generated reusable clusters
 for target-creature modification, landwalk, fortify, enchant-creature,
