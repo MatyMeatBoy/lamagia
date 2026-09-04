@@ -1852,6 +1852,24 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
     }
+    case "karoo-bounce": {
+      // "sacrifice it unless you return an untapped <basic> you control" (Karoo,
+      // Coral Atoll, ... CR 603.2). Auto-picks a candidate; otherwise sacrifices.
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const source = findPermanent(state, sourceId);
+      if (!source) return state;
+      const land = playerAt(state, source.controller).battlefield.find((permanent) =>
+        permanent.instance_id !== sourceId && !permanent.tapped
+        && cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase()));
+      if (!land) {
+        return logged(movePermanentToZone(state, source, "graveyard"), source.controller, `${source.card.name} es sacrificado.`);
+      }
+      const next = withPlayer(state, land.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== land.instance_id)
+      }));
+      return withPlayer(next, land.card.owner, (player) => ({ ...player, hand: [...player.hand, land.card] }));
+    }
     case "return-target-land": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
