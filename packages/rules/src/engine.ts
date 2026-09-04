@@ -1276,6 +1276,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "damage-active-player-equal-hand": {
       return dealDamageToPlayer(state, state.activeSeat, playerAt(state, state.activeSeat).hand.length, sourceName);
     }
+    case "lose-life-each-player-equal-hand": {
+      let next = state;
+      for (const player of state.players) next = loseLife(next, player.seat, player.hand.length);
+      return next;
+    }
     case "damage-active-player-hand-minus": {
       const amount = Math.max(0, playerAt(state, state.activeSeat).hand.length - effect.offset);
       return dealDamageToPlayer(state, state.activeSeat, amount, sourceName);
