@@ -261,7 +261,7 @@ export type GameAction =
   | { readonly type: "cycle"; readonly cardId: string }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly discardCardId?: string }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly discardCardId?: string; readonly exileCardId?: string }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -2441,9 +2441,10 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
             && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id))
         : [undefined];
       const discards = ability.discardsCard ? player.hand : [undefined];
-      for (const sacrifice of sacrifices) for (const discard of discards) actions.push({
-        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}) },
-        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}`,
+      const exiles = ability.exilesGraveyardCard ? player.graveyard : [undefined];
+      for (const sacrifice of sacrifices) for (const discard of discards) for (const exile of exiles) actions.push({
+        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}), ...(exile ? { exileCardId: exile.instance_id } : {}) },
+        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exile ? ` — Exile ${exile.name}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         note: ability.text
@@ -2705,6 +2706,7 @@ function activatableAbility(
     if (!candidates.length) return { legal: false };
   }
   if (ability.discardsCard && !player.hand.length) return { legal: false };
+  if (ability.exilesGraveyardCard && !player.graveyard.length) return { legal: false };
   if (ability.removeCounters && !ability.removeCounters.every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) {
     return { legal: false };
   }
@@ -2759,6 +2761,11 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (ability.discardsCard) {
     discard = playerAt(state, seat).hand.find((card) => card.instance_id === action.discardCardId) ?? playerAt(state, seat).hand[0];
     if (!discard) throw new Error("Debes elegir una carta para descartar.");
+  }
+  let exile: GameCard | undefined;
+  if (ability.exilesGraveyardCard) {
+    exile = playerAt(state, seat).graveyard.find((card) => card.instance_id === action.exileCardId) ?? playerAt(state, seat).graveyard[0];
+    if (!exile) throw new Error("Debes elegir una carta del cementerio para exiliar.");
   }
 
   if (check.targetKind) {
@@ -2824,6 +2831,14 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       graveyard: [...current.graveyard, discard!]
     }));
     next = logged(next, seat, `${player.name} descarta ${discard.name}.`);
+  }
+  if (exile) {
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      graveyard: current.graveyard.filter((card) => card.instance_id !== exile!.instance_id),
+      exile: [...current.exile, exile!]
+    }));
+    next = logged(next, seat, `${player.name} exilia ${exile.name} de su cementerio.`);
   }
 
   next = pushActivatedOnStack(next, seat, source, ability, targets);

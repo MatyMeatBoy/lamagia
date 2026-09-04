@@ -86,6 +86,8 @@ export interface ActivatedAbility {
   readonly sacrificesPermanent?: { readonly type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token"; readonly mode: "any" | "another" };
   /** One card chosen from the controller's hand as an activation cost. */
   readonly discardsCard?: boolean;
+  /** One card chosen from the controller's graveyard and exiled as a cost. */
+  readonly exilesGraveyardCard?: boolean;
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
   readonly lifeCost: number;
@@ -806,6 +808,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
   const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(artifact|enchantment|land|noncreature\s+permanent|token)\b/i.exec(costText);
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
+  const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
   const removedCounters: CounterCost[] = [];
   for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+~/gi)) {
     const amount = toNumber(match[1]);
@@ -821,6 +824,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:artifact|enchantment|land|noncreature\s+permanent|token)\b/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
+    .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
     .replace(/[,\s]/g, "");
   if (leftovers.length) return null;
@@ -831,6 +835,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]!.slice(1).toLowerCase()}` as "Artifact" | "Enchantment" | "Land" } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
+    ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     lifeCost,
     manaCost,
