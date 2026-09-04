@@ -314,6 +314,8 @@ export type SpellEffect =
   | { readonly kind: "compound"; readonly effects: readonly SpellEffect[]; readonly targetOffsets?: readonly (number | null)[] }
   | { readonly kind: "incite-rebellion" }
   | { readonly kind: "draw"; readonly amount: number | "X" }
+  /** Draw only if the controller currently has more life than an opponent. */
+  | { readonly kind: "draw-if-life-more-than-opponent"; readonly amount: number }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "draw-active-player" }
   | { readonly kind: "draw-equal-tapped-creatures" }
@@ -1675,6 +1677,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw", amount: "X" }, target: "none" };
+  }
+  if ((match = /^Then if you have more life than an opponent, draw (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "draw-if-life-more-than-opponent", amount }, target: "none" };
   }
   if ((match = /^You gain (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);

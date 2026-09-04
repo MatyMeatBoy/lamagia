@@ -221,6 +221,21 @@ describe("C13 sacrifice-card parsing", () => {
   });
 });
 
+describe("conditional life comparison parsing", () => {
+  it("keeps a sequential life gain before the conditional draw", () => {
+    const profile = cardProfile(card({
+      name: "Survival Cache",
+      type_line: "Sorcery",
+      oracle_text: "You gain 2 life. Then if you have more life than an opponent, draw a card."
+    }));
+    expect(profile.effects).toEqual([
+      { kind: "gain-life", amount: 2 },
+      { kind: "draw-if-life-more-than-opponent", amount: 1 }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("flashback parsing", () => {
   it("extracts a fixed Flashback alternative cost without flagging the keyword line", () => {
     const profile = cardProfile(card({

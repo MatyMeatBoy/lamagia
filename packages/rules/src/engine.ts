@@ -1418,6 +1418,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return next;
     }
     case "draw": return drawCards(state, controller, effectAmount(effect.amount, object));
+    case "draw-if-life-more-than-opponent": {
+      const life = playerAt(state, controller).life;
+      if (!opponentsOf(state, controller).some((seat) => life > playerAt(state, seat).life)) return state;
+      return drawCards(state, controller, effect.amount);
+    }
     case "draw-target-player": {
       const target = object.targets[0];
       return target?.kind === "player" ? drawCards(state, target.seat, effectAmount(effect.amount, object)) : state;

@@ -1720,3 +1720,9 @@ CR 615.1. The reusable profile closes equivalent Oracle printings as well.
 The refreshed export is **192/341 C13 (56.3%)**, with **149 unfinished** and
 **71 one-line-away**. The fork report `3af0cb0` (conditional Split second) is
 also queued as one incoming commit and remains outside the integration batch.
+
+### C13 conditional life-comparison draw (2026-09-04)
+
+The effect IR now supports “Then if you have more life than an opponent, draw
+N cards” as a reusable conditional draw. It evaluates after preceding effects,
+so Survival Cache gains life before checking the comparison (CR 608.2c).
