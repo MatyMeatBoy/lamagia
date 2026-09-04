@@ -25163,7 +25163,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Augur of Bolas — `be5d6779-ecc9-44b9-8c4d-97a243059d55`
 - [ ] Augury Adept — `be5a65fd-0d06-4771-bee7-0e42cc9871da`
 - [ ] Avenger of Zendikar — `4ba5b3f6-503b-43e6-b66e-4f8c55cffed7`
-- [ ] Azami, Lady of Scrolls — `0f8b97fe-3e5e-47c2-9a9d-7f77482aa159`
+- [x] Azami, Lady of Scrolls — `0f8b97fe-3e5e-47c2-9a9d-7f77482aa159`
 - [ ] Azorius Herald — `a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6`
 - [ ] Azorius Keyrune — `7266b491-54e6-4393-a448-d5ae99d965c6`
 - [x] Baleful Force — `f26fa9e4-f528-4e22-8f7c-329fc3b633e4`

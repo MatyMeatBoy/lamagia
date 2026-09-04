@@ -590,6 +590,27 @@ the same profile.
 Rules reference: Comprehensive Rules 109.5, 601.2c and 115.1; official
 Wizards source: `https://magic.wizards.com/en/rules`.
 
+### Cooperative C13 cluster: typed tap activation costs
+
+The activation parser now turns `Tap an untapped [subtype] you control` into
+the reusable `tapsCreature` cost descriptor. It supports both `any` and
+`another`, treats subtype matching case-insensitively, and leaves the source
+eligible when the text does not say `another`; Azami, Lady of Scrolls is the
+C13 application. `legalActions` exposes one action per eligible permanent
+with a stable `tapId`, while the authoritative apply path revalidates the
+choice and taps it before putting the ability on the stack. Summoning sickness
+does not block this cost because it is not a tap-symbol activation cost.
+
+The scope is deliberately separate from `{T}` source costs, mana abilities,
+crew, and multi-cost payment ordering. Future cards using the same wording
+reuse this descriptor without card-name branches. This follows Comprehensive
+Rules 117.3b, 601.2g, 602.2b and 701.21; official Wizards source:
+`https://magic.wizards.com/en/rules`.
+
+Validation: `npx vitest run packages/rules/src/engine.test.ts --reporter=dot`
+— 294 passed after the typed-cost scenarios; full workspace checks remain
+pending before integrator review.
+
 ## Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
