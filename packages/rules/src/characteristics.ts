@@ -309,6 +309,7 @@ export type SpellEffect =
   | { readonly kind: "scry"; readonly amount: number; readonly thenDraw?: number }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-permanents-you-control-keyword"; readonly keyword: EnforcedKeyword }
+  | { readonly kind: "overwhelming-stampede" }
   | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
@@ -1191,6 +1192,13 @@ function matchTriggerLine(line: string): { event: TriggerEvent; subject: Trigger
   return null;
 }
 
+/** "Elves" -> "Elf", "Dwarves" -> "Dwarf", "Allies" -> "Ally", else drop a trailing "s". */
+function singularSubtype(word: string): string {
+  if (/ves$/i.test(word)) return word.replace(/ves$/i, "f");
+  if (/ies$/i.test(word)) return word.replace(/ies$/i, "y");
+  return word.replace(/s$/i, "");
+}
+
 /** Matches one sentence against the closed effect templates. */
 function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind } | null {
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
@@ -1426,6 +1434,21 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: kind === "modify-target-creature" ? "creature" : "none"
     };
   }
+  // "Creatures you control get +N/+N and gain <keywords> until end of turn" (Overrun).
+  if ((match = /^Creatures you control get ([+-]\d+)\/([+-]\d+) and gain ((?:flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear)(?:(?:,| and )(?:flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear))*) until end of turn$/i.exec(text))) {
+    return {
+      effect: { kind: "compound", effects: [
+        { kind: "modify-creatures-you-control", power: Number(match[1]), toughness: Number(match[2]) },
+        ...match[3]!.split(/\s*(?:,|\band\b)\s*/i).map((word) => word.trim().toLowerCase()).filter((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))
+          .map((keyword) => ({ kind: "grant-permanents-you-control-keyword" as const, keyword: keyword as EnforcedKeyword }))
+      ] },
+      target: "none"
+    };
+  }
+  // "Until end of turn, creatures you control gain trample and get +X/+X, where X is the greatest power among creatures you control" (Overwhelming Stampede).
+  if (/^Until end of turn, creatures you control gain trample and get \+X\/\+X, where X is the greatest power among creatures you control$/i.test(text)) {
+    return { effect: { kind: "overwhelming-stampede" }, target: "none" };
+  }
   if ((match = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     // Firebreathing-style self pumps: the source is the only affected creature
     // and the modifier expires during cleanup (CR 613.4c, 514.2).
@@ -1455,10 +1478,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };
   }
   if ((match = /^Put a (\+1\/\+1|-1\/-1) counter on target creature for each ([A-Za-z][A-Za-z'’-]*) you control$/i.exec(text))) {
-    return { effect: { kind: "add-counter-target-per-subtype", counter: match[1]!, subtype: match[2]! }, target: "creature" };
+    return { effect: { kind: "add-counter-target-per-subtype", counter: match[1]!, subtype: singularSubtype(match[2]!) }, target: "creature" };
   }
   if ((match = /^Target creature gets \+X\/\+X until end of turn, where X is the number of ([A-Za-z][A-Za-z'’-]*) you control$/i.exec(text))) {
-    return { effect: { kind: "modify-target-creature-per-subtype", subtype: match[1]! }, target: "creature" };
+    return { effect: { kind: "modify-target-creature-per-subtype", subtype: singularSubtype(match[1]!) }, target: "creature" };
   }
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on ~$/i.exec(text))) {
     const amount = toNumber(match[1]);

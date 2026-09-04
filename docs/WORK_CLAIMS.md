@@ -81,6 +81,7 @@ feature name.
 | `c14-sacrifice-land-cost` | `Sacrifice a land` activation cost; `Target creature you control gains <keyword> until end of turn` | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-subtype-scaled-pump-counter` | `Target creature gets +X/+X where X = <Subtype> you control`; `Put a +1/+1 counter on target creature for each <Subtype> you control` | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-power-threshold-wipe-and-board-token` | `Destroy all creatures with power greater than target creature's power`; `Create X tokens where X is creatures on the battlefield` | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-overrun-mass-pump` | `Creatures you control get +N/+N and gain <kw> until end of turn` (Overrun); Overwhelming Stampede; plural subtype normalisation | `c14-batch2-clean` | active | 2026-09-04 |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |

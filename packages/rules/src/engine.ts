@@ -1516,6 +1516,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         }))
       }));
     }
+    case "overwhelming-stampede": {
+      // Creatures you control gain trample and get +X/+X until end of turn,
+      // where X is the greatest power among them (CR 613).
+      const mine = playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
+      const x = Math.max(0, ...mine.map((permanent) => powerOf(permanent, state)));
+      let next = modifyCreatures(state, x, x, (candidate) => candidate.controller === controller && isCreature(cardProfile(candidate.card)));
+      next = withPlayer(next, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
+          ? { ...permanent, temporaryKeywords: [...new Set([...(permanent.temporaryKeywords ?? []), "trample" as EnforcedKeyword])] }
+          : permanent)
+      }));
+      return logged(next, controller, `${sourceName}: tus criaturas ganan +${x}/+${x} y arrollar.`);
+    }
     case "grant-all-creatures-keyword": {
       return {
         ...state,
