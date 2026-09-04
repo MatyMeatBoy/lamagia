@@ -2,7 +2,7 @@
 
 Generated from the local Comprehensive Rules snapshot and the normalized catalog. The report distinguishes keyword abilities from keyword actions and ability words; a high catalog count is a prioritization signal, not proof that all variants share one implementation.
 
-**Summary:** 27 implemented · 2 partial · 165 backlog
+**Summary:** 30 implemented · 2 partial · 162 backlog
 
 `catalog occurrences` counts Scryfall keyword metadata and is used to prioritize reusable primitives. Every implementation still requires a scenario test and a Comprehensive Rules citation.
 
@@ -21,7 +21,7 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.10 | Haste | implemented | 2200 | summoning-sickness exemption |
 | 702.11 | Hexproof | implemented | 303 | target legality |
 | 702.12 | Indestructible | implemented | 529 | destruction replacement |
-| 702.13 | Intimidate | backlog | 59 | Needs a dedicated rules primitive and scenario tests |
+| 702.13 | Intimidate | implemented | 59 | artifact-or-color blocking restriction |
 | 702.14 | Landwalk | implemented | 402 | combat evasion by land subtype |
 | 702.15 | Lifelink | implemented | 1336 | combat damage life gain |
 | 702.16 | Protection | partial | 621 | not yet a complete source/quality prevention layer |
@@ -44,7 +44,7 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.33 | Kicker | implemented | 652 | alternative/additional cast cost |
 | 702.34 | Flashback | backlog | 793 | Needs a dedicated rules primitive and scenario tests |
 | 702.35 | Madness | backlog | 230 | Needs a dedicated rules primitive and scenario tests |
-| 702.36 | Fear | backlog | 120 | Needs a dedicated rules primitive and scenario tests |
+| 702.36 | Fear | implemented | 120 | artifact-or-black blocking restriction |
 | 702.37 | Morph | backlog | 344 | Needs a dedicated rules primitive and scenario tests |
 | 702.38 | Amplify | backlog | 14 | Needs a dedicated rules primitive and scenario tests |
 | 702.39 | Provoke | backlog | 16 | Needs a dedicated rules primitive and scenario tests |
@@ -69,7 +69,7 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.58 | Graft | backlog | 39 | Needs a dedicated rules primitive and scenario tests |
 | 702.59 | Recover | backlog | 9 | Needs a dedicated rules primitive and scenario tests |
 | 702.60 | Ripple | backlog | 7 | Needs a dedicated rules primitive and scenario tests |
-| 702.61 | Split Second | backlog | 80 | Needs a dedicated rules primitive and scenario tests |
+| 702.61 | Split Second | implemented | 80 | stack response restriction |
 | 702.62 | Suspend | backlog | 239 | Needs a dedicated rules primitive and scenario tests |
 | 702.63 | Vanishing | backlog | 66 | Needs a dedicated rules primitive and scenario tests |
 | 702.64 | Absorb | backlog | 0 | Needs a dedicated rules primitive and scenario tests |
