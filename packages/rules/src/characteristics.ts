@@ -271,6 +271,7 @@ export type SpellEffect =
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number | "X" }
+  | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   | { readonly kind: "damage-any-target-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "damage-controller-equal-hand" }
@@ -1551,6 +1552,8 @@ function recognizeText(text: string): RecognizedText {
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
+    // Extort is synthesised from the keyword below (CR 702.39).
+    if (/^extort\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -1669,6 +1672,12 @@ export function cardProfile(card: CardData): CardProfile {
   const isPermanent = types.some((type) => type === "Land" || type === "Creature" || type === "Artifact" || type === "Enchantment" || type === "Planeswalker" || type === "Battle");
   const cost = parseManaCost(face.mana_cost);
   const recognized = recognizeText(text);
+  // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
+  // drains each opponent for 1 and heals the controller by that much.
+  const hasExtort = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "extort");
+  const synthesizedTriggers: TriggerDefinition[] = hasExtort
+    ? [{ event: "spell-cast", subject: "you", effect: { kind: "extort" }, optional: true, targetKind: "none", sourceText: "Extort", payCost: parseManaCost("{W/B}") ?? undefined }]
+    : [];
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
   const cyclingSearches = parseCyclingSearches(text);
@@ -1738,7 +1747,7 @@ export function cardProfile(card: CardData): CardProfile {
       : [],
     modalChoices: recognized.modalChoices,
     effects: recognized.effects,
-    triggers: recognized.triggers,
+    triggers: [...recognized.triggers, ...synthesizedTriggers],
     targetKind: recognized.targetKind,
     kickerCost: recognized.kickerCost ?? null,
     evokeCost: recognized.evokeCost ?? null,

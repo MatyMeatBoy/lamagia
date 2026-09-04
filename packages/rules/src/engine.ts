@@ -1285,6 +1285,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return next;
     }
+    case "extort": {
+      // Each opponent loses 1 life; the controller gains that much (CR 702.39a).
+      let next = state;
+      let drained = 0;
+      for (const seat of opponentsOf(state, controller)) {
+        next = loseLife(next, seat, 1);
+        drained += 1;
+      }
+      if (drained > 0) {
+        next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + drained }));
+        next = raiseEvent(next, { kind: "life-gained", seat: controller, amount: drained });
+        next = logged(next, controller, `Extorsión: cada oponente pierde 1 vida; ${playerAt(next, controller).name} gana ${drained}.`);
+      }
+      return next;
+    }
     case "damage-each-opponent": {
       let next = state;
       for (const seat of opponentsOf(state, controller)) next = dealDamageToPlayer(next, seat, effectAmount(effect.amount, object), sourceName);

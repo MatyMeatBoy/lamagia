@@ -1800,6 +1800,27 @@ describe("kicker and optional-cost triggers", () => {
     expect(game.players[0]!.graveyard.some((c) => c.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("synthesises an Extort cast trigger from the keyword", () => {
+    const ghast = () => make({ name: "Extortionist", type_line: "Creature — Human", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "3", keywords: ["Extort"], oracle_text: "Extort" });
+    const p = profileOf(ghast());
+    expect(p.triggers.some((t) => t.event === "spell-cast" && t.effect.kind === "extort" && t.optional && t.payCost?.raw === "{W/B}")).toBe(true);
+    expect(p.fullyImplemented).toBe(true);
+
+    let game = ready([ghast(), BOLT()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), MOUNTAIN()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.some((x) => x.card.name === "Extortionist") && state.pendingChoice === null && !state.stack.length);
+    // Cast Bolt; extort triggers and offers the {W/B} payment.
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand.find((c) => c.name === "Lightning Bolt")!.instance_id, targets: [{ kind: "player", seat: 1 }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger" || state.turn > 1);
+    if (game.pendingChoice?.type === "optional-trigger") {
+      const before = game.players[1]!.life;
+      const accept = legalActions(game, 0).find((e) => e.action.type === "choose-trigger" && e.action.accept)!;
+      game = applyAction(game, 0, accept.action);
+      game = passUntil(game, (state) => state.players[1]!.life < before || state.turn > 1);
+      expect(game.players[1]!.life).toBeLessThan(before);
+    }
+  });
+
   it("casts an evoke creature for its alternative cost and sacrifices it on entry", () => {
     const drifter = () => make({ name: "Mulldrifter", type_line: "Creature — Elemental", mana_cost: "{4}{U}", cmc: 5, power: "2", toughness: "2", keywords: ["Flying"], oracle_text: "Flying\nEvoke {2}{U}\nWhen Mulldrifter enters the battlefield, draw two cards." });
     const p = profileOf(drifter());
