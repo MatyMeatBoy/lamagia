@@ -99,6 +99,7 @@ const ARTIFACT_GRAVEYARD_RETURN = () => make({ name: "Artifact Reclaim", type_li
 const LAND_GRAVEYARD_BATTLEFIELD = () => make({ name: "Restore Memory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Put target land card from a graveyard onto the battlefield under your control." });
 const ARTIFACT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Sharuum Memory", type_line: "Sorcery", mana_cost: "{2}{U}{B}", cmc: 4, oracle_text: "Return target artifact card from your graveyard to the battlefield." });
 const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", type_line: "Sorcery", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Return target enchantment card from your graveyard to your hand." });
+const ENCHANTMENT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Enchantment Reanimate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Return target enchantment card from your graveyard to the battlefield." });
 const DOUBLE_STRIKE_SPELL = () => make({ name: "Twin Edge", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Target creature gains double strike until end of turn." });
 const TRAMPLE_BOOST = () => make({ name: "Selesnya Memory", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Target creature gets +2/+2 and gains trample until end of turn." });
 const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "{R}: This creature gets +1/+0 until end of turn." });
@@ -1174,6 +1175,16 @@ describe("casting", () => {
     const target = game.players[1]!.battlefield[0]!;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
     expect(game.players[1]!.hand.some((card) => card.name === "Test Oath")).toBe(true);
+  });
+
+  it("returns an enchantment card from the graveyard to the battlefield", () => {
+    expect(profileOf(ENCHANTMENT_GRAVEYARD_BATTLEFIELD()).effects).toEqual([{ kind: "return-target-enchantment-card-from-graveyard-to-battlefield" }]);
+    const targetCard = make({ name: "Dead Oath", type_line: "Enchantment" });
+    let game = readyToCast([ENCHANTMENT_GRAVEYARD_BATTLEFIELD()], [FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [targetCard], "dead-oath") }));
+    const target = legalTargets(game, 0, "enchantment-card-in-your-graveyard")[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [target] });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Dead Oath")).toBe(true);
   });
 
   it("scales any-target damage from controlled creatures", () => {

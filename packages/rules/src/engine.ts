@@ -1512,6 +1512,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return putOntoBattlefield(next, object.controller, card, false);
     }
+    case "return-target-enchantment-card-from-graveyard-to-battlefield": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card || !cardProfile(card).types.includes("Enchantment")) return state;
+      const next = withPlayer(state, target.seat, (current) => ({ ...current, graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id) }));
+      return putOntoBattlefield(next, object.controller, card, false);
+    }
     case "exile-target-card-from-graveyard": {
       const target = object.targets[0];
       if (!target || target.kind !== "graveyard-card") return state;
