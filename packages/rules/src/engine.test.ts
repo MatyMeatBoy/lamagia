@@ -1132,6 +1132,14 @@ describe("casting", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("resolves Baleful Strix ETB draw when the artifact creature enters", () => {
+    let game = readyToCast([C13_BALEFUL_STRIX()], [ISLAND(), SWAMP()]);
+    game = stage(game, 0, () => ({ library: toHand(0, [FOREST()], "strix-library") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Baleful Strix")).toBe(true);
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Forest"]);
+  });
+
   it("resolves C13 draw-only spells through the shared draw engine", () => {
     for (const [spell, lands] of [
       [C13_BRILLIANT_PLAN(), [ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND()]],
