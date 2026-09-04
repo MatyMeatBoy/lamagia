@@ -85,7 +85,10 @@ def _entry_key(entry: dict[str, Any], prefix: str) -> str:
 
 def _card_ids(entry: dict[str, Any]) -> list[str]:
     """Extract unique Oracle IDs, retaining the roadmap's deterministic order."""
-    cards = entry.get("unlocked_cards") or entry.get("cards") or []
+    # Use every card affected by the primitive, not only today's final
+    # blockers. This makes overlapping jobs co-locate before assignment and
+    # prevents two workers from editing the same card in parallel.
+    cards = entry.get("affected_cards") or entry.get("unlocked_cards") or entry.get("cards") or []
     result: list[str] = []
     seen: set[str] = set()
     for card in cards:
@@ -148,6 +151,7 @@ def build_worker_plan(
                 )),
                 "priority": str(entry.get("priority") or ("high" if entry.get("quick_win_count") else "normal")),
                 "oracle_ids": cards,
+                "oracle_cards": entry.get("affected_cards") or entry.get("unlocked_cards") or entry.get("cards") or [],
                 "batches": batches,
             }
         )
@@ -252,6 +256,12 @@ def render_document(plan: dict[str, Any]) -> str:
                 f"| {job['priority']} | `{job['claim_key']}` | {job['family']} | {len(job['oracle_ids'])} |"
                 f" {job['quick_win_count']} | {job['unlocks']} | {len(job['batches'])} |"
             )
+            cards = ", ".join(
+                f"{card.get('name', '?')} [{card.get('oracle_id', '?')}]" if isinstance(card, dict) else str(card)
+                for card in job.get("oracle_cards", [])
+            )
+            if cards:
+                lines += [f"Cards: {cards}", ""]
         lines.append("")
     if plan["skipped_claims"]:
         lines += ["## Already claimed", "", ", ".join(f"`{key}`" for key in plan["skipped_claims"]), ""]

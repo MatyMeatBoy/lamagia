@@ -256,6 +256,23 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual({owners["shared"], owners["a"], owners["b"]}, {owners["shared"]})
         self.assertEqual(sum(worker["estimated_cards"] for worker in plan["workers"]), 4)
 
+    def test_worker_plan_uses_all_affected_cards_for_overlap_safety(self) -> None:
+        plan = build_worker_plan([
+            {"claim_key": "primitive-a", "affected_cards": [
+                {"oracle_id": "shared", "name": "Shared"},
+                {"oracle_id": "a", "name": "A"},
+            ]},
+            {"claim_key": "primitive-b", "affected_cards": [
+                {"oracle_id": "shared", "name": "Shared"},
+                {"oracle_id": "b", "name": "B"},
+            ]},
+        ], workers=2, memory_budget_gb=2)
+        jobs = [job for worker in plan["workers"] for job in worker["jobs"]]
+        self.assertEqual({job["claim_key"] for job in jobs}, {"primitive-a", "primitive-b"})
+        owners = {worker["worker"] for worker in plan["workers"] for job in worker["jobs"] if "shared" in job["oracle_ids"]}
+        self.assertEqual(len(owners), 1)
+        self.assertEqual({"shared", "a", "b"}, {oracle_id for job in jobs for oracle_id in job["oracle_ids"]})
+
     def test_reads_only_exact_active_claim_statuses(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "claims.md"
@@ -339,6 +356,15 @@ class PrimitiveRoadmapTests(unittest.TestCase):
         first = [entry["template"] for entry in build_roadmap(blocked, top=3)]
         second = [entry["template"] for entry in build_roadmap(blocked, top=3)]
         self.assertEqual(first, second)
+
+    def test_roadmap_keeps_all_cards_affected_by_a_template(self) -> None:
+        blocked = [
+            {"oracle_id": "a", "name": "A", "templates": {"aaa-shared", "other-a"}, "lines": ["aaa-shared", "other-a"]},
+            {"oracle_id": "b", "name": "B", "templates": {"aaa-shared", "other-b"}, "lines": ["aaa-shared", "other-b"]},
+            {"oracle_id": "c", "name": "C", "templates": {"other-a", "other-b"}, "lines": ["other-a", "other-b"]},
+        ]
+        entry = build_roadmap(blocked, top=1)[0]
+        self.assertEqual([card["oracle_id"] for card in entry["affected_cards"]], ["a", "b"])
 
     def test_scoped_roadmap_defaults_claim_namespace_to_set(self) -> None:
         self.assertEqual(resolve_claim_prefix(None, "c13"), "c13")

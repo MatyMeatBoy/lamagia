@@ -1421,12 +1421,12 @@ rebase a stale full-tree branch.
 The reported `241/337` C14 figure was observed in a transient/generated
 working state, but is not reproducible from the current committed profiles or
 from the worker branch history (the latter records 120/337 at its last
-checkpoint). The current reproducible five-precon union is **131/337** via
-`check_precon_coverage.py`; the separate `116/322` figure in `SET_COVERAGE.md`
-counts edition memberships from the catalog, so it is a different denominator.
-The useful C14 functionality from the stale worker tree is already rescued
-through the integrated batch history plus `893730c`; importing its remaining
-files would discard newer C13 rules and is prohibited. To recover any extra
-work behind the 241 figure, the worker must provide the exact card-to-commit
-mapping; no uncommitted generated profile is treated as code. Commit `5f01afc`
-(C13 top-library selection) is queued for the next integration batch.
+checkpoint). After a clean profile export, the reproducible five-precon union
+is **116/322 unique Oracle IDs**; the edition-membership report in
+`SET_COVERAGE.md` uses the same denominator. The useful C14 functionality from
+the stale worker tree is already rescued through the integrated batch history
+plus `893730c`; importing its remaining files would discard newer C13 rules
+and is prohibited. To recover any extra work behind the 241 figure, the worker
+must provide the exact card-to-commit mapping; no uncommitted generated
+profile is treated as code. Commits `5f01afc`, `6b99130`, and `b8702fb` (C13
+worker artifacts) remain queued for the next integration batch.
