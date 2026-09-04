@@ -22490,7 +22490,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,34
 - [ ] Eternal Dragon — `04d8615c-3883-4251-9790-1d8a4a40e142`
 - [ ] Eye of Doom — `e808a11e-29bd-4e99-a24e-67fa8f6fe502`
 - [ ] Faerie Conclave — `0c25f6b1-8fb3-4406-9605-0282d2dbbcec`
-- [ ] Fecundity — `ffa64ac6-fe55-48b8-b015-849982cd7ad8`
+- [x] Fecundity — `ffa64ac6-fe55-48b8-b015-849982cd7ad8`
 - [ ] Fell Shepherd — `5fd78088-53db-453b-90a3-b8426b0a8269`
 - [ ] Fiend Hunter — `cb9d557a-fc06-428c-8be6-7d28add33028`
 - [ ] Fiery Justice — `333809cb-e196-45f2-8a67-31374438e56e`
