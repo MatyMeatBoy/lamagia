@@ -610,6 +610,23 @@ Rules 117.3b, 601.2g, 602.2b and 701.21; official Wizards source:
 Validation: `npm run check --workspace=@prossh/rules` PASS and `npm test
 --workspace=@prossh/rules` PASS — 362 passed, 6 skipped.
 
+### Cooperative C13 cluster: draw spells and Flashback life payments
+
+Brilliant Plan and Harmonize reuse the shared `draw` effect, Vision Skeins
+reuses `each-player-draw`, and Deep Analysis reuses `draw-target-player` plus
+the existing Flashback cast path. The Flashback parser now accepts Oracle's
+typographic `Flashback—` separator and extracts an additional `Pay N life`
+component instead of treating it as an invalid mana cost. The authoritative
+cast path reserves and pays that life, exposes it in the action label, and
+still exiles the spell after resolution. Insufficient life removes the
+Flashback action; target draw remains subject to normal target legality.
+
+Rules reference: Comprehensive Rules 601.2, 601.2f, 702.34 and 118.4;
+official Wizards source: `https://magic.wizards.com/en/rules`.
+
+Validation: `npm run check --workspace=@prossh/rules` PASS and `npm test
+--workspace=@prossh/rules` PASS — 367 passed, 6 skipped.
+
 ## Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
