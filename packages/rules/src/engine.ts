@@ -2526,7 +2526,11 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,
-        battlefield: player.battlefield.map((permanent) => ({ ...permanent, tapped: false, summoningSick: false }))
+        battlefield: player.battlefield.map((permanent) => ({
+          ...permanent,
+          tapped: cardProfile(permanent.card).doesNotUntapDuringUntap ? permanent.tapped : false,
+          summoningSick: false
+        }))
       }));
       next = { ...next, combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
       next = logged(next, next.activeSeat, `Turno ${next.turn} · ${playerAt(next, next.activeSeat).name} endereza sus permanentes.`);
