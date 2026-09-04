@@ -3603,6 +3603,15 @@ function needsFirstStrikeStep(state: GameState): boolean {
   return combatants.some((permanent) => keywordOf(state, permanent, "first strike") || keywordOf(state, permanent, "double strike"));
 }
 
+/** Applies untapped, controller-facing combat-damage prevention (CR 615.1). */
+function combatDamageAfterControllerPrevention(state: GameState, defender: SeatId, amount: number): number {
+  const prevented = playerAt(state, defender).battlefield.reduce((total, permanent) => {
+    if (permanent.tapped) return total;
+    return total + cardProfile(permanent.card).combatRules.preventsCombatDamageToController;
+  }, 0);
+  return Math.max(0, amount - prevented);
+}
+
 interface DamageBatch { readonly toPlayers: { seat: SeatId; amount: number; commanderId?: string; sourceName: string; sourceId: string }[]; readonly toPermanents: { instanceId: string; amount: number; deathtouch: boolean; sourceName: string }[]; readonly lifelink: { seat: SeatId; amount: number }[] }
 
 function computeCombatDamage(state: GameState, firstStrikeStep: boolean): DamageBatch {
@@ -3626,14 +3635,18 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
       const wasBlocked = state.combat.blockers.some((block) => block.attackerId === entry.instanceId);
       // A creature whose blockers all left combat deals no damage unless it was never blocked.
       if (wasBlocked) continue;
+      const dealt = isCreature(cardProfile(attacker.card))
+        ? combatDamageAfterControllerPrevention(state, entry.defender, power)
+        : power;
+      if (dealt <= 0) continue;
       toPlayers.push({
         seat: entry.defender,
-        amount: power,
+        amount: dealt,
         ...(attacker.isCommander ? { commanderId: attacker.instance_id } : {}),
         sourceName: attacker.card.name,
         sourceId: attacker.instance_id
       });
-      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: power });
+      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: dealt });
       continue;
     }
 
@@ -3646,14 +3659,18 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
           && cardProfile(source.card).attackersAssignAsUnblockedWhileAttacking;
       });
     if (assignAsUnblocked) {
+      const dealt = isCreature(cardProfile(attacker.card))
+        ? combatDamageAfterControllerPrevention(state, entry.defender, power)
+        : power;
+      if (dealt <= 0) continue;
       toPlayers.push({
         seat: entry.defender,
-        amount: power,
+        amount: dealt,
         ...(attacker.isCommander ? { commanderId: attacker.instance_id } : {}),
         sourceName: attacker.card.name,
         sourceId: attacker.instance_id
       });
-      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: power });
+      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: dealt });
       continue;
     }
 
@@ -3668,14 +3685,18 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
       remaining -= assigned;
     }
     if (remaining > 0 && keywordOf(state, attacker, "trample")) {
+      const dealt = isCreature(cardProfile(attacker.card))
+        ? combatDamageAfterControllerPrevention(state, entry.defender, remaining)
+        : remaining;
+      if (dealt <= 0) continue;
       toPlayers.push({
         seat: entry.defender,
-        amount: remaining,
+        amount: dealt,
         ...(attacker.isCommander ? { commanderId: attacker.instance_id } : {}),
         sourceName: attacker.card.name,
         sourceId: attacker.instance_id
       });
-      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: remaining });
+      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: dealt });
     }
   }
 

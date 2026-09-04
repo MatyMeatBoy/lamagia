@@ -23,37 +23,6 @@ Cards: One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
 | normal | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 |
 Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
 
-| normal | `c13-remove-counter-from-deals` | activated | 1 | 0 | 1 | 1 |
-Cards: Deathbringer Thoctar [2500a811-2435-4915-ac83-9bfe2887621a]
-
-| normal | `c13-the-beginning-your-end` | triggered | 1 | 0 | 1 | 1 |
-Cards: Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
-
-| normal | `c13-was-kicked-has-split` | replacement | 1 | 0 | 1 | 1 |
-Cards: Molten Disaster [21390513-1ed0-48f2-a7fa-020da8f803c0]
-
-| normal | `c13-when-enters-sacrifice-unless` | triggered | 1 | 0 | 1 | 1 |
-Cards: Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
-
-| normal | `c13-when-you-cast-create` | triggered | 1 | 0 | 1 | 1 |
-Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
-
-
-## Worker 2
-
-8 primitives / 8 unique cards
-
-| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
-| --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-blue-spells-and-red` | other | 1 | 0 | 1 | 1 |
-Cards: Nightscape Familiar [57296ea3-3c0d-49b7-bc08-0d0d8414e9ad]
-
-| normal | `c13-flying-first-strike-vigilance` | other | 1 | 0 | 1 | 1 |
-Cards: Sphinx of the Steel Wind [1c96772b-463c-4655-836b-cf6e9dc6319f]
-
-| normal | `c13-long-untapped-creature-would` | static-continuous | 1 | 0 | 1 | 1 |
-Cards: Thunderstaff [1a88a378-051c-42b4-bd0e-9c40ae8efea6]
-
 | normal | `c13-return-all-permanents-the` | other | 1 | 0 | 1 | 1 |
 Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
 
@@ -70,17 +39,17 @@ Cards: Dungeon Geists [ab5ebae2-cd77-4a7d-a93b-8042cd486429]
 Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
 
 
-## Worker 3
+## Worker 2
 
 8 primitives / 8 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-choose-more` | modal | 1 | 0 | 1 | 1 |
-Cards: Rain of Thorns [363b0504-27bf-40df-96ec-9e3cb1e47588]
+| normal | `c13-blue-spells-and-red` | other | 1 | 0 | 1 | 1 |
+Cards: Nightscape Familiar [57296ea3-3c0d-49b7-bc08-0d0d8414e9ad]
 
-| normal | `c13-flying-protection-from-black` | other | 1 | 0 | 1 | 1 |
-Cards: Karmic Guide [8c31fec9-e4b3-4761-990e-7be38eb05604]
+| normal | `c13-flying-first-strike-vigilance` | other | 1 | 0 | 1 | 1 |
+Cards: Sphinx of the Steel Wind [1c96772b-463c-4655-836b-cf6e9dc6319f]
 
 | normal | `c13-players-have-maximum-hand` | other | 1 | 0 | 1 | 1 |
 Cards: Price of Knowledge [1c586aa7-7a61-464f-abba-b33f9a525f0e]
@@ -101,17 +70,17 @@ Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
 Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
 
 
-## Worker 4
+## Worker 3
 
 8 primitives / 8 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-creatures-can-attack-you` | combat-restriction | 1 | 0 | 1 | 1 |
-Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
+| normal | `c13-choose-more` | modal | 1 | 0 | 1 | 1 |
+Cards: Rain of Thorns [363b0504-27bf-40df-96ec-9e3cb1e47588]
 
-| normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
+| normal | `c13-flying-protection-from-black` | other | 1 | 0 | 1 | 1 |
+Cards: Karmic Guide [8c31fec9-e4b3-4761-990e-7be38eb05604]
 
 | normal | `c13-prevent-all-combat-damage` | other | 1 | 0 | 1 | 1 |
 Cards: Guard Gomazoa [7c565975-aebc-4599-ac32-5594c718e2cb]
@@ -132,17 +101,17 @@ Cards: Mnemonic Wall [f2933616-211b-4d3f-8064-2be61c26079a]
 Cards: Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
 
 
-## Worker 5
+## Worker 4
 
 8 primitives / 8 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-destroy-target-nonblack-creatures` | other | 1 | 0 | 1 | 1 |
-Cards: Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
+| normal | `c13-creatures-can-attack-you` | combat-restriction | 1 | 0 | 1 | 1 |
+Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 
-| normal | `c13-graft` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
+| normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
 
 | normal | `c13-put-target-nonland-permanent` | other | 1 | 0 | 1 | 1 |
 Cards: Unexpectedly Absent [e8d78a83-c932-4b55-8f75-7094c672c3a9]
@@ -161,4 +130,35 @@ Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
 
 | normal | `c13-whenever-creature-you-control` | triggered | 1 | 0 | 1 | 1 |
 Cards: Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
+
+
+## Worker 5
+
+8 primitives / 8 unique cards
+
+| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| normal | `c13-destroy-target-nonblack-creatures` | other | 1 | 0 | 1 | 1 |
+Cards: Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
+
+| normal | `c13-graft` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
+
+| normal | `c13-remove-counter-from-deals` | activated | 1 | 0 | 1 | 1 |
+Cards: Deathbringer Thoctar [2500a811-2435-4915-ac83-9bfe2887621a]
+
+| normal | `c13-the-beginning-your-end` | triggered | 1 | 0 | 1 | 1 |
+Cards: Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
+
+| normal | `c13-was-kicked-has-split` | replacement | 1 | 0 | 1 | 1 |
+Cards: Molten Disaster [21390513-1ed0-48f2-a7fa-020da8f803c0]
+
+| normal | `c13-when-enters-sacrifice-unless` | triggered | 1 | 0 | 1 | 1 |
+Cards: Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
+
+| normal | `c13-when-you-cast-create` | triggered | 1 | 0 | 1 | 1 |
+Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
+
+| normal | `c13-whenever-creature-you-control-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
 

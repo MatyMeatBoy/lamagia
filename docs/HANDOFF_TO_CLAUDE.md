@@ -1649,3 +1649,22 @@ unfinished; C14 reports **191/322 (59.3%)**. Contributors must regenerate the
 queue with `rules:engine:export`, `rules:roadmap:c13`, and
 `rules:oracle:plan:c13`; the generated roadmap, not raw Oracle wording, is the
 work-allocation source of truth.
+
+### Integrator checkpoint: Thunderstaff and C14 cross-set reuse (2026-09-04)
+
+Thunderstaff now reuses a parsed static replacement primitive: while an untapped
+source is controlled, each applicable source prevents one creature combat damage
+to that player; multiple sources stack and the prevented amount is also removed
+from lifelink and commander-damage accounting (CR 614.1, 615.1). The scenario
+suite covers both untapped and tapped states. This raises the current C13 export
+to **187/341 (54.8%)**, with **154** unfinished and **76** one-line-away; C14 is
+**191/322 (59.3%)**.
+
+The catalog cross-check confirms why C14 work is reusable: of its **322 unique
+Oracle IDs**, **315 also have printings outside C14** and **7 are C14-only**.
+The 191 implemented profiles therefore already benefit other editions by stable
+Oracle ID; the 131 pending IDs should be scheduled by primitive family rather
+than by printing. Current C14-only cards are Breaching Leviathan, Crown of Doom,
+Demon of Wailing Agonies, Dulcet Sirens, Flesh Carver, Raving Dead and Spoils of
+Blood. Example pending reusable profiles include Skullclamp, Beastmaster
+Ascension, Masked Admirers, Scrap Mastery, Cathodion and Reaper from the Abyss.

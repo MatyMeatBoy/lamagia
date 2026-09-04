@@ -383,6 +383,7 @@ const SCRY_SPELL = () => make({ name: "Read the Bones Lite", type_line: "Sorcery
 const SCRY_ETB_CREATURE = () => make({ name: "Omen Owl", type_line: "Creature — Bird", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", oracle_text: "When Omen Owl enters the battlefield, scry 2." });
 const SCRY_DRAW_SPELL = () => make({ name: "Read the Bones", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Scry 2, then draw two cards. You lose 2 life." });
 const COMBAT_SEAR = () => make({ name: "Combat Sear", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Combat Sear deals 3 damage to target attacking or blocking creature." });
+const THUNDERSTAFF = () => make({ name: "Thunderstaff", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "As long as Thunderstaff is untapped, if a creature would deal combat damage to you, prevent 1 of that damage.\n{2}, {T}: Attacking creatures get +1/+0 until end of turn." });
 const FLAMETONGUE = () => make({ name: "Flametongue Kavu", type_line: "Creature — Kavu", mana_cost: "{3}{R}", cmc: 4, power: "4", toughness: "2", oracle_text: "When Flametongue Kavu enters the battlefield, it deals 4 damage to target creature." });
 const WHIPFLARE = () => make({ name: "Whipflare", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Whipflare deals 2 damage to each nonartifact creature." });
 const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature — Bear", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2" });
@@ -4835,6 +4836,24 @@ describe("combat", () => {
     const bear = game.players[0]!.battlefield[0]!;
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
     expect(game.players[0]!.battlefield[0]!.tapped).toBe(true);
+    game = passUntil(game, (state) => state.step === "postcombat-main" || state.turn > 1);
+    expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("prevents one creature combat damage while Thunderstaff is untapped", () => {
+    expect(profileOf(THUNDERSTAFF()).combatRules.preventsCombatDamageToController).toBe(1);
+    expect(profileOf(THUNDERSTAFF()).fullyImplemented).toBe(true);
+
+    let game = atAttackers([BEAR()], [THUNDERSTAFF()]);
+    const bear = game.players[0]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "postcombat-main" || state.turn > 1);
+    expect(game.players[1]!.life).toBe(39);
+
+    game = atAttackers([BEAR()], [THUNDERSTAFF()]);
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.map((permanent) => ({ ...permanent, tapped: true })) }));
+    const tappedBear = game.players[0]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: tappedBear.instance_id, defender: 1 }] });
     game = passUntil(game, (state) => state.step === "postcombat-main" || state.turn > 1);
     expect(game.players[1]!.life).toBe(38);
   });

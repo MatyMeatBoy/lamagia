@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,551** · cobertura: **24.2%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,556** · cobertura: **24.2%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -128,7 +128,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
 | 2004-01-01 | Magic Player Rewards 2004 (`P04`) | promos | player-rewards-2004 | other | 1 | 0 | 1 | 0.0% |
 | 2004-01-24 | Darksteel Promos (`PDST`) | promos | darksteel | other | 1 | 0 | 1 | 0.0% |
-| 2004-02-06 | Darksteel (`DST`) | expansion | 2000s | main | 165 | 24 | 141 | 14.5% |
+| 2004-02-06 | Darksteel (`DST`) | expansion | 2000s | main | 165 | 25 | 140 | 15.2% |
 | 2004-05-22 | Fifth Dawn Promos (`P5DN`) | promos | fifth-dawn | other | 1 | 0 | 1 | 0.0% |
 | 2004-06-04 | Fifth Dawn (`5DN`) | expansion | 2000s | main | 165 | 37 | 128 | 22.4% |
 | 2004-09-18 | Champions of Kamigawa Promos (`PCHK`) | promos | champions-of-kamigawa | other | 1 | 1 | 0 | 100.0% |
@@ -234,7 +234,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 | 2010-04-23 | Rise of the Eldrazi (`ROE`) | expansion | 2010s | main | 233 | 76 | 157 | 32.6% |
 | 2010-04-23 | Rise of the Eldrazi Promos (`PROE`) | promos | rise-of-the-eldrazi | other | 4 | 2 | 2 | 50.0% |
 | 2010-06-04 | Duels of the Planeswalkers (`DPA`) | boxed-products | duels-of-the-planeswalkers | other | 101 | 58 | 43 | 57.4% |
-| 2010-06-18 | Archenemy (`ARC`) | archenemy | 2010s | other | 141 | 55 | 86 | 39.0% |
+| 2010-06-18 | Archenemy (`ARC`) | archenemy | 2010s | other | 141 | 56 | 85 | 39.7% |
 | 2010-07-16 | Magic 2011 (`M11`) | core | 2010s | main | 234 | 103 | 131 | 44.0% |
 | 2010-08-27 | From the Vault: Relics (`V10`) | from-the-vault | 2010s | other | 15 | 3 | 12 | 20.0% |
 | 2010-09-03 | Duel Decks: Elspeth vs. Tezzeret (`DDF`) | duel-decks | duel-decks-elspeth-vs-tezzeret | other | 73 | 23 | 50 | 31.5% |
@@ -254,7 +254,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 | 2011-04-01 | Duel Decks: Knights vs. Dragons (`DDG`) | duel-decks | duel-decks-knights-vs-dragons | other | 72 | 29 | 43 | 40.3% |
 | 2011-05-12 | New Phyrexia Promos (`PNPH`) | promos | new-phyrexia | other | 4 | 1 | 3 | 25.0% |
 | 2011-05-13 | New Phyrexia (`NPH`) | expansion | phyrexia | main | 170 | 37 | 133 | 21.8% |
-| 2011-05-14 | Duel Decks: Mirrodin Pure vs. New Phyrexia (`TD2`) | duel-decks | duel-decks-mirrodin-pure-vs-new-phyrexia | other | 80 | 32 | 48 | 40.0% |
+| 2011-05-14 | Duel Decks: Mirrodin Pure vs. New Phyrexia (`TD2`) | duel-decks | duel-decks-mirrodin-pure-vs-new-phyrexia | other | 80 | 33 | 47 | 41.2% |
 | 2011-06-17 | Commander 2011 (`CMD`) | commander | 2011 | commander | 303 | 118 | 185 | 38.9% |
 | 2011-07-14 | Magic 2012 Promos (`PM12`) | promos | magic-2012 | other | 3 | 0 | 3 | 0.0% |
 | 2011-07-15 | Magic 2012 (`M12`) | core | 2010s | main | 234 | 97 | 137 | 41.5% |
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 26 | 42 | 38.2% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 65 | 169 | 27.8% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 186 | 155 | 54.5% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 187 | 154 | 54.8% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 3 | 9 | 25.0% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 5 | 9 | 35.7% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 1 | 8 | 11.1% |
@@ -380,7 +380,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 | 2017-04-28 | Amonkhet (`AKH`) | expansion | amonkhet | main | 272 | 80 | 192 | 29.4% |
 | 2017-04-28 | Amonkhet Invocations (`MP2`) | masterpieces | amonkhet-invocations | other | 54 | 8 | 46 | 14.8% |
 | 2017-04-28 | Amonkhet Promos (`PAKH`) | promos | amonkhet | other | 69 | 11 | 58 | 15.9% |
-| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 138 | 151 | 47.8% |
+| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 139 | 150 | 48.1% |
 | 2017-06-16 | Archenemy: Nicol Bolas (`E01`) | archenemy | 2010s | other | 101 | 38 | 63 | 37.6% |
 | 2017-07-14 | Hour of Devastation (`HOU`) | expansion | 2010s | main | 199 | 53 | 146 | 26.6% |
 | 2017-07-14 | Hour of Devastation Promos (`PHOU`) | promos | hour-of-devastation | other | 55 | 5 | 50 | 9.1% |
@@ -700,7 +700,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 
 | Grupo | Subgrupo | Ediciones | Cartas únicas | Implementadas | Pendientes | % |
 |---|---|---:|---:|---:|---:|---:|
-| anthologies | 2017 | 1 | 289 | 138 | 151 | 47.8% |
+| anthologies | 2017 | 1 | 289 | 139 | 150 | 48.1% |
 | anthologies | 2018 | 1 | 279 | 114 | 165 | 40.9% |
 | anthologies | arena-anthology-1 | 1 | 26 | 11 | 15 | 42.3% |
 | anthologies | arena-anthology-2 | 1 | 25 | 9 | 16 | 36.0% |
@@ -717,7 +717,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 | anthologies | historic-anthology-6 | 1 | 20 | 13 | 7 | 65.0% |
 | anthologies | historic-anthology-7 | 1 | 25 | 10 | 15 | 40.0% |
 | anthologies | pioneer-anthology-1 | 1 | 11 | 2 | 9 | 18.2% |
-| archenemy | 2010s | 2 | 242 | 93 | 149 | 38.4% |
+| archenemy | 2010s | 2 | 242 | 94 | 148 | 38.8% |
 | boxed-products | 2017-gift-pack | 1 | 5 | 5 | 0 | 100.0% |
 | boxed-products | anthologies | 1 | 81 | 38 | 43 | 46.9% |
 | boxed-products | astral-cards | 1 | 12 | 0 | 12 | 0.0% |
@@ -740,7 +740,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 | boxed-products | the-zeta-set | 1 | 121 | 36 | 85 | 29.8% |
 | commander | 2011 | 1 | 303 | 118 | 185 | 38.9% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 186 | 155 | 54.5% |
+| commander | 2013 | 1 | 341 | 187 | 154 | 54.8% |
 | commander | 2014 | 1 | 322 | 191 | 131 | 59.3% |
 | commander | 2015 | 1 | 327 | 120 | 207 | 36.7% |
 | commander | 2016 | 1 | 341 | 98 | 243 | 28.7% |
@@ -784,7 +784,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 | duel-decks | duel-decks-knights-vs-dragons | 1 | 72 | 29 | 43 | 40.3% |
 | duel-decks | duel-decks-merfolk-vs-goblins | 1 | 57 | 18 | 39 | 31.6% |
 | duel-decks | duel-decks-mind-vs-might | 1 | 56 | 23 | 33 | 41.1% |
-| duel-decks | duel-decks-mirrodin-pure-vs-new-phyrexia | 1 | 80 | 32 | 48 | 40.0% |
+| duel-decks | duel-decks-mirrodin-pure-vs-new-phyrexia | 1 | 80 | 33 | 47 | 41.2% |
 | duel-decks | duel-decks-nissa-vs-ob-nixilis | 1 | 62 | 27 | 35 | 43.5% |
 | duel-decks | duel-decks-phyrexia-vs-the-coalition | 1 | 67 | 30 | 37 | 44.8% |
 | duel-decks | duel-decks-sorin-vs-tibalt | 1 | 71 | 27 | 44 | 38.0% |
@@ -793,7 +793,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 33 | 34 | 49.3% |
 | eternal | 2020s | 6 | 537 | 110 | 427 | 20.5% |
 | expansion | 1990s | 11 | 1573 | 288 | 1285 | 18.3% |
-| expansion | 2000s | 19 | 3082 | 510 | 2572 | 16.5% |
+| expansion | 2000s | 19 | 3082 | 511 | 2571 | 16.6% |
 | expansion | 2010s | 14 | 2735 | 590 | 2145 | 21.6% |
 | expansion | 2020s | 17 | 3738 | 490 | 3248 | 13.1% |
 | expansion | alara | 2 | 379 | 112 | 267 | 29.6% |
@@ -12275,7 +12275,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 - [ ] Tel-Jilad Wolf — `e1fcab73-8a23-43ae-9d8b-9601ffa8663e`
 - [ ] Test of Faith — `3397aa3d-bf73-4ca3-a806-059361603079`
 - [ ] Thought Dissector — `6702fcdb-0b06-4b17-966a-3c5e033c3341`
-- [ ] Thunderstaff — `1a88a378-051c-42b4-bd0e-9c40ae8efea6`
 - [ ] Trinisphere — `69d994f2-b8f6-425f-9655-977c2144d40c`
 - [ ] Turn the Tables — `bd5ad7c3-4477-4278-9875-d2ffbb0e8089`
 - [ ] Unforge — `fa360a9d-3cff-4833-9ce2-b2f53d26127f`
@@ -18061,7 +18060,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 - [ ] Synod Sanctum — `643ddf81-bbd3-4398-b5a7-1169c6e2b081`
 - [ ] Taurean Mauler — `fd5ee26c-cc54-4dc0-b611-5cda14354a5e`
 - [ ] Thelonite Hermit — `69d2e5f3-2f4d-4a36-bcd5-181164ecd894`
-- [ ] Thunderstaff — `1a88a378-051c-42b4-bd0e-9c40ae8efea6`
 - [ ] Torrent of Souls — `3ec1b309-8c26-4dc4-b4c3-f97c2c3f8a68`
 - [ ] Two-Headed Dragon — `a4fa3052-d1ec-4442-a832-15ba36c500ee`
 - [ ] Unbender Tine — `cdc0a1a5-d9e4-4923-b472-2fa78212167f`
@@ -19223,7 +19221,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 - [ ] Talisman of Progress — `00e35322-1a9a-41e3-9ce1-359c8eaa3bc7`
 - [ ] Test of Faith — `3397aa3d-bf73-4ca3-a806-059361603079`
 - [ ] Thirst for Knowledge — `939e6f71-185e-41f2-9d54-72cce06f1dce`
-- [ ] Thunderstaff — `1a88a378-051c-42b4-bd0e-9c40ae8efea6`
 - [ ] Triumph of the Hordes — `3ded0c0c-40ce-4d14-a9a6-b023bc19ee0e`
 - [ ] Turn the Tide — `2546db90-1f6e-43f7-a116-2fefe67d489d`
 - [ ] Vedalken Certarch — `337533fb-2783-493c-856f-c41a83cca443`
@@ -21895,7 +21892,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 - [ ] Thopter Foundry — `88bef744-550e-4f33-b1ff-a8ee990ec754`
 - [ ] Thousand-Year Elixir — `4dc5726e-2f7e-4c2b-9616-c3301d212f78`
 - [ ] Thraximundar — `9e0e4217-fefe-48dd-9153-032460192b19`
-- [ ] Thunderstaff — `1a88a378-051c-42b4-bd0e-9c40ae8efea6`
 - [ ] Tooth and Claw — `587368eb-068c-44a3-ba8c-5ad0f59f880f`
 - [ ] True-Name Nemesis — `112322ad-8f66-4cd4-98a1-f425d61a69ce`
 - [ ] Unexpectedly Absent — `e8d78a83-c932-4b55-8f75-7094c672c3a9`
@@ -28339,7 +28335,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,55
 - [ ] Terastodon — `17975a20-2c13-4325-be1e-0bcda5063a2d`
 - [ ] Thief of Blood — `97d61346-bd53-4eb8-a920-6ae0382eb20d`
 - [ ] Thousand-Year Elixir — `4dc5726e-2f7e-4c2b-9616-c3301d212f78`
-- [ ] Thunderstaff — `1a88a378-051c-42b4-bd0e-9c40ae8efea6`
 - [ ] Titania's Chosen — `a9e72fe7-c4b3-421a-8b2f-bb9448b04a44`
 - [ ] Titania, Protector of Argoth — `d0ade00d-a496-441d-9b7e-7dc033d3292c`
 - [ ] Tribute to the Wild — `ba0fc2ca-7084-454a-9d4e-5cbca945a7ca`
