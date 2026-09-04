@@ -351,6 +351,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-permanent" }
   | { readonly kind: "return-n-nonland-permanents"; readonly count: number | "X" }
   | { readonly kind: "return-n-creatures"; readonly count: number | "X" }
+  | { readonly kind: "destroy-n-creatures"; readonly count: number | "X"; readonly nonblack?: boolean }
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
@@ -1878,6 +1879,14 @@ function recognizeText(text: string): RecognizedText {
         triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "player", unimplementedText: [], covered: true
       };
     }
+  }
+  // Dregs of Sorrow: "Destroy X target nonblack creatures. Draw X cards."
+  const dregs = /^Destroy X target (nonblack )?creatures\.\s*Draw X cards\.$/i.exec(joined);
+  if (dregs) {
+    return {
+      effects: [{ kind: "compound", effects: [{ kind: "destroy-n-creatures", count: "X", ...(dregs[1] ? { nonblack: true } : {}) }, { kind: "draw", amount: "X" }] }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
   }
   // Incite Rebellion: each player takes damage and their creatures take damage equal to their creature count.
   if (/^For each player, ~ deals damage to that player and each creature that player controls equal to the number of creatures they control\.$/i.test(joined)) {

@@ -2028,6 +2028,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return logged(next, controller, `${sourceName} devuelve ${candidates.length} permanente(s) que no son tierra a la mano.`);
     }
+    case "destroy-n-creatures": {
+      const count = effect.count === "X" ? object.variableValue : effect.count;
+      if (count <= 0) return state;
+      const targets = allPermanents(state)
+        .filter((permanent) => isCreature(cardProfile(permanent.card))
+          && (!effect.nonblack || !cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === "B")))
+        .sort((left, right) => {
+          const opp = (left.controller !== controller ? 0 : 1) - (right.controller !== controller ? 0 : 1);
+          if (opp !== 0) return opp;
+          return (powerOf(right, state) + toughnessOf(right, state)) - (powerOf(left, state) + toughnessOf(left, state));
+        })
+        .slice(0, count);
+      let next = state;
+      for (const permanent of targets) {
+        const live = findPermanent(next, permanent.instance_id);
+        if (live) next = destroyPermanent(next, live);
+      }
+      return logged(next, controller, `${sourceName} destruye ${targets.length} criatura(s).`);
+    }
     case "return-n-creatures": {
       const count = effect.count === "X" ? object.variableValue : effect.count;
       if (count <= 0) return state;
