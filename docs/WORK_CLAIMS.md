@@ -54,6 +54,15 @@ feature name.
 | `c14-combat-damage-target` | `~ deals N damage to target attacking or blocking creature` (`attacking-or-blocking-creature` target kind) | `c14-self-pump` | merged (`ead5da1`) | 2026-09-03 |
 | `c14-it-deals-trigger` | Normalise leading "it deals/gets/gains/fights" in a trigger clause to the source (`~`) | `c14-self-pump` | merged (`cbdceac`) | 2026-09-03 |
 | `c14-damage-sweep-filter` | `~ deals N damage to each nonartifact creature` / `each creature without flying` | `c14-self-pump` | merged (`cbdceac`) | 2026-09-03 |
+| `c14-destroy-permanent-and-self-bounce` | plain `Destroy target permanent`; `Return a creature you control to its owner's hand` | `c14-batch2-clean` | ready (`d3dae63`) | 2026-09-04 |
+| `c14-board-cost-reduction` | `~ costs {N} less to cast for each creature on the battlefield` (negative additionalGeneric) | `c14-batch2-clean` | ready (`8def468`) | 2026-09-04 |
+| `c14-medallion-cost-reduction` | `<color/type> spells you cast cost {N} less to cast` static grant | `c14-batch2-clean` | ready (`5a6b506`) | 2026-09-04 |
+| `c14-graveyard-self-return` | `When ~ is put into a graveyard from the battlefield, return it to its owner's hand`; `You draw N cards and you lose N life` | `c14-batch2-clean` | ready (`ccc5268`) | 2026-09-04 |
+| `c14-tapped-wipe-and-commander-mana` | `Destroy all tapped creatures`; `Add N mana of any color in your commander's color identity` | `c14-batch2-clean` | ready (`727fe47`) | 2026-09-04 |
+| `c14-evoke` | Evoke alternative cost + kicked-style sacrifice trigger (CR 702.34) | `c14-batch2-clean` | ready (`95c912c`) | 2026-09-04 |
+| `c14-extort` | Extort keyword synthesised as a spell-cast optional-pay drain trigger (CR 702.39) | `c14-batch2-clean` | ready (`4992925`) | 2026-09-04 |
+| `c14-static-land-mana-bonus` | `<Basic type>s you control produce an additional {C}` / tap-for-mana wording | `c14-batch2-clean` | ready (`fa44b87`) | 2026-09-04 |
+| `c14-planeswalker-loyalty` | Planeswalker loyalty counters, sorcery-speed loyalty abilities, 0-loyalty SBA; `draw a card for each <color> creature` | `c14-batch2-clean` | ready (`d98a87f`) | 2026-09-04 |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |
