@@ -857,6 +857,10 @@ function triggerMatches(
     const subtype = definition.condition.subtype.toLowerCase();
     if (playerAt(state, watcher.controller).battlefield.some((permanent) => cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype))) return false;
   }
+  if (definition.condition?.kind === "controlled-creature-power-at-least") {
+    if (!playerAt(state, watcher.controller).battlefield.some((permanent) => isCreature(cardProfile(permanent.card))
+      && powerOf(permanent, state) >= definition.condition.amount)) return false;
+  }
   const subject = definition.subject;
 
   // Turn-structure triggers are about a player, not an object.

@@ -106,6 +106,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-static-creature-pt-grant` | Static +P/+T bonuses for other creatures you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-destroy-power-toughness-loss` | Destroy a creature then make its controller lose its power plus toughness | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-variable-global-debuff` | X-scaled -X/-X effects affecting every creature | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-conditional-power-trigger` | Optional triggers gated by a controlled creature's power threshold | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 
 ## Claim format
 
