@@ -109,6 +109,15 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-conditional-power-trigger` | Optional triggers gated by a controlled creature's power threshold | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-nonflying-global-damage` | X-scaled damage to nonflying creatures and each player | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-upkeep-draw-life-loss` | Upkeep draw-and-life-loss compound trigger wording | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-fear-evasion` | Fear keyword and black-or-artifact blocking restriction | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-equal-hand-upkeep-damage` | Opponent-upkeep damage equal to active player's hand size | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-artifact-life` | Life gain multiplied by controlled artifacts | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-named-source-counters` | Named non-power counters placed on a triggered source | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-global-fear-test` | Scenario coverage for global fear grants | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-life-types` | Reusable counted life gain for artifacts, creatures and enchantments | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-creature-tokens` | Token creation scaled by controlled creature count | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-power-threshold-targets` | Legal target filtering for creatures with power five or greater | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-continuous-flying-targets` | Continuous flying grants respected by flying-target filters | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 
 ## Claim format
 
