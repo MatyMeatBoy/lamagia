@@ -99,6 +99,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-activated-discard-cost` | Activated costs that discard one card from the controller’s hand | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-sacrifice-token` | Activated costs that sacrifice a token permanent | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-exile-graveyard-cost` | Activated costs that exile one card from the controller’s graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-graveyard-to-library-bottom` | Return a targeted card from your graveyard to the bottom of your library | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
