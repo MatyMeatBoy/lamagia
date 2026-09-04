@@ -1699,6 +1699,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return logged(next, controller, `${sourceName} destruye todas las criaturas.`);
     }
+    case "destroy-all-creatures-draw-destroyed": {
+      const destroyed = allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))
+        && !keywordOf(state, permanent, "indestructible"));
+      let next = state;
+      for (const permanent of destroyed) next = movePermanentToZone(next, permanent, "graveyard");
+      next = drawCards(next, controller, destroyed.length);
+      return logged(next, controller, `${sourceName} destruye ${destroyed.length} criatura(s) y roba ${destroyed.length}.`);
+    }
     case "destroy-all-artifacts-creatures-enchantments": {
       let next = state;
       for (const permanent of allPermanents(state)) {

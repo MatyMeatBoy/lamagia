@@ -327,6 +327,7 @@ export type SpellEffect =
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures" }
+  | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
@@ -1411,6 +1412,16 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
+  const decreeJoined = decreeBody.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  if (/^Destroy all creatures\. They can't be regenerated\. Draw a card for each creature destroyed this way\.?$/i.test(decreeJoined)) {
+    const unsupported = body.filter((entry) => !decreeBody.includes(entry)).map((entry) => entry.text);
+    return {
+      effects: [{ kind: "destroy-all-creatures-draw-destroyed" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none",
+      unimplementedText: unsupported, covered: unsupported.length === 0
+    };
+  }
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library\.$/i.test(joined)) {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
