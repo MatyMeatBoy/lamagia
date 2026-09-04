@@ -114,6 +114,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `arsenal-command-tower` | Command Tower produces mana restricted to the commander’s color identity (CR 903.5d, 106.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-chaos-warp` | Chaos Warp shuffles a target permanent into its owner’s library and conditionally puts the revealed top card onto the battlefield (CR 701.20, 701.34) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-decree-of-pain` | Decree of Pain destroys all creatures and draws for creatures destroyed by that effect (CR 608.2c, 701.7) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-desertion` | Desertion counters a spell and puts an artifact or creature spell onto the battlefield under its controller’s control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
