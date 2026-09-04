@@ -174,6 +174,16 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
       ?? available.find((entry) => entry.action.type === "choose-discard");
     if (wanted) return { action: wanted.action, label: wanted.label };
   }
+  if (state.pendingChoice?.type === "library-pick" && state.pendingChoice.seat === seat) {
+    // Prefer a nonland; otherwise take the first option.
+    const picks = available.filter((entry) => entry.action.type === "resolve-library-pick");
+    const nonland = picks.find((entry) => {
+      const card = state.players[seat]!.library.find((c) => entry.action.type === "resolve-library-pick" && c.instance_id === entry.action.cardId);
+      return card && !isLand(cardProfile(card));
+    });
+    const wanted = nonland ?? picks[0];
+    if (wanted) return { action: wanted.action, label: wanted.label };
+  }
   if (state.pendingChoice?.type === "scry" && state.pendingChoice.seat === seat) {
     // Deterministic policy: bottom the top card only when the bot is flooded on
     // lands (5+ in play and the card is another land), otherwise keep it.

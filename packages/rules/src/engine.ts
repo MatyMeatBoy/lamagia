@@ -1654,6 +1654,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           : permanent)
       }));
     }
+    case "look-put-one-in-hand": {
+      const optionIds = playerAt(state, controller).library.slice(0, effect.amount).map((card) => card.instance_id);
+      if (!optionIds.length) return state;
+      return { ...state, priorityOpen: false, pendingChoice: { type: "library-pick", seat: controller, sourceId: object.id, sourceCard: object.card, optionIds } };
+    }
     case "grant-target-creature-keyword": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

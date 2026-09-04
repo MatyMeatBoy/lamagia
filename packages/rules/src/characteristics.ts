@@ -1686,6 +1686,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "attacking-or-blocking-creature" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "attacking-or-blocking-creature" };
   }
+  if ((match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the other(?:s)? on the bottom of your library in any order$/i.exec(text))
+      || (match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the rest on the bottom of your library in any order$/i.exec(text))
+      || (match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the other on the bottom of your library$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null && amount > 1) return { effect: { kind: "look-put-one-in-hand", amount }, target: "none" };
+  }
   if ((match = /^Scry (\w+)$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null && amount > 0) return { effect: { kind: "scry", amount }, target: "none" };
