@@ -2320,6 +2320,24 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    // "Whenever another creature you control with power N or less enters, X" (Mentor of the Meek).
+    const lowPowerEnters = /^whenever\s+another\s+creature\s+you\s+control\s+with\s+power\s+(\d+)\s+or\s+less\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(line);
+    if (lowPowerEnters) {
+      const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(lowPowerEnters[2]!);
+      const payCost = payGate ? parseManaCost(payGate[1]!) : null;
+      const rest = payGate ? payGate[2]! : lowPowerEnters[2]!;
+      const optional = payGate ? true : /^you\s+may\b/i.test(rest);
+      const rec = (payCost && payCost.hasVariable) ? null : recognizeSentence(optional ? rest.replace(/^you\s+may\s+/i, "") : rest);
+      if (rec) {
+        triggers.push({
+          event: "enters-battlefield", subject: "another-creature-you-control", effect: rec.effect,
+          optional, targetKind: rec.target, sourceText: line,
+          condition: { kind: "entering-power-at-most", amount: Number(lowPowerEnters[1]) },
+          ...(payCost && payCost.symbols.length ? { payCost } : {})
+        });
+        continue;
+      }
+    }
     // "Whenever another non-<Subtype> creature you control dies, X" (Requiem Angel).
     const nonSubtypeDies = /^whenever\s+another\s+non-([A-Za-z][A-Za-z'’-]*)\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i.exec(line);
     if (nonSubtypeDies) {
