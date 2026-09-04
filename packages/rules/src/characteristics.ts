@@ -1665,6 +1665,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const discard = toNumber(match[2]);
     if (draw !== null && draw > 0 && discard !== null && discard > 0) return { effect: { kind: "draw-then-discard", draw, discard }, target: "none" };
   }
+  if ((match = /^Draw (\w+) cards?\.\s*If you do, discard (\w+) cards?$/i.exec(text))) {
+    const draw = toNumber(match[1]);
+    const discard = toNumber(match[2]);
+    if (draw !== null && draw > 0 && discard !== null && discard > 0) return { effect: { kind: "draw-then-discard", draw, discard }, target: "none" };
+  }
   if (/^Exile ~$/i.test(text)) return { effect: { kind: "exile-self" }, target: "none" };
   if (/^Return (?:it|~) to its owner's hand$/i.test(text)) return { effect: { kind: "return-source-to-hand" }, target: "none" };
   if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-self-into-library" }, target: "none" };
