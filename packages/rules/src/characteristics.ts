@@ -1343,6 +1343,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     },
     target: "none"
   };
+  const triggeredSelfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text);
+  if (triggeredSelfPump) return {
+    effect: { kind: "modify-source-creature", power: Number(triggeredSelfPump[1]), toughness: Number(triggeredSelfPump[2]) },
+    target: "none"
+  };
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };
