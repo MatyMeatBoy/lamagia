@@ -2125,6 +2125,17 @@ describe("casting", () => {
       && entry.action.attackers.some((attacker) => attacker.instanceId === bear.instance_id))).toBe(true);
   });
 
+  it("keeps Fires of Yavimaya's pump limited to its controller's creatures", () => {
+    let game = readyToCast([], [FIRES_OF_YAVIMAYA(), BEAR(), MOUNTAIN(), FOREST()], [BEAR()]);
+    const fires = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Fires of Yavimaya")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === fires.instance_id)!;
+    game = applyAction(game, 0, activation.action);
+    game = passUntil(game, (state) => state.stack.length === 0
+      && state.players[0]!.graveyard.some((card) => card.name === "Fires of Yavimaya"));
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.powerModifier).toBe(2);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.powerModifier ?? 0).toBe(0);
+  });
+
   it("reuses the landfall trigger subject when a land enters", () => {
     let game = readyToCast([LANDFALL_BEAST(), FOREST()], [FOREST(), FOREST(), FOREST()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
