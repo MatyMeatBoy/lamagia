@@ -732,6 +732,12 @@ profiles, deterministic state transitions, and scenario tests; Decree's cycling
 trigger remains explicitly unimplemented. See `docs/WORK_CLAIMS.md` for active
 claims and `docs/SET_COVERAGE.md` for the remaining Arsenal cards.
 
+The current upstream branch also contains newly generated reusable clusters
+for target-creature modification, landwalk, fortify, enchant-creature,
+choose-modal, sorcery-speed restrictions, and typed counterspells. They were
+reviewed before this batch and deliberately not duplicated here; integrate or
+rebase that upstream work before claiming overlapping files.
+
 ### Cooperative C13 cluster: graveyard creature return
 
 The branch recognises `Return target creature card from your graveyard to the
