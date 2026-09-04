@@ -108,6 +108,15 @@ export interface Permanent {
   readonly toughnessModifier: number;
   /** Keyword effects from spells/abilities that expire during cleanup. */
   readonly temporaryKeywords?: readonly EnforcedKeyword[];
+  /** Temporary characteristic-setting animation, cleared during cleanup (CR 613.6). */
+  readonly temporaryAnimation?: {
+    readonly power: number;
+    readonly toughness: number;
+    readonly colors: readonly string[];
+    readonly types: readonly CardType[];
+    readonly subtypes: readonly string[];
+    readonly keywords: readonly EnforcedKeyword[];
+  };
   /** One-shot destruction-replacement shields created by Regenerate (CR 701.19). */
   readonly regenerationShields?: number;
   /** The creature this Equipment is attached to, when it is equipped. */
@@ -536,6 +545,9 @@ function findPermanent(state: GameState, instanceId: string): Permanent | null {
 function counterModifier(permanent: Permanent): number {
   return (permanent.counters["+1/+1"] ?? 0) - (permanent.counters["-1/-1"] ?? 0);
 }
+function isCreaturePermanent(permanent: Permanent): boolean {
+  return permanent.temporaryAnimation !== undefined || isCreature(cardProfile(permanent.card));
+}
 function attachedEquipment(state: GameState, creature: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === creature.instance_id
     && cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === "equipment"));
@@ -569,7 +581,7 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
-  return (imprint?.power ?? level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
+  return (permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -581,7 +593,7 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.toughness, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
-  return (imprint?.toughness ?? level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
+  return (permanent.temporaryAnimation?.toughness ?? imprint?.toughness ?? level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const profile = cardProfile(permanent.card);
@@ -592,11 +604,11 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
   }).at(-1);
   if (level?.keywords.includes(keyword)) return true;
   if (permanent.temporaryKeywords?.includes(keyword)) return true;
-  if (isCreature(profile) && allPermanents(state).some((source) => cardProfile(source.card).staticKeywordGrants.some((grant) => grant.keyword === keyword
+  if (isCreaturePermanent(permanent) && allPermanents(state).some((source) => cardProfile(source.card).staticKeywordGrants.some((grant) => grant.keyword === keyword
       && grant.sourceZone !== "graveyard"
       && (grant.scope === "all-creatures" || (source.controller === permanent.controller
         && (grant.scope === "creatures-you-control" || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))))))) return true;
-  if (isCreature(profile) && state.players.some((player) => player.seat === permanent.controller
+  if (isCreaturePermanent(permanent) && state.players.some((player) => player.seat === permanent.controller
       && player.graveyard.some((card) => cardProfile(card).staticKeywordGrants.some((grant) => grant.sourceZone === "graveyard"
         && grant.keyword === keyword
         && grant.scope === "creatures-you-control"
@@ -2244,6 +2256,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!source || !isCreature(cardProfile(source.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === source.instance_id);
     }
+    case "animate-source": {
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!source) return state;
+      return withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? {
+            ...permanent,
+            temporaryAnimation: {
+              power: effect.power,
+              toughness: effect.toughness,
+              colors: effect.colors,
+              types: ["Artifact", "Creature"],
+              subtypes: effect.subtypes,
+              keywords: effect.keywords
+            },
+            temporaryKeywords: [...new Set([...(permanent.temporaryKeywords ?? []), ...effect.keywords])]
+          }
+          : permanent)
+      }));
+    }
     case "modify-triggered-creature": {
       const targetId = object.trigger?.eventPermanentId;
       if (!targetId) return state;
@@ -3756,7 +3790,7 @@ function pruneCombat(state: GameState): GameState {
 
 function canAttack(state: GameState, permanent: Permanent): boolean {
   const profile = cardProfile(permanent.card);
-  if (!isCreature(profile)) return false;
+  if (!isCreaturePermanent(permanent)) return false;
   if (permanent.tapped) return false;
   if (profile.keywords.includes("defender")) return false;
   // A printed "can't attack" is the same restriction as defender (CR 506.3a).
@@ -3803,7 +3837,7 @@ function landwalkEvades(state: GameState, attacker: Permanent, defenderSeat: Sea
 
 function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): boolean {
   const blockerProfile = cardProfile(blocker.card);
-  if (!isCreature(blockerProfile) || blocker.tapped) return false;
+  if (!isCreaturePermanent(blocker) || blocker.tapped) return false;
   if (blockerProfile.combatRules.cannotBlock || blocker.cantBlockThisTurn) return false;
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
@@ -4169,7 +4203,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         ...next,
         players: next.players.map((current) => ({
           ...current,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], regenerationShields: 0, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryAnimation: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
         }))
       };
       break;
@@ -4794,7 +4828,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     const profile = cardProfile(permanent.card);
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
     if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
-      if (!isCreature(profile)) return false;
+      if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
