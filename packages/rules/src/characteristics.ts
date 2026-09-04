@@ -221,7 +221,7 @@ export interface StaticKeywordGrant {
 }
 
 export interface StaticPowerToughnessGrant {
-  readonly scope: "other-creatures-you-control" | "all-creatures";
+  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -767,11 +767,11 @@ function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
-  const match = /^(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control|all creatures)\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(line.trim().replace(/\.$/, ""));
+  const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(line.trim().replace(/\.$/, ""));
   return match ? {
-    scope: /^all creatures/i.test(match[1]!) ? "all-creatures" : "other-creatures-you-control",
-    ...(!/^all creatures/i.test(match[1]!) && match[2] ? { color: match[2]!.toUpperCase() } : {}),
-    power: Number(match[3]), toughness: Number(match[4])
+    scope: match[4] ? "all-creatures" : match[3] ? "creatures-you-control" : "other-creatures-you-control",
+    ...(match[2] ? { color: match[2]!.toUpperCase() } : {}),
+    power: Number(match[5]), toughness: Number(match[6])
   } : null;
 }
 

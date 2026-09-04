@@ -362,18 +362,23 @@ function equipmentBonus(state: GameState | undefined, creature: Permanent): { po
       : total;
   }, { power: 0, toughness: 0 });
 }
+function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { power: number; toughness: number } {
+  return allPermanents(state)
+    .filter((source) => source.controller === permanent.controller)
+    .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants
+      .filter((grant) => grant.scope === "creatures-you-control"
+        || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))
+      .map((grant) => ({ source, grant })))
+    .filter(({ grant }) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
+    .reduce((total, { grant }) => ({ power: total.power + grant.power, toughness: total.toughness + grant.toughness }), { power: 0, toughness: 0 });
+}
 export function powerOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
   const level = state ? profile.levelDefinitions.filter((definition) => {
     const count = permanent.counters.level ?? 0;
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
   }).at(-1) : undefined;
-  const staticBonus = state ? allPermanents(state)
-    .filter((source) => source.controller === permanent.controller && source.instance_id !== permanent.instance_id)
-    .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
-    .filter((grant) => grant.scope === "other-creatures-you-control")
-    .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
-    .reduce((total, grant) => total + grant.power, 0) : 0;
+  const staticBonus = state ? staticPowerToughnessBonus(state, permanent).power : 0;
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
   return (level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
@@ -384,12 +389,7 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     const count = permanent.counters.level ?? 0;
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
   }).at(-1) : undefined;
-  const staticBonus = state ? allPermanents(state)
-    .filter((source) => source.controller === permanent.controller && source.instance_id !== permanent.instance_id)
-    .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
-    .filter((grant) => grant.scope === "other-creatures-you-control")
-    .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
-    .reduce((total, grant) => total + grant.toughness, 0) : 0;
+  const staticBonus = state ? staticPowerToughnessBonus(state, permanent).toughness : 0;
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.toughness, 0) : 0;
   return (level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
