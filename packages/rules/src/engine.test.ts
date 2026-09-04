@@ -48,6 +48,7 @@ const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant",
 const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
 const X_DISCARD_SPELL = () => make({ name: "Scalable Mind Twist", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Target player discards X cards." });
 const LIFE_SPELL = () => make({ name: "Simple Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain 1 life." });
+const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
 const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "You lose 2 life." });
 const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you lose life, put a +1/+1 counter on Pain Counter." });
 const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Target player gains 2 life." });
@@ -742,6 +743,16 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 0 });
     expect(game.players[0]!.battlefield.every((permanent) => permanent.temporaryKeywords?.includes("indestructible"))).toBe(true);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.temporaryKeywords?.includes("indestructible"))).toBe(false);
+  });
+
+  it("calculates life from the targeted creature's current power", () => {
+    const profile = profileOf(POWER_LIFE_SPELL());
+    expect(profile).toMatchObject({ targetKind: "creature-you-control", effects: [{ kind: "gain-life-equal-target-power" }] });
+    let game = readyToCast([POWER_LIFE_SPELL()], [FOREST(), BEAR()]);
+    const creature = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const before = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: creature.instance_id }] });
+    expect(game.players[0]!.life).toBe(before + 2);
   });
 
   it("scales token creation from the controller's current land count", () => {
