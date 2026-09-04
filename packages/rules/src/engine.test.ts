@@ -1048,6 +1048,13 @@ describe("casting", () => {
     game = applyAction(game, pendingSeat(game)!, { type: "pass" });
     const surviving = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
     expect(surviving).toMatchObject({ damage: 0, deathtouched: false, tapped: true, regenerationShields: 0 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    const anotherProfile = profileOf(make({
+      name: "Wizard Chorus", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2",
+      oracle_text: "Tap another untapped creature you control: Draw a card."
+    }));
+    expect(anotherProfile.activatedAbilities[0]).toMatchObject({ tapsCreature: { mode: "another" } });
   });
 
   it("regenerates a targeted creature and removes it from combat", () => {
