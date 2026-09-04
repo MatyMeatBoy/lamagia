@@ -713,3 +713,30 @@ Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
 (+179); Commander 2014 set coverage 90/337 -> 91/337 (Nantuko Shade). The
 integrator should rerun `npm run rules:engine:export` and regenerate
 `docs/PRIMITIVE_ROADMAP.md` / `data/rules/coverage-c14.md` after merge.
+
+### C14 race batch: scry and combat-restricted damage
+
+Second `c14-self-pump` batch, three reusable primitives:
+
+- **Scry** (`scry` effect, CR 701.17). `recognizeSentence` reads `Scry N` and
+  `Scry N, then draw M cards`. Resolution opens a `scry` pending choice that
+  walks the top N cards one at a time: each is kept on top or sent to the
+  bottom, then the library is rebuilt `[kept…, untouched remainder, bottomed…]`
+  and any trailing `then draw` runs. Kept-pile reordering is not modelled. The
+  bot keeps each card unless it is land-flooded (5+ lands in play and the card
+  is a land). Works as a spell effect and, through the existing trigger bus, as
+  `When ~ enters the battlefield, scry N`.
+- **`~ deals N damage to target attacking or blocking creature`**: new
+  `attacking-or-blocking-creature` target kind, filtered from
+  `state.combat.attackers`/`blockers`, reusing `damage-any-target`.
+
+Files: `packages/rules/src/characteristics.ts`, `engine.ts`, `projection.ts`,
+`bot.ts`, `engine.test.ts` (describe "scry and combat-restricted damage",
+4 scenarios).
+
+Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
+(202 rules tests); `npm run rules:test:oracle` PASS (22); `npm run
+simulate:engine` PASS (200 games, 160 finished, 0 invariant/projection
+failures). Catalog fully-implemented 6,995 -> 7,132; Commander 2014 91 -> 92/337
+(Read the Bones). The C14 set tail is now mostly one-off primitives; per-batch
+catalog yield stays high (+137) but per-batch C14 yield is small.

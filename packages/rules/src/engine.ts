@@ -243,6 +243,25 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       readonly amount: number;
       readonly remaining: number;
+    }
+  | {
+      /**
+       * Scry (CR 701.17): the player looks at the top N cards one at a time and
+       * puts each on the bottom or keeps it on top. Kept cards stay in their
+       * printed order; reordering the kept pile is not modelled.
+       */
+      readonly type: "scry";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      /** Library instance ids still to be decided, top of library first. */
+      readonly pending: readonly string[];
+      /** Instance ids already kept on top, in final order. */
+      readonly kept: readonly string[];
+      /** Instance ids already sent to the bottom, in final order. */
+      readonly bottomed: readonly string[];
+      /** Cards to draw once every looked-at card has a decision (CR 701.17e / "then draw"). */
+      readonly thenDraw: number;
     };
 
 export type GameAction =
@@ -259,6 +278,7 @@ export type GameAction =
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
+  | { readonly type: "resolve-scry"; readonly sourceId: string; readonly cardId: string; readonly toBottom: boolean }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -1165,6 +1185,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === source.instance_id);
       const sign = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
       return logged(next, controller, `${sourceName} obtiene ${sign(effect.power)}/${sign(effect.toughness)} hasta el final del turno.`);
+    }
+    case "scry": {
+      const player = playerAt(state, controller);
+      const pending = player.library.slice(0, effect.amount).map((card) => card.instance_id);
+      if (!pending.length) return state;
+      return {
+        ...state,
+        pendingChoice: { type: "scry", seat: controller, sourceId: object.id, sourceCard: object.card, pending, kept: [], bottomed: [], thenDraw: effect.thenDraw ?? 0 }
+      };
     }
     case "grant-target-creature-keyword": {
       const target = object.targets[0];
@@ -2085,6 +2114,16 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
       return actions;
     }
+    if (choice.type === "scry") {
+      const topId = choice.pending[0]!;
+      const card = player.library.find((candidate) => candidate.instance_id === topId);
+      const name = card?.name ?? "la carta superior";
+      const position = choice.kept.length + choice.bottomed.length + 1;
+      const note = `${choice.sourceCard.name}: vistazo, carta ${position} de ${position + choice.pending.length - 1}.`;
+      actions.push({ action: { type: "resolve-scry", sourceId: choice.sourceId, cardId: topId, toBottom: false }, label: `Dejar arriba: ${name}`, note });
+      actions.push({ action: { type: "resolve-scry", sourceId: choice.sourceId, cardId: topId, toBottom: true }, label: `Poner abajo: ${name}`, note });
+      return actions;
+    }
     if (choice.stage === "confirm") {
       actions.push({
         action: { type: "choose-reveal", sourceId: choice.sourceId, reveal: false },
@@ -2262,6 +2301,16 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     return state.players.flatMap((player) => player.graveyard
       .filter((card) => isLand(cardProfile(card)))
       .map((card) => ({ kind: "graveyard-card", seat: player.seat, instanceId: card.instance_id }) as Target));
+  }
+  if (kind === "attacking-or-blocking-creature") {
+    const inCombat = new Set<string>([
+      ...state.combat.attackers.map((entry) => entry.instanceId),
+      ...state.combat.blockers.map((entry) => entry.instanceId)
+    ]);
+    return allPermanents(state)
+      .filter((permanent) => inCombat.has(permanent.instance_id) && isCreature(cardProfile(permanent.card)))
+      .filter((permanent) => (!keywordOf(state, permanent, "hexproof") || permanent.controller === seat) && !keywordOf(state, permanent, "shroud"))
+      .map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
   }
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   if (kind === "creature-spell" || kind === "noncreature-spell") {
@@ -2928,6 +2977,37 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
   return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
 }
 
+function applyResolveScry(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "resolve-scry" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "scry" || choice.seat !== seat) throw new Error("No tienes un vistazo pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Ese vistazo ya no corresponde a la habilidad pendiente.");
+  if (choice.pending[0] !== action.cardId) throw new Error("Debes decidir sobre la carta superior de la biblioteca primero.");
+  const player = playerAt(state, seat);
+  if (!player.library.some((card) => card.instance_id === action.cardId)) throw new Error("Esa carta ya no está en tu biblioteca.");
+  const pending = choice.pending.slice(1);
+  const kept = action.toBottom ? choice.kept : [...choice.kept, action.cardId];
+  const bottomed = action.toBottom ? [...choice.bottomed, action.cardId] : choice.bottomed;
+
+  if (pending.length) {
+    return { ...state, pendingChoice: { ...choice, pending, kept, bottomed } };
+  }
+
+  // Every looked-at card has a decision: rebuild the library as
+  // [kept..., untouched remainder, bottomed...] (CR 701.17b-c).
+  const looked = new Set([...kept, ...bottomed]);
+  const byId = new Map(player.library.map((card) => [card.instance_id, card] as const));
+  const remainder = player.library.filter((card) => !looked.has(card.instance_id));
+  const nextLibrary = [
+    ...kept.map((id) => byId.get(id)!).filter(Boolean),
+    ...remainder,
+    ...bottomed.map((id) => byId.get(id)!).filter(Boolean)
+  ];
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({ ...current, library: nextLibrary }));
+  next = logged(next, seat, `${player.name} mira ${choice.kept.length + choice.bottomed.length + 1} carta(s) y pone ${bottomed.length} abajo.`);
+  if (choice.thenDraw > 0) next = drawCards(next, seat, choice.thenDraw);
+  return next;
+}
+
 /** Applies one action for one seat, then settles the game to its next decision point. */
 export function applyAction(state: GameState, seat: SeatId, action: GameAction): GameState {
   if (state.finished) throw new Error("La partida ya terminó.");
@@ -2948,6 +3028,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
+    case "resolve-scry": next = applyResolveScry(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {
