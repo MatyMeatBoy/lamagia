@@ -45,6 +45,7 @@ const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_
 const UNTAP_SPELL = () => make({ name: "Tactical Untap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Untap target permanent." });
 const MILL_SPELL = () => make({ name: "Gravewind", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player mills three cards." });
 const EACH_MILL_SPELL = () => make({ name: "Shared Gravewind", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Each opponent mills two cards." });
+const ALL_MILL_SPELL = () => make({ name: "Universal Gravewind", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Each player mills two cards." });
 const EACH_DRAW_SPELL = () => make({ name: "Shared Insight", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Each opponent draws two cards." });
 const WHEEL_SPELL = () => make({ name: "Shared Wheel", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Each player discards their hand, then draws seven cards." });
 const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target creature spell." });
@@ -1174,6 +1175,10 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [BEAR(), BEAR()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("mills every player with the same deterministic amount", () => {
+    expect(profileOf(ALL_MILL_SPELL()).effects).toEqual([{ kind: "mill-each-player", amount: 2 }]);
   });
 
   it("deals spell damage to every creature and lets state-based actions clear lethal damage", () => {
