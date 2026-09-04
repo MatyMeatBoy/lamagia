@@ -642,6 +642,24 @@ official Wizards source: `https://magic.wizards.com/en/rules`.
 Validation: `npm run check --workspace=@prossh/rules` PASS and `npm test
 --workspace=@prossh/rules` PASS — 373 passed, 6 skipped.
 
+### Cooperative C13 cluster: Arcane Denial delayed draws
+
+Arcane Denial is compiled into one parameterized counter effect with two
+delayed upkeep draws: its target's controller may choose 0 through 2 cards and
+the caster draws 1. The delayed entries are queued for the next turn's upkeep,
+then become ordinary triggers and preserve player-private choice handling.
+The `choose-draw` action clamps to the remaining library, is exposed only to
+the owed player, and is supported by the deterministic bot. This keeps the
+primitive reusable for future counterspells with different delayed amounts,
+without a card-name branch.
+
+Rules reference: Comprehensive Rules 603.3, 603.7, 608.2b and 121.1;
+official Wizards source: `https://magic.wizards.com/en/rules`.
+
+Validation: `npm run check --workspace=@prossh/rules` PASS; targeted Arcane
+Denial tests PASS (4 tests). Full workspace tests should be rerun after
+integration.
+
 ## Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
