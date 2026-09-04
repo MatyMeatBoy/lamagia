@@ -5,7 +5,6 @@ import unittest
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, classify, cluster_text, effective_worker_count, mana_ability_hint, operand_hints, primitive_cluster_inventory, search_criterion_hint
 from export_set_coverage import product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, load_blocked_cards, template_of
-from plan_primitive_workers import plan_workers
 
 
 class OracleCompilerTests(unittest.TestCase):
