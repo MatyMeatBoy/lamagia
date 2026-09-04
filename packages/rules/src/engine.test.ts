@@ -137,6 +137,7 @@ const PLANT_SPELL = () => make({ name: "Plant Ritual", type_line: "Sorcery", man
 const TAPPED_ZOMBIES = () => make({ name: "Army of the Dead", type_line: "Sorcery", mana_cost: "{5}{B}{B}", cmc: 7, oracle_text: "Create thirteen tapped 2/2 black Zombie creature tokens." });
 const LAND_SCALED_TOKENS = () => make({ name: "Land Bloom", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Create a 0/1 green Plant creature token for each land you control." });
 const CREATURE_SCALED_TOKENS = () => make({ name: "Brood Bloom", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Create a 1/1 green Saproling creature token for each creature you control." });
+const FEAR_TOKEN_SPELL = () => make({ name: "Fear Brood", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Create a 1/1 black Horror creature token with fear." });
 const PLANT_COUNTERS = () => make({ name: "Verdant Rally", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put a +1/+1 counter on each Plant creature you control." });
 const CREATURE_COUNTERS = () => make({ name: "Creature Rally", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put a +1/+1 counter on each creature you control." });
 const PLANT = () => make({ name: "Plant", type_line: "Creature — Plant", mana_cost: "", cmc: 0, power: "0", toughness: "1" });
@@ -982,6 +983,10 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [BEAR(), BEAR()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Saproling")).toHaveLength(2);
+  });
+
+  it("preserves fear on generated tokens", () => {
+    expect(profileOf(FEAR_TOKEN_SPELL()).effects[0]).toMatchObject({ kind: "create-token", token: { keywords: ["fear"] } });
   });
 
   it("adds counters only to creatures of the requested subtype", () => {
