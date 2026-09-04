@@ -65,6 +65,7 @@ const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", t
 const DOUBLE_STRIKE_SPELL = () => make({ name: "Twin Edge", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Target creature gains double strike until end of turn." });
 const TRAMPLE_BOOST = () => make({ name: "Selesnya Memory", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Target creature gets +2/+2 and gains trample until end of turn." });
 const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "{R}: This creature gets +1/+0 until end of turn." });
+const COUNTER_DAMAGE = () => make({ name: "Thoctar Memory", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from this creature: This creature deals 1 damage to any target." });
 const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
@@ -686,6 +687,30 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === creature.instance_id)).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(1);
+  });
+
+  it("offers and pays an activated counter-removal cost", () => {
+    const profile = profileOf(COUNTER_DAMAGE());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      removeCounters: [{ kind: "+1/+1", amount: 1 }],
+      effect: { kind: "damage-any-target", amount: 1 },
+      targetKind: "any"
+    });
+    let game = readyToCast([], [COUNTER_DAMAGE()], [], [BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Thoctar Memory")!;
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = {
+      ...game,
+      players: game.players.map((player) => player.seat === 0
+        ? { ...player, battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, counters: { "+1/+1": 1 } } : permanent) }
+        : player)
+    };
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, { ...activation!.action, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    const updated = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
+    expect(updated.counters["+1/+1"]).toBe(0);
   });
 
   it("enforces a creature's cannot-be-blocked restriction", () => {

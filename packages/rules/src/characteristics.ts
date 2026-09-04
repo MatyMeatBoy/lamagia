@@ -82,6 +82,8 @@ export interface ActivatedAbility {
   readonly sacrificesSelf: boolean;
   /** Creature chosen as an activation cost, optionally excluding the source. */
   readonly sacrificesCreature?: "any" | "another";
+  /** Counters removed from the source as an activation cost. */
+  readonly removeCounters?: readonly CounterCost[];
   readonly lifeCost: number;
   /** Mana part of the activation cost, or null when the ability needs none. */
   readonly manaCost: ManaCost | null;
@@ -697,7 +699,8 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
 
 /**
  * Parses an activation cost made from mana, tapping, paying life and
- * sacrificing its own source, plus an effect the engine can resolve.
+ * sacrificing its own source, removing counters, plus an effect the engine can
+ * resolve.
  *
  * Everything else — untapping ({Q}), loyalty, energy, exiling or sacrificing
  * other permanents or discarding — leaves the ability out of
@@ -728,6 +731,12 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
 
   const sacrificesSelf = /sacrifice\s+~/i.test(costText);
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
+  const removedCounters: CounterCost[] = [];
+  for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+~/gi)) {
+    const amount = toNumber(match[1]);
+    const kind = match[2]?.trim().replace(/\s+/g, " ").toLowerCase();
+    if (amount !== null && kind) removedCounters.push({ kind, amount });
+  }
   const lifeMatch = /pay\s+(\d+)\s+life/i.exec(costText);
   const lifeCost = lifeMatch ? Number(lifeMatch[1]) : 0;
   const leftovers = costText
@@ -735,6 +744,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/pay\s+\d+\s+life/gi, "")
     .replace(/sacrifice\s+~/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
+    .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
     .replace(/[,\s]/g, "");
   if (leftovers.length) return null;
   return {
@@ -742,6 +752,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     requiresTap,
     sacrificesSelf,
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
+    ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     lifeCost,
     manaCost,
     effect: recognized.effect,
