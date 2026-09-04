@@ -154,6 +154,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-counted-planeswalkers` | Planeswalkers accepted by controlled-type scaling | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-counted-battles` | Battles accepted by controlled-type scaling | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-return-artifact-to-hand` | Return target artifact permanents to their owners' hands | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-return-enchantment-to-hand` | Return target enchantment permanents to their owners' hands | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 
 ## Claim format
 
