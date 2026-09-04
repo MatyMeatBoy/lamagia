@@ -241,6 +241,7 @@ export interface StaticPowerToughnessGrant {
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
+  readonly subtype?: string;
 }
 
 /** Characteristics printed in one level band of a leveler card (CR 711). */
