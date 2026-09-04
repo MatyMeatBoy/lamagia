@@ -729,6 +729,18 @@ mana-value conditions and copied spells.
 Validation: targeted engine tests PASS (174 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: X-scaled discard
+
+The branch extends `Target player discards X cards` through the existing
+server-side private discard choice. X is evaluated from the announced spell
+value, while the affected player chooses each card and the opponent sees no
+hand contents. This follows CR 107.3, 701.8 and 400.1. Scenario coverage
+verifies two sequential choices. The scope excludes random discard,
+simultaneous multi-player choices and replacement effects.
+
+Validation: targeted engine tests PASS (175 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: any-creature combat damage triggers
 
 The branch adds the reusable trigger grammar for `Whenever a creature deals

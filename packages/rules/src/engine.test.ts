@@ -46,6 +46,7 @@ const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Insta
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
 const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
+const X_DISCARD_SPELL = () => make({ name: "Scalable Mind Twist", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Target player discards X cards." });
 const LIFE_SPELL = () => make({ name: "Simple Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain 1 life." });
 const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "You lose 2 life." });
 const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you lose life, put a +1/+1 counter on Pain Counter." });
@@ -738,6 +739,21 @@ describe("casting", () => {
     expect(game.pendingChoice).toBeNull();
     expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears"]);
     expect(game.players[1]!.graveyard.at(-1)?.name).toBe("Storm Crow");
+  });
+
+  it("uses X to request multiple private discard choices", () => {
+    let game = readyToCast([X_DISCARD_SPELL()], [SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({ autoPass: false }));
+    game = stage(game, 1, (player) => ({ autoPass: false, hand: toHand(1, [BEAR(), FLIER(), FOREST()], "x-discard-hand") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 1, amount: 2, remaining: 2 });
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 1, { type: "choose-discard", sourceId, cardId: "x-discard-hand-0" });
+    game = applyAction(game, 1, { type: "choose-discard", sourceId, cardId: "x-discard-hand-1" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[1]!.hand).toHaveLength(1);
   });
 
   it("lets Lightning Bolt target a creature as well as a player", () => {

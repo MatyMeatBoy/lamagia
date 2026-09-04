@@ -132,7 +132,7 @@ export type SpellEffect =
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
-  | { readonly kind: "discard-target-player"; readonly amount: number }
+  | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number | "X" }
@@ -908,6 +908,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "discard-target-player", amount }, target: "player" };
   }
+  if ((match = /^Target player discards X cards?$/i.exec(text))) return { effect: { kind: "discard-target-player", amount: "X" }, target: "player" };
   if ((match = /^Target player mills (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "mill-target-player", amount }, target: "player" };
