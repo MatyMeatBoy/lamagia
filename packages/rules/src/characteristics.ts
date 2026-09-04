@@ -426,6 +426,8 @@ export interface TriggerDefinition {
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number };
   readonly spellType?: "creature";
+  /** Colour filter on a spell-cast trigger (Titania's Chosen). */
+  readonly spellColor?: string;
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
   /** "if its evoke cost was paid" gate on the sacrifice trigger (CR 702.34c). */
@@ -1110,6 +1112,7 @@ const TRIGGER_TEMPLATES: readonly {
   readonly subject: TriggerSubject;
   readonly pattern: RegExp;
   readonly spellType?: "creature";
+  readonly spellColor?: string;
 }[] = [
   { event: "life-gained", subject: "you", pattern: /^whenever\s+you\s+gain\s+life,?\s*(.+)$/i },
   { event: "life-lost", subject: "you", pattern: /^whenever\s+you\s+lose\s+life,?\s*(.+)$/i },
@@ -1145,6 +1148,11 @@ const TRIGGER_TEMPLATES: readonly {
   // A player is the subject.
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "each-player", spellColor: "W", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+white\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "each-player", spellColor: "U", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+blue\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "each-player", spellColor: "B", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+black\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "each-player", spellColor: "R", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+red\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "each-player", spellColor: "G", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+green\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", pattern: /^whenever\s+you\s+cast\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+spell,?\s*(.+)$/i },
 
@@ -1159,13 +1167,13 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i }
 ];
 
-function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string; spellType?: "creature" } | null {
+function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string; spellType?: "creature"; spellColor?: string } | null {
   // Landfall is a keyword ability word; its rules-bearing trigger follows the
   // dash and uses the same enters-battlefield event (CR 603.1, 603.2).
   const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
-    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}) };
+    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}) };
   }
   return null;
 }
@@ -1752,6 +1760,7 @@ function recognizeText(text: string): RecognizedText {
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
+          ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
           ...(payCost && payCost.symbols.length ? { payCost } : {})
         });

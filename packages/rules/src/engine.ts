@@ -981,6 +981,7 @@ function triggerMatches(
 
   if (event.kind === "spell-cast") {
     if (definition.spellType === "creature" && !isCreature(cardProfile(event.card))) return false;
+    if (definition.spellColor && !(cardProfile(event.card).colors ?? []).some((color) => color.toUpperCase() === definition.spellColor)) return false;
     if (subject === "you") return event.controller === watcher.controller;
     if (subject === "opponent") return event.controller !== watcher.controller;
     if (subject === "each-player") return true;
