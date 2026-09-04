@@ -738,6 +738,12 @@ unimplemented. See
 `docs/WORK_CLAIMS.md` for active claims and `docs/SET_COVERAGE.md` for the
 remaining Arsenal cards.
 
+The latest C13 batch also closes Gahiji's opponent-attack buff, Guttersnipe's
+instant/sorcery trigger, Fecundity's death-draw choice for the dead creature's
+controller, and the reusable Fires of Yavimaya/Goblin Bombardment sacrifice
+activations. Each has parser and rules scenarios; the corresponding C13 rows
+are checked in `docs/SET_COVERAGE.md`.
+
 The current upstream branch also contains newly generated reusable clusters
 for target-creature modification, landwalk, fortify, enchant-creature,
 choose-modal, sorcery-speed restrictions, and typed counterspells. They were
