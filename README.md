@@ -40,6 +40,12 @@ stable `oracle_id`s and twenty-card commit batches. A rules/test-only commit may
 add no completed card; the integrator must report before/after `fullyImplemented`
 counts and only count a card when every clause is executable.
 
+For the keyword backlog, run `npm run rules:keyword:audit`. It compares the
+checked-in Comprehensive Rules 702 headings with engine contracts and catalog
+frequency, separating implemented, partial, and backlog work. Use
+[KEYWORD_COVERAGE.md](KEYWORD_COVERAGE.md) to choose a reusable primitive
+instead of reimplementing a keyword per card.
+
 For the current C13 sprint, use `npm run rules:oracle:c13` to generate the same
 queue from only the 356 cards in that set, then
 `npm run rules:oracle:plan:c13` to assign five disjoint primitive clusters.
