@@ -1300,7 +1300,7 @@ function raiseEvent(
         sourceCard: watcher.card,
         definition,
         cause: causeOf(state, event),
-        ...("controller" in event ? { eventController: event.controller } : {}),
+        ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {})
       });
     }
@@ -1892,6 +1892,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = effectAmount(effect.amount, object);
       const next = loseLife(state, target.seat, amount);
       return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${amount} vidas.`);
+    }
+    case "lose-life-event-player": {
+      // "That player" is the event's own player (e.g. the opponent who
+      // drew), not a chosen target — CR 603.3d.
+      const seat = object.trigger?.eventController;
+      if (seat === undefined) return state;
+      const amount = effectAmount(effect.amount, object);
+      const next = loseLife(state, seat, amount);
+      return logged(next, controller, `${playerAt(next, seat).name} pierde ${amount} vidas.`);
+    }
+    case "damage-event-player": {
+      const seat = object.trigger?.eventController;
+      if (seat === undefined) return state;
+      const amount = effectAmount(effect.amount, object);
+      return dealDamageToPlayer(state, seat, amount, sourceName);
     }
     case "lose-life-target-player-each-controlled-type": {
       const target = object.targets[0];

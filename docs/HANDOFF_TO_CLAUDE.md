@@ -1861,3 +1861,48 @@ The worker planner now normalizes claim statuses before optional parenthesized
 commit notes, so `review (abc123)` is excluded exactly like `review`. This keeps
 fork work disjoint automatically: the current C13 plan has **34 unclaimed
 primitives**, balanced as **7/7/7/7/6** across five workers.
+
+### Worker-05: event-player drain family, from a user-supplied decklist (2026-09-04)
+
+Claim `rules-event-player-drain`, prioritized from cards in a user-supplied
+Moxfield decklist (Nekusar, the Mindrazer, group-draw punisher). "Whenever an
+opponent draws a card, ~ deals N damage to that player/them" and "...that
+player loses N life": "that player" is the `card-drawn` event's own player,
+not a chosen target (CR 603.3d). `TriggerInstance.eventController` was only
+captured from events with a `controller` field; extended `raiseEvent` to also
+capture it from `seat`-keyed events (`card-drawn`, `life-gained`/`life-lost`),
+then added two direct-resolution effects (`damage-event-player`,
+`lose-life-event-player`) reading `object.trigger?.eventController`. Scenario
+coverage casts a two-card draw spell at one opponent while a second player
+sits idle, confirming the punisher credits the drawing seat specifically, not
+its controller (the caster) and not "any" opponent.
+
+Fully implements Nekusar the Mindrazer, Underworld Dreams, Scrawling Crawler,
+Spellshock, Iron Maiden, Calculating Lich, Fate Unraveler, Incite Rebellion,
+Viseling, and Aether Sting; partially resolves Razorkin Needlehead (a separate
+first-strike clause remains). Global export: **8,572/38,711** (+7 from before
+the merge below). `npm run check` and `npm test` PASS (**462 rules tests**,
+up from 461; simulator and 49 Python tests PASS). Two pre-existing duplicate
+`case` warnings from `vite:esbuild` (`shuffle-source-into-library`,
+`target-player-sacrifice-attacking-creature`) are upstream, unrelated to this
+change, and harmless (first match wins; dead code only).
+
+### Worker-05: merged onto the integrator's latest batch (2026-09-04)
+
+Fetched `origin/feat/activated-abilities-and-triggers` (now at `8c9e7fe`, far
+ahead of the `8bcf441` base this branch started from) and merged it in before
+continuing, per the user's instruction to re-check `AI_CONTRIBUTOR.md` and
+`WORK_CLAIMS.md`. Cross-checked every worker-05 claim above against the new
+HEAD: `equipped-creature triggered abilities` (commit `2753dfb`) and Condemn
+(`66a74da`, as `bottom-attacker-controller-gains-toughness`) were already
+integrated independently — dropped the redundant equipped-creature work
+in progress before it was ever committed, and removed worker-05's duplicate
+Condemn effect (`bottom-of-library-target-attacking-creature-then-life-gain-toughness`)
+and its now-dead second `attacking-creature` `legalTargets` branch, keeping
+the integrator's version. `any-creature-enters-trigger`,
+`target-player-draw-and-lose-life` (the `draw-target-player`/`lose-life-target-player`
+compound), `blood-artist-drain`, `rules-partner-keyword`, and Swords to
+Plowshares (`exile-target-creature-then-life-gain-power`) were not duplicated
+and remain worker-05's own contribution. Full check/test/simulate rerun green
+after the merge; `npm run rules:engine:export` and `rules:set:coverage`
+regenerated against the merged tree before the next claim.

@@ -92,6 +92,12 @@ const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf",
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
 const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });
+// "That player" refers back to the card-drawn event's own player (the
+// opponent who drew), resolved from `object.trigger?.eventController` —
+// not a chosen target and not always `object.controller`'s opponent list.
+const DAMAGE_ON_OPPONENT_DRAW = () => make({ name: "Test Nekusar", type_line: "Creature — Wizard", mana_cost: "{2}{U}{B}{R}", cmc: 5, power: "2", toughness: "4", oracle_text: "Whenever an opponent draws a card, ~ deals 1 damage to that player." });
+const LIFELOSS_ON_OPPONENT_DRAW = () => make({ name: "Test Scrawling Crawler", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "Whenever an opponent draws a card, that player loses 1 life." });
+const DRAW_TWO_TARGET = () => make({ name: "Test Divination", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Target player draws two cards." });
 const X_MINUS_SWEEP = () => make({ name: "X Minus Sweep", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "All creatures get -X/-X until end of turn." });
 const POWER_DRAW_TRIGGER = () => make({ name: "Power Draw Trigger", type_line: "Creature — Human Druid", mana_cost: "{3}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your end step, if you control a creature with power 5 or greater, you may draw a card." });
 const NONFLYING_SWEEP = () => make({ name: "Nonflying Sweep", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell deals X damage to each creature without flying and each player." });
@@ -2306,6 +2312,27 @@ describe("casting", () => {
     expect(game.players[1]!.library.length).toBe(libraryBefore + 1);
     expect(game.players[1]!.library.at(-1)?.name).toBe("Grizzly Bears");
     expect(game.combat.attackers).not.toContainEqual(expect.objectContaining({ instanceId: bear.instance_id }));
+  });
+
+  it("punishes the specific opponent who drew, not the ability's own controller", () => {
+    const profileDamage = profileOf(DAMAGE_ON_OPPONENT_DRAW());
+    expect(profileDamage.triggers[0]).toMatchObject({ event: "card-drawn", subject: "opponent", effect: { kind: "damage-event-player", amount: 1 } });
+    expect(profileDamage.fullyImplemented).toBe(true);
+    const profileLife = profileOf(LIFELOSS_ON_OPPONENT_DRAW());
+    expect(profileLife.triggers[0]).toMatchObject({ event: "card-drawn", subject: "opponent", effect: { kind: "lose-life-event-player", amount: 1 } });
+    expect(profileLife.fullyImplemented).toBe(true);
+
+    // Seat 0 controls the punisher and casts the draw spell, but both draws
+    // are targeted at seat 1: the trigger must credit seat 1, resolved from
+    // the card-drawn event itself, not seat 0 (the caster/controller).
+    let game = readyToCast([DRAW_TWO_TARGET()], [DAMAGE_ON_OPPONENT_DRAW(), ISLAND(), ISLAND(), ISLAND()], [], []);
+    const life0 = game.players[0]!.life;
+    const life1 = game.players[1]!.life;
+    const handBefore1 = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.hand.length).toBe(handBefore1 + 2);
+    expect(game.players[0]!.life).toBe(life0);
+    expect(game.players[1]!.life).toBe(life1 - 2);
   });
 
   it("uses the announced X value for variable all-creature debuffs", () => {
