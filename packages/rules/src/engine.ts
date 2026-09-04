@@ -1240,6 +1240,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const amount = playerAt(state, controller).graveyard.filter((card) => isCreature(cardProfile(card))).length;
       return drawCards(state, controller, amount);
     }
+    case "draw-equal-greatest-mana-value-you-control": {
+      const amount = playerAt(state, controller).battlefield.reduce((max, permanent) => Math.max(max, cardProfile(permanent.card).manaValue), 0);
+      return drawCards(state, controller, amount);
+    }
     case "each-player-draw": {
       let next = state;
       for (const player of state.players) if (!player.lost) next = drawCards(next, player.seat, effectAmount(effect.amount, object));
@@ -2796,6 +2800,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 
   actions.push({ action: { type: "pass" }, label: state.stack.length ? "Dejar resolver" : "Pasar prioridad" });
 
+  // Grand Abolisher: during its controller's turn, opponents can't cast spells
+  // or activate nonmana abilities of artifacts/creatures/enchantments (CR 720).
+  const opponentsLocked = allPermanents(state).some((permanent) =>
+    cardProfile(permanent.card).locksOpponentsOnYourTurn
+    && permanent.controller === state.activeSeat && permanent.controller !== seat);
+
   if (sorcerySpeed(state, seat) && player.landsPlayedThisTurn < 1) {
     for (const card of player.hand) {
       if (!isLand(cardProfile(card))) continue;
@@ -2804,6 +2814,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   }
 
   for (const card of player.hand) {
+    if (opponentsLocked) break;
     const profile = cardProfile(card);
     const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
@@ -2826,6 +2837,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   }
 
   for (const card of player.commandZone) {
+    if (opponentsLocked) break;
     const tax = commanderTax(player, card.instance_id);
     const profile = cardProfile(card);
     const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
@@ -2882,6 +2894,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
     }
     for (const ability of profile.activatedAbilities) {
+      if (opponentsLocked && ["Artifact", "Creature", "Enchantment"].some((type) => profile.types.includes(type as CardType))) continue;
       const check = activatableAbility(state, seat, permanent, ability);
       if (!check.legal) continue;
       const sacrifices = ability.sacrificesCreature

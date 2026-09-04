@@ -267,6 +267,7 @@ export type SpellEffect =
   | { readonly kind: "draw-equal-controlled-type"; readonly type: CardType }
   | { readonly kind: "draw-equal-controlled-color-creature"; readonly color: string }
   | { readonly kind: "draw-equal-graveyard-creatures" }
+  | { readonly kind: "draw-equal-greatest-mana-value-you-control" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
@@ -508,6 +509,8 @@ export interface CardProfile {
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
+  /** Grand Abolisher: opponents can't cast spells / activate nonmana abilities during your turn (CR 720). */
+  readonly locksOpponentsOnYourTurn: boolean;
   readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
@@ -1646,6 +1649,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return (?:another )?target enchantment card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "enchantment-card-in-your-graveyard" };
   if (/^Return target instant or sorcery card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "instant-or-sorcery-card-in-your-graveyard" };
   if ((match = /^Draw a card for each creature card in your graveyard$/i.exec(text))) return { effect: { kind: "draw-equal-graveyard-creatures" }, target: "none" };
+  if (/^Draw cards equal to the greatest mana value among permanents you control$/i.test(text)) return { effect: { kind: "draw-equal-greatest-mana-value-you-control" }, target: "none" };
   if (/^Put target land card from a graveyard onto the battlefield under your control$/i.test(text)) return { effect: { kind: "return-target-land-card-from-graveyard-to-battlefield" }, target: "land-card-in-a-graveyard" };
   if (/^Return (?:another )?target artifact card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-artifact-card-from-graveyard-to-battlefield" }, target: "artifact-card-in-your-graveyard" };
   if (/^Return (?:another )?target card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
@@ -1797,6 +1801,7 @@ function recognizeText(text: string): RecognizedText {
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
+    if (/^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.
@@ -2038,6 +2043,7 @@ export function cardProfile(card: CardData): CardProfile {
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
+  const locksOpponentsOnYourTurn = text.split("\n").some((line) => /^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line.trim()));
   const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
@@ -2065,6 +2071,7 @@ export function cardProfile(card: CardData): CardProfile {
     staticKeywordGrants,
     preventsLifeGain,
     noMaximumHandSize,
+    locksOpponentsOnYourTurn,
     staticPowerToughnessGrants,
     levelUpCost,
     levelDefinitions,
