@@ -482,6 +482,8 @@ export interface CardProfile {
   readonly costReducesPerBoardCreature: number;
   /** Static "<color/type> spells you cast cost {N} less to cast" grant (Medallion cycle, CR 118.9). */
   readonly spellCostReductionGrant: { readonly amount: number; readonly color?: string; readonly type?: CardType } | null;
+  /** "<Basic type>s you control produce an additional {C}" (Crypt Ghast, CR 605). */
+  readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   readonly entersTapped: EntersTappedRule;
   /** Printed attack/block restrictions and landwalk evasion. */
   readonly combatRules: CombatRules;
@@ -1554,6 +1556,9 @@ function recognizeText(text: string): RecognizedText {
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
+    // Static land mana bonus is consumed by cardProfile / manaSources.
+    if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
+    if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -1685,6 +1690,11 @@ export function cardProfile(card: CardData): CardProfile {
   // "~ costs {N} less to cast for each creature on the battlefield" (Blasphemous Act, CR 118.9).
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
+  const landBonusMatch = /(Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{([WUBRG])\}/i.exec(text)
+    ?? /whenever you tap a (Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{([WUBRG])\}/i.exec(text);
+  const staticLandManaBonus = landBonusMatch
+    ? { subtype: landBonusMatch[1]!.replace(/s$/i, "").replace(/^./, (c) => c.toUpperCase()), mana: landBonusMatch[2]!.toUpperCase() }
+    : null;
   const grantMatch = /^(?:(white|blue|black|red|green) )?(artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
   const COLOR_LETTER: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
   const spellCostReductionGrant = grantMatch
@@ -1754,6 +1764,7 @@ export function cardProfile(card: CardData): CardProfile {
     kickedEffects: recognized.kickedEffects ?? [],
     costReducesPerBoardCreature,
     spellCostReductionGrant,
+    staticLandManaBonus,
     combatRules,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     entersWithCounters: isPermanent ? parseEntersWithCounters(text) : [],

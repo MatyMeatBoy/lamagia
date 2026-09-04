@@ -451,16 +451,24 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
 /** Untapped permanents this player can currently tap for mana. */
 export function manaSources(player: PlayerState): ManaSource[] {
   const sources: ManaSource[] = [];
+  const landBonuses = player.battlefield
+    .map((permanent) => cardProfile(permanent.card).staticLandManaBonus)
+    .filter((bonus): bonus is { subtype: string; mana: string } => Boolean(bonus));
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability)) continue;
+      // "<Basic type>s you control produce an additional {C}" (Crypt Ghast):
+      // a matching land's ability produces one extra of the granted colour.
+      const bonus = landBonuses.find((entry) =>
+        profile.subtypes.some((subtype) => subtype.toLowerCase() === entry.subtype.toLowerCase())
+        && (ability.produces as readonly string[]).includes(entry.mana));
       sources.push({
         permanentId: permanent.instance_id,
         abilityIndex: ability.index,
         name: permanent.card.name,
         options: ability.produces,
-        amount: ability.amount,
+        amount: ability.amount + (bonus ? 1 : 0),
         ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
         ...(ability.removeCounters ? { removeCounters: ability.removeCounters } : {}),
         lifeCost: ability.lifeCost,
@@ -2778,12 +2786,17 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   if (!ability || !ability.produces.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
   if (ability.fixedProduces && action.mana !== ability.fixedProduces[0]) throw new Error("Esa habilidad de maná produce un conjunto fijo.");
   if (!canUseManaAbility(player, source, ability)) throw new Error("No puedes activar esa habilidad de maná ahora.");
+  const sourceProfile = cardProfile(source.card);
+  const landBonus = player.battlefield.some((permanent) => {
+    const grant = cardProfile(permanent.card).staticLandManaBonus;
+    return grant && grant.mana === action.mana && sourceProfile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype.toLowerCase());
+  }) ? 1 : 0;
   const next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost + (ability.gainLife ?? 0),
     manaPool: ability.fixedProduces
       ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
-      : addMana(current.manaPool, action.mana, ability.amount),
+      : addMana(current.manaPool, action.mana, ability.amount + landBonus),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
       const counters = { ...permanent.counters };

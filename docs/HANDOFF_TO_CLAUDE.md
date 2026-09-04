@@ -907,3 +907,13 @@ heals the controller by that much. Reuses the optional-cost trigger flow.
 Validation: check PASS; 276 tests; oracle 25 OK; simulate 200 games 0 failures.
 Catalog 7,744 -> 7,751; Commander 2014 119/337 (Crypt Ghast / Pontiff still
 blocked by their other static text).
+
+### C14 batch10: static basic-land mana bonus
+
+`<Basic type>s you control produce an additional {C}` / `Whenever you tap a
+<Basic type> for mana, add an additional {C}` (Crypt Ghast, Nirkana Revenant):
+parsed to `staticLandManaBonus`; `manaSources` and `applyActivateMana` add one
+extra of the granted colour when a matching land is tapped.
+
+Validation: check PASS; 276 tests; oracle 25 OK; simulate 200 games 0 failures.
+Catalog 7,751 -> 7,753; Commander 2014 119 -> 120/337 (Crypt Ghast).
