@@ -361,6 +361,7 @@ export type SpellEffect =
   | { readonly kind: "xathrid-upkeep"; readonly fallbackLife: number }
   | { readonly kind: "disciple-of-bolas" }
   | { readonly kind: "create-copy-token"; readonly amount: number; readonly kickedAmount?: number }
+  | { readonly kind: "drain-target-toughness-pump-source-power" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
@@ -981,6 +982,7 @@ function parseStaticPowerToughnessGrants(text: string): StaticPowerToughnessGran
 function effectUsesVariable(effect: SpellEffect): boolean {
   const anyEffect = effect as Record<string, unknown>;
   if (anyEffect.amount === "X" || anyEffect.count === "X") return true;
+  if (effect.kind === "drain-target-toughness-pump-source-power") return true;
   if (effect.kind === "compound") return effect.effects.some(effectUsesVariable);
   return false;
 }
@@ -1619,6 +1621,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     // Firebreathing-style self pumps: the source is the only affected creature
     // and the modifier expires during cleanup (CR 613.4c, 514.2).
     return { effect: { kind: "modify-source-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
+  }
+  if (/^Target creature gets -0\/-X until end of turn and ~ gets \+X\/\+0 until end of turn$/i.test(text)) {
+    return { effect: { kind: "drain-target-toughness-pump-source-power" }, target: "creature" };
   }
   if ((match = /^each opponent loses X life, where X is your devotion to (white|blue|black|red|green)\.?\s*You gain life equal to the life lost this way\.?$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };

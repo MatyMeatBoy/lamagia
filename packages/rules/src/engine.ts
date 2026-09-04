@@ -1810,6 +1810,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!source || !isCreature(cardProfile(source.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === source.instance_id);
     }
+    case "drain-target-toughness-pump-source-power": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const x = object.variableValue;
+      if (x <= 0) return state;
+      const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
+      let next = modifyCreatures(state, 0, -x, (candidate) => candidate.instance_id === target.instanceId);
+      if (source && isCreature(cardProfile(source.card))) {
+        next = modifyCreatures(next, x, 0, (candidate) => candidate.instance_id === source.instance_id);
+      }
+      return logged(next, controller, `${sourceName}: la criatura objetivo obtiene -0/-${x}; ${sourceName} obtiene +${x}/+0.`);
+    }
     case "scry": {
       const player = playerAt(state, controller);
       const pending = player.library.slice(0, effect.amount).map((card) => card.instance_id);
