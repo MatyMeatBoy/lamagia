@@ -160,6 +160,7 @@ export type SpellEffect =
   | { readonly kind: "activate-only-as-<n>-sorcery"; readonly n: number }
   | { readonly kind: "activate-only-as-<n>-sorcery"; readonly n: number }
   | { readonly kind: "activate-only-as-<n>-sorcery"; readonly n: number }
+  | { readonly kind: "activate-only-as-<n>-sorcery"; readonly n: number }
   | { readonly kind: "landwalk-<type>"; readonly type: string }
   | { readonly kind: "landwalk-<type>"; readonly type: string }
   | { readonly kind: "this-land-enters-tapped"; readonly basic?: boolean }
