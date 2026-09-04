@@ -6,8 +6,9 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ## Current published checkpoint — 2026-09-04
 
-The latest source checkpoint is the Prowess rules change being published from
-this branch; verify the Pages run before reporting it as live.
+The latest source checkpoint includes verified Prowess, Changeling, Shadow,
+and Exalted primitives plus benchmark-selected compositional worker payloads;
+verify the Pages run before reporting a new client asset as live.
 Coverage numbers have two deliberate units:
 
 - **Unique engine profiles:** 8,994 / 38,711 fully implemented. These are
@@ -23,6 +24,9 @@ Coverage numbers have two deliberate units:
   benchmark reduces worker context by 5.0% while preserving exact identities
   and clause counts. This is scheduling
   compression only: it does not mark a card implemented.
+- **Batch policy:** C13 currently benchmarks at -22.1% because of fixed
+  dictionary overhead, so its workers receive exact Oracle text plus atom
+  hints; compact payloads are used only when the batch benchmark is positive.
 
 Do not report the 38,711 profile catalog as implemented cards. Recompute both
 views after accepted rules commits and publish the generated `site/coverage.json`.

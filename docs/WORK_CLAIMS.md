@@ -85,9 +85,9 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
-| `global-exalted` | Exalted sole-attacker trigger and temporary pump (CR 702.83) | `feat/activated-abilities-and-triggers` | merged (`94c813e`) | 2026-09-04 |
-| `global-shadow` | Shadow evasion and blocking symmetry (CR 702.28) | `feat/activated-abilities-and-triggers` | merged (`64f9641`) | 2026-09-04 |
-| `global-changeling` | Changeling keyword coverage using the existing all-creature-types model (CR 702.73) | `feat/activated-abilities-and-triggers` | merged (`aa453c7`) | 2026-09-04 |
+| `global-exalted` | Exalted sole-attacker trigger and temporary pump (CR 702.83) | `feat/activated-abilities-and-triggers` | merged (`a9c3c45`) | 2026-09-04 |
+| `global-shadow` | Shadow evasion and blocking symmetry (CR 702.28) | `feat/activated-abilities-and-triggers` | merged (`c5eeb6e`) | 2026-09-04 |
+| `global-changeling` | Changeling keyword coverage using the existing all-creature-types model (CR 702.73) | `feat/activated-abilities-and-triggers` | merged (`8d2d186`) | 2026-09-04 |
 | `global-prowess` | Prowess noncreature-spell trigger and temporary self pump (CR 702.108) | `feat/activated-abilities-and-triggers` | merged (`8d53f24`) | 2026-09-04 |
 | `c13-horsemanship` | Global Horsemanship evasion keyword and Lu Xun C13 regression scenario (CR 702.31) | `feat/activated-abilities-and-triggers` | merged (`76b1d78`) | 2026-09-04 |
 | `rules-land-search` | Landcycling variants and land-subtype search resolution | `feat/activated-abilities-and-triggers` | merged (`7c7f77c`) | 2026-09-03 |
