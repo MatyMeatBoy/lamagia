@@ -955,7 +955,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   if (/^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
   const parsedEffectText = effectText.replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "").trim();
-  const selfUntap = /^Untap ~$/i.test(parsedEffectText);
+  const selfUntap = /^Untap ~\.?$/i.test(parsedEffectText);
   // Planeswalker loyalty abilities (CR 606): the cost is a signed loyalty change.
   const loyalty = /^\s*([+\u2212\u2013-])?\s*(\d+)\s*$/.exec(costText);
   if (loyalty) {

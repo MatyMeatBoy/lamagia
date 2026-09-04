@@ -372,6 +372,19 @@ describe("triggered self modifications", () => {
   });
 });
 
+describe("untap restrictions", () => {
+  it("recognises the static no-untap rule and source untap activation", () => {
+    const profile = cardProfile(card({
+      name: "Basalt Monolith",
+      type_line: "Artifact",
+      oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact."
+    }));
+    expect(profile.doesNotUntapDuringUntap).toBe(true);
+    expect(profile.activatedAbilities).toContainEqual(expect.objectContaining({ effect: { kind: "untap-source" } }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("effect recognition", () => {
   it("keeps creature type when putting a graveyard card on top", () => {
     const profile = cardProfile(card({
