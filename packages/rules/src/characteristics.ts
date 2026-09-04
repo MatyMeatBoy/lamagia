@@ -375,6 +375,8 @@ export interface TriggerDefinition {
    */
   readonly targetKind: TargetKind;
   readonly sourceText: string;
+  readonly condition?: { readonly kind: "no-controlled-subtype"; readonly subtype: string };
+  readonly condition?: { readonly kind: "no-controlled-subtype"; readonly subtype: string };
   readonly spellType?: "creature";
 }
 
@@ -1350,9 +1352,11 @@ function recognizeText(text: string): RecognizedText {
     // `targetKind` a spell uses when it is cast.
     const triggered = matchTriggerLine(line);
     if (triggered) {
+      const conditionMatch = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      const effectText = triggered.effectText.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      const effectText = (conditionMatch?.[2]?.trim() ?? triggered.effectText)
+        .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       const optional = /^you\s+may\b/i.test(effectText);
       const recognized = recognizeSentence(optional ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {
@@ -1363,6 +1367,7 @@ function recognizeText(text: string): RecognizedText {
           optional,
           targetKind: recognized.target,
           sourceText: line,
+          ...(conditionMatch ? { condition: { kind: "no-controlled-subtype" as const, subtype: conditionMatch[1]! } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {})
         });
       } else {

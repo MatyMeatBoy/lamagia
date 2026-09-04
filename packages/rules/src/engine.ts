@@ -893,6 +893,10 @@ function triggerMatches(
   event: GameEvent
 ): boolean {
   if (definition.event !== event.kind) return false;
+  if (definition.condition?.kind === "no-controlled-subtype") {
+    const subtype = definition.condition.subtype.toLowerCase();
+    if (playerAt(state, watcher.controller).battlefield.some((permanent) => cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype))) return false;
+  }
   const subject = definition.subject;
 
   // Turn-structure triggers are about a player, not an object.
