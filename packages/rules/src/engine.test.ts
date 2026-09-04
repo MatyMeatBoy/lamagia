@@ -147,6 +147,7 @@ const FLYING_LORD = () => make({ name: "Sky Lord", type_line: "Creature — Bird
 const OTHER_FLYING_LORD = () => make({ name: "Other Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Other creatures you control have flying." });
 const GAIN_FLYING_LORD = () => make({ name: "Gain Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control gain flying." });
 const ALL_FLYING_LORD = () => make({ name: "Universal Sky", type_line: "Enchantment", mana_cost: "{3}{U}", cmc: 4, oracle_text: "All creatures have flying." });
+const ALL_PUMP = () => make({ name: "Universal Pump", type_line: "Enchantment", mana_cost: "{3}{G}", cmc: 4, oracle_text: "All creatures get +1/+1." });
 const CROSIS_CHARM = () => make({
   name: "Crosis's Charm", type_line: "Instant", mana_cost: "{U}{B}{R}", cmc: 3,
   oracle_text: "Choose one —\n• Return target permanent to its owner's hand.\n• Destroy target nonblack creature. It can't be regenerated.\n• Destroy target artifact."
@@ -831,6 +832,14 @@ describe("casting", () => {
     expect(profileOf(ALL_FLYING_LORD()).staticKeywordGrants).toEqual([{ scope: "all-creatures", keyword: "flying" }]);
     let game = readyToCast([FLYING_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [ALL_FLYING_LORD(), BEAR()]);
     expect(legalTargets(game, 0, "creature-with-flying")).toHaveLength(1);
+  });
+
+  it("applies global static power and toughness bonuses", () => {
+    expect(profileOf(ALL_PUMP()).staticPowerToughnessGrants).toEqual([{ scope: "all-creatures", power: 1, toughness: 1 }]);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ALL_PUMP(), BEAR()]);
+    expect(powerOf(game.players[0]!.battlefield[1]!, game)).toBe(3);
+    expect(toughnessOf(game.players[0]!.battlefield[1]!, game)).toBe(3);
   });
 
   it("resolves a compound draw-and-life-loss instruction as one effect", () => {
