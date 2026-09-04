@@ -19,7 +19,7 @@
 | `rules-c13-annihilate-draw` | `codex/c13-equipment-cluster` | Verify Annihilate reuses typed nonblack-creature destruction plus the shared draw effect | Ready for integrator review |
 | `rules-c13-etb-graveyard-exile` | `codex/c13-equipment-cluster` | Reuse target-player graveyard exile and existing ETB/land primitives for Angel of Finality and Bojuka Bog | Ready for integrator review |
 | `rules-c13-arcane-denial-delay` | `codex/c13-equipment-cluster` | Reusable delayed-upkeep draw effects created by Arcane Denial after it counters a spell | Ready for integrator review |
-| `rules-c13-bane-of-progress` | `codex/c13-equipment-cluster` | Reusable ETB sweep of artifacts/enchantments plus counters for permanents destroyed, applied to Bane of Progress | In progress |
+| `rules-c13-bane-of-progress` | `codex/c13-equipment-cluster` | Reusable ETB sweep of artifacts/enchantments plus counters for permanents destroyed, applied to Bane of Progress | Ready for integrator review |
 | `rules-level-up` | `codex/c13-equipment-cluster` | Level up activation, level counters, and level-band P/T/keyword characteristics | Ready for integrator review |
 | `rules-tap-untap` | `codex/c13-equipment-cluster` | Targeted Tap target creature and Untap target permanent effects | Ready for integrator review |
 | `rules-mill` | `codex/c13-equipment-cluster` | Target player mills a bounded number of cards into their graveyard | Ready for integrator review |

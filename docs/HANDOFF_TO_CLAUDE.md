@@ -660,6 +660,25 @@ Validation: `npm run check --workspace=@prossh/rules` PASS; targeted Arcane
 Denial tests PASS (4 tests). Full workspace tests should be rerun after
 integration.
 
+### Cooperative C13 cluster: Bane of Progress sweep
+
+Bane of Progress reuses a parameterized ETB primitive that destroys every
+artifact and enchantment permanent that is not indestructible, counts the
+permanents destroyed across all players, and puts that many counters on the
+triggering source. The source is resolved through its stable permanent ID, so
+the effect remains correct if the source leaves before its trigger resolves;
+countering the ETB prevents the sweep. The compiler's primitive inventory also
+preserves delayed-draw amounts and optionality, so future counterspell variants
+join the same review family instead of being rediscovered card by card.
+
+Rules reference: Comprehensive Rules 603.2, 603.3d, 608.2b, 701.8, 122.1 and
+122.6;
+official Wizards source: `https://magic.wizards.com/en/rules`.
+
+Validation: `npm run check --workspace=@prossh/rules` PASS; Bane of Progress
+scenarios and the Python compiler suite PASS. Full workspace tests should be
+rerun after integration.
+
 ## Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
