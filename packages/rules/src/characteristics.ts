@@ -1260,6 +1260,23 @@ function parseMultiBasicSearch(text: string): SpellEffect | null {
   return null;
 }
 
+function parseDeathScaledToken(text: string): SpellEffect | null {
+  const trimmed = text.trim();
+  // Spoils of Blood: "Create an X/X black Horror creature token, where X is the number of creatures that died this turn."
+  const xx = /^Create an? X\/X (.+? token),?\s*where x is the number of creatures that died this turn$/i.exec(trimmed);
+  if (xx) {
+    const base = parseCreateToken(`Create a 1/1 ${xx[1]!}`);
+    return base?.kind === "create-token" ? { ...base, amount: "creatures-died-this-turn", statsFromAmount: true } : null;
+  }
+  // Fresh Meat: "Create a 3/3 green Beast creature token for each creature put into your graveyard from the battlefield this turn."
+  const suffix = /\s+for each creature put into your graveyard from the battlefield this turn$/i;
+  if (suffix.test(trimmed)) {
+    const base = parseCreateToken(trimmed.replace(suffix, ""));
+    return base?.kind === "create-token" ? { ...base, amount: "creatures-died-this-turn" } : null;
+  }
+  return null;
+}
+
 function parseCreatureScaledToken(text: string): SpellEffect | null {
   const boardMatch = /\s*,?\s*where x is the number of creatures on the battlefield$/i;
   if (boardMatch.test(text.trim())) {
