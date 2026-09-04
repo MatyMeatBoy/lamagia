@@ -172,6 +172,20 @@ describe("payment trigger parsing", () => {
   });
 });
 
+describe("shared charm parsing", () => {
+  it("normalizes a named Naya Charm and preserves all three modes", () => {
+    const profile = cardProfile(card({
+      name: "Naya Charm",
+      type_line: "Instant",
+      oracle_text: "Choose one —\n• Naya Charm deals 3 damage to target creature.\n• Return target card from a graveyard to its owner's hand.\n• Tap all creatures target player controls."
+    }));
+    expect(profile.modalChoices).toHaveLength(3);
+    expect(profile.modalChoices[0]).toMatchObject({ effect: { kind: "damage-any-target", amount: 3 }, targetKind: "creature" });
+    expect(profile.modalChoices[2]).toMatchObject({ effect: { kind: "tap-all-creatures-target-player" }, targetKind: "player" });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("effect recognition", () => {
   it("recognizes a draw spell", () => {
     const profile = cardProfile(card({ name: "Test Draw", type_line: "Sorcery", mana_cost: "{2}{U}", oracle_text: "Draw three cards." }));
