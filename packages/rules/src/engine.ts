@@ -2860,6 +2860,7 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
   for (const entry of state.combat.attackers) {
     const attacker = findPermanent(state, entry.instanceId);
     if (!attacker || !dealsDamageInStep(state, attacker, firstStrikeStep)) continue;
+    if (cardProfile(attacker.card).combatRules.preventsAllCombatDamage) continue;
     const power = powerOf(attacker, state);
     if (power <= 0) continue;
     const deathtouch = keywordOf(state, attacker, "deathtouch");
@@ -2909,13 +2910,19 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
     const blocker = findPermanent(state, block.instanceId);
     const attacker = findPermanent(state, block.attackerId);
     if (!blocker || !attacker || !dealsDamageInStep(state, blocker, firstStrikeStep)) continue;
+    if (cardProfile(blocker.card).combatRules.preventsAllCombatDamage) continue;
     const power = powerOf(blocker, state);
     if (power <= 0) continue;
     toPermanents.push({ instanceId: attacker.instance_id, amount: power, deathtouch: keywordOf(state, blocker, "deathtouch"), sourceName: blocker.card.name });
     if (keywordOf(state, blocker, "lifelink")) lifelink.push({ seat: blocker.controller, amount: power });
   }
 
-  return { toPlayers, toPermanents, lifelink };
+  // Fog Bank and similar: no combat damage is dealt to them either.
+  const shielded = toPermanents.filter((hit) => {
+    const permanent = findPermanent(state, hit.instanceId);
+    return !permanent || !cardProfile(permanent.card).combatRules.preventsAllCombatDamage;
+  });
+  return { toPlayers, toPermanents: shielded, lifelink };
 }
 
 function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameState {
