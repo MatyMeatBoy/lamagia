@@ -118,6 +118,7 @@ const NONCREATURE_SAC = () => make({ name: "Noncreature Memory", type_line: "Cre
 const DISCARD_ACTIVATION = () => make({ name: "Discard Memory", type_line: "Creature — Wizard", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "{T}, Discard a card: Draw a card." });
 const TOKEN_SAC_ACTIVATION = () => make({ name: "Token Memory", type_line: "Creature — Shaman", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Sacrifice a token: Draw a card." });
 const GRAVEYARD_EXILE_ACTIVATION = () => make({ name: "Grave Memory", type_line: "Creature — Wizard", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "Exile a card from your graveyard: Draw a card." });
+const COMBINED_COST_ACTIVATION = () => make({ name: "Combined Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact, Discard a card: Draw a card." });
 const BOTTOM_RETURN = () => make({ name: "Bottom Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on the bottom of your library." });
 const SHUFFLE_RETURN = () => make({ name: "Shuffle Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Shuffle target card from your graveyard into your library." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
@@ -848,6 +849,19 @@ describe("casting", () => {
     expect(() => applyAction(game, 0, {
       type: "activate", sourceId: source.instance_id, abilityIndex: 0, discardCardId: "not-in-hand"
     })).toThrow();
+  });
+
+  it("combines sacrifice and discard choices in one atomic activation", () => {
+    const sourceCard = COMBINED_COST_ACTIVATION();
+    expect(profileOf(sourceCard).activatedAbilities[0]).toMatchObject({ sacrificesPermanent: { type: "Artifact" }, discardsCard: true });
+    let game = readyToCast([BEAR()], [sourceCard, ARTIFACT_SAC_ALTAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sourceCard.name)!;
+    const sacrifice = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Artifact Memory")!;
+    const discard = game.players[0]!.hand[0]!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === sacrifice.instance_id && entry.action.discardCardId === discard.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Artifact Memory", "Grizzly Bears"]));
   });
 
   it("offers only generated tokens for a token sacrifice cost", () => {
