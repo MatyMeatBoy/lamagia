@@ -319,7 +319,8 @@ export type SpellEffect =
   /** Creates one destruction-replacement shield for the targeted creature (CR 701.19). */
   | { readonly kind: "regenerate-target-creature" }
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
-  | { readonly kind: "exile-target-permanent" }
+ | { readonly kind: "exile-target-permanent" }
+  | { readonly kind: "exile-target-nontoken-creature" }
   | { readonly kind: "exile-target-graveyard" }
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "return-target-permanent" }
@@ -475,6 +476,8 @@ export type TargetKind =
   | "creature-with-shroud"
   | "creature-with-reach"
   | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-your-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | `subtype:${string}` | "none";
+  | "nonblack-creature" | "nontoken-creature" | "creature-with-flying" | "creature-with-defender" | "creature-with-deathtouch" | "creature-with-lifelink" | "creature-with-menace" | "creature-with-haste" | "creature-with-first-strike" | "creature-with-double-strike" | "creature-with-trample" | "creature-with-vigilance" | "creature-with-indestructible" | "creature-with-hexproof" | "creature-with-shroud" | "creature-with-reach" | "creature-power-at-least-5" | "creature-power-at-most-4" | "creature-toughness-at-least-4" | "creature-toughness-at-most-4" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
+  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | `subtype:${string}` | "none";
   
 
 export interface CardProfile {
@@ -503,7 +506,9 @@ export interface CardProfile {
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
-  readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
+ readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
+  /** Whether the permanent copies the power/toughness of its exiled imprint. */
+  readonly copiesImprintedCreatureStats: boolean;
   /** Static replacement effect that adds one mana when a controlled land produces mana. */
   readonly doublesLandMana: boolean;
   /** Printed Level up cost and level bands, when present. */
@@ -1467,6 +1472,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^All creatures get (-?\d+)\/(-?\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-all-creatures", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
   }
+  if (/^(?:You may )?exile target nontoken creature$/i.test(text)) return { effect: { kind: "exile-target-nontoken-creature" }, target: "nontoken-creature" };
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
@@ -1689,7 +1695,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
-    if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+   if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/i.test(line)) continue;
     if (/^level\s+\d+(?:-\d+|\+)?$/i.test(line) || /^\d+\/\d+$/.test(line)) continue;
     if (parseEquipmentModification(line)) continue;
     // Combat restrictions and landwalk are static: they change which
@@ -1873,7 +1880,8 @@ export function cardProfile(card: CardData): CardProfile {
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
-  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
+ const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
+  const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
   const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
@@ -1902,7 +1910,8 @@ export function cardProfile(card: CardData): CardProfile {
     staticKeywordGrants,
     preventsLifeGain,
     noMaximumHandSize,
-    staticPowerToughnessGrants,
+   staticPowerToughnessGrants,
+    copiesImprintedCreatureStats,
     doublesLandMana,
     levelUpCost,
     levelDefinitions,

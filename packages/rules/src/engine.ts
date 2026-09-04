@@ -86,6 +86,8 @@ export interface Permanent {
   readonly regenerationShields?: number;
   /** The creature this Equipment is attached to, when it is equipped. */
   readonly attachedTo?: string;
+  /** The last card exiled by an imprint ability, if any. */
+  readonly exiledWith?: GameCard;
   readonly isCommander: boolean;
 }
 
@@ -243,6 +245,8 @@ export type PendingChoice =
       /** Mana cost that must be paid to accept ("you may pay {cost}. If you do"). */
       readonly payCost?: ManaCost;
       readonly manaCost?: ManaCost;
+      readonly targets?: readonly Target[];
+      readonly sourcePermanentId?: string;
     }
   | {
       /**
@@ -421,7 +425,8 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
   const staticBonus = state ? staticPowerToughnessBonus(state, permanent).power : 0;
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
-  return (level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
+  const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
+  return (imprint?.power ?? level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -432,7 +437,8 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const staticBonus = state ? staticPowerToughnessBonus(state, permanent).toughness : 0;
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.toughness, 0) : 0;
-  return (level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
+  const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
+  return (imprint?.toughness ?? level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const profile = cardProfile(permanent.card);
@@ -1672,6 +1678,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? movePermanentToZone(state, permanent, "exile") : state;
     }
+    case "exile-target-nontoken-creature": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const creature = findPermanent(state, target.instanceId);
+      if (!creature || creature.card.token || !isCreature(cardProfile(creature.card))) return state;
+      const moved = movePermanentToZone(state, creature, "exile");
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const source = sourceId ? findPermanent(moved, sourceId) : undefined;
+      if (!source) return moved;
+      return withPlayer(moved, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, exiledWith: creature.card }
+          : permanent)
+      }));
+    }
     case "exile-target-graveyard": {
       const target = object.targets[0];
       if (!target || target.kind !== "player") return state;
@@ -2086,6 +2108,8 @@ function resolveTop(state: GameState): GameState {
           triggerEffect: object.trigger.definition.effect,
           sourceCard: object.trigger.sourceCard,
           ...(object.trigger.definition.payCost ? { payCost: object.trigger.definition.payCost } : {}),
+          targets: object.targets,
+          sourcePermanentId: object.trigger.sourcePermanentId,
           ...(object.trigger.definition.manaCost ? { manaCost: object.trigger.definition.manaCost } : {})
         }
       };
@@ -2929,6 +2953,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     .filter((permanent) => !keywordOf(state, permanent, "shroud"));
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
+    if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
     if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
       if (!isCreature(profile)) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
@@ -3464,12 +3489,13 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     id: choice.sourceId,
     controller: seat,
     card: choice.sourceCard,
-    label: `${choice.sourceCard.name} · habilidad opcional`,
-    targets: [],
-    fromCommandZone: false,
-    variableValue: 0,
-    countered: false
-  };
+   label: `${choice.sourceCard.name} · habilidad opcional`,
+    targets: choice.targets ?? [],
+   fromCommandZone: false,
+   variableValue: 0,
+    countered: false,
+   sourcePermanentId: choice.sourcePermanentId
+ };
   next = applyEffect(next, source, choice.triggerEffect);
   return logged(next, seat, `Se resuelve la habilidad opcional de ${choice.sourceCard.name}.`);
 }
