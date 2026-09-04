@@ -226,6 +226,8 @@ export interface TriggerInstance {
   readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId };
   /** Last-known power carried by a creature-dies event (CR 603.3d, 608.2h). */
   readonly eventPower?: number;
+  /** Player damaged by a damage event, for effects referring to "that player". */
+  readonly eventPlayer?: SeatId;
 }
 
 /** A delayed trigger created by a resolving spell (CR 603.7). */
@@ -262,8 +264,8 @@ export type GameEvent =
   | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly power?: number }
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
-  | { readonly kind: "deals-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
+  | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
+  | { readonly kind: "deals-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
@@ -1435,7 +1437,8 @@ function raiseEvent(
         ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
         ...("amount" in event ? { eventAmount: event.amount } : {}),
-        ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {})
+        ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
+        ...("victim" in event ? { eventPlayer: event.victim } : {})
       });
     }
   }
@@ -1516,7 +1519,8 @@ function dealDamageToPlayer(
       permanentId: source.permanentId,
       controller: source.controller,
       card: source.card,
-      victim: seat
+      victim: seat,
+      amount
     });
   }
   return logged(next, seat, `${sourceName} hace ${amount} de daño a ${playerAt(next, seat).name}.`);
@@ -1630,6 +1634,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return next;
     }
     case "draw": return drawCards(state, controller, effectAmount(effect.amount, object));
+    case "draw-combat-damage-participants": {
+      const amount = object.trigger?.eventAmount ?? 0;
+      const damagedPlayer = object.trigger?.eventPlayer;
+      if (amount <= 0 || damagedPlayer === undefined) return state;
+      let next = drawCards(state, controller, amount);
+      next = drawCards(next, damagedPlayer, amount);
+      return next;
+    }
     case "draw-if-life-more-than-opponent": {
       const life = playerAt(state, controller).life;
       if (!opponentsOf(state, controller).some((seat) => life > playerAt(state, seat).life)) return state;
@@ -4294,7 +4306,7 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
     if (dealer && hit.amount > 0) {
       next = raiseEvent(next, {
         kind: "deals-combat-damage-to-player",
-        permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card, victim: hit.seat
+        permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card, victim: hit.seat, amount: hit.amount
       });
     }
     if (hit.commanderId) {

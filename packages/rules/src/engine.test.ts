@@ -6233,6 +6233,21 @@ describe("combat", () => {
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
   });
+  it("draws Diviner Spirit's combat damage amount for both players", () => {
+    let game = atAttackers([DIVINER_SPIRIT()], []);
+    const attacker = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Diviner Spirit")!;
+    const beforeController = game.players[0]!.hand.length;
+    const beforeDamaged = game.players[1]!.hand.length;
+    expect(profileOf(DIVINER_SPIRIT()).triggers[0]).toMatchObject({
+      event: "deals-combat-damage-to-player", subject: "self", effect: { kind: "draw-combat-damage-participants" }, targetKind: "none"
+    });
+
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "postcombat-main" || state.turn > 1);
+
+    expect(game.players[0]!.hand.length).toBe(beforeController + 2);
+    expect(game.players[1]!.hand.length).toBe(beforeDamaged + 2);
+  });
 
   it("reveals the top card, puts it into hand, and gains its mana value", () => {
     const revealed = make({ name: "Revealed Relic", type_line: "Artifact", mana_cost: "{3}{G}", cmc: 4 });
