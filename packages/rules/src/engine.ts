@@ -43,10 +43,12 @@ export const STEP_LABELS: Readonly<Record<TurnStep, string>> = {
   "postcombat-main": "Principal 2", end: "Paso final", cleanup: "Limpieza"
 };
 
-function matchesSacrificeType(profile: CardProfile, type: "Artifact" | "Enchantment" | "Land" | "Noncreature"): boolean {
+function matchesSacrificeType(permanent: Permanent, type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token"): boolean {
+  const profile = cardProfile(permanent.card);
   if (type === "Artifact") return isArtifact(profile);
   if (type === "Enchantment") return isEnchantment(profile);
   if (type === "Noncreature") return profile.isPermanent && !isCreature(profile);
+  if (type === "Token") return Boolean(permanent.card.token);
   return isLand(profile);
 }
 
@@ -2435,7 +2437,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         ? player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
           && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id))
         : ability.sacrificesPermanent
-          ? player.battlefield.filter((candidate) => matchesSacrificeType(cardProfile(candidate.card), ability.sacrificesPermanent!.type)
+          ? player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
             && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id))
         : [undefined];
       const discards = ability.discardsCard ? player.hand : [undefined];
@@ -2698,7 +2700,7 @@ function activatableAbility(
     if (!candidates.length) return { legal: false };
   }
   if (ability.sacrificesPermanent) {
-    const candidates = player.battlefield.filter((candidate) => matchesSacrificeType(cardProfile(candidate.card), ability.sacrificesPermanent!.type)
+    const candidates = player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id));
     if (!candidates.length) return { legal: false };
   }
@@ -2748,7 +2750,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     sacrifice = candidates.find((candidate) => candidate.instance_id === action.sacrificeId) ?? candidates[0];
     if (!sacrifice) throw new Error("Debes elegir una criatura para sacrificar.");
   } else if (ability.sacrificesPermanent) {
-    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeType(cardProfile(candidate.card), ability.sacrificesPermanent!.type)
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== source.instance_id));
     sacrifice = candidates.find((candidate) => candidate.instance_id === action.sacrificeId) ?? candidates[0];
     if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesPermanent.type.toLowerCase()} para sacrificar.`);
