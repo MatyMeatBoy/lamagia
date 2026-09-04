@@ -34,6 +34,9 @@ const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", ma
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
 const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — Snake", mana_cost: "{B}", cmc: 1, power: "1", toughness: "1", keywords: ["Deathtouch"], oracle_text: "Deathtouch" });
+const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
+const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Bat", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", colors: ["B"] });
+const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
 const LIFELINKER = () => make({ name: "Kind Knight", type_line: "Creature — Knight", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink" });
 const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature — Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["First strike"], oracle_text: "First strike" });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
@@ -2237,6 +2240,13 @@ describe("combat restrictions and landwalk", () => {
     const crow = permanentNamed(air, 0, "Storm Crow");
     air = applyAction(air, 0, { type: "declare-attackers", attackers: [{ instanceId: crow.instance_id, defender: 1 }] });
     expect(legalBlockers(air, 1).map((permanent) => permanent.card.name)).toEqual(["Cloud Sentry"]);
+  });
+
+  it("enforces fear: only black or artifact creatures may block", () => {
+    let game = attackWith([FEARER()], [BEAR(), BLACK_BLOCKER(), ARTIFACT_BLOCKER()]);
+    const fearer = permanentNamed(game, 0, "Fear Stalker");
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: fearer.instance_id, defender: 1 }] });
+    expect(legalBlockers(game, 1).map((permanent) => permanent.card.name)).toEqual(["Dusk Bat", "Iron Construct"]);
   });
 
   it("refuses a declaration that leaves out a creature which must attack", () => {
