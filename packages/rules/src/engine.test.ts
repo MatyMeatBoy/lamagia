@@ -119,6 +119,7 @@ const TOUGHNESS_REMOVAL = () => make({ name: "Fragile Game Bane", type_line: "In
 const DEFENDER_REMOVAL = () => make({ name: "Wall Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with defender." });
 const DEATHTOUCH_REMOVAL = () => make({ name: "Viper Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with deathtouch." });
 const LIFELINK_REMOVAL = () => make({ name: "Knight Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with lifelink." });
+const MENACE_REMOVAL = () => make({ name: "Menace Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with menace." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
@@ -1289,6 +1290,12 @@ describe("casting", () => {
     expect(profileOf(LIFELINK_REMOVAL()).targetKind).toBe("creature-with-lifelink");
     const game = readyToCast([LIFELINK_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [LIFELINKER(), BEAR()]);
     expect(legalTargets(game, 0, "creature-with-lifelink")).toHaveLength(1);
+  });
+
+  it("uses enforced menace when selecting menace creature targets", () => {
+    expect(profileOf(MENACE_REMOVAL()).targetKind).toBe("creature-with-menace");
+    const game = readyToCast([MENACE_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [GLOBAL_FEAR(), BEAR()]);
+    expect(legalTargets(game, 0, "creature-with-menace")).toHaveLength(0);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
