@@ -454,7 +454,7 @@ export interface TriggerDefinition {
 }
 
 export type TargetKind =
-  | "any" | "player" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
+  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
   | "nonblack-creature" | "nontoken-creature" | "creature-with-flying" | "creature-with-defender" | "creature-with-deathtouch" | "creature-with-lifelink" | "creature-with-menace" | "creature-with-haste" | "creature-with-first-strike" | "creature-with-double-strike" | "creature-with-trample" | "creature-with-vigilance" | "creature-with-indestructible" | "creature-with-hexproof" | "creature-with-shroud" | "creature-with-reach" | "creature-power-at-least-5" | "creature-power-at-most-4" | "creature-toughness-at-least-4" | "creature-toughness-at-most-4" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
@@ -1256,7 +1256,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "draw-active-player" }, target: "none" };
   }
   if (/^Draw a card for each tapped creature target opponent controls$/i.test(text)) {
-    return { effect: { kind: "draw-equal-tapped-creatures" }, target: "player" };
+    return { effect: { kind: "draw-equal-tapped-creatures" }, target: "opponent" };
   }
   if ((match = /^Draw a card for each (creature|artifact|enchantment|land|planeswalker|battle) you control$/i.exec(text))) {
     const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1) as CardType;
