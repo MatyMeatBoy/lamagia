@@ -138,6 +138,21 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-lifelink-targets` | Creature targets filtered by enforced lifelink | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-menace-targets` | Creature targets filtered by enforced menace | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-haste-targets` | Creature targets filtered by enforced haste | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-first-strike-targets` | Creature targets filtered by enforced first strike | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-double-strike-targets` | Creature targets filtered by enforced double strike | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-trample-targets` | Creature targets filtered by enforced trample | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-vigilance-targets` | Creature targets filtered by enforced vigilance | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-indestructible-targets` | Creature targets filtered by enforced indestructible | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-hexproof-targets` | Creature targets filtered by enforced hexproof and ownership | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-shroud-targets` | Shroud target prohibition kept in target filtering | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-reach-targets` | Creature targets filtered by enforced reach | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-flying-only-sweeper` | Damage effects restricted to creatures with flying | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-static-keyword-gain-verb` | Alternate gain wording for static keyword grants | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-global-static-keywords` | Static keyword grants affecting every creature | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-global-static-pt` | Global static power/toughness layer bonuses | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-global-static-pt-dedup` | Prevent duplicate application of global static bonuses | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-counted-planeswalkers` | Planeswalkers accepted by controlled-type scaling | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-counted-battles` | Battles accepted by controlled-type scaling | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 
 ## Claim format
 
