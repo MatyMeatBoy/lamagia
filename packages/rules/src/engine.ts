@@ -1164,6 +1164,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "damage-controller-equal-hand": {
       return dealDamageToPlayer(state, controller, playerAt(state, controller).hand.length, sourceName);
     }
+    case "damage-active-player-hand-minus": {
+      const amount = Math.max(0, playerAt(state, state.activeSeat).hand.length - effect.offset);
+      return dealDamageToPlayer(state, state.activeSeat, amount, sourceName);
+    }
     case "modify-all-creatures": {
       const next = modifyCreatures(state, effect.power, effect.toughness, () => true);
       return logged(next, controller, `${sourceName} modifica a todas las criaturas hasta el final del turno.`);
