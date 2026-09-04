@@ -56,18 +56,19 @@ def plan_workers(
 
 
 def load_claimed_keys(path: Path | None) -> set[str]:
-    """Read active/ready claim keys without treating markdown descriptions as code."""
+    """Read active claim keys from the exact Markdown status column."""
     if path is None or not path.exists():
         return set()
     claimed: set[str] = set()
-    row_pattern = re.compile(r"^\|\s*`([^`]+)`\s*\|(?P<rest>.*)$")
     for line in path.read_text(encoding="utf-8").splitlines():
-        match = row_pattern.match(line)
-        if not match:
+        if not line.lstrip().startswith("|"):
             continue
-        rest = match.group("rest").casefold()
-        if any(status in rest for status in ACTIVE_STATUSES):
-            claimed.add(match.group(1))
+        columns = [column.strip() for column in line.strip().strip("|").split("|")]
+        if len(columns) < 4 or not columns[0].startswith("`") or not columns[0].endswith("`"):
+            continue
+        status = columns[3].strip("`").casefold()
+        if status in ACTIVE_STATUSES:
+            claimed.add(columns[0][1:-1])
     return claimed
 
 

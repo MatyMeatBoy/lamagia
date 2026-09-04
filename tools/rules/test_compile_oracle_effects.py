@@ -8,7 +8,7 @@ from pathlib import Path
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint
 from export_set_coverage import product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, select_profiles, template_of
-from plan_primitive_workers import plan_workers
+from plan_primitive_workers import load_claimed_keys, plan_workers
 
 
 class OracleCompilerTests(unittest.TestCase):
@@ -156,6 +156,20 @@ class OracleCompilerTests(unittest.TestCase):
         plan = plan_workers(clusters, worker_count=2)
         self.assertEqual([entry["cluster"] for entry in plan], ["a", "b"])
         self.assertEqual(plan_workers(clusters, worker_count=2, offset=2)[0]["cluster"], "c")
+
+    def test_reads_only_exact_active_claim_statuses(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "claims.md"
+            path.write_text(
+                "| Claim key | Scope | Branch | Status | Since |\n"
+                "| --- | --- | --- | --- | --- |\n"
+                "| `free` | scope | worker | merged | today |\n"
+                "| `owned` | scope | worker | active | today |\n"
+                "| `reviewing` | scope | worker | review | today |\n"
+                "| `inactive-word` | scope | worker | inactive | today |\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(load_claimed_keys(path), {"owned", "reviewing"})
 
 
 class PrimitiveRoadmapTests(unittest.TestCase):
