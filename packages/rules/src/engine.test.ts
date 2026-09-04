@@ -1137,6 +1137,15 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Bane of Progress")?.counters["+1/+1"]).toBeUndefined();
   });
 
+  it("counts matching permanents across both battlefields", () => {
+    let game = readyToCast([C13_BANE_OF_PROGRESS()], [FOREST(), FOREST(), FOREST(), FOREST(), SOL_RING()], [], [LIFE_LOCK()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const bane = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Bane of Progress")!;
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Sol Ring")).toBe(false);
+    expect(game.players[1]!.battlefield).toHaveLength(0);
+    expect(bane.counters["+1/+1"]).toBe(2);
+  });
+
   it("lets Angel of Finality choose a player and exile that graveyard", () => {
     let game = readyToCast([C13_ANGEL_OF_FINALITY()], [PLAINS(), PLAINS(), PLAINS(), PLAINS()]);
     game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR(), FOREST()], "angel-yard") }));
