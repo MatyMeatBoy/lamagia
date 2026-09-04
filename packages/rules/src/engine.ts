@@ -3956,6 +3956,13 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     }));
     next = logged(next, seat, `${player.name} descarta ${discarded.name}.`);
   }
+  if (ability.sacrificesLand) {
+    const lands = playerAt(next, seat).battlefield.filter((permanent) => isLand(cardProfile(permanent.card)));
+    const paid = lands.find((permanent) => permanent.instance_id === action.sacrificeId) ?? lands[0];
+    if (!paid) throw new Error("No tienes una tierra para sacrificar.");
+    next = movePermanentToZone(next, paid, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
+  }
   if (sacrifice) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);
     if (!paid) throw new Error("La criatura elegida para sacrificar ya no está en el campo.");
