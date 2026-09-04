@@ -1754,9 +1754,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       let next = state;
       for (const permanent of allPermanents(state)) {
         if (!isCreature(cardProfile(permanent.card))) continue;
+        if (effect.tappedOnly && !permanent.tapped) continue;
         next = destroyPermanent(next, permanent);
       }
-      return logged(next, controller, `${sourceName} destruye todas las criaturas.`);
+      return logged(next, controller, `${sourceName} destruye ${effect.tappedOnly ? "las criaturas giradas" : "todas las criaturas"}.`);
     }
     case "destroy-all-artifacts-creatures-enchantments": {
       let next = state;
