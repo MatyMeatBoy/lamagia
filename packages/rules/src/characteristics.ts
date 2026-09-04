@@ -348,6 +348,8 @@ export type SpellEffect =
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
+  | { readonly kind: "syphon-mind" }
+  | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
   | { readonly kind: "target-player-discard-unless-land"; readonly discard: number }
   | { readonly kind: "return-target-land" }
@@ -1573,6 +1575,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
   }
+  if (/^Each other player discards a card\.\s*You draw a card for each card discarded this way$/i.test(text)) {
+    return { effect: { kind: "syphon-mind" }, target: "none" };
+  }
+  if ((match = /^~ deals X damage to target creature and you gain X life, where X is the number of ([A-Za-z]+)s you control$/i.exec(text))) {
+    return { effect: { kind: "tendrils-of-corruption", subtype: match[1]! }, target: "creature" };
+  }
   if (/^Put target attacking creature on the bottom of its owner's library\. Its controller gains life equal to its toughness$/i.test(text)) {
     return { effect: { kind: "bottom-attacker-controller-gains-toughness" }, target: "attacking-creature" };
   }
@@ -1761,12 +1769,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }, target: "none" };
   }
   // Purely cosmetic trailing clauses do not change the outcome the engine produces.
-  if (/^(It|They) can't be regenerated$/i.test(text)) return null;
+  if (/^(?:It|They|That creature) can't be regenerated$/i.test(text)) return null;
   return null;
 }
 
 function isIgnorableSentence(sentence: string): boolean {
-  return /^(It|They) can't be regenerated\.?$/i.test(sentence.trim());
+  return /^(?:It|They|That creature) can't be regenerated\.?$/i.test(sentence.trim());
 }
 
 function recognizeText(text: string): RecognizedText {
@@ -2036,6 +2044,8 @@ function recognizeText(text: string): RecognizedText {
       const payCost = payGate ? parseManaCost(payGate[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       const optional = payGate ? true : /^you\s+may\b/i.test(effectText);
+      // Drop a purely cosmetic trailing sentence ("That creature can't be regenerated.").
+      effectText = effectText.replace(/\.\s*(?:It|They|That creature) can't be regenerated\.?$/i, "");
       const recognized = (payCost && payCost.hasVariable) ? null
         : recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {

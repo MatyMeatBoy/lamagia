@@ -1415,6 +1415,38 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "syphon-mind": {
+      let next = state;
+      let discarded = 0;
+      for (const player of state.players) {
+        if (player.seat === controller || player.lost) continue;
+        const hand = playerAt(next, player.seat).hand;
+        if (!hand.length) continue;
+        // Deterministic: give up the highest mana value card.
+        const card = [...hand].sort((a, b) => cardProfile(b).manaValue - cardProfile(a).manaValue)[0]!;
+        next = withPlayer(next, player.seat, (current) => ({
+          ...current,
+          hand: current.hand.filter((c) => c.instance_id !== card.instance_id),
+          graveyard: [...current.graveyard, card]
+        }));
+        discarded += 1;
+      }
+      if (discarded > 0) next = drawCards(next, controller, discarded);
+      return logged(next, controller, `${sourceName}: cada oponente descarta; robas ${discarded}.`);
+    }
+    case "tendrils-of-corruption": {
+      const target = object.targets[0];
+      if (target?.kind !== "permanent") return state;
+      const amount = playerAt(state, controller).battlefield.filter((permanent) =>
+        cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+      if (amount <= 0) return state;
+      let next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
+      if (!playersCantGainLife(next)) {
+        next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + amount }));
+        next = raiseEvent(next, { kind: "life-gained", seat: controller, amount });
+      }
+      return logged(next, controller, `${sourceName} hace ${amount} de daño y ganas ${amount} vidas.`);
+    }
     case "each-opponent-sacrifice-creature": {
       let next = state;
       for (const player of state.players) {
