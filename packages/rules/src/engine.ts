@@ -3701,7 +3701,9 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
       if (remaining <= 0) break;
       const lethal = deathtouch ? 1 : Math.max(1, toughnessOf(blocker, state) - blocker.damage);
       const assigned = Math.min(remaining, lethal);
-      if (!hasProtectionFrom(cardProfile(attacker.card), cardProfile(blocker.card))) {
+      const blockerProfile = cardProfile(blocker.card);
+      if (!blockerProfile.combatRules.preventsAllCombatDamageToSelf
+        && !hasProtectionFrom(cardProfile(attacker.card), blockerProfile)) {
         toPermanents.push({ instanceId: blocker.instance_id, amount: assigned, deathtouch, sourceName: attacker.card.name, sourceId: attacker.instance_id });
         if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: assigned });
       }
@@ -3730,7 +3732,9 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
     if (cardProfile(blocker.card).combatRules.preventsAllCombatDamage) continue;
     const power = powerOf(blocker, state);
     if (power <= 0) continue;
-    if (!hasProtectionFrom(cardProfile(blocker.card), cardProfile(attacker.card))) {
+    const attackerProfile = cardProfile(attacker.card);
+    if (!attackerProfile.combatRules.preventsAllCombatDamageToSelf
+      && !hasProtectionFrom(cardProfile(blocker.card), attackerProfile)) {
       toPermanents.push({ instanceId: attacker.instance_id, amount: power, deathtouch: keywordOf(state, blocker, "deathtouch"), sourceName: blocker.card.name, sourceId: blocker.instance_id });
       if (keywordOf(state, blocker, "lifelink")) lifelink.push({ seat: blocker.controller, amount: power });
     }

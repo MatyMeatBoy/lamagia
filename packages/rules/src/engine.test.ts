@@ -37,6 +37,7 @@ const ANY_SPELL_TRIGGER = () => make({ name: "Spell Archivist", type_line: "Crea
 const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Optional Archivist enters the battlefield, you may draw a card." });
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
+const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature — Jellyfish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", keywords: ["Defender", "Flying"], oracle_text: "Defender, flying\nPrevent all combat damage that would be dealt to this creature." });
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
 const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — Snake", mana_cost: "{B}", cmc: 1, power: "1", toughness: "1", keywords: ["Deathtouch"], oracle_text: "Deathtouch" });
 const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
@@ -4916,6 +4917,21 @@ describe("combat", () => {
     game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 1);
     expect(game.players[0]!.battlefield).toHaveLength(0);
     expect(game.players[1]!.battlefield[0]!.damage).toBe(0);
+  });
+
+  it("prevents combat damage dealt to Guard Gomazoa without preventing its own damage", () => {
+    const profile = profileOf(GUARD_GOMAZOA());
+    expect(profile.combatRules.preventsAllCombatDamageToSelf).toBe(true);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = atAttackers([TRAMPLER()], [GUARD_GOMAZOA()]);
+    const attacker = game.players[0]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    const blocker = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 1, { type: "declare-blockers", blockers: [{ instanceId: blocker.instance_id, attackerId: attacker.instance_id }] });
+    game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 1);
+    expect(game.players[1]!.battlefield[0]!.damage).toBe(0);
+    expect(game.players[1]!.life).toBe(37);
   });
 
   it("keeps a vigilant attacker untapped", () => {

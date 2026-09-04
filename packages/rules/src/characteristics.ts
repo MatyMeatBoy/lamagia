@@ -167,6 +167,8 @@ export interface CombatRules {
   readonly landwalk: readonly string[];
   /** "Prevent all combat damage that would be dealt to and dealt by ~" (Fog Bank). */
   readonly preventsAllCombatDamage: boolean;
+  /** "Prevent all combat damage that would be dealt to ~" (Guard Gomazoa). */
+  readonly preventsAllCombatDamageToSelf: boolean;
   /** "If a creature would deal combat damage to you, prevent N of that damage" while untapped (CR 615.1). */
   readonly preventsCombatDamageToController: number;
   /** "You may have ~ assign its combat damage as though it weren't blocked" (Tornado Elemental). */
@@ -182,6 +184,7 @@ export const NO_COMBAT_RULES: CombatRules = {
   blocksOnlyWithKeyword: null,
   landwalk: [],
   preventsAllCombatDamage: false,
+  preventsAllCombatDamageToSelf: false,
   preventsCombatDamageToController: 0,
   assignsAsUnblocked: false
 };
@@ -204,6 +207,7 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   if (/^~ can't attack or block$/.test(text)) return { cannotAttack: true, cannotBlock: true };
   if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
   if (/^prevent all combat damage that would be dealt to and dealt by ~$/i.test(text)) return { preventsAllCombatDamage: true };
+  if (/^prevent all combat damage that would be dealt to ~$/i.test(text)) return { preventsAllCombatDamageToSelf: true };
   const controllerPrevention = /^as long as ~ is untapped, if a creature would deal combat damage to you, prevent (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) of that damage$/i.exec(text);
   if (controllerPrevention) return { preventsCombatDamageToController: toNumber(controllerPrevention[1]!) ?? 0 };
   if (/^you may have ~ assign its combat damage as though it weren't blocked$/i.test(text)) return { assignsAsUnblocked: true };

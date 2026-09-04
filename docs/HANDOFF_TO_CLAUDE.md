@@ -1710,3 +1710,13 @@ honor explicit targets while retaining its deterministic fallback for effects
 without target selection. `Reckless Spite` is covered as two distinct nonblack
 creature targets followed by controller life loss (CR 601.2c, 608.2b). C13 is
 now **191/341 (56.0%)**, with **150 unfinished** and **72 one-line-away**.
+
+### Integrator checkpoint: source-only combat prevention (2026-09-04)
+
+`CombatRules` now distinguishes prevention to-and-by the source from
+prevention only to the source. `Guard Gomazoa` uses the latter; combat damage
+assignment, trample overflow, and its own outgoing damage remain correct under
+CR 615.1. The reusable profile closes equivalent Oracle printings as well.
+The refreshed export is **192/341 C13 (56.3%)**, with **149 unfinished** and
+**71 one-line-away**. The fork report `3af0cb0` (conditional Split second) is
+also queued as one incoming commit and remains outside the integration batch.

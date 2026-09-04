@@ -103,6 +103,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-split-second` | Enforce Split second's prohibition on non-mana spells and activated abilities while the spell is on the stack | `feat/activated-abilities-and-triggers` | merged (pending commit) | 2026-09-04 |
 | `c13-protection` | Parse color protection and enforce its targeting, blocking, and combat-damage prevention rules; Sphinx of the Steel Wind | `feat/activated-abilities-and-triggers` | merged (`2c228ee`) | 2026-09-04 |
 | `c13-destroy-target-nonblack-creatures` | Reusable multiple-target nonblack creature destruction with a controller life-loss follow-up; Reckless Spite | `feat/activated-abilities-and-triggers` | merged (`pending`) | 2026-09-04 |
+| `c13-prevent-all-combat-damage` | Reuse combat-damage prevention for damage dealt to the source creature only; Guard Gomazoa | `feat/activated-abilities-and-triggers` | merged (`pending`) | 2026-09-04 |
 | `rules-level-up` | Level up costs, level counters, and the three C13 cards: Echo Mage, Hada Spy Patrol, Kazandu Tuskcaller | `codex/c13-equipment-cluster` | merged (`f325052`) | 2026-09-03 |
 | `rules-tap-untap` | Targeted Tap target creature and Untap target permanent effects | `codex/c13-equipment-cluster` | merged (`4fa0290`) | 2026-09-03 |
 | `rules-mill` | Target player mills a bounded number of cards into their graveyard | `codex/c13-equipment-cluster` | merged (`2842700`) | 2026-09-03 |
