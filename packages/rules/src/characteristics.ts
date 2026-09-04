@@ -428,7 +428,7 @@ export type TargetKind =
   | "creature-with-hexproof"
   | "creature-with-shroud"
   | "creature-with-reach"
-  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "land-card-in-a-graveyard" | `subtype:${string}` | "none";
+  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-a-graveyard" | `subtype:${string}` | "none";
   
 
 export interface CardProfile {
@@ -1384,6 +1384,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Exile target card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "card-in-a-graveyard" };
   if (/^Exile target creature card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "creature-card-in-a-graveyard" };
   if (/^Exile target artifact card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "artifact-card-in-a-graveyard" };
+  if (/^Exile target enchantment card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "enchantment-card-in-a-graveyard" };
   if (/^Put target card from your graveyard on top of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-top" }, target: "card-in-your-graveyard" };
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
