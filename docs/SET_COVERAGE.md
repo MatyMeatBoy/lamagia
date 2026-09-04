@@ -25177,7 +25177,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [x] Borrowing 100,000 Arrows — `a3f10772-d055-419d-a535-4f094eaf437c`
 - [ ] Brooding Saurian — `2fb7f844-edaf-43ef-9121-318baf9ec9ce`
 - [ ] Capricious Efreet — `9abd2286-23e9-49cd-be53-39423890f35c`
-- [ ] Carnage Altar — `aa05900f-0f04-407e-931c-fea8f91e78e3`
+- [x] Carnage Altar — `aa05900f-0f04-407e-931c-fea8f91e78e3`
 - [ ] Charmbreaker Devils — `1b9df437-6988-4ddc-80c4-893e11076067`
 - [ ] Charnelhoard Wurm — `4a430fa3-e693-424b-9981-d7d8193445e3`
 - [x] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
