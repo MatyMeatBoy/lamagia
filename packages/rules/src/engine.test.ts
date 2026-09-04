@@ -1515,6 +1515,15 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("reuses the upkeep compound trigger for C13 Baleful Force", () => {
+    let game = twoSeatGame(Array.from({ length: 12 }, () => BEAR()), []);
+    game = putOnBattlefield(game, 0, [C13_BALEFUL_FORCE()]);
+    const beforeHand = game.players[0]!.hand.length;
+    game = passUntil(game, (state) => state.players[0]!.life === 39 && state.players[0]!.hand.length === beforeHand + 1);
+    expect(game.players[0]!.life).toBe(39);
+    expect(game.players[0]!.hand.length).toBe(beforeHand + 1);
+  });
+
   it("draws once per creature controlled by the caster", () => {
     expect(profileOf(CREATURE_DRAW()).effects).toEqual([{ kind: "draw-equal-controlled-type", type: "Creature" }]);
   });
