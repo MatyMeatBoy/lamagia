@@ -80,6 +80,7 @@ feature name.
 | `c13-keyword-target-filters` | Target filters for fear, defender, deathtouch, lifelink, menace, haste, first/double strike, trample, vigilance, indestructible, hexproof, and shroud; continuous grants are respected | `codex/c13-equipment-cluster` | merged (`3b2f825`) | 2026-09-04 |
 | `rules-compound-sentence-order` | Parse multi-sentence destruction plus power/toughness life-loss effects before the generic destruction primitive | `feat/activated-abilities-and-triggers` | merged (`5e9f3cf`) | 2026-09-04 |
 | `c13-fork-followup-20260904` | Reach and flying-only filters; global keyword/P+T layers; counted planeswalkers and battles; optional-condition narrowing; GameCard test fixtures | `codex/c13-equipment-cluster` | merged (local `b3372a2`; source `3cd6156`) | 2026-09-04 |
+| `c13-cross-graveyard-targets` | Exile or return cards from any graveyard with reusable creature, artifact, enchantment, and land filters | `codex/c13-equipment-cluster` | merged (local `5bd0bff`) | 2026-09-04 |
 
 ## Claim format
 
