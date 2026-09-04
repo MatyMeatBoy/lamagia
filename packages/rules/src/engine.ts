@@ -257,6 +257,7 @@ export type PendingChoice =
       readonly sourcePermanentId?: string;
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
+      readonly unlessPayCost?: ManaCost;
     }
   | {
       /**
@@ -2270,6 +2271,7 @@ function resolveTop(state: GameState): GameState {
           triggerEffect: object.trigger.definition.effect,
           sourceCard: object.trigger.sourceCard,
           ...(object.trigger.definition.payCost ? { payCost: object.trigger.definition.payCost } : {}),
+          ...(object.trigger.definition.unlessPayCost ? { payCost: object.trigger.definition.unlessPayCost, unlessPayCost: object.trigger.definition.unlessPayCost } : {}),
           targets: object.targets,
           sourcePermanentId: object.trigger.sourcePermanentId,
           sourceController: object.controller,
@@ -3823,6 +3825,31 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     if (!payment) throw new Error("No se pudo pagar el coste de la habilidad.");
     next = withPlayer(next, seat, (current) => ({ ...current, manaPool: payment.remaining }));
     return logged(next, seat, playerAt(next, seat).name + " paga " + choice.manaCost.raw + " para evitar la habilidad.");
+  }
+  if (choice.unlessPayCost) {
+    if (action.accept) {
+      const plan = planManaPayment(choice.unlessPayCost, playerAt(next, seat), { state: next });
+      if (!plan) throw new Error(`No puedes pagar ${choice.unlessPayCost.raw} por ${choice.sourceCard.name}.`);
+      next = applyManaPlan(next, seat, plan);
+      const paid = payCost(choice.unlessPayCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+      if (!paid) throw new Error(`No se pudo pagar ${choice.unlessPayCost.raw}.`);
+      next = withPlayer(next, seat, (current) => ({ ...current, manaPool: paid.remaining, life: current.life - paid.lifePaid }));
+      return logged(next, seat, `${playerAt(next, seat).name} paga ${choice.unlessPayCost.raw} para conservar ${choice.sourceCard.name}.`);
+    }
+    const source: StackObject = {
+      id: choice.sourceId,
+      controller: choice.sourceController ?? seat,
+      card: choice.sourceCard,
+      label: `${choice.sourceCard.name} · habilidad opcional`,
+      targets: choice.targets ?? [],
+      fromCommandZone: false,
+      flashback: false,
+      variableValue: 0,
+      countered: false,
+      sourcePermanentId: choice.sourcePermanentId
+    };
+    next = applyEffect(next, source, choice.triggerEffect);
+    return logged(next, source.controller, `${choice.sourceCard.name} se sacrifica al no pagar ${choice.unlessPayCost.raw}.`);
   }
   if (!action.accept) return logged(next, seat, `${playerAt(state, seat).name} no realiza la habilidad opcional de ${choice.sourceCard.name}.`);
   const optionalCost = choice.payCost ?? choice.manaCost;

@@ -228,6 +228,8 @@ const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantmen
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
 const C13_BALEFUL_FORCE = () => make({ name: "Baleful Force", type_line: "Creature — Elemental", mana_cost: "{5}{B}{B}{B}", cmc: 8, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life.", scryfall_id: "a5e79f7b-0212-476b-9dea-bf1ada419e72" });
 const C13_DRUIDIC_SATCHEL = () => make({ name: "Druidic Satchel", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Reveal the top card of your library. If it's a creature card, create a 1/1 green Saproling creature token. If it's a land card, put that card onto the battlefield under your control. If it's a noncreature, nonland card, you gain 2 life.", scryfall_id: "f3aaefb4-4662-434a-9c31-3f2c754ce9cc" });
+const C13_RUPTURE_SPIRE = () => make({ name: "Rupture Spire", type_line: "Land", oracle_text: "Rupture Spire enters the battlefield tapped.\nWhen Rupture Spire enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.", produced_mana: ["W", "U", "B", "R", "G"], scryfall_id: "622087fc-4e34-43cd-a46f-fd2c339b3905" });
+const C13_TRANSGUILD_PROMENADE = () => make({ name: "Transguild Promenade", type_line: "Land", oracle_text: "Transguild Promenade enters the battlefield tapped.\nWhen Transguild Promenade enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.", produced_mana: ["W", "U", "B", "R", "G"], scryfall_id: "9f325665-43cd-4b6d-8878-e42a39178e3f" });
 const SCRY_TWO = () => make({ name: "Scry Two", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Scry 2." });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
@@ -3579,6 +3581,27 @@ describe("activated abilities", () => {
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[0]!.library).toHaveLength(0);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Saproling")).toBe(true);
+  });
+
+  it("offers the ETB payment for C13 sacrifice-unless-paid lands", () => {
+    let game = readyOnBoard([FOREST()], { hold: true });
+    game = stage(game, 0, () => ({ hand: toHand(0, [C13_RUPTURE_SPIRE()], "rupture-hand") }));
+    game = applyAction(game, 0, { type: "play-land", cardId: "rupture-hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", unlessPayCost: { raw: "{1}" } });
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Rupture Spire")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Rupture Spire")).toBe(false);
+
+    game = readyOnBoard([], { hold: true });
+    game = stage(game, 0, () => ({ hand: toHand(0, [C13_TRANSGUILD_PROMENADE()], "promenade-hand") }));
+    game = applyAction(game, 0, { type: "play-land", cardId: "promenade-hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(legalActions(game, 0).map((entry) => entry.action.type)).toEqual(["choose-trigger"]);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: false });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Transguild Promenade")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Transguild Promenade")).toBe(true);
   });
 
   it("refuses Llanowar Elves the turn it arrives and adds {G} once it can tap", () => {

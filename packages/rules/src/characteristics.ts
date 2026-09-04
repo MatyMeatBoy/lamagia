@@ -480,6 +480,8 @@ export interface TriggerDefinition {
   readonly requiresEvoked?: boolean;
   /** Optional mana cost to get the effect ("you may pay {cost}. If you do, ..."). */
   readonly payCost?: ManaCost;
+  /** For "sacrifice ~ unless you pay {cost}", declining the payment applies the effect. */
+  readonly unlessPayCost?: ManaCost;
 }
 
 export type TargetKind =
@@ -1894,6 +1896,7 @@ function recognizeText(text: string): RecognizedText {
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
       const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
+      const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
       let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
@@ -1904,10 +1907,12 @@ function recognizeText(text: string): RecognizedText {
       if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "you may pay {cost}. If you do, X" — an optional mana cost gating X.
       const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
-      const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : null;
+      const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-      const optional = payGate || unlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
+      const optional = payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
       const recognized = (payCost && payCost.hasVariable) ? null
+        : sacrificeUnlessPayment
+        ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {
         triggers.push({
@@ -1923,7 +1928,8 @@ function recognizeText(text: string): RecognizedText {
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
-          ...(payCost && payCost.symbols.length ? { payCost, manaCost: payCost } : {})
+          ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment ? { payCost, manaCost: payCost } : {}),
+          ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {})
         });
       } else {
         unimplementedText.push(line);
