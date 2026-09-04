@@ -374,6 +374,17 @@ const SHOCK_LAND = () => make({
   oracle_text: "({T}: Add {U} or {R}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
   produced_mana: ["U", "R"]
 });
+// Torbran-style static damage amplifier (CR 614.1c): a red source *you
+// control* deals that much damage plus 2 to an opponent (or their
+// permanents) instead — never to the controller's own side, and never for a
+// non-red source.
+const DAMAGE_AMPLIFIER = () => make({
+  name: "Test Torbran", type_line: "Creature — Dwarf Berserker", mana_cost: "{2}{R}{R}", cmc: 4, power: "2", toughness: "3",
+  colors: ["R"], color_identity: ["R"],
+  oracle_text: "If a red source you control would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus 2 instead."
+});
+const RED_BOLT = () => make({ name: "Test Red Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, colors: ["R"], oracle_text: "~ deals 3 damage to any target." });
+const BLUE_BOLT = () => make({ name: "Test Blue Bolt", type_line: "Instant", mana_cost: "{U}", cmc: 1, colors: ["U"], oracle_text: "~ deals 3 damage to any target." });
 const ETB_BOLTER = () => make({
   name: "Flame Herald", type_line: "Creature — Dragon", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3",
   oracle_text: "When Flame Herald enters the battlefield, Flame Herald deals 2 damage to any target."
@@ -5516,6 +5527,42 @@ describe("combat", () => {
     const id = game.players[0]!.battlefield[0]!.instance_id;
     expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: id, defender: 0 }] })).toThrow(/no puede ser atacado/);
     expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: "ghost", defender: 1 }] })).toThrow(/no puede atacar/);
+  });
+
+  it("amplifies a red source's damage to an opponent, but not to its own controller or from off-color sources", () => {
+    const profile = profileOf(DAMAGE_AMPLIFIER());
+    expect(profile.damageAmplify).toEqual({ colorFilter: "R", excludesSelf: false, scope: "opponent", amount: 2 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Combat damage: the amplifier itself is a red source, so no self-exclusion applies.
+    let game = atAttackers([DAMAGE_AMPLIFIER()], []);
+    const attacker = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Torbran")!;
+    const before = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    expect(game.players[1]!.life).toBe(before - 4); // 2 power + 2 bonus
+
+    // A red spell targeting the opponent is amplified too; a blue spell is not.
+    let spellGame = twoSeatGame([], []);
+    spellGame = putOnBattlefield(spellGame, 0, [DAMAGE_AMPLIFIER(), MOUNTAIN(), ISLAND()]);
+    spellGame = stage(spellGame, 0, () => ({ hand: toHand(0, [RED_BOLT(), BLUE_BOLT()]) }));
+    spellGame = passUntil(spellGame, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const life1 = spellGame.players[1]!.life;
+    spellGame = applyAction(spellGame, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    spellGame = passUntil(spellGame, (state) => state.stack.length === 0);
+    expect(spellGame.players[1]!.life).toBe(life1 - 5); // 3 + 2 amplified (red)
+    const life1After = spellGame.players[1]!.life;
+    spellGame = applyAction(spellGame, 0, { type: "cast", cardId: "hand-1", targets: [{ kind: "player", seat: 1 }] });
+    spellGame = passUntil(spellGame, (state) => state.stack.length === 0);
+    expect(spellGame.players[1]!.life).toBe(life1After - 3); // blue: not amplified
+
+    // Damage the amplifier's own controller deals to themselves is never amplified.
+    let selfGame = twoSeatGame([], []);
+    selfGame = putOnBattlefield(selfGame, 0, [DAMAGE_AMPLIFIER(), MOUNTAIN()]);
+    selfGame = stage(selfGame, 0, () => ({ hand: toHand(0, [RED_BOLT()]) }));
+    selfGame = passUntil(selfGame, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const ownLife = selfGame.players[0]!.life;
+    selfGame = applyAction(selfGame, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 0 }] });
+    expect(selfGame.players[0]!.life).toBe(ownLife - 3); // no amplification against self
   });
 });
 

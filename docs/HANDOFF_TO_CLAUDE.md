@@ -2090,3 +2090,55 @@ pre-existing bug is now reachable from one additional seed. The underlying
 bug itself is unrelated to mana/life and remains unfixed; it should be
 investigated on its own (seed 92 and seed 116 both point at the same commander-
 tracking invariant) rather than blocking this claim.
+
+### Worker-05: Torbran-style damage amplifiers, a new static primitive (2026-09-04)
+
+Claim `rules-damage-amplify`, continuing the decklist (Torbran, Thane of Red
+Fell). This is genuinely new territory, not a variant of an existing
+primitive: "If a red source you control would deal damage to an opponent or
+a permanent an opponent controls, it deals that much damage plus 2 instead"
+(CR 614.1c) is a static replacement effect on the *amount* of damage, which
+nothing in the engine modeled before. Designed it as a reusable
+`CardProfile.damageAmplify` shape (`colorFilter?: ManaType`, `excludesSelf`
+for "another ... source" wording, `scope: "opponent" | "any"`, `amount`) and
+a `damageAmplifyBonus` helper that sums every matching amplifier the
+damage's controller has on the battlefield.
+
+The subtle part was wiring it into every damage path without double-counting
+or missing spells: `dealDamageToPermanent` gained an optional `source`
+param threaded through all 8 `applyEffect` call sites plus combat damage
+(each already had `controller`/`sourcePermanentId` on hand). Player damage
+needed a correction mid-implementation — `dealDamageFromObject` must key
+amplification off `object.controller`/`object.card` directly, *not* the
+permanent looked up by `sourceForDamage`, because a spell dealing its own
+damage (Lightning Bolt, say) has no matching battlefield permanent yet;
+relying on that lookup silently produced zero bonus for every spell while
+still amplifying combat/activated-ability damage correctly. Combat damage to
+players and commander-damage tracking both apply the same bonus via the
+existing `dealer` permanent, which is always resolvable there.
+
+Fully implements Torbran, Thane of Red Fell; Jaya, Venerated Firemage;
+Embermaw Hellion; Thor, Asgard's Avenger (4 cards, matching every catalog
+card whose amplifier clause names a single fixed color or none, uses plain
+"a"/"another" — not an "or" color/type list — and doesn't gate on an extra
+condition like Saga chapters or Max Speed). Scenario coverage: combat damage
+from the amplifier's own red body (self-inclusion, no "another"), a red
+spell amplified against an opponent, a blue spell *not* amplified (color
+filter), and the same red spell targeting its own controller *not* amplified
+(opponent-only scope).
+
+**Known limit, left honest rather than guessed at:** lifelink on amplified
+combat damage still gains only the pre-amplification amount —
+`computeCombatDamage` computes the lifelink batch before `applyCombatDamage`
+applies the bonus, and reordering that touches combat's core damage-batching
+architecture beyond this claim's scope. No currently-pending card combines
+lifelink with being amplified by this exact family, so it isn't blocking
+anything today, but a future claim should thread the bonus into the lifelink
+batch too.
+
+Global export: **8,814/38,711** (+4 from 8,810 after the pain-mana claim).
+`npm run check` and `npm test` PASS (**481 rules tests**, up from 480;
+simulator and the full 55-test Python suite PASS). `npm run simulate:engine`
+still reports 2/200 (seeds 92 and 116, both the same pre-existing bug
+already flagged above and as a separate task) — no new seed introduced by
+this claim.

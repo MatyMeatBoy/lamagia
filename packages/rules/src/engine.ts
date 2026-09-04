@@ -1382,6 +1382,27 @@ function effectAmount(amount: number | "X", object: StackObject): number {
 
 type DamageSource = Pick<GameEvent & { kind: "deals-damage-to-player" }, "permanentId" | "controller" | "card">;
 
+/** Torbran-style static damage amplifiers (CR 614.1c): sums every applicable bonus the source's controller has in play. */
+function damageAmplifyBonus(
+  state: GameState,
+  sourceController: SeatId,
+  sourceProfile: CardProfile | undefined,
+  sourcePermanentId: string | undefined,
+  victimController: SeatId
+): number {
+  let bonus = 0;
+  for (const amplifier of allPermanents(state)) {
+    if (amplifier.controller !== sourceController) continue;
+    const amp = cardProfile(amplifier.card).damageAmplify;
+    if (!amp) continue;
+    if (amp.excludesSelf && amplifier.instance_id === sourcePermanentId) continue;
+    if (amp.colorFilter && !(sourceProfile?.colors ?? []).includes(amp.colorFilter)) continue;
+    if (amp.scope === "opponent" && victimController === sourceController) continue;
+    bonus += amp.amount;
+  }
+  return bonus;
+}
+
 function dealDamageToPlayer(
   state: GameState,
   seat: SeatId,
@@ -1412,8 +1433,15 @@ function sourceForDamage(state: GameState, object: StackObject): DamageSource | 
     : undefined;
 }
 
+/**
+ * Deals damage from a resolving spell or ability. Amplification (Torbran)
+ * always keys off the object's own controller and card — never the
+ * permanent lookup `sourceForDamage` needs for the `deals-damage-to-player`
+ * event, since a spell dealing its own damage has no matching permanent yet.
+ */
 function dealDamageFromObject(state: GameState, seat: SeatId, amount: number, sourceName: string, object: StackObject): GameState {
-  return dealDamageToPlayer(state, seat, amount, sourceName, sourceForDamage(state, object));
+  const bonus = damageAmplifyBonus(state, object.controller, cardProfile(object.card), object.sourcePermanentId, seat);
+  return dealDamageToPlayer(state, seat, amount + bonus, sourceName, sourceForDamage(state, object));
 }
 
 function loseLife(state: GameState, seat: SeatId, amount: number): GameState {
@@ -1439,22 +1467,24 @@ function dealDamageToPermanent(
   amount: number,
   deathtouch: boolean,
   sourceName: string,
-  sourceProfile?: CardProfile
+  sourceProfile?: CardProfile,
+  source?: { readonly controller: SeatId; readonly permanentId?: string }
 ): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
   if (sourceProfile && hasProtectionFrom(sourceProfile, cardProfile(permanent.card))) return state;
+  const total = amount + (source ? damageAmplifyBonus(state, source.controller, sourceProfile, source.permanentId, permanent.controller) : 0);
   // Damage to a planeswalker removes that many loyalty counters (CR 120.3c).
   const isPlaneswalker = cardProfile(permanent.card).types.includes("Planeswalker") && "loyalty" in permanent.counters;
   const next = withPlayer(state, permanent.controller, (player) => ({
     ...player,
     battlefield: player.battlefield.map((candidate) => {
       if (candidate.instance_id !== instanceId) return candidate;
-      if (isPlaneswalker) return { ...candidate, counters: { ...candidate.counters, loyalty: Math.max(0, (candidate.counters.loyalty ?? 0) - amount) } };
-      return { ...candidate, damage: candidate.damage + amount, deathtouched: candidate.deathtouched || deathtouch };
+      if (isPlaneswalker) return { ...candidate, counters: { ...candidate.counters, loyalty: Math.max(0, (candidate.counters.loyalty ?? 0) - total) } };
+      return { ...candidate, damage: candidate.damage + total, deathtouched: candidate.deathtouched || deathtouch };
     })
   }));
-  return logged(next, permanent.controller, `${sourceName} hace ${amount} de daño a ${permanent.card.name}.`);
+  return logged(next, permanent.controller, `${sourceName} hace ${total} de daño a ${permanent.card.name}.`);
 }
 
 /** Applies a layer 7c P/T modifier which cleanup removes (CR 613.4c, 514.2). */
@@ -1815,7 +1845,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = playerAt(state, controller).battlefield.filter((permanent) =>
         cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
       if (amount <= 0) return state;
-      let next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
+      let next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       if (!playersCantGainLife(next)) {
         next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + amount }));
         next = raiseEvent(next, { kind: "life-gained", seat: controller, amount });
@@ -2045,7 +2075,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         if (!planeswalker && effect.filter === "nonartifact" && profile.types.includes("Artifact")) continue;
         if (!planeswalker && effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
         if (effect.filter === "with-flying" && !keywordOf(next, permanent, "flying")) continue;
-        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
+        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       }
       return next;
     }
@@ -2053,7 +2083,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = effectAmount(effect.amount, object);
       let next = state;
       for (const permanent of allPermanents(state)) {
-        if (isCreature(cardProfile(permanent.card))) next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
+        if (isCreature(cardProfile(permanent.card))) next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       }
       for (const player of state.players) {
         if (!player.lost) next = dealDamageFromObject(next, player.seat, amount, sourceName, object);
@@ -2086,7 +2116,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (const permanent of allPermanents(state)) {
         if (isCreature(cardProfile(permanent.card)) && !keywordOf(state, permanent, "flying")) {
-          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
+          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
         }
       }
       for (const player of state.players) if (!player.lost) next = dealDamageFromObject(next, player.seat, amount, sourceName, object);
@@ -2097,7 +2127,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (const permanent of allPermanents(state)) {
         if (isCreature(cardProfile(permanent.card)) && keywordOf(state, permanent, "flying")) {
-          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
+          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
         }
       }
       return next;
@@ -2107,7 +2137,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target) return state;
       const amount = effectAmount(effect.amount, object);
       if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
-      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       return state;
     }
     case "incite-rebellion": {
@@ -2118,7 +2148,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         const amount = creatures.length;
         if (amount === 0) continue;
         next = dealDamageFromObject(next, player.seat, amount, sourceName, object);
-        for (const creature of creatures) next = dealDamageToPermanent(next, creature.instance_id, amount, false, sourceName, cardProfile(object.card));
+        for (const creature of creatures) next = dealDamageToPermanent(next, creature.instance_id, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       }
       return next;
     }
@@ -2127,7 +2157,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target) return state;
       const amount = playerAt(state, controller).battlefield.filter((permanent) => cardProfile(permanent.card).types.includes(effect.type)).length;
       if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
-      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       return state;
     }
     case "damage-controller-equal-hand": {
@@ -3933,11 +3963,13 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
   let next = state;
   for (const hit of batch.toPermanents) {
     const source = findPermanent(state, hit.sourceId);
-    next = dealDamageToPermanent(next, hit.instanceId, hit.amount, hit.deathtouch, hit.sourceName, source ? cardProfile(source.card) : undefined);
+    next = dealDamageToPermanent(next, hit.instanceId, hit.amount, hit.deathtouch, hit.sourceName, source ? cardProfile(source.card) : undefined,
+      source ? { controller: source.controller, permanentId: source.instance_id } : undefined);
   }
   for (const hit of batch.toPlayers) {
     const dealer = findPermanent(state, hit.sourceId);
-    next = dealDamageToPlayer(next, hit.seat, hit.amount, hit.sourceName, dealer
+    const bonus = dealer ? damageAmplifyBonus(next, dealer.controller, cardProfile(dealer.card), dealer.instance_id, hit.seat) : 0;
+    next = dealDamageToPlayer(next, hit.seat, hit.amount + bonus, hit.sourceName, dealer
       ? { permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card }
       : undefined);
     if (dealer && hit.amount > 0) {
@@ -3950,7 +3982,7 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
       const commanderId = hit.commanderId;
       next = withPlayer(next, hit.seat, (player) => ({
         ...player,
-        commanderDamage: { ...player.commanderDamage, [commanderId]: (player.commanderDamage[commanderId] ?? 0) + hit.amount }
+        commanderDamage: { ...player.commanderDamage, [commanderId]: (player.commanderDamage[commanderId] ?? 0) + hit.amount + bonus }
       }));
     }
   }

@@ -293,6 +293,17 @@ export interface StaticPowerToughnessGrant {
   readonly threshold?: number;
 }
 
+/** Torbran-style static damage amplifier (CR 614.1c). */
+export interface DamageAmplify {
+  /** Undefined means any color (e.g. Thor, Asgard's Avenger). */
+  readonly colorFilter?: ManaType;
+  /** "another ... source" excludes the amplifier's own permanent from its own bonus. */
+  readonly excludesSelf: boolean;
+  /** "opponent" = only damage to an opponent or their permanents; "any" = every permanent or player, including allies. */
+  readonly scope: "opponent" | "any";
+  readonly amount: number;
+}
+
 /** Characteristics printed in one level band of a leveler card (CR 711). */
 export interface LevelDefinition {
   readonly minLevel: number;
@@ -706,6 +717,8 @@ export interface CardProfile {
   readonly attackersAssignAsUnblockedWhileAttacking: boolean;
   readonly preventsOpponentLoss: boolean;
   readonly forcesAllCreaturesToAttack: boolean;
+  /** Torbran-style static damage amplifier (CR 614.1c): "If a [color] source you control would deal damage to X, it deals that much damage plus N instead." */
+  readonly damageAmplify: DamageAmplify | null;
  readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
   /** Whether the permanent copies the power/toughness of its exiled imprint. */
   readonly copiesImprintedCreatureStats: boolean;
@@ -1192,6 +1205,30 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
 
 function parseStaticPowerToughnessGrants(text: string): StaticPowerToughnessGrant[] {
   return text.split("\n").map(parseStaticPowerToughnessGrant).filter((grant): grant is StaticPowerToughnessGrant => grant !== null);
+}
+
+// Torbran, Thane of Red Fell (CR 614.1c): "opponent" scope excludes the
+// controller's own permanents and life total from the bonus, so a card that
+// could hurt its own controller is left unmatched rather than guessed at.
+const DAMAGE_AMPLIFY_OPPONENT = /^If (a|another) (red|white|blue|black|green)? ?source you control would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus (\d+) instead\.?$/i;
+// "any" scope hits every permanent or player, including the controller's own.
+const DAMAGE_AMPLIFY_ANY = /^If (a|another) (red|white|blue|black|green)? ?source you control would deal damage to a permanent or player, it deals that much damage plus (\d+)(?: to that permanent or player)? instead\.?$/i;
+
+const DAMAGE_AMPLIFY_COLOR_LETTER: Readonly<Record<string, ManaType>> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
+
+function parseDamageAmplify(line: string): DamageAmplify | null {
+  const clean = line.trim();
+  const opponent = DAMAGE_AMPLIFY_OPPONENT.exec(clean);
+  const any = opponent ? null : DAMAGE_AMPLIFY_ANY.exec(clean);
+  const match = opponent ?? any;
+  if (!match) return null;
+  const colorFilter = match[2] ? DAMAGE_AMPLIFY_COLOR_LETTER[match[2]!.toLowerCase()] : undefined;
+  return {
+    excludesSelf: match[1]!.toLowerCase() === "another",
+    ...(colorFilter ? { colorFilter } : {}),
+    scope: opponent ? "opponent" : "any",
+    amount: Number(match[3])
+  };
 }
 
 /**
@@ -2742,6 +2779,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
+    if (parseDamageAmplify(line)) continue;
     // Rebound is synthesised from the keyword; consume the reminder line.
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
@@ -3060,6 +3098,7 @@ export function cardProfile(card: CardData): CardProfile {
   const attackersAssignAsUnblockedWhileAttacking = /for each creature you control, you may have that creature assign its combat damage as though it weren't blocked/i.test(text);
   const preventsOpponentLoss = /your opponents can't lose the game\.?/i.test(text);
   const forcesAllCreaturesToAttack = /all creatures attack each combat if able\.?/i.test(text);
+  const damageAmplify = text.split("\n").map((line) => parseDamageAmplify(line.trim())).find((grant): grant is DamageAmplify => grant !== null) ?? null;
   const additionalCostExileGraveyardX = /as an additional cost to cast ~, exile x cards from your graveyard\.?/i.test(text);
   const hasRebound = /(?:^|\n)rebound\.?(?:$|\n)/i.test(text);
   const additionalCostSacrificeLand = /as an additional cost to cast ~, sacrifice a land\.?/i.test(text);
@@ -3105,6 +3144,7 @@ export function cardProfile(card: CardData): CardProfile {
     attackersAssignAsUnblockedWhileAttacking,
     preventsOpponentLoss,
     forcesAllCreaturesToAttack,
+    damageAmplify,
    staticPowerToughnessGrants,
     copiesImprintedCreatureStats,
     doublesLandMana,
