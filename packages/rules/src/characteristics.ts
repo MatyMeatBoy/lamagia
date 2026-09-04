@@ -378,6 +378,8 @@ export type SpellEffect =
   | { readonly kind: "modify-all-attacking-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
+  /** Target loses the amount carried by the life-gain/loss event that caused this trigger. */
+  | { readonly kind: "lose-life-target-event-amount" }
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number | "X" }
@@ -1896,6 +1898,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "gain-life-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "gain-life-target-player", amount: "X" }, target: "player" };
+  }
+  if (/^Target opponent loses that much life$/i.test(text)) {
+    return { effect: { kind: "lose-life-target-event-amount" }, target: "opponent" };
   }
   if ((match = /^Each player gains (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);

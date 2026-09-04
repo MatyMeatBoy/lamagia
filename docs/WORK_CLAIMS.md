@@ -332,6 +332,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-whenever-creature-you-control-2` | Power-threshold entering-creature trigger with optional targeted damage (CR 603.2, 603.4, 120.2) | `codex/c13-where-ancients-tread-f99` | active | 2026-09-04 |
 | `c13-oracle-damage-triggered-shape-4` | Any-player draw trigger that deals damage to the drawing player (CR 603.2, 603.3d, 120.2) | `codex/c13-spiteful-visions-f99` | active | 2026-09-04 |
 | `c13-oracle-damage-triggered-shape-5` | Optional attack trigger that taps a chosen number of untapped creatures of a subtype, then pumps and damages the attacked player (CR 508.1i, 601.2) | `codex/c13-myr-battlesphere-f99` | active | 2026-09-04 |
+| `c13-oracle-gain-life-triggered-5` | Life-gain event carries its amount into a targeted opponent life-loss trigger (CR 603.2, 120.3) | `codex/c13-sanguine-bond-f99` | active | 2026-09-04 |
 
 ## Claim format
 
