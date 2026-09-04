@@ -1668,3 +1668,17 @@ than by printing. Current C14-only cards are Breaching Leviathan, Crown of Doom,
 Demon of Wailing Agonies, Dulcet Sirens, Flesh Carver, Raving Dead and Spoils of
 Blood. Example pending reusable profiles include Skullclamp, Beastmaster
 Ascension, Masked Admirers, Scrap Mastery, Cathodion and Reaper from the Abyss.
+
+### Integrator checkpoint: Nightscape Familiar multi-color reduction (2026-09-04)
+
+The cost-reduction parser now preserves a color union such as “blue spells and
+red spells” as one reusable grant. Matching any listed color applies the generic
+reduction once; unrelated colors remain full price. The C13 export is now
+**188/341 (55.1%)**, with **153** unfinished and **75** one-line-away. The worker
+plan remains five disjoint workers under the 2 GB scheduler budget, with up to
+20 Oracle IDs per commit and the 11-commit integration threshold.
+
+The worker planner now normalizes claim statuses before optional parenthesized
+commit notes, so `review (abc123)` is excluded exactly like `review`. This keeps
+fork work disjoint automatically: the current C13 plan has **34 unclaimed
+primitives**, balanced as **7/7/7/7/6** across five workers.

@@ -3599,6 +3599,17 @@ describe("kicker and optional-cost triggers", () => {
     expect(game.players[1]!.life).toBe(38);
   });
 
+  it("applies one shared reduction to blue or red spells", () => {
+    const familiar = () => make({ name: "Nightscape Familiar", type_line: "Creature — Zombie", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Blue spells and red spells you cast cost {1} less to cast.\n{1}{B}: Regenerate Nightscape Familiar." });
+    const blueSpell = () => make({ name: "Blue Insight", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, colors: ["U"], oracle_text: "Draw a card." });
+    const greenSpell = () => make({ name: "Green Insight", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, colors: ["G"], oracle_text: "Draw a card." });
+    expect(profileOf(familiar())).toMatchObject({ spellCostReductionGrant: { amount: 1, colors: ["U", "R"] }, fullyImplemented: true });
+    let game = ready([blueSpell()], [ISLAND(), familiar()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(true);
+    game = ready([greenSpell()], [FOREST(), familiar()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(false);
+  });
+
   it("applies Arcane Melee's global reduction to an opponent's spell", () => {
     const melee = () => make({ name: "Arcane Melee", type_line: "Enchantment", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Instant and sorcery spells cost {2} less to cast." });
     const instant = () => make({ name: "Cheap Insight", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, colors: ["U"], oracle_text: "You gain 1 life." });

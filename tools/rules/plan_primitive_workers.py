@@ -67,7 +67,10 @@ def load_claimed_keys(path: Path | None) -> set[str]:
         columns = [column.strip() for column in line.strip().strip("|").split("|")]
         if len(columns) < 4 or not columns[0].startswith("`") or not columns[0].endswith("`"):
             continue
-        status = columns[3].strip("`").casefold()
+        # Allow a compact commit annotation, e.g. `review (abc123)`, without
+        # losing the coordination state. The base status remains the token
+        # before the optional parenthesized note.
+        status = re.split(r"\s*\(", columns[3].strip("`"), maxsplit=1)[0].strip().casefold()
         if status in ACTIVE_STATUSES:
             claimed.add(columns[0][1:-1])
     return claimed

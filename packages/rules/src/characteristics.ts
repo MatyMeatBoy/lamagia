@@ -688,6 +688,8 @@ export interface CardProfile {
   readonly spellCostReductionGrant: {
     readonly amount: number;
     readonly color?: string;
+    /** A single reduction applies to any matching color in this union. */
+    readonly colors?: readonly string[];
     readonly type?: CardType;
     readonly types?: readonly CardType[];
     readonly appliesToAllPlayers?: boolean;
@@ -2419,7 +2421,7 @@ function recognizeText(text: string): RecognizedText {
     if (flashback) { flashbackCost = parseManaCost(flashback[1]!); continue; }
     // Board-scaled self cost reduction is consumed by cardProfile, not resolved here.
     if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
-    if (/^(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
+    if (/^(?:(?:(?:white|blue|black|red|green)\s+spells)(?:\s+and\s+(?:white|blue|black|red|green)\s+spells)+|(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells) you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^instant and sorcery spells cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     const chooseOneOrBoth = /^Choose one or both(?:\s+[—–-�])?\s*$/i.test(line);
     if (chooseOneOrBoth || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
@@ -2774,11 +2776,17 @@ export function cardProfile(card: CardData): CardProfile {
   const staticLandManaBonus = landBonusMatch
     ? { subtype: landBonusMatch[1]!.replace(/s$/i, "").replace(/^./, (c) => c.toUpperCase()), mana: landBonusMatch[2]!.toUpperCase() }
     : null;
+  const multiColorGrantMatch = /^((?:(?:white|blue|black|red|green)\s+spells)(?:\s+and\s+(?:white|blue|black|red|green)\s+spells)+) you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
   const grantMatch = /^(?:(white|blue|black|red|green) )?(artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
   const globalInstantSorceryMatch = /^instant and sorcery spells cost \{(\d+)\} less to cast\.?$/im.exec(text);
   const COLOR_LETTER: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
   const spellCostReductionGrant = globalInstantSorceryMatch
     ? { amount: Number(globalInstantSorceryMatch[1]), types: ["Instant", "Sorcery"] as const, appliesToAllPlayers: true }
+    : multiColorGrantMatch
+    ? {
+        amount: Number(multiColorGrantMatch[2]),
+        colors: [...new Set([...multiColorGrantMatch[1]!.matchAll(/(white|blue|black|red|green)\s+spells/gi)].map((match) => COLOR_LETTER[match[1]!.toLowerCase()]!))]
+      }
     : grantMatch
     ? {
         amount: Number(grantMatch[3]),

@@ -339,6 +339,17 @@ class OracleCompilerTests(unittest.TestCase):
             )
             self.assertEqual(load_claimed_keys(path), {"owned", "reviewing"})
 
+    def test_reads_review_claims_with_commit_annotations(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "claims.md"
+            path.write_text(
+                "| Claim key | Scope | Branch | Status | Since |\n"
+                "| --- | --- | --- | --- | --- |\n"
+                "| `reviewed` | scope | worker | review (`abc123`) | today |\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(load_claimed_keys(path), {"reviewed"})
+
 
 class PrimitiveRoadmapTests(unittest.TestCase):
     def test_folds_only_the_parameters_a_primitive_varies_by(self) -> None:

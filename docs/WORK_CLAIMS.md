@@ -342,3 +342,10 @@ rules citations and the integrator review remain mandatory.
 | `c13-tidal-force-tap-untap-choice` | Optional each-upkeep choice to tap or untap a target permanent for Tidal Force (CR 603.2, 603.5, 701.21) | `codex/c13-tidal-force` | active | 2026-09-04 |
 | `c13-echo-cost` | Reusable Echo cost and next-upkeep pay-or-sacrifice handling (CR 702.30) | `feat/activated-abilities-and-triggers` | merged (this commit) | 2026-09-04 |
 | `c13-thunderstaff-combat-prevention` | Thunderstaff prevents 1 combat damage from creatures to its controller while untapped (CR 615.1, 614.1) | `feat/activated-abilities-and-triggers` | merged (this commit) | 2026-09-04 |
+| `c13-blue-spells-and-red` | Nightscape Familiar's shared reduction for blue or red spells you cast (CR 118.9) | `feat/activated-abilities-and-triggers` | merged (this commit) | 2026-09-04 |
+| `c13-the-beginning-each-end` | Brooding Saurian's end-step owner-control reset | `codex/c13-brooding-saurian` | review (`73e07c7`) | 2026-09-04 |
+| `c13-the-beginning-your-end` | Wall of Reverence's optional end-step life gain | `codex/c13-wall-reverence` | active | 2026-09-04 |
+| `c13-the-beginning-your-upkeep` | Capricious Efreet's upkeep random destruction choice | `codex/c13-capricious-efreet` | review (`a868c8d`) | 2026-09-04 |
+| `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
+| `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
+| `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
