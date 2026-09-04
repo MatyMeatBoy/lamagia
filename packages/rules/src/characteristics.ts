@@ -328,6 +328,7 @@ export type SpellEffect =
   | { readonly kind: "shuffle-target-card-into-library" }
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
+  | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
@@ -1398,6 +1399,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Shuffle target card from your graveyard into your library$/i.test(text)) return { effect: { kind: "shuffle-target-card-into-library" }, target: "card-in-your-graveyard" };
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
+  if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
