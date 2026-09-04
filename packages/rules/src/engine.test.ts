@@ -50,6 +50,7 @@ const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Insta
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
 const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
+const DISCARD_HAND_SPELL = () => make({ name: "Memory Collapse", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Target player discards their hand." });
 const X_DISCARD_SPELL = () => make({ name: "Scalable Mind Twist", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Target player discards X cards." });
 const LIFE_SPELL = () => make({ name: "Simple Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain 1 life." });
 const ARTIFACT_LIFE_SPELL = () => make({ name: "Artifact Blessing", type_line: "Instant", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 2 life for each artifact you control." });
@@ -1105,6 +1106,13 @@ describe("casting", () => {
 
   it("models a wheel as discard-to-graveyard followed by equal draws", () => {
     expect(profileOf(WHEEL_SPELL()).effects).toEqual([{ kind: "each-player-discard-and-draw", amount: 7 }]);
+  });
+
+  it("moves a targeted player's entire hand to their graveyard", () => {
+    let game = readyToCast([DISCARD_HAND_SPELL()], [SWAMP(), SWAMP(), SWAMP(), SWAMP()], [BEAR(), BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.hand).toHaveLength(0);
+    expect(game.players[1]!.graveyard.filter((card) => card.name === "Grizzly Bears")).toHaveLength(2);
   });
 
   it("deals spell damage to every creature and lets state-based actions clear lethal damage", () => {

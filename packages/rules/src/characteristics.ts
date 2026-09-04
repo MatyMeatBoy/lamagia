@@ -250,6 +250,7 @@ export type SpellEffect =
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
+  | { readonly kind: "discard-target-player-hand" }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number | "X" }
@@ -1205,6 +1206,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-player-discard-and-draw", amount }, target: "none" };
   }
+  if (/^Target player discards their hand$/i.test(text)) return { effect: { kind: "discard-target-player-hand" }, target: "player" };
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on ~$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-source", counter: match[2]!.trim().toLowerCase(), amount }, target: "none" };
