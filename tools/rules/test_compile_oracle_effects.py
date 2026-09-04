@@ -5,6 +5,7 @@ import unittest
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, classify, cluster_text, effective_worker_count, mana_ability_hint, operand_hints, primitive_cluster_inventory, search_criterion_hint
 from export_set_coverage import product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, load_blocked_cards, template_of
+from plan_primitive_workers import build_worker_plan
 
 
 class OracleCompilerTests(unittest.TestCase):
@@ -156,6 +157,43 @@ class PrimitiveRoadmapTests(unittest.TestCase):
         first = claim_key("c14", "{cost}: ~ gets +<n>/+<n> until end of turn", taken)
         second = claim_key("c14", "{cost}: ~ gets +<n>/-<n> until end of turn", taken)
         self.assertNotEqual(first, second)
+
+    def test_assigns_disjoint_primitives_with_commit_sized_batches(self) -> None:
+        roadmap = [
+            {
+                "claim_key": "first",
+                "template": "first",
+                "family": "activated",
+                "unlocks": 21,
+                "unlocked_cards": [{"oracle_id": str(index)} for index in range(21)],
+            },
+            {
+                "claim_key": "second",
+                "template": "second",
+                "family": "triggered",
+                "unlocks": 2,
+                "unlocked_cards": [{"oracle_id": "x"}, {"oracle_id": "y"}],
+            },
+        ]
+        plan = build_worker_plan(
+            roadmap,
+            workers=5,
+            memory_budget_gb=2,
+            estimated_worker_mb=256,
+            max_cards_per_commit=20,
+            claim_prefix="c13",
+            claimed_keys={"c13-second"},
+        )
+        self.assertEqual(plan["worker_count"], 5)
+        self.assertEqual(plan["skipped_claims"], ["c13-second"])
+        jobs = [job for worker in plan["workers"] for job in worker["jobs"]]
+        self.assertEqual([job["claim_key"] for job in jobs], ["c13-first"])
+        self.assertEqual([len(batch) for batch in jobs[0]["batches"]], [20, 1])
+        self.assertEqual(len({job["claim_key"] for job in jobs}), len(jobs))
+
+    def test_limits_workers_to_the_memory_budget(self) -> None:
+        plan = build_worker_plan([], workers=8, memory_budget_gb=1, estimated_worker_mb=256)
+        self.assertEqual(plan["worker_count"], 4)
 
 if __name__ == "__main__":
     unittest.main()

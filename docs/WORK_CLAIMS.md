@@ -84,6 +84,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `rules-all-creature-counters` | Put counters on all controlled creatures | `codex/c13-equipment-cluster` | merged (`160e3b4`) | 2026-09-03 |
 | `rules-python-ir` | Reusable raw-text operands: actions, zones, card types, and subtypes for the Oracle compiler | `feat/activated-abilities-and-triggers` | merged (`7326cbe`) | 2026-09-03 |
 | `tools-primitive-roadmap` | `tools/rules/plan_primitive_roadmap.py` and its unit tests: rank Oracle primitives by cards actually finished | `codex-ready/c14-combat-restrictions` | ready to integrate | 2026-09-03 |
+| `tools-parallel-workers` | `tools/rules/plan_primitive_workers.py`: assign disjoint primitives to bounded workers and split 20-card commit batches | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c14-combat-restrictions` | Printed can't attack / can't block / attacks each combat if able / can block only creatures with X | `codex-ready/c14-combat-restrictions` | ready to integrate | 2026-09-03 |
 | `c14-landwalk` | Landwalk evasion for every basic land type plus legendary landwalk | `codex-ready/c14-combat-restrictions` | ready to integrate | 2026-09-03 |
 | `c13-activated-pump` | Activated self-creature P/T bonuses through end of turn | `codex/c13-equipment-cluster` | active | 2026-09-03 |
