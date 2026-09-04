@@ -27,6 +27,7 @@ feature name.
 | `rules-target-discard` | Target player chooses bounded cards from their hand to discard | `codex/c13-equipment-cluster` | merged (`90e0098`) | 2026-09-03 |
 | `rules-life-gained` | Life-gained trigger event and source +1/+1/-1/-1 counter effect | `codex/c13-equipment-cluster` | merged (`b1bf642`) | 2026-09-03 |
 | `rules-target-life` | Target-player life gain with event propagation | `codex/c13-equipment-cluster` | merged (`41bfb46`) | 2026-09-03 |
+| `rules-draws-card-trigger` | `draws-card` GameEvent/TriggerEvent family (Sheoldred/Nekusar/Underworld Dreams/Psychosis Crawler style "whenever you/an opponent draws a card" payoffs), `cantBeCountered`, instant-or-sorcery `spell-cast` trigger subtype, `your-hand-size` P/T CDA, and an `assertInvariants` fix in `tools/simulator/run_engine_matrix.ts` (a stack object backed by a triggered/activated ability reuses its source permanent's still-on-battlefield card and was being double-counted as an in-transit spell) | `c14-batch2-clean` | pending | 2026-09-04 |
 | `rules-each-life` | Living-player life gain with one event per recipient | `codex/c13-equipment-cluster` | merged (`283a02f`) | 2026-09-03 |
 | `rules-target-life-loss` | Target-player life loss, distinct from damage | `codex/c13-equipment-cluster` | merged (`93318e6`) | 2026-09-03 |
 | `rules-each-life-loss` | Living-player global life loss, distinct from damage | `codex/c13-equipment-cluster` | merged (`6d128b6`) | 2026-09-03 |

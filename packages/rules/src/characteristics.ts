@@ -302,6 +302,8 @@ export type SpellEffect =
   | { readonly kind: "return-random-creature-from-graveyard-to-hand" }
   | { readonly kind: "modify-all-attacking-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
+  | { readonly kind: "damage-triggering-player"; readonly amount: number }
+  | { readonly kind: "triggering-player-loses-life"; readonly amount: number }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
@@ -430,7 +432,8 @@ export type TriggerEvent =
   | "draw-step"
   | "end-step"
   | "life-gained"
-  | "life-lost";
+  | "life-lost"
+  | "draws-card";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -463,7 +466,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "draw-step": "habilidad del paso de robo",
   "end-step": "habilidad del paso final",
   "life-gained": "life-gain trigger",
-  "life-lost": "life-loss trigger"
+  "life-lost": "life-loss trigger",
+  "draws-card": "habilidad de robo"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -486,7 +490,7 @@ export interface TriggerDefinition {
     | { readonly kind: "creature-died-this-turn" }
     | { readonly kind: "cast-from-hand" }
     | { readonly kind: "entering-power-at-most"; readonly amount: number };
-  readonly spellType?: "creature";
+  readonly spellType?: "creature" | "instant-or-sorcery";
   /** Colour filter on a spell-cast trigger (Titania's Chosen). */
   readonly spellColor?: string;
   /** Creature-subtype filter on a spell-cast trigger (Lys Alana Huntmaster). */
@@ -562,6 +566,8 @@ export interface CardProfile {
   readonly preventsOpponentLoss: boolean;
   /** Warmonger Hellkite: "All creatures attack each combat if able" (CR 508.1d). */
   readonly forcesAllCreaturesToAttack: boolean;
+  /** "~ can't be countered" (CR 613.9, Niv-Mizzet Parun etc.). */
+  readonly cantBeCountered: boolean;
   readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
@@ -590,7 +596,7 @@ export interface CardProfile {
   /** "<Basic type>s you control produce an additional {C}" (Crypt Ghast, CR 605). */
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   /** Characteristic-defining P/T "equal to the number of X you control" (CR 604.3). */
-  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | "your-life-total" | null;
+  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | "your-life-total" | "your-hand-size" | null;
   /** Lieutenant (Commander 2014): commander-conditional static bonuses. */
   readonly lieutenant: {
     readonly selfPower: number;
@@ -1287,13 +1293,15 @@ const TRIGGER_TEMPLATES: readonly {
   readonly event: TriggerEvent;
   readonly subject: TriggerSubject;
   readonly pattern: RegExp;
-  readonly spellType?: "creature";
+  readonly spellType?: "creature" | "instant-or-sorcery";
   readonly spellColor?: string;
   readonly spellSubtype?: string;
   readonly nontoken?: boolean;
 }[] = [
   { event: "life-gained", subject: "you", pattern: /^whenever\s+you\s+gain\s+life,?\s*(.+)$/i },
   { event: "life-lost", subject: "you", pattern: /^whenever\s+you\s+lose\s+life,?\s*(.+)$/i },
+  { event: "draws-card", subject: "you", pattern: /^whenever\s+you\s+draw\s+a\s+card,?\s*(.+)$/i },
+  { event: "draws-card", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+draws\s+a\s+card,?\s*(.+)$/i },
   // The permanent that carries the ability is the object the event is about.
   { event: "enters-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+dies,?\s*(.+)$/i },
@@ -1333,6 +1341,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "enters-battlefield", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "each-player", spellType: "instant-or-sorcery", pattern: /^whenever\s+a\s+player\s+casts\s+an\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellColor: "W", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+white\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellColor: "U", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+blue\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellColor: "B", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+black\s+spell,?\s*(.+)$/i },
@@ -1352,7 +1361,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i }
 ];
 
-function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string; spellType?: "creature"; spellColor?: string; spellSubtype?: string; nontoken?: boolean } | null {
+function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string; spellType?: "creature" | "instant-or-sorcery"; spellColor?: string; spellSubtype?: string; nontoken?: boolean } | null {
   // Landfall is a keyword ability word; its rules-bearing trigger follows the
   // dash and uses the same enters-battlefield event (CR 603.1, 603.2).
   const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "").replace(/^morbid\s+[—–-]\s*/i, "");
@@ -1696,6 +1705,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
+  }
+  if ((match = /^~ deals (\w+) damage to that player$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-triggering-player", amount }, target: "none" };
+  }
+  if ((match = /^(?:that player|they) loses? (\w+) life$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "triggering-player-loses-life", amount }, target: "none" };
   }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
@@ -2128,6 +2145,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
+    if (/^~ can't be countered\.?$/i.test(line)) continue;
     // Rebound is synthesised from the keyword; consume the reminder line.
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
@@ -2159,6 +2177,7 @@ function recognizeText(text: string): RecognizedText {
     }
     if (/^~'?s power and toughness are each equal to the number of (?:creature|land|artifact|green permanent)s? you control\.?$/i.test(line)) continue;
     if (/^~'?s power and toughness are each equal to your life total\.?$/i.test(line)) continue;
+    if (/^~'?s power and toughness are each equal to the number of cards in your hand\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
@@ -2374,11 +2393,14 @@ export function cardProfile(card: CardData): CardProfile {
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
   const cdaMatch = /~'?s power and toughness are each equal to the number of (creature|land|artifact|green permanent)s? you control/i.exec(text);
   const lifeCdaMatch = /~'?s power and toughness are each equal to your life total/i.test(text);
+  const handCdaMatch = /~'?s power and toughness are each equal to the number of cards in your hand/i.test(text);
   const cdaPowerToughness = lifeCdaMatch
     ? "your-life-total"
-    : cdaMatch
-      ? (/green permanent/i.test(cdaMatch[1]!) ? "green-permanents-you-control" : `${cdaMatch[1]!.toLowerCase()}s-you-control`) as CardProfile["cdaPowerToughness"]
-      : null;
+    : handCdaMatch
+      ? "your-hand-size"
+      : cdaMatch
+        ? (/green permanent/i.test(cdaMatch[1]!) ? "green-permanents-you-control" : `${cdaMatch[1]!.toLowerCase()}s-you-control`) as CardProfile["cdaPowerToughness"]
+        : null;
   // Lieutenant (Commander 2014): "As long as you control your commander, ~ gets
   // +N/+N and <bonus>." The quoted-ability variants are not covered.
   const lieutenantMatch = /Lieutenant\s+[—–-]\s+As long as you control your commander, ~ gets \+(\d+)\/\+(\d+)(?:\s+and\s+(.+?))?\.?(?:\n|$)/i.exec(text);
@@ -2422,6 +2444,7 @@ export function cardProfile(card: CardData): CardProfile {
   const additionalCostSacrificeLand = text.split("\n").some((line) => /^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line.trim()));
   const preventsOpponentLoss = text.split("\n").some((line) => /^you can't win the game and your opponents can't lose the game\.?$/i.test(line.trim()));
   const forcesAllCreaturesToAttack = text.split("\n").some((line) => /^all creatures attack each combat if able\.?$/i.test(line.trim()));
+  const cantBeCountered = text.split("\n").some((line) => /^~ can't be countered\.?$/i.test(line.trim()));
   const hasRebound = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "rebound")
     || text.split("\n").some((line) => /^rebound\b/i.test(line.trim()));
   const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
@@ -2456,6 +2479,7 @@ export function cardProfile(card: CardData): CardProfile {
     attackersAssignAsUnblockedWhileAttacking,
     preventsOpponentLoss,
     forcesAllCreaturesToAttack,
+    cantBeCountered,
     additionalCostExileGraveyardX,
     additionalCostSacrificeLand,
     hasRebound,

@@ -164,6 +164,8 @@ export interface TriggerInstance {
   readonly definition: TriggerDefinition;
   /** What raised it, for the log and for the client's stack strip. */
   readonly cause: string;
+  /** The player the event was actually about ("that player"), when the event names one. */
+  readonly eventSeat?: SeatId;
 }
 
 /**
@@ -182,7 +184,8 @@ export type GameEvent =
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
-  | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
+  | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number }
+  | { readonly kind: "draws-card"; readonly seat: SeatId };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
 export interface BlockerDeclaration { readonly instanceId: string; readonly attackerId: string }
@@ -474,6 +477,7 @@ function cdaCount(state: GameState, permanent: Permanent, kind: NonNullable<Card
       cardProfile(candidate.card).colors.some((color) => color.toUpperCase() === "G")).length;
   }
   if (kind === "your-life-total") return Math.max(0, playerAt(state, permanent.controller).life);
+  if (kind === "your-hand-size") return playerAt(state, permanent.controller).hand.length;
   const type = kind === "creatures-you-control" ? "Creature" : kind === "lands-you-control" ? "Land" : "Artifact";
   return playerAt(state, permanent.controller).battlefield.filter((candidate) => cardProfile(candidate.card).types.includes(type)).length;
 }
@@ -865,6 +869,7 @@ function drawCards(state: GameState, seat: SeatId, amount: number): GameState {
       return next;
     }
     next = withPlayer(next, seat, (current) => ({ ...current, library: current.library.slice(1), hand: [...current.hand, card] }));
+    next = raiseEvent(next, { kind: "draws-card", seat });
   }
   const player = playerAt(next, seat);
   if (amount > 0 && !player.drewFromEmptyLibrary) next = logged(next, seat, `${player.name} roba ${amount === 1 ? "una carta" : `${amount} cartas`}.`);
@@ -1011,6 +1016,13 @@ function eventObject(event: GameEvent): { permanentId: string; controller: SeatI
     : null;
 }
 
+/** The specific player an event is "about" ("that player"), when it names one. */
+function eventSeatOf(event: GameEvent): SeatId | undefined {
+  if (event.kind === "draws-card" || event.kind === "life-gained" || event.kind === "life-lost") return event.seat;
+  if (event.kind === "deals-combat-damage-to-player") return event.victim;
+  return undefined;
+}
+
 /**
  * Whether one printed trigger condition matches one event.
  *
@@ -1057,6 +1069,7 @@ function triggerMatches(
 
   if (event.kind === "spell-cast") {
     if (definition.spellType === "creature" && !isCreature(cardProfile(event.card))) return false;
+    if (definition.spellType === "instant-or-sorcery" && !cardProfile(event.card).types.some((type) => type === "Instant" || type === "Sorcery")) return false;
     if (definition.spellColor && !(cardProfile(event.card).colors ?? []).some((color) => color.toUpperCase() === definition.spellColor)) return false;
     if (definition.spellSubtype && !cardProfile(event.card).subtypes.some((subtype) => subtype.toLowerCase() === definition.spellSubtype)) return false;
     if (subject === "you") return event.controller === watcher.controller;
@@ -1067,6 +1080,13 @@ function triggerMatches(
 
   if (event.kind === "life-gained" || event.kind === "life-lost") {
     return subject === "you" && event.seat === watcher.controller;
+  }
+
+  if (event.kind === "draws-card") {
+    if (subject === "you") return event.seat === watcher.controller;
+    if (subject === "opponent") return event.seat !== watcher.controller;
+    if (subject === "each-player") return true;
+    return false;
   }
 
   const object = eventObject(event);
@@ -1106,6 +1126,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
     case "life-gained": return `${playerAt(state, event.seat).name} gana ${event.amount} vidas`;
     case "life-lost": return `${playerAt(state, event.seat).name} pierde ${event.amount} vidas`;
+    case "draws-card": return `${playerAt(state, event.seat).name} roba una carta`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -1151,7 +1172,8 @@ function raiseEvent(
         sourcePermanentId: watcher.instance_id,
         sourceCard: watcher.card,
         definition,
-        cause: causeOf(state, event)
+        cause: causeOf(state, event),
+        ...(eventSeatOf(event) !== undefined ? { eventSeat: eventSeatOf(event) } : {})
       });
     }
   }
@@ -1721,6 +1743,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const victim = [...candidates].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
       const next = movePermanentToZone(state, victim, "graveyard");
       return logged(next, target.seat, `${playerAt(next, target.seat).name} sacrifica a ${victim.card.name}.`);
+    }
+    case "damage-triggering-player": {
+      const seat = object.trigger?.eventSeat;
+      if (seat === undefined) return state;
+      return dealDamageToPlayer(state, seat, effect.amount, sourceName);
+    }
+    case "triggering-player-loses-life": {
+      const seat = object.trigger?.eventSeat;
+      if (seat === undefined) return state;
+      return loseLife(state, seat, effect.amount);
     }
     case "each-player-gains-life": {
       if (playersCantGainLife(state)) return state;
@@ -2411,6 +2443,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "counter-target-spell": {
       const target = object.targets[0];
       if (!target || target.kind !== "spell") return state;
+      const targeted = state.stack.find((entry) => entry.id === target.stackId);
+      if (targeted && cardProfile(targeted.card).cantBeCountered) return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
     }
     case "add-counter-source": {

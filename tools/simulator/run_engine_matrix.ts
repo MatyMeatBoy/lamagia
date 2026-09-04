@@ -44,9 +44,14 @@ function inputs(seatOffset: number): DeckInput[] {
 /** The invariants a legal Commander game can never break. */
 function assertInvariants(state: GameState, seed: number): void {
   for (const player of state.players) {
+    // A spell's card leaves hand/command zone for the stack, so it is only
+    // ever counted there. An activated or triggered ability's stack object
+    // reuses its still-present source permanent's card (CR 608.2b) — counting
+    // that object here as well as via battlefield would double-count it.
+    const inTransitSpells = state.stack.filter((object) => object.card.owner === player.seat && !object.trigger && !object.activated).length;
     const owned = player.library.length + player.hand.length + player.battlefield.length
       + player.graveyard.length + player.exile.length + player.commandZone.length
-      + state.stack.filter((object) => object.card.owner === player.seat).length;
+      + inTransitSpells;
     if (owned !== 100) throw new Error(`seed ${seed}: ${player.name} owns ${owned} card objects, expected 100`);
     if (!Number.isInteger(player.life)) throw new Error(`seed ${seed}: ${player.name} has a non-integer life total`);
     const commanders = player.battlefield.filter((permanent) => permanent.isCommander).length + player.commandZone.length;

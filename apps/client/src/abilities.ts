@@ -209,6 +209,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     rule: "Se dispara cuando el jugador indicado pierde vida.",
     enforced: "Se dispara una vez por cada evento de pérdida de vida.",
     path: "M5 12h14"
+  },
+  "draws-card": {
+    label: "Al robar una carta",
+    rule: "Se dispara cuando el jugador indicado roba una carta.",
+    enforced: "Se dispara una vez por cada carta robada.",
+    path: "M4 4h16v16H4z"
   }
 };
 
