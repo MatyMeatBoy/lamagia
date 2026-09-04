@@ -191,6 +191,8 @@ export interface StackObject {
   readonly activated?: ActivatedAbility;
   /** Permanent source for activated abilities; unlike card identity, this is an in-play instance. */
   readonly sourcePermanentId?: string;
+  /** Event permanent retained when an optional trigger is resolving through a choice. */
+  readonly triggeredPermanentId?: string;
 }
 
 export interface TriggerInstance {
@@ -305,6 +307,8 @@ export type PendingChoice =
       readonly manaCost?: ManaCost;
       readonly targets?: readonly Target[];
       readonly sourcePermanentId?: string;
+      /** Event permanent retained while an optional trigger awaits a choice. */
+      readonly triggeredPermanentId?: string;
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       readonly unlessPayCost?: ManaCost;
@@ -2216,6 +2220,29 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
     }
+    case "move-counter-from-source-to-triggered-creature": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const targetId = object.trigger?.eventPermanentId ?? object.triggeredPermanentId;
+      if (!sourceId || !targetId || sourceId === targetId) return state;
+      const source = findPermanent(state, sourceId);
+      const target = findPermanent(state, targetId);
+      if (!source || !target || !isCreature(cardProfile(target.card))) return state;
+      const available = source.counters[effect.counter] ?? 0;
+      if (available < 1) return state;
+      let next = withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === sourceId
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: available - 1 } }
+          : permanent)
+      }));
+      next = withPlayer(next, target.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === targetId
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + 1 } }
+          : permanent)
+      }));
+      return logged(next, object.controller, `${sourceName} mueve un contador ${effect.counter} a ${target.card.name}.`);
+    }
     case "look-put-one-in-hand": {
       const optionIds = playerAt(state, controller).library.slice(0, effect.amount).map((card) => card.instance_id);
       if (!optionIds.length) return state;
@@ -3406,6 +3433,7 @@ function resolveTop(state: GameState): GameState {
           ...(object.trigger.definition.unlessPayCost ? { payCost: object.trigger.definition.unlessPayCost, unlessPayCost: object.trigger.definition.unlessPayCost } : {}),
           targets: object.targets,
           sourcePermanentId: object.trigger.sourcePermanentId,
+          ...(object.trigger.eventPermanentId ? { triggeredPermanentId: object.trigger.eventPermanentId } : {}),
           sourceController: object.controller,
           ...(object.trigger.definition.paymentBy ? { paymentBy: object.trigger.definition.paymentBy } : {}),
           ...(object.trigger.definition.manaCost ? { manaCost: object.trigger.definition.manaCost } : {})
@@ -5410,7 +5438,8 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
         flashback: false,
         variableValue: 0,
         countered: false,
-        sourcePermanentId: choice.sourcePermanentId
+        sourcePermanentId: choice.sourcePermanentId,
+        ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
       };
       next = applyEffect(next, source, choice.triggerEffect);
       return logged(next, source.controller, choice.sourceCard.name + " resuelve su habilidad porque el oponente no paga.");
@@ -5444,7 +5473,8 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
       flashback: false,
       variableValue: 0,
       countered: false,
-      sourcePermanentId: choice.sourcePermanentId
+      sourcePermanentId: choice.sourcePermanentId,
+      ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
     };
     next = applyEffect(next, source, choice.triggerEffect);
     return logged(next, source.controller, `${choice.sourceCard.name} se sacrifica al no pagar ${choice.unlessPayCost.raw}.`);
@@ -5470,7 +5500,8 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
    flashback: false,
    variableValue: 0,
     countered: false,
-   sourcePermanentId: choice.sourcePermanentId
+   sourcePermanentId: choice.sourcePermanentId,
+   ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
  };
   next = applyEffect(next, source, choice.triggerEffect);
   return logged(next, seat, `Se resuelve la habilidad opcional de ${choice.sourceCard.name}.`);

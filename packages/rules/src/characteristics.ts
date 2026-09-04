@@ -413,6 +413,8 @@ export type SpellEffect =
   | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-triggered-creature-and-grant-keyword"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
+  /** Graft counter transfer to the creature that caused the trigger (CR 702.58). */
+  | { readonly kind: "move-counter-from-source-to-triggered-creature"; readonly counter: string }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-permanents-you-control-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "overwhelming-stampede" }
@@ -766,6 +768,8 @@ export interface CardProfile {
   readonly combatRules: CombatRules;
   /** Counters with which this permanent enters the battlefield. */
   readonly entersWithCounters: readonly CounterCost[];
+  /** Graft number, when this permanent has the Graft keyword. */
+  readonly graftAmount: number | null;
   readonly isPermanent: boolean;
   readonly castableFromHand: boolean;
   /** True when every printed instruction is covered by the engine. */
@@ -1351,6 +1355,7 @@ interface RecognizedText {
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   kickerCost?: ManaCost | null;
   entwineCost?: ManaCost | null;
+  graftAmount?: number | null;
   kickedEffects?: SpellEffect[];
   kickedKeywords?: EnforcedKeyword[];
   echoCost?: ManaCost | null;
@@ -2525,6 +2530,7 @@ function recognizeText(text: string): RecognizedText {
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
   let entwineCost: ManaCost | null = null;
+  let graftAmount: number | null = null;
   let echoCost: ManaCost | null = null;
   let evokeCost: ManaCost | null = null;
   let flashbackCost: ManaCost | null = null;
@@ -2548,6 +2554,10 @@ function recognizeText(text: string): RecognizedText {
     // (CR 702.42a). Reminder text is not executable.
     const entwine = /^Entwine\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (entwine) { entwineCost = parseManaCost(entwine[1]!); continue; }
+    // Graft is an entry replacement plus a triggered counter-transfer ability
+    // (CR 702.58a-b); cardProfile synthesizes the trigger from this value.
+    const graft = /^Graft\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (graft) { graftAmount = toNumber(graft[1]); continue; }
     // Flashback: cast from the graveyard for this cost, then exile (CR 702.34 → 702.34a numbering aside, 702.33 family).
     const flashback = /^Flashback\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (flashback) { flashbackCost = parseManaCost(flashback[1]!); continue; }
@@ -2877,7 +2887,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -2909,6 +2919,12 @@ export function cardProfile(card: CardData): CardProfile {
   const lowerKeywords = (card.keywords ?? []).map((keyword) => keyword.toLowerCase());
   if (lowerKeywords.includes("undying")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "+1/+1" }, optional: false, targetKind: "none", sourceText: "Undying" });
   if (lowerKeywords.includes("persist")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "-1/-1" }, optional: false, targetKind: "none", sourceText: "Persist" });
+  const graftAmount = recognized.graftAmount ?? null;
+  if (graftAmount !== null) synthesizedTriggers.push({
+    event: "enters-battlefield", subject: "another-creature",
+    effect: { kind: "move-counter-from-source-to-triggered-creature", counter: "+1/+1" },
+    optional: true, targetKind: "none", sourceText: `Graft ${graftAmount}`
+  });
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
   const cyclingSearches = parseCyclingSearches(text);
@@ -3058,6 +3074,7 @@ export function cardProfile(card: CardData): CardProfile {
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
     kickerCost: recognized.kickerCost ?? null,
     entwineCost: recognized.entwineCost ?? null,
+    graftAmount,
     evokeCost: recognized.evokeCost ?? null,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
@@ -3073,7 +3090,16 @@ export function cardProfile(card: CardData): CardProfile {
     combatRules,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     doesNotUntapDuringUntap,
-    entersWithCounters: isPermanent ? parseEntersWithCounters(text) : [],
+    entersWithCounters: isPermanent
+      ? (() => {
+          const counters = parseEntersWithCounters(text);
+          if (graftAmount === null) return counters;
+          const existing = counters.find((counter) => counter.kind === "+1/+1");
+          return existing
+            ? counters.map((counter) => counter.kind === "+1/+1" ? { ...counter, amount: counter.amount + graftAmount } : counter)
+            : [...counters, { kind: "+1/+1", amount: graftAmount }];
+        })()
+      : [],
     isPermanent,
     // Lands are played, not cast; everything else needs a payable printed cost.
     castableFromHand: !types.includes("Land") && cost !== null && cost.symbols.length > 0,
