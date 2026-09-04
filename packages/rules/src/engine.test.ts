@@ -211,6 +211,7 @@ const C13_ARMY_OF_THE_DAMNED = () => {
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
 };
 const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for up to two basic land cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", scryfall_id: "8b755881-a72d-4e21-a369-d2924eb4585a" });
+const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice Armillary Sphere: Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
 const RHYSTIC_STUDY = () => make({ name: "Rhystic Study", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}." });
@@ -2867,6 +2868,27 @@ describe("activated abilities", () => {
     // The sacrificed land is not added to the graveyard a second time by the search.
     expect(game.players[0]!.graveyard.filter((card) => card.name === "Polluted Delta")).toHaveLength(1);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Island")).toBe(false);
+  });
+
+  it("sacrifices Armillary Sphere and puts both selected basics into hand", () => {
+    let game = readyOnBoard([C13_ARMILLARY_SPHERE(), ISLAND(), ISLAND()], { library: [ISLAND(), SWAMP(), MOUNTAIN()] });
+    const sphere = permanentNamed(game, 0, "Armillary Sphere")!;
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === sphere.instance_id);
+    expect(offered).toBeDefined();
+
+    game = applyAction(game, 0, offered!.action);
+    expect(permanentNamed(game, 0, "Armillary Sphere")).toBeUndefined();
+    expect(game.players[0]!.graveyard.filter((card) => card.name === "Armillary Sphere")).toHaveLength(1);
+    expect(game.pendingChoice).toMatchObject({ type: "search-library-multi", seat: 0, selectedIds: [] });
+    const sourceId = game.pendingChoice!.sourceId;
+
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId, query: "Island" });
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId, query: "Swamp" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.hand.filter((card) => card.name === "Island")).toHaveLength(1);
+    expect(game.players[0]!.hand.filter((card) => card.name === "Swamp")).toHaveLength(1);
+    expect(game.players[0]!.library.some((card) => card.name === "Island" || card.name === "Swamp")).toBe(false);
+    expect(game.players[0]!.library.some((card) => card.name === "Mountain")).toBe(true);
   });
 
   it("spends entry counters for Vivid mana, including automatic coloured payment", () => {
