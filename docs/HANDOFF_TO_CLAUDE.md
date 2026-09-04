@@ -1112,6 +1112,17 @@ scenario tests cover accept/decline imprint, payer identity, and hiding an
 unaffordable payment action. Integrate the complete batch only after validation;
 do not import stale handoff snapshots or untracked user folders.
 
+### Integrator checkpoint: C13 sacrifice batch accepted (2026-09-04)
+
+Integrated the functional portion of the 11-commit Fires of Yavimaya/Goblin
+Bombardment batch: typed sacrifice costs, controller-scoped haste/pump, and
+player/creature damage targets, with parser and engine scenarios. Its two
+incoming generated-document commits were superseded by the current local
+snapshots. Validation: `npm run check` PASS; `npm test` PASS (**345 rules
+tests**, simulator, **38 Oracle Python tests**). C13 remains **168/356 (47.2%)**
+and global export remains **8,047/38,711**; no card is counted until all its
+printed clauses are executable.
+
 ### Integrator checkpoint: C13 trigger batch accepted (2026-09-04)
 
 Integrated the 12-commit Gahiji, Guttersnipe, and Fecundity batch. It adds
