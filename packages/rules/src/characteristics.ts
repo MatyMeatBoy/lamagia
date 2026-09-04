@@ -237,6 +237,7 @@ export type SpellEffect =
   | { readonly kind: "compound"; readonly effects: readonly SpellEffect[] }
   | { readonly kind: "draw"; readonly amount: number | "X" }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
+  | { readonly kind: "draw-active-player" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
@@ -980,6 +981,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "upkeep", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+upkeep,?\s*(.+)$/i },
   { event: "upkeep", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+upkeep,?\s*(.+)$/i },
   { event: "draw-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+draw\s+step,?\s*(.+)$/i },
+  { event: "draw-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+player[’']s\s+draw\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i }
@@ -1053,6 +1055,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "draw-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw-target-player", amount: "X" }, target: "player" };
+  }
+  if (/^That player draws an additional card$/i.test(text)) {
+    return { effect: { kind: "draw-active-player" }, target: "none" };
   }
   if ((match = /^Each player draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
