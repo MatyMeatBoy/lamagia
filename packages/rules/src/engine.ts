@@ -1255,6 +1255,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
       return state;
     }
+    case "damage-any-target-each-controlled-type": {
+      const target = object.targets[0];
+      if (!target) return state;
+      const amount = playerAt(state, controller).battlefield.filter((permanent) => cardProfile(permanent.card).types.includes(effect.type)).length;
+      if (target.kind === "player") return dealDamageToPlayer(state, target.seat, amount, sourceName);
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
+      return state;
+    }
     case "damage-controller-equal-hand": {
       return dealDamageToPlayer(state, controller, playerAt(state, controller).hand.length, sourceName);
     }
