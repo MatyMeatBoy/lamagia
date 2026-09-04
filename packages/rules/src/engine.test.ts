@@ -65,6 +65,7 @@ const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", t
 const DOUBLE_STRIKE_SPELL = () => make({ name: "Twin Edge", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Target creature gains double strike until end of turn." });
 const TRAMPLE_BOOST = () => make({ name: "Selesnya Memory", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Target creature gets +2/+2 and gains trample until end of turn." });
 const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "{R}: This creature gets +1/+0 until end of turn." });
+const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on top of your library." });
@@ -671,6 +672,20 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
     const boosted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
     expect([powerOf(boosted), toughnessOf(boosted)]).toEqual([7, 6]);
+  });
+
+  it("offers and pays a chosen creature sacrifice activation cost", () => {
+    const profile = profileOf(CARNAGE_ALTAR());
+    expect(profile.activatedAbilities[0]).toMatchObject({ sacrificesCreature: "any", effect: { kind: "draw", amount: 1 } });
+    let game = readyToCast([], [FOREST(), FOREST(), FOREST(), CARNAGE_ALTAR(), BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Carnage Memory")!;
+    const creature = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === creature.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === creature.instance_id)).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.hand).toHaveLength(1);
   });
 
   it("enforces a creature's cannot-be-blocked restriction", () => {

@@ -80,6 +80,8 @@ export interface ActivatedAbility {
   readonly index: number;
   readonly requiresTap: boolean;
   readonly sacrificesSelf: boolean;
+  /** Creature chosen as an activation cost, optionally excluding the source. */
+  readonly sacrificesCreature?: "any" | "another";
   readonly lifeCost: number;
   /** Mana part of the activation cost, or null when the ability needs none. */
   readonly manaCost: ManaCost | null;
@@ -725,18 +727,21 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   if (manaSymbols.length && (!manaCost || manaCost.hasVariable)) return null;
 
   const sacrificesSelf = /sacrifice\s+~/i.test(costText);
+  const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
   const lifeMatch = /pay\s+(\d+)\s+life/i.exec(costText);
   const lifeCost = lifeMatch ? Number(lifeMatch[1]) : 0;
   const leftovers = costText
     .replace(/\{[^}]*\}/g, "")
     .replace(/pay\s+\d+\s+life/gi, "")
     .replace(/sacrifice\s+~/gi, "")
+    .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/[,\s]/g, "");
   if (leftovers.length) return null;
   return {
     index,
     requiresTap,
     sacrificesSelf,
+    ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
     lifeCost,
     manaCost,
     effect: recognized.effect,

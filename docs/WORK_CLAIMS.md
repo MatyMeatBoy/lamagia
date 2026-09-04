@@ -88,6 +88,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c14-landwalk` | Landwalk evasion for every basic land type plus legendary landwalk | `codex-ready/c14-combat-restrictions` | ready to integrate | 2026-09-03 |
 | `c13-activated-pump` | Activated self-creature P/T bonuses through end of turn | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-unblockable` | Printed creature can't-be-blocked restriction | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature, including “another” | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 
 ## Claim format
 

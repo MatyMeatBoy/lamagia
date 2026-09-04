@@ -794,6 +794,19 @@ costs, non-self targets and other activated costs.
 Validation: targeted engine tests and full `npm run check`/`npm test` required
 before integration.
 
+### Cooperative C13 cluster: activated creature sacrifice costs
+
+The branch recognises activated costs such as `Sacrifice a creature` and
+`Sacrifice another creature`, exposes one legal activation per possible
+creature, validates the selected permanent server-side, and moves it through
+the normal sacrifice/death path before resolving the ability. This follows CR
+602.1 and 601.2f. Scenario coverage verifies Carnage Altar-style draw and
+selection. The scope excludes sacrificing multiple permanents, noncreature
+costs and replacement effects.
+
+Validation: targeted engine tests and full `npm run check`/`npm test` required
+before integration.
+
 ### Cooperative C13 cluster: can't-be-blocked restriction
 
 The branch recognises `This creature can't be blocked` as a static combat rule
