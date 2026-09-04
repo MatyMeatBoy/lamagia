@@ -1475,6 +1475,19 @@ describe("casting", () => {
     expect(game.players[1]!.hand.length).toBe(2);
   });
 
+  it("reuses the tapped-creature draw primitive for C13 Borrowing 100,000 Arrows", () => {
+    let game = readyToCast([C13_BORROWING_ARROWS()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()], [], [BEAR(), BEAR()]);
+    game = {
+      ...game,
+      players: game.players.map((player) => player.seat === 1
+        ? { ...player, battlefield: player.battlefield.map((permanent) => ({ ...permanent, tapped: true })) }
+        : player)
+    };
+    const before = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.hand.length).toBe(before + 2);
+  });
+
   it("draws once per creature controlled by the caster", () => {
     expect(profileOf(CREATURE_DRAW()).effects).toEqual([{ kind: "draw-equal-controlled-type", type: "Creature" }]);
   });
