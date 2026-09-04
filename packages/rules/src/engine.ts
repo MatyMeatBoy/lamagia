@@ -1159,6 +1159,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === permanent.instance_id);
     }
+    case "modify-source-creature": {
+      const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
+      if (!source || !isCreature(cardProfile(source.card))) return state;
+      const next = modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === source.instance_id);
+      const sign = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
+      return logged(next, controller, `${sourceName} obtiene ${sign(effect.power)}/${sign(effect.toughness)} hasta el final del turno.`);
+    }
     case "grant-target-creature-keyword": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

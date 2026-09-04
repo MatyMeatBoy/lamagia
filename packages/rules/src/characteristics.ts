@@ -243,6 +243,7 @@ export type SpellEffect =
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
@@ -1058,6 +1059,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       effect: { kind, power, toughness } as SpellEffect,
       target: kind === "modify-target-creature" ? "creature" : "none"
     };
+  }
+  if ((match = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
+    // Firebreathing-style self pumps: the source is the only affected creature
+    // and the modifier expires during cleanup (CR 613.4c, 514.2).
+    return { effect: { kind: "modify-source-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
   }
   const temporaryKeyword = /^Target creature gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud) until end of turn$/i.exec(text);
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };

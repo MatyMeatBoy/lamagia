@@ -179,6 +179,10 @@ const SIGNAL_PEST = () => make({
   name: "Well of Lore", type_line: "Artifact", mana_cost: "{2}", cmc: 2,
   oracle_text: "{1}{U}, {T}: Draw a card."
 });
+const FIREBREATHER = () => make({
+  name: "Firecoil Drake", type_line: "Creature — Dragon", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2",
+  oracle_text: "{R}: Firecoil Drake gets +1/+0 until end of turn."
+});
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
@@ -1487,6 +1491,37 @@ describe("activated abilities", () => {
     expect(game.players[0]!.manaPool).toMatchObject({ U: 0, C: 0 });
     // An activated ability that is not a mana ability resolves through the stack.
     expect(game.players[0]!.hand).toHaveLength(hand + 1);
+  });
+
+  it("resolves a self-pump activated ability through the stack and expires it in cleanup", () => {
+    const profile = profileOf(FIREBREATHER());
+    expect(profile.activatedAbilities).toHaveLength(1);
+    expect(profile.activatedAbilities[0]).toMatchObject({ requiresTap: false, sacrificesSelf: false, lifeCost: 0 });
+    expect(profile.activatedAbilities[0]!.manaCost?.raw).toBe("{R}");
+    expect(profile.activatedAbilities[0]!.effect).toEqual({ kind: "modify-source-creature", power: 1, toughness: 0 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyOnBoard([FIREBREATHER(), MOUNTAIN(), MOUNTAIN()], { hold: true });
+    const drake = permanentNamed(game, 0, "Firecoil Drake")!;
+    expect([powerOf(drake, game), toughnessOf(drake, game)]).toEqual([2, 2]);
+
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === drake.instance_id);
+    expect(action).toBeDefined();
+    game = applyAction(game, 0, action!.action);
+    // A non-mana activation uses the stack; it resolves once priority is passed (CR 602.2a).
+    expect(game.stack).toHaveLength(1);
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.stack).toHaveLength(0);
+    expect(powerOf(permanentNamed(game, 0, "Firecoil Drake")!, game)).toBe(3);
+
+    // A second activation stacks another layer 7c modifier (CR 613.4c).
+    game = applyAction(game, 0, { type: "activate", sourceId: drake.instance_id, abilityIndex: 0 });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(powerOf(permanentNamed(game, 0, "Firecoil Drake")!, game)).toBe(4);
+
+    // The modifier is removed during the cleanup step (CR 514.2).
+    game = passUntil(game, (state) => state.turn > 1);
+    expect(powerOf(permanentNamed(game, 0, "Firecoil Drake")!, game)).toBe(2);
   });
 
   it("keeps mana abilities out of the decision the table waits on", () => {

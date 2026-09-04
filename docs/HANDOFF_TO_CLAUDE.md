@@ -692,3 +692,24 @@ Integrated commits: `c518638`, `d554c36`, `00be19b`, `015e495`, `85f46f8`,
 Validation: `npm run check` PASS; `npm test` PASS (182 rules tests, simulator
 and 12 Python compiler tests); `npm run simulate:engine` PASS (200 games,
 160 finished, 0 invariant/projection failures). C13 is now 125/356.
+
+### C14 race batch: Firebreathing-style self pumps
+
+`c14-self-pump` adds the `modify-source-creature` effect. `recognizeSentence`
+now reads `~ gets +N/±N until end of turn` (the effect half of a Firebreathing
+activation), and `parseActivatedAbility` already supplies the mana/`{T}`/life
+cost. On resolution the engine applies a layer 7c P/T modifier to the ability's
+source permanent only, reusing `modifyCreatures`; cleanup expires it (CR 613.4c,
+514.2). Non-mana activation still goes on the stack. Scope excludes pumps that
+also grant a keyword, target another creature, or scale with X.
+
+Files: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`,
+`packages/rules/src/engine.test.ts` (one scenario: profile shape, stacked
+activations, cleanup expiry).
+
+Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
+(198 rules tests); `npm run simulate:engine` PASS (200 games, 160 finished,
+0 invariant/projection failures). Catalog fully-implemented 6,816 -> 6,995
+(+179); Commander 2014 set coverage 90/337 -> 91/337 (Nantuko Shade). The
+integrator should rerun `npm run rules:engine:export` and regenerate
+`docs/PRIMITIVE_ROADMAP.md` / `data/rules/coverage-c14.md` after merge.
