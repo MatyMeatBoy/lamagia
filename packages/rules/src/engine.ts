@@ -473,6 +473,7 @@ function cdaCount(state: GameState, permanent: Permanent, kind: NonNullable<Card
     return playerAt(state, permanent.controller).battlefield.filter((candidate) =>
       cardProfile(candidate.card).colors.some((color) => color.toUpperCase() === "G")).length;
   }
+  if (kind === "your-life-total") return Math.max(0, playerAt(state, permanent.controller).life);
   const type = kind === "creatures-you-control" ? "Creature" : kind === "lands-you-control" ? "Land" : "Artifact";
   return playerAt(state, permanent.controller).battlefield.filter((candidate) => cardProfile(candidate.card).types.includes(type)).length;
 }
@@ -1315,6 +1316,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         graveyard: player.graveyard.filter((card) => card.instance_id !== object.card.instance_id),
         hand: [...player.hand, object.card]
       }));
+    }
+    case "shuffle-source-into-library": {
+      // "When ~ is put into a graveyard from anywhere, shuffle it into its
+      // owner's library" (Serra Avatar). By the time this resolves the card
+      // is already in the graveyard.
+      const owner = object.card.owner;
+      if (!playerAt(state, owner).graveyard.some((card) => card.instance_id === object.card.instance_id)) return state;
+      const remaining = playerAt(state, owner).graveyard.filter((card) => card.instance_id !== object.card.instance_id);
+      const shuffled = shuffle([...playerAt(state, owner).library, object.card], state.rngState);
+      return withPlayer({ ...state, rngState: shuffled.state }, owner, (player) => ({ ...player, graveyard: remaining, library: shuffled.items }));
     }
     case "undying-return": {
       // Undying / Persist: reanimate the card from its owner's graveyard with a counter (CR 702.92/93).
