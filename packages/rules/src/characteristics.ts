@@ -2716,6 +2716,10 @@ function recognizeText(text: string): RecognizedText {
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
+    // Changeling is represented by `profile.changeling` and enforced by
+    // `hasSubtype` in every zone (CR 702.73a); consume the keyword line only
+    // after that semantic representation has been built.
+    if (/^changeling\.?$/i.test(line)) continue;
     // Storm remains a keyword-only marker until copy-count tracking is added.
     if (/^storm\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.

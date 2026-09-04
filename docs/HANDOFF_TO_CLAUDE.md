@@ -10,9 +10,9 @@ The latest source checkpoint is the Prowess rules change being published from
 this branch; verify the Pages run before reporting it as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 8,932 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 8,958 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 21,698 / 84,990 implemented (25.5%) across 685
+- **Edition memberships:** 21,758 / 84,990 implemented (25.6%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
