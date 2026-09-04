@@ -2581,6 +2581,25 @@ describe("triggered abilities", () => {
     expect(countered.counters["+1/+1"]).toBe(1);
   });
 
+  it("reuses the life-gained counter trigger for C13 Ajani's Pridemate", () => {
+    const profile = profileOf(C13_AJANI_PRIDEMATE());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "life-gained",
+      subject: "you",
+      effect: { kind: "add-counter-source", counter: "+1/+1", amount: 1 }
+    });
+    let game = readyToCast([LIFE_SPELL()], [FOREST(), C13_AJANI_PRIDEMATE()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    const pridemate = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ajani's Pridemate")!;
+    expect(pridemate.counters["+1/+1"]).toBe(1);
+  });
+
   it("gains life for the chosen target player and raises that player's event", () => {
     const profile = profileOf(TARGET_LIFE_SPELL());
     expect(profile.effects[0]).toMatchObject({ kind: "gain-life-target-player", amount: 2 });
