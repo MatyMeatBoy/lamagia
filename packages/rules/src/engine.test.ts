@@ -273,6 +273,7 @@ const C13_ANGEL_OF_FINALITY = () => make({ name: "Angel of Finality", type_line:
 const C13_BOJUKA_BOG = () => make({ name: "Bojuka Bog", type_line: "Land", oracle_text: "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", produced_mana: ["B"], scryfall_id: "2ef9848c-fe7f-4434-8936-4074f67883af" });
 const C13_ARCANE_DENIAL = () => make({ name: "Arcane Denial", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.", scryfall_id: "ab175817-da6a-4ae7-a016-c3bfb087eae0" });
 const C13_BANE_OF_PROGRESS = () => make({ name: "Bane of Progress", type_line: "Creature — Elemental", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "When Bane of Progress enters the battlefield, destroy all artifacts and enchantments, then put a +1/+1 counter on Bane of Progress for each permanent destroyed this way.", scryfall_id: "51f9a6cc-8eb2-44ed-a2d9-913ac514ad67" });
+const C13_RAZOR_HIPPOGRIFF = () => make({ name: "Razor Hippogriff", type_line: "Creature — Hippogriff", mana_cost: "{3}{W}{W}", cmc: 5, power: "3", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen Razor Hippogriff enters the battlefield, you may return target artifact card from your graveyard to your hand. You gain life equal to that card's converted mana cost.", scryfall_id: "d121108e-f0bc-469b-bf94-e5e530801a4" });
 const C13_AUGUR_OF_BOLAS = () => make({ name: "Augur of Bolas", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order.", scryfall_id: "c13-augur-of-bolas" });
 const C13_ACT_OF_AUTHORITY = () => make({ name: "Act of Authority", type_line: "Enchantment", mana_cost: "{3}{W}", cmc: 4, oracle_text: "When this enchantment enters, you may exile target artifact or enchantment.\nAt the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of this enchantment.", scryfall_id: "c13-act-of-authority" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
@@ -1503,6 +1504,29 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[1]!.graveyard).toHaveLength(0);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Angel of Finality")).toBe(true);
+  });
+
+  it("returns Razor Hippogriff's artifact and gains its mana value", () => {
+    const profile = profileOf(C13_RAZOR_HIPPOGRIFF());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield", optional: true,
+      targetKind: "artifact-card-in-your-graveyard",
+      effect: { kind: "return-target-artifact-and-gain-mana-value" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([C13_RAZOR_HIPPOGRIFF()], [PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [SOL_RING()], "hippogriff-yard") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    if (game.pendingChoice?.type === "trigger-target") {
+      const choice = game.pendingChoice;
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: choice.options[0]! });
+    }
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.players[0]!.life).toBe(41);
+    expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(false);
   });
 
   it("resolves Bojuka Bog's ETB exile while preserving its tapped land entry", () => {

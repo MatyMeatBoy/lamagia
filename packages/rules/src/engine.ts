@@ -2665,6 +2665,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
       }));
     }
+    case "return-target-artifact-and-gain-mana-value": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card || !cardProfile(card).types.includes("Artifact")) return state;
+      let next = withPlayer(state, target.seat, (current) => ({
+        ...current,
+        hand: [...current.hand, card],
+        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
+      }));
+      if (playersCantGainLife(next)) return next;
+      const amount = cardProfile(card).manaValue;
+      next = withPlayer(next, object.controller, (current) => ({ ...current, life: current.life + amount }));
+      return raiseEvent(next, { kind: "life-gained", seat: object.controller, amount });
+    }
     case "return-target-creature-card-from-graveyard-to-battlefield": {
       const target = object.targets[0];
       if (!target || target.kind !== "graveyard-card") return state;

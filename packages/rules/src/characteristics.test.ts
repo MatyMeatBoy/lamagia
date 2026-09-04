@@ -622,6 +622,19 @@ describe("effect recognition", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises artifact recovery triggers that gain the recovered mana value", () => {
+    const profile = cardProfile(card({
+      name: "Razor Hippogriff", type_line: "Creature — Hippogriff",
+      oracle_text: "When Razor Hippogriff enters the battlefield, you may return target artifact card from your graveyard to your hand. You gain life equal to that card's converted mana cost."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      optional: true,
+      targetKind: "artifact-card-in-your-graveyard",
+      effect: { kind: "return-target-artifact-and-gain-mana-value" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("recognises reusable landfall and artifact-creature trigger subjects", () => {
     const landfall = cardProfile(card({
       name: "Landfall Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", power: "4", toughness: "4",
