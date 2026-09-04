@@ -172,3 +172,29 @@ declared, it must update the claim before touching the additional files.
 
 Claims coordinate contributors but do not replace review: CI, scenario tests,
 rules citations and the integrator review remain mandatory.
+
+## Integrator note: known duplicate commits on `c14-batch2-clean`
+
+`c14-batch2-clean` was branched from an older point on
+`feat/activated-abilities-and-triggers` and fell ~212 commits behind while
+this worker (claude-c14) kept committing. A rebase onto the current tip
+conflicts on nearly every commit (both branches touch `characteristics.ts` /
+`engine.ts` constantly), so it was not attempted mid-session. A diff against
+current `origin/feat/activated-abilities-and-triggers` found exactly two
+commits on this branch that duplicate work already merged upstream — **skip
+these two when cherry-picking**, upstream's version is more complete:
+
+- `f326a02` "feat(rules): Flashback (cast from graveyard, then exile)" —
+  upstream already has Flashback (cost parsing, graveyard casting, exile on
+  resolve/counter, life-cost support) via a longer commit sequence ending
+  around `98a50a9`/`2b856c6`.
+- `795589e` "feat(rules): up-to-N basic land fetch onto the battlefield" —
+  upstream already has `search-library-multi` covering the same "up to two
+  basic land cards ... put them onto the battlefield tapped" pattern (and
+  more destinations) via `e0c3c2c`/`288a391`/`870c7a8`.
+
+Every other claude-c14 primitive on this branch (Undying/Persist, Morbid +
+creaturesDiedThisTurn, Split second, Rebound, extort-grant, devotion-drain,
+planeswalker damage, {X} activated costs, create-copy-token, multi-target
+bounce/destroy, Xathrid/Ghoulcaller/Disciple-of-Bolas sacrifice payoffs, etc.)
+was checked against upstream by keyword grep and found unique as of this note.
