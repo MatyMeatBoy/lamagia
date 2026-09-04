@@ -2814,6 +2814,36 @@ describe("casting", () => {
     expect(game.players[1]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Sol Ring", "Command Tower"]));
   });
 
+  it("generates every legal subset for Choose one or more", () => {
+    const rain = make({
+      name: "Rain of Thorns", type_line: "Sorcery", mana_cost: "{4}{G}{G}", cmc: 6,
+      oracle_text: "Choose one or more —\n• Destroy target artifact.\n• Destroy target creature.\n• Destroy target land."
+    });
+    const profile = profileOf(rain);
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.modalChoices).toHaveLength(7);
+    expect(profile.modalChoices.filter((choice) => choice.targetKinds?.length === 3)).toHaveLength(1);
+    const minimumTwo = profileOf({ ...rain, name: "Rain of Thorns (minimum two)", scryfall_id: "test-rain-minimum-two", oracle_text: rain.oracle_text!.replace("one or more", "two or more") });
+    expect(minimumTwo.modalChoices).toHaveLength(4);
+
+    let game = readyToCast([rain], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()], [], [SOL_RING(), BEAR(), COMMAND_TOWER()]);
+    const all = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode !== undefined && entry.requiresTargets?.length === 3);
+    expect(all?.requiresTargets).toEqual(["artifact", "creature", "land"]);
+    if (!all || all.action.type !== "cast") throw new Error("Rain of Thorns should expose the all-target modal action.");
+    const artifact = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    const creature = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const land = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Command Tower")!;
+    game = applyAction(game, 0, {
+      type: "cast", cardId: "hand-0", mode: all.action.mode,
+      targets: [
+        { kind: "permanent", instanceId: artifact.instance_id },
+        { kind: "permanent", instanceId: creature.instance_id },
+        { kind: "permanent", instanceId: land.instance_id }
+      ]
+    });
+    expect(game.players[1]!.battlefield).toHaveLength(0);
+  });
+
   it("resolves all Boros Charm modes after normalizing its printed name", () => {
     const charm = BOROS_CHARM();
     expect(profileOf(charm).fullyImplemented).toBe(true);

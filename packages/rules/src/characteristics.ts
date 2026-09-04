@@ -2409,7 +2409,9 @@ function recognizeText(text: string): RecognizedText {
     if (/^(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^instant and sorcery spells cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     const chooseOneOrBoth = /^Choose one or both(?:\s+[—–-�])?\s*$/i.test(line);
-    if (chooseOneOrBoth || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
+    const chooseMoreMatch = /^Choose (one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more(?:\s+[—–-�])?\s*$/i.exec(line);
+    if (chooseOneOrBoth || chooseMoreMatch || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
+      const minimumChoices = chooseMoreMatch ? (toNumber(chooseMoreMatch[1]!) ?? Number(chooseMoreMatch[1])) : 1;
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
       const unimplementedChoices: string[] = [];
@@ -2428,7 +2430,7 @@ function recognizeText(text: string): RecognizedText {
         cursor += 1;
       }
       if (!invalid && choices.length > 0 && choices.length === cursor - start) {
-        modalChoices.push(...choices);
+        if (!chooseMoreMatch) modalChoices.push(...choices);
         if (chooseOneOrBoth) {
           const targetKinds = choices.map((choice) => choice.targetKind)
             .filter((kind): kind is Exclude<TargetKind, "none"> => kind !== "none");
@@ -2444,6 +2446,36 @@ function recognizeText(text: string): RecognizedText {
             targetKind: targetKinds[0] ?? "none",
             ...(targetKinds.length ? { targetKinds } : {})
           });
+        } else if (chooseMoreMatch) {
+          // "Choose N or more" is a single modal choice whose legal modes are
+          // all non-empty subsets meeting the printed minimum. Generate those
+          // combinations once so every matching card reuses the same primitive
+          // and each selected branch retains its own target slot (CR 700.2).
+          const subsets: ModalChoice[][] = [];
+          const visit = (start: number, selected: ModalChoice[]): void => {
+            for (let index = start; index < choices.length; index += 1) {
+              const next = [...selected, choices[index]!];
+              if (next.length >= minimumChoices) subsets.push(next);
+              if (index + 1 < choices.length) visit(index + 1, next);
+            }
+          };
+          visit(0, []);
+          for (const subset of subsets) {
+            const targetKinds = subset.map((choice) => choice.targetKind)
+              .filter((kind): kind is Exclude<TargetKind, "none"> => kind !== "none");
+            let targetOffset = 0;
+            modalChoices.push({
+              index: modalChoices.length,
+              text: `Choose ${subset.map((choice) => choice.text.replace(/[.;]$/, "")).join("; ")}`,
+              effect: {
+                kind: "compound",
+                effects: subset.map((choice) => choice.effect),
+                targetOffsets: subset.map((choice) => choice.targetKind === "none" ? null : targetOffset++)
+              },
+              targetKind: targetKinds[0] ?? "none",
+              ...(targetKinds.length ? { targetKinds } : {})
+            });
+          }
         }
       } else {
         // Keep the unsupported branches, not only the modal heading. This makes
