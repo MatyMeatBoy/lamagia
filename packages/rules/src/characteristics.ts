@@ -358,6 +358,8 @@ export interface TriggerDefinition {
   readonly spellType?: "creature";
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
+  /** Optional mana cost the controller may pay to get the effect ("you may pay {cost}. If you do, ..."). */
+  readonly payCost?: ManaCost;
 }
 
 export type TargetKind =
@@ -1302,9 +1304,14 @@ function recognizeText(text: string): RecognizedText {
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
       const requiresKicked = Boolean(kickedGate);
       if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-      const optional = /^you\s+may\b/i.test(effectText);
-      const recognized = recognizeSentence(optional ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
-      if (recognized) {
+      // "you may pay {cost}. If you do, X" — an optional mana cost gating X
+      // (CR 603.2c / "if you do"). No target is chosen for these.
+      const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
+      const payCost = payGate ? parseManaCost(payGate[1]!) : null;
+      if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      const optional = payGate ? true : /^you\s+may\b/i.test(effectText);
+      const recognized = recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
+      if (recognized && !(payCost && payCost.hasVariable)) {
         triggers.push({
           event: triggered.event,
           subject: triggered.subject,
@@ -1313,7 +1320,8 @@ function recognizeText(text: string): RecognizedText {
           targetKind: recognized.target,
           sourceText: line,
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
-          ...(requiresKicked ? { requiresKicked: true } : {})
+          ...(requiresKicked ? { requiresKicked: true } : {}),
+          ...(payCost && payCost.symbols.length ? { payCost } : {})
         });
       } else {
         unimplementedText.push(line);

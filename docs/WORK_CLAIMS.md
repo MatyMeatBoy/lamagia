@@ -56,6 +56,8 @@ feature name.
 | `c14-damage-sweep-filter` | `~ deals N damage to each nonartifact creature` / `each creature without flying` | `c14-self-pump` | active | 2026-09-03 |
 | `c14-graveyard-another` | Accept "Return another target <type> card from your graveyard" | `c14-self-pump` | active | 2026-09-03 |
 | `c14-draw-then-discard` | `Draw N, then discard M` effect (spell + activated) plus bot discard policy | `c14-self-pump` | active | 2026-09-03 |
+| `c14-kicker` | Kicker/Multikicker cost, kicked-only effects and enters triggers (CR 702.33) | `c14-self-pump` | active | 2026-09-03 |
+| `c14-optional-pay-trigger` | `you may pay {cost}. If you do, X` optional-cost trigger effects | `c14-self-pump` | active | 2026-09-04 |
 
 ## Claim format
 

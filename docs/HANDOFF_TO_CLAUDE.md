@@ -805,3 +805,13 @@ Validation: check PASS; 209 rules tests; oracle 22 OK; simulate:engine 200
 games, 0 invariant/projection failures (159 finished vs 160 baseline: bots now
 sometimes pay a kicker, marginally slower games). Catalog 7,277 -> 7,307;
 Commander 2014 98 -> 100/337 (Into the Roil, Kor Sanctifiers).
+
+### C14 race batch: optional "you may pay {cost}. If you do" triggers
+
+A triggered clause `you may pay {cost}. If you do, X` becomes an optional
+trigger whose `optional-trigger` pending choice carries `payCost`. `legalActions`
+offers the accept branch only when the mana can be planned; `applyChooseTrigger`
+pays it before applying X. Variable payment costs are left unmodelled.
+
+Validation: check PASS; 210 rules tests; oracle 22 OK; simulate:engine 200 games
+0 failures. Catalog 7,307 -> 7,329; Commander 2014 100 -> 101/337.

@@ -195,6 +195,7 @@ const JALUM_TOME = () => make({ name: "Jalum Tome", type_line: "Artifact", mana_
 const EXILE_SELF_SPELL = () => make({ name: "Vanishing Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Vanishing Bolt deals 2 damage to any target. Exile Vanishing Bolt." });
 const INTO_THE_ROIL = () => make({ name: "Into the Roil", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Kicker {1}{U} (You may pay an additional {1}{U} as you cast this spell.)\nReturn target nonland permanent to its owner's hand. If this spell was kicked, draw a card." });
 const KOR_SANCTIFIERS = () => make({ name: "Kor Sanctifiers", type_line: "Creature — Kor Cleric", mana_cost: "{3}{W}", cmc: 4, power: "2", toughness: "3", oracle_text: "Kicker {W} (You may pay an additional {W} as you cast this spell.)\nWhen Kor Sanctifiers enters the battlefield, if it was kicked, destroy target artifact or enchantment." });
+const PAY_DRAWER = () => make({ name: "Ledger Keeper", type_line: "Creature — Human", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Ledger Keeper enters the battlefield, you may pay {1}. If you do, draw a card." });
 const SHUFFLE_SELF_SPELL = () => make({ name: "Recurring Nova", type_line: "Sorcery", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 5 life. Shuffle Recurring Nova into its owner's library." });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 
@@ -1308,6 +1309,31 @@ describe("kicker", () => {
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[1]!.hand.some((c) => c.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand.length).toBe(hb - 1 + 1);
+  });
+
+  it("gates an optional trigger effect behind a payable mana cost", () => {
+    const profile = profileOf(PAY_DRAWER());
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", optional: true, effect: { kind: "draw", amount: 1 } });
+    expect(profile.triggers[0]!.payCost?.raw).toBe("{1}");
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Enough mana left over to pay {1}: the accept option is offered and draws.
+    let game = ready([PAY_DRAWER()], [ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const accept = legalActions(game, 0).find((entry) => entry.action.type === "choose-trigger" && entry.action.accept);
+    expect(accept).toBeDefined();
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, accept!.action);
+    game = passUntil(game, (state) => state.players[0]!.hand.length !== handBefore || state.turn > 1);
+    expect(game.players[0]!.hand.length).toBe(handBefore + 1);
+
+    // No spare mana: accept is not even offered, only decline.
+    let broke = ready([PAY_DRAWER()], [ISLAND(), ISLAND()]);
+    broke = applyAction(broke, 0, { type: "cast", cardId: "hand-0" });
+    broke = passUntil(broke, (state) => state.pendingChoice?.type === "optional-trigger");
+    const opts = legalActions(broke, 0).filter((entry) => entry.action.type === "choose-trigger");
+    expect(opts.every((entry) => entry.action.type === "choose-trigger" && entry.action.accept === false)).toBe(true);
   });
 
   it("fires a kicked-only enters trigger only on the kicked cast", () => {
