@@ -357,6 +357,11 @@ def compile_card(row: sqlite3.Row) -> dict[str, Any]:
         "primitive_clusters": primitive_clusters,
         "mana_abilities": mana_abilities,
         "unmatched": unmatched,
+        # A useful scheduling signal: these cards have exactly one unresolved
+        # Oracle clause, so finishing the owning primitive can close the card
+        # immediately. It is a hint for workers, never an implementation claim.
+        "missing_clause_count": len(unmatched),
+        "completion_hint": "quick-win" if len(unmatched) == 1 else "multi-clause" if unmatched else "complete",
         "status": "candidate" if parsed and not unmatched else "needs-review" if parsed else "vanilla",
     }
 
@@ -444,12 +449,17 @@ def primitive_cluster_inventory(
     clusters: dict[str, dict[str, Any]] = {}
     for card in cards:
         for cluster in card.get("primitive_clusters", []):
-            entry = clusters.setdefault(cluster, {"cards": {}, "examples": set()})
+            entry = clusters.setdefault(cluster, {"cards": {}, "examples": set(), "quick_win_count": 0})
+            missing_count = int(card.get("missing_clause_count", len(card.get("unmatched", []))))
             entry["cards"][str(card["oracle_id"])] = {
                 "oracle_id": str(card["oracle_id"]),
                 "scryfall_id": str(card["scryfall_id"]),
                 "name": str(card["name"]),
+                "missing_clause_count": missing_count,
+                "completion_hint": "quick-win" if missing_count == 1 else "multi-clause",
             }
+            if missing_count == 1:
+                entry["quick_win_count"] += 1
             for clause in card.get("clauses", []):
                 if not clause.get("candidate") and clause.get("primitive_cluster") == cluster:
                     entry["examples"].add(str(clause["text"]))
@@ -457,13 +467,15 @@ def primitive_cluster_inventory(
         {
             "cluster": cluster,
             "card_count": len(entry["cards"]),
+            "quick_win_count": entry["quick_win_count"],
+            "priority": "high" if entry["quick_win_count"] else "normal",
             "commit_batches": ceil(len(entry["cards"]) / commit_card_limit),
             "examples": sorted(entry["examples"], key=str.casefold)[:3],
             "cards": sorted(entry["cards"].values(), key=lambda item: (item["name"].casefold(), item["oracle_id"])),
         }
         for cluster, entry in clusters.items()
     ]
-    return sorted(inventory, key=lambda item: (-item["card_count"], item["cluster"]))
+    return sorted(inventory, key=lambda item: (-item["quick_win_count"], -item["card_count"], item["cluster"]))
 
 
 def effective_worker_count(workers: int, memory_budget_gb: float, estimated_worker_mb: int) -> int:

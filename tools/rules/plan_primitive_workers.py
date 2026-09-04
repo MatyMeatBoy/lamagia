@@ -142,6 +142,11 @@ def build_worker_plan(
                 "family": family,
                 "unlocks": int(entry.get("unlocks") or len(cards)),
                 "blocks": int(entry.get("blocks") or 0),
+                "quick_win_count": int(entry.get("quick_win_count") or sum(
+                    1 for card in entry.get("cards", [])
+                    if isinstance(card, dict) and card.get("completion_hint") == "quick-win"
+                )),
+                "priority": str(entry.get("priority") or ("high" if entry.get("quick_win_count") else "normal")),
                 "oracle_ids": cards,
                 "batches": batches,
             }
@@ -149,7 +154,7 @@ def build_worker_plan(
 
     # Roadmap rank is already the ROI ordering. Assigning the largest jobs
     # first makes the result balanced while claim keys remain deterministic.
-    jobs.sort(key=lambda job: (-len(job["oracle_ids"]), -job["unlocks"], job["claim_key"]))
+    jobs.sort(key=lambda job: (-job["quick_win_count"], -len(job["oracle_ids"]), -job["unlocks"], job["claim_key"]))
     assigned: list[list[dict[str, Any]]] = [[] for _ in range(worker_count)]
     load = [0] * worker_count
     for job in jobs:
@@ -200,11 +205,11 @@ def render_document(plan: dict[str, Any]) -> str:
             lines.append("Idle — no unclaimed work in this queue.")
             lines.append("")
             continue
-        lines += ["| Claim | Family | Cards | Unlocks | Batches |", "| --- | --- | ---: | ---: | ---: |"]
+        lines += ["| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |", "| --- | --- | --- | ---: | ---: | ---: | ---: |"]
         for job in worker["jobs"]:
             lines.append(
-                f"| `{job['claim_key']}` | {job['family']} | {len(job['oracle_ids'])} |"
-                f" {job['unlocks']} | {len(job['batches'])} |"
+                f"| {job['priority']} | `{job['claim_key']}` | {job['family']} | {len(job['oracle_ids'])} |"
+                f" {job['quick_win_count']} | {job['unlocks']} | {len(job['batches'])} |"
             )
         lines.append("")
     if plan["skipped_claims"]:

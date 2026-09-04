@@ -25,6 +25,11 @@ Las distintas ilustraciones, marcos y sets no requieren otra implementación.
 Si una carta tiene varias funciones, cuenta como pendiente hasta cubrirlas
 todas.
 
+El plan global marca como `quick-win` cada carta con una sola cláusula Oracle
+pendiente. Prioriza esos IDs dentro de su cluster: una primitiva correcta puede
+cerrar varias cartas de golpe. No confundas una primitiva nueva con una carta
+cerrada; comprueba el export de perfiles antes y después.
+
 ## Un commit por cada bloque de veinte
 
 Después de revisar el diff, el contribuyente puede publicar cada bloque con un

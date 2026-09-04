@@ -22,6 +22,13 @@ generados e ignorados por Git. La cláusula `unimplementedText` del perfil es la
 fuente exacta para decidir qué falta; no marcar una carta completa porque solo
 se reconoció una parte de su texto.
 
+Para el catálogo completo, la rutina es `npm run rules:oracle:compile` y luego
+`npm run rules:oracle:plan`. Cada tarjeta del queue conserva `oracle_id`, el
+conteo de cláusulas faltantes y `completion_hint`; `quick-win` significa una
+sola cláusula faltante. Así los agentes trabajan por primitiva y priorizan las
+cartas que pueden cerrarse de inmediato, sin repetir el análisis de tipos,
+zonas o costes.
+
 `docs/SET_COVERAGE.md` y `data/rules/set-coverage.json` agrupan por edición.
 Las impresiones se deduplican por `oracle_id`: una mejora de una carta se
 propaga a sus reimpresiones, mientras los pendientes siguen listados bajo cada
@@ -84,5 +91,5 @@ Son referencias de investigación; no son dependencias de ejecución ni
 autorizan copiar código o assets.
 
 El agente puede continuar descubriendo cartas equivalentes mientras tenga
-contexto o tokens; el límite es por commit: máximo cinco `oracle_id` nuevos.
+contexto o tokens; el límite es por commit: máximo veinte `oracle_id` nuevos.
 El comando y la revisión están detallados en [CONTRIBUTING.md](CONTRIBUTING.md).

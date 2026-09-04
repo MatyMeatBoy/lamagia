@@ -31,12 +31,14 @@ after each commit, but must stop when a claim is taken. Keep bot output to one
 short status line per commit; include details only for failures, blockers, or
 limits. This saves context without losing reproducibility.
 
-To refresh the reusable work queue, run `npm run rules:oracle:compile` and claim
-one entry from `data/rules/oracle-clusters.json`; it already carries stable
-`oracle_id`s and twenty-card commit batch counts. The compiler keeps an ignored
-incremental cache, so unchanged Oracle rows are reused on later runs and the
-cache is invalidated automatically when the parser version changes. To measure
-the local speedup, run `npm run rules:oracle:benchmark`.
+To refresh the reusable work queue for the whole catalog, run
+`npm run rules:oracle:compile` followed by `npm run rules:oracle:plan`; claim one
+entry from `data/rules/oracle-worker-plan.json`. Each card is tagged
+`quick-win` when it has exactly one unresolved clause, and each cluster exposes
+its quick-win count so workers can close complete cards first. The queue carries
+stable `oracle_id`s and twenty-card commit batches. A rules/test-only commit may
+add no completed card; the integrator must report before/after `fullyImplemented`
+counts and only count a card when every clause is executable.
 
 For the current C13 sprint, use `npm run rules:oracle:c13` to generate the same
 queue from only the 356 cards in that set, then

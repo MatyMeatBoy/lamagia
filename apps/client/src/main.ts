@@ -207,8 +207,19 @@ function apiUrl(path: string): string {
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(apiUrl(path), init);
-  const payload = (await response.json()) as T & { error?: string };
-  if (!response.ok) throw new Error(payload.error ?? `La petición falló (${response.status}).`);
+  const contentType = response.headers.get("content-type") ?? "";
+  const raw = await response.text();
+  let payload: (T & { error?: string }) | null = null;
+  if (contentType.includes("json") && raw) {
+    try { payload = JSON.parse(raw) as T & { error?: string }; } catch { /* handled below */ }
+  }
+  if (!payload && raw.trim().startsWith("<")) {
+    throw new Error(API_BASE
+      ? "El servidor de partidas devolvió una página HTML en vez de JSON. Revisa la URL del match-server."
+      : "La web pública está publicada, pero GitHub Pages no ejecuta el match-server. Inicia `npm run dev:server` para jugar contra la IA o configura un backend público en `__PROSSH_API_BASE__`.");
+  }
+  if (!response.ok) throw new Error(payload?.error ?? `La petición falló (${response.status}).`);
+  if (!payload) throw new Error("El servidor devolvió una respuesta inválida.");
   return payload;
 }
 
@@ -1328,16 +1339,22 @@ function coverageSetRows(sets: readonly CoverageSet[]): string {
 }
 
 function coverageSubgroupRows(sets: readonly CoverageSet[]): string {
-  const buckets = new Map<string, { group: string; subgroup: string; editions: number; uniqueCards: number; implemented: number }>();
+  const buckets = new Map<string, { group: string; subgroup: string; firstReleasedAt: string; editions: number; uniqueCards: number; implemented: number }>();
   for (const set of sets) {
     const key = `${set.group}\u0000${set.subgroup}`;
-    const bucket = buckets.get(key) ?? { group: set.group, subgroup: set.subgroup, editions: 0, uniqueCards: 0, implemented: 0 };
+    const bucket = buckets.get(key) ?? { group: set.group, subgroup: set.subgroup, firstReleasedAt: set.releasedAt || "9999-99-99", editions: 0, uniqueCards: 0, implemented: 0 };
+    if ((set.releasedAt || "9999-99-99") < bucket.firstReleasedAt) bucket.firstReleasedAt = set.releasedAt || "9999-99-99";
     bucket.editions += 1;
     bucket.uniqueCards += set.uniqueCards;
     bucket.implemented += set.implemented;
     buckets.set(key, bucket);
   }
-  const rows = [...buckets.values()].sort((left, right) => left.group.localeCompare(right.group) || left.subgroup.localeCompare(right.subgroup));
+  // Keep the same Alpha -> newest chronology as the edition list. Alphabetical
+  // sorting made Commander years, promo families and historical blocks appear
+  // unrelated when several top-level groups were visible at once.
+  const rows = [...buckets.values()].sort((left, right) => left.firstReleasedAt.localeCompare(right.firstReleasedAt)
+    || coverageGroupLabel(left.group).localeCompare(coverageGroupLabel(right.group))
+    || left.subgroup.localeCompare(right.subgroup));
   return rows.length ? rows.map((bucket) => {
     const percentage = bucket.uniqueCards ? Math.round(bucket.implemented / bucket.uniqueCards * 1000) / 10 : 100;
     return `<button class="coverage-subgroup-row" type="button" data-coverage-subgroup="${escapeHtml(bucket.subgroup)}" data-coverage-subgroup-group="${escapeHtml(bucket.group)}">
@@ -1348,11 +1365,31 @@ function coverageSubgroupRows(sets: readonly CoverageSet[]): string {
   }).join("") : `<p class="zone-private">No hay subgrupos para este filtro.</p>`;
 }
 
-function renderCoverageReport(report: SetCoverageReport): void {
-  const body = document.querySelector<HTMLElement>("#coverage-dialog .panel-body");
-  if (!body) return;
-  const groups = [...new Set(report.sets.map((set) => set.group))].sort((left, right) => left.localeCompare(right));
-  const subgroups = [...new Set(report.sets.filter((set) => coverageGroup === "all" || set.group === coverageGroup).map((set) => set.subgroup))].sort((left, right) => left.localeCompare(right));
+function coverageChronology<T extends { releasedAt: string }>(items: readonly T[]): T[] {
+  return [...items].sort((left, right) => (left.releasedAt || "9999-99-99").localeCompare(right.releasedAt || "9999-99-99"));
+}
+
+function coverageGroupOptions(sets: readonly CoverageSet[]): string[] {
+  const firstRelease = new Map<string, string>();
+  for (const set of sets) {
+    const date = set.releasedAt || "9999-99-99";
+    if (!firstRelease.has(set.group) || date < firstRelease.get(set.group)!) firstRelease.set(set.group, date);
+  }
+  return [...firstRelease.keys()].sort((left, right) => firstRelease.get(left)!.localeCompare(firstRelease.get(right)!)
+    || coverageGroupLabel(left).localeCompare(coverageGroupLabel(right)));
+}
+
+function coverageSubgroupOptions(sets: readonly CoverageSet[], group: string): string[] {
+  const firstRelease = new Map<string, string>();
+  for (const set of sets) {
+    if (group !== "all" && set.group !== group) continue;
+    const date = set.releasedAt || "9999-99-99";
+    if (!firstRelease.has(set.subgroup) || date < firstRelease.get(set.subgroup)!) firstRelease.set(set.subgroup, date);
+  }
+  return [...firstRelease.keys()].sort((left, right) => firstRelease.get(left)!.localeCompare(firstRelease.get(right)!) || left.localeCompare(right));
+}
+
+function coverageResultsHtml(report: SetCoverageReport): string {
   const filtered = report.sets.filter((set) => (coverageFilter === "all" || set.category === coverageFilter)
     && (coverageGroup === "all" || set.group === coverageGroup)
     && (coverageSubgroup === "all" || set.subgroup === coverageSubgroup)
@@ -1360,6 +1397,24 @@ function renderCoverageReport(report: SetCoverageReport): void {
   const subgroupSource = report.sets.filter((set) => (coverageFilter === "all" || set.category === coverageFilter)
     && (coverageGroup === "all" || set.group === coverageGroup)
     && (!coverageQuery || `${set.name} ${set.code}`.toLocaleLowerCase().includes(coverageQuery.toLocaleLowerCase())));
+  return `<div class="coverage-subgroups"><h3>Subgrupos${coverageGroup === "all" ? " · orden cronológico" : ` · ${escapeHtml(coverageGroupLabel(coverageGroup))}`}</h3><div class="coverage-list">${coverageSubgroupRows(subgroupSource)}</div></div>
+    <div class="coverage-list">${coverageSetRows(coverageChronology(filtered))}</div>`;
+}
+
+function wireCoverageResults(body: HTMLElement, report: SetCoverageReport): void {
+  body.querySelectorAll<HTMLButtonElement>("[data-coverage-subgroup]").forEach((button) => button.addEventListener("click", () => {
+    coverageGroup = button.dataset.coverageSubgroupGroup ?? "all";
+    coverageSubgroup = button.dataset.coverageSubgroup ?? "all";
+    renderCoverageReport(report);
+  }));
+  body.querySelectorAll<HTMLButtonElement>("[data-coverage-set]").forEach((button) => button.addEventListener("click", () => void loadCoverageSet(button.dataset.coverageSet!)));
+}
+
+function renderCoverageReport(report: SetCoverageReport): void {
+  const body = document.querySelector<HTMLElement>("#coverage-dialog .panel-body");
+  if (!body) return;
+  const groups = coverageGroupOptions(report.sets);
+  const subgroups = coverageSubgroupOptions(report.sets, coverageGroup);
   const excluded = report.excludedEditions?.length ? ` · ${report.excludedEditions.length} ediciones pausadas (Alchemy y Un-)` : "";
   body.innerHTML = `<div class="coverage-toolbar">
       <div class="coverage-filters">${(["all", "main", "commander", "secret-lair", "other"] as const).map((category) =>
@@ -1370,8 +1425,7 @@ function renderCoverageReport(report: SetCoverageReport): void {
     </div>
     <div class="coverage-total"><b>${report.percentage}% global</b><span>${report.setCount} ediciones · ${report.implementedMembershipCount.toLocaleString()} / ${report.membershipCount.toLocaleString()} cartas únicas por edición</span></div>
     <p class="panel-note">Orden cronológico: Alpha → ediciones nuevas. Las reimpresiones heredan el estado de su <code>oracle_id</code>; entra a un subgrupo y luego a una edición para ver sus pendientes${escapeHtml(excluded)}.</p>
-    <div class="coverage-subgroups"><h3>Subgrupos${coverageGroup === "all" ? "" : ` · ${escapeHtml(coverageGroupLabel(coverageGroup))}`}</h3><div class="coverage-list">${coverageSubgroupRows(subgroupSource)}</div></div>
-    <div class="coverage-list">${coverageSetRows(filtered)}</div>`;
+    <div id="coverage-results">${coverageResultsHtml(report)}</div>`;
   body.querySelectorAll<HTMLButtonElement>("[data-coverage-filter]").forEach((button) => button.addEventListener("click", () => {
     coverageFilter = button.dataset.coverageFilter as CoverageSet["category"] | "all";
     renderCoverageReport(report);
@@ -1383,23 +1437,21 @@ function renderCoverageReport(report: SetCoverageReport): void {
   });
   body.querySelector<HTMLInputElement>("#coverage-query")?.addEventListener("input", (event) => {
     const input = event.target as HTMLInputElement;
-    const caret = input.selectionStart ?? input.value.length;
     coverageQuery = input.value;
-    renderCoverageReport(report);
-    const refreshed = document.querySelector<HTMLInputElement>("#coverage-query");
-    refreshed?.focus();
-    refreshed?.setSelectionRange(caret, caret);
+    // Replace only the result list, not the input itself. Rebuilding the whole
+    // dialog on every keystroke made the browser reset the caret and type text
+    // backwards (for example `commander` became `rednammoc`).
+    const results = body.querySelector<HTMLElement>("#coverage-results");
+    if (results) {
+      results.innerHTML = coverageResultsHtml(report);
+      wireCoverageResults(body, report);
+    }
   });
   body.querySelector<HTMLSelectElement>("#coverage-subgroup")?.addEventListener("change", (event) => {
     coverageSubgroup = (event.target as HTMLSelectElement).value;
     renderCoverageReport(report);
   });
-  body.querySelectorAll<HTMLButtonElement>("[data-coverage-subgroup]").forEach((button) => button.addEventListener("click", () => {
-    coverageGroup = button.dataset.coverageSubgroupGroup ?? "all";
-    coverageSubgroup = button.dataset.coverageSubgroup ?? "all";
-    renderCoverageReport(report);
-  }));
-  body.querySelectorAll<HTMLButtonElement>("[data-coverage-set]").forEach((button) => button.addEventListener("click", () => void loadCoverageSet(button.dataset.coverageSet!)));
+  wireCoverageResults(body, report);
 }
 
 async function loadCoverageSet(code: string): Promise<void> {
