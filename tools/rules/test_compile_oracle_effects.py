@@ -98,7 +98,21 @@ class OracleCompilerTests(unittest.TestCase):
             self.assertEqual(load_card_cache(path)["oracle-1"], entry)
             path.write_text(json.dumps({"format": "prossh-oracle-card-cache/v1", "parser_version": "old", "cards": {"oracle-1": entry}}), encoding="utf-8")
             self.assertEqual(load_card_cache(path), {})
-        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v3")
+        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v5")
+
+    def test_excludes_known_closed_static_primitives_from_review(self) -> None:
+        for text in (
+            "This land enters tapped.",
+            "Cycling {2}",
+            "Equip {3}",
+            "Level up {1}{G}",
+            "LEVEL 3+",
+            "2/4",
+            "Choose one —",
+        ):
+            result = classify(text)
+            self.assertTrue(result["known_static"])
+            self.assertTrue(result["candidate"])
 
     def test_builds_deterministic_cluster_first_queue(self) -> None:
         cards = [

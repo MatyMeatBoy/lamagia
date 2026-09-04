@@ -29,7 +29,7 @@ from typing import Any
 
 
 DEFAULT_COMMIT_CARD_LIMIT = 20
-ORACLE_IR_PARSER_VERSION = "v3"
+ORACLE_IR_PARSER_VERSION = "v5"
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -65,6 +65,13 @@ CARD_TYPES = {"land", "creature", "artifact", "enchantment", "instant", "sorcery
 CRITERION_NOISE = {"basic", "card", "permanent", "spell", "with", "that", "whose", "where", "named", "converted", "mana", "power", "toughness"}
 SUPPORTED_KEYWORDS = ("flying", "reach", "first strike", "double strike", "deathtouch", "trample", "vigilance", "lifelink", "menace", "defender", "haste", "indestructible", "hexproof", "shroud", "flash")
 KEYWORD_ONLY_RE = re.compile(r"^(?:" + "|".join(re.escape(keyword) for keyword in SUPPORTED_KEYWORDS) + r")(?:\s*,\s*(?:" + "|".join(re.escape(keyword) for keyword in SUPPORTED_KEYWORDS) + r"))*\.?$", re.I)
+KNOWN_STATIC_RE = re.compile(
+    r"^(?:this land|~|[A-Za-z][A-Za-z'’ -]+) enters(?: the battlefield)? tapped"
+    r"(?: with (?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) [A-Za-z+\-/ ]+ counters? on it)?"
+    r"(?: unless\b.*)?\.?$|^cycling\s+.+$|^[A-Za-z][A-Za-z ]*cycling\s+.+$|^equip\s+.+$|^level up\s+.+$",
+    re.I,
+)
+KNOWN_STATIC_LINE_RE = re.compile(r"^(?:level\s+\d+(?:-\d+|\+)?|\d+\/\d+|choose\s+(?:one|two|one or both)\s+(?:-|—|–))\.?$", re.I)
 ZONE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("library", r"\blibrar(?:y|ies)\b"),
     ("hand", r"\bhand\b"),
@@ -207,6 +214,7 @@ def classify(clause: str) -> dict[str, Any]:
         target_zone = "graveyard" if re.search(r"\bgraveyard\b", target_text, re.I) else "hand" if re.search(r"\bhand\b", target_text, re.I) else "battlefield"
     modal = bool(re.search(r"\bchoose (?:one|two|three|one or more)\b", lower))
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
+    known_static = bool(KNOWN_STATIC_RE.fullmatch(clause.strip()) or KNOWN_STATIC_LINE_RE.fullmatch(clause.strip()))
     operands = operand_hints(clause, target_text, search_criterion)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
@@ -240,7 +248,8 @@ def classify(clause: str) -> dict[str, Any]:
         # reusable mechanic constraints without using card names as identity.
         "primitive_cluster": "|".join(cluster_parts),
         "keyword_only": keyword_only,
-        "candidate": bool(families or kind != "static-or-spell" or keyword_only),
+        "known_static": known_static,
+        "candidate": bool(families or kind != "static-or-spell" or keyword_only or known_static),
     }
 
 
