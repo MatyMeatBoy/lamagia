@@ -220,6 +220,7 @@ const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
+const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
 const SCRY_TWO = () => make({ name: "Scry Two", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Scry 2." });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
@@ -2389,6 +2390,25 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0
       && (state.players[0]!.battlefield.find((permanent) => permanent.instance_id === sourceId)?.powerModifier ?? 0) === 2);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === sourceId)).toMatchObject({ powerModifier: 2, toughnessModifier: 2 });
+  });
+
+  it("keeps C13 Basalt Monolith tapped through untap and resolves its untap activation", () => {
+    let game = readyToCast([], [C13_BASALT_MONOLITH(), FOREST(), FOREST(), FOREST()]);
+    const basalt = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Basalt Monolith")!;
+    const mana = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana" && entry.action.sourceId === basalt.instance_id);
+    expect(mana?.action.type).toBe("activate-mana");
+    game = applyAction(game, 0, mana!.action);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === basalt.instance_id)?.tapped).toBe(true);
+
+    game = { ...game, step: "untap", priorityOpen: false, prioritySeat: 0, passedSeats: [] };
+    game = settle(game);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === basalt.instance_id)?.tapped).toBe(true);
+
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === basalt.instance_id);
+    expect(activation?.action.type).toBe("activate");
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.battlefield.find((permanent) => permanent.instance_id === basalt.instance_id)?.tapped === false);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === basalt.instance_id)?.tapped).toBe(false);
   });
 
   it("exiles a selected graveyard and returns any selected permanent to its owner", () => {
