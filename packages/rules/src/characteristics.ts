@@ -327,6 +327,8 @@ export type SpellEffect =
   | { readonly kind: "return-target-card-to-library-top" }
   | { readonly kind: "return-target-card-to-library-bottom" }
   | { readonly kind: "shuffle-target-card-into-library" }
+  /** Replaces a resolving spell's normal graveyard destination (CR 701.19). */
+  | { readonly kind: "shuffle-source-into-library" }
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "tap-all-creatures-target-player" }
@@ -1442,6 +1444,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Put target card from your graveyard on top of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-top" }, target: "card-in-your-graveyard" };
   if (/^Put target card from your graveyard on the bottom of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-bottom" }, target: "card-in-your-graveyard" };
   if (/^Shuffle target card from your graveyard into your library$/i.test(text)) return { effect: { kind: "shuffle-target-card-into-library" }, target: "card-in-your-graveyard" };
+  if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-source-into-library" }, target: "none" };
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };

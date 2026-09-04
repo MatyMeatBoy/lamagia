@@ -236,6 +236,22 @@ describe("multi-card library searches", () => {
   });
 });
 
+describe("self-shuffle replacement", () => {
+  it("recognises Blue Sun's Zenith returning itself to its owner's library", () => {
+    const profile = cardProfile(card({
+      name: "Blue Sun's Zenith",
+      type_line: "Instant",
+      mana_cost: "{X}{U}{U}{U}",
+      oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library."
+    }));
+    expect(profile.effects).toEqual([
+      { kind: "draw-target-player", amount: "X" },
+      { kind: "shuffle-source-into-library" }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("effect recognition", () => {
   it("recognizes a draw spell", () => {
     const profile = cardProfile(card({ name: "Test Draw", type_line: "Sorcery", mana_cost: "{2}{U}", oracle_text: "Draw three cards." }));
