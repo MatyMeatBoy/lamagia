@@ -361,6 +361,7 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
   const staticBonus = state ? allPermanents(state)
     .filter((source) => source.controller === permanent.controller && source.instance_id !== permanent.instance_id)
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
+    .filter((grant) => grant.scope === "other-creatures-you-control")
     .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, grant) => total + grant.power, 0) : 0;
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
@@ -376,6 +377,7 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const staticBonus = state ? allPermanents(state)
     .filter((source) => source.controller === permanent.controller && source.instance_id !== permanent.instance_id)
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
+    .filter((grant) => grant.scope === "other-creatures-you-control")
     .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, grant) => total + grant.toughness, 0) : 0;
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
