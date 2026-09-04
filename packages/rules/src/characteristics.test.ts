@@ -301,6 +301,18 @@ describe("self-shuffle replacement", () => {
   });
 });
 
+describe("scry", () => {
+  it("recognises the reusable Scry 1 effect", () => {
+    const profile = cardProfile(card({
+      name: "New Benalia",
+      type_line: "Land",
+      oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}."
+    }));
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", effect: { kind: "scry", amount: 1 } });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("effect recognition", () => {
   it("keeps creature type when putting a graveyard card on top", () => {
     const profile = cardProfile(card({

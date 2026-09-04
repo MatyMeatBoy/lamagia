@@ -294,6 +294,16 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      readonly type: "scry";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly topCard: GameCard;
+      readonly remaining: number;
+      readonly returnSourceToGraveyard: boolean;
+      readonly exileSourceAfterResolution: boolean;
+    }
+  | {
       readonly type: "discard-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -335,6 +345,7 @@ export type GameAction =
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
+  | { readonly type: "choose-scry"; readonly sourceId: string; readonly bottom: boolean }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "resolve-scry"; readonly sourceId: string; readonly cardId: string; readonly toBottom: boolean }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
@@ -2124,6 +2135,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "search-library-multi":
       // Multi-card searches are completed through the explicit choice action below.
       return state;
+    case "scry":
+      // Scry is completed through the private top-card choice below.
+      return state;
     case "attach-equipment": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -2160,6 +2174,38 @@ function hasSelfShuffle(effect: SpellEffect): boolean {
     || (effect.kind === "compound" && effect.effects.some(hasSelfShuffle));
 }
 
+function beginScry(
+  state: GameState,
+  seat: SeatId,
+  sourceId: string,
+  sourceCard: GameCard,
+  amount: number,
+  returnSourceToGraveyard: boolean,
+  exileSourceAfterResolution: boolean
+): GameState {
+  if (amount <= 0) return state;
+  const topCard = playerAt(state, seat).library[0];
+  if (!topCard) {
+    if (!returnSourceToGraveyard) return state;
+    return withPlayer(state, sourceCard.owner, (player) => exileSourceAfterResolution
+      ? { ...player, exile: [...player.exile, sourceCard] }
+      : { ...player, graveyard: [...player.graveyard, sourceCard] });
+  }
+  return {
+    ...state,
+    pendingChoice: {
+      type: "scry",
+      seat,
+      sourceId,
+      sourceCard,
+      topCard,
+      remaining: amount,
+      returnSourceToGraveyard,
+      exileSourceAfterResolution
+    }
+  };
+}
+
 function resolveTop(state: GameState): GameState {
   const object = state.stack.at(-1);
   if (!object) return state;
@@ -2192,6 +2238,8 @@ function resolveTop(state: GameState): GameState {
   }
 
   if (object.trigger) {
+    const triggerScry = object.trigger.definition.effect.kind === "scry" ? object.trigger.definition.effect : null;
+    if (triggerScry) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerScry.amount, false, false);
     if (object.trigger.definition.optional) {
       const payer = object.trigger.definition.paymentBy === "opponent"
         ? (object.trigger.eventController ?? opponentsOf(next, object.controller)[0] ?? object.controller)
@@ -2223,6 +2271,8 @@ function resolveTop(state: GameState): GameState {
 
   const activatedEffect = object.activated?.effect;
   const selectedEffect = object.selectedEffect;
+  const scry = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "scry" }> => effect.kind === "scry");
+  if (scry) return beginScry(next, object.controller, object.id, object.card, scry.amount, !object.activated, Boolean(object.flashback));
   const search = activatedEffect?.kind === "search-library"
     ? activatedEffect
     : selectedEffect?.kind === "search-library"
@@ -2863,6 +2913,19 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         action: { type: "finish-library-search", sourceId: choice.sourceId },
         label: "Terminar búsqueda",
         note: "Deja de elegir cartas y baraja la biblioteca."
+      });
+      return actions;
+    }
+    if (choice.type === "scry") {
+      actions.push({
+        action: { type: "choose-scry", sourceId: choice.sourceId, bottom: false },
+        label: "Mantener en la parte superior",
+        note: `${choice.sourceCard.name}: conserva la carta superior.`
+      });
+      actions.push({
+        action: { type: "choose-scry", sourceId: choice.sourceId, bottom: true },
+        label: "Poner en el fondo",
+        note: `${choice.sourceCard.name}: mueve la carta superior al fondo.`
       });
       return actions;
     }
@@ -3811,6 +3874,25 @@ function applyFinishLibrarySearch(state: GameState, seat: SeatId, action: Extrac
   return finishMultiLibrarySearch(state, seat, choice, choice.selectedIds);
 }
 
+function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-scry" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "scry" || choice.seat !== seat) throw new Error("No tienes una elección de adivinar pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes resolver la elección de adivinar pendiente.");
+  const player = playerAt(state, seat);
+  if (player.library[0]?.instance_id !== choice.topCard.instance_id) throw new Error("La carta superior cambió antes de resolver adivinar.");
+  const rest = player.library.slice(1);
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    library: action.bottom ? [...rest, choice.topCard] : [choice.topCard, ...rest]
+  }));
+  if (choice.returnSourceToGraveyard) {
+    next = withPlayer(next, choice.sourceCard.owner, (current) => choice.exileSourceAfterResolution
+      ? { ...current, exile: [...current.exile, choice.sourceCard] }
+      : { ...current, graveyard: [...current.graveyard, choice.sourceCard] });
+  }
+  return logged(next, seat, `${player.name} ${action.bottom ? "pone la carta superior en el fondo" : "mantiene la carta superior"}.`);
+}
+
 function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readonly AttackerDeclaration[]): GameState {
   if (state.step !== "declare-attackers" || seat !== state.activeSeat) throw new Error("No es tu paso de declarar atacantes.");
   if (state.combat.attackersDeclared) throw new Error("Los atacantes ya fueron declarados.");
@@ -4081,6 +4163,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
+    case "choose-scry": next = applyChooseScry(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "resolve-scry": next = applyResolveScry(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
