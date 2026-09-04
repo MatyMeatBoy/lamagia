@@ -49,6 +49,9 @@ instead of reimplementing a keyword per card.
 For the current C13 sprint, use `npm run rules:oracle:c13` to generate the same
 queue from only the 356 cards in that set, then
 `npm run rules:oracle:plan:c13` to assign five disjoint primitive clusters.
+When generating a scoped roadmap directly, `--set-code c13` now automatically
+names claims in the `c13-*` namespace; pass `--claim-prefix` only for an
+intentional shared primitive.
 
 Coverage map: [docs/SET_COVERAGE.md](docs/SET_COVERAGE.md) and the web
 “Implementation by set” view. The project is being renamed from `ProsshTCG`

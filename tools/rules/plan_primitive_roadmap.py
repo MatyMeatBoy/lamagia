@@ -25,7 +25,7 @@ Example:
       --profiles data/rules/engine-card-profiles.json \
       --output data/rules/primitive-roadmap.json \
       --prompt-output docs/PRIMITIVE_ROADMAP.md \
-      --top 40 --claim-prefix c14
+      --top 40 --set-code c13
 """
 
 from __future__ import annotations
@@ -39,6 +39,11 @@ from pathlib import Path
 from typing import Any, Iterable
 
 ROADMAP_FORMAT = "prossh-primitive-roadmap/v1"
+
+
+def resolve_claim_prefix(explicit: str | None, set_code: str | None) -> str:
+    """Use the scoped set as the default namespace for worker claims."""
+    return explicit if explicit is not None else str(set_code or "")
 
 # Ordered because the mana-cost pattern has to run before bare-number folding,
 # otherwise `{2}` degrades to `{<n>}` and stops grouping with `{3}`.
@@ -286,12 +291,13 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path("data/rules/primitive-roadmap.json"))
     parser.add_argument("--prompt-output", type=Path, default=None, help="Markdown work order to write.")
     parser.add_argument("--top", type=int, default=40, help="How many primitives to schedule.")
-    parser.add_argument("--claim-prefix", default="c14", help="Prefix for generated claim keys.")
+    parser.add_argument("--claim-prefix", default=None, help="Prefix for generated claim keys; defaults to --set-code.")
     parser.add_argument("--decks", type=Path, default=Path("data/decks/commander-precons.json"), help="Deck JSON used by --set-code.")
     parser.add_argument("--set-code", default=None, help="Limit the roadmap to cards in this product/set code.")
     args = parser.parse_args()
 
     payload = json.loads(args.profiles.read_text(encoding="utf-8"))
+    claim_prefix = resolve_claim_prefix(args.claim_prefix, args.set_code)
     scope_ids = deck_oracle_ids(args.decks, args.set_code) if args.set_code else None
     profiles = select_profiles(payload["profiles"], scope_ids)
     blocked = load_blocked_cards(profiles)
@@ -314,7 +320,7 @@ def main() -> None:
                 "format": ROADMAP_FORMAT,
                 "source": str(args.profiles),
                 "generated_at": datetime.now(UTC).isoformat(),
-                "claim_prefix": args.claim_prefix,
+                "claim_prefix": claim_prefix,
                 "scope": args.set_code,
                 "stats": stats,
                 "roadmap": roadmap,
@@ -327,7 +333,7 @@ def main() -> None:
     )
     if args.prompt_output:
         args.prompt_output.parent.mkdir(parents=True, exist_ok=True)
-        args.prompt_output.write_text(render_document(roadmap, stats, args.claim_prefix, args.set_code), encoding="utf-8")
+        args.prompt_output.write_text(render_document(roadmap, stats, claim_prefix, args.set_code), encoding="utf-8")
 
     print(
         f"Roadmap written: {len(roadmap)} primitives finishing {stats['queue_unlocks']} cards "

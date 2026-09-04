@@ -7,7 +7,7 @@ from pathlib import Path
 
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, trigger_subject_hint
 from export_set_coverage import is_ignored_edition, product_group
-from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, select_profiles, template_of
+from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, resolve_claim_prefix, select_profiles, template_of
 from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
 from compile_oracle_effects import return_target_hint
 
@@ -330,6 +330,10 @@ class PrimitiveRoadmapTests(unittest.TestCase):
         first = [entry["template"] for entry in build_roadmap(blocked, top=3)]
         second = [entry["template"] for entry in build_roadmap(blocked, top=3)]
         self.assertEqual(first, second)
+
+    def test_scoped_roadmap_defaults_claim_namespace_to_set(self) -> None:
+        self.assertEqual(resolve_claim_prefix(None, "c13"), "c13")
+        self.assertEqual(resolve_claim_prefix("shared", "c13"), "shared")
 
     def test_selects_profiles_for_a_set_scope_by_oracle_or_printing_id(self) -> None:
         profiles = [
