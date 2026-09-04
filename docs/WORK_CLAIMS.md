@@ -95,6 +95,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-activated-sacrifice-enchantment` | Activated costs that sacrifice an enchantment, including “another” | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-sacrifice-land` | Activated costs that sacrifice a land, including “another” | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-sacrifice-noncreature` | Activated costs that sacrifice any noncreature permanent | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-discard-cost` | Activated costs that discard one card from the controller’s hand | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
