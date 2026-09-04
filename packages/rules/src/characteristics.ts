@@ -180,6 +180,7 @@ export type SpellEffect =
   
   | { readonly kind: "fortify-{effect}"; readonly effect: string }
   | { readonly kind: "fortify land"; readonly land_type: string }
+  | { readonly kind: "fortify land static"; readonly land_type: string, readonly effect: string }
   | { readonly kind: "activate-only-as-<n>-sorcery"; readonly n: number }
   | { readonly kind: "activate-only-as-<n>-sorcery"; readonly n: number }
   | { readonly kind: "activate-only-as-<n>-sorcery"; readonly n: number }
