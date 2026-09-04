@@ -272,7 +272,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     : null;
 
   const targetKinds = new Set<string>([
-    "any", "player", "creature", "spell", "creature-spell", "noncreature-spell", "permanent", "artifact-or-enchantment", "creature-power-at-least-5", "creature-toughness-at-least-4",
+    "any", "player", "creature", "spell", "creature-spell", "noncreature-spell", "permanent", "artifact-or-enchantment", "creature-power-at-least-5", "creature-power-at-most-4", "creature-toughness-at-least-4",
     "artifact-creature-or-planeswalker", "artifact-enchantment-or-land", "artifact",
     "nonland", "nonartifact-creature", "creature-you-control", "land-you-control", "enchantment", "land",
     "player-or-planeswalker", "card-in-your-graveyard", "creature-card-in-your-graveyard", "artifact-card-in-your-graveyard", "enchantment-card-in-your-graveyard", "land-card-in-a-graveyard",
