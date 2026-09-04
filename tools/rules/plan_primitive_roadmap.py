@@ -204,6 +204,11 @@ def build_roadmap(blocked: list[dict[str, Any]], top: int, examples: int = 4) ->
             break
 
         cumulative += len(best_unlocked)
+        affected_indices = sorted(
+            by_template[best_template],
+            key=lambda i: blocked[i]["name"] or "",
+        )
+        one_line_indices = [index for index in affected_indices if len(blocked[index]["lines"]) == 1]
         roadmap.append(
             {
                 "rank": len(roadmap) + 1,
@@ -223,7 +228,14 @@ def build_roadmap(blocked: list[dict[str, Any]], top: int, examples: int = 4) ->
                 ],
                 "affected_cards": [
                     {"oracle_id": blocked[index]["oracle_id"], "name": blocked[index]["name"]}
-                    for index in sorted(by_template[best_template], key=lambda i: blocked[i]["name"] or "")
+                    for index in affected_indices
+                ],
+                # Exact engine-grounded quick-review queue: these cards have
+                # one unmatched Oracle line and can close without rediscovery.
+                "one_line_count": len(one_line_indices),
+                "one_line_cards": [
+                    {"oracle_id": blocked[index]["oracle_id"], "name": blocked[index]["name"]}
+                    for index in one_line_indices
                 ],
             }
         )
@@ -256,14 +268,14 @@ def render_document(roadmap: list[dict[str, Any]], stats: dict[str, Any], claim_
         "",
         "## Queue",
         "",
-        "| # | Unlocks | Cumulative | Blocks | Family | Claim key | Template |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| # | Unlocks | Cumulative | Blocks | One-line review | Family | Claim key | Template |",
+        "| --- | --- | --- | --- | ---: | --- | --- | --- |",
     ]
     for entry in roadmap:
         template = entry["template"].replace("|", "\\|")
         lines.append(
             f"| {entry['rank']} | {entry['unlocks']} | {entry['cumulative_unlocks']} |"
-            f" {entry['blocks']} | {entry['family']} |"
+            f" {entry['blocks']} | {entry.get('one_line_count', 0)} | {entry['family']} |"
             f" `{claim_prefix}-{entry['claim_key']}` | `{template}` |"
         )
 
@@ -275,6 +287,7 @@ def render_document(roadmap: list[dict[str, Any]], stats: dict[str, Any], claim_
             f"- Template: `{entry['template']}`",
             f"- Family: {entry['family']}",
             f"- Appears in {entry['blocks']} unfinished cards; it is the last blocker for {entry['unlocks']}.",
+            f"- One-line review candidates: **{entry.get('one_line_count', 0)}**.",
             "",
             "Printed examples:",
             "",
@@ -318,7 +331,7 @@ def main() -> None:
         "card_count": len(profiles),
         "implemented": sum(1 for profile in profiles if profile.get("fullyImplemented")),
         "blocked": len(blocked),
-        "one_line_away": sum(1 for card in blocked if len(card["templates"]) == 1),
+        "one_line_away": sum(1 for card in blocked if len(card["lines"]) == 1),
         "queue_unlocks": roadmap[-1]["cumulative_unlocks"] if roadmap else 0,
         "distinct_templates": len({template for card in blocked for template in card["templates"]}),
         "family_counts": dict(Counter(family_of(template) for card in blocked for template in card["templates"]).most_common()),

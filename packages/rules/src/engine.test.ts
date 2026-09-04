@@ -131,8 +131,9 @@ const DOUBLE_STRIKE_SPELL = () => make({ name: "Twin Edge", type_line: "Instant"
 const TRAMPLE_BOOST = () => make({ name: "Selesnya Memory", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Target creature gets +2/+2 and gains trample until end of turn." });
 const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "{R}: This creature gets +1/+0 until end of turn." });
 const MARROW_BATS = () => make({ name: "Marrow Bats", type_line: "Creature — Bat", mana_cost: "{3}{B}", cmc: 4, power: "2", toughness: "2", oracle_text: "{B}, Pay 4 life: Regenerate Marrow Bats." });
-const COUNTER_DAMAGE = () => make({ name: "Thoctar Memory", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from this creature: This creature deals 1 damage to any target." });
+const COUNTER_DAMAGE = () => make({ name: "Deathbringer Thoctar", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from ~: It deals 1 damage to any target." });
 const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
+const TOOTH_AND_CLAW = () => make({ name: "Tooth and Claw", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Sacrifice two creatures: Create a 3/1 red Beast creature token named Carnivore." });
 const SURVIVAL_CACHE = () => make({ name: "Survival Cache", type_line: "Sorcery", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 2 life. Then if you have more life than an opponent, draw a card." });
 const RAVENOUS_BALOTH = () => make({ name: "Ravenous Baloth", type_line: "Creature — Beast", mana_cost: "{2}{G}{G}", cmc: 4, power: "4", toughness: "4", oracle_text: "Sacrifice a Beast: You gain 4 life." });
 const ARTIFACT_SAC_ALTAR = () => make({ name: "Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact: Draw a card." });
@@ -1718,6 +1719,19 @@ describe("casting", () => {
     }
   });
 
+  it("offers and pays two distinct creature sacrifice costs for Tooth and Claw", () => {
+    let game = readyToCast([], [TOOTH_AND_CLAW(), BEAR(), TRAMPLER()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Tooth and Claw")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.sacrificeIds?.length === 2);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Grizzly Bears", "Big Stomper"]));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Carnivore")).toBe(true);
+  });
+
   it("does not offer the source for an another-artifact sacrifice cost", () => {
     const sourceCard = ANOTHER_ARTIFACT_SAC();
     const profile = profileOf(sourceCard);
@@ -1968,7 +1982,7 @@ describe("casting", () => {
       targetKind: "any"
     });
     let game = readyToCast([], [COUNTER_DAMAGE()], [], [BEAR()]);
-    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Thoctar Memory")!;
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Deathbringer Thoctar")!;
     const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
     game = {
       ...game,

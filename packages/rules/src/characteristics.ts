@@ -92,6 +92,8 @@ export interface ActivatedAbility {
   readonly tapsCreature?: { readonly subtype?: string; readonly mode: "any" | "another" };
   /** Creature chosen as an activation cost, optionally excluding the source. */
   readonly sacrificesCreature?: "any" | "another";
+  /** Multiple creatures chosen as one activation cost, e.g. "Sacrifice two creatures". */
+  readonly sacrificesCreatures?: { readonly amount: number; readonly subtype?: string };
   /** Creature subtype required by the activation cost, e.g. "Sacrifice a Beast". */
   readonly sacrificesCreatureSubtype?: { readonly subtype: string; readonly mode: "any" | "another" };
   readonly sacrificesArtifact?: boolean;
@@ -384,6 +386,7 @@ export type SpellEffect =
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
   | { readonly kind: "damage-any-target-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "damage-controller-equal-hand" }
   | { readonly kind: "damage-active-player-equal-hand" }
@@ -627,7 +630,7 @@ export type TargetKind =
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
- | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
+  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
@@ -1191,7 +1194,12 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // Mana abilities have their own immediate-resolution path (CR 605.1a).
   if (/^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
-  const parsedEffectText = effectText.replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "").trim();
+  const parsedEffectText = effectText
+    .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
+    // Oracle often uses “it” after naming the source in the cost/effect line.
+    // Normalize it to the same source marker used by the shared effect parser.
+    .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
+    .trim();
   const selfUntap = /^Untap ~\.?$/i.test(parsedEffectText);
   // Planeswalker loyalty abilities (CR 606): the cost is a signed loyalty change.
   const loyalty = /^\s*([+\u2212\u2013-])?\s*(\d+)\s*$/.exec(costText);
@@ -1243,9 +1251,10 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     mode: tapCreatureMatch[1]!.toLowerCase() === "another" ? "another" as const : "any" as const,
     ...(tapCreatureMatch[2]!.toLowerCase() === "creature" ? {} : { subtype: tapCreatureMatch[2]! })
   } : undefined;
+  const sacrificeCreatures = /sacrifice\s+(two|three|four|five|\d+)\s+(?:(?:a|an)\s+)?([A-Za-z][A-Za-z'’-]*\s+)?creatures\b/i.exec(costText);
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature\b/i.exec(costText);
   const sacrificeCreatureSubtype = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?([A-Za-z][A-Za-z'’-]*)\b/i.exec(costText);
-  const typedCreature = sacrificeCreatureSubtype && !/^(?:creature|artifact|enchantment|land|noncreature|token|permanent)$/i.test(sacrificeCreatureSubtype[2]!)
+  const typedCreature = !sacrificeCreatures && sacrificeCreatureSubtype && !/^(?:creature|artifact|enchantment|land|noncreature|token|permanent)$/i.test(sacrificeCreatureSubtype[2]!)
     ? sacrificeCreatureSubtype
     : null;
   const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
@@ -1264,6 +1273,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/pay\s+\d+\s+life/gi, "")
     .replace(/sacrifice\s+~/gi, "")
     .replace(/\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/g, "")
+    .replace(/sacrifice\s+(?:two|three|four|five|\d+)\s+(?:(?:a|an)\s+)?(?:[A-Za-z][A-Za-z'’-]*\s+)?creatures\b/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?[A-Za-z][A-Za-z'’-]*\b/gi, (match) => typedCreature ? "" : match)
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
@@ -1278,6 +1288,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     requiresTap,
     sacrificesSelf,
     ...(tapsCreature ? { tapsCreature } : {}),
+    ...(sacrificeCreatures ? { sacrificesCreatures: { amount: toNumber(sacrificeCreatures[1])!, ...(sacrificeCreatures[2] ? { subtype: sacrificeCreatures[2].trim() } : {}) } } : {}),
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
     ...(typedCreature ? { sacrificesCreatureSubtype: { subtype: typedCreature[2]!, mode: typedCreature[1] ? "another" as const : "any" as const } } : {}),
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]!.slice(1).toLowerCase()}` as "Artifact" | "Enchantment" | "Land" } } : {}),

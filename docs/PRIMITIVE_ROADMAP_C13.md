@@ -9,63 +9,174 @@ primitive finishes the most cards next?* A clause that appears in thousands of
 cards but never completes one is correctly ranked low.
 
 - Catalog cards: **341**
-- Fully implemented: **193**
-- Unfinished: **148**, of which **70** are a single line away
-- This queue's 40 entries would finish **40** more cards
+- Fully implemented: **153**
+- Unfinished: **188**, of which **100** are a single line away
+- This queue's 40 entries would finish **44** more cards
 - Scope: **C13**
 
 ## Queue
 
-| # | Unlocks | Cumulative | Blocks | Family | Claim key | Template |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | 1 | 1 | 1 | triggered | `c13-the-beginning-each-end` | `at the beginning of each end step, each player gains control of all nontoken permanents they own` |
-| 2 | 1 | 2 | 1 | triggered | `c13-the-beginning-your-end` | `at the beginning of your end step, you may gain life equal to the power of target creature you control` |
-| 3 | 1 | 3 | 1 | triggered | `c13-the-beginning-your-upkeep` | `at the beginning of your upkeep, choose target nonland permanent you control and up to <n> target nonland permanents you don't control. destroy <n> of them at random` |
-| 4 | 1 | 4 | 1 | other | `c13-beast-spells-you-cast` | `beast spells you cast cost {cost} less to cast` |
-| 5 | 1 | 5 | 1 | modal | `c13-choose-more` | `choose <n> or more -` |
-| 6 | 1 | 6 | 1 | combat-restriction | `c13-creatures-can-attack-you` | `creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` |
-| 7 | 1 | 7 | 1 | keyword-ability | `c13-entwine-cost` | `entwine {cost}` |
-| 8 | 1 | 8 | 1 | keyword-ability | `c13-forecast-cost-reveal-from` | `forecast - {cost}, reveal ~ from your hand: each player draws <n> card` |
-| 9 | 1 | 9 | 1 | keyword-ability | `c13-graft` | `graft <n>` |
-| 10 | 1 | 10 | 1 | replacement | `c13-was-kicked-has-split` | `if ~ was kicked, it has split second` |
-| 11 | 1 | 11 | 1 | other | `c13-landfall-whenever-land-you` | `landfall - whenever <n> land you control enters, you may gain <n> life` |
-| 12 | 1 | 12 | 1 | other | `c13-players-have-maximum-hand` | `players have no maximum hand size` |
-| 13 | 1 | 13 | 1 | activated | `c13-remove-counter-from-deals` | `remove <n> +<n>/+<n> counter from ~: it deals <n> damage to any target` |
-| 14 | 1 | 14 | 1 | other | `c13-return-all-permanents-the` | `return all permanents of the color of your choice to their owners' hands` |
-| 15 | 1 | 15 | 1 | activated | `c13-sacrifice-beast-you-gain` | `sacrifice <n> beast: you gain <n> life` |
-| 16 | 1 | 16 | 1 | token | `c13-sacrifice-creatures-create-red` | `sacrifice <n> creatures: create <n> <n>/<n> red beast creature token named carnivore` |
-| 17 | 1 | 17 | 1 | other | `c13-then-you-have-more` | `then if you have more life than <n> opponent, draw <n> card` |
-| 18 | 1 | 18 | 1 | other | `c13-untap-all-green-and` | `untap all green and/or blue creatures you control during each other player's untap step` |
-| 19 | 1 | 19 | 1 | other | `c13-until-end-turn-creatures` | `until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n>` |
-| 20 | 1 | 20 | 1 | triggered | `c13-when-sharuum-enters-you` | `when sharuum enters, you may return target artifact card from your graveyard to the battlefield` |
-| 21 | 1 | 21 | 1 | triggered | `c13-when-you-cast-create` | `when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it` |
-| 22 | 1 | 22 | 1 | triggered | `c13-when-you-cycle-you` | `when you cycle ~, you may have it deal <n> damage to each creature` |
-| 23 | 1 | 23 | 1 | triggered | `c13-when-you-cycle-you-2` | `when you cycle ~, you may have target creature gain fear until end of turn` |
-| 24 | 1 | 24 | 1 | counters | `c13-when-enters-destroy-all` | `when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way` |
-| 25 | 1 | 25 | 1 | triggered | `c13-when-enters-exile-another` | `when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step` |
-| 26 | 1 | 26 | 1 | triggered | `c13-when-enters-return-target` | `when ~ enters, return target artifact card from your graveyard to your hand. you gain life equal to that card's mana value` |
-| 27 | 1 | 27 | 1 | triggered | `c13-when-enters-return-target-2` | `when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value` |
-| 28 | 1 | 28 | 1 | triggered | `c13-when-enters-sacrifice-unless` | `when ~ enters, sacrifice it unless {cost} was spent to cast it` |
-| 29 | 1 | 29 | 1 | static-continuous | `c13-when-enters-tap-target` | `when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~` |
-| 30 | 1 | 30 | 1 | triggered | `c13-when-enters-target-opponent` | `when ~ enters, target opponent creates <n> <n>/<n> blue faerie creature tokens with flying` |
-| 31 | 1 | 31 | 1 | triggered | `c13-when-enters-you-may` | `when ~ enters, you may return target instant or sorcery card from your graveyard to your hand` |
-| 32 | 1 | 32 | 1 | triggered | `c13-whenever-creature-dies-untap` | `whenever <n> creature dies, untap ~` |
-| 33 | 1 | 33 | 1 | triggered | `c13-whenever-creature-you-control` | `whenever <n> creature you control enters, it deals damage equal to its power to any target` |
-| 34 | 1 | 34 | 1 | triggered | `c13-whenever-creature-you-control-2` | `whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target` |
-| 35 | 1 | 35 | 1 | triggered | `c13-whenever-opponent-draws-card` | `whenever <n> opponent draws <n> card, ~ deals <n> damage to that player` |
-| 36 | 1 | 36 | 1 | triggered | `c13-whenever-player-draws-card` | `whenever <n> player draws <n> card, ~ deals <n> damage to that player` |
-| 37 | 1 | 37 | 1 | triggered | `c13-whenever-spell-ability-causes` | `whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library` |
-| 38 | 1 | 38 | 1 | triggered | `c13-whenever-another-creature-you` | `whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker` |
-| 39 | 1 | 39 | 1 | token | `c13-whenever-another-nontoken-creature` | `whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste` |
-| 40 | 1 | 40 | 1 | triggered | `c13-whenever-you-cast-instant` | `whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy` |
+| # | Unlocks | Cumulative | Blocks | One-line review | Family | Claim key | Template |
+| --- | --- | --- | --- | ---: | --- | --- | --- |
+| 1 | 2 | 2 | 3 | 2 | keyword-ability | `c13-echo-cost` | `echo {cost}` |
+| 2 | 2 | 4 | 2 | 2 | modal | `c13-choose-both` | `choose <n> or both -` |
+| 3 | 2 | 6 | 2 | 2 | triggered | `c13-when-enters-sacrifice-unless` | `when ~ enters, sacrifice it unless you pay {cost}` |
+| 4 | 2 | 8 | 2 | 2 | activated | `c13-cost-remove-storage-counters` | `{cost}, remove <n> storage counters from ~: add <n> mana in any combination of {cost} and/or {cost}` |
+| 5 | 1 | 9 | 1 | 1 | other | `c13-additional-cost-cast-pay` | `as <n> additional cost to cast ~, pay <n> life` |
+| 6 | 1 | 10 | 1 | 1 | static-continuous | `c13-long-your-graveyard-and` | `as long as ~ is in your graveyard and you control <n> island, creatures you control have flying` |
+| 7 | 1 | 11 | 1 | 1 | static-continuous | `c13-long-untapped-creature-would` | `as long as ~ is untapped, if <n> creature would deal combat damage to you, prevent <n> of that damage` |
+| 8 | 1 | 12 | 1 | 1 | triggered | `c13-the-beginning-each-end` | `at the beginning of each end step, each player gains control of all nontoken permanents they own` |
+| 9 | 1 | 13 | 1 | 1 | triggered | `c13-the-beginning-each-upkeep` | `at the beginning of each upkeep, you may tap or untap target permanent` |
+| 10 | 1 | 14 | 1 | 1 | triggered | `c13-the-beginning-your-end` | `at the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control` |
+| 11 | 1 | 15 | 1 | 1 | triggered | `c13-the-beginning-your-end-2` | `at the beginning of your end step, you may gain life equal to the power of target creature you control` |
+| 12 | 1 | 16 | 1 | 1 | triggered | `c13-the-beginning-your-upkeep` | `at the beginning of your upkeep, choose target nonland permanent you control and up to <n> target nonland permanents you don't control. destroy <n> of them at random` |
+| 13 | 1 | 17 | 1 | 1 | triggered | `c13-the-beginning-your-upkeep-2` | `at the beginning of your upkeep, you may exile target artifact or enchantment. if you do, its controller gains control of ~` |
+| 14 | 1 | 18 | 1 | 1 | other | `c13-beast-spells-you-cast` | `beast spells you cast cost {cost} less to cast` |
+| 15 | 1 | 19 | 1 | 1 | other | `c13-blue-spells-and-red` | `blue spells and red spells you cast cost {cost} less to cast` |
+| 16 | 1 | 20 | 1 | 1 | modal | `c13-choose-more` | `choose <n> or more -` |
+| 17 | 1 | 21 | 1 | 1 | other | `c13-creature-spells-you-control` | `creature spells you control with power <n> or greater can't be countered` |
+| 18 | 1 | 22 | 1 | 1 | combat-restriction | `c13-creatures-can-attack-you` | `creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` |
+| 19 | 1 | 23 | 1 | 1 | other | `c13-destroy-target-nonblack-creatures` | `destroy <n> target nonblack creatures` |
+| 20 | 1 | 24 | 1 | 1 | keyword-ability | `c13-entwine-cost` | `entwine {cost}` |
+| 21 | 1 | 25 | 1 | 1 | keyword-ability | `c13-flashback-cost-pay-life` | `flashback-{cost}, pay <n> life` |
+| 22 | 1 | 26 | 1 | 1 | other | `c13-flying-first-strike-vigilance` | `flying, first strike, vigilance, lifelink, protection from red and from green` |
+| 23 | 1 | 27 | 1 | 0 | other | `c13-flying-protection-from-black` | `flying, protection from black` |
+| 24 | 1 | 28 | 1 | 1 | keyword-ability | `c13-forecast-cost-reveal-from` | `forecast - {cost}, reveal ~ from your hand: each player draws <n> card` |
+| 25 | 1 | 29 | 1 | 1 | keyword-ability | `c13-graft` | `graft <n>` |
+| 26 | 1 | 30 | 1 | 1 | replacement | `c13-was-kicked-has-split` | `if ~ was kicked, it has split second` |
+| 27 | 1 | 31 | 1 | 1 | other | `c13-instant-and-sorcery-spells` | `instant and sorcery spells cost {cost} less to cast` |
+| 28 | 1 | 32 | 1 | 1 | other | `c13-landfall-whenever-land-you` | `landfall - whenever <n> land you control enters, you may gain <n> life` |
+| 29 | 1 | 33 | 1 | 1 | pump | `c13-landfall-whenever-land-you-2` | `landfall - whenever <n> land you control enters, ~ gets +<n>/+<n> and gains trample until end of turn` |
+| 30 | 1 | 34 | 1 | 1 | other | `c13-more-than-creatures-can` | `no more than <n> creatures can attack you each combat` |
+| 31 | 1 | 35 | 1 | 1 | other | `c13-players-have-maximum-hand` | `players have no maximum hand size` |
+| 32 | 1 | 36 | 1 | 1 | other | `c13-prevent-all-combat-damage` | `prevent all combat damage that would be dealt to ~` |
+| 33 | 1 | 37 | 1 | 1 | other | `c13-put-target-nonland-permanent` | `put target nonland permanent into its owner's library just beneath the top <n> cards of that library` |
+| 34 | 1 | 38 | 1 | 1 | activated | `c13-remove-counter-from-deals` | `remove <n> +<n>/+<n> counter from ~: it deals <n> damage to any target` |
+| 35 | 1 | 39 | 1 | 1 | other | `c13-return-all-permanents-the` | `return all permanents of the color of your choice to their owners' hands` |
+| 36 | 1 | 40 | 1 | 1 | activated | `c13-sacrifice-beast-you-gain` | `sacrifice <n> beast: you gain <n> life` |
+| 37 | 1 | 41 | 1 | 1 | token | `c13-sacrifice-creatures-create-red` | `sacrifice <n> creatures: create <n> <n>/<n> red beast creature token named carnivore` |
+| 38 | 1 | 42 | 1 | 1 | other | `c13-search-your-library-for` | `search your library for up to <n> basic land cards, reveal those cards, put <n> onto the battlefield tapped and the other into your hand, then shuffle` |
+| 39 | 1 | 43 | 1 | 1 | activated | `c13-tap-untapped-wizard-you` | `tap <n> untapped wizard you control: draw <n> card` |
+| 40 | 1 | 44 | 1 | 1 | other | `c13-then-you-have-more` | `then if you have more life than <n> opponent, draw <n> card` |
 
 ## Work orders
 
-### 1. `c13-the-beginning-each-end` — finishes 1 cards
+### 1. `c13-echo-cost` — finishes 2 cards
+
+- Template: `echo {cost}`
+- Family: keyword-ability
+- Appears in 3 unfinished cards; it is the last blocker for 2.
+- One-line review candidates: **2**.
+
+Printed examples:
+
+- **Raven Familiar** — Echo {2}{U}
+- **Crater Hellion** — Echo {4}{R}{R}
+- **Karmic Guide** — Echo {3}{W}{W}
+
+Cards finished (first 2): Crater Hellion, Raven Familiar.
+
+All affected cards (3): Crater Hellion [2d37c437-0d5c-400d-88ce-10d173b28eda], Karmic Guide [8c31fec9-e4b3-4761-990e-7be38eb05604], Raven Familiar [47aabd9d-0f68-490a-a2ae-5cd9ef689be6]
+
+### 2. `c13-choose-both` — finishes 2 cards
+
+- Template: `choose <n> or both -`
+- Family: modal
+- Appears in 2 unfinished cards; it is the last blocker for 2.
+- One-line review candidates: **2**.
+
+Printed examples:
+
+- **Soul Manipulation** — Choose one or both —
+- **Fissure Vent** — Choose one or both —
+
+Cards finished (first 2): Fissure Vent, Soul Manipulation.
+
+All affected cards (2): Fissure Vent [f5bac25d-72e9-4655-8a04-3646fc10be27], Soul Manipulation [419c2ae1-fec7-4c27-a7a0-99f777abb4de]
+
+### 3. `c13-when-enters-sacrifice-unless` — finishes 2 cards
+
+- Template: `when ~ enters, sacrifice it unless you pay {cost}`
+- Family: triggered
+- Appears in 2 unfinished cards; it is the last blocker for 2.
+- One-line review candidates: **2**.
+
+Printed examples:
+
+- **Rupture Spire** — When ~ enters, sacrifice it unless you pay {1}.
+- **Transguild Promenade** — When ~ enters, sacrifice it unless you pay {1}.
+
+Cards finished (first 2): Rupture Spire, Transguild Promenade.
+
+All affected cards (2): Rupture Spire [7eadffcb-1e15-44c1-b1db-78c71b8ec1ce], Transguild Promenade [98334bfa-c516-4c20-bdc5-9e32e7127adc]
+
+### 4. `c13-cost-remove-storage-counters` — finishes 2 cards
+
+- Template: `{cost}, remove <n> storage counters from ~: add <n> mana in any combination of {cost} and/or {cost}`
+- Family: activated
+- Appears in 2 unfinished cards; it is the last blocker for 2.
+- One-line review candidates: **2**.
+
+Printed examples:
+
+- **Saltcrusted Steppe** — {1}, Remove X storage counters from ~: Add X mana in any combination of {G} and/or {W}.
+- **Molten Slagheap** — {1}, Remove X storage counters from ~: Add X mana in any combination of {B} and/or {R}.
+
+Cards finished (first 2): Molten Slagheap, Saltcrusted Steppe.
+
+All affected cards (2): Molten Slagheap [33587cb2-0fd3-4e4c-bc5e-e7299cc9dab5], Saltcrusted Steppe [021e4165-2f02-4bd4-86ca-cb7bf4c9e23d]
+
+### 5. `c13-additional-cost-cast-pay` — finishes 1 cards
+
+- Template: `as <n> additional cost to cast ~, pay <n> life`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Toxic Deluge** — As an additional cost to cast ~, pay X life.
+
+Cards finished (first 1): Toxic Deluge.
+
+All affected cards (1): Toxic Deluge [afaef788-34d1-460b-b884-9d7ae6ddeb18]
+
+### 6. `c13-long-your-graveyard-and` — finishes 1 cards
+
+- Template: `as long as ~ is in your graveyard and you control <n> island, creatures you control have flying`
+- Family: static-continuous
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Wonder** — As long as ~ is in your graveyard and you control an Island, creatures you control have flying.
+
+Cards finished (first 1): Wonder.
+
+All affected cards (1): Wonder [232284f7-c623-4895-9ab9-8b1a39926830]
+
+### 7. `c13-long-untapped-creature-would` — finishes 1 cards
+
+- Template: `as long as ~ is untapped, if <n> creature would deal combat damage to you, prevent <n> of that damage`
+- Family: static-continuous
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Thunderstaff** — As long as ~ is untapped, if a creature would deal combat damage to you, prevent 1 of that damage.
+
+Cards finished (first 1): Thunderstaff.
+
+All affected cards (1): Thunderstaff [1a88a378-051c-42b4-bd0e-9c40ae8efea6]
+
+### 8. `c13-the-beginning-each-end` — finishes 1 cards
 
 - Template: `at the beginning of each end step, each player gains control of all nontoken permanents they own`
 - Family: triggered
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -75,11 +186,42 @@ Cards finished (first 1): Brooding Saurian.
 
 All affected cards (1): Brooding Saurian [2fb7f844-edaf-43ef-9121-318baf9ec9ce]
 
-### 2. `c13-the-beginning-your-end` — finishes 1 cards
+### 9. `c13-the-beginning-each-upkeep` — finishes 1 cards
+
+- Template: `at the beginning of each upkeep, you may tap or untap target permanent`
+- Family: triggered
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Tidal Force** — At the beginning of each upkeep, you may tap or untap target permanent.
+
+Cards finished (first 1): Tidal Force.
+
+All affected cards (1): Tidal Force [1b25e262-e2df-4768-b55e-1b7b8d3ee993]
+
+### 10. `c13-the-beginning-your-end` — finishes 1 cards
+
+- Template: `at the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control`
+- Family: triggered
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Conjurer's Closet** — At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.
+
+Cards finished (first 1): Conjurer's Closet.
+
+All affected cards (1): Conjurer's Closet [cd1eda60-53e4-44d0-9b2c-7a57395e291f]
+
+### 11. `c13-the-beginning-your-end-2` — finishes 1 cards
 
 - Template: `at the beginning of your end step, you may gain life equal to the power of target creature you control`
 - Family: triggered
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -89,11 +231,12 @@ Cards finished (first 1): Wall of Reverence.
 
 All affected cards (1): Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
 
-### 3. `c13-the-beginning-your-upkeep` — finishes 1 cards
+### 12. `c13-the-beginning-your-upkeep` — finishes 1 cards
 
 - Template: `at the beginning of your upkeep, choose target nonland permanent you control and up to <n> target nonland permanents you don't control. destroy <n> of them at random`
 - Family: triggered
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -103,11 +246,27 @@ Cards finished (first 1): Capricious Efreet.
 
 All affected cards (1): Capricious Efreet [9abd2286-23e9-49cd-be53-39423890f35c]
 
-### 4. `c13-beast-spells-you-cast` — finishes 1 cards
+### 13. `c13-the-beginning-your-upkeep-2` — finishes 1 cards
+
+- Template: `at the beginning of your upkeep, you may exile target artifact or enchantment. if you do, its controller gains control of ~`
+- Family: triggered
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Act of Authority** — At the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of ~.
+
+Cards finished (first 1): Act of Authority.
+
+All affected cards (1): Act of Authority [c12b8e31-5702-4d3c-80c9-56c87e50679d]
+
+### 14. `c13-beast-spells-you-cast` — finishes 1 cards
 
 - Template: `beast spells you cast cost {cost} less to cast`
 - Family: other
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -117,11 +276,27 @@ Cards finished (first 1): Krosan Warchief.
 
 All affected cards (1): Krosan Warchief [88350861-244c-4634-9bc9-e9a79401bd02]
 
-### 5. `c13-choose-more` — finishes 1 cards
+### 15. `c13-blue-spells-and-red` — finishes 1 cards
+
+- Template: `blue spells and red spells you cast cost {cost} less to cast`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Nightscape Familiar** — Blue spells and red spells you cast cost {1} less to cast.
+
+Cards finished (first 1): Nightscape Familiar.
+
+All affected cards (1): Nightscape Familiar [57296ea3-3c0d-49b7-bc08-0d0d8414e9ad]
+
+### 16. `c13-choose-more` — finishes 1 cards
 
 - Template: `choose <n> or more -`
 - Family: modal
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -131,11 +306,27 @@ Cards finished (first 1): Rain of Thorns.
 
 All affected cards (1): Rain of Thorns [363b0504-27bf-40df-96ec-9e3cb1e47588]
 
-### 6. `c13-creatures-can-attack-you` — finishes 1 cards
+### 17. `c13-creature-spells-you-control` — finishes 1 cards
+
+- Template: `creature spells you control with power <n> or greater can't be countered`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Spellbreaker Behemoth** — Creature spells you control with power 5 or greater can't be countered.
+
+Cards finished (first 1): Spellbreaker Behemoth.
+
+All affected cards (1): Spellbreaker Behemoth [cba07472-7212-4411-a9f9-38a48870ad69]
+
+### 18. `c13-creatures-can-attack-you` — finishes 1 cards
 
 - Template: `creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you`
 - Family: combat-restriction
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -145,11 +336,27 @@ Cards finished (first 1): Propaganda.
 
 All affected cards (1): Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 
-### 7. `c13-entwine-cost` — finishes 1 cards
+### 19. `c13-destroy-target-nonblack-creatures` — finishes 1 cards
+
+- Template: `destroy <n> target nonblack creatures`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Reckless Spite** — Destroy two target nonblack creatures.
+
+Cards finished (first 1): Reckless Spite.
+
+All affected cards (1): Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
+
+### 20. `c13-entwine-cost` — finishes 1 cards
 
 - Template: `entwine {cost}`
 - Family: keyword-ability
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -159,11 +366,57 @@ Cards finished (first 1): One Dozen Eyes.
 
 All affected cards (1): One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
 
-### 8. `c13-forecast-cost-reveal-from` — finishes 1 cards
+### 21. `c13-flashback-cost-pay-life` — finishes 1 cards
+
+- Template: `flashback-{cost}, pay <n> life`
+- Family: keyword-ability
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Deep Analysis** — Flashback—{1}{U}, Pay 3 life.
+
+Cards finished (first 1): Deep Analysis.
+
+All affected cards (1): Deep Analysis [579cbd92-797f-4cdf-91ed-fca7a523eae5]
+
+### 22. `c13-flying-first-strike-vigilance` — finishes 1 cards
+
+- Template: `flying, first strike, vigilance, lifelink, protection from red and from green`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Sphinx of the Steel Wind** — Flying, first strike, vigilance, lifelink, protection from red and from green
+
+Cards finished (first 1): Sphinx of the Steel Wind.
+
+All affected cards (1): Sphinx of the Steel Wind [1c96772b-463c-4655-836b-cf6e9dc6319f]
+
+### 23. `c13-flying-protection-from-black` — finishes 1 cards
+
+- Template: `flying, protection from black`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+- **Karmic Guide** — Flying, protection from black
+
+Cards finished (first 1): Karmic Guide.
+
+All affected cards (1): Karmic Guide [8c31fec9-e4b3-4761-990e-7be38eb05604]
+
+### 24. `c13-forecast-cost-reveal-from` — finishes 1 cards
 
 - Template: `forecast - {cost}, reveal ~ from your hand: each player draws <n> card`
 - Family: keyword-ability
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -173,11 +426,12 @@ Cards finished (first 1): Skyscribing.
 
 All affected cards (1): Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
 
-### 9. `c13-graft` — finishes 1 cards
+### 25. `c13-graft` — finishes 1 cards
 
 - Template: `graft <n>`
 - Family: keyword-ability
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -187,11 +441,12 @@ Cards finished (first 1): Llanowar Reborn.
 
 All affected cards (1): Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
 
-### 10. `c13-was-kicked-has-split` — finishes 1 cards
+### 26. `c13-was-kicked-has-split` — finishes 1 cards
 
 - Template: `if ~ was kicked, it has split second`
 - Family: replacement
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -201,11 +456,27 @@ Cards finished (first 1): Molten Disaster.
 
 All affected cards (1): Molten Disaster [21390513-1ed0-48f2-a7fa-020da8f803c0]
 
-### 11. `c13-landfall-whenever-land-you` — finishes 1 cards
+### 27. `c13-instant-and-sorcery-spells` — finishes 1 cards
+
+- Template: `instant and sorcery spells cost {cost} less to cast`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Arcane Melee** — Instant and sorcery spells cost {2} less to cast.
+
+Cards finished (first 1): Arcane Melee.
+
+All affected cards (1): Arcane Melee [9967b292-1239-4aed-b871-72e40d1f3e26]
+
+### 28. `c13-landfall-whenever-land-you` — finishes 1 cards
 
 - Template: `landfall - whenever <n> land you control enters, you may gain <n> life`
 - Family: other
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -215,11 +486,42 @@ Cards finished (first 1): Grazing Gladehart.
 
 All affected cards (1): Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
 
-### 12. `c13-players-have-maximum-hand` — finishes 1 cards
+### 29. `c13-landfall-whenever-land-you-2` — finishes 1 cards
+
+- Template: `landfall - whenever <n> land you control enters, ~ gets +<n>/+<n> and gains trample until end of turn`
+- Family: pump
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Baloth Woodcrasher** — Landfall — Whenever a land you control enters, ~ gets +4/+4 and gains trample until end of turn.
+
+Cards finished (first 1): Baloth Woodcrasher.
+
+All affected cards (1): Baloth Woodcrasher [faaf9975-74df-4e9d-be0c-19a446cd507c]
+
+### 30. `c13-more-than-creatures-can` — finishes 1 cards
+
+- Template: `no more than <n> creatures can attack you each combat`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Crawlspace** — No more than two creatures can attack you each combat.
+
+Cards finished (first 1): Crawlspace.
+
+All affected cards (1): Crawlspace [2296370c-fe34-4df6-92a5-260f1634bede]
+
+### 31. `c13-players-have-maximum-hand` — finishes 1 cards
 
 - Template: `players have no maximum hand size`
 - Family: other
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -229,11 +531,42 @@ Cards finished (first 1): Price of Knowledge.
 
 All affected cards (1): Price of Knowledge [1c586aa7-7a61-464f-abba-b33f9a525f0e]
 
-### 13. `c13-remove-counter-from-deals` — finishes 1 cards
+### 32. `c13-prevent-all-combat-damage` — finishes 1 cards
+
+- Template: `prevent all combat damage that would be dealt to ~`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Guard Gomazoa** — Prevent all combat damage that would be dealt to ~.
+
+Cards finished (first 1): Guard Gomazoa.
+
+All affected cards (1): Guard Gomazoa [7c565975-aebc-4599-ac32-5594c718e2cb]
+
+### 33. `c13-put-target-nonland-permanent` — finishes 1 cards
+
+- Template: `put target nonland permanent into its owner's library just beneath the top <n> cards of that library`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Unexpectedly Absent** — Put target nonland permanent into its owner's library just beneath the top X cards of that library.
+
+Cards finished (first 1): Unexpectedly Absent.
+
+All affected cards (1): Unexpectedly Absent [e8d78a83-c932-4b55-8f75-7094c672c3a9]
+
+### 34. `c13-remove-counter-from-deals` — finishes 1 cards
 
 - Template: `remove <n> +<n>/+<n> counter from ~: it deals <n> damage to any target`
 - Family: activated
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -243,11 +576,12 @@ Cards finished (first 1): Deathbringer Thoctar.
 
 All affected cards (1): Deathbringer Thoctar [2500a811-2435-4915-ac83-9bfe2887621a]
 
-### 14. `c13-return-all-permanents-the` — finishes 1 cards
+### 35. `c13-return-all-permanents-the` — finishes 1 cards
 
 - Template: `return all permanents of the color of your choice to their owners' hands`
 - Family: other
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -257,11 +591,12 @@ Cards finished (first 1): Wash Out.
 
 All affected cards (1): Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
 
-### 15. `c13-sacrifice-beast-you-gain` — finishes 1 cards
+### 36. `c13-sacrifice-beast-you-gain` — finishes 1 cards
 
 - Template: `sacrifice <n> beast: you gain <n> life`
 - Family: activated
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -271,11 +606,12 @@ Cards finished (first 1): Ravenous Baloth.
 
 All affected cards (1): Ravenous Baloth [ee771e66-72f8-480f-9920-92c68ab93c3b]
 
-### 16. `c13-sacrifice-creatures-create-red` — finishes 1 cards
+### 37. `c13-sacrifice-creatures-create-red` — finishes 1 cards
 
 - Template: `sacrifice <n> creatures: create <n> <n>/<n> red beast creature token named carnivore`
 - Family: token
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -285,11 +621,42 @@ Cards finished (first 1): Tooth and Claw.
 
 All affected cards (1): Tooth and Claw [587368eb-068c-44a3-ba8c-5ad0f59f880f]
 
-### 17. `c13-then-you-have-more` — finishes 1 cards
+### 38. `c13-search-your-library-for` — finishes 1 cards
+
+- Template: `search your library for up to <n> basic land cards, reveal those cards, put <n> onto the battlefield tapped and the other into your hand, then shuffle`
+- Family: other
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Cultivate** — Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.
+
+Cards finished (first 1): Cultivate.
+
+All affected cards (1): Cultivate [8b755881-a72d-4e21-a369-d2924eb4585a]
+
+### 39. `c13-tap-untapped-wizard-you` — finishes 1 cards
+
+- Template: `tap <n> untapped wizard you control: draw <n> card`
+- Family: activated
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+- **Azami, Lady of Scrolls** — Tap an untapped Wizard you control: Draw a card.
+
+Cards finished (first 1): Azami, Lady of Scrolls.
+
+All affected cards (1): Azami, Lady of Scrolls [0f8b97fe-3e5e-47c2-9a9d-7f77482aa159]
+
+### 40. `c13-then-you-have-more` — finishes 1 cards
 
 - Template: `then if you have more life than <n> opponent, draw <n> card`
 - Family: other
 - Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
 
 Printed examples:
 
@@ -298,326 +665,4 @@ Printed examples:
 Cards finished (first 1): Survival Cache.
 
 All affected cards (1): Survival Cache [5fb8be5a-3666-4680-84e2-341cb269df07]
-
-### 18. `c13-untap-all-green-and` — finishes 1 cards
-
-- Template: `untap all green and/or blue creatures you control during each other player's untap step`
-- Family: other
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Murkfiend Liege** — Untap all green and/or blue creatures you control during each other player's untap step.
-
-Cards finished (first 1): Murkfiend Liege.
-
-All affected cards (1): Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
-
-### 19. `c13-until-end-turn-creatures` — finishes 1 cards
-
-- Template: `until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n>`
-- Family: other
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Sudden Spoiling** — Until end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2.
-
-Cards finished (first 1): Sudden Spoiling.
-
-All affected cards (1): Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
-
-### 20. `c13-when-sharuum-enters-you` — finishes 1 cards
-
-- Template: `when sharuum enters, you may return target artifact card from your graveyard to the battlefield`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Sharuum the Hegemon** — When Sharuum enters, you may return target artifact card from your graveyard to the battlefield.
-
-Cards finished (first 1): Sharuum the Hegemon.
-
-All affected cards (1): Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
-
-### 21. `c13-when-you-cast-create` — finishes 1 cards
-
-- Template: `when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Prossh, Skyraider of Kher** — When you cast ~, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.
-
-Cards finished (first 1): Prossh, Skyraider of Kher.
-
-All affected cards (1): Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
-
-### 22. `c13-when-you-cycle-you` — finishes 1 cards
-
-- Template: `when you cycle ~, you may have it deal <n> damage to each creature`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Slice and Dice** — When you cycle ~, you may have it deal 1 damage to each creature.
-
-Cards finished (first 1): Slice and Dice.
-
-All affected cards (1): Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
-
-### 23. `c13-when-you-cycle-you-2` — finishes 1 cards
-
-- Template: `when you cycle ~, you may have target creature gain fear until end of turn`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Dirge of Dread** — When you cycle ~, you may have target creature gain fear until end of turn.
-
-Cards finished (first 1): Dirge of Dread.
-
-All affected cards (1): Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
-
-### 24. `c13-when-enters-destroy-all` — finishes 1 cards
-
-- Template: `when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way`
-- Family: counters
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Bane of Progress** — When ~ enters, destroy all artifacts and enchantments. Put a +1/+1 counter on ~ for each permanent destroyed this way.
-
-Cards finished (first 1): Bane of Progress.
-
-All affected cards (1): Bane of Progress [51f9a6cc-8eb2-44ed-a2d9-913ac514ad67]
-
-### 25. `c13-when-enters-exile-another` — finishes 1 cards
-
-- Template: `when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Flickerwisp** — When ~ enters, exile another target permanent. Return that card to the battlefield under its owner's control at the beginning of the next end step.
-
-Cards finished (first 1): Flickerwisp.
-
-All affected cards (1): Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
-
-### 26. `c13-when-enters-return-target` — finishes 1 cards
-
-- Template: `when ~ enters, return target artifact card from your graveyard to your hand. you gain life equal to that card's mana value`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Razor Hippogriff** — When ~ enters, return target artifact card from your graveyard to your hand. You gain life equal to that card's mana value.
-
-Cards finished (first 1): Razor Hippogriff.
-
-All affected cards (1): Razor Hippogriff [d121108e-f0bc-469b-bf94-e5e5308014a2]
-
-### 27. `c13-when-enters-return-target-2` — finishes 1 cards
-
-- Template: `when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Phyrexian Delver** — When ~ enters, return target creature card from your graveyard to the battlefield. You lose life equal to that card's mana value.
-
-Cards finished (first 1): Phyrexian Delver.
-
-All affected cards (1): Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
-
-### 28. `c13-when-enters-sacrifice-unless` — finishes 1 cards
-
-- Template: `when ~ enters, sacrifice it unless {cost} was spent to cast it`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Azorius Herald** — When ~ enters, sacrifice it unless {U} was spent to cast it.
-
-Cards finished (first 1): Azorius Herald.
-
-All affected cards (1): Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
-
-### 29. `c13-when-enters-tap-target` — finishes 1 cards
-
-- Template: `when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~`
-- Family: static-continuous
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Dungeon Geists** — When ~ enters, tap target creature an opponent controls. That creature doesn't untap during its controller's untap step for as long as you control ~.
-
-Cards finished (first 1): Dungeon Geists.
-
-All affected cards (1): Dungeon Geists [ab5ebae2-cd77-4a7d-a93b-8042cd486429]
-
-### 30. `c13-when-enters-target-opponent` — finishes 1 cards
-
-- Template: `when ~ enters, target opponent creates <n> <n>/<n> blue faerie creature tokens with flying`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Hunted Troll** — When ~ enters, target opponent creates four 1/1 blue Faerie creature tokens with flying.
-
-Cards finished (first 1): Hunted Troll.
-
-All affected cards (1): Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
-
-### 31. `c13-when-enters-you-may` — finishes 1 cards
-
-- Template: `when ~ enters, you may return target instant or sorcery card from your graveyard to your hand`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Mnemonic Wall** — When ~ enters, you may return target instant or sorcery card from your graveyard to your hand.
-
-Cards finished (first 1): Mnemonic Wall.
-
-All affected cards (1): Mnemonic Wall [f2933616-211b-4d3f-8064-2be61c26079a]
-
-### 32. `c13-whenever-creature-dies-untap` — finishes 1 cards
-
-- Template: `whenever <n> creature dies, untap ~`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Goblin Sharpshooter** — Whenever a creature dies, untap ~.
-
-Cards finished (first 1): Goblin Sharpshooter.
-
-All affected cards (1): Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
-
-### 33. `c13-whenever-creature-you-control` — finishes 1 cards
-
-- Template: `whenever <n> creature you control enters, it deals damage equal to its power to any target`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Warstorm Surge** — Whenever a creature you control enters, it deals damage equal to its power to any target.
-
-Cards finished (first 1): Warstorm Surge.
-
-All affected cards (1): Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
-
-### 34. `c13-whenever-creature-you-control-2` — finishes 1 cards
-
-- Template: `whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Where Ancients Tread** — Whenever a creature you control with power 5 or greater enters, you may have ~ deal 5 damage to any target.
-
-Cards finished (first 1): Where Ancients Tread.
-
-All affected cards (1): Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
-
-### 35. `c13-whenever-opponent-draws-card` — finishes 1 cards
-
-- Template: `whenever <n> opponent draws <n> card, ~ deals <n> damage to that player`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Nekusar, the Mindrazer** — Whenever an opponent draws a card, ~ deals 1 damage to that player.
-
-Cards finished (first 1): Nekusar, the Mindrazer.
-
-All affected cards (1): Nekusar, the Mindrazer [8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6]
-
-### 36. `c13-whenever-player-draws-card` — finishes 1 cards
-
-- Template: `whenever <n> player draws <n> card, ~ deals <n> damage to that player`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Spiteful Visions** — Whenever a player draws a card, ~ deals 1 damage to that player.
-
-Cards finished (first 1): Spiteful Visions.
-
-All affected cards (1): Spiteful Visions [922cf963-2b1b-43ad-819e-6e49133e6aae]
-
-### 37. `c13-whenever-spell-ability-causes` — finishes 1 cards
-
-- Template: `whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Widespread Panic** — Whenever a spell or ability causes its controller to shuffle their library, that player puts a card from their hand on top of their library.
-
-Cards finished (first 1): Widespread Panic.
-
-All affected cards (1): Widespread Panic [853a3c2b-3d37-453a-8a77-4d90bd3a1cb7]
-
-### 38. `c13-whenever-another-creature-you` — finishes 1 cards
-
-- Template: `whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Stalking Vengeance** — Whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.
-
-Cards finished (first 1): Stalking Vengeance.
-
-All affected cards (1): Stalking Vengeance [5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb]
-
-### 39. `c13-whenever-another-nontoken-creature` — finishes 1 cards
-
-- Template: `whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste`
-- Family: token
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Sek'Kuar, Deathkeeper** — Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.
-
-Cards finished (first 1): Sek'Kuar, Deathkeeper.
-
-All affected cards (1): Sek'Kuar, Deathkeeper [94426127-65c2-435e-ba92-423a3c102061]
-
-### 40. `c13-whenever-you-cast-instant` — finishes 1 cards
-
-- Template: `whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Mirari** — Whenever you cast an instant or sorcery spell, you may pay {3}. If you do, copy that spell. You may choose new targets for the copy.
-
-Cards finished (first 1): Mirari.
-
-All affected cards (1): Mirari [8f6a2fce-719e-4745-80d3-aabce5c9bafa]
 

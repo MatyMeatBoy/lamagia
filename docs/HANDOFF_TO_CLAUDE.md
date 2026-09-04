@@ -1734,3 +1734,60 @@ also queued as one incoming commit and remains outside the integration batch.
 The effect IR now supports “Then if you have more life than an opponent, draw
 N cards” as a reusable conditional draw. It evaluates after preceding effects,
 so Survival Cache gains life before checking the comparison (CR 608.2c).
+
+### Primitive dictionary and mass one-line audit (2026-09-04)
+
+Added `tools/rules/build_primitive_dictionary.py` and the generated
+`docs/PRIMITIVE_DICTIONARY_C13.md`. It indexes common wording such as
+`sacrifice`, `search`, `exile`, `return`, `draw`, `discard`, `counter`,
+`damage`, `token`, triggers and activated abilities against the actual parser
+fields and engine handlers. The sacrifice section explicitly distinguishes
+costs from effects and links typed and multi-permanent candidate selection.
+The generated C13 audit currently reports **205/341 complete**, **136
+unfinished**, and **58 cards one unmatched line away**. Those candidates are
+grouped by normalized blocker and suggested claim, so a worker fixes the shared
+primitive instead of repeating a card-name patch. Run
+`npm run rules:engine:export`, `npm run rules:roadmap:c13`,
+`npm run rules:oracle:plan:c13`, and `npm run rules:dictionary:c13` after each
+accepted batch.
+
+The mass audit closed Deathbringer Thoctar by reusing the activated-ability
+parser's source normalization for Oracle's “It deals...” wording; the scenario
+still exercises counter payment, target legality and stack resolution. This is
+the model for future one-line fixes: only mark a card complete after the fresh
+engine export confirms every line.
+
+### External commit rescue protocol
+
+When worker commits arrive, fetch all refs only at the scheduled ten-minute
+integration check (or on an explicit exception), then inspect each candidate's
+stat, diff and tests. Rescue code and scenarios selectively; never merge a
+stale full tree or generated status file wholesale. Preserve existing parser
+fields and engine handlers, resolve conflicts explicitly, regenerate coverage,
+run the full checks, and record each head as accepted, duplicate, rejected or
+pending with its reason. Accepted incoming work is consolidated into one batch
+commit when the queue reaches eleven or more commits, unless a safety or
+blocking fix requires earlier integration.
+
+### Pages and local match server
+
+GitHub Pages remains a static client and cannot execute Fastify/Socket.IO. The
+local authoritative server is currently healthy at `http://localhost:8787`
+(`GET /health` returned `{"ok":true,"service":"prossh-match-server"}`). Use
+`npm run dev:server` alongside `npm run dev` for AI-battle testing. A public
+AI battle requires a separately deployed match-server origin configured through
+`window.__PROSSH_API_BASE__`; Pages must never treat its HTML fallback as the
+match API.
+
+### Review-first worker queue (2026-09-04)
+
+The C13 worker planner now accepts `data/rules/oracle-effects-c13.json` and
+promotes cards with status `needs-review` before broad primitive work. It also
+tracks the exact engine `one_line_cards` queue, so workers can close cards with
+one unresolved Oracle line first. This is triage only: each change still needs
+the appropriate Comprehensive Rules citation and scenario test. Regenerate with
+`npm run rules:engine:export`, `npm run rules:roadmap:c13`, then
+`npm run rules:oracle:plan:c13`; choose randomly among the highest-priority
+unclaimed jobs and re-check `docs/WORK_CLAIMS.md` immediately before editing.
+The current generated plan reports **16** Oracle needs-review card occurrences
+across its unclaimed C13 jobs and **32** one-line candidates in those jobs.

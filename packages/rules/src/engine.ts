@@ -64,6 +64,15 @@ function matchesSacrificeCreatureCost(permanent: Permanent, ability: ActivatedAb
   return !typed || cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === typed.subtype.toLowerCase());
 }
 
+function combinations<T>(items: readonly T[], amount: number): T[][] {
+  if (amount === 0) return [[]];
+  if (items.length < amount) return [];
+  const first = items[0]!;
+  const rest = items.slice(1);
+  return combinations(rest, amount - 1).map((choice) => [first, ...choice])
+    .concat(combinations(rest, amount));
+}
+
 export interface GameCard extends CardData {
   readonly instance_id: string;
   readonly owner: SeatId;
@@ -420,7 +429,7 @@ export type GameAction =
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[] }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly variableValue?: number }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -4510,18 +4519,29 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       if (opponentsLocked && ["Artifact", "Creature", "Enchantment"].some((type) => profile.types.includes(type as CardType))) continue;
       const check = activatableAbility(state, seat, permanent, ability);
       if (!check.legal) continue;
-      const sacrifices = ability.sacrificesCreature || ability.sacrificesCreatureSubtype
-        ? player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))
-        : ability.sacrificesPermanent
-          ? player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
-            && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id))
-        : [undefined];
+      const sacrificeCandidates = ability.sacrificesCreatures
+        ? player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
+          && (!ability.sacrificesCreatures!.subtype
+            || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.sacrificesCreatures!.subtype!.toLowerCase())))
+        : ability.sacrificesCreature || ability.sacrificesCreatureSubtype
+          ? player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))
+          : ability.sacrificesPermanent
+            ? player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
+              && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id))
+            : [];
+      const hasSacrificeCost = Boolean(ability.sacrificesCreatures || ability.sacrificesCreature || ability.sacrificesCreatureSubtype || ability.sacrificesPermanent);
+      const sacrificeSets: readonly (readonly Permanent[])[] = ability.sacrificesCreatures
+        ? combinations(sacrificeCandidates, ability.sacrificesCreatures!.amount)
+        : hasSacrificeCost ? sacrificeCandidates.map((candidate) => [candidate]) : [[]];
       const discards = ability.discardsCard ? player.hand : [undefined];
       const exiles = ability.exilesGraveyardCard ? player.graveyard : [undefined];
       const tapCreatures = ability.tapsCreature ? tapCostCandidates(state, seat, permanent, ability) : [undefined];
-      for (const sacrifice of sacrifices) for (const tapCreature of tapCreatures) for (const discard of discards) for (const exile of exiles) actions.push({
-        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}), ...(tapCreature ? { tapId: tapCreature.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}), ...(exile ? { exileCardId: exile.instance_id } : {}) },
-        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exile ? ` — Exile ${exile.name}` : ""}`,
+      for (const sacrificeSet of sacrificeSets) for (const tapCreature of tapCreatures) for (const discard of discards) for (const exile of exiles) actions.push({
+        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index,
+          ...(sacrificeSet.length === 1 ? { sacrificeId: sacrificeSet[0]!.instance_id } : {}),
+          ...(sacrificeSet.length > 1 ? { sacrificeIds: sacrificeSet.map((candidate) => candidate.instance_id) } : {}),
+          ...(tapCreature ? { tapId: tapCreature.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}), ...(exile ? { exileCardId: exile.instance_id } : {}) },
+        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exile ? ` — Exile ${exile.name}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         note: ability.text
@@ -4898,6 +4918,12 @@ function activatableAbility(
     const candidates = player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id));
     if (!candidates.length) return { legal: false };
   }
+  if (ability.sacrificesCreatures) {
+    const candidates = player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
+      && (!ability.sacrificesCreatures!.subtype
+        || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.sacrificesCreatures!.subtype!.toLowerCase())));
+    if (candidates.length < ability.sacrificesCreatures!.amount) return { legal: false };
+  }
   if (ability.sacrificesCreatureSubtype && !player.battlefield.some((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))) {
     return { legal: false };
   }
@@ -4964,20 +4990,34 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   // Targets are chosen while the ability is announced, before any cost is paid
   // (rule 601.2c applied to activations through 602.2b).
   let targets: readonly Target[] = action.targets ?? [];
-  let sacrifice: Permanent | undefined;
-  if (ability.sacrificesCreature) {
+  let sacrifices: Permanent[] = [];
+  if (ability.sacrificesCreatures) {
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
+      && (!ability.sacrificesCreatures!.subtype
+        || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.sacrificesCreatures!.subtype!.toLowerCase())));
+    const selectedIds = action.sacrificeIds ?? (action.sacrificeId ? [action.sacrificeId] : []);
+    const selected = selectedIds.map((id) => candidates.find((candidate) => candidate.instance_id === id));
+    if (selected.length !== ability.sacrificesCreatures!.amount || selected.some((candidate) => !candidate)
+      || new Set(selectedIds).size !== selectedIds.length) {
+      throw new Error(`Debes elegir ${ability.sacrificesCreatures!.amount} criaturas válidas para sacrificar.`);
+    }
+    sacrifices = selected as Permanent[];
+  } else if (ability.sacrificesCreature) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id));
-    sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
+    const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error("Debes elegir una criatura para sacrificar.");
+    sacrifices = [sacrifice];
   } else if (ability.sacrificesCreatureSubtype) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id));
-    sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
+    const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesCreatureSubtype.subtype} para sacrificar.`);
+    sacrifices = [sacrifice];
   } else if (ability.sacrificesPermanent) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== source.instance_id));
-    sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
+    const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesPermanent.type.toLowerCase()} para sacrificar.`);
+    sacrifices = [sacrifice];
   }
   let tapCreature: Permanent | undefined;
   if (ability.tapsCreature) {
@@ -5098,7 +5138,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
   let sacrificedPower = 0;
-  if (sacrifice) {
+  for (const sacrifice of sacrifices) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);
     if (!paid) throw new Error("La criatura elegida para sacrificar ya no está en el campo.");
     sacrificedPower = Math.max(0, powerOf(paid, next));
