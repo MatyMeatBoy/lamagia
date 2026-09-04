@@ -403,7 +403,7 @@ export type TargetKind =
   | "any" | "player" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
-  | "nonblack-creature" | "creature-with-flying" | "creature-with-defender" | "creature-with-deathtouch" | "creature-with-lifelink" | "creature-with-menace" | "creature-with-haste" | "creature-with-first-strike" | "creature-with-double-strike" | "creature-with-trample" | "creature-with-vigilance" | "creature-with-indestructible" | "creature-power-at-least-5" | "creature-power-at-most-4" | "creature-toughness-at-least-4" | "creature-toughness-at-most-4" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
+  | "nonblack-creature" | "creature-with-flying" | "creature-with-defender" | "creature-with-deathtouch" | "creature-with-lifelink" | "creature-with-menace" | "creature-with-haste" | "creature-with-first-strike" | "creature-with-double-strike" | "creature-with-trample" | "creature-with-vigilance" | "creature-with-indestructible" | "creature-with-hexproof" | "creature-power-at-least-5" | "creature-power-at-most-4" | "creature-toughness-at-least-4" | "creature-toughness-at-most-4" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
   | "card-in-your-graveyard" | "creature-card-in-your-graveyard" | "artifact-card-in-your-graveyard" | "enchantment-card-in-your-graveyard" | "land-card-in-a-graveyard" | `subtype:${string}` | "none";
   
 
@@ -1267,6 +1267,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature with trample$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-trample" };
   if (/^Destroy target creature with vigilance$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-vigilance" };
   if (/^Destroy target creature with indestructible$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-indestructible" };
+  if (/^Destroy target creature with hexproof$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-hexproof" };
   if (/^Destroy target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };
   if (/^Destroy target creature with toughness 4 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-least-4" };
