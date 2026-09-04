@@ -117,6 +117,7 @@ const GLOBAL_INDESTRUCTIBLE = () => make({
 });
 const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — Goblin", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Creatures you control have haste." });
 const FLYING_LORD = () => make({ name: "Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control have flying." });
+const OTHER_FLYING_LORD = () => make({ name: "Other Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Other creatures you control have flying." });
 const CROSIS_CHARM = () => make({
   name: "Crosis's Charm", type_line: "Instant", mana_cost: "{U}{B}{R}", cmc: 3,
   oracle_text: "Choose one —\n• Return target permanent to its owner's hand.\n• Destroy target nonblack creature. It can't be regenerated.\n• Destroy target artifact."
@@ -783,6 +784,13 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [HASTE_LORD(), BEAR()], { sick: true });
     game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
     expect(legalAttackers(game, 0).map((permanent) => permanent.card.name)).toEqual(expect.arrayContaining(["Haste Memory", "Grizzly Bears"]));
+  });
+
+  it("supports static grants that exclude their source", () => {
+    expect(profileOf(OTHER_FLYING_LORD()).staticKeywordGrants).toEqual([{ scope: "other-creatures-you-control", keyword: "flying" }]);
+    let game = readyToCast([FLYING_REMOVAL()], [FOREST(), FOREST(), FOREST()]);
+    game = putOnBattlefield(game, 0, [OTHER_FLYING_LORD(), BEAR()]);
+    expect(legalTargets(game, 0, "creature-with-flying")).toHaveLength(1);
   });
 
   it("resolves a compound draw-and-life-loss instruction as one effect", () => {
