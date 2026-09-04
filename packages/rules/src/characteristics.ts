@@ -304,6 +304,8 @@ export type SpellEffect =
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string }
+  | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string }
   | { readonly kind: "scry"; readonly amount: number; readonly thenDraw?: number }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-permanents-you-control-keyword"; readonly keyword: EnforcedKeyword }
@@ -1445,6 +1447,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };
+  }
+  if ((match = /^Put a (\+1\/\+1|-1\/-1) counter on target creature for each ([A-Za-z][A-Za-z'’-]*) you control$/i.exec(text))) {
+    return { effect: { kind: "add-counter-target-per-subtype", counter: match[1]!, subtype: match[2]! }, target: "creature" };
+  }
+  if ((match = /^Target creature gets \+X\/\+X until end of turn, where X is the number of ([A-Za-z][A-Za-z'’-]*) you control$/i.exec(text))) {
+    return { effect: { kind: "modify-target-creature-per-subtype", subtype: match[1]! }, target: "creature" };
   }
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on ~$/i.exec(text))) {
     const amount = toNumber(match[1]);
