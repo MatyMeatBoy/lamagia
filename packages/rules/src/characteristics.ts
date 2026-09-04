@@ -248,7 +248,7 @@ export type SpellEffect =
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   | { readonly kind: "damage-controller-equal-hand" }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
-  | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean }
+  | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" }
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
@@ -1091,6 +1091,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-all-creatures", amount, excludeSource: Boolean(match[2]) }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-all-creatures", amount: "X", excludeSource: Boolean(match[2]) }, target: "none" };
   }
+  if ((match = /^~ deals (\w+) damage to each (nonartifact creature|creature without flying)$/i.exec(text))) {
+    const amount = toNumber(match[1]) ?? (match[1]!.toUpperCase() === "X" ? "X" : null);
+    const filter = /nonartifact/i.test(match[2]!) ? "nonartifact" as const : "without-flying" as const;
+    if (amount !== null) return { effect: { kind: "damage-all-creatures", amount, excludeSource: false, filter }, target: "none" };
+  }
   if ((match = /^(All creatures|Creatures you control|Target creature) gets? ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     const power = Number(match[2]);
     const toughness = Number(match[3]);
@@ -1312,7 +1317,9 @@ function recognizeText(text: string): RecognizedText {
     // `targetKind` a spell uses when it is cast.
     const triggered = matchTriggerLine(line);
     if (triggered) {
-      const effectText = triggered.effectText;
+      // Wizards writes the source as "it" once the trigger clause has already
+      // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
+      const effectText = triggered.effectText.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       const optional = /^you\s+may\b/i.test(effectText);
       const recognized = recognizeSentence(optional ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {
