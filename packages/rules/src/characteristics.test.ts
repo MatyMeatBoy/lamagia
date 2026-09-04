@@ -878,4 +878,16 @@ describe("faces and oracle normalisation", () => {
     }));
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("keeps creature-only keyword grants limited to creatures", () => {
+    const profile = cardProfile(card({
+      name: "Aerie Mystics", type_line: "Creature — Bird Wizard", mana_cost: "{3}{G}{U}",
+      oracle_text: "Flying\n{1}{G}{U}: Creatures you control gain shroud until end of turn."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      manaCost: { raw: "{1}{G}{U}" }, targetKind: "none",
+      effect: { kind: "grant-creatures-you-control-keyword", keyword: "shroud" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });

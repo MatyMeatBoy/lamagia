@@ -2308,6 +2308,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }))
       }));
     }
+    case "grant-creatures-you-control-keyword": {
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
+          ? { ...permanent, temporaryKeywords: [...new Set([...(permanent.temporaryKeywords ?? []), effect.keyword])] }
+          : permanent)
+      }));
+    }
     case "overwhelming-stampede": {
       // Creatures you control gain trample and get +X/+X until end of turn,
       // where X is the greatest power among them (CR 613).
