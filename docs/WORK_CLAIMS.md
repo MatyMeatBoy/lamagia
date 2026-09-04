@@ -19,7 +19,7 @@ feature name.
 | --- | --- | --- | --- | --- |
 | `rules-land-search` | Landcycling variants and land-subtype search resolution | `feat/activated-abilities-and-triggers` | merged (`7c7f77c`) | 2026-09-03 |
 | `rules-equipment` | Equip actions, attachment state, and Equipment static bonuses | `codex/c13-equipment-cluster` | merged (`f61a096`) | 2026-09-03 |
-| `rules-c13-reprint-equivalence` | Verify C13 reprints reuse existing oracle-driven rules for Army of the Damned, Command Tower, and Decree of Pain | `codex/c13-equipment-cluster` | merged (`811b41a`) | 2026-09-04 |
+| `rules-c13-reprint-equivalence` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; retain an Army of the Damned ID scenario | `codex/c13-equipment-cluster` | merged (`811b41a`) | 2026-09-04 |
 | `rules-level-up` | Level up costs, level counters, and the three C13 cards: Echo Mage, Hada Spy Patrol, Kazandu Tuskcaller | `codex/c13-equipment-cluster` | merged (`f325052`) | 2026-09-03 |
 | `rules-tap-untap` | Targeted Tap target creature and Untap target permanent effects | `codex/c13-equipment-cluster` | merged (`4fa0290`) | 2026-09-03 |
 | `rules-mill` | Target player mills a bounded number of cards into their graveyard | `codex/c13-equipment-cluster` | merged (`2842700`) | 2026-09-03 |
