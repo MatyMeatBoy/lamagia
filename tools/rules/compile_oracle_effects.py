@@ -206,6 +206,13 @@ def trigger_subject_hint(clause: str) -> str | None:
     return next((subject for subject, pattern in TRIGGER_SUBJECT_PATTERNS if re.search(pattern, clause, re.I)), None)
 
 
+def return_target_hint(clause: str) -> str | None:
+    """Preserve the closed parser's graveyard-return target family."""
+    if re.search(r"\breturn\s+target\s+permanent\s+card\s+from\s+your\s+graveyard\s+to\s+the\s+battlefield\b", clause, re.I):
+        return "permanent-card-in-your-graveyard"
+    return None
+
+
 def classify(clause: str) -> dict[str, Any]:
     lower = clause.lower()
     families = [name for name, pattern in VERB_PATTERNS if re.search(pattern, clause, re.I)]
@@ -223,6 +230,7 @@ def classify(clause: str) -> dict[str, Any]:
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
     operands = operand_hints(clause, target_text, search_criterion)
     trigger_subject = trigger_subject_hint(clause)
+    return_target = return_target_hint(clause)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
         cluster_parts.append("shape:" + cluster_text(clause))
@@ -242,6 +250,8 @@ def classify(clause: str) -> dict[str, Any]:
     cost_actions = operands.get("cost_actions", [])
     if cost_actions:
         cluster_parts.append("cost-actions:" + ",".join(cost_actions))
+    if return_target:
+        cluster_parts.append("return-target:" + return_target)
     if modal:
         cluster_parts.append("modal")
     return {
@@ -255,6 +265,7 @@ def classify(clause: str) -> dict[str, Any]:
         "target_types": target_types,
         "target_zone": target_zone,
         "trigger_subject": trigger_subject,
+        "return_target": return_target,
         "search_criterion": search_criterion,
         "operands": operands,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),

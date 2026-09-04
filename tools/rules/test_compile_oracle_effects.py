@@ -2,7 +2,7 @@
 
 import unittest
 
-from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, classify, cluster_text, effective_worker_count, mana_ability_hint, operand_hints, primitive_cluster_inventory, search_criterion_hint, trigger_subject_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, classify, cluster_text, effective_worker_count, mana_ability_hint, operand_hints, primitive_cluster_inventory, return_target_hint, search_criterion_hint, trigger_subject_hint
 from export_set_coverage import product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, load_blocked_cards, template_of
 from plan_primitive_workers import build_worker_plan
@@ -67,6 +67,11 @@ class OracleCompilerTests(unittest.TestCase):
 
     def test_preserves_player_spell_trigger_subjects(self) -> None:
         self.assertEqual(trigger_subject_hint("Whenever an opponent casts a spell, draw a card."), "opponent")
+
+    def test_preserves_permanent_graveyard_return_target(self) -> None:
+        clause = "Return target permanent card from your graveyard to the battlefield."
+        self.assertEqual(return_target_hint(clause), "permanent-card-in-your-graveyard")
+        self.assertEqual(classify(clause)["return_target"], "permanent-card-in-your-graveyard")
 
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
