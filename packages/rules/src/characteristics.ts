@@ -97,6 +97,8 @@ export interface ActivatedAbility {
   readonly targetKind: TargetKind;
   /** Level up is an activated ability with a sorcery-speed restriction. */
   readonly sorcerySpeed?: boolean;
+  /** Printed restriction that narrows activation to the precombat main phase. */
+  readonly precombatMainOnly?: boolean;
   readonly text: string;
 }
 
@@ -309,6 +311,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
+  | { readonly kind: "return-target-legendary-creature-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-permanent-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-land-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-artifact-card-from-graveyard-to-battlefield" }
@@ -420,7 +423,7 @@ export type TargetKind =
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
   | "nonblack-creature" | "creature-with-flying" | "creature-with-defender" | "creature-with-deathtouch" | "creature-with-lifelink" | "creature-with-menace" | "creature-with-haste" | "creature-with-first-strike" | "creature-with-double-strike" | "creature-with-trample" | "creature-with-vigilance" | "creature-with-indestructible" | "creature-with-hexproof" | "creature-with-shroud" | "creature-with-reach" | "creature-power-at-least-5" | "creature-power-at-most-4" | "creature-toughness-at-least-4" | "creature-toughness-at-most-4" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
-  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | `subtype:${string}` | "none";
+  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | `subtype:${string}` | "none";
   
 
 export interface CardProfile {
@@ -793,10 +796,12 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   if (/^add\b/i.test(effectText.trim())) return null;
   // Loyalty abilities are a separate cost system the engine does not model yet.
   if (/^\s*[+\u2212\u2013-]?\d+\s*:/.test(line)) return null;
-  const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(effectText.trim());
+  const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
+  const parsedEffectText = effectText.replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "").trim();
+  const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
   const recognized = selfPump
     ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
-    : recognizeSentence(effectText);
+    : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 
   const symbols = costText.match(/\{[^}]+\}/g) ?? [];
@@ -840,6 +845,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]!.slice(1).toLowerCase()}` as "Artifact" | "Enchantment" | "Land" } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
+    ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     lifeCost,
     manaCost,
@@ -1329,6 +1335,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
   if (/^Return target creature card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "creature-card-in-your-graveyard" };
   if (/^Return target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
+  if (/^Return target legendary creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-legendary-creature-card-from-graveyard-to-battlefield" }, target: "legendary-creature-card-in-your-graveyard" };
   if (/^Return target permanent card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-your-graveyard" };
   if (/^Return target permanent card from a graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-a-graveyard" };
   if (/^Return target artifact card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "artifact-card-in-your-graveyard" };
