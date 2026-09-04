@@ -59,6 +59,10 @@ export interface ManaAbility {
   readonly lifeCost: number;
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
+  /** Fixed mana cost paid before a variable counter-to-mana ability resolves. */
+  readonly manaCost?: ManaCost;
+  /** Storage-counter abilities produce one mana per removed counter. */
+  readonly variableAmountCounter?: string;
   /** Some mana abilities have a small immediate side effect (CR 605). */
   readonly gainLife?: number;
   /** Static activation restriction such as Temple of the False God. */
@@ -533,11 +537,7 @@ export interface CardProfile {
   readonly cyclingSearches: readonly CyclingSearchAbility[];
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
-<<<<<<< HEAD
   /** Additional life payment bundled into a Flashback cost (CR 118.8). */
-=======
-  /** Additional life payment printed alongside a Flashback mana cost. */
->>>>>>> a3bb0c5 (feat(rules): parse flashback life payments)
   readonly flashbackLifeCost: number;
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
@@ -752,6 +752,20 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
     const requiresTap = /\{T\}/.test(costText);
+    const variableStorage = /^add\s+X\s+mana\s+in\s+any\s+combination\s+of\s+(\{[WUBRGC]\})(?:\s+and\/or\s+(\{[WUBRGC]\}))?\.?$/i.exec(effectText.trim());
+    if (variableStorage && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(costText)) {
+      const manaSymbols = costText.match(/\{[^}]+\}/g) ?? [];
+      const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
+      const leftovers = costText
+        .replace(/\{[^}]+\}/g, "")
+        .replace(/remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i, "")
+        .replace(/[，,\s]/g, "");
+      const colors = [variableStorage[1], variableStorage[2]].filter((symbol): symbol is string => Boolean(symbol)).map((symbol) => symbol.slice(1, -1).toUpperCase() as ManaType);
+      if (!leftovers.length && manaCost && !manaCost.hasVariable && colors.length) {
+        abilities.push({ index: abilities.length, produces: colors, amount: 0, manaCost, variableAmountCounter: "storage", requiresTap: false, lifeCost: 0, text: line.trim() });
+        continue;
+      }
+    }
     const lifeMatch = /pay\s+(\d+)\s+life/i.exec(costText);
     const lifeCost = lifeMatch ? Number(lifeMatch[1]) : 0;
     const counterMatch = /remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+([+\-\w/ ]+?)\s+counters?\s+from\s+~/i.exec(costText);

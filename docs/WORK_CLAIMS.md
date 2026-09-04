@@ -34,6 +34,10 @@ feature name.
 | `c13-typed-tap-cost` | Reusable `Tap an untapped [subtype] you control` activation costs with `any`/`another` selection and server validation; Azami | `codex/c13-equipment-cluster` | merged (`c50a721`) | 2026-09-04 |
 | `c13-druidic-satchel-top-reveal` | Reveal-top-card conditional: create a Saproling for creatures, put lands onto the battlefield, otherwise gain life | `feat/activated-abilities-and-triggers` | merged (`abd93f1`) | 2026-09-04 |
 | `c13-etb-sacrifice-unless-pay` | ETB trigger that sacrifices its source unless its controller pays a fixed mana cost | `feat/activated-abilities-and-triggers` | merged (`51435d3`) | 2026-09-04 |
+| `c13-draw-and-draw-life-reuse` | Reuse draw-only and draw/life compound primitives for Brilliant Plan, Harmonize, Vision Skeins, Deep Analysis and Phyrexian Gargantua | `feat/activated-abilities-and-triggers` | merged (`761c675`) | 2026-09-04 |
+| `c13-baleful-strix-etb` | Baleful Strix ETB draw plus flying/deathtouch through existing primitives | `feat/activated-abilities-and-triggers` | merged (`5b397e8`) | 2026-09-04 |
+| `c13-annihilate-destroy-draw` | Annihilate typed nonblack-creature removal followed by draw, with target legality scenarios | `feat/activated-abilities-and-triggers` | merged (`8d6c17b`) | 2026-09-04 |
+| `c13-storage-mana` | Molten Slagheap and Saltcrusted Steppe storage counters: variable B/R or G/W output after paying {1} | `feat/activated-abilities-and-triggers` | active | 2026-09-04 |
 | `rules-level-up` | Level up costs, level counters, and the three C13 cards: Echo Mage, Hada Spy Patrol, Kazandu Tuskcaller | `codex/c13-equipment-cluster` | merged (`f325052`) | 2026-09-03 |
 | `rules-tap-untap` | Targeted Tap target creature and Untap target permanent effects | `codex/c13-equipment-cluster` | merged (`4fa0290`) | 2026-09-03 |
 | `rules-mill` | Target player mills a bounded number of cards into their graveyard | `codex/c13-equipment-cluster` | merged (`2842700`) | 2026-09-03 |

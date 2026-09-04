@@ -221,6 +221,8 @@ const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", ora
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
+const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
+const C13_SALTCRUSTED_STEPPE = () => make({ name: "Saltcrusted Steppe", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {G} and/or {W}.", produced_mana: ["C", "G", "W"], scryfall_id: "c13-saltcrusted-steppe" });
 const C13_AZAMI = () => make({ name: "Azami, Lady of Scrolls", type_line: "Legendary Creature — Human Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "0", toughness: "2", oracle_text: "Tap an untapped Wizard you control: Draw a card.", scryfall_id: "cafda395-840f-4359-9314-e1cbf137cc66" });
 const AZAMI_WIZARD = () => make({ name: "Library Wizard", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "1" });
 const C13_BRILLIANT_PLAN = () => make({ name: "Brilliant Plan", type_line: "Sorcery", mana_cost: "{4}{U}", cmc: 5, oracle_text: "Draw three cards.", scryfall_id: "4fc6b5a0-9a0f-4934-8a43-a0e5364832ec" });
@@ -1097,6 +1099,28 @@ describe("casting", () => {
     expect(profileOf(C13_HARMONIZE())).toMatchObject({ effects: [{ kind: "draw", amount: 3 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_VISION_SKEINS())).toMatchObject({ effects: [{ kind: "each-player-draw", amount: 2 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_DEEP_ANALYSIS())).toMatchObject({ effects: [{ kind: "draw-target-player", amount: 2 }], targetKind: "player", flashbackCost: { raw: "{1}{U}" }, fullyImplemented: true });
+  });
+
+  it("offers storage-counter mana as variable colour choices", () => {
+    const profile = profileOf(C13_MOLTEN_SLAGHEAP());
+    const storage = profile.manaAbilities.find((ability) => ability.variableAmountCounter === "storage");
+    expect(storage).toMatchObject({ manaCost: { raw: "{1}" }, produces: ["B", "R"] });
+    let game = readyToCast([], [C13_MOLTEN_SLAGHEAP()]);
+    const source = game.players[0]!.battlefield[0]!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+        ? { ...permanent, counters: { storage: 2 } }
+        : permanent)
+    }));
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.variableAmount === 2
+      && entry.action.manaChoices?.join("") === "BR");
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.manaPool).toMatchObject({ B: 1, R: 1 });
+    expect(game.players[0]!.battlefield[0]!.counters.storage).toBe(0);
+    expect(game.players[0]!.battlefield[0]!.tapped).toBe(true);
   });
 
   it("recognizes a reusable typed tap cost", () => {

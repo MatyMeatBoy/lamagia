@@ -1358,3 +1358,21 @@ Current coverage: **180/356 C13 precon cards (50.6%)** and **165/341 unique
 C13 set entries (48.4%)**; global export **8,194/38,711 (21.2%)**. Validation:
 `npm run check` and `npm test` PASS (**402 rules tests**, simulator, **39 Oracle
 Python tests**).
+
+### Integrator checkpoint: C13 draw/ETB reuse + storage mana (2026-09-04)
+
+Integrated the fork's two incoming batches (12 and 11 commits). Draw-only
+primitives now cover Brilliant Plan, Harmonize and Vision Skeins; Flashback
+life costs/actions cover Deep Analysis; ETB draw/keyword reuse covers Baleful
+Strix and the generalized draw/life compound covers Phyrexian Gargantua.
+Annihilate now enforces nonblack-creature targeting before its draw effect.
+
+Added the storage-counter mana primitive for Molten Slagheap and Saltcrusted
+Steppe: activations pay `{1}`, remove a chosen number of storage counters and
+produce every legal B/R or G/W combination. Automatic spell payment does not
+mistake variable storage abilities for free mana sources (CR 106.1, 605.3a).
+
+Current regenerated coverage: **180/356 C13 precon cards (50.6%)** and
+**165/341 unique C13 set entries (48.4%)**; global export **8,196/38,711
+(21.2%)**. Validation: `npm run check` and `npm test` PASS (**415 rules
+tests**, simulator, **39 Oracle Python tests**).
