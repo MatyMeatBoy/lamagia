@@ -243,6 +243,7 @@ export type SpellEffect =
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
@@ -727,7 +728,10 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   if (/^add\b/i.test(effectText.trim())) return null;
   // Loyalty abilities are a separate cost system the engine does not model yet.
   if (/^\s*[+\u2212\u2013-]?\d+\s*:/.test(line)) return null;
-  const recognized = recognizeSentence(effectText);
+  const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(effectText.trim());
+  const recognized = selfPump
+    ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
+    : recognizeSentence(effectText);
   if (!recognized) return null;
 
   const symbols = costText.match(/\{[^}]+\}/g) ?? [];

@@ -64,6 +64,7 @@ const ARTIFACT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Sharuum Memory", type
 const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", type_line: "Sorcery", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Return target enchantment card from your graveyard to your hand." });
 const DOUBLE_STRIKE_SPELL = () => make({ name: "Twin Edge", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Target creature gains double strike until end of turn." });
 const TRAMPLE_BOOST = () => make({ name: "Selesnya Memory", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Target creature gets +2/+2 and gains trample until end of turn." });
+const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "{R}: This creature gets +1/+0 until end of turn." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on top of your library." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
@@ -663,6 +664,16 @@ describe("casting", () => {
     const boosted = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
     expect([powerOf(boosted), toughnessOf(boosted)]).toEqual([4, 4]);
     expect(boosted.temporaryKeywords).toEqual(["trample"]);
+  });
+
+  it("resolves an activated self-pump against its source permanent", () => {
+    const profile = profileOf(INFERNO_PUMP());
+    expect(profile.activatedAbilities[0]).toMatchObject({ manaCost: { raw: "{R}" }, targetKind: "none", effect: { kind: "modify-source-creature", power: 1, toughness: 0 } });
+    let game = readyToCast([], [MOUNTAIN(), INFERNO_PUMP()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Inferno Memory")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+    const boosted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
+    expect([powerOf(boosted), toughnessOf(boosted)]).toEqual([7, 6]);
   });
 
   it("scales token creation from the controller's current land count", () => {
