@@ -2545,6 +2545,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
         || (kind === "permanent-card-in-your-graveyard" && cardProfile(card).isPermanent)
         || (kind === "permanent-card-in-a-graveyard" && cardProfile(card).isPermanent)
         || (kind === "legendary-creature-card-in-your-graveyard" && isCreature(cardProfile(card)) && cardProfile(card).supertypes.some((value) => value.toLowerCase() === "legendary"))
+      )
       .map((card) => ({ kind: "graveyard-card", seat: player.seat, instanceId: card.instance_id }) as Target));
   }
   if (kind === "land-card-in-a-graveyard") {
