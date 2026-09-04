@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, trigger_subject_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, top_card_reveal_hint, trigger_subject_hint
 from export_set_coverage import is_ignored_edition, product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, resolve_claim_prefix, select_profiles, template_of
 from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
@@ -13,6 +13,16 @@ from compile_oracle_effects import return_target_hint
 
 
 class OracleCompilerTests(unittest.TestCase):
+    def test_reuses_top_card_reveal_and_mana_value_operands(self) -> None:
+        reveal = "Whenever this creature deals combat damage to a player, reveal the top card of your library and put that card into your hand."
+        result = classify(reveal)
+        self.assertTrue(top_card_reveal_hint(reveal))
+        self.assertTrue(result["top_card_reveal"])
+        self.assertIn("reveal-top:hand", result["primitive_cluster"])
+        amount = classify("You gain life equal to its mana value.")
+        self.assertTrue(amount["mana_value_dependency"])
+        self.assertIn("amount:mana-value", amount["primitive_cluster"])
+
     def test_preserves_open_subtype_for_steelshapers_gift(self) -> None:
         self.assertEqual(
             search_criterion_hint(

@@ -2195,6 +2195,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (isLand(profile)) return putOntoBattlefield(next, controller, card, false);
       return applyEffect(next, object, { kind: "gain-life", amount: effect.fallbackLife });
     }
+    case "reveal-top-card-to-hand-and-gain-mana-value": {
+      const player = playerAt(state, controller);
+      const card = player.library[0];
+      if (!card) return logged(state, controller, `${player.name} revela la biblioteca vacía.`);
+      let next = withPlayer(state, controller, (current) => ({
+        ...current,
+        library: current.library.slice(1),
+        hand: [...current.hand, card]
+      }));
+      next = logged(next, controller, `${player.name} revela ${card.name} y la pone en su mano.`);
+      const amount = cardProfile(card).manaValue;
+      if (amount <= 0 || playersCantGainLife(next)) return next;
+      next = withPlayer(next, controller, (current) => ({ ...current, life: current.life + amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller,
+        `${playerAt(next, controller).name} gana ${amount} vidas.`);
+    }
     case "create-token": {
       const amount = effect.amount === "lands-you-control"
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length

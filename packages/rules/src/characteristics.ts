@@ -373,6 +373,8 @@ export type SpellEffect =
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control"; readonly token: TokenDefinition }
+  /** Reveals one library card, moves it to hand, then gains its mana value. */
+  | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
   | { readonly kind: "reveal-top-card-conditional"; readonly creatureToken: TokenDefinition; readonly landDestination: "battlefield"; readonly fallbackLife: number }
   | {
       readonly kind: "search-library";
@@ -1004,12 +1006,15 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // duplicate card-text patterns in the activation-cost parser.
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
   const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
+  const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
   const recognized = selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
     ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
     : revealTopConditional
     ? { effect: revealTopConditional, target: "none" as TargetKind }
+    : revealTopToHand
+    ? { effect: revealTopToHand, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 
@@ -1232,6 +1237,12 @@ function parseRevealTopCardConditional(text: string): SpellEffect | null {
   };
 }
 
+function parseRevealTopCardToHandAndGainManaValue(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value\.?$/i.test(normalized)) return null;
+  return { kind: "reveal-top-card-to-hand-and-gain-mana-value" };
+}
+
 /**
  * Recognises the trigger condition of one printed line.
  *
@@ -1434,6 +1445,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^That player draws an additional card$/i.test(text)) {
     return { effect: { kind: "draw-active-player" }, target: "none" };
+  }
+  if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
+    return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };
   }
   if (/^Draw a card for each tapped creature target opponent controls$/i.test(text)) {
     return { effect: { kind: "draw-equal-tapped-creatures" }, target: "opponent" };

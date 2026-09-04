@@ -99,6 +99,14 @@ TRIGGER_SUBJECT_PATTERNS: tuple[tuple[str, str], ...] = (
     ("land-you-control", r"a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?"),
 )
 
+TOP_CARD_TO_HAND_RE = re.compile(r"\breveal the top card of your library\b.*\bput that card into your hand\b", re.I)
+MANA_VALUE_RE = re.compile(r"\bmana value\b", re.I)
+
+
+def top_card_reveal_hint(clause: str) -> bool:
+    """Identify the reusable reveal-top-to-hand operand used by combat triggers."""
+    return bool(TOP_CARD_TO_HAND_RE.search(clause))
+
 
 def mana_ability_hint(line: str) -> dict[str, Any] | None:
     """Extract reusable mana-ability structure without declaring it executable."""
@@ -292,6 +300,8 @@ def classify(clause: str) -> dict[str, Any]:
     cost_text, _ = clause_cost_effect_parts(clause)
     cost_context = "activated-cost" if ACTIVATED_RE.match(clause.strip()) else "additional-cast-cost" if ADDITIONAL_COST_RE.search(clause) else None
     trigger_subject = trigger_subject_hint(clause)
+    top_card_reveal = top_card_reveal_hint(clause)
+    mana_value_dependency = bool(MANA_VALUE_RE.search(clause))
     return_target = return_target_hint(clause)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
@@ -319,6 +329,10 @@ def classify(clause: str) -> dict[str, Any]:
         cluster_parts.append("cost-actions:" + ",".join(cost_actions))
     if return_target:
         cluster_parts.append("return-target:" + return_target)
+    if top_card_reveal:
+        cluster_parts.append("reveal-top:hand")
+    if mana_value_dependency:
+        cluster_parts.append("amount:mana-value")
     if modal:
         cluster_parts.append("modal")
     return {
@@ -334,6 +348,8 @@ def classify(clause: str) -> dict[str, Any]:
         "trigger_subject": trigger_subject,
         "cost_context": cost_context,
         "return_target": return_target,
+        "top_card_reveal": top_card_reveal,
+        "mana_value_dependency": mana_value_dependency,
         "search_criterion": search_criterion,
         "operands": operands,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),
@@ -344,7 +360,7 @@ def classify(clause: str) -> dict[str, Any]:
         "primitive_cluster": "|".join(cluster_parts),
         "keyword_only": keyword_only,
         "known_static": known_static,
-        "candidate": bool(families or kind != "static-or-spell" or keyword_only or known_static),
+        "candidate": bool(families or kind != "static-or-spell" or keyword_only or known_static or top_card_reveal),
     }
 
 

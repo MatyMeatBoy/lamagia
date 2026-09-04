@@ -531,6 +531,19 @@ libraries finish without inventing cards.
 Rules reference: Comprehensive Rules 701.22a–d; official Wizards source:
 `https://magic.wizards.com/en/rules`.
 
+### Reusable top-card reveal and mana-value primitive
+
+`reveal-top-card-to-hand-and-gain-mana-value` handles the shared shape used by
+C13 Augury Adept: reveal exactly one card, move that card to its controller's
+hand, then gain life equal to that card's mana value. The Python Oracle IR now
+retains `reveal-top:hand` and `amount:mana-value` operands, so later cards reuse
+the primitive instead of reparsing the nouns. An empty library reveals nothing;
+life gain remains subject to existing prevention. Scenario coverage includes a
+combat-damage trigger and a four-mana-value revealed card.
+
+Rules reference: Comprehensive Rules 701.16, 608.2c and 119.3; official
+Wizards source: `https://magic.wizards.com/en/rules`.
+
 ### Reusable triggered self-modifier primitive
 
 The parser maps `~ gets +N/+N and gains <keyword> until end of turn` inside a

@@ -525,6 +525,20 @@ describe("effect recognition", () => {
     expect(sphinx.fullyImplemented).toBe(true);
   });
 
+  it("reuses the top-card reveal primitive with a mana-value amount", () => {
+    const profile = cardProfile(card({
+      name: "Augury Adept", type_line: "Creature — Kithkin Wizard", mana_cost: "{1}{W/U}{W/U}", cmc: 3,
+      power: "2", toughness: "2",
+      oracle_text: "Whenever this creature deals combat damage to a player, reveal the top card of your library and put that card into your hand. You gain life equal to its mana value."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "deals-combat-damage-to-player",
+      subject: "self",
+      effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("treats a keyword-only body as fully covered", () => {
     const profile = cardProfile(card({ name: "Serra Angel", type_line: "Creature — Angel", mana_cost: "{3}{W}{W}", oracle_text: "Flying, vigilance", keywords: ["Flying", "Vigilance"], power: "4", toughness: "4" }));
     expect(profile.keywords).toEqual(["flying", "vigilance"]);
