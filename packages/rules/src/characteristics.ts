@@ -1683,6 +1683,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
   }
+  if (/^Each other player discards a card\.\s*You draw a card for each card discarded this way$/i.test(text)) {
+    return { effect: { kind: "syphon-mind" }, target: "none" };
+  }
+  if ((match = /^~ deals X damage to target creature and you gain X life, where X is the number of ([A-Za-z]+)s you control$/i.exec(text))) {
+    return { effect: { kind: "tendrils-of-corruption", subtype: match[1]! }, target: "creature" };
+  }
   if (/^Put target attacking creature on the bottom of its owner's library\. Its controller gains life equal to its toughness$/i.test(text)) {
     return { effect: { kind: "bottom-attacker-controller-gains-toughness" }, target: "attacking-creature" };
   }
@@ -1922,12 +1928,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }, target: "none" };
   }
   // Purely cosmetic trailing clauses do not change the outcome the engine produces.
-  if (/^(It|They) can't be regenerated$/i.test(text)) return null;
+  if (/^(?:It|They|That creature) can't be regenerated$/i.test(text)) return null;
   return null;
 }
 
 function isIgnorableSentence(sentence: string): boolean {
-  return /^(It|They) can't be regenerated\.?$/i.test(sentence.trim());
+  return /^(?:It|They|That creature) can't be regenerated\.?$/i.test(sentence.trim());
 }
 
 function recognizeText(text: string): RecognizedText {
