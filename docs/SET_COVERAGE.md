@@ -282,7 +282,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 | 2012-09-07 | Duel Decks: Izzet vs. Golgari (`DDJ`) | duel-decks | duel-decks-izzet-vs-golgari | other | 78 | 13 | 65 | 16.7% |
 | 2012-10-05 | Return to Ravnica (`RTR`) | expansion | ravnica | main | 254 | 58 | 196 | 22.8% |
 | 2012-10-05 | Return to Ravnica Promos (`PRTR`) | promos | return-to-ravnica | other | 10 | 0 | 10 | 0.0% |
-| 2012-11-02 | Commander's Arsenal (`CM1`) | commander | 2012 | other | 18 | 1 | 17 | 5.6% |
+| 2012-11-02 | Commander's Arsenal (`CM1`) | commander | 2012 | other | 18 | 11 | 7 | 61.1% |
 | 2013-01-01 | Duels of the Planeswalkers 2014 Promos (`PDP14`) | promos | duels-of-the-planeswalkers-2014 | other | 3 | 0 | 3 | 0.0% |
 | 2013-01-01 | Friday Night Magic 2013 (`F13`) | promos | fnm-2013 | other | 12 | 3 | 9 | 25.0% |
 | 2013-01-01 | Judge Gift Cards 2013 (`J13`) | promos | judge-2013 | other | 8 | 0 | 8 | 0.0% |
@@ -4424,7 +4424,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Chrome Host Seedshark — `837c5d0e-0a33-4f9d-ae25-68a687bdf640`
 - [ ] Cloud, Midgar Mercenary — `33d2584b-bf29-4c22-bd45-14ba2fb98c0e`
 - [ ] Cloud, Planet's Champion — `8512bd08-ecba-4e0e-b65c-8209764a65e5`
-- [ ] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
+- [x] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
 - [ ] Crop Rotation — `28b46183-c62f-47b1-9fee-3ba148202cab`
 - [ ] Culling the Weak — `6385fd0d-256d-4400-9319-afa8170024db`
 - [ ] Dark Ritual — `53f7c868-b03e-4fc2-8dcf-a75bbfa3272b`
@@ -5306,7 +5306,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Daraja Griffin — `daa0d720-cac1-487a-93e2-33e18f91f19b`
 - [ ] Dark Privilege — `29f4c69a-ca59-4e9f-a808-87ba85b34f2f`
 - [ ] Death Watch — `6f5b6cba-3b57-4e6a-afa7-0cb62e5cc7d4`
-- [ ] Desertion — `ee3d1f44-e0ca-4ce9-be76-4b675a115156`
+- [x] Desertion — `ee3d1f44-e0ca-4ce9-be76-4b675a115156`
 - [ ] Desolation — `a80c3af8-470e-4e95-9579-cfdf18fbdbfa`
 - [ ] Dormant Volcano — `38ba1956-5505-4a7a-b6af-e75715b1401f`
 - [ ] Dragon Mask — `fce29dd8-23b1-465c-a977-526f716dc8f6`
@@ -10730,7 +10730,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Day of the Dragons — `c4df259a-cdd4-420a-8e3d-7b69da5c9f6f`
 - [ ] Decree of Annihilation — `6679b462-3c90-418c-8727-acd1a61d988b`
 - [ ] Decree of Justice — `67a98359-6f02-4556-ad47-c01b643686d6`
-- [ ] Decree of Pain — `932668fa-d6e3-41c0-ad0c-8e0a00e68d11`
+- [x] Decree of Pain — `932668fa-d6e3-41c0-ad0c-8e0a00e68d11`
 - [ ] Decree of Savagery — `96a6a8d4-6077-470f-984e-b576a24557a2`
 - [ ] Decree of Silence — `920684d0-aef3-4408-a66b-a0c9394c58f4`
 - [ ] Dimensional Breach — `70d4f764-fca1-477a-9b0f-bbfcc1f7dfb1`
@@ -11131,7 +11131,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Dross Harvester — `5520ada0-f173-4b5e-a0b8-a5938a1c0a4b`
 - [ ] Dross Prowler — `a3122c6a-20be-4bb3-ab2f-928143378ea6`
 - [ ] Dross Scorpion — `132786bb-157c-4e2c-8f82-13df6a667448`
-- [ ] Duplicant — `ea86abfa-6cab-4ef0-8463-34136fc25b59`
+- [x] Duplicant — `ea86abfa-6cab-4ef0-8463-34136fc25b59`
 - [ ] Duskworker — `14d85a83-323b-4e42-88bf-71167a8174e3`
 - [ ] Electrostatic Bolt — `6fc26faa-94a8-433f-8863-126c2d2e73b0`
 - [ ] Empyrial Plate — `e95e100e-4886-4bde-825c-017e878ac825`
@@ -22225,7 +22225,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Dreamborn Muse — `68d7f338-c6e7-4372-b41c-901e39e08bde`
 - [ ] Duergar Hedge-Mage — `ecb2fd58-b880-4d9e-93cb-c4d2b28233c9`
 - [ ] Earthquake — `9a40614b-50a3-422c-849e-53c8b7d3d204`
-- [ ] Edric, Spymaster of Trest — `9a1de7e4-9930-4db3-a8f3-d146d0abf38b`
+- [x] Edric, Spymaster of Trest — `9a1de7e4-9930-4db3-a8f3-d146d0abf38b`
 - [ ] Electrolyze — `07b222d7-24f2-4994-9004-ff6672ebe161`
 - [ ] Elvish Aberration — `1d25b831-c1de-4f79-bbb3-1582eda96452`
 - [ ] Eternal Witness — `30b24e8e-3b0e-4d8e-90f3-f66eb7c1858c`
@@ -23964,7 +23964,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 
 ### commander / 2012 · Commander's Arsenal (`CM1`)
 
-- [ ] Chaos Warp — `07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8`
+- [x] Chaos Warp — `07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8`
 - [ ] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
 - [ ] Decree of Pain — `932668fa-d6e3-41c0-ad0c-8e0a00e68d11`
 - [ ] Desertion — `ee3d1f44-e0ca-4ce9-be76-4b675a115156`
@@ -23972,15 +23972,15 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Duplicant — `ea86abfa-6cab-4ef0-8463-34136fc25b59`
 - [ ] Edric, Spymaster of Trest — `9a1de7e4-9930-4db3-a8f3-d146d0abf38b`
 - [ ] Kaalia of the Vast — `cb8d80c9-ed58-4f2d-aa8c-c383370c7f1a`
-- [ ] Loyal Retainers — `55b88d43-ec45-4435-a316-1c8aee249ff0`
+- [x] Loyal Retainers — `55b88d43-ec45-4435-a316-1c8aee249ff0`
 - [ ] Maelstrom Wanderer — `ad9b7fbc-61c8-43ee-a65c-99206fd1e4df`
-- [ ] Mind's Eye — `63fd2a57-7a47-4e07-947c-f4e9da7ee538`
-- [ ] Mirari's Wake — `852657c0-18a4-4b28-b9ae-7728acdb5044`
-- [ ] Rhystic Study — `53236dd7-845a-444c-96d5-f41ed7325d8f`
+- [x] Mind's Eye — `63fd2a57-7a47-4e07-947c-f4e9da7ee538`
+- [x] Mirari's Wake — `852657c0-18a4-4b28-b9ae-7728acdb5044`
+- [x] Rhystic Study — `53236dd7-845a-444c-96d5-f41ed7325d8f`
 - [ ] Scroll Rack — `648bd03d-247e-4d6f-87a9-12a67688cbf5`
 - [ ] Sylvan Library — `92eed395-62ca-4293-882b-8565c40daab5`
 - [ ] The Mimeoplasm — `55123455-d435-46d4-b0cd-0c1614343be2`
-- [ ] Vela the Night-Clad — `185e34f0-60ae-4b07-94ac-96cef11b1604`
+- [x] Vela the Night-Clad — `185e34f0-60ae-4b07-94ac-96cef11b1604`
 
 ### promos / duels-of-the-planeswalkers-2014 · Duels of the Planeswalkers 2014 Promos (`PDP14`)
 
