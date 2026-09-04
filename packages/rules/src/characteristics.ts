@@ -356,6 +356,8 @@ export type SpellEffect =
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
   | { readonly kind: "sacrifice-own-creature-then-draw"; readonly amount: number }
   | { readonly kind: "return-all-your-graveyard-to-hand" }
+  /** Return every creature card that entered your graveyard from the battlefield this turn. */
+  | { readonly kind: "return-creatures-died-this-turn-to-hand" }
   | { readonly kind: "look-put-one-in-hand"; readonly amount: number }
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   | { readonly kind: "oblation"; readonly draw: number }
@@ -2069,6 +2071,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Return a creature card at random from your graveyard to your hand$/i.test(text)) {
     return { effect: { kind: "return-random-creature-from-graveyard-to-hand" }, target: "none" };
+  }
+  if (/^Return to your hand all creature cards that were put into your graveyard from the battlefield this turn$/i.test(text)) {
+    return { effect: { kind: "return-creatures-died-this-turn-to-hand" }, target: "none" };
   }
   if ((match = /^Attacking creatures get ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-all-attacking-creatures", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };

@@ -449,6 +449,11 @@ const DEATH_DRAIN = () => make({
   name: "Grave Pact Acolyte", type_line: "Creature — Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",
   oracle_text: "When Grave Pact Acolyte dies, each opponent loses 2 life."
 });
+const FELL_SHEPHERD = () => make({
+  name: "Fell Shepherd", type_line: "Creature — Demon", mana_cost: "{5}{B}{B}", cmc: 7, power: "8", toughness: "6",
+  oracle_text: "Whenever Fell Shepherd deals combat damage to a player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn.",
+  scryfall_id: "5fd78088-53db-453b-90a3-b8426b0a826e"
+});
 const WATCHER = () => make({
   name: "Mortuary Watcher", type_line: "Creature — Spirit", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
   oracle_text: "Whenever another creature you control dies, you gain 1 life."
@@ -5441,6 +5446,25 @@ describe("combat", () => {
     expect(choice.sourceCard.name).toBe("Edric, Spymaster of Trest");
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     expect(game.players[0]!.hand.length).toBe(beforeHand + 1);
+  });
+
+  it("returns every own creature card that died this turn with Fell Shepherd", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BOLT()]) }));
+    game = putOnBattlefield(game, 0, [FELL_SHEPHERD(), BEAR(), MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears"));
+    game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
+    const shepherd = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Fell Shepherd")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: shepherd.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.sourceCard.name).toBe("Fell Shepherd");
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
   });
 
   it("reveals the top card, puts it into hand, and gains its mana value", () => {
