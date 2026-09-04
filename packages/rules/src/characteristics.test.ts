@@ -311,6 +311,18 @@ describe("scry", () => {
     expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", effect: { kind: "scry", amount: 1 } });
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("maps every numeric Scry amount to the same reusable primitive", () => {
+    for (const amount of [1, 2, 3, 7]) {
+      const profile = cardProfile(card({
+        name: `Test Scry ${amount}`,
+        type_line: "Sorcery",
+        oracle_text: `Scry ${amount}.`
+      }));
+      expect(profile.effects).toEqual([{ kind: "scry", amount }]);
+      expect(profile.fullyImplemented).toBe(true);
+    }
+  });
 });
 
 describe("effect recognition", () => {
