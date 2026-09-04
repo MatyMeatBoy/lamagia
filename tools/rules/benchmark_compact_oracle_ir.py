@@ -65,6 +65,10 @@ def compact_worker_payload(compact: dict[str, Any]) -> dict[str, Any]:
 
 
 def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
+    # Materialize once: callers may provide a generator.  The old code first
+    # consumed it while building the legacy payload and then benchmarked an
+    # empty compact payload.
+    cards = list(cards)
     rows = unresolved(cards)
     compact = build_compact_ir(card for card in cards)
     old = legacy_payload(rows)
@@ -80,6 +84,28 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
     new_refs = sum(len(card["program"]) for card in compact["cards"])
     if old_refs != new_refs:
         raise AssertionError("compact review payload changed clause count")
+
+    # Counts are necessary but insufficient.  A compact transformation must
+    # preserve clause order and the exact primitive identity plus every
+    # structured operand (target, zone, type, amount, cost, timing, etc.).
+    old_signatures = {
+        card["oracle_id"]: [
+            (primitive_key(row["clause"]), json.dumps(operands(row["clause"]), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+            for row in rows
+            if str(row["card"].get("oracle_id") or "") == card["oracle_id"]
+        ]
+        for card in old["cards"]
+    }
+    key_by_symbol = {item["symbol"]: item["key"] for item in compact["primitives"]}
+    new_signatures = {
+        card["oracle_id"]: [
+            (key_by_symbol[item["primitive"]], json.dumps(item["operands"], ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+            for item in card["program"]
+        ]
+        for card in compact["cards"]
+    }
+    if old_signatures != new_signatures:
+        raise AssertionError("compact review payload changed primitive identity or operands")
     return {
         "format": "prossh-oracle-compression-benchmark/v1",
         "review_cards": len(old["cards"]),
@@ -94,6 +120,7 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
         "recommended_workflow": "compact-payload" if reduction > 0 else "legacy-payload-with-compositional-hints",
         "exact_primitive_reuse_ratio": compact["reuse_ratio"],
         "identity_and_clause_checks": "PASS",
+        "identity_and_operand_checks": "PASS",
     }
 
 

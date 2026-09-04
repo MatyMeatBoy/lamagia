@@ -21,8 +21,8 @@ Coverage numbers have two deliberate units:
 - **Commander 2014:** 195 / 322 unique cards (60.6%), 127 pending.
 - **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
   component references; 99.9% are reused across clauses. The full-catalog
-  benchmark reduces worker context by 5.0% while preserving exact identities
-  and clause counts. This is scheduling
+  benchmark reduces worker context by 5.0% while preserving exact identities,
+  clause order, primitive keys, and operands. This is scheduling
   compression only: it does not mark a card implemented.
 - **Batch policy:** C13 currently benchmarks at -22.1% because of fixed
   dictionary overhead, so its workers receive exact Oracle text plus atom

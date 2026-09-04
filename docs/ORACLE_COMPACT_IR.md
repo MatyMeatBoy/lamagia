@@ -47,7 +47,12 @@ python -m unittest tools/rules/test_compact_oracle_ir.py -v
 ```
 
 The benchmark compares the old repeated-clause worker payload with the new
-short-reference payload and fails if card identities or clause counts change.
+short-reference payload and fails if card identities, clause order, exact
+primitive keys, or structured operands change. This is important: preserving
+only counts could silently turn (for example) a battlefield target into a
+graveyard target while still reporting `PASS`. The comparison also
+materializes its input once, so generator-based callers cannot accidentally
+benchmark an empty compact payload.
 On the full current catalog it reports 22,210 clause references, 9,745 exact
 shapes, 47 compositional atoms, 99.9% atom reuse, and a 5.0% worker-context
 byte reduction, so the compact payload is recommended there. The current C13

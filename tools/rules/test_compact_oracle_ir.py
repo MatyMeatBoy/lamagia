@@ -71,9 +71,16 @@ class CompactOracleIrTests(unittest.TestCase):
     def test_legacy_comparison_preserves_identity_and_clause_count(self) -> None:
         result = compare([card("a", "One", "Draw a card."), card("b", "Two", "Draw two cards.", amount=2)])
         self.assertEqual(result["identity_and_clause_checks"], "PASS")
+        self.assertEqual(result["identity_and_operand_checks"], "PASS")
         self.assertEqual(result["review_cards"], 2)
         self.assertEqual(result["clause_references"], 2)
         self.assertEqual(result["recommended_workflow"], "legacy-payload-with-compositional-hints")
+
+    def test_comparison_accepts_single_pass_iterators(self) -> None:
+        result = compare(iter([card("a", "One", "Draw a card.")]))
+        self.assertEqual(result["review_cards"], 1)
+        self.assertEqual(result["clause_references"], 1)
+        self.assertEqual(result["identity_and_operand_checks"], "PASS")
 
     def test_solved_clauses_do_not_enter_the_dictionary(self) -> None:
         solved = card("a", "Solved", "Draw a card.")

@@ -51,8 +51,8 @@ For a comparison against the legacy repeated-text workflow, run
 `npm run rules:oracle:benchmark:compact` (or pass a set-specific Oracle IR).
 Use the emitted `recommended_workflow`: adopt the compact payload only when
 the measured reduction is positive; otherwise keep legacy card text and use
-the compositional atoms as navigation hints. In both modes identity and
-clause-count checks must report `PASS`.
+the compositional atoms as navigation hints. In both modes the identity,
+clause-order, primitive-key, and exact-operand checks must report `PASS`.
 For work outside C13, use the same generated index with `npm run
 rules:dictionary`.
 The worker plan is review-first: jobs containing Oracle `needs-review` cards

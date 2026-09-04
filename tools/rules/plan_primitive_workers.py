@@ -375,8 +375,13 @@ def main() -> None:
         if not args.benchmark.exists():
             raise SystemExit(f"Benchmark not found: {args.benchmark}. Run the matching benchmark first.")
         benchmark = json.loads(args.benchmark.read_text(encoding="utf-8"))
-        if benchmark.get("identity_and_clause_checks") != "PASS":
-            raise SystemExit("Benchmark identity_and_clause_checks must be PASS before scheduling workers.")
+        if (
+            benchmark.get("identity_and_clause_checks") != "PASS"
+            or benchmark.get("identity_and_operand_checks") != "PASS"
+        ):
+            raise SystemExit(
+                "Benchmark identity and exact operand checks must be PASS before scheduling workers."
+            )
         review_payload_mode = str(benchmark.get("recommended_workflow") or review_payload_mode)
     plan = build_worker_plan(
         payload.get("roadmap") or payload.get("clusters") or [],
