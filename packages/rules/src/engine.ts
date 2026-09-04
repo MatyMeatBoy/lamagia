@@ -178,6 +178,7 @@ export type GameEvent =
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard }
   | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
 
@@ -239,6 +240,7 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       /** Mana cost that must be paid to accept ("you may pay {cost}. If you do"). */
       readonly payCost?: ManaCost;
+      readonly manaCost?: ManaCost;
     }
   | {
       /**
@@ -803,6 +805,7 @@ function drawCards(state: GameState, seat: SeatId, amount: number): GameState {
       return next;
     }
     next = withPlayer(next, seat, (current) => ({ ...current, library: current.library.slice(1), hand: [...current.hand, card] }));
+    next = raiseEvent(next, { kind: "card-drawn", seat, card });
   }
   const player = playerAt(next, seat);
   if (amount > 0 && !player.drewFromEmptyLibrary) next = logged(next, seat, `${player.name} roba ${amount === 1 ? "una carta" : `${amount} cartas`}.`);
@@ -1000,6 +1003,10 @@ function triggerMatches(
       && event.card.instance_id === watcher.instanceId;
   }
 
+  if (event.kind === "card-drawn") {
+    return definition.subject === "opponent" && event.seat !== watcher.controller;
+  }
+
   if (event.kind === "life-gained" || event.kind === "life-lost") {
     return subject === "you" && event.seat === watcher.controller;
   }
@@ -1041,6 +1048,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "becomes-tapped": return `${object!.card.name} se gira`;
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
     case "card-cycled": return `${playerAt(state, event.controller).name} cicla ${event.card.name}`;
+    case "card-drawn": return `${playerAt(state, event.seat).name} roba una carta`;
     case "life-gained": return `${playerAt(state, event.seat).name} gana ${event.amount} vidas`;
     case "life-lost": return `${playerAt(state, event.seat).name} pierde ${event.amount} vidas`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
@@ -2027,7 +2035,8 @@ function resolveTop(state: GameState): GameState {
           sourceId: object.trigger.id,
           triggerEffect: object.trigger.definition.effect,
           sourceCard: object.trigger.sourceCard,
-          ...(object.trigger.definition.payCost ? { payCost: object.trigger.definition.payCost } : {})
+          ...(object.trigger.definition.payCost ? { payCost: object.trigger.definition.payCost } : {}),
+          ...(object.trigger.definition.manaCost ? { manaCost: object.trigger.definition.manaCost } : {})
         }
       };
     }
@@ -2585,11 +2594,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (state.pendingChoice.seat !== seat) return actions;
     const choice = state.pendingChoice;
     if (choice.type === "optional-trigger") {
-      const canPay = !choice.payCost || !choice.payCost.symbols.length || Boolean(planManaPayment(choice.payCost, player));
+      const optionalCost = choice.payCost ?? choice.manaCost;
+      const canPay = !optionalCost || !optionalCost.symbols.length || Boolean(planManaPayment(optionalCost, player));
       if (canPay) {
         actions.push({
           action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true },
-          label: choice.payCost?.symbols.length ? `Sí, pagar ${choice.payCost.raw}` : "Sí, resolver habilidad",
+          label: optionalCost?.symbols.length ? `Sí, pagar ${optionalCost.raw}` : "Sí, resolver habilidad",
           note: "La habilidad opcional se resuelve ahora."
         });
       }
@@ -3391,14 +3401,15 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
   if (choice.sourceId !== action.sourceId) throw new Error("Esa elección de trigger ya no está pendiente.");
   let next: GameState = { ...state, pendingChoice: null };
   if (!action.accept) return logged(next, seat, `${playerAt(state, seat).name} no realiza la habilidad opcional de ${choice.sourceCard.name}.`);
-  if (choice.payCost && choice.payCost.symbols.length) {
-    const plan = planManaPayment(choice.payCost, playerAt(next, seat));
-    if (!plan) throw new Error(`No puedes pagar ${choice.payCost.raw} por ${choice.sourceCard.name}.`);
+  const optionalCost = choice.payCost ?? choice.manaCost;
+  if (optionalCost && optionalCost.symbols.length) {
+    const plan = planManaPayment(optionalCost, playerAt(next, seat));
+    if (!plan) throw new Error(`No puedes pagar ${optionalCost.raw} por ${choice.sourceCard.name}.`);
     next = applyManaPlan(next, seat, plan);
-    const paid = payCost(choice.payCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
-    if (!paid) throw new Error(`No se pudo pagar ${choice.payCost.raw}.`);
+    const paid = payCost(optionalCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+    if (!paid) throw new Error(`No se pudo pagar ${optionalCost.raw}.`);
     next = withPlayer(next, seat, (current) => ({ ...current, manaPool: paid.remaining, life: current.life - paid.lifePaid }));
-    next = logged(next, seat, `${playerAt(next, seat).name} paga ${choice.payCost.raw} por ${choice.sourceCard.name}.`);
+    next = logged(next, seat, `${playerAt(next, seat).name} paga ${optionalCost.raw} por ${choice.sourceCard.name}.`);
   }
   const source: StackObject = {
     id: choice.sourceId,
