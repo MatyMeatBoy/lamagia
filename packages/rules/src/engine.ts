@@ -1409,6 +1409,26 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         hand: [...player.hand, object.card]
       }));
     }
+    case "destroy-all-then-reanimate-one": {
+      const doomed = allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card)));
+      if (!doomed.length) return state;
+      let next = state;
+      for (const permanent of doomed) {
+        const live = findPermanent(next, permanent.instance_id);
+        if (live) next = destroyPermanent(next, live);
+      }
+      // Deterministic pick: the highest mana value creature destroyed this way.
+      const graveyards = doomed.map((permanent) => ({ permanent, inGraveyard: playerAt(next, permanent.card.owner).graveyard.some((card) => card.instance_id === permanent.card.instance_id) }));
+      const candidates = graveyards.filter((entry) => entry.inGraveyard).map((entry) => entry.permanent);
+      if (!candidates.length) return logged(next, controller, `${sourceName} destruye todas las criaturas.`);
+      const chosen = [...candidates].sort((a, b) => cardProfile(b.card).manaValue - cardProfile(a.card).manaValue)[0]!;
+      next = withPlayer(next, chosen.card.owner, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((card) => card.instance_id !== chosen.card.instance_id)
+      }));
+      next = putOntoBattlefield(next, controller, chosen.card, false);
+      return logged(next, controller, `${sourceName} destruye todas las criaturas y regresa ${chosen.card.name} bajo tu control.`);
+    }
     case "shuffle-source-into-library": {
       // "When ~ is put into a graveyard from anywhere, shuffle it into its
       // owner's library" (Serra Avatar). By the time this resolves the card

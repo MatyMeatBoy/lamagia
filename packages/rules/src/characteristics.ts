@@ -2103,6 +2103,13 @@ function recognizeText(text: string): RecognizedText {
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
     };
   }
+  // Necromantic Selection: destroy all creatures, reanimate one of them under your control, then exile self.
+  if (/^Destroy all creatures, then return a creature card put into a graveyard this way to the battlefield under your control\.\s*It'?s a black Zombie in addition to its other colors and types\.\s*Exile ~\.$/i.test(joined)) {
+    return {
+      effects: [{ kind: "destroy-all-then-reanimate-one" }, { kind: "exile-self" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
   // Martial Coup: "Create X 1/1 white Soldier creature tokens. If X is 5 or more, destroy all other creatures."
   const martialCoup = /^Create X (.+? tokens)\.\s*If X is (\d+) or more, destroy all other creatures\.$/i.exec(joined);
   if (martialCoup) {
