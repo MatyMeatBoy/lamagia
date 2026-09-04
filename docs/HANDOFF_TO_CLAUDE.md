@@ -1,6 +1,6 @@
 # lamagia — implementation handoff
 
-**Read this before changing the project.** It is an honest snapshot of the working tree as of 2026-09-03, separating what is implemented and verified from what is still product intent. Do not present anything below the "Truth boundaries" line as working.
+**Read this before changing the project.** It is an honest snapshot of the working tree as of 2026-09-04, separating what is implemented and verified from what is still product intent. Do not present anything below the "Truth boundaries" line as working.
 
 Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
@@ -801,3 +801,24 @@ Latest validation: `npm run check` PASS; `npm test` PASS (213 rules tests,
 simulator and 24 Python tests); `npm run simulate:engine` PASS (200 games,
 160 finished, 0 invariant/projection failures). The engine exports 7,284 fully
 implemented catalog cards; C13 is 141/356 (215 pending).
+
+### Fork integration checkpoint: 2026-09-04
+
+The C13 fork exception batch was integrated through the latest available
+commits. It adds reusable counted effects, keyword-aware target filters,
+continuous static keyword/P+T layers, reach/flying-only sweeps, and
+planeswalker/battle counting. Duplicate claims were collapsed into grouped
+rows in `docs/WORK_CLAIMS.md`; commits with equivalent fixes were skipped after
+review. No incoming commit identified itself as Hermes/Nemotron; the visible
+author metadata was `MatyMeatBoy`.
+
+Verified after integration: `npm run check` PASS; `npm test` PASS (273 rules
+tests, simulator and Oracle compiler tests); C13 is **150/356** implemented
+and the engine export is **7,540/38,711** fully implemented cards. The current
+set map reports **19.4%** across 708 editions.
+
+The Pages workflow and refreshed `site/coverage.json` were pushed to
+`feat/activated-abilities-and-triggers`. Pages is not yet publicly reachable:
+the repository/API session still returns 404 for the workflow/repository, so
+activation or visibility must be completed in GitHub settings before a live
+URL can be claimed.
