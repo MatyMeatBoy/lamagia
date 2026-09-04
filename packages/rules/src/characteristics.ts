@@ -533,7 +533,11 @@ export interface CardProfile {
   readonly cyclingSearches: readonly CyclingSearchAbility[];
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
+<<<<<<< HEAD
   /** Additional life payment bundled into a Flashback cost (CR 118.8). */
+=======
+  /** Additional life payment printed alongside a Flashback mana cost. */
+>>>>>>> a3bb0c5 (feat(rules): parse flashback life payments)
   readonly flashbackLifeCost: number;
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
@@ -901,24 +905,24 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
   return null;
 }
 
-function parseFlashbackCost(text: string): ManaCost | null {
+function parseFlashbackDetails(text: string): { cost: ManaCost; lifeCost: number } | null {
   for (const line of text.split("\n")) {
-    const match = /^flashback(?:\s+|\s*—\s*)(.+)$/i.exec(line.trim().replace(/\.$/, ""));
+    const match = /^flashback(?:\s+|[—–-]\s*)(.+)$/i.exec(line.trim().replace(/\.$/, ""));
     if (!match) continue;
-    const manaText = match[1]!.split(/,\s*pay\s+\d+\s+life\b/i, 1)[0]!.trim();
-    const cost = parseManaCost(manaText);
-    if (cost && !cost.hasVariable) return cost;
+    const costMatch = /^((?:\{[^}]+\})+)(?:,\s*pay\s+(\d+)\s+life)?/i.exec(match[1]!.trim());
+    if (!costMatch) continue;
+    const cost = parseManaCost(costMatch[1]!.trim());
+    if (cost && !cost.hasVariable) return { cost, lifeCost: Number(costMatch[2] ?? 0) };
   }
   return null;
 }
 
+function parseFlashbackCost(text: string): ManaCost | null {
+  return parseFlashbackDetails(text)?.cost ?? null;
+}
+
 function parseFlashbackLifeCost(text: string): number {
-  for (const line of text.split("\n")) {
-    if (!/^flashback(?:\s+|\s*—\s*)/i.test(line.trim())) continue;
-    const match = /,\s*pay\s+(\d+)\s+life\b/i.exec(line);
-    if (match) return Number(match[1]);
-  }
-  return 0;
+  return parseFlashbackDetails(text)?.lifeCost ?? 0;
 }
 
 function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {

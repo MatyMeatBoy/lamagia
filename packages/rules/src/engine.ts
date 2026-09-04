@@ -2869,8 +2869,9 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   const cost = flashback ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
-  const lifeCost = flashback ? profile.flashbackLifeCost : 0;
+  const flashbackLifeCost = flashback ? profile.flashbackLifeCost : 0;
   if (flashback && (profile.isPermanent || !profile.flashbackCost)) return { legal: false };
+  if (flashback && flashbackLifeCost > player.life) return { legal: false };
   if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
   if (!flashback && kicked && !profile.kickerCost) return { legal: false };
   if (!flashback && evoked && !profile.evokeCost) return { legal: false };
@@ -2880,7 +2881,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
+  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost: flashbackLifeCost });
   if (!plan) return { legal: false };
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -3728,7 +3729,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   next = withPlayer(next, seat, (current) => ({
     ...current,
     manaPool: payment.remaining,
-    life: current.life - payment.lifePaid,
+    life: current.life - payment.lifePaid - flashbackLifeCost,
     hand: fromHand ? current.hand.filter((candidate) => candidate.instance_id !== card.instance_id) : current.hand,
     graveyard: fromYard ? current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id) : current.graveyard,
     commandZone: fromCommand ? current.commandZone.filter((candidate) => candidate.instance_id !== card.instance_id) : current.commandZone,
