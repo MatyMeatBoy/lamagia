@@ -2134,6 +2134,24 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("lets Goblin Bombardment target a creature and applies lethal damage", () => {
+    let game = readyToCast([], [GOBLIN_BOMBARDMENT(), BEAR()], [], [DEATHTOUCHER()]);
+    const bombardment = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Bombardment")!;
+    const sacrifice = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Tiny Viper")!;
+    game = applyAction(game, 0, {
+      type: "activate",
+      sourceId: bombardment.instance_id,
+      abilityIndex: 0,
+      sacrificeId: sacrifice.instance_id,
+      targets: [{ kind: "permanent", instanceId: target.instance_id }]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0
+      && state.players[1]!.graveyard.some((card) => card.name === "Tiny Viper"));
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
+  });
+
   it("does not offer Fires of Yavimaya without both colored mana sources", () => {
     const game = readyToCast([], [FIRES_OF_YAVIMAYA(), MOUNTAIN(), BEAR()]);
     const fires = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Fires of Yavimaya")!;
