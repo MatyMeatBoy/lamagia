@@ -18,6 +18,24 @@ Use this contract when adding rules to **La Magia**. Read `AGENTS.md`,
 - Cite the applicable official Comprehensive Rules number in the test or
   handoff. Do not copy XMage, Forge, Arena, Scryfall, or Wizards code/assets.
 
+## Generate the next task
+
+Do not choose cards by name or by an old status count. Refresh the engine-first
+queue, then claim one generated cluster:
+
+```text
+npm run rules:engine:export
+npm run rules:roadmap:c13
+npm run rules:oracle:plan:c13
+```
+
+Read `docs/PRIMITIVE_ROADMAP_C13.md` and `docs/PRIMITIVE_WORKERS_C13.md`.
+The roadmap ranks work by cards actually closed (last-blocker wins), while the
+worker plan co-locates overlapping `oracle_id`s and assigns disjoint primitives
+to five workers within the 2 GB budget. The raw Oracle IR command
+(`npm run rules:oracle:c13`) is useful for inspecting wording, but the engine
+roadmap is authoritative for what still needs implementation.
+
 ## Definition of done
 
 Add scenario tests before implementation when the change affects the engine.
