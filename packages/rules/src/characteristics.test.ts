@@ -866,4 +866,16 @@ describe("faces and oracle normalisation", () => {
     }));
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("recognises proportional life-gain triggers", () => {
+    const profile = cardProfile(card({
+      name: "Sanguine Bond", type_line: "Enchantment", mana_cost: "{3}{B}{B}",
+      oracle_text: "Whenever you gain life, target opponent loses that much life."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "life-gained", subject: "you", targetKind: "opponent",
+      effect: { kind: "lose-life-target-event-amount" }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });

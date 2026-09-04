@@ -207,6 +207,8 @@ export interface TriggerInstance {
   readonly eventController?: SeatId;
   /** Permanent involved in the event, used by effects referring to "that creature". */
   readonly eventPermanentId?: string;
+  /** Amount carried by life-gain/loss events for proportional triggers. */
+  readonly eventAmount?: number;
 }
 
 /** A delayed trigger created by a resolving spell (CR 603.7). */
@@ -1347,7 +1349,8 @@ function raiseEvent(
         definition,
         cause: causeOf(state, event),
         ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
-        ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {})
+        ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
+        ...("amount" in event ? { eventAmount: event.amount } : {})
       });
     }
   }
@@ -1982,6 +1985,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
       const amount = effectAmount(effect.amount, object);
+      const next = loseLife(state, target.seat, amount);
+      return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${amount} vidas.`);
+    }
+    case "lose-life-target-event-amount": {
+      const target = object.targets[0];
+      const amount = object.trigger?.eventAmount ?? 0;
+      if (target?.kind !== "player" || amount <= 0) return state;
       const next = loseLife(state, target.seat, amount);
       return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${amount} vidas.`);
     }
