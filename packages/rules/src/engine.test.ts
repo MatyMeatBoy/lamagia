@@ -73,6 +73,7 @@ const PLANESWALKER_LIFE_SPELL = () => make({ name: "Walker Blessing", type_line:
 const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each battle you control." });
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
+const CAPRICIOUS_EFREET = () => make({ name: "Capricious Efreet", type_line: "Creature — Efreet", mana_cost: "{3}{R}{R}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of your upkeep, choose target nonland permanent you control and up to two target nonland permanents you don't control. Destroy one of them at random.", scryfall_id: "9abd2286-23e9-49cd-be53-39423890f35c" });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
@@ -2113,6 +2114,33 @@ describe("casting", () => {
   it("gates an optional end-step draw on a controlled power threshold", () => {
     const profile = profileOf(POWER_DRAW_TRIGGER());
     expect(profile.triggers[0]).toMatchObject({ condition: { kind: "controlled-creature-power-at-least", amount: 5 }, effect: { kind: "draw", amount: 1 } });
+  });
+
+  it("selects Capricious Efreet's required and optional random targets", () => {
+    const profile = profileOf(CAPRICIOUS_EFREET());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "upkeep", subject: "you", optional: false,
+      effect: { kind: "destroy-random-target-permanent", amount: 1 },
+      targetKind: "nonland-you-control",
+      targetKinds: ["nonland-you-control", "nonland-opponent", "nonland-opponent"],
+      minimumTargets: 1
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [CAPRICIOUS_EFREET(), BEAR()], [], [BEAR(), TEST_ARTIFACT()]);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    let choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.options).toHaveLength(2);
+    const ownBear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "permanent", instanceId: ownBear.instance_id } });
+    choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.options).toHaveLength(2);
+    const enemyBear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "permanent", instanceId: enemyBear.instance_id } });
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "finish-trigger-targets")).toBe(true);
+    game = applyAction(game, 0, { type: "finish-trigger-targets", sourceId: game.pendingChoice!.sourceId });
+    game = passUntil(game, (state) => state.players.some((player) => player.graveyard.some((card) => card.name === "Grizzly Bears")));
+    expect(game.players.some((player) => player.graveyard.some((card) => card.name === "Grizzly Bears"))).toBe(true);
   });
 
   it("damages only nonfliers while still damaging every player", () => {

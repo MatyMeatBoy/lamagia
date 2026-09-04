@@ -283,6 +283,10 @@ export type PendingChoice =
       readonly trigger: TriggerInstance;
       readonly targetKind: Exclude<TargetKind, "none">;
       readonly options: readonly Target[];
+      /** Present for multi-target triggers; selected targets are private state. */
+      readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+      readonly selectedTargets?: readonly Target[];
+      readonly minimumTargets?: number;
     }
   | {
       readonly type: "search-library";
@@ -356,6 +360,7 @@ export type GameAction =
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
+  | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
@@ -1733,6 +1738,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
     }
+    case "destroy-random-target-permanent": {
+      const candidates = object.targets
+        .filter((target): target is Extract<Target, { kind: "permanent" }> => target.kind === "permanent")
+        .map((target) => findPermanent(state, target.instanceId))
+        .filter((permanent): permanent is Permanent => Boolean(permanent));
+      let next = state;
+      for (let count = 0; count < effect.amount && candidates.length; count += 1) {
+        const rolled = nextRandom(next.rngState);
+        const index = Math.floor(rolled.value * candidates.length);
+        const selected = candidates.splice(index, 1)[0]!;
+        next = { ...next, rngState: rolled.state };
+        next = destroyPermanent(next, selected);
+      }
+      return next;
+    }
     case "chaos-warp": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -3082,6 +3102,13 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       return actions;
     }
     if (choice.type === "trigger-target") {
+      if (choice.targetKinds && (choice.selectedTargets?.length ?? 0) >= (choice.minimumTargets ?? 1)) {
+        actions.push({
+          action: { type: "finish-trigger-targets", sourceId: choice.sourceId },
+          label: "Finish target selection",
+          note: `${choice.trigger.sourceCard.name}: do not add another optional target.`
+        });
+      }
       for (const option of choice.options) {
         actions.push({
           action: { type: "choose-trigger-target", sourceId: choice.sourceId, target: option },
@@ -3457,6 +3484,8 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     }
     if (kind === "artifact-creature-or-planeswalker") return profile.types.some((type) => ["Artifact", "Creature", "Planeswalker"].includes(type));
     if (kind === "nonland") return !isLand(profile);
+    if (kind === "nonland-you-control") return !isLand(profile) && permanent.controller === seat;
+    if (kind === "nonland-opponent") return !isLand(profile) && permanent.controller !== seat;
     if (kind === "noncreature-permanent") return !isCreature(profile);
     return true;
   }).map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
@@ -4394,6 +4423,10 @@ function putNextTriggerOnStack(state: GameState): GameState {
     return { ...state, triggerQueue: remaining, stack: [...state.stack, triggerStackObject(trigger, [])], ...opened };
   }
 
+  if (trigger.definition.targetKinds?.length) {
+    return openMultiTriggerTargetChoice({ ...state, triggerQueue: remaining }, trigger, [], opened);
+  }
+
   const options = legalTargets(state, trigger.controller, targetKind);
   if (!options.length) {
     const dropped = logged({ ...state, triggerQueue: remaining }, trigger.controller,
@@ -4417,12 +4450,53 @@ function putNextTriggerOnStack(state: GameState): GameState {
   };
 }
 
+function openMultiTriggerTargetChoice(
+  state: GameState,
+  trigger: TriggerInstance,
+  selectedTargets: readonly Target[],
+  opened: { readonly prioritySeat: SeatId; readonly priorityOpen: boolean; readonly passedSeats: readonly SeatId[] }
+): GameState {
+  const targetKinds = trigger.definition.targetKinds ?? [];
+  const minimumTargets = trigger.definition.minimumTargets ?? targetKinds.length;
+  const nextKind = targetKinds[selectedTargets.length];
+  const selected = new Set(selectedTargets.map((target) => JSON.stringify(target)));
+  const options = nextKind
+    ? legalTargets(state, trigger.controller, nextKind).filter((target) => !selected.has(JSON.stringify(target)))
+    : [];
+  if (!nextKind || (!options.length && selectedTargets.length >= minimumTargets)) {
+    return { ...state, stack: [...state.stack, triggerStackObject(trigger, selectedTargets)], pendingChoice: null, ...opened };
+  }
+  if (!options.length) {
+    return logged(state, trigger.controller, `La habilidad disparada de ${trigger.sourceCard.name} se retira: no hay objetivos legales.`);
+  }
+  return {
+    ...state,
+    pendingChoice: {
+      type: "trigger-target",
+      seat: trigger.controller,
+      sourceId: trigger.id,
+      trigger,
+      targetKind: nextKind,
+      options,
+      targetKinds,
+      selectedTargets,
+      minimumTargets
+    }
+  };
+}
+
 function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger-target" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "trigger-target" || choice.seat !== seat) throw new Error("No tienes un objetivo de habilidad pendiente.");
   if (choice.sourceId !== action.sourceId) throw new Error("Esa habilidad ya no espera un objetivo.");
   const valid = choice.options.some((option) => JSON.stringify(option) === JSON.stringify(action.target));
   if (!valid) throw new Error(`Objetivo ilegal para ${choice.trigger.sourceCard.name}.`);
+  if (choice.targetKinds) {
+    const selectedTargets = [...(choice.selectedTargets ?? []), action.target];
+    const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+    const next = openMultiTriggerTargetChoice({ ...state, pendingChoice: null }, choice.trigger, selectedTargets, { prioritySeat: active, priorityOpen: true, passedSeats: [] });
+    return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
+  }
   const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
   const next: GameState = {
     ...state,
@@ -4433,6 +4507,23 @@ function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extrac
     passedSeats: []
   };
   return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
+}
+
+function applyFinishTriggerTargets(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-trigger-targets" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "trigger-target" || !choice.targetKinds || choice.seat !== seat) throw new Error("No tienes objetivos opcionales pendientes.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa elección ya no corresponde a la habilidad pendiente.");
+  if ((choice.selectedTargets?.length ?? 0) < (choice.minimumTargets ?? 1)) throw new Error("Debes elegir el objetivo obligatorio.");
+  const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+  const next: GameState = {
+    ...state,
+    pendingChoice: null,
+    stack: [...state.stack, triggerStackObject(choice.trigger, choice.selectedTargets ?? [])],
+    prioritySeat: active,
+    priorityOpen: true,
+    passedSeats: []
+  };
+  return logged(next, seat, `${choice.trigger.sourceCard.name} termina la selección de objetivos.`);
 }
 
 function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-discard" }>): GameState {
@@ -4471,6 +4562,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
+    case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-scry": next = applyChooseScry(state, seat, action); break;

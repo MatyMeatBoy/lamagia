@@ -330,6 +330,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-permanent" }
+  /** Destroy one random permanent from an already-selected target group. */
+  | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
   | { readonly kind: "chaos-warp" }
   /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
   | { readonly kind: "regenerate-source" }
@@ -472,6 +474,10 @@ export interface TriggerDefinition {
    * apart from the card-level `targetKind` used by spells.
    */
   readonly targetKind: TargetKind;
+  /** Ordered target slots for multi-target triggered abilities. */
+  readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  /** Minimum number of targets required when `targetKinds` has optional slots. */
+  readonly minimumTargets?: number;
   readonly sourceText: string;
   /** Mana that must be paid when an optional trigger is accepted. */
  readonly manaCost?: ManaCost;
@@ -499,6 +505,7 @@ export type TargetKind =
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
+  | "nonland-you-control" | "nonland-opponent"
  | "nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
   | "attacking-or-blocking-creature"
   | "creature-power-at-least-5"
@@ -1634,6 +1641,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target artifact, creature, or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-creature-or-planeswalker" };
   if (/^Destroy target artifact, enchantment, or land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-enchantment-or-land" };
   if (/^Destroy target permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "permanent" };
+  if (/^Choose target nonland permanent you control and up to two target nonland permanents you don't control\. Destroy one of them at random$/i.test(text)) {
+    return { effect: { kind: "destroy-random-target-permanent", amount: 1 }, target: "nonland-you-control" };
+  }
   if (/^Destroy target nonland permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonland" };
   if (/^Destroy target nonartifact creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-creature" };
   if (/^Destroy target nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonblack-creature" };
@@ -1956,12 +1966,14 @@ function recognizeText(text: string): RecognizedText {
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {
+        const capriciousMultiTarget = /^choose target nonland permanent you control and up to two target nonland permanents you don't control\. destroy one of them at random\.?$/i.test(effectText);
         triggers.push({
           event: triggered.event,
           subject: triggered.subject,
           effect: recognized.effect,
           optional,
           targetKind: recognized.target,
+          ...(capriciousMultiTarget ? { targetKinds: ["nonland-you-control", "nonland-opponent", "nonland-opponent"] as const, minimumTargets: 1 } : {}),
           sourceText: line,
           ...(unlessPayment && payCost ? { paymentBy: "opponent" as const } : {}),
           ...(eventControllerChoice ? { choiceBy: "event-controller" as const } : {}),
