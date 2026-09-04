@@ -438,6 +438,8 @@ export interface TriggerDefinition {
   readonly spellSubtype?: string;
   /** Only nontoken permanents fire this trigger (Soul of the Harvest). */
   readonly nontoken?: boolean;
+  /** Excludes creatures of this subtype from a dies/enters trigger (Requiem Angel). */
+  readonly excludeSubtype?: string;
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
   /** "if its evoke cost was paid" gate on the sacrifice trigger (CR 702.34c). */
@@ -1779,6 +1781,19 @@ function recognizeText(text: string): RecognizedText {
         for (const event of ["enters-battlefield", "dies"] as const) {
           triggers.push({ event, subject: "self", effect: rec.effect, optional, targetKind: rec.target, sourceText: line });
         }
+        continue;
+      }
+    }
+    // "Whenever another non-<Subtype> creature you control dies, X" (Requiem Angel).
+    const nonSubtypeDies = /^whenever\s+another\s+non-([A-Za-z][A-Za-z'’-]*)\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i.exec(line);
+    if (nonSubtypeDies) {
+      const rec = recognizeSentence(nonSubtypeDies[2]!.replace(/^you\s+may\s+/i, ""));
+      if (rec) {
+        triggers.push({
+          event: "dies", subject: "another-creature-you-control", effect: rec.effect,
+          optional: /^you\s+may\b/i.test(nonSubtypeDies[2]!), targetKind: rec.target, sourceText: line,
+          excludeSubtype: nonSubtypeDies[1]!
+        });
         continue;
       }
     }
