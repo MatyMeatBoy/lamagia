@@ -1793,6 +1793,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return logged(next, controller, `${sourceName}: ${chosen.name} vuelve a la mano al azar desde el cementerio.`);
     }
+    case "modify-all-attacking-creatures": {
+      const attackerIds = new Set(state.combat.attackers.map((entry) => entry.instanceId));
+      const next = modifyCreatures(state, effect.power, effect.toughness, (permanent) => attackerIds.has(permanent.instance_id));
+      return logged(next, controller, `${sourceName}: las criaturas atacantes obtienen ${effect.power}/${effect.toughness}.`);
+    }
     case "each-player-gains-life": {
       if (playersCantGainLife(state)) return state;
       let next = state;
@@ -3285,8 +3290,9 @@ function canAttack(state: GameState, permanent: Permanent): boolean {
  * legally attack.
  */
 function requiredAttackers(state: GameState, seat: SeatId): Permanent[] {
+  const forcedBoardWide = allPermanents(state).some((permanent) => cardProfile(permanent.card).forcesAllCreaturesToAttack);
   return playerAt(state, seat).battlefield.filter((permanent) =>
-    cardProfile(permanent.card).combatRules.mustAttack && canAttack(state, permanent));
+    (forcedBoardWide || cardProfile(permanent.card).combatRules.mustAttack) && canAttack(state, permanent));
 }
 
 /** The tightest defender-controlled attacker limit (CR 508.1d). */
