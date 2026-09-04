@@ -762,6 +762,12 @@ Ajani's Pridemate is also verified as a C13 reprint of the life-gained
 source-counter trigger: the stable profile, trigger event, and end-to-end
 counter resolution are shared with the existing primitive.
 
+Blue Sun's Zenith now uses a dedicated self-shuffle replacement: its target
+draw resolves normally, then the spell is shuffled into its owner's library
+instead of the graveyard. The countered-spell path correctly remains the
+normal graveyard destination; both paths have scenarios and the C13 row is
+checked.
+
 The reprint-equivalence pass verifies C13's Command Tower and Decree of Pain
 against their shared oracle-driven implementations. Army of the Damned is now
 covered end to end, including Flashback from the graveyard and exile on
