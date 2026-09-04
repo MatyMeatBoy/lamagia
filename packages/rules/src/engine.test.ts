@@ -1118,6 +1118,15 @@ describe("casting", () => {
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === stagedSource.instance_id)).toBe(false);
   });
 
+  it("rejects a forged tap target that does not match the typed cost", () => {
+    const game = readyToCast([], [C13_AZAMI(), AZAMI_WIZARD(), BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(() => applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0, tapId: bear.instance_id
+    })).toThrow();
+  });
+
   it("offers and pays a chosen creature sacrifice activation cost", () => {
     const profile = profileOf(CARNAGE_ALTAR());
     expect(profile.activatedAbilities[0]).toMatchObject({ sacrificesCreature: "any", effect: { kind: "draw", amount: 1 } });
