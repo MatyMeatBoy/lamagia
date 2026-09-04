@@ -1122,8 +1122,8 @@ describe("casting", () => {
 
   it("uses continuous flying grants when filtering flying targets", () => {
     let game = readyToCast([FLYING_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [FLYING_LORD(), BEAR()]);
-    expect(legalTargets(game, 0, "creature-with-flying")).toHaveLength(1);
-    expect(legalTargets(game, 0, "creature-with-flying")[0]).toMatchObject({ kind: "permanent" });
+    expect(legalTargets(game, 0, "creature-with-flying")).toHaveLength(2);
+    expect(legalTargets(game, 0, "creature-with-flying").every((target) => target.kind === "permanent")).toBe(true);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
