@@ -606,6 +606,8 @@ export interface CardProfile {
   readonly flashbackCost: ManaCost | null;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
   readonly additionalCostExileGraveyardX: boolean;
+  /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
+  readonly hasRebound: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
@@ -2174,6 +2176,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
+    // Rebound is synthesised from the keyword; consume the reminder line.
+    if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
     // Storm remains a keyword-only marker until copy-count tracking is added.

@@ -128,6 +128,8 @@ export interface PlayerState {
   readonly drewFromEmptyLibrary: boolean;
   /** Skip priority automatically in windows where this seat has nothing to do. */
   readonly autoPass: boolean;
+  /** Rebound (CR 702.88): instance ids exiled this way, castable free at the next upkeep. */
+  readonly reboundPending: readonly string[];
 }
 
 export type Target =
@@ -154,6 +156,8 @@ export interface StackObject {
   readonly evoked?: boolean;
   /** Cast from the graveyard via Flashback — exiles on leaving the stack (CR 702.34). */
   readonly fromFlashback?: boolean;
+  /** The free recast of a Rebound spell from exile (CR 702.88); it goes to the graveyard afterwards. */
+  readonly fromRebound?: boolean;
   /** Selected `Choose one` mode, when the spell has supported modal text. */
   readonly selectedEffect?: SpellEffect;
   /** Present when this is a triggered ability rather than a spell. */
@@ -863,6 +867,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       manaPool: emptyPool(),
       lost: false,
       drewFromEmptyLibrary: false,
+      reboundPending: [],
       autoPass: kind === "bot"
     } satisfies PlayerState;
   });
@@ -2812,9 +2817,15 @@ function resolveTop(state: GameState): GameState {
   if (!object) return state;
   let next: GameState = { ...state, stack: state.stack.slice(0, -1) };
   const profile = cardProfile(object.card);
-  // Flashback (CR 702.34) sends the card to exile instead of the graveyard when it leaves the stack.
-  const retireZone: "graveyard" | "exile" = object.fromFlashback ? "exile" : "graveyard";
-  const retire = (s: GameState): GameState => withPlayer(s, object.card.owner, (player) => ({ ...player, [retireZone]: [...player[retireZone], object.card] }));
+  // Flashback (CR 702.34) and the first cast of a Rebound spell (CR 702.88) send
+  // the card to exile instead of the graveyard when it leaves the stack.
+  const reboundNow = profile.hasRebound && !object.fromFlashback && !object.fromRebound && !profile.isPermanent;
+  const retireZone: "graveyard" | "exile" = object.fromFlashback || reboundNow ? "exile" : "graveyard";
+  const retire = (s: GameState): GameState => withPlayer(s, object.card.owner, (player) => ({
+    ...player,
+    [retireZone]: [...player[retireZone], object.card],
+    ...(reboundNow ? { reboundPending: [...player.reboundPending, object.card.instance_id] } : {})
+  }));
 
   if (object.countered) {
     if (object.trigger) return logged(next, object.controller, `Se contrarresta la habilidad disparada de ${object.card.name}.`);
@@ -4456,6 +4467,33 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
 
   next = pushActivatedOnStack(next, seat, source, ability, targets, sacrificedPower || sacrificedArtifactMv);
   return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
+}
+
+/** The free recast of a Rebound spell from exile at the controller's upkeep (CR 702.88b). */
+function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast" }>): GameState {
+  const player = playerAt(state, seat);
+  if (!player.reboundPending.includes(action.cardId)) throw new Error("Esa carta no está esperando un rebote.");
+  const card = player.exile.find((candidate) => candidate.instance_id === action.cardId);
+  if (!card) throw new Error("La carta de rebote ya no está en el exilio.");
+  const profile = cardProfile(card);
+  let chosen: readonly Target[] = action.targets ?? [];
+  if (profile.targetKind !== "none" && profile.targetKind !== "any") {
+    const allowed = legalTargets(state, seat, profile.targetKind);
+    chosen = chosen.length ? chosen : allowed.slice(0, 1);
+    if (!chosen.length) throw new Error(`${card.name} necesita un objetivo legal.`);
+    if (!chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
+      throw new Error(`Objetivo ilegal para ${card.name}.`);
+    }
+  }
+  let next = withPlayer(state, seat, (current) => ({
+    ...current,
+    exile: current.exile.filter((candidate) => candidate.instance_id !== card.instance_id),
+    reboundPending: current.reboundPending.filter((id) => id !== card.instance_id)
+  }));
+  next = pushOnStack(next, seat, card, chosen, false, action.variableValue ?? 0, undefined, false, false, false);
+  next = { ...next, stack: next.stack.map((entry, index) => index === next.stack.length - 1 ? { ...entry, fromRebound: true } : entry) };
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card });
+  return logged(next, seat, `${player.name} relanza ${card.name} desde el exilio (rebote).`);
 }
 
 function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast" }>): GameState {
