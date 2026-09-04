@@ -3078,7 +3078,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const modal = mode === undefined ? undefined : profile.modalChoices[mode];
       actions.push({
         action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, ...(cost.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }) },
-        label: `Lanzar ${card.name} con Flashback${profile.flashbackLifeCost ? ` — Pay ${profile.flashbackLifeCost} life` : ""}${modal ? ` — ${modal.text}` : ""}`,
+        label: `Lanzar ${card.name} con Flashback${profile.flashbackLifeCost ? ` — Pay ${profile.flashbackLifeCost} life (paga ${profile.flashbackLifeCost} vidas)` : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
         manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
@@ -3729,7 +3729,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   next = withPlayer(next, seat, (current) => ({
     ...current,
     manaPool: payment.remaining,
-    life: current.life - payment.lifePaid - flashbackLifeCost,
+    life: current.life - payment.lifePaid,
     hand: fromHand ? current.hand.filter((candidate) => candidate.instance_id !== card.instance_id) : current.hand,
     graveyard: fromYard ? current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id) : current.graveyard,
     commandZone: fromCommand ? current.commandZone.filter((candidate) => candidate.instance_id !== card.instance_id) : current.commandZone,

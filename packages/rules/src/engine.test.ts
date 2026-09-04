@@ -1072,6 +1072,7 @@ describe("casting", () => {
     expect(genericProfile.activatedAbilities[0]!.tapsCreature?.subtype).toBeUndefined();
   });
 
+<<<<<<< HEAD
   it("regenerates a targeted creature and removes it from combat", () => {
     let game = readyToCast([REGENERATE_TARGET()], [FOREST(), FOREST()], [], [BEAR()]);
     const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
@@ -1106,9 +1107,7 @@ describe("casting", () => {
   });
 
   it("offers Flashback life costs in actions and pays them once", () => {
-    expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears", "Forest", "Plains"]);
-
-    game = readyToCast([], [ISLAND(), ISLAND()]);
+    let game = readyToCast([], [ISLAND(), ISLAND()]);
     game = stage(game, 0, (player) => ({
       life: 10,
       graveyard: toHand(0, [C13_DEEP_ANALYSIS()], "analysis-flashback"),
