@@ -1297,3 +1297,17 @@ The batch's stale coverage/claim snapshots were intentionally regenerated
 locally. Current export: **159/341 C13 cards (46.6%)** and **8,144/38,711
 cards globally (21.0%)**. Validation: `npm run check` PASS; `npm test` PASS
 (**386 rules tests**, simulator, **39 Oracle Python tests**).
+
+### Integrator checkpoint: Basalt Monolith batch and Crawlspace (2026-09-04)
+
+Integrated the fork's third 11-commit batch. Basalt Monolith now reuses the
+activated self-untap primitive and remains tapped through untap when its static
+restriction says so; both straight and typographic apostrophes are accepted
+(CR 502.2, 602.1, 701.21). Also added Crawlspace's defender-side attacker
+limit as a reusable combat declaration rule, including bot-safe declarations
+(CR 508.1d).
+
+Current regenerated coverage: **176/356 C13 precon cards (49.4%)** and
+**161/341 unique C13 set entries (47.2%)**; global export **8,154/38,711
+(21.1%)**. Validation: `npm run check` PASS; `npm test` PASS (**389 rules
+tests**, simulator, **39 Oracle Python tests**).
