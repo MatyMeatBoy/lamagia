@@ -256,6 +256,7 @@ export type SpellEffect =
   | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-each-controlled-type"; readonly amount: number; readonly type: CardType }
+  | { readonly kind: "gain-life-each-permanent"; readonly amount: number }
   | { readonly kind: "gain-life-equal-target-power" }
   | { readonly kind: "lose-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
@@ -1077,6 +1078,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^You gain (\w+) life for each (artifact|creature|enchantment|land) you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "gain-life-each-controlled-type", amount, type: match[2]![0]!.toUpperCase() + match[2]!.slice(1) as CardType }, target: "none" };
+  }
+  if ((match = /^You gain (\w+) life for each permanent you control$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "gain-life-each-permanent", amount }, target: "none" };
   }
   if (/^You gain life equal to the power of target creature you control$/i.test(text)) {
     return { effect: { kind: "gain-life-equal-target-power" }, target: "creature-you-control" };
