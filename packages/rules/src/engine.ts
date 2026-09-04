@@ -16,8 +16,11 @@ import {
   cardProfile, isCreature, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
-  addMana, emptyPool, payCost, poolTotal, type ManaCost, type ManaPool, type ManaType
+  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaType
 } from "./mana.js";
+
+/** {W/B} — the extort payment (CR 702.39a), reused when the ability is granted. */
+const EXTORT_COST: ManaCost = parseManaCost("{W/B}")!;
 
 export type SeatId = number;
 
@@ -1098,8 +1101,18 @@ function raiseEvent(
 ): GameState {
   const watchers = [...allPermanents(state), ...extraWatchers];
   const queued: TriggerInstance[] = [];
+  // Pontiff of Blight: "Other creatures you control have extort" (CR 702.39, 613).
+  const extortGrantors = new Set(allPermanents(state)
+    .filter((permanent) => cardProfile(permanent.card).grantsExtortToOthers)
+    .map((permanent) => permanent.controller));
   for (const watcher of watchers) {
-    const definitions = cardProfile(watcher.card).triggers;
+    const base = cardProfile(watcher.card).triggers;
+    const grantedExtort: TriggerDefinition[] = extortGrantors.has(watcher.controller)
+      && isCreature(cardProfile(watcher.card))
+      && !cardProfile(watcher.card).triggers.some((definition) => definition.effect.kind === "extort")
+      ? [{ event: "spell-cast", subject: "you", effect: { kind: "extort" }, optional: true, targetKind: "none", sourceText: "Extort", payCost: EXTORT_COST }]
+      : [];
+    const definitions = grantedExtort.length ? [...base, ...grantedExtort] : base;
     for (const [index, definition] of definitions.entries()) {
       if (!triggerMatches(state, { instanceId: watcher.instance_id, controller: watcher.controller }, definition, event)) continue;
       // "if it was kicked" gate (CR 702.33e): only the kicked cast fires it.
