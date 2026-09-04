@@ -215,6 +215,8 @@ const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
 const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant", mana_cost: "{X}{U}{U}{U}", cmc: 3, oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library.", scryfall_id: "613a41b8-0b4f-4995-bf1e-ca41f96e6438" });
+const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
+const SCRY_TWO = () => make({ name: "Scry Two", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Scry 2." });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
 const RHYSTIC_STUDY = () => make({ name: "Rhystic Study", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}." });
@@ -2346,6 +2348,21 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Cultivate")).toBe(true);
   });
 
+  it("orders both top and bottom cards for the reusable Scry 2 primitive", () => {
+    let game = readyToCast([SCRY_TWO()], [ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), SWAMP()], "scry-two"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "scry", remainingCards: [{ name: "Grizzly Bears" }, { name: "Swamp" }] });
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "choose-scry", sourceId, query: "Grizzly Bears", bottom: true });
+    expect(game.pendingChoice).toMatchObject({ type: "scry", remainingCards: [{ name: "Swamp" }] });
+    game = applyAction(game, 0, { type: "choose-scry", sourceId, query: "Swamp", bottom: false });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.library[0]?.name).toBe("Swamp");
+    expect(game.players[0]!.library.at(-1)?.name).toBe("Grizzly Bears");
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Scry Two")).toBe(true);
+  });
+
   it("returns Blue Sun's Zenith to its owner's library after drawing", () => {
     let game = readyToCast([C13_BLUE_SUN()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
     const beforeHand = game.players[0]!.hand.length;
@@ -2371,6 +2388,26 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Blue Sun's Zenith")).toBe(true);
     expect(game.players[0]!.library.some((card) => card.name === "Blue Sun's Zenith")).toBe(false);
+  });
+
+  it("lets New Benalia scry its private top card to the bottom", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [C13_NEW_BENALIA()], "new-benalia"),
+      library: toHand(0, [BEAR(), ISLAND()], "scry-library")
+    }));
+    game = putOnBattlefield(game, 0, [FOREST()]);
+    game = { ...game, activeSeat: 0, prioritySeat: 0, step: "precombat-main", priorityOpen: true, passedSeats: [] };
+    game = applyAction(game, 0, { type: "play-land", cardId: "new-benalia-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "scry", seat: 0, remainingCards: [{ name: "Grizzly Bears" }] });
+    expect(legalActions(game, 1)).toHaveLength(0);
+    expect(legalActions(game, 0).map((entry) => entry.action.type)).toEqual(["choose-scry", "choose-scry"]);
+    expect(projectGame(game, 0).scry?.topCards.map((card) => card.name)).toEqual(["Grizzly Bears"]);
+    expect(projectGame(game, 1).scry).toBeNull();
+    game = applyAction(game, 0, { type: "choose-scry", sourceId: game.pendingChoice!.sourceId, query: "Grizzly Bears", bottom: true });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.library.map((card) => card.name)).toEqual(["Island", "Grizzly Bears"]);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "New Benalia")?.tapped).toBe(true);
   });
 
   it("counters a spell whose target has left the battlefield", () => {

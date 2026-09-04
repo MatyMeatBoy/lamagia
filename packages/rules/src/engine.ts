@@ -282,8 +282,9 @@ export type PendingChoice =
       readonly seat: SeatId;
       readonly sourceId: string;
       readonly sourceCard: GameCard;
-      readonly topCard: GameCard;
-      readonly remaining: number;
+      readonly remainingCards: readonly GameCard[];
+      readonly topCards: readonly GameCard[];
+      readonly bottomCards: readonly GameCard[];
       readonly returnSourceToGraveyard: boolean;
       readonly exileSourceAfterResolution: boolean;
     }
@@ -310,7 +311,7 @@ export type GameAction =
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
-  | { readonly type: "choose-scry"; readonly sourceId: string; readonly bottom: boolean }
+  | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
@@ -2018,8 +2019,9 @@ function beginScry(
       seat,
       sourceId,
       sourceCard,
-      topCard,
-      remaining: amount,
+      remainingCards: playerAt(state, seat).library.slice(0, amount),
+      topCards: [],
+      bottomCards: [],
       returnSourceToGraveyard,
       exileSourceAfterResolution
     }
@@ -2671,16 +2673,18 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       return actions;
     }
     if (choice.type === "scry") {
-      actions.push({
-        action: { type: "choose-scry", sourceId: choice.sourceId, bottom: false },
-        label: "Mantener en la parte superior",
-        note: `${choice.sourceCard.name}: conserva la carta superior.`
-      });
-      actions.push({
-        action: { type: "choose-scry", sourceId: choice.sourceId, bottom: true },
-        label: "Poner en el fondo",
-        note: `${choice.sourceCard.name}: mueve la carta superior al fondo.`
-      });
+      for (const card of choice.remainingCards) {
+        actions.push({
+          action: { type: "choose-scry", sourceId: choice.sourceId, query: card.name, bottom: false },
+          label: `Mantener ${card.name} arriba`,
+          note: `${choice.sourceCard.name}: coloca esta carta arriba.`
+        });
+        actions.push({
+          action: { type: "choose-scry", sourceId: choice.sourceId, query: card.name, bottom: true },
+          label: `Poner ${card.name} en el fondo`,
+          note: `${choice.sourceCard.name}: coloca esta carta en el fondo.`
+        });
+      }
       return actions;
     }
     if (choice.type === "discard-cards") {
@@ -3545,18 +3549,26 @@ function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAct
   if (!choice || choice.type !== "scry" || choice.seat !== seat) throw new Error("No tienes una elección de adivinar pendiente.");
   if (choice.sourceId !== action.sourceId) throw new Error("Debes resolver la elección de adivinar pendiente.");
   const player = playerAt(state, seat);
-  if (player.library[0]?.instance_id !== choice.topCard.instance_id) throw new Error("La carta superior cambió antes de resolver adivinar.");
-  const rest = player.library.slice(1);
+  const selected = choice.remainingCards.find((card) => card.name.trim().toLocaleLowerCase() === action.query.trim().toLocaleLowerCase());
+  if (!selected) throw new Error("Debes elegir una carta visible de la selección de adivinar.");
+  const remainingCards = choice.remainingCards.filter((card) => card.instance_id !== selected.instance_id);
+  const topCards = action.bottom ? choice.topCards : [selected, ...choice.topCards];
+  const bottomCards = action.bottom ? [...choice.bottomCards, selected] : choice.bottomCards;
+  if (remainingCards.length) {
+    return logged({ ...state, pendingChoice: { ...choice, remainingCards, topCards, bottomCards } }, seat,
+      `${player.name} coloca ${selected.name} ${action.bottom ? "en el fondo" : "arriba"}.`);
+  }
+  const rest = player.library.slice(choice.remainingCards.length);
   let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
     ...current,
-    library: action.bottom ? [...rest, choice.topCard] : [choice.topCard, ...rest]
+    library: [...topCards, ...rest, ...bottomCards]
   }));
   if (choice.returnSourceToGraveyard) {
     next = withPlayer(next, choice.sourceCard.owner, (current) => choice.exileSourceAfterResolution
       ? { ...current, exile: [...current.exile, choice.sourceCard] }
       : { ...current, graveyard: [...current.graveyard, choice.sourceCard] });
   }
-  return logged(next, seat, `${player.name} ${action.bottom ? "pone la carta superior en el fondo" : "mantiene la carta superior"}.`);
+  return logged(next, seat, `${player.name} termina de adivinar.`);
 }
 
 function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readonly AttackerDeclaration[]): GameState {
