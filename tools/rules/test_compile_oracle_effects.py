@@ -98,7 +98,7 @@ class OracleCompilerTests(unittest.TestCase):
             self.assertEqual(load_card_cache(path)["oracle-1"], entry)
             path.write_text(json.dumps({"format": "prossh-oracle-card-cache/v1", "parser_version": "old", "cards": {"oracle-1": entry}}), encoding="utf-8")
             self.assertEqual(load_card_cache(path), {})
-        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v5")
+        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v6")
 
     def test_excludes_known_closed_static_primitives_from_review(self) -> None:
         for text in (

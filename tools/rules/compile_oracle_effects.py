@@ -29,7 +29,7 @@ from typing import Any
 
 
 DEFAULT_COMMIT_CARD_LIMIT = 20
-ORACLE_IR_PARSER_VERSION = "v5"
+ORACLE_IR_PARSER_VERSION = "v6"
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -71,7 +71,7 @@ KNOWN_STATIC_RE = re.compile(
     r"(?: unless\b.*)?\.?$|^cycling\s+.+$|^[A-Za-z][A-Za-z ]*cycling\s+.+$|^equip\s+.+$|^level up\s+.+$",
     re.I,
 )
-KNOWN_STATIC_LINE_RE = re.compile(r"^(?:level\s+\d+(?:-\d+|\+)?|\d+\/\d+|choose\s+(?:one|two|one or both)\s+(?:-|—|–))\.?$", re.I)
+KNOWN_STATIC_LINE_RE = re.compile(r"^(?:level\s+\d+(?:-\d+|\+)?|\d+\/\d+|choose\s+(?:one|two|one or both)\s+(?:-|—|–|�))\.?$", re.I)
 ZONE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("library", r"\blibrar(?:y|ies)\b"),
     ("hand", r"\bhand\b"),
