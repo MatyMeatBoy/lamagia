@@ -475,7 +475,8 @@ export interface TriggerDefinition {
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number }
     | { readonly kind: "controlled-subtype-at-least"; readonly subtype: string; readonly amount: number }
     | { readonly kind: "creature-died-this-turn" }
-    | { readonly kind: "cast-from-hand" };
+    | { readonly kind: "cast-from-hand" }
+    | { readonly kind: "entering-power-at-most"; readonly amount: number };
   readonly spellType?: "creature";
   /** Colour filter on a spell-cast trigger (Titania's Chosen). */
   readonly spellColor?: string;
@@ -2137,6 +2138,24 @@ function recognizeText(text: string): RecognizedText {
         for (const event of ["enters-battlefield", "attacks"] as const) {
           triggers.push({ event, subject: "self", effect: rec.effect, optional, targetKind: rec.target, sourceText: line });
         }
+        continue;
+      }
+    }
+    // "Whenever another creature you control with power N or less enters, X" (Mentor of the Meek).
+    const lowPowerEnters = /^whenever\s+another\s+creature\s+you\s+control\s+with\s+power\s+(\d+)\s+or\s+less\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(line);
+    if (lowPowerEnters) {
+      const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(lowPowerEnters[2]!);
+      const payCost = payGate ? parseManaCost(payGate[1]!) : null;
+      const rest = payGate ? payGate[2]! : lowPowerEnters[2]!;
+      const optional = payGate ? true : /^you\s+may\b/i.test(rest);
+      const rec = (payCost && payCost.hasVariable) ? null : recognizeSentence(optional ? rest.replace(/^you\s+may\s+/i, "") : rest);
+      if (rec) {
+        triggers.push({
+          event: "enters-battlefield", subject: "another-creature-you-control", effect: rec.effect,
+          optional, targetKind: rec.target, sourceText: line,
+          condition: { kind: "entering-power-at-most", amount: Number(lowPowerEnters[1]) },
+          ...(payCost && payCost.symbols.length ? { payCost } : {})
+        });
         continue;
       }
     }

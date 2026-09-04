@@ -1040,6 +1040,11 @@ function triggerMatches(
     if (count < condition.amount) return false;
   }
   if (condition?.kind === "creature-died-this-turn" && state.creaturesDiedThisTurn < 1) return false;
+  if (condition?.kind === "entering-power-at-most") {
+    const entering = eventObject(event);
+    const permanent = entering && findPermanent(state, entering.permanentId);
+    if (!permanent || powerOf(permanent, state) > condition.amount) return false;
+  }
   const subject = definition.subject;
 
   // Turn-structure triggers are about a player, not an object.
