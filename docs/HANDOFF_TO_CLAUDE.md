@@ -744,6 +744,16 @@ controller, and the reusable Fires of Yavimaya/Goblin Bombardment sacrifice
 activations. Each has parser and rules scenarios; the corresponding C13 rows
 are checked in `docs/SET_COVERAGE.md`.
 
+The multi-card library-search cluster now covers Cultivate and Armillary Sphere:
+the parser extracts basic-land restrictions, ordered destinations, reveal text,
+and Armillary Sphere's named self-sacrifice cost. The authoritative engine
+keeps exact library ids private, supports selecting zero through the printed
+maximum, shuffles the remainder deterministically, and projects only the
+searching player's legal candidates plus their full-library review. The client
+also shows multi-search progress. This follows CR 701.19, 701.23, 701.26 and
+400.7; the scope excludes searches with different per-card restrictions or
+non-deterministic destination choices.
+
 The reprint-equivalence pass verifies C13's Command Tower and Decree of Pain
 against their shared oracle-driven implementations. Army of the Damned is now
 covered end to end, including Flashback from the graveyard and exile on
