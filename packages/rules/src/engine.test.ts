@@ -339,6 +339,7 @@ const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type
 const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantment", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target.", scryfall_id: "89d77b63-eeee-4d8a-9622-b1ea36dc70de" });
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
 const C13_DISCIPLE_OF_GRISELBRAND = () => make({ name: "Disciple of Griselbrand", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2", oracle_text: "{1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.", scryfall_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad" });
+const C13_NIGHT_SOIL = () => make({ name: "Night Soil", type_line: "Enchantment", mana_cost: "{1}{G}", cmc: 2, oracle_text: "{1}, Exile two creature cards from a single graveyard: Create a 1/1 green Saproling creature token.", scryfall_id: "3165fe8f-52d7-40f7-bb14-8f4300a564e6" });
 const C13_BALEFUL_FORCE = () => make({ name: "Baleful Force", type_line: "Creature — Elemental", mana_cost: "{5}{B}{B}{B}", cmc: 8, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life.", scryfall_id: "a5e79f7b-0212-476b-9dea-bf1ada419e72" });
 const C13_DRUIDIC_SATCHEL = () => make({ name: "Druidic Satchel", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Reveal the top card of your library. If it's a creature card, create a 1/1 green Saproling creature token. If it's a land card, put that card onto the battlefield under your control. If it's a noncreature, nonland card, you gain 2 life.", scryfall_id: "f3aaefb4-4662-434a-9c31-3f2c754ce9cc" });
 const C13_RUPTURE_SPIRE = () => make({ name: "Rupture Spire", type_line: "Land", oracle_text: "Rupture Spire enters the battlefield tapped.\nWhen Rupture Spire enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.", produced_mana: ["W", "U", "B", "R", "G"], scryfall_id: "622087fc-4e34-43cd-a46f-fd2c339b3905" });
@@ -1908,6 +1909,30 @@ describe("casting", () => {
     // creature's last-known toughness when it resolves (CR 608.2h).
     expect(game.players[0]!.life).toBe(before + 2);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("exiles two creature cards from one graveyard for Night Soil", () => {
+    const profile = profileOf(C13_NIGHT_SOIL());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      exilesCreatureCardsFromSingleGraveyard: 2,
+      effect: { kind: "create-token", amount: 1 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([], [C13_NIGHT_SOIL(), FOREST()]);
+    const graveyardCards = toHand(1, [BEAR(), WALL()], "night-soil-yard");
+    game = stage(game, 1, () => ({ graveyard: graveyardCards }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Night Soil")!;
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && JSON.stringify(entry.action.exileCardIds) === JSON.stringify(graveyardCards.map((card) => card.instance_id)));
+    expect(action).toBeDefined();
+    game = applyAction(game, 0, action!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    // The cards are paid from a single graveyard before the token resolves
+    // (CR 602.2b, 601.2h); the effect is then a normal stack resolution.
+    expect(game.players[1]!.graveyard).toHaveLength(0);
+    expect(game.players[1]!.exile.map((card) => card.name)).toEqual(["Grizzly Bears", "Stone Wall"]);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Saproling")).toBe(true);
   });
 
   it("restricts Ravenous Baloth's sacrifice cost to Beasts and gains life", () => {
