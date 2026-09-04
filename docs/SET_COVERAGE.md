@@ -25169,7 +25169,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Baleful Force — `f26fa9e4-f528-4e22-8f7c-329fc3b633e4`
 - [x] Baloth Woodcrasher — `faaf9975-74df-4e9d-be0c-19a446cd507c`
 - [ ] Bane of Progress — `51f9a6cc-8eb2-44ed-a2d9-913ac514ad67`
-- [ ] Basalt Monolith — `6b8cf2a0-b045-4d91-9d91-c602d40c6237`
+- [x] Basalt Monolith — `6b8cf2a0-b045-4d91-9d91-c602d40c6237`
 - [ ] Behemoth Sledge — `00573e77-8ff6-4acb-8683-8827d965288f`
 - [ ] Blood Rites — `69757aaf-182e-41a0-a5b4-4404e4c81c45`
 - [x] Blue Sun's Zenith — `613a41b8-0b4f-4995-bf1e-ca41f96e6438`
