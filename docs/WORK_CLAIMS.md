@@ -327,6 +327,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-choose-both` | Soul Manipulation and Fissure Vent modal one-or-both selection | `codex/c13-choose-both` | active | 2026-09-04 |
 | `c13-choose-more` | Parameterized modal subsets for `Choose N or more`, including ordered target slots for Rain of Thorns (CR 700.2, 601.2b) | `codex/c13-choose-more-a32` | active | 2026-09-04 |
 | `c13-graft` | Reusable Graft entry counters and optional counter transfer to another entering creature (CR 702.58, 122.1, 603.2) | `codex/c13-graft-f99` | active | 2026-09-04 |
+| `c13-whenever-creature-dies-untap` | Reusable death-triggered source untap (CR 603.2, 701.21) | `codex/c13-goblin-sharpshooter-f99` | active | 2026-09-04 |
 
 ## Claim format
 
