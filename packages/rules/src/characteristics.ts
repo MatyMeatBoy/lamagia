@@ -236,6 +236,7 @@ export interface EquipmentModification {
 export interface StaticKeywordGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
   readonly keyword: EnforcedKeyword;
+  readonly subtype?: string;
 }
 
 export interface StaticPowerToughnessGrant {
@@ -976,7 +977,7 @@ function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {
 }
 
 function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
-  return text.split("\n").map(parseStaticKeywordGrant).filter((grant): grant is StaticKeywordGrant => grant !== null);
+  return text.split("\n").flatMap(parseStaticKeywordGrant);
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
@@ -1934,7 +1935,7 @@ function recognizeText(text: string): RecognizedText {
     // Combat restrictions and landwalk are static: they change which
     // declarations are legal rather than resolving anything (CR 508.1d, 509.1a).
     if (combatRuleLines.has(line)) continue;
-    if (parseStaticKeywordGrant(line)) continue;
+    if (parseStaticKeywordGrant(line).length) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
