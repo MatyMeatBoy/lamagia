@@ -2502,6 +2502,20 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.hand).toHaveLength(1);
   });
 
+  it("lets the spell's caster pay Rhystic Study's unless cost", () => {
+    let game = readyToCast([], [RHYSTIC_STUDY()]);
+    game = putOnBattlefield(game, 1, [FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 1, () => ({ hand: toHand(1, [BEAR()], "rhystic-payer") }));
+    game = { ...game, activeSeat: 1, prioritySeat: 1, step: "precombat-main", priorityOpen: true, passedSeats: [] };
+    game = applyAction(game, 1, { type: "cast", cardId: game.players[1]!.hand[0]!.instance_id });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.seat).toBe(1);
+    expect(legalActions(game, 1).find((entry) => entry.action.type === "choose-trigger" && entry.action.accept)?.label).toBe("Pagar {1} para evitar");
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.hand).toHaveLength(0);
+    expect(game.players[1]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(3);
+  });
+
   it("fires creature-spell triggers only for creature spells", () => {
     let game = readyToCast([BEAR()], [FOREST(), FOREST(), CREATURE_CAST_DRAWER()]);
     game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
