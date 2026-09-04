@@ -1694,6 +1694,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return putOntoBattlefield(next, controller, chosen, false);
     }
+    case "return-random-creature-from-graveyard-to-hand": {
+      const candidates = playerAt(state, controller).graveyard.filter((card) => isCreature(cardProfile(card)));
+      if (!candidates.length) return state;
+      const shuffled = shuffle(candidates, state.rngState);
+      const chosen = shuffled.items[0]!;
+      const next = withPlayer({ ...state, rngState: shuffled.state }, controller, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((card) => card.instance_id !== chosen.instance_id),
+        hand: [...player.hand, chosen]
+      }));
+      return logged(next, controller, `${sourceName}: ${chosen.name} vuelve a la mano al azar desde el cementerio.`);
+    }
     case "each-player-gains-life": {
       if (playersCantGainLife(state)) return state;
       let next = state;
