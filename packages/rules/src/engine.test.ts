@@ -115,6 +115,7 @@ const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Insta
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
 const TOUGH_CREATURE_REMOVAL = () => make({ name: "Tough Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with toughness 4 or greater." });
 const SMALL_CREATURE_REMOVAL = () => make({ name: "Small Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 4 or less." });
+const TOUGHNESS_REMOVAL = () => make({ name: "Fragile Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with toughness 4 or less." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
@@ -1261,6 +1262,12 @@ describe("casting", () => {
     expect(profileOf(SMALL_CREATURE_REMOVAL()).targetKind).toBe("creature-power-at-most-4");
     const game = readyToCast([SMALL_CREATURE_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [TRAMPLER(), BEAR()]);
     expect(legalTargets(game, 0, "creature-power-at-most-4")).toHaveLength(1);
+  });
+
+  it("supports low-toughness creature target filters", () => {
+    expect(profileOf(TOUGHNESS_REMOVAL()).targetKind).toBe("creature-toughness-at-most-4");
+    const game = readyToCast([TOUGHNESS_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [WALL(), TRAMPLER()]);
+    expect(legalTargets(game, 0, "creature-toughness-at-most-4")).toHaveLength(1);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
