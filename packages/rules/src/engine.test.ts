@@ -87,6 +87,8 @@ const LIFE_LOCK = () => make({ name: "Life Lock", type_line: "Enchantment", mana
 const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment", mana_cost: "{3}", cmc: 3, oracle_text: "You have no maximum hand size." });
 const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other creatures you control get +1/+1." });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
+const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
+const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });
 const X_MINUS_SWEEP = () => make({ name: "X Minus Sweep", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "All creatures get -X/-X until end of turn." });
 const POWER_DRAW_TRIGGER = () => make({ name: "Power Draw Trigger", type_line: "Creature — Human Druid", mana_cost: "{3}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your end step, if you control a creature with power 5 or greater, you may draw a card." });
 const NONFLYING_SWEEP = () => make({ name: "Nonflying Sweep", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell deals X damage to each creature without flying and each player." });
@@ -2135,6 +2137,36 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
     expect(game.players[1]!.life).toBe(before - 4);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("exiles the targeted creature and pays its controller life equal to its power", () => {
+    const profile = profileOf(EXILE_LIFEGAIN_REMOVAL());
+    expect(profile).toMatchObject({ targetKind: "creature", effects: [{ kind: "exile-target-creature-then-life-gain-power" }], fullyImplemented: true });
+    let game = readyToCast([EXILE_LIFEGAIN_REMOVAL()], [PLAINS()], [], [BEAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const before = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[1]!.life).toBe(before + 2);
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it("only lets Condemn-style removal target an attacking creature, paying life equal to toughness", () => {
+    const profile = profileOf(CONDEMN_LIKE());
+    expect(profile).toMatchObject({ targetKind: "attacking-creature", effects: [{ kind: "bottom-of-library-target-attacking-creature-then-life-gain-toughness" }], fullyImplemented: true });
+    let game = readyToCast([CONDEMN_LIKE()], [PLAINS()], [], [BEAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    // Not attacking yet: no legal target.
+    expect(legalTargets(game, 0, "attacking-creature")).toHaveLength(0);
+    game = { ...game, combat: { ...game.combat, attackers: [{ instanceId: bear.instance_id, defender: 0 }] } };
+    const before = game.players[1]!.life;
+    const libraryBefore = game.players[1]!.library.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[1]!.life).toBe(before + 2);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[1]!.library.length).toBe(libraryBefore + 1);
+    expect(game.players[1]!.library.at(-1)?.name).toBe("Grizzly Bears");
+    expect(game.combat.attackers).not.toContainEqual(expect.objectContaining({ instanceId: bear.instance_id }));
   });
 
   it("uses the announced X value for variable all-creature debuffs", () => {

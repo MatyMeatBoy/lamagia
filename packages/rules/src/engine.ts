@@ -922,7 +922,7 @@ function millCards(state: GameState, seat: SeatId, amount: number): GameState {
 }
 
 /** Moves a permanent off the battlefield, honouring the commander-zone replacement. */
-function movePermanentToZone(state: GameState, permanent: Permanent, zone: "graveyard" | "exile"): GameState {
+function movePermanentToZone(state: GameState, permanent: Permanent, zone: "graveyard" | "exile" | "library-bottom"): GameState {
   const ownerSeat = permanent.card.owner;
   let next = withPlayer(state, permanent.controller, (player) => ({
     ...player,
@@ -947,8 +947,10 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
     }
     return logged(next, permanent.controller, `${permanent.card.name} deja el campo de batalla.`);
   }
-  next = withPlayer(next, ownerSeat, (player) => ({ ...player, [zone]: [...player[zone], permanent.card] }));
-  next = logged(next, permanent.controller, `${permanent.card.name} va ${zone === "graveyard" ? "al cementerio" : "al exilio"}.`);
+  const field = zone === "library-bottom" ? "library" : zone;
+  next = withPlayer(next, ownerSeat, (player) => ({ ...player, [field]: [...player[field], permanent.card] }));
+  next = logged(next, permanent.controller,
+    `${permanent.card.name} va ${zone === "graveyard" ? "al cementerio" : zone === "exile" ? "al exilio" : "al fondo de la biblioteca"}.`);
   // "Dies" is specifically battlefield → graveyard (rule 700.4). A commander
   // redirected to the command zone above never reaches this point.
   if (zone === "graveyard" && isCreature(cardProfile(permanent.card))) {
@@ -1726,6 +1728,35 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       let next = movePermanentToZone(state, permanent, "graveyard");
       next = loseLife(next, permanent.controller, loss);
       return logged(next, controller, `${permanent.card.name} es destruida y su controlador pierde ${loss} vidas.`);
+    }
+    case "exile-target-creature-then-life-gain-power": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      // CR 613.7a: last known information — read power before it leaves.
+      const gain = powerOf(permanent, state);
+      const beneficiary = permanent.controller;
+      let next = movePermanentToZone(state, permanent, "exile");
+      if (gain > 0 && !playersCantGainLife(next)) {
+        next = withPlayer(next, beneficiary, (player) => ({ ...player, life: player.life + gain }));
+        next = raiseEvent(next, { kind: "life-gained", seat: beneficiary, amount: gain });
+      }
+      return logged(next, controller, `${permanent.card.name} es exiliada${gain > 0 ? `; su controlador gana ${gain} vidas` : ""}.`);
+    }
+    case "bottom-of-library-target-attacking-creature-then-life-gain-toughness": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      const gain = toughnessOf(permanent, state);
+      const beneficiary = permanent.controller;
+      let next = movePermanentToZone(state, permanent, "library-bottom");
+      if (gain > 0 && !playersCantGainLife(next)) {
+        next = withPlayer(next, beneficiary, (player) => ({ ...player, life: player.life + gain }));
+        next = raiseEvent(next, { kind: "life-gained", seat: beneficiary, amount: gain });
+      }
+      return logged(next, controller, `${permanent.card.name} va al fondo de la biblioteca de su dueño${gain > 0 ? `; su controlador gana ${gain} vidas` : ""}.`);
     }
     case "destroy-target-permanent": {
       const target = object.targets[0];
@@ -3424,6 +3455,13 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     ]);
     return allPermanents(state)
       .filter((permanent) => inCombat.has(permanent.instance_id) && isCreature(cardProfile(permanent.card)))
+      .filter((permanent) => (!keywordOf(state, permanent, "hexproof") || permanent.controller === seat) && !keywordOf(state, permanent, "shroud"))
+      .map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
+  }
+  if (kind === "attacking-creature") {
+    const attacking = new Set(state.combat.attackers.map((entry) => entry.instanceId));
+    return allPermanents(state)
+      .filter((permanent) => attacking.has(permanent.instance_id) && isCreature(cardProfile(permanent.card)))
       .filter((permanent) => (!keywordOf(state, permanent, "hexproof") || permanent.controller === seat) && !keywordOf(state, permanent, "shroud"))
       .map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
   }

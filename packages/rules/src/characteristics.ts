@@ -394,7 +394,11 @@ export type SpellEffect =
       readonly reveal: boolean;
     }
   /** Partner with <name> (CR 702.124f): a deterministic, name-exact search — no candidate choice, unlike `search-library`. */
-  | { readonly kind: "partner-with-search"; readonly cardName: string };
+  | { readonly kind: "partner-with-search"; readonly cardName: string }
+  /** Swords to Plowshares: power is captured before the creature leaves the battlefield (last known information, CR 613.7a). */
+  | { readonly kind: "exile-target-creature-then-life-gain-power" }
+  /** Condemn: toughness is likewise captured before the creature leaves. */
+  | { readonly kind: "bottom-of-library-target-attacking-creature-then-life-gain-toughness" };
 
 /**
  * Game events the engine raises for triggered abilities.
@@ -508,6 +512,7 @@ export type TargetKind =
   | "enchantment" | "land"
  | "nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
   | "attacking-or-blocking-creature"
+  | "attacking-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
   | "creature-power-at-most-4"
@@ -1335,6 +1340,16 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 
   if (/^The owner of target permanent shuffles it into their library, then reveals the top card of their library\. If it's a permanent card, they put it onto the battlefield$/i.test(text)) {
     return { effect: { kind: "chaos-warp" }, target: "permanent" };
+  }
+  // Swords to Plowshares: the exiled creature's power is read before it
+  // leaves the battlefield (CR 613.7a last known information).
+  if (/^Exile target creature\. Its controller gains life equal to its power$/i.test(text)) {
+    return { effect: { kind: "exile-target-creature-then-life-gain-power" }, target: "creature" };
+  }
+  // Condemn: same shape as Swords to Plowshares, but the target must be
+  // attacking and the removal is to library bottom rather than exile.
+  if (/^Put target attacking creature on the bottom of its owner['’]s library\. Its controller gains life equal to its toughness$/i.test(text)) {
+    return { effect: { kind: "bottom-of-library-target-attacking-creature-then-life-gain-toughness" }, target: "attacking-creature" };
   }
 
   const drawLose = /^(?:you\s+)?draw\s+(a|an|\w+)\s+cards?\s+and\s+(?:you\s+)?lose\s+(\w+)\s+life$/i.exec(text);

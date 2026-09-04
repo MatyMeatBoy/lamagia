@@ -1547,3 +1547,35 @@ Global export: **8,259/38,711** (+9). `npm run check` and `npm test` PASS
 (**436 rules tests**, up from 434; simulator smoke tests and 40 Oracle Python
 tests PASS). `npm run simulate:engine` reproduces the same pre-existing,
 unrelated seed-92 invariant failure.
+
+### Worker-05: Swords to Plowshares and Condemn, back on Commander 2017 (2026-09-04)
+
+Claim `rules-exile-and-bottom-library-lifegain`. Two of the format's most
+iconic removal spells, both a two-sentence single line: the first sentence
+(exile / bottom-of-library) was already trivially resolvable, but the second
+("Its controller gains life equal to its power/toughness") needs the
+creature's stats read as last known information (CR 613.7a) *before* it
+leaves the battlefield — the same shape already used by the existing
+`destroy-target-creature-then-life-loss` special case, just exiled/library
+instead of destroyed, and paid to the controller instead of taken from them.
+
+- Added a new `attacking-creature` target kind (Condemn requires the target
+  to actually be attacking; the existing `attacking-or-blocking-creature`
+  kind would have wrongly allowed blockers too) — filtered from
+  `state.combat.attackers` the same way the existing combined kind reads
+  both lists.
+- Generalized `movePermanentToZone`'s zone parameter with a `"library-bottom"`
+  option alongside `"graveyard"`/`"exile"`, so Condemn's removal reuses the
+  same commander-redirect (CR 903.9) and token-vanish handling those already
+  get, rather than duplicating it.
+- Both new effects are direct-resolution (find the permanent, capture
+  power/toughness, move it, then pay life to its captured controller);
+  `settle`'s existing combat-pruning removes a bottom-decked attacker from
+  `state.combat.attackers` automatically, so no extra cleanup was needed —
+  verified by a scenario test.
+
+This is back on Commander 2017 itself: **106/299 C17 (35.5%, up from 104)**.
+Global export: **8,261/38,711** (+2). `npm run check` and `npm test` PASS
+(**438 rules tests**, up from 436; simulator smoke tests and 40 Oracle Python
+tests PASS). `npm run simulate:engine` reproduces the same pre-existing,
+unrelated seed-92 invariant failure.
