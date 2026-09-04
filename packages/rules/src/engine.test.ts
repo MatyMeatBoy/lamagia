@@ -764,6 +764,22 @@ describe("casting", () => {
     ]);
   });
 
+  it("offers zero through two cards for the controller's delayed draw", () => {
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [C13_ARCANE_DENIAL()], [ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    const bolt = game.stack.at(-1)!;
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "draw-cards");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "draw-cards" }>;
+    expect(choice.seat).toBe(0);
+    expect(legalActions(game, 0).map((entry) => entry.action.type === "choose-draw" ? entry.action.amount : -1)).toEqual([0, 1, 2]);
+    const before = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "choose-draw", sourceId: choice.sourceId, amount: 2 });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.hand.length).toBe(before + 2);
+    expect(game.players[1]!.hand.length).toBe(2);
+  });
+
   it("uses a fixed multicolor mana ability as its full printed output", () => {
     let game = readyToCast([AZORIUS_SPELL()], [AZORIUS_RELIC()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
