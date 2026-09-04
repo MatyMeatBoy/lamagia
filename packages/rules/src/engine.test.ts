@@ -99,6 +99,7 @@ const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature —
 const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Target player gains 2 life." });
 const EACH_LIFE_SPELL = () => make({ name: "Common Blessing", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Each player gains 1 life." });
 const TARGET_LOSS_SPELL = () => make({ name: "Shared Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player loses 3 life." });
+const SIGN_IN_BLOOD = () => make({ name: "Bled Wisdom", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player draws two cards and loses 2 life." });
 const CREATURE_COUNT_LOSS = () => make({ name: "Creature Toll", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Target player loses life equal to the number of creatures you control." });
 const EACH_LOSS_SPELL = () => make({ name: "Common Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Each player loses 1 life." });
 const X_OPPONENT_LOSS = () => make({ name: "Scalable Burden", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Each opponent loses X life." });
@@ -3723,6 +3724,26 @@ describe("triggered abilities", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.life).toBe(40);
     expect(game.players[1]!.life).toBe(37);
+  });
+
+  it("lets the target player both draw and pay the life for a Sign in Blood effect", () => {
+    const profile = profileOf(SIGN_IN_BLOOD());
+    expect(profile.effects[0]).toMatchObject({
+      kind: "compound",
+      effects: [{ kind: "draw-target-player", amount: 2 }, { kind: "lose-life-target-player", amount: 2 }]
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([SIGN_IN_BLOOD()], [SWAMP()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const targetHand = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    // The caster neither draws nor pays: both effects resolve against the
+    // single chosen target, not the controller.
+    expect(game.players[0]!.life).toBe(40);
+    expect(game.players[1]!.life).toBe(38);
+    expect(game.players[1]!.hand.length).toBe(targetHand + 2);
   });
 
   it("makes each living player lose life", () => {

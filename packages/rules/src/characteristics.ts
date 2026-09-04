@@ -1424,6 +1424,18 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "draw-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw-target-player", amount: "X" }, target: "player" };
   }
+  // Sign in Blood pattern: one target player both draws and pays the life,
+  // reusing the existing single-player draw and life-loss effect kinds
+  // resolved against the same stack-object target (Sign in Blood, Blood Pact,
+  // Painful Lesson, Harrowing Journey, Damnable Pact).
+  if ((match = /^Target player draws (\w+) cards? and loses (\w+) life$/i.exec(text))) {
+    const drawAmount = toNumber(match[1]) ?? (match[1]!.toUpperCase() === "X" ? "X" as const : null);
+    const lifeAmount = toNumber(match[2]) ?? (match[2]!.toUpperCase() === "X" ? "X" as const : null);
+    if (drawAmount !== null && lifeAmount !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw-target-player", amount: drawAmount }, { kind: "lose-life-target-player", amount: lifeAmount }] },
+      target: "player"
+    };
+  }
   if ((match = /^Scry (\d+)$/i.exec(text))) return { effect: { kind: "scry", amount: Number(match[1]) }, target: "none" };
   if ((match = /^(?:~|This spell) deals (\w+) damage to each player$/i.exec(text))) {
     const amount = toNumber(match[1]);

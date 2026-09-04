@@ -1447,3 +1447,25 @@ tests**, up from 426; simulator smoke tests and 40 Oracle Python tests PASS).
 92, "P1 lost track of its commander") that is unrelated to this change — it
 reproduces identically on this same HEAD with this diff stashed out, so it is
 not attributable to this claim and is left for a separate investigation.
+
+### Worker-05: reusable "target player draws and loses life" compound (2026-09-04)
+
+Claim `rules-target-player-draw-and-lose-life`. Sign in Blood's family
+("Target player draws N cards and loses N life") already had both halves as
+separate effect kinds (`draw-target-player`, `lose-life-target-player`); the
+only gap was recognizing the combined sentence as a `compound` of the two,
+which `applyEffect` already resolves against the same single stack-object
+target, so no engine change was needed — only a new `recognizeSentence`
+pattern in `characteristics.ts`. Because the sentence is also reached through
+the existing trigger-effect path, this took effect for both spells (Sign in
+Blood, Damnable Pact, Blood Pact, Painful Lesson, Harrowing Journey,
+Reverent Howl, Shredder's Revenge, Vault Plunderer) and one trigger
+(Bloodgift Demon's upkeep clause), fully implementing 9 cards from one
+grammar line — 2 of them (Sign in Blood, Bloodgift Demon) in C14.
+
+Regenerated coverage: **119/322 C14 cards (37.0%)**, global export
+**8,235/38,711**. `npm run check` and `npm test` PASS (**434 rules tests**,
+up from 433 once `data/decks/cedh-pod.json` was generated locally via
+`npm run decks:pod:sync` — it is required by the simulator suite and was
+missing from this fresh worktree). `npm run simulate:engine` reproduces the
+same pre-existing, unrelated seed-92 invariant failure noted above.
