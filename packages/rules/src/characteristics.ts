@@ -362,6 +362,7 @@ export type SpellEffect =
   | { readonly kind: "tap-target-permanent" }
   | { readonly kind: "target-cant-block" }
   | { readonly kind: "untap-target-permanent" }
+  | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control"; readonly token: TokenDefinition }
   | {
@@ -954,6 +955,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   if (/^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
   const parsedEffectText = effectText.replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "").trim();
+  const selfUntap = /^Untap ~$/i.test(parsedEffectText);
   // Planeswalker loyalty abilities (CR 606): the cost is a signed loyalty change.
   const loyalty = /^\s*([+\u2212\u2013-])?\s*(\d+)\s*$/.exec(costText);
   if (loyalty) {
@@ -970,7 +972,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // The effect grammar is shared by spells, triggers and activations; do not
   // duplicate card-text patterns in the activation-cost parser.
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
-  const recognized = selfPump
+  const recognized = selfUntap
+    ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
+    : selfPump
     ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
