@@ -2502,6 +2502,24 @@ describe("casting", () => {
     expect(game.players[0]!.library.some((card) => card.name === "Scry Two")).toBe(false);
   });
 
+  it("clamps Scry N to the cards actually left in the library", () => {
+    let game = readyToCast([SCRY_TWO()], [ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: toHand(0, [BEAR()], "scry-short") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "scry", remainingCards: [{ name: "Grizzly Bears" }] });
+    game = applyAction(game, 0, { type: "choose-scry", sourceId: game.pendingChoice!.sourceId, query: "Grizzly Bears", bottom: true });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.library.map((card) => card.name)).toEqual(["Grizzly Bears"]);
+  });
+
+  it("finishes an empty-library Scry spell without opening a choice", () => {
+    let game = readyToCast([SCRY_TWO()], [ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Scry Two")).toBe(true);
+  });
+
   it("returns Blue Sun's Zenith to its owner's library after drawing", () => {
     let game = readyToCast([C13_BLUE_SUN()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
     const beforeHand = game.players[0]!.hand.length;
