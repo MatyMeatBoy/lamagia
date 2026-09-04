@@ -25167,7 +25167,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Azorius Herald — `a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6`
 - [ ] Azorius Keyrune — `7266b491-54e6-4393-a448-d5ae99d965c6`
 - [ ] Baleful Force — `f26fa9e4-f528-4e22-8f7c-329fc3b633e4`
-- [ ] Baloth Woodcrasher — `faaf9975-74df-4e9d-be0c-19a446cd507c`
+- [x] Baloth Woodcrasher — `faaf9975-74df-4e9d-be0c-19a446cd507c`
 - [ ] Bane of Progress — `51f9a6cc-8eb2-44ed-a2d9-913ac514ad67`
 - [ ] Basalt Monolith — `6b8cf2a0-b045-4d91-9d91-c602d40c6237`
 - [ ] Behemoth Sledge — `00573e77-8ff6-4acb-8683-8827d965288f`
@@ -25284,7 +25284,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [x] Naya Charm — `20cc0f3e-de69-4e5f-88b3-ae7e6c6b5996`
 - [ ] Naya Soulbeast — `5ea0c608-2c56-4889-a5d3-d435df515950`
 - [ ] Nekusar, the Mindrazer — `8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6`
-- [ ] New Benalia — `6e743fbf-b5b6-4176-a4f2-6933f521f2fe`
+- [x] New Benalia — `6e743fbf-b5b6-4176-a4f2-6933f521f2fe`
 - [ ] Night Soil — `3165fe8f-52d7-40f7-bb14-8f4300a564e6`
 - [ ] Nightscape Familiar — `57296ea3-3c0d-49b7-bc08-0d0d8414e9ad`
 - [ ] Nihil Spellbomb — `b713e49f-1b13-42d1-91f2-cc7a579e7614`
