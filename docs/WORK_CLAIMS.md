@@ -89,7 +89,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `global-shadow` | Shadow evasion and blocking symmetry (CR 702.28) | `feat/activated-abilities-and-triggers` | merged (`64f9641`) | 2026-09-04 |
 | `global-changeling` | Changeling keyword coverage using the existing all-creature-types model (CR 702.73) | `feat/activated-abilities-and-triggers` | merged (`aa453c7`) | 2026-09-04 |
 | `global-prowess` | Prowess noncreature-spell trigger and temporary self pump (CR 702.108) | `feat/activated-abilities-and-triggers` | merged (`8d53f24`) | 2026-09-04 |
-| `c13-horsemanship` | Global Horsemanship evasion keyword and Lu Xun C13 regression scenario (CR 702.31) | `feat/activated-abilities-and-triggers` | active | 2026-09-04 |
+| `c13-horsemanship` | Global Horsemanship evasion keyword and Lu Xun C13 regression scenario (CR 702.31) | `feat/activated-abilities-and-triggers` | merged (`76b1d78`) | 2026-09-04 |
 | `rules-land-search` | Landcycling variants and land-subtype search resolution | `feat/activated-abilities-and-triggers` | merged (`7c7f77c`) | 2026-09-03 |
 | `rules-equipment` | Equip actions, attachment state, and Equipment static bonuses | `codex/c13-equipment-cluster` | merged (`f61a096`) | 2026-09-03 |
 | `rules-c13-reprint-equivalence` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | `codex/c13-equipment-cluster` | merged (`44d0e78`) | 2026-09-04 |

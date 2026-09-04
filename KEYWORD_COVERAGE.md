@@ -2,7 +2,7 @@
 
 Generated from the local Comprehensive Rules snapshot and the normalized catalog. The report distinguishes keyword abilities from keyword actions and ability words; a high catalog count is a prioritization signal, not proof that all variants share one implementation.
 
-**Summary:** 23 implemented · 2 partial · 169 backlog
+**Summary:** 27 implemented · 2 partial · 165 backlog
 
 `catalog occurrences` counts Scryfall keyword metadata and is used to prioritize reusable primitives. Every implementation still requires a scenario test and a Comprehensive Rules citation.
 
@@ -36,10 +36,10 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.25 | Flanking | backlog | 61 | Needs a dedicated rules primitive and scenario tests |
 | 702.26 | Phasing | backlog | 17 | Needs a dedicated rules primitive and scenario tests |
 | 702.27 | Buyback | backlog | 99 | Needs a dedicated rules primitive and scenario tests |
-| 702.28 | Shadow | backlog | 101 | Needs a dedicated rules primitive and scenario tests |
+| 702.28 | Shadow | implemented | 101 | symmetric shadow evasion and blocking |
 | 702.29 | Cycling | implemented | 2060 | cycling action and optional search variants |
 | 702.30 | Echo | backlog | 147 | Needs a dedicated rules primitive and scenario tests |
-| 702.31 | Horsemanship | backlog | 55 | Needs a dedicated rules primitive and scenario tests |
+| 702.31 | Horsemanship | implemented | 55 | symmetric horsemanship evasion and blocking |
 | 702.32 | Fading | backlog | 44 | Needs a dedicated rules primitive and scenario tests |
 | 702.33 | Kicker | implemented | 652 | alternative/additional cast cost |
 | 702.34 | Flashback | backlog | 793 | Needs a dedicated rules primitive and scenario tests |
@@ -91,7 +91,7 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.80 | Wither | backlog | 46 | Needs a dedicated rules primitive and scenario tests |
 | 702.81 | Retrace | backlog | 54 | Needs a dedicated rules primitive and scenario tests |
 | 702.82 | Devour | backlog | 62 | Needs a dedicated rules primitive and scenario tests |
-| 702.83 | Exalted | backlog | 95 | Needs a dedicated rules primitive and scenario tests |
+| 702.83 | Exalted | implemented | 95 | sole-attacker temporary pump trigger |
 | 702.84 | Unearth | backlog | 157 | Needs a dedicated rules primitive and scenario tests |
 | 702.85 | Cascade | backlog | 169 | Needs a dedicated rules primitive and scenario tests |
 | 702.86 | Annihilator | backlog | 80 | Needs a dedicated rules primitive and scenario tests |
@@ -116,7 +116,7 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.105 | Dethrone | backlog | 32 | Needs a dedicated rules primitive and scenario tests |
 | 702.106 | Hidden Agenda | backlog | 16 | Needs a dedicated rules primitive and scenario tests |
 | 702.107 | Outlast | backlog | 44 | Needs a dedicated rules primitive and scenario tests |
-| 702.108 | Prowess | backlog | 258 | Needs a dedicated rules primitive and scenario tests |
+| 702.108 | Prowess | implemented | 258 | noncreature-spell temporary pump trigger |
 | 702.109 | Dash | backlog | 56 | Needs a dedicated rules primitive and scenario tests |
 | 702.110 | Exploit | backlog | 62 | Needs a dedicated rules primitive and scenario tests |
 | 702.111 | Menace | implemented | 1115 | blocking restriction |
