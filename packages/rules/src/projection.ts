@@ -111,6 +111,16 @@ export interface ScryView {
   readonly remaining: number;
 }
 
+/** Top cards disclosed only to the player resolving a look-top effect. */
+export interface TopSelectionView {
+  readonly sourceId: string;
+  readonly sourceName: string;
+  readonly stage: "select" | "bottom";
+  readonly cards: readonly CardView[];
+  readonly eligibleTypes: readonly string[];
+  readonly selectedCardId?: string;
+}
+
 export interface GameView {
   readonly viewerSeat: SeatId;
   readonly version: number;
@@ -128,6 +138,8 @@ export interface GameView {
   readonly librarySearch: LibrarySearchView | null;
   /** Present only for the player currently resolving Scry. */
   readonly scry: ScryView | null;
+  /** Present only for the player currently resolving a top-card selection. */
+  readonly topSelection: TopSelectionView | null;
   readonly combat: {
     readonly attackers: readonly { readonly instanceId: string; readonly name: string; readonly defender: SeatId }[];
     readonly blockers: readonly { readonly instanceId: string; readonly name: string; readonly attackerId: string }[];
@@ -303,11 +315,21 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     topCards: pendingScry.remainingCards.map(cardView),
     remaining: pendingScry.remainingCards.length
   } : null;
+  const pendingTopSelection = state.pendingChoice?.type === "look-top-select" && state.pendingChoice.seat === viewerSeat
+    ? state.pendingChoice : null;
+  const topSelection: TopSelectionView | null = pendingTopSelection ? {
+    sourceId: pendingTopSelection.sourceId,
+    sourceName: pendingTopSelection.sourceCard.name,
+    stage: pendingTopSelection.stage,
+    cards: pendingTopSelection.remainingCards.map(cardView),
+    eligibleTypes: pendingTopSelection.types,
+    ...(pendingTopSelection.selectedCardId ? { selectedCardId: pendingTopSelection.selectedCardId } : {})
+  } : null;
 
   const targetKinds = new Set<string>([
     "any", "player", "creature", "spell", "creature-spell", "noncreature-spell", "permanent", "artifact-or-enchantment", "creature-with-defender", "creature-with-deathtouch", "creature-with-lifelink", "creature-with-menace", "creature-with-haste", "creature-with-first-strike", "creature-with-double-strike", "creature-with-trample", "creature-with-vigilance", "creature-with-indestructible", "creature-with-hexproof", "creature-with-shroud", "creature-with-reach", "creature-power-at-least-5", "creature-power-at-most-4", "creature-toughness-at-least-4", "creature-toughness-at-most-4",
     "artifact-creature-or-planeswalker", "artifact-enchantment-or-land", "artifact",
-    "nonland", "nonartifact-creature", "creature-you-control", "land-you-control", "enchantment", "land",
+    "nonland", "nonartifact-creature", "non-demon-creature", "creature-you-control", "land-you-control", "enchantment", "land",
     "attacking-or-blocking-creature",
     "player-or-planeswalker", "card-in-your-graveyard", "card-in-a-graveyard", "creature-card-in-your-graveyard", "creature-card-in-a-graveyard", "artifact-card-in-your-graveyard", "artifact-card-in-a-graveyard", "enchantment-card-in-your-graveyard", "enchantment-card-in-a-graveyard", "land-card-in-a-graveyard",
     ...viewerActions.flatMap((action) => action.requiresTarget ? [action.requiresTarget] : [])
@@ -340,6 +362,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     })),
     librarySearch,
     scry,
+    topSelection,
     combat: {
       attackers: state.combat.attackers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), defender: entry.defender })),
       blockers: state.combat.blockers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), attackerId: entry.attackerId })),

@@ -67,7 +67,10 @@ def load_claimed_keys(path: Path | None) -> set[str]:
         columns = [column.strip() for column in line.strip().strip("|").split("|")]
         if len(columns) < 4 or not columns[0].startswith("`") or not columns[0].endswith("`"):
             continue
-        status = columns[3].strip("`").casefold()
+        # Allow a compact commit annotation, e.g. `review (abc123)`, without
+        # losing the coordination state. The base status remains the token
+        # before the optional parenthesized note.
+        status = re.split(r"\s*\(", columns[3].strip("`"), maxsplit=1)[0].strip().casefold()
         if status in ACTIVE_STATUSES:
             claimed.add(columns[0][1:-1])
     return claimed
@@ -85,7 +88,10 @@ def _entry_key(entry: dict[str, Any], prefix: str) -> str:
 
 def _card_ids(entry: dict[str, Any]) -> list[str]:
     """Extract unique Oracle IDs, retaining the roadmap's deterministic order."""
-    cards = entry.get("unlocked_cards") or entry.get("cards") or []
+    # Use every card affected by the primitive, not only today's final
+    # blockers. This makes overlapping jobs co-locate before assignment and
+    # prevents two workers from editing the same card in parallel.
+    cards = entry.get("affected_cards") or entry.get("unlocked_cards") or entry.get("cards") or []
     result: list[str] = []
     seen: set[str] = set()
     for card in cards:
@@ -148,6 +154,7 @@ def build_worker_plan(
                 )),
                 "priority": str(entry.get("priority") or ("high" if entry.get("quick_win_count") else "normal")),
                 "oracle_ids": cards,
+                "oracle_cards": entry.get("affected_cards") or entry.get("unlocked_cards") or entry.get("cards") or [],
                 "batches": batches,
             }
         )
@@ -252,6 +259,12 @@ def render_document(plan: dict[str, Any]) -> str:
                 f"| {job['priority']} | `{job['claim_key']}` | {job['family']} | {len(job['oracle_ids'])} |"
                 f" {job['quick_win_count']} | {job['unlocks']} | {len(job['batches'])} |"
             )
+            cards = ", ".join(
+                f"{card.get('name', '?')} [{card.get('oracle_id', '?')}]" if isinstance(card, dict) else str(card)
+                for card in job.get("oracle_cards", [])
+            )
+            if cards:
+                lines += [f"Cards: {cards}", ""]
         lines.append("")
     if plan["skipped_claims"]:
         lines += ["## Already claimed", "", ", ".join(f"`{key}`" for key in plan["skipped_claims"]), ""]

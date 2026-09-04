@@ -531,6 +531,31 @@ libraries finish without inventing cards.
 Rules reference: Comprehensive Rules 701.22a–d; official Wizards source:
 `https://magic.wizards.com/en/rules`.
 
+### Reusable top-card reveal and mana-value primitive
+
+`reveal-top-card-to-hand-and-gain-mana-value` handles the shared shape used by
+C13 Augury Adept: reveal exactly one card, move that card to its controller's
+hand, then gain life equal to that card's mana value. The Python Oracle IR now
+retains `reveal-top:hand` and `amount:mana-value` operands, so later cards reuse
+the primitive instead of reparsing the nouns. An empty library reveals nothing;
+life gain remains subject to existing prevention. Scenario coverage includes a
+combat-damage trigger and a four-mana-value revealed card.
+
+Rules reference: Comprehensive Rules 701.16, 608.2c and 119.3; official
+Wizards source: `https://magic.wizards.com/en/rules`.
+
+### Reusable reveal-until type primitive
+
+`reveal-until-type-to-hand` models Foster's optional `{1}` death trigger with
+the type preserved as an operand: reveal from the top until a Creature card,
+put the hit into hand, and move only the preceding revealed cards to the
+graveyard. If no matching card exists, the whole library is moved to the
+graveyard. The Python IR emits `reveal-until:<Type>:hand:graveyard`, allowing
+future artifact, land, or other type variants to reuse the same effect.
+
+Rules reference: Comprehensive Rules 701.16, 701.13 and 603.2; official
+Wizards source: `https://magic.wizards.com/en/rules`.
+
 ### Reusable triggered self-modifier primitive
 
 The parser maps `~ gets +N/+N and gains <keyword> until end of turn` inside a
@@ -646,6 +671,123 @@ Rules reference: Comprehensive Rules 109.5, 601.2c and 115.1; official
 Wizards source: `https://magic.wizards.com/en/rules`.
 
 ## Cooperative C13 cluster: Level Up
+### Cooperative C13 cluster: typed tap activation costs
+
+The activation parser now turns `Tap an untapped [subtype] you control` into
+the reusable `tapsCreature` cost descriptor. It supports both `any` and
+`another`, treats subtype matching case-insensitively, and leaves the source
+eligible when the text does not say `another`; Azami, Lady of Scrolls is the
+C13 application. `legalActions` exposes one action per eligible permanent
+with a stable `tapId`, while the authoritative apply path revalidates the
+choice and taps it before putting the ability on the stack. Summoning sickness
+does not block this cost because it is not a tap-symbol activation cost.
+
+The scope is deliberately separate from `{T}` source costs, mana abilities,
+crew, and multi-cost payment ordering. Future cards using the same wording
+reuse this descriptor without card-name branches. This follows Comprehensive
+Rules 117.3b, 601.2g, 602.2b and 701.21; official Wizards source:
+`https://magic.wizards.com/en/rules`.
+
+Validation: `npm run check --workspace=@prossh/rules` PASS and `npm test
+--workspace=@prossh/rules` PASS — 362 passed, 6 skipped.
+
+### Cooperative C13 cluster: draw spells and Flashback life payments
+
+Brilliant Plan and Harmonize reuse the shared `draw` effect, Vision Skeins
+reuses `each-player-draw`, and Deep Analysis reuses `draw-target-player` plus
+the existing Flashback cast path. The Flashback parser now accepts Oracle's
+typographic `Flashback—` separator and extracts an additional `Pay N life`
+component instead of treating it as an invalid mana cost. The authoritative
+cast path reserves and pays that life, exposes it in the action label, and
+still exiles the spell after resolution. Insufficient life removes the
+Flashback action; target draw remains subject to normal target legality.
+
+Rules reference: Comprehensive Rules 601.2, 601.2f, 702.34 and 118.4;
+official Wizards source: `https://magic.wizards.com/en/rules`.
+
+Validation: `npm run check --workspace=@prossh/rules` PASS and `npm test
+--workspace=@prossh/rules` PASS — 367 passed, 6 skipped.
+
+### Cooperative C13 cluster: ETB draw and destroy-then-draw reuse
+
+Baleful Strix now verifies the existing ETB draw trigger and flying/deathtouch
+characteristics as a C13 printing. Phyrexian Gargantua generalizes the
+compound `draw N and lose N life` recognizer, so its ETB uses the same ordered
+draw and life-loss effects without a card-specific branch. Annihilate verifies
+that typed nonblack-creature destruction and the shared draw effect resolve in
+sequence, while black creatures remain illegal targets.
+
+Rules reference: Comprehensive Rules 603.2, 608.2b, 608.2c and 700.4;
+official Wizards source: `https://magic.wizards.com/en/rules`.
+
+Validation: `npm run check --workspace=@prossh/rules` PASS and `npm test
+--workspace=@prossh/rules` PASS — 373 passed, 6 skipped.
+
+### Cooperative C13 cluster: Arcane Denial delayed draws
+
+Arcane Denial is compiled into one parameterized counter effect with two
+delayed upkeep draws: its target's controller may choose 0 through 2 cards and
+the caster draws 1. The delayed entries are queued for the next turn's upkeep,
+then become ordinary triggers and preserve player-private choice handling.
+The `choose-draw` action clamps to the remaining library, is exposed only to
+the owed player, and is supported by the deterministic bot. This keeps the
+primitive reusable for future counterspells with different delayed amounts,
+without a card-name branch.
+
+Rules reference: Comprehensive Rules 603.3, 603.7, 608.2b and 121.1;
+official Wizards source: `https://magic.wizards.com/en/rules`.
+
+Validation: `npm run check --workspace=@prossh/rules` PASS; targeted Arcane
+Denial tests PASS (4 tests). Full workspace tests should be rerun after
+integration.
+
+### Cooperative C13 cluster: Bane of Progress sweep
+
+Bane of Progress reuses a parameterized ETB primitive that destroys every
+artifact and enchantment permanent that is not indestructible, counts the
+permanents destroyed across all players, and puts that many counters on the
+triggering source. The source is resolved through its stable permanent ID, so
+the effect remains correct if the source leaves before its trigger resolves;
+countering the ETB prevents the sweep. The compiler's primitive inventory also
+preserves delayed-draw amounts and optionality, so future counterspell variants
+join the same review family instead of being rediscovered card by card.
+
+Rules reference: Comprehensive Rules 603.2, 603.3d, 608.2b, 701.8, 122.1 and
+122.6;
+official Wizards source: `https://magic.wizards.com/en/rules`.
+
+Validation: `npm run check --workspace=@prossh/rules` PASS; Bane of Progress
+scenarios and the Python compiler suite PASS. Full workspace tests should be
+rerun after integration.
+
+### Cooperative C13 cluster: private top-N selection
+
+The C13 Augur of Bolas fixture now uses a parameterized `look-top-select`
+primitive. It privately exposes the top N cards to the controller, offers only
+matching card types for the optional hand selection, then requires the
+remaining cards to be ordered on the bottom. The primitive is deliberately
+name-independent so future “look at the top N ...” cards can reuse it.
+
+The engine keeps the viewed cards out of every other player's projection and
+uses ordinal actions rather than leaking library instance IDs. The parser
+extracts N and the requested card types from Oracle text. Scenarios cover
+selecting an instant, declining, ordering the remainder, and opponent
+privacy. This follows CR 401.1, 401.4, 401.5, 701.20e and 701.23a; verify
+against the official [Wizards Comprehensive Rules](https://magic.wizards.com/en/rules).
+
+### Cooperative C13 cluster: Act of Authority control transfer
+
+Act of Authority now reuses the typed artifact/enchantment exile effect. Its
+ETB trigger exiles the chosen permanent without transferring the source; its
+upkeep trigger uses the parameterized `gainSourceControl: target-controller`
+variant after a successful exile. Controller movement preserves the same
+permanent instance and is applied only if the source remains on the
+battlefield. Tests cover target selection, optional resolution, exile, and
+upkeep transfer. The control-change behavior is grounded in CR 110.2, 110.5,
+701.20 and 701.23a; confirm against the official [Wizards Comprehensive
+Rules](https://magic.wizards.com/en/rules).
+
+### Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
 as a sorcery-speed activated ability, pays through the existing mana planner,
@@ -901,9 +1043,10 @@ implemented cards. The current set map reports **19.7%** across 708 editions.
 The latest fork batch also adds reusable ETB trigger subjects for artifacts and
 enchantments under your control.
 
-The primitive compiler is now parser version `v9`: it reuses its incremental
+The primitive compiler is now parser version `v10`: it reuses its incremental
 cache, preserves typed sacrifice operands, distinguishes discard activation
-costs from discard effects, and emits a valid
+costs from discard effects, and records modal operands such as `one-or-both`
+for the reusable modal engine. It emits a valid
 one-command C13 worker plan (`npm run rules:oracle:plan:c13`): 5 disjoint
 workers, a 2 GB scheduler ceiling, 20 `oracle_id`s per commit, and an
 11-commit integration threshold. The latest benchmark classified 38,711 cards
@@ -1406,6 +1549,14 @@ Current regenerated coverage: **183/356 C13 precon cards (51.4%)** and
 (21.2%)**. Validation: `npm run check` and `npm test` PASS (**425 rules
 tests**, simulator, **39 Oracle Python tests**).
 
+### C13 threshold return primitive (2026-09-04)
+
+Stitch Together now uses one numeric threshold primitive: the targeted creature
+card returns to hand normally, but returns to the battlefield instead when its
+controller has at least seven cards in their graveyard at resolution. The
+threshold is evaluated on resolution, after target selection, so the same
+effect can serve future Threshold values without card-specific logic.
+
 ### Integrator checkpoint: stale C14 branch review (2026-09-04)
 
 Reviewed `c14-batch2-clean`: its reported 200+ cards were already present in
@@ -1416,10 +1567,18 @@ attacking-creature sacrifice). Check, full tests, simulator and 40 Oracle
 Python tests pass. Fork protocol: update from the current integration branch,
 claim one disjoint primitive, commit directly with tests and a compact
 `CLAIM/BASE/COMMIT/FILES/TESTS/SCENARIOS/LIMITS` report; never accumulate or
-rebase a stale full-tree branch. Current regenerated coverage is **184/356
-C13 precon cards**, **169/341 unique C13 entries**, **116/322 C14 cards**, and
-**8,223/38,711 global cards**. Commit `5f01afc` (C13 top-library selection)
-is queued for the next integration batch.
+rebase a stale full-tree branch.
+
+The supplied worker report is valid for its own stale code: `af82c1f` exported
+**241/337 C14 printing identities**. It must not be confused with the clean
+integration branch, whose current export is **116/322 unique Oracle IDs**;
+`SET_COVERAGE.md` uses that canonical denominator. The worker report now
+provides the exact card-to-commit map needed to rescue the missing C14
+functions; cherry-pick/reimplement commits case by case, never merge its
+stale full tree. The clean branch currently exports **186/356 C13 printings**,
+**171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
+`5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
+queued for the next integration batch.
 
 ### Worker-05: reusable "any creature enters" trigger (2026-09-04)
 
@@ -1579,3 +1738,126 @@ Global export: **8,261/38,711** (+2). `npm run check` and `npm test` PASS
 (**438 rules tests**, up from 436; simulator smoke tests and 40 Oracle Python
 tests PASS). `npm run simulate:engine` reproduces the same pre-existing,
 unrelated seed-92 invariant failure.
+
+### Worker-05: merged onto the integrator's latest batch (2026-09-04)
+
+Fetched `origin/feat/activated-abilities-and-triggers` (now at `8c9e7fe`, far
+ahead of the `8bcf441` base this branch started from) and merged it in before
+continuing, per the user's instruction to re-check `AI_CONTRIBUTOR.md` and
+`WORK_CLAIMS.md`. Cross-checked every worker-05 claim above against the new
+HEAD: `equipped-creature triggered abilities` (commit `2753dfb`) and Condemn
+(`66a74da`, as `bottom-attacker-controller-gains-toughness`) were already
+integrated independently — dropped the redundant equipped-creature work
+in progress before it was ever committed, and removed worker-05's duplicate
+Condemn effect (`bottom-of-library-target-attacking-creature-then-life-gain-toughness`)
+and its now-dead second `attacking-creature` `legalTargets` branch, keeping
+the integrator's version. `any-creature-enters-trigger`,
+`target-player-draw-and-lose-life` (the `draw-target-player`/`lose-life-target-player`
+compound), `blood-artist-drain`, `rules-partner-keyword`, and Swords to
+Plowshares (`exile-target-creature-then-life-gain-power`) were not duplicated
+and remain worker-05's own contribution. Full check/test/simulate rerun green
+after the merge; `npm run rules:engine:export` and `rules:set:coverage`
+regenerated against the merged tree before the next claim.
+
+### Worker checkpoint: Charmbreaker Devils random recovery (2026-09-04)
+
+Added the parameterized `return-random-instant-or-sorcery-from-graveyard`
+primitive. It filters by card type, returns up to `N` cards without replacement,
+and advances the deterministic RNG, covering Charmbreaker Devils' upkeep
+trigger (CR 603.2, 701.3). Commit `1d3212b` is queued for
+integration; this branch is based on `b008385` and excludes sibling worker
+commits.
+The reported `241/337` C14 figure was observed in a transient/generated
+working state, but is not reproducible from the current committed profiles or
+from the worker branch history (the latter records 120/337 at its last
+checkpoint). After a clean profile export, the reproducible five-precon union
+is **116/322 unique Oracle IDs**; the edition-membership report in
+`SET_COVERAGE.md` uses the same denominator. The useful C14 functionality from
+the stale worker tree is already rescued through the integrated batch history
+plus `893730c`; importing its remaining files would discard newer C13 rules
+and is prohibited. To recover any extra work behind the 241 figure, the worker
+must provide the exact card-to-commit mapping; no uncommitted generated
+profile is treated as code. Commits `5f01afc`, `6b99130`, and `b8702fb` (C13
+worker artifacts) remain queued for the next integration batch.
+
+### C13 choose-one-or-both modal primitive (2026-09-04)
+
+`Soul Manipulation` (`419c2ae1-fec7-4c27-a7a0-99f777abb4de`) and `Fissure
+Vent` (`f5bac25d-72e9-4655-8a04-3646fc10be27`) now reuse the modal parser's
+synthetic `Choose both` mode. It composes the already-supported branch effects,
+preserves their ordered target kinds, and resolves each target at its own
+offset; ordinary `Choose one` cards remain unchanged. The client and bot expose
+the ordered target sequence, while the server validates every target.
+### Worker checkpoint: Conjurer's Closet reusable blink (2026-09-04)
+
+Added the reusable `blink-target-creature` primitive for Conjurer's Closet:
+the optional end-step trigger targets a creature you control, exiles it, then
+returns it under your control through the normal battlefield-entry path (CR
+603.2, 603.5, 400.7). The implementation preserves ETB event generation and
+does not return tokens from exile. Commit `2451f5c` is queued for
+integration; this branch is based on `b008385` and excludes sibling worker
+commits.
+### Worker checkpoint: Tidal Force tap-or-untap choice (2026-09-04)
+
+Added `tap-or-untap-target-permanent`, a reusable two-step trigger primitive:
+the target is chosen first, then the controller chooses whether to tap or
+untap it. This covers Tidal Force's “At the beginning of each upkeep” ability
+and gives bots deterministic behavior (CR 603.2, 603.5, 701.21). Commit
+`870297c` is queued for integration; this branch is based on `b008385`
+and excludes sibling worker commits.
+### C13 Wonder graveyard static primitive (2026-09-04)
+
+`Wonder` (`232284f7-c623-4895-9ab9-8b1a39926830`) now records its static grant
+with explicit `sourceZone: "graveyard"` and `requiresControlledLandSubtype:
+"Island"`. The engine applies the grant only to creatures controlled by that
+player while the required land subtype is present; the Python IR preserves the
+same zone, subtype, and keyword operands for future cards.
+
+### Worker checkpoint: Echo (2026-09-04)
+
+Echo is parsed as a reusable profile cost and scheduled for the permanent's
+controller at their next upkeep. The player may pay through the normal mana
+planner; declining sacrifices the source. This closes C13 cards blocked only
+by `Echo {cost}` (CR 702.30a-b).
+
+### Integrator checkpoint (2026-09-04)
+
+The accumulated C13 worker batch is validated locally before publication. The
+engine-first queue now reports **186/341 C13 cards complete (54.5%)**, with 155
+unfinished; C14 reports **191/322 (59.3%)**. Contributors must regenerate the
+queue with `rules:engine:export`, `rules:roadmap:c13`, and
+`rules:oracle:plan:c13`; the generated roadmap, not raw Oracle wording, is the
+work-allocation source of truth.
+
+### Integrator checkpoint: Thunderstaff and C14 cross-set reuse (2026-09-04)
+
+Thunderstaff now reuses a parsed static replacement primitive: while an untapped
+source is controlled, each applicable source prevents one creature combat damage
+to that player; multiple sources stack and the prevented amount is also removed
+from lifelink and commander-damage accounting (CR 614.1, 615.1). The scenario
+suite covers both untapped and tapped states. This raises the current C13 export
+to **187/341 (54.8%)**, with **154** unfinished and **76** one-line-away; C14 is
+**191/322 (59.3%)**.
+
+The catalog cross-check confirms why C14 work is reusable: of its **322 unique
+Oracle IDs**, **315 also have printings outside C14** and **7 are C14-only**.
+The 191 implemented profiles therefore already benefit other editions by stable
+Oracle ID; the 131 pending IDs should be scheduled by primitive family rather
+than by printing. Current C14-only cards are Breaching Leviathan, Crown of Doom,
+Demon of Wailing Agonies, Dulcet Sirens, Flesh Carver, Raving Dead and Spoils of
+Blood. Example pending reusable profiles include Skullclamp, Beastmaster
+Ascension, Masked Admirers, Scrap Mastery, Cathodion and Reaper from the Abyss.
+
+### Integrator checkpoint: Nightscape Familiar multi-color reduction (2026-09-04)
+
+The cost-reduction parser now preserves a color union such as “blue spells and
+red spells” as one reusable grant. Matching any listed color applies the generic
+reduction once; unrelated colors remain full price. The C13 export is now
+**188/341 (55.1%)**, with **153** unfinished and **75** one-line-away. The worker
+plan remains five disjoint workers under the 2 GB scheduler budget, with up to
+20 Oracle IDs per commit and the 11-commit integration threshold.
+
+The worker planner now normalizes claim statuses before optional parenthesized
+commit notes, so `review (abc123)` is excluded exactly like `review`. This keeps
+fork work disjoint automatically: the current C13 plan has **34 unclaimed
+primitives**, balanced as **7/7/7/7/6** across five workers.

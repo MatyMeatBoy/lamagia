@@ -5,14 +5,36 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, delayed_draw_hint, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, trigger_subject_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, delayed_draw_hint, effective_worker_count, graveyard_static_hint, load_card_cache, look_top_hint, mana_ability_hint, operand_hints, primitive_cluster_inventory, reveal_until_type_hint, save_card_cache, search_criterion_hint, top_card_reveal_hint, trigger_subject_hint
 from export_set_coverage import is_ignored_edition, product_group
+from check_precon_coverage import identity_of
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, resolve_claim_prefix, select_profiles, template_of
 from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
 from compile_oracle_effects import return_target_hint
 
 
 class OracleCompilerTests(unittest.TestCase):
+    def test_precon_identity_prefers_oracle_id_over_printing(self) -> None:
+        self.assertEqual(identity_of({"oracle_id": "oracle", "scryfall_id": "printing"}), "oracle")
+        self.assertEqual(identity_of({"scryfall_id": "printing"}), "printing")
+
+    def test_reuses_top_card_reveal_and_mana_value_operands(self) -> None:
+        reveal = "Whenever this creature deals combat damage to a player, reveal the top card of your library and put that card into your hand."
+        result = classify(reveal)
+        self.assertTrue(top_card_reveal_hint(reveal))
+        self.assertTrue(result["top_card_reveal"])
+        self.assertIn("reveal-top:hand", result["primitive_cluster"])
+        amount = classify("You gain life equal to its mana value.")
+        self.assertTrue(amount["mana_value_dependency"])
+        self.assertIn("amount:mana-value", amount["primitive_cluster"])
+
+    def test_extracts_reveal_until_type_operands(self) -> None:
+        clause = "If you do, reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest into your graveyard."
+        result = classify(clause)
+        self.assertEqual(reveal_until_type_hint(clause), "Creature")
+        self.assertEqual(result["reveal_until_type"], "Creature")
+        self.assertIn("reveal-until:Creature:hand:graveyard", result["primitive_cluster"])
+
     def test_preserves_open_subtype_for_steelshapers_gift(self) -> None:
         self.assertEqual(
             search_criterion_hint(
@@ -104,10 +126,34 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(result["delayed_draw"], {"optional": False, "amount": 1})
         self.assertIn("delayed-draw:mandatory:1", result["primitive_cluster"])
 
+    def test_preserves_look_top_amount_and_card_types(self) -> None:
+        clause = "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order."
+        self.assertEqual(look_top_hint(clause), {
+            "amount": 3,
+            "types": ["instant", "sorcery"],
+            "destination": "hand",
+            "rest_destination": "bottom",
+        })
+        result = classify(clause)
+        self.assertEqual(result["look_top"]["amount"], 3)
+        self.assertIn("look-top:3:instant,sorcery:hand:bottom", result["primitive_cluster"])
+
     def test_preserves_permanent_graveyard_return_target(self) -> None:
         clause = "Return target permanent card from your graveyard to the battlefield."
         self.assertEqual(return_target_hint(clause), "permanent-card-in-your-graveyard")
         self.assertEqual(classify(clause)["return_target"], "permanent-card-in-your-graveyard")
+
+    def test_preserves_graveyard_static_zone_and_land_subtype(self) -> None:
+        clause = "As long as this card is in your graveyard and you control an Island, creatures you control have flying."
+        self.assertEqual(graveyard_static_hint(clause), {
+            "source_zone": "graveyard",
+            "requires_controlled_land_subtype": "Island",
+            "keyword": "flying",
+        })
+        result = classify(clause)
+        self.assertTrue(result["known_static"])
+        self.assertIn("source-zone:graveyard", result["primitive_cluster"])
+        self.assertIn("requires-land-subtype:Island", result["primitive_cluster"])
 
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
@@ -117,6 +163,12 @@ class OracleCompilerTests(unittest.TestCase):
         result = classify("Flying, vigilance")
         self.assertTrue(result["keyword_only"])
         self.assertTrue(result["candidate"])
+
+    def test_preserves_choose_one_or_both_as_a_modal_operand(self) -> None:
+        result = classify("Choose one or both —")
+        self.assertTrue(result["modal"])
+        self.assertEqual(result["modal_mode"], "one-or-both")
+        self.assertIn("modal-mode:one-or-both", result["primitive_cluster"])
 
     def test_reuses_mana_side_effect_and_restriction_primitives(self) -> None:
         self.assertEqual(
@@ -146,7 +198,7 @@ class OracleCompilerTests(unittest.TestCase):
             self.assertEqual(load_card_cache(path)["oracle-1"], entry)
             path.write_text(json.dumps({"format": "prossh-oracle-card-cache/v1", "parser_version": "old", "cards": {"oracle-1": entry}}), encoding="utf-8")
             self.assertEqual(load_card_cache(path), {})
-        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v9")
+        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v10")
 
     def test_separates_discard_activation_cost_from_discard_effect(self) -> None:
         result = classify("{T}, Discard a card: Draw a card.")
@@ -256,6 +308,23 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual({owners["shared"], owners["a"], owners["b"]}, {owners["shared"]})
         self.assertEqual(sum(worker["estimated_cards"] for worker in plan["workers"]), 4)
 
+    def test_worker_plan_uses_all_affected_cards_for_overlap_safety(self) -> None:
+        plan = build_worker_plan([
+            {"claim_key": "primitive-a", "affected_cards": [
+                {"oracle_id": "shared", "name": "Shared"},
+                {"oracle_id": "a", "name": "A"},
+            ]},
+            {"claim_key": "primitive-b", "affected_cards": [
+                {"oracle_id": "shared", "name": "Shared"},
+                {"oracle_id": "b", "name": "B"},
+            ]},
+        ], workers=2, memory_budget_gb=2)
+        jobs = [job for worker in plan["workers"] for job in worker["jobs"]]
+        self.assertEqual({job["claim_key"] for job in jobs}, {"primitive-a", "primitive-b"})
+        owners = {worker["worker"] for worker in plan["workers"] for job in worker["jobs"] if "shared" in job["oracle_ids"]}
+        self.assertEqual(len(owners), 1)
+        self.assertEqual({"shared", "a", "b"}, {oracle_id for job in jobs for oracle_id in job["oracle_ids"]})
+
     def test_reads_only_exact_active_claim_statuses(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "claims.md"
@@ -269,6 +338,17 @@ class OracleCompilerTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(load_claimed_keys(path), {"owned", "reviewing"})
+
+    def test_reads_review_claims_with_commit_annotations(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "claims.md"
+            path.write_text(
+                "| Claim key | Scope | Branch | Status | Since |\n"
+                "| --- | --- | --- | --- | --- |\n"
+                "| `reviewed` | scope | worker | review (`abc123`) | today |\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(load_claimed_keys(path), {"reviewed"})
 
 
 class PrimitiveRoadmapTests(unittest.TestCase):
@@ -339,6 +419,15 @@ class PrimitiveRoadmapTests(unittest.TestCase):
         first = [entry["template"] for entry in build_roadmap(blocked, top=3)]
         second = [entry["template"] for entry in build_roadmap(blocked, top=3)]
         self.assertEqual(first, second)
+
+    def test_roadmap_keeps_all_cards_affected_by_a_template(self) -> None:
+        blocked = [
+            {"oracle_id": "a", "name": "A", "templates": {"aaa-shared", "other-a"}, "lines": ["aaa-shared", "other-a"]},
+            {"oracle_id": "b", "name": "B", "templates": {"aaa-shared", "other-b"}, "lines": ["aaa-shared", "other-b"]},
+            {"oracle_id": "c", "name": "C", "templates": {"other-a", "other-b"}, "lines": ["other-a", "other-b"]},
+        ]
+        entry = build_roadmap(blocked, top=1)[0]
+        self.assertEqual([card["oracle_id"] for card in entry["affected_cards"]], ["a", "b"])
 
     def test_scoped_roadmap_defaults_claim_namespace_to_set(self) -> None:
         self.assertEqual(resolve_claim_prefix(None, "c13"), "c13")

@@ -150,11 +150,32 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const pick = chosen ?? fallback;
     if (pick) return { action: pick.action, label: pick.label };
   }
+  if (state.pendingChoice?.type === "tap-or-untap" && state.pendingChoice.seat === seat) {
+    const choice = state.pendingChoice;
+    const targetPermanent = "instanceId" in choice.target ? choice.target : undefined;
+    const target = targetPermanent
+      ? state.players.flatMap((player) => player.battlefield).find((permanent) => permanent.instance_id === targetPermanent.instanceId)
+      : undefined;
+    const preferred = target?.tapped ? "untap" : "tap";
+    const chosen = available.find((entry) => entry.action.type === "choose-tap-or-untap" && entry.action.mode === preferred)
+      ?? available.find((entry) => entry.action.type === "choose-tap-or-untap");
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "draw-cards" && state.pendingChoice.seat === seat) {
     const choice = state.pendingChoice;
     const chosen = available.find((entry) => entry.action.type === "choose-draw" && entry.action.amount === choice.maxAmount)
       ?? available.find((entry) => entry.action.type === "choose-draw");
     if (chosen) return { action: chosen.action, label: chosen.label };
+  }
+  if (state.pendingChoice?.type === "look-top-select" && state.pendingChoice.seat === seat) {
+    // Prefer the first eligible card, then deterministically bottom-order the
+    // remaining private cards so the bot uses the same public action path.
+    const choose = available.find((entry) => entry.action.type === "choose-look-top");
+    if (choose) return { action: choose.action, label: choose.label };
+    const finish = available.find((entry) => entry.action.type === "finish-look-top");
+    if (state.pendingChoice.stage === "select" && finish) return { action: finish.action, label: finish.label };
+    const bottom = available.find((entry) => entry.action.type === "choose-look-top-bottom");
+    if (bottom) return { action: bottom.action, label: bottom.label };
   }
   const searchChoice = state.pendingChoice?.type === "search-library" ? state.pendingChoice : null;
   if (searchChoice && searchChoice.seat === seat) {
@@ -172,6 +193,16 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
       : [...hand].sort((left, right) => (cardProfile(right).cost?.symbols.length ?? 0) - (cardProfile(left).cost?.symbols.length ?? 0))[0];
     const wanted = available.find((entry) => entry.action.type === "choose-discard" && entry.action.cardId === preferred?.instance_id)
       ?? available.find((entry) => entry.action.type === "choose-discard");
+    if (wanted) return { action: wanted.action, label: wanted.label };
+  }
+  if (state.pendingChoice?.type === "library-pick" && state.pendingChoice.seat === seat) {
+    // Prefer a nonland; otherwise take the first option.
+    const picks = available.filter((entry) => entry.action.type === "resolve-library-pick");
+    const nonland = picks.find((entry) => {
+      const card = state.players[seat]!.library.find((c) => entry.action.type === "resolve-library-pick" && c.instance_id === entry.action.cardId);
+      return card && !isLand(cardProfile(card));
+    });
+    const wanted = nonland ?? picks[0];
     if (wanted) return { action: wanted.action, label: wanted.label };
   }
   if (state.pendingChoice?.type === "scry" && state.pendingChoice.seat === seat) {
@@ -245,8 +276,11 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     });
     const chosen = commander ?? permanent ?? casts[0];
     if (chosen && chosen.action.type === "cast") {
-      const targets = chosen.requiresTarget ? pickTargets(state, seat, chosen.requiresTarget) : undefined;
-      if (chosen.requiresTarget && !targets?.length) return passOr(available);
+      const targetKinds = chosen.requiresTargets ?? (chosen.requiresTarget ? [chosen.requiresTarget] : []);
+      const targets = targetKinds.length
+        ? targetKinds.flatMap((kind) => pickTargets(state, seat, kind)?.slice(0, 1) ?? [])
+        : undefined;
+      if (targetKinds.length && targets?.length !== targetKinds.length) return passOr(available);
       return { action: targets ? { ...chosen.action, targets } : chosen.action, label: chosen.label };
     }
   }

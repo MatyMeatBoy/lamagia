@@ -40,6 +40,11 @@ def pending_family(card: dict[str, Any]) -> str:
     return "other"
 
 
+def identity_of(card: dict[str, Any]) -> str:
+    """Use one stable game identity per card, independent of its printing."""
+    return str(card.get("oracle_id") or card.get("scryfall_id") or "")
+
+
 def clause_templates(clauses: list[str]) -> list[str]:
     """Canonicalize Oracle clauses so repeated missing mechanics are visible.
 
@@ -71,17 +76,17 @@ def report(decks_path: Path, profiles_path: Path, set_code: str) -> str:
     all_cards: dict[str, dict[str, Any]] = {}
     for deck in selected:
         for card in deck["cards"]:
-            all_cards.setdefault(card["scryfall_id"], card)
+            all_cards.setdefault(identity_of(card), card)
     implemented = 0
     pending_families: dict[str, int] = {}
     pending_templates: dict[str, set[str]] = {}
     for deck in selected:
-        ids = {card["scryfall_id"] for card in deck["cards"]}
-        done = sum(bool(profiles.get(card_id, profiles.get(next((card.get("oracle_id") for card in deck["cards"] if card["scryfall_id"] == card_id), ""), {})).get("fullyImplemented")) for card_id in ids)
-        lines.append(f"- **{deck['name']}**: {done}/{len(ids)} unique cards implemented")
+        cards = {identity_of(card): card for card in deck["cards"]}
+        done = sum(bool(profiles.get(card_id, {}).get("fullyImplemented")) for card_id in cards)
+        lines.append(f"- **{deck['name']}**: {done}/{len(cards)} unique cards implemented")
     for card_id, card in sorted(all_cards.items(), key=lambda item: item[1]["name"].casefold()):
         historical = all_cards[card_id]
-        profile = profiles.get(card_id, profiles.get(historical.get("oracle_id", ""), {}))
+        profile = profiles.get(card_id, {})
         if profile.get("fullyImplemented"):
             implemented += 1
             continue

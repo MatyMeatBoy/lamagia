@@ -1,5 +1,8 @@
 # La Magia
 
+AI contributors: read [the quick-start contract](docs/AI_CONTRIBUTOR_QUICK_START.md)
+before claiming a cluster or publishing a commit.
+
 Community Magic rules engine and Commander client. Implement reusable rules
 clusters, not one-off card names. Cards share logic by stable `oracle_id`, so
 one good primitive improves every printing and set.
@@ -20,6 +23,22 @@ Report `CLAIM`, `BASE SHA`, `COMMIT SHA`, `FILES`, `TESTS`, `SCENARIOS`, and
 `LIMITS`. Never stage `data/`, assets, secrets, or unrelated changes. Full
 instructions: [CONTRIBUTING.md](CONTRIBUTING.md) and
 [IMPLEMENTATION_CLUSTERS.md](IMPLEMENTATION_CLUSTERS.md).
+
+Required direct-commit report (one cluster, at most 20 `oracle_id`s):
+
+```text
+CLAIM: c13-<primitive>
+BASE: <sha>
+COMMIT: <sha>
+CARDS: <name> | <oracle_id>; ...
+FILES: <explicit paths>
+TESTS: <commands + result>
+SCENARIOS: <covered cases>
+LIMITS: <remaining unsupported wording>
+```
+
+Publish with `git push origin HEAD`; do not send only a card count or a stale
+full-tree branch. The integrator batches 11+ commits before integration.
 
 ### Parallel bot handoff
 

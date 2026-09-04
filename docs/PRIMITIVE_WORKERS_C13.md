@@ -10,153 +10,141 @@ Each primitive is assigned to exactly one worker; jobs sharing an oracle_id are 
 
 ## Worker 1
 
-25 primitives / 21 unique cards
+7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| high | `c13-other|static-or-spell|shape:enchant player` | other | 5 | 5 | 5 | 1 |
-| normal | `c13-other|static-or-spell|shape:if this spell was kicked, it has split second` | other | 1 | 0 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:kicker {cost}` | other | 2 | 1 | 2 | 1 |
-| high | `c13-other|static-or-spell|shape:all creatures gain fear until end of turn` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:choose <n> color` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:each player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:hideaway <n>` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:instant and sorcery spells cost {cost} less to cast` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:put target land card from <n> graveyard onto the battlefield under your control|target-types:Land|zone:graveyard` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:shuffle blue sun's zenith into its owner's library` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:then each player who searched their library this way shuffles` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:this spell costs {cost} more to cast for each target beyond the first|zone:battlefield` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:you may activate abilities of creatures you control as though those creatures had haste` | other | 1 | 1 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:after this phase, there is <n> additional combat phase` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:cast this spell only during the declare blockers step on <n> opponent's turn` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:each of those creatures attacks that combat if able` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:remove all attacking creatures from combat and untap them` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:they can't attack you or planeswalkers you control that combat` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:each opponent may create <n> <n>/<n> red elemental creature tokens with haste` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:for each opponent who does, create <n> <n>/<n> red elemental creature tokens with haste` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:tempting offer - create <n> <n>/<n> red elemental creature tokens with haste` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:each opponent may search their library for <n> land card and put it onto the battlefield` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:then each player who searched <n> library this way shuffles` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:reveal the top <n> cards of your library` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:you may put <n> creature card from among them onto the battlefield` | other | 1 | 0 | 1 | 1 |
+| normal | `c13-creatures-can-attack-you` | combat-restriction | 1 | 0 | 1 | 1 |
+Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
+
+| normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
+
+| normal | `c13-remove-counter-from-deals` | activated | 1 | 0 | 1 | 1 |
+Cards: Deathbringer Thoctar [2500a811-2435-4915-ac83-9bfe2887621a]
+
+| normal | `c13-untap-all-green-and` | other | 1 | 0 | 1 | 1 |
+Cards: Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
+
+| normal | `c13-when-enters-return-target` | triggered | 1 | 0 | 1 | 1 |
+Cards: Razor Hippogriff [d121108e-f0bc-469b-bf94-e5e5308014a2]
+
+| normal | `c13-when-enters-you-may` | triggered | 1 | 0 | 1 | 1 |
+Cards: Mnemonic Wall [f2933616-211b-4d3f-8064-2be61c26079a]
+
+| normal | `c13-whenever-creature-dies-untap` | triggered | 1 | 0 | 1 | 1 |
+Cards: Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
+
 
 ## Worker 2
 
-23 primitives / 21 unique cards
+7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| high | `c13-other|static-or-spell|shape:they can't be regenerated` | other | 4 | 4 | 4 | 1 |
-| high | `c13-other|static-or-spell|shape:enchant land` | other | 2 | 2 | 2 | 1 |
-| high | `c13-other|static-or-spell|shape:activate only during your turn, before attackers are declared` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:as long as this card is in your graveyard and you control <n> island, creatures you control have flying` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:choose <n> or more -|modal` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:equipped creature has hexproof and haste` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:horsemanship` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:it's still <n> land` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:put target nonland permanent into its owner's library just beneath the top <n> cards of that library|zone:battlefield` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:storm` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:then shuffle` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:those creatures fight each other` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:you may choose not to untap rubinia soulsinger during your untap step` | other | 1 | 1 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:cast this spell only during combat` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:it gains haste until end of turn` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:untap target creature you don't control and gain control of it|target-types:Creature|zone:battlefield` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:for each opponent, gain control of up to <n> target creature that player controls until end of turn|target-types:Creature|zone:battlefield` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:they gain haste until end of turn` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:untap those creatures` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:entwine {cost}` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:• create <n> <n>/<n> green insect creature tokens` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:• permanents you control gain indestructible until end of turn` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:• target creature gains double strike until end of turn|target-types:Creature|zone:battlefield` | other | 1 | 0 | 1 | 1 |
+| normal | `c13-destroy-target-nonblack-creatures` | other | 1 | 0 | 1 | 1 |
+Cards: Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
+
+| normal | `c13-graft` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
+
+| normal | `c13-return-all-permanents-the` | other | 1 | 0 | 1 | 1 |
+Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
+
+| normal | `c13-until-end-turn-creatures` | other | 1 | 0 | 1 | 1 |
+Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
+
+| normal | `c13-when-enters-return-target-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
+
+| normal | `c13-when-sharuum-enters-you` | triggered | 1 | 0 | 1 | 1 |
+Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
+
+| normal | `c13-whenever-creature-you-control` | triggered | 1 | 0 | 1 | 1 |
+Cards: Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
+
 
 ## Worker 3
 
-26 primitives / 21 unique cards
+7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-other|static-or-spell|shape:if you do, copy that spell` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:then copy that spell` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:you may choose new targets for target instant or sorcery spell|target-types:Instant,Sorcery|zone:battlefield` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:you may choose new targets for the copies` | other | 1 | 0 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:you may choose new targets for the copy` | other | 5 | 2 | 5 | 1 |
-| high | `c13-other|static-or-spell|shape:split second` | other | 2 | 1 | 2 | 1 |
-| normal | `c13-other|static-or-spell|shape:until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n>|zone:battlefield` | other | 1 | 0 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:beast spells you cast cost {cost} less to cast` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:choose target creature|target-types:Creature|zone:battlefield` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:flashback-{cost}, pay <n> life` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:if <n> or more tokens would be created, twice that many of those tokens are created instead` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:no more than <n> creatures can attack you each combat` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:put those cards onto the battlefield, then shuffle` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:suspend <n>-{cost}` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:this artifact doesn't untap during your untap step` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:untap all green and/or blue creatures you control during each other player's untap step` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:• tap all creatures target player controls|zone:battlefield` | other | 1 | 1 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:choose left or right` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:each player gains control of the creature they chose` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:starting with you and proceeding in the chosen direction, each player chooses <n> creature controlled by the next player in that direction` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:all creatures get -<n>/-<n> until end of turn` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:as <n> additional cost to cast this spell, pay <n> life|cost-context:additional-cast-cost` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:if it's <n> land card, put it onto the battlefield` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:otherwise, put it into your hand` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:• tap target permanent <n> opponent controls|zone:battlefield` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:• untap target permanent you control|zone:battlefield` | other | 1 | 0 | 1 | 1 |
+| normal | `c13-entwine-cost` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
+
+| normal | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 |
+Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
+
+| normal | `c13-sacrifice-beast-you-gain` | activated | 1 | 0 | 1 | 1 |
+Cards: Ravenous Baloth [ee771e66-72f8-480f-9920-92c68ab93c3b]
+
+| normal | `c13-was-kicked-has-split` | replacement | 1 | 0 | 1 | 1 |
+Cards: Molten Disaster [21390513-1ed0-48f2-a7fa-020da8f803c0]
+
+| normal | `c13-when-enters-sacrifice-unless` | triggered | 1 | 0 | 1 | 1 |
+Cards: Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
+
+| normal | `c13-when-you-cast-create` | triggered | 1 | 0 | 1 | 1 |
+Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
+
+| normal | `c13-whenever-creature-you-control-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
+
 
 ## Worker 4
 
-23 primitives / 21 unique cards
+7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| high | `c13-other|static-or-spell|shape:echo {cost}` | other | 3 | 1 | 3 | 1 |
-| normal | `c13-other|static-or-spell|shape:flying, protection from black` | other | 1 | 0 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:put <n> of them into your hand and the rest on the bottom of your library in any order` | other | 2 | 1 | 2 | 1 |
-| high | `c13-other|static-or-spell|shape:evoke {cost}` | other | 2 | 2 | 2 | 1 |
-| high | `c13-other|static-or-spell|shape:activate only during your upkeep` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:blue spells and red spells you cast cost {cost} less to cast` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:flying, first strike, vigilance, lifelink, protection from red and from green` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:if it's <n> land card, put that card onto the battlefield under your control` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:overload {cost}` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:rebound` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:tempting offer - choose target creature you control|target-types:Creature|zone:battlefield` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:this creature can't be blocked as long as defending player controls the most creatures or is tied for the most` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:vanishing <n>` | other | 1 | 1 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:as many times as you choose, you may pay <n> life, put those cards on the bottom of your library in any order, then look at the top <n> cards of your library` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:look at the top <n> cards of your library` | other | 2 | 0 | 2 | 1 |
-| normal | `c13-other|static-or-spell|shape:put <n> of them into your hand and the rest into your graveyard` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:then shuffle and put the last cards you looked at this way on top in any order` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:as this creature enters, choose <n> player` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:this creature has protection from the chosen player` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:if you do, reveal cards from the top of your library until you reveal <n> creature card` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:put that card into your hand and the rest into your graveyard` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:<n> can't be <n>` | other | 1 | 0 | 1 | 1 |
+| normal | `c13-flying-first-strike-vigilance` | other | 1 | 0 | 1 | 1 |
+Cards: Sphinx of the Steel Wind [1c96772b-463c-4655-836b-cf6e9dc6319f]
+
+| normal | `c13-prevent-all-combat-damage` | other | 1 | 0 | 1 | 1 |
+Cards: Guard Gomazoa [7c565975-aebc-4599-ac32-5594c718e2cb]
+
+| normal | `c13-sacrifice-creatures-create-red` | token | 1 | 0 | 1 | 1 |
+Cards: Tooth and Claw [587368eb-068c-44a3-ba8c-5ad0f59f880f]
+
+| normal | `c13-when-enters-destroy-all` | counters | 1 | 0 | 1 | 1 |
+Cards: Bane of Progress [51f9a6cc-8eb2-44ed-a2d9-913ac514ad67]
+
+| normal | `c13-when-enters-tap-target` | static-continuous | 1 | 0 | 1 | 1 |
+Cards: Dungeon Geists [ab5ebae2-cd77-4a7d-a93b-8042cd486429]
+
+| normal | `c13-when-you-cycle-you` | triggered | 1 | 0 | 1 | 1 |
+Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
+
+| normal | `c13-whenever-opponent-draws-card` | triggered | 1 | 0 | 1 | 1 |
+Cards: Nekusar, the Mindrazer [8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6]
+
 
 ## Worker 5
 
-21 primitives / 20 unique cards
+6 primitives / 6 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| high | `c13-other|static-or-spell|shape:enchant creature` | other | 4 | 2 | 4 | 1 |
-| normal | `c13-other|static-or-spell|shape:enchanted creature is <n> insect artifact creature with base power and toughness <n>/<n> and has indestructible, and it loses all other abilities, card types, a` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:you control enchanted creature` | other | 1 | 0 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:it can't be regenerated` | other | 2 | 2 | 2 | 1 |
-| high | `c13-other|static-or-spell|shape:activate only if you control <n> or more lands` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:changeling` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:creatures you control have haste` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:graft <n>` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:if you do, its controller gains control of this enchantment` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:players have no maximum hand size` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:serra avatar's power and toughness are each equal to your life total` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:that creature doesn't untap during its controller's untap step for as long as you control this creature` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:this creature doesn't untap during your untap step` | other | 1 | 1 | 1 | 1 |
-| high | `c13-other|static-or-spell|shape:you can't activate this ability during combat` | other | 1 | 1 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:put the rest on the bottom of your library in any order` | other | 2 | 0 | 2 | 1 |
-| normal | `c13-other|static-or-spell|shape:you may put <n> creature card with power <n> or greater from among them onto the battlefield` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:you may reveal <n> instant or sorcery card from among them and put it into your hand` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:create thirteen tapped <n>/<n> black zombie creature tokens` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:flashback {cost}` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:kicker {cost} and/or {cost}` | other | 1 | 0 | 1 | 1 |
-| normal | `c13-other|static-or-spell|shape:that creature can't be regenerated` | other | 1 | 0 | 1 | 1 |
+| normal | `c13-flying-protection-from-black` | other | 1 | 0 | 1 | 1 |
+Cards: Karmic Guide [8c31fec9-e4b3-4761-990e-7be38eb05604]
+
+| normal | `c13-put-target-nonland-permanent` | other | 1 | 0 | 1 | 1 |
+Cards: Unexpectedly Absent [e8d78a83-c932-4b55-8f75-7094c672c3a9]
+
+| normal | `c13-then-you-have-more` | other | 1 | 0 | 1 | 1 |
+Cards: Survival Cache [5fb8be5a-3666-4680-84e2-341cb269df07]
+
+| normal | `c13-when-enters-exile-another` | triggered | 1 | 0 | 1 | 1 |
+Cards: Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
+
+| normal | `c13-when-enters-target-opponent` | triggered | 1 | 0 | 1 | 1 |
+Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
+
+| normal | `c13-when-you-cycle-you-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
+
+
+## Already claimed
+
+`c13-beast-spells-you-cast`, `c13-choose-more`, `c13-players-have-maximum-hand`, `c13-the-beginning-each-end`, `c13-the-beginning-your-end`, `c13-the-beginning-your-upkeep`

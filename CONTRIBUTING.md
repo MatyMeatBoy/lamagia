@@ -1,5 +1,8 @@
 # Contribuir a La Magia
 
+Para bots y forks, empieza por [AI Contributor Quick Start](docs/AI_CONTRIBUTOR_QUICK_START.md);
+es el contrato corto y actualizado para entregar commits directos integrables.
+
 El trabajo se reparte por clusters de reglas, no por nombres de cartas. Una
 mejora de una gramática se reutiliza automáticamente en todas las ediciones y
 reimpresiones que comparten `oracle_id`.
@@ -39,12 +42,41 @@ solo comando:
 git add packages/rules/src tools/rules docs/SET_COVERAGE.md IMPLEMENTATION_CLUSTERS.md; git commit -m "feat(rules): implement [cluster] batch [01]"
 ```
 
-No hagas push salvo que el integrador lo pida; los commits se acumulan y se
-publican juntos después de la revisión.
+Publica cada commit en el remoto para que el integrador pueda recogerlo; los
+commits se acumulan y se integran juntos después de la revisión.
 
 No se deben añadir `data/`, secretos, imágenes no autorizadas ni carpetas de
 trabajo. Si el cambio toca cliente o servidor, inclúyelos explícitamente en
 `git add`.
+
+## Formato único de entrega directa
+
+El commit debe llegar acompañado de este bloque, sin resumen ambiguo de
+"cartas funcionales":
+
+```text
+CLAIM: c13-<primitive>
+BASE: <sha exacto usado antes de editar>
+COMMIT: <sha publicado>
+CARDS:
+- <Card name> | <oracle_id>
+FILES: <lista explícita>
+TESTS: <comandos y resultado>
+SCENARIOS: <casos cubiertos>
+LIMITS: <texto o cartas todavía no soportados>
+```
+
+Un commit contiene un solo cluster y como máximo 20 `oracle_id`. El worker
+debe publicar el commit (`git push origin HEAD`) y puede continuar con otro
+cluster solo después de actualizar `BASE` y reclamarlo. Comando recomendado:
+
+```powershell
+git add packages/rules/src/characteristics.ts packages/rules/src/engine.ts packages/rules/src/*test.ts docs/WORK_CLAIMS.md; git diff --cached --check; npm run check; npm test; git commit -m "feat(rules): implement <primitive> batch <nn>"; git push origin HEAD
+```
+
+No uses `git add -A` ni incluyas archivos generados. El integrador reúne 11 o
+más commits publicados, revisa cada bloque y actualiza cobertura antes de
+integrarlos.
 
 ## Revisión antes de sumar cobertura
 

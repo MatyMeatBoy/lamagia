@@ -3,6 +3,65 @@
 This is the lightweight coordination ledger for parallel card and rules work.
 The claim key is a reusable primitive or a disjoint card batch, never a vague
 feature name.
+| Cluster | Worker branch | Scope | Status |
+| --- | --- | --- | --- |
+| `rules-equipment` | `codex/c13-equipment-cluster` | Equip, attachment, Equipment static bonuses, and Sword of the Paruns untap abilities | Ready for integrator review |
+| `rules-c13-reprint-equivalence` | `codex/c13-equipment-cluster` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | Ready for integrator review |
+| `rules-flashback` | `codex/c13-equipment-cluster` | Flashback cost parsing, graveyard casting, and exile replacement for instant and sorcery cards | Ready for integrator review |
+| `rules-c13-multi-basic-search` | `codex/c13-equipment-cluster` | Multi-card basic-land searches with ordered destinations for Cultivate and Armillary Sphere | Ready for integrator review |
+| `rules-c13-life-gain-counter` | `codex/c13-equipment-cluster` | Reuse the life-gained trigger and +1/+1 counter primitive for Ajani's Pridemate | Ready for integrator review |
+| `rules-c13-shuffle-source` | `codex/c13-equipment-cluster` | Shuffle-self replacement for Blue Sun's Zenith after its target draw resolves | Ready for integrator review |
+| `rules-c13-scry` | `codex/c13-equipment-cluster` | Reusable Scry N primitive: private top-card projection, arbitrary top/bottom ordering, duplicate-name-safe ordinal choices, and C13 New Benalia Scry 1 | Ready for integrator review |
+| `rules-c13-landfall-pump` | `codex/c13-equipment-cluster` | Reusable trigger-self P/T plus temporary keyword effect for Landfall cards such as Baloth Woodcrasher | Ready for integrator review |
+| `rules-c13-basalt-untap` | `codex/c13-equipment-cluster` | Reusable source-untap activation and static “doesn't untap during your untap step” rule for Basalt Monolith | Ready for integrator review |
+| `rules-c13-reuse-basic-effects` | `codex/c13-equipment-cluster` | Verify C13 cards reuse existing draw, damage, sacrifice-cost, and upkeep compound primitives: Borrowing 100,000 Arrows, Blood Rites, Carnage Altar, Baleful Force | Ready for integrator review |
+| `rules-c13-tap-typed-cost` | `codex/c13-equipment-cluster` | Reusable activation cost for tapping an untapped creature or subtype you control, applied to Azami, Lady of Scrolls | Ready for integrator review |
+| `rules-c13-draw-spell-reuse` | `codex/c13-equipment-cluster` | Verify C13 draw spells reuse the existing draw primitives: Brilliant Plan, Harmonize, Vision Skeins, and Deep Analysis with Flashback | Ready for integrator review |
+| `rules-c13-baleful-strix-etb` | `codex/c13-equipment-cluster` | Apply the existing ETB draw and combat-keyword primitives to the C13 Baleful Strix printing | Ready for integrator review |
+| `rules-c13-etb-draw-life` | `codex/c13-equipment-cluster` | Reuse the compound draw-and-life-loss effect for the C13 Phyrexian Gargantua ETB | Ready for integrator review |
+| `rules-c13-annihilate-draw` | `codex/c13-equipment-cluster` | Verify Annihilate reuses typed nonblack-creature destruction plus the shared draw effect | Ready for integrator review |
+| `rules-c13-etb-graveyard-exile` | `codex/c13-equipment-cluster` | Reuse target-player graveyard exile and existing ETB/land primitives for Angel of Finality and Bojuka Bog | Ready for integrator review |
+| `rules-c13-arcane-denial-delay` | `codex/c13-equipment-cluster` | Reusable delayed-upkeep draw effects created by Arcane Denial after it counters a spell | Ready for integrator review |
+| `rules-c13-bane-of-progress` | `codex/c13-equipment-cluster` | Reusable ETB sweep of artifacts/enchantments plus counters for permanents destroyed, applied to Bane of Progress | Ready for integrator review |
+| `rules-c13-augur-top-selection` | `codex/c13-equipment-cluster` | Reusable private top-N selection: optionally take one matching card and bottom-order the rest, applied to Augur of Bolas | Ready for integrator review |
+| `rules-c13-act-of-authority-control` | `codex/c13-equipment-cluster` | Reuse typed artifact/enchantment exile and transfer the enchantment to the exiled permanent's controller on the upkeep trigger | Ready for integrator review |
+| `rules-level-up` | `codex/c13-equipment-cluster` | Level up activation, level counters, and level-band P/T/keyword characteristics | Ready for integrator review |
+| `rules-tap-untap` | `codex/c13-equipment-cluster` | Targeted Tap target creature and Untap target permanent effects | Ready for integrator review |
+| `rules-mill` | `codex/c13-equipment-cluster` | Target player mills a bounded number of cards into their graveyard | Ready for integrator review |
+| `rules-counter-restrictions` | `codex/c13-equipment-cluster` | Creature-spell and noncreature-spell counter target families | Ready for integrator review |
+| `rules-plus-counters` | `codex/c13-equipment-cluster` | Put +1/+1 or -1/-1 counters on a target creature | Ready for integrator review |
+| `rules-target-discard` | `codex/c13-equipment-cluster` | Target-player discard with an explicit hand-card choice | Ready for integrator review |
+| `rules-life-gained` | `codex/c13-equipment-cluster` | Life-gained trigger event and source +1/+1/-1/-1 counter effect | Ready for integrator review |
+| `rules-target-life` | `codex/c13-equipment-cluster` | Target-player life gain with event propagation | Ready for integrator review |
+| `rules-each-life` | `codex/c13-equipment-cluster` | Living-player life gain with one event per recipient | Ready for integrator review |
+| `rules-target-life-loss` | `codex/c13-equipment-cluster` | Target-player life loss, distinct from damage | Ready for integrator review |
+| `rules-each-life-loss` | `codex/c13-equipment-cluster` | Living-player global life loss, distinct from damage | Ready for integrator review |
+| `rules-self-life-loss` | `codex/c13-equipment-cluster` | Controller life loss, distinct from damage | Ready for integrator review |
+| `rules-life-lost-trigger` | `codex/c13-equipment-cluster` | Life-lost event bus for effects and damage | Ready for integrator review |
+| `rules-token-creation` | `codex/c13-equipment-cluster` | Token creation preserves tapped state for C13 token family | Ready for integrator review |
+| `rules-graveyard-return` | `codex/c13-equipment-cluster` | Targeted creature-card return from own graveyard to hand | Ready for integrator review |
+| `rules-combat-damage-any-creature` | `codex/c13-equipment-cluster` | Combat-damage trigger for any creature source | Ready for integrator review |
+| `rules-token-scaling` | `codex/c13-equipment-cluster` | Token creation scaled by lands controlled | Ready for integrator review |
+| `rules-subtype-counters` | `codex/c13-equipment-cluster` | Counters on all controlled creatures of a subtype | Ready for integrator review |
+| `rules-graveyard-exile` | `codex/c13-equipment-cluster` | Exile a targeted card from own graveyard | Ready for integrator review |
+| `rules-x-opponent-loss` | `codex/c13-equipment-cluster` | X-scaled life loss for each opponent | Ready for integrator review |
+| `rules-x-draw` | `codex/c13-equipment-cluster` | X-scaled self draw effect | Ready for integrator review |
+| `rules-each-opponent-mill` | `codex/c13-equipment-cluster` | Global mill for each opponent | Ready for integrator review |
+| `rules-each-opponent-draw` | `codex/c13-equipment-cluster` | Global draw for each opponent | Ready for integrator review |
+| `rules-graveyard-library-top` | `codex/c13-equipment-cluster` | Return own graveyard card to library top | Ready for integrator review |
+| `rules-all-creature-counters` | `codex/c13-equipment-cluster` | Counters on all creatures controlled by the caster | Ready for integrator review |
+| `rules-creature-spell-trigger` | `codex/c13-equipment-cluster` | Creature-spell filter for cast triggers | Ready for integrator review |
+| `rules-x-discard` | `codex/c13-equipment-cluster` | X-scaled private discard choices | Ready for integrator review |
+| `rules-graveyard-battlefield` | `codex/c13-equipment-cluster` | Return a creature card from own graveyard to battlefield | Ready for integrator review |
+| `rules-artifact-graveyard-target` | `codex/c13-equipment-cluster` | Restrict artifact-card recovery to artifact cards | Ready for integrator review |
+| `rules-land-graveyard-battlefield` | `codex/c13-equipment-cluster` | Put a land from any graveyard onto battlefield under caster control | Ready for integrator review |
+| `rules-artifact-graveyard-battlefield` | `codex/c13-equipment-cluster` | Return an artifact from own graveyard to battlefield | Ready for integrator review |
+| `rules-enchantment-graveyard-target` | `codex/c13-equipment-cluster` | Restrict enchantment-card recovery to enchantment cards | Ready for integrator review |
+| `rules-temporary-keyword` | `codex/c13-equipment-cluster` | Temporary keyword grants on targeted creatures | Ready for integrator review |
+| `rules-temporary-pt-keyword` | `codex/c13-equipment-cluster` | Combined temporary P/T and keyword grant | Ready for integrator review |
+
+Workers must claim a disjoint primitive or card batch before editing. The
+integrator owns merge order and reruns coverage after each accepted commit.
 
 ## Before editing
 
@@ -250,6 +309,11 @@ feature name.
 | `c13-exile-land-from-any-graveyard` | Exile target land card from any graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-artifact-etb-trigger-subject` | Trigger subjects for artifacts entering under your control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-enchantment-etb-trigger-subject` | Trigger subjects for enchantments entering under your control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-storage-counter-mana-output` | Consume variable storage-counter mana lines already executed by the mana engine (Saltcrusted Steppe, Molten Slagheap; CR 605.1a) | `feat/activated-abilities-and-triggers` | active | 2026-09-04 |
+| `c13-reveal-top-gain-mana-value` | Augury Adept top-card reveal, move to hand and mana-value life gain | `codex/c13-augury-adept` | active | 2026-09-04 |
+| `c13-reveal-until-creature` | Foster reveal until a creature, move it to hand and revealed cards to graveyard | `codex/c13-foster` | active | 2026-09-04 |
+| `c13-threshold-graveyard-return` | Stitch Together threshold branch between battlefield and hand | `codex/c13-stitch-together` | active | 2026-09-04 |
+| `c13-choose-both` | Soul Manipulation and Fissure Vent modal one-or-both selection | `codex/c13-choose-both` | active | 2026-09-04 |
 
 ## Claim format
 
@@ -278,3 +342,15 @@ rules citations and the integrator review remain mandatory.
 | `c13-fecundity-death-draw` | Fecundity lets the controller of each creature that dies optionally draw a card (CR 603.2, 603.5, 603.6a, 121.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-fires-yavimaya-activation` | Fires of Yavimaya grants haste and sacrifices itself for a controlled-creature +2/+2 activation (CR 602.2b, 613.4, 611.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-goblin-bombardment-activation` | Goblin Bombardment sacrifices a creature as a cost to deal 1 damage to any target (CR 602.2b, 117.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-charmbreaker-random-spell-recovery` | Beginning-of-upkeep recovery of a random instant or sorcery card from your graveyard to your hand | `codex/c13-charmbreaker-devils` | active | 2026-09-04 |
+| `c13-conjurers-closet-blink` | Optional end-step exile and return of a target creature you control, reusable blink primitive for Conjurer's Closet (CR 603.2, 603.5, 610.3, 400.7) | `codex/c13-conjurers-closet` | active | 2026-09-04 |
+| `c13-tidal-force-tap-untap-choice` | Optional each-upkeep choice to tap or untap a target permanent for Tidal Force (CR 603.2, 603.5, 701.21) | `codex/c13-tidal-force` | active | 2026-09-04 |
+| `c13-echo-cost` | Reusable Echo cost and next-upkeep pay-or-sacrifice handling (CR 702.30) | `feat/activated-abilities-and-triggers` | merged (this commit) | 2026-09-04 |
+| `c13-thunderstaff-combat-prevention` | Thunderstaff prevents 1 combat damage from creatures to its controller while untapped (CR 615.1, 614.1) | `feat/activated-abilities-and-triggers` | merged (this commit) | 2026-09-04 |
+| `c13-blue-spells-and-red` | Nightscape Familiar's shared reduction for blue or red spells you cast (CR 118.9) | `feat/activated-abilities-and-triggers` | merged (this commit) | 2026-09-04 |
+| `c13-the-beginning-each-end` | Brooding Saurian's end-step owner-control reset | `codex/c13-brooding-saurian` | review (`73e07c7`) | 2026-09-04 |
+| `c13-the-beginning-your-end` | Wall of Reverence's optional end-step life gain | `codex/c13-wall-reverence` | active | 2026-09-04 |
+| `c13-the-beginning-your-upkeep` | Capricious Efreet's upkeep random destruction choice | `codex/c13-capricious-efreet` | review (`a868c8d`) | 2026-09-04 |
+| `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
+| `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
+| `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |

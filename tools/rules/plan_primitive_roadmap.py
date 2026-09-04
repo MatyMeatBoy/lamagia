@@ -221,6 +221,10 @@ def build_roadmap(blocked: list[dict[str, Any]], top: int, examples: int = 4) ->
                     {"oracle_id": blocked[index]["oracle_id"], "name": blocked[index]["name"]}
                     for index in sorted(best_unlocked, key=lambda i: blocked[i]["name"] or "")[:60]
                 ],
+                "affected_cards": [
+                    {"oracle_id": blocked[index]["oracle_id"], "name": blocked[index]["name"]}
+                    for index in sorted(by_template[best_template], key=lambda i: blocked[i]["name"] or "")
+                ],
             }
         )
 
@@ -282,6 +286,13 @@ def render_document(roadmap: list[dict[str, Any]], stats: dict[str, Any], claim_
             lines += ["", f"Cards finished (first {len(shown)}): {', '.join(shown)}.", ""]
         else:
             lines.append("")
+        affected = entry.get("affected_cards", [])
+        if affected:
+            lines += [
+                f"All affected cards ({len(affected)}): "
+                + ", ".join(f"{card['name']} [{card['oracle_id']}]" for card in affected),
+                "",
+            ]
     return "\n".join(lines) + "\n"
 
 
