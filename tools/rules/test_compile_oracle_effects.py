@@ -7,6 +7,7 @@ from pathlib import Path
 
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint
 from export_set_coverage import product_group
+from plan_primitive_roadmap import build_roadmap, claim_key, load_blocked_cards, template_of
 from plan_primitive_workers import plan_workers
 
 
@@ -156,6 +157,66 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual([entry["cluster"] for entry in plan], ["a", "b"])
         self.assertEqual(plan_workers(clusters, worker_count=2, offset=2)[0]["cluster"], "c")
 
+
+class PrimitiveRoadmapTests(unittest.TestCase):
+    def test_folds_only_the_parameters_a_primitive_varies_by(self) -> None:
+        self.assertEqual(
+            template_of("{2}{G}: ~ gets +3/+3 until end of turn."),
+            "{cost}: ~ gets +<n>/+<n> until end of turn",
+        )
+        # Two costs and two sizes are the same engine work, so they share a queue entry.
+        self.assertEqual(
+            template_of("{1}: ~ gets +1/+1 until end of turn."),
+            template_of("{4}{B}{B}: ~ gets +7/+7 until end of turn."),
+        )
+
+    def test_keeps_different_rules_work_in_different_templates(self) -> None:
+        self.assertNotEqual(
+            template_of("{2}: ~ gets +1/+1 until end of turn."),
+            template_of("{2}: ~ gains flying until end of turn."),
+        )
+
+    def test_ranks_by_cards_finished_not_by_how_often_a_clause_appears(self) -> None:
+        # `common` appears in every card but never finishes one on its own;
+        # `finisher` appears twice and completes both of those cards.
+        blocked = [
+            {"oracle_id": "a", "name": "A", "templates": {"common", "finisher"}, "lines": ["common", "finisher"]},
+            {"oracle_id": "b", "name": "B", "templates": {"common", "finisher"}, "lines": ["common", "finisher"]},
+            {"oracle_id": "c", "name": "C", "templates": {"common", "other-1"}, "lines": ["common", "other-1"]},
+            {"oracle_id": "d", "name": "D", "templates": {"common", "other-2"}, "lines": ["common", "other-2"]},
+        ]
+        roadmap = build_roadmap(blocked, top=2)
+        self.assertEqual(roadmap[0]["template"], "common")
+        self.assertEqual(roadmap[0]["blocks"], 4)
+        # Nothing is finished by the first pick, but it is still scheduled first
+        # because retiring it is what lets the next pick finish two cards.
+        self.assertEqual(roadmap[0]["unlocks"], 0)
+        self.assertEqual(roadmap[1]["template"], "finisher")
+        self.assertEqual(roadmap[1]["unlocks"], 2)
+        self.assertEqual(roadmap[1]["cumulative_unlocks"], 2)
+
+    def test_counts_a_card_once_even_when_a_template_repeats(self) -> None:
+        blocked = [{"oracle_id": "a", "name": "A", "templates": {"only"}, "lines": ["only", "only"]}]
+        roadmap = build_roadmap(blocked, top=1)
+        self.assertEqual(roadmap[0]["unlocks"], 1)
+        self.assertEqual(roadmap[0]["blocks"], 1)
+
+    def test_ignores_finished_cards_and_cards_with_no_recorded_blocker(self) -> None:
+        blocked = load_blocked_cards(
+            [
+                {"oracle_id": "done", "name": "Done", "fullyImplemented": True, "unimplementedText": []},
+                {"oracle_id": "bug", "name": "Bug", "fullyImplemented": False, "unimplementedText": []},
+                {"oracle_id": "real", "name": "Real", "fullyImplemented": False, "unimplementedText": ["scry 2."]},
+            ]
+        )
+        self.assertEqual([card["name"] for card in blocked], ["Real"])
+        self.assertEqual(blocked[0]["templates"], {"scry <n>"})
+
+    def test_claim_keys_stay_unique_for_similar_templates(self) -> None:
+        taken: set[str] = set()
+        first = claim_key("c14", "{cost}: ~ gets +<n>/+<n> until end of turn", taken)
+        second = claim_key("c14", "{cost}: ~ gets +<n>/-<n> until end of turn", taken)
+        self.assertNotEqual(first, second)
 
 if __name__ == "__main__":
     unittest.main()
