@@ -154,6 +154,7 @@ export type SpellEffect =
   | { readonly kind: "this-land-enters-tapped"; readonly basic?: boolean }
   | { readonly kind: "choose-<n>-|-modal"; readonly choices: readonly string[] }
   | { readonly kind: "enchant-creature"; readonly aura?: boolean }
+  | { readonly kind: "fortify-{effect}"; readonly effect: string }
     | { readonly kind: "damage-prevent-target"; readonly amount: number | "X" }
     /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
