@@ -823,11 +823,11 @@ describe("casting", () => {
     expect(zombies.every((permanent) => permanent.tapped)).toBe(true);
   });
 
-  it("keeps Army of the Damned's tapped-token core while exposing its Flashback gap", () => {
+  it("recognises Army of the Damned's executable Flashback cost", () => {
     const card = C13_ARMY_OF_THE_DAMNED();
     expect(card.scryfall_id).toBe("75d667ec-86f4-4850-a3b6-e7a9fc7053b0");
-    expect(cardProfile(card).fullyImplemented).toBe(false);
-    expect(cardProfile(card).unimplementedText).toContain("Flashback {7}{B}{B}");
+    expect(cardProfile(card).fullyImplemented).toBe(true);
+    expect(cardProfile(card).flashbackCost?.raw).toBe("{7}{B}{B}");
     expect(cardProfile(card).effects[0]).toMatchObject({
       kind: "create-token",
       amount: 13,

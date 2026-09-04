@@ -2044,7 +2044,7 @@ function resolveTop(state: GameState): GameState {
         sourceCard: object.card,
         search,
         returnSourceToGraveyard: !object.activated,
-        exileSourceAfterResolution: object.flashback
+        exileSourceAfterResolution: Boolean(object.flashback)
       }
     };
   }
