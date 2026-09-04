@@ -1086,3 +1086,7 @@ changing the generated IR.
 The accepted fork batch also adds Vela's reusable intimidate/static-grant and
 leaves-battlefield trigger coverage; its detailed historical notes were
 condensed here to avoid reintroducing stale handoff snapshots.
+
+The same accepted batch adds Decree of Pain's cycling trigger, Edric's combat
+damage draw trigger, and the associated scenario coverage. The remaining fork
+tail is still being accumulated before the next >10-commit integration batch.
