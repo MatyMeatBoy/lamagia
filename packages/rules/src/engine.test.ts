@@ -79,6 +79,7 @@ const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "
 const X_MINUS_SWEEP = () => make({ name: "X Minus Sweep", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "All creatures get -X/-X until end of turn." });
 const POWER_DRAW_TRIGGER = () => make({ name: "Power Draw Trigger", type_line: "Creature — Human Druid", mana_cost: "{3}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your end step, if you control a creature with power 5 or greater, you may draw a card." });
 const NONFLYING_SWEEP = () => make({ name: "Nonflying Sweep", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell deals X damage to each creature without flying and each player." });
+const FLYING_SWEEP = () => make({ name: "Flying Sweep", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell deals X damage to each creature with flying." });
 const UPKEEP_DRAW_LOSS = () => make({ name: "Upkeep Draw Loss", type_line: "Creature — Demon", mana_cost: "{5}{B}", cmc: 6, power: "2", toughness: "2", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life." });
 const PLAGUE_ENGINE = () => make({ name: "Plague Engine", type_line: "Creature — Horror", mana_cost: "{3}{B}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your upkeep, put a plague counter on Plague Engine." });
 const Ophiomancer_MEMORY = () => make({ name: "Ophiomancer Memory", type_line: "Creature — Human Shaman", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "At the beginning of each upkeep, if you control no Snakes, create a 1/1 black Snake creature token with deathtouch." });
@@ -1941,6 +1942,10 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grave Pact Acolyte")).toBe(true);
     // Its own death trigger resolved even though its source had already left.
     expect(game.players[0]!.life).toBe(38);
+  });
+
+  it("recognizes the complementary flying-only sweeper", () => {
+    expect(profileOf(FLYING_SWEEP()).effects).toEqual([{ kind: "damage-flying-creatures", amount: "X" }]);
   });
 
   it("fires another creature's death trigger without firing it for itself", () => {

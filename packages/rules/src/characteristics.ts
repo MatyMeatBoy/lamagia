@@ -277,6 +277,7 @@ export type SpellEffect =
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-nonflying-creatures-and-players"; readonly amount: number | "X" }
+  | { readonly kind: "damage-flying-creatures"; readonly amount: number | "X" }
   /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-all-creatures-minus-X" }
@@ -1167,6 +1168,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-nonflying-creatures-and-players", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-nonflying-creatures-and-players", amount: "X" }, target: "none" };
+  }
+  if ((match = /^(?:~|This spell) deals (\w+) damage to each creature with flying$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-flying-creatures", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-flying-creatures", amount: "X" }, target: "none" };
   }
   if (/^That player draws an additional card$/i.test(text)) {
     return { effect: { kind: "draw-active-player" }, target: "none" };
