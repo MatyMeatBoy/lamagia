@@ -1128,6 +1128,19 @@ describe("casting", () => {
     expect(game.players[0]!.manaPool.U).toBe(0);
   });
 
+  it("uses the C13 Command Tower print in the shared mana action", () => {
+    let game = createGame([
+      deck("c13-tower", GREEN_COMMANDER(), [C13_COMMAND_TOWER()]),
+      deck("opponent", COMMANDER("Blue Commander"), [])
+    ], { allowPartialDecks: true });
+    game = putOnBattlefield(game, 0, [C13_COMMAND_TOWER()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const tower = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Command Tower")!;
+    const actions = legalActions(game, 0).filter((candidate) => candidate.action.type === "activate-mana" && candidate.action.sourceId === tower.instance_id);
+    expect(actions).toHaveLength(1);
+    expect(actions[0]!.action.type === "activate-mana" && actions[0]!.action.mana).toBe("G");
+  });
+
   it("offers only generated tokens for a token sacrifice cost", () => {
     const sourceCard = TOKEN_SAC_ACTIVATION();
     expect(profileOf(sourceCard).activatedAbilities[0]).toMatchObject({ sacrificesPermanent: { type: "Token", mode: "any" } });
