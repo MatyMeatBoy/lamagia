@@ -446,6 +446,8 @@ export interface TriggerDefinition {
  readonly manaCost?: ManaCost;
   /** For "unless that player pays", the opponent is the payer and the trigger controller receives the effect if they decline. */
   readonly paymentBy?: "opponent";
+  /** The event object's controller makes an optional choice, rather than the ability source's controller. */
+  readonly choiceBy?: "event-controller";
   readonly condition?:
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number };
@@ -1142,6 +1144,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },
+  { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(that\s+creature[’']s\s+controller\s+may\s+.+)$/i },
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
   { event: "leaves-battlefield", subject: "self-or-another-creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
@@ -1770,10 +1773,11 @@ function recognizeText(text: string): RecognizedText {
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
+      const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? triggered.effectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "if it was kicked" gate (CR 702.33e).
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
@@ -1783,7 +1787,7 @@ function recognizeText(text: string): RecognizedText {
       const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-      const optional = payGate || unlessPayment ? true : /^you\s+may\b/i.test(effectText);
+      const optional = payGate || unlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
       const recognized = (payCost && payCost.hasVariable) ? null
         : recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {
@@ -1795,6 +1799,7 @@ function recognizeText(text: string): RecognizedText {
           targetKind: recognized.target,
           sourceText: line,
           ...(unlessPayment && payCost ? { paymentBy: "opponent" as const } : {}),
+          ...(eventControllerChoice ? { choiceBy: "event-controller" as const } : {}),
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),

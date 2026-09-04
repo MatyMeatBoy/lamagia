@@ -1101,7 +1101,7 @@ function raiseEvent(
         sourceCard: watcher.card,
         definition,
         cause: causeOf(state, event),
-        ...(event.kind === "spell-cast" ? { eventController: event.controller } : {}),
+        ...("controller" in event ? { eventController: event.controller } : {}),
         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {})
       });
     }
@@ -2146,11 +2146,14 @@ function resolveTop(state: GameState): GameState {
       const payer = object.trigger.definition.paymentBy === "opponent"
         ? (object.trigger.eventController ?? opponentsOf(next, object.controller)[0] ?? object.controller)
         : object.controller;
+      const choiceSeat = object.trigger.definition.choiceBy === "event-controller"
+        ? (object.trigger.eventController ?? object.controller)
+        : payer;
       return {
         ...next,
         pendingChoice: {
           type: "optional-trigger",
-          seat: payer,
+          seat: choiceSeat,
           sourceId: object.trigger.id,
           triggerEffect: object.trigger.definition.effect,
           sourceCard: object.trigger.sourceCard,
