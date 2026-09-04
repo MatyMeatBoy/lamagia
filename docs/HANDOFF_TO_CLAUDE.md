@@ -651,6 +651,18 @@ effects.
 Validation: targeted engine tests PASS (178 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: artifact graveyard return
+
+The branch recognises `Return target artifact card from your graveyard to the
+battlefield`, restricts legal choices to artifact cards in the caster's
+graveyard, and reuses the normal battlefield-entry path. This follows CR
+400.1, 400.7 and 608.2c. Scenario coverage verifies artifact filtering and
+removal from the graveyard. The scope excludes attached-card handling,
+replacement effects and non-artifact cards.
+
+Validation: targeted engine tests PASS (179 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: land-scaled token creation
 
 The branch adds the reusable `Create a token for each land you control`
