@@ -61,6 +61,7 @@ const GRAVEYARD_BATTLEFIELD = () => make({ name: "Reanimate Memory", type_line: 
 const ARTIFACT_GRAVEYARD_RETURN = () => make({ name: "Artifact Reclaim", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Return target artifact card from your graveyard to your hand." });
 const LAND_GRAVEYARD_BATTLEFIELD = () => make({ name: "Restore Memory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Put target land card from a graveyard onto the battlefield under your control." });
 const ARTIFACT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Sharuum Memory", type_line: "Sorcery", mana_cost: "{2}{U}{B}", cmc: 4, oracle_text: "Return target artifact card from your graveyard to the battlefield." });
+const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", type_line: "Sorcery", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Return target enchantment card from your graveyard to your hand." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on top of your library." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
@@ -620,6 +621,21 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Equipment")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Test Equipment")).toBe(false);
+  });
+
+  it("restricts enchantment graveyard recovery to enchantment cards", () => {
+    const profile = profileOf(ENCHANTMENT_GRAVEYARD_RETURN());
+    expect(profile).toMatchObject({ targetKind: "enchantment-card-in-your-graveyard", effects: [{ kind: "return-target-card-from-graveyard" }] });
+    const enchantment = make({ name: "Test Enchantment", type_line: "Enchantment", mana_cost: "{1}{G}", cmc: 2 });
+    let game = readyToCast([ENCHANTMENT_GRAVEYARD_RETURN()], [FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, graveyard: toHand(0, [enchantment, BEAR()], "enchantment-yard") }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    expect(legalTargets(game, 0, "enchantment-card-in-your-graveyard")).toHaveLength(1);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "graveyard-card", seat: 0, instanceId: "enchantment-yard-0" }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Test Enchantment")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Enchantment")).toBe(false);
   });
 
   it("scales token creation from the controller's current land count", () => {
