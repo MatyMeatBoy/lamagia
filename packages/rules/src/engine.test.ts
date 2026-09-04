@@ -57,6 +57,7 @@ const LIFE_SPELL = () => make({ name: "Simple Blessing", type_line: "Instant", m
 const ARTIFACT_LIFE_SPELL = () => make({ name: "Artifact Blessing", type_line: "Instant", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 2 life for each artifact you control." });
 const CREATURE_LIFE_SPELL = () => make({ name: "Creature Blessing", type_line: "Instant", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 1 life for each creature you control." });
 const LAND_LIFE_SPELL = () => make({ name: "Land Blessing", type_line: "Instant", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 1 life for each land you control." });
+const PERMANENT_LIFE_SPELL = () => make({ name: "Permanent Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each permanent you control." });
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
@@ -836,6 +837,10 @@ describe("casting", () => {
 
   it("also counts lands through the same controlled-type primitive", () => {
     expect(profileOf(LAND_LIFE_SPELL()).effects).toEqual([{ kind: "gain-life-each-controlled-type", amount: 1, type: "Land" }]);
+  });
+
+  it("counts every controlled permanent when the text says permanent", () => {
+    expect(profileOf(PERMANENT_LIFE_SPELL()).effects).toEqual([{ kind: "gain-life-each-permanent", amount: 1 }]);
   });
 
   it("draws for the active player when a draw-step trigger resolves", () => {
