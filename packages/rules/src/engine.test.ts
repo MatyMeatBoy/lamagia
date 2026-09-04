@@ -948,7 +948,7 @@ describe("casting", () => {
   it("damages only nonfliers while still damaging every player", () => {
     const profile = profileOf(NONFLYING_SWEEP());
     expect(profile.effects).toEqual([{ kind: "damage-nonflying-creatures-and-players", amount: "X" }]);
-    let game = readyToCast([NONFLYING_SWEEP()], [MOUNTAIN(), MOUNTAIN()], [], [BEAR(), FLIER()]);
+    let game = readyToCast([NONFLYING_SWEEP()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [BEAR(), FLIER()]);
     const flying = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Storm Crow")!;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === flying.instance_id)).toBe(true);
