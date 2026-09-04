@@ -462,9 +462,7 @@ export type TargetKind =
   | "creature-with-hexproof"
   | "creature-with-shroud"
   | "creature-with-reach"
- | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | `subtype:${string}` | "none";
-  | "nonblack-creature" | "creature-with-flying" | "creature-with-defender" | "creature-with-deathtouch" | "creature-with-lifelink" | "creature-with-menace" | "creature-with-haste" | "creature-with-first-strike" | "creature-with-double-strike" | "creature-with-trample" | "creature-with-vigilance" | "creature-with-indestructible" | "creature-with-hexproof" | "creature-with-shroud" | "creature-with-reach" | "creature-power-at-least-5" | "creature-power-at-most-4" | "creature-toughness-at-least-4" | "creature-toughness-at-most-4" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
-  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | `subtype:${string}` | "none";
+  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-your-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | `subtype:${string}` | "none";
   
 
 export interface CardProfile {
