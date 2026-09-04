@@ -2417,6 +2417,18 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Cultivate")).toBe(true);
   });
 
+  it("allows an up-to-two basic search to finish without choosing a card", () => {
+    let game = readyToCast([C13_CULTIVATE()], [FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [ISLAND()], "cultivate-optional"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice?.type).toBe("search-library-multi");
+    game = applyAction(game, 0, { type: "finish-library-search", sourceId: game.pendingChoice!.sourceId });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.library.some((card) => card.name === "Island")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Island")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Cultivate")).toBe(true);
+  });
+
   it("counters a spell whose target has left the battlefield", () => {
     let game = readyToCast([BOLT()], [MOUNTAIN()], [BOLT()], [MOUNTAIN(), BEAR()]);
     const bearId = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.instance_id;
