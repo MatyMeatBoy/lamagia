@@ -182,7 +182,7 @@ function effectiveKeywords(state: GameState, permanent: Permanent): readonly str
     for (const source of state.players.flatMap((player) => player.battlefield)) {
       if (source.controller !== permanent.controller) continue;
       for (const grant of cardProfile(source.card).staticKeywordGrants) {
-        if (grant.scope === "creatures-you-control") keywords.add(grant.keyword);
+        if (grant.scope === "creatures-you-control" || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id)) keywords.add(grant.keyword);
       }
     }
   }
