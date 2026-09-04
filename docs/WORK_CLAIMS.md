@@ -83,6 +83,7 @@ feature name.
 | `c13-cross-graveyard-targets` | Exile or return cards from any graveyard with reusable creature, artifact, enchantment, and land filters | `codex/c13-equipment-cluster` | merged (local `5bd0bff`) | 2026-09-04 |
 | `c13-artifact-etb-trigger-subject` | Trigger subjects for artifacts entering under your control | `codex/c13-equipment-cluster` | merged (source `295e798`) | 2026-09-04 |
 | `c13-enchantment-etb-trigger-subject` | Trigger subjects for enchantments entering under your control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-enchantment-etb-trigger-subject` | Trigger subjects for enchantments entering under your control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 
 ## Claim format
 
