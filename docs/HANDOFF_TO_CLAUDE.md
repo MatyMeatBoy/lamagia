@@ -744,10 +744,11 @@ controller, and the reusable Fires of Yavimaya/Goblin Bombardment sacrifice
 activations. Each has parser and rules scenarios; the corresponding C13 rows
 are checked in `docs/SET_COVERAGE.md`.
 
-The reprint-equivalence pass also verifies C13's Army of the Damned, Command
-Tower, and Decree of Pain against their shared oracle-driven implementations.
-Fireball was intentionally excluded: its extra-target cost clause is still
-unimplemented, so it must not be marked complete until that cost is modeled.
+The reprint-equivalence pass verifies C13's Command Tower and Decree of Pain
+against their shared oracle-driven implementations. Army of the Damned keeps
+its tapped-token path covered, but remains pending because its C13 print also
+has Flashback. Fireball is likewise excluded because its extra-target cost
+clause is still unimplemented.
 
 The current upstream branch also contains newly generated reusable clusters
 for target-creature modification, landwalk, fortify, enchant-creature,
