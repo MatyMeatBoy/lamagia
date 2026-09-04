@@ -341,6 +341,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-oracle-counter-activated-cost` | Opal Palace commander-identity mana ability marks mana used for a commander cast and applies its cast-count +1/+1 counters (CR 605.1a, 614.1c, 903.8) | `codex/c13-mana-priority-f99` | active | 2026-09-04 |
 | `c13-oracle-damage-activated-cost` | Leonin Bladetrap sacrifices itself to deal damage to attacking creatures without flying (CR 602.2b, 608.2c, 120.4) | `codex/c13-leonin-bladetrap-f99` | active | 2026-09-04 |
 | `c13-oracle-damage-triggered-shape-7` | Fell Shepherd returns all creature cards put into your graveyard from the battlefield this turn after combat damage to a player (CR 603.2, 603.3d, 400.7) | `codex/c13-fell-shepherd-f99` | active | 2026-09-04 |
+| `c13-oracle-damage-triggered-target` | Stalking Vengeance uses a dead creature's last-known power to damage a target player or planeswalker (CR 603.2, 603.3d, 109.5) | `codex/c13-stalking-vengeance-f99` | active | 2026-09-04 |
 
 ## Claim format
 

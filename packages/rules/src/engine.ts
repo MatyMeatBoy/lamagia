@@ -222,6 +222,8 @@ export interface TriggerInstance {
   readonly eventPermanentId?: string;
   /** Amount carried by life-gain/loss events for proportional triggers. */
   readonly eventAmount?: number;
+  /** Last-known power carried by a creature-dies event (CR 603.3d, 608.2h). */
+  readonly eventPower?: number;
 }
 
 /** A delayed trigger created by a resolving spell (CR 603.7). */
@@ -245,7 +247,7 @@ export interface DelayedDraw {
 export type GameEvent =
   | { readonly kind: "enters-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "leaves-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly power?: number }
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
@@ -1084,7 +1086,7 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
   if (permanent.card.token) {
     if (zone === "graveyard" && isCreature(cardProfile(permanent.card))) {
       next = { ...next, creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1 };
-      next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card }, [permanent]);
+      next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state) }, [permanent]);
     }
     return logged(next, permanent.controller, `${permanent.card.name} deja el campo de batalla.`);
   }
@@ -1098,7 +1100,7 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
       creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1,
       creatureCardsDiedThisTurn: [...next.creatureCardsDiedThisTurn, permanent.card]
     };
-    next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card }, [permanent]);
+    next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state) }, [permanent]);
   }
   return next;
 }
@@ -1389,7 +1391,8 @@ function raiseEvent(
         cause: causeOf(state, event),
         ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
-        ...("amount" in event ? { eventAmount: event.amount } : {})
+        ...("amount" in event ? { eventAmount: event.amount } : {}),
+        ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {})
       });
     }
   }
@@ -2195,11 +2198,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       const eventId = object.trigger?.eventPermanentId ?? object.triggeredPermanentId;
       const creature = eventId ? findPermanent(state, eventId) : undefined;
-      if (!target || !creature || !isCreature(cardProfile(creature.card))) return state;
-      const amount = Math.max(0, powerOf(creature, state));
-      const source: DamageSource = { permanentId: creature.instance_id, controller: creature.controller, card: creature.card };
+      const eventPower = object.trigger?.eventPower;
+      if (!target || (!creature && eventPower === undefined)) return state;
+      if (creature && !isCreature(cardProfile(creature.card))) return state;
+      const amount = Math.max(0, eventPower ?? powerOf(creature!, state));
+      const source: DamageSource | undefined = creature
+        ? { permanentId: creature.instance_id, controller: creature.controller, card: creature.card }
+        : undefined;
       if (target.kind === "player") return dealDamageToPlayer(state, target.seat, amount, sourceName, source);
-      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, keywordOf(state, creature, "deathtouch"), sourceName, cardProfile(creature.card));
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, source ? cardProfile(creature!.card) : cardProfile(object.card));
+      return state;
+    }
+    case "damage-source-power": {
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      const target = object.targets[0];
+      if (!source || !target || !isCreature(cardProfile(source.card))) return state;
+      const amount = Math.max(0, powerOf(source, state));
+      if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(source.card));
       return state;
     }
     case "tap-creatures-pump-source-damage-attacker": {

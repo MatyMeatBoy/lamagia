@@ -454,6 +454,12 @@ const FELL_SHEPHERD = () => make({
   oracle_text: "Whenever Fell Shepherd deals combat damage to a player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn.",
   scryfall_id: "5fd78088-53db-453b-90a3-b8426b0a826e"
 });
+const STALKING_VENGEANCE = () => make({
+  name: "Stalking Vengeance", type_line: "Creature — Avatar", mana_cost: "{6}{R}", cmc: 7, power: "5", toughness: "5",
+  keywords: ["Haste"],
+  oracle_text: "Haste\nWhenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.",
+  scryfall_id: "5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb"
+});
 const WATCHER = () => make({
   name: "Mortuary Watcher", type_line: "Creature — Spirit", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
   oracle_text: "Whenever another creature you control dies, you gain 1 life."
@@ -4513,6 +4519,16 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grave Pact Acolyte")).toBe(true);
     // Its own death trigger resolved even though its source had already left.
     expect(game.players[0]!.life).toBe(38);
+  });
+
+  it("uses the source power for Stalking Vengeance after another creature dies", () => {
+    let game = readyToCast([BOLT()], [STALKING_VENGEANCE(), MOUNTAIN(), BEAR()]);
+    const victim = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: victim.instance_id }] });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", seat: 0, targetKind: "player-or-planeswalker" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
+    expect(game.players[1]!.life).toBe(35);
   });
 
   it("recognizes the complementary flying-only sweeper", () => {
