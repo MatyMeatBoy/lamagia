@@ -1188,3 +1188,6 @@ life payments such as `Flashback—{1}{U}, Pay 3 life.`. Mana planning reserves
 that life before selecting sources, and the legal action label exposes the
 payment. Scenario coverage uses Deep Analysis and verifies the life component
 is paid together with mana (CR 702.34, 118.8).
+
+Coverage after this refinement: **170/356 C13 cards (47.8%)** and
+**8,114/38,711 globally**.
