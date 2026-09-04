@@ -1026,3 +1026,27 @@ extra of the granted colour when a matching land is tapped.
 
 Validation: check PASS; 276 tests; oracle 25 OK; simulate 200 games 0 failures.
 Catalog 7,751 -> 7,753; Commander 2014 119 -> 120/337 (Crypt Ghast).
+
+### Integrator checkpoint: current fork batches and public Pages
+
+The incoming C13/C14 fork tail was reviewed and integrated without importing
+the fork's stale documentation snapshots over newer local work. Reused
+primitives include Chaos Warp-style shuffle/reveal, Decree of Pain's sweep and
+draw, Desertion's counter-and-return, Command Tower color identity, Mirari's
+Wake mana/P+T grants, Loyal Retainers restrictions, and Maelstrom Wanderer
+haste reuse. Duplicate or already-equivalent patches were retained once.
+
+Validation: `npm run check` PASS; `npm test` PASS (**314 rules tests**, simulator
+and **36 Oracle Python tests**). The current export is **7,991/38,711** fully
+implemented cards; C13 is **161/356**, C14 is **127/337**, and the filtered map
+is **21.4% (18,174/84,990 memberships) across 685 editions**.
+
+The global queue remains incremental and reusable: five disjoint workers, a
+2 GB scheduler ceiling, up to 20 `oracle_id`s per commit, and `quick-win`
+priority for cards with exactly one unresolved clause.
+
+The public client now consumes JSON safely and reports a useful backend error
+instead of throwing `Unexpected token '<'` when Pages returns HTML. GitHub Pages
+is static, so local AI play is verified but a public AI match still requires a
+hosted `services/match-server` origin configured through
+`window.__PROSSH_API_BASE__`.
