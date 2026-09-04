@@ -245,6 +245,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-then-you-have-more` | Sequential life comparison followed by conditional self-draw, reusable for Survival Cache (CR 608.2c) | `codex/c13-life-comparison-f99` | active | 2026-09-04 |
+| `c13-when-enters-return-target` | Optional ETB artifact recovery with life gain equal to the returned card's mana value, applied to Razor Hippogriff (CR 603.2, 608.2) | `codex/c13-hippogriff-reclaim-f99` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |

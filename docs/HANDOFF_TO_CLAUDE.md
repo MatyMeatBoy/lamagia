@@ -1793,3 +1793,9 @@ After refreshing the engine export, the current plan reports **9** Oracle
 needs-review card occurrences across its unclaimed C13 jobs and **39**
 one-line candidates in those jobs. The authoritative C13 export is **206/341
 complete**, with **135** unfinished and **58** one-line-away cards.
+
+### C13 Razor Hippogriff artifact recovery (2026-09-04)
+
+The artifact-graveyard return primitive now supports optional recovery followed
+by life gain equal to the recovered card's mana value. Razor Hippogriff is the
+covered C13 application (CR 603.2, 608.2).
