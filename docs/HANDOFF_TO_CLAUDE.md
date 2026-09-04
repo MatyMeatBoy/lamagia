@@ -607,9 +607,8 @@ reuse this descriptor without card-name branches. This follows Comprehensive
 Rules 117.3b, 601.2g, 602.2b and 701.21; official Wizards source:
 `https://magic.wizards.com/en/rules`.
 
-Validation: `npx vitest run packages/rules/src/engine.test.ts --reporter=dot`
-— 294 passed after the typed-cost scenarios; full workspace checks remain
-pending before integrator review.
+Validation: `npm run check --workspace=@prossh/rules` PASS and `npm test
+--workspace=@prossh/rules` PASS — 362 passed, 6 skipped.
 
 ## Cooperative C13 cluster: Level Up
 
