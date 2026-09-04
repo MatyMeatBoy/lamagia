@@ -2017,3 +2017,33 @@ After refreshing the engine export, the current plan reports **9** Oracle
 needs-review card occurrences across its unclaimed C13 jobs and **39**
 one-line candidates in those jobs. The authoritative C13 export is **206/341
 complete**, with **135** unfinished and **58** one-line-away cards.
+
+### Worker-05: shock lands were already correct, just uncredited (2026-09-04)
+
+Claim `rules-shock-land-credit`, continuing from the same user-supplied
+Moxfield decklist. "As ~ enters, you may pay 2 life. If you don't, it enters
+tapped." (Blood Crypt, Watery Grave, Steam Vents in the decklist) turned out
+to need **zero engine changes** — `entersTapped`'s `unless-pay-life` branch
+(`engine.ts`) already enforces exactly this: paying whenever the player's
+life total can comfortably afford it (`life > rule.life + 1`), tapped
+otherwise. `parseEntersTapped` (`characteristics.ts`) already recognized the
+wording into that structured rule too. The only gap was that the per-line
+`unimplementedText` loop had no consumption check for this specific two-
+sentence combo, so every shock land was honestly-but-wrongly reported as
+`fullyImplemented: false` despite the printed text executing correctly.
+Added the missing `continue` and — since this exact mechanic apparently had
+no scenario test anywhere in the suite — a first one: plays the land at high
+life (untapped, −2 life) and at life 2 (tapped, life unchanged).
+
+Fully implements the entire real shock-land cycle: Blood Crypt, Watery Grave,
+Steam Vents, Breeding Pool, Hallowed Fountain, Temple Garden, Overgrown Tomb,
+Sacred Foundry, Godless Shrine, Stomping Ground. Global export:
+**8,780/38,711** (+15 from 8,765 before this and the drain cluster above).
+`npm run check` and `npm test` PASS (**479 rules tests**, up from 478;
+simulator and the full Python suite PASS). Same two pre-existing upstream
+duplicate-`case` `vite:esbuild` warnings as before, unrelated.
+
+Worth flagging for a future claim: `parseEntersTapped`'s other branches
+(`unless-reveal-card` for Frostboil-style reveal lands, `unless-few-lands`,
+`unless-many-lands`) likely have the identical uncredited-but-working gap —
+not checked in this batch, scope was the decklist's shock lands only.

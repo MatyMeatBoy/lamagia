@@ -364,6 +364,13 @@ const CYCLING_LAND = () => make({
 const WATERY_GRAVE = () => make({
   name: "Watery Grave", type_line: "Land — Island Swamp", oracle_text: "({T}: Add {U} or {B}.)"
 });
+// A shock land: the `unless-pay-life` entersTapped rule was already fully
+// enforced by the engine, but the printed line wasn't credited as covered.
+const SHOCK_LAND = () => make({
+  name: "Test Steam Vents", type_line: "Land — Island Mountain",
+  oracle_text: "({T}: Add {U} or {R}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+  produced_mana: ["U", "R"]
+});
 const ETB_BOLTER = () => make({
   name: "Flame Herald", type_line: "Creature — Dragon", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3",
   oracle_text: "When Flame Herald enters the battlefield, Flame Herald deals 2 damage to any target."
@@ -630,6 +637,30 @@ describe("turn structure", () => {
     expect(game.turn).toBe(1);
     expect(game.step).toBe("precombat-main");
     expect(game.prioritySeat).toBe(0);
+  });
+
+  it("lets a shock land enter untapped for 2 life when it can be afforded, tapped otherwise", () => {
+    const profile = profileOf(SHOCK_LAND());
+    expect(profile.entersTapped).toEqual({ kind: "unless-pay-life", life: 2 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let flush = twoSeatGame([], []);
+    flush = stage(flush, 0, () => ({ hand: toHand(0, [SHOCK_LAND()], "shock-flush") }));
+    flush = passUntil(flush, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const before = flush.players[0]!.life;
+    flush = applyAction(flush, 0, { type: "play-land", cardId: "shock-flush-0" });
+    const flushLand = flush.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
+    expect(flushLand.tapped).toBe(false);
+    expect(flush.players[0]!.life).toBe(before - 2);
+
+    // At low life, the same choice protects it and the land enters tapped instead.
+    let poor = twoSeatGame([], []);
+    poor = stage(poor, 0, () => ({ hand: toHand(0, [SHOCK_LAND()], "shock-poor"), life: 2 }));
+    poor = passUntil(poor, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    poor = applyAction(poor, 0, { type: "play-land", cardId: "shock-poor-0" });
+    const poorLand = poor.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
+    expect(poorLand.tapped).toBe(true);
+    expect(poor.players[0]!.life).toBe(2);
   });
 
   it("skips the opening draw only for the starting player", () => {

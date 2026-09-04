@@ -2694,6 +2694,13 @@ function recognizeText(text: string): RecognizedText {
     // Replacement text for entering tapped is executed by `parseEntersTapped`
     // before priority opens; it is not an unresolved spell effect.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
+    // Shock lands: "As ~ enters, you may pay N life. If you don't, it enters
+    // tapped." is the same `unless-pay-life` replacement effect above, split
+    // across two sentences by Wizards' templating rather than one. `entersTapped`
+    // (`unless-pay-life`, `packages/rules/src/engine.ts`) already enforces it —
+    // paying whenever life can comfortably afford it — so the printed line
+    // describes exactly what already executes, not an unresolved effect.
+    if (/^As ~ enters, you may pay \d+ life\.\s*If you don['’]t, (?:~|it) enters tapped\.?$/i.test(line)) continue;
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
