@@ -1112,6 +1112,16 @@ scenario tests cover accept/decline imprint, payer identity, and hiding an
 unaffordable payment action. Integrate the complete batch only after validation;
 do not import stale handoff snapshots or untracked user folders.
 
+### Integrator checkpoint: C13 Duplicant/Rhystic batch accepted (2026-09-04)
+
+The full functional batch was integrated: Duplicant's nontoken-creature imprint
+ETB and Rhystic Study's opponent-specific "unless that player pays" trigger.
+The stale generated coverage commit was regenerated locally instead of copied.
+Validation: `npm run check` PASS; `npm test` PASS (**329 rules tests**,
+simulator, **38 Oracle Python tests**). C13 remains **163/356 (45.8%)** because
+these cards are outside that precon's unique-card list; the global export is
+**8,011/38,711** fully implemented.
+
 This batch's implementation is validated below after the complete commit set is
 processed; Rhystic Study uses the exact opponent who drew the card as payer,
 and its accept action is omitted when that player cannot pay.
