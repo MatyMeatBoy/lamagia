@@ -1762,6 +1762,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, target.seat, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: target.seat, amount }), controller, `${playerAt(next, target.seat).name} gana ${amount} vidas.`);
     }
+    case "sacrifice-own-creature-then-draw": {
+      const creatures = playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
+      if (!creatures.length) return state;
+      // Deterministic: give up the least valuable creature.
+      const victim = [...creatures].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
+      let next = movePermanentToZone(state, victim, "graveyard");
+      next = drawCards(next, controller, effect.amount);
+      return logged(next, controller, `${playerAt(next, controller).name} sacrifica ${victim.card.name} y roba ${effect.amount}.`);
+    }
+    case "reanimate-own-best-creature-from-graveyard": {
+      const candidates = playerAt(state, controller).graveyard.filter((card) => isCreature(cardProfile(card)));
+      if (!candidates.length) return state;
+      const chosen = [...candidates].sort((a, b) => cardProfile(b).manaValue - cardProfile(a).manaValue)[0]!;
+      const next = withPlayer(state, controller, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((card) => card.instance_id !== chosen.instance_id)
+      }));
+      return putOntoBattlefield(next, controller, chosen, false);
+    }
     case "each-player-gains-life": {
       if (playersCantGainLife(state)) return state;
       let next = state;
