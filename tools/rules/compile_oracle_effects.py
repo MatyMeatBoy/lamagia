@@ -29,7 +29,7 @@ from typing import Any
 
 
 DEFAULT_COMMIT_CARD_LIMIT = 20
-ORACLE_IR_PARSER_VERSION = "v7"
+ORACLE_IR_PARSER_VERSION = "v8"
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -69,7 +69,8 @@ KEYWORD_ONLY_RE = re.compile(r"^(?:" + "|".join(re.escape(keyword) for keyword i
 KNOWN_STATIC_RE = re.compile(
     r"^(?:this land|~|[A-Za-z][A-Za-z'’ -]+) enters(?: the battlefield)? tapped"
     r"(?: with (?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) [A-Za-z+\-/ ]+ counters? on it)?"
-    r"(?: unless\b.*)?\.?$|^cycling\s+.+$|^[A-Za-z][A-Za-z ]*cycling\s+.+$|^equip\s+.+$|^level up\s+.+$",
+    r"(?: unless\b.*)?\.?$|^cycling\s+.+$|^[A-Za-z][A-Za-z ]*cycling\s+.+$|^equip\s+.+$|^level up\s+.+$"
+    r"|^this creature can't be blocked\.?$",
     re.I,
 )
 KNOWN_STATIC_LINE_RE = re.compile(r"^(?:level\s+\d+(?:-\d+|\+)?|\d+\/\d+|choose\s+(?:one|two|one or both)\s+(?:-|—|–|�))\.?$", re.I)

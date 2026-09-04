@@ -10,74 +10,13 @@ Each primitive is assigned to exactly one worker, so parallel work cannot claim 
 
 ## Worker 1
 
-23 primitives / 29 cards
+24 primitives / 29 cards
 
 | Claim | Family | Cards | Unlocks | Batches |
 | --- | --- | ---: | ---: | ---: |
 | `c13-other|static-or-spell|shape:enchant player` | other | 5 | 5 | 1 |
 | `c13-other|static-or-spell|shape:kicker {cost}` | other | 2 | 2 | 1 |
-| `c13-other|static-or-spell|shape:this creature can't be blocked` | other | 2 | 2 | 1 |
-| `c13-other|static-or-spell|shape:all creatures get -<n>/-<n> until end of turn` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:beast spells you cast cost {cost} less to cast` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:choose <n> color` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:each player gains control of the creature they chose` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:flashback {cost}` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:for each opponent, gain control of up to <n> target creature that player controls until end of turn|target-types:Creature|zone:battlefield` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:if it's <n> land card, put it onto the battlefield` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:if you do, reveal cards from the top of your library until you reveal <n> creature card` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:no more than <n> creatures can attack you each combat` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:put target land card from <n> graveyard onto the battlefield under your control|target-types:Land|zone:graveyard` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:remove all attacking creatures from combat and untap them` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:storm` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:that creature doesn't untap during its controller's untap step for as long as you control this creature` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:then shuffle and put the last cards you looked at this way on top in any order` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:this creature doesn't untap during your untap step` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:untap target creature you don't control and gain control of it|target-types:Creature|zone:battlefield` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:you control enchanted creature` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:you may put <n> creature card from among them onto the battlefield` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:• tap all creatures target player controls|zone:battlefield` | other | 1 | 1 | 1 |
-
-## Worker 2
-
-24 primitives / 29 cards
-
-| Claim | Family | Cards | Unlocks | Batches |
-| --- | --- | ---: | ---: | ---: |
-| `c13-other|static-or-spell|shape:you may choose new targets for the copy` | other | 5 | 5 | 1 |
-| `c13-other|static-or-spell|shape:look at the top <n> cards of your library` | other | 2 | 2 | 1 |
 | `c13-other|static-or-spell|shape:<n> can't be <n>` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:activate only during your upkeep` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:as <n> additional cost to cast this spell, pay <n> life|cost-context:additional-cast-cost` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:blue spells and red spells you cast cost {cost} less to cast` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:choose <n> or more -|modal` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:creatures you control have haste` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:each player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:flashback-{cost}, pay <n> life` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:graft <n>` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:if it's <n> land card, put that card onto the battlefield under your control` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:instant and sorcery spells cost {cost} less to cast` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:otherwise, put it into your hand` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:put target nonland permanent into its owner's library just beneath the top <n> cards of that library|zone:battlefield` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:reveal the top <n> cards of your library` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:suspend <n>-{cost}` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:then copy that spell` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:they can't attack you or planeswalkers you control that combat` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:this creature has protection from the chosen player` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:untap those creatures` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:you may activate abilities of creatures you control as though those creatures had haste` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:you may put <n> creature card with power <n> or greater from among them onto the battlefield` | other | 1 | 1 | 1 |
-| `c13-other|static-or-spell|shape:• tap target permanent <n> opponent controls|zone:battlefield` | other | 1 | 1 | 1 |
-
-## Worker 3
-
-24 primitives / 29 cards
-
-| Claim | Family | Cards | Unlocks | Batches |
-| --- | --- | ---: | ---: | ---: |
-| `c13-other|static-or-spell|shape:enchant creature` | other | 4 | 4 | 1 |
-| `c13-other|static-or-spell|shape:evoke {cost}` | other | 2 | 2 | 1 |
-| `c13-other|static-or-spell|shape:put the rest on the bottom of your library in any order` | other | 2 | 2 | 1 |
 | `c13-other|static-or-spell|shape:activate only if you control <n> or more lands` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:as long as this card is in your graveyard and you control <n> island, creatures you control have flying` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:cast this spell only during combat` | other | 1 | 1 | 1 |
@@ -100,15 +39,15 @@ Each primitive is assigned to exactly one worker, so parallel work cannot claim 
 | `c13-other|static-or-spell|shape:you may reveal <n> instant or sorcery card from among them and put it into your hand` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:• target creature gains double strike until end of turn|target-types:Creature|zone:battlefield` | other | 1 | 1 | 1 |
 
-## Worker 4
+## Worker 2
 
 24 primitives / 29 cards
 
 | Claim | Family | Cards | Unlocks | Batches |
 | --- | --- | ---: | ---: | ---: |
-| `c13-other|static-or-spell|shape:they can't be regenerated` | other | 4 | 4 | 1 |
-| `c13-other|static-or-spell|shape:it can't be regenerated` | other | 2 | 2 | 1 |
-| `c13-other|static-or-spell|shape:split second` | other | 2 | 2 | 1 |
+| `c13-other|static-or-spell|shape:you may choose new targets for the copy` | other | 5 | 5 | 1 |
+| `c13-other|static-or-spell|shape:look at the top <n> cards of your library` | other | 2 | 2 | 1 |
+| `c13-other|static-or-spell|shape:activate only during your turn, before attackers are declared` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:after this phase, there is <n> additional combat phase` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:as many times as you choose, you may pay <n> life, put those cards on the bottom of your library in any order, then look at the top <n> cards of your library` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:cast this spell only during the declare blockers step on <n> opponent's turn` | other | 1 | 1 | 1 |
@@ -131,16 +70,15 @@ Each primitive is assigned to exactly one worker, so parallel work cannot claim 
 | `c13-other|static-or-spell|shape:• create <n> <n>/<n> green insect creature tokens` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:• untap target permanent you control|zone:battlefield` | other | 1 | 1 | 1 |
 
-## Worker 5
+## Worker 3
 
-24 primitives / 28 cards
+23 primitives / 28 cards
 
 | Claim | Family | Cards | Unlocks | Batches |
 | --- | --- | ---: | ---: | ---: |
-| `c13-other|static-or-spell|shape:echo {cost}` | other | 3 | 3 | 1 |
-| `c13-other|static-or-spell|shape:enchant land` | other | 2 | 2 | 1 |
-| `c13-other|static-or-spell|shape:put <n> of them into your hand and the rest on the bottom of your library in any order` | other | 2 | 2 | 1 |
-| `c13-other|static-or-spell|shape:activate only during your turn, before attackers are declared` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:enchant creature` | other | 4 | 4 | 1 |
+| `c13-other|static-or-spell|shape:evoke {cost}` | other | 2 | 2 | 1 |
+| `c13-other|static-or-spell|shape:put the rest on the bottom of your library in any order` | other | 2 | 2 | 1 |
 | `c13-other|static-or-spell|shape:all creatures gain fear until end of turn` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:as this creature enters, choose <n> player` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:changeling` | other | 1 | 1 | 1 |
@@ -161,3 +99,64 @@ Each primitive is assigned to exactly one worker, so parallel work cannot claim 
 | `c13-other|static-or-spell|shape:you can't activate this ability during combat` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:you may choose not to untap rubinia soulsinger during your untap step` | other | 1 | 1 | 1 |
 | `c13-other|static-or-spell|shape:• permanents you control gain indestructible until end of turn` | other | 1 | 1 | 1 |
+
+## Worker 4
+
+23 primitives / 28 cards
+
+| Claim | Family | Cards | Unlocks | Batches |
+| --- | --- | ---: | ---: | ---: |
+| `c13-other|static-or-spell|shape:they can't be regenerated` | other | 4 | 4 | 1 |
+| `c13-other|static-or-spell|shape:it can't be regenerated` | other | 2 | 2 | 1 |
+| `c13-other|static-or-spell|shape:split second` | other | 2 | 2 | 1 |
+| `c13-other|static-or-spell|shape:all creatures get -<n>/-<n> until end of turn` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:beast spells you cast cost {cost} less to cast` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:choose <n> color` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:each player gains control of the creature they chose` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:flashback {cost}` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:for each opponent, gain control of up to <n> target creature that player controls until end of turn|target-types:Creature|zone:battlefield` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:if it's <n> land card, put it onto the battlefield` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:if you do, reveal cards from the top of your library until you reveal <n> creature card` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:no more than <n> creatures can attack you each combat` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:put target land card from <n> graveyard onto the battlefield under your control|target-types:Land|zone:graveyard` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:remove all attacking creatures from combat and untap them` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:storm` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:that creature doesn't untap during its controller's untap step for as long as you control this creature` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:then shuffle and put the last cards you looked at this way on top in any order` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:this creature doesn't untap during your untap step` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:untap target creature you don't control and gain control of it|target-types:Creature|zone:battlefield` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:you control enchanted creature` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:you may put <n> creature card from among them onto the battlefield` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:• tap all creatures target player controls|zone:battlefield` | other | 1 | 1 | 1 |
+
+## Worker 5
+
+24 primitives / 28 cards
+
+| Claim | Family | Cards | Unlocks | Batches |
+| --- | --- | ---: | ---: | ---: |
+| `c13-other|static-or-spell|shape:echo {cost}` | other | 3 | 3 | 1 |
+| `c13-other|static-or-spell|shape:enchant land` | other | 2 | 2 | 1 |
+| `c13-other|static-or-spell|shape:put <n> of them into your hand and the rest on the bottom of your library in any order` | other | 2 | 2 | 1 |
+| `c13-other|static-or-spell|shape:activate only during your upkeep` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:as <n> additional cost to cast this spell, pay <n> life|cost-context:additional-cast-cost` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:blue spells and red spells you cast cost {cost} less to cast` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:choose <n> or more -|modal` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:creatures you control have haste` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:each player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:flashback-{cost}, pay <n> life` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:graft <n>` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:if it's <n> land card, put that card onto the battlefield under your control` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:instant and sorcery spells cost {cost} less to cast` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:otherwise, put it into your hand` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:put target nonland permanent into its owner's library just beneath the top <n> cards of that library|zone:battlefield` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:reveal the top <n> cards of your library` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:suspend <n>-{cost}` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:then copy that spell` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:they can't attack you or planeswalkers you control that combat` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:this creature has protection from the chosen player` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:untap those creatures` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:you may activate abilities of creatures you control as though those creatures had haste` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:you may put <n> creature card with power <n> or greater from among them onto the battlefield` | other | 1 | 1 | 1 |
+| `c13-other|static-or-spell|shape:• tap target permanent <n> opponent controls|zone:battlefield` | other | 1 | 1 | 1 |

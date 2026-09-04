@@ -845,7 +845,7 @@ implemented cards. The current set map reports **19.7%** across 708 editions.
 The latest fork batch also adds reusable ETB trigger subjects for artifacts and
 enchantments under your control.
 
-The primitive compiler is now parser version `v7`: it reuses its incremental
+The primitive compiler is now parser version `v8`: it reuses its incremental
 cache, preserves typed sacrifice operands, distinguishes discard activation
 costs from discard effects, and emits a valid
 one-command C13 worker plan (`npm run rules:oracle:plan:c13`): 5 disjoint
@@ -885,6 +885,6 @@ screen and static grouped coverage summary while gameplay remains local-only.
 
 The worker planner was hardened for the raw `oracle-clusters.json` schema: it
 now preserves the real cluster key, derives its family, and accepts an explicit
-claim prefix. The C13 plan therefore produces 119 distinct primitive jobs
+claim prefix. The C13 plan therefore produces 118 distinct primitive jobs
 across five workers instead of collapsing them under `primitive`; use
 `npm run rules:oracle:plan:c13` to regenerate it after each accepted batch.
