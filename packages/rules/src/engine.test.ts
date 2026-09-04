@@ -114,6 +114,7 @@ const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact"
 const ARTIFACT_SAC_ALTAR = () => make({ name: "Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact: Draw a card." });
 const ENCHANTMENT_SAC_ALTAR = () => make({ name: "Enchantment Memory", type_line: "Enchantment", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an enchantment: Draw a card." });
 const LAND_SAC_ALTAR = () => make({ name: "Land Memory", type_line: "Land", oracle_text: "Sacrifice a land: Draw a card." });
+const ANOTHER_ARTIFACT_SAC = () => make({ name: "Another Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice another artifact: Draw a card." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const ANY_GRAVEYARD_EXILE = () => make({ name: "Cross Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from a graveyard." });
@@ -844,6 +845,19 @@ describe("casting", () => {
       expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
       expect(game.players[0]!.graveyard.some((card) => card.name === sacrificedName)).toBe(true);
     }
+  });
+
+  it("does not offer the source for an another-artifact sacrifice cost", () => {
+    const sourceCard = ANOTHER_ARTIFACT_SAC();
+    const profile = profileOf(sourceCard);
+    expect(profile.activatedAbilities[0]).toMatchObject({ sacrificesPermanent: { type: "Artifact", mode: "another" } });
+    let game = readyToCast([], [sourceCard]);
+    const source = game.players[0]!.battlefield[0]!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)).toBe(false);
+    game = readyToCast([], [sourceCard, ARTIFACT_SAC_ALTAR()]);
+    const second = game.players[0]!.battlefield.find((permanent) => permanent.instance_id !== source.instance_id)!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === second.instance_id);
+    expect(activation).toBeDefined();
   });
 
   it("offers and pays an activated counter-removal cost", () => {
