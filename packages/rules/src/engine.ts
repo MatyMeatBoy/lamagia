@@ -311,6 +311,8 @@ export interface GameState {
   readonly pendingChoice: PendingChoice | null;
   /** Creatures that died (battlefield → graveyard) this turn — powers Morbid (CR 702.66). */
   readonly creaturesDiedThisTurn: number;
+  /** Creature cards that entered their owner's graveyard from the battlefield this turn. */
+  readonly creatureCardsDiedThisTurn: readonly GameCard[];
 }
 
 export type PendingChoice =
@@ -1014,7 +1016,8 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     version: 0,
     startingSeat: 0,
     pendingChoice: null,
-    creaturesDiedThisTurn: 0
+    creaturesDiedThisTurn: 0,
+    creatureCardsDiedThisTurn: []
   };
   const opened = logged(base, null, `Partida creada con ${players.length} jugadores · ${startingLife} vidas · mano inicial de ${openingHand}.`);
   return settle(opened);
@@ -1090,7 +1093,11 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
   // "Dies" is specifically battlefield → graveyard (rule 700.4). A commander
   // redirected to the command zone above never reaches this point.
   if (zone === "graveyard" && isCreature(cardProfile(permanent.card))) {
-    next = { ...next, creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1 };
+    next = {
+      ...next,
+      creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1,
+      creatureCardsDiedThisTurn: [...next.creatureCardsDiedThisTurn, permanent.card]
+    };
     next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card }, [permanent]);
   }
   return next;
@@ -2016,6 +2023,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         hand: [...player.hand, chosen]
       }));
       return logged(next, controller, `${sourceName}: ${chosen.name} vuelve a la mano al azar desde el cementerio.`);
+    }
+    case "return-creatures-died-this-turn-to-hand": {
+      const diedIds = new Set(state.creatureCardsDiedThisTurn
+        .filter((card) => card.owner === controller)
+        .map((card) => card.instance_id));
+      if (!diedIds.size) return state;
+      const player = playerAt(state, controller);
+      const returned = player.graveyard.filter((card) => diedIds.has(card.instance_id));
+      if (!returned.length) return state;
+      const next = withPlayer(state, controller, (current) => ({
+        ...current,
+        graveyard: current.graveyard.filter((card) => !diedIds.has(card.instance_id)),
+        hand: [...current.hand, ...returned]
+      }));
+      return logged(next, controller, `${sourceName}: ${returned.map((card) => card.name).join(", ")} vuelve(n) a tu mano.`);
     }
     case "modify-all-attacking-creatures": {
       const attackerIds = new Set(state.combat.attackers.map((entry) => entry.instanceId));
@@ -4314,7 +4336,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
 
   switch (step) {
     case "untap": {
-      next = { ...next, creaturesDiedThisTurn: 0 };
+      next = { ...next, creaturesDiedThisTurn: 0, creatureCardsDiedThisTurn: [] };
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,
