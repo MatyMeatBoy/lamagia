@@ -343,6 +343,19 @@ describe("scry", () => {
   });
 });
 
+describe("delayed draw primitives", () => {
+  it("recognises Arcane Denial as one counter plus two parametrized delayed draws", () => {
+    const profile = cardProfile(card({
+      name: "Arcane Denial",
+      type_line: "Instant",
+      oracle_text: "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep."
+    }));
+    expect(profile.effects).toEqual([{ kind: "counter-target-spell-with-delayed-draw", targetAmount: 2, casterAmount: 1 }]);
+    expect(profile.targetKind).toBe("spell");
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("triggered self modifications", () => {
   it("recognises Landfall P/T plus keyword as one reusable effect", () => {
     const profile = cardProfile(card({
