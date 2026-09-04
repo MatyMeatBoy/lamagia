@@ -158,6 +158,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-return-enchantment-from-graveyard` | Return target enchantment card from graveyard to battlefield | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-exile-card-from-any-graveyard` | Exile target card from any graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-return-card-from-any-graveyard` | Return target card from any graveyard to its owner's hand | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-exile-creature-from-any-graveyard` | Exile target creature card from any graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 
 ## Claim format
 
