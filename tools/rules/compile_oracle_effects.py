@@ -85,6 +85,9 @@ ZONE_PATTERNS: tuple[tuple[str, str], ...] = (
 )
 
 TRIGGER_SUBJECT_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("each-player", r"a\s+player\s+casts\s+(?:a\s+)?spell"),
+    ("opponent", r"an\s+opponent\s+casts\s+(?:a\s+)?spell"),
+    ("you", r"you\s+cast\s+(?:a\s+)?spell"),
     ("another-permanent-you-control", r"another\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control"),
     ("permanent-you-control", r"a\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control"),
     ("artifact-you-control", r"an\s+artifact\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control"),
