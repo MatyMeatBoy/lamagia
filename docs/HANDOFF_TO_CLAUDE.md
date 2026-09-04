@@ -1418,15 +1418,13 @@ claim one disjoint primitive, commit directly with tests and a compact
 `CLAIM/BASE/COMMIT/FILES/TESTS/SCENARIOS/LIMITS` report; never accumulate or
 rebase a stale full-tree branch.
 
-The reported `241/337` C14 figure was observed in a transient/generated
-working state, but is not reproducible from the current committed profiles or
-from the worker branch history (the latter records 120/337 at its last
-checkpoint). After a clean profile export, the reproducible five-precon union
-is **116/322 unique Oracle IDs**; the edition-membership report in
-`SET_COVERAGE.md` uses the same denominator. The useful C14 functionality from
-the stale worker tree is already rescued through the integrated batch history
-plus `893730c`; importing its remaining files would discard newer C13 rules
-and is prohibited. To recover any extra work behind the 241 figure, the worker
-must provide the exact card-to-commit mapping; no uncommitted generated
-profile is treated as code. Commits `5f01afc`, `6b99130`, and `b8702fb` (C13
-worker artifacts) remain queued for the next integration batch.
+The supplied worker report is valid for its own stale code: `af82c1f` exported
+**241/337 C14 printing identities**. It must not be confused with the clean
+integration branch, whose current export is **116/322 unique Oracle IDs**;
+`SET_COVERAGE.md` uses that canonical denominator. The worker report now
+provides the exact card-to-commit map needed to rescue the missing C14
+functions; cherry-pick/reimplement commits case by case, never merge its
+stale full tree. The clean branch currently exports **186/356 C13 printings**,
+**171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
+`5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
+queued for the next integration batch.

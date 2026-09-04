@@ -21,6 +21,22 @@ Report `CLAIM`, `BASE SHA`, `COMMIT SHA`, `FILES`, `TESTS`, `SCENARIOS`, and
 instructions: [CONTRIBUTING.md](CONTRIBUTING.md) and
 [IMPLEMENTATION_CLUSTERS.md](IMPLEMENTATION_CLUSTERS.md).
 
+Required direct-commit report (one cluster, at most 20 `oracle_id`s):
+
+```text
+CLAIM: c13-<primitive>
+BASE: <sha>
+COMMIT: <sha>
+CARDS: <name> | <oracle_id>; ...
+FILES: <explicit paths>
+TESTS: <commands + result>
+SCENARIOS: <covered cases>
+LIMITS: <remaining unsupported wording>
+```
+
+Publish with `git push origin HEAD`; do not send only a card count or a stale
+full-tree branch. The integrator batches 11+ commits before integration.
+
 ### Parallel bot handoff
 
 Workers claim disjoint primitives, commit locally, and report only the compact

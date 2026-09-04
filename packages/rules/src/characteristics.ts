@@ -1899,7 +1899,9 @@ function recognizeText(text: string): RecognizedText {
     // `produced_mana` fallback, but the card must not claim its text is executed.
     const manaLine = /^([^:]{1,80}):\s*(add\b.*)$/i.exec(line);
     if (manaLine) {
-      if (!parseManaInstruction(manaLine[2]!)) unimplementedText.push(line);
+      const variableStorageMana = /^add\s+X\s+mana\s+in\s+any\s+combination\s+of\s+\{[WUBRGC]\}(?:\s+and\/or\s+\{[WUBRGC]\})?\.?$/i.test(manaLine[2]!.trim())
+        && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(manaLine[1]!);
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana) unimplementedText.push(line);
       continue;
     }
 

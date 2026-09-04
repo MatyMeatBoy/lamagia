@@ -638,6 +638,19 @@ describe("faces and oracle normalisation", () => {
     expect(profile.fullyImplemented).toBe(false);
   });
 
+  it("consumes variable storage-counter mana already modeled by the mana engine", () => {
+    const profile = cardProfile({
+      scryfall_id: "c13-storage-profile",
+      name: "Molten Slagheap",
+      type_line: "Land",
+      oracle_text: "{T}: Add {C}.\n{1}, Remove X storage counters from ~: Add X mana in any combination of {B} and/or {R}.",
+      produced_mana: ["C", "B", "R"]
+    });
+    expect(profile.manaAbilities.find((ability) => ability.variableAmountCounter === "storage")).toBeDefined();
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("reuses Storm keyword consumption and targeted attacker sacrifice", () => {
     const profile = cardProfile(card({
       name: "Storm Offering", type_line: "Sorcery", mana_cost: "{3}{B}",

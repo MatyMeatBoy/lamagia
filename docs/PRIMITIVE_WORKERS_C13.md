@@ -10,7 +10,7 @@ Each primitive is assigned to exactly one worker; jobs sharing an oracle_id are 
 
 ## Worker 1
 
-9 primitives / 9 unique cards
+8 primitives / 8 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
@@ -22,6 +22,34 @@ Cards: Karmic Guide [8c31fec9-e4b3-4761-990e-7be38eb05604]
 
 | normal | `c13-when-enters-look-the` | library-look | 1 | 0 | 1 | 1 |
 Cards: Raven Familiar [47aabd9d-0f68-490a-a2ae-5cd9ef689be6]
+
+| normal | `c13-prevent-all-combat-damage` | other | 1 | 0 | 1 | 1 |
+Cards: Fog Bank [3a2bb47d-228d-499e-a34b-9e10d99e9b2c]
+
+| normal | `c13-sacrifice-beast-you-gain` | activated | 1 | 0 | 1 | 1 |
+Cards: Ravenous Baloth [ee771e66-72f8-480f-9920-92c68ab93c3b]
+
+| normal | `c13-the-beginning-your-end-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
+
+| normal | `c13-until-end-turn-creatures` | other | 1 | 0 | 1 | 1 |
+Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
+
+| normal | `c13-when-sharuum-enters-you` | triggered | 1 | 0 | 1 | 1 |
+Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
+
+
+## Worker 2
+
+8 primitives / 8 unique cards
+
+| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| normal | `c13-beast-spells-you-cast` | other | 1 | 0 | 1 | 1 |
+Cards: Krosan Warchief [88350861-244c-4634-9bc9-e9a79401bd02]
+
+| normal | `c13-destroy-target-nonblack-creatures` | other | 1 | 0 | 1 | 1 |
+Cards: Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
 
 | normal | `c13-graft` | keyword-ability | 1 | 0 | 1 | 1 |
 Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
@@ -38,21 +66,21 @@ Cards: Capricious Efreet [9abd2286-23e9-49cd-be53-39423890f35c]
 | normal | `c13-was-kicked-has-split` | replacement | 1 | 0 | 1 | 1 |
 Cards: Molten Disaster [21390513-1ed0-48f2-a7fa-020da8f803c0]
 
-| normal | `c13-when-you-cycle-you` | triggered | 1 | 0 | 1 | 1 |
-Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
+| normal | `c13-when-you-cast-create` | triggered | 1 | 0 | 1 | 1 |
+Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
 
 
-## Worker 2
+## Worker 3
 
-8 primitives / 9 unique cards
+8 primitives / 8 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-choose-both` | modal | 2 | 0 | 2 | 1 |
-Cards: Fissure Vent [f5bac25d-72e9-4655-8a04-3646fc10be27], Soul Manipulation [419c2ae1-fec7-4c27-a7a0-99f777abb4de]
+| normal | `c13-blue-spells-and-red` | other | 1 | 0 | 1 | 1 |
+Cards: Nightscape Familiar [57296ea3-3c0d-49b7-bc08-0d0d8414e9ad]
 
-| normal | `c13-destroy-target-nonblack-creatures` | other | 1 | 0 | 1 | 1 |
-Cards: Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
+| normal | `c13-entwine-cost` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
 
 | normal | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 |
 Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
@@ -69,21 +97,21 @@ Cards: Charmbreaker Devils [1b9df437-6988-4ddc-80c4-893e11076067]
 | normal | `c13-when-enters-destroy-all` | counters | 1 | 0 | 1 | 1 |
 Cards: Bane of Progress [51f9a6cc-8eb2-44ed-a2d9-913ac514ad67]
 
-| normal | `c13-when-you-cycle-you-2` | triggered | 1 | 0 | 1 | 1 |
-Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
+| normal | `c13-when-you-cycle-you` | triggered | 1 | 0 | 1 | 1 |
+Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
 
 
-## Worker 3
+## Worker 4
 
-7 primitives / 8 unique cards
+8 primitives / 8 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-cost-remove-storage-counters` | activated | 2 | 0 | 2 | 1 |
-Cards: Molten Slagheap [33587cb2-0fd3-4e4c-bc5e-e7299cc9dab5], Saltcrusted Steppe [021e4165-2f02-4bd4-86ca-cb7bf4c9e23d]
+| normal | `c13-choose-more` | modal | 1 | 0 | 1 | 1 |
+Cards: Rain of Thorns [363b0504-27bf-40df-96ec-9e3cb1e47588]
 
-| normal | `c13-entwine-cost` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
+| normal | `c13-flying-first-strike-vigilance` | other | 1 | 0 | 1 | 1 |
+Cards: Sphinx of the Steel Wind [1c96772b-463c-4655-836b-cf6e9dc6319f]
 
 | normal | `c13-long-your-graveyard-and` | static-continuous | 1 | 0 | 1 | 1 |
 Cards: Wonder [232284f7-c623-4895-9ab9-8b1a39926830]
@@ -100,21 +128,21 @@ Cards: Act of Authority [c12b8e31-5702-4d3c-80c9-56c87e50679d]
 | normal | `c13-when-enters-exile-another` | triggered | 1 | 0 | 1 | 1 |
 Cards: Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
 
+| normal | `c13-when-you-cycle-you-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
 
-## Worker 4
 
-8 primitives / 8 unique cards
+## Worker 5
+
+7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-beast-spells-you-cast` | other | 1 | 0 | 1 | 1 |
-Cards: Krosan Warchief [88350861-244c-4634-9bc9-e9a79401bd02]
+| normal | `c13-creatures-can-attack-you` | combat-restriction | 1 | 0 | 1 | 1 |
+Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 
-| normal | `c13-choose-more` | modal | 1 | 0 | 1 | 1 |
-Cards: Rain of Thorns [363b0504-27bf-40df-96ec-9e3cb1e47588]
-
-| normal | `c13-flying-first-strike-vigilance` | other | 1 | 0 | 1 | 1 |
-Cards: Sphinx of the Steel Wind [1c96772b-463c-4655-836b-cf6e9dc6319f]
+| normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
 
 | normal | `c13-players-have-maximum-hand` | other | 1 | 0 | 1 | 1 |
 Cards: Price of Knowledge [1c586aa7-7a61-464f-abba-b33f9a525f0e]
@@ -128,37 +156,10 @@ Cards: Conjurer's Closet [cd1eda60-53e4-44d0-9b2c-7a57395e291f]
 | normal | `c13-untap-all-green-and` | other | 1 | 0 | 1 | 1 |
 Cards: Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
 
-| normal | `c13-when-sharuum-enters-you` | triggered | 1 | 0 | 1 | 1 |
-Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
+| normal | `c13-when-enters-look-the-2` | library-look | 1 | 0 | 1 | 1 |
+Cards: Augur of Bolas [be5d6779-ecc9-44b9-8c4d-97a243059d55]
 
 
-## Worker 5
+## Already claimed
 
-8 primitives / 8 unique cards
-
-| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
-| --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-blue-spells-and-red` | other | 1 | 0 | 1 | 1 |
-Cards: Nightscape Familiar [57296ea3-3c0d-49b7-bc08-0d0d8414e9ad]
-
-| normal | `c13-creatures-can-attack-you` | combat-restriction | 1 | 0 | 1 | 1 |
-Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
-
-| normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
-
-| normal | `c13-prevent-all-combat-damage` | other | 1 | 0 | 1 | 1 |
-Cards: Fog Bank [3a2bb47d-228d-499e-a34b-9e10d99e9b2c]
-
-| normal | `c13-sacrifice-beast-you-gain` | activated | 1 | 0 | 1 | 1 |
-Cards: Ravenous Baloth [ee771e66-72f8-480f-9920-92c68ab93c3b]
-
-| normal | `c13-the-beginning-your-end-2` | triggered | 1 | 0 | 1 | 1 |
-Cards: Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
-
-| normal | `c13-until-end-turn-creatures` | other | 1 | 0 | 1 | 1 |
-Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
-
-| normal | `c13-when-you-cast-create` | triggered | 1 | 0 | 1 | 1 |
-Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
-
+`c13-choose-both`
