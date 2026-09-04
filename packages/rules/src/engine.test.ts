@@ -361,6 +361,11 @@ const GOBLIN_SHARPSHOOTER = () => make({
   name: "Goblin Sharpshooter", type_line: "Creature — Goblin", mana_cost: "{2}{R}", power: "1", toughness: "1",
   oracle_text: "Whenever a creature dies, untap ~", scryfall_id: "d81285b7-a718-411a-8be3-ecc0cfe0bcb0"
 });
+const WARSTORM_SURGE = () => make({
+  name: "Warstorm Surge", type_line: "Enchantment", mana_cost: "{5}{R}",
+  oracle_text: "Whenever a creature you control enters the battlefield, it deals damage equal to its power to any target.",
+  scryfall_id: "42fb1a1c-ab3d-4cdc-a6ff-a591f7481583"
+});
 const CYCLING_LAND = () => make({
   name: "Barren Moor", type_line: "Land", oracle_text: "This land enters tapped.\n{T}: Add {B}.\nCycling {B} ({B}, Discard this card: Draw a card.)"
 });
@@ -767,6 +772,16 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
     game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === shooter.instance_id)?.tapped).toBe(false);
+  });
+
+  it("deals entering-creature power with Warstorm Surge", () => {
+    let game = readyToCast([BEAR()], [WARSTORM_SURGE(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", targetKind: "any" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[1]!.life).toBe(38);
   });
 
   it("checks the life comparison after Survival Cache gains life", () => {
