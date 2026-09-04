@@ -919,6 +919,20 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
   return next;
 }
 
+/** Moves an existing permanent between controller battlefields (CR 110.2). */
+function changePermanentController(state: GameState, permanent: Permanent, controller: SeatId): GameState {
+  if (permanent.controller === controller) return state;
+  let next = withPlayer(state, permanent.controller, (player) => ({
+    ...player,
+    battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+  }));
+  next = withPlayer(next, controller, (player) => ({
+    ...player,
+    battlefield: [...player.battlefield, { ...permanent, controller }]
+  }));
+  return next;
+}
+
 function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { tapped: boolean; lifeCost: number } {
   const rule = profile.entersTapped;
   const player = playerAt(state, seat);
@@ -1617,7 +1631,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
-      return permanent ? movePermanentToZone(state, permanent, "exile") : state;
+      if (!permanent) return state;
+      const targetController = permanent.controller;
+      let next = movePermanentToZone(state, permanent, "exile");
+      if (effect.gainSourceControl !== "target-controller") return next;
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const source = sourceId ? findPermanent(next, sourceId) : undefined;
+      return source ? changePermanentController(next, source, targetController) : next;
     }
     case "exile-target-nontoken-creature": {
       const target = object.targets[0];

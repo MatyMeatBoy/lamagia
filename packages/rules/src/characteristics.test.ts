@@ -291,6 +291,21 @@ describe("look-top selection", () => {
   });
 });
 
+describe("Act of Authority", () => {
+  it("reuses typed exile and transfers its source to the target controller", () => {
+    const profile = cardProfile(card({
+      name: "Act of Authority",
+      type_line: "Enchantment",
+      oracle_text: "When this enchantment enters, you may exile target artifact or enchantment.\nAt the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of this enchantment."
+    }));
+    expect(profile.triggers).toMatchObject([
+      { event: "enters-battlefield", optional: true, targetKind: "artifact-or-enchantment", effect: { kind: "exile-target-permanent" } },
+      { event: "upkeep", optional: true, targetKind: "artifact-or-enchantment", effect: { kind: "exile-target-permanent", gainSourceControl: "target-controller" } }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("delayed draw primitives", () => {
   it("recognises Arcane Denial as one counter plus two parametrized delayed draws", () => {
     const profile = cardProfile(card({

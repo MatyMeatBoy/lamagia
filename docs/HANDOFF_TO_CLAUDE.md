@@ -694,6 +694,18 @@ selecting an instant, declining, ordering the remainder, and opponent
 privacy. This follows CR 401.1, 401.4, 401.5, 701.20e and 701.23a; verify
 against the official [Wizards Comprehensive Rules](https://magic.wizards.com/en/rules).
 
+### Cooperative C13 cluster: Act of Authority control transfer
+
+Act of Authority now reuses the typed artifact/enchantment exile effect. Its
+ETB trigger exiles the chosen permanent without transferring the source; its
+upkeep trigger uses the parameterized `gainSourceControl: target-controller`
+variant after a successful exile. Controller movement preserves the same
+permanent instance and is applied only if the source remains on the
+battlefield. Tests cover target selection, optional resolution, exile, and
+upkeep transfer. The control-change behavior is grounded in CR 110.2, 110.5,
+701.20 and 701.23a; confirm against the official [Wizards Comprehensive
+Rules](https://magic.wizards.com/en/rules).
+
 ### Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed

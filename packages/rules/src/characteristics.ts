@@ -316,7 +316,7 @@ export type SpellEffect =
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
   /** Destroy artifact/enchantment permanents, then count the ones destroyed. */
   | { readonly kind: "destroy-all-artifacts-enchantments-add-counters"; readonly counter: string }
- | { readonly kind: "exile-target-permanent" }
+ | { readonly kind: "exile-target-permanent"; readonly gainSourceControl?: "target-controller" }
   | { readonly kind: "exile-target-nontoken-creature" }
   | { readonly kind: "exile-target-graveyard" }
   | { readonly kind: "return-target-creature" }
@@ -1091,6 +1091,16 @@ function parseLookTopSelection(text: string): SpellEffect | null {
   return { kind: "look-top-select", amount, types, destination: "hand" };
 }
 
+function parseExileAndTransferSource(text: string): SpellEffect | null {
+  if (/^Exile target artifact or enchantment$/i.test(text.trim().replace(/\.$/, ""))) {
+    return { kind: "exile-target-permanent" };
+  }
+  if (/^Exile target artifact or enchantment\. If you do, its controller gains control of (?:this enchantment|~)$/i.test(text.trim())) {
+    return { kind: "exile-target-permanent", gainSourceControl: "target-controller" };
+  }
+  return null;
+}
+
 function parseMultiBasicSearch(text: string): SpellEffect | null {
   const normalized = text.replace(/\s+/g, " ").trim();
   if (/^Search your library for up to two basic land cards, (?:reveal those cards, )?put one onto the battlefield tapped and (?:the other|the rest) into your hand, then shuffle\.?$/i.test(normalized)) {
@@ -1525,6 +1535,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Destroy all artifacts and enchantments, then put a (\+1\/\+1|-1\/-1) counter on ~ for each permanent destroyed this way$/i.exec(text))) {
     return { effect: { kind: "destroy-all-artifacts-enchantments-add-counters", counter: match[1]! }, target: "none" };
   }
+  const exileAndTransfer = parseExileAndTransferSource(text);
+  if (exileAndTransfer) return { effect: exileAndTransfer, target: "artifact-or-enchantment" };
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };

@@ -233,6 +233,7 @@ const C13_BOJUKA_BOG = () => make({ name: "Bojuka Bog", type_line: "Land", oracl
 const C13_ARCANE_DENIAL = () => make({ name: "Arcane Denial", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.", scryfall_id: "ab175817-da6a-4ae7-a016-c3bfb087eae0" });
 const C13_BANE_OF_PROGRESS = () => make({ name: "Bane of Progress", type_line: "Creature — Elemental", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "When Bane of Progress enters the battlefield, destroy all artifacts and enchantments, then put a +1/+1 counter on Bane of Progress for each permanent destroyed this way.", scryfall_id: "51f9a6cc-8eb2-44ed-a2d9-913ac514ad67" });
 const C13_AUGUR_OF_BOLAS = () => make({ name: "Augur of Bolas", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order.", scryfall_id: "c13-augur-of-bolas" });
+const C13_ACT_OF_AUTHORITY = () => make({ name: "Act of Authority", type_line: "Enchantment", mana_cost: "{3}{W}", cmc: 4, oracle_text: "When this enchantment enters, you may exile target artifact or enchantment.\nAt the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of this enchantment.", scryfall_id: "c13-act-of-authority" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
 const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantment", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target.", scryfall_id: "89d77b63-eeee-4d8a-9622-b1ea36dc70de" });
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
@@ -1184,6 +1185,34 @@ describe("casting", () => {
     }
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[0]!.library.slice(-3).map((card) => card.name)).toEqual(["Forest", "Grizzly Bears", "Lightning Bolt"]);
+  });
+
+  it("exiles Act of Authority's target and transfers the source to that controller", () => {
+    let game = readyToCast([C13_ACT_OF_AUTHORITY()], [PLAINS(), PLAINS(), PLAINS(), PLAINS()], [], [SOL_RING()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", targetKind: "artifact-or-enchantment" });
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const ring = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "permanent", instanceId: ring.instance_id } });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Sol Ring")).toBe(false);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Act of Authority")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Act of Authority")).toBe(false);
+
+    game = putOnBattlefield(game, 1, [SOL_RING()]);
+    game = stage(game, 0, () => ({ autoPass: true }));
+    game = stage(game, 1, () => ({ autoPass: true }));
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const upkeepTarget = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const upkeepRing = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: upkeepTarget.sourceId, target: { kind: "permanent", instanceId: upkeepRing.instance_id } });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const upkeepOptional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: upkeepOptional.sourceId, accept: true });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Act of Authority")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Act of Authority")).toBe(false);
   });
 
   it("lets Angel of Finality choose a player and exile that graveyard", () => {
