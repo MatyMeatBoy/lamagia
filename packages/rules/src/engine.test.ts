@@ -111,6 +111,9 @@ const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature �
 const MARROW_BATS = () => make({ name: "Marrow Bats", type_line: "Creature — Bat", mana_cost: "{3}{B}", cmc: 4, power: "2", toughness: "2", oracle_text: "{B}, Pay 4 life: Regenerate Marrow Bats." });
 const COUNTER_DAMAGE = () => make({ name: "Thoctar Memory", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from this creature: This creature deals 1 damage to any target." });
 const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
+const ARTIFACT_SAC_ALTAR = () => make({ name: "Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact: Draw a card." });
+const ENCHANTMENT_SAC_ALTAR = () => make({ name: "Enchantment Memory", type_line: "Enchantment", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an enchantment: Draw a card." });
+const LAND_SAC_ALTAR = () => make({ name: "Land Memory", type_line: "Land", oracle_text: "Sacrifice a land: Draw a card." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const ANY_GRAVEYARD_EXILE = () => make({ name: "Cross Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from a graveyard." });
@@ -817,6 +820,30 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === creature.instance_id)).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(1);
+  });
+
+  it("offers typed permanent sacrifice costs and moves the chosen permanent", () => {
+    for (const [altar, sacrificedName, expectedType] of [
+      [ARTIFACT_SAC_ALTAR(), "Artifact Memory", "Artifact"],
+      [ENCHANTMENT_SAC_ALTAR(), "Pacifism", "Enchantment"],
+      [LAND_SAC_ALTAR(), "Forest", "Land"]
+    ] as const) {
+      const sacrificed = sacrificedName === "Artifact Memory"
+        ? ARTIFACT_SAC_ALTAR()
+        : sacrificedName === "Pacifism"
+          ? make({ name: "Pacifism", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Enchant creature" })
+          : FOREST();
+      const profile = profileOf(altar);
+      expect(profile.activatedAbilities[0]).toMatchObject({ sacrificesPermanent: { type: expectedType, mode: "any" } });
+      let game = readyToCast([], [altar, sacrificed]);
+      const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === altar.name)!;
+      const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sacrificedName)!;
+      const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === target.instance_id);
+      expect(activation).toBeDefined();
+      game = applyAction(game, 0, activation!.action);
+      expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
+      expect(game.players[0]!.graveyard.some((card) => card.name === sacrificedName)).toBe(true);
+    }
   });
 
   it("offers and pays an activated counter-removal cost", () => {
