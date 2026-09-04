@@ -120,6 +120,7 @@ const ANOTHER_ARTIFACT_SAC = () => make({ name: "Another Artifact Memory", type_
 const NONCREATURE_SAC = () => make({ name: "Noncreature Memory", type_line: "Creature — Shaman", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2", oracle_text: "Sacrifice a noncreature permanent: Draw a card." });
 const DISCARD_ACTIVATION = () => make({ name: "Discard Memory", type_line: "Creature — Wizard", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "{T}, Discard a card: Draw a card." });
 const TOKEN_SAC_ACTIVATION = () => make({ name: "Token Memory", type_line: "Creature — Shaman", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Sacrifice a token: Draw a card." });
+const GRAVEYARD_EXILE_ACTIVATION = () => make({ name: "Grave Memory", type_line: "Creature — Wizard", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "Exile a card from your graveyard: Draw a card." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const ANY_GRAVEYARD_EXILE = () => make({ name: "Cross Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from a graveyard." });
@@ -900,6 +901,21 @@ describe("casting", () => {
     const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === token.instance_id);
     expect(activation).toBeDefined();
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.instance_id)).toBe(false);
+  });
+
+  it("projects and pays a chosen graveyard exile activation cost", () => {
+    const sourceCard = GRAVEYARD_EXILE_ACTIVATION();
+    expect(profileOf(sourceCard).activatedAbilities[0]).toMatchObject({ exilesGraveyardCard: true, effect: { kind: "draw", amount: 1 } });
+    const exiled = BEAR();
+    let game = readyToCast([], [sourceCard]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [exiled], "activation-graveyard") }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sourceCard.name)!;
+    const card = game.players[0]!.graveyard.find((candidate) => candidate.name === exiled.name)!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.exileCardId === card.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.graveyard.some((candidate) => candidate.instance_id === card.instance_id)).toBe(false);
+    expect(game.players[0]!.exile.some((candidate) => candidate.instance_id === card.instance_id)).toBe(true);
   });
 
   it("offers and pays an activated counter-removal cost", () => {
