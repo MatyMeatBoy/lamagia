@@ -1488,6 +1488,12 @@ describe("casting", () => {
     expect(game.players[1]!.hand.length).toBe(before + 2);
   });
 
+  it("keeps opponent-only draw targets from selecting its own controller", () => {
+    const game = readyToCast([C13_BORROWING_ARROWS()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
+    expect(profileOf(C13_BORROWING_ARROWS()).targetKind).toBe("opponent");
+    expect(legalTargets(game, 0, "opponent")).toEqual([{ kind: "player", seat: 1 }]);
+  });
+
   it("reuses typed sacrifice and any-target damage for C13 Blood Rites", () => {
     let game = readyToCast([], [C13_BLOOD_RITES(), MOUNTAIN(), MOUNTAIN(), BEAR()], [], [BEAR()]);
     const rites = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Blood Rites")!;
