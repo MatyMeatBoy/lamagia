@@ -558,6 +558,8 @@ export interface CardProfile {
   readonly flashbackCost: ManaCost | null;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
   readonly additionalCostExileGraveyardX: boolean;
+  /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
+  readonly hasRebound: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static "<color/type> spells you cast cost {N} less to cast" grant (Medallion cycle, CR 118.9). */
@@ -1982,6 +1984,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
+    // Rebound is synthesised from the keyword; consume the reminder line.
+    if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
     // Split second (CR 702.61): the current engine has no priority windows to
@@ -2244,6 +2248,8 @@ export function cardProfile(card: CardData): CardProfile {
   const attackersAssignAsUnblockedWhileAttacking = text.split("\n").some((line) => /^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line.trim()));
   const additionalCostExileGraveyardX = text.split("\n").some((line) => /^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line.trim()));
   const preventsOpponentLoss = text.split("\n").some((line) => /^you can't win the game and your opponents can't lose the game\.?$/i.test(line.trim()));
+  const hasRebound = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "rebound")
+    || text.split("\n").some((line) => /^rebound\b/i.test(line.trim()));
   const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
@@ -2276,6 +2282,7 @@ export function cardProfile(card: CardData): CardProfile {
     attackersAssignAsUnblockedWhileAttacking,
     preventsOpponentLoss,
     additionalCostExileGraveyardX,
+    hasRebound,
     staticPowerToughnessGrants,
     levelUpCost,
     levelDefinitions,
