@@ -206,6 +206,25 @@ def trigger_subject_hint(clause: str) -> str | None:
     return next((subject for subject, pattern in TRIGGER_SUBJECT_PATTERNS if re.search(pattern, clause, re.I)), None)
 
 
+def delayed_draw_hint(clause: str) -> dict[str, Any] | None:
+    """Preserve delayed-upkeep draw parameters for counterspell clusters."""
+    optional = re.search(
+        r"\bmay\s+draw\s+up\s+to\s+(a|an|one|two|three|four|five|\d+)\s+cards?\s+at\s+the\s+beginning\s+of\s+the\s+next\s+turn's\s+upkeep\b",
+        clause,
+        re.I,
+    )
+    if optional:
+        return {"optional": True, "max_amount": number_hint(optional.group(1))}
+    mandatory = re.search(
+        r"\b(?:you\s+)?draw\s+(a|an|one|two|three|four|five|\d+)\s+cards?\s+at\s+the\s+beginning\s+of\s+the\s+next\s+turn's\s+upkeep\b",
+        clause,
+        re.I,
+    )
+    if mandatory:
+        return {"optional": False, "amount": number_hint(mandatory.group(1))}
+    return None
+
+
 def return_target_hint(clause: str) -> str | None:
     """Preserve the closed parser's graveyard-return target family."""
     if re.search(r"\breturn\s+target\s+permanent\s+card\s+from\s+your\s+graveyard\s+to\s+the\s+battlefield\b", clause, re.I):
@@ -230,6 +249,7 @@ def classify(clause: str) -> dict[str, Any]:
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
     operands = operand_hints(clause, target_text, search_criterion)
     trigger_subject = trigger_subject_hint(clause)
+    delayed_draw = delayed_draw_hint(clause)
     return_target = return_target_hint(clause)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
@@ -247,6 +267,10 @@ def classify(clause: str) -> dict[str, Any]:
         cluster_parts.append("sacrifice-types:" + ",".join(sacrifice_types))
     if trigger_subject:
         cluster_parts.append("trigger-subject:" + trigger_subject)
+    if delayed_draw:
+        amount = delayed_draw.get("max_amount", delayed_draw.get("amount"))
+        mode = "optional" if delayed_draw.get("optional") else "mandatory"
+        cluster_parts.append(f"delayed-draw:{mode}:{amount}")
     cost_actions = operands.get("cost_actions", [])
     if cost_actions:
         cluster_parts.append("cost-actions:" + ",".join(cost_actions))
@@ -265,6 +289,7 @@ def classify(clause: str) -> dict[str, Any]:
         "target_types": target_types,
         "target_zone": target_zone,
         "trigger_subject": trigger_subject,
+        "delayed_draw": delayed_draw,
         "return_target": return_target,
         "search_criterion": search_criterion,
         "operands": operands,
