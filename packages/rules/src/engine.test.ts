@@ -2368,6 +2368,18 @@ describe("casting", () => {
     expect(() => applyAction(game, 0, { type: "cycle", cardId: "hand-0", cyclingIndex: 99 })).toThrow("no existe");
   });
 
+  it("reuses the triggered self-modifier for C13 Baloth Woodcrasher", () => {
+    let game = readyToCast([C13_BALOTH_WOODCRASHER(), FOREST()], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0
+      && (state.players[0]!.battlefield.find((permanent) => permanent.card.name === "Baloth Woodcrasher")?.powerModifier ?? 0) === 4);
+    const baloth = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Baloth Woodcrasher")!;
+    expect(baloth.powerModifier).toBe(4);
+    expect(baloth.toughnessModifier).toBe(4);
+    expect(baloth.temporaryKeywords).toContain("trample");
+  });
+
   it("exiles a selected graveyard and returns any selected permanent to its owner", () => {
     let game = readyToCast([GRAVE_PURGE()], [SWAMP()]);
     game = stage(game, 1, (player) => ({ graveyard: toHand(1, [BEAR()], "fallen") }));
