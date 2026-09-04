@@ -397,7 +397,14 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, grant) => total + grant.power, 0) : 0;
-  return (level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus;
+  const base = profile.cdaPowerToughness && state ? cdaCount(state, permanent, profile.cdaPowerToughness) : (level?.power ?? profile.power ?? 0);
+  return base + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus;
+}
+
+/** Characteristic-defining P/T: count of a permanent type the controller has (CR 604.3). */
+function cdaCount(state: GameState, permanent: Permanent, kind: NonNullable<CardProfile["cdaPowerToughness"]>): number {
+  const type = kind === "creatures-you-control" ? "Creature" : kind === "lands-you-control" ? "Land" : "Artifact";
+  return playerAt(state, permanent.controller).battlefield.filter((candidate) => cardProfile(candidate.card).types.includes(type)).length;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -410,7 +417,8 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, grant) => total + grant.toughness, 0) : 0;
-  return (level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus;
+  const base = profile.cdaPowerToughness && state ? cdaCount(state, permanent, profile.cdaPowerToughness) : (level?.toughness ?? profile.toughness ?? 0);
+  return base + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const profile = cardProfile(permanent.card);
