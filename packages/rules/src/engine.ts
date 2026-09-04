@@ -2235,6 +2235,8 @@ function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): bo
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
   if (keywordOf(state, attacker, "flying") && !keywordOf(state, blocker, "flying") && !keywordOf(state, blocker, "reach")) return false;
   if (keywordOf(state, attacker, "fear") && !blockerProfile.colors.includes("B") && !blockerProfile.types.includes("Artifact")) return false;
+  if (keywordOf(state, attacker, "intimidate") && !blockerProfile.types.includes("Artifact")
+    && !attackerProfile.colors.some((color) => blockerProfile.colors.includes(color))) return false;
   // "Can block only creatures with X" is an evasion check read from the blocker.
   const only = blockerProfile.combatRules.blocksOnlyWithKeyword;
   if (only && !keywordOf(state, attacker, only)) return false;

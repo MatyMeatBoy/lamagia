@@ -179,6 +179,8 @@ const GLOBAL_INDESTRUCTIBLE = () => make({
   oracle_text: "Permanents you control gain indestructible until end of turn."
 });
 const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — Goblin", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Creatures you control have haste." });
+const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "Legendary Creature — Elemental", mana_cost: "{5}{G}{U}{R}", cmc: 8, power: "7", toughness: "5", oracle_text: "Creatures you control have haste.\nCascade\nCascade" });
+const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Creature — Vampire", mana_cost: "{3}{U}{B}", cmc: 5, power: "4", toughness: "4", colors: ["U", "B"], keywords: ["Intimidate"], oracle_text: "Intimidate\nOther creatures you control have intimidate.\nWhenever Vela the Night-Clad or another creature you control leaves the battlefield, each opponent loses 1 life." });
 const FLYING_LORD = () => make({ name: "Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control have flying." });
 const OTHER_FLYING_LORD = () => make({ name: "Other Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Other creatures you control have flying." });
 const GAIN_FLYING_LORD = () => make({ name: "Gain Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control gain flying." });
@@ -1138,6 +1140,22 @@ describe("casting", () => {
     expect(legalAttackers(game, 0).map((permanent) => permanent.card.name)).toEqual(expect.arrayContaining(["Haste Memory", "Grizzly Bears"]));
   });
 
+  it("reuses static haste for Maelstrom Wanderer while leaving cascade explicit", () => {
+    const profile = profileOf(MAELSTROM_WANDERER());
+    expect(profile.staticKeywordGrants).toEqual([{ scope: "creatures-you-control", keyword: "haste" }]);
+    expect(profile.unimplementedText).toEqual(["Cascade", "Cascade"]);
+  });
+
+  it("enforces Vela's intimidate and static intimidate grant", () => {
+    const profile = profileOf(VELA());
+    expect(profile.keywords).toContain("intimidate");
+    expect(profile.staticKeywordGrants).toEqual([{ scope: "other-creatures-you-control", keyword: "intimidate" }]);
+    let game = readyToCast([], [VELA()], [], [BLACK_BLOCKER(), BEAR()]);
+    const vela = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Vela the Night-Clad")!;
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: vela.instance_id, defender: 1 }] });
+    expect(legalBlockers(game, 1).map((permanent) => permanent.card.name)).toEqual(["Dusk Bat"]);
+  });
   it("supports static grants that exclude their source", () => {
     expect(profileOf(OTHER_FLYING_LORD()).staticKeywordGrants).toEqual([{ scope: "other-creatures-you-control", keyword: "flying" }]);
     let game = readyToCast([FLYING_REMOVAL()], [FOREST(), FOREST(), FOREST()]);
