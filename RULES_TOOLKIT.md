@@ -27,6 +27,13 @@ hasta tres cláusulas de ejemplo para que un worker no tenga que reabrir cada
 carta. El IR no se ejecuta directamente: cada vector aprobado debe convertirse en un tipo
 cerrado de `characteristics.ts`, citar CR y recibir un escenario de prueba.
 
+Las tareas `rules:oracle:compile` y `rules:oracle:c13` guardan un caché local
+ignorado (`oracle-card-cache*.json`). Se indexa por `oracle_id` y una huella de
+los campos Oracle relevantes, por lo que una segunda ejecución solo recompila
+filas nuevas o modificadas. `ORACLE_IR_PARSER_VERSION` invalida automáticamente
+entradas antiguas cuando cambia la metodología; el caché nunca es una fuente de
+reglas ni debe comitearse.
+
 Para avanzar C13 sin recompilar todo el histórico usa
 `npm run rules:oracle:c13`. El mismo parser genera una IR y cola aisladas de
 las 356 cartas del set; las primitivas aprobadas siguen siendo globales y no se
