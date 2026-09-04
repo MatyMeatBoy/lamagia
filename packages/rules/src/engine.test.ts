@@ -57,6 +57,7 @@ const TAPPED_DRAW = () => make({ name: "Tapped Draw", type_line: "Sorcery", mana
 const GLOBAL_FEAR = () => make({ name: "Global Fear", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain menace until end of turn." });
 const LIFE_LOCK = () => make({ name: "Life Lock", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Players can't gain life." });
 const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment", mana_cost: "{3}", cmc: 3, oracle_text: "You have no maximum hand size." });
+const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other creatures you control get +1/+1." });
 const Ophiomancer_MEMORY = () => make({ name: "Ophiomancer Memory", type_line: "Creature — Human Shaman", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "At the beginning of each upkeep, if you control no Snakes, create a 1/1 black Snake creature token with deathtouch." });
 const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "You lose 2 life." });
 const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you lose life, put a +1/+1 counter on Pain Counter." });
@@ -849,6 +850,19 @@ describe("casting", () => {
     game = stage(game, 0, (player) => ({ hand: [...player.hand, BEAR()] }));
     game = passUntil(game, (state) => state.turn === 2 && state.activeSeat === 0 && state.step === "untap");
     expect(game.log.some((entry) => entry.text.includes("descarta") && entry.seat === 0)).toBe(false);
+  });
+
+  it("applies static bonuses to other creatures without buffing the source", () => {
+    const profile = profileOf(PUMP_LORD());
+    expect(profile.staticPowerToughnessGrants).toEqual([{ scope: "other-creatures-you-control", power: 1, toughness: 1 }]);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [PUMP_LORD(), BEAR()]);
+    const lord = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Pump Lord")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(powerOf(lord, game)).toBe(2);
+    expect(toughnessOf(lord, game)).toBe(2);
+    expect(powerOf(bear, game)).toBe(3);
+    expect(toughnessOf(bear, game)).toBe(3);
   });
 
   it("scales token creation from the controller's current land count", () => {

@@ -358,7 +358,12 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     const count = permanent.counters.level ?? 0;
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
   }).at(-1) : undefined;
-  return (level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power;
+  const staticBonus = state ? allPermanents(state)
+    .filter((source) => source.controller === permanent.controller && source.instance_id !== permanent.instance_id)
+    .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
+    .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
+    .reduce((total, grant) => total + grant.power, 0) : 0;
+  return (level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -366,7 +371,12 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     const count = permanent.counters.level ?? 0;
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
   }).at(-1) : undefined;
-  return (level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness;
+  const staticBonus = state ? allPermanents(state)
+    .filter((source) => source.controller === permanent.controller && source.instance_id !== permanent.instance_id)
+    .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
+    .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
+    .reduce((total, grant) => total + grant.toughness, 0) : 0;
+  return (level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const profile = cardProfile(permanent.card);

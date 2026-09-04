@@ -212,6 +212,13 @@ export interface StaticKeywordGrant {
   readonly keyword: EnforcedKeyword;
 }
 
+export interface StaticPowerToughnessGrant {
+  readonly scope: "other-creatures-you-control";
+  readonly power: number;
+  readonly toughness: number;
+  readonly color?: string;
+}
+
 /** Characteristics printed in one level band of a leveler card (CR 711). */
 export interface LevelDefinition {
   readonly minLevel: number;
@@ -407,6 +414,7 @@ export interface CardProfile {
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
+  readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
   readonly levelDefinitions: readonly LevelDefinition[];
@@ -721,6 +729,19 @@ function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {
 
 function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
   return text.split("\n").map(parseStaticKeywordGrant).filter((grant): grant is StaticKeywordGrant => grant !== null);
+}
+
+function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
+  const match = /^other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(line.trim().replace(/\.$/, ""));
+  return match ? {
+    scope: "other-creatures-you-control",
+    ...(match[1] ? { color: match[1].toUpperCase() } : {}),
+    power: Number(match[2]), toughness: Number(match[3])
+  } : null;
+}
+
+function parseStaticPowerToughnessGrants(text: string): StaticPowerToughnessGrant[] {
+  return text.split("\n").map(parseStaticPowerToughnessGrant).filter((grant): grant is StaticPowerToughnessGrant => grant !== null);
 }
 
 /**
@@ -1270,6 +1291,7 @@ function recognizeText(text: string): RecognizedText {
     // declarations are legal rather than resolving anything (CR 508.1d, 509.1a).
     if (combatRuleLines.has(line)) continue;
     if (parseStaticKeywordGrant(line)) continue;
+    if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
@@ -1356,6 +1378,7 @@ export function cardProfile(card: CardData): CardProfile {
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
+  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
   const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
@@ -1381,6 +1404,7 @@ export function cardProfile(card: CardData): CardProfile {
     staticKeywordGrants,
     preventsLifeGain,
     noMaximumHandSize,
+    staticPowerToughnessGrants,
     levelUpCost,
     levelDefinitions,
     activatedAbilities: isPermanent
