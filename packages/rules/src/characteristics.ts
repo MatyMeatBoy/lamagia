@@ -344,6 +344,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "return-target-permanent" }
   | { readonly kind: "return-n-nonland-permanents"; readonly count: number | "X" }
+  | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
@@ -1877,6 +1878,10 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
+    // Undying / Persist reminder text — synthesised from the keyword (CR 702.92/93).
+    if (/^undying\b/i.test(line) || /^persist\b/i.test(line)) continue;
+    if (/^when ~ dies, if it had no \+1\/\+1 counter on it, return it to the battlefield under its owner's control with a \+1\/\+1 counter on it\.?$/i.test(line)) continue;
+    if (/^when ~ dies, if it had no -1\/-1 counter on it, return it to the battlefield under its owner's control with a -1\/-1 counter on it\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.
     if (/^~ can be your commander\.?$/i.test(line)) continue;
     // Looking at your own top card any time changes no outcome the engine tracks.
@@ -2071,6 +2076,11 @@ export function cardProfile(card: CardData): CardProfile {
   const synthesizedTriggers: TriggerDefinition[] = hasExtort
     ? [{ event: "spell-cast", subject: "you", effect: { kind: "extort" }, optional: true, targetKind: "none", sourceText: "Extort", payCost: parseManaCost("{W/B}") ?? undefined }]
     : [];
+  // Undying / Persist (CR 702.93 / 702.92): a self dies trigger that reanimates
+  // the card with a +1/+1 (undying) or -1/-1 (persist) counter when it had none.
+  const lowerKeywords = (card.keywords ?? []).map((keyword) => keyword.toLowerCase());
+  if (lowerKeywords.includes("undying")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "+1/+1" }, optional: false, targetKind: "none", sourceText: "Undying" });
+  if (lowerKeywords.includes("persist")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "-1/-1" }, optional: false, targetKind: "none", sourceText: "Persist" });
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
   const cyclingSearches = parseCyclingSearches(text);

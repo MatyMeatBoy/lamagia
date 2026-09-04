@@ -1118,6 +1118,8 @@ function raiseEvent(
       // "if it was kicked" gate (CR 702.33e): only the kicked cast fires it.
       if (definition.requiresKicked && !watcher.kicked) continue;
       if (definition.requiresEvoked && !watcher.evoked) continue;
+      // Undying / Persist only fire when the creature died without the relevant counter (CR 702.92c/702.93c).
+      if (definition.effect.kind === "undying-return" && (watcher.counters[definition.effect.counter] ?? 0) > 0) continue;
       queued.push({
         id: `trigger:${state.version}:${state.triggerQueue.length + queued.length}:${watcher.instance_id}:${index}`,
         controller: watcher.controller,
@@ -1291,6 +1293,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         graveyard: player.graveyard.filter((card) => card.instance_id !== object.card.instance_id),
         hand: [...player.hand, object.card]
       }));
+    }
+    case "undying-return": {
+      // Undying / Persist: reanimate the card from its owner's graveyard with a counter (CR 702.92/93).
+      const owner = object.card.owner;
+      if (!playerAt(state, owner).graveyard.some((card) => card.instance_id === object.card.instance_id)) return state;
+      let next = withPlayer(state, owner, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((card) => card.instance_id !== object.card.instance_id)
+      }));
+      next = putOntoBattlefield(next, owner, object.card, playerAt(next, owner).commanderIds.includes(object.card.instance_id));
+      next = withPlayer(next, owner, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === object.card.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + 1 } }
+          : permanent)
+      }));
+      return logged(next, owner, `${object.card.name} regresa al campo con un contador ${effect.counter}.`);
     }
     case "draw-then-discard": {
       let next = drawCards(state, controller, effect.draw);
