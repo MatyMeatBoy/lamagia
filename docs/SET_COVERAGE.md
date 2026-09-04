@@ -300,7 +300,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 12 | 56 | 17.6% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 33 | 201 | 14.1% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 105 | 236 | 30.8% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 106 | 235 | 31.1% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 2 | 10 | 16.7% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 5 | 9 | 35.7% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 0 | 9 | 0.0% |
@@ -25155,7 +25155,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Act of Authority — `c12b8e31-5702-4d3c-80c9-56c87e50679d`
 - [ ] Aerie Mystics — `12134f7d-433a-416a-b668-c1a21984c94b`
 - [ ] Aethermage's Touch — `15692698-ef57-4672-bf76-5fe4a00c693a`
-- [ ] Ajani's Pridemate — `95e94dea-5ac0-4d6f-adec-ca147aee861f`
+- [x] Ajani's Pridemate — `95e94dea-5ac0-4d6f-adec-ca147aee861f`
 - [ ] Arcane Denial — `ab1cc360-b9de-48d9-9983-4dfe4a7d2a37`
 - [ ] Arcane Melee — `9967b292-1239-4aed-b871-72e40d1f3e26`
 - [x] Armillary Sphere — `3963140c-da67-43e6-9514-fe9dc0a43c4d`
