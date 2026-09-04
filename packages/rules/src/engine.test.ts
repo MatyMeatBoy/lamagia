@@ -204,6 +204,8 @@ const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Cre
 const GAHIJI = () => make({ name: "Gahiji, Honored One", type_line: "Legendary Creature — Beast", mana_cost: "{3}{R}{G}{W}", cmc: 6, power: "4", toughness: "4", oracle_text: "Whenever a creature attacks one of your opponents or a planeswalker an opponent controls, that creature gets +2/+0 until end of turn." });
 const GUTTERSNIPE = () => make({ name: "Guttersnipe", type_line: "Creature — Goblin Shaman", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever you cast an instant or sorcery spell, Guttersnipe deals 2 damage to each opponent." });
 const FECUNDITY = () => make({ name: "Fecundity", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature dies, that creature's controller may draw a card." });
+const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "Enchantment", mana_cost: "{1}{R}{G}", cmc: 3, oracle_text: "Creatures you control have haste.\n{R}{G}, Sacrifice Fires of Yavimaya: Creatures you control get +2/+2 until end of turn." });
+const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
 const RHYSTIC_STUDY = () => make({ name: "Rhystic Study", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}." });
@@ -2087,6 +2089,25 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 2, targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")[0]!.tapped).toBe(true);
     expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Sol Ring")[0]!.tapped).toBe(false);
+  });
+
+  it("reuses haste and self-sacrifice pump for Fires of Yavimaya", () => {
+    const profile = profileOf(FIRES_OF_YAVIMAYA());
+    expect(profile.staticKeywordGrants).toMatchObject([{ keyword: "haste" }]);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sacrificesSelf: true,
+      manaCost: { raw: "{R}{G}" },
+      effect: { kind: "modify-creatures-you-control", power: 2, toughness: 2 }
+    });
+    let game = readyToCast([], [FIRES_OF_YAVIMAYA(), BEAR(), MOUNTAIN(), FOREST()]);
+    const fires = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Fires of Yavimaya")!;
+    const activation = legalActions(game, 0).find((entry) =>
+      entry.action.type === "activate" && entry.action.sourceId === fires.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0
+      && state.players[0]!.graveyard.some((card) => card.name === "Fires of Yavimaya"));
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.powerModifier).toBe(2);
   });
 
   it("reuses the landfall trigger subject when a land enters", () => {
