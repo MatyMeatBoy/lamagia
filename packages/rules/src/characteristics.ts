@@ -159,6 +159,7 @@ export type SpellEffect =
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
+  | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
@@ -973,6 +974,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   const temporaryKeyword = /^Target creature gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud) until end of turn$/i.exec(text);
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };
+  const combined = /^Target creature gets ([+-]\d+)\/([+-]\d+) and gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud) until end of turn$/i.exec(text);
+  if (combined) return {
+    effect: { kind: "modify-and-grant-target-creature", power: Number(combined[1]), toughness: Number(combined[2]), keyword: combined[3]!.toLowerCase() as EnforcedKeyword },
+    target: "creature"
+  };
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };

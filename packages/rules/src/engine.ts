@@ -1171,6 +1171,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           : candidate)
       }));
     }
+    case "modify-and-grant-target-creature": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? {
+              ...candidate,
+              powerModifier: candidate.powerModifier + effect.power,
+              toughnessModifier: candidate.toughnessModifier + effect.toughness,
+              temporaryKeywords: [...new Set([...(candidate.temporaryKeywords ?? []), effect.keyword])]
+            }
+          : candidate)
+      }));
+    }
     case "add-counter-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
