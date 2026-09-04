@@ -772,6 +772,20 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
   });
+  it("counters a spell and schedules Arcane Denial's two next-upkeep draws", () => {
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [C13_ARCANE_DENIAL()], [ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    const bolt = game.stack.at(-1)!;
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Arcane Denial")).toBe(true);
+    expect(game.delayedDraws).toMatchObject([
+      { seat: 0, amount: 2, optional: true, triggerAtTurn: 2 },
+      { seat: 1, amount: 1, optional: false, triggerAtTurn: 2 }
+    ]);
+  });
+
   it("uses a fixed multicolor mana ability as its full printed output", () => {
     let game = readyToCast([AZORIUS_SPELL()], [AZORIUS_RELIC()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
