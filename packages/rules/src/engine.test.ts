@@ -53,6 +53,7 @@ const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instan
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
+const HAND_MINUS_DAMAGE = () => make({ name: "Hand Minus Damage", type_line: "Creature — Artifact", mana_cost: "{5}", cmc: 5, power: "2", toughness: "2", oracle_text: "At the beginning of each opponent's upkeep, this creature deals X damage to that player, where X is the number of cards in their hand minus 4." });
 const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "You lose 2 life." });
 const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you lose life, put a +1/+1 counter on Pain Counter." });
 const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Target player gains 2 life." });
@@ -840,6 +841,11 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [DRAW_MINE()]);
     game = passUntil(game, (state) => state.turn === 2 && state.activeSeat === 0 && state.step === "precombat-main");
     expect(game.log.some((entry) => entry.text.includes("Se resuelve la habilidad del paso de robo de Draw Mine"))).toBe(true);
+  });
+
+  it("clamps opponent hand-count damage at zero", () => {
+    const profile = profileOf(HAND_MINUS_DAMAGE());
+    expect(profile.triggers[0]).toMatchObject({ event: "upkeep", subject: "opponent", effect: { kind: "damage-active-player-hand-minus", offset: 4 } });
   });
 
   it("scales token creation from the controller's current land count", () => {
