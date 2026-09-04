@@ -1240,6 +1240,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: "none"
     };
   }
+  if (/^Draw a card, then put a (\+1\/\+1|-1\/-1) counter on ~$/i.exec(text)) {
+    const c = /^Draw a card, then put a (\+1\/\+1|-1\/-1) counter on ~$/i.exec(text)!;
+    return { effect: { kind: "compound", effects: [{ kind: "draw", amount: 1 }, { kind: "add-counter-source", counter: c[1]!, amount: 1 }] }, target: "none" };
+  }
+  if (/^You draw a card and target opponent gains (\w+) life$/i.exec(text)) {
+    const c = /^You draw a card and target opponent gains (\w+) life$/i.exec(text)!;
+    const life = toNumber(c[1]!);
+    if (life !== null) return { effect: { kind: "compound", effects: [{ kind: "draw", amount: 1 }, { kind: "gain-life-target-player", amount: life }] }, target: "player" };
+  }
   if ((match = /^You draw a card and you lose (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return {
