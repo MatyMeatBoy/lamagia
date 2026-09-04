@@ -2146,6 +2146,15 @@ describe("casting", () => {
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === bombardment.instance_id)).toBe(false);
   });
 
+  it("lets a creature attack immediately under Fires of Yavimaya", () => {
+    let game = readyToCast([], []);
+    game = putOnBattlefield(game, 0, [FIRES_OF_YAVIMAYA(), BEAR()], { sick: true });
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "declare-attackers"
+      && entry.action.attackers.some((attacker) => attacker.instanceId === bear.instance_id))).toBe(true);
+  });
+
   it("reuses the landfall trigger subject when a land enters", () => {
     let game = readyToCast([LANDFALL_BEAST(), FOREST()], [FOREST(), FOREST(), FOREST()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
