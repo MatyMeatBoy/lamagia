@@ -405,6 +405,7 @@ export interface CardProfile {
   readonly equipCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
+  readonly preventsLifeGain: boolean;
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
   readonly levelDefinitions: readonly LevelDefinition[];
@@ -1268,6 +1269,7 @@ function recognizeText(text: string): RecognizedText {
     // declarations are legal rather than resolving anything (CR 508.1d, 509.1a).
     if (combatRuleLines.has(line)) continue;
     if (parseStaticKeywordGrant(line)) continue;
+    if (/^players can't gain life\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -1350,6 +1352,7 @@ export function cardProfile(card: CardData): CardProfile {
   const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
     ? parseEquipmentModification(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
+  const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
   const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
@@ -1373,6 +1376,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipCost,
     equipmentModification,
     staticKeywordGrants,
+    preventsLifeGain,
     levelUpCost,
     levelDefinitions,
     activatedAbilities: isPermanent
