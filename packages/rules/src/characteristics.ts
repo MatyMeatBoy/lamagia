@@ -152,6 +152,7 @@ export type SpellEffect =
   | { readonly kind: "counter-<type>"; readonly type: string }
   | { readonly kind: "activate-only-as-<n>-sorcery"; readonly n: number }
   | { readonly kind: "landwalk-<type>"; readonly type: string }
+  | { readonly kind: "landwalk-<type>"; readonly type: string }
   | { readonly kind: "this-land-enters-tapped"; readonly basic?: boolean }
   | { readonly kind: "choose-<n>-|-modal"; readonly choices: readonly string[] }
   | { readonly kind: "enchant-creature"; readonly aura?: boolean }
