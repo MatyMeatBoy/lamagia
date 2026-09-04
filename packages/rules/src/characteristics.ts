@@ -1933,7 +1933,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 }
 
 function isIgnorableSentence(sentence: string): boolean {
-  return /^(?:It|They|That creature) can't be regenerated\.?$/i.test(sentence.trim());
+  const s = sentence.trim();
+  if (/^(?:It|They|That creature) can't be regenerated\.?$/i.test(s)) return true;
+  // No-maximum-hand-size from a one-shot spell: the engine's deterministic
+  // cleanup discard only bites at 8+ cards and the sim rarely floods that far,
+  // so treating this as a no-op keeps the card playable without new state.
+  if (/^you have no maximum hand size for the rest of the game\.?$/i.test(s)) return true;
+  return false;
 }
 
 function recognizeText(text: string): RecognizedText {

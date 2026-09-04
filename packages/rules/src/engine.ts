@@ -1503,6 +1503,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "return-all-your-graveyard-to-hand": {
+      const player = playerAt(state, controller);
+      if (!player.graveyard.length) return state;
+      // The resolving spell itself is still on the stack, so it is not in the graveyard yet.
+      const returned = player.graveyard;
+      const next = withPlayer(state, controller, (current) => ({ ...current, graveyard: [], hand: [...current.hand, ...returned] }));
+      return logged(next, controller, `${sourceName} devuelve ${returned.length} carta(s) del cementerio a la mano.`);
+    }
     case "syphon-mind": {
       let next = state;
       let discarded = 0;
