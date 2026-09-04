@@ -1249,6 +1249,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness$/i.test(`${text}.`)) {
     return { effect: { kind: "destroy-target-creature-then-life-loss" }, target: "creature" };
   }
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on ~$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "add-counter-source", counter: match[2]!.trim().toLowerCase(), amount }, target: "none" };
+  }
   if (/^All creatures get -X\/-X until end of turn$/i.test(text)) {
     return { effect: { kind: "modify-all-creatures-minus-X" }, target: "none" };
   }
