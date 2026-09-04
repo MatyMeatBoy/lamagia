@@ -93,7 +93,10 @@ export interface StackView {
 export interface LibrarySearchView {
   readonly sourceId: string;
   readonly sourceName: string;
-  readonly destination: "top" | "hand" | "graveyard" | "battlefield";
+  readonly destination: "top" | "hand" | "graveyard" | "battlefield" | "multiple";
+  /** Multi-card searches expose progress without exposing server-only ids. */
+  readonly selectedCount?: number;
+  readonly maxSelections?: number;
   /** Every card matching the effect's type/subtype restriction. */
   readonly candidates: readonly CardView[];
   /** The complete library, available only to the searching player. */
@@ -256,16 +259,28 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
   const mustDeclareAttackers = state.step === "declare-attackers" && !state.combat.attackersDeclared;
   const mustDeclareBlockers = state.step === "declare-blockers" && !state.combat.blockersDeclared;
 
-  const pendingSearch = state.pendingChoice?.type === "search-library" && state.pendingChoice.seat === viewerSeat
+  const pendingSearch = (state.pendingChoice?.type === "search-library" || state.pendingChoice?.type === "search-library-multi") && state.pendingChoice.seat === viewerSeat
     ? state.pendingChoice
     : null;
   const librarySearch: LibrarySearchView | null = pendingSearch
-    ? {
+    ? pendingSearch.type === "search-library"
+      ? {
         sourceId: pendingSearch.sourceId,
         sourceName: pendingSearch.sourceCard.name,
         destination: pendingSearch.search.destination,
         candidates: state.players[viewerSeat]!.library
           .filter((card) => pendingSearch.optionIds.includes(card.instance_id))
+          .map(cardView),
+        allCards: state.players[viewerSeat]!.library.map(cardView)
+      }
+      : {
+        sourceId: pendingSearch.sourceId,
+        sourceName: pendingSearch.sourceCard.name,
+        destination: "multiple",
+        selectedCount: pendingSearch.selectedIds.length,
+        maxSelections: pendingSearch.search.destinations.length,
+        candidates: state.players[viewerSeat]!.library
+          .filter((card) => pendingSearch.optionIds.includes(card.instance_id) && !pendingSearch.selectedIds.includes(card.instance_id))
           .map(cardView),
         allCards: state.players[viewerSeat]!.library.map(cardView)
       }
