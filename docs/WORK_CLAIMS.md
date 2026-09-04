@@ -63,6 +63,7 @@ feature name.
 | `c14-extort` | Extort keyword synthesised as a spell-cast optional-pay drain trigger (CR 702.39) | `c14-batch2-clean` | ready (`4992925`) | 2026-09-04 |
 | `c14-static-land-mana-bonus` | `<Basic type>s you control produce an additional {C}` / tap-for-mana wording | `c14-batch2-clean` | ready (`fa44b87`) | 2026-09-04 |
 | `c14-planeswalker-loyalty` | Planeswalker loyalty counters, sorcery-speed loyalty abilities, 0-loyalty SBA; `draw a card for each <color> creature` | `c14-batch2-clean` | ready (`d98a87f`) | 2026-09-04 |
+| `c14-enters-or-dies-and-leaves` | `When ~ enters or is put into a graveyard from the battlefield, X` (two triggers); `leaves the battlefield` aliased to the dies event | `c14-batch2-clean` | active | 2026-09-04 |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |
