@@ -841,4 +841,15 @@ describe("faces and oracle normalisation", () => {
     }));
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("recognises draw triggers that refer to any player", () => {
+    const profile = cardProfile(card({
+      name: "Spiteful Visions", type_line: "Enchantment", mana_cost: "{2}{B}{R}",
+      oracle_text: "Whenever a player draws a card, Spiteful Visions deals 1 damage to that player."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "card-drawn", subject: "each-player", effect: { kind: "damage-event-player", amount: 1 }, targetKind: "none"
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
