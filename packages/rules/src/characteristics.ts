@@ -440,7 +440,8 @@ export interface TriggerDefinition {
   readonly condition?:
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number }
-    | { readonly kind: "controlled-subtype-at-least"; readonly subtype: string; readonly amount: number };
+    | { readonly kind: "controlled-subtype-at-least"; readonly subtype: string; readonly amount: number }
+    | { readonly kind: "creature-died-this-turn" };
   readonly spellType?: "creature";
   /** Colour filter on a spell-cast trigger (Titania's Chosen). */
   readonly spellColor?: string;
@@ -462,7 +463,7 @@ export type TargetKind =
   | "any" | "player" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
-  | "nonblack-creature" | "nonartifact-nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
+  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
   | "attacking-or-blocking-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
@@ -1225,7 +1226,7 @@ const TRIGGER_TEMPLATES: readonly {
 function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string; spellType?: "creature"; spellColor?: string; spellSubtype?: string; nontoken?: boolean } | null {
   // Landfall is a keyword ability word; its rules-bearing trigger follows the
   // dash and uses the same enters-battlefield event (CR 603.1, 603.2).
-  const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "");
+  const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "").replace(/^morbid\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
     if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}), ...(template.spellSubtype ? { spellSubtype: template.spellSubtype } : {}), ...(template.nontoken ? { nontoken: true } : {}) };
@@ -1601,6 +1602,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target nonartifact creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-creature" };
   if (/^Destroy target nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonblack-creature" };
   if (/^Destroy target nonartifact,? nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-nonblack-creature" };
+  if (/^Destroy target non-Demon creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "non-demon-creature" };
   if (/^Destroy all creatures with flying$/i.test(text)) return { effect: { kind: "destroy-all-creatures", flyingOnly: true }, target: "none" };
   if (/^Destroy all creatures with power greater than target creature'?s power$/i.test(text)) return { effect: { kind: "destroy-creatures-power-greater-than-target" }, target: "creature" };
   if (/^Destroy target creature with flying$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-flying" };
@@ -1885,11 +1887,13 @@ function recognizeText(text: string): RecognizedText {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
       const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggered.effectText);
+      const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
       const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
       let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim()
-        ?? (countCondition && countConditionAmount !== null ? countCondition[3]!.trim() : undefined) ?? triggered.effectText)
+        ?? (countCondition && countConditionAmount !== null ? countCondition[3]!.trim() : undefined)
+        ?? diedCondition?.[1]?.trim() ?? triggered.effectText)
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "if it was kicked" gate (CR 702.33e).
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
@@ -1913,6 +1917,7 @@ function recognizeText(text: string): RecognizedText {
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),
+          ...(diedCondition ? { condition: { kind: "creature-died-this-turn" as const } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
           ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),
