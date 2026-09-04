@@ -194,6 +194,10 @@ const FIREBREATHER = () => make({
   name: "Firecoil Drake", type_line: "Creature — Dragon", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2",
   oracle_text: "{R}: Firecoil Drake gets +1/+0 until end of turn."
 });
+const SCRY_SPELL = () => make({ name: "Read the Bones Lite", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Scry 3." });
+const SCRY_ETB_CREATURE = () => make({ name: "Omen Owl", type_line: "Creature — Bird", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", oracle_text: "When Omen Owl enters the battlefield, scry 2." });
+const SCRY_DRAW_SPELL = () => make({ name: "Read the Bones", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Scry 2, then draw two cards. You lose 2 life." });
+const COMBAT_SEAR = () => make({ name: "Combat Sear", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Combat Sear deals 3 damage to target attacking or blocking creature." });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
@@ -1176,6 +1180,100 @@ describe("casting", () => {
     expect(legalTargets(game, 0, "subtype:Equipment")).toHaveLength(1);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: equipment.instance_id }] });
     expect(game.players[1]!.exile.some((card) => card.name === "Test Equipment")).toBe(true);
+  });
+});
+
+describe("scry and combat-restricted damage", () => {
+  function ready(cards: CardData[], battlefield: CardData[], top: CardData[] = [], opponentBoard: CardData[] = []) {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, cards) }));
+    game = stage(game, 1, () => ({ hand: [] }));
+    if (top.length) game = stage(game, 0, (player) => ({ library: [...toHand(0, top, "top"), ...player.library].slice(0, player.library.length) }));
+    game = putOnBattlefield(game, 0, battlefield);
+    if (opponentBoard.length) game = putOnBattlefield(game, 1, opponentBoard);
+    return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+  }
+
+  it("resolves Scry N as a keep/bottom decision per looked-at card and rebuilds the library", () => {
+    expect(profileOf(SCRY_SPELL()).effects).toContainEqual({ kind: "scry", amount: 3 });
+    expect(profileOf(SCRY_SPELL()).fullyImplemented).toBe(true);
+
+    let game = ready([SCRY_SPELL()], [ISLAND()], [BEAR(), FOREST(), MOUNTAIN()]);
+    const topNames = game.players[0]!.library.slice(0, 4).map((card) => card.name);
+    expect(topNames.slice(0, 3)).toEqual(["Grizzly Bears", "Forest", "Mountain"]);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice?.type).toBe("scry");
+
+    // Keep Grizzly Bears, bottom Forest, keep Mountain.
+    const scryId = game.pendingChoice!.sourceId;
+    const decide = (toBottom: boolean) => {
+      const top = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).pending[0]!;
+      game = applyAction(game, 0, { type: "resolve-scry", sourceId: scryId, cardId: top, toBottom });
+    };
+    decide(false);
+    decide(true);
+    decide(false);
+
+    expect(game.pendingChoice).toBeNull();
+    const library = game.players[0]!.library.map((card) => card.name);
+    expect(library.slice(0, 3)).toEqual(["Grizzly Bears", "Mountain", topNames[3]]);
+    expect(library[library.length - 1]).toBe("Forest");
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Read the Bones Lite")).toBe(true);
+  });
+
+  it("chains 'scry N, then draw M' and keeps the rest of the sentence", () => {
+    const profile = profileOf(SCRY_DRAW_SPELL());
+    expect(profile.effects).toContainEqual({ kind: "scry", amount: 2, thenDraw: 2 });
+    expect(profile.effects).toContainEqual({ kind: "lose-life", amount: 2 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = ready([SCRY_DRAW_SPELL()], [SWAMP(), SWAMP()], [BEAR(), FOREST()]);
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice?.type).toBe("scry");
+    const scryId = game.pendingChoice!.sourceId;
+    for (let i = 0; i < 2; i += 1) {
+      const top = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).pending[0]!;
+      game = applyAction(game, 0, { type: "resolve-scry", sourceId: scryId, cardId: top, toBottom: false });
+    }
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.hand.length).toBe(handBefore - 1 + 2);
+    expect(game.players[0]!.life).toBe(38);
+  });
+
+  it("runs an enters-the-battlefield scry through the trigger bus", () => {
+    expect(profileOf(SCRY_ETB_CREATURE()).fullyImplemented).toBe(true);
+    let game = ready([SCRY_ETB_CREATURE()], [ISLAND(), ISLAND(), ISLAND()], [BEAR(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "scry" || state.players[0]!.battlefield.some((p) => p.card.name === "Omen Owl") && !state.stack.length);
+    expect(game.pendingChoice?.type).toBe("scry");
+    const scryId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "resolve-scry", sourceId: scryId, cardId: (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).pending[0]!, toBottom: true });
+    game = applyAction(game, 0, { type: "resolve-scry", sourceId: scryId, cardId: (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).pending[0]!, toBottom: false });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.library[game.players[0]!.library.length - 1]!.name).toBe("Grizzly Bears");
+  });
+
+  it("only offers an attacking or blocking creature to Combat Sear and deals lethal damage", () => {
+    expect(profileOf(COMBAT_SEAR()).targetKind).toBe("attacking-or-blocking-creature");
+    expect(profileOf(COMBAT_SEAR()).fullyImplemented).toBe(true);
+
+    let game = ready([COMBAT_SEAR()], [MOUNTAIN(), GIANT()], [], [BEAR()]);
+    // Before combat there is nothing to target, so the spell is not castable.
+    expect(legalTargets(game, 0, "attacking-or-blocking-creature")).toHaveLength(0);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(false);
+
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && !state.combat.attackersDeclared);
+    const giant = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Hill Giant")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: giant.instance_id, defender: 1 }] });
+
+    const options = legalTargets(game, 0, "attacking-or-blocking-creature");
+    expect(options).toEqual([{ kind: "permanent", instanceId: giant.instance_id }]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: options });
+    game = passUntil(game, (state) => !state.players[0]!.battlefield.some((p) => p.card.name === "Hill Giant") || state.turn > 1);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Hill Giant")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Hill Giant")).toBe(true);
   });
 });
 

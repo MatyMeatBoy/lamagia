@@ -155,6 +155,18 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
       return { action: { ...chosen.action, query: card.name }, label: `busca ${card.name}` };
     }
   }
+  if (state.pendingChoice?.type === "scry" && state.pendingChoice.seat === seat) {
+    // Deterministic policy: bottom the top card only when the bot is flooded on
+    // lands (5+ in play and the card is another land), otherwise keep it.
+    const scry = state.pendingChoice;
+    const topId = scry.pending[0];
+    const card = state.players[seat]!.library.find((candidate) => candidate.instance_id === topId);
+    const landsInPlay = state.players[seat]!.battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length;
+    const flooded = Boolean(card && isLand(cardProfile(card)) && landsInPlay >= 5);
+    const wanted = available.find((entry) => entry.action.type === "resolve-scry" && entry.action.toBottom === flooded)
+      ?? available.find((entry) => entry.action.type === "resolve-scry");
+    if (wanted) return { action: wanted.action, label: wanted.label };
+  }
 
   if (state.step === "declare-attackers" && !state.combat.attackersDeclared && seat === state.activeSeat) {
     return { action: { type: "declare-attackers", attackers: chooseAttackers(state, seat) }, label: "declara atacantes" };
