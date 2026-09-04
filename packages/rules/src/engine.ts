@@ -1622,6 +1622,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = modifyCreatures(state, amount, amount, () => true);
       return logged(next, controller, `${sourceName} da -${Math.abs(amount)}/-${Math.abs(amount)} a todas las criaturas hasta el final del turno.`);
     }
+    case "modify-all-creatures-per-land": {
+      const count = playerAt(state, controller).battlefield.filter((permanent) =>
+        cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+      const next = modifyCreatures(state, effect.power * count, effect.toughness * count, () => true);
+      return logged(next, controller, `${sourceName} da ${effect.power * count}/${effect.toughness * count} a todas las criaturas hasta el final del turno.`);
+    }
     case "modify-creatures-you-control": {
       const next = modifyCreatures(state, effect.power, effect.toughness, (permanent) => permanent.controller === controller);
       return logged(next, controller, `${sourceName} modifica tus criaturas hasta el final del turno.`);

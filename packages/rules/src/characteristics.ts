@@ -249,6 +249,8 @@ export interface StaticPowerToughnessGrant {
   readonly toughness: number;
   readonly color?: string;
   readonly subtype?: string;
+  readonly counterName?: string;
+  readonly threshold?: number;
 }
 
 /** Characteristics printed in one level band of a leveler card (CR 711). */
@@ -323,6 +325,7 @@ export type SpellEffect =
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "modify-all-creatures-minus-X" }
+  | { readonly kind: "modify-all-creatures-per-land"; readonly power: number; readonly toughness: number; readonly subtype: string }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
