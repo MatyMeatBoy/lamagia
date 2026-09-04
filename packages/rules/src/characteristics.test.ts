@@ -276,6 +276,22 @@ describe("scry", () => {
   });
 });
 
+describe("triggered self modifications", () => {
+  it("recognises Landfall P/T plus keyword as one reusable effect", () => {
+    const profile = cardProfile(card({
+      name: "Baloth Woodcrasher",
+      type_line: "Creature — Beast",
+      oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield",
+      subject: "land-you-control",
+      effect: { kind: "modify-triggered-creature-and-grant-keyword", power: 4, toughness: 4, keyword: "trample" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("effect recognition", () => {
   it("recognizes a draw spell", () => {
     const profile = cardProfile(card({ name: "Test Draw", type_line: "Sorcery", mana_cost: "{2}{U}", oracle_text: "Draw three cards." }));
