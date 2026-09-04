@@ -276,6 +276,18 @@ export type PendingChoice =
       readonly bottomed: readonly string[];
       /** Cards to draw once every looked-at card has a decision (CR 701.17e / "then draw"). */
       readonly thenDraw: number;
+    }
+  | {
+      /**
+       * "Look at the top N cards of your library. Put one into your hand and the
+       * rest on the bottom" (Sea Gate Oracle). The viewer sees `optionIds` and
+       * picks exactly one; the others go to the bottom in library order.
+       */
+      readonly type: "library-pick";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
     };
 
 export type GameAction =
@@ -293,6 +305,7 @@ export type GameAction =
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "resolve-scry"; readonly sourceId: string; readonly cardId: string; readonly toBottom: boolean }
+  | { readonly type: "resolve-library-pick"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -1518,6 +1531,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         pendingChoice: { type: "scry", seat: controller, sourceId: object.id, sourceCard: object.card, pending, kept: [], bottomed: [], thenDraw: effect.thenDraw ?? 0 }
       };
     }
+    case "look-put-one-in-hand": {
+      const optionIds = playerAt(state, controller).library.slice(0, effect.amount).map((card) => card.instance_id);
+      if (!optionIds.length) return state;
+      return { ...state, priorityOpen: false, pendingChoice: { type: "library-pick", seat: controller, sourceId: object.id, sourceCard: object.card, optionIds } };
+    }
     case "grant-target-creature-keyword": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -2661,6 +2679,19 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
       return actions;
     }
+    if (choice.type === "library-pick") {
+      for (const id of choice.optionIds) {
+        const card = player.library.find((candidate) => candidate.instance_id === id);
+        if (!card) continue;
+        actions.push({
+          action: { type: "resolve-library-pick", sourceId: choice.sourceId, cardId: id },
+          label: `A la mano: ${card.name}`,
+          cardId: id,
+          note: `${choice.sourceCard.name}: elige una; el resto va al fondo.`
+        });
+      }
+      return actions;
+    }
     if (choice.type === "scry") {
       const topId = choice.pending[0]!;
       const card = player.library.find((candidate) => candidate.instance_id === topId);
@@ -3655,6 +3686,24 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
   return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
 }
 
+function applyResolveLibraryPick(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "resolve-library-pick" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "library-pick" || choice.seat !== seat) throw new Error("No tienes una elección de biblioteca pendiente.");
+  if (choice.sourceId !== action.sourceId || !choice.optionIds.includes(action.cardId)) throw new Error("Debes elegir una de las cartas vistas.");
+  const player = playerAt(state, seat);
+  const chosen = player.library.find((card) => card.instance_id === action.cardId);
+  if (!chosen) throw new Error("Esa carta ya no está en tu biblioteca.");
+  const looked = new Set(choice.optionIds);
+  const rest = player.library.filter((card) => looked.has(card.instance_id) && card.instance_id !== action.cardId);
+  const remainder = player.library.filter((card) => !looked.has(card.instance_id));
+  const next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    hand: [...current.hand, chosen],
+    library: [...remainder, ...rest]
+  }));
+  return logged(next, seat, `${player.name} toma ${chosen.name} y deja el resto abajo.`);
+}
+
 function applyResolveScry(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "resolve-scry" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "scry" || choice.seat !== seat) throw new Error("No tienes un vistazo pendiente.");
@@ -3707,6 +3756,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "resolve-scry": next = applyResolveScry(state, seat, action); break;
+    case "resolve-library-pick": next = applyResolveLibraryPick(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {
