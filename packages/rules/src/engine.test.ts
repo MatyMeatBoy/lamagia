@@ -4911,6 +4911,16 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.life).toBe(38);
   });
 
+  it("uses the source power for Stalking Vengeance after another creature dies", () => {
+    let game = readyToCast([BOLT()], [STALKING_VENGEANCE(), MOUNTAIN(), BEAR()]);
+    const victim = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: victim.instance_id }] });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", seat: 0, targetKind: "player-or-planeswalker" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
+    expect(game.players[1]!.life).toBe(35);
+  });
+
   it("recognizes the complementary flying-only sweeper", () => {
     expect(profileOf(FLYING_SWEEP()).effects).toEqual([{ kind: "damage-flying-creatures", amount: "X" }]);
   });

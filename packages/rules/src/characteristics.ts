@@ -407,6 +407,8 @@ export type SpellEffect =
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   /** Damage equal to the power of the creature that caused this trigger. */
   | { readonly kind: "damage-triggered-creature-power" }
+  /** Damage from the ability source equal to that source's current power. */
+  | { readonly kind: "damage-source-power" }
   /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
   | { readonly kind: "tap-creatures-pump-source-damage-attacker"; readonly subtype: string }
   | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
@@ -1976,6 +1978,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^~ deals damage equal to its power to any target$/i.test(text)) {
     return { effect: { kind: "damage-triggered-creature-power" }, target: "any" };
   }
+  if (/^~ deals damage equal to its power to target player or planeswalker$/i.test(text)) {
+    return { effect: { kind: "damage-triggered-creature-power" }, target: "player-or-planeswalker" };
+  }
   if ((match = /^(?:~|This spell) deals damage equal to the number of (creatures|artifacts|enchantments|lands) you control to any target$/i.exec(text))) {
     const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1, -1) as CardType;
     return { effect: { kind: "damage-any-target-each-controlled-type", type }, target: "any" };
@@ -3100,6 +3105,15 @@ function recognizeText(text: string): RecognizedText {
         });
         continue;
       }
+    }
+    // Stalking Vengeance: "it" refers to the source permanent, not the
+    // creature whose death caused the trigger (CR 109.5).
+    if (/^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s+it\s+deals\s+damage\s+equal\s+to\s+its\s+power\s+to\s+target\s+player\s+or\s+planeswalker\.?$/i.test(line)) {
+      triggers.push({
+        event: "dies", subject: "another-creature-you-control", effect: { kind: "damage-source-power" },
+        optional: false, targetKind: "player-or-planeswalker", sourceText: line
+      });
+      continue;
     }
     const leavesLine = line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
     // Modern Oracle splits Bane of Progress's dependent instruction into a
