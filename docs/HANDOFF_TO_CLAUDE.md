@@ -1392,3 +1392,16 @@ exile-all-graveyards ETB path. C13 coverage is now **182/356 precon cards
 (51.1%)** and **167/341 unique set entries (49.0%)**; global export is
 **8,199/38,711 (21.2%)**. Validation: `npm run check` and `npm test` PASS
 (**424 rules tests**, simulator, **39 Oracle Python tests**).
+
+### Integrator checkpoint: C13 Split second (2026-09-04)
+
+Added the reusable Split second keyword and enforced its priority restriction:
+while a Split second spell is on the stack, only mana abilities remain
+activatable; casts, cycling, equip and other activated abilities are hidden and
+rejected by the authoritative rules engine (CR 702.61, 117.1b). This closes
+the Krosan Grip primitive and is reusable by Sudden Spoiling and future cards.
+
+Current regenerated coverage: **183/356 C13 precon cards (51.4%)** and
+**168/341 unique C13 set entries (49.3%)**; global export **8,206/38,711
+(21.2%)**. Validation: `npm run check` and `npm test` PASS (**425 rules
+tests**, simulator, **39 Oracle Python tests**).

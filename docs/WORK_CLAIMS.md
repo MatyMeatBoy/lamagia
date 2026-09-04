@@ -41,6 +41,7 @@ feature name.
 | `c13-additional-life-cost` | Parse and pay spell additional life costs, starting with Toxic Deluge; reusable independently of the spell effect | `feat/activated-abilities-and-triggers` | merged (`704f234`) | 2026-09-04 |
 | `c13-delayed-draw-choice` | Arcane Denial's delayed upkeep draws with private 0..N choice, deterministic bot selection and library clamping | `feat/activated-abilities-and-triggers` | merged (`a439b56`) | 2026-09-04 |
 | `c13-graveyard-exile-etb` | ETB exile all graveyards for Angel of Finality and Bojuka Bog, reusing zone-exile primitives | `feat/activated-abilities-and-triggers` | merged (`054e82a`) | 2026-09-04 |
+| `c13-split-second` | Enforce Split second's prohibition on non-mana spells and activated abilities while the spell is on the stack | `feat/activated-abilities-and-triggers` | merged (pending commit) | 2026-09-04 |
 | `rules-level-up` | Level up costs, level counters, and the three C13 cards: Echo Mage, Hada Spy Patrol, Kazandu Tuskcaller | `codex/c13-equipment-cluster` | merged (`f325052`) | 2026-09-03 |
 | `rules-tap-untap` | Targeted Tap target creature and Untap target permanent effects | `codex/c13-equipment-cluster` | merged (`4fa0290`) | 2026-09-03 |
 | `rules-mill` | Target player mills a bounded number of cards into their graveyard | `codex/c13-equipment-cluster` | merged (`2842700`) | 2026-09-03 |

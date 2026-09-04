@@ -523,6 +523,11 @@ export interface ManaSource {
 }
 
 /** Rule 302.6 applies to a creature's own tap ability, including Llanowar Elves. */
+function splitSecondActive(state: GameState): boolean {
+  const top = state.stack.at(-1);
+  return Boolean(top && cardProfile(top.card).keywords.includes("split second"));
+}
+
 function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: ManaAbility, state?: GameState): boolean {
   if (ability.requiresTap && permanent.tapped) return false;
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return false;
@@ -2985,6 +2990,7 @@ function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean): Ma
 function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none"> } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
+  if (splitSecondActive(state)) return { legal: false };
   const cost = flashback ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
   const lifeCost = flashback
     ? profile.flashbackLifeCost
@@ -3174,7 +3180,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
   }
 
-  for (const card of player.hand) {
+  if (!splitSecondActive(state)) for (const card of player.hand) {
     const profile = cardProfile(card);
     const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
@@ -3238,7 +3244,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
   }
 
-  for (const card of player.hand) {
+  if (!splitSecondActive(state)) for (const card of player.hand) {
     const profile = cardProfile(card);
     const cyclingOptions = profile.cyclingCost
       ? [{ cost: profile.cyclingCost, index: undefined, label: `Cycle ${card.name}`, note: `Cycling ${profile.cyclingCost.raw}` }]
@@ -3315,7 +3321,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         note: ability.text
       });
     }
-    if (profile.equipCost && profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
+    if (!splitSecondActive(state) && profile.equipCost && profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
       && planManaPayment(profile.equipCost, player, { state })
       && legalTargets(state, seat, "creature-you-control").length) {
       actions.push({
@@ -3554,6 +3560,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
 
 function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cycle" }>): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para ciclar esa carta.");
+  if (splitSecondActive(state)) throw new Error("Split second impide activar habilidades que no sean de maná.");
   const player = playerAt(state, seat);
   const card = player.hand.find((candidate) => candidate.instance_id === action.cardId);
   const profile = card ? cardProfile(card) : null;
@@ -3617,6 +3624,7 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
 
 function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "equip" }>): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para equipar.");
+  if (splitSecondActive(state)) throw new Error("Split second impide activar habilidades que no sean de maná.");
   const player = playerAt(state, seat);
   const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   if (!source) throw new Error("Ese equipo ya no está bajo tu control.");
@@ -3658,6 +3666,7 @@ function activatableAbility(
   ability: ActivatedAbility
 ): { legal: boolean; targetKind?: Exclude<TargetKind, "none">; note?: string } {
   const player = playerAt(state, seat);
+  if (splitSecondActive(state)) return { legal: false };
   if (permanent.controller !== seat) return { legal: false };
   if (ability.sorcerySpeed && !sorcerySpeed(state, seat)) return { legal: false };
   if (ability.loyaltyCost !== undefined) {

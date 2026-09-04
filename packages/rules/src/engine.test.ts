@@ -224,6 +224,7 @@ const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Ar
 const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
 const C13_SALTCRUSTED_STEPPE = () => make({ name: "Saltcrusted Steppe", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {G} and/or {W}.", produced_mana: ["C", "G", "W"], scryfall_id: "c13-saltcrusted-steppe" });
 const TOXIC_DELUGE = () => make({ name: "Toxic Deluge", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "As an additional cost to cast ~, pay X life.\nAll creatures get -X/-X until end of turn.", scryfall_id: "c13-toxic-deluge" });
+const C13_KROSAN_GRIP = () => make({ name: "Krosan Grip", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second\nDestroy target artifact or enchantment.", scryfall_id: "c13-krosan-grip" });
 const C13_AZAMI = () => make({ name: "Azami, Lady of Scrolls", type_line: "Legendary Creature — Human Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "0", toughness: "2", oracle_text: "Tap an untapped Wizard you control: Draw a card.", scryfall_id: "cafda395-840f-4359-9314-e1cbf137cc66" });
 const AZAMI_WIZARD = () => make({ name: "Library Wizard", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "1" });
 const C13_BRILLIANT_PLAN = () => make({ name: "Brilliant Plan", type_line: "Sorcery", mana_cost: "{4}{U}", cmc: 5, oracle_text: "Draw three cards.", scryfall_id: "4fc6b5a0-9a0f-4934-8a43-a0e5364832ec" });
@@ -1188,6 +1189,15 @@ describe("casting", () => {
     let game = readyToCast([TOXIC_DELUGE()], [SWAMP(), SWAMP(), SWAMP()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 1 });
     expect(game.players[0]!.life).toBe(39);
+  });
+
+  it("blocks non-mana responses while a Split second spell is on the stack", () => {
+    const split = C13_KROSAN_GRIP();
+    expect(profileOf(split).keywords).toContain("split second");
+    let game = readyToCast([BOLT()], [MOUNTAIN()]);
+    const stackCard = { ...split, instance_id: "split-second", owner: 1 };
+    game = { ...game, stack: [{ id: "split-second", controller: 1, card: stackCard, label: stackCard.name, targets: [], fromCommandZone: false, variableValue: 0, countered: false }], prioritySeat: 0, priorityOpen: true };
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" || entry.action.type === "activate" || entry.action.type === "cycle" || entry.action.type === "equip")).toBe(false);
   });
 
   it("recognizes a reusable typed tap cost", () => {
