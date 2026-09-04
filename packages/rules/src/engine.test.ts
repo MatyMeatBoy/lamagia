@@ -223,6 +223,7 @@ const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature —
 const SANGUINE_BOND = () => make({ name: "Sanguine Bond", type_line: "Enchantment", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Whenever you gain life, target opponent loses that much life.", scryfall_id: "73089a39-a2f6-4aa2-a058-e6551475153d" });
 const AERIE_MYSTICS = () => make({ name: "Aerie Mystics", type_line: "Creature — Bird Wizard", mana_cost: "{3}{G}{U}", cmc: 5, power: "3", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\n{1}{G}{U}: Creatures you control gain shroud until end of turn.", scryfall_id: "12134f7d-433a-416a-b668-c1a21984c94b" });
 const RAKECLAW_GARGANTUAN = () => make({ name: "Rakeclaw Gargantuan", type_line: "Creature — Beast", mana_cost: "{2}{R}{G}{W}", cmc: 5, power: "5", toughness: "3", oracle_text: "{1}: Target creature with power 5 or greater gains first strike until end of turn.", scryfall_id: "8dbb4a8f-78e9-4ceb-824d-bb67bdf939db" });
+const HOMEWARD_PATH = () => make({ name: "Homeward Path", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Each player gains control of all creatures they own.", scryfall_id: "cb8ec2e4-8223-4172-8f2c-37c918a573fa" });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
@@ -4662,6 +4663,28 @@ describe("activated abilities", () => {
     game = passUntil(game, (state) => state.stack.length === 0);
 
     expect(permanentNamed(game, 1, "Big Stomper")!.temporaryKeywords).toContain("first strike");
+  });
+
+  it("returns only owned creatures with Homeward Path", () => {
+    let game = readyOnBoard([HOMEWARD_PATH(), BEAR()], { hold: true });
+    game = putOnBattlefield(game, 1, [FLIER()]);
+    const ownedBear = permanentNamed(game, 0, "Grizzly Bears")!;
+    const ownedCrow = permanentNamed(game, 1, "Storm Crow")!;
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((p) => p.instance_id !== ownedBear.instance_id).concat({ ...ownedCrow, controller: 0 }) }));
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.filter((p) => p.instance_id !== ownedCrow.instance_id).concat({ ...ownedBear, controller: 1 }) }));
+
+    const source = permanentNamed(game, 0, "Homeward Path")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.abilityIndex === 0);
+    expect(activation).toBeDefined();
+    expect(profileOf(HOMEWARD_PATH()).activatedAbilities[0]).toMatchObject({ requiresTap: true, targetKind: "none", effect: { kind: "return-owned-creatures-to-control" } });
+
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    expect(permanentNamed(game, 0, "Grizzly Bears")!.controller).toBe(0);
+    expect(permanentNamed(game, 1, "Storm Crow")!.controller).toBe(1);
+    expect(permanentNamed(game, 1, "Grizzly Bears")).toBeUndefined();
+    expect(permanentNamed(game, 0, "Storm Crow")).toBeUndefined();
   });
 
   it("resolves Druidic Satchel's conditional top-card reveal", () => {

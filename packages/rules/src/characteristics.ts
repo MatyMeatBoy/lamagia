@@ -441,6 +441,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-permanent" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
+  /** Return each non-token creature to its owner's control without changing zones. */
+  | { readonly kind: "return-owned-creatures-to-control" }
   | { readonly kind: "chaos-warp" }
   /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
   | { readonly kind: "regenerate-source" }
@@ -2193,6 +2195,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Each player gains control of all nontoken permanents they own$/i.test(text)) {
     return { effect: { kind: "return-owned-nontoken-permanents-to-control" }, target: "none" };
+  }
+  if (/^Each player gains control of all creatures they own$/i.test(text)) {
+    return { effect: { kind: "return-owned-creatures-to-control" }, target: "none" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if ((match = /^That creature gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {

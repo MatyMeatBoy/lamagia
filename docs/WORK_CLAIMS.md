@@ -335,6 +335,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-oracle-gain-life-triggered-5` | Life-gain event carries its amount into a targeted opponent life-loss trigger (CR 603.2, 120.3) | `codex/c13-sanguine-bond-f99` | active | 2026-09-04 |
 | `c13-oracle-other-activated-shape-2` | Activated global shroud grant for creatures you control until end of turn (CR 113.6, 702.18) | `codex/c13-aerie-mystics-f99` | active | 2026-09-04 |
 | `c13-oracle-other-activated-shape-4` | Activated target power threshold grant: target creature with power 5 or greater gains first strike until end of turn (CR 601.2c, 702.7) | `codex/c13-rakeclaw-f99` | active | 2026-09-04 |
+| `c13-oracle-other-activated-shape-3` | Activated creature-only control reset: each player gains control of all creatures they own (CR 110.2,  control-change effects) | `codex/c13-homeward-path-f99` | active | 2026-09-04 |
 
 ## Claim format
 
