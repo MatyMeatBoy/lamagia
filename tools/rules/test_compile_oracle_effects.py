@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, trigger_subject_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, delayed_draw_hint, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, trigger_subject_hint
 from export_set_coverage import is_ignored_edition, product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, resolve_claim_prefix, select_profiles, template_of
 from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
@@ -94,6 +94,15 @@ class OracleCompilerTests(unittest.TestCase):
 
     def test_preserves_player_spell_trigger_subjects(self) -> None:
         self.assertEqual(trigger_subject_hint("Whenever an opponent casts a spell, draw a card."), "opponent")
+
+    def test_preserves_delayed_draw_amount_and_optionality(self) -> None:
+        self.assertEqual(
+            delayed_draw_hint("Its controller may draw up to two cards at the beginning of the next turn's upkeep."),
+            {"optional": True, "max_amount": 2},
+        )
+        result = classify("You draw a card at the beginning of the next turn's upkeep.")
+        self.assertEqual(result["delayed_draw"], {"optional": False, "amount": 1})
+        self.assertIn("delayed-draw:mandatory:1", result["primitive_cluster"])
 
     def test_preserves_permanent_graveyard_return_target(self) -> None:
         clause = "Return target permanent card from your graveyard to the battlefield."
