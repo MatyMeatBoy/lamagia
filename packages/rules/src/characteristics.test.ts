@@ -169,6 +169,20 @@ describe("C13 sacrifice-card parsing", () => {
   });
 });
 
+describe("flashback parsing", () => {
+  it("extracts a fixed Flashback alternative cost without flagging the keyword line", () => {
+    const profile = cardProfile(card({
+      name: "Army of the Damned",
+      type_line: "Sorcery",
+      mana_cost: "{5}{B}{B}",
+      oracle_text: "Create thirteen tapped 2/2 black Zombie creature tokens.\nFlashback {7}{B}{B}"
+    }));
+    expect(profile.flashbackCost?.raw).toBe("{7}{B}{B}");
+    expect(profile.unimplementedText).toContain("Flashback {7}{B}{B}");
+    expect(profile.fullyImplemented).toBe(false);
+  });
+});
+
 describe("effect recognition", () => {
   it("recognizes a draw spell", () => {
     const profile = cardProfile(card({ name: "Test Draw", type_line: "Sorcery", mana_cost: "{2}{U}", oracle_text: "Draw three cards." }));

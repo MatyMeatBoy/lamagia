@@ -466,6 +466,8 @@ export interface CardProfile {
   readonly manaAbilities: readonly ManaAbility[];
   /** Generic cycling from hand; specialized landcycling remains review-only. */
   readonly cyclingCost: ManaCost | null;
+  /** Alternative cost for casting this instant or sorcery from a graveyard. */
+  readonly flashbackCost: ManaCost | null;
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
@@ -784,6 +786,16 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
       if (keywords.length) return { power: 0, toughness: 0, keywords, text: line.trim() };
     }
+  }
+  return null;
+}
+
+function parseFlashbackCost(text: string): ManaCost | null {
+  for (const line of text.split("\n")) {
+    const match = /^flashback\s+(.+)$/i.exec(line.trim().replace(/\.$/, ""));
+    if (!match) continue;
+    const cost = parseManaCost(match[1]!.trim());
+    if (cost && !cost.hasVariable) return cost;
   }
   return null;
 }
@@ -1636,6 +1648,7 @@ export function cardProfile(card: CardData): CardProfile {
   const recognized = recognizeText(text);
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
+  const flashbackCost = parseFlashbackCost(text);
   const equipCost = parseEquipCost(text);
   const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
     ? parseEquipmentModification(text) : null;
@@ -1665,6 +1678,7 @@ export function cardProfile(card: CardData): CardProfile {
     loyalty: numeric(face.loyalty),
     manaAbilities,
     cyclingCost,
+    flashbackCost,
     equipCost,
     equipmentModification,
     staticKeywordGrants,
