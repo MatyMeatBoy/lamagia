@@ -177,6 +177,7 @@ function abilitiesOf(permanent: Permanent, available: readonly LegalAction[]): A
 
 function effectiveKeywords(state: GameState, permanent: Permanent): readonly string[] {
   const keywords = new Set<string>(cardProfile(permanent.card).keywords);
+  for (const keyword of permanent.temporaryKeywords ?? []) keywords.add(keyword);
   for (const equipment of state.players.flatMap((player) => player.battlefield).filter((candidate) => candidate.attachedTo === permanent.instance_id)) {
     for (const keyword of cardProfile(equipment.card).equipmentModification?.keywords ?? []) keywords.add(keyword);
   }
