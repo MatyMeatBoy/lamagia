@@ -1493,10 +1493,10 @@ describe("casting", () => {
     const rites = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Blood Rites")!;
     const victim = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
     const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === rites.instance_id);
-    expect(activation?.action.type).toBe("activate");
-    expect(activation?.action.type === "activate" ? activation.action.sacrificeId : undefined).toBeDefined();
+    if (!activation || activation.action.type !== "activate") throw new Error("Blood Rites activation was not generated.");
+    expect(activation.action.sacrificeId).toBeDefined();
     game = applyAction(game, 0, {
-      ...(activation!.action),
+      ...activation.action,
       targets: [{ kind: "permanent", instanceId: victim.instance_id }]
     });
     game = passUntil(game, (state) => state.stack.length === 0 && state.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears"));
