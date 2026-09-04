@@ -2134,6 +2134,12 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("does not offer Fires of Yavimaya without both colored mana sources", () => {
+    const game = readyToCast([], [FIRES_OF_YAVIMAYA(), MOUNTAIN(), BEAR()]);
+    const fires = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Fires of Yavimaya")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === fires.instance_id)).toBe(false);
+  });
+
   it("reuses the landfall trigger subject when a land enters", () => {
     let game = readyToCast([LANDFALL_BEAST(), FOREST()], [FOREST(), FOREST(), FOREST()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
