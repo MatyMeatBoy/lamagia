@@ -432,6 +432,9 @@ function staticPtBonus(state: GameState, permanent: Permanent): { power: number;
       } else if (grant.scope === "subtype-creatures-you-control") {
         if (source.controller !== permanent.controller || source.instance_id === permanent.instance_id) continue;
         if (!target.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype!.toLowerCase())) continue;
+      } else if (grant.scope === "creatures-you-control-counter-threshold") {
+        if (source.controller !== permanent.controller || !isCreature(target)) continue;
+        if ((source.counters[grant.counterName!] ?? 0) < grant.threshold!) continue;
       }
       power += grant.power;
       toughness += grant.toughness;
@@ -1505,6 +1508,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const amount = -object.variableValue;
       const next = modifyCreatures(state, amount, amount, () => true);
       return logged(next, controller, `${sourceName} da -${Math.abs(amount)}/-${Math.abs(amount)} a todas las criaturas hasta el final del turno.`);
+    }
+    case "modify-all-creatures-per-land": {
+      const count = playerAt(state, controller).battlefield.filter((permanent) =>
+        cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+      const next = modifyCreatures(state, effect.power * count, effect.toughness * count, () => true);
+      return logged(next, controller, `${sourceName} da ${effect.power * count}/${effect.toughness * count} a todas las criaturas hasta el final del turno.`);
     }
     case "modify-creatures-you-control": {
       const next = modifyCreatures(state, effect.power, effect.toughness, (permanent) => permanent.controller === controller);

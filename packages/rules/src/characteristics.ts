@@ -228,11 +228,13 @@ export interface StaticKeywordGrant {
 }
 
 export interface StaticPowerToughnessGrant {
-  readonly scope: "other-creatures-you-control" | "all-color-creatures" | "subtype-creatures-you-control";
+  readonly scope: "other-creatures-you-control" | "all-color-creatures" | "subtype-creatures-you-control" | "creatures-you-control-counter-threshold";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
   readonly subtype?: string;
+  readonly counterName?: string;
+  readonly threshold?: number;
 }
 
 /** Characteristics printed in one level band of a leveler card (CR 711). */
@@ -305,6 +307,7 @@ export type SpellEffect =
   /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-all-creatures-minus-X" }
+  | { readonly kind: "modify-all-creatures-per-land"; readonly power: number; readonly toughness: number; readonly subtype: string }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
@@ -904,6 +907,12 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   // you control get +1/+1" (Elvish Archdruid).
   const subtype = /^other\s+([A-Za-z][A-Za-z'’-]*?)s?(?:\s+creatures)?\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   if (subtype && !/^creature$/i.test(subtype[1]!)) return { scope: "subtype-creatures-you-control", subtype: subtype[1]!, power: Number(subtype[2]), toughness: Number(subtype[3]) };
+  // "As long as ~ has seven or more quest counters on it, creatures you control get +5/+5" (Beastmaster Ascension).
+  const gated = /^as long as ~ has ([a-z]+|\d+) or more ([a-z]+) counters on it, creatures you control get \+(\d+)\/\+(\d+)$/i.exec(clean);
+  if (gated) {
+    const threshold = toNumber(gated[1]!);
+    if (threshold !== null) return { scope: "creatures-you-control-counter-threshold", counterName: gated[2]!.toLowerCase(), threshold, power: Number(gated[3]), toughness: Number(gated[4]) };
+  }
   return null;
 }
 
@@ -1567,6 +1576,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^All creatures get -X\/-X until end of turn$/i.test(text)) {
     return { effect: { kind: "modify-all-creatures-minus-X" }, target: "none" };
+  }
+  if ((match = /^All creatures get (-\d+)\/(-\d+) until end of turn for each ([A-Za-z]+) you control$/i.exec(text))) {
+    return { effect: { kind: "modify-all-creatures-per-land", power: Number(match[1]), toughness: Number(match[2]), subtype: singularSubtype(match[3]!) }, target: "none" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
