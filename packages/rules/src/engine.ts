@@ -2399,6 +2399,27 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return withPlayer(removed, permanent.card.owner, (player) => ({ ...player, library: [permanent.card, ...player.library] }));
     }
+    case "put-target-nonland-permanent-under-top": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || isLand(cardProfile(permanent.card))) return state;
+      const removed = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      if (permanent.card.token || permanent.isCommander) {
+        return withPlayer(removed, permanent.card.owner, (player) => ({
+          ...player,
+          ...(permanent.isCommander ? { commandZone: [...player.commandZone, permanent.card] } : {})
+        }));
+      }
+      const offset = Math.max(0, effectAmount(effect.amount, object));
+      return withPlayer(removed, permanent.card.owner, (player) => ({
+        ...player,
+        library: [...player.library.slice(0, offset), permanent.card, ...player.library.slice(offset)]
+      }));
+    }
     case "return-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

@@ -128,6 +128,7 @@ const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature �
 const MARROW_BATS = () => make({ name: "Marrow Bats", type_line: "Creature — Bat", mana_cost: "{3}{B}", cmc: 4, power: "2", toughness: "2", oracle_text: "{B}, Pay 4 life: Regenerate Marrow Bats." });
 const COUNTER_DAMAGE = () => make({ name: "Thoctar Memory", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from this creature: This creature deals 1 damage to any target." });
 const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
+const UNEXPECTEDLY_ABSENT = () => make({ name: "Unexpectedly Absent", type_line: "Instant", mana_cost: "{X}{W}{U}", cmc: 2, oracle_text: "Put target nonland permanent into its owner's library just beneath the top X cards of that library." });
 const ARTIFACT_SAC_ALTAR = () => make({ name: "Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact: Draw a card." });
 const ENCHANTMENT_SAC_ALTAR = () => make({ name: "Enchantment Memory", type_line: "Enchantment", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an enchantment: Draw a card." });
 const LAND_SAC_ALTAR = () => make({ name: "Land Memory", type_line: "Land", oracle_text: "Sacrifice a land: Draw a card." });
@@ -717,6 +718,19 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(0);
+  });
+
+  it("inserts Unexpectedly Absent's target below the chosen top cards", () => {
+    let game = readyToCast([UNEXPECTEDLY_ABSENT()], [PLAINS(), ISLAND(), PLAINS()], [], [BEAR()]);
+    game = stage(game, 1, () => ({ library: toHand(1, [BOLT(), FOREST()], "absent-library") }));
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, {
+      type: "cast", cardId: "hand-0", variableValue: 1,
+      targets: [{ kind: "permanent", instanceId: target.instance_id }]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
+    expect(game.players[1]!.library.map((card) => card.name).slice(0, 3)).toEqual(["Lightning Bolt", "Grizzly Bears", "Forest"]);
   });
 
   it("parses echo and sacrifices the permanent when its next-upkeep cost is declined", () => {

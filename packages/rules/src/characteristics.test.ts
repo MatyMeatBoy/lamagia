@@ -221,6 +221,20 @@ describe("C13 sacrifice-card parsing", () => {
   });
 });
 
+describe("library insertion parsing", () => {
+  it("preserves the X offset for Unexpectedly Absent", () => {
+    const profile = cardProfile(card({
+      name: "Unexpectedly Absent",
+      type_line: "Instant",
+      mana_cost: "{X}{W}{U}",
+      oracle_text: "Put target nonland permanent into its owner's library just beneath the top X cards of that library."
+    }));
+    expect(profile.effects[0]).toEqual({ kind: "put-target-nonland-permanent-under-top", amount: "X" });
+    expect(profile.targetKind).toBe("nonland");
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("flashback parsing", () => {
   it("extracts a fixed Flashback alternative cost without flagging the keyword line", () => {
     const profile = cardProfile(card({

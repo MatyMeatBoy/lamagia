@@ -433,6 +433,8 @@ export type SpellEffect =
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "return-target-permanent" }
   | { readonly kind: "put-target-creature-on-library-top" }
+  /** Put a target nonland permanent below the top N cards of its owner's library. */
+  | { readonly kind: "put-target-nonland-permanent-under-top"; readonly amount: number | "X" }
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
   /** Return N random instant/sorcery cards from your graveyard to hand. */
@@ -2171,6 +2173,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (randomSpellReturn) {
     const amount = toNumber(randomSpellReturn[1]!);
     if (amount !== null && amount > 0) return { effect: { kind: "return-random-instant-or-sorcery-from-graveyard", amount }, target: "none" };
+  }
+  if ((match = /^Put target nonland permanent into its owner's library just beneath the top (\w+) cards? of that library$/i.exec(text))) {
+    const amount = toNumber(match[1]) ?? (/^X$/i.test(match[1]!) ? "X" as const : null);
+    if (amount !== null) return { effect: { kind: "put-target-nonland-permanent-under-top", amount }, target: "nonland" };
   }
    if (/^Put target creature on top of its owner's library$/i.test(text)) return { effect: { kind: "put-target-creature-on-library-top" }, target: "creature" };
    if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
