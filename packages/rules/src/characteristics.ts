@@ -423,6 +423,8 @@ export type SpellEffect =
   | { readonly kind: "move-counter-from-source-to-triggered-creature"; readonly counter: string }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-permanents-you-control-keyword"; readonly keyword: EnforcedKeyword }
+  /** Temporary keyword grant limited to creatures controlled by the effect's controller. */
+  | { readonly kind: "grant-creatures-you-control-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "overwhelming-stampede" }
   | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
@@ -2104,6 +2106,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };
   const globalKeyword = /^Permanents you control gain (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
   if (globalKeyword) return { effect: { kind: "grant-permanents-you-control-keyword", keyword: globalKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "none" };
+  const creaturesKeyword = /^Creatures you control gain (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
+  if (creaturesKeyword) return { effect: { kind: "grant-creatures-you-control-keyword", keyword: creaturesKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "none" };
   const allKeyword = /^All creatures gain (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
   if (allKeyword) return { effect: { kind: "grant-all-creatures-keyword", keyword: allKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "none" };
   const combined = /^Target creature gets ([+-]\d+)\/([+-]\d+) and gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
