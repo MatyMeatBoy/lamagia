@@ -1951,10 +1951,14 @@ function recognizeText(text: string): RecognizedText {
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       const optional = payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
+      const optionalEffectText = optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
       const recognized = (payCost && payCost.hasVariable) ? null
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
-        : recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "You ") : effectText);
+        : recognizeSentence(optionalEffectText)
+          // Most optional templates intentionally omit the subject, but a few
+          // effects (e.g. “You gain life equal to ...”) need it to match.
+          ?? (optional && !payGate ? recognizeSentence(`You ${optionalEffectText}`) : null);
       if (recognized) {
         triggers.push({
           event: triggered.event,
