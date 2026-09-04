@@ -525,6 +525,8 @@ export interface CardProfile {
   readonly kickedEffects: readonly SpellEffect[];
   /** Evoke alternative cost (CR 702.34), null when absent. */
   readonly evokeCost: ManaCost | null;
+  /** Flashback cost — cast from graveyard, then exile (CR 702.34), null when absent. */
+  readonly flashbackCost: ManaCost | null;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static "<color/type> spells you cast cost {N} less to cast" grant (Medallion cycle, CR 118.9). */
@@ -1048,6 +1050,7 @@ interface RecognizedText {
   kickerCost?: ManaCost | null;
   kickedEffects?: SpellEffect[];
   evokeCost?: ManaCost | null;
+  flashbackCost?: ManaCost | null;
   /** Exact normalized clauses the closed engine intentionally does not execute. */
   readonly unimplementedText: readonly string[];
   readonly covered: boolean;
@@ -1779,6 +1782,7 @@ function recognizeText(text: string): RecognizedText {
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
   let evokeCost: ManaCost | null = null;
+  let flashbackCost: ManaCost | null = null;
   const kickedEffects: SpellEffect[] = [];
 
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
@@ -1790,6 +1794,9 @@ function recognizeText(text: string): RecognizedText {
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
+    // Flashback: cast from the graveyard for this cost, then exile (CR 702.34 → 702.34a numbering aside, 702.33 family).
+    const flashback = /^Flashback\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (flashback) { flashbackCost = parseManaCost(flashback[1]!); continue; }
     // Board-scaled self cost reduction is consumed by cardProfile, not resolved here.
     if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
     if (/^(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
@@ -2009,7 +2016,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, evokeCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, evokeCost, flashbackCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -2133,6 +2140,7 @@ export function cardProfile(card: CardData): CardProfile {
     targetKind: recognized.targetKind,
     kickerCost: recognized.kickerCost ?? null,
     evokeCost: recognized.evokeCost ?? null,
+    flashbackCost: recognized.flashbackCost ?? null,
     kickedEffects: recognized.kickedEffects ?? [],
     costReducesPerBoardCreature,
     spellCostReductionGrant,

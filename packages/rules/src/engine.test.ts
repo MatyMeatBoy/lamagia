@@ -1838,6 +1838,24 @@ describe("kicker and optional-cost triggers", () => {
     expect(game.players[0]!.graveyard.some((c) => c.name === "Mulldrifter")).toBe(true);
   });
 
+  it("casts an instant from the graveyard via Flashback and then exiles it", () => {
+    const bolt = () => make({ name: "Fire Echo", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Fire Echo deals 2 damage to any target.\nFlashback {3}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)" });
+    const p = profileOf(bolt());
+    expect(p.flashbackCost?.raw).toBe("{3}{R}");
+    expect(p.fullyImplemented).toBe(true);
+
+    let game = ready([], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [bolt()], "fb") }));
+    const fb = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.action.flashback);
+    expect(fb).toBeDefined();
+    const before = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "fb-0", flashback: true, targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.life).toBe(before - 2);
+    expect(game.players[0]!.exile.some((c) => c.name === "Fire Echo")).toBe(true);
+    expect(game.players[0]!.graveyard.some((c) => c.name === "Fire Echo")).toBe(false);
+  });
+
   it("parses a graveyard self-return dies trigger and a compound draw/loss spell", () => {
     const spine = () => make({ name: "Spine of Ish Sah", type_line: "Artifact", mana_cost: "{7}", cmc: 7, oracle_text: "When Spine of Ish Sah enters the battlefield, destroy target permanent.\nWhen Spine of Ish Sah is put into a graveyard from the battlefield, return it to its owner's hand." });
     expect(profileOf(spine()).triggers.some((t) => t.event === "dies" && t.effect.kind === "return-source-to-hand")).toBe(true);

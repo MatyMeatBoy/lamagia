@@ -131,6 +131,8 @@ export interface StackObject {
   /** The spell was cast for its kicker cost (CR 702.33). */
   readonly kicked?: boolean;
   readonly evoked?: boolean;
+  /** Cast from the graveyard via Flashback — exiles on leaving the stack (CR 702.34). */
+  readonly fromFlashback?: boolean;
   /** Selected `Choose one` mode, when the spell has supported modal text. */
   readonly selectedEffect?: SpellEffect;
   /** Present when this is a triggered ability rather than a spell. */
@@ -295,7 +297,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly flashback?: boolean }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType }
@@ -2102,11 +2104,14 @@ function resolveTop(state: GameState): GameState {
   if (!object) return state;
   let next: GameState = { ...state, stack: state.stack.slice(0, -1) };
   const profile = cardProfile(object.card);
+  // Flashback (CR 702.34) sends the card to exile instead of the graveyard when it leaves the stack.
+  const retireZone: "graveyard" | "exile" = object.fromFlashback ? "exile" : "graveyard";
+  const retire = (s: GameState): GameState => withPlayer(s, object.card.owner, (player) => ({ ...player, [retireZone]: [...player[retireZone], object.card] }));
 
   if (object.countered) {
     if (object.trigger) return logged(next, object.controller, `Se contrarresta la habilidad disparada de ${object.card.name}.`);
     if (object.activated) return logged(next, object.controller, `Se contrarresta la habilidad activada de ${object.card.name}.`);
-    next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+    next = retire(next);
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
   }
 
@@ -2119,7 +2124,7 @@ function resolveTop(state: GameState): GameState {
   if (object.targets.length && targetsGone) {
     if (object.trigger) return logged(next, object.controller, `La habilidad de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
     if (object.activated) return logged(next, object.controller, `La habilidad activada de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
-    next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+    next = retire(next);
     return logged(next, object.controller, `${object.card.name} se contrarresta: sus objetivos ya no son legales.`);
   }
 
@@ -2161,7 +2166,7 @@ function resolveTop(state: GameState): GameState {
       })
       .map((card) => card.instance_id);
     if (!options.length) {
-      if (!object.activated) next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+      if (!object.activated) next = retire(next);
       return logged(next, object.controller, `${object.card.name} se resuelve: no hay una carta válida en la biblioteca.`);
     }
     return {
@@ -2186,7 +2191,7 @@ function resolveTop(state: GameState): GameState {
   if (selectedEffect) {
     const resolved = applyEffect(next, object, selectedEffect);
     next = logged(resolved, object.controller, `Se resuelve el modo elegido de ${object.card.name}.`);
-    return withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+    return retire(next);
   }
 
   if (profile.isPermanent) {
@@ -2200,15 +2205,15 @@ function resolveTop(state: GameState): GameState {
   if (!profile.effects.length && !(object.kicked && profile.kickedEffects.length)) {
     next = logged(next, object.controller, `${object.card.name} se resuelve sin efecto: su texto todavía no está implementado.`);
   }
-  const retire = profile.effects.find((effect) => effect.kind === "exile-self" || effect.kind === "shuffle-self-into-library");
-  if (retire?.kind === "exile-self") {
+  const selfRetire = profile.effects.find((effect) => effect.kind === "exile-self" || effect.kind === "shuffle-self-into-library");
+  if (selfRetire?.kind === "exile-self") {
     return withPlayer(next, object.card.owner, (player) => ({ ...player, exile: [...player.exile, object.card] }));
   }
-  if (retire?.kind === "shuffle-self-into-library") {
+  if (selfRetire?.kind === "shuffle-self-into-library") {
     const shuffled = shuffle([...playerAt(next, object.card.owner).library, object.card], next.rngState);
     return withPlayer({ ...next, rngState: shuffled.state }, object.card.owner, (player) => ({ ...player, library: shuffled.items }));
   }
-  next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
+  next = retire(next);
   return next;
 }
 
@@ -2876,6 +2881,25 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
   }
 
+  // Flashback: cast an instant/sorcery from the graveyard for its flashback cost (CR 702.34).
+  for (const card of player.graveyard) {
+    if (opponentsLocked) break;
+    const profile = cardProfile(card);
+    if (!profile.flashbackCost) continue;
+    const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
+    if (!instantSpeed && !sorcerySpeed(state, seat)) continue;
+    if (!planManaPayment(profile.flashbackCost, player)) continue;
+    if (profile.targetKind !== "none" && profile.targetKind !== "any" && !legalTargets(state, seat, profile.targetKind).length) continue;
+    actions.push({
+      action: { type: "cast", cardId: card.instance_id, flashback: true },
+      label: `Retrospectiva: ${card.name} (${profile.flashbackCost.raw})`,
+      cardId: card.instance_id,
+      manaValue: profile.flashbackCost.manaValue,
+      ...(profile.targetKind !== "none" ? { requiresTarget: profile.targetKind as Exclude<TargetKind, "none"> } : {}),
+      ...(profile.fullyImplemented ? {} : { note: "Su texto todavía no está implementado." })
+    });
+  }
+
   for (const card of player.hand) {
     const profile = cardProfile(card);
     const cyclingOptions = profile.cyclingCost
@@ -3049,7 +3073,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, fromFlashback = false): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -3061,7 +3085,8 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     countered: false,
     ...(selectedEffect ? { selectedEffect } : {}),
     ...(kicked ? { kicked: true } : {}),
-    ...(evoked ? { evoked: true } : {})
+    ...(evoked ? { evoked: true } : {}),
+    ...(fromFlashback ? { fromFlashback: true } : {})
   };
   // After putting an object on the stack its controller receives priority again (rule 117.3c).
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
@@ -3379,17 +3404,27 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
 
 function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast" }>): GameState {
   const player = playerAt(state, seat);
+  const flashback = Boolean(action.flashback);
   const fromHand = player.hand.find((card) => card.instance_id === action.cardId);
   const fromCommand = player.commandZone.find((card) => card.instance_id === action.cardId);
-  const card = fromHand ?? fromCommand;
+  const fromGraveyard = flashback ? player.graveyard.find((card) => card.instance_id === action.cardId) : undefined;
+  const card = fromHand ?? fromCommand ?? fromGraveyard;
   if (!card) throw new Error("Esa carta no está en tu mano ni en tu zona de mando.");
   const kicked = Boolean(action.kicked);
   const evoked = Boolean(action.evoked);
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked);
+  const profile = cardProfile(card);
+  if (flashback) {
+    if (!fromGraveyard || !profile.flashbackCost) throw new Error(`${card.name} no tiene retrospectiva.`);
+    const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
+    if (!instantSpeed && !sorcerySpeed(state, seat)) throw new Error(`Solo puedes lanzar ${card.name} con retrospectiva en tu fase principal.`);
+    if (profile.targetKind !== "none" && profile.targetKind !== "any" && !legalTargets(state, seat, profile.targetKind).length) throw new Error(`${card.name} necesita un objetivo legal.`);
+  }
+  const check = flashback
+    ? { legal: true as const, ...(profile.targetKind !== "none" ? { targetKind: profile.targetKind as Exclude<TargetKind, "none"> } : {}) }
+    : castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
-  const profile = cardProfile(card);
-  const spellCost = spellCostOf(profile, kicked, evoked);
+  const spellCost = flashback ? profile.flashbackCost! : spellCostOf(profile, kicked, evoked);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0) - boardCostReduction(state, seat, card, profile);
   const plan = planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0 });
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
@@ -3413,11 +3448,12 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     life: current.life - payment.lifePaid,
     hand: current.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
     commandZone: current.commandZone.filter((candidate) => candidate.instance_id !== card.instance_id),
+    graveyard: flashback ? current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id) : current.graveyard,
     ...(fromCommand ? { commanderCasts: { ...current.commanderCasts, [card.instance_id]: (current.commanderCasts[card.instance_id] ?? 0) + 1 } } : {})
   }));
   const selectedEffect = profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
-  next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked);
+  next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, flashback);
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card });
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}.`);
 }
