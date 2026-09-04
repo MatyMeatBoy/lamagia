@@ -1711,6 +1711,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = modifyCreatures(state, effect.power, effect.toughness, (permanent) => attackerIds.has(permanent.instance_id));
       return logged(next, controller, `${sourceName}: las criaturas atacantes obtienen ${effect.power}/${effect.toughness}.`);
     }
+    case "target-player-sacrifice-attacking-creature": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const attackerIds = new Set(state.combat.attackers.map((entry) => entry.instanceId));
+      const candidates = playerAt(state, target.seat).battlefield.filter((permanent) => attackerIds.has(permanent.instance_id));
+      if (!candidates.length) return state;
+      // Deterministic "of their choice": give up the least valuable attacker.
+      const victim = [...candidates].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
+      const next = movePermanentToZone(state, victim, "graveyard");
+      return logged(next, target.seat, `${playerAt(next, target.seat).name} sacrifica a ${victim.card.name}.`);
+    }
     case "each-player-gains-life": {
       if (playersCantGainLife(state)) return state;
       let next = state;

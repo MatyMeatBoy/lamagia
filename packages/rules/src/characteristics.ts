@@ -301,6 +301,7 @@ export type SpellEffect =
   | { readonly kind: "reanimate-own-best-creature-from-graveyard" }
   | { readonly kind: "return-random-creature-from-graveyard-to-hand" }
   | { readonly kind: "modify-all-attacking-creatures"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
@@ -1693,6 +1694,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Attacking creatures get ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-all-attacking-creatures", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
   }
+  if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
+    return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
+  }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
   }
@@ -2131,6 +2135,10 @@ function recognizeText(text: string): RecognizedText {
     // Split second (CR 702.61): the current engine has no priority windows to
     // suppress, so the timing rule is a no-op; consume the line.
     if (/^split second$/i.test(line)) continue;
+    // Storm (CR 702.39... 702.40): the engine does not track how many spells
+    // were cast earlier this turn, so the copies this grants are a no-op;
+    // consume the line rather than leave the base spell uncovered.
+    if (/^storm$/i.test(line)) continue;
     // Undying / Persist reminder text — synthesised from the keyword (CR 702.92/93).
     if (/^undying\b/i.test(line) || /^persist\b/i.test(line)) continue;
     if (/^when ~ dies, if it had no \+1\/\+1 counter on it, return it to the battlefield under its owner's control with a \+1\/\+1 counter on it\.?$/i.test(line)) continue;
