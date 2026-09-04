@@ -2290,6 +2290,11 @@ export function cardProfile(card: CardData): CardProfile {
   const synthesizedTriggers: TriggerDefinition[] = hasExtort
     ? [{ event: "spell-cast", subject: "you", effect: { kind: "extort" }, optional: true, targetKind: "none", sourceText: "Extort", payCost: parseManaCost("{W/B}") ?? undefined }]
     : [];
+  // Undying / Persist (CR 702.93 / 702.92): a self dies trigger that reanimates
+  // the card with a +1/+1 (undying) or -1/-1 (persist) counter when it had none.
+  const lowerKeywords = (card.keywords ?? []).map((keyword) => keyword.toLowerCase());
+  if (lowerKeywords.includes("undying")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "+1/+1" }, optional: false, targetKind: "none", sourceText: "Undying" });
+  if (lowerKeywords.includes("persist")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "-1/-1" }, optional: false, targetKind: "none", sourceText: "Persist" });
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
   const cyclingSearches = parseCyclingSearches(text);
