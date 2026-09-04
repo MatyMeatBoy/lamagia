@@ -1630,6 +1630,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         if (effect.excludeSource && permanent.instance_id === object.card.instance_id) continue;
         if (!planeswalker && effect.filter === "nonartifact" && profile.types.includes("Artifact")) continue;
         if (!planeswalker && effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
+        if (effect.filter === "with-flying" && !keywordOf(next, permanent, "flying")) continue;
         next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
       }
       return next;
@@ -2748,11 +2749,12 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
 
     // Siege Behemoth: while an "assign as though unblocked" creature attacks, this
     // controller's attackers assign all their damage to the player (CR 510.1c).
-    const assignAsUnblocked = state.combat.attackers.some((other) => {
-      const source = findPermanent(state, other.instanceId);
-      return source && source.controller === attacker.controller
-        && cardProfile(source.card).attackersAssignAsUnblockedWhileAttacking;
-    });
+    const assignAsUnblocked = cardProfile(attacker.card).combatRules.assignsAsUnblocked
+      || state.combat.attackers.some((other) => {
+        const source = findPermanent(state, other.instanceId);
+        return source && source.controller === attacker.controller
+          && cardProfile(source.card).attackersAssignAsUnblockedWhileAttacking;
+      });
     if (assignAsUnblocked) {
       toPlayers.push({
         seat: entry.defender,
