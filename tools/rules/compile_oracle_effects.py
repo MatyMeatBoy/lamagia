@@ -32,7 +32,7 @@ from typing import Any
 DEFAULT_COMMIT_CARD_LIMIT = 20
 # Bump whenever the emitted IR schema or classification semantics change so
 # incremental runs cannot silently reuse cards compiled by an older parser.
-ORACLE_IR_PARSER_VERSION = "v9"
+ORACLE_IR_PARSER_VERSION = "v10"
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -304,7 +304,8 @@ def classify(clause: str) -> dict[str, Any]:
     target_zone = None
     if target_text:
         target_zone = "graveyard" if re.search(r"\bgraveyard\b", target_text, re.I) else "hand" if re.search(r"\bhand\b", target_text, re.I) else "battlefield"
-    modal = bool(re.search(r"\bchoose (?:one|two|three|one or more)\b", lower))
+    modal_mode = "one-or-both" if re.search(r"\bchoose one or both\b", lower) else "one-or-more" if re.search(r"\bchoose one or more\b", lower) else "one" if re.search(r"\bchoose one\b", lower) else None
+    modal = modal_mode is not None or bool(re.search(r"\bchoose (?:two|three)\b", lower))
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
     known_static = bool(KNOWN_STATIC_RE.fullmatch(clause.strip()) or KNOWN_STATIC_LINE_RE.fullmatch(clause.strip()))
     operands = operand_hints(clause, target_text, search_criterion)
@@ -345,6 +346,8 @@ def classify(clause: str) -> dict[str, Any]:
         cluster_parts.append("return-target:" + return_target)
     if modal:
         cluster_parts.append("modal")
+    if modal_mode:
+        cluster_parts.append("modal-mode:" + modal_mode)
     return {
         "text": clause,
         "kind": kind,
@@ -363,6 +366,7 @@ def classify(clause: str) -> dict[str, Any]:
         "operands": operands,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),
         "modal": modal,
+        "modal_mode": modal_mode,
         "conditional": bool(re.search(r"\b(?:if|unless|as long as|whenever)\b", lower)),
         # Stable grouping key for AI/contributor batches. It preserves the
         # reusable mechanic constraints without using card names as identity.

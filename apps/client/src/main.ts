@@ -11,7 +11,7 @@
  * the card preview float over the table so they never steal board space.
  */
 
-import type { AbilityView, CardView, GameView, LegalAction, PermanentView, PlayerView, Target, TurnStep } from "@prossh/rules";
+import type { AbilityView, CardView, GameView, LegalAction, PermanentView, PlayerView, Target, TargetKind, TurnStep } from "@prossh/rules";
 import { ACTIVATION_GLYPHS, KEYWORD_GLYPHS, TRIGGER_GLYPHS, glyphSvg, keywordGlyph, type AbilityGlyph } from "./abilities.js";
 import "./styles.css";
 
@@ -63,7 +63,7 @@ const STEP_LABELS: Record<TurnStep, string> = {
 };
 
 interface UiState {
-  pendingTarget: { action: LegalAction; options: readonly Target[] } | null;
+  pendingTarget: { action: LegalAction; options: readonly Target[]; targetKinds: readonly TargetKind[]; selectedTargets: readonly Target[]; targetIndex: number } | null;
   attackers: Map<string, number>;
   blockers: Map<string, string>;
   selectedBlocker: string | null;
@@ -365,7 +365,22 @@ function chooseTarget(target: Target): void {
     void submit({ ...action, targetId: target.instanceId });
     return;
   }
-  void submit({ ...action, targets: [target] });
+  const selectedTargets = [...pending.selectedTargets, target];
+  const nextIndex = pending.targetIndex + 1;
+  if (nextIndex < pending.targetKinds.length) {
+    const nextKind = pending.targetKinds[nextIndex]!;
+    const options = view?.targetOptions[nextKind] ?? [];
+    if (!options.length) {
+      ui.notice = "Ya no hay objetivos legales para completar esta elección.";
+      render();
+      return;
+    }
+    ui.pendingTarget = { ...pending, options, selectedTargets, targetIndex: nextIndex };
+    ui.notice = `Elige el objetivo ${nextIndex + 1} de ${pending.targetKinds.length}.`;
+    render();
+    return;
+  }
+  void submit({ ...action, targets: selectedTargets });
 }
 
 function graveyardTargetHtml(): string {
@@ -381,11 +396,12 @@ function graveyardTargetHtml(): string {
 
 /** Starts the target flow for one action, or submits it when it needs no target. */
 function runAction(entry: LegalAction, subject: string): void {
-  if (entry.requiresTarget && view) {
-    const options = view.targetOptions[entry.requiresTarget] ?? [];
+  const targetKinds = entry.requiresTargets ?? (entry.requiresTarget ? [entry.requiresTarget] : []);
+  if (targetKinds.length && view) {
+    const options = view.targetOptions[targetKinds[0]!] ?? [];
     if (!options.length) { ui.notice = `No hay objetivos legales para ${subject}.`; render(); return; }
-    ui.pendingTarget = { action: entry, options };
-    ui.notice = `Elige un objetivo para ${subject}.`;
+    ui.pendingTarget = { action: entry, options, targetKinds, selectedTargets: [], targetIndex: 0 };
+    ui.notice = targetKinds.length > 1 ? `Elige el objetivo 1 de ${targetKinds.length}.` : `Elige un objetivo para ${subject}.`;
     render();
     return;
   }

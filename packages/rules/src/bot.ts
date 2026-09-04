@@ -245,8 +245,11 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     });
     const chosen = commander ?? permanent ?? casts[0];
     if (chosen && chosen.action.type === "cast") {
-      const targets = chosen.requiresTarget ? pickTargets(state, seat, chosen.requiresTarget) : undefined;
-      if (chosen.requiresTarget && !targets?.length) return passOr(available);
+      const targetKinds = chosen.requiresTargets ?? (chosen.requiresTarget ? [chosen.requiresTarget] : []);
+      const targets = targetKinds.length
+        ? targetKinds.flatMap((kind) => pickTargets(state, seat, kind)?.slice(0, 1) ?? [])
+        : undefined;
+      if (targetKinds.length && targets?.length !== targetKinds.length) return passOr(available);
       return { action: targets ? { ...chosen.action, targets } : chosen.action, label: chosen.label };
     }
   }

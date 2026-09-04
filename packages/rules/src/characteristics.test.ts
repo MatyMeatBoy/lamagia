@@ -184,6 +184,22 @@ describe("shared charm parsing", () => {
     expect(profile.modalChoices[2]).toMatchObject({ effect: { kind: "tap-all-creatures-target-player" }, targetKind: "player" });
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("adds a reusable synthetic mode for Choose one or both", () => {
+    const profile = cardProfile(card({
+      name: "Soul Manipulation",
+      type_line: "Instant",
+      oracle_text: "Choose one or both —\n• Counter target creature spell.\n• Return target creature card from your graveyard to your hand."
+    }));
+    expect(profile.modalChoices).toHaveLength(3);
+    expect(profile.modalChoices[2]).toMatchObject({
+      text: "Choose both",
+      effect: { kind: "compound", targetOffsets: [0, 1] },
+      targetKind: "creature-spell",
+      targetKinds: ["creature-spell", "creature-card-in-your-graveyard"]
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("C13 sacrifice-card parsing", () => {

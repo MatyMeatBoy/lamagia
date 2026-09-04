@@ -118,6 +118,12 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertTrue(result["keyword_only"])
         self.assertTrue(result["candidate"])
 
+    def test_preserves_choose_one_or_both_as_a_modal_operand(self) -> None:
+        result = classify("Choose one or both —")
+        self.assertTrue(result["modal"])
+        self.assertEqual(result["modal_mode"], "one-or-both")
+        self.assertIn("modal-mode:one-or-both", result["primitive_cluster"])
+
     def test_reuses_mana_side_effect_and_restriction_primitives(self) -> None:
         self.assertEqual(
             mana_ability_hint("{T}: Add {C}. You gain 1 life."),
@@ -146,7 +152,7 @@ class OracleCompilerTests(unittest.TestCase):
             self.assertEqual(load_card_cache(path)["oracle-1"], entry)
             path.write_text(json.dumps({"format": "prossh-oracle-card-cache/v1", "parser_version": "old", "cards": {"oracle-1": entry}}), encoding="utf-8")
             self.assertEqual(load_card_cache(path), {})
-        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v9")
+        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v10")
 
     def test_separates_discard_activation_cost_from_discard_effect(self) -> None:
         result = classify("{T}, Discard a card: Draw a card.")

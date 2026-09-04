@@ -901,9 +901,10 @@ implemented cards. The current set map reports **19.7%** across 708 editions.
 The latest fork batch also adds reusable ETB trigger subjects for artifacts and
 enchantments under your control.
 
-The primitive compiler is now parser version `v9`: it reuses its incremental
+The primitive compiler is now parser version `v10`: it reuses its incremental
 cache, preserves typed sacrifice operands, distinguishes discard activation
-costs from discard effects, and emits a valid
+costs from discard effects, and records modal operands such as `one-or-both`
+for the reusable modal engine. It emits a valid
 one-command C13 worker plan (`npm run rules:oracle:plan:c13`): 5 disjoint
 workers, a 2 GB scheduler ceiling, 20 `oracle_id`s per commit, and an
 11-commit integration threshold. The latest benchmark classified 38,711 cards
@@ -1430,3 +1431,12 @@ and is prohibited. To recover any extra work behind the 241 figure, the worker
 must provide the exact card-to-commit mapping; no uncommitted generated
 profile is treated as code. Commits `5f01afc`, `6b99130`, and `b8702fb` (C13
 worker artifacts) remain queued for the next integration batch.
+
+### C13 choose-one-or-both modal primitive (2026-09-04)
+
+`Soul Manipulation` (`419c2ae1-fec7-4c27-a7a0-99f777abb4de`) and `Fissure
+Vent` (`f5bac25d-72e9-4655-8a04-3646fc10be27`) now reuse the modal parser's
+synthetic `Choose both` mode. It composes the already-supported branch effects,
+preserves their ordered target kinds, and resolves each target at its own
+offset; ordinary `Choose one` cards remain unchanged. The client and bot expose
+the ordered target sequence, while the server validates every target.

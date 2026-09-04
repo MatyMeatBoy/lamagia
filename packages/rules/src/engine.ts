@@ -372,6 +372,8 @@ export interface LegalAction {
   readonly label: string;
   readonly cardId?: string;
   readonly requiresTarget?: Exclude<TargetKind, "none">;
+  /** Ordered target kinds for a synthetic modal that selects multiple branches. */
+  readonly requiresTargets?: readonly Exclude<TargetKind, "none">[];
   readonly manaValue?: number;
   readonly note?: string;
 }
@@ -1279,13 +1281,16 @@ function modifyCreatures(
   };
 }
 
-function applyEffect(state: GameState, object: StackObject, effect: SpellEffect): GameState {
+function applyEffect(state: GameState, object: StackObject, effect: SpellEffect, targetIndex = 0): GameState {
   const controller = object.controller;
   const sourceName = object.card.name;
   switch (effect.kind) {
     case "compound": {
       let next = state;
-      for (const child of effect.effects) next = applyEffect(next, object, child);
+      for (const [index, child] of effect.effects.entries()) {
+        const childTargetIndex = effect.targetOffsets?.[index] ?? targetIndex;
+        next = applyEffect(next, object, child, childTargetIndex ?? targetIndex);
+      }
       return next;
     }
     case "draw": return drawCards(state, controller, effectAmount(effect.amount, object));
@@ -1728,7 +1733,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return logged(next, controller, `${permanent.card.name} es destruida y su controlador pierde ${loss} vidas.`);
     }
     case "destroy-target-permanent": {
-      const target = object.targets[0];
+      const target = object.targets[targetIndex];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
@@ -1861,7 +1866,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
     }
     case "return-target-card-from-graveyard": {
-      const target = object.targets[0];
+      const target = object.targets[targetIndex];
       if (!target || target.kind !== "graveyard-card") return state;
       const player = playerAt(state, target.seat);
       const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
@@ -2092,7 +2097,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return logged(next, controller, `${sourceName} destruye ${destroyed.length} artifact(s)/enchantment(s) y pone ${destroyed.length} contador(es).`);
     }
     case "counter-target-spell": {
-      const target = object.targets[0];
+      const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
     }
@@ -3017,7 +3022,7 @@ function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean): Ma
   return withKicker(profile.cost!, kicked ? profile.kickerCost : null);
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none"> } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
@@ -3041,11 +3046,14 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
   const targetKind = modal?.targetKind ?? profile.targetKind;
+  const targetKinds = modal?.targetKinds;
+  if (targetKinds?.some((kind) => !legalTargets(state, seat, kind).length)) return { legal: false };
   if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind).length) return { legal: false };
   if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind).length) return { legal: false };
   return {
     legal: true,
     ...(targetKind !== "none" ? { targetKind } : {}),
+    ...(targetKinds?.length ? { targetKinds } : {}),
     ...(profile.fullyImplemented ? {} : { note: "Su texto todavía no está implementado; entra al juego pero no ejecuta su efecto." })
   };
 }
@@ -3227,6 +3235,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         cardId: card.instance_id,
         manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
       });
     }
@@ -3248,6 +3257,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         cardId: card.instance_id,
         manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
       });
     }
@@ -3269,6 +3279,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         cardId: card.instance_id,
         manaValue: cardProfile(card).manaValue + tax + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
       });
     }
@@ -3930,7 +3941,15 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
-  if (check.targetKind) {
+  if (check.targetKinds?.length) {
+    const chosen = requested.length
+      ? requested
+      : check.targetKinds.flatMap((kind) => legalTargets(state, seat, kind).slice(0, 1));
+    if (chosen.length !== check.targetKinds.length) throw new Error(`${card.name} necesita ${check.targetKinds.length} objetivos legales.`);
+    const valid = chosen.every((target, index) => legalTargets(state, seat, check.targetKinds![index]!).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
+    if (!valid) throw new Error(`Objetivo ilegal para ${card.name}.`);
+    action = { ...action, targets: chosen };
+  } else if (check.targetKind) {
     const allowed = legalTargets(state, seat, check.targetKind);
     const chosen = requested.length ? requested : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${card.name} necesita un objetivo legal.`);

@@ -118,6 +118,8 @@ export interface ModalChoice {
   readonly text: string;
   readonly effect: SpellEffect;
   readonly targetKind: TargetKind;
+  /** Ordered target kinds when this synthetic mode selects multiple branches. */
+  readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
 }
 
 /** A landcycling variant: discard from hand to search a land subtype. */
@@ -265,7 +267,7 @@ export interface TokenDefinition {
 
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
-  | { readonly kind: "compound"; readonly effects: readonly SpellEffect[] }
+  | { readonly kind: "compound"; readonly effects: readonly SpellEffect[]; readonly targetOffsets?: readonly (number | null)[] }
   | { readonly kind: "draw"; readonly amount: number | "X" }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "draw-active-player" }
@@ -1832,7 +1834,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
     if (/^(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^instant and sorcery spells cost \{\d+\} less to cast\.?$/i.test(line)) continue;
-    if (/^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
+    const chooseOneOrBoth = /^Choose one or both(?:\s+[—–-�])?\s*$/i.test(line);
+    if (chooseOneOrBoth || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
       const unimplementedChoices: string[] = [];
@@ -1852,6 +1855,22 @@ function recognizeText(text: string): RecognizedText {
       }
       if (!invalid && choices.length > 0 && choices.length === cursor - start) {
         modalChoices.push(...choices);
+        if (chooseOneOrBoth) {
+          const targetKinds = choices.map((choice) => choice.targetKind)
+            .filter((kind): kind is Exclude<TargetKind, "none"> => kind !== "none");
+          let targetOffset = 0;
+          modalChoices.push({
+            index: choices.length,
+            text: "Choose both",
+            effect: {
+              kind: "compound",
+              effects: choices.map((choice) => choice.effect),
+              targetOffsets: choices.map((choice) => choice.targetKind === "none" ? null : targetOffset++)
+            },
+            targetKind: targetKinds[0] ?? "none",
+            ...(targetKinds.length ? { targetKinds } : {})
+          });
+        }
       } else {
         // Keep the unsupported branches, not only the modal heading. This makes
         // the primitive roadmap identify the real missing effects instead of

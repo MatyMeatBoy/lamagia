@@ -194,6 +194,14 @@ const NAYA_CHARM = () => make({
   name: "Naya Charm", type_line: "Instant", mana_cost: "{R}{G}{W}", cmc: 3,
   oracle_text: "Choose one —\n• Naya Charm deals 3 damage to target creature.\n• Return target card from a graveyard to its owner's hand.\n• Tap all creatures target player controls."
 });
+const SOUL_MANIPULATION = () => make({
+  name: "Soul Manipulation", type_line: "Instant", mana_cost: "{1}{U}{B}", cmc: 3,
+  oracle_text: "Choose one or both —\n• Counter target creature spell.\n• Return target creature card from your graveyard to your hand."
+});
+const FISSURE_VENT = () => make({
+  name: "Fissure Vent", type_line: "Sorcery", mana_cost: "{3}{R}", cmc: 4,
+  oracle_text: "Choose one or both —\n• Destroy target artifact.\n• Destroy target nonbasic land."
+});
 const GLOBAL_INDESTRUCTIBLE = () => make({
   name: "Global Indestructible", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
   oracle_text: "Permanents you control gain indestructible until end of turn."
@@ -2641,6 +2649,30 @@ describe("casting", () => {
     expect(destroy?.requiresTarget).toBe("artifact");
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 2, targets: [{ kind: "permanent", instanceId: ring.instance_id }] });
     expect(game.players[1]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+
+  it("offers and resolves the synthetic both mode with ordered targets", () => {
+    const profile = profileOf(FISSURE_VENT());
+    expect(profile.modalChoices).toHaveLength(3);
+    expect(profile.modalChoices[2]).toMatchObject({
+      text: "Choose both",
+      effect: { kind: "compound", targetOffsets: [0, 1] },
+      targetKind: "artifact",
+      targetKinds: ["artifact", "nonbasic-land"]
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([FISSURE_VENT()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [SOL_RING(), COMMAND_TOWER()]);
+    const artifact = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    const land = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Command Tower")!;
+    const both = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode === 2);
+    expect(both?.requiresTargets).toEqual(["artifact", "nonbasic-land"]);
+    game = applyAction(game, 0, {
+      type: "cast", cardId: "hand-0", mode: 2,
+      targets: [{ kind: "permanent", instanceId: artifact.instance_id }, { kind: "permanent", instanceId: land.instance_id }]
+    });
+    expect(game.players[1]!.battlefield).toHaveLength(0);
+    expect(game.players[1]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Sol Ring", "Command Tower"]));
   });
 
   it("resolves all Boros Charm modes after normalizing its printed name", () => {
