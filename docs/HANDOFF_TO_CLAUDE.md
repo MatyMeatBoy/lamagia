@@ -782,6 +782,18 @@ continuous effects.
 Validation: targeted engine tests PASS (182 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: activated self-pump
+
+The branch recognises activated lines such as `{R}: This creature gets +1/+0
+until end of turn`, binds the effect to the source permanent rather than
+creating a target, and applies it through the existing cleanup-expiring P/T
+modifier. This follows CR 602.1 and 613.4c. Scenario coverage verifies an
+Inferno Titan-style activation and resolution. The scope excludes variable
+costs, non-self targets and other activated costs.
+
+Validation: targeted engine tests and full `npm run check`/`npm test` required
+before integration.
+
 ### Cooperative C13 cluster: land-scaled token creation
 
 The branch adds the reusable `Create a token for each land you control`
