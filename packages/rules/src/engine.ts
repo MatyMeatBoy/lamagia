@@ -860,13 +860,14 @@ function triggerMatches(
   event: GameEvent
 ): boolean {
   if (definition.event !== event.kind) return false;
-  if (definition.condition?.kind === "no-controlled-subtype") {
-    const subtype = definition.condition.subtype.toLowerCase();
+  const condition = definition.condition;
+  if (condition?.kind === "no-controlled-subtype") {
+    const subtype = condition.subtype.toLowerCase();
     if (playerAt(state, watcher.controller).battlefield.some((permanent) => cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype))) return false;
   }
-  if (definition.condition?.kind === "controlled-creature-power-at-least") {
+  if (condition?.kind === "controlled-creature-power-at-least") {
     if (!playerAt(state, watcher.controller).battlefield.some((permanent) => isCreature(cardProfile(permanent.card))
-      && powerOf(permanent, state) >= definition.condition.amount)) return false;
+      && powerOf(permanent, state) >= condition.amount)) return false;
   }
   const subject = definition.subject;
 
