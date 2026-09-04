@@ -22,7 +22,7 @@ feature name.
 | `rules-c13-reprint-equivalence` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | `codex/c13-equipment-cluster` | merged (`44d0e78`) | 2026-09-04 |
 | `rules-flashback` | Flashback alternative-cost casting, graveyard action visibility, and exile replacement | `codex/c13-equipment-cluster` | merged (`44d0e78`) | 2026-09-04 |
 | `rules-flashback-life-cost` | Parse and pay life bundled into Flashback alternative costs, including C13 Deep Analysis | `feat/activated-abilities-and-triggers` | merged (`2b856c6`) | 2026-09-04 |
-| `rules-c13-multi-basic-search` | Multi-card basic-land searches with ordered destinations for Cultivate, Armillary Sphere, and Burnished Hart | `codex/c13-equipment-cluster` | merged (pending local integration commit) | 2026-09-04 |
+| `rules-c13-multi-basic-search` | Multi-card basic-land searches with ordered destinations for Cultivate, Armillary Sphere, and Burnished Hart | `codex/c13-equipment-cluster` | merged (`a4883df`) | 2026-09-04 |
 | `rules-level-up` | Level up costs, level counters, and the three C13 cards: Echo Mage, Hada Spy Patrol, Kazandu Tuskcaller | `codex/c13-equipment-cluster` | merged (`f325052`) | 2026-09-03 |
 | `rules-tap-untap` | Targeted Tap target creature and Untap target permanent effects | `codex/c13-equipment-cluster` | merged (`4fa0290`) | 2026-09-03 |
 | `rules-mill` | Target player mills a bounded number of cards into their graveyard | `codex/c13-equipment-cluster` | merged (`2842700`) | 2026-09-03 |
