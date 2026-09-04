@@ -1112,6 +1112,15 @@ scenario tests cover accept/decline imprint, payer identity, and hiding an
 unaffordable payment action. Integrate the complete batch only after validation;
 do not import stale handoff snapshots or untracked user folders.
 
+### Integrator checkpoint: C13 Charm batch accepted (2026-09-04)
+
+Integrated the 13-commit batch for Boros, Selesnya, Azorius, and Naya Charm
+modal primitives. Azorius was kept as shared work because it is not a C13 card;
+the generated coverage snapshot was refreshed locally. Validation: `npm run
+check` PASS; `npm test` PASS (**334 rules tests**, simulator, **38 Oracle
+Python tests**). C13 advanced to **165/356 (46.3%)**, with 191 pending; the
+global export is **8,021/38,711** and the filtered map is **21.6%**.
+
 ### Integrator checkpoint: C13 Duplicant/Rhystic batch accepted (2026-09-04)
 
 The full functional batch was integrated: Duplicant's nontoken-creature imprint
