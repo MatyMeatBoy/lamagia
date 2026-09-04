@@ -83,6 +83,9 @@ instead of reimplementing a keyword per card.
 For the current C13 sprint, use `npm run rules:oracle:c13` to generate the same
 queue from only the 356 cards in that set, then
 `npm run rules:oracle:plan:c13` to assign five disjoint primitive clusters.
+For compact, reusable worker context, run `npm run rules:oracle:compact` (or
+the `:c13` variant) after compiling the Oracle IR. It interns only review
+symbols; it never replaces the authoritative raw text or rules engine.
 When generating a scoped roadmap directly, `--set-code c13` now automatically
 names claims in the `c13-*` namespace; pass `--claim-prefix` only for an
 intentional shared primitive.

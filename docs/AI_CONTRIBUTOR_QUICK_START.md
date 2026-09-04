@@ -41,6 +41,9 @@ Read `docs/PRIMITIVE_ROADMAP_C13.md` and `docs/PRIMITIVE_WORKERS_C13.md`.
 Use `docs/PRIMITIVE_DICTIONARY_C13.md` to link common wording to existing
 parser fields and engine handlers before creating a new primitive; its
 one-line queue is the mass-review starting point, not a substitute for tests.
+Use [the compact Oracle IR](ORACLE_COMPACT_IR.md) to reuse operation symbols
+and operands across cards. It is a context/scheduling aid only: the raw Oracle
+clause and the real engine profile remain authoritative.
 For work outside C13, use the same generated index with `npm run
 rules:dictionary`.
 The worker plan is review-first: jobs containing Oracle `needs-review` cards
