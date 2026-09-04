@@ -124,6 +124,7 @@ const HASTE_REMOVAL = () => make({ name: "Haste Bane", type_line: "Instant", man
 const FIRST_STRIKE_REMOVAL = () => make({ name: "First Strike Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with first strike." });
 const DOUBLE_STRIKE_REMOVAL = () => make({ name: "Double Strike Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with double strike." });
 const TRAMPLE_REMOVAL = () => make({ name: "Trample Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with trample." });
+const VIGILANCE_REMOVAL = () => make({ name: "Vigilance Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with vigilance." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
@@ -1324,6 +1325,12 @@ describe("casting", () => {
     expect(profileOf(TRAMPLE_REMOVAL()).targetKind).toBe("creature-with-trample");
     const game = readyToCast([TRAMPLE_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [TRAMPLER(), BEAR()]);
     expect(legalTargets(game, 0, "creature-with-trample")).toHaveLength(1);
+  });
+
+  it("supports vigilance creature target filtering", () => {
+    expect(profileOf(VIGILANCE_REMOVAL()).targetKind).toBe("creature-with-vigilance");
+    const game = readyToCast([VIGILANCE_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [make({ name: "Vigilant Knight", type_line: "Creature — Knight", power: "2", toughness: "2", keywords: ["Vigilance"] }), BEAR()]);
+    expect(legalTargets(game, 0, "creature-with-vigilance")).toHaveLength(1);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
