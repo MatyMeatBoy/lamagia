@@ -476,6 +476,19 @@ libraries finish without inventing cards.
 Rules reference: Comprehensive Rules 701.22a–d; official Wizards source:
 `https://magic.wizards.com/en/rules`.
 
+### Reusable triggered self-modifier primitive
+
+The parser maps `~ gets +N/+N and gains <keyword> until end of turn` inside a
+trigger to `modify-triggered-creature-and-grant-keyword`. Resolution targets
+the triggering permanent's stable instance ID, applies the temporary Layer 7c
+modifier and records the keyword in the same cleanup-expiring state used by
+other temporary grants. This covers C13 Baloth Woodcrasher's Landfall without
+embedding its name; other numeric bonuses and supported combat keywords reuse
+the template. Reminder text is ignored by Oracle normalization.
+
+Rules reference: Comprehensive Rules 603.2, 613.4c and 611.2a; official
+Wizards source: `https://magic.wizards.com/en/rules`.
+
 ## Recommended next sequence
 
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
