@@ -1634,10 +1634,17 @@ with explicit `sourceZone: "graveyard"` and `requiresControlledLandSubtype:
 player while the required land subtype is present; the Python IR preserves the
 same zone, subtype, and keyword operands for future cards.
 
+### Worker checkpoint: Echo (2026-09-04)
+
+Echo is parsed as a reusable profile cost and scheduled for the permanent's
+controller at their next upkeep. The player may pay through the normal mana
+planner; declining sacrifices the source. This closes C13 cards blocked only
+by `Echo {cost}` (CR 702.30a-b).
+
 ### Integrator checkpoint (2026-09-04)
 
 The accumulated C13 worker batch is validated locally before publication. The
-engine-first queue now reports **184/341 C13 cards complete (54.0%)**, with 157
+engine-first queue now reports **186/341 C13 cards complete (54.5%)**, with 155
 unfinished; C14 reports **191/322 (59.3%)**. Contributors must regenerate the
 queue with `rules:engine:export`, `rules:roadmap:c13`, and
 `rules:oracle:plan:c13`; the generated roadmap, not raw Oracle wording, is the

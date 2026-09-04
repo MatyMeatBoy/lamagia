@@ -367,6 +367,10 @@ const UPKEEP_SAGE = () => make({
   name: "Dawn Sage", type_line: "Creature — Human Wizard", mana_cost: "{2}{W}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "At the beginning of your upkeep, you gain 2 life."
 });
+const ECHO_CREATURE = () => make({
+  name: "Echo Adept", type_line: "Creature — Wizard", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2",
+  oracle_text: "Echo {1}{G}"
+});
 const SIGNAL_PEST = () => make({
   name: "Well of Lore", type_line: "Artifact", mana_cost: "{2}", cmc: 2,
   oracle_text: "{1}{U}, {T}: Draw a card."
@@ -704,6 +708,30 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(0);
+  });
+
+  it("parses echo and sacrifices the permanent when its next-upkeep cost is declined", () => {
+    const profile = profileOf(ECHO_CREATURE());
+    expect(profile.echoCost).toMatchObject({ raw: "{1}{G}", manaValue: 2 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([ECHO_CREATURE()], [FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Echo Adept")).toBe(true);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", unlessPayCost: { raw: "{1}{G}" } });
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: false });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Echo Adept")).toBe(false);
+  });
+
+  it("pays echo through the normal mana planner and keeps the permanent", () => {
+    let game = readyToCast([ECHO_CREATURE()], [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const echoChoice = game.pendingChoice!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "choose-trigger" && entry.action.accept)).toBe(true);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: echoChoice.sourceId, accept: true });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Echo Adept")).toBe(true);
   });
 
   it("resolves Chaos Warp as an owner-library replacement", () => {

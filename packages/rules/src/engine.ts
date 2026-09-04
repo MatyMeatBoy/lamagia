@@ -78,6 +78,8 @@ export interface Permanent {
   readonly evoked?: boolean;
   /** This permanent's spell was cast from hand, as opposed to put onto the battlefield another way (CR 601). */
   readonly castFromHand?: boolean;
+  /** Echo is due on the controller's next upkeep; cleared when its trigger is queued. */
+  readonly echoDueTurn?: number;
   /** Doesn't untap during its controller's next untap step (Breaching Leviathan, CR 502.1). */
   readonly skipNextUntap?: boolean;
   /** A loyalty ability was activated on this planeswalker this turn (CR 606.3). */
@@ -1105,6 +1107,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     ...(kicked ? { kicked: true } : {}),
     ...(evoked ? { evoked: true } : {}),
     ...(castFromHand ? { castFromHand: true } : {}),
+    ...(profile.echoCost ? { echoDueTurn: state.turn + 1 } : {}),
     counters: {
       ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
       // A planeswalker enters with loyalty counters equal to its printed value (CR 306.5b).
@@ -3757,6 +3760,46 @@ function queueDelayedDraws(state: GameState): GameState {
   return { ...state, delayedDraws: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
 }
 
+/** Queues Echo once, at the controller's next upkeep (CR 702.30a-b). */
+function queueEchoTriggers(state: GameState): GameState {
+  const due = allPermanents(state).filter((permanent) =>
+    permanent.controller === state.activeSeat
+    && permanent.echoDueTurn !== undefined
+    && permanent.echoDueTurn <= state.turn
+    && cardProfile(permanent.card).echoCost !== null);
+  if (!due.length) return state;
+  const dueIds = new Set(due.map((permanent) => permanent.instance_id));
+  const players = state.players.map((player) => ({
+    ...player,
+    battlefield: player.battlefield.map((permanent) => {
+      if (!dueIds.has(permanent.instance_id)) return permanent;
+      const { echoDueTurn: _echoDueTurn, ...withoutEcho } = permanent;
+      return withoutEcho;
+    })
+  }));
+  const triggers: TriggerInstance[] = due.map((permanent, index) => {
+    const cost = cardProfile(permanent.card).echoCost!;
+    return {
+      id: `echo:${state.version}:${state.triggerQueue.length + index}:${permanent.instance_id}`,
+      controller: permanent.controller,
+      sourcePermanentId: permanent.instance_id,
+      sourceCard: permanent.card,
+      definition: {
+        event: "upkeep",
+        subject: "you",
+        effect: { kind: "sacrifice-source" },
+        optional: true,
+        targetKind: "none",
+        sourceText: `Echo ${cost.raw}: pay or sacrifice`,
+        unlessPayCost: cost
+      },
+      cause: `${permanent.card.name} entered the battlefield`,
+      eventController: permanent.controller
+    };
+  });
+  return { ...state, players, triggerQueue: [...state.triggerQueue, ...triggers] };
+}
+
 function beginStep(state: GameState, step: TurnStep): GameState {
   let next: GameState = { ...state, step, passedSeats: [], prioritySeat: state.activeSeat };
   next = emptyManaPools(next);
@@ -3830,6 +3873,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
   // opens, so they are already queued when a player would first receive it.
   if (step === "upkeep") {
     next = queueDelayedDraws(next);
+    next = queueEchoTriggers(next);
     next = raiseEvent(next, { kind: "upkeep", activeSeat: next.activeSeat });
   }
   if (step === "draw") next = raiseEvent(next, { kind: "draw-step", activeSeat: next.activeSeat });

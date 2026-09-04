@@ -633,6 +633,8 @@ export interface CardProfile {
   /** Generic cycling from hand. */
   readonly cyclingCost: ManaCost | null;
   readonly cyclingSearches: readonly CyclingSearchAbility[];
+  /** Echo cost paid at the controller's next upkeep (CR 702.30). */
+  readonly echoCost: ManaCost | null;
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
   /** Additional life payment bundled into a Flashback cost (CR 118.8). */
@@ -1274,6 +1276,7 @@ interface RecognizedText {
   readonly targetKind: TargetKind;
   kickerCost?: ManaCost | null;
   kickedEffects?: SpellEffect[];
+  echoCost?: ManaCost | null;
   evokeCost?: ManaCost | null;
   flashbackCost?: ManaCost | null;
   /** Exact normalized clauses the closed engine intentionally does not execute. */
@@ -2388,6 +2391,7 @@ function recognizeText(text: string): RecognizedText {
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
+  let echoCost: ManaCost | null = null;
   let evokeCost: ManaCost | null = null;
   let flashbackCost: ManaCost | null = null;
   const kickedEffects: SpellEffect[] = [];
@@ -2395,6 +2399,10 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Echo is a delayed upkeep payment for permanents that just entered under
+    // a player's control (CR 702.30a-b). Reminder text is not executable.
+    const echo = /^Echo\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (echo) { echoCost = parseManaCost(echo[1]!); continue; }
     // Evoke alternative cost (CR 702.34). Reminder text is dropped.
     const evoke = /^Evoke\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (evoke) { evokeCost = parseManaCost(evoke[1]!); continue; }
@@ -2689,7 +2697,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, evokeCost, flashbackCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, evokeCost, flashbackCost, echoCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -2812,6 +2820,7 @@ export function cardProfile(card: CardData): CardProfile {
     manaAbilities,
     cyclingCost,
     cyclingSearches,
+    echoCost: recognized.echoCost ?? null,
     flashbackLifeCost,
     additionalLifeCost,
     additionalLifeCostVariable,
