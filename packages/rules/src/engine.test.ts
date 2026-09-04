@@ -926,7 +926,7 @@ describe("casting", () => {
     const target = legalTargets(game, 0, "card-in-your-graveyard")[0]!;
     const before = game.players[0]!.library.length;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [target] });
-    expect(game.players[0]!.graveyard.some((card) => card.instance_id === returned.instance_id)).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.instance_id === target.instanceId)).toBe(false);
     expect(game.players[0]!.library).toHaveLength(before + 1);
     expect(game.players[0]!.library.at(-1)!.instance_id).toBe(target.kind === "graveyard-card" ? target.instanceId : "");
   });
