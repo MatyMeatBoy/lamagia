@@ -587,6 +587,7 @@ const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature 
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 const GREEN_COMMANDER = () => make({ name: "Green Commander", type_line: "Legendary Creature — Human", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"], color_identity: ["G"] });
 const COMMAND_TOWER = () => make({ name: "Command Tower", type_line: "Land", oracle_text: "{T}: Add one mana of any color in your commander's color identity.", produced_mana: ["W", "U", "B", "R", "G"] });
+const OPAL_PALACE = () => make({ name: "Opal Palace", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Add one mana of any color in your commander's color identity. If you spend this mana to cast your commander, it enters with a number of additional +1/+1 counters on it equal to the number of times it's been cast from the command zone this game.", produced_mana: ["B", "C", "G", "R", "U", "W"], scryfall_id: "912553e7-1e67-4045-84fd-0a791754cf6c" });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
   const cards = [commander, ...contents];
@@ -5723,6 +5724,21 @@ describe("activated abilities", () => {
 
 
 describe("commander rules", () => {
+  it("puts Opal Palace counters on a commander cast with its mana", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: [], commanderColorIdentity: ["G"] }));
+    game = putOnBattlefield(game, 0, [OPAL_PALACE(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const palace = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Opal Palace")!;
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: palace.instance_id, abilityIndex: 1, mana: "G" });
+    expect(game.players[0]!.commanderMana).toBe(1);
+    const commanderId = game.players[0]!.commandZone[0]!.instance_id;
+    game = applyAction(game, 0, { type: "cast", cardId: commanderId });
+    const commander = game.players[0]!.battlefield.find((permanent) => permanent.isCommander)!;
+    expect(commander.counters["+1/+1"]).toBe(1);
+    expect(game.players[0]!.commanderMana).toBe(0);
+  });
+
   it("charges two extra generic for each previous cast from the command zone", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ hand: [] }));
