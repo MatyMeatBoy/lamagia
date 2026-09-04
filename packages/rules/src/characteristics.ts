@@ -1818,6 +1818,19 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    // "Whenever ~ enters or attacks, X" is an enters trigger plus an attacks
+    // trigger (Grave Titan, CR 603.2).
+    const entersOrAttacks = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?\s+or\s+attacks,?\s*(.+)$/i.exec(line);
+    if (entersOrAttacks) {
+      const rec = recognizeSentence(entersOrAttacks[1]!.replace(/^you\s+may\s+/i, "").replace(/^it\s+(deals|gets|gains)/i, "~ $1"));
+      const optional = /^you\s+may\b/i.test(entersOrAttacks[1]!);
+      if (rec) {
+        for (const event of ["enters-battlefield", "attacks"] as const) {
+          triggers.push({ event, subject: "self", effect: rec.effect, optional, targetKind: rec.target, sourceText: line });
+        }
+        continue;
+      }
+    }
     // "Whenever another non-<Subtype> creature you control dies, X" (Requiem Angel).
     const nonSubtypeDies = /^whenever\s+another\s+non-([A-Za-z][A-Za-z'’-]*)\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i.exec(line);
     if (nonSubtypeDies) {
