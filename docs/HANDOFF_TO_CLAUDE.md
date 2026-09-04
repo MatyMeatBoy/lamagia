@@ -1271,3 +1271,15 @@ spells (CR 118.9), with an opponent-cast scenario.
 Validation before the next coverage export: `npm test` PASS (**382 rules
 tests**, simulator, **39 Oracle Python tests**). Coverage snapshots are
 regenerated after the next accepted batch.
+
+### Integrator checkpoint: C13 Landfall self-pump batch (2026-09-04)
+
+Integrated the fork's second 11-commit batch. Landfall triggers now resolve
+source-relative modifiers through the reusable `sourcePermanentId`, including
+temporary +N/+N and keyword grants; Baloth Woodcrasher is covered without a
+card-name-specific branch (CR 603.2, 613.4c, 611.2a).
+
+The batch's stale coverage/claim snapshots were intentionally regenerated
+locally. Current export: **159/341 C13 cards (46.6%)** and **8,144/38,711
+cards globally (21.0%)**. Validation: `npm run check` PASS; `npm test` PASS
+(**386 rules tests**, simulator, **39 Oracle Python tests**).
