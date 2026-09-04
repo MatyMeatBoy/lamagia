@@ -1296,6 +1296,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
   if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
   if (/^Return target artifact to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "artifact" };
+  if (/^Return target enchantment to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "enchantment" };
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
   if (/^Return target creature card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "creature-card-in-your-graveyard" };
   if (/^Return target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
