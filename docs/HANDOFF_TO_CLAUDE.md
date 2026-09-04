@@ -1720,3 +1720,10 @@ CR 615.1. The reusable profile closes equivalent Oracle printings as well.
 The refreshed export is **192/341 C13 (56.3%)**, with **149 unfinished** and
 **71 one-line-away**. The fork report `3af0cb0` (conditional Split second) is
 also queued as one incoming commit and remains outside the integration batch.
+
+### C13 optional cycle “may have” triggers (2026-09-04)
+
+The generic `card-cycled` trigger parser now normalizes “you may have it deal …”
+and “you may have target creature gain …” into existing reusable effects. Slice
+and Dice uses the all-creature damage path; Dirge of Dread uses the targeted
+temporary keyword path (CR 603.2, 702.29).

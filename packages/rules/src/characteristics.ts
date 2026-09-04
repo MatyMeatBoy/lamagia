@@ -2652,9 +2652,12 @@ function recognizeText(text: string): RecognizedText {
       const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
       const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
+      const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
       let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
+        .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
+        .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "if it was kicked" gate (CR 702.33e).
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
@@ -2664,7 +2667,7 @@ function recognizeText(text: string): RecognizedText {
       const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-      const optional = payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
+      const optional = payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice || mayHave ? true : /^you\s+may\b/i.test(effectText);
       const recognized = (payCost && payCost.hasVariable) ? null
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }

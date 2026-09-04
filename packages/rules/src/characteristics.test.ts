@@ -609,6 +609,26 @@ describe("effect recognition", () => {
     expect(sphinx.fullyImplemented).toBe(true);
   });
 
+  it("normalizes optional cycle triggers that use 'you may have'", () => {
+    const slice = cardProfile(card({
+      name: "Slice and Dice", type_line: "Sorcery", oracle_text: "Cycling {2}{R}\nWhen you cycle this card, you may have it deal 1 damage to each creature."
+    }));
+    expect(slice.triggers[0]).toMatchObject({
+      event: "card-cycled", subject: "self", optional: true,
+      effect: { kind: "damage-all-creatures", amount: 1 }
+    });
+    expect(slice.fullyImplemented).toBe(true);
+
+    const dirge = cardProfile(card({
+      name: "Dirge of Dread", type_line: "Sorcery", oracle_text: "Cycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn."
+    }));
+    expect(dirge.triggers[0]).toMatchObject({
+      event: "card-cycled", subject: "self", optional: true,
+      targetKind: "creature", effect: { kind: "grant-target-creature-keyword", keyword: "fear" }
+    });
+    expect(dirge.fullyImplemented).toBe(true);
+  });
+
   it("reuses the top-card reveal primitive with a mana-value amount", () => {
     const profile = cardProfile(card({
       name: "Augury Adept", type_line: "Creature — Kithkin Wizard", mana_cost: "{1}{W/U}{W/U}", cmc: 3,

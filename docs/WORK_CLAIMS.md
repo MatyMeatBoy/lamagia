@@ -233,6 +233,8 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `arsenal-vela-intimidate` | Intimidate keyword/static grants plus Vela’s leaves-the-battlefield trigger (CR 603.6c, 702.13, 509.1a) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-when-you-cycle-you` | Optional cycle trigger with reusable all-creature damage, applied to Slice and Dice (CR 603.2, 702.29) | `codex/c13-cycle-may-have-f99` | active | 2026-09-04 |
+| `c13-when-you-cycle-you-2` | Optional cycle trigger with targeted temporary fear, applied to Dirge of Dread (CR 603.2, 702.29) | `codex/c13-cycle-may-have-f99` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
