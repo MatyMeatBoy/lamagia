@@ -1954,7 +1954,7 @@ function recognizeText(text: string): RecognizedText {
       const recognized = (payCost && payCost.hasVariable) ? null
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
-        : recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
+        : recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "You ") : effectText);
       if (recognized) {
         triggers.push({
           event: triggered.event,

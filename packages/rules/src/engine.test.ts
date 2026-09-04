@@ -73,6 +73,7 @@ const PLANESWALKER_LIFE_SPELL = () => make({ name: "Walker Blessing", type_line:
 const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each battle you control." });
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
+const WALL_OF_REVERENCE = () => make({ name: "Wall of Reverence", type_line: "Creature — Spirit Wall", mana_cost: "{3}{W}", cmc: 4, power: "1", toughness: "6", oracle_text: "Defender, flying\nAt the beginning of your end step, you may gain life equal to the power of target creature you control.", scryfall_id: "0810983f-818a-43e6-a7b5-ebe0bc8b9f6a" });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
@@ -3493,6 +3494,28 @@ describe("triggered abilities", () => {
     });
    expect(profileOf(CREATURE_CAST_DRAWER()).triggers[0]).toMatchObject({ event: "spell-cast", subject: "you", spellType: "creature" });
  });
+
+  it("resolves Wall of Reverence's optional power-based end-step trigger", () => {
+    const profile = profileOf(WALL_OF_REVERENCE());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "end-step", subject: "you", optional: true,
+      effect: { kind: "gain-life-equal-target-power" }, targetKind: "creature-you-control"
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [WALL_OF_REVERENCE(), BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    expect(game.pendingChoice?.type).toBe("trigger-target");
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const beforeLife = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "permanent", instanceId: bear.instance_id } });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.players[0]!.life).toBe(beforeLife + 2);
+  });
 
   it("lets Duplicant imprint a nontoken creature on entry", () => {
     let game = readyToCast([DUPLICANT()], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()], [BEAR()]);

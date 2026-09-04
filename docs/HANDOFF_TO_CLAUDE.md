@@ -1428,3 +1428,13 @@ stale full tree. The clean branch currently exports **186/356 C13 printings**,
 **171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
 `5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
 queued for the next integration batch.
+
+### Worker checkpoint: Wall of Reverence reusable end-step trigger (2026-09-04)
+
+Added the optional trigger primitive for “At the beginning of your end step,
+you may gain life equal to the power of target creature you control”, including
+target selection before the optional choice and a scenario for Wall of
+Reverence (CR 603.2, 603.5, 608.2h). Optional trigger normalization now keeps
+the subject when parsing “you may ...”, so future optional triggers can reuse
+the same parser path. Commit `WALL_COMMIT` is queued for integration; this
+branch is based on `b008385` and does not include sibling worker commits.
