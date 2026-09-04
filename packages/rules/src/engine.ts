@@ -43,12 +43,13 @@ export const STEP_LABELS: Readonly<Record<TurnStep, string>> = {
   "postcombat-main": "Principal 2", end: "Paso final", cleanup: "Limpieza"
 };
 
-function matchesSacrificeType(permanent: Permanent, type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token"): boolean {
+function matchesSacrificeType(permanent: Permanent, type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token" | "Permanent"): boolean {
   const profile = cardProfile(permanent.card);
   if (type === "Artifact") return isArtifact(profile);
   if (type === "Enchantment") return isEnchantment(profile);
   if (type === "Noncreature") return profile.isPermanent && !isCreature(profile);
   if (type === "Token") return Boolean(permanent.card.token);
+  if (type === "Permanent") return profile.isPermanent;
   return isLand(profile);
 }
 
