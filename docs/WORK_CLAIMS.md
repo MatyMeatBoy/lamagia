@@ -13,6 +13,7 @@
 | `rules-c13-basalt-untap` | `codex/c13-equipment-cluster` | Reusable source-untap activation and static “doesn't untap during your untap step” rule for Basalt Monolith | Ready for integrator review |
 | `rules-c13-reuse-basic-effects` | `codex/c13-equipment-cluster` | Verify C13 cards reuse existing draw, damage, sacrifice-cost, and upkeep compound primitives: Borrowing 100,000 Arrows, Blood Rites, Carnage Altar, Baleful Force | Ready for integrator review |
 | `rules-c13-tap-typed-cost` | `codex/c13-equipment-cluster` | Reusable activation cost for tapping an untapped creature or subtype you control, applied to Azami, Lady of Scrolls | Ready for integrator review |
+| `rules-c13-draw-spell-reuse` | `codex/c13-equipment-cluster` | Verify C13 draw-only spells reuse the existing draw primitives: Brilliant Plan, Harmonize, and Vision Skeins | In progress |
 | `rules-level-up` | `codex/c13-equipment-cluster` | Level up activation, level counters, and level-band P/T/keyword characteristics | Ready for integrator review |
 | `rules-tap-untap` | `codex/c13-equipment-cluster` | Targeted Tap target creature and Untap target permanent effects | Ready for integrator review |
 | `rules-mill` | `codex/c13-equipment-cluster` | Target player mills a bounded number of cards into their graveyard | Ready for integrator review |
