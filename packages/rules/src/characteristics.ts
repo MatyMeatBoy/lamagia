@@ -565,6 +565,8 @@ export interface CardProfile {
   /** "<Basic type>s you control produce an additional {C}" (Crypt Ghast, CR 605). */
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   readonly entersTapped: EntersTappedRule;
+  /** Static replacement rule that keeps this permanent tapped during untap. */
+  readonly doesNotUntapDuringUntap: boolean;
   /** Printed attack/block restrictions and landwalk evasion. */
   readonly combatRules: CombatRules;
   /** Counters with which this permanent enters the battlefield. */
@@ -1818,6 +1820,7 @@ function recognizeText(text: string): RecognizedText {
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
+    if (/^~ doesn't untap during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
@@ -1994,6 +1997,7 @@ export function cardProfile(card: CardData): CardProfile {
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
+  const doesNotUntapDuringUntap = text.split("\n").some((line) => /^~ doesn't untap during your untap step\.?$/i.test(line.trim()));
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
   const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
@@ -2059,6 +2063,7 @@ export function cardProfile(card: CardData): CardProfile {
     staticLandManaBonus,
     combatRules,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
+    doesNotUntapDuringUntap,
     entersWithCounters: isPermanent ? parseEntersWithCounters(text) : [],
     isPermanent,
     // Lands are played, not cast; everything else needs a payable printed cost.
