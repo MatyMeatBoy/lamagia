@@ -2452,8 +2452,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 /** Targets a spell could legally choose right now. */
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
-  if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard") {
-    const sources = kind === "card-in-a-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-a-graveyard" ? state.players : [playerAt(state, seat)];
+  if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard") {
+    const sources = kind === "card-in-a-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-a-graveyard" ? state.players : [playerAt(state, seat)];
     return sources.flatMap((player) => player.graveyard
       .filter((card) => kind === "card-in-your-graveyard"
         || kind === "card-in-a-graveyard"
@@ -2461,6 +2461,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
         || (kind === "creature-card-in-a-graveyard" && isCreature(cardProfile(card)))
         || (kind === "artifact-card-in-your-graveyard" && cardProfile(card).types.includes("Artifact"))
         || (kind === "artifact-card-in-a-graveyard" && cardProfile(card).types.includes("Artifact"))
+        || (kind === "enchantment-card-in-a-graveyard" && cardProfile(card).types.includes("Enchantment"))
         || (kind === "enchantment-card-in-your-graveyard" && cardProfile(card).types.includes("Enchantment")))
       .map((card) => ({ kind: "graveyard-card", seat: player.seat, instanceId: card.instance_id }) as Target));
   }

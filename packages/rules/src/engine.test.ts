@@ -111,6 +111,7 @@ const ANY_GRAVEYARD_EXILE = () => make({ name: "Cross Grave Purge", type_line: "
 const ANY_GRAVEYARD_RETURN = () => make({ name: "Cross Grave Reclaim", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Return target card from a graveyard to its owner's hand." });
 const ANY_CREATURE_EXILE = () => make({ name: "Cross Creature Purge", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Exile target creature card from a graveyard." });
 const ANY_ARTIFACT_EXILE = () => make({ name: "Cross Artifact Purge", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Exile target artifact card from a graveyard." });
+const ANY_ENCHANTMENT_EXILE = () => make({ name: "Cross Enchantment Purge", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Exile target enchantment card from a graveyard." });
 const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on top of your library." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
@@ -1219,6 +1220,13 @@ describe("casting", () => {
     let game = readyToCast([ANY_ARTIFACT_EXILE()], [SWAMP(), SWAMP()]);
     game = stage(game, 1, () => ({ graveyard: toHand(1, [TEST_ARTIFACT(), BEAR()], "cross-artifact") }));
     expect(legalTargets(game, 0, "artifact-card-in-a-graveyard")).toHaveLength(1);
+  });
+
+  it("filters cross-graveyard exile to enchantment cards", () => {
+    expect(profileOf(ANY_ENCHANTMENT_EXILE()).targetKind).toBe("enchantment-card-in-a-graveyard");
+    let game = readyToCast([ANY_ENCHANTMENT_EXILE()], [SWAMP(), SWAMP()]);
+    game = stage(game, 1, () => ({ graveyard: toHand(1, [make({ name: "Dead Oath", type_line: "Enchantment" }), BEAR()], "cross-enchantment") }));
+    expect(legalTargets(game, 0, "enchantment-card-in-a-graveyard")).toHaveLength(1);
   });
 
   it("scales any-target damage from controlled creatures", () => {
