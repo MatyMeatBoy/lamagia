@@ -1708,6 +1708,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           : candidate)
       }));
     }
+    case "modify-target-creature-per-subtype": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      const count = playerAt(state, controller).battlefield.filter((p) => cardProfile(p.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+      return modifyCreatures(state, count, count, (candidate) => candidate.instance_id === permanent.instance_id);
+    }
+    case "add-counter-target-per-subtype": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      const count = playerAt(state, controller).battlefield.filter((p) => cardProfile(p.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+      if (count === 0) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, counters: { ...candidate.counters, [effect.counter]: (candidate.counters[effect.counter] ?? 0) + count } }
+          : candidate)
+      }));
+    }
     case "add-counter-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
