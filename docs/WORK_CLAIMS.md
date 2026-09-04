@@ -334,6 +334,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-oracle-damage-triggered-shape-5` | Optional attack trigger that taps a chosen number of untapped creatures of a subtype, then pumps and damages the attacked player (CR 508.1i, 601.2) | `codex/c13-myr-battlesphere-f99` | active | 2026-09-04 |
 | `c13-oracle-gain-life-triggered-5` | Life-gain event carries its amount into a targeted opponent life-loss trigger (CR 603.2, 120.3) | `codex/c13-sanguine-bond-f99` | active | 2026-09-04 |
 | `c13-oracle-other-activated-shape-2` | Activated global shroud grant for creatures you control until end of turn (CR 113.6, 702.18) | `codex/c13-aerie-mystics-f99` | active | 2026-09-04 |
+| `c13-oracle-other-activated-shape-4` | Activated target power threshold grant: target creature with power 5 or greater gains first strike until end of turn (CR 601.2c, 702.7) | `codex/c13-rakeclaw-f99` | active | 2026-09-04 |
 
 ## Claim format
 

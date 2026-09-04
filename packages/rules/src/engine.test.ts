@@ -222,6 +222,7 @@ const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery"
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
 const SANGUINE_BOND = () => make({ name: "Sanguine Bond", type_line: "Enchantment", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Whenever you gain life, target opponent loses that much life.", scryfall_id: "73089a39-a2f6-4aa2-a058-e6551475153d" });
 const AERIE_MYSTICS = () => make({ name: "Aerie Mystics", type_line: "Creature — Bird Wizard", mana_cost: "{3}{G}{U}", cmc: 5, power: "3", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\n{1}{G}{U}: Creatures you control gain shroud until end of turn.", scryfall_id: "12134f7d-433a-416a-b668-c1a21984c94b" });
+const RAKECLAW_GARGANTUAN = () => make({ name: "Rakeclaw Gargantuan", type_line: "Creature — Beast", mana_cost: "{2}{R}{G}{W}", cmc: 5, power: "5", toughness: "3", oracle_text: "{1}: Target creature with power 5 or greater gains first strike until end of turn.", scryfall_id: "8dbb4a8f-78e9-4ceb-824d-bb67bdf939db" });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
@@ -4641,6 +4642,26 @@ describe("activated abilities", () => {
     expect(permanentNamed(game, 0, "Aerie Mystics")!.temporaryKeywords).toContain("shroud");
     expect(permanentNamed(game, 0, "Grizzly Bears")!.temporaryKeywords).toContain("shroud");
     expect(permanentNamed(game, 0, "Forest")!.temporaryKeywords ?? []).not.toContain("shroud");
+  });
+
+  it("filters Rakeclaw Gargantuan's first-strike target by current power", () => {
+    let game = readyOnBoard([RAKECLAW_GARGANTUAN(), FOREST()], { hold: true });
+    game = putOnBattlefield(game, 1, [TRAMPLER(), BEAR()]);
+    const source = permanentNamed(game, 0, "Rakeclaw Gargantuan")!;
+    const big = permanentNamed(game, 1, "Big Stomper")!;
+    expect(profileOf(RAKECLAW_GARGANTUAN()).activatedAbilities[0]).toMatchObject({
+      manaCost: { raw: "{1}" }, targetKind: "creature-power-at-least-5",
+      effect: { kind: "grant-target-creature-keyword", keyword: "first strike" }
+    });
+    const legal = legalTargets(game, 0, "creature-power-at-least-5");
+    expect(legal).toContainEqual({ kind: "permanent", instanceId: big.instance_id });
+    expect(legal).not.toContainEqual({ kind: "permanent", instanceId: permanentNamed(game, 1, "Grizzly Bears")!.instance_id });
+
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0,
+      targets: [{ kind: "permanent", instanceId: big.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    expect(permanentNamed(game, 1, "Big Stomper")!.temporaryKeywords).toContain("first strike");
   });
 
   it("resolves Druidic Satchel's conditional top-card reveal", () => {
