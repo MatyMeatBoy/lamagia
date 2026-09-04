@@ -109,6 +109,9 @@ varias primitivas, usa tareas/worktrees separados con alcance sin solapamiento:
 
 - consulta y actualiza `docs/WORK_CLAIMS.md` antes de editar; publica el claim
   primero para que otro worker lo vea rápidamente;
+- todos parten del mismo SHA publicado por el integrador y cada worker escoge
+  un cluster libre al azar del roadmap regenerado; si el claim ya fue tomado,
+  vuelve a sortear;
 - un worker por cluster reutilizable o por lote de cartas;
 - cada worker lee este documento y `docs/HANDOFF_TO_CLAUDE.md`, añade escenarios,
   actualiza el mapa de cobertura y deja un commit pequeño;

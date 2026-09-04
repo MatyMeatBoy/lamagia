@@ -1320,7 +1320,7 @@ function raiseEvent(
         sourceCard: watcher.card,
         definition,
         cause: causeOf(state, event),
-        ...("controller" in event ? { eventController: event.controller } : {}),
+        ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {})
       });
     }
@@ -1929,6 +1929,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const next = loseLife(state, target.seat, amount);
       return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${amount} vidas.`);
     }
+    case "lose-life-event-player": {
+      // "That player" is the event's own player (e.g. the opponent who
+      // drew), not a chosen target — CR 603.3d.
+      const seat = object.trigger?.eventController;
+      if (seat === undefined) return state;
+      const amount = effectAmount(effect.amount, object);
+      const next = loseLife(state, seat, amount);
+      return logged(next, controller, `${playerAt(next, seat).name} pierde ${amount} vidas.`);
+    }
+    case "damage-event-player": {
+      const seat = object.trigger?.eventController;
+      if (seat === undefined) return state;
+      const amount = effectAmount(effect.amount, object);
+      return dealDamageToPlayer(state, seat, amount, sourceName);
+    }
     case "lose-life-target-player-each-controlled-type": {
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
@@ -2343,6 +2358,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
               .map((permanent) => ({ ...permanent, controller: player.seat })))
         }))
       };
+    }
+    case "destroy-random-target-permanent": {
+      const candidates = object.targets
+        .filter((target): target is Extract<Target, { kind: "permanent" }> => target.kind === "permanent")
+        .map((target) => findPermanent(state, target.instanceId))
+        .filter((permanent): permanent is Permanent => Boolean(permanent));
+      let next = state;
+      for (let count = 0; count < effect.amount && candidates.length; count += 1) {
+        const rolled = nextRandom(next.rngState);
+        const index = Math.floor(rolled.value * candidates.length);
+        const selected = candidates.splice(index, 1)[0]!;
+        next = { ...next, rngState: rolled.state };
+        next = destroyPermanent(next, selected);
+      }
+      return next;
     }
     case "chaos-warp": {
       const target = object.targets[0];

@@ -379,6 +379,9 @@ export type SpellEffect =
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number | "X" }
+  /** "that player" in a triggered ability referring back to the event's own player (e.g. the opponent who drew) — CR 603.3d, not a chosen target. */
+  | { readonly kind: "lose-life-event-player"; readonly amount: number | "X" }
+  | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   | { readonly kind: "damage-any-target-each-controlled-type"; readonly type: CardType }
@@ -1730,6 +1733,19 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "each-opponent-loses-life", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-opponent-loses-life", amount: "X" }, target: "none" };
+  }
+  // "that player" in these two refers back to the event's own player (e.g.
+  // the opponent who drew the card that triggered this), not a chosen
+  // target — CR 603.3d. Resolved from `object.trigger?.eventController`.
+  if ((match = /^~ deals (\w+) damage to (?:that player|them)$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount) return { effect: { kind: "damage-event-player", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-event-player", amount: "X" }, target: "none" };
+  }
+  if ((match = /^That player loses (\w+) life$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount) return { effect: { kind: "lose-life-event-player", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "lose-life-event-player", amount: "X" }, target: "none" };
   }
   if ((match = /^~ deals (\w+) damage to any target$/i.exec(text))) {
     const amount = toNumber(match[1]);
