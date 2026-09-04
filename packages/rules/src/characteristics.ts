@@ -347,6 +347,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
+  | { readonly kind: "return-target-creature-card-from-graveyard-threshold"; readonly threshold: number }
   | { readonly kind: "return-target-legendary-creature-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-permanent-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-land-card-from-graveyard-to-battlefield" }
@@ -1799,6 +1800,14 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  const thresholdReturn = /^Return target creature card from your graveyard to your hand\. Threshold [—–-] Return that card from your graveyard to the battlefield instead if there are (one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more cards in your graveyard\.?$/i.exec(joined);
+  const threshold = thresholdReturn ? toNumber(thresholdReturn[1]!) : null;
+  if (threshold !== null) {
+    return {
+      effects: [{ kind: "return-target-creature-card-from-graveyard-threshold", threshold }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature-card-in-your-graveyard", unimplementedText: [], covered: true
     };
   }
   if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness\.$/i.test(joined)) {

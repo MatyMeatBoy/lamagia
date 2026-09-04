@@ -319,6 +319,20 @@ describe("self-shuffle replacement", () => {
   });
 });
 
+describe("threshold return", () => {
+  it("keeps Stitch Together's threshold as a reusable numeric operand", () => {
+    const profile = cardProfile(card({
+      name: "Stitch Together", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2,
+      oracle_text: "Return target creature card from your graveyard to your hand. Threshold — Return that card from your graveyard to the battlefield instead if there are seven or more cards in your graveyard."
+    }));
+    expect(profile).toMatchObject({
+      targetKind: "creature-card-in-your-graveyard",
+      effects: [{ kind: "return-target-creature-card-from-graveyard-threshold", threshold: 7 }],
+      fullyImplemented: true
+    });
+  });
+});
+
 describe("scry", () => {
   it("recognises the reusable Scry 1 effect", () => {
     const profile = cardProfile(card({

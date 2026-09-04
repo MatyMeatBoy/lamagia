@@ -1406,6 +1406,14 @@ Current regenerated coverage: **183/356 C13 precon cards (51.4%)** and
 (21.2%)**. Validation: `npm run check` and `npm test` PASS (**425 rules
 tests**, simulator, **39 Oracle Python tests**).
 
+### C13 threshold return primitive (2026-09-04)
+
+Stitch Together now uses one numeric threshold primitive: the targeted creature
+card returns to hand normally, but returns to the battlefield instead when its
+controller has at least seven cards in their graveyard at resolution. The
+threshold is evaluated on resolution, after target selection, so the same
+effect can serve future Threshold values without card-specific logic.
+
 ### Integrator checkpoint: stale C14 branch review (2026-09-04)
 
 Reviewed `c14-batch2-clean`: its reported 200+ cards were already present in

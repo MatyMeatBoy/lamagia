@@ -891,6 +891,20 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
   });
 
+  it("uses Stitch Together's threshold at resolution", () => {
+    const stitch = make({ name: "Stitch Together", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2,
+      oracle_text: "Return target creature card from your graveyard to your hand. Threshold — Return that card from your graveyard to the battlefield instead if there are seven or more cards in your graveyard.",
+      scryfall_id: "bc3d5911-3580-4132-9daf-2826495b5739" });
+    let game = readyToCast([stitch], [SWAMP(), SWAMP()]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [BEAR(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()], "stitch-yard") }));
+    const target = { kind: "graveyard-card" as const, seat: 0 as const, instanceId: "stitch-yard-0" };
+    expect(legalTargets(game, 0, "creature-card-in-your-graveyard")).toContainEqual(target);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [target] });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard).toHaveLength(7);
+  });
+
   it("puts the chosen graveyard card on top of its owner's library", () => {
     const profile = profileOf(GRAVEYARD_TOP());
     expect(profile).toMatchObject({ targetKind: "card-in-your-graveyard", effects: [{ kind: "return-target-card-to-library-top" }] });
