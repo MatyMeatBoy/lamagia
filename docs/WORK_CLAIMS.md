@@ -311,6 +311,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-reveal-until-creature` | Foster reveal until a creature, move it to hand and revealed cards to graveyard | `codex/c13-foster` | active | 2026-09-04 |
 | `c13-threshold-graveyard-return` | Stitch Together threshold branch between battlefield and hand | `codex/c13-stitch-together` | active | 2026-09-04 |
 | `c13-choose-both` | Soul Manipulation and Fissure Vent modal one-or-both selection | `codex/c13-choose-both` | active | 2026-09-04 |
+| `c13-was-kicked-has-split` | Conditional Split second static keyword while a spell is kicked, reusable for Molten Disaster (CR 702.33e, 702.61) | `codex/c13-kicked-split-ebc` | active | 2026-09-04 |
 
 ## Claim format
 

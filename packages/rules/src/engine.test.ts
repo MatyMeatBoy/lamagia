@@ -3480,6 +3480,7 @@ describe("scry and combat-restricted damage", () => {
 
 describe("kicker and optional-cost triggers", () => {
   const INTO_THE_ROIL = () => make({ name: "Into the Roil", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Kicker {1}{U} (You may pay an additional {1}{U} as you cast this spell.)\nReturn target nonland permanent to its owner's hand. If this spell was kicked, draw a card." });
+  const KICKED_SPLIT = () => make({ name: "Kicked Split", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, colors: ["R"], oracle_text: "Kicker {R}\nEach player loses 1 life.\nIf this spell was kicked, it has split second." });
   const KOR_SANCTIFIERS = () => make({ name: "Kor Sanctifiers", type_line: "Creature — Kor Cleric", mana_cost: "{3}{W}", cmc: 4, power: "2", toughness: "3", oracle_text: "Kicker {W} (You may pay an additional {W} as you cast this spell.)\nWhen Kor Sanctifiers enters the battlefield, if it was kicked, destroy target artifact or enchantment." });
   const JALUM_TOME = () => make({ name: "Jalum Tome", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Draw a card, then discard a card." });
   const PAY_DRAWER = () => make({ name: "Ledger Keeper", type_line: "Creature — Human", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Ledger Keeper enters the battlefield, you may pay {1}. If you do, draw a card." });
@@ -3509,6 +3510,18 @@ describe("kicker and optional-cost triggers", () => {
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[1]!.hand.some((c) => c.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand.length).toBe(hb - 1 + 1);
+  });
+
+  it("enables Split second only for a kicked spell", () => {
+    const profile = profileOf(KICKED_SPLIT());
+    expect(profile.kickedKeywords).toEqual(["split second"]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = ready([KICKED_SPLIT()], [MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 1, () => ({ autoPass: false, hand: toHand(1, [BOLT()], "response") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", kicked: true });
+    if (game.prioritySeat === 0) game = applyAction(game, 0, { type: "pass" });
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "cast")).toBe(false);
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "pass")).toBe(true);
   });
 
   it("fires a kicked-only enters trigger only on the kicked cast", () => {

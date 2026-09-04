@@ -692,6 +692,8 @@ export interface CardProfile {
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   readonly kickerCost: ManaCost | null;
   readonly kickedEffects: readonly SpellEffect[];
+  /** Keywords granted only when the spell is kicked (CR 702.33e). */
+  readonly kickedKeywords: readonly EnforcedKeyword[];
   /** Evoke alternative cost (CR 702.34), null when absent. */
   readonly evokeCost: ManaCost | null;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
@@ -1302,6 +1304,7 @@ interface RecognizedText {
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   kickerCost?: ManaCost | null;
   kickedEffects?: SpellEffect[];
+  kickedKeywords?: EnforcedKeyword[];
   echoCost?: ManaCost | null;
   evokeCost?: ManaCost | null;
   flashbackCost?: ManaCost | null;
@@ -2430,6 +2433,7 @@ function recognizeText(text: string): RecognizedText {
   let evokeCost: ManaCost | null = null;
   let flashbackCost: ManaCost | null = null;
   const kickedEffects: SpellEffect[] = [];
+  const kickedKeywords: EnforcedKeyword[] = [];
 
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
@@ -2713,6 +2717,8 @@ function recognizeText(text: string): RecognizedText {
       // "If ~ was kicked, X" — X applies only on a kicked cast (CR 702.33e).
       const ifKicked = /^If (?:~|this spell|this creature) was kicked(?:\s+\d+ times?)?,\s*(.+)$/i.exec(sentence.trim());
       if (ifKicked) {
+        const keyword = /^it has (split second)\.?$/i.exec(ifKicked[1]!.trim());
+        if (keyword) { kickedKeywords.push(keyword[1]!.toLowerCase() as EnforcedKeyword); continue; }
         const rk = recognizeSentence(ifKicked[1]!);
         if (rk) { kickedEffects.push(rk.effect); if (rk.target !== "none") targetKind = rk.target; }
         else unimplementedText.push(sentence.trim());
@@ -2735,7 +2741,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, evokeCost, flashbackCost, echoCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -2910,6 +2916,7 @@ export function cardProfile(card: CardData): CardProfile {
     evokeCost: recognized.evokeCost ?? null,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
+    kickedKeywords: recognized.kickedKeywords ?? [],
     additionalCostExileGraveyardX,
     hasRebound,
     additionalCostSacrificeLand,

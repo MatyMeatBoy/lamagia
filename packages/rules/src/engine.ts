@@ -588,7 +588,8 @@ export interface ManaSource {
 /** Rule 302.6 applies to a creature's own tap ability, including Llanowar Elves. */
 function splitSecondActive(state: GameState): boolean {
   const top = state.stack.at(-1);
-  return Boolean(top && cardProfile(top.card).keywords.includes("split second"));
+  return Boolean(top && (cardProfile(top.card).keywords.includes("split second")
+    || (top.kicked && cardProfile(top.card).kickedKeywords.includes("split second"))));
 }
 
 function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: ManaAbility, state?: GameState): boolean {
