@@ -1471,6 +1471,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (current) => ({ ...current, graveyard: [], hand: [...current.hand, ...returned] }));
       return logged(next, controller, `${sourceName} devuelve ${returned.length} carta(s) del cementerio a la mano.`);
     }
+    case "create-copy-token": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const original = findPermanent(state, target.instanceId);
+      if (!original) return state;
+      const total = (object.kicked && effect.kickedAmount) ? effect.kickedAmount : effect.amount;
+      let next = state;
+      for (let index = 0; index < total; index += 1) {
+        const copy: GameCard = {
+          ...original.card,
+          scryfall_id: `copytoken:${object.id}:${index}`,
+          instance_id: `copytoken:${object.id}:${index}`,
+          owner: controller,
+          token: true
+        };
+        next = putOntoBattlefield(next, controller, copy, false);
+      }
+      return logged(next, controller, `${sourceName} crea ${total} copia(s) de ${original.card.name}.`);
+    }
     case "play-additional-land": {
       return withPlayer(state, controller, (player) => ({ ...player, extraLandDrops: player.extraLandDrops + effect.amount }));
     }

@@ -360,6 +360,7 @@ export type SpellEffect =
   | { readonly kind: "return-all-your-graveyard-to-hand" }
   | { readonly kind: "xathrid-upkeep"; readonly fallbackLife: number }
   | { readonly kind: "disciple-of-bolas" }
+  | { readonly kind: "create-copy-token"; readonly amount: number; readonly kickedAmount?: number }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
@@ -1629,6 +1630,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
   }
+  if (/^Create a token that's a copy of target creature you control$/i.test(text)) {
+    return { effect: { kind: "create-copy-token", amount: 1 }, target: "creature-you-control" };
+  }
+  if (/^Create a token that's a copy of target creature$/i.test(text)) {
+    return { effect: { kind: "create-copy-token", amount: 1 }, target: "creature" };
+  }
   if ((match = /^You may play (an additional land|up to (\w+) additional lands?) this turn$/i.exec(text))) {
     const amount = match[2] ? (toNumber(match[2]) ?? 1) : 1;
     return { effect: { kind: "play-additional-land", amount }, target: "none" };
@@ -1922,6 +1929,13 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "compound", effects: [{ kind: "destroy-n-creatures", count: "X", ...(dregs[1] ? { nonblack: true } : {}) }, { kind: "draw", amount: "X" }] }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  // Rite of Replication: one copy, or five instead when kicked.
+  if (/^Create a token that's a copy of target creature\.\s*If this spell was kicked, create five tokens that are copies of that creature instead\.$/i.test(joined)) {
+    return {
+      effects: [{ kind: "create-copy-token", amount: 1, kickedAmount: 5 }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
     };
   }
   // Incite Rebellion: each player takes damage and their creatures take damage equal to their creature count.
