@@ -983,3 +983,13 @@ resolves first.
 
 Validation: check PASS; 275 tests; oracle 25 OK; simulate 200 games 0 failures.
 Catalog 7,734 -> 7,744; Commander 2014 117 -> 119/337 (Mulldrifter, Shriekmaw).
+
+### C14 batch9: Extort
+
+Extort (CR 702.39) synthesised from the keyword: a `spell-cast` trigger with an
+optional `{W/B}` payment whose `extort` effect drains each opponent for 1 and
+heals the controller by that much. Reuses the optional-cost trigger flow.
+
+Validation: check PASS; 276 tests; oracle 25 OK; simulate 200 games 0 failures.
+Catalog 7,744 -> 7,751; Commander 2014 119/337 (Crypt Ghast / Pontiff still
+blocked by their other static text).
