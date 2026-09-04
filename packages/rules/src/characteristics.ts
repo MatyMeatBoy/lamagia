@@ -356,6 +356,8 @@ export interface TriggerDefinition {
   readonly targetKind: TargetKind;
   readonly sourceText: string;
   readonly spellType?: "creature";
+  /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
+  readonly requiresKicked?: boolean;
 }
 
 export type TargetKind =
@@ -396,6 +398,10 @@ export interface CardProfile {
   readonly effects: readonly SpellEffect[];
   readonly triggers: readonly TriggerDefinition[];
   readonly targetKind: TargetKind;
+  /** Kicker / Multikicker additional cost (CR 702.33), null when absent. */
+  readonly kickerCost: ManaCost | null;
+  /** Effects that only apply when the spell was kicked ("if ~ was kicked, ..."). */
+  readonly kickedEffects: readonly SpellEffect[];
   readonly entersTapped: EntersTappedRule;
   /** Printed attack/block restrictions and landwalk evasion. */
   readonly combatRules: CombatRules;
@@ -801,6 +807,8 @@ interface RecognizedText {
   readonly activatedAbilities: ActivatedAbility[];
   readonly modalChoices: ModalChoice[];
   readonly targetKind: TargetKind;
+  kickerCost?: ManaCost | null;
+  kickedEffects?: SpellEffect[];
   /** Exact normalized clauses the closed engine intentionally does not execute. */
   readonly unimplementedText: readonly string[];
   readonly covered: boolean;
@@ -1150,6 +1158,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Exile target player's graveyard$/i.test(text)) return { effect: { kind: "exile-target-graveyard" }, target: "player" };
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
   if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
+  if (/^Return target nonland permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "nonland" };
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
   if ((match = /^Return (?:another )?target (creature|artifact|enchantment) card from your graveyard to your hand$/i.exec(text))) {
     return { effect: { kind: "return-target-card-from-graveyard" }, target: `${match[1]!.toLowerCase()}-card-in-your-graveyard` as TargetKind };
@@ -1216,10 +1225,19 @@ function recognizeText(text: string): RecognizedText {
   const combatRuleLines = parseCombatRules(body.map((entry) => entry.text)).consumed;
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
+  let kickerCost: ManaCost | null = null;
+  const kickedEffects: SpellEffect[] = [];
 
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Kicker / Multikicker additional cost (CR 702.33). The reminder text in
+    // parentheses carries no rules and is dropped.
+    const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (kicker) {
+      kickerCost = parseManaCost(kicker[1]!);
+      continue;
+    }
     if (/^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
@@ -1280,7 +1298,10 @@ function recognizeText(text: string): RecognizedText {
     if (triggered) {
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      const effectText = triggered.effectText.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      let effectText = triggered.effectText.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
+      const requiresKicked = Boolean(kickedGate);
+      if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       const optional = /^you\s+may\b/i.test(effectText);
       const recognized = recognizeSentence(optional ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {
@@ -1291,7 +1312,8 @@ function recognizeText(text: string): RecognizedText {
           optional,
           targetKind: recognized.target,
           sourceText: line,
-          ...(triggered.spellType ? { spellType: triggered.spellType } : {})
+          ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
+          ...(requiresKicked ? { requiresKicked: true } : {})
         });
       } else {
         unimplementedText.push(line);
@@ -1301,6 +1323,19 @@ function recognizeText(text: string): RecognizedText {
 
     for (const sentence of line.split(SENTENCE_SPLIT)) {
       if (!sentence.trim()) continue;
+      // "If ~ was kicked, X" — X applies only on a kicked cast (CR 702.33e).
+      // "N times" scaling is not modelled.
+      const ifKicked = /^If (?:~|this spell|this creature) was kicked(?:\s+\d+ times?)?,\s*(.+)$/i.exec(sentence.trim());
+      if (ifKicked) {
+        const recognizedKicked = recognizeSentence(ifKicked[1]!);
+        if (recognizedKicked) {
+          kickedEffects.push(recognizedKicked.effect);
+          if (recognizedKicked.target !== "none") targetKind = recognizedKicked.target;
+        } else {
+          unimplementedText.push(sentence.trim());
+        }
+        continue;
+      }
       const recognized = recognizeSentence(sentence);
       if (!recognized) {
         if (!isIgnorableSentence(sentence)) unimplementedText.push(sentence.trim());
@@ -1310,7 +1345,7 @@ function recognizeText(text: string): RecognizedText {
       if (recognized.target !== "none") targetKind = recognized.target;
     }
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -1380,6 +1415,8 @@ export function cardProfile(card: CardData): CardProfile {
     effects: recognized.effects,
     triggers: recognized.triggers,
     targetKind: recognized.targetKind,
+    kickerCost: recognized.kickerCost ?? null,
+    kickedEffects: recognized.kickedEffects ?? [],
     combatRules,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     entersWithCounters: isPermanent ? parseEntersWithCounters(text) : [],

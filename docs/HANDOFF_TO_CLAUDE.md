@@ -786,3 +786,22 @@ card to that zone instead of the graveyard once its other effects resolve.
 
 Validation: check PASS; 207 rules tests; oracle 22 OK; simulate:engine 200 games
 0 failures. Catalog 7,273 -> 7,277; Commander 2014 98/337.
+
+### C14 race batch: Kicker / Multikicker
+
+Kicker and Multikicker additional cost (CR 702.33). `Kicker {cost}` /
+`Multikicker {cost}` lines set `profile.kickerCost`; `legalActions` offers a
+separate kicked cast action whose mana is `base + kicker`; `applyCast` pays it
+and marks the `StackObject`/`Permanent` kicked. `If ~ was kicked, X` sentences
+become `profile.kickedEffects`, applied on resolution only when kicked; an
+enters trigger reading "..., if it was kicked, ..." carries `requiresKicked`
+and `raiseEvent` skips it on a non-kicked cast. Multikicker is treated as a
+boolean (paid at least once); per-kick scaling is not modelled.
+
+Files: characteristics.ts, engine.ts, engine.test.ts (2 scenarios: Into the
+Roil, Kor Sanctifiers).
+
+Validation: check PASS; 209 rules tests; oracle 22 OK; simulate:engine 200
+games, 0 invariant/projection failures (159 finished vs 160 baseline: bots now
+sometimes pay a kicker, marginally slower games). Catalog 7,277 -> 7,307;
+Commander 2014 98 -> 100/337 (Into the Roil, Kor Sanctifiers).

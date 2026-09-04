@@ -193,6 +193,8 @@ const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature 
 const MYR_RETRIEVER = () => make({ name: "Myr Retriever", type_line: "Artifact Creature — Myr", mana_cost: "{2}", cmc: 2, power: "1", toughness: "1", oracle_text: "When Myr Retriever dies, return another target artifact card from your graveyard to your hand." });
 const JALUM_TOME = () => make({ name: "Jalum Tome", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Draw a card, then discard a card." });
 const EXILE_SELF_SPELL = () => make({ name: "Vanishing Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Vanishing Bolt deals 2 damage to any target. Exile Vanishing Bolt." });
+const INTO_THE_ROIL = () => make({ name: "Into the Roil", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Kicker {1}{U} (You may pay an additional {1}{U} as you cast this spell.)\nReturn target nonland permanent to its owner's hand. If this spell was kicked, draw a card." });
+const KOR_SANCTIFIERS = () => make({ name: "Kor Sanctifiers", type_line: "Creature — Kor Cleric", mana_cost: "{3}{W}", cmc: 4, power: "2", toughness: "3", oracle_text: "Kicker {W} (You may pay an additional {W} as you cast this spell.)\nWhen Kor Sanctifiers enters the battlefield, if it was kicked, destroy target artifact or enchantment." });
 const SHUFFLE_SELF_SPELL = () => make({ name: "Recurring Nova", type_line: "Sorcery", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 5 life. Shuffle Recurring Nova into its owner's library." });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 
@@ -1264,6 +1266,64 @@ describe("scry and combat-restricted damage", () => {
     game = passUntil(game, (state) => !state.players[0]!.battlefield.some((p) => p.card.name === "Hill Giant") || state.turn > 1);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Hill Giant")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Hill Giant")).toBe(true);
+  });
+});
+
+describe("kicker", () => {
+  function ready(cards: CardData[], battlefield: CardData[], opponentBoard: CardData[] = []) {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, cards) }));
+    game = stage(game, 1, () => ({ hand: [] }));
+    game = putOnBattlefield(game, 0, battlefield);
+    if (opponentBoard.length) game = putOnBattlefield(game, 1, opponentBoard);
+    return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+  }
+
+  it("parses the kicker cost and only applies the kicked clause when paid", () => {
+    const profile = profileOf(INTO_THE_ROIL());
+    expect(profile.kickerCost?.raw).toBe("{1}{U}");
+    expect(profile.effects).toContainEqual({ kind: "return-target-permanent" });
+    expect(profile.kickedEffects).toContainEqual({ kind: "draw", amount: 1 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Unkicked: two lands are enough, no card drawn.
+    let game = ready([INTO_THE_ROIL()], [ISLAND(), ISLAND()], [BEAR()]);
+    const foeBear = () => game.players[1]!;
+    const bearId = game.players[1]!.battlefield.find((p) => p.card.name === "Grizzly Bears")!.instance_id;
+    const casts = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(casts).toHaveLength(1);
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bearId }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.hand.some((c) => c.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.hand.length).toBe(handBefore - 1);
+
+    // Kicked: four mana, permanent bounced and a card drawn.
+    game = ready([INTO_THE_ROIL()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()], [BEAR()]);
+    const bear2 = game.players[1]!.battlefield.find((p) => p.card.name === "Grizzly Bears")!.instance_id;
+    const kicked = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.kicked);
+    expect(kicked).toBeDefined();
+    const hb = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", kicked: true, targets: [{ kind: "permanent", instanceId: bear2 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.hand.some((c) => c.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.hand.length).toBe(hb - 1 + 1);
+  });
+
+  it("fires a kicked-only enters trigger only on the kicked cast", () => {
+    expect(profileOf(KOR_SANCTIFIERS()).fullyImplemented).toBe(true);
+
+    // Unkicked: the ETB trigger does not fire, the artifact survives.
+    let game = ready([KOR_SANCTIFIERS()], [PLAINS(), PLAINS(), PLAINS(), PLAINS()], [IRON_BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.some((p) => p.card.name === "Kor Sanctifiers") && !state.stack.length && state.pendingChoice === null);
+    expect(game.players[1]!.battlefield.some((p) => p.card.name === "Iron Bear")).toBe(true);
+
+    // Kicked: the ETB trigger destroys the artifact.
+    game = ready([KOR_SANCTIFIERS()], [PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()], [IRON_BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", kicked: true });
+    game = passUntil(game, (state) => !state.players[1]!.battlefield.some((p) => p.card.name === "Iron Bear") || state.turn > 1);
+    expect(game.players[1]!.graveyard.some((c) => c.name === "Iron Bear")).toBe(true);
   });
 });
 
