@@ -1192,6 +1192,17 @@ is paid together with mana (CR 702.34, 118.8).
 Coverage after this refinement: **170/356 C13 cards (47.8%)** and
 **8,114/38,711 globally**.
 
+### Integrator checkpoint: Hua Tuo typed graveyard-top activation (2026-09-04)
+
+Added the reusable target restriction for `Put target creature card from your
+graveyard on top of your library`, so Hua Tuo no longer treats noncreature
+cards as legal targets. Its precombat-main activation timing remains enforced
+by the shared activation validator (CR 602.1, 602.2b, 701.18).
+
+Validation: `npm run check` PASS; `npm test` PASS (**372 rules tests**,
+simulator, **39 Oracle Python tests**). C13 is **172/356 (48.3%)** and global
+export is **8,125/38,711**.
+
 ### Integrator checkpoint: self-shuffle and life-gain batch (2026-09-04)
 
 Integrated the functional portion of the fork's 11-commit batch: reusable

@@ -302,6 +302,21 @@ describe("self-shuffle replacement", () => {
 });
 
 describe("effect recognition", () => {
+  it("keeps creature type when putting a graveyard card on top", () => {
+    const profile = cardProfile(card({
+      name: "Hua Tuo, Honored Physician",
+      type_line: "Legendary Creature — Human",
+      mana_cost: "{2}{G}",
+      oracle_text: "{T}: Put target creature card from your graveyard on top of your library. Activate only during your turn, before attackers are declared."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      precombatMainOnly: true,
+      targetKind: "creature-card-in-your-graveyard",
+      effect: { kind: "return-target-card-to-library-top" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("recognizes a draw spell", () => {
     const profile = cardProfile(card({ name: "Test Draw", type_line: "Sorcery", mana_cost: "{2}{U}", oracle_text: "Draw three cards." }));
     expect(profile.effects).toEqual([{ kind: "draw", amount: 3 }]);

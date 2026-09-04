@@ -919,6 +919,34 @@ describe("casting", () => {
     expect(game.players[0]!.life).toBe(1);
   });
 
+  it("Hua Tuo puts only a creature card from its graveyard on top", () => {
+    const hua = make({
+      name: "Hua Tuo, Honored Physician",
+      type_line: "Legendary Creature — Human",
+      mana_cost: "{2}{G}",
+      cmc: 3,
+      power: "2",
+      toughness: "2",
+      oracle_text: "{T}: Put target creature card from your graveyard on top of your library. Activate only during your turn, before attackers are declared."
+    });
+    const creature = make({ name: "Grave Creature", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "3", toughness: "3" });
+    const land = make({ name: "Grave Land", type_line: "Land", mana_cost: "", cmc: 0 });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [hua]);
+    game = stage(game, 0, (player) => ({ graveyard: toHand(0, [creature, land], "hua-yard") }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const source = game.players[0]!.battlefield[0]!;
+    const target = { kind: "graveyard-card" as const, seat: 0, instanceId: "hua-yard-0" };
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    const activationAction = activation!.action;
+    if (activationAction.type !== "activate") throw new Error("Hua Tuo activation was not offered.");
+    game = applyAction(game, 0, { ...activationAction, targets: [target] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.library[0]!.name).toBe("Grave Creature");
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grave Land")).toBe(true);
+  });
+
   it("returns a land from any graveyard under the caster's control", () => {
     const profile = profileOf(LAND_GRAVEYARD_BATTLEFIELD());
     expect(profile).toMatchObject({ targetKind: "land-card-in-a-graveyard", effects: [{ kind: "return-target-land-card-from-graveyard-to-battlefield" }] });

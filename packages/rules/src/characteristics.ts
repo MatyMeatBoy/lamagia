@@ -1616,7 +1616,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Exile target artifact card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "artifact-card-in-a-graveyard" };
   if (/^Exile target enchantment card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "enchantment-card-in-a-graveyard" };
   if (/^Exile target land card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "land-card-in-a-graveyard" };
-  if (/^Put target card from your graveyard on top of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-top" }, target: "card-in-your-graveyard" };
+   if (/^Put target creature card from your graveyard on top of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-top" }, target: "creature-card-in-your-graveyard" };
+   if (/^Put target card from your graveyard on top of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-top" }, target: "card-in-your-graveyard" };
   if (/^Put target card from your graveyard on the bottom of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-bottom" }, target: "card-in-your-graveyard" };
   if (/^Shuffle target card from your graveyard into your library$/i.test(text)) return { effect: { kind: "shuffle-target-card-into-library" }, target: "card-in-your-graveyard" };
   if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-source-into-library" }, target: "none" };
