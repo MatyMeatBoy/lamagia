@@ -76,6 +76,11 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(result["operands"]["cost_actions"], ["discard"])
         self.assertEqual(result["primitive_cluster"], "draw|activated|cost-actions:discard")
 
+    def test_groups_combined_activated_costs_without_losing_type(self) -> None:
+        result = classify("Sacrifice an artifact, Discard a card: Draw a card.")
+        self.assertEqual(result["operands"]["cost_actions"], ["discard", "sacrifice"])
+        self.assertEqual(result["operands"]["sacrifice_types"], ["Artifact"])
+
     def test_preserves_player_spell_trigger_subjects(self) -> None:
         self.assertEqual(trigger_subject_hint("Whenever an opponent casts a spell, draw a card."), "opponent")
 
