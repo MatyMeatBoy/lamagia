@@ -1405,3 +1405,18 @@ Current regenerated coverage: **183/356 C13 precon cards (51.4%)** and
 **168/341 unique C13 set entries (49.3%)**; global export **8,206/38,711
 (21.2%)**. Validation: `npm run check` and `npm test` PASS (**425 rules
 tests**, simulator, **39 Oracle Python tests**).
+
+### Integrator checkpoint: stale C14 branch review (2026-09-04)
+
+Reviewed `c14-batch2-clean`: its reported 200+ cards were already present in
+our HEAD through equivalent commits, so its full historical tree is not safe
+to merge. A wholesale merge reintroduced obsolete types and failed TypeScript.
+The only current delta was rescued as `893730c` (Storm marker plus targeted
+attacking-creature sacrifice). Check, full tests, simulator and 40 Oracle
+Python tests pass. Fork protocol: update from the current integration branch,
+claim one disjoint primitive, commit directly with tests and a compact
+`CLAIM/BASE/COMMIT/FILES/TESTS/SCENARIOS/LIMITS` report; never accumulate or
+rebase a stale full-tree branch. Current regenerated coverage is **184/356
+C13 precon cards**, **169/341 unique C13 entries**, **116/322 C14 cards**, and
+**8,223/38,711 global cards**. Commit `5f01afc` (C13 top-library selection)
+is queued for the next integration batch.

@@ -637,4 +637,14 @@ describe("faces and oracle normalisation", () => {
     expect(profile.manaAbilities).toHaveLength(1);
     expect(profile.fullyImplemented).toBe(false);
   });
+
+  it("reuses Storm keyword consumption and targeted attacker sacrifice", () => {
+    const profile = cardProfile(card({
+      name: "Storm Offering", type_line: "Sorcery", mana_cost: "{3}{B}",
+      oracle_text: "Storm\nTarget player sacrifices an attacking creature of their choice."
+    }));
+    expect(profile.effects).toEqual([{ kind: "target-player-sacrifice-attacking-creature" }]);
+    expect(profile.targetKind).toBe("player");
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
