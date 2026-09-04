@@ -190,6 +190,8 @@ const COMBAT_SEAR = () => make({ name: "Combat Sear", type_line: "Instant", mana
 const FLAMETONGUE = () => make({ name: "Flametongue Kavu", type_line: "Creature — Kavu", mana_cost: "{3}{R}", cmc: 4, power: "4", toughness: "2", oracle_text: "When Flametongue Kavu enters the battlefield, it deals 4 damage to target creature." });
 const WHIPFLARE = () => make({ name: "Whipflare", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Whipflare deals 2 damage to each nonartifact creature." });
 const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature — Bear", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2" });
+const MYR_RETRIEVER = () => make({ name: "Myr Retriever", type_line: "Artifact Creature — Myr", mana_cost: "{2}", cmc: 2, power: "1", toughness: "1", oracle_text: "When Myr Retriever dies, return another target artifact card from your graveyard to your hand." });
+const JALUM_TOME = () => make({ name: "Jalum Tome", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Draw a card, then discard a card." });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
@@ -1175,6 +1177,49 @@ describe("scry and combat-restricted damage", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     game = passUntil(game, (state) => state.players[1]!.battlefield.length <= 1 || state.turn > 1);
     expect(game.players[1]!.battlefield.map((permanent) => permanent.card.name)).toEqual(["Iron Bear"]);
+  });
+
+  it("draws then makes the controller discard for a {cost}: draw, then discard ability", () => {
+    const profile = profileOf(JALUM_TOME());
+    expect(profile.activatedAbilities[0]).toMatchObject({ requiresTap: true, lifeCost: 0 });
+    expect(profile.activatedAbilities[0]!.effect).toEqual({ kind: "draw-then-discard", draw: 1, discard: 1 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = ready([], [JALUM_TOME(), ISLAND(), ISLAND()], [BEAR(), FOREST()]);
+    const tome = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Jalum Tome")!;
+    const handBefore = game.players[0]!.hand.length;
+    const libBefore = game.players[0]!.library.length;
+    game = applyAction(game, 0, { type: "activate", sourceId: tome.instance_id, abilityIndex: 0 });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.pendingChoice?.type).toBe("discard-cards");
+    const drewCard = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: drewCard.instance_id });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.hand.length).toBe(handBefore);
+    expect(game.players[0]!.library.length).toBe(libBefore - 1);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("returns 'another target artifact card' from the graveyard on a dies trigger", () => {
+    const profile = profileOf(MYR_RETRIEVER());
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "dies", subject: "self", effect: { kind: "return-target-card-from-graveyard" }, targetKind: "artifact-card-in-your-graveyard"
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = ready([BOLT()], [MOUNTAIN()]);
+    game = stage(game, 0, (player) => ({ graveyard: toHand(0, [SOL_RING()], "retriever-yard") }));
+    game = putOnBattlefield(game, 0, [MYR_RETRIEVER()]);
+    const myr = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Myr Retriever")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: myr.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target" || state.players[0]!.hand.some((card) => card.name === "Sol Ring"));
+    if (game.pendingChoice?.type === "trigger-target") {
+      const solRing = game.players[0]!.graveyard.find((card) => card.name === "Sol Ring")!;
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "graveyard-card", seat: 0, instanceId: solRing.instance_id } });
+    }
+    game = passUntil(game, (state) => state.players[0]!.hand.some((card) => card.name === "Sol Ring") || state.turn > 1);
+    expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Myr Retriever")).toBe(true);
   });
 
   it("only offers an attacking or blocking creature to Combat Sear and deals lethal damage", () => {

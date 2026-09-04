@@ -155,6 +155,17 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
       return { action: { ...chosen.action, query: card.name }, label: `busca ${card.name}` };
     }
   }
+  if (state.pendingChoice?.type === "discard-cards" && state.pendingChoice.seat === seat) {
+    // Discard a surplus land when flooded, otherwise the highest-cost card
+    // (least likely to be castable soon). Deterministic given the hand order.
+    const hand = state.players[seat]!.hand;
+    const lands = hand.filter((card) => isLand(cardProfile(card)));
+    const preferred = lands.length > 4 ? lands[lands.length - 1]
+      : [...hand].sort((left, right) => (cardProfile(right).cost?.symbols.length ?? 0) - (cardProfile(left).cost?.symbols.length ?? 0))[0];
+    const wanted = available.find((entry) => entry.action.type === "choose-discard" && entry.action.cardId === preferred?.instance_id)
+      ?? available.find((entry) => entry.action.type === "choose-discard");
+    if (wanted) return { action: wanted.action, label: wanted.label };
+  }
   if (state.pendingChoice?.type === "scry" && state.pendingChoice.seat === seat) {
     // Deterministic policy: bottom the top card only when the bot is flooded on
     // lands (5+ in play and the card is another land), otherwise keep it.

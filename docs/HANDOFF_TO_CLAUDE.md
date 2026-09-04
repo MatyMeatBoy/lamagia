@@ -758,3 +758,22 @@ Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
 (204 rules tests); `npm run rules:test:oracle` PASS; `npm run simulate:engine`
 PASS (200 games, 160 finished, 0 failures). Catalog 7,132 -> 7,210; Commander
 2014 92 -> 94/337 (Flametongue Kavu, Whipflare).
+
+### C14 race batch: graveyard-return "another", draw-then-discard, dies triggers
+
+- `Return another target <type> card from your graveyard to your hand`: the
+  optional "another" is accepted (the source that just died is still a legal
+  graveyard target here; excluding it is not yet modelled). Reuses the `dies`
+  event, so Myr Retriever / Junk Diver work through the trigger-target flow.
+- `draw-then-discard` effect: `Draw N cards, then discard M cards` draws, then
+  opens the existing `discard-cards` pending choice for the controller. Wired
+  from activated abilities too, so `{cost}: Draw a card, then discard a card`
+  (Jalum Tome) is payable and resolvable. The bot now resolves `discard-cards`
+  (surplus land when flooded, else highest-cost card).
+
+Files: `characteristics.ts`, `engine.ts`, `bot.ts`, `engine.test.ts` (2 scenarios).
+
+Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
+(206 rules tests); `npm run rules:test:oracle` PASS; `npm run simulate:engine`
+PASS (200 games, 160 finished, 0 failures). Catalog 7,210 -> 7,273; Commander
+2014 94 -> 97/337 (Myr Retriever, Junk Diver, Jalum Tome).

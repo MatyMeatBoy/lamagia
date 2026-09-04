@@ -1050,6 +1050,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       for (const seat of opponentsOf(state, controller)) next = drawCards(next, seat, amount);
       return next;
     }
+    case "draw-then-discard": {
+      let next = drawCards(state, controller, effect.draw);
+      const amount = Math.min(effect.discard, playerAt(next, controller).hand.length);
+      if (amount <= 0) return next;
+      return {
+        ...next,
+        priorityOpen: false,
+        pendingChoice: { type: "discard-cards", seat: controller, sourceId: object.id, sourceCard: object.card, amount, remaining: amount }
+      };
+    }
     case "discard-target-player": {
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
