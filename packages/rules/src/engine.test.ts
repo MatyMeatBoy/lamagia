@@ -73,6 +73,7 @@ const PLANESWALKER_LIFE_SPELL = () => make({ name: "Walker Blessing", type_line:
 const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each battle you control." });
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
+const BROODING_SAURIAN = () => make({ name: "Brooding Saurian", type_line: "Creature — Lizard", mana_cost: "{2}{G}{G}", cmc: 4, power: "4", toughness: "4", oracle_text: "At the beginning of each end step, each player gains control of all nontoken permanents they own.", scryfall_id: "2fb7f844-edaf-43ef-9121-318baf9ec9ce" });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
@@ -3493,6 +3494,26 @@ describe("triggered abilities", () => {
     });
    expect(profileOf(CREATURE_CAST_DRAWER()).triggers[0]).toMatchObject({ event: "spell-cast", subject: "you", spellType: "creature" });
  });
+
+  it("returns owned nontoken permanents to their owners with Brooding Saurian", () => {
+    const profile = profileOf(BROODING_SAURIAN());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "end-step", subject: "each-player", optional: false,
+      effect: { kind: "return-owned-nontoken-permanents-to-control" }, targetKind: "none"
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BROODING_SAURIAN(), BEAR()]);
+    const owned = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== owned.instance_id) }));
+    game = stage(game, 1, (player) => ({ battlefield: [...player.battlefield, { ...owned, controller: 1 }] }));
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [] });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.some((permanent) => permanent.instance_id === owned.instance_id));
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === owned.instance_id)!.controller).toBe(0);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === owned.instance_id)).toBe(false);
+  });
 
   it("lets Duplicant imprint a nontoken creature on entry", () => {
     let game = readyToCast([DUPLICANT()], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()], [BEAR()]);

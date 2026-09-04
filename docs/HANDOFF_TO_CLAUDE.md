@@ -1428,3 +1428,11 @@ stale full tree. The clean branch currently exports **186/356 C13 printings**,
 **171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
 `5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
 queued for the next integration batch.
+
+### Worker checkpoint: Brooding Saurian ownership reset (2026-09-04)
+
+Added the reusable `return-owned-nontoken-permanents-to-control` trigger
+primitive. At each end step it restores control of every nontoken permanent
+to its owner without changing zones, covering Brooding Saurian (CR 603.2,
+603.6, 110.2). Commit `f6f8031` is queued for integration; this
+branch is based on `b008385` and excludes sibling worker commits.
