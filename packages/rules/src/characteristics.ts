@@ -1033,9 +1033,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "gain-life", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "gain-life", amount: "X" }, target: "none" };
   }
-  if ((match = /^You gain (\w+) life for each artifact you control$/i.exec(text))) {
+  if ((match = /^You gain (\w+) life for each (artifact|creature|enchantment) you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
-    if (amount !== null) return { effect: { kind: "gain-life-each-controlled-type", amount, type: "Artifact" }, target: "none" };
+    if (amount !== null) return { effect: { kind: "gain-life-each-controlled-type", amount, type: match[2]![0]!.toUpperCase() + match[2]!.slice(1) as CardType }, target: "none" };
   }
   if (/^You gain life equal to the power of target creature you control$/i.test(text)) {
     return { effect: { kind: "gain-life-equal-target-power" }, target: "creature-you-control" };
