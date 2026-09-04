@@ -2488,6 +2488,9 @@ function activatableAbility(
       && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id));
     if (!candidates.length) return { legal: false };
   }
+  if (ability.removeCounters && !ability.removeCounters.every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) {
+    return { legal: false };
+  }
   if (ability.manaCost && ability.manaCost.symbols.length) {
     // The cost is paid as one lump, so the check has to look at the board the
     // payment will actually see: life already spent on the ability, and the
@@ -2530,6 +2533,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     sacrifice = candidates.find((candidate) => candidate.instance_id === action.sacrificeId) ?? candidates[0];
     if (!sacrifice) throw new Error("Debes elegir una criatura para sacrificar.");
   }
+
   if (check.targetKind) {
     const allowed = legalTargets(state, seat, check.targetKind);
     const chosen = targets.length ? targets : allowed.slice(0, 1);
@@ -2559,6 +2563,18 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       ...current,
       manaPool: payment.remaining,
       life: current.life - payment.lifePaid
+    }));
+  }
+
+  if (ability.removeCounters?.length) {
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      battlefield: current.battlefield.map((permanent) => {
+        if (permanent.instance_id !== source.instance_id) return permanent;
+        const counters = { ...permanent.counters };
+        for (const cost of ability.removeCounters ?? []) counters[cost.kind] = (counters[cost.kind] ?? 0) - cost.amount;
+        return { ...permanent, counters };
+      })
     }));
   }
 
