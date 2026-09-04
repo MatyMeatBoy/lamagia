@@ -65,6 +65,8 @@ export interface Permanent {
   readonly toughnessModifier: number;
   /** Keyword effects from spells/abilities that expire during cleanup. */
   readonly temporaryKeywords?: readonly EnforcedKeyword[];
+  /** One-shot destruction-replacement shields created by Regenerate (CR 701.19). */
+  readonly regenerationShields?: number;
   /** The creature this Equipment is attached to, when it is equipped. */
   readonly attachedTo?: string;
   readonly isCommander: boolean;
@@ -788,6 +790,33 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
   return next;
 }
 
+/** Removes a permanent from combat without moving it off the battlefield. */
+function removeFromCombat(state: GameState, instanceId: string): GameState {
+  const attackers = state.combat.attackers.filter((entry) => entry.instanceId !== instanceId);
+  const blockers = state.combat.blockers.filter((entry) => entry.instanceId !== instanceId && entry.attackerId !== instanceId);
+  if (attackers.length === state.combat.attackers.length && blockers.length === state.combat.blockers.length) return state;
+  return { ...state, combat: { ...state.combat, attackers, blockers } };
+}
+
+/**
+ * Applies the destruction replacement created by Regenerate, or destroys the
+ * permanent normally when no shield remains (CR 701.19, 400.7g).
+ */
+function destroyPermanent(state: GameState, permanent: Permanent): GameState {
+  const current = findPermanent(state, permanent.instance_id);
+  if (!current || keywordOf(state, current, "indestructible")) return state;
+  const shields = current.regenerationShields ?? 0;
+  if (shields <= 0) return movePermanentToZone(state, current, "graveyard");
+  let next = withPlayer(state, current.controller, (player) => ({
+    ...player,
+    battlefield: player.battlefield.map((candidate) => candidate.instance_id === current.instance_id
+      ? { ...candidate, tapped: true, damage: 0, deathtouched: false, regenerationShields: shields - 1 }
+      : candidate)
+  }));
+  next = removeFromCombat(next, current.instance_id);
+  return logged(next, current.controller, `${current.card.name} regenera y permanece en el campo de batalla.`);
+}
+
 function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { tapped: boolean; lifeCost: number } {
   const rule = profile.entersTapped;
   const player = playerAt(state, seat);
@@ -830,6 +859,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     powerModifier: 0,
     toughnessModifier: 0,
     temporaryKeywords: [],
+    regenerationShields: 0,
     isCommander
   };
   let next = withPlayer(state, seat, (player) => ({
@@ -1275,15 +1305,36 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
-      if (!permanent || keywordOf(state, permanent, "indestructible")) return state;
-      return movePermanentToZone(state, permanent, "graveyard");
+      return permanent ? destroyPermanent(state, permanent) : state;
     }
     case "destroy-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
-      if (!permanent || keywordOf(state, permanent, "indestructible")) return state;
-      return movePermanentToZone(state, permanent, "graveyard");
+      return permanent ? destroyPermanent(state, permanent) : state;
+    }
+    case "regenerate-source": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const source = findPermanent(state, sourceId);
+      if (!source) return state;
+      return withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, regenerationShields: (permanent.regenerationShields ?? 0) + 1 }
+          : permanent)
+      }));
+    }
+    case "regenerate-target-creature": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const creature = findPermanent(state, target.instanceId);
+      if (!creature || !isCreature(cardProfile(creature.card))) return state;
+      return withPlayer(state, creature.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === creature.instance_id
+          ? { ...permanent, regenerationShields: (permanent.regenerationShields ?? 0) + 1 }
+          : permanent)
+      }));
     }
     case "exile-target-permanent": {
       const target = object.targets[0];
@@ -1426,8 +1477,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "destroy-all-creatures": {
       let next = state;
       for (const permanent of allPermanents(state)) {
-        if (!isCreature(cardProfile(permanent.card)) || keywordOf(state, permanent, "indestructible")) continue;
-        next = movePermanentToZone(next, permanent, "graveyard");
+        if (!isCreature(cardProfile(permanent.card))) continue;
+        next = destroyPermanent(next, permanent);
       }
       return logged(next, controller, `${sourceName} destruye todas las criaturas.`);
     }
@@ -1436,8 +1487,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       for (const permanent of allPermanents(state)) {
         const profile = cardProfile(permanent.card);
         const affected = profile.types.some((type) => ["Artifact", "Creature", "Enchantment"].includes(type));
-        if (!affected || keywordOf(state, permanent, "indestructible")) continue;
-        next = movePermanentToZone(next, permanent, "graveyard");
+        if (!affected) continue;
+        next = destroyPermanent(next, permanent);
       }
       return logged(next, controller, `${sourceName} destruye artifacts, criaturas y encantamientos.`);
     }
@@ -1702,9 +1753,7 @@ function applyStateBasedActions(state: GameState): GameState {
       const toughness = toughnessOf(permanent, next);
       const lethal = toughness <= 0 || (permanent.damage > 0 && permanent.damage >= toughness) || permanent.deathtouched;
       if (!lethal) continue;
-      if (keywordOf(next, permanent, "indestructible") && toughness > 0 && permanent.damage < toughness && !permanent.deathtouched) continue;
-      if (keywordOf(next, permanent, "indestructible") && toughness > 0) continue;
-      next = movePermanentToZone(next, permanent, "graveyard");
+      next = destroyPermanent(next, permanent);
       changed = true;
     }
 
@@ -2027,7 +2076,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         ...next,
         players: next.players.map((current) => ({
           ...current,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [] }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], regenerationShields: 0 }))
         }))
       };
       break;

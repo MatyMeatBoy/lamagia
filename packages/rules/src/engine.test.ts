@@ -37,6 +37,7 @@ const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — S
 const LIFELINKER = () => make({ name: "Kind Knight", type_line: "Creature — Knight", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink" });
 const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature — Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["First strike"], oracle_text: "First strike" });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
+const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Regenerate target creature." });
 const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Tap target creature." });
 const UNTAP_SPELL = () => make({ name: "Tactical Untap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Untap target permanent." });
 const MILL_SPELL = () => make({ name: "Gravewind", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player mills three cards." });
@@ -68,6 +69,7 @@ const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", t
 const DOUBLE_STRIKE_SPELL = () => make({ name: "Twin Edge", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Target creature gains double strike until end of turn." });
 const TRAMPLE_BOOST = () => make({ name: "Selesnya Memory", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Target creature gets +2/+2 and gains trample until end of turn." });
 const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "{R}: This creature gets +1/+0 until end of turn." });
+const MARROW_BATS = () => make({ name: "Marrow Bats", type_line: "Creature — Bat", mana_cost: "{3}{B}", cmc: 4, power: "2", toughness: "2", oracle_text: "{B}, Pay 4 life: Regenerate Marrow Bats." });
 const COUNTER_DAMAGE = () => make({ name: "Thoctar Memory", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from this creature: This creature deals 1 damage to any target." });
 const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
@@ -696,6 +698,41 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
     const boosted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
     expect([powerOf(boosted), toughnessOf(boosted)]).toEqual([7, 6]);
+  });
+
+  it("creates a reusable regeneration shield from an activated ability", () => {
+    const profile = profileOf(MARROW_BATS());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      manaCost: { raw: "{B}" }, lifeCost: 4, targetKind: "none", effect: { kind: "regenerate-source" }
+    });
+    let game = readyToCast([], [SWAMP(), MARROW_BATS()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Marrow Bats")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+    expect(game.players[0]!.life).toBe(36);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)?.regenerationShields).toBe(1);
+
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) =>
+      permanent.instance_id === source.instance_id ? { ...permanent, damage: 2 } : permanent) }));
+    game = applyAction(game, pendingSeat(game)!, { type: "pass" });
+    const surviving = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
+    expect(surviving).toMatchObject({ damage: 0, deathtouched: false, tapped: true, regenerationShields: 0 });
+  });
+
+  it("regenerates a targeted creature and removes it from combat", () => {
+    let game = readyToCast([REGENERATE_TARGET()], [FOREST(), FOREST()], [], [BEAR()]);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = {
+      ...game,
+      combat: { ...game.combat, attackers: [{ instanceId: target.instance_id, defender: 0 }] },
+      players: game.players.map((player) => player.seat === 1
+        ? { ...player, battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id ? { ...permanent, damage: 2 } : permanent) }
+        : player)
+    };
+    game = applyAction(game, pendingSeat(game)!, { type: "pass" });
+    const surviving = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
+    expect(surviving).toMatchObject({ damage: 0, tapped: true, regenerationShields: 0 });
+    expect(game.combat.attackers).not.toContainEqual(expect.objectContaining({ instanceId: target.instance_id }));
   });
 
   it("offers and pays a chosen creature sacrifice activation cost", () => {

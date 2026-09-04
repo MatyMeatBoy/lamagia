@@ -98,6 +98,24 @@ describe("mana abilities", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises source and targeted regeneration as reusable effects", () => {
+    const source = cardProfile(card({
+      name: "Marrow Bats", type_line: "Creature — Bat", mana_cost: "{3}{B}", cmc: 4,
+      oracle_text: "{B}, Pay 4 life: Regenerate Marrow Bats."
+    }));
+    expect(source.activatedAbilities[0]).toMatchObject({
+      manaCost: { raw: "{B}" }, lifeCost: 4, targetKind: "none", effect: { kind: "regenerate-source" }
+    });
+
+    const target = cardProfile(card({
+      name: "Regrowth Shield", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2,
+      oracle_text: "Regenerate target creature."
+    }));
+    expect(target.effects[0]).toEqual({ kind: "regenerate-target-creature" });
+    expect(target.targetKind).toBe("creature");
+    expect(target.fullyImplemented).toBe(true);
+  });
+
   it("recognises reusable Equipment equip and static modifications", () => {
     const cases = [
       card({ name: "Behemoth Sledge", type_line: "Artifact — Equipment", oracle_text: "Equipped creature gets +2/+2 and has trample and lifelink.\nEquip {3}" }),

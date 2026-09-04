@@ -270,6 +270,10 @@ export type SpellEffect =
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-permanent" }
+  /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
+  | { readonly kind: "regenerate-source" }
+  /** Creates one destruction-replacement shield for the targeted creature (CR 701.19). */
+  | { readonly kind: "regenerate-target-creature" }
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
   | { readonly kind: "exile-target-permanent" }
   | { readonly kind: "exile-target-graveyard" }
@@ -1125,6 +1129,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     // Firebreathing-style self pumps: the source is the only affected creature
     // and the modifier expires during cleanup (CR 613.4c, 514.2).
     return { effect: { kind: "modify-source-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
+  }
+  if (/^Regenerate target creature$/i.test(text)) {
+    return { effect: { kind: "regenerate-target-creature" }, target: "creature" };
+  }
+  if (/^Regenerate (?:~|[A-Za-z][A-Za-z'’ -]*)$/i.test(text)) {
+    return { effect: { kind: "regenerate-source" }, target: "none" };
   }
   const temporaryKeyword = /^Target creature gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud) until end of turn$/i.exec(text);
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };
