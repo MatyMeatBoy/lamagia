@@ -2744,13 +2744,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   // announced like a spell and waits for priority to pass.
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
-    const manaBonusOptions = isLand(profile) && allPermanents(state).some((candidate) => candidate.controller === seat
-      && cardProfile(candidate.card).doublesLandMana) ? profile.manaAbilities.flatMap((ability) => ability.produces) : [];
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability)) continue;
       const activations = ability.fixedProduces ? [ability.fixedProduces[0]!] : ability.produces;
       for (const mana of activations) {
-        const bonusOptions = isLand(profile) && manaBonusOptions.length ? [...new Set(manaBonusOptions)] : [undefined];
+        const bonusOptions = isLand(profile) && allPermanents(state).some((candidate) => candidate.controller === seat
+          && cardProfile(candidate.card).doublesLandMana) ? [...new Set(ability.produces)] : [undefined];
         for (const manaBonus of bonusOptions) {
           const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: ability.amount }, () => mana);
           const produced = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((type) => `{${type}}`).join("");
