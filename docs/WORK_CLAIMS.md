@@ -4,6 +4,7 @@
 | --- | --- | --- | --- |
 | `rules-equipment` | `codex/c13-equipment-cluster` | Equip, attachment, Equipment static bonuses, and Sword of the Paruns untap abilities | Ready for integrator review |
 | `rules-c13-reprint-equivalence` | `codex/c13-equipment-cluster` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | Ready for integrator review |
+| `rules-flashback` | `codex/c13-equipment-cluster` | Flashback cost parsing, graveyard casting, and exile replacement for instant and sorcery cards | Ready for integrator review |
 | `rules-level-up` | `codex/c13-equipment-cluster` | Level up activation, level counters, and level-band P/T/keyword characteristics | Ready for integrator review |
 | `rules-tap-untap` | `codex/c13-equipment-cluster` | Targeted Tap target creature and Untap target permanent effects | Ready for integrator review |
 | `rules-mill` | `codex/c13-equipment-cluster` | Target player mills a bounded number of cards into their graveyard | Ready for integrator review |
