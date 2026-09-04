@@ -1029,7 +1029,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "discard-target-player": {
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
-      const amount = Math.min(effect.amount, playerAt(state, target.seat).hand.length);
+      const amount = Math.min(effectAmount(effect.amount, object), playerAt(state, target.seat).hand.length);
       if (amount <= 0) return state;
       return {
         ...state,
