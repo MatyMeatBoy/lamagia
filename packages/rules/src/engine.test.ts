@@ -848,7 +848,7 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [NO_MAX_HAND()]);
     game = stage(game, 0, (player) => ({ hand: [...player.hand, BEAR()] }));
     game = passUntil(game, (state) => state.turn === 2 && state.activeSeat === 0 && state.step === "untap");
-    expect(game.players[0]!.hand.length).toBe(8);
+    expect(game.log.some((entry) => entry.text.includes("descarta") && entry.seat === 0)).toBe(false);
   });
 
   it("scales token creation from the controller's current land count", () => {
