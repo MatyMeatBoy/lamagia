@@ -112,6 +112,7 @@ const ENCHANTMENT_SAC_ALTAR = () => make({ name: "Enchantment Memory", type_line
 const LAND_SAC_ALTAR = () => make({ name: "Land Memory", type_line: "Land", oracle_text: "Sacrifice a land: Draw a card." });
 const ANOTHER_ARTIFACT_SAC = () => make({ name: "Another Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice another artifact: Draw a card." });
 const NONCREATURE_SAC = () => make({ name: "Noncreature Memory", type_line: "Creature — Shaman", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2", oracle_text: "Sacrifice a noncreature permanent: Draw a card." });
+const DISCARD_ACTIVATION = () => make({ name: "Discard Memory", type_line: "Creature — Wizard", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "{T}, Discard a card: Draw a card." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const ANY_GRAVEYARD_EXILE = () => make({ name: "Cross Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from a graveyard." });
@@ -818,6 +819,20 @@ describe("casting", () => {
     const land = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === land.instance_id)).toBe(true);
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId !== land.instance_id && entry.action.sacrificeId)).toBe(false);
+  });
+
+  it("projects and pays a chosen card discarded as an activation cost", () => {
+    const sourceCard = DISCARD_ACTIVATION();
+    expect(profileOf(sourceCard).activatedAbilities[0]).toMatchObject({ discardsCard: true, requiresTap: true, effect: { kind: "draw", amount: 1 } });
+    const discarded = BEAR();
+    let game = readyToCast([discarded], [sourceCard]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sourceCard.name)!;
+    const card = game.players[0]!.hand.find((candidate) => candidate.name === discarded.name)!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.discardCardId === card.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.hand.some((candidate) => candidate.instance_id === card.instance_id)).toBe(false);
+    expect(game.players[0]!.graveyard.some((candidate) => candidate.instance_id === card.instance_id)).toBe(true);
   });
 
   it("offers and pays an activated counter-removal cost", () => {
