@@ -1347,3 +1347,14 @@ Current coverage: **178/356 C13 precon cards (50.0%)** and **163/341 unique
 C13 set entries (47.8%)**; global export **8,173/38,711 (21.1%)**. Validation:
 `npm run check` and `npm test` PASS (**401 rules tests**, simulator, **39 Oracle
 Python tests**).
+
+### Integrator checkpoint: C13 ETB sacrifice-unless-pay (2026-09-04)
+
+Added the reusable optional-trigger inversion for “sacrifice ~ unless you pay
+{N}”, including payment/decline resolution and the two C13 lands Rupture Spire
+and Transguild Promenade (CR 603.2, 603.5, 117.12).
+
+Current coverage: **180/356 C13 precon cards (50.6%)** and **165/341 unique
+C13 set entries (48.4%)**; global export **8,194/38,711 (21.2%)**. Validation:
+`npm run check` and `npm test` PASS (**402 rules tests**, simulator, **39 Oracle
+Python tests**).

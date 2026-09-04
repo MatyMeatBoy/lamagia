@@ -33,6 +33,7 @@ feature name.
 | `c13-reuse-basic-effects` | Reuse draw-per-tapped-creature, typed sacrifice damage/draw, and upkeep compound triggers for four C13 cards | `codex/c13-equipment-cluster` | merged (`8474a06`) | 2026-09-04 |
 | `c13-typed-tap-cost` | Reusable `Tap an untapped [subtype] you control` activation costs with `any`/`another` selection and server validation; Azami | `codex/c13-equipment-cluster` | merged (`c50a721`) | 2026-09-04 |
 | `c13-druidic-satchel-top-reveal` | Reveal-top-card conditional: create a Saproling for creatures, put lands onto the battlefield, otherwise gain life | `feat/activated-abilities-and-triggers` | merged (`abd93f1`) | 2026-09-04 |
+| `c13-etb-sacrifice-unless-pay` | ETB trigger that sacrifices its source unless its controller pays a fixed mana cost | `feat/activated-abilities-and-triggers` | merged (`51435d3`) | 2026-09-04 |
 | `rules-level-up` | Level up costs, level counters, and the three C13 cards: Echo Mage, Hada Spy Patrol, Kazandu Tuskcaller | `codex/c13-equipment-cluster` | merged (`f325052`) | 2026-09-03 |
 | `rules-tap-untap` | Targeted Tap target creature and Untap target permanent effects | `codex/c13-equipment-cluster` | merged (`4fa0290`) | 2026-09-03 |
 | `rules-mill` | Target player mills a bounded number of cards into their graveyard | `codex/c13-equipment-cluster` | merged (`2842700`) | 2026-09-03 |
