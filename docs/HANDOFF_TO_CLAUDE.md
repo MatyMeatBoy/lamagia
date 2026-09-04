@@ -1336,3 +1336,14 @@ Blood Rites, Carnage Altar, and Baleful Force (CR 603.2, 601.2c, 602.2b).
 Coverage remains **176/356 C13 precon cards (49.4%)** and **161/341 unique C13
 set entries (47.2%)**; global export **8,154/38,711 (21.1%)**. Validation:
 `npm test` PASS (**395 rules tests**, simulator, **39 Oracle Python tests**).
+
+### Integrator checkpoint: C13 Satchel + typed tap batch (2026-09-04)
+
+Added Druidic Satchel's reusable conditional top-card reveal and integrated the
+fork's typed-tap activation cost for Azami, including selectable `any`/`another`
+subtype candidates and server-side validation (CR 602.2b, 701.19, 701.8).
+
+Current coverage: **178/356 C13 precon cards (50.0%)** and **163/341 unique
+C13 set entries (47.8%)**; global export **8,173/38,711 (21.1%)**. Validation:
+`npm run check` and `npm test` PASS (**401 rules tests**, simulator, **39 Oracle
+Python tests**).
