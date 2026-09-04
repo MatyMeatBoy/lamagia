@@ -122,6 +122,7 @@ const DISCARD_ACTIVATION = () => make({ name: "Discard Memory", type_line: "Crea
 const TOKEN_SAC_ACTIVATION = () => make({ name: "Token Memory", type_line: "Creature — Shaman", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Sacrifice a token: Draw a card." });
 const GRAVEYARD_EXILE_ACTIVATION = () => make({ name: "Grave Memory", type_line: "Creature — Wizard", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "Exile a card from your graveyard: Draw a card." });
 const BOTTOM_RETURN = () => make({ name: "Bottom Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on the bottom of your library." });
+const SHUFFLE_RETURN = () => make({ name: "Shuffle Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Shuffle target card from your graveyard into your library." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const ANY_GRAVEYARD_EXILE = () => make({ name: "Cross Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from a graveyard." });
@@ -930,6 +931,19 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.instance_id === targetId)).toBe(false);
     expect(game.players[0]!.library).toHaveLength(before + 1);
     expect(game.players[0]!.library.at(-1)!.instance_id).toBe(target.kind === "graveyard-card" ? target.instanceId : "");
+  });
+
+  it("shuffles a selected graveyard card into its owner's library", () => {
+    const returned = BEAR();
+    let game = readyToCast([SHUFFLE_RETURN()], [FOREST()]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [returned], "shuffle-graveyard") }));
+    const target = legalTargets(game, 0, "card-in-your-graveyard")[0]!;
+    const targetId = target.kind === "graveyard-card" ? target.instanceId : "";
+    const before = game.players[0]!.library.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [target] });
+    expect(game.players[0]!.graveyard.some((card) => card.instance_id === targetId)).toBe(false);
+    expect(game.players[0]!.library).toHaveLength(before + 1);
+    expect(game.players[0]!.library.some((card) => card.instance_id === targetId)).toBe(true);
   });
 
   it("offers and pays an activated counter-removal cost", () => {
