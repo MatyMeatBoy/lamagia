@@ -2158,6 +2158,17 @@ describe("kicker and optional-cost triggers", () => {
     expect(game.players[0]!.graveyard.some((c) => c.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("recognises plain 'Destroy target permanent' and self-bounce ETB triggers", () => {
+    const obelisk = () => make({ name: "Unstable Obelisk", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{T}: Add {C}.\n{7}, {T}, Sacrifice Unstable Obelisk: Destroy target permanent." });
+    const lion = () => make({ name: "Whitemane Lion", type_line: "Creature — Cat", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Flash\nWhen Whitemane Lion enters the battlefield, return a creature you control to its owner's hand." });
+    const op = profileOf(obelisk());
+    expect(op.activatedAbilities.some((a) => a.effect.kind === "destroy-target-permanent")).toBe(true);
+    expect(op.fullyImplemented).toBe(true);
+    const lp = profileOf(lion());
+    expect(lp.triggers[0]).toMatchObject({ event: "enters-battlefield", effect: { kind: "return-target-creature" }, targetKind: "creature-you-control" });
+    expect(lp.fullyImplemented).toBe(true);
+  });
+
   it("gates an optional trigger behind a payable mana cost", () => {
     const profile = profileOf(PAY_DRAWER());
     expect(profile.triggers[0]).toMatchObject({ optional: true, effect: { kind: "draw", amount: 1 } });

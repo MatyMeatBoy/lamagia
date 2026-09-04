@@ -918,3 +918,15 @@ Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
 simulate:engine` PASS (200 games, 162 finished, 0 invariant/projection
 failures). Engine catalog fully-implemented 7,529 -> 7,655; Commander 2014
 97 -> 104/337.
+
+### C14 batch3: plain permanent destruction + self-bounce ETB
+
+- `Destroy target permanent` (any permanent) recognised — unblocks the sac
+  activated ability on Unstable Obelisk and similar.
+- `Return a creature you control to its owner's hand` reuses `return-target-
+  creature` with a `creature-you-control` target, so Whitemane Lion-style ETB
+  self-bounce resolves.
+
+Validation: check PASS; 271 rules tests; oracle 25 OK; simulate:engine 200
+games 162 finished 0 failures. Catalog 7,655 -> 7,670; Commander 2014 104 ->
+107/337.
