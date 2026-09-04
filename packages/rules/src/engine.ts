@@ -1463,6 +1463,27 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!permanent || keywordOf(state, permanent, "indestructible")) return state;
       return movePermanentToZone(state, permanent, "graveyard");
     }
+    case "chaos-warp": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      let next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      next = permanent.isCommander
+        ? withPlayer(next, permanent.card.owner, (player) => ({ ...player, commandZone: [...player.commandZone, permanent.card] }))
+        : withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: [...player.library, permanent.card] }));
+      const owner = playerAt(next, permanent.card.owner);
+      const shuffled = shuffle(owner.library, next.rngState);
+      next = { ...next, rngState: shuffled.state };
+      const top = shuffled.items[0];
+      next = withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: shuffled.items.slice(1) }));
+      if (top && cardProfile(top).isPermanent) next = putOntoBattlefield(next, permanent.card.owner, top, false);
+      else if (top) next = withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: [top, ...player.library] }));
+      return logged(next, controller, `${permanent.card.name} se baraja en la biblioteca de su propietario.`);
+    }
     case "exile-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

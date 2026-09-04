@@ -305,6 +305,7 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-permanent" }
+  | { readonly kind: "chaos-warp" }
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
   | { readonly kind: "exile-target-permanent" }
   | { readonly kind: "exile-target-graveyard" }
@@ -1067,6 +1068,10 @@ function matchTriggerLine(line: string): { event: TriggerEvent; subject: Trigger
 function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind } | null {
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
   let match: RegExpExecArray | null;
+
+  if (/^The owner of target permanent shuffles it into their library, then reveals the top card of their library\. If it's a permanent card, they put it onto the battlefield$/i.test(text)) {
+    return { effect: { kind: "chaos-warp" }, target: "permanent" };
+  }
 
   if ((match = /^Draw a card and lose (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
