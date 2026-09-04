@@ -329,6 +329,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-graft` | Reusable Graft entry counters and optional counter transfer to another entering creature (CR 702.58, 122.1, 603.2) | `codex/c13-graft-f99` | active | 2026-09-04 |
 | `c13-whenever-creature-dies-untap` | Reusable death-triggered source untap (CR 603.2, 701.21) | `codex/c13-goblin-sharpshooter-f99` | active | 2026-09-04 |
 | `c13-whenever-creature-you-control` | Reusable entering-creature power damage to any target (CR 603.2, 120.2, 603.3d) | `codex/c13-warstorm-surge-f99` | active | 2026-09-04 |
+| `c13-whenever-creature-you-control-2` | Power-threshold entering-creature trigger with optional targeted damage (CR 603.2, 603.4, 120.2) | `codex/c13-where-ancients-tread-f99` | active | 2026-09-04 |
 
 ## Claim format
 
