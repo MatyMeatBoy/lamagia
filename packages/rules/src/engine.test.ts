@@ -115,6 +115,7 @@ const LAND_SAC_ALTAR = () => make({ name: "Land Memory", type_line: "Land", orac
 const ANOTHER_ARTIFACT_SAC = () => make({ name: "Another Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice another artifact: Draw a card." });
 const NONCREATURE_SAC = () => make({ name: "Noncreature Memory", type_line: "Creature — Shaman", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2", oracle_text: "Sacrifice a noncreature permanent: Draw a card." });
 const DISCARD_ACTIVATION = () => make({ name: "Discard Memory", type_line: "Creature — Wizard", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "{T}, Discard a card: Draw a card." });
+const TOKEN_SAC_ACTIVATION = () => make({ name: "Token Memory", type_line: "Creature — Shaman", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Sacrifice a token: Draw a card." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const ANY_GRAVEYARD_EXILE = () => make({ name: "Cross Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from a graveyard." });
@@ -835,6 +836,18 @@ describe("casting", () => {
     game = applyAction(game, 0, activation!.action);
     expect(game.players[0]!.hand.some((candidate) => candidate.instance_id === card.instance_id)).toBe(false);
     expect(game.players[0]!.graveyard.some((candidate) => candidate.instance_id === card.instance_id)).toBe(true);
+  });
+
+  it("offers only generated tokens for a token sacrifice cost", () => {
+    const sourceCard = TOKEN_SAC_ACTIVATION();
+    expect(profileOf(sourceCard).activatedAbilities[0]).toMatchObject({ sacrificesPermanent: { type: "Token", mode: "any" } });
+    let game = readyToCast([PLANT_SPELL()], [FOREST(), FOREST(), FOREST(), FOREST(), sourceCard, BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sourceCard.name)!;
+    const token = game.players[0]!.battlefield.find((permanent) => permanent.card.token)!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === token.instance_id);
+    expect(activation).toBeDefined();
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.instance_id)).toBe(false);
   });
 
   it("offers and pays an activated counter-removal cost", () => {
