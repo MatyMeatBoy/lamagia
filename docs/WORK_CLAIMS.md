@@ -218,3 +218,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-naya-charm-modal` | Naya Charm's three modes, including damage to a creature and tapping all creatures controlled by a target player (CR 601.2b, 609.3, 701.21) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-gahiji-attack-buff` | Gahiji's attack trigger buffs the attacking creature only when it attacks one of its controller's opponents (CR 603.2, 508.1i, 613.4) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-guttersnipe-spell-trigger` | Guttersnipe triggers from your instant/sorcery casts and deals 2 damage to each opponent (CR 603.2, 603.5, 608.2c) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-fecundity-death-draw` | Fecundity lets the controller of each creature that dies optionally draw a card (CR 603.2, 603.5, 603.6a, 121.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
