@@ -805,4 +805,15 @@ describe("faces and oracle normalisation", () => {
     }));
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("recognises a death-triggered source untap", () => {
+    const profile = cardProfile(card({
+      name: "Goblin Sharpshooter", type_line: "Creature — Goblin", mana_cost: "{2}{R}",
+      oracle_text: "Whenever a creature dies, untap ~."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "dies", subject: "any-creature", effect: { kind: "untap-source" }, targetKind: "none"
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
