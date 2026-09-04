@@ -1305,10 +1305,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const draw = toNumber(match[2]);
     if (amount !== null && amount > 0 && draw !== null && draw > 0) return { effect: { kind: "scry", amount, thenDraw: draw }, target: "none" };
   }
-  if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness$/i.test(`${text}.`)) {
     return { effect: { kind: "destroy-target-creature-then-life-loss" }, target: "creature" };
   }
+  if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if ((match = /^Each player discards their hand, then draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-player-discard-and-draw", amount }, target: "none" };
@@ -1419,6 +1419,12 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness\.$/i.test(joined)) {
+    return {
+      effects: [{ kind: "destroy-target-creature-then-life-loss" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
     };
   }
 
