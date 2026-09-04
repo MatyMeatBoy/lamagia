@@ -2110,6 +2110,30 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.powerModifier).toBe(2);
   });
 
+  it("sacrifices a creature before resolving Goblin Bombardment", () => {
+    const profile = profileOf(GOBLIN_BOMBARDMENT());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sacrificesCreature: "any",
+      effect: { kind: "damage-any-target", amount: 1 },
+      targetKind: "any"
+    });
+    let game = readyToCast([], [GOBLIN_BOMBARDMENT(), BEAR()]);
+    const bombardment = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Bombardment")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === bombardment.instance_id
+      && entry.action.sacrificeId === bear.instance_id)).toBe(true);
+    game = applyAction(game, 0, {
+      type: "activate",
+      sourceId: bombardment.instance_id,
+      abilityIndex: 0,
+      sacrificeId: bear.instance_id,
+      targets: [{ kind: "player", seat: 1 }]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[1]!.life === 39);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
   it("reuses the landfall trigger subject when a land enters", () => {
     let game = readyToCast([LANDFALL_BEAST(), FOREST()], [FOREST(), FOREST(), FOREST()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
