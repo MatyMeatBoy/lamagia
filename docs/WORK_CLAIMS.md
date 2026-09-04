@@ -66,6 +66,7 @@ feature name.
 | `c14-enters-or-dies-and-leaves` | `When ~ enters or is put into a graveyard from the battlefield, X` (two triggers); `leaves the battlefield` aliased to the dies event | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-target-cant-block` | `Target creature can't block this turn` (per-permanent flag cleared in cleanup) | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-cda-power-toughness` | Characteristic-defining `~s power and toughness are each equal to the number of X you control` (CR 604.3) | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-add-mana-and-sac-artifact` | Trigger/spell `Add {C}{C}{C}` effect; `sacrifice an artifact` activation cost | `c14-batch2-clean` | active | 2026-09-04 |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |

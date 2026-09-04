@@ -1790,6 +1790,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return raiseTapEvents(next, state, [permanent.instance_id]);
     }
+    case "add-mana": {
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        manaPool: Object.entries(effect.pool).reduce((pool, [type, count]) => addMana(pool, type as ManaType, count), player.manaPool)
+      }));
+    }
     case "target-cant-block": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -2961,6 +2967,9 @@ function activatableAbility(
       && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id));
     if (!candidates.length) return { legal: false };
   }
+  if (ability.sacrificesArtifact && !player.battlefield.some((candidate) => cardProfile(candidate.card).types.includes("Artifact"))) {
+    return { legal: false };
+  }
   if (ability.removeCounters && !ability.removeCounters.every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) {
     return { legal: false };
   }
@@ -3067,6 +3076,14 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     if (!paid) throw new Error(`${source.card.name} ya no está en el campo para sacrificarse.`);
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${source.card.name}.`);
+  }
+  if (ability.sacrificesArtifact) {
+    const board = playerAt(next, seat).battlefield.filter((permanent) => cardProfile(permanent.card).types.includes("Artifact"));
+    const paid = board.find((permanent) => permanent.instance_id === action.sacrificeId)
+      ?? board.find((permanent) => permanent.instance_id !== source.instance_id) ?? board[0];
+    if (!paid) throw new Error("No hay un artefacto para sacrificar.");
+    next = movePermanentToZone(next, paid, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
   if (sacrifice) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);

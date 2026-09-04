@@ -82,6 +82,8 @@ export interface ActivatedAbility {
   readonly sacrificesSelf: boolean;
   /** Creature chosen as an activation cost, optionally excluding the source. */
   readonly sacrificesCreature?: "any" | "another";
+  /** Sacrifice an artifact you control as an activation cost. */
+  readonly sacrificesArtifact?: boolean;
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
   readonly lifeCost: number;
@@ -328,6 +330,7 @@ export type SpellEffect =
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
   | { readonly kind: "target-cant-block" }
+  | { readonly kind: "add-mana"; readonly pool: Readonly<Record<string, number>> }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control"; readonly token: TokenDefinition }
@@ -884,6 +887,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
 
   const sacrificesSelf = /sacrifice\s+~/i.test(costText);
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
+  const sacrificesArtifact = /sacrifice\s+(?:a\s+|an\s+)?artifact/i.test(costText);
   const removedCounters: CounterCost[] = [];
   for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+~/gi)) {
     const amount = toNumber(match[1]);
@@ -897,6 +901,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/pay\s+\d+\s+life/gi, "")
     .replace(/sacrifice\s+~/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
+    .replace(/sacrifice\s+(?:a\s+|an\s+)?artifact/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
     .replace(/[,\s]/g, "");
   if (leftovers.length) return null;
@@ -905,6 +910,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     requiresTap,
     sacrificesSelf,
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
+    ...(sacrificesArtifact ? { sacrificesArtifact: true as const } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     lifeCost,
     manaCost,
@@ -1117,6 +1123,17 @@ function matchTriggerLine(line: string): { event: TriggerEvent; subject: Trigger
 function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind } | null {
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
   let match: RegExpExecArray | null;
+
+  // "Add {C}{C}{C}" inside a triggered ability (Cathodion). Mana abilities on a
+  // permanent have their own path; this is only for trigger/spell resolution.
+  if ((match = /^Add ((?:\{[WUBRGC]\})+)$/i.exec(text))) {
+    const pool: Record<string, number> = {};
+    for (const sym of match[1]!.match(/\{([WUBRGC])\}/gi) ?? []) {
+      const t = sym.replace(/[{}]/g, "").toUpperCase();
+      pool[t] = (pool[t] ?? 0) + 1;
+    }
+    return { effect: { kind: "add-mana", pool }, target: "none" };
+  }
 
   if ((match = /^Draw a card and lose (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
