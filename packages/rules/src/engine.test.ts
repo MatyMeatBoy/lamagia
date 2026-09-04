@@ -1125,6 +1125,18 @@ describe("casting", () => {
     expect(game.players[0]!.exile.some((card) => card.name === "Deep Analysis")).toBe(true);
   });
 
+  it("resolves C13 draw-only spells through the shared draw engine", () => {
+    for (const [spell, lands] of [
+      [C13_BRILLIANT_PLAN(), [ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND()]],
+      [C13_HARMONIZE(), [FOREST(), FOREST(), FOREST(), FOREST()]]
+    ] as const) {
+      let game = readyToCast([spell], lands);
+      game = stage(game, 0, () => ({ library: toHand(0, [BEAR(), FLIER(), FOREST()], `draw-${spell.name}`) }));
+      game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+      expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears", "Storm Crow", "Forest"]);
+    }
+  });
+
   it("offers and pays a chosen untapped Wizard for Azami", () => {
     let game = readyToCast([], [C13_AZAMI(), AZAMI_WIZARD(), BEAR()]);
     const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;
