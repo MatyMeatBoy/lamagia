@@ -1556,6 +1556,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!targetId) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === targetId);
     }
+    case "modify-triggered-creature-and-grant-keyword": {
+      const targetId = object.trigger?.sourcePermanentId;
+      if (!targetId) return state;
+      return withPlayer(modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === targetId), controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === targetId
+          ? { ...permanent, temporaryKeywords: [...new Set([...(permanent.temporaryKeywords ?? []), effect.keyword])] }
+          : permanent)
+      }));
+    }
     case "grant-target-creature-keyword": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
