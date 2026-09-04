@@ -821,7 +821,9 @@ function librarySearchHtml(): string {
   const search = view?.librarySearch;
   if (!search) return "";
   const cards = ui.showFullLibrary ? search.allCards : search.candidates;
-  const title = ui.showFullLibrary ? "Mazo completo" : `Objetivos posibles · ${search.candidates.length}`;
+  const progress = search.destination === "multiple" && search.selectedCount !== undefined && search.maxSelections !== undefined
+    ? ` · ${search.selectedCount}/${search.maxSelections}` : "";
+  const title = ui.showFullLibrary ? "Mazo completo" : `Objetivos posibles · ${search.candidates.length}${progress}`;
   return `<section class="library-search-overlay" aria-label="Buscar en biblioteca">
     <header><div><b>${escapeHtml(search.sourceName)}</b><span>${escapeHtml(title)}</span></div>
       <button id="toggle-full-library" class="text-button" type="button">${ui.showFullLibrary ? "Ver objetivos" : "Ver todo el mazo"}</button></header>
