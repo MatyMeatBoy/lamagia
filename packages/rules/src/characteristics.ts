@@ -1329,7 +1329,7 @@ function matchTriggerLine(line: string): { event: TriggerEvent; subject: Trigger
   const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
-    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}) };
+    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}) };
   }
   return null;
 }
@@ -2034,6 +2034,7 @@ function recognizeText(text: string): RecognizedText {
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
+          ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
           ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment ? { payCost, manaCost: payCost } : {}),
           ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {})
