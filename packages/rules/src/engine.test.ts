@@ -5242,6 +5242,14 @@ describe("combat restrictions and landwalk", () => {
     name: "Bog Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
     oracle_text: "Swampwalk"
   });
+  const HORSEMAN = () => make({
+    name: "Lu Xun, Scholar General", type_line: "Legendary Creature — Human Soldier", mana_cost: "{3}{U}", cmc: 4,
+    power: "2", toughness: "2", keywords: ["Horsemanship"], oracle_text: "Horsemanship"
+  });
+  const HORSEMAN_BLOCKER = () => make({
+    name: "River Rider", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3,
+    power: "2", toughness: "2", keywords: ["Horsemanship"], oracle_text: "Horsemanship"
+  });
   const CRAWLSPACE = () => make({
     name: "Crawlspace", type_line: "Artifact", mana_cost: "{3}", cmc: 3,
     oracle_text: "No more than one creature can attack you each combat."
@@ -5256,6 +5264,8 @@ describe("combat restrictions and landwalk", () => {
     // A recognised restriction is not left over as unimplemented text.
     expect(profileOf(NO_BLOCKER()).fullyImplemented).toBe(true);
     expect(profileOf(SWAMPWALKER()).fullyImplemented).toBe(true);
+    expect(profileOf(HORSEMAN()).keywords).toContain("horsemanship");
+    expect(profileOf(HORSEMAN()).fullyImplemented).toBe(true);
     expect(profileOf(CRAWLSPACE()).fullyImplemented).toBe(true);
   });
 
@@ -5365,6 +5375,13 @@ describe("combat restrictions and landwalk", () => {
     // The damage still lands because nothing could be declared as a blocker.
     wet = passUntil(wet, (state) => state.players[1]!.life < 40);
     expect(wet.players[1]!.life).toBe(38);
+  });
+
+  it("requires horsemanship to block a horsemanship attacker", () => {
+    let game = attackWith([HORSEMAN()], [BEAR(), HORSEMAN_BLOCKER()]);
+    const attacker = permanentNamed(game, 0, "Lu Xun, Scholar General");
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    expect(legalBlockers(game, 1).map((permanent) => permanent.card.name)).toEqual(["River Rider"]);
   });
 });
 

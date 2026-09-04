@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,595** · cobertura: **25.4%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,623** · cobertura: **25.4%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -64,7 +64,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 | 1999-02-15 | Urza's Legacy (`ULG`) | expansion | urza | main | 143 | 57 | 86 | 39.9% |
 | 1999-04-21 | Classic Sixth Edition (`6ED`) | core | 1990s | main | 335 | 148 | 187 | 44.2% |
 | 1999-04-29 | Portal Three Kingdoms Promos (`PPTK`) | promos | portal-three-kingdoms | other | 1 | 0 | 1 | 0.0% |
-| 1999-05-01 | Portal Three Kingdoms (`PTK`) | starter | 1990s | other | 170 | 77 | 93 | 45.3% |
+| 1999-05-01 | Portal Three Kingdoms (`PTK`) | starter | 1990s | other | 170 | 93 | 77 | 54.7% |
 | 1999-05-29 | Urza's Destiny Promos (`PUDS`) | promos | urza-s-destiny | other | 1 | 0 | 1 | 0.0% |
 | 1999-06-07 | Urza's Destiny (`UDS`) | expansion | urza | main | 143 | 46 | 97 | 32.2% |
 | 1999-07-01 | Starter 1999 (`S99`) | starter | 1990s | other | 158 | 118 | 40 | 74.7% |
@@ -217,7 +217,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 | 2009-07-17 | Magic 2010 (`M10`) | core | 2010s | main | 234 | 119 | 115 | 50.9% |
 | 2009-08-28 | From the Vault: Exiled (`V09`) | from-the-vault | 2000s | other | 15 | 4 | 11 | 26.7% |
 | 2009-09-04 | Planechase (`HOP`) | planechase | planechase | other | 146 | 62 | 84 | 42.5% |
-| 2009-09-07 | Masters Edition III (`ME3`) | masters-remastered | masters-edition-iii | other | 220 | 78 | 142 | 35.5% |
+| 2009-09-07 | Masters Edition III (`ME3`) | masters-remastered | masters-edition-iii | other | 220 | 86 | 134 | 39.1% |
 | 2009-10-02 | Zendikar (`ZEN`) | expansion | zendikar | main | 234 | 82 | 152 | 35.0% |
 | 2009-10-02 | Zendikar Promos (`PZEN`) | promos | zendikar | other | 5 | 3 | 2 | 60.0% |
 | 2009-10-30 | Duel Decks: Garruk vs. Liliana (`DDD`) | duel-decks | duel-decks-garruk-vs-liliana | other | 57 | 25 | 32 | 43.9% |
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 27 | 41 | 39.7% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 68 | 166 | 29.1% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 219 | 122 | 64.2% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 220 | 121 | 64.5% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 3 | 9 | 25.0% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 6 | 8 | 42.9% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 2 | 7 | 22.2% |
@@ -368,7 +368,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 | 2016-09-30 | Kaladesh Promos (`PKLD`) | promos | kaladesh | other | 70 | 5 | 65 | 7.1% |
 | 2016-10-01 | San Diego Comic-Con 2016 (`PS16`) | promos | comic-con-2016 | other | 5 | 0 | 5 | 0.0% |
 | 2016-11-11 | Commander 2016 (`C16`) | commander | 2016 | commander | 341 | 102 | 239 | 29.9% |
-| 2016-11-16 | Treasure Chest (`PZ2`) | treasure-chest | 2010s | other | 270 | 39 | 231 | 14.4% |
+| 2016-11-16 | Treasure Chest (`PZ2`) | treasure-chest | 2010s | other | 270 | 41 | 229 | 15.2% |
 | 2016-11-25 | Planechase Anthology (`PCA`) | planechase | planechase-anthology | other | 136 | 44 | 92 | 32.4% |
 | 2017-01-01 | Friday Night Magic 2017 (`F17`) | promos | fnm-2017 | other | 9 | 2 | 7 | 22.2% |
 | 2017-01-01 | Judge Gift Cards 2017 (`J17`) | promos | judge-2017 | other | 9 | 1 | 8 | 11.1% |
@@ -380,7 +380,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 | 2017-04-28 | Amonkhet (`AKH`) | expansion | amonkhet | main | 272 | 81 | 191 | 29.8% |
 | 2017-04-28 | Amonkhet Invocations (`MP2`) | masterpieces | amonkhet-invocations | other | 54 | 8 | 46 | 14.8% |
 | 2017-04-28 | Amonkhet Promos (`PAKH`) | promos | amonkhet | other | 69 | 11 | 58 | 15.9% |
-| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 144 | 145 | 49.8% |
+| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 145 | 144 | 50.2% |
 | 2017-06-16 | Archenemy: Nicol Bolas (`E01`) | archenemy | 2010s | other | 101 | 40 | 61 | 39.6% |
 | 2017-07-14 | Hour of Devastation (`HOU`) | expansion | 2010s | main | 199 | 56 | 143 | 28.1% |
 | 2017-07-14 | Hour of Devastation Promos (`PHOU`) | promos | hour-of-devastation | other | 55 | 5 | 50 | 9.1% |
@@ -700,7 +700,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 
 | Grupo | Subgrupo | Ediciones | Cartas únicas | Implementadas | Pendientes | % |
 |---|---|---:|---:|---:|---:|---:|
-| anthologies | 2017 | 1 | 289 | 144 | 145 | 49.8% |
+| anthologies | 2017 | 1 | 289 | 145 | 144 | 50.2% |
 | anthologies | 2018 | 1 | 279 | 118 | 161 | 42.3% |
 | anthologies | arena-anthology-1 | 1 | 26 | 11 | 15 | 42.3% |
 | anthologies | arena-anthology-2 | 1 | 25 | 10 | 15 | 40.0% |
@@ -740,7 +740,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 | boxed-products | the-zeta-set | 1 | 121 | 38 | 83 | 31.4% |
 | commander | 2011 | 1 | 303 | 122 | 181 | 40.3% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 219 | 122 | 64.2% |
+| commander | 2013 | 1 | 341 | 220 | 121 | 64.5% |
 | commander | 2014 | 1 | 322 | 195 | 127 | 60.6% |
 | commander | 2015 | 1 | 327 | 126 | 201 | 38.5% |
 | commander | 2016 | 1 | 341 | 102 | 239 | 29.9% |
@@ -883,7 +883,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 | masters-remastered | masters-25 | 1 | 249 | 86 | 163 | 34.5% |
 | masters-remastered | masters-edition | 1 | 185 | 44 | 141 | 23.8% |
 | masters-remastered | masters-edition-ii | 1 | 245 | 57 | 188 | 23.3% |
-| masters-remastered | masters-edition-iii | 1 | 220 | 78 | 142 | 35.5% |
+| masters-remastered | masters-edition-iii | 1 | 220 | 86 | 134 | 39.1% |
 | masters-remastered | masters-edition-iv | 1 | 260 | 90 | 170 | 34.6% |
 | masters-remastered | modern-masters | 1 | 229 | 53 | 176 | 23.1% |
 | masters-remastered | modern-masters-2015 | 1 | 249 | 71 | 178 | 28.5% |
@@ -1200,7 +1200,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 5 | 11 | 31.2% |
 | spellbooks | 2020s | 1 | 8 | 1 | 7 | 12.5% |
-| starter | 1990s | 5 | 740 | 440 | 300 | 59.5% |
+| starter | 1990s | 5 | 740 | 456 | 284 | 61.6% |
 | starter | 2000s | 1 | 20 | 20 | 0 | 100.0% |
 | starter | 2010s | 7 | 89 | 45 | 44 | 50.6% |
 | starter | 2020s | 1 | 120 | 64 | 56 | 53.3% |
@@ -1215,7 +1215,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 | supplemental | modern-horizons-3 | 1 | 313 | 42 | 271 | 13.4% |
 | supplemental | ravnica-clue-edition | 1 | 268 | 93 | 175 | 34.7% |
 | supplemental | the-lord-of-the-rings-tales-of-middle-earth | 1 | 291 | 25 | 266 | 8.6% |
-| treasure-chest | 2010s | 2 | 419 | 92 | 327 | 22.0% |
+| treasure-chest | 2010s | 2 | 419 | 94 | 325 | 22.4% |
 
 ## Pendientes por edición
 
@@ -6611,13 +6611,11 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 ### starter / 1990s · Portal Three Kingdoms (`PTK`)
 
 - [ ] Balance of Power — `c57ee68e-6832-4d4c-b710-fc03a2c10a9c`
-- [ ] Barbarian General — `d4f2e305-bec0-48c8-8040-f85618c71cc9`
 - [ ] Borrowing the East Wind — `79334732-8db1-4393-9fed-3cde3c572c5c`
 - [ ] Broken Dam — `75fffc1b-db65-4c6b-9503-db50fccb837c`
 - [ ] Burning Fields — `b3b58231-d532-423b-91d0-78d9c0f66f0f`
 - [ ] Burning of Xinye — `3a3cec13-4766-40d2-88e0-41bcdd5249e9`
 - [ ] Cao Cao, Lord of Wei — `81a98b14-e827-4241-a401-64890def51af`
-- [ ] Cao Ren, Wei Commander — `99cbc054-2757-4c07-ad04-9ac67dad4abc`
 - [ ] Capture of Jingzhou — `89aa65d9-2502-40b0-90b6-b25a8e9f6155`
 - [ ] Champion's Victory — `8df38d95-1707-4f83-9d64-41f0be2a3b3b`
 - [ ] Coercion — `68413337-ddb9-46f8-8c8e-f3d2d672c652`
@@ -6640,11 +6638,8 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Imperial Recruiter — `4d6a1391-817a-4ddc-840d-886b138eeb3f`
 - [ ] Kongming's Contraptions — `c3327ffe-f47f-4f5b-b929-a7706ef4932d`
 - [ ] Lady Sun — `dcc363a7-652d-4d2b-9081-3e5735120f21`
-- [ ] Lady Zhurong, Warrior Queen — `531e6ffb-28e0-4e8e-ad88-2f3a243789cf`
 - [ ] Liu Bei, Lord of Shu — `f46416cc-0c3d-4d90-bdcb-910c5d4a2014`
 - [ ] Lu Bu, Master-at-Arms — `ff959f1f-0982-4761-a6b0-3044dff1d617`
-- [ ] Lu Meng, Wu General — `a1e2a966-6aad-4325-b644-3ced319bdd7d`
-- [ ] Lu Xun, Scholar General — `ea658352-abef-4201-b20c-f5c5809d1d3e`
 - [ ] Ma Chao, Western Warrior — `023e26d8-b67d-43dd-89b1-8905b1183094`
 - [ ] Marshaling the Troops — `f82c628c-c01a-4a1c-af9a-e296ba50f12f`
 - [ ] Misfortune's Gain — `01b778d7-0965-48ab-a81f-e29f8a233d07`
@@ -6659,8 +6654,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Rockslide Ambush — `13958d6f-25f9-4a6c-a16c-e7a20e1b9117`
 - [ ] Rolling Earthquake — `46b96552-830e-4732-9560-9872aeec858b`
 - [ ] Sage's Knowledge — `b8ffd53b-5b10-4866-83fe-630eee58c514`
-- [ ] Shu Cavalry — `d9180f63-c745-41a1-9f01-273e7ee13176`
-- [ ] Shu Elite Companions — `edf304b8-523e-4233-8d77-1d45d33cbb86`
 - [ ] Shu General — `0fef6729-b044-4daf-834a-ac8c9711ad8a`
 - [ ] Sima Yi, Wei Field Marshal — `eefa9a94-9915-4dcd-b5dc-7f8e9aa621a7`
 - [ ] Slashing Tiger — `c07a86de-ec29-478c-b6cb-057eb9d3e126`
@@ -6669,7 +6662,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Stolen Grain — `dc17836d-8edf-44bd-a9ee-346d6af25dbf`
 - [ ] Stone Catapult — `c3ead850-3f22-4edb-ac96-40abbdf27905`
 - [ ] Strategic Planning — `02b5acf3-47cb-4d39-9307-e02656f1879b`
-- [ ] Sun Ce, Young Conquerer — `93b0185c-b86f-4137-bc6d-96212eee1708`
 - [ ] Sun Quan, Lord of Wu — `70503280-6bdf-431d-8213-367a9783463a`
 - [ ] Taoist Mystic — `e705ec38-b8f7-4f99-8cb9-8448dc3e50ec`
 - [ ] Taunting Challenge — `50c52320-9f84-4655-a91a-e09b71f9025c`
@@ -6679,26 +6671,18 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Warrior's Oath — `574044cf-2e2f-4b5c-b4d1-cf05ba814ab2`
 - [ ] Warrior's Stand — `1f08072d-7dec-4f0d-b465-dda62eb17630`
 - [ ] Wei Assassins — `e87dd341-416c-4e93-8eb4-1519ecd2674c`
-- [ ] Wei Elite Companions — `2db5e0cd-c991-4fda-9001-9e4f10e8a805`
 - [ ] Wei Night Raiders — `d24ee48a-86a9-4a72-9311-79b6ea3f41f2`
-- [ ] Wei Scout — `f7fa054f-39cb-47d3-a55d-3f70ae164063`
-- [ ] Wei Strike Force — `002ad5fa-a20c-4d30-beef-401d89868d67`
 - [ ] Wu Admiral — `578c5b92-9f7e-4645-9624-f2c1a16b6aaf`
-- [ ] Wu Elite Cavalry — `7dc5d729-0553-46fb-aff7-2f0d9573837b`
-- [ ] Wu Light Cavalry — `c24da532-311b-4b83-82d2-7dc80409ba12`
 - [ ] Wu Scout — `ef577d7d-7a24-4bd3-b86b-f69e37bb2ce7`
 - [ ] Wu Spy — `4b681770-eea3-459c-ad5b-138834213f8c`
 - [ ] Wu Warship — `f184e860-05c3-43cf-a625-ab53427406c5`
 - [ ] Xiahou Dun, the One-Eyed — `9602f262-62cb-4c1e-91b6-d94780e571cf`
 - [ ] Xun Yu, Wei Advisor — `fb5fea4a-1b04-45c6-a207-e2e8493ea968`
-- [ ] Yellow Scarves Cavalry — `8ff7e8e9-11b4-4a77-a423-70777f00482b`
-- [ ] Yellow Scarves General — `6fbade4d-502d-45d7-a79e-3fd9e3e7ccdf`
 - [ ] Yuan Shao's Infantry — `8ad91015-db7f-43ea-97c9-bf2bf5656858`
 - [ ] Yuan Shao, the Indecisive — `2fc5fffa-2eb1-4a3c-af47-3ff8c7df608d`
 - [ ] Zhang Fei, Fierce Warrior — `f3f815b8-75c6-40e0-9716-872f0f5c9d46`
 - [ ] Zhang He, Wei General — `fe35b809-7439-4bdc-bce2-42262095064f`
 - [ ] Zhang Liao, Hero of Hefei — `244541f6-cbfc-4e89-9156-64e412f745a7`
-- [ ] Zhao Zilong, Tiger General — `22aa8e7f-b30d-49e2-b99e-9232e1a3bcf3`
 - [ ] Zhou Yu, Chief Commander — `0b4742b7-e769-4354-beaf-6b4d18768ec1`
 - [ ] Zhuge Jin, Wu Strategist — `ce995d3f-be7c-4d2a-8ec4-c7f7f831f0bf`
 - [ ] Zodiac Dragon — `e5c2cf0f-c1c0-4fd6-9b5f-7d4aa25246a7`
@@ -16918,8 +16902,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Living Plane — `30e99293-3212-4e3f-b543-b1c7c416575d`
 - [ ] Livonya Silone — `57f2aa02-f5f3-42a5-939d-5cc94200951e`
 - [ ] Lu Bu, Master-at-Arms — `ff959f1f-0982-4761-a6b0-3044dff1d617`
-- [ ] Lu Meng, Wu General — `a1e2a966-6aad-4325-b644-3ced319bdd7d`
-- [ ] Lu Xun, Scholar General — `ea658352-abef-4201-b20c-f5c5809d1d3e`
 - [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Mana Vortex — `98b88734-09e2-4209-a787-9b5b345391f9`
 - [ ] Marhault Elsdragon — `c202f124-4283-48f6-aef1-470ad9ded22b`
@@ -16940,8 +16922,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Rohgahh of Kher Keep — `44412804-aa69-4e62-b118-123741d91914`
 - [ ] Rolling Earthquake — `46b96552-830e-4732-9560-9872aeec858b`
 - [ ] Rubinia Soulsinger — `bd3eeaba-964b-49ea-bb11-5875a78b8a4c`
-- [ ] Shu Cavalry — `d9180f63-c745-41a1-9f01-273e7ee13176`
-- [ ] Shu Elite Companions — `edf304b8-523e-4233-8d77-1d45d33cbb86`
 - [ ] Shu General — `0fef6729-b044-4daf-834a-ac8c9711ad8a`
 - [ ] Slashing Tiger — `c07a86de-ec29-478c-b6cb-057eb9d3e126`
 - [ ] Sol Grail — `0396ef40-3774-4684-9971-160aaccf6ac6`
@@ -16954,7 +16934,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Stolen Grain — `dc17836d-8edf-44bd-a9ee-346d6af25dbf`
 - [ ] Storm World — `868f4ab2-a846-4ad0-8720-95fd234dd36b`
 - [ ] Strategic Planning — `02b5acf3-47cb-4d39-9307-e02656f1879b`
-- [ ] Sun Ce, Young Conquerer — `93b0185c-b86f-4137-bc6d-96212eee1708`
 - [ ] Sun Quan, Lord of Wu — `70503280-6bdf-431d-8213-367a9783463a`
 - [ ] Sword of the Ages — `201f2434-96b3-408c-a5ce-74d0675920ed`
 - [ ] Takklemaggot — `31d01633-86f8-4a3f-9c28-f6968e056ba3`
@@ -16967,13 +16946,10 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Urborg — `b6114962-035e-4e7f-9009-4739bf83a05a`
 - [ ] Voodoo Doll — `4d330c40-3d72-4528-a254-d036683958d3`
 - [ ] Wandering Mage — `ac9c81a1-f444-4051-b309-f1af1b5df12a`
-- [ ] Wei Elite Companions — `2db5e0cd-c991-4fda-9001-9e4f10e8a805`
 - [ ] Wei Night Raiders — `d24ee48a-86a9-4a72-9311-79b6ea3f41f2`
-- [ ] Wei Strike Force — `002ad5fa-a20c-4d30-beef-401d89868d67`
 - [ ] Willow Priestess — `630eab2b-c1fd-46bb-8ae0-ff837e46db1c`
 - [ ] Willow Satyr — `c7c660bd-5f58-464c-bc75-dd244b7ca535`
 - [ ] Wormwood Treefolk — `2a014ef1-0450-4485-8a8c-8210a985be4c`
-- [ ] Wu Elite Cavalry — `7dc5d729-0553-46fb-aff7-2f0d9573837b`
 - [ ] Wu Warship — `f184e860-05c3-43cf-a625-ab53427406c5`
 - [ ] Xiahou Dun, the One-Eyed — `9602f262-62cb-4c1e-91b6-d94780e571cf`
 - [ ] Zhang Fei, Fierce Warrior — `f3f815b8-75c6-40e0-9716-872f0f5c9d46`
@@ -21365,7 +21341,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Leafdrake Roost — `b5ff42a1-1ac4-472b-8479-5e3749845305`
 - [ ] Leonin Bladetrap — `ca21d597-40a5-4724-9d53-1ab6e6c6e767`
 - [ ] Lim-Dûl's Vault — `3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97`
-- [ ] Lu Xun, Scholar General — `ea658352-abef-4201-b20c-f5c5809d1d3e`
 - [ ] Magus of the Arena — `44865261-16f8-42d2-a388-a57173142eb0`
 - [ ] Marath, Will of the Wild — `fae87115-8749-4d25-a594-7139dd01a034`
 - [ ] Mass Mutiny — `d96763a0-6a6e-4520-899a-468b4bb307c8`
@@ -26596,7 +26571,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Brudiclad, Telchor Engineer — `a7ac5d98-805e-4212-be94-333a0c0c44a7`
 - [ ] Bruse Tarl, Boorish Herder — `e39a1f6b-6b13-4a8b-ac0c-63ede4636812`
 - [ ] Burnt Offering — `86eb30a0-0beb-42db-9ddf-cf8be6c99dd3`
-- [ ] Cao Ren, Wei Commander — `99cbc054-2757-4c07-ad04-9ac67dad4abc`
 - [ ] Charging Cinderhorn — `397e0d30-a3bf-4b33-98b6-b880f8de5cbb`
 - [ ] Cloak of Mists — `13358b1d-0a35-48ed-a7fb-70359fa3998f`
 - [ ] Conqueror's Flail — `9aace0d3-89e6-4254-b96f-ee3a878f2f91`
@@ -26685,7 +26659,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Kydele, Chosen of Kruphix — `5fca0ce6-e6ba-4319-b3c4-b4d48901e9b4`
 - [ ] Kynaios and Tiro of Meletis — `53ee4254-fef7-49ec-aafc-0320987764e6`
 - [ ] Lady Sun — `dcc363a7-652d-4d2b-9081-3e5735120f21`
-- [ ] Lady Zhurong, Warrior Queen — `531e6ffb-28e0-4e8e-ad88-2f3a243789cf`
 - [ ] Leovold, Emissary of Trest — `d5d91377-fd66-4dbe-a092-07f2ea379ca7`
 - [ ] Licia, Sanguine Tribune — `57170e91-6ebe-4b14-bf56-96d8cf6a4d03`
 - [ ] Lord Windgrace — `38a55562-1e2d-4240-9454-219a4a25d38d`
@@ -27709,7 +27682,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **21,59
 - [ ] Lightkeeper of Emeria — `7f31aa43-cf75-4488-b47f-e16e923a2d01`
 - [ ] Loreseeker's Stone — `28a21e56-b97f-487d-9a89-61c248192cec`
 - [ ] Lotleth Troll — `61b1d7e5-6155-4204-b110-35a890551ec8`
-- [ ] Lu Xun, Scholar General — `ea658352-abef-4201-b20c-f5c5809d1d3e`
 - [ ] Malfegor — `52e1546a-63eb-48d7-acc4-81b912aabc90`
 - [ ] Mana-Charged Dragon — `87354a7b-01be-419e-b383-4c28e12a2f2b`
 - [ ] Masked Admirers — `ea97fc76-3a32-414c-aa12-87be1a0eb9f3`

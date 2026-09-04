@@ -7,10 +7,10 @@ Community Magic rules engine and Commander client. Implement reusable rules
 clusters, not one-off card names. Cards share logic by stable `oracle_id`, so
 one good primitive improves every printing and set.
 
-Published coverage is currently **8,874/38,711 unique engine profiles** and
-**21,595/84,990 edition memberships (25.4%)**. The public set map uses edition
+Published coverage is currently **8,890/38,711 unique engine profiles** and
+**21,623/84,990 edition memberships (25.4%)**. The public set map uses edition
 memberships; reprints therefore appear there separately even though their
-rules implementation is shared. Current C13 is **219/341** and C14 is
+rules implementation is shared. Current C13 is **220/341** and C14 is
 **195/322**. See the [current handoff checkpoint](docs/HANDOFF_TO_CLAUDE.md).
 
 The reusable offline Commander deck generator is documented in

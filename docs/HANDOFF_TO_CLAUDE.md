@@ -6,19 +6,22 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ## Current published checkpoint — 2026-09-04
 
-The latest Pages deployment is the successful build of `f208b30`.
+The latest source checkpoint is the Horsemanship rules change being published
+from this branch; verify the Pages run before reporting it as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 8,874 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 8,890 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 21,595 / 84,990 implemented (25.4%) across 685
+- **Edition memberships:** 21,623 / 84,990 implemented (25.4%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 219 / 341 unique cards (64.2%), 122 pending.
+- **Commander 2013:** 220 / 341 unique cards (64.5%), 121 pending.
 - **Commander 2014:** 195 / 322 unique cards (60.6%), 127 pending.
-- **Composable review vocabulary:** 46 semantic atoms cover 69,497 unresolved
-  component references; 99.9% are reused across clauses. This is scheduling
+- **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
+  component references; 99.9% are reused across clauses. The full-catalog
+  benchmark reduces worker context by 5.0% while preserving exact identities
+  and clause counts. This is scheduling
   compression only: it does not mark a card implemented.
 
 Do not report the 38,711 profile catalog as implemented cards. Recompute both

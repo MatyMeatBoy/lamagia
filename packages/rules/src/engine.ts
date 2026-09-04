@@ -3823,6 +3823,9 @@ function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): bo
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
   if (attackerProfile.protectionFrom.some((quality) => blockerProfile.colors.includes(quality))) return false;
+  // Horsemanship is not flying: only a creature with horsemanship can block
+  // one with it (CR 702.31b), and reach does not bypass this restriction.
+  if (keywordOf(state, attacker, "horsemanship") && !keywordOf(state, blocker, "horsemanship")) return false;
   if (keywordOf(state, attacker, "flying") && !keywordOf(state, blocker, "flying") && !keywordOf(state, blocker, "reach")) return false;
   if (keywordOf(state, attacker, "fear") && !blockerProfile.colors.includes("B") && !blockerProfile.types.includes("Artifact")) return false;
   if (keywordOf(state, attacker, "intimidate") && !blockerProfile.types.includes("Artifact")
