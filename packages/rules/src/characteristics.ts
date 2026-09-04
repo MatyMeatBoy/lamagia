@@ -311,7 +311,7 @@ export type SpellEffect =
   | { readonly kind: "tap-target-permanent" }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "attach-equipment" }
-  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control"; readonly token: TokenDefinition }
+  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control"; readonly token: TokenDefinition }
   | {
       readonly kind: "search-library";
       readonly types: readonly CardType[];
@@ -968,6 +968,12 @@ function parseLandScaledToken(text: string): SpellEffect | null {
   return base?.kind === "create-token" ? { ...base, amount: "lands-you-control" } : null;
 }
 
+function parseCreatureScaledToken(text: string): SpellEffect | null {
+  if (!/\s+for each creature you control$/i.test(text.trim())) return null;
+  const base = parseCreateToken(text.trim().replace(/\s+for each creature you control$/i, ""));
+  return base?.kind === "create-token" ? { ...base, amount: "creatures-you-control" } : null;
+}
+
 /**
  * Recognises the trigger condition of one printed line.
  *
@@ -1303,7 +1309,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
-  const token = parseLandScaledToken(text) ?? parseCreateToken(text);
+  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
   const genericSearch = parseLibrarySearch(text);
   if (genericSearch) return { effect: genericSearch, target: "none" };
