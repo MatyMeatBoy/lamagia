@@ -1726,3 +1726,9 @@ also queued as one incoming commit and remains outside the integration batch.
 The token primitive now supports “target opponent creates …” without redirecting
 the tokens to the ability controller. Hunted Troll covers the opponent target
 filter and Faerie token creation (CR 603.2, 111.2).
+
+### C13 Phyrexian Delver reanimation payment (2026-09-04)
+
+The graveyard-creature return primitive now supports the optional Phyrexian
+Delver wording and charges its controller life equal to the returned card's
+mana value after it enters (CR 603.2, 608.2).

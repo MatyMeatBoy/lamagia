@@ -234,6 +234,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-when-enters-target-opponent` | Targeted ETB token creation under the chosen opponent's control, applied to Hunted Troll (CR 603.2, 111.2) | `codex/c13-target-opponent-tokens-f99` | active | 2026-09-04 |
+| `c13-when-enters-return-target-2` | Optional ETB creature reanimation with controller life loss equal to the returned card's mana value, applied to Phyrexian Delver (CR 603.2, 608.2) | `codex/c13-delver-reanimate-f99` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |

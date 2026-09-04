@@ -605,6 +605,19 @@ describe("effect recognition", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises reanimation triggers that charge the creature's mana value", () => {
+    const profile = cardProfile(card({
+      name: "Phyrexian Delver", type_line: "Creature — Phyrexian Zombie",
+      oracle_text: "When Phyrexian Delver enters the battlefield, you may put target creature card from your graveyard onto the battlefield. You lose life equal to that creature's converted mana cost."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      optional: true,
+      targetKind: "creature-card-in-your-graveyard",
+      effect: { kind: "reanimate-target-creature-and-lose-mana-value" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("recognises reusable landfall and artifact-creature trigger subjects", () => {
     const landfall = cardProfile(card({
       name: "Landfall Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", power: "4", toughness: "4",
