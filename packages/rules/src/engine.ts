@@ -3936,6 +3936,18 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
+  if (ability.discardsCard) {
+    const hand = playerAt(next, seat).hand;
+    const discarded = hand.find((card) => card.instance_id === action.sacrificeId)
+      ?? [...hand].sort((left, right) => (cardProfile(right).cost?.symbols.length ?? 0) - (cardProfile(left).cost?.symbols.length ?? 0))[0];
+    if (!discarded) throw new Error("No tienes una carta para descartar.");
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      hand: current.hand.filter((card) => card.instance_id !== discarded.instance_id),
+      graveyard: [...current.graveyard, discarded]
+    }));
+    next = logged(next, seat, `${player.name} descarta ${discarded.name}.`);
+  }
   if (sacrifice) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);
     if (!paid) throw new Error("La criatura elegida para sacrificar ya no está en el campo.");
