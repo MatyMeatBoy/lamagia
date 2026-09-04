@@ -111,6 +111,108 @@ feature name.
 | `c14-draw-then-discard` | `Draw N, then discard M` effect (spell + activated) + bot discard-cards policy | `c14-batch2-clean` | merged (`02b40ed`) | 2026-09-04 |
 | `c14-self-zone` | `Exile ~` / `Shuffle ~ into its owner's library` spell self-destination; graveyard `another target` + nonland-permanent bounce | `c14-batch2-clean` | merged (`02b40ed`) | 2026-09-04 |
 | `bot-fear-block` | Bot chooseBlockers respects fear (CR 702.36b) | `c14-batch2-clean` | merged (`8f095af`) | 2026-09-04 |
+| `rules-python-sacrifice-operands` | Preserve typed sacrifice operands and reusable primitive clusters in the Oracle compiler | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `rules-python-trigger-subjects` | Preserve reusable trigger subjects such as permanent-you-control in the Oracle compiler | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `rules-python-activated-cost-operands` | Preserve reusable discard, exile, and sacrifice cost operands for activated-ability batches | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `rules-python-graveyard-return-operands` | Preserve permanent-card graveyard return destinations for compiler clusters | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `tools-primitive-roadmap` | `tools/rules/plan_primitive_roadmap.py` and its unit tests: rank Oracle primitives by cards actually finished | `codex-ready/c14-combat-restrictions` | ready to integrate | 2026-09-03 |
+| `tools-parallel-workers` | `tools/rules/plan_primitive_workers.py`: assign disjoint primitives to bounded workers and split 20-card commit batches | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c14-combat-restrictions` | Printed can't attack / can't block / attacks each combat if able / can block only creatures with X | `codex-ready/c14-combat-restrictions` | ready to integrate | 2026-09-03 |
+| `c14-landwalk` | Landwalk evasion for every basic land type plus legendary landwalk | `codex-ready/c14-combat-restrictions` | ready to integrate | 2026-09-03 |
+| `c13-activated-pump` | Activated self-creature P/T bonuses through end of turn | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-unblockable` | Printed creature can't-be-blocked restriction | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature, including “another” | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-activated-sacrifice-artifact` | Activated costs that sacrifice an artifact, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-enchantment` | Activated costs that sacrifice an enchantment, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-land` | Activated costs that sacrifice a land, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-noncreature` | Activated costs that sacrifice any noncreature permanent (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-permanent` | Activated costs that sacrifice a permanent, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-discard-cost` | Activated costs that discard one card from the controller’s hand (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-token` | Activated costs that sacrifice a token permanent (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-exile-graveyard-cost` | Activated costs that exile one card from the controller’s graveyard (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-graveyard-to-library-bottom` | Return a targeted card from your graveyard to the bottom of your library (CR 400.7, 701.19) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-graveyard-shuffle-into-library` | Shuffle a targeted card from your graveyard into your library (CR 400.7, 701.20) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-return-permanent-card-to-battlefield` | Return a targeted permanent card from your graveyard to the battlefield (CR 400.7, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-return-permanent-card-from-any-graveyard` | Return a targeted permanent card from any graveyard to the battlefield (CR 400.7, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-exile-permanent-card-from-graveyard` | Exile a targeted permanent card from your graveyard (CR 400.7, 701.11) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-exile-permanent-card-from-any-graveyard` | Exile a targeted permanent card from any graveyard (CR 400.7, 701.11) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-loyal-retainers` | Loyal Retainers: precombat activated sacrifice and legendary-creature graveyard return (CR 602.2b, 608.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-compound-draw-life-loss` | Compound draw-and-life-loss effects used by upkeep triggers | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-damage-equal-hand` | Damage to a player equal to cards in that player's hand | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-static-haste-grant` | Static “creatures you control have haste” grants | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-draw-step-additional-card` | Draw-step triggers that draw an additional card for the active player | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-opponent-hand-minus-damage` | Opponent-upkeep damage equal to active player's hand count minus an offset | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-conditional-subtype-trigger` | Conditional triggers gated by controlling no permanent of a subtype | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-draw-tapped-creatures` | Draw a card for each tapped creature controlled by a targeted opponent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-global-creature-keyword` | Temporary keyword grants to all creatures on the battlefield | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-life-gain-prevention` | Static prevention of all player life gain | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-no-maximum-hand-size` | Static removal of the cleanup maximum-hand-size discard | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-static-creature-pt-grant` | Static +P/+T bonuses for other creatures you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-destroy-power-toughness-loss` | Destroy a creature then make its controller lose its power plus toughness | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-variable-global-debuff` | X-scaled -X/-X effects affecting every creature | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-conditional-power-trigger` | Optional triggers gated by a controlled creature's power threshold | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-nonflying-global-damage` | X-scaled damage to nonflying creatures and each player | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-upkeep-draw-life-loss` | Upkeep draw-and-life-loss compound trigger wording | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-fear-evasion` | Fear keyword and black-or-artifact blocking restriction | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-equal-hand-upkeep-damage` | Opponent-upkeep damage equal to active player's hand size | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-artifact-life` | Life gain multiplied by controlled artifacts | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-named-source-counters` | Named non-power counters placed on a triggered source | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-global-fear-test` | Scenario coverage for global fear grants | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-life-types` | Reusable counted life gain for artifacts, creatures and enchantments | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-creature-tokens` | Token creation scaled by controlled creature count | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-power-threshold-targets` | Legal target filtering for creatures with power five or greater | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-continuous-flying-targets` | Continuous flying grants respected by flying-target filters | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-other-creature-keyword-grants` | Static keyword grants excluding their source creature | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-fear-token-keywords` | Preserve fear when parsing generated token keywords | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-equal-hand-life-loss` | Life loss equal to each player's hand size | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-wheel-discard-draw` | Deterministic discard-hand then draw count effect | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-targeted-hand-discard` | Move a targeted player's full hand to graveyard | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-target-life-loss` | Targeted life loss scaled by controlled type count | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-mill-each-player` | Mill a fixed or X amount from every library | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-player-only-global-damage` | Damage every player without affecting permanents | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-land-life` | Count controlled lands in scalable life gain | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-life-per-permanent` | Life gain scaled by all controlled permanents | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-draw-controlled-type` | Draw one card per controlled creature, artifact, enchantment or land | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-counted-any-target-damage` | Any-target damage scaled by a controlled type count | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-toughness-threshold-targets` | Creature targets filtered by toughness four or greater | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-low-power-targets` | Creature targets filtered by power four or less | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-low-toughness-targets` | Creature targets filtered by toughness four or less | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-defender-targets` | Creature targets filtered by enforced defender | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-deathtouch-targets` | Creature targets filtered by enforced deathtouch | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-lifelink-targets` | Creature targets filtered by enforced lifelink | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-menace-targets` | Creature targets filtered by enforced menace | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-haste-targets` | Creature targets filtered by enforced haste | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-first-strike-targets` | Creature targets filtered by enforced first strike | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-double-strike-targets` | Creature targets filtered by enforced double strike | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-trample-targets` | Creature targets filtered by enforced trample | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-vigilance-targets` | Creature targets filtered by enforced vigilance | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-indestructible-targets` | Creature targets filtered by enforced indestructible | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-hexproof-targets` | Creature targets filtered by enforced hexproof and ownership | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-shroud-targets` | Shroud target prohibition kept in target filtering | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-reach-targets` | Creature targets filtered by enforced reach | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-flying-only-sweeper` | Damage effects restricted to creatures with flying | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-static-keyword-gain-verb` | Alternate gain wording for static keyword grants | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-global-static-keywords` | Static keyword grants affecting every creature | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-global-static-pt` | Global static power/toughness layer bonuses | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-global-static-pt-dedup` | Prevent duplicate application of global static bonuses | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-counted-planeswalkers` | Planeswalkers accepted by controlled-type scaling | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-counted-battles` | Battles accepted by controlled-type scaling | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-return-artifact-to-hand` | Return target artifact permanents to their owners' hands | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-return-enchantment-to-hand` | Return target enchantment permanents to their owners' hands | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-return-enchantment-from-graveyard` | Return target enchantment card from graveyard to battlefield | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-exile-card-from-any-graveyard` | Exile target card from any graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-return-card-from-any-graveyard` | Return target card from any graveyard to its owner's hand | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-exile-creature-from-any-graveyard` | Exile target creature card from any graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-exile-artifact-from-any-graveyard` | Exile target artifact card from any graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-exile-enchantment-from-any-graveyard` | Exile target enchantment card from any graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-exile-land-from-any-graveyard` | Exile target land card from any graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-artifact-etb-trigger-subject` | Trigger subjects for artifacts entering under your control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-enchantment-etb-trigger-subject` | Trigger subjects for enchantments entering under your control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 
 ## Claim format
 
