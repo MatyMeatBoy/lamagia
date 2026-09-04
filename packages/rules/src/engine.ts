@@ -2183,6 +2183,30 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return logged(next, controller, `${sourceName} devuelve ${candidates.length} permanente(s) que no son tierra a la mano.`);
     }
+    case "return-n-creatures": {
+      const count = effect.count === "X" ? object.variableValue : effect.count;
+      if (count <= 0) return state;
+      // Optional "up to N" with no tracked targets: bounce opponents' biggest creatures first.
+      const candidates = allPermanents(state)
+        .filter((permanent) => isCreature(cardProfile(permanent.card)))
+        .sort((left, right) => {
+          const opp = (left.controller !== controller ? 0 : 1) - (right.controller !== controller ? 0 : 1);
+          if (opp !== 0) return opp;
+          return (powerOf(right, state) + toughnessOf(right, state)) - (powerOf(left, state) + toughnessOf(left, state));
+        })
+        .slice(0, count);
+      let next = state;
+      for (const permanent of candidates) {
+        const live = findPermanent(next, permanent.instance_id);
+        if (!live) continue;
+        next = withPlayer(next, live.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== live.instance_id)
+        }));
+        if (!live.card.token) next = withPlayer(next, live.card.owner, (player) => ({ ...player, hand: [...player.hand, live.card] }));
+      }
+      return logged(next, controller, `${sourceName} devuelve ${candidates.length} criatura(s) a la mano.`);
+    }
     case "karoo-bounce": {
       // "sacrifice it unless you return an untapped <basic> you control" (Karoo,
       // Coral Atoll, ... CR 603.2). Auto-picks a candidate; otherwise sacrifices.
