@@ -392,7 +392,9 @@ export type SpellEffect =
       readonly subtypes?: readonly string[];
       readonly destinations: readonly ("hand" | "battlefield-tapped")[];
       readonly reveal: boolean;
-    };
+    }
+  /** Partner with <name> (CR 702.124f): a deterministic, name-exact search — no candidate choice, unlike `search-library`. */
+  | { readonly kind: "partner-with-search"; readonly cardName: string };
 
 /**
  * Game events the engine raises for triggered abilities.
@@ -477,8 +479,13 @@ export interface TriggerDefinition {
  readonly manaCost?: ManaCost;
   /** For "unless that player pays", the opponent is the payer and the trigger controller receives the effect if they decline. */
   readonly paymentBy?: "opponent";
-  /** The event object's controller makes an optional choice, rather than the ability source's controller. */
-  readonly choiceBy?: "event-controller";
+  /**
+   * Who makes the ability's optional "may" choice, when it isn't the trigger's
+   * controller: the event object's controller ("event-controller"), or the
+   * ability's own chosen target ("target" — CR 603.3d: targets are already
+   * fixed by the time the ability resolves, e.g. "target player may ...").
+   */
+  readonly choiceBy?: "event-controller" | "target";
   /** Maximum cards for a delayed/up-to draw trigger; the player chooses 0..N on resolution. */
   readonly drawUpTo?: number;
   readonly condition?:
@@ -1862,6 +1869,32 @@ function recognizeText(text: string): RecognizedText {
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
+    // Partner (CR 702.123): purely a deck-construction rule — createGame
+    // already accepts multiple declared commanderNames, so the printed line
+    // carries no per-card state here. Reminder text (parenthetical) is
+    // already stripped from `text` above, so no parenthetical ever survives
+    // to this loop.
+    if (/^Partner\.?$/i.test(line)) continue;
+    // Partner with <name> (CR 702.124f): an exact, deterministic library
+    // search — no candidate choice, unlike fetch-land style `search-library`.
+    // The target player (not the controller) decides on resolution, so this
+    // is `choiceBy: "target"`. Two known printings are excluded by name: The
+    // Knight of Land Drops lets you freely choose any legendary Knight and
+    // never searches, and Mothers Yamazaki's "partner with itself" needs a
+    // self-referential two-copy deck this primitive does not model.
+    const partnerWith = /^Partner with (.+?)\.?$/i.exec(line);
+    if (partnerWith) {
+      const cardName = partnerWith[1]!.trim();
+      const excluded = cardName.toLowerCase() === "itself" || cardName.toLowerCase() === "knight";
+      if (!excluded) {
+        triggers.push({
+          event: "enters-battlefield", subject: "self",
+          effect: { kind: "partner-with-search", cardName },
+          optional: true, choiceBy: "target", targetKind: "player", sourceText: line
+        });
+        continue;
+      }
+    }
     // Board-scaled self cost reduction is consumed by cardProfile, not resolved here.
     if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
     if (/^(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;

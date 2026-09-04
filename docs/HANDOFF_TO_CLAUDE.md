@@ -1498,3 +1498,52 @@ global export **8,250/38,711**. `npm run check` and `npm test` PASS (**434
 rules tests**, simulator smoke tests and 40 Oracle Python tests PASS).
 `npm run simulate:engine` reproduces the same pre-existing, unrelated seed-92
 invariant failure.
+
+### Worker-05: the Partner keyword and Partner with <name> (2026-09-04)
+
+Claim `rules-partner-keyword`, requested by the user by name ("la keyword
+partner y sus asociados, como los que hay en LOTR"). Two independent pieces:
+
+1. **Partner** (CR 702.123) is purely a deck-construction legality rule.
+   `createGame` already accepts an array of `commanderNames` and builds a
+   multi-card command zone from it — nothing about the *card* needs new
+   state, so the printed line is now just recognized and dropped, honestly
+   reflecting that the engine already supports two commanders mechanically.
+2. **Partner with <name>** (CR 702.124f) is a real ETB effect: the printed
+   text in this catalog is (after this project's global reminder-text strip)
+   exactly `Partner with <Name>`. It searches the target player's library for
+   the exact named card and puts it into that player's hand, then shuffles.
+   The key rules subtlety is *who* decides: targets are chosen by the
+   ability's controller as it goes on the stack (CR 603.3d) as always, but
+   the "may" is decided by the *targeted* player on resolution, not the
+   controller. `TriggerDefinition.choiceBy` only had `"event-controller"`
+   (for "that creature's controller may..."); added `"target"`, resolved in
+   `engine.ts`'s optional-trigger branch from `object.targets[0]`. The actual
+   move-and-shuffle is a new direct-resolution `partner-with-search` effect
+   (`characteristics.ts`/`engine.ts`) — deliberately not routed through the
+   existing interactive `search-library` pending-choice flow, since there is
+   no candidate to pick among, only a yes/no and a name.
+   Two known non-standard printings are excluded by the captured name rather
+   than guessed at: The Knight of Land Drops ("Partner with Knight" — lets
+   you freely choose any legendary Knight, never searches) and Mothers
+   Yamazaki ("Partner with itself" — a self-referential two-copy deck this
+   primitive does not model). Both stay honestly pending.
+
+This does **not** move Commander 2017 itself — checked directly against the
+local catalog: no `c17`-set card actually prints "Partner" text (the
+mechanic's real timeline is Commander 2016 for bare Partner and Battlebond
+for "Partner with", not C17; C17 reused the plain Partner keyword on none of
+its own legends). It does move **Commander 2016 (93→96)**, **Commander
+Anthology Volume II (102→103)**, **Commander Legends (140→145)**, and
+**Bloomburrow Commander (88→89)** to full completion for 9 single-ability
+cards (Ishai, Ravos Soultender, Tana, Rograkh, Toggo, Blaring Recruiter,
+Proud Mentor, Lore Weaver, Chakram Slinger). It also strips the resolved
+`Partner with` line from every Battlebond, Doctor Who, and Tales of
+Middle-earth Commander printing's `unimplementedText` — including the LOTR
+hobbit pairs Merry/Pippin and Frodo/Sam the user asked about by name — even
+where those cards stay pending on a separate, unrelated ability.
+
+Global export: **8,259/38,711** (+9). `npm run check` and `npm test` PASS
+(**436 rules tests**, up from 434; simulator smoke tests and 40 Oracle Python
+tests PASS). `npm run simulate:engine` reproduces the same pre-existing,
+unrelated seed-92 invariant failure.

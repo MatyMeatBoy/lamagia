@@ -2279,6 +2279,26 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return logged(next, controller, `${equipment.card.name} se anexa a ${creature.card.name}.`);
     }
+    case "partner-with-search": {
+      // CR 702.124f: an exact-name search with no candidate choice, unlike
+      // `search-library` above — so it resolves directly here rather than
+      // through a pending choice. "Then shuffle" happens either way.
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const player = playerAt(state, target.seat);
+      const found = player.library.find((card) => card.name === effect.cardName);
+      const remaining = found ? player.library.filter((card) => card.instance_id !== found.instance_id) : player.library;
+      const shuffled = shuffle(remaining, state.rngState);
+      let next: GameState = { ...state, rngState: shuffled.state };
+      next = withPlayer(next, target.seat, (current) => ({
+        ...current,
+        library: shuffled.items,
+        hand: found ? [...current.hand, found] : current.hand
+      }));
+      return logged(next, controller, found
+        ? `${playerAt(next, target.seat).name} pone a ${found.name} en su mano desde su biblioteca.`
+        : `${playerAt(next, target.seat).name} busca a ${effect.cardName} en su biblioteca sin encontrarla.`);
+    }
   }
 }
 
@@ -2384,8 +2404,11 @@ function resolveTop(state: GameState): GameState {
       const payer = object.trigger.definition.paymentBy === "opponent"
         ? (object.trigger.eventController ?? opponentsOf(next, object.controller)[0] ?? object.controller)
         : object.controller;
+      const targetPlayer = object.targets.find((target) => target.kind === "player");
       const choiceSeat = object.trigger.definition.choiceBy === "event-controller"
         ? (object.trigger.eventController ?? object.controller)
+        : object.trigger.definition.choiceBy === "target"
+        ? (targetPlayer?.kind === "player" ? targetPlayer.seat : payer)
         : payer;
       return {
         ...next,

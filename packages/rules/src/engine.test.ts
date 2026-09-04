@@ -343,6 +343,22 @@ const DRAIN_ARTIST = () => make({
   name: "Vein Reaper", type_line: "Creature — Vampire", mana_cost: "{B}{B}", cmc: 2, power: "0", toughness: "2",
   oracle_text: "Whenever ~ or another creature dies, target player loses 1 life and you gain 1 life."
 });
+// Partner (CR 702.123) is purely a deck-construction rule already covered by
+// createGame's multi-commander support; the printed line carries no state.
+const PARTNER_BARE = () => make({
+  name: "Twinbond Kin", type_line: "Legendary Creature — Human Scout", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2",
+  oracle_text: "Partner (You can have two commanders if both have partner.)"
+});
+// Partner with <name> (CR 702.124f) is an exact, deterministic library
+// search decided by the chosen target, not the controller.
+const PARTNER_WITH_SEEKER = () => make({
+  name: "Bonded Seeker", type_line: "Legendary Creature — Human Scout", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2",
+  oracle_text: "Partner with Bonded Kin (When this creature enters, target player may put Bonded Kin into their hand from their library, then shuffle.)"
+});
+const PARTNER_WITH_KIN = () => make({
+  name: "Bonded Kin", type_line: "Legendary Creature — Human Scout", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2",
+  oracle_text: "Partner with Bonded Seeker (When this creature enters, target player may put Bonded Seeker into their hand from their library, then shuffle.)"
+});
 // Modern errata dropped "under your control" from Essence Warden and Soul
 // Warden: the trigger now watches every creature entering, not only the
 // controller's own (still excluding the source itself, CR 109.5).
@@ -3511,6 +3527,12 @@ describe("triggered abilities", () => {
       effect: { kind: "compound", effects: [{ kind: "lose-life-target-player", amount: 1 }, { kind: "gain-life", amount: 1 }] }
     });
     expect(profileOf(DRAIN_ARTIST()).fullyImplemented).toBe(true);
+    expect(profileOf(PARTNER_BARE())).toMatchObject({ triggers: [], effects: [], fullyImplemented: true });
+    expect(profileOf(PARTNER_WITH_SEEKER()).triggers[0]).toMatchObject({
+      event: "enters-battlefield", subject: "self", optional: true, choiceBy: "target", targetKind: "player",
+      effect: { kind: "partner-with-search", cardName: "Bonded Kin" }
+    });
+    expect(profileOf(PARTNER_WITH_SEEKER()).fullyImplemented).toBe(true);
     expect(profileOf(RAIDER()).triggers[0]).toMatchObject({ event: "attacks", subject: "self", targetKind: "any" });
     expect(profileOf(UPKEEP_SAGE()).triggers[0]).toMatchObject({ event: "upkeep", subject: "you" });
     expect(profileOf(CREATURE_COMBAT_DRAWER()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", effect: { kind: "draw", amount: 1 } });
@@ -3888,6 +3910,40 @@ describe("triggered abilities", () => {
     solo = applyAction(solo, 1, { type: "choose-trigger-target", sourceId: soloChoice.sourceId, target: { kind: "player", seat: 0 } });
     expect(solo.players[0]!.life).toBe(soloLife0 - 1);
     expect(solo.players[1]!.life).toBe(soloLife1 + 1);
+  });
+
+  it("lets the chosen target search for its exact partner", () => {
+    const bondedKin = PARTNER_WITH_KIN();
+    let game = readyToCast([PARTNER_WITH_SEEKER()], [FOREST(), FOREST()]);
+    game = stage(game, 1, (player) => ({ library: [...toHand(1, [bondedKin], "lib"), ...player.library] }));
+    const libraryBefore = game.players[1]!.library.length;
+    const handBefore = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    // The caster's controller chooses the target, as with any targeted ability.
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", seat: 0 });
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "player", seat: 1 } });
+    // But the chosen player, not the caster, decides whether to search.
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", seat: 1 });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.players[1]!.hand.some((card) => card.name === "Bonded Kin")).toBe(true);
+    expect(game.players[1]!.hand.length).toBe(handBefore + 1);
+    expect(game.players[1]!.library.length).toBe(libraryBefore - 1);
+  });
+
+  it("leaves the chosen target's hand untouched when they decline the search", () => {
+    const bondedKin = PARTNER_WITH_KIN();
+    let game = readyToCast([PARTNER_WITH_SEEKER()], [FOREST(), FOREST()]);
+    game = stage(game, 1, (player) => ({ library: [...toHand(1, [bondedKin], "lib"), ...player.library] }));
+    const handBefore = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "player", seat: 1 } });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: optional.sourceId, accept: false });
+    expect(game.players[1]!.hand.some((card) => card.name === "Bonded Kin")).toBe(false);
+    expect(game.players[1]!.hand.length).toBe(handBefore);
   });
 
   it("fires another creature's enter trigger under any player's control, but not for itself", () => {
