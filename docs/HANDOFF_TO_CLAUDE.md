@@ -564,6 +564,24 @@ still outside `SpellEffect`.
 - Do not claim the game is "fully playable" or that "all cards work" until rules coverage and authenticated online flows actually prove it.
 - Treat new card images and external data as licence and provenance decisions, not implementation conveniences.
 
+### Current C13 primitive batch (2026-09-04)
+
+The active C13 batch now covers typed activated costs for sacrificing artifacts,
+enchantments, lands, noncreature permanents, and tokens; choosing a discard
+from hand; exiling a chosen card from the controller's graveyard; generic and
+`another` permanent ETB subjects; player-wide spell-cast subjects; and moving
+graveyard cards to the library bottom or through a deterministic shuffle.
+Explicit cost selections are validated by the authoritative engine instead of
+silently falling back to another card. Python compilation preserves
+`sacrifice_types`, `cost_actions`, and `trigger_subject` for reusable worker
+clusters. These behaviours follow CR 117.3b, 400.7, 602.2b, and 603.2–603.3;
+printed text outside the closed templates remains pending.
+
+Validation: `npm run check --workspace=@prossh/rules`, `npm run
+test --workspace=@prossh/rules`, and `python
+tools/rules/test_compile_oracle_effects.py` PASS; latest rules result 274
+passed, 6 skipped, compiler result 23 passed.
+
 ## Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
