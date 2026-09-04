@@ -123,6 +123,7 @@ const PERMANENT_SAC_ACTIVATION = () => make({ name: "Permanent Sacrifice Memory"
 const GENERIC_REANIMATE = () => make({ name: "Permanent Reclaim", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Return target permanent card from your graveyard to the battlefield." });
 const CROSS_GENERIC_REANIMATE = () => make({ name: "Cross Permanent Reclaim", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Return target permanent card from a graveyard to the battlefield." });
 const PERMANENT_GRAVEYARD_EXILE = () => make({ name: "Permanent Exile", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target permanent card from your graveyard." });
+const CROSS_PERMANENT_GRAVEYARD_EXILE = () => make({ name: "Cross Permanent Exile", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Exile target permanent card from a graveyard." });
 const BOTTOM_RETURN = () => make({ name: "Bottom Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on the bottom of your library." });
 const SHUFFLE_RETURN = () => make({ name: "Shuffle Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Shuffle target card from your graveyard into your library." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
@@ -914,6 +915,18 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets });
     expect(game.players[0]!.exile.some((card) => card.name === "Exile Relic")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Exile Trick")).toBe(true);
+  });
+
+  it("filters cross-graveyard permanent exile without exposing nonpermanents", () => {
+    const permanent = make({ name: "Cross Exile Relic", type_line: "Artifact" });
+    const instant = make({ name: "Cross Exile Trick", type_line: "Instant", mana_cost: "{U}" });
+    let game = readyToCast([CROSS_PERMANENT_GRAVEYARD_EXILE()], [SWAMP(), SWAMP()]);
+    game = stage(game, 1, () => ({ graveyard: toHand(1, [permanent, instant], "cross-permanent-exile") }));
+    const targets = legalTargets(game, 0, "permanent-card-in-a-graveyard");
+    expect(targets).toHaveLength(1);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets });
+    expect(game.players[1]!.exile.some((card) => card.name === "Cross Exile Relic")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Cross Exile Trick")).toBe(true);
   });
 
   it("offers only generated tokens for a token sacrifice cost", () => {
