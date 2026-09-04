@@ -758,6 +758,10 @@ The same reusable primitive now recognizes Burnished Hart's variant, where
 both selected basics enter the battlefield tapped, with a scenario covering
 its sacrifice cost and destination order.
 
+Ajani's Pridemate is also verified as a C13 reprint of the life-gained
+source-counter trigger: the stable profile, trigger event, and end-to-end
+counter resolution are shared with the existing primitive.
+
 The reprint-equivalence pass verifies C13's Command Tower and Decree of Pain
 against their shared oracle-driven implementations. Army of the Damned is now
 covered end to end, including Flashback from the graveyard and exile on
