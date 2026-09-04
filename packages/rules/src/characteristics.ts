@@ -1225,6 +1225,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness$/i.test(`${text}.`)) {
     return { effect: { kind: "destroy-target-creature-then-life-loss" }, target: "creature" };
   }
+  if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
   if (/^Destroy target enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "enchantment" };
@@ -1410,6 +1411,16 @@ function recognizeText(text: string): RecognizedText {
       } else {
         unimplementedText.push(line);
       }
+      continue;
+    }
+
+    // Some historical Oracle rows keep two tightly coupled instructions on
+    // one line. Give the closed parser a chance to recognize that whole line
+    // before the generic sentence splitter separates it.
+    const wholeLine = recognizeSentence(line);
+    if (wholeLine) {
+      effects.push(wholeLine.effect);
+      if (wholeLine.target !== "none") targetKind = wholeLine.target;
       continue;
     }
 
