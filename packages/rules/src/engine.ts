@@ -2061,6 +2061,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return logged(next, controller, `${sourceName} destruye artifacts, criaturas y encantamientos.`);
     }
+    case "destroy-all-artifacts-enchantments-add-counters": {
+      const destroyed = allPermanents(state).filter((permanent) => {
+        const profile = cardProfile(permanent.card);
+        return (isArtifact(profile) || isEnchantment(profile)) && !keywordOf(state, permanent, "indestructible");
+      });
+      let next = state;
+      for (const permanent of destroyed) next = movePermanentToZone(next, permanent, "graveyard");
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const source = sourceId ? findPermanent(next, sourceId) : undefined;
+      if (source && destroyed.length > 0) {
+        next = withPlayer(next, source.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+            ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + destroyed.length } }
+            : permanent)
+        }));
+      }
+      return logged(next, controller, `${sourceName} destruye ${destroyed.length} artifact(s)/enchantment(s) y pone ${destroyed.length} contador(es).`);
+    }
     case "counter-target-spell": {
       const target = object.targets[0];
       if (!target || target.kind !== "spell") return state;

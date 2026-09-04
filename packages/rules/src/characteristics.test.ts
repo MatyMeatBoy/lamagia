@@ -356,6 +356,21 @@ describe("delayed draw primitives", () => {
   });
 });
 
+describe("Bane of Progress primitives", () => {
+  it("recognises the artifact/enchantment sweep and destruction count", () => {
+    const profile = cardProfile(card({
+      name: "Bane of Progress",
+      type_line: "Creature — Elemental",
+      oracle_text: "When Bane of Progress enters the battlefield, destroy all artifacts and enchantments, then put a +1/+1 counter on Bane of Progress for each permanent destroyed this way."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield",
+      effect: { kind: "destroy-all-artifacts-enchantments-add-counters", counter: "+1/+1" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("triggered self modifications", () => {
   it("recognises Landfall P/T plus keyword as one reusable effect", () => {
     const profile = cardProfile(card({
