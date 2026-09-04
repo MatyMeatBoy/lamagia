@@ -309,6 +309,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-reveal-until-creature` | Foster reveal until a creature, move it to hand and revealed cards to graveyard | `codex/c13-foster` | active | 2026-09-04 |
 | `c13-threshold-graveyard-return` | Stitch Together threshold branch between battlefield and hand | `codex/c13-stitch-together` | active | 2026-09-04 |
 | `c13-choose-both` | Soul Manipulation and Fissure Vent modal one-or-both selection | `codex/c13-choose-both` | active | 2026-09-04 |
+| `c13-protection-colors` | Protection from colors: parser plus target, combat-blocking, and damage prevention rules for C13 creatures such as Karmic Guide and Sphinx of the Steel Wind (CR 702.16) | `codex/c13-protection-colors-8c9` | active | 2026-09-04 |
 
 ## Claim format
 
