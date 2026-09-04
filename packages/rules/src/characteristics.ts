@@ -318,6 +318,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-artifact-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-enchantment-card-from-graveyard-to-battlefield" }
   | { readonly kind: "exile-target-card-from-graveyard" }
+  | { readonly kind: "exile-target-permanent-card-from-graveyard" }
   | { readonly kind: "return-target-card-to-library-top" }
   | { readonly kind: "return-target-card-to-library-bottom" }
   | { readonly kind: "shuffle-target-card-into-library" }
@@ -1413,6 +1414,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
   if (/^Return target card from a graveyard to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "card-in-a-graveyard" };
   if (/^Exile target card from your graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
+  if (/^Exile target permanent card from your graveyard$/i.test(text)) return { effect: { kind: "exile-target-permanent-card-from-graveyard" }, target: "permanent-card-in-your-graveyard" };
   if (/^Exile target card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "card-in-a-graveyard" };
   if (/^Exile target creature card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "creature-card-in-a-graveyard" };
   if (/^Exile target artifact card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "artifact-card-in-a-graveyard" };
