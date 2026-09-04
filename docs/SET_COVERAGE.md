@@ -25159,7 +25159,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Arcane Denial — `ab1cc360-b9de-48d9-9983-4dfe4a7d2a37`
 - [ ] Arcane Melee — `9967b292-1239-4aed-b871-72e40d1f3e26`
 - [ ] Armillary Sphere — `3963140c-da67-43e6-9514-fe9dc0a43c4d`
-- [x] Army of the Damned — `75d667ec-86f4-4850-a3b6-e7a9fc7053b0`
+- [ ] Army of the Damned — `75d667ec-86f4-4850-a3b6-e7a9fc7053b0`
 - [ ] Augur of Bolas — `be5d6779-ecc9-44b9-8c4d-97a243059d55`
 - [ ] Augury Adept — `be5a65fd-0d06-4771-bee7-0e42cc9871da`
 - [ ] Avenger of Zendikar — `4ba5b3f6-503b-43e6-b66e-4f8c55cffed7`
