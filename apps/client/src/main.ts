@@ -836,6 +836,22 @@ function librarySearchHtml(): string {
   </section>`;
 }
 
+function scryHtml(): string {
+  const scry = view?.scry;
+  if (!scry) return "";
+  const actions = view?.legalActions.filter((entry) => entry.action.type === "choose-scry") ?? [];
+  return `<section class="library-search-overlay scry-overlay" aria-label="Scry">
+    <header><div><b>${escapeHtml(scry.sourceName)}</b><span>Scry ${scry.topCards.length}</span></div></header>
+    <div class="scry-cards">${scry.topCards.map((card) => `<article class="scry-card">
+      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="" loading="lazy"/>` : ""}<b>${escapeHtml(card.name)}</b><small>${escapeHtml(card.type_line)}</small>
+    </article>`).join("")}</div>
+    <div class="scry-actions">${actions.map((entry) => {
+      const index = view!.legalActions.indexOf(entry);
+      return `<button class="action-row choice-action" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">${escapeHtml(entry.label)}</button>`;
+    }).join("")}</div>
+  </section>`;
+}
+
 function landingHtml(): string {
   return `<main class="shell landing">
     <header class="topbar"><a class="brand" href="#">PROSSH<span>TCG</span></a><span class="turn-readout">Simulador de Commander</span></header>
@@ -867,6 +883,8 @@ function render(): void {
   const triggerTargets = triggerTargetActions();
   const handHint = triggerTargets.length
     ? `Elige el objetivo de ${triggerTargets[0]?.note?.split(":")[0] ?? "la habilidad disparada"}.`
+    : view.scry
+    ? `Mira las ${view.scry.topCards.length} cartas superiores y decide su orden.`
     : searchChoice
     ? "Elige en la biblioteca la carta que quieres poner arriba."
     : triggerChoice
@@ -937,8 +955,9 @@ function render(): void {
       </section>
     </div>
   </main>
-  ${librarySearchHtml()}
-  ${abilityMenuHtml()}
+    ${librarySearchHtml()}
+    ${scryHtml()}
+    ${abilityMenuHtml()}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
   <div class="card-preview" id="card-preview"></div>
