@@ -327,6 +327,7 @@ export type SpellEffect =
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
+  | { readonly kind: "target-cant-block" }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control"; readonly token: TokenDefinition }
@@ -1452,6 +1453,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
+  if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Destroy all tapped creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures", tappedOnly: true }, target: "none" };
