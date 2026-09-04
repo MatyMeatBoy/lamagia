@@ -1415,6 +1415,24 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "disciple-of-bolas": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const fodder = playerAt(state, controller).battlefield.filter((permanent) =>
+        isCreature(cardProfile(permanent.card)) && permanent.instance_id !== sourceId);
+      if (!fodder.length) return state;
+      // Deterministic: sacrifice the highest-power creature to maximise the payoff.
+      const victim = [...fodder].sort((a, b) => powerOf(b, state) - powerOf(a, state))[0]!;
+      const x = Math.max(0, powerOf(victim, state));
+      let next = movePermanentToZone(state, victim, "graveyard");
+      if (x > 0) {
+        if (!playersCantGainLife(next)) {
+          next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + x }));
+          next = raiseEvent(next, { kind: "life-gained", seat: controller, amount: x });
+        }
+        next = drawCards(next, controller, x);
+      }
+      return logged(next, controller, `${sourceName}: sacrifica ${victim.card.name}; ganas ${x} vidas y robas ${x}.`);
+    }
     case "xathrid-upkeep": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
       const fodder = playerAt(state, controller).battlefield.filter((permanent) =>
