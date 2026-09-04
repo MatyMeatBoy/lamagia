@@ -108,6 +108,7 @@ const COUNTER_DAMAGE = () => make({ name: "Thoctar Memory", type_line: "Creature
 const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
+const ANY_GRAVEYARD_EXILE = () => make({ name: "Cross Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from a graveyard." });
 const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on top of your library." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
@@ -1208,6 +1209,39 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.life).toBe(37);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+  });
+
+  it("returns a targeted artifact permanent to its owner's hand", () => {
+    expect(profileOf(ARTIFACT_BOUNCE()).targetKind).toBe("artifact");
+    let game = readyToCast([ARTIFACT_BOUNCE()], [ISLAND(), ISLAND()], [], [TEST_ARTIFACT()]);
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.hand.some((card) => card.name === "Test Relic")).toBe(true);
+  });
+
+  it("returns a targeted enchantment permanent to its owner's hand", () => {
+    expect(profileOf(ENCHANTMENT_BOUNCE()).targetKind).toBe("enchantment");
+    let game = readyToCast([ENCHANTMENT_BOUNCE()], [ISLAND(), ISLAND()], [], [make({ name: "Test Oath", type_line: "Enchantment" })]);
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.hand.some((card) => card.name === "Test Oath")).toBe(true);
+  });
+
+  it("returns an enchantment card from the graveyard to the battlefield", () => {
+    expect(profileOf(ENCHANTMENT_GRAVEYARD_BATTLEFIELD()).effects).toEqual([{ kind: "return-target-enchantment-card-from-graveyard-to-battlefield" }]);
+    const targetCard = make({ name: "Dead Oath", type_line: "Enchantment" });
+    let game = readyToCast([ENCHANTMENT_GRAVEYARD_BATTLEFIELD()], [FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [targetCard], "dead-oath") }));
+    const target = legalTargets(game, 0, "enchantment-card-in-your-graveyard")[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [target] });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Dead Oath")).toBe(true);
+  });
+
+  it("exposes graveyard cards from either player for cross-graveyard exile", () => {
+    expect(profileOf(ANY_GRAVEYARD_EXILE()).targetKind).toBe("card-in-a-graveyard");
+    let game = readyToCast([ANY_GRAVEYARD_EXILE()], [SWAMP()]);
+    game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR()], "opponent-grave") }));
+    expect(legalTargets(game, 0, "card-in-a-graveyard")).toHaveLength(1);
   });
 
   it("scales any-target damage from controlled creatures", () => {
