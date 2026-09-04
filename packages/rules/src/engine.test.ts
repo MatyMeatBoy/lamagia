@@ -873,6 +873,21 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Zombie")).toHaveLength(13);
   });
 
+  it("exiles a Flashback spell when an opponent counters it", () => {
+    let game = readyToCast([], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()], [COUNTER()], [ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({ graveyard: toHand(0, [C13_ARMY_OF_THE_DAMNED()], "countered-flashback") }));
+    const card = game.players[0]!.graveyard[0]!;
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "cast"
+      && entry.action.cardId === card.instance_id && entry.action.fromGraveyard === true);
+    expect(offered).toBeDefined();
+    game = applyAction(game, 0, offered!.action);
+    const spell = game.stack.at(-1)!;
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "spell", stackId: spell.id }] });
+    game = passUntil(game, (state) => state.stack.length === 0
+      && state.players[0]!.exile.some((candidate) => candidate.instance_id === card.instance_id));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Zombie")).toBe(false);
+  });
+
   it("returns a land from any graveyard under the caster's control", () => {
     const profile = profileOf(LAND_GRAVEYARD_BATTLEFIELD());
     expect(profile).toMatchObject({ targetKind: "land-card-in-a-graveyard", effects: [{ kind: "return-target-land-card-from-graveyard-to-battlefield" }] });
