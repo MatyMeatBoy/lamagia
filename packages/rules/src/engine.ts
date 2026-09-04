@@ -1942,6 +1942,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return putOntoBattlefield(next, object.controller, card, false);
     }
+    case "return-random-instant-or-sorcery-from-graveyard": {
+      const player = playerAt(state, controller);
+      let next = state;
+      for (let count = 0; count < effect.amount; count += 1) {
+        const candidates = playerAt(next, controller).graveyard.filter((card) => {
+          const profile = cardProfile(card);
+          return profile.types.includes("Instant") || profile.types.includes("Sorcery");
+        });
+        if (!candidates.length) break;
+        const rolled = nextRandom(next.rngState);
+        const selected = candidates[Math.floor(rolled.value * candidates.length)]!;
+        next = withPlayer({ ...next, rngState: rolled.state }, controller, (current) => ({
+          ...current,
+          graveyard: current.graveyard.filter((card) => card.instance_id !== selected.instance_id),
+          hand: [...current.hand, selected]
+        }));
+      }
+      const recovered = playerAt(next, controller).hand.length - player.hand.length;
+      return recovered > 0
+        ? logged(next, controller, `${playerAt(next, controller).name} recupera ${recovered} instantáneo(s) o conjuro(s).`)
+        : next;
+    }
     case "exile-target-card-from-graveyard": {
       const target = object.targets[0];
       if (!target || target.kind !== "graveyard-card") return state;

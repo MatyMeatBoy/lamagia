@@ -1428,3 +1428,12 @@ stale full tree. The clean branch currently exports **186/356 C13 printings**,
 **171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
 `5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
 queued for the next integration batch.
+
+### Worker checkpoint: Charmbreaker Devils random recovery (2026-09-04)
+
+Added the parameterized `return-random-instant-or-sorcery-from-graveyard`
+primitive. It filters by card type, returns up to `N` cards without replacement,
+and advances the deterministic RNG, covering Charmbreaker Devils' upkeep
+trigger (CR 603.2, 701.3). Commit `1d3212b` is queued for
+integration; this branch is based on `b008385` and excludes sibling worker
+commits.

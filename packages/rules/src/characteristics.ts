@@ -346,6 +346,8 @@ export type SpellEffect =
   | { readonly kind: "put-target-creature-on-library-top" }
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
+  /** Return N random instant/sorcery cards from your graveyard to hand. */
+  | { readonly kind: "return-random-instant-or-sorcery-from-graveyard"; readonly amount: number }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-legendary-creature-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-permanent-card-from-graveyard-to-battlefield" }
@@ -1670,6 +1672,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Exile target player's graveyard$/i.test(text)) return { effect: { kind: "exile-target-graveyard" }, target: "player" };
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
+  const randomSpellReturn = /^(?:Return|Put) (a|an|one|two|three|four|five|\d+) instant or sorcery cards? at random from your graveyard to your hand$/i.exec(text);
+  if (randomSpellReturn) {
+    const amount = toNumber(randomSpellReturn[1]!);
+    if (amount !== null && amount > 0) return { effect: { kind: "return-random-instant-or-sorcery-from-graveyard", amount }, target: "none" };
+  }
    if (/^Put target creature on top of its owner's library$/i.test(text)) return { effect: { kind: "put-target-creature-on-library-top" }, target: "creature" };
    if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
   if (/^Return target artifact to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "artifact" };

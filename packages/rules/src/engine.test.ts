@@ -73,6 +73,7 @@ const PLANESWALKER_LIFE_SPELL = () => make({ name: "Walker Blessing", type_line:
 const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each battle you control." });
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
+const CHARMBREAKER_DEVILS = () => make({ name: "Charmbreaker Devils", type_line: "Creature — Devil", mana_cost: "{5}{R}", cmc: 6, power: "5", toughness: "4", oracle_text: "At the beginning of your upkeep, return an instant or sorcery card at random from your graveyard to your hand.", scryfall_id: "1b9df437-6988-4ddc-80c4-893e11076067" });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
@@ -2209,6 +2210,21 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: false });
     expect(game.players[0]!.library).toHaveLength(32);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Optional Archivist")).toBe(true);
+  });
+
+  it("returns one random instant or sorcery for Charmbreaker Devils", () => {
+    const profile = profileOf(CHARMBREAKER_DEVILS());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "upkeep", subject: "you", optional: false,
+      effect: { kind: "return-random-instant-or-sorcery-from-graveyard", amount: 1 }, targetKind: "none"
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [CHARMBREAKER_DEVILS()]);
+    game = stage(game, 0, (player) => ({ ...player, graveyard: toHand(0, [BOLT(), TAP_SPELL()], "grave") }));
+    game = passUntil(game, (state) => state.players[0]!.hand.some((card) => card.name === "Lightning Bolt" || card.name === "Tactical Tap"));
+    const recovered = game.players[0]!.hand.filter((card) => card.name === "Lightning Bolt" || card.name === "Tactical Tap");
+    expect(recovered).toHaveLength(1);
   });
 
   it("resolves the optional ETB only after the controller accepts it", () => {
