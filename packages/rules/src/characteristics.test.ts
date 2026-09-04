@@ -326,6 +326,26 @@ describe("untap restrictions", () => {
   });
 });
 
+describe("C13 primitive reuse", () => {
+  it("recognises each card through shared effect templates", () => {
+    const arrows = card({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", oracle_text: "Draw a card for each tapped creature target opponent controls." });
+    expect(cardProfile(arrows)).toMatchObject({ targetKind: "player", effects: [{ kind: "draw-equal-tapped-creatures" }], fullyImplemented: true });
+
+    const rites = card({ name: "Blood Rites", type_line: "Enchantment", oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target." });
+    expect(cardProfile(rites).activatedAbilities).toContainEqual(expect.objectContaining({ sacrificesCreature: "any", targetKind: "any", effect: { kind: "damage-any-target", amount: 2 } }));
+
+    const altar = card({ name: "Carnage Altar", type_line: "Artifact", oracle_text: "{3}, Sacrifice a creature: Draw a card." });
+    expect(cardProfile(altar).activatedAbilities).toContainEqual(expect.objectContaining({ sacrificesCreature: "any", effect: { kind: "draw", amount: 1 } }));
+
+    const force = card({ name: "Baleful Force", type_line: "Creature — Elemental", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life." });
+    expect(cardProfile(force).triggers).toContainEqual(expect.objectContaining({
+      event: "upkeep",
+      subject: "each-player",
+      effect: expect.objectContaining({ kind: "compound" })
+    }));
+  });
+});
+
 describe("effect recognition", () => {
   it("recognizes a draw spell", () => {
     const profile = cardProfile(card({ name: "Test Draw", type_line: "Sorcery", mana_cost: "{2}{U}", oracle_text: "Draw three cards." }));
