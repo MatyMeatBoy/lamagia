@@ -1031,6 +1031,19 @@ describe("casting", () => {
     });
   });
 
+  it("destroys only the legal nonblack target before drawing", () => {
+    let game = readyToCast([C13_ANNIHILATE()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], [BEAR(), BLACK_BLOCKER()]);
+    game = stage(game, 0, () => ({ library: toHand(0, [FOREST()], "annihilate-library") }));
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const black = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Dusk Bat")!;
+    expect(legalTargets(game, 0, "nonblack-creature")).toContainEqual({ kind: "permanent", instanceId: bear.instance_id });
+    expect(legalTargets(game, 0, "nonblack-creature")).not.toContainEqual({ kind: "permanent", instanceId: black.instance_id });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === black.instance_id)).toBe(true);
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Forest"]);
+  });
+
   it("resolves Phyrexian Gargantua's compound ETB draw and life loss", () => {
     let game = readyToCast([C13_PHYREXIAN_GARGANTUA()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
     game = stage(game, 0, () => ({ library: toHand(0, [FOREST(), PLAINS()], "gargantua-library") }));
