@@ -133,6 +133,7 @@ const REACH_REMOVAL = () => make({ name: "Reach Bane", type_line: "Instant", man
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
+const ARTIFACT_BOUNCE = () => make({ name: "Artifact Recall", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Return target artifact to its owner's hand." });
 const ENCHANTMENT_REMOVAL = () => make({ name: "Demolish Enchantment", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Destroy target enchantment." });
 const LAND_REMOVAL = () => make({ name: "Stone Rain", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target land." });
 const DISK = () => make({ name: "Nevinyrral's Disk", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{1}, {T}: Destroy all artifacts, creatures, and enchantments." });
@@ -1156,6 +1157,14 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.life).toBe(37);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+  });
+
+  it("returns a targeted artifact permanent to its owner's hand", () => {
+    expect(profileOf(ARTIFACT_BOUNCE()).targetKind).toBe("artifact");
+    let game = readyToCast([ARTIFACT_BOUNCE()], [ISLAND(), ISLAND()], [], [TEST_ARTIFACT()]);
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.hand.some((card) => card.name === "Test Relic")).toBe(true);
   });
 
   it("scales any-target damage from controlled creatures", () => {
