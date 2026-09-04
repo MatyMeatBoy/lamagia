@@ -522,6 +522,13 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .library-card img { width: 100%; aspect-ratio: 0.72; object-fit: cover; border-radius: 4px; }
 .library-card b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .63rem; }
 .library-card small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-faint); font-size: .52rem; }
+.scry-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.scry-card { min-width: 0; display: grid; gap: 3px; padding: 5px; border: 1px solid var(--gold-dim); border-radius: 7px; background: #101f15; }
+.scry-card img { width: 100%; aspect-ratio: .72; object-fit: cover; border-radius: 4px; }
+.scry-card b, .scry-card small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scry-card b { font-size: .64rem; }
+.scry-card small { color: var(--text-faint); font-size: .52rem; }
+.scry-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; }
 
 .stack-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 3px 0; }
 .stack-strip > b { color: var(--gold); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; }
