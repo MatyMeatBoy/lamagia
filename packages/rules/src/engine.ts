@@ -1038,6 +1038,10 @@ function playersCantGainLife(state: GameState): boolean {
   return allPermanents(state).some((permanent) => cardProfile(permanent.card).preventsLifeGain);
 }
 
+function playerHasNoMaximumHandSize(state: GameState, seat: SeatId): boolean {
+  return playerAt(state, seat).battlefield.some((permanent) => cardProfile(permanent.card).noMaximumHandSize);
+}
+
 function dealDamageToPermanent(state: GameState, instanceId: string, amount: number, deathtouch: boolean, sourceName: string): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
@@ -2094,7 +2098,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
     case "cleanup": {
       const player = playerAt(next, next.activeSeat);
       const excess = player.hand.length - 7;
-      if (excess > 0) {
+      if (excess > 0 && !playerHasNoMaximumHandSize(next, next.activeSeat)) {
         // Deterministic discard: the most expensive cards go first.
         const ordered = [...player.hand].sort((left, right) => (cardProfile(right).manaValue) - (cardProfile(left).manaValue));
         const discarded = ordered.slice(0, excess);

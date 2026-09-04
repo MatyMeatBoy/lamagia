@@ -414,6 +414,7 @@ export interface CardProfile {
   readonly equipmentModification: EquipmentModification | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   readonly preventsLifeGain: boolean;
+  readonly noMaximumHandSize: boolean;
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
   readonly levelDefinitions: readonly LevelDefinition[];
@@ -1336,6 +1337,7 @@ function recognizeText(text: string): RecognizedText {
     if (combatRuleLines.has(line)) continue;
     if (parseStaticKeywordGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
+    if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -1423,6 +1425,7 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
+  const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
   const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
@@ -1448,6 +1451,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipmentModification,
     staticKeywordGrants,
     preventsLifeGain,
+    noMaximumHandSize,
     levelUpCost,
     levelDefinitions,
     activatedAbilities: isPermanent
