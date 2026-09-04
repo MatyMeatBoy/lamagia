@@ -827,6 +827,7 @@ threads took 22.97 s, so processes remain the default.
 
 The Pages workflow and refreshed `site/coverage.json` are committed on
 `feat/activated-abilities-and-triggers`. The repository is now public and
-Pages is configured to use GitHub Actions. The expected URL is
-`https://matymeatboy.github.io/lamagia/`; the next push should deploy the
-workflow artifact there.
+Pages is configured to use GitHub Actions; the `github-pages` environment
+allows both `master` and `feat/activated-abilities-and-triggers`. The expected
+URL is `https://matymeatboy.github.io/lamagia/`; the next push should deploy
+the workflow artifact there.
