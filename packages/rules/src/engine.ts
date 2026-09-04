@@ -2775,22 +2775,22 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (ability.sacrificesCreature) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
       && (ability.sacrificesCreature !== "another" || candidate.instance_id !== source.instance_id));
-    sacrifice = candidates.find((candidate) => candidate.instance_id === action.sacrificeId) ?? candidates[0];
+    sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error("Debes elegir una criatura para sacrificar.");
   } else if (ability.sacrificesPermanent) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== source.instance_id));
-    sacrifice = candidates.find((candidate) => candidate.instance_id === action.sacrificeId) ?? candidates[0];
+    sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesPermanent.type.toLowerCase()} para sacrificar.`);
   }
   let discard: GameCard | undefined;
   if (ability.discardsCard) {
-    discard = playerAt(state, seat).hand.find((card) => card.instance_id === action.discardCardId) ?? playerAt(state, seat).hand[0];
+    discard = action.discardCardId ? playerAt(state, seat).hand.find((card) => card.instance_id === action.discardCardId) : playerAt(state, seat).hand[0];
     if (!discard) throw new Error("Debes elegir una carta para descartar.");
   }
   let exile: GameCard | undefined;
   if (ability.exilesGraveyardCard) {
-    exile = playerAt(state, seat).graveyard.find((card) => card.instance_id === action.exileCardId) ?? playerAt(state, seat).graveyard[0];
+    exile = action.exileCardId ? playerAt(state, seat).graveyard.find((card) => card.instance_id === action.exileCardId) : playerAt(state, seat).graveyard[0];
     if (!exile) throw new Error("Debes elegir una carta del cementerio para exiliar.");
   }
 
