@@ -274,7 +274,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
   const targetKinds = new Set<string>([
     "any", "player", "creature", "spell", "creature-spell", "noncreature-spell", "permanent", "artifact-or-enchantment", "creature-with-defender", "creature-with-deathtouch", "creature-with-lifelink", "creature-with-menace", "creature-with-haste", "creature-with-first-strike", "creature-with-double-strike", "creature-with-trample", "creature-with-vigilance", "creature-with-indestructible", "creature-with-hexproof", "creature-with-shroud", "creature-power-at-least-5", "creature-power-at-most-4", "creature-toughness-at-least-4", "creature-toughness-at-most-4",
     "artifact-creature-or-planeswalker", "artifact-enchantment-or-land", "artifact",
-    "nonland", "nonartifact-creature", "non-demon-creature", "creature-you-control", "land-you-control", "enchantment", "land",
+    "nonland", "nonartifact-creature", "non-demon-creature", "creature-you-control", "land-you-control", "enchantment", "land", "nonbasic-land",
     "attacking-or-blocking-creature", "attacking-creature",
     "player-or-planeswalker", "card-in-your-graveyard", "creature-card-in-your-graveyard", "artifact-card-in-your-graveyard", "enchantment-card-in-your-graveyard", "instant-or-sorcery-card-in-your-graveyard", "land-card-in-a-graveyard",
     ...viewerActions.flatMap((action) => action.requiresTarget ? [action.requiresTarget] : [])
