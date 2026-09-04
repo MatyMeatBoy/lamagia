@@ -119,6 +119,7 @@ const DISCARD_ACTIVATION = () => make({ name: "Discard Memory", type_line: "Crea
 const TOKEN_SAC_ACTIVATION = () => make({ name: "Token Memory", type_line: "Creature — Shaman", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Sacrifice a token: Draw a card." });
 const GRAVEYARD_EXILE_ACTIVATION = () => make({ name: "Grave Memory", type_line: "Creature — Wizard", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "Exile a card from your graveyard: Draw a card." });
 const COMBINED_COST_ACTIVATION = () => make({ name: "Combined Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact, Discard a card: Draw a card." });
+const PERMANENT_SAC_ACTIVATION = () => make({ name: "Permanent Sacrifice Memory", type_line: "Creature — Shaman", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Sacrifice another permanent: Draw a card." });
 const BOTTOM_RETURN = () => make({ name: "Bottom Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on the bottom of your library." });
 const SHUFFLE_RETURN = () => make({ name: "Shuffle Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Shuffle target card from your graveyard into your library." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
@@ -862,6 +863,17 @@ describe("casting", () => {
     expect(activation).toBeDefined();
     game = applyAction(game, 0, activation!.action);
     expect(game.players[0]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Artifact Memory", "Grizzly Bears"]));
+  });
+
+  it("offers any other permanent for a generic permanent sacrifice cost", () => {
+    const sourceCard = PERMANENT_SAC_ACTIVATION();
+    expect(profileOf(sourceCard).activatedAbilities[0]).toMatchObject({ sacrificesPermanent: { type: "Permanent", mode: "another" } });
+    let game = readyToCast([], [sourceCard, TEST_ARTIFACT(), BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sourceCard.name)!;
+    const artifact = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Relic")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === artifact.instance_id);
+    expect(activation).toBeDefined();
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === source.instance_id)).toBe(false);
   });
 
   it("offers only generated tokens for a token sacrifice cost", () => {
