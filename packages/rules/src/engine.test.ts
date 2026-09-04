@@ -45,6 +45,7 @@ const UNTAP_SPELL = () => make({ name: "Tactical Untap", type_line: "Instant", m
 const MILL_SPELL = () => make({ name: "Gravewind", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player mills three cards." });
 const EACH_MILL_SPELL = () => make({ name: "Shared Gravewind", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Each opponent mills two cards." });
 const EACH_DRAW_SPELL = () => make({ name: "Shared Insight", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Each opponent draws two cards." });
+const WHEEL_SPELL = () => make({ name: "Shared Wheel", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Each player discards their hand, then draws seven cards." });
 const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target creature spell." });
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
@@ -1100,6 +1101,10 @@ describe("casting", () => {
     const before = game.players.map((player) => player.library.length);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players.map((player, seat) => player.library.length)).toEqual(before.map((count, seat) => count - 2));
+  });
+
+  it("models a wheel as discard-to-graveyard followed by equal draws", () => {
+    expect(profileOf(WHEEL_SPELL()).effects).toEqual([{ kind: "each-player-discard-and-draw", amount: 7 }]);
   });
 
   it("deals spell damage to every creature and lets state-based actions clear lethal damage", () => {

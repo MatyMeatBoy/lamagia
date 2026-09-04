@@ -1198,6 +1198,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return next;
     }
+    case "each-player-discard-and-draw": {
+      let next = state;
+      for (const player of state.players) {
+        const hand = playerAt(next, player.seat).hand;
+        next = withPlayer(next, player.seat, (current) => ({ ...current, hand: [], graveyard: [...current.graveyard, ...hand] }));
+        next = drawCards(next, player.seat, effect.amount);
+      }
+      return next;
+    }
     case "damage-nonflying-creatures-and-players": {
       const amount = effectAmount(effect.amount, object);
       let next = state;
