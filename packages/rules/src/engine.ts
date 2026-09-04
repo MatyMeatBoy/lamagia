@@ -1257,6 +1257,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return putOntoBattlefield(next, object.controller, card, false);
     }
+    case "return-target-land-card-from-graveyard-to-battlefield": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card || !isLand(cardProfile(card))) return state;
+      const next = withPlayer(state, target.seat, (current) => ({
+        ...current,
+        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
+      }));
+      return putOntoBattlefield(next, object.controller, card, false);
+    }
     case "exile-target-card-from-graveyard": {
       const target = object.targets[0];
       if (!target || target.kind !== "graveyard-card") return state;
@@ -2153,6 +2165,11 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
         || (kind === "creature-card-in-your-graveyard" && isCreature(cardProfile(card)))
         || (kind === "artifact-card-in-your-graveyard" && cardProfile(card).types.includes("Artifact")))
       .map((card) => ({ kind: "graveyard-card", seat, instanceId: card.instance_id }) as Target);
+  }
+  if (kind === "land-card-in-a-graveyard") {
+    return state.players.flatMap((player) => player.graveyard
+      .filter((card) => isLand(cardProfile(card)))
+      .map((card) => ({ kind: "graveyard-card", seat: player.seat, instanceId: card.instance_id }) as Target));
   }
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   if (kind === "creature-spell" || kind === "noncreature-spell") {

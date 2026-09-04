@@ -637,6 +637,20 @@ is not. The scope excludes battlefield return and recursion costs.
 Validation: targeted engine tests PASS (177 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: land graveyard return
+
+The branch recognises `Put target land card from a graveyard onto the
+battlefield under your control`, exposes land cards from every graveyard as
+legal targets, removes the selected card from its owner, and enters it under
+the spell controller's control through the standard battlefield-entry path.
+This follows CR 400.1, 400.7 and 608.2c. Scenario coverage verifies targeting
+an opponent's graveyard and the resulting controller/owner distinction. The
+scope excludes multiple targets, tapped-entry instructions and replacement
+effects.
+
+Validation: targeted engine tests PASS (178 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: land-scaled token creation
 
 The branch adds the reusable `Create a token for each land you control`
