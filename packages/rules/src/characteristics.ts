@@ -1168,17 +1168,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "chaos-warp" }, target: "permanent" };
   }
 
-  if ((match = /^Draw a card and lose (\w+) life$/i.exec(text))) {
-    const amount = toNumber(match[1]);
-    if (amount !== null) return {
-      effect: { kind: "compound", effects: [{ kind: "draw", amount: 1 }, { kind: "lose-life", amount }] },
-      target: "none"
-    };
-  }
-  if ((match = /^You draw a card and you lose (\w+) life$/i.exec(text))) {
-    const amount = toNumber(match[1]);
-    if (amount !== null) return {
-      effect: { kind: "compound", effects: [{ kind: "draw", amount: 1 }, { kind: "lose-life", amount }] },
+  const drawLose = /^(?:you\s+)?draw\s+(a|an|\w+)\s+cards?\s+and\s+(?:you\s+)?lose\s+(\w+)\s+life$/i.exec(text);
+  if (drawLose) {
+    const drawAmount = toNumber(drawLose[1]);
+    const lifeAmount = toNumber(drawLose[2]);
+    if (drawAmount !== null && lifeAmount !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: drawAmount }, { kind: "lose-life", amount: lifeAmount }] },
       target: "none"
     };
   }
