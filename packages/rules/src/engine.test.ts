@@ -44,6 +44,12 @@ const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Ba
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
 const LIFELINKER = () => make({ name: "Kind Knight", type_line: "Creature — Knight", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink" });
 const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature — Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["First strike"], oracle_text: "First strike" });
+const SPHINX_OF_THE_STEEL_WIND = () => make({
+  name: "Sphinx of the Steel Wind", type_line: "Artifact Creature — Sphinx", mana_cost: "{5}{W}{U}{B}", cmc: 8,
+  power: "6", toughness: "6", colors: ["W", "U", "B"],
+  oracle_text: "Flying, first strike, vigilance, lifelink, protection from red and from green"
+});
+const RED_RAIDER = () => make({ name: "Red Raider", type_line: "Creature — Goblin", mana_cost: "{1}{R}", cmc: 2, power: "3", toughness: "3", colors: ["R"] });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
 const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Regenerate target creature." });
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
@@ -4867,6 +4873,35 @@ describe("combat", () => {
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: tappedBear.instance_id, defender: 1 }] });
     game = passUntil(game, (state) => state.step === "postcombat-main" || state.turn > 1);
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("enforces protection from red for targets, blocking, and combat damage", () => {
+    const sphinx = SPHINX_OF_THE_STEEL_WIND();
+    const redRaider = RED_RAIDER();
+    expect(profileOf(sphinx).protectionFrom).toEqual(["R", "G"]);
+    expect(profileOf(sphinx).fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 1, [sphinx]);
+    game = putOnBattlefield(game, 0, [redRaider]);
+    expect(legalTargets(game, 0, "creature", profileOf(redRaider)))
+      .not.toContainEqual({ kind: "permanent", instanceId: game.players[1]!.battlefield[0]!.instance_id });
+
+    game = atAttackers([sphinx], [redRaider]);
+    const sphinxId = game.players[0]!.battlefield[0]!.instance_id;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: sphinxId, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    expect(legalBlockers(game, 1)).toHaveLength(0);
+
+    game = atAttackers([redRaider], [sphinx]);
+    const raiderId = game.players[0]!.battlefield[0]!.instance_id;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: raiderId, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    const sphinxIdAsBlocker = game.players[1]!.battlefield[0]!.instance_id;
+    game = applyAction(game, 1, { type: "declare-blockers", blockers: [{ instanceId: sphinxIdAsBlocker, attackerId: raiderId }] });
+    game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 1);
+    expect(game.players[0]!.battlefield).toHaveLength(0);
+    expect(game.players[1]!.battlefield[0]!.damage).toBe(0);
   });
 
   it("keeps a vigilant attacker untapped", () => {

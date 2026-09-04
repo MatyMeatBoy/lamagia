@@ -17,62 +17,6 @@ Each primitive is assigned to exactly one worker; jobs sharing an oracle_id are 
 | normal | `c13-creatures-can-attack-you` | combat-restriction | 1 | 0 | 1 | 1 |
 Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 
-| normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
-
-| normal | `c13-remove-counter-from-deals` | activated | 1 | 0 | 1 | 1 |
-Cards: Deathbringer Thoctar [2500a811-2435-4915-ac83-9bfe2887621a]
-
-| normal | `c13-untap-all-green-and` | other | 1 | 0 | 1 | 1 |
-Cards: Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
-
-| normal | `c13-when-enters-return-target` | triggered | 1 | 0 | 1 | 1 |
-Cards: Razor Hippogriff [d121108e-f0bc-469b-bf94-e5e5308014a2]
-
-| normal | `c13-when-enters-you-may` | triggered | 1 | 0 | 1 | 1 |
-Cards: Mnemonic Wall [f2933616-211b-4d3f-8064-2be61c26079a]
-
-| normal | `c13-whenever-creature-dies-untap` | triggered | 1 | 0 | 1 | 1 |
-Cards: Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
-
-
-## Worker 2
-
-7 primitives / 7 unique cards
-
-| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
-| --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-destroy-target-nonblack-creatures` | other | 1 | 0 | 1 | 1 |
-Cards: Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
-
-| normal | `c13-graft` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
-
-| normal | `c13-return-all-permanents-the` | other | 1 | 0 | 1 | 1 |
-Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
-
-| normal | `c13-until-end-turn-creatures` | other | 1 | 0 | 1 | 1 |
-Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
-
-| normal | `c13-when-enters-return-target-2` | triggered | 1 | 0 | 1 | 1 |
-Cards: Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
-
-| normal | `c13-when-sharuum-enters-you` | triggered | 1 | 0 | 1 | 1 |
-Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
-
-| normal | `c13-whenever-creature-you-control` | triggered | 1 | 0 | 1 | 1 |
-Cards: Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
-
-
-## Worker 3
-
-7 primitives / 7 unique cards
-
-| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
-| --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-entwine-cost` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
-
 | normal | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 |
 Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
 
@@ -92,14 +36,14 @@ Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
 Cards: Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
 
 
-## Worker 4
+## Worker 2
 
 7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-flying-first-strike-vigilance` | other | 1 | 0 | 1 | 1 |
-Cards: Sphinx of the Steel Wind [1c96772b-463c-4655-836b-cf6e9dc6319f]
+| normal | `c13-destroy-target-nonblack-creatures` | other | 1 | 0 | 1 | 1 |
+Cards: Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
 
 | normal | `c13-prevent-all-combat-damage` | other | 1 | 0 | 1 | 1 |
 Cards: Guard Gomazoa [7c565975-aebc-4599-ac32-5594c718e2cb]
@@ -120,14 +64,14 @@ Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
 Cards: Nekusar, the Mindrazer [8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6]
 
 
-## Worker 5
+## Worker 3
 
-6 primitives / 6 unique cards
+7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-flying-protection-from-black` | other | 1 | 0 | 1 | 1 |
-Cards: Karmic Guide [8c31fec9-e4b3-4761-990e-7be38eb05604]
+| normal | `c13-entwine-cost` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
 
 | normal | `c13-put-target-nonland-permanent` | other | 1 | 0 | 1 | 1 |
 Cards: Unexpectedly Absent [e8d78a83-c932-4b55-8f75-7094c672c3a9]
@@ -143,6 +87,62 @@ Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
 
 | normal | `c13-when-you-cycle-you-2` | triggered | 1 | 0 | 1 | 1 |
 Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
+
+| normal | `c13-whenever-player-draws-card` | triggered | 1 | 0 | 1 | 1 |
+Cards: Spiteful Visions [922cf963-2b1b-43ad-819e-6e49133e6aae]
+
+
+## Worker 4
+
+7 primitives / 7 unique cards
+
+| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
+
+| normal | `c13-remove-counter-from-deals` | activated | 1 | 0 | 1 | 1 |
+Cards: Deathbringer Thoctar [2500a811-2435-4915-ac83-9bfe2887621a]
+
+| normal | `c13-untap-all-green-and` | other | 1 | 0 | 1 | 1 |
+Cards: Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
+
+| normal | `c13-when-enters-return-target` | triggered | 1 | 0 | 1 | 1 |
+Cards: Razor Hippogriff [d121108e-f0bc-469b-bf94-e5e5308014a2]
+
+| normal | `c13-when-enters-you-may` | triggered | 1 | 0 | 1 | 1 |
+Cards: Mnemonic Wall [f2933616-211b-4d3f-8064-2be61c26079a]
+
+| normal | `c13-whenever-creature-dies-untap` | triggered | 1 | 0 | 1 | 1 |
+Cards: Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
+
+| normal | `c13-whenever-spell-ability-causes` | triggered | 1 | 0 | 1 | 1 |
+Cards: Widespread Panic [853a3c2b-3d37-453a-8a77-4d90bd3a1cb7]
+
+
+## Worker 5
+
+6 primitives / 6 unique cards
+
+| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| normal | `c13-graft` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
+
+| normal | `c13-return-all-permanents-the` | other | 1 | 0 | 1 | 1 |
+Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
+
+| normal | `c13-until-end-turn-creatures` | other | 1 | 0 | 1 | 1 |
+Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
+
+| normal | `c13-when-enters-return-target-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
+
+| normal | `c13-when-sharuum-enters-you` | triggered | 1 | 0 | 1 | 1 |
+Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
+
+| normal | `c13-whenever-creature-you-control` | triggered | 1 | 0 | 1 | 1 |
+Cards: Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
 
 
 ## Already claimed

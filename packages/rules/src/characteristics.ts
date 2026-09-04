@@ -243,6 +243,20 @@ export function parseCombatRules(lines: readonly string[]): { rules: CombatRules
   return { rules, consumed };
 }
 
+const PROTECTION_QUALITIES: Readonly<Record<string, string>> = {
+  white: "W", blue: "U", black: "B", red: "R", green: "G"
+};
+
+/** Reads the common color-only protection line while preserving each quality. */
+function parseProtectionFromLine(line: string): readonly string[] | null {
+  const match = /(?:^|,\s*)protection from (.+)$/i.exec(line.trim().replace(/\.$/, ""));
+  if (!match) return null;
+  const qualities = match[1]!.replace(/\s+and\s+from\s+/gi, ",").replace(/\s+and\s+/gi, ",")
+    .split(",").map((quality) => quality.trim().toLowerCase()).filter(Boolean);
+  if (!qualities.length || qualities.some((quality) => !PROTECTION_QUALITIES[quality])) return null;
+  return qualities.map((quality) => PROTECTION_QUALITIES[quality]!);
+}
+
 /** Static bonuses granted by an Equipment to its equipped creature. */
 export interface EquipmentModification {
   readonly power: number;
@@ -667,6 +681,8 @@ export interface CardProfile {
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
   readonly levelDefinitions: readonly LevelDefinition[];
+  /** Color qualities named by a Protection line (CR 702.16). */
+  readonly protectionFrom: readonly string[];
   readonly activatedAbilities: readonly ActivatedAbility[];
   readonly modalChoices: readonly ModalChoice[];
   readonly effects: readonly SpellEffect[];
@@ -2484,6 +2500,9 @@ function recognizeText(text: string): RecognizedText {
     // Combat restrictions and landwalk are static: they change which
     // declarations are legal rather than resolving anything (CR 508.1d, 509.1a).
     if (combatRuleLines.has(line)) continue;
+    // Protection's quality is tracked separately because it affects targeting,
+    // blocking and damage prevention, not stack resolution (CR 702.16).
+    if (parseProtectionFromLine(line)) continue;
     if (parseStaticKeywordGrant(line).length) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
@@ -2813,6 +2832,7 @@ export function cardProfile(card: CardData): CardProfile {
   const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
+  const protectionFrom = text.split(/\r?\n/).flatMap((line) => parseProtectionFromLine(line) ?? []);
   const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
 
   const profile: CardProfile = {
@@ -2852,6 +2872,7 @@ export function cardProfile(card: CardData): CardProfile {
     doublesLandMana,
     levelUpCost,
     levelDefinitions,
+    protectionFrom,
     activatedAbilities: isPermanent
       ? [
           ...recognized.activatedAbilities,

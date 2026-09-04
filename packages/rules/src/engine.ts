@@ -1362,9 +1362,17 @@ function playerHasNoMaximumHandSize(state: GameState, seat: SeatId): boolean {
   return playerAt(state, seat).battlefield.some((permanent) => cardProfile(permanent.card).noMaximumHandSize);
 }
 
-function dealDamageToPermanent(state: GameState, instanceId: string, amount: number, deathtouch: boolean, sourceName: string): GameState {
+function dealDamageToPermanent(
+  state: GameState,
+  instanceId: string,
+  amount: number,
+  deathtouch: boolean,
+  sourceName: string,
+  sourceProfile?: CardProfile
+): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
+  if (sourceProfile && hasProtectionFrom(sourceProfile, cardProfile(permanent.card))) return state;
   // Damage to a planeswalker removes that many loyalty counters (CR 120.3c).
   const isPlaneswalker = cardProfile(permanent.card).types.includes("Planeswalker") && "loyalty" in permanent.counters;
   const next = withPlayer(state, permanent.controller, (player) => ({
@@ -1731,7 +1739,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = playerAt(state, controller).battlefield.filter((permanent) =>
         cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
       if (amount <= 0) return state;
-      let next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
+      let next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
       if (!playersCantGainLife(next)) {
         next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + amount }));
         next = raiseEvent(next, { kind: "life-gained", seat: controller, amount });
@@ -1946,7 +1954,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         if (!planeswalker && effect.filter === "nonartifact" && profile.types.includes("Artifact")) continue;
         if (!planeswalker && effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
         if (effect.filter === "with-flying" && !keywordOf(next, permanent, "flying")) continue;
-        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
       }
       return next;
     }
@@ -1954,7 +1962,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = effectAmount(effect.amount, object);
       let next = state;
       for (const permanent of allPermanents(state)) {
-        if (isCreature(cardProfile(permanent.card))) next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+        if (isCreature(cardProfile(permanent.card))) next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
       }
       for (const player of state.players) {
         if (!player.lost) next = dealDamageToPlayer(next, player.seat, amount, sourceName);
@@ -1987,7 +1995,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (const permanent of allPermanents(state)) {
         if (isCreature(cardProfile(permanent.card)) && !keywordOf(state, permanent, "flying")) {
-          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
         }
       }
       for (const player of state.players) if (!player.lost) next = dealDamageToPlayer(next, player.seat, amount, sourceName);
@@ -1998,7 +2006,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (const permanent of allPermanents(state)) {
         if (isCreature(cardProfile(permanent.card)) && keywordOf(state, permanent, "flying")) {
-          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
         }
       }
       return next;
@@ -2008,7 +2016,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target) return state;
       const amount = effectAmount(effect.amount, object);
       if (target.kind === "player") return dealDamageToPlayer(state, target.seat, amount, sourceName);
-      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
       return state;
     }
     case "incite-rebellion": {
@@ -2019,7 +2027,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         const amount = creatures.length;
         if (amount === 0) continue;
         next = dealDamageToPlayer(next, player.seat, amount, sourceName);
-        for (const creature of creatures) next = dealDamageToPermanent(next, creature.instance_id, amount, false, sourceName);
+        for (const creature of creatures) next = dealDamageToPermanent(next, creature.instance_id, amount, false, sourceName, cardProfile(object.card));
       }
       return next;
     }
@@ -2028,7 +2036,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target) return state;
       const amount = playerAt(state, controller).battlefield.filter((permanent) => cardProfile(permanent.card).types.includes(effect.type)).length;
       if (target.kind === "player") return dealDamageToPlayer(state, target.seat, amount, sourceName);
-      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
       return state;
     }
     case "damage-controller-equal-hand": {
@@ -3540,6 +3548,7 @@ function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): bo
   if (blockerProfile.combatRules.cannotBlock || blocker.cantBlockThisTurn) return false;
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
+  if (attackerProfile.protectionFrom.some((quality) => blockerProfile.colors.includes(quality))) return false;
   if (keywordOf(state, attacker, "flying") && !keywordOf(state, blocker, "flying") && !keywordOf(state, blocker, "reach")) return false;
   if (keywordOf(state, attacker, "fear") && !blockerProfile.colors.includes("B") && !blockerProfile.types.includes("Artifact")) return false;
   if (keywordOf(state, attacker, "intimidate") && !blockerProfile.types.includes("Artifact")
@@ -3549,6 +3558,12 @@ function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): bo
   if (only && !keywordOf(state, attacker, only)) return false;
   if (landwalkEvades(state, attacker, blocker.controller)) return false;
   return true;
+}
+
+/** CR 702.16: protection prevents targeting and damage from the named quality. */
+function hasProtectionFrom(source: CardProfile, target: CardProfile): boolean {
+  return target.protectionFrom.some((quality) => source.colors.includes(quality)
+    || (quality === "Artifact" && isArtifact(source)));
 }
 
 export function legalAttackers(state: GameState, seat: SeatId): Permanent[] {
@@ -3612,7 +3627,7 @@ function combatDamageAfterControllerPrevention(state: GameState, defender: SeatI
   return Math.max(0, amount - prevented);
 }
 
-interface DamageBatch { readonly toPlayers: { seat: SeatId; amount: number; commanderId?: string; sourceName: string; sourceId: string }[]; readonly toPermanents: { instanceId: string; amount: number; deathtouch: boolean; sourceName: string }[]; readonly lifelink: { seat: SeatId; amount: number }[] }
+interface DamageBatch { readonly toPlayers: { seat: SeatId; amount: number; commanderId?: string; sourceName: string; sourceId: string }[]; readonly toPermanents: { instanceId: string; amount: number; deathtouch: boolean; sourceName: string; sourceId: string }[]; readonly lifelink: { seat: SeatId; amount: number }[] }
 
 function computeCombatDamage(state: GameState, firstStrikeStep: boolean): DamageBatch {
   const toPlayers: DamageBatch["toPlayers"] = [];
@@ -3680,8 +3695,10 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
       if (remaining <= 0) break;
       const lethal = deathtouch ? 1 : Math.max(1, toughnessOf(blocker, state) - blocker.damage);
       const assigned = Math.min(remaining, lethal);
-      toPermanents.push({ instanceId: blocker.instance_id, amount: assigned, deathtouch, sourceName: attacker.card.name });
-      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: assigned });
+      if (!hasProtectionFrom(cardProfile(attacker.card), cardProfile(blocker.card))) {
+        toPermanents.push({ instanceId: blocker.instance_id, amount: assigned, deathtouch, sourceName: attacker.card.name, sourceId: attacker.instance_id });
+        if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: assigned });
+      }
       remaining -= assigned;
     }
     if (remaining > 0 && keywordOf(state, attacker, "trample")) {
@@ -3707,8 +3724,10 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
     if (cardProfile(blocker.card).combatRules.preventsAllCombatDamage) continue;
     const power = powerOf(blocker, state);
     if (power <= 0) continue;
-    toPermanents.push({ instanceId: attacker.instance_id, amount: power, deathtouch: keywordOf(state, blocker, "deathtouch"), sourceName: blocker.card.name });
-    if (keywordOf(state, blocker, "lifelink")) lifelink.push({ seat: blocker.controller, amount: power });
+    if (!hasProtectionFrom(cardProfile(blocker.card), cardProfile(attacker.card))) {
+      toPermanents.push({ instanceId: attacker.instance_id, amount: power, deathtouch: keywordOf(state, blocker, "deathtouch"), sourceName: blocker.card.name, sourceId: blocker.instance_id });
+      if (keywordOf(state, blocker, "lifelink")) lifelink.push({ seat: blocker.controller, amount: power });
+    }
   }
 
   // Fog Bank and similar: no combat damage is dealt to them either.
@@ -3722,7 +3741,10 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
 function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameState {
   const batch = computeCombatDamage(state, firstStrikeStep);
   let next = state;
-  for (const hit of batch.toPermanents) next = dealDamageToPermanent(next, hit.instanceId, hit.amount, hit.deathtouch, hit.sourceName);
+  for (const hit of batch.toPermanents) {
+    const source = findPermanent(state, hit.sourceId);
+    next = dealDamageToPermanent(next, hit.instanceId, hit.amount, hit.deathtouch, hit.sourceName, source ? cardProfile(source.card) : undefined);
+  }
   for (const hit of batch.toPlayers) {
     next = dealDamageToPlayer(next, hit.seat, hit.amount, hit.sourceName);
     const dealer = findPermanent(next, hit.sourceId);
@@ -3990,9 +4012,9 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (profile.modalChoices.length && !modal) return { legal: false };
   const targetKind = modal?.targetKind ?? profile.targetKind;
   const targetKinds = modal?.targetKinds;
-  if (targetKinds?.some((kind) => !legalTargets(state, seat, kind).length)) return { legal: false };
-  if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind).length) return { legal: false };
-  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind).length) return { legal: false };
+  if (targetKinds?.some((kind) => !legalTargets(state, seat, kind, profile).length)) return { legal: false };
+  if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind, profile).length) return { legal: false };
+  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, profile).length) return { legal: false };
   return {
     legal: true,
     ...(targetKind !== "none" ? { targetKind } : {}),
@@ -4378,7 +4400,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 }
 
 /** Targets a spell could legally choose right now. */
-export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
+export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">, sourceProfile?: CardProfile): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "opponent") return state.players.filter((player) => player.seat !== seat && !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-your-graveyard" || kind === "permanent-card-in-a-graveyard" || kind === "legendary-creature-card-in-your-graveyard") {
@@ -4411,6 +4433,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     return allPermanents(state)
       .filter((permanent) => inCombat.has(permanent.instance_id) && isCreature(cardProfile(permanent.card)))
       .filter((permanent) => (!keywordOf(state, permanent, "hexproof") || permanent.controller === seat) && !keywordOf(state, permanent, "shroud"))
+      .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card)))
       .map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
   }
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
@@ -4424,7 +4447,8 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
   }
   const permanents = allPermanents(state)
     .filter((permanent) => !keywordOf(state, permanent, "hexproof") || permanent.controller === seat)
-    .filter((permanent) => !keywordOf(state, permanent, "shroud"));
+    .filter((permanent) => !keywordOf(state, permanent, "shroud"))
+    .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card)));
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
@@ -4756,8 +4780,9 @@ function activatableAbility(
   }
   const targetKind = ability.targetKind;
   if (targetKind === "none") return { legal: true };
-  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind).length) return { legal: false };
-  if (!legalTargets(state, seat, targetKind).length) return { legal: false };
+  const sourceProfile = cardProfile(permanent.card);
+  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
+  if (!legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
   return { legal: true, targetKind };
 }
 
@@ -4820,7 +4845,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   }
 
   if (check.targetKind) {
-    const allowed = legalTargets(state, seat, check.targetKind);
+    const allowed = legalTargets(state, seat, check.targetKind, cardProfile(source.card));
     const chosen = targets.length ? targets : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${source.card.name} necesita un objetivo legal.`);
     const valid = chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
@@ -4958,7 +4983,7 @@ function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAc
   const profile = cardProfile(card);
   let chosen: readonly Target[] = action.targets ?? [];
   if (profile.targetKind !== "none" && profile.targetKind !== "any") {
-    const allowed = legalTargets(state, seat, profile.targetKind);
+    const allowed = legalTargets(state, seat, profile.targetKind, profile);
     chosen = chosen.length ? chosen : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${card.name} necesita un objetivo legal.`);
     if (!chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
@@ -5004,13 +5029,13 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (check.targetKinds?.length) {
     const chosen = requested.length
       ? requested
-      : check.targetKinds.flatMap((kind) => legalTargets(state, seat, kind).slice(0, 1));
+      : check.targetKinds.flatMap((kind) => legalTargets(state, seat, kind, profile).slice(0, 1));
     if (chosen.length !== check.targetKinds.length) throw new Error(`${card.name} necesita ${check.targetKinds.length} objetivos legales.`);
-    const valid = chosen.every((target, index) => legalTargets(state, seat, check.targetKinds![index]!).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
+    const valid = chosen.every((target, index) => legalTargets(state, seat, check.targetKinds![index]!, profile).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
     if (!valid) throw new Error(`Objetivo ilegal para ${card.name}.`);
     action = { ...action, targets: chosen };
   } else if (check.targetKind) {
-    const allowed = legalTargets(state, seat, check.targetKind);
+    const allowed = legalTargets(state, seat, check.targetKind, profile);
     const chosen = requested.length ? requested : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${card.name} necesita un objetivo legal.`);
     const valid = chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
@@ -5570,7 +5595,7 @@ function putNextTriggerOnStack(state: GameState): GameState {
     return { ...state, triggerQueue: remaining, stack: [...state.stack, triggerStackObject(trigger, [])], ...opened };
   }
 
-  const options = legalTargets(state, trigger.controller, targetKind);
+  const options = legalTargets(state, trigger.controller, targetKind, cardProfile(trigger.sourceCard));
   if (!options.length) {
     const dropped = logged({ ...state, triggerQueue: remaining }, trigger.controller,
       `La habilidad disparada de ${trigger.sourceCard.name} se retira de la pila: no hay objetivo legal.`);

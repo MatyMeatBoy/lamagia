@@ -1682,3 +1682,22 @@ The worker planner now normalizes claim statuses before optional parenthesized
 commit notes, so `review (abc123)` is excluded exactly like `review`. This keeps
 fork work disjoint automatically: the current C13 plan has **34 unclaimed
 primitives**, balanced as **7/7/7/7/6** across five workers.
+
+### Integrator checkpoint: Protection quality (2026-09-04)
+
+Protection from color is now represented as a reusable profile operand and
+enforced for legal permanent targets, blocking declarations, and combat damage
+prevention (CR 702.16). The scenario uses Sphinx of the Steel Wind and a red
+creature; it also verifies that first-strike combat can destroy the red creature
+without marking damage on the protected Sphinx. Non-color protection qualities
+remain intentionally unparsed until a fixture requires them. The refreshed
+export is **190/341 C13 (55.7%)**, with **151 unfinished** and **73 one-line-away**.
+
+### Incoming worker patch queue
+
+`commitsv1.patch` / `commitsv1.md` report one external commit
+(`83872d6`, `worker/c13-primitives-batch1`), not a batch. It overlaps the
+already-integrated multi-color reduction and combat-prevention work, so it is
+queued for comparison rather than applied wholesale. The integrator continues
+to process incoming fork work in batches of 11+ commits; use the exact
+card-to-commit map when rescuing additional changes.
