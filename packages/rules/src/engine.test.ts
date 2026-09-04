@@ -180,6 +180,7 @@ const GLOBAL_INDESTRUCTIBLE = () => make({
   oracle_text: "Permanents you control gain indestructible until end of turn."
 });
 const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — Goblin", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Creatures you control have haste." });
+const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "Legendary Creature — Elemental", mana_cost: "{5}{G}{U}{R}", cmc: 8, power: "7", toughness: "5", oracle_text: "Creatures you control have haste.\nCascade\nCascade" });
 const FLYING_LORD = () => make({ name: "Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control have flying." });
 const OTHER_FLYING_LORD = () => make({ name: "Other Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Other creatures you control have flying." });
 const GAIN_FLYING_LORD = () => make({ name: "Gain Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control gain flying." });
@@ -1139,6 +1140,12 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [HASTE_LORD(), BEAR()], { sick: true });
     game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
     expect(legalAttackers(game, 0).map((permanent) => permanent.card.name)).toEqual(expect.arrayContaining(["Haste Memory", "Grizzly Bears"]));
+  });
+
+  it("reuses static haste for Maelstrom Wanderer while leaving cascade explicit", () => {
+    const profile = profileOf(MAELSTROM_WANDERER());
+    expect(profile.staticKeywordGrants).toEqual([{ scope: "creatures-you-control", keyword: "haste" }]);
+    expect(profile.unimplementedText).toEqual(["Cascade", "Cascade"]);
   });
 
   it("supports static grants that exclude their source", () => {
