@@ -346,6 +346,7 @@ export type SpellEffect =
   | { readonly kind: "return-n-nonland-permanents"; readonly count: number | "X" }
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   | { readonly kind: "oblation"; readonly draw: number }
+  | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "target-player-discard-unless-land"; readonly discard: number }
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
@@ -523,6 +524,8 @@ export interface CardProfile {
   readonly grantsExtortToOthers: boolean;
   /** Siege Behemoth: while it attacks, your creatures assign combat damage as though unblocked (CR 510.1c). */
   readonly attackersAssignAsUnblockedWhileAttacking: boolean;
+  /** Abyssal Persecutor: "your opponents can't lose the game" (CR 104.3a). */
+  readonly preventsOpponentLoss: boolean;
   readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
@@ -547,7 +550,7 @@ export interface CardProfile {
   /** "<Basic type>s you control produce an additional {C}" (Crypt Ghast, CR 605). */
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   /** Characteristic-defining P/T "equal to the number of X you control" (CR 604.3). */
-  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | null;
+  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | null;
   /** Lieutenant (Commander 2014): commander-conditional static bonuses. */
   readonly lieutenant: {
     readonly selfPower: number;
@@ -1549,6 +1552,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     // and the modifier expires during cleanup (CR 613.4c, 514.2).
     return { effect: { kind: "modify-source-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
   }
+  if ((match = /^each opponent loses X life, where X is your devotion to (white|blue|black|red|green)\.?\s*You gain life equal to the life lost this way\.?$/i.exec(text))) {
+    const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
+    return { effect: { kind: "devotion-drain", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };
+  }
   if (/^Regenerate target creature$/i.test(text)) {
     return { effect: { kind: "regenerate-target-creature" }, target: "creature" };
   }
@@ -1894,6 +1901,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^other creatures you control have extort\.?$/i.test(line)) continue;
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
+    if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
     // Undying / Persist reminder text — synthesised from the keyword (CR 702.92/93).
@@ -1914,7 +1922,7 @@ function recognizeText(text: string): RecognizedText {
           || new RegExp(`^other creatures you control get \\+\\d+\\/\\+\\d+(?:\\s+and\\s+have\\s+${kwGroup})?$`, "i").test(rider)) continue;
       }
     }
-    if (/^~'?s power and toughness are each equal to the number of (?:creature|land|artifact)s? you control\.?$/i.test(line)) continue;
+    if (/^~'?s power and toughness are each equal to the number of (?:creature|land|artifact|green permanent)s? you control\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
@@ -2106,8 +2114,10 @@ export function cardProfile(card: CardData): CardProfile {
   // "~ costs {N} less to cast for each creature on the battlefield" (Blasphemous Act, CR 118.9).
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
-  const cdaMatch = /~'?s power and toughness are each equal to the number of (creature|land|artifact)s? you control/i.exec(text);
-  const cdaPowerToughness = cdaMatch ? (`${cdaMatch[1]!.toLowerCase()}s-you-control` as CardProfile["cdaPowerToughness"]) : null;
+  const cdaMatch = /~'?s power and toughness are each equal to the number of (creature|land|artifact|green permanent)s? you control/i.exec(text);
+  const cdaPowerToughness = cdaMatch
+    ? (/green permanent/i.test(cdaMatch[1]!) ? "green-permanents-you-control" : `${cdaMatch[1]!.toLowerCase()}s-you-control`) as CardProfile["cdaPowerToughness"]
+    : null;
   // Lieutenant (Commander 2014): "As long as you control your commander, ~ gets
   // +N/+N and <bonus>." The quoted-ability variants are not covered.
   const lieutenantMatch = /Lieutenant\s+[—–-]\s+As long as you control your commander, ~ gets \+(\d+)\/\+(\d+)(?:\s+and\s+(.+?))?\.?(?:\n|$)/i.exec(text);
@@ -2148,6 +2158,7 @@ export function cardProfile(card: CardData): CardProfile {
   const grantsExtortToOthers = text.split("\n").some((line) => /^other creatures you control have extort\.?$/i.test(line.trim()));
   const attackersAssignAsUnblockedWhileAttacking = text.split("\n").some((line) => /^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line.trim()));
   const additionalCostExileGraveyardX = text.split("\n").some((line) => /^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line.trim()));
+  const preventsOpponentLoss = text.split("\n").some((line) => /^you can't win the game and your opponents can't lose the game\.?$/i.test(line.trim()));
   const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
@@ -2178,6 +2189,7 @@ export function cardProfile(card: CardData): CardProfile {
     locksOpponentsOnYourTurn,
     grantsExtortToOthers,
     attackersAssignAsUnblockedWhileAttacking,
+    preventsOpponentLoss,
     additionalCostExileGraveyardX,
     staticPowerToughnessGrants,
     levelUpCost,

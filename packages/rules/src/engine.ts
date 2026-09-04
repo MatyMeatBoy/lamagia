@@ -459,6 +459,10 @@ function staticPtBonus(state: GameState, permanent: Permanent): { power: number;
 
 /** Characteristic-defining P/T: count of a permanent type the controller has (CR 604.3). */
 function cdaCount(state: GameState, permanent: Permanent, kind: NonNullable<CardProfile["cdaPowerToughness"]>): number {
+  if (kind === "green-permanents-you-control") {
+    return playerAt(state, permanent.controller).battlefield.filter((candidate) =>
+      cardProfile(candidate.card).colors.some((color) => color.toUpperCase() === "G")).length;
+  }
   const type = kind === "creatures-you-control" ? "Creature" : kind === "lands-you-control" ? "Land" : "Artifact";
   return playerAt(state, permanent.controller).battlefield.filter((candidate) => cardProfile(candidate.card).types.includes(type)).length;
 }
@@ -1407,6 +1411,26 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (amount === 0) return state;
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
+    }
+    case "devotion-drain": {
+      // Devotion (CR 700.5): count coloured mana symbols of one colour in the mana costs of permanents you control.
+      const devotion = playerAt(state, controller).battlefield.reduce((total, permanent) => {
+        const cost = permanent.card.mana_cost ?? "";
+        return total + (cost.match(new RegExp(effect.color, "gi")) ?? []).length;
+      }, 0);
+      if (devotion <= 0) return state;
+      let next = state;
+      let lost = 0;
+      for (const player of state.players) {
+        if (player.seat === controller || player.lost) continue;
+        next = loseLife(next, player.seat, devotion);
+        lost += devotion;
+      }
+      if (lost > 0 && !playersCantGainLife(next)) {
+        next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + lost }));
+        next = raiseEvent(next, { kind: "life-gained", seat: controller, amount: lost });
+      }
+      return logged(next, controller, `${sourceName}: devoción ${devotion}; cada oponente pierde ${devotion} vidas.`);
     }
     case "gain-life-each-permanent": {
       if (playersCantGainLife(state)) return state;
@@ -2415,8 +2439,15 @@ function applyStateBasedActions(state: GameState): GameState {
       }
     }
 
+    // Abyssal Persecutor: "your opponents can't lose the game" (CR 104.3a) — a
+    // player can't lose while an opponent controls such a permanent.
+    const shieldedFromLoss = new Set(allPermanents(next)
+      .filter((permanent) => cardProfile(permanent.card).preventsOpponentLoss)
+      .flatMap((permanent) => next.players.filter((player) => player.seat !== permanent.controller).map((player) => player.seat)));
+
     for (const player of next.players) {
       if (player.lost) continue;
+      if (shieldedFromLoss.has(player.seat)) continue;
       const lethalCommander = Object.entries(player.commanderDamage).find(([, amount]) => amount >= 21);
       const reason = player.life <= 0
         ? "vidas a 0"
