@@ -233,6 +233,8 @@ const C13_DEEP_ANALYSIS = () => make({ name: "Deep Analysis", type_line: "Sorcer
 const C13_BALEFUL_STRIX = () => make({ name: "Baleful Strix", type_line: "Artifact Creature — Bird", mana_cost: "{U}{B}", cmc: 2, power: "1", toughness: "1", keywords: ["Flying", "Deathtouch"], oracle_text: "Flying\nDeathtouch\nWhen this creature enters, draw a card.", scryfall_id: "47ac0f77-1294-4de9-93d1-141a9f314f98" });
 const C13_PHYREXIAN_GARGANTUA = () => make({ name: "Phyrexian Gargantua", type_line: "Creature — Phyrexian Horror", mana_cost: "{4}{B}{B}", cmc: 6, power: "4", toughness: "4", oracle_text: "When this creature enters, you draw two cards and you lose 2 life.", scryfall_id: "56ae94c2-8bbb-4807-b1e0-8ef178dd1697" });
 const C13_ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Destroy target nonblack creature. It can't be regenerated.\nDraw a card.", scryfall_id: "595e8c26-672d-4978-87ec-9e0ed64ceaf0" });
+const C13_ANGEL_OF_FINALITY = () => make({ name: "Angel of Finality", type_line: "Creature — Angel", mana_cost: "{3}{W}", cmc: 4, power: "3", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, exile target player's graveyard.", scryfall_id: "bd3c34c9-2072-4ebb-93ef-34173015bfb8" });
+const C13_BOJUKA_BOG = () => make({ name: "Bojuka Bog", type_line: "Land", oracle_text: "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", produced_mana: ["B"], scryfall_id: "2ef9848c-fe7f-4434-8936-4074f67883af" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
 const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantment", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target.", scryfall_id: "89d77b63-eeee-4d8a-9622-b1ea36dc70de" });
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
@@ -1182,6 +1184,19 @@ describe("casting", () => {
       targetKind: "nonblack-creature",
       fullyImplemented: true
     });
+  });
+
+  it("reuses target graveyard exile for C13 ETB cards", () => {
+    for (const card of [C13_ANGEL_OF_FINALITY(), C13_BOJUKA_BOG()]) {
+      const profile = profileOf(card);
+      expect(profile.triggers).toMatchObject([{
+        event: "enters-battlefield",
+        targetKind: "player",
+        effect: { kind: "exile-target-graveyard" }
+      }]);
+      expect(profile.fullyImplemented).toBe(true);
+    }
+    expect(profileOf(C13_BOJUKA_BOG())).toMatchObject({ entersTapped: { kind: "tapped" }, manaAbilities: [{ produces: ["B"] }] });
   });
 
   it("destroys only the legal nonblack target before drawing", () => {
