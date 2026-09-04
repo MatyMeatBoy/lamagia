@@ -309,6 +309,8 @@ export type PendingChoice =
       readonly sourcePermanentId?: string;
       /** Event permanent retained while an optional trigger awaits a choice. */
       readonly triggeredPermanentId?: string;
+      /** Typed permanents chosen and tapped when the optional trigger resolves. */
+      readonly tapCost?: TriggerDefinition["tapCost"];
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       readonly unlessPayCost?: ManaCost;
@@ -436,7 +438,7 @@ export type GameAction =
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[] }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
-  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
+  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[] }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-tap-or-untap"; readonly sourceId: string; readonly mode: "tap" | "untap" }
@@ -2134,6 +2136,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, keywordOf(state, creature, "deathtouch"), sourceName, cardProfile(creature.card));
       return state;
     }
+    case "tap-creatures-pump-source-damage-attacker": {
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const amount = Math.max(0, object.variableValue);
+      if (!sourceId || amount <= 0) return state;
+      const source = findPermanent(state, sourceId);
+      const attack = state.combat.attackers.find((entry) => entry.instanceId === sourceId);
+      if (!source || !attack || !isCreature(cardProfile(source.card))) return state;
+      const pumped = modifyCreatures(state, amount, 0, (candidate) => candidate.instance_id === sourceId);
+      return dealDamageFromObject(pumped, attack.defender, amount, sourceName, object);
+    }
     case "incite-rebellion": {
       let next = state;
       for (const player of state.players) {
@@ -3451,6 +3463,7 @@ function resolveTop(state: GameState): GameState {
           targets: object.targets,
           sourcePermanentId: object.trigger.sourcePermanentId,
           ...(object.trigger.eventPermanentId ? { triggeredPermanentId: object.trigger.eventPermanentId } : {}),
+          ...(object.trigger.definition.tapCost ? { tapCost: object.trigger.definition.tapCost } : {}),
           sourceController: object.controller,
           ...(object.trigger.definition.paymentBy ? { paymentBy: object.trigger.definition.paymentBy } : {}),
           ...(object.trigger.definition.manaCost ? { manaCost: object.trigger.definition.manaCost } : {})
@@ -4277,6 +4290,27 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const choice = state.pendingChoice;
     if (choice.type === "optional-trigger") {
       const optionalCost = choice.payCost ?? choice.manaCost;
+      if (choice.tapCost) {
+        const candidates = triggerTapCostCandidates(state, seat, choice.sourcePermanentId, choice.tapCost);
+        const combinationsToOffer = choice.tapCost.amount === "any"
+          ? Array.from({ length: candidates.length + 1 }, (_, amount) => combinations(candidates, amount)).flat()
+          : combinations(candidates, choice.tapCost.amount);
+        for (const selected of combinationsToOffer) {
+          actions.push({
+            action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true, tapIds: selected.map((permanent) => permanent.instance_id) },
+            label: selected.length
+              ? `Sí — girar ${selected.map((permanent) => permanent.card.name).join(", ")}`
+              : "Sí, resolver sin girar criaturas",
+            note: "Elige las criaturas enderezadas que se girarán al resolver la habilidad."
+          });
+        }
+        actions.push({
+          action: { type: "choose-trigger", sourceId: choice.sourceId, accept: false },
+          label: "No, no hacerlo",
+          note: "No eliges realizar el efecto opcional."
+        });
+        return actions;
+      }
       const canPay = !optionalCost || !optionalCost.symbols.length || Boolean(planManaPayment(optionalCost, player, { state }));
       if (canPay) {
         actions.push({
@@ -5085,6 +5119,20 @@ function tapCostCandidates(
   });
 }
 
+/** Returns the exact untapped typed permanents that may be chosen for a trigger tap cost. */
+function triggerTapCostCandidates(
+  state: GameState,
+  seat: SeatId,
+  sourceId: string | undefined,
+  cost: NonNullable<TriggerDefinition["tapCost"]>
+): Permanent[] {
+  return playerAt(state, seat).battlefield.filter((candidate) => {
+    if (candidate.tapped || !isCreature(cardProfile(candidate.card))) return false;
+    if (cost.mode === "another" && candidate.instance_id === sourceId) return false;
+    return !cost.subtype || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === cost.subtype!.toLowerCase());
+  });
+}
+
 function applyActivate(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate" }>): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para activar esa habilidad.");
   const player = playerAt(state, seat);
@@ -5443,6 +5491,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
   if (!choice || choice.type !== "optional-trigger" || choice.seat !== seat) throw new Error("No tienes una elección de trigger pendiente.");
   if (choice.sourceId !== action.sourceId) throw new Error("Esa elección de trigger ya no está pendiente.");
   let next: GameState = { ...state, pendingChoice: null };
+  let tapCount = 0;
   if (choice.paymentBy === "opponent") {
     if (!action.accept) {
       const source: StackObject = {
@@ -5497,6 +5546,30 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     return logged(next, source.controller, `${choice.sourceCard.name} se sacrifica al no pagar ${choice.unlessPayCost.raw}.`);
   }
   if (!action.accept) return logged(next, seat, `${playerAt(state, seat).name} no realiza la habilidad opcional de ${choice.sourceCard.name}.`);
+  if (choice.tapCost) {
+    const candidates = triggerTapCostCandidates(state, seat, choice.sourcePermanentId, choice.tapCost);
+    const selectedIds = action.tapIds ?? [];
+    const selected = selectedIds.map((id) => candidates.find((candidate) => candidate.instance_id === id));
+    const validAmount = choice.tapCost.amount === "any"
+      ? selected.length <= candidates.length
+      : selected.length === choice.tapCost.amount;
+    if (!validAmount || selected.some((candidate) => !candidate) || new Set(selectedIds).size !== selectedIds.length) {
+      throw new Error(choice.tapCost.amount === "any"
+        ? "Debes elegir criaturas válidas para girar."
+        : `Debes elegir ${choice.tapCost.amount} criaturas válidas para girar.`);
+    }
+    if (selected.length) {
+      tapCount = selected.length;
+      next = withPlayer(next, seat, (current) => ({
+        ...current,
+        battlefield: current.battlefield.map((permanent) => selectedIds.includes(permanent.instance_id)
+          ? { ...permanent, tapped: true }
+          : permanent)
+      }));
+      next = raiseTapEvents(next, state, selectedIds);
+      next = logged(next, seat, `${playerAt(next, seat).name} gira ${selected.map((permanent) => permanent!.card.name).join(", ")} para ${choice.sourceCard.name}.`);
+    }
+  }
   const optionalCost = choice.payCost ?? choice.manaCost;
   if (optionalCost && optionalCost.symbols.length) {
     const plan = planManaPayment(optionalCost, playerAt(next, seat));
@@ -5515,7 +5588,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     targets: choice.targets ?? [],
    fromCommandZone: false,
    flashback: false,
-   variableValue: 0,
+   variableValue: tapCount,
     countered: false,
    sourcePermanentId: choice.sourcePermanentId,
    ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})

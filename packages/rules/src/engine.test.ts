@@ -456,6 +456,12 @@ const RAIDER = () => make({
   name: "Bloodthirst Raider", type_line: "Creature — Orc", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2",
   oracle_text: "Whenever Bloodthirst Raider attacks, Bloodthirst Raider deals 1 damage to any target."
 });
+const MYR_BATTLESPHERE = () => make({
+  name: "Myr Battlesphere", type_line: "Artifact Creature — Construct", mana_cost: "{7}", cmc: 7, power: "4", toughness: "7",
+  oracle_text: "When this creature enters, create four 1/1 colorless Myr artifact creature tokens.\nWhenever this creature attacks, you may tap X untapped Myr you control. If you do, this creature gets +X/+0 until end of turn and deals X damage to the player or planeswalker it's attacking.",
+  scryfall_id: "c53ba31a-ba27-4e17-9a92-311acb1cab29"
+});
+const MYR_TOKEN = () => make({ name: "Myr", type_line: "Artifact Creature — Myr", power: "1", toughness: "1" });
 const CREATURE_COMBAT_DRAWER = () => make({
   name: "Combat Chronicler", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "Whenever a creature deals combat damage to a player, draw a card."
@@ -4516,6 +4522,26 @@ describe("triggered abilities", () => {
     // of unblocked combat damage both land inside the same settle.
     expect(game.players[1]!.life).toBe(37);
     expect(game.log.some((entry) => entry.text.includes("Bloodthirst Raider hace 1 de daño"))).toBe(true);
+  });
+
+  it("lets Myr Battlesphere choose untapped Myr and uses the chosen count for X", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: [] }));
+    game = putOnBattlefield(game, 0, [MYR_BATTLESPHERE(), MYR_TOKEN(), MYR_TOKEN(), MYR_TOKEN()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const sphere = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Myr Battlesphere")!;
+    const myrs = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Myr");
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: sphere.instance_id, defender: 1 }] });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", tapCost: { amount: "any", subtype: "Myr" } });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    const selected = myrs.slice(0, 2).map((permanent) => permanent.instance_id);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "choose-trigger"
+      && entry.action.accept && JSON.stringify(entry.action.tapIds) === JSON.stringify(selected))).toBe(true);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true, tapIds: selected });
+    const updatedSphere = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === sphere.instance_id)!;
+    expect(myrs.slice(0, 2).every((permanent) => game.players[0]!.battlefield.find((candidate) => candidate.instance_id === permanent.instance_id)!.tapped)).toBe(true);
+    expect(powerOf(updatedSphere, game)).toBe(6);
+    expect(game.players[1]!.life).toBe(32);
   });
 
   it("fires an upkeep trigger only in its controller's own upkeep", () => {

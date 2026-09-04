@@ -852,4 +852,18 @@ describe("faces and oracle normalisation", () => {
     }));
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("recognises Myr Battlesphere's variable tap-and-attack trigger", () => {
+    const profile = cardProfile(card({
+      name: "Myr Battlesphere", type_line: "Artifact Creature — Construct", mana_cost: "{7}",
+      oracle_text: "When this creature enters, create four 1/1 colorless Myr artifact creature tokens.\nWhenever this creature attacks, you may tap X untapped Myr you control. If you do, this creature gets +X/+0 until end of turn and deals X damage to the player or planeswalker it's attacking."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "attacks", subject: "self", optional: true,
+      tapCost: { amount: "any", subtype: "Myr", mode: "any" },
+      effect: { kind: "tap-creatures-pump-source-damage-attacker", subtype: "Myr" },
+      targetKind: "none"
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });

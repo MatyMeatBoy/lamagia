@@ -390,6 +390,8 @@ export type SpellEffect =
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   /** Damage equal to the power of the creature that caused this trigger. */
   | { readonly kind: "damage-triggered-creature-power" }
+  /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
+  | { readonly kind: "tap-creatures-pump-source-damage-attacker"; readonly subtype: string }
   | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
   | { readonly kind: "damage-any-target-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "damage-controller-equal-hand" }
@@ -632,6 +634,8 @@ export interface TriggerDefinition {
   readonly requiresEvoked?: boolean;
   /** Optional mana cost to get the effect ("you may pay {cost}. If you do, ..."). */
   readonly payCost?: ManaCost;
+  /** Optional tap cost paid by choosing and tapping a group of permanents. */
+  readonly tapCost?: { readonly amount: number | "any"; readonly subtype?: string; readonly mode: "any" | "another" };
   /** For "sacrifice ~ unless you pay {cost}", declining the payment applies the effect. */
   readonly unlessPayCost?: ManaCost;
 }
@@ -2805,6 +2809,23 @@ function recognizeText(text: string): RecognizedText {
           event: "dies", subject: "another-creature-you-control", effect: rec.effect,
           optional: /^you\s+may\b/i.test(nonSubtypeDies[2]!), targetKind: rec.target, sourceText: line,
           excludeSubtype: nonSubtypeDies[1]!
+        });
+        continue;
+      }
+    }
+    // Myr Battlesphere: tapping any number of untapped Myr is an optional
+    // resolution choice, not a mana cost. Keep the selected group explicit so
+    // the authoritative engine can validate and tap the exact permanents.
+    const tapAndAttack = /^(?:when|whenever)\s+~\s+attacks,?\s+you may tap\s+(X|any number of|a|an|one|two|three|four|five|\d+)\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control\.\s*if you do,\s+~ gets \+X\/\+0 until end of turn and deals X damage to the player or planeswalker it's attacking\.?$/i.exec(line);
+    if (tapAndAttack) {
+      const amountText = tapAndAttack[1]!.toLowerCase();
+      const amount = /^(?:x|any number of)$/.test(amountText) ? "any" as const : toNumber(amountText);
+      if (amount !== null) {
+        triggers.push({
+          event: "attacks", subject: "self",
+          effect: { kind: "tap-creatures-pump-source-damage-attacker", subtype: singularSubtype(tapAndAttack[2]!) },
+          optional: true, targetKind: "none", sourceText: line,
+          tapCost: { amount, subtype: singularSubtype(tapAndAttack[2]!), mode: "any" }
         });
         continue;
       }
