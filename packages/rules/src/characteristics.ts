@@ -306,6 +306,7 @@ export type SpellEffect =
   | { readonly kind: "gain-life-each-controlled-type"; readonly amount: number; readonly type: CardType }
   | { readonly kind: "gain-life-each-subtype"; readonly amount: number; readonly subtype: string }
   | { readonly kind: "gain-life-each-permanent"; readonly amount: number }
+  | { readonly kind: "gain-life-each-creature-you-control"; readonly amount: number }
   | { readonly kind: "gain-life-equal-target-power" }
   | { readonly kind: "lose-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
@@ -1748,6 +1749,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       effect: { kind: "you-and-opponent-each", effect: { kind: "create-token", amount: "X", token: { name: "Elf Warrior", typeLine: "Creature — Elf Warrior", power: 1, toughness: 1, colors: ["G"], keywords: [], tapped: false } } },
       target: "none"
     };
+  }
+  if ((match = /^Choose an opponent\.\s*You and that player each (create (?!an? X\/X|X\b).+)$/i.exec(text))) {
+    const inner = parseCreateToken(match[1]!.replace(/^create/i, "Create"));
+    if (inner?.kind === "create-token") return { effect: { kind: "you-and-opponent-each", effect: inner }, target: "none" };
+  }
+  if ((match = /^Choose an opponent\.\s*You gain (\d+) life for each creature you control and that player gains \d+ life for each creature they control$/i.exec(text))) {
+    return { effect: { kind: "you-and-opponent-each", effect: { kind: "gain-life-each-creature-you-control", amount: Number(match[1]) } }, target: "none" };
   }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
