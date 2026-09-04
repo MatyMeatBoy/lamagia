@@ -122,6 +122,7 @@ feature name.
 | `c14-rebound` | claude-c14 | done | Rebound keyword, Nomads Assembly (+12 catalog) |
 | `c14-sun-titan` | claude-c14 | done | Sun Titan |
 | `c14-multi-land-fetch` | claude-c14 | done | Burnished Hart, Myriad Landscape (+14 catalog) |
+| `c14-harrow-extra-land` | claude-c14 | done | Harrow + extra land drops |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |

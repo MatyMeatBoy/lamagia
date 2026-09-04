@@ -360,6 +360,7 @@ export type SpellEffect =
   | { readonly kind: "return-all-your-graveyard-to-hand" }
   | { readonly kind: "xathrid-upkeep"; readonly fallbackLife: number }
   | { readonly kind: "disciple-of-bolas" }
+  | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
   | { readonly kind: "target-player-discard-unless-land"; readonly discard: number }
@@ -562,6 +563,8 @@ export interface CardProfile {
   readonly additionalCostExileGraveyardX: boolean;
   /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
   readonly hasRebound: boolean;
+  /** "As an additional cost to cast ~, sacrifice a land" (Harrow, CR 601.2b). */
+  readonly additionalCostSacrificeLand: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static "<color/type> spells you cast cost {N} less to cast" grant (Medallion cycle, CR 118.9). */
@@ -1617,6 +1620,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
   }
+  if ((match = /^You may play (an additional land|up to (\w+) additional lands?) this turn$/i.exec(text))) {
+    const amount = match[2] ? (toNumber(match[2]) ?? 1) : 1;
+    return { effect: { kind: "play-additional-land", amount }, target: "none" };
+  }
   if (/^sacrifice another creature\.\s*You gain X life and draw X cards, where X is that creature's power$/i.test(text)) {
     return { effect: { kind: "disciple-of-bolas" }, target: "none" };
   }
@@ -2001,6 +2008,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^other creatures you control have extort\.?$/i.test(line)) continue;
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
+    if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     // Rebound is synthesised from the keyword; consume the reminder line.
     if (/^rebound$/i.test(line)) continue;
@@ -2265,6 +2273,7 @@ export function cardProfile(card: CardData): CardProfile {
   const grantsExtortToOthers = text.split("\n").some((line) => /^other creatures you control have extort\.?$/i.test(line.trim()));
   const attackersAssignAsUnblockedWhileAttacking = text.split("\n").some((line) => /^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line.trim()));
   const additionalCostExileGraveyardX = text.split("\n").some((line) => /^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line.trim()));
+  const additionalCostSacrificeLand = text.split("\n").some((line) => /^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line.trim()));
   const preventsOpponentLoss = text.split("\n").some((line) => /^you can't win the game and your opponents can't lose the game\.?$/i.test(line.trim()));
   const hasRebound = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "rebound")
     || text.split("\n").some((line) => /^rebound\b/i.test(line.trim()));
@@ -2300,6 +2309,7 @@ export function cardProfile(card: CardData): CardProfile {
     attackersAssignAsUnblockedWhileAttacking,
     preventsOpponentLoss,
     additionalCostExileGraveyardX,
+    additionalCostSacrificeLand,
     hasRebound,
     staticPowerToughnessGrants,
     levelUpCost,
