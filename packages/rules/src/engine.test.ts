@@ -845,6 +845,14 @@ describe("casting", () => {
     });
   });
 
+  it("resolves the C13 Army print into thirteen tapped Zombies", () => {
+    let game = readyToCast([C13_ARMY_OF_THE_DAMNED()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const zombies = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Zombie");
+    expect(zombies).toHaveLength(13);
+    expect(zombies.every((permanent) => permanent.tapped)).toBe(true);
+  });
+
   it("returns a land from any graveyard under the caster's control", () => {
     const profile = profileOf(LAND_GRAVEYARD_BATTLEFIELD());
     expect(profile).toMatchObject({ targetKind: "land-card-in-a-graveyard", effects: [{ kind: "return-target-land-card-from-graveyard-to-battlefield" }] });
