@@ -363,7 +363,7 @@ export type SpellEffect =
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "attach-equipment" }
-  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
+  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
   | {
       readonly kind: "search-library";
       readonly types: readonly CardType[];
@@ -534,6 +534,8 @@ export interface CardProfile {
   readonly evokeCost: ManaCost | null;
   /** Flashback cost — cast from graveyard, then exile (CR 702.34), null when absent. */
   readonly flashbackCost: ManaCost | null;
+  /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
+  readonly additionalCostExileGraveyardX: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static "<color/type> spells you cast cost {N} less to cast" grant (Medallion cycle, CR 118.9). */
@@ -1155,6 +1157,13 @@ function parseEquipmentScaledToken(text: string): SpellEffect | null {
   return base?.kind === "create-token" ? { ...base, amount: "equipment-attached-to-source" } : null;
 }
 
+function parseOpponentHandScaledToken(text: string): SpellEffect | null {
+  const suffix = /,?\s*where x is the number of your opponents with four or more cards in hand$/i;
+  if (!suffix.test(text.trim())) return null;
+  const base = parseCreateToken(text.trim().replace(suffix, "").replace(/^Create X\b/i, "Create a"));
+  return base?.kind === "create-token" ? { ...base, amount: "opponents-with-4-plus-cards" } : null;
+}
+
 function parseDeathScaledToken(text: string): SpellEffect | null {
   const trimmed = text.trim();
   // Spoils of Blood: "Create an X/X black Horror creature token, where X is the number of creatures that died this turn."
@@ -1705,7 +1714,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
-  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseEquipmentScaledToken(text) ?? parseDeathScaledToken(text) ?? parseCreateToken(text);
+  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseEquipmentScaledToken(text) ?? parseDeathScaledToken(text) ?? parseOpponentHandScaledToken(text) ?? parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
   const genericSearch = parseLibrarySearch(text);
   if (genericSearch) return { effect: genericSearch, target: "none" };
@@ -1860,6 +1869,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line)) continue;
     if (/^other creatures you control have extort\.?$/i.test(line)) continue;
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
+    if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.
@@ -2104,6 +2114,7 @@ export function cardProfile(card: CardData): CardProfile {
   const locksOpponentsOnYourTurn = text.split("\n").some((line) => /^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line.trim()));
   const grantsExtortToOthers = text.split("\n").some((line) => /^other creatures you control have extort\.?$/i.test(line.trim()));
   const attackersAssignAsUnblockedWhileAttacking = text.split("\n").some((line) => /^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line.trim()));
+  const additionalCostExileGraveyardX = text.split("\n").some((line) => /^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line.trim()));
   const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
@@ -2134,6 +2145,7 @@ export function cardProfile(card: CardData): CardProfile {
     locksOpponentsOnYourTurn,
     grantsExtortToOthers,
     attackersAssignAsUnblockedWhileAttacking,
+    additionalCostExileGraveyardX,
     staticPowerToughnessGrants,
     levelUpCost,
     levelDefinitions,
