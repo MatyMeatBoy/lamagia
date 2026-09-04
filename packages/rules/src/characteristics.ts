@@ -346,6 +346,9 @@ export type SpellEffect =
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
+  | { readonly kind: "add-counter-all-creatures"; readonly counter: string; readonly amount: number | "X" }
+  | { readonly kind: "remove-all-counters-target" }
+  | { readonly kind: "remove-all-counters-all-and-exile-tokens" }
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-creature-then-controller-token"; readonly token: TokenDefinition }
@@ -1706,6 +1709,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-creatures-you-control", counter: match[2]!, amount }, target: "none" };
   }
+  if ((match = /^Put (X|a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counters? on each creature$/i.exec(text))) {
+    const amount = /^X$/i.test(match[1]!) ? "X" as const : toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "add-counter-all-creatures", counter: match[2]!, amount }, target: "none" };
+  }
+  if (/^Remove all counters from target permanent$/i.test(text)) return { effect: { kind: "remove-all-counters-target" }, target: "permanent" };
+  if (/^Remove all counters from all permanents and exile all tokens$/i.test(text)) return { effect: { kind: "remove-all-counters-all-and-exile-tokens" }, target: "none" };
   if ((match = /^~ deals (\w+) damage to target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "creature" };

@@ -2303,6 +2303,46 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           : permanent)
       }));
     }
+    case "add-counter-all-creatures": {
+      const amount = effect.amount === "X" ? object.variableValue : effect.amount;
+      if (amount <= 0) return state;
+      let next = state;
+      for (const player of state.players) {
+        next = withPlayer(next, player.seat, (current) => ({
+          ...current,
+          battlefield: current.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
+            ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + amount } }
+            : permanent)
+        }));
+      }
+      return logged(next, controller, `${sourceName} pone ${amount} contador(es) ${effect.counter} en cada criatura.`);
+    }
+    case "remove-all-counters-target": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, counters: {} } : candidate)
+      }));
+    }
+    case "remove-all-counters-all-and-exile-tokens": {
+      let next = state;
+      for (const player of state.players) {
+        for (const permanent of [...player.battlefield]) {
+          if (permanent.card.token) {
+            next = movePermanentToZone(next, findPermanent(next, permanent.instance_id) ?? permanent, "exile");
+          }
+        }
+        next = withPlayer(next, player.seat, (current) => ({
+          ...current,
+          battlefield: current.battlefield.map((permanent) => Object.keys(permanent.counters).length ? { ...permanent, counters: {} } : permanent)
+        }));
+      }
+      return logged(next, controller, `${sourceName} retira todos los contadores y exilia todas las fichas.`);
+    }
     case "level-up": {
       const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       if (!source || source.controller !== controller || !isCreature(cardProfile(source.card))) return state;
