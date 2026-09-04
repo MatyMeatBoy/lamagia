@@ -275,6 +275,7 @@ export type SpellEffect =
   | { readonly kind: "draw-equal-tapped-creatures" }
   | { readonly kind: "draw-equal-controlled-type"; readonly type: CardType }
   | { readonly kind: "draw-equal-controlled-color-creature"; readonly color: string }
+  | { readonly kind: "draw-equal-graveyard-creatures" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }

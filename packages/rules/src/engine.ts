@@ -1314,6 +1314,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }).length;
       return drawCards(state, controller, amount);
     }
+    case "draw-equal-graveyard-creatures": {
+      const amount = playerAt(state, controller).graveyard.filter((card) => isCreature(cardProfile(card))).length;
+      return drawCards(state, controller, amount);
+    }
     case "each-player-draw": {
       let next = state;
       for (const player of state.players) if (!player.lost) next = drawCards(next, player.seat, effectAmount(effect.amount, object));
