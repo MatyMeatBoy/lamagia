@@ -62,6 +62,7 @@ const ARTIFACT_GRAVEYARD_RETURN = () => make({ name: "Artifact Reclaim", type_li
 const LAND_GRAVEYARD_BATTLEFIELD = () => make({ name: "Restore Memory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Put target land card from a graveyard onto the battlefield under your control." });
 const ARTIFACT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Sharuum Memory", type_line: "Sorcery", mana_cost: "{2}{U}{B}", cmc: 4, oracle_text: "Return target artifact card from your graveyard to the battlefield." });
 const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", type_line: "Sorcery", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Return target enchantment card from your graveyard to your hand." });
+const DOUBLE_STRIKE_SPELL = () => make({ name: "Twin Edge", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Target creature gains double strike until end of turn." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on top of your library." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
@@ -636,6 +637,16 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.hand.some((card) => card.name === "Test Enchantment")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Test Enchantment")).toBe(false);
+  });
+
+  it("grants a temporary combat keyword to the chosen creature", () => {
+    const profile = profileOf(DOUBLE_STRIKE_SPELL());
+    expect(profile).toMatchObject({ targetKind: "creature", effects: [{ kind: "grant-target-creature-keyword", keyword: "double strike" }] });
+    let game = readyToCast([DOUBLE_STRIKE_SPELL()], [MOUNTAIN(), PLAINS()], [], [BEAR()]);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    const boosted = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
+    expect(boosted.temporaryKeywords).toEqual(["double strike"]);
   });
 
   it("scales token creation from the controller's current land count", () => {
