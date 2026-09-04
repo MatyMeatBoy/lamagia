@@ -609,6 +609,17 @@ describe("effect recognition", () => {
     expect(sphinx.fullyImplemented).toBe(true);
   });
 
+  it("reuses the power-based life primitive for optional end-step triggers", () => {
+    const wall = cardProfile(card({
+      name: "Wall of Reverence", type_line: "Creature — Spirit", oracle_text: "Flying\nAt the beginning of your end step, you may gain life equal to the power of target creature you control."
+    }));
+    expect(wall.triggers[0]).toMatchObject({
+      event: "end-step", subject: "you", optional: true,
+      targetKind: "creature-you-control", effect: { kind: "gain-life-equal-target-power" }
+    });
+    expect(wall.fullyImplemented).toBe(true);
+  });
+
   it("reuses the top-card reveal primitive with a mana-value amount", () => {
     const profile = cardProfile(card({
       name: "Augury Adept", type_line: "Creature — Kithkin Wizard", mana_cost: "{1}{W/U}{W/U}", cmc: 3,

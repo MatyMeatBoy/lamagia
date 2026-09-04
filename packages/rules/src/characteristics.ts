@@ -2669,7 +2669,9 @@ function recognizeText(text: string): RecognizedText {
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
-          const executableText = optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
+          const executableText = optional && !payGate
+            ? effectText.replace(/^you\s+may\s+/i, "").replace(/^gain\s+life\b/i, "You gain life")
+            : effectText;
           const lookTop = parseLookTopSelection(executableText);
           return lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
         })();

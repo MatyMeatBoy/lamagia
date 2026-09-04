@@ -1720,3 +1720,10 @@ CR 615.1. The reusable profile closes equivalent Oracle printings as well.
 The refreshed export is **192/341 C13 (56.3%)**, with **149 unfinished** and
 **71 one-line-away**. The fork report `3af0cb0` (conditional Split second) is
 also queued as one incoming commit and remains outside the integration batch.
+
+### C13 optional end-step power-to-life trigger (2026-09-04)
+
+The generic trigger compiler now reuses the existing power-based life primitive
+when an optional end-step ability says “you may gain life equal to the power of
+target creature you control.” Wall of Reverence is covered with target selection
+and accept/decline resolution (CR 603.2).

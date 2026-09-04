@@ -80,6 +80,7 @@ const PLANESWALKER_LIFE_SPELL = () => make({ name: "Walker Blessing", type_line:
 const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each battle you control." });
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
+const WALL_OF_REVERENCE = () => make({ name: "Wall of Reverence", type_line: "Creature — Spirit", mana_cost: "{3}{W}", cmc: 4, power: "1", toughness: "6", colors: ["W"], keywords: ["Flying"], oracle_text: "Flying\nAt the beginning of your end step, you may gain life equal to the power of target creature you control." });
 const CHARMBREAKER_DEVILS = () => make({ name: "Charmbreaker Devils", type_line: "Creature — Devil", mana_cost: "{5}{R}", cmc: 6, power: "5", toughness: "4", oracle_text: "At the beginning of your upkeep, return an instant or sorcery card at random from your graveyard to your hand.", scryfall_id: "1b9df437-6988-4ddc-80c4-893e11076067" });
 const CONJURERS_CLOSET = () => make({ name: "Conjurer's Closet", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.", scryfall_id: "cd1eda60-53e4-44d0-9b2c-7a57395e291f" });
 const TIDAL_FORCE = () => make({ name: "Tidal Force", type_line: "Creature — Elemental", mana_cost: "{5}{U}{U}", cmc: 7, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you may tap or untap target permanent.", scryfall_id: "1b25e262-e2df-4768-b55e-1b7b8d3ee993" });
@@ -2273,6 +2274,25 @@ describe("casting", () => {
   it("gates an optional end-step draw on a controlled power threshold", () => {
     const profile = profileOf(POWER_DRAW_TRIGGER());
     expect(profile.triggers[0]).toMatchObject({ condition: { kind: "controlled-creature-power-at-least", amount: 5 }, effect: { kind: "draw", amount: 1 } });
+  });
+
+  it("resolves Wall of Reverence's optional end-step life trigger", () => {
+    const profile = profileOf(WALL_OF_REVERENCE());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "end-step", subject: "you", optional: true,
+      targetKind: "creature-you-control", effect: { kind: "gain-life-equal-target-power" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [WALL_OF_REVERENCE(), TRAMPLER()]);
+    const before = game.players[0]!.life;
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const stomper = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "permanent", instanceId: stomper.instance_id } });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.players[0]!.life).toBe(before + 6);
   });
 
   it("damages only nonfliers while still damaging every player", () => {
