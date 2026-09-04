@@ -154,6 +154,21 @@ describe("effect recognition", () => {
     expect(cardProfile(card({ name: "Wrath of God", type_line: "Sorcery", mana_cost: "{2}{W}{W}", oracle_text: "Destroy all creatures. They can't be regenerated." })).effects).toEqual([{ kind: "destroy-all-creatures" }]);
   });
 
+  it("keeps unsupported modal branches in diagnostics", () => {
+    const profile = cardProfile(card({
+      name: "Modal Diagnostic",
+      type_line: "Instant",
+      mana_cost: "{2}",
+      oracle_text: "Choose one —\n• Target player sacrifices a permanent.\n• Put a doom counter on target permanent."
+    }));
+    expect(profile.fullyImplemented).toBe(false);
+    expect(profile.unimplementedText).toEqual([
+      "Choose one —",
+      "Target player sacrifices a permanent.",
+      "Put a doom counter on target permanent."
+    ]);
+  });
+
   it("recognises Equipment as an artifact subtype target on the battlefield", () => {
     const profile = cardProfile(card({ name: "Exile Equipment", type_line: "Instant", mana_cost: "{1}{W}", oracle_text: "Exile target Equipment." }));
     expect(profile.effects).toEqual([{ kind: "exile-target-permanent" }]);

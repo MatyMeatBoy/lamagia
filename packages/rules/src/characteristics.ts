@@ -1186,6 +1186,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
+      const unimplementedChoices: string[] = [];
       let cursor = start;
       let invalid = false;
       while (cursor < body.length && body[cursor]!.bullet) {
@@ -1193,14 +1194,20 @@ function recognizeText(text: string): RecognizedText {
         const choiceText = entry.text;
         const executableText = choiceText.replace(/\s+It can(?:not|'t) be regenerated\.?$/i, "");
         const recognized = recognizeSentence(executableText);
-        if (!recognized) invalid = true;
+        if (!recognized) {
+          invalid = true;
+          unimplementedChoices.push(choiceText);
+        }
         else choices.push({ index: choices.length, text: choiceText, effect: recognized.effect, targetKind: recognized.target });
         cursor += 1;
       }
       if (!invalid && choices.length > 0 && choices.length === cursor - start) {
         modalChoices.push(...choices);
       } else {
-        unimplementedText.push(line);
+        // Keep the unsupported branches, not only the modal heading. This makes
+        // the primitive roadmap identify the real missing effects instead of
+        // falsely reporting `Choose one` as the whole unresolved behavior.
+        unimplementedText.push(line, ...unimplementedChoices);
       }
       lineIndex = Math.max(lineIndex, cursor - 1);
       continue;

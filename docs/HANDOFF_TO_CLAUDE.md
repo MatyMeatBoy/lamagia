@@ -178,6 +178,10 @@ loads pending IDs only when an edition is opened.
 - Supported `Choose one` modes become reusable `ModalChoice` entries. The
   engine publishes one legal cast action per mode, applies the selected effect
   on resolution, and filters its targets normally.
+- Modal diagnostics retain every unsupported bullet branch alongside the modal
+  heading. This keeps the primitive roadmap honest: a mixed/unsupported modal
+  is not reduced to the generic `Choose one` label, so workers can claim the
+  actual missing effect cluster.
 - Added reusable exact target families for artifact, enchantment, land and
   player-or-planeswalker removal, plus the artifact/creature/enchantment board
   sweep. Crosis Charm and Dromar’s Charm are scenario-tested.
@@ -194,6 +198,10 @@ loads pending IDs only when an edition is opened.
   threads 10.25s. The queue now advertises up to 20 new
   `oracle_id` values per commit; the claim ledger still prevents overlapping
   clusters between forks.
+- Fork polling policy: the integrator checks the fork at most once every five
+  minutes. Between checks, local work continues on an unclaimed primitive; a
+  check is actionable only when the threshold is reached or the fork reports a
+  blocker.
 - Supported keyword-only clauses are removed from the review queue; the latest
   full IR therefore reduced actionable pending entries from 22,678 to 18,254
   without changing executable-card coverage.

@@ -10,73 +10,58 @@ cards but never completes one is correctly ranked low.
 
 - Catalog cards: **341**
 - Fully implemented: **112**
-- Unfinished: **229**, of which **115** are a single line away
-- This queue's 40 entries would finish **45** more cards
+- Unfinished: **229**, of which **110** are a single line away
+- This queue's 40 entries would finish **42** more cards
 - Scope: **C13**
 
 ## Queue
 
 | # | Unlocks | Cumulative | Blocks | Family | Claim key | Template |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 4 | 4 | 5 | modal | `c13-choose` | `choose <n> -` |
-| 2 | 2 | 6 | 2 | modal | `c13-choose-both` | `choose <n> or both -` |
-| 3 | 2 | 8 | 2 | triggered | `c13-when-enters-sacrifice-unless` | `when ~ enters, sacrifice it unless you pay {cost}` |
-| 4 | 1 | 9 | 2 | keyword-ability | `c13-split-second` | `split second` |
-| 5 | 1 | 10 | 2 | other | `c13-can-blocked` | `~ can't be blocked` |
-| 6 | 1 | 11 | 1 | static-continuous | `c13-long-your-graveyard-and` | `as long as ~ is in your graveyard and you control <n> island, creatures you control have flying` |
-| 7 | 1 | 12 | 1 | triggered | `c13-the-beginning-each-end` | `at the beginning of each end step, each player gains control of all nontoken permanents they own` |
-| 8 | 1 | 13 | 1 | triggered | `c13-the-beginning-each-opponent` | `at the beginning of each opponent's upkeep, ~ deals <n> damage to that player, where <n> is the number of cards in their hand minus <n>` |
-| 9 | 1 | 14 | 1 | token | `c13-the-beginning-each-upkeep` | `at the beginning of each upkeep, if you control no snakes, create <n> <n>/<n> black snake creature token with deathtouch` |
-| 10 | 1 | 15 | 1 | triggered | `c13-the-beginning-each-upkeep-2` | `at the beginning of each upkeep, you draw <n> card and you lose <n> life` |
-| 11 | 1 | 16 | 1 | triggered | `c13-the-beginning-each-upkeep-3` | `at the beginning of each upkeep, you may tap or untap target permanent` |
-| 12 | 1 | 17 | 1 | triggered | `c13-the-beginning-your-end` | `at the beginning of your end step, if you control <n> creature with power <n> or greater, you may draw <n> card` |
-| 13 | 1 | 18 | 1 | triggered | `c13-the-beginning-your-end-2` | `at the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control` |
-| 14 | 1 | 19 | 1 | triggered | `c13-the-beginning-your-end-3` | `at the beginning of your end step, you may gain life equal to the power of target creature you control` |
-| 15 | 1 | 20 | 1 | triggered | `c13-the-beginning-your-upkeep` | `at the beginning of your upkeep, choose target nonland permanent you control and up to <n> target nonland permanents you don't control. destroy <n> of them at random` |
-| 16 | 1 | 21 | 1 | triggered | `c13-the-beginning-your-upkeep-2` | `at the beginning of your upkeep, you may exile target artifact or enchantment. if you do, its controller gains control of ~` |
-| 17 | 1 | 22 | 1 | modal | `c13-choose-more` | `choose <n> or more -` |
-| 18 | 1 | 23 | 1 | combat-restriction | `c13-creatures-can-attack-you` | `creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` |
-| 19 | 1 | 24 | 1 | other | `c13-creatures-you-control-have` | `creatures you control have haste` |
-| 20 | 1 | 25 | 1 | other | `c13-destroy-target-nonblack-creatures` | `destroy <n> target nonblack creatures` |
-| 21 | 1 | 26 | 1 | other | `c13-draw-card-for-each` | `draw <n> card for each tapped creature target opponent controls` |
-| 22 | 1 | 27 | 1 | other | `c13-each-player-discards-all` | `each player discards all the cards in their hand, then draws that many cards` |
-| 23 | 1 | 28 | 1 | keyword-ability | `c13-entwine-cost` | `entwine {cost}` |
-| 24 | 1 | 29 | 1 | keyword-ability | `c13-flashback-cost` | `flashback {cost}` |
-| 25 | 1 | 30 | 1 | keyword-ability | `c13-flashback-cost-pay-life` | `flashback-{cost}, pay <n> life` |
-| 26 | 1 | 31 | 1 | other | `c13-flying-first-strike-vigilance` | `flying, first strike, vigilance, lifelink, protection from red and from green` |
-| 27 | 1 | 32 | 1 | keyword-ability | `c13-forecast-cost-reveal-from` | `forecast - {cost}, reveal ~ from your hand: each player draws <n> card` |
-| 28 | 1 | 33 | 1 | keyword-ability | `c13-graft` | `graft <n>` |
-| 29 | 1 | 34 | 1 | other | `c13-instant-and-sorcery-spells` | `instant and sorcery spells cost {cost} less to cast` |
-| 30 | 1 | 35 | 1 | other | `c13-landfall-whenever-land-you` | `landfall - whenever <n> land you control enters, you may gain <n> life` |
-| 31 | 1 | 36 | 1 | other | `c13-landfall-whenever-land-you-2` | `landfall - whenever <n> land you control enters, you may pay {cost}. if you do, draw <n> card` |
-| 32 | 1 | 37 | 1 | pump | `c13-landfall-whenever-land-you-3` | `landfall - whenever <n> land you control enters, ~ gets +<n>/+<n> and gains trample until end of turn` |
-| 33 | 1 | 38 | 1 | other | `c13-more-than-creatures-can` | `no more than <n> creatures can attack you each combat` |
-| 34 | 1 | 39 | 1 | pump | `c13-other-creatures-you-control` | `other creatures you control get +<n>/+<n>` |
-| 35 | 1 | 40 | 1 | regenerate | `c13-pay-life-regenerate` | `pay <n> life: regenerate ~` |
-| 36 | 1 | 41 | 1 | other | `c13-prevent-all-combat-damage` | `prevent all combat damage that would be dealt to and dealt by ~` |
-| 37 | 1 | 42 | 1 | other | `c13-prevent-all-combat-damage-2` | `prevent all combat damage that would be dealt to ~` |
-| 38 | 1 | 43 | 1 | other | `c13-put-target-nonland-permanent` | `put target nonland permanent into its owner's library just beneath the top <n> cards of that library` |
-| 39 | 1 | 44 | 1 | activated | `c13-remove-counter-from-deals` | `remove <n> +<n>/+<n> counter from ~: it deals <n> damage to any target` |
-| 40 | 1 | 45 | 1 | other | `c13-return-all-permanents-the` | `return all permanents of the color of your choice to their owners' hands` |
+| 1 | 2 | 2 | 2 | modal | `c13-choose-both` | `choose <n> or both -` |
+| 2 | 2 | 4 | 2 | triggered | `c13-when-enters-sacrifice-unless` | `when ~ enters, sacrifice it unless you pay {cost}` |
+| 3 | 1 | 5 | 2 | keyword-ability | `c13-split-second` | `split second` |
+| 4 | 1 | 6 | 2 | other | `c13-can-blocked` | `~ can't be blocked` |
+| 5 | 1 | 7 | 1 | static-continuous | `c13-long-your-graveyard-and` | `as long as ~ is in your graveyard and you control <n> island, creatures you control have flying` |
+| 6 | 1 | 8 | 1 | triggered | `c13-the-beginning-each-end` | `at the beginning of each end step, each player gains control of all nontoken permanents they own` |
+| 7 | 1 | 9 | 1 | triggered | `c13-the-beginning-each-opponent` | `at the beginning of each opponent's upkeep, ~ deals <n> damage to that player, where <n> is the number of cards in their hand minus <n>` |
+| 8 | 1 | 10 | 1 | token | `c13-the-beginning-each-upkeep` | `at the beginning of each upkeep, if you control no snakes, create <n> <n>/<n> black snake creature token with deathtouch` |
+| 9 | 1 | 11 | 1 | triggered | `c13-the-beginning-each-upkeep-2` | `at the beginning of each upkeep, you draw <n> card and you lose <n> life` |
+| 10 | 1 | 12 | 1 | triggered | `c13-the-beginning-each-upkeep-3` | `at the beginning of each upkeep, you may tap or untap target permanent` |
+| 11 | 1 | 13 | 1 | triggered | `c13-the-beginning-your-end` | `at the beginning of your end step, if you control <n> creature with power <n> or greater, you may draw <n> card` |
+| 12 | 1 | 14 | 1 | triggered | `c13-the-beginning-your-end-2` | `at the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control` |
+| 13 | 1 | 15 | 1 | triggered | `c13-the-beginning-your-end-3` | `at the beginning of your end step, you may gain life equal to the power of target creature you control` |
+| 14 | 1 | 16 | 1 | triggered | `c13-the-beginning-your-upkeep` | `at the beginning of your upkeep, choose target nonland permanent you control and up to <n> target nonland permanents you don't control. destroy <n> of them at random` |
+| 15 | 1 | 17 | 1 | triggered | `c13-the-beginning-your-upkeep-2` | `at the beginning of your upkeep, you may exile target artifact or enchantment. if you do, its controller gains control of ~` |
+| 16 | 1 | 18 | 1 | modal | `c13-choose-more` | `choose <n> or more -` |
+| 17 | 1 | 19 | 1 | combat-restriction | `c13-creatures-can-attack-you` | `creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` |
+| 18 | 1 | 20 | 1 | other | `c13-creatures-you-control-have` | `creatures you control have haste` |
+| 19 | 1 | 21 | 1 | other | `c13-destroy-target-nonblack-creatures` | `destroy <n> target nonblack creatures` |
+| 20 | 1 | 22 | 1 | other | `c13-draw-card-for-each` | `draw <n> card for each tapped creature target opponent controls` |
+| 21 | 1 | 23 | 1 | keyword-ability | `c13-entwine-cost` | `entwine {cost}` |
+| 22 | 1 | 24 | 1 | keyword-ability | `c13-flashback-cost` | `flashback {cost}` |
+| 23 | 1 | 25 | 1 | keyword-ability | `c13-flashback-cost-pay-life` | `flashback-{cost}, pay <n> life` |
+| 24 | 1 | 26 | 1 | other | `c13-flying-first-strike-vigilance` | `flying, first strike, vigilance, lifelink, protection from red and from green` |
+| 25 | 1 | 27 | 1 | keyword-ability | `c13-forecast-cost-reveal-from` | `forecast - {cost}, reveal ~ from your hand: each player draws <n> card` |
+| 26 | 1 | 28 | 1 | keyword-ability | `c13-graft` | `graft <n>` |
+| 27 | 1 | 29 | 1 | other | `c13-instant-and-sorcery-spells` | `instant and sorcery spells cost {cost} less to cast` |
+| 28 | 1 | 30 | 1 | other | `c13-landfall-whenever-land-you` | `landfall - whenever <n> land you control enters, you may gain <n> life` |
+| 29 | 1 | 31 | 1 | other | `c13-landfall-whenever-land-you-2` | `landfall - whenever <n> land you control enters, you may pay {cost}. if you do, draw <n> card` |
+| 30 | 1 | 32 | 1 | pump | `c13-landfall-whenever-land-you-3` | `landfall - whenever <n> land you control enters, ~ gets +<n>/+<n> and gains trample until end of turn` |
+| 31 | 1 | 33 | 1 | other | `c13-more-than-creatures-can` | `no more than <n> creatures can attack you each combat` |
+| 32 | 1 | 34 | 1 | pump | `c13-other-creatures-you-control` | `other creatures you control get +<n>/+<n>` |
+| 33 | 1 | 35 | 1 | regenerate | `c13-pay-life-regenerate` | `pay <n> life: regenerate ~` |
+| 34 | 1 | 36 | 1 | other | `c13-prevent-all-combat-damage` | `prevent all combat damage that would be dealt to and dealt by ~` |
+| 35 | 1 | 37 | 1 | other | `c13-prevent-all-combat-damage-2` | `prevent all combat damage that would be dealt to ~` |
+| 36 | 1 | 38 | 1 | other | `c13-put-target-nonland-permanent` | `put target nonland permanent into its owner's library just beneath the top <n> cards of that library` |
+| 37 | 1 | 39 | 1 | activated | `c13-remove-counter-from-deals` | `remove <n> +<n>/+<n> counter from ~: it deals <n> damage to any target` |
+| 38 | 1 | 40 | 1 | other | `c13-return-all-permanents-the` | `return all permanents of the color of your choice to their owners' hands` |
+| 39 | 1 | 41 | 1 | activated | `c13-sacrifice-beast-you-gain` | `sacrifice <n> beast: you gain <n> life` |
+| 40 | 1 | 42 | 1 | counters | `c13-sacrifice-creature-put-counter` | `sacrifice <n> creature: put <n> +<n>/+<n> counter on ~` |
 
 ## Work orders
 
-### 1. `c13-choose` — finishes 4 cards
-
-- Template: `choose <n> -`
-- Family: modal
-- Appears in 5 unfinished cards; it is the last blocker for 4.
-
-Printed examples:
-
-- **Boros Charm** — Choose one —
-- **Hull Breach** — Choose one —
-- **Selesnya Charm** — Choose one —
-- **Naya Charm** — Choose one —
-
-Cards finished (first 4): Boros Charm, Hull Breach, Naya Charm, Selesnya Charm.
-
-### 2. `c13-choose-both` — finishes 2 cards
+### 1. `c13-choose-both` — finishes 2 cards
 
 - Template: `choose <n> or both -`
 - Family: modal
@@ -89,7 +74,7 @@ Printed examples:
 
 Cards finished (first 2): Fissure Vent, Soul Manipulation.
 
-### 3. `c13-when-enters-sacrifice-unless` — finishes 2 cards
+### 2. `c13-when-enters-sacrifice-unless` — finishes 2 cards
 
 - Template: `when ~ enters, sacrifice it unless you pay {cost}`
 - Family: triggered
@@ -102,7 +87,7 @@ Printed examples:
 
 Cards finished (first 2): Rupture Spire, Transguild Promenade.
 
-### 4. `c13-split-second` — finishes 1 cards
+### 3. `c13-split-second` — finishes 1 cards
 
 - Template: `split second`
 - Family: keyword-ability
@@ -115,7 +100,7 @@ Printed examples:
 
 Cards finished (first 1): Krosan Grip.
 
-### 5. `c13-can-blocked` — finishes 1 cards
+### 4. `c13-can-blocked` — finishes 1 cards
 
 - Template: `~ can't be blocked`
 - Family: other
@@ -129,7 +114,7 @@ Printed examples:
 
 Cards finished (first 1): Hada Spy Patrol.
 
-### 6. `c13-long-your-graveyard-and` — finishes 1 cards
+### 5. `c13-long-your-graveyard-and` — finishes 1 cards
 
 - Template: `as long as ~ is in your graveyard and you control <n> island, creatures you control have flying`
 - Family: static-continuous
@@ -141,7 +126,7 @@ Printed examples:
 
 Cards finished (first 1): Wonder.
 
-### 7. `c13-the-beginning-each-end` — finishes 1 cards
+### 6. `c13-the-beginning-each-end` — finishes 1 cards
 
 - Template: `at the beginning of each end step, each player gains control of all nontoken permanents they own`
 - Family: triggered
@@ -153,7 +138,7 @@ Printed examples:
 
 Cards finished (first 1): Brooding Saurian.
 
-### 8. `c13-the-beginning-each-opponent` — finishes 1 cards
+### 7. `c13-the-beginning-each-opponent` — finishes 1 cards
 
 - Template: `at the beginning of each opponent's upkeep, ~ deals <n> damage to that player, where <n> is the number of cards in their hand minus <n>`
 - Family: triggered
@@ -165,7 +150,7 @@ Printed examples:
 
 Cards finished (first 1): Viseling.
 
-### 9. `c13-the-beginning-each-upkeep` — finishes 1 cards
+### 8. `c13-the-beginning-each-upkeep` — finishes 1 cards
 
 - Template: `at the beginning of each upkeep, if you control no snakes, create <n> <n>/<n> black snake creature token with deathtouch`
 - Family: token
@@ -177,7 +162,7 @@ Printed examples:
 
 Cards finished (first 1): Ophiomancer.
 
-### 10. `c13-the-beginning-each-upkeep-2` — finishes 1 cards
+### 9. `c13-the-beginning-each-upkeep-2` — finishes 1 cards
 
 - Template: `at the beginning of each upkeep, you draw <n> card and you lose <n> life`
 - Family: triggered
@@ -189,7 +174,7 @@ Printed examples:
 
 Cards finished (first 1): Baleful Force.
 
-### 11. `c13-the-beginning-each-upkeep-3` — finishes 1 cards
+### 10. `c13-the-beginning-each-upkeep-3` — finishes 1 cards
 
 - Template: `at the beginning of each upkeep, you may tap or untap target permanent`
 - Family: triggered
@@ -201,7 +186,7 @@ Printed examples:
 
 Cards finished (first 1): Tidal Force.
 
-### 12. `c13-the-beginning-your-end` — finishes 1 cards
+### 11. `c13-the-beginning-your-end` — finishes 1 cards
 
 - Template: `at the beginning of your end step, if you control <n> creature with power <n> or greater, you may draw <n> card`
 - Family: triggered
@@ -213,7 +198,7 @@ Printed examples:
 
 Cards finished (first 1): Drumhunter.
 
-### 13. `c13-the-beginning-your-end-2` — finishes 1 cards
+### 12. `c13-the-beginning-your-end-2` — finishes 1 cards
 
 - Template: `at the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control`
 - Family: triggered
@@ -225,7 +210,7 @@ Printed examples:
 
 Cards finished (first 1): Conjurer's Closet.
 
-### 14. `c13-the-beginning-your-end-3` — finishes 1 cards
+### 13. `c13-the-beginning-your-end-3` — finishes 1 cards
 
 - Template: `at the beginning of your end step, you may gain life equal to the power of target creature you control`
 - Family: triggered
@@ -237,7 +222,7 @@ Printed examples:
 
 Cards finished (first 1): Wall of Reverence.
 
-### 15. `c13-the-beginning-your-upkeep` — finishes 1 cards
+### 14. `c13-the-beginning-your-upkeep` — finishes 1 cards
 
 - Template: `at the beginning of your upkeep, choose target nonland permanent you control and up to <n> target nonland permanents you don't control. destroy <n> of them at random`
 - Family: triggered
@@ -249,7 +234,7 @@ Printed examples:
 
 Cards finished (first 1): Capricious Efreet.
 
-### 16. `c13-the-beginning-your-upkeep-2` — finishes 1 cards
+### 15. `c13-the-beginning-your-upkeep-2` — finishes 1 cards
 
 - Template: `at the beginning of your upkeep, you may exile target artifact or enchantment. if you do, its controller gains control of ~`
 - Family: triggered
@@ -261,7 +246,7 @@ Printed examples:
 
 Cards finished (first 1): Act of Authority.
 
-### 17. `c13-choose-more` — finishes 1 cards
+### 16. `c13-choose-more` — finishes 1 cards
 
 - Template: `choose <n> or more -`
 - Family: modal
@@ -273,7 +258,7 @@ Printed examples:
 
 Cards finished (first 1): Rain of Thorns.
 
-### 18. `c13-creatures-can-attack-you` — finishes 1 cards
+### 17. `c13-creatures-can-attack-you` — finishes 1 cards
 
 - Template: `creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you`
 - Family: combat-restriction
@@ -285,7 +270,7 @@ Printed examples:
 
 Cards finished (first 1): Propaganda.
 
-### 19. `c13-creatures-you-control-have` — finishes 1 cards
+### 18. `c13-creatures-you-control-have` — finishes 1 cards
 
 - Template: `creatures you control have haste`
 - Family: other
@@ -297,7 +282,7 @@ Printed examples:
 
 Cards finished (first 1): Fires of Yavimaya.
 
-### 20. `c13-destroy-target-nonblack-creatures` — finishes 1 cards
+### 19. `c13-destroy-target-nonblack-creatures` — finishes 1 cards
 
 - Template: `destroy <n> target nonblack creatures`
 - Family: other
@@ -309,7 +294,7 @@ Printed examples:
 
 Cards finished (first 1): Reckless Spite.
 
-### 21. `c13-draw-card-for-each` — finishes 1 cards
+### 20. `c13-draw-card-for-each` — finishes 1 cards
 
 - Template: `draw <n> card for each tapped creature target opponent controls`
 - Family: other
@@ -321,19 +306,7 @@ Printed examples:
 
 Cards finished (first 1): Borrowing 100,000 Arrows.
 
-### 22. `c13-each-player-discards-all` — finishes 1 cards
-
-- Template: `each player discards all the cards in their hand, then draws that many cards`
-- Family: other
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-
-Printed examples:
-
-- **Incendiary Command** — Each player discards all the cards in their hand, then draws that many cards.
-
-Cards finished (first 1): Incendiary Command.
-
-### 23. `c13-entwine-cost` — finishes 1 cards
+### 21. `c13-entwine-cost` — finishes 1 cards
 
 - Template: `entwine {cost}`
 - Family: keyword-ability
@@ -345,7 +318,7 @@ Printed examples:
 
 Cards finished (first 1): One Dozen Eyes.
 
-### 24. `c13-flashback-cost` — finishes 1 cards
+### 22. `c13-flashback-cost` — finishes 1 cards
 
 - Template: `flashback {cost}`
 - Family: keyword-ability
@@ -357,7 +330,7 @@ Printed examples:
 
 Cards finished (first 1): Army of the Damned.
 
-### 25. `c13-flashback-cost-pay-life` — finishes 1 cards
+### 23. `c13-flashback-cost-pay-life` — finishes 1 cards
 
 - Template: `flashback-{cost}, pay <n> life`
 - Family: keyword-ability
@@ -369,7 +342,7 @@ Printed examples:
 
 Cards finished (first 1): Deep Analysis.
 
-### 26. `c13-flying-first-strike-vigilance` — finishes 1 cards
+### 24. `c13-flying-first-strike-vigilance` — finishes 1 cards
 
 - Template: `flying, first strike, vigilance, lifelink, protection from red and from green`
 - Family: other
@@ -381,7 +354,7 @@ Printed examples:
 
 Cards finished (first 1): Sphinx of the Steel Wind.
 
-### 27. `c13-forecast-cost-reveal-from` — finishes 1 cards
+### 25. `c13-forecast-cost-reveal-from` — finishes 1 cards
 
 - Template: `forecast - {cost}, reveal ~ from your hand: each player draws <n> card`
 - Family: keyword-ability
@@ -393,7 +366,7 @@ Printed examples:
 
 Cards finished (first 1): Skyscribing.
 
-### 28. `c13-graft` — finishes 1 cards
+### 26. `c13-graft` — finishes 1 cards
 
 - Template: `graft <n>`
 - Family: keyword-ability
@@ -405,7 +378,7 @@ Printed examples:
 
 Cards finished (first 1): Llanowar Reborn.
 
-### 29. `c13-instant-and-sorcery-spells` — finishes 1 cards
+### 27. `c13-instant-and-sorcery-spells` — finishes 1 cards
 
 - Template: `instant and sorcery spells cost {cost} less to cast`
 - Family: other
@@ -417,7 +390,7 @@ Printed examples:
 
 Cards finished (first 1): Arcane Melee.
 
-### 30. `c13-landfall-whenever-land-you` — finishes 1 cards
+### 28. `c13-landfall-whenever-land-you` — finishes 1 cards
 
 - Template: `landfall - whenever <n> land you control enters, you may gain <n> life`
 - Family: other
@@ -429,7 +402,7 @@ Printed examples:
 
 Cards finished (first 1): Grazing Gladehart.
 
-### 31. `c13-landfall-whenever-land-you-2` — finishes 1 cards
+### 29. `c13-landfall-whenever-land-you-2` — finishes 1 cards
 
 - Template: `landfall - whenever <n> land you control enters, you may pay {cost}. if you do, draw <n> card`
 - Family: other
@@ -441,7 +414,7 @@ Printed examples:
 
 Cards finished (first 1): Seer's Sundial.
 
-### 32. `c13-landfall-whenever-land-you-3` — finishes 1 cards
+### 30. `c13-landfall-whenever-land-you-3` — finishes 1 cards
 
 - Template: `landfall - whenever <n> land you control enters, ~ gets +<n>/+<n> and gains trample until end of turn`
 - Family: pump
@@ -453,7 +426,7 @@ Printed examples:
 
 Cards finished (first 1): Baloth Woodcrasher.
 
-### 33. `c13-more-than-creatures-can` — finishes 1 cards
+### 31. `c13-more-than-creatures-can` — finishes 1 cards
 
 - Template: `no more than <n> creatures can attack you each combat`
 - Family: other
@@ -465,7 +438,7 @@ Printed examples:
 
 Cards finished (first 1): Crawlspace.
 
-### 34. `c13-other-creatures-you-control` — finishes 1 cards
+### 32. `c13-other-creatures-you-control` — finishes 1 cards
 
 - Template: `other creatures you control get +<n>/+<n>`
 - Family: pump
@@ -477,7 +450,7 @@ Printed examples:
 
 Cards finished (first 1): Kongming, "Sleeping Dragon".
 
-### 35. `c13-pay-life-regenerate` — finishes 1 cards
+### 33. `c13-pay-life-regenerate` — finishes 1 cards
 
 - Template: `pay <n> life: regenerate ~`
 - Family: regenerate
@@ -489,7 +462,7 @@ Printed examples:
 
 Cards finished (first 1): Marrow Bats.
 
-### 36. `c13-prevent-all-combat-damage` — finishes 1 cards
+### 34. `c13-prevent-all-combat-damage` — finishes 1 cards
 
 - Template: `prevent all combat damage that would be dealt to and dealt by ~`
 - Family: other
@@ -501,7 +474,7 @@ Printed examples:
 
 Cards finished (first 1): Fog Bank.
 
-### 37. `c13-prevent-all-combat-damage-2` — finishes 1 cards
+### 35. `c13-prevent-all-combat-damage-2` — finishes 1 cards
 
 - Template: `prevent all combat damage that would be dealt to ~`
 - Family: other
@@ -513,7 +486,7 @@ Printed examples:
 
 Cards finished (first 1): Guard Gomazoa.
 
-### 38. `c13-put-target-nonland-permanent` — finishes 1 cards
+### 36. `c13-put-target-nonland-permanent` — finishes 1 cards
 
 - Template: `put target nonland permanent into its owner's library just beneath the top <n> cards of that library`
 - Family: other
@@ -525,7 +498,7 @@ Printed examples:
 
 Cards finished (first 1): Unexpectedly Absent.
 
-### 39. `c13-remove-counter-from-deals` — finishes 1 cards
+### 37. `c13-remove-counter-from-deals` — finishes 1 cards
 
 - Template: `remove <n> +<n>/+<n> counter from ~: it deals <n> damage to any target`
 - Family: activated
@@ -537,7 +510,7 @@ Printed examples:
 
 Cards finished (first 1): Deathbringer Thoctar.
 
-### 40. `c13-return-all-permanents-the` — finishes 1 cards
+### 38. `c13-return-all-permanents-the` — finishes 1 cards
 
 - Template: `return all permanents of the color of your choice to their owners' hands`
 - Family: other
@@ -548,4 +521,28 @@ Printed examples:
 - **Wash Out** — Return all permanents of the color of your choice to their owners' hands.
 
 Cards finished (first 1): Wash Out.
+
+### 39. `c13-sacrifice-beast-you-gain` — finishes 1 cards
+
+- Template: `sacrifice <n> beast: you gain <n> life`
+- Family: activated
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+
+Printed examples:
+
+- **Ravenous Baloth** — Sacrifice a Beast: You gain 4 life.
+
+Cards finished (first 1): Ravenous Baloth.
+
+### 40. `c13-sacrifice-creature-put-counter` — finishes 1 cards
+
+- Template: `sacrifice <n> creature: put <n> +<n>/+<n> counter on ~`
+- Family: counters
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+
+Printed examples:
+
+- **Scarland Thrinax** — Sacrifice a creature: Put a +1/+1 counter on ~.
+
+Cards finished (first 1): Scarland Thrinax.
 
