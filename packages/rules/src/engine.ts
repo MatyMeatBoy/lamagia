@@ -3571,6 +3571,12 @@ function activatableAbility(
     if (permanent.loyaltyUsedThisTurn) return { legal: false };
     if (ability.loyaltyCost < 0 && (permanent.counters.loyalty ?? 0) < -ability.loyaltyCost) return { legal: false };
   }
+  if (ability.requiresOpponentLands !== undefined) {
+    const maxOpponentLands = Math.max(0, ...state.players
+      .filter((other) => other.seat !== seat && !other.lost)
+      .map((other) => other.battlefield.filter((p) => isLand(cardProfile(p.card))).length));
+    if (maxOpponentLands < ability.requiresOpponentLands) return { legal: false };
+  }
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
   // the turn began. Non-creature permanents are unaffected by summoning sickness.
