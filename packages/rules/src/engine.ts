@@ -2566,7 +2566,12 @@ function resolveTop(state: GameState): GameState {
     return next;
   }
 
-  for (const effect of profile.effects) next = applyEffect(next, object, effect);
+  // A kicked "instead" clause replaces its base effect rather than adding to it (Rite of Replication).
+  const kickedReplaces = object.kicked && profile.kickedEffects.some((effect) => effect.kind === "create-copy-token");
+  for (const effect of profile.effects) {
+    if (kickedReplaces && effect.kind === "create-copy-token") continue;
+    next = applyEffect(next, object, effect);
+  }
   if (object.kicked) for (const effect of profile.kickedEffects) next = applyEffect(next, object, effect);
   if (!profile.effects.length && !(object.kicked && profile.kickedEffects.length)) {
     next = logged(next, object.controller, `${object.card.name} se resuelve sin efecto: su texto todavía no está implementado.`);

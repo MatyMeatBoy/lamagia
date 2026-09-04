@@ -1636,6 +1636,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Create a token that's a copy of target creature$/i.test(text)) {
     return { effect: { kind: "create-copy-token", amount: 1 }, target: "creature" };
   }
+  if ((match = /^create (two|three|four|five|\d+) (?:tokens that are copies of that creature|of those tokens)(?: instead)?\.?$/i.exec(text.trim()))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "create-copy-token", amount }, target: "none" };
+  }
   if ((match = /^You may play (an additional land|up to (\w+) additional lands?) this turn$/i.exec(text))) {
     const amount = match[2] ? (toNumber(match[2]) ?? 1) : 1;
     return { effect: { kind: "play-additional-land", amount }, target: "none" };
