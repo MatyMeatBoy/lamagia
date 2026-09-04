@@ -64,6 +64,23 @@ las cartas compatibles.
 7. Ejecutar `npm run check`, `npm test` y `npm run simulate:engine`.
 8. Actualizar `docs/RULES_RESEARCH.md` y el export de cobertura.
 
+## Primitive-first parameter extraction
+
+Numeric variants belong to one primitive whenever the Comprehensive Rules use
+the same procedure. For example, compile `Scry N` as `{kind: "scry", amount:
+N}`: Scry 1 has one visible card and one top/bottom decision, while Scry 2 or
+more lets the player partition and order all revealed cards; Scry 0 creates no
+scry event (CR 701.22a-b). The engine owns the procedure, clamping `N` to the
+available library, while the Python compiler records `N` and groups matching
+Oracle clauses for contributors.
+
+Apply the same rule to quantities, types, subtypes, zones and optionality:
+`Equipment` remains a subtype operand, `battlefield` remains a zone operand,
+and `exile` remains an action. A new card should add a fixture and scenario;
+it should not add a card-name branch when an existing primitive can consume its
+parameters. The compiler's IR is review input only; approved semantics still
+need a closed TypeScript effect, server-side legal action and regression test.
+
 ## Prioridades actuales
 
 - Búsquedas de biblioteca y reemplazos de entrada al campo.
