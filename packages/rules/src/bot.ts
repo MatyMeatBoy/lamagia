@@ -150,6 +150,17 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const pick = chosen ?? fallback;
     if (pick) return { action: pick.action, label: pick.label };
   }
+  if (state.pendingChoice?.type === "tap-or-untap" && state.pendingChoice.seat === seat) {
+    const choice = state.pendingChoice;
+    const targetPermanent = "instanceId" in choice.target ? choice.target : undefined;
+    const target = targetPermanent
+      ? state.players.flatMap((player) => player.battlefield).find((permanent) => permanent.instance_id === targetPermanent.instanceId)
+      : undefined;
+    const preferred = target?.tapped ? "untap" : "tap";
+    const chosen = available.find((entry) => entry.action.type === "choose-tap-or-untap" && entry.action.mode === preferred)
+      ?? available.find((entry) => entry.action.type === "choose-tap-or-untap");
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "draw-cards" && state.pendingChoice.seat === seat) {
     const choice = state.pendingChoice;
     const chosen = available.find((entry) => entry.action.type === "choose-draw" && entry.action.amount === choice.maxAmount)

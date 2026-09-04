@@ -1428,3 +1428,12 @@ stale full tree. The clean branch currently exports **186/356 C13 printings**,
 **171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
 `5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
 queued for the next integration batch.
+
+### Worker checkpoint: Tidal Force tap-or-untap choice (2026-09-04)
+
+Added `tap-or-untap-target-permanent`, a reusable two-step trigger primitive:
+the target is chosen first, then the controller chooses whether to tap or
+untap it. This covers Tidal Force's “At the beginning of each upkeep” ability
+and gives bots deterministic behavior (CR 603.2, 603.5, 701.21). Commit
+`870297c` is queued for integration; this branch is based on `b008385`
+and excludes sibling worker commits.

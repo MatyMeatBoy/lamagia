@@ -371,6 +371,8 @@ export type SpellEffect =
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
+  /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
+  | { readonly kind: "tap-or-untap-target-permanent" }
   | { readonly kind: "target-cant-block" }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "untap-source" }
@@ -1713,6 +1715,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
+  if (/^Tap or untap target permanent$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };

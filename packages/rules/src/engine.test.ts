@@ -73,6 +73,7 @@ const PLANESWALKER_LIFE_SPELL = () => make({ name: "Walker Blessing", type_line:
 const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each battle you control." });
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
+const TIDAL_FORCE = () => make({ name: "Tidal Force", type_line: "Creature — Elemental", mana_cost: "{5}{U}{U}", cmc: 7, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you may tap or untap target permanent.", scryfall_id: "1b25e262-e2df-4768-b55e-1b7b8d3ee993" });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
@@ -2209,6 +2210,28 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: false });
     expect(game.players[0]!.library).toHaveLength(32);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Optional Archivist")).toBe(true);
+  });
+
+  it("lets Tidal Force choose whether to tap or untap its target", () => {
+    const profile = profileOf(TIDAL_FORCE());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "upkeep", subject: "each-player", optional: true,
+      effect: { kind: "tap-or-untap-target-permanent" }, targetKind: "permanent"
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [BEAR()]);
+    game = putOnBattlefield(game, 0, [TIDAL_FORCE()]);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "permanent", instanceId: bear.instance_id } });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.pendingChoice?.type).toBe("tap-or-untap");
+    game = applyAction(game, 0, { type: "choose-tap-or-untap", sourceId: game.pendingChoice!.sourceId, mode: "tap" });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.tapped).toBe(true);
   });
 
   it("resolves the optional ETB only after the controller accepts it", () => {

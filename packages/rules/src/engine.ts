@@ -285,6 +285,14 @@ export type PendingChoice =
       readonly options: readonly Target[];
     }
   | {
+      /** Tidal Force-style choice after a target has been selected (CR 701.21). */
+      readonly type: "tap-or-untap";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly target: Target;
+    }
+  | {
       readonly type: "search-library";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -356,6 +364,7 @@ export type GameAction =
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
+  | { readonly type: "choose-tap-or-untap"; readonly sourceId: string; readonly mode: "tap" | "untap" }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
@@ -2180,6 +2189,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return raiseTapEvents(next, state, [permanent.instance_id]);
     }
+    case "tap-or-untap-target-permanent": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent" || !findPermanent(state, target.instanceId)) return state;
+      return {
+        ...state,
+        pendingChoice: {
+          type: "tap-or-untap",
+          seat: controller,
+          sourceId: object.id,
+          sourceCard: object.card,
+          target
+        }
+      };
+    }
     case "target-cant-block": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -3090,6 +3113,13 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.trigger.sourceCard.name}: ${choice.trigger.definition.sourceText}`
         });
       }
+      return actions;
+    }
+    if (choice.type === "tap-or-untap") {
+      actions.push(
+        { action: { type: "choose-tap-or-untap", sourceId: choice.sourceId, mode: "tap" }, label: "Tap target permanent", note: `${choice.sourceCard.name}: tap the chosen permanent.` },
+        { action: { type: "choose-tap-or-untap", sourceId: choice.sourceId, mode: "untap" }, label: "Untap target permanent", note: `${choice.sourceCard.name}: untap the chosen permanent.` }
+      );
       return actions;
     }
     if (choice.type === "search-library") {
@@ -4435,6 +4465,24 @@ function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extrac
   return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
 }
 
+function applyChooseTapOrUntap(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-tap-or-untap" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "tap-or-untap" || choice.seat !== seat) throw new Error("No tienes una elección de girar/enderezar pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa elección ya no corresponde a la habilidad pendiente.");
+  if (choice.target.kind !== "permanent") throw new Error("El objetivo no es un permanente.");
+  const permanent = findPermanent(state, choice.target.instanceId);
+  if (!permanent) throw new Error("El permanente objetivo ya no está en el campo de batalla.");
+  const tapped = action.mode === "tap";
+  const next = withPlayer({ ...state, pendingChoice: null }, permanent.controller, (player) => ({
+    ...player,
+    battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+      ? { ...candidate, tapped } : candidate)
+  }));
+  return tapped
+    ? raiseTapEvents(next, state, [permanent.instance_id])
+    : logged(next, seat, `${permanent.card.name} se endereza.`);
+}
+
 function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-discard" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "discard-cards" || choice.seat !== seat) throw new Error("No tienes una elección de descarte pendiente.");
@@ -4471,6 +4519,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
+    case "choose-tap-or-untap": next = applyChooseTapOrUntap(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-scry": next = applyChooseScry(state, seat, action); break;
