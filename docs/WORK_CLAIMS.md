@@ -62,6 +62,7 @@ feature name.
 | `c13-compound-draw-life-loss` | Resolve a compound draw plus life-loss instruction as one effect | `codex/c13-equipment-cluster` | merged (`80c6d53`) | 2026-09-03 |
 | `c13-hand-count-damage` | Resolve damage equal to the controller's hand size | `codex/c13-equipment-cluster` | merged (`969c85d`) | 2026-09-03 |
 | `tools-parallel-workers` | Assign disjoint primitive clusters to bounded workers under the shared memory budget | `codex/c13-equipment-cluster` | merged (`96be7d7`) | 2026-09-03 |
+| `rules-regeneration` | Regeneration shields, destruction replacement, combat removal, and reusable `{cost}: Regenerate ~` parsing | `feat/activated-abilities-and-triggers` | active | 2026-09-03 |
 
 ## Claim format
 
