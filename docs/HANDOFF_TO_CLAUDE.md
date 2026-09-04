@@ -4,6 +4,23 @@
 
 Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
+## Current published checkpoint — 2026-09-04
+
+The latest Pages deployment is the successful build of `f208b30`.
+Coverage numbers have two deliberate units:
+
+- **Unique engine profiles:** 8,874 / 38,711 fully implemented. These are
+  deduplicated by stable `oracle_id`; one implementation covers every printing.
+- **Edition memberships:** 21,595 / 84,990 implemented (25.4%) across 685
+  editions. This is what the public implementation-by-edition view displays,
+  so it is expected to be lower than the total catalog size and to count a
+  shared card once per edition.
+- **Commander 2013:** 219 / 341 unique cards (64.2%), 122 pending.
+- **Commander 2014:** 195 / 322 unique cards (60.6%), 127 pending.
+
+Do not report the 38,711 profile catalog as implemented cards. Recompute both
+views after accepted rules commits and publish the generated `site/coverage.json`.
+
 ## Product objective
 
 ProsshTCG is a Commander simulator built for a four-player pod but architected for 2–8 seats. It targets the browser first, with Android (Capacitor) and desktop (Tauri) planned from the same client. The visual reference is a modernised MTGO: three opponents share the upper band, the local player owns the lower band, phases and priority are explicit, and public zones can be inspected without leaking hidden information.
