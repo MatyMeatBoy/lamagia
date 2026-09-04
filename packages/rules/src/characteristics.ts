@@ -162,6 +162,8 @@ export interface CombatRules {
   readonly landwalk: readonly string[];
   /** "Prevent all combat damage that would be dealt to and dealt by ~" (Fog Bank). */
   readonly preventsAllCombatDamage: boolean;
+  /** "You may have ~ assign its combat damage as though it weren't blocked" (Tornado Elemental). */
+  readonly assignsAsUnblocked: boolean;
 }
 
 export const NO_COMBAT_RULES: CombatRules = {
@@ -172,7 +174,8 @@ export const NO_COMBAT_RULES: CombatRules = {
   maxAttackers: null,
   blocksOnlyWithKeyword: null,
   landwalk: [],
-  preventsAllCombatDamage: false
+  preventsAllCombatDamage: false,
+  assignsAsUnblocked: false
 };
 
 /** Basic land types landwalk can name, plus the two most common nonbasic ones. */
@@ -193,6 +196,7 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   if (/^~ can't attack or block$/.test(text)) return { cannotAttack: true, cannotBlock: true };
   if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
   if (/^prevent all combat damage that would be dealt to and dealt by ~$/i.test(text)) return { preventsAllCombatDamage: true };
+  if (/^you may have ~ assign its combat damage as though it weren't blocked$/i.test(text)) return { assignsAsUnblocked: true };
 
   const attackLimit = /^no more than (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) creatures? can attack you each combat$/.exec(text);
   if (attackLimit) return { maxAttackers: toNumber(attackLimit[1]) ?? 0 };
@@ -318,7 +322,7 @@ export type SpellEffect =
   | { readonly kind: "lose-life-each-player-equal-hand" }
   | { readonly kind: "damage-active-player-hand-minus"; readonly offset: number }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
-  | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying"; readonly alsoPlaneswalkers?: boolean }
+  | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" | "with-flying"; readonly alsoPlaneswalkers?: boolean }
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-nonflying-creatures-and-players"; readonly amount: number | "X" }
@@ -1644,6 +1648,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^~ deals (\w+) damage to each creature without flying and each planeswalker$/i.exec(text))) {
     const amount = toNumber(match[1]) ?? (match[1]!.toUpperCase() === "X" ? "X" : null);
     if (amount !== null) return { effect: { kind: "damage-all-creatures", amount, excludeSource: false, filter: "without-flying", alsoPlaneswalkers: true }, target: "none" };
+  }
+  if ((match = /^~ deals (\w+) damage to each creature with flying$/i.exec(text))) {
+    const amount = toNumber(match[1]) ?? (match[1]!.toUpperCase() === "X" ? "X" : null);
+    if (amount !== null) return { effect: { kind: "damage-all-creatures", amount, excludeSource: false, filter: "with-flying" }, target: "none" };
   }
   if ((match = /^(All creatures|Creatures you control|Target creature) gets? ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     const power = Number(match[2]);
