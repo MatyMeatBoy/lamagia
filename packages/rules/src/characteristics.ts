@@ -877,10 +877,10 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
 
   const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
   const sacrificesSelf = /sacrifice\s+~/i.test(costText) || namedSelfSacrifice;
-  const tapCreatureMatch = /tap\s+an\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control/i.exec(costText);
+  const tapCreatureMatch = /tap\s+(an|another)\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control/i.exec(costText);
   const tapsCreature = tapCreatureMatch ? {
-    mode: "any" as const,
-    ...(tapCreatureMatch[1]!.toLowerCase() === "creature" ? {} : { subtype: tapCreatureMatch[1]! })
+    mode: tapCreatureMatch[1]!.toLowerCase() === "another" ? "another" as const : "any" as const,
+    ...(tapCreatureMatch[2]!.toLowerCase() === "creature" ? {} : { subtype: tapCreatureMatch[2]! })
   } : undefined;
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
   const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
@@ -901,7 +901,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/g, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
-    .replace(/tap\s+an\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
+    .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
