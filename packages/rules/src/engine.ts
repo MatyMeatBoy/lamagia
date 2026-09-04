@@ -68,6 +68,8 @@ export interface Permanent {
   readonly evoked?: boolean;
   /** This permanent's spell was cast from hand, as opposed to put onto the battlefield another way (CR 601). */
   readonly castFromHand?: boolean;
+  /** Doesn't untap during its controller's next untap step (Breaching Leviathan, CR 502.1). */
+  readonly skipNextUntap?: boolean;
   /** A loyalty ability was activated on this planeswalker this turn (CR 606.3). */
   readonly loyaltyUsedThisTurn?: boolean;
   /** "Target creature can't block this turn"; cleared during cleanup. */
@@ -1815,6 +1817,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!source || !isCreature(cardProfile(source.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === source.instance_id);
     }
+    case "tap-all-nonblue-skip-untap": {
+      let next = state;
+      for (const player of state.players) {
+        next = withPlayer(next, player.seat, (current) => ({
+          ...current,
+          battlefield: current.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
+            && !cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === "U")
+            ? { ...permanent, tapped: true, skipNextUntap: true }
+            : permanent)
+        }));
+      }
+      return logged(next, controller, `${sourceName} gira todas las criaturas no azules; no enderezan en el próximo paso de enderezar de sus controladores.`);
+    }
     case "exile-all-attacking-creatures": {
       let next = state;
       for (const entry of state.combat.attackers) {
@@ -2972,7 +2987,9 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         ...player,
         landsPlayedThisTurn: 0,
         extraLandDrops: 0,
-        battlefield: player.battlefield.map((permanent) => ({ ...permanent, tapped: false, summoningSick: false, loyaltyUsedThisTurn: false }))
+        battlefield: player.battlefield.map((permanent) => permanent.skipNextUntap
+          ? { ...permanent, summoningSick: false, loyaltyUsedThisTurn: false, skipNextUntap: false }
+          : { ...permanent, tapped: false, summoningSick: false, loyaltyUsedThisTurn: false })
       }));
       next = { ...next, combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
       next = logged(next, next.activeSeat, `Turno ${next.turn} · ${playerAt(next, next.activeSeat).name} endereza sus permanentes.`);

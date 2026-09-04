@@ -363,6 +363,7 @@ export type SpellEffect =
   | { readonly kind: "create-copy-token"; readonly amount: number; readonly kickedAmount?: number }
   | { readonly kind: "drain-target-toughness-pump-source-power" }
   | { readonly kind: "exile-all-attacking-creatures" }
+  | { readonly kind: "tap-all-nonblue-skip-untap" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
@@ -1629,6 +1630,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^exile all attacking creatures$/i.test(text)) {
     return { effect: { kind: "exile-all-attacking-creatures" }, target: "none" };
+  }
+  if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
+    return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
   }
   if ((match = /^each opponent loses X life, where X is your devotion to (white|blue|black|red|green)\.?\s*You gain life equal to the life lost this way\.?$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
