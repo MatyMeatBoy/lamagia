@@ -311,6 +311,7 @@ export type SpellEffect =
   | { readonly kind: "damage-flying-creatures"; readonly amount: number | "X" }
   /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "modify-all-creatures-minus-X" }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
@@ -1621,6 +1622,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^All creatures get (-?\d+)\/(-?\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-all-creatures", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
   }
+  if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
+    return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
+  }
   if (/^(?:You may )?exile target nontoken creature$/i.test(text)) return { effect: { kind: "exile-target-nontoken-creature" }, target: "nontoken-creature" };
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
@@ -1878,6 +1882,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
+    // Storm remains a keyword-only marker until copy-count tracking is added.
+    if (/^storm\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.
     if (/^~ can be your commander\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.

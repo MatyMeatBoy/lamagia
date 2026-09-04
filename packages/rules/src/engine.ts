@@ -1589,6 +1589,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = modifyCreatures(state, effect.power, effect.toughness, () => true);
       return logged(next, controller, `${sourceName} modifica a todas las criaturas hasta el final del turno.`);
     }
+    case "target-player-sacrifice-attacking-creature": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const attackerIds = new Set(state.combat.attackers.map((entry) => entry.instanceId));
+      const candidates = playerAt(state, target.seat).battlefield.filter((permanent) => attackerIds.has(permanent.instance_id));
+      if (!candidates.length) return state;
+      const victim = [...candidates].sort((a, b) =>
+        (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
+      const next = movePermanentToZone(state, victim, "graveyard");
+      return logged(next, target.seat, `${playerAt(next, target.seat).name} sacrifica a ${victim.card.name}.`);
+    }
     case "modify-all-creatures-minus-X": {
       const amount = -object.variableValue;
       const next = modifyCreatures(state, amount, amount, () => true);
