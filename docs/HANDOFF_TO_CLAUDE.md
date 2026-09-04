@@ -675,6 +675,17 @@ battlefield return and recursion costs.
 Validation: targeted engine tests PASS (180 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: temporary creature keyword
+
+The branch recognises `Target creature gains [keyword] until end of turn` for
+the enforced combat-keyword set, stores the grant separately from printed and
+Equipment keywords, and clears it during cleanup. This follows CR 613.1f and
+514.2. Scenario coverage verifies a double-strike grant. The scope excludes
+continuous non-temporary effects, protection clauses and multi-keyword grammar.
+
+Validation: targeted engine tests PASS (181 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: land-scaled token creation
 
 The branch adds the reusable `Create a token for each land you control`

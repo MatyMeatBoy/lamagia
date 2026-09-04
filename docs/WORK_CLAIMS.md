@@ -35,6 +35,7 @@
 | `rules-land-graveyard-battlefield` | `codex/c13-equipment-cluster` | Put a land from any graveyard onto battlefield under caster control | Ready for integrator review |
 | `rules-artifact-graveyard-battlefield` | `codex/c13-equipment-cluster` | Return an artifact from own graveyard to battlefield | Ready for integrator review |
 | `rules-enchantment-graveyard-target` | `codex/c13-equipment-cluster` | Restrict enchantment-card recovery to enchantment cards | Ready for integrator review |
+| `rules-temporary-keyword` | `codex/c13-equipment-cluster` | Temporary keyword grants on targeted creatures | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.
