@@ -296,6 +296,7 @@ export type SpellEffect =
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "modify-triggered-creature-and-grant-keyword"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-permanents-you-control-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
@@ -1331,6 +1332,16 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (combined) return {
     effect: { kind: "modify-and-grant-target-creature", power: Number(combined[1]), toughness: Number(combined[2]), keyword: combined[3]!.toLowerCase() as EnforcedKeyword },
     target: "creature"
+  };
+  const triggeredCombined = /^~ gets ([+-]\d+)\/([+-]\d+) and gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
+  if (triggeredCombined) return {
+    effect: {
+      kind: "modify-triggered-creature-and-grant-keyword",
+      power: Number(triggeredCombined[1]),
+      toughness: Number(triggeredCombined[2]),
+      keyword: triggeredCombined[3]!.toLowerCase() as EnforcedKeyword
+    },
+    target: "none"
   };
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
