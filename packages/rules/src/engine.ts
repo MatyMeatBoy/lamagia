@@ -394,7 +394,14 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
   }).at(-1) : undefined;
   const staticBonus = state ? staticPtBonus(state, permanent).power : 0;
   const base = profile.cdaPowerToughness && state ? cdaCount(state, permanent, profile.cdaPowerToughness) : (level?.power ?? profile.power ?? 0);
-  return base + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus;
+  const lt = state && profile.lieutenant && controlsCommander(state, permanent.controller) ? profile.lieutenant.selfPower : 0;
+  return base + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + lt;
+}
+
+/** A player "controls their commander" while one of their commander cards is a permanent they control (Lieutenant, Commander 2014). */
+function controlsCommander(state: GameState, seat: SeatId): boolean {
+  const player = playerAt(state, seat);
+  return player.battlefield.some((permanent) => player.commanderIds.includes(permanent.instance_id));
 }
 
 /** Static "get +N/+N" grants that reach `permanent` (anthem layer 7c, CR 613.4c). */
@@ -416,6 +423,13 @@ function staticPtBonus(state: GameState, permanent: Permanent): { power: number;
       power += grant.power;
       toughness += grant.toughness;
     }
+    // Lieutenant: an active source grants its "other creatures you control" bonus.
+    const lt = cardProfile(source.card).lieutenant;
+    if (lt && (lt.otherPower || lt.otherToughness) && source.controller === permanent.controller
+      && source.instance_id !== permanent.instance_id && isCreature(target) && controlsCommander(state, source.controller)) {
+      power += lt.otherPower;
+      toughness += lt.otherToughness;
+    }
   }
   return { power, toughness };
 }
@@ -433,7 +447,8 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
   }).at(-1) : undefined;
   const staticBonus = state ? staticPtBonus(state, permanent).toughness : 0;
   const base = profile.cdaPowerToughness && state ? cdaCount(state, permanent, profile.cdaPowerToughness) : (level?.toughness ?? profile.toughness ?? 0);
-  return base + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus;
+  const lt = state && profile.lieutenant && controlsCommander(state, permanent.controller) ? profile.lieutenant.selfToughness : 0;
+  return base + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + lt;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const profile = cardProfile(permanent.card);
@@ -449,6 +464,11 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
       && (grant.scope === "creatures-you-control"
         || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id)
         || (grant.scope === "subtype-creatures-you-control" && profile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype!.toLowerCase())))))) return true;
+  // Lieutenant: an active source grants keywords to the creatures you control.
+  if (isCreature(profile) && allPermanents(state).some((source) => {
+    const lt = cardProfile(source.card).lieutenant;
+    return lt?.otherKeywords.includes(keyword) && source.controller === permanent.controller && controlsCommander(state, source.controller);
+  })) return true;
   return attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword));
 }
 

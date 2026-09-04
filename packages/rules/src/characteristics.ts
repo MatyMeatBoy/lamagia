@@ -518,6 +518,14 @@ export interface CardProfile {
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   /** Characteristic-defining P/T "equal to the number of X you control" (CR 604.3). */
   readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | null;
+  /** Lieutenant (Commander 2014): commander-conditional static bonuses. */
+  readonly lieutenant: {
+    readonly selfPower: number;
+    readonly selfToughness: number;
+    readonly otherPower: number;
+    readonly otherToughness: number;
+    readonly otherKeywords: readonly EnforcedKeyword[];
+  } | null;
   readonly entersTapped: EntersTappedRule;
   /** Printed attack/block restrictions and landwalk evasion. */
   readonly combatRules: CombatRules;
@@ -1742,6 +1750,16 @@ function recognizeText(text: string): RecognizedText {
     if (/^extort\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.
     if (/^~ can be your commander\.?$/i.test(line)) continue;
+    // Lieutenant lines are consumed by cardProfile when the rider is covered.
+    {
+      const lt = /^Lieutenant\s+[—–-]\s+As long as you control your commander, ~ gets \+\d+\/\+\d+(?:\s+and\s+(.+?))?\.?$/i.exec(line);
+      if (lt) {
+        const rider = (lt[1] ?? "").trim().replace(/\.$/, "");
+        const kwGroup = `(?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*`;
+        if (rider === "" || new RegExp(`^creatures you control have ${kwGroup}$`, "i").test(rider)
+          || new RegExp(`^other creatures you control get \\+\\d+\\/\\+\\d+(?:\\s+and\\s+have\\s+${kwGroup})?$`, "i").test(rider)) continue;
+      }
+    }
     if (/^~'?s power and toughness are each equal to the number of (?:creature|land|artifact)s? you control\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
@@ -1911,6 +1929,23 @@ export function cardProfile(card: CardData): CardProfile {
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
   const cdaMatch = /~'?s power and toughness are each equal to the number of (creature|land|artifact)s? you control/i.exec(text);
   const cdaPowerToughness = cdaMatch ? (`${cdaMatch[1]!.toLowerCase()}s-you-control` as CardProfile["cdaPowerToughness"]) : null;
+  // Lieutenant (Commander 2014): "As long as you control your commander, ~ gets
+  // +N/+N and <bonus>." The quoted-ability variants are not covered.
+  const lieutenantMatch = /Lieutenant\s+[—–-]\s+As long as you control your commander, ~ gets \+(\d+)\/\+(\d+)(?:\s+and\s+(.+?))?\.?(?:\n|$)/i.exec(text);
+  let lieutenant: CardProfile["lieutenant"] = null;
+  if (lieutenantMatch) {
+    const rider = (lieutenantMatch[3] ?? "").trim().replace(/\.$/, "");
+    let otherPower = 0, otherToughness = 0;
+    let otherKeywords: EnforcedKeyword[] = [];
+    let riderOk = rider === "";
+    const gAll = new RegExp(`^creatures you control have ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(rider);
+    const gOther = new RegExp(`^other creatures you control get \\+(\\d+)\\/\\+(\\d+)(?:\\s+and\\s+have\\s+((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*))?$`, "i").exec(rider);
+    if (gAll) { otherKeywords = parseKeywordList(gAll[1]!); riderOk = true; }
+    else if (gOther) { otherPower = Number(gOther[1]); otherToughness = Number(gOther[2]); otherKeywords = gOther[3] ? parseKeywordList(gOther[3]) : []; riderOk = true; }
+    if (riderOk) {
+      lieutenant = { selfPower: Number(lieutenantMatch[1]), selfToughness: Number(lieutenantMatch[2]), otherPower, otherToughness, otherKeywords };
+    }
+  }
   const landBonusMatch = /(Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{([WUBRG])\}/i.exec(text)
     ?? /whenever you tap a (Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{([WUBRG])\}/i.exec(text);
   const staticLandManaBonus = landBonusMatch
@@ -1987,6 +2022,7 @@ export function cardProfile(card: CardData): CardProfile {
     spellCostReductionGrant,
     staticLandManaBonus,
     cdaPowerToughness,
+    lieutenant,
     combatRules,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     entersWithCounters: isPermanent ? parseEntersWithCounters(text) : [],

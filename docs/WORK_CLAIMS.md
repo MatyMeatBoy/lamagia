@@ -85,6 +85,7 @@ feature name.
 | `c14-subtype-scope-battlefield` | subtype-scaled target effects accept `on the battlefield` (Timberwatch Elf) as well as `you control` | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-spell-subtype-and-nontoken-triggers` | `Whenever you cast an Elf spell`; `Whenever another nontoken creature you control enters` | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-non-subtype-dies-trigger` | `Whenever another non-<Subtype> creature you control dies, X` (Requiem Angel) | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-lieutenant` | Lieutenant (Commander 2014): commander-conditional self +N/+N and other-creature P/T / keyword grants; quoted-ability variants uncovered | `c14-batch2-clean` | active | 2026-09-04 |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |
