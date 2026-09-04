@@ -297,6 +297,8 @@ export type SpellEffect =
   | { readonly kind: "lose-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
+  | { readonly kind: "sacrifice-own-creature-then-draw"; readonly amount: number }
+  | { readonly kind: "reanimate-own-best-creature-from-graveyard" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
@@ -1668,6 +1670,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if ((match = /^Choose an opponent\.\s*You gain (\d+) life for each creature you control and that player gains \d+ life for each creature they control$/i.exec(text))) {
     return { effect: { kind: "you-and-opponent-each", effect: { kind: "gain-life-each-creature-you-control", amount: Number(match[1]) } }, target: "none" };
+  }
+  if ((match = /^Choose an opponent\.\s*You and that player each sacrifice a creature\.\s*Each player who sacrificed a creature this way draws (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "you-and-opponent-each", effect: { kind: "sacrifice-own-creature-then-draw", amount } }, target: "none" };
+  }
+  if (/^Choose an opponent\.\s*Return a creature card from your graveyard to the battlefield, then that player returns a creature card from their graveyard to the battlefield$/i.test(text)) {
+    return { effect: { kind: "you-and-opponent-each", effect: { kind: "reanimate-own-best-creature-from-graveyard" } }, target: "none" };
   }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
