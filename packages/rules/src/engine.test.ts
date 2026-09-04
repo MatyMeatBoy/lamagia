@@ -2254,6 +2254,12 @@ describe("casting", () => {
     expect(game.players[1]!.life).toBe(38);
   });
 
+  it("does not overclaim Fireball while its extra-target cost is unsupported", () => {
+    const profile = cardProfile(FIREBALL());
+    expect(profile.fullyImplemented).toBe(false);
+    expect(profile.unimplementedText.some((text) => /costs.*more.*target/i.test(text))).toBe(true);
+  });
+
   it("lets Enlightened Tutor choose a legal artifact from the library", () => {
     let game = readyToCast([TUTOR()], [PLAINS()]);
     game = stage(game, 0, (player) => ({ library: [...toHand(0, [SOL_RING()], "library"), ...player.library] }));
