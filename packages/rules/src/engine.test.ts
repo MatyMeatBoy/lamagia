@@ -214,6 +214,7 @@ const C13_ARMY_OF_THE_DAMNED = () => {
 };
 const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for up to two basic land cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", scryfall_id: "8b755881-a72d-4e21-a369-d2924eb4585a" });
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice Armillary Sphere: Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
+const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
 const RHYSTIC_STUDY = () => make({ name: "Rhystic Study", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}." });
@@ -3279,6 +3280,21 @@ describe("activated abilities", () => {
     expect(game.players[0]!.hand.filter((card) => card.name === "Swamp")).toHaveLength(1);
     expect(game.players[0]!.library.some((card) => card.name === "Island" || card.name === "Swamp")).toBe(false);
     expect(game.players[0]!.library.some((card) => card.name === "Mountain")).toBe(true);
+  });
+
+  it("sacrifices Burnished Hart and puts both selected basics tapped onto the battlefield", () => {
+    let game = readyOnBoard([C13_BURNISHED_HART(), FOREST(), FOREST(), FOREST()], { library: [ISLAND(), SWAMP(), MOUNTAIN()] });
+    const hart = permanentNamed(game, 0, "Burnished Hart")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: hart.instance_id, abilityIndex: 0 });
+    expect(game.players[0]!.graveyard.filter((card) => card.name === "Burnished Hart")).toHaveLength(1);
+    expect(game.pendingChoice?.type).toBe("search-library-multi");
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId, query: "Island" });
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId, query: "Swamp" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.filter((permanent) => ["Island", "Swamp"].includes(permanent.card.name))).toHaveLength(2);
+    expect(game.players[0]!.battlefield.filter((permanent) => ["Island", "Swamp"].includes(permanent.card.name)).every((permanent) => permanent.tapped)).toBe(true);
+    expect(game.players[0]!.hand.some((card) => card.name === "Island" || card.name === "Swamp")).toBe(false);
   });
 
   it("spends entry counters for Vivid mana, including automatic coloured payment", () => {
