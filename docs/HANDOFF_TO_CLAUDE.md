@@ -1176,7 +1176,15 @@ uses the alternative mana cost, and exiles the spell after resolution or when
 countered. Army of the Damned is now counted as implemented; this closes the
 previous reprint-equivalence gap without a card-name-specific rule.
 
-Validation: `npm run check` PASS; `npm test` PASS (**355 rules tests**,
-simulator, **38 Oracle Python tests**). C13 is **169/356 implemented (47.5%)**;
-global export is **8,111/38,711**. The fork remains on disjoint claims and must
+Validation: `npm run check` PASS; `npm test` PASS (**357 rules tests**,
+simulator, **38 Oracle Python tests**). C13 is **170/356 implemented (47.8%)**;
+global export is **8,114/38,711**. The fork remains on disjoint claims and must
 accumulate more than 10 commits before the next integration notice.
+
+### Integrator checkpoint: Flashback life-cost refinement (2026-09-04)
+
+The reusable Flashback parser now handles the em-dash form and additional
+life payments such as `Flashback—{1}{U}, Pay 3 life.`. Mana planning reserves
+that life before selecting sources, and the legal action label exposes the
+payment. Scenario coverage uses Deep Analysis and verifies the life component
+is paid together with mana (CR 702.34, 118.8).

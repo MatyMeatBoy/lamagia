@@ -217,6 +217,19 @@ describe("flashback parsing", () => {
     expect(profile.unimplementedText).toEqual([]);
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("extracts life bundled into an em-dash Flashback cost", () => {
+    const profile = cardProfile(card({
+      name: "Deep Analysis",
+      type_line: "Sorcery",
+      mana_cost: "{3}{U}",
+      oracle_text: "Target player draws two cards.\nFlashback—{1}{U}, Pay 3 life."
+    }));
+    expect(profile.flashbackCost?.raw).toBe("{1}{U}");
+    expect(profile.flashbackLifeCost).toBe(3);
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("effect recognition", () => {

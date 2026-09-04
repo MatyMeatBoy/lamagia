@@ -509,8 +509,10 @@ export interface CardProfile {
   /** Generic cycling from hand. */
   readonly cyclingCost: ManaCost | null;
   readonly cyclingSearches: readonly CyclingSearchAbility[];
-  /** Alternative cost for casting this instant or sorcery from a graveyard. */
+  /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
+  /** Additional life payment bundled into a Flashback cost (CR 118.8). */
+  readonly flashbackLifeCost: number;
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
@@ -871,12 +873,22 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
 
 function parseFlashbackCost(text: string): ManaCost | null {
   for (const line of text.split("\n")) {
-    const match = /^flashback\s+(.+)$/i.exec(line.trim().replace(/\.$/, ""));
+    const match = /^flashback(?:\s+|\s*—\s*)(.+)$/i.exec(line.trim().replace(/\.$/, ""));
     if (!match) continue;
-    const cost = parseManaCost(match[1]!.trim());
+    const manaText = match[1]!.split(/,\s*pay\s+\d+\s+life\b/i, 1)[0]!.trim();
+    const cost = parseManaCost(manaText);
     if (cost && !cost.hasVariable) return cost;
   }
   return null;
+}
+
+function parseFlashbackLifeCost(text: string): number {
+  for (const line of text.split("\n")) {
+    if (!/^flashback(?:\s+|\s*—\s*)/i.test(line.trim())) continue;
+    const match = /,\s*pay\s+(\d+)\s+life\b/i.exec(line);
+    if (match) return Number(match[1]);
+  }
+  return 0;
 }
 
 function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {
@@ -1727,7 +1739,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
-    if (/^flashback\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
    if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/i.test(line)) continue;
@@ -1896,6 +1908,7 @@ export function cardProfile(card: CardData): CardProfile {
   const cyclingCost = parseCyclingCost(text);
   const cyclingSearches = parseCyclingSearches(text);
   const flashbackCost = parseFlashbackCost(text);
+  const flashbackLifeCost = parseFlashbackLifeCost(text);
   const equipCost = parseEquipCost(text);
   // "~ costs {N} less to cast for each creature on the battlefield" (Blasphemous Act, CR 118.9).
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
@@ -1945,6 +1958,7 @@ export function cardProfile(card: CardData): CardProfile {
     cyclingCost,
     cyclingSearches,
     flashbackCost,
+    flashbackLifeCost,
     equipCost,
     equipmentModification,
     staticKeywordGrants,

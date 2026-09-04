@@ -614,17 +614,18 @@ function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType, b
 export function planManaPayment(
   cost: ManaCost,
   player: PlayerState,
-  options: { readonly variableValue?: number; readonly additionalGeneric?: number; readonly state?: GameState } = {}
+  options: { readonly variableValue?: number; readonly additionalGeneric?: number; readonly state?: GameState; readonly lifeCost?: number } = {}
 ): ManaPlan | null {
   const startingPool = player.manaPool;
   const sources = manaSources(player, options.state);
   const variableValue = options.variableValue ?? 0;
   const additionalGeneric = options.additionalGeneric ?? 0;
+  const externalLifeCost = options.lifeCost ?? 0;
   const variableCount = cost.symbols.filter((symbol) => symbol.kind === "variable").length;
   const needed = Math.max(0, cost.manaValue + variableValue * variableCount + additionalGeneric);
   if (poolTotal(startingPool) + manaSourceCapacity(sources) < needed) return null;
 
-  const payOptions = (lifeSpent: number) => ({ variableValue, additionalGeneric, availableLife: player.life - lifeSpent });
+  const payOptions = (lifeSpent: number) => ({ variableValue, additionalGeneric, availableLife: player.life - externalLifeCost - lifeSpent });
   const ordered = [...sources].sort((left, right) =>
     left.options.length - right.options.length ||
     left.lifeCost - right.lifeCost ||
@@ -644,11 +645,11 @@ export function planManaPayment(
     let index = 0;
     for (;;) {
       const payment = payCost(cost, currentPool, payOptions(currentLife));
-      if (payment) return { taps: currentTaps, pool: currentPool, lifeCost: currentLife };
+      if (payment) return { taps: currentTaps, pool: currentPool, lifeCost: currentLife + externalLifeCost };
       if (index >= spare.length) return null;
       const source = spare[index]!;
       index += 1;
-      if (player.life - currentLife - source.lifeCost <= 0) continue;
+      if (player.life - externalLifeCost - currentLife - source.lifeCost <= 0) continue;
       // Prefer a colour the cost still asks for; otherwise any option works for generic.
       const type = source.options.find((candidate) => wanted.has(candidate)) ?? source.options[0]!;
       const bonusType = source.bonusOptions?.find((candidate) => wanted.has(candidate)) ?? source.bonusOptions?.[0];
@@ -683,7 +684,7 @@ export function planManaPayment(
       const signature = sourceSignature(source);
       if (tried.has(signature)) continue; // Interchangeable sources share one branch.
       tried.add(signature);
-      if (player.life - lifeSpent - source.lifeCost <= 0) continue;
+      if (player.life - externalLifeCost - lifeSpent - source.lifeCost <= 0) continue;
       for (const type of requirement) {
         if (!source.options.includes(type)) continue;
         for (const bonusType of source.bonusOptions ?? [undefined]) {
@@ -2710,6 +2711,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   const cost = flashback ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
+  const lifeCost = flashback ? profile.flashbackLifeCost : 0;
   if (flashback && (profile.isPermanent || !profile.flashbackCost)) return { legal: false };
   if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
   if (!flashback && kicked && !profile.kickerCost) return { legal: false };
@@ -2720,7 +2722,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state });
+  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
   if (!plan) return { legal: false };
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -2899,7 +2901,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const modal = mode === undefined ? undefined : profile.modalChoices[mode];
       actions.push({
         action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, ...(cost.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }) },
-        label: `Lanzar ${card.name} con Flashback${modal ? ` — ${modal.text}` : ""}`,
+        label: `Lanzar ${card.name} con Flashback${profile.flashbackLifeCost ? ` (paga ${profile.flashbackLifeCost} vidas)` : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
         manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
@@ -3492,10 +3494,11 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
 
   const profile = cardProfile(card);
   const spellCost = fromGraveyard ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
+  const flashbackLifeCost = fromGraveyard ? profile.flashbackLifeCost : 0;
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state });
+  const plan = planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost: flashbackLifeCost });
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];

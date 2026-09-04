@@ -896,6 +896,24 @@ describe("casting", () => {
       && entry.action.cardId === card.instance_id && entry.action.fromGraveyard === true)).toBe(false);
   });
 
+  it("pays a Flashback life component in addition to its mana cost", () => {
+    const card = make({
+      name: "Deep Analysis",
+      type_line: "Sorcery",
+      mana_cost: "{3}{U}",
+      cmc: 4,
+      oracle_text: "Target player draws two cards.\nFlashback—{1}{U}, Pay 3 life."
+    });
+    let game = readyToCast([], [ISLAND(), FOREST()]);
+    game = stage(game, 0, (player) => ({ life: 4, graveyard: toHand(0, [card], "life-flashback") }));
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "cast"
+      && entry.action.cardId === "life-flashback-0" && entry.action.fromGraveyard === true);
+    expect(offered?.label).toContain("paga 3 vidas");
+    expect(offered).toBeDefined();
+    game = applyAction(game, 0, offered!.action);
+    expect(game.players[0]!.life).toBe(1);
+  });
+
   it("returns a land from any graveyard under the caster's control", () => {
     const profile = profileOf(LAND_GRAVEYARD_BATTLEFIELD());
     expect(profile).toMatchObject({ targetKind: "land-card-in-a-graveyard", effects: [{ kind: "return-target-land-card-from-graveyard-to-battlefield" }] });
