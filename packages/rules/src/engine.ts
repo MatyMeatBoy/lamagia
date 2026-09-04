@@ -3019,11 +3019,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return logged(next, controller,
         `${player.name} revela ${revealed.map((card) => card.name).join(", ")}; pone ${selected.name} en su mano y el resto en su cementerio.`);
     }
-    case "create-token": {
+    case "create-token":
+    case "create-token-for-target-player": {
+      const targetPlayer = effect.kind === "create-token-for-target-player" ? object.targets[0] : undefined;
+      if (effect.kind === "create-token-for-target-player" && targetPlayer?.kind !== "player") return state;
+      const tokenController = targetPlayer?.kind === "player" ? targetPlayer.seat : controller;
       const amount = effect.amount === "lands-you-control"
-        ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
+        ? playerAt(state, tokenController).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
         : effect.amount === "creatures-you-control"
-          ? playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
+          ? playerAt(state, tokenController).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
         : effect.amount === "creatures-on-battlefield"
           ? allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length
         : effect.amount === "equipment-attached-to-source"
@@ -3031,7 +3035,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         : effect.amount === "creatures-died-this-turn"
           ? state.creaturesDiedThisTurn
         : effect.amount === "opponents-with-4-plus-cards"
-          ? state.players.filter((player) => player.seat !== controller && !player.lost && player.hand.length >= 4).length
+          ? state.players.filter((player) => player.seat !== tokenController && !player.lost && player.hand.length >= 4).length
         : effectAmount(effect.amount, object);
       const stat = effect.statsFromAmount ? amount : null;
       let next = state;
@@ -3039,7 +3043,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         const token: GameCard = {
           scryfall_id: `token:${object.id}:${index}`,
           instance_id: `token:${object.id}:${index}`,
-          owner: controller,
+          owner: tokenController,
           token: true,
           name: effect.token.name,
           type_line: effect.token.typeLine,
@@ -3051,9 +3055,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           colors: effect.token.colors,
           keywords: effect.token.keywords
         };
-        next = putOntoBattlefield(next, controller, token, false, effect.token.tapped);
+        next = putOntoBattlefield(next, tokenController, token, false, effect.token.tapped);
       }
-      return logged(next, controller, `${playerAt(next, controller).name} crea ${amount} ${effect.token.name}${amount === 1 ? "" : "s"}.`);
+      return logged(next, tokenController, `${playerAt(next, tokenController).name} crea ${amount} ${effect.token.name}${amount === 1 ? "" : "s"}.`);
     }
     case "search-library":
       // Search is resolved through the explicit library-choice action below.

@@ -1720,3 +1720,9 @@ CR 615.1. The reusable profile closes equivalent Oracle printings as well.
 The refreshed export is **192/341 C13 (56.3%)**, with **149 unfinished** and
 **71 one-line-away**. The fork report `3af0cb0` (conditional Split second) is
 also queued as one incoming commit and remains outside the integration batch.
+
+### C13 targeted ETB token recipient (2026-09-04)
+
+The token primitive now supports “target opponent creates …” without redirecting
+the tokens to the ability controller. Hunted Troll covers the opponent target
+filter and Faerie token creation (CR 603.2, 111.2).

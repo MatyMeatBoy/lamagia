@@ -593,6 +593,18 @@ describe("effect recognition", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("assigns targeted token creation to the chosen opponent", () => {
+    const profile = cardProfile(card({
+      name: "Hunted Troll", type_line: "Creature — Troll Warrior",
+      oracle_text: "When Hunted Troll enters the battlefield, target opponent creates four 1/1 blue Faerie creature tokens with flying."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      targetKind: "opponent",
+      effect: { kind: "create-token-for-target-player", amount: 4 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("recognises reusable landfall and artifact-creature trigger subjects", () => {
     const landfall = cardProfile(card({
       name: "Landfall Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", power: "4", toughness: "4",
