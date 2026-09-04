@@ -100,6 +100,7 @@ feature name.
 | `c14-flashback` | claude-c14 | done | Faithless Looting (+63 catalog) |
 | `c14-counter-removal` | claude-c14 | done | Aether Snap, Black Suns Zenith, Vampire Hexmage |
 | `c14-extort-grant` | claude-c14 | done | Pontiff of Blight |
+| `c14-siege-behemoth` | claude-c14 | done | Siege Behemoth |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |

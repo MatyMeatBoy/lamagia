@@ -517,6 +517,8 @@ export interface CardProfile {
   readonly locksOpponentsOnYourTurn: boolean;
   /** Pontiff of Blight: "Other creatures you control have extort" (CR 702.39). */
   readonly grantsExtortToOthers: boolean;
+  /** Siege Behemoth: while it attacks, your creatures assign combat damage as though unblocked (CR 510.1c). */
+  readonly attackersAssignAsUnblockedWhileAttacking: boolean;
   readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
@@ -1857,6 +1859,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     if (/^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line)) continue;
     if (/^other creatures you control have extort\.?$/i.test(line)) continue;
+    if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.
@@ -2100,6 +2103,7 @@ export function cardProfile(card: CardData): CardProfile {
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const locksOpponentsOnYourTurn = text.split("\n").some((line) => /^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line.trim()));
   const grantsExtortToOthers = text.split("\n").some((line) => /^other creatures you control have extort\.?$/i.test(line.trim()));
+  const attackersAssignAsUnblockedWhileAttacking = text.split("\n").some((line) => /^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line.trim()));
   const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
@@ -2129,6 +2133,7 @@ export function cardProfile(card: CardData): CardProfile {
     noMaximumHandSize,
     locksOpponentsOnYourTurn,
     grantsExtortToOthers,
+    attackersAssignAsUnblockedWhileAttacking,
     staticPowerToughnessGrants,
     levelUpCost,
     levelDefinitions,
