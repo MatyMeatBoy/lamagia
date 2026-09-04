@@ -244,3 +244,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-boros-charm-modal-self-reference` | Boros Charm's three modes plus normalization of printed card-name self references (CR 601.2b, 700.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `azorius-charm-library-top` | Azorius Charm's creature-to-owner-library-top mode, draw mode, and controlled-creature pump mode; shared card primitive (CR 601.2b, 701.18) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-naya-charm-modal` | Naya Charm's three modes, including damage to a creature and tapping all creatures controlled by a target player (CR 601.2b, 609.3, 701.21) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-gahiji-attack-buff` | Gahiji's attack trigger buffs the attacking creature only when it attacks one of its controller's opponents (CR 603.2, 508.1i, 613.4) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
