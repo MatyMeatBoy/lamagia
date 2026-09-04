@@ -1694,6 +1694,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
   }
+  if (/^sacrifice another creature\.\s*You gain X life and draw X cards, where X is that creature's power$/i.test(text)) {
+    return { effect: { kind: "disciple-of-bolas" }, target: "none" };
+  }
   if (/^Each other player discards a card\.\s*You draw a card for each card discarded this way$/i.test(text)) {
     return { effect: { kind: "syphon-mind" }, target: "none" };
   }
