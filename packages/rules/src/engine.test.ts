@@ -124,6 +124,7 @@ const TOKEN_SAC_ACTIVATION = () => make({ name: "Token Memory", type_line: "Crea
 const GRAVEYARD_EXILE_ACTIVATION = () => make({ name: "Grave Memory", type_line: "Creature — Wizard", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "Exile a card from your graveyard: Draw a card." });
 const COMBINED_COST_ACTIVATION = () => make({ name: "Combined Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact, Discard a card: Draw a card." });
 const PERMANENT_SAC_ACTIVATION = () => make({ name: "Permanent Sacrifice Memory", type_line: "Creature — Shaman", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Sacrifice another permanent: Draw a card." });
+const GENERIC_REANIMATE = () => make({ name: "Permanent Reclaim", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Return target permanent card from your graveyard to the battlefield." });
 const BOTTOM_RETURN = () => make({ name: "Bottom Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on the bottom of your library." });
 const SHUFFLE_RETURN = () => make({ name: "Shuffle Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Shuffle target card from your graveyard into your library." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
@@ -926,6 +927,19 @@ describe("casting", () => {
     const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === artifact.instance_id);
     expect(activation).toBeDefined();
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === source.instance_id)).toBe(false);
+  });
+
+  it("filters generic graveyard return to permanent cards", () => {
+    const permanent = make({ name: "Dead Relic", type_line: "Artifact" });
+    const instant = make({ name: "Dead Trick", type_line: "Instant", mana_cost: "{U}" });
+    let game = readyToCast([GENERIC_REANIMATE()], [SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [permanent, instant], "generic-reanimate") }));
+    const targets = legalTargets(game, 0, "permanent-card-in-your-graveyard");
+    expect(targets).toHaveLength(1);
+    let target = targets[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [target] });
+    expect(game.players[0]!.battlefield.some((candidate) => candidate.card.name === "Dead Relic")).toBe(true);
+    expect(game.players[0]!.graveyard.some((candidate) => candidate.name === "Dead Trick")).toBe(true);
   });
 
   it("offers only generated tokens for a token sacrifice cost", () => {
