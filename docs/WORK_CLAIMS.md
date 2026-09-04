@@ -209,3 +209,4 @@ declared, it must update the claim before touching the additional files.
 
 Claims coordinate contributors but do not replace review: CI, scenario tests,
 rules citations and the integrator review remain mandatory.
+| `arsenal-edric-combat-draw` | Edric draws optionally when a creature deals combat damage to one of his opponents (CR 603.2, 603.5, 120.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
