@@ -2149,6 +2149,19 @@ describe("triggered abilities", () => {
     expect(toughnessOf(duplicant, game)).toBe(2);
   });
 
+  it("lets Duplicant decline its optional imprint", () => {
+    let game = readyToCast([DUPLICANT()], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()], [BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const target = targetChoice.options.find((option) => option.kind === "permanent")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: false });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.exile).toHaveLength(0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Duplicant")?.exiledWith).toBeUndefined();
+  });
+
   it("lets Rhystic Study draw when the opponent declines to pay", () => {
     let game = readyToCast([], [RHYSTIC_STUDY()]);
     game = putOnBattlefield(game, 1, [FOREST(), FOREST()]);
