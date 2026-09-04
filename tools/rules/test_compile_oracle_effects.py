@@ -9,6 +9,7 @@ from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_V
 from export_set_coverage import is_ignored_edition, product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, select_profiles, template_of
 from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
+from compile_oracle_effects import return_target_hint
 
 
 class OracleCompilerTests(unittest.TestCase):
@@ -85,6 +86,11 @@ class OracleCompilerTests(unittest.TestCase):
 
     def test_preserves_player_spell_trigger_subjects(self) -> None:
         self.assertEqual(trigger_subject_hint("Whenever an opponent casts a spell, draw a card."), "opponent")
+
+    def test_preserves_permanent_graveyard_return_target(self) -> None:
+        clause = "Return target permanent card from your graveyard to the battlefield."
+        self.assertEqual(return_target_hint(clause), "permanent-card-in-your-graveyard")
+        self.assertEqual(classify(clause)["return_target"], "permanent-card-in-your-graveyard")
 
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
