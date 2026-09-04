@@ -184,6 +184,10 @@ const SELESNYA_CHARM = () => make({
   name: "Selesnya Charm", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2,
   oracle_text: "Choose one —\n• Create a 2/2 white Knight creature token with vigilance.\n• Exile target creature with power 5 or greater.\n• Target creature gets +2/+2 and gains trample until end of turn."
 });
+const AZORIUS_CHARM = () => make({
+  name: "Azorius Charm", type_line: "Instant", mana_cost: "{W}{U}", cmc: 2,
+  oracle_text: "Choose one —\n• Put target creature on top of its owner's library.\n• Draw a card.\n• Creatures you control get +1/+1 until end of turn."
+});
 const GLOBAL_INDESTRUCTIBLE = () => make({
   name: "Global Indestructible", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
   oracle_text: "Permanents you control gain indestructible until end of turn."
@@ -2010,6 +2014,26 @@ describe("casting", () => {
     const pump = legalActions(game, 0).find((entry) =>
       entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode === 2);
     expect(pump?.requiresTarget).toBe("creature");
+  });
+
+  it("puts Azorius Charm's creature on top of its owner's library", () => {
+    const charm = AZORIUS_CHARM();
+    expect(profileOf(charm).fullyImplemented).toBe(true);
+    expect(profileOf(charm).modalChoices).toHaveLength(3);
+    const creature = make({ name: "Top Bear", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
+    let game = readyToCast([charm], [PLAINS(), ISLAND()], [], [creature]);
+    const target = game.players[1]!.battlefield[0]!;
+    const action = legalActions(game, 0).find((entry) =>
+      entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode === 0);
+    expect(action?.requiresTarget).toBe("creature");
+    game = applyAction(game, 0, {
+      type: "cast",
+      cardId: "hand-0",
+      mode: 0,
+      targets: [{ kind: "permanent", instanceId: target.instance_id }]
+    });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Top Bear")).toBe(false);
+    expect(game.players[1]!.library[0]!.name).toBe("Top Bear");
   });
 
   it("reuses the landfall trigger subject when a land enters", () => {
