@@ -325,6 +325,14 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /** Look at the top N cards, choose one for hand, and bottom the rest. */
+      readonly type: "library-pick";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+    }
+  | {
       readonly type: "discard-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -365,16 +373,17 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly fromGraveyard?: boolean }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[] }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
+  | { readonly type: "resolve-library-pick"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
   | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean; readonly ordinal?: number }
   | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
@@ -2897,6 +2906,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return logged(next, controller, `${equipment.card.name} se anexa a ${creature.card.name}.`);
     }
+    default:
+      return state;
   }
 }
 
@@ -3162,8 +3173,8 @@ function resolveTop(state: GameState): GameState {
   if (profile.effects.some(hasSelfShuffle)) {
     return logged(next, object.controller, `${object.card.name} se baraja en la biblioteca de su propietario.`);
   }
-  const retire = profile.effects.find((effect) => effect.kind === "exile-self" || effect.kind === "shuffle-self-into-library");
-  if (retire?.kind === "exile-self") {
+  const selfRetire = profile.effects.find((effect) => effect.kind === "exile-self" || effect.kind === "shuffle-self-into-library");
+  if (selfRetire?.kind === "exile-self") {
     return withPlayer(next, object.card.owner, (player) => ({ ...player, exile: [...player.exile, object.card] }));
   }
   if (selfRetire?.kind === "shuffle-self-into-library") {
@@ -3793,6 +3804,19 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
       return actions;
     }
+    if (choice.type === "library-pick") {
+      for (const cardId of choice.optionIds) {
+        const card = player.library.find((candidate) => candidate.instance_id === cardId);
+        if (!card) continue;
+        actions.push({
+          action: { type: "resolve-library-pick", sourceId: choice.sourceId, cardId },
+          label: `Choose ${card.name}`,
+          cardId,
+          note: `${choice.sourceCard.name}: choose one card for your hand.`
+        });
+      }
+      return actions;
+    }
     if (choice.type === "scry") {
       choice.remainingCards.forEach((card, ordinal) => {
         actions.push({
@@ -3929,7 +3953,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       if (!check.legal) continue;
       const modal = mode === undefined ? undefined : profile.modalChoices[mode];
       actions.push({
-        action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, ...(cost.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }) },
+        action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, flashback: true, ...(cost.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }) },
         label: `Lanzar ${card.name} con Flashback${profile.flashbackLifeCost ? ` — Pay ${profile.flashbackLifeCost} life (paga ${profile.flashbackLifeCost} vidas)` : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
         manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0),
@@ -4107,7 +4131,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
-    if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
       if (!isCreature(profile)) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
@@ -4186,7 +4210,7 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     ...(selectedEffect ? { selectedEffect } : {}),
     ...(kicked ? { kicked: true } : {}),
     ...(evoked ? { evoked: true } : {}),
-    ...(fromFlashback ? { fromFlashback: true } : {})
+    ...(flashback ? { fromFlashback: true } : {})
   };
   // After putting an object on the stack its controller receives priority again (rule 117.3c).
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
@@ -4657,7 +4681,7 @@ function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAc
 
 function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast" }>): GameState {
   const player = playerAt(state, seat);
-  const fromGraveyard = action.fromGraveyard === true;
+  const fromGraveyard = action.fromGraveyard === true || action.flashback === true;
   const fromHand = fromGraveyard ? undefined : player.hand.find((card) => card.instance_id === action.cardId);
   const fromCommand = fromGraveyard ? undefined : player.commandZone.find((card) => card.instance_id === action.cardId);
   const fromYard = fromGraveyard ? player.graveyard.find((card) => card.instance_id === action.cardId) : undefined;
@@ -4898,6 +4922,25 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
     : choice.search.destination === "hand" ? "su mano"
     : choice.search.destination === "graveyard" ? "su cementerio" : "el campo de batalla";
   return logged(next, seat, `${player.name} ${choice.search.reveal ? `revela ${selected.name} y la pone en ${destination}` : `pone ${selected.name} en ${destination}`}.`);
+}
+
+function applyResolveLibraryPick(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "resolve-library-pick" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "library-pick" || choice.seat !== seat || choice.sourceId !== action.sourceId) {
+    throw new Error("No tienes una selección de biblioteca pendiente.");
+  }
+  if (!choice.optionIds.includes(action.cardId)) throw new Error("Esa carta no está entre las opciones.");
+  const player = playerAt(state, seat);
+  const picked = player.library.find((card) => card.instance_id === action.cardId);
+  if (!picked) throw new Error("La carta elegida ya no está en la biblioteca.");
+  const optionIds = new Set(choice.optionIds);
+  const rest = player.library.filter((card) => !optionIds.has(card.instance_id) || card.instance_id !== picked.instance_id);
+  const next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    library: rest,
+    hand: [...current.hand, picked]
+  }));
+  return logged(next, seat, `${player.name} pone ${picked.name} en su mano y el resto en el fondo de su biblioteca.`);
 }
 
 function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extract<PendingChoice, { type: "search-library-multi" }>, selectedIds: readonly string[]): GameState {
@@ -5239,6 +5282,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
+    case "resolve-library-pick": next = applyResolveLibraryPick(state, seat, action); break;
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-scry": next = applyChooseScry(state, seat, action); break;
     case "choose-draw": next = applyChooseDraw(state, seat, action); break;

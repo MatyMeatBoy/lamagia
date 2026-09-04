@@ -92,6 +92,8 @@ export interface ActivatedAbility {
   readonly tapsCreature?: { readonly subtype?: string; readonly mode: "any" | "another" };
   /** Creature chosen as an activation cost, optionally excluding the source. */
   readonly sacrificesCreature?: "any" | "another";
+  readonly sacrificesArtifact?: boolean;
+  readonly sacrificesLand?: boolean;
   /** Noncreature permanent chosen as an activation cost, optionally excluding the source. */
   readonly sacrificesPermanent?: { readonly type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token" | "Permanent"; readonly mode: "any" | "another" };
   /** One card chosen from the controller's hand as an activation cost. */
@@ -111,6 +113,7 @@ export interface ActivatedAbility {
   readonly loyaltyCost?: number;
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
+  readonly requiresOpponentLands?: number;
   readonly text: string;
 }
 
@@ -242,7 +245,7 @@ export interface EquipmentModification {
 }
 
 export interface StaticKeywordGrant {
-  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
+  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures" | "subtype-creatures-you-control";
   readonly keyword: EnforcedKeyword;
   readonly subtype?: string;
 }
@@ -312,6 +315,26 @@ export type SpellEffect =
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
   | { readonly kind: "sacrifice-own-creature-then-draw"; readonly amount: number }
+  | { readonly kind: "return-all-your-graveyard-to-hand" }
+  | { readonly kind: "look-put-one-in-hand"; readonly amount: number }
+  | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
+  | { readonly kind: "oblation"; readonly draw: number }
+  | { readonly kind: "devotion-drain"; readonly color: string }
+  | { readonly kind: "each-opponent-sacrifice-creature" }
+  | { readonly kind: "syphon-mind" }
+  | { readonly kind: "xathrid-upkeep"; readonly fallbackLife: number }
+  | { readonly kind: "disciple-of-bolas" }
+  | { readonly kind: "create-copy-token"; readonly amount: number; readonly kickedAmount?: number }
+  | { readonly kind: "drain-target-toughness-pump-source-power" }
+  | { readonly kind: "exile-all-attacking-creatures" }
+  | { readonly kind: "tap-all-nonblue-skip-untap" }
+  | { readonly kind: "destroy-all-then-reanimate-one" }
+  | { readonly kind: "you-and-opponent-each"; readonly effect: SpellEffect }
+  | { readonly kind: "untap-all-nonland-both" }
+  | { readonly kind: "play-additional-land"; readonly amount: number }
+  | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
+  | { readonly kind: "bottom-attacker-controller-gains-toughness" }
+  | { readonly kind: "target-player-discard-unless-land"; readonly discard: number }
   | { readonly kind: "reanimate-own-best-creature-from-graveyard" }
   | { readonly kind: "return-random-creature-from-graveyard-to-hand" }
   | { readonly kind: "modify-all-attacking-creatures"; readonly power: number; readonly toughness: number }
@@ -394,7 +417,11 @@ export type SpellEffect =
   | { readonly kind: "shuffle-source-into-library" }
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
-  | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean }
+  | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean; readonly flyingOnly?: boolean; readonly xThreshold?: number; readonly excludeSource?: boolean }
+  | { readonly kind: "destroy-creatures-power-greater-than-target" }
+  | { readonly kind: "return-n-nonland-permanents"; readonly count: number | "X" }
+  | { readonly kind: "return-n-creatures"; readonly count: number | "X" }
+  | { readonly kind: "destroy-n-creatures"; readonly count: number | "X"; readonly nonblack?: boolean }
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
@@ -410,7 +437,7 @@ export type SpellEffect =
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
-  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control"; readonly token: TokenDefinition }
+  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
   | { readonly kind: "reveal-top-card-conditional"; readonly creatureToken: TokenDefinition; readonly landDestination: "battlefield"; readonly fallbackLife: number }
   | {
       readonly kind: "search-library";
@@ -420,6 +447,7 @@ export type SpellEffect =
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
       readonly reveal: boolean;
+      readonly count?: number;
     }
   | {
       readonly kind: "search-library-multi";
@@ -472,6 +500,7 @@ export type TriggerSubject =
   | "another-creature"
   | "self-or-another-creature-you-control"
   | "any-creature"
+  | "equipped-creature"
   | "creature-attacks-opponent"
   | "you"
   | "each-player"
@@ -518,8 +547,16 @@ export interface TriggerDefinition {
   readonly drawUpTo?: number;
   readonly condition?:
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
-    | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number };
+    | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number }
+    | { readonly kind: "controlled-subtype-at-least"; readonly subtype: string; readonly amount: number }
+    | { readonly kind: "creature-died-this-turn" }
+    | { readonly kind: "cast-from-hand" }
+    | { readonly kind: "entering-power-at-most"; readonly amount: number };
   readonly spellType?: "creature" | "instant-or-sorcery";
+  readonly spellColor?: string;
+  readonly spellSubtype?: string;
+  readonly nontoken?: boolean;
+  readonly excludeSubtype?: string;
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
   /** "if its evoke cost was paid" gate on the sacrifice trigger (CR 702.34c). */
@@ -534,8 +571,8 @@ export type TargetKind =
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
- | "nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
-  | "attacking-or-blocking-creature"
+ | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
+  | "attacking-or-blocking-creature" | "attacking-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
   | "creature-power-at-most-4"
@@ -553,7 +590,7 @@ export type TargetKind =
   | "creature-with-hexproof"
   | "creature-with-shroud"
   | "creature-with-reach"
-  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-your-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | `subtype:${string}` | "none" | "nontoken-creature"
+  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-your-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | "instant-or-sorcery-card-in-your-graveyard" | "permanent-card-in-your-graveyard-mv-3-or-less" | `subtype:${string}` | "none" | "nontoken-creature"
   | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | `subtype:${string}` | "none";
   
 
@@ -591,6 +628,11 @@ export interface CardProfile {
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
+  readonly locksOpponentsOnYourTurn: boolean;
+  readonly grantsExtortToOthers: boolean;
+  readonly attackersAssignAsUnblockedWhileAttacking: boolean;
+  readonly preventsOpponentLoss: boolean;
+  readonly forcesAllCreaturesToAttack: boolean;
  readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
   /** Whether the permanent copies the power/toughness of its exiled imprint. */
   readonly copiesImprintedCreatureStats: boolean;
@@ -608,8 +650,6 @@ export interface CardProfile {
   readonly kickedEffects: readonly SpellEffect[];
   /** Evoke alternative cost (CR 702.34), null when absent. */
   readonly evokeCost: ManaCost | null;
-  /** Flashback cost — cast from graveyard, then exile (CR 702.34), null when absent. */
-  readonly flashbackCost: ManaCost | null;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
   readonly additionalCostExileGraveyardX: boolean;
   /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
@@ -1014,9 +1054,22 @@ function parseFlashbackLifeCost(text: string): number {
   return parseFlashbackDetails(text)?.lifeCost ?? 0;
 }
 
-function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {
-  const match = /^(?:(other )?creatures you control|all creatures) (?:have|gain) (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate)$/i.exec(line.trim().replace(/\.$/, ""));
-  return match ? { scope: match[1] ? "other-creatures-you-control" : /^all creatures/i.test(match[0]!) ? "all-creatures" : "creatures-you-control", keyword: match[2]!.toLowerCase() as EnforcedKeyword } : null;
+const GRANTABLE_KEYWORDS = "flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate";
+
+function parseKeywordList(text: string): EnforcedKeyword[] {
+  return text.split(/\s*(?:,|\band\b)\s*/i).map((word) => word.trim().toLowerCase())
+    .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
+}
+
+function parseStaticKeywordGrant(line: string): StaticKeywordGrant[] {
+  const clean = line.trim().replace(/\.$/, "");
+  const all = new RegExp(`^all creatures (?:have|gain) ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
+  if (all) return parseKeywordList(all[1]!).map((keyword) => ({ scope: "all-creatures" as const, keyword }));
+  const own = new RegExp(`^(other )?creatures you control (?:have|gain) ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
+  if (own) return parseKeywordList(own[2]!).map((keyword) => ({ scope: own[1] ? "other-creatures-you-control" as const : "creatures-you-control" as const, keyword }));
+  const subtype = new RegExp(`^([A-Za-z][A-Za-z'’-]*) creatures (?:you control )?have ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
+  if (subtype && !/^creature$/i.test(subtype[1]!)) return parseKeywordList(subtype[2]!).map((keyword) => ({ scope: "subtype-creatures-you-control" as const, keyword, subtype: subtype[1]! }));
+  return [];
 }
 
 function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
@@ -1373,12 +1426,17 @@ function parseRevealTopCardConditional(text: string): SpellEffect | null {
  * subject the event must involve. Anything outside this table is left unmatched
  * and reported as uncovered rather than attributed to the wrong permanent.
  */
-const TRIGGER_TEMPLATES: readonly {
+type TriggerTemplate = {
   readonly event: TriggerEvent;
   readonly subject: TriggerSubject;
   readonly pattern: RegExp;
   readonly spellType?: "creature" | "instant-or-sorcery";
-}[] = [
+  readonly spellColor?: string;
+  readonly spellSubtype?: string;
+  readonly nontoken?: boolean;
+};
+
+const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "life-gained", subject: "you", pattern: /^whenever\s+you\s+gain\s+life,?\s*(.+)$/i },
   { event: "life-lost", subject: "you", pattern: /^whenever\s+you\s+lose\s+life,?\s*(.+)$/i },
   // The permanent that carries the ability is the object the event is about.
@@ -1439,7 +1497,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i }
 ];
 
-function matchTriggerLine(line: string): { event: TriggerEvent; subject: TriggerSubject; effectText: string; spellType?: "creature" | "instant-or-sorcery" } | null {
+function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { effectText: string }) | null {
   // Landfall is a keyword ability word; its rules-bearing trigger follows the
   // dash and uses the same enters-battlefield event (CR 603.1, 603.2).
   const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "").replace(/^morbid\s+[—–-]\s*/i, "");
@@ -2419,6 +2477,10 @@ function recognizeText(text: string): RecognizedText {
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
+      const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggered.effectText);
+      const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
+      const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggered.effectText);
+      const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggered.effectText);
       const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
       const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
@@ -2594,6 +2656,14 @@ export function cardProfile(card: CardData): CardProfile {
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
+  const locksOpponentsOnYourTurn = /during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?/i.test(text);
+  const grantsExtortToOthers = /other creatures you control have extort\.?/i.test(text);
+  const attackersAssignAsUnblockedWhileAttacking = /for each creature you control, you may have that creature assign its combat damage as though it weren't blocked/i.test(text);
+  const preventsOpponentLoss = /your opponents can't lose the game\.?/i.test(text);
+  const forcesAllCreaturesToAttack = /all creatures attack each combat if able\.?/i.test(text);
+  const additionalCostExileGraveyardX = /as an additional cost to cast ~, exile x cards from your graveyard\.?/i.test(text);
+  const hasRebound = /(?:^|\n)rebound\.?(?:$|\n)/i.test(text);
+  const additionalCostSacrificeLand = /as an additional cost to cast ~, sacrifice a land\.?/i.test(text);
   const doesNotUntapDuringUntap = text.split("\n").some((line) => /^~ doesn[’']t untap during your untap step\.?$/i.test(line.trim()));
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
@@ -2620,7 +2690,6 @@ export function cardProfile(card: CardData): CardProfile {
     manaAbilities,
     cyclingCost,
     cyclingSearches,
-    flashbackCost,
     flashbackLifeCost,
     additionalLifeCost,
     additionalLifeCostVariable,
@@ -2629,6 +2698,11 @@ export function cardProfile(card: CardData): CardProfile {
     staticKeywordGrants,
     preventsLifeGain,
     noMaximumHandSize,
+    locksOpponentsOnYourTurn,
+    grantsExtortToOthers,
+    attackersAssignAsUnblockedWhileAttacking,
+    preventsOpponentLoss,
+    forcesAllCreaturesToAttack,
    staticPowerToughnessGrants,
     copiesImprintedCreatureStats,
     doublesLandMana,
@@ -2656,8 +2730,11 @@ export function cardProfile(card: CardData): CardProfile {
     targetKind: recognized.targetKind,
     kickerCost: recognized.kickerCost ?? null,
     evokeCost: recognized.evokeCost ?? null,
-    flashbackCost: recognized.flashbackCost ?? null,
+    flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
+    additionalCostExileGraveyardX,
+    hasRebound,
+    additionalCostSacrificeLand,
     costReducesPerBoardCreature,
     spellCostReductionGrant,
     staticLandManaBonus,
