@@ -427,6 +427,7 @@ def compile_catalog(
     cache = load_card_cache(cache_output)
     result_by_identity: dict[str, dict[str, Any]] = {}
     missing_rows: list[dict[str, Any]] = []
+    cache_dirty = False
     for row in unique_rows:
         identity = str(row["oracle_id"] or row["id"])
         fingerprint = card_fingerprint(row)
@@ -456,7 +457,9 @@ def compile_catalog(
         identity = str(row["oracle_id"] or row["id"])
         result_by_identity[identity] = card
         cache[identity] = {"fingerprint": card_fingerprint(row), "card": card}
-    save_card_cache(cache_output, cache)
+        cache_dirty = True
+    if cache_dirty:
+        save_card_cache(cache_output, cache)
     return [result_by_identity[str(row["oracle_id"] or row["id"])] for row in unique_rows]
 
 
