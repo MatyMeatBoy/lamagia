@@ -97,6 +97,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-activated-sacrifice-enchantment` | Activated costs that sacrifice an enchantment, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-sacrifice-land` | Activated costs that sacrifice a land, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-sacrifice-noncreature` | Activated costs that sacrifice any noncreature permanent (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-permanent` | Activated costs that sacrifice a permanent, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-discard-cost` | Activated costs that discard one card from the controller’s hand (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-sacrifice-token` | Activated costs that sacrifice a token permanent (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-exile-graveyard-cost` | Activated costs that exile one card from the controller’s graveyard (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
