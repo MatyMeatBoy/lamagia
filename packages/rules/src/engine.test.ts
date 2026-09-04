@@ -330,6 +330,8 @@ const FLAMETONGUE = () => make({ name: "Flametongue Kavu", type_line: "Creature 
 const WHIPFLARE = () => make({ name: "Whipflare", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Whipflare deals 2 damage to each nonartifact creature." });
 const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature — Bear", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2" });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
+const GREEN_COMMANDER = () => make({ name: "Green Commander", type_line: "Legendary Creature — Human", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"], color_identity: ["G"] });
+const COMMAND_TOWER = () => make({ name: "Command Tower", type_line: "Land", oracle_text: "{T}: Add one mana of any color in your commander's color identity.", produced_mana: ["W", "U", "B", "R", "G"] });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
   const cards = [commander, ...contents];

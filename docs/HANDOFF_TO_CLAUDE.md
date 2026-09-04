@@ -1112,6 +1112,18 @@ scenario tests cover accept/decline imprint, payer identity, and hiding an
 unaffordable payment action. Integrate the complete batch only after validation;
 do not import stale handoff snapshots or untracked user folders.
 
+### Integrator checkpoint: C13 reprint-equivalence batch accepted (2026-09-04)
+
+Integrated the 12-commit stable-ID reprint test batch for Army of the Damned,
+Command Tower, and Decree of Pain. Command Tower now filters mana choices to
+the declared commanders' color identity (CR 903.4); Army and Decree reuse the
+same Oracle-driven primitives rather than name-specific implementations. The
+incoming generated snapshots were regenerated locally. Validation remains
+green: `npm run check`, `npm test` (**351 rules tests**, simulator, **38 Oracle
+Python tests**). C13 remains **168/356 (47.2%)** and global export
+**8,047/38,711**; Army is intentionally still pending because its actual
+printed profile has an unresolved clause.
+
 ### Integrator checkpoint: C13 sacrifice batch accepted (2026-09-04)
 
 Integrated the functional portion of the 11-commit Fires of Yavimaya/Goblin

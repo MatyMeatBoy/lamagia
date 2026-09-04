@@ -52,6 +52,8 @@ export interface ManaAbility {
   readonly amount: number;
   /** Fixed mixed output, such as `{T}: Add {W}{U}`, rather than a choice. */
   readonly fixedProduces?: readonly ManaType[];
+  /** Restricts choices to the controller's commander color identity. */
+  readonly commanderIdentity?: boolean;
   readonly requiresTap: boolean;
   /** Life the ability costs (pain and filter lands). */
   readonly lifeCost: number;
@@ -650,7 +652,7 @@ function symbolsIn(text: string): ManaType[] {
  * board-dependent ability, and reading it as five free colours would let the
  * table pay costs it cannot actually pay.
  */
-function parseAddClause(effect: string): { produces: ManaType[]; amount: number; fixedProduces?: ManaType[] } | null {
+function parseAddClause(effect: string): { produces: ManaType[]; amount: number; fixedProduces?: ManaType[]; commanderIdentity?: boolean } | null {
   const clause = effect.trim().replace(/\.$/, "");
   const anyColor = /^add\s+(\w+)\s+mana\s+of\s+any\s+(?:one\s+)?colors?$/i.exec(clause);
   if (anyColor) {
@@ -662,7 +664,7 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   const commanderIdentity = /^add\s+(\w+)\s+mana\s+of\s+any\s+color\s+in\s+your\s+commander['’]s\s+color\s+identity$/i.exec(clause);
   if (commanderIdentity) {
     const amount = toNumber(commanderIdentity[1]);
-    return amount ? { produces: [...MANA_COLORS], amount } : null;
+    return amount ? { produces: [...MANA_COLORS], amount, commanderIdentity: true } : null;
   }
   const anyCombination = /^add\s+(\w+)\s+mana\s+in\s+any\s+combination\s+of\s+colors$/i.exec(clause);
   if (anyCombination) {
@@ -743,6 +745,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
+      ...(produced.commanderIdentity ? { commanderIdentity: true } : {}),
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),

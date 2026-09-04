@@ -111,6 +111,8 @@ export interface PlayerState {
   readonly graveyard: readonly GameCard[];
   readonly exile: readonly GameCard[];
   readonly commandZone: readonly GameCard[];
+  /** Union of the declared commanders' color identities (CR 903.4). */
+  readonly commanderColorIdentity: readonly string[];
   readonly commanderIds: readonly string[];
   /** Commander tax counter: `{2}` more for each previous cast from the command zone. */
   readonly commanderCasts: Readonly<Record<string, number>>;
@@ -488,6 +490,12 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
   return (ability.removeCounters ?? []).every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount);
 }
 
+function manaOptionsFor(player: PlayerState, ability: ManaAbility): readonly ManaType[] {
+  return ability.commanderIdentity
+    ? ability.produces.filter((mana) => player.commanderColorIdentity.includes(mana))
+    : ability.produces;
+}
+
 /** Untapped permanents this player can currently tap for mana. */
 export function manaSources(player: PlayerState, state?: GameState): ManaSource[] {
   const sources: ManaSource[] = [];
@@ -500,19 +508,21 @@ export function manaSources(player: PlayerState, state?: GameState): ManaSource[
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability)) continue;
+      const options = manaOptionsFor(player, ability);
+      if (!options.length) continue;
       // "<Basic type>s you control produce an additional {C}" (Crypt Ghast):
       // a matching land's ability produces one extra of the granted colour.
       const bonus = landBonuses.find((entry) =>
         isLand(profile) && hasSubtype(profile, entry.subtype)
-        && (ability.produces as readonly string[]).includes(entry.mana));
+        && (options as readonly string[]).includes(entry.mana));
       sources.push({
         permanentId: permanent.instance_id,
         abilityIndex: ability.index,
         name: permanent.card.name,
-        options: ability.produces,
+        options,
         amount: ability.amount + (bonus ? 1 : 0),
         ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
-        ...(doublesLandMana && isLand(profile) ? { bonusOptions: ability.produces } : {}),
+        ...(doublesLandMana && isLand(profile) ? { bonusOptions: options } : {}),
         ...(ability.removeCounters ? { removeCounters: ability.removeCounters } : {}),
         lifeCost: ability.lifeCost,
         requiresTap: ability.requiresTap
@@ -769,6 +779,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       exile: [],
       commandZone: commanders,
       commanderIds: commanders.map((card) => card.instance_id),
+      commanderColorIdentity: [...new Set(commanders.flatMap((card) => card.color_identity ?? []).map((color) => color.toUpperCase()))],
       commanderCasts: Object.fromEntries(commanders.map((card) => [card.instance_id, 0])),
       commanderDamage: {},
       landsPlayedThisTurn: 0,
@@ -2907,10 +2918,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability)) continue;
-      const activations = ability.fixedProduces ? [ability.fixedProduces[0]!] : ability.produces;
+      const options = manaOptionsFor(player, ability);
+      if (!options.length) continue;
+      const activations = ability.fixedProduces ? [ability.fixedProduces[0]!] : options;
       for (const mana of activations) {
         const bonusOptions = isLand(profile) && allPermanents(state).some((candidate) => candidate.controller === seat
-          && cardProfile(candidate.card).doublesLandMana) ? [...new Set(ability.produces)] : [undefined];
+          && cardProfile(candidate.card).doublesLandMana) ? [...new Set(options)] : [undefined];
         for (const manaBonus of bonusOptions) {
           const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: ability.amount }, () => mana);
           const produced = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((type) => `{${type}}`).join("");
@@ -3113,7 +3126,8 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
   const ability = cardProfile(source.card).manaAbilities.find((candidate) => candidate.index === action.abilityIndex);
-  if (!ability || !ability.produces.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
+  const options = ability ? manaOptionsFor(player, ability) : [];
+  if (!ability || !options.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
   if (ability.fixedProduces && action.mana !== ability.fixedProduces[0]) throw new Error("Esa habilidad de maná produce un conjunto fijo.");
   if (!canUseManaAbility(player, source, ability)) throw new Error("No puedes activar esa habilidad de maná ahora.");
   const sourceProfile = cardProfile(source.card);
@@ -3122,7 +3136,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     return grant && grant.mana === action.mana && sourceProfile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype.toLowerCase());
   }) ? 1 : 0;
   const manaBonusOptions = isLand(cardProfile(source.card)) && allPermanents(state).some((candidate) => candidate.controller === seat
-    && cardProfile(candidate.card).doublesLandMana) ? ability.produces : [];
+    && cardProfile(candidate.card).doublesLandMana) ? options : [];
   const manaBonus = action.manaBonus ?? (manaBonusOptions[0]);
   if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
   const next = withPlayer(state, seat, (current) => ({
