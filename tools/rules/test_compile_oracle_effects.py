@@ -1,8 +1,11 @@
 """Small regression suite for the reusable Oracle-to-IR vocabulary."""
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
-from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, classify, cluster_text, effective_worker_count, mana_ability_hint, operand_hints, primitive_cluster_inventory, search_criterion_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint
 from export_set_coverage import product_group
 from plan_primitive_workers import plan_workers
 
@@ -15,6 +18,19 @@ class OracleCompilerTests(unittest.TestCase):
             ),
             {"types": [], "subtypes": ["Equipment"]},
         )
+
+    def test_preserves_search_filters_after_card_type(self) -> None:
+        self.assertEqual(
+            search_criterion_hint(
+                "Search your library for a land card with a basic land type, put it onto the battlefield tapped, then shuffle."
+            ),
+            {"types": ["land"], "subtypes": ["Basic"]},
+        )
+
+    def test_normalizes_inflected_actions_and_plural_types(self) -> None:
+        result = classify("Target player sacrifices artifacts and creatures.")
+        self.assertIn("sacrifice", result["families"])
+        self.assertEqual(result["target_types"], ["Artifact", "Creature"])
 
     def test_separates_target_subtype_from_zone(self) -> None:
         result = classify("Exile target Equipment from the battlefield.")
@@ -72,6 +88,17 @@ class OracleCompilerTests(unittest.TestCase):
     def test_bounds_parallel_batch_to_memory_budget(self) -> None:
         self.assertEqual(effective_worker_count(5, 2, 256), 5)
         self.assertEqual(effective_worker_count(8, 1, 256), 4)
+
+    def test_incremental_cache_round_trips_and_invalidates_parser_version(self) -> None:
+        row = {"id": "1", "oracle_id": "oracle-1", "name": "Test", "mana_cost": "{U}", "type_line": "Instant", "oracle_text": "Draw a card."}
+        entry = {"fingerprint": card_fingerprint(row), "card": {"oracle_id": "oracle-1", "status": "candidate"}}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "cache.json"
+            save_card_cache(path, {"oracle-1": entry})
+            self.assertEqual(load_card_cache(path)["oracle-1"], entry)
+            path.write_text(json.dumps({"format": "prossh-oracle-card-cache/v1", "parser_version": "old", "cards": {"oracle-1": entry}}), encoding="utf-8")
+            self.assertEqual(load_card_cache(path), {})
+        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v3")
 
     def test_builds_deterministic_cluster_first_queue(self) -> None:
         cards = [

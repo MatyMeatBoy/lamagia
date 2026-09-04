@@ -14,6 +14,8 @@ el mismo `oracle_id`.
 - `tools/rules/compile_oracle_effects.py` es nuestro inventario local y
   conserva cláusulas, familias, operandos, zonas y `primitive_cluster`; su
   salida `oracle-clusters.json` es la cola determinista para repartir trabajo.
+  También mantiene un caché incremental por `oracle_id` y huella del texto;
+  las reejecuciones no reinterpretan cartas sin cambios.
 - `packages/rules/src/characteristics.ts` es el límite de entrada: solo una
   forma estructurada cerrada puede declararse ejecutable.
 - `packages/rules/src/engine.ts` aplica esa forma de manera pura y
@@ -49,11 +51,12 @@ solo sirven para contrastar comportamiento y casos borde.
 
 1. Compilar una vez el catálogo y generar `oracle-clusters.json`, agrupado por
    `primitive_cluster`.
-2. Asignar un worker a cada cluster, no a cada nombre de carta.
-3. Añadir una prueba representativa y reutilizar la primitiva para el resto.
-4. Exportar perfiles y cobertura C13; solo las cartas con todas sus cláusulas
+2. Reutilizar el caché para que cada cambio vuelva a procesar solo sus filas.
+3. Asignar un worker a cada cluster, no a cada nombre de carta.
+4. Añadir una prueba representativa y reutilizar la primitiva para el resto.
+5. Exportar perfiles y cobertura C13; solo las cartas con todas sus cláusulas
    cubiertas pasan a `fullyImplemented`.
-5. Reservar trabajo manual para excepciones, costes/elecciones complejas y
+6. Reservar trabajo manual para excepciones, costes/elecciones complejas y
    efectos que necesitan estado nuevo.
 
 Esto conserva la velocidad del parser automático sin convertir una inferencia

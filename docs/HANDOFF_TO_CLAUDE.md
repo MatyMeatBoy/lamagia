@@ -170,9 +170,11 @@ loads pending IDs only when an edition is opened.
 ### 7. Bounded primitive batches and reusable trigger/modal effects
 
 - `tools/rules/compile_oracle_effects.py` splits independent card/primitives
-  into deterministic bounded process batches. The review profile is 5 workers
+  into deterministic bounded process batches. The review profile is 8 workers
   with a 2 GB scheduler budget; workers are capped from the requested memory
-  estimate.
+  estimate. Its ignored `oracle-card-cache*.json` reuses unchanged rows by
+  `oracle_id` and field fingerprint; `ORACLE_IR_PARSER_VERSION` invalidates
+  stale entries after parser changes.
 - Supported `Choose one` modes become reusable `ModalChoice` entries. The
   engine publishes one legal cast action per mode, applies the selected effect
   on resolution, and filters its targets normally.
@@ -195,6 +197,11 @@ loads pending IDs only when an edition is opened.
 - Supported keyword-only clauses are removed from the review queue; the latest
   full IR therefore reduced actionable pending entries from 22,678 to 18,254
   without changing executable-card coverage.
+- Fork integration policy: do not cherry-pick a partial stream. Accumulate more
+  than ten new fork commits after the last integration, preserve their order,
+  cherry-pick the complete group, then run the full gate once. Each contributor
+  commit may still contain at most twenty new `oracle_id`s and must keep its
+  claim disjoint from other workers.
 
 ## Current verified state
 
@@ -387,11 +394,11 @@ supports deterministic bounded card/primitives batches.
 - `docs/COOPERATIVE_BATCH_PROMPT.md` is the short prompt for fresh workers.
   The Oracle IR now persists reusable `operands` (actions, zones, card types
   and subtypes), so Equipment, battlefield and similar nouns are not re-learned
-  for every card; its Python regression suite passes 11 tests.
+  for every card; its Python regression suite passes 13 tests.
 
-Validation: 166 rules tests, workspace TypeScript checks, simulator smoke tests
-and 11 Python compiler regressions pass. C13 is 124/356 unique cards implemented
-(34.8%); generated coverage remains in `data/rules/coverage-c13.md`.
+Validation: 182 rules tests, workspace TypeScript checks, simulator smoke tests
+and 13 Python compiler regressions pass. C13 is 125/356 unique cards implemented
+(35.1%); generated coverage remains in `data/rules/coverage-c13.md`.
 
 The Oracle compiler now accepts `--workers`, `--backend`, `--batch-size`,
 `--memory-budget-gb`, and `--estimated-worker-mb`. Its default five-process

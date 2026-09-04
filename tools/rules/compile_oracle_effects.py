@@ -16,6 +16,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sqlite3
@@ -28,22 +29,23 @@ from typing import Any
 
 
 DEFAULT_COMMIT_CARD_LIMIT = 20
+ORACLE_IR_PARSER_VERSION = "v3"
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
     ("search-library", r"\bsearch (?:your|a) library\b"),
-    ("draw", r"\bdraw\b"),
-    ("discard", r"\bdiscard\b"),
-    ("mill", r"\bmill\b|put the top .* into .*graveyard"),
-    ("damage", r"\bdeal(?:s)?\b.*\bdamage\b|\bdamage\b"),
-    ("gain-life", r"\bgain(?:s)?\b.*\blife\b"),
-    ("lose-life", r"\blose(?:s)?\b.*\blife\b"),
-    ("destroy", r"\bdestroy\b"),
-    ("exile", r"\bexile\b"),
-    ("return", r"\breturn\b"),
-    ("sacrifice", r"\bsacrifice\b"),
-    ("create-token", r"\bcreate\b.*\btoken\b"),
-    ("counter", r"\bcounter\b|\bproliferate\b"),
+    ("draw", r"\bdraw(?:s|ing)?\b"),
+    ("discard", r"\bdiscard(?:s|ed)?\b"),
+    ("mill", r"\bmill(?:s|ed)?\b|put the top .* into .*graveyard"),
+    ("damage", r"\bdeal(?:s|t)?\b.*\bdamage\b|\bdamage\b"),
+    ("gain-life", r"\bgain(?:s|ed)?\b.*\blife\b"),
+    ("lose-life", r"\blose(?:s|st)?\b.*\blife\b"),
+    ("destroy", r"\bdestroy(?:s|ed)?\b"),
+    ("exile", r"\bexile(?:s|d)?\b"),
+    ("return", r"\breturn(?:s|ed)?\b"),
+    ("sacrifice", r"\bsacrific(?:e|es|ed)\b"),
+    ("create-token", r"\bcreate(?:s|d)?\b.*\btoken\b"),
+    ("counter", r"\bcounter(?:s|ed)?\b|\bproliferate(?:s)?\b"),
     ("modify-stats", r"\bgets?\b.*[+-]\d+|[+-]\d+\/+[+-]\d+"),
 )
 
@@ -53,7 +55,7 @@ TRIGGER_RE = re.compile(r"\b(?:when(?:ever)?|at the beginning of|at the end of)\
 ACTIVATED_RE = re.compile(r"^[^:\n]{1,160}:\s*", re.I)
 TARGET_RE = re.compile(r"\btarget\s+([^.;]+)", re.I)
 MANA_ABILITY_RE = re.compile(r"^(?P<cost>[^:\n]{1,160}):\s*(?P<effect>add\b.+)$", re.I)
-SEARCH_RE = re.compile(r"\bsearch your library for (?:an? |up to (?:one|two|three|five) )?(.+?) card\b", re.I)
+SEARCH_RE = re.compile(r"\bsearch your library for (?:an? |up to (?:one|two|three|five) )?(.+?\bcard(?:s)?(?:\s+with\b[^.;]+)?)", re.I)
 NUMBER_RE = re.compile(r"\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b", re.I)
 WORD_NUMBERS = {
     "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4,
@@ -127,6 +129,11 @@ def number_hint(text: str) -> int | str | None:
     return WORD_NUMBERS.get(token, int(token) if token.isdigit() else None)
 
 
+def has_card_type(text: str, card_type: str) -> bool:
+    """Match singular and plural type words without matching unrelated words."""
+    return bool(re.search(rf"\b{re.escape(card_type)}(?:s|es)?\b", text, re.I))
+
+
 def search_criterion_hint(clause: str) -> dict[str, list[str]] | None:
     """Extract type/subtype operands without pretending the search is executable.
 
@@ -139,7 +146,10 @@ def search_criterion_hint(clause: str) -> dict[str, list[str]] | None:
     if not match:
         return None
     criterion = re.sub(r"\s+", " ", match.group(1).strip())
-    types = sorted({word.lower() for word in CARD_TYPES if re.search(rf"\b{re.escape(word)}\b", criterion, re.I)})
+    # The marker is grammar, not part of the requested type/subtype. Keep any
+    # trailing `with ...` filter so it can contribute operands as well.
+    criterion = re.sub(r"\s+cards?\b", "", criterion, count=1, flags=re.I).strip()
+    types = sorted({word.lower() for word in CARD_TYPES if has_card_type(criterion, word)})
     subtypes: list[str] = ["Basic"] if re.search(r"\bbasic\b", criterion, re.I) else []
     for part in re.split(r"\s+(?:or|and)\s+", criterion, flags=re.I):
         candidate = re.sub(r"\b(?:basic|land|creature|artifact|enchantment|instant|sorcery|planeswalker|battle|kindred)\b", "", part, flags=re.I).strip()
@@ -158,7 +168,7 @@ def operand_hints(clause: str, target_text: str | None, search_criterion: dict[s
     TypeScript primitive decides what those operands permit in a given effect.
     """
     zones = [name for name, pattern in ZONE_PATTERNS if re.search(pattern, clause, re.I)]
-    card_types = sorted({word.title() for word in CARD_TYPES if re.search(rf"\b{re.escape(word)}\b", clause, re.I)})
+    card_types = sorted({word.title() for word in CARD_TYPES if has_card_type(clause, word)})
     subtypes = list((search_criterion or {}).get("subtypes", []))
     if target_text:
         target_operand = re.sub(r"\s+(?:from|on|in)\s+(?:the\s+)?(?:battlefield|graveyard|hand|exile|library|stack)\b.*$", "", target_text, flags=re.I).strip()
@@ -191,7 +201,7 @@ def classify(clause: str) -> dict[str, Any]:
     target_text = target.group(1).strip() if target else None
     target_operand = re.sub(r"\s+(?:from|on|in)\s+(?:the\s+)?(?:battlefield|graveyard|hand)\b.*$", "", target_text or "", flags=re.I).strip()
     target_subtype = target_operand if target_operand and re.fullmatch(r"[A-Za-z][A-Za-z'’/-]*", target_operand) and target_operand.lower() not in CARD_TYPES else None
-    target_types = sorted({word.title() for word in CARD_TYPES if target_operand and re.search(rf"\b{re.escape(word)}\b", target_operand, re.I)})
+    target_types = sorted({word.title() for word in CARD_TYPES if target_operand and has_card_type(target_operand, word)})
     target_zone = None
     if target_text:
         target_zone = "graveyard" if re.search(r"\bgraveyard\b", target_text, re.I) else "hand" if re.search(r"\bhand\b", target_text, re.I) else "battlefield"
@@ -256,6 +266,43 @@ def compile_card(row: sqlite3.Row) -> dict[str, Any]:
         "unmatched": unmatched,
         "status": "candidate" if parsed and not unmatched else "needs-review" if parsed else "vanilla",
     }
+
+
+def card_fingerprint(row: dict[str, Any]) -> str:
+    """Return a stable cache key for fields that affect the generated IR."""
+    payload = "\x1f".join(str(row.get(field) or "") for field in (
+        "id", "oracle_id", "name", "mana_cost", "type_line", "oracle_text",
+    ))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def load_card_cache(path: Path | None) -> dict[str, dict[str, Any]]:
+    """Load reusable card IR, ignoring stale or malformed cache files."""
+    if path is None or not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if payload.get("format") != "prossh-oracle-card-cache/v1" or payload.get("parser_version") != ORACLE_IR_PARSER_VERSION:
+        return {}
+    cards = payload.get("cards")
+    return cards if isinstance(cards, dict) else {}
+
+
+def save_card_cache(path: Path | None, entries: dict[str, dict[str, Any]]) -> None:
+    """Persist cache atomically so an interrupted run never corrupts it."""
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "format": "prossh-oracle-card-cache/v1",
+        "parser_version": ORACLE_IR_PARSER_VERSION,
+        "cards": {key: entries[key] for key in sorted(entries)},
+    }
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+    temporary.replace(path)
 
 
 def review_markdown(cards: list[dict[str, Any]], inventory: list[dict[str, Any]] | None = None) -> str:
@@ -347,6 +394,7 @@ def compile_catalog(
     backend: str = "processes",
     batch_size: int = 256,
     set_code: str | None = None,
+    cache_output: Path | None = None,
 ) -> list[dict[str, Any]]:
     database = sqlite3.connect(f"file:{catalog}?mode=ro", uri=True)
     database.row_factory = sqlite3.Row
@@ -367,23 +415,40 @@ def compile_catalog(
         seen.add(identity)
         unique_rows.append(dict(row))
     database.close()
+    cache = load_card_cache(cache_output)
+    result_by_identity: dict[str, dict[str, Any]] = {}
+    missing_rows: list[dict[str, Any]] = []
+    for row in unique_rows:
+        identity = str(row["oracle_id"] or row["id"])
+        fingerprint = card_fingerprint(row)
+        cached = cache.get(identity)
+        if cached and cached.get("fingerprint") == fingerprint and isinstance(cached.get("card"), dict):
+            result_by_identity[identity] = cached["card"]
+        else:
+            missing_rows.append(row)
     worker_count = effective_worker_count(workers, memory_budget_gb, estimated_worker_mb)
-    if worker_count == 1 or len(unique_rows) < 2:
-        return [compile_card(row) for row in unique_rows]
-    if batch_size <= 0:
+    if worker_count == 1 or len(missing_rows) < 2:
+        compiled = [compile_card(row) for row in missing_rows]
+    elif batch_size <= 0:
         raise ValueError("El tamaño del lote debe ser positivo.")
-    executor_type = ProcessPoolExecutor if backend == "processes" else ThreadPoolExecutor
-    executor_kwargs: dict[str, Any] = {"max_workers": worker_count}
-    if backend == "threads": executor_kwargs["thread_name_prefix"] = "oracle"
-    # Keep only one bounded batch in flight. `map` preserves catalog order, so
-    # parallel classification remains deterministic for generated IR and AI
-    # review queues.
-    result: list[dict[str, Any]] = []
-    with executor_type(**executor_kwargs) as pool:
-        for start in range(0, len(unique_rows), batch_size):
-            batch = unique_rows[start:start + batch_size]
-            result.extend(pool.map(compile_card, batch, chunksize=32) if backend == "processes" else pool.map(compile_card, batch))
-    return result
+    else:
+        executor_type = ProcessPoolExecutor if backend == "processes" else ThreadPoolExecutor
+        executor_kwargs: dict[str, Any] = {"max_workers": worker_count}
+        if backend == "threads": executor_kwargs["thread_name_prefix"] = "oracle"
+        # Keep only one bounded batch in flight. `map` preserves catalog order, so
+        # parallel classification remains deterministic for generated IR and AI
+        # review queues.
+        compiled = []
+        with executor_type(**executor_kwargs) as pool:
+            for start in range(0, len(missing_rows), batch_size):
+                batch = missing_rows[start:start + batch_size]
+                compiled.extend(pool.map(compile_card, batch, chunksize=32) if backend == "processes" else pool.map(compile_card, batch))
+    for row, card in zip(missing_rows, compiled):
+        identity = str(row["oracle_id"] or row["id"])
+        result_by_identity[identity] = card
+        cache[identity] = {"fingerprint": card_fingerprint(row), "card": card}
+    save_card_cache(cache_output, cache)
+    return [result_by_identity[str(row["oracle_id"] or row["id"])] for row in unique_rows]
 
 
 def main() -> None:
@@ -398,12 +463,13 @@ def main() -> None:
     parser.add_argument("--estimated-worker-mb", type=int, default=256, help="Memory reserved per worker for scheduling (default: 256).")
     parser.add_argument("--backend", choices=("processes", "threads"), default="processes", help="Parallel backend; processes use CPU cores, threads share one process.")
     parser.add_argument("--batch-size", type=int, default=256, help="Cards submitted per bounded batch (default: 256).")
+    parser.add_argument("--cache-output", type=Path, help="Optional incremental IR cache; unchanged oracle_id rows are reused.")
     parser.add_argument("--commit-card-limit", type=int, default=DEFAULT_COMMIT_CARD_LIMIT, help="Maximum new oracle_id values per generated commit batch (default: 20).")
     args = parser.parse_args()
     if not args.catalog.exists():
         raise SystemExit("No existe el catálogo local; ejecuta npm run catalog:sync primero.")
     worker_count = effective_worker_count(args.workers, args.memory_budget_gb, args.estimated_worker_mb)
-    cards = compile_catalog(args.catalog, args.workers, args.memory_budget_gb, args.estimated_worker_mb, args.backend, args.batch_size, args.set_code)
+    cards = compile_catalog(args.catalog, args.workers, args.memory_budget_gb, args.estimated_worker_mb, args.backend, args.batch_size, args.set_code, args.cache_output)
     counts = Counter(card["status"] for card in cards)
     clusters = primitive_cluster_inventory(cards, args.commit_card_limit)
     payload = {
@@ -429,7 +495,8 @@ def main() -> None:
             "cluster_count": len(clusters),
             "clusters": clusters,
         }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"Oracle IR written: {len(cards):,} cards -> {args.output} (workers={worker_count}, backend={args.backend}, budget={args.memory_budget_gb:g}GB)")
+    cache_note = f", cache={args.cache_output}" if args.cache_output else ""
+    print(f"Oracle IR written: {len(cards):,} cards -> {args.output} (workers={worker_count}, backend={args.backend}, budget={args.memory_budget_gb:g}GB{cache_note})")
     print(f"Statuses: {dict(sorted(counts.items()))}")
 
 

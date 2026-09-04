@@ -32,7 +32,10 @@ BASE: start from the current branch HEAD; do not assume prior chat context.
    COMMIT SHA, FILES, TESTS, SCENARIOS, and LIMITS. The integrator cherry-picks
    the SHA, reruns full coverage, and marks the claim merged. Continue with the
    next disjoint batch only after recording the previous one. Do not push unless
-   the integrator explicitly requests a grouped publication.
+   the integrator explicitly requests a grouped publication. The integrator
+   deliberately waits for more than ten new commits, then cherry-picks the
+   complete ordered group and validates it once; keep claims disjoint while
+   that group is accumulating.
 ```
 
 This prevents workers from relying on stale conversation context and makes

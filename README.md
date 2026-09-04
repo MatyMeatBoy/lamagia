@@ -23,8 +23,10 @@ instructions: [CONTRIBUTING.md](CONTRIBUTING.md) and
 
 To refresh the reusable work queue, run `npm run rules:oracle:compile` and claim
 one entry from `data/rules/oracle-clusters.json`; it already carries stable
-`oracle_id`s and twenty-card commit batch counts. To measure the local speedup,
-run `npm run rules:oracle:benchmark`.
+`oracle_id`s and twenty-card commit batch counts. The compiler keeps an ignored
+incremental cache, so unchanged Oracle rows are reused on later runs and the
+cache is invalidated automatically when the parser version changes. To measure
+the local speedup, run `npm run rules:oracle:benchmark`.
 
 For the current C13 sprint, use `npm run rules:oracle:c13` to generate the same
 queue from only the 356 cards in that set, then
