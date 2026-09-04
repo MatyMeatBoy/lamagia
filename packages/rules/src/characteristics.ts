@@ -257,6 +257,7 @@ export type SpellEffect =
   | { readonly kind: "draw-active-player" }
   | { readonly kind: "draw-equal-tapped-creatures" }
   | { readonly kind: "draw-equal-controlled-type"; readonly type: CardType }
+  | { readonly kind: "scry"; readonly amount: number }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
@@ -1228,6 +1229,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "draw-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw-target-player", amount: "X" }, target: "player" };
   }
+  if ((match = /^Scry (\d+)$/i.exec(text))) return { effect: { kind: "scry", amount: Number(match[1]) }, target: "none" };
   if ((match = /^(?:~|This spell) deals (\w+) damage to each player$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-each-player", amount }, target: "none" };
