@@ -1666,7 +1666,6 @@ stale full tree. The clean branch currently exports **186/356 C13 printings**,
 **171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
 `5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
 queued for the next integration batch.
-
 ### Worker-05: reusable "any creature enters" trigger (2026-09-04)
 
 Claim `c14-any-creature-enters-trigger`. Wizards dropped "under your control"
@@ -2249,3 +2248,12 @@ The generic `card-cycled` trigger parser now normalizes “you may have it deal 
 and “you may have target creature gain …” into existing reusable effects. Slice
 and Dice uses the all-creature damage path; Dirge of Dread uses the targeted
 temporary keyword path (CR 603.2, 702.29).
+### Integrator checkpoint: Capricious Efreet multi-target random destruction (2026-09-05)
+
+Added reusable ordered multi-target trigger selection: mandatory targets are
+chosen first, optional target slots can be finished explicitly, and target
+filters remain authoritative per slot. Capricious Efreet now selects one
+controlled nonland permanent plus up to two opposing nonland permanents, then
+destroys one selected target using deterministic RNG (CR 603.3d, 601.2c,
+701.7). The functional worker commit `a868c8d` is integrated on top of the
+current authoritative engine; stale generated handoff text was not imported.
