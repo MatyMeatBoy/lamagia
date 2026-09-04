@@ -2440,6 +2440,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           ? (() => { const src = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id); return src ? attachedEquipment(state, src).length : 0; })()
         : effect.amount === "creatures-died-this-turn"
           ? state.creaturesDiedThisTurn
+        : effect.amount === "opponents-with-4-plus-cards"
+          ? state.players.filter((player) => player.seat !== controller && !player.lost && player.hand.length >= 4).length
         : effectAmount(effect.amount, object);
       const stat = effect.statsFromAmount ? amount : null;
       let next = state;
@@ -4230,6 +4232,17 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     commandZone: fromCommand ? current.commandZone.filter((candidate) => candidate.instance_id !== card.instance_id) : current.commandZone,
     ...(fromCommand ? { commanderCasts: { ...current.commanderCasts, [card.instance_id]: (current.commanderCasts[card.instance_id] ?? 0) + 1 } } : {})
   }));
+  if (profile.additionalCostExileGraveyardX) {
+    const count = action.variableValue ?? 0;
+    const doomed = playerAt(next, seat).graveyard.slice(0, count);
+    if (doomed.length < count) throw new Error(`No hay suficientes cartas en tu cementerio para ${card.name}.`);
+    const doomedIds = new Set(doomed.map((c) => c.instance_id));
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      graveyard: current.graveyard.filter((c) => !doomedIds.has(c.instance_id)),
+      exile: [...current.exile, ...doomed]
+    }));
+  }
   const selectedEffect = profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard);

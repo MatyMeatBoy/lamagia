@@ -600,6 +600,8 @@ export interface CardProfile {
   readonly evokeCost: ManaCost | null;
   /** Flashback cost — cast from graveyard, then exile (CR 702.34), null when absent. */
   readonly flashbackCost: ManaCost | null;
+  /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
+  readonly additionalCostExileGraveyardX: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
@@ -1265,6 +1267,13 @@ function parseMultiBasicSearch(text: string): SpellEffect | null {
     return { kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"], destinations: ["hand", "hand"], reveal: true };
   }
   return null;
+}
+
+function parseOpponentHandScaledToken(text: string): SpellEffect | null {
+  const suffix = /,?\s*where x is the number of your opponents with four or more cards in hand$/i;
+  if (!suffix.test(text.trim())) return null;
+  const base = parseCreateToken(text.trim().replace(suffix, "").replace(/^Create X\b/i, "Create a"));
+  return base?.kind === "create-token" ? { ...base, amount: "opponents-with-4-plus-cards" } : null;
 }
 
 function parseDeathScaledToken(text: string): SpellEffect | null {
@@ -2071,6 +2080,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line)) continue;
     if (/^other creatures you control have extort\.?$/i.test(line)) continue;
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
+    if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
     // Storm remains a keyword-only marker until copy-count tracking is added.
