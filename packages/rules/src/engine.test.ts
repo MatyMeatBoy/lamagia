@@ -128,6 +128,7 @@ const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature �
 const MARROW_BATS = () => make({ name: "Marrow Bats", type_line: "Creature — Bat", mana_cost: "{3}{B}", cmc: 4, power: "2", toughness: "2", oracle_text: "{B}, Pay 4 life: Regenerate Marrow Bats." });
 const COUNTER_DAMAGE = () => make({ name: "Thoctar Memory", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from this creature: This creature deals 1 damage to any target." });
 const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
+const TOOTH_AND_CLAW = () => make({ name: "Tooth and Claw", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Sacrifice two creatures: Create a 3/1 red Beast creature token named Carnivore." });
 const ARTIFACT_SAC_ALTAR = () => make({ name: "Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact: Draw a card." });
 const ENCHANTMENT_SAC_ALTAR = () => make({ name: "Enchantment Memory", type_line: "Enchantment", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an enchantment: Draw a card." });
 const LAND_SAC_ALTAR = () => make({ name: "Land Memory", type_line: "Land", oracle_text: "Sacrifice a land: Draw a card." });
@@ -1662,6 +1663,19 @@ describe("casting", () => {
       expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
       expect(game.players[0]!.graveyard.some((card) => card.name === sacrificedName)).toBe(true);
     }
+  });
+
+  it("offers and pays two distinct creature sacrifice costs for Tooth and Claw", () => {
+    let game = readyToCast([], [TOOTH_AND_CLAW(), BEAR(), TRAMPLER()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Tooth and Claw")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.sacrificeIds?.length === 2);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Grizzly Bears", "Big Stomper"]));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Carnivore")).toBe(true);
   });
 
   it("does not offer the source for an another-artifact sacrifice cost", () => {

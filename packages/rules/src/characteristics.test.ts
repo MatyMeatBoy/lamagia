@@ -219,6 +219,20 @@ describe("C13 sacrifice-card parsing", () => {
     expect(fires.fullyImplemented).toBe(true);
     expect(bombardment.fullyImplemented).toBe(true);
   });
+
+  it("preserves a multi-creature sacrifice cost", () => {
+    const toothAndClaw = cardProfile(card({
+      name: "Tooth and Claw",
+      type_line: "Artifact",
+      oracle_text: "Sacrifice two creatures: Create a 3/1 red Beast creature token named Carnivore."
+    }));
+    expect(toothAndClaw.activatedAbilities[0]).toMatchObject({
+      sacrificesCreatures: { amount: 2 },
+      effect: { kind: "create-token", amount: 1, token: { name: "Carnivore", power: 3, toughness: 1, colors: ["R"] } },
+      targetKind: "none"
+    });
+    expect(toothAndClaw.fullyImplemented).toBe(true);
+  });
 });
 
 describe("flashback parsing", () => {

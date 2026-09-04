@@ -1720,3 +1720,11 @@ CR 615.1. The reusable profile closes equivalent Oracle printings as well.
 The refreshed export is **192/341 C13 (56.3%)**, with **149 unfinished** and
 **71 one-line-away**. The fork report `3af0cb0` (conditional Split second) is
 also queued as one incoming commit and remains outside the integration batch.
+
+### C13 multi-creature sacrifice costs (2026-09-04)
+
+Activated abilities can now preserve a cost such as “Sacrifice two creatures”
+and expose deterministic combinations of distinct legal permanents through the
+authoritative action projection. The selected IDs are validated and paid
+together before the existing token-creation primitive resolves (CR 117.3b,
+602.2b).
