@@ -219,6 +219,8 @@ const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", ora
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
+const C13_AZAMI = () => make({ name: "Azami, Lady of Scrolls", type_line: "Legendary Creature — Human Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "0", toughness: "2", oracle_text: "Tap an untapped Wizard you control: Draw a card.", scryfall_id: "cafda395-840f-4359-9314-e1cbf137cc66" });
+const AZAMI_WIZARD = () => make({ name: "Library Wizard", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "1" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
 const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantment", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target.", scryfall_id: "89d77b63-eeee-4d8a-9622-b1ea36dc70de" });
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
@@ -967,6 +969,15 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
     const boosted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
     expect([powerOf(boosted), toughnessOf(boosted)]).toEqual([7, 6]);
+  });
+
+  it("recognizes a reusable typed tap cost", () => {
+    const profile = profileOf(C13_AZAMI());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      tapsCreature: { mode: "any", subtype: "Wizard" },
+      effect: { kind: "draw", amount: 1 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
   });
 
   it("offers and pays a chosen creature sacrifice activation cost", () => {
