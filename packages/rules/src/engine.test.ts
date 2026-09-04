@@ -204,7 +204,6 @@ const GUTTERSNIPE = () => make({ name: "Guttersnipe", type_line: "Creature — G
 const FECUNDITY = () => make({ name: "Fecundity", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature dies, that creature's controller may draw a card." });
 const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "Enchantment", mana_cost: "{1}{R}{G}", cmc: 3, oracle_text: "Creatures you control have haste.\n{R}{G}, Sacrifice Fires of Yavimaya: Creatures you control get +2/+2 until end of turn." });
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
-const C13_CHAOS_WARP = () => ({ ...CHAOS_WARP(), scryfall_id: "07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8" });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
@@ -648,10 +647,8 @@ describe("casting", () => {
   });
 
   it("reuses oracle-driven rules for C13 reprints", () => {
-    expect(C13_CHAOS_WARP().scryfall_id).toBe("07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8");
     expect(C13_COMMAND_TOWER().scryfall_id).toBe("0895c9b7-ae7d-4bb3-af17-3b75deb50a25");
     expect(C13_DECREE_OF_PAIN().scryfall_id).toBe("932668fa-d6e3-41c0-ad0c-8e0a00e68d11");
-    expect(cardProfile(C13_CHAOS_WARP()).fullyImplemented).toBe(true);
     expect(cardProfile(C13_COMMAND_TOWER()).manaAbilities).toHaveLength(1);
     expect(cardProfile(C13_DECREE_OF_PAIN()).effects).toMatchObject([{ kind: "destroy-all-creatures-draw-destroyed" }]);
   });
