@@ -3876,7 +3876,9 @@ function boardCostReduction(state: GameState, seat: SeatId, card: GameCard, prof
     const grant = cardProfile(permanent.card).spellCostReductionGrant;
     if (!grant) continue;
     if (grant.color && !spellColors.includes(grant.color)) continue;
+    if (grant.colors && !grant.colors.some((color) => spellColors.includes(color))) continue;
     if (grant.type && !profile.types.includes(grant.type)) continue;
+    if (grant.subtype && !profile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype!.toLowerCase())) continue;
     if (grant.types && !grant.types.some((type) => profile.types.includes(type))) continue;
     reduction += grant.amount;
   }

@@ -681,7 +681,9 @@ export interface CardProfile {
   readonly spellCostReductionGrant: {
     readonly amount: number;
     readonly color?: string;
+    readonly colors?: readonly string[];
     readonly type?: CardType;
+    readonly subtype?: string;
     readonly types?: readonly CardType[];
     readonly appliesToAllPlayers?: boolean;
   } | null;
@@ -2407,6 +2409,8 @@ function recognizeText(text: string): RecognizedText {
     // Board-scaled self cost reduction is consumed by cardProfile, not resolved here.
     if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
     if (/^(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
+    if (/^(?:blue|red) spells and (?:blue|red) spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
+    if (/^[A-Za-z][A-Za-z'’/-]* spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^instant and sorcery spells cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     const chooseOneOrBoth = /^Choose one or both(?:\s+[—–-�])?\s*$/i.test(line);
     if (chooseOneOrBoth || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
@@ -2762,16 +2766,22 @@ export function cardProfile(card: CardData): CardProfile {
     ? { subtype: landBonusMatch[1]!.replace(/s$/i, "").replace(/^./, (c) => c.toUpperCase()), mana: landBonusMatch[2]!.toUpperCase() }
     : null;
   const grantMatch = /^(?:(white|blue|black|red|green) )?(artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
+  const colorPairGrantMatch = /^(blue|red) spells and (blue|red) spells you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
+  const subtypeGrantMatch = /^([A-Za-z][A-Za-z'’/-]*) spells you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
   const globalInstantSorceryMatch = /^instant and sorcery spells cost \{(\d+)\} less to cast\.?$/im.exec(text);
   const COLOR_LETTER: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
   const spellCostReductionGrant = globalInstantSorceryMatch
     ? { amount: Number(globalInstantSorceryMatch[1]), types: ["Instant", "Sorcery"] as const, appliesToAllPlayers: true }
+    : colorPairGrantMatch
+    ? { amount: Number(colorPairGrantMatch[3]), colors: [COLOR_LETTER[colorPairGrantMatch[1]!.toLowerCase()]!, COLOR_LETTER[colorPairGrantMatch[2]!.toLowerCase()]!] as const }
     : grantMatch
     ? {
         amount: Number(grantMatch[3]),
         ...(grantMatch[1] ? { color: COLOR_LETTER[grantMatch[1].toLowerCase()] } : {}),
         ...(grantMatch[2] ? { type: (grantMatch[2][0]!.toUpperCase() + grantMatch[2].slice(1)) as CardType } : {})
       }
+    : subtypeGrantMatch && !COLOR_LETTER[subtypeGrantMatch[1]!.toLowerCase()] && !CARD_TYPES.some((type) => type.toLowerCase() === subtypeGrantMatch[1]!.toLowerCase())
+    ? { amount: Number(subtypeGrantMatch[2]), subtype: subtypeGrantMatch[1]![0]!.toUpperCase() + subtypeGrantMatch[1]!.slice(1) }
     : null;
   const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
     ? parseEquipmentModification(text) : null;

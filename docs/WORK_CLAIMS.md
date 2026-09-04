@@ -337,6 +337,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-fecundity-death-draw` | Fecundity lets the controller of each creature that dies optionally draw a card (CR 603.2, 603.5, 603.6a, 121.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-fires-yavimaya-activation` | Fires of Yavimaya grants haste and sacrifices itself for a controlled-creature +2/+2 activation (CR 602.2b, 613.4, 611.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-goblin-bombardment-activation` | Goblin Bombardment sacrifices a creature as a cost to deal 1 damage to any target (CR 602.2b, 117.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-krosan-warchief-beast-reduction` | Static reduction for Beast spells you cast, reusable subtype-aware cost modifier (CR 118.9) | `codex/c13-krosan-warchief-a32` | active | 2026-09-04 |
 | `c13-charmbreaker-random-spell-recovery` | Beginning-of-upkeep recovery of a random instant or sorcery card from your graveyard to your hand | `codex/c13-charmbreaker-devils` | active | 2026-09-04 |
 | `c13-conjurers-closet-blink` | Optional end-step exile and return of a target creature you control, reusable blink primitive for Conjurer's Closet (CR 603.2, 603.5, 610.3, 400.7) | `codex/c13-conjurers-closet` | active | 2026-09-04 |
 | `c13-tidal-force-tap-untap-choice` | Optional each-upkeep choice to tap or untap a target permanent for Tidal Force (CR 603.2, 603.5, 701.21) | `codex/c13-tidal-force` | active | 2026-09-04 |

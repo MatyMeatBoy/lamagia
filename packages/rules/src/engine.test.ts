@@ -3585,6 +3585,23 @@ describe("kicker and optional-cost triggers", () => {
     expect(cast).toBeDefined();
   });
 
+  it("applies subtype and multi-color spell cost reductions", () => {
+    const warchief = () => make({ name: "Krosan Warchief", type_line: "Creature — Goblin Warrior", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Beast spells you cast cost {1} less to cast." });
+    const beast = () => make({ name: "Test Beast", type_line: "Creature — Beast", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", colors: ["G"] });
+    const nonBeast = () => make({ name: "Test Elf", type_line: "Creature — Elf", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", colors: ["G"] });
+    expect(profileOf(warchief())).toMatchObject({ spellCostReductionGrant: { amount: 1, subtype: "Beast" }, fullyImplemented: true });
+    let game = ready([beast()], [FOREST(), warchief()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(true);
+    game = ready([nonBeast()], [FOREST(), warchief()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(false);
+
+    const familiar = () => make({ name: "Nightscape Familiar", type_line: "Creature — Zombie", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Blue spells and red spells you cast cost {1} less to cast." });
+    const blueSpell = () => make({ name: "Test Blue Spell", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, colors: ["U"], oracle_text: "You gain 1 life." });
+    expect(profileOf(familiar())).toMatchObject({ spellCostReductionGrant: { amount: 1, colors: ["U", "R"] }, fullyImplemented: true });
+    game = ready([blueSpell()], [ISLAND(), familiar()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(true);
+  });
+
   it("reduces a spell's generic cost by {N} per creature on the battlefield", () => {
     const act = () => make({ name: "Blasphemous Act", type_line: "Sorcery", mana_cost: "{8}{R}", cmc: 9, oracle_text: "This spell costs {1} less to cast for each creature on the battlefield.\nBlasphemous Act deals 13 damage to each creature." });
     expect(profileOf(act()).costReducesPerBoardCreature).toBe(1);
