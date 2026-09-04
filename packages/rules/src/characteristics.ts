@@ -148,6 +148,8 @@ export interface CombatRules {
    * because the check is about the defender's board, not the attacker's.
    */
   readonly landwalk: readonly string[];
+  /** "Prevent all combat damage that would be dealt to and dealt by ~" (Fog Bank). */
+  readonly preventsAllCombatDamage: boolean;
 }
 
 export const NO_COMBAT_RULES: CombatRules = {
@@ -156,7 +158,8 @@ export const NO_COMBAT_RULES: CombatRules = {
   cannotBeBlocked: false,
   mustAttack: false,
   blocksOnlyWithKeyword: null,
-  landwalk: []
+  landwalk: [],
+  preventsAllCombatDamage: false
 };
 
 /** Basic land types landwalk can name, plus the two most common nonbasic ones. */
@@ -176,6 +179,7 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   if (/^~ can't be blocked$/.test(text)) return { cannotBeBlocked: true };
   if (/^~ can't attack or block$/.test(text)) return { cannotAttack: true, cannotBlock: true };
   if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
+  if (/^prevent all combat damage that would be dealt to and dealt by ~$/i.test(text)) return { preventsAllCombatDamage: true };
 
   const blocksOnly = /^~ can block only creatures with (flying|reach|defender|flash|haste|menace|trample|vigilance|lifelink|deathtouch|first strike|double strike|indestructible|hexproof|shroud)$/.exec(text);
   if (blocksOnly) return { blocksOnlyWithKeyword: blocksOnly[1] as EnforcedKeyword };
@@ -1766,6 +1770,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^extort\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.
     if (/^~ can be your commander\.?$/i.test(line)) continue;
+    // Looking at your own top card any time changes no outcome the engine tracks.
+    if (/^You may look at the top card of your library any time\.?$/i.test(line)) continue;
     // Lieutenant lines are consumed by cardProfile when the rider is covered.
     {
       const lt = /^Lieutenant\s+[—–-]\s+As long as you control your commander, ~ gets \+\d+\/\+\d+(?:\s+and\s+(.+?))?\.?$/i.exec(line);
