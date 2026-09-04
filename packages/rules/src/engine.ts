@@ -2296,7 +2296,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!target || target.kind !== "graveyard-card") return state;
       const player = playerAt(state, target.seat);
       const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
-      if (!card || !isCreature(cardProfile(card))) return state;
+      if (!card || !cardProfile(card).isPermanent) return state;
       const next = withPlayer(state, target.seat, (current) => ({
         ...current,
         graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
