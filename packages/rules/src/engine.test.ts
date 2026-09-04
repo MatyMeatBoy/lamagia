@@ -1567,6 +1567,55 @@ describe("casting", () => {
     expect(game.players[1]!.hand.length).toBe(2);
   });
 
+  it("reuses the tapped-creature draw primitive for C13 Borrowing 100,000 Arrows", () => {
+    let game = readyToCast([C13_BORROWING_ARROWS()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()], [], [BEAR(), BEAR()]);
+    game = {
+      ...game,
+      players: game.players.map((player) => player.seat === 1
+        ? { ...player, battlefield: player.battlefield.map((permanent) => ({ ...permanent, tapped: true })) }
+        : player)
+    };
+    const before = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.hand.length).toBe(before + 2);
+  });
+
+  it("reuses typed sacrifice and any-target damage for C13 Blood Rites", () => {
+    let game = readyToCast([], [C13_BLOOD_RITES(), MOUNTAIN(), MOUNTAIN(), BEAR()], [], [BEAR()]);
+    const rites = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Blood Rites")!;
+    const victim = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === rites.instance_id);
+    if (!activation || activation.action.type !== "activate") throw new Error("Blood Rites activation was not generated.");
+    expect(activation.action.sacrificeId).toBeDefined();
+    game = applyAction(game, 0, {
+      ...activation.action,
+      targets: [{ kind: "permanent", instanceId: victim.instance_id }]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears"));
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("reuses the generic sacrifice-cost draw activation for C13 Carnage Altar", () => {
+    let game = readyToCast([], [C13_CARNAGE_ALTAR(), FOREST(), FOREST(), FOREST(), BEAR()]);
+    const altar = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Carnage Altar")!;
+    const beforeHand = game.players[0]!.hand.length;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === altar.instance_id);
+    expect(activation?.action.type).toBe("activate");
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.hand.length === beforeHand + 1);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("reuses the upkeep compound trigger for C13 Baleful Force", () => {
+    let game = twoSeatGame(Array.from({ length: 12 }, () => BEAR()), []);
+    game = putOnBattlefield(game, 0, [C13_BALEFUL_FORCE()]);
+    const beforeHand = game.players[0]!.hand.length;
+    game = passUntil(game, (state) => state.players[0]!.life === 39 && state.players[0]!.hand.length === beforeHand + 1);
+    expect(game.players[0]!.life).toBe(39);
+    expect(game.players[0]!.hand.length).toBe(beforeHand + 1);
+  });
+
   it("draws once per creature controlled by the caster", () => {
     expect(profileOf(CREATURE_DRAW()).effects).toEqual([{ kind: "draw-equal-controlled-type", type: "Creature" }]);
   });
