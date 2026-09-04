@@ -146,6 +146,7 @@ const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — G
 const FLYING_LORD = () => make({ name: "Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control have flying." });
 const OTHER_FLYING_LORD = () => make({ name: "Other Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Other creatures you control have flying." });
 const GAIN_FLYING_LORD = () => make({ name: "Gain Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control gain flying." });
+const ALL_FLYING_LORD = () => make({ name: "Universal Sky", type_line: "Enchantment", mana_cost: "{3}{U}", cmc: 4, oracle_text: "All creatures have flying." });
 const CROSIS_CHARM = () => make({
   name: "Crosis's Charm", type_line: "Instant", mana_cost: "{U}{B}{R}", cmc: 3,
   oracle_text: "Choose one —\n• Return target permanent to its owner's hand.\n• Destroy target nonblack creature. It can't be regenerated.\n• Destroy target artifact."
@@ -824,6 +825,12 @@ describe("casting", () => {
 
   it("accepts gain as an alternate static keyword verb", () => {
     expect(profileOf(GAIN_FLYING_LORD()).staticKeywordGrants).toEqual([{ scope: "creatures-you-control", keyword: "flying" }]);
+  });
+
+  it("supports static keyword grants that affect every creature", () => {
+    expect(profileOf(ALL_FLYING_LORD()).staticKeywordGrants).toEqual([{ scope: "all-creatures", keyword: "flying" }]);
+    let game = readyToCast([FLYING_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [ALL_FLYING_LORD(), BEAR()]);
+    expect(legalTargets(game, 0, "creature-with-flying")).toHaveLength(1);
   });
 
   it("resolves a compound draw-and-life-loss instruction as one effect", () => {
