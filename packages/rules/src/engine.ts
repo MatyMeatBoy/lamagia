@@ -1273,6 +1273,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "gain-life-each-subtype": {
+      if (playersCantGainLife(state)) return state;
+      const amount = allPermanents(state).filter((permanent) =>
+        cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length * effect.amount;
+      if (amount === 0) return state;
+      const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
+    }
     case "gain-life-each-permanent": {
       if (playersCantGainLife(state)) return state;
       const amount = playerAt(state, controller).battlefield.length * effect.amount;

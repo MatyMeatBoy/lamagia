@@ -76,6 +76,7 @@ feature name.
 | `c14-destroy-then-controller-token` | `Destroy target creature. Its controller creates <token>` (Pongify, Afterlife) | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-discard-activation-cost` | `Discard a card` as part of an activated-ability cost (Trading Post, CR 602.1) | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-static-keyword-and-anthem-expansions` | Multi-keyword and subtype static grants; `another/any creature enters` triggers; `Other <Subtype> creatures you control get +N/+N` | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-subtype-scaled-life-and-enters` | `You gain N life for each <Subtype>`; `Whenever a creature you control enters` templates | `c14-batch2-clean` | active | 2026-09-04 |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |

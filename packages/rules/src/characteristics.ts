@@ -274,6 +274,7 @@ export type SpellEffect =
   | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-each-controlled-type"; readonly amount: number; readonly type: CardType }
+  | { readonly kind: "gain-life-each-subtype"; readonly amount: number; readonly subtype: string }
   | { readonly kind: "gain-life-each-permanent"; readonly amount: number }
   | { readonly kind: "gain-life-equal-target-power" }
   | { readonly kind: "lose-life"; readonly amount: number | "X" }
@@ -1125,6 +1126,8 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
@@ -1224,6 +1227,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^You gain (\w+) life for each (artifact|creature|enchantment|land) you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "gain-life-each-controlled-type", amount, type: match[2]![0]!.toUpperCase() + match[2]!.slice(1) as CardType }, target: "none" };
+  }
+  if ((match = /^You gain (\w+) life for each ([A-Za-z][A-Za-z'’-]*) (on the battlefield|you control)$/i.exec(text))
+      && !/^(artifact|creature|enchantment|land|permanent)$/i.test(match[2]!)) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "gain-life-each-subtype", amount, subtype: match[2]! }, target: "none" };
   }
   if ((match = /^You gain (\w+) life for each permanent you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
