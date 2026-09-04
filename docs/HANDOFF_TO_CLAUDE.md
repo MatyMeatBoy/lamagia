@@ -631,6 +631,20 @@ structured-mana path.
 Rules reference: Comprehensive Rules 502.2, 602.1 and 701.21; official
 Wizards source: `https://magic.wizards.com/en/rules`.
 
+### C13 reuse verification: basic effect families
+
+Borrowing 100,000 Arrows, Blood Rites, Carnage Altar and Baleful Force now
+have C13 scenarios that exercise existing primitives instead of adding named
+branches: tapped-creature-count draw, typed creature sacrifice costs,
+any-target damage, ordinary draw, and upkeep draw-plus-life-loss. The
+“target opponent” wording is represented by a reusable opponent-only target
+kind, preventing the caster from being selected. Coverage marks use each
+printing's stable Scryfall ID; other printings with the same `oracle_id` reuse
+the same profile.
+
+Rules reference: Comprehensive Rules 109.5, 601.2c and 115.1; official
+Wizards source: `https://magic.wizards.com/en/rules`.
+
 ## Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
