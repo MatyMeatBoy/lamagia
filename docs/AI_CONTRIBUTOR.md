@@ -1,5 +1,9 @@
 # Contribuir una carta con tu LLM
 
+> **Quick start:** usa primero [AI Contributor Quick Start](AI_CONTRIBUTOR_QUICK_START.md)
+> para el contrato actualizado de claims, commits directos, pruebas y formato
+> compacto de entrega.
+
 Este documento es el equivalente de la idea “Contribute a Card with Your LLM”
 de [Phase](https://github.com/phase-rs/phase), adaptado a lamagia (antes
 ProsshTCG). Copia el

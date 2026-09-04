@@ -1,5 +1,8 @@
 # Contribuir a La Magia
 
+Para bots y forks, empieza por [AI Contributor Quick Start](docs/AI_CONTRIBUTOR_QUICK_START.md);
+es el contrato corto y actualizado para entregar commits directos integrables.
+
 El trabajo se reparte por clusters de reglas, no por nombres de cartas. Una
 mejora de una gramática se reutiliza automáticamente en todas las ediciones y
 reimpresiones que comparten `oracle_id`.

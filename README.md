@@ -1,5 +1,8 @@
 # La Magia
 
+AI contributors: read [the quick-start contract](docs/AI_CONTRIBUTOR_QUICK_START.md)
+before claiming a cluster or publishing a commit.
+
 Community Magic rules engine and Commander client. Implement reusable rules
 clusters, not one-off card names. Cards share logic by stable `oracle_id`, so
 one good primitive improves every printing and set.
