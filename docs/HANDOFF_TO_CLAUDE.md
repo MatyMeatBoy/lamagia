@@ -226,8 +226,8 @@ runs a **greedy set cover**:
   rises the moment the template sharing its cards is scheduled, which is why the
   tie-break is coverage rather than an arbitrary order.
 
-Measured on the current catalog: **15,217 of 32,057 unfinished cards are exactly
-one line away**, and the top 40 templates would finish 1,326 of them. The
+Measured on the current catalog: **15,182 of 31,895 unfinished cards are exactly
+one line away**, and the top 40 templates would finish 1,329 of them. The
 generated `docs/PRIMITIVE_ROADMAP.md` is a work order with claim keys, printed
 examples and the exact card list per entry, so a contributor can pick one up
 cold. Regenerate it after every batch; it is not hand-editable.
@@ -264,15 +264,16 @@ generated queue and disjoint from the C13 equipment/counters/life work.
 
 ```text
 npm run check                    PASS (0 errors)
-npm run test --workspace=@prossh/rules   182 passed, 6 skipped
+npm run test --workspace=@prossh/rules   197 passed
 python tools/rules/test_compile_oracle_effects.py   22 tests OK
 npm run simulate:engine          200 games, 0 invariant failures, 160 finished
-npm run rules:engine:export      38,711 cards; 6,654 fully implemented
+npm run rules:engine:export      38,711 cards; 6,816 fully implemented
 ```
 
-Fully implemented moved **6,500 → 6,654 (+154)**, and every combat-restriction
-and landwalk template dropped out of the regenerated roadmap, which is the
-tool checking its own prediction.
+The Claude batch moved **6,500 → 6,654 (+154)** on its base, and every
+combat-restriction and landwalk template dropped out of its regenerated
+roadmap. After the C13 integrations, the current branch exports **6,816** fully
+implemented profiles; the roadmap is regenerated from that current result.
 
 ### Limits
 
@@ -298,7 +299,7 @@ tool checking its own prediction.
 | Activated abilities | Mana abilities resolve immediately and never use the stack; non-mana activations are announced, paid and put on the stack like a spell. Costs cover mana, `{T}`, paying life and sacrificing the source, and a source that taps for its own ability is removed from its mana sources first. | `activatableAbility`/`applyActivate`/`applyActivateMana` in `engine.ts`, `parseActivatedAbility` in `characteristics.ts`; `engine.test.ts` → "activated abilities" (6 cases) |
 | Oracle reading | The printed name **and** the modern "this land" / "this creature" self reference both normalise to `~`, so current reprints parse. A mana clause must consume its whole sentence, so a restricted "any color that a land an opponent controls could produce" is not read as five free colours. | `normalizedOracle`, `parseAddClause`; `characteristics.test.ts` → "faces and oracle normalisation" |
 | Commander | Command-zone start, `{2}` tax per previous cast, return-to-command-zone on death, 21-damage elimination tracked per commander. | `commanderTax`, `movePermanentToZone`; `engine.test.ts` → "commander rules" |
-| Combat | Attack declaration with per-attacker defender choice, blocks, first/double strike sub-step, deathtouch, trample, lifelink, vigilance, menace, flying/reach restrictions, defender, haste, summoning sickness. | `computeCombatDamage`; `engine.test.ts` → "combat" (11 cases) |
+| Combat | Attack declaration with per-attacker defender choice, blocks, first/double strike sub-step, deathtouch, trample, lifelink, vigilance, menace, flying/reach restrictions, defender, haste, summoning sickness, printed attack/block restrictions, attack requirements, and basic/legendary landwalk. | `computeCombatDamage`, `CombatRules`; `engine.test.ts` → combat scenarios |
 | State-based actions | Lethal damage, zero toughness, indestructible, legend rule, 0 life, empty-library draw, 21 commander damage, last player standing. | `applyStateBasedActions`; `engine.test.ts` → "state-based actions" |
 | P/T and counters | Entry counters, counter costs on mana abilities, temporary creature P/T modifiers and cleanup expiration. | `CounterCost`, `powerOf`, `toughnessOf`, `applyEffect`; `engine.test.ts` → Vivid/Infest scenarios |
 | Privacy | A projection contains the viewer's hand and nothing hidden from any other seat — not the cards, not their identifiers. | `packages/rules/src/projection.ts`; asserted in `engine.test.ts`, `real-decks.test.ts` and the engine matrix |
@@ -322,7 +323,7 @@ npm run simulate:engine 200 seeded games in 12.99s                         PASS
                         finished 160, unfinished 40, avg 51.09 turns
                         0 invariant failures, 0 projection leaks
 npm run rules:cr:sync  3,162 structured CR rules -> Markdown snapshot      PASS
-npm run rules:engine:export  38,711 cards; 6,500 fully implemented         PASS
+npm run rules:engine:export  38,711 cards; 6,816 fully implemented         PASS
 npm run rules:set:coverage  708 editions; 14.4% membership coverage        PASS
 ```
 
