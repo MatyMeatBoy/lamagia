@@ -183,6 +183,7 @@ const GLOBAL_INDESTRUCTIBLE = () => make({
 const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — Goblin", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Creatures you control have haste." });
 const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "Legendary Creature — Elemental", mana_cost: "{5}{G}{U}{R}", cmc: 8, power: "7", toughness: "5", oracle_text: "Creatures you control have haste.\nCascade\nCascade" });
 const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Creature — Vampire", mana_cost: "{3}{U}{B}", cmc: 5, power: "4", toughness: "4", colors: ["U", "B"], keywords: ["Intimidate"], oracle_text: "Intimidate\nOther creatures you control have intimidate.\nWhenever Vela the Night-Clad or another creature you control leaves the battlefield, each opponent loses 1 life." });
+const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const FLYING_LORD = () => make({ name: "Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control have flying." });
 const OTHER_FLYING_LORD = () => make({ name: "Other Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Other creatures you control have flying." });
 const GAIN_FLYING_LORD = () => make({ name: "Gain Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control gain flying." });
@@ -2091,6 +2092,7 @@ describe("triggered abilities", () => {
     expect(profileOf(RAIDER()).triggers[0]).toMatchObject({ event: "attacks", subject: "self", targetKind: "any" });
     expect(profileOf(UPKEEP_SAGE()).triggers[0]).toMatchObject({ event: "upkeep", subject: "you" });
     expect(profileOf(CREATURE_COMBAT_DRAWER()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", effect: { kind: "draw", amount: 1 } });
+    expect(profileOf(EDRIC()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", optional: true, effect: { kind: "draw", amount: 1 } });
     expect(profileOf(CREATURE_CAST_DRAWER()).triggers[0]).toMatchObject({ event: "spell-cast", subject: "you", spellType: "creature" });
   });
 
@@ -2865,6 +2867,18 @@ describe("combat", () => {
     let game = twoSeatGame([], []);
     game = putOnBattlefield(game, 0, [hasty], { sick: true });
     expect(legalAttackers(game, 0)).toHaveLength(1);
+  });
+
+  it("lets Edric optionally draw after combat damage to an opponent", () => {
+    let game = atAttackers([EDRIC(), BEAR()], []);
+    const attacker = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const beforeHand = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.sourceCard.name).toBe("Edric, Spymaster of Trest");
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.hand.length).toBe(beforeHand + 1);
   });
 
   it("does not let a tapped creature attack", () => {
