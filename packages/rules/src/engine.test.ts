@@ -5275,6 +5275,14 @@ describe("combat restrictions and landwalk", () => {
     name: "River Rider", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3,
     power: "2", toughness: "2", keywords: ["Horsemanship"], oracle_text: "Horsemanship"
   });
+  const SHADOWER = () => make({
+    name: "Dauthi Slayer", type_line: "Creature — Dauthi Soldier", mana_cost: "{B}{B}", cmc: 2,
+    power: "2", toughness: "2", keywords: ["Shadow"], oracle_text: "Shadow"
+  });
+  const SHADOW_BLOCKER = () => make({
+    name: "Dauthi Horror", type_line: "Creature — Dauthi Horror", mana_cost: "{1}{B}", cmc: 2,
+    power: "2", toughness: "1", keywords: ["Shadow"], oracle_text: "Shadow"
+  });
   const CRAWLSPACE = () => make({
     name: "Crawlspace", type_line: "Artifact", mana_cost: "{3}", cmc: 3,
     oracle_text: "No more than one creature can attack you each combat."
@@ -5291,6 +5299,8 @@ describe("combat restrictions and landwalk", () => {
     expect(profileOf(SWAMPWALKER()).fullyImplemented).toBe(true);
     expect(profileOf(HORSEMAN()).keywords).toContain("horsemanship");
     expect(profileOf(HORSEMAN()).fullyImplemented).toBe(true);
+    expect(profileOf(SHADOWER()).keywords).toContain("shadow");
+    expect(profileOf(SHADOWER()).fullyImplemented).toBe(true);
     expect(profileOf(CRAWLSPACE()).fullyImplemented).toBe(true);
   });
 
@@ -5407,6 +5417,18 @@ describe("combat restrictions and landwalk", () => {
     const attacker = permanentNamed(game, 0, "Lu Xun, Scholar General");
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
     expect(legalBlockers(game, 1).map((permanent) => permanent.card.name)).toEqual(["River Rider"]);
+  });
+
+  it("allows shadow combat only between creatures with shadow", () => {
+    let shadowGame = attackWith([SHADOWER()], [BEAR(), SHADOW_BLOCKER()]);
+    const shadowAttacker = permanentNamed(shadowGame, 0, "Dauthi Slayer");
+    shadowGame = applyAction(shadowGame, 0, { type: "declare-attackers", attackers: [{ instanceId: shadowAttacker.instance_id, defender: 1 }] });
+    expect(legalBlockers(shadowGame, 1).map((permanent) => permanent.card.name)).toEqual(["Dauthi Horror"]);
+
+    let groundGame = attackWith([BEAR()], [SHADOW_BLOCKER()]);
+    const groundAttacker = permanentNamed(groundGame, 0, "Grizzly Bears");
+    groundGame = applyAction(groundGame, 0, { type: "declare-attackers", attackers: [{ instanceId: groundAttacker.instance_id, defender: 1 }] });
+    expect(legalBlockers(groundGame, 1)).toHaveLength(0);
   });
 });
 

@@ -3827,6 +3827,9 @@ function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): bo
   // Horsemanship is not flying: only a creature with horsemanship can block
   // one with it (CR 702.31b), and reach does not bypass this restriction.
   if (keywordOf(state, attacker, "horsemanship") && !keywordOf(state, blocker, "horsemanship")) return false;
+  // Shadow works in both directions: a shadow creature can block only a
+  // shadow creature, and can be blocked only by one (CR 702.28b).
+  if (keywordOf(state, attacker, "shadow") !== keywordOf(state, blocker, "shadow")) return false;
   if (keywordOf(state, attacker, "flying") && !keywordOf(state, blocker, "flying") && !keywordOf(state, blocker, "reach")) return false;
   if (keywordOf(state, attacker, "fear") && !blockerProfile.colors.includes("B") && !blockerProfile.types.includes("Artifact")) return false;
   if (keywordOf(state, attacker, "intimidate") && !blockerProfile.types.includes("Artifact")

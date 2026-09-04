@@ -41,7 +41,7 @@ const CARD_TYPES: readonly CardType[] = ["Land", "Creature", "Artifact", "Enchan
 export const ENFORCED_KEYWORDS = [
   "flying", "reach", "first strike", "double strike", "deathtouch", "trample",
   "vigilance", "lifelink", "menace", "defender", "haste", "indestructible",
-  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "prowess", "split second"
+  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "prowess", "shadow", "split second"
 ] as const;
 export type EnforcedKeyword = (typeof ENFORCED_KEYWORDS)[number];
 
