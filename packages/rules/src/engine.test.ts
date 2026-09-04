@@ -52,6 +52,8 @@ const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant",
 const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
 const X_DISCARD_SPELL = () => make({ name: "Scalable Mind Twist", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Target player discards X cards." });
 const LIFE_SPELL = () => make({ name: "Simple Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain 1 life." });
+const ARTIFACT_LIFE_SPELL = () => make({ name: "Artifact Blessing", type_line: "Instant", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 2 life for each artifact you control." });
+const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
@@ -847,6 +849,15 @@ describe("casting", () => {
     const before = game.players[0]!.life;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[0]!.life).toBe(before - 2);
+  });
+
+  it("scales life gain by the number of controlled artifacts", () => {
+    expect(profileOf(ARTIFACT_LIFE_SPELL()).effects).toEqual([{ kind: "gain-life-each-controlled-type", amount: 2, type: "Artifact" }]);
+    let game = readyToCast([ARTIFACT_LIFE_SPELL()], [PLAINS(), PLAINS(), PLAINS()], [], [TEST_ARTIFACT()]);
+    game = putOnBattlefield(game, 0, [TEST_ARTIFACT(), TEST_ARTIFACT()]);
+    const before = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.life).toBe(before + 4);
   });
 
   it("draws for the active player when a draw-step trigger resolves", () => {
