@@ -49,7 +49,7 @@ class OracleCompilerTests(unittest.TestCase):
     def test_preserves_typed_sacrifice_operands_for_workers(self) -> None:
         result = classify("Sacrifice an artifact: Draw a card.")
         self.assertEqual(result["operands"]["sacrifice_types"], ["Artifact"])
-        self.assertEqual(result["primitive_cluster"], "draw|activated|sacrifice-types:Artifact")
+        self.assertEqual(result["primitive_cluster"], "draw|activated|sacrifice-types:Artifact|cost-actions:sacrifice")
 
     def test_preserves_generic_permanent_trigger_subject(self) -> None:
         self.assertEqual(trigger_subject_hint("Whenever a permanent enters the battlefield under your control, draw a card."), "permanent-you-control")
