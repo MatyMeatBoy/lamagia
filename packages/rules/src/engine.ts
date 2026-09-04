@@ -2482,6 +2482,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }))
       };
     }
+    case "return-owned-creatures-to-control": {
+      const moved = allPermanents(state).filter((permanent) => !permanent.card.token
+        && isCreature(cardProfile(permanent.card)) && permanent.card.owner !== permanent.controller);
+      if (!moved.length) return state;
+      const movedIds = new Set(moved.map((permanent) => permanent.instance_id));
+      return {
+        ...state,
+        players: state.players.map((player) => ({
+          ...player,
+          battlefield: player.battlefield
+            .filter((permanent) => !movedIds.has(permanent.instance_id))
+            .concat(moved.filter((permanent) => permanent.card.owner === player.seat)
+              .map((permanent) => ({ ...permanent, controller: player.seat })))
+        }))
+      };
+    }
     case "destroy-random-target-permanent": {
       const candidates = object.targets
         .filter((target): target is Extract<Target, { kind: "permanent" }> => target.kind === "permanent")
