@@ -1656,6 +1656,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         library: [...current.library, card]
       }));
     }
+    case "shuffle-target-card-into-library": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card) return state;
+      const shuffled = shuffle([...player.library, card], state.rngState);
+      const next = withPlayer(state, target.seat, (current) => ({
+        ...current,
+        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id),
+        library: shuffled.items
+      }));
+      return { ...next, rngState: shuffled.state };
+    }
     case "untap-equipped-creature": {
       const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       const attachedId = equipment?.attachedTo;
