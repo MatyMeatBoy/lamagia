@@ -147,6 +147,7 @@ export type SpellEffect =
   | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean }
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   | { readonly kind: "equip-{cost}"; readonly cost: string | "X" }
+  | { readonly kind: "equip-{cost}-static"; readonly cost: string }
   | { readonly kind: "equip-{cost}-<n>"; readonly cost: string, readonly n: number }
   | { readonly kind: "equip-{cost}-variant"; readonly cost: string, readonly variant: number }
   | { readonly kind: "land-enters-tapped"; readonly basic?: boolean }
