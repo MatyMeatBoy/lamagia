@@ -203,6 +203,11 @@ def operand_hints(clause: str, target_text: str | None, search_criterion: dict[s
         discard = re.search(r"\bdiscard\s+(a|an|one|two|three|four|five|\d+)\s+cards?\b", cost_text, re.I)
         if discard:
             result["discard_card_count"] = number_hint(discard.group(1))
+    if ACTIVATED_RE.match(clause.strip()):
+        cost_text = clause.split(":", 1)[0]
+        cost_actions = [action for action in ("discard", "exile", "sacrifice") if re.search(rf"\b{action}\b", cost_text, re.I)]
+        if cost_actions:
+            result["cost_actions"] = cost_actions
     return result
 
 
