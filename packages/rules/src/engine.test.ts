@@ -83,6 +83,8 @@ const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instan
 const BROODING_SAURIAN = () => make({ name: "Brooding Saurian", type_line: "Creature — Lizard", mana_cost: "{2}{G}{G}", cmc: 4, power: "4", toughness: "4", oracle_text: "At the beginning of each end step, each player gains control of all nontoken permanents they own.", scryfall_id: "2fb7f844-edaf-43ef-9121-318baf9ec9ce" });
 const CAPRICIOUS_EFREET = () => make({ name: "Capricious Efreet", type_line: "Creature — Efreet", mana_cost: "{3}{R}{R}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of your upkeep, choose target nonland permanent you control and up to two target nonland permanents you don't control. Destroy one of them at random.", scryfall_id: "9abd2286-23e9-49cd-be53-39423890f35c" });
 const CHARMBREAKER_DEVILS = () => make({ name: "Charmbreaker Devils", type_line: "Creature — Devil", mana_cost: "{5}{R}", cmc: 6, power: "5", toughness: "4", oracle_text: "At the beginning of your upkeep, return an instant or sorcery card at random from your graveyard to your hand.", scryfall_id: "1b9df437-6988-4ddc-80c4-893e11076067" });
+const CHARNELHOARD_WURM = () => make({ name: "Charnelhoard Wurm", type_line: "Creature — Wurm", mana_cost: "{4}{B}{R}{G}", cmc: 7, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample\nWhenever this creature deals damage to an opponent, you may return target card from your graveyard to your hand.", scryfall_id: "4a430fa3-e693-424b-9981-d7d8193445e3" });
+const DAMAGE_TRIGGERER = () => make({ name: "Damage Triggerer", type_line: "Creature — Wurm", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3", oracle_text: "Whenever this creature deals damage to an opponent, you may return target card from your graveyard to your hand.\n{T}: ~ deals 1 damage to any target." });
 const CONJURERS_CLOSET = () => make({ name: "Conjurer's Closet", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.", scryfall_id: "cd1eda60-53e4-44d0-9b2c-7a57395e291f" });
 const TIDAL_FORCE = () => make({ name: "Tidal Force", type_line: "Creature — Elemental", mana_cost: "{5}{U}{U}", cmc: 7, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you may tap or untap target permanent.", scryfall_id: "1b25e262-e2df-4768-b55e-1b7b8d3ee993" });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
@@ -4417,6 +4419,37 @@ describe("activated abilities", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: false });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Transguild Promenade")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Transguild Promenade")).toBe(true);
+  });
+
+  it("fires an any-damage trigger from a permanent source", () => {
+    expect(profileOf(CHARNELHOARD_WURM()).triggers[0]).toMatchObject({
+      event: "deals-damage-to-player", subject: "self", optional: true,
+      targetKind: "card-in-your-graveyard", effect: { kind: "return-target-card-from-graveyard" }
+    });
+    expect(profileOf(CHARNELHOARD_WURM()).fullyImplemented).toBe(true);
+
+    let game = readyOnBoard([DAMAGE_TRIGGERER()], { hold: true });
+    const yard = toHand(0, [BEAR(), FLIER()], "damage-yard");
+    const returned = yard[0]!;
+    const other = yard[1]!;
+    game = stage(game, 0, (player) => ({ graveyard: [returned, other] }));
+    const source = permanentNamed(game, 0, "Damage Triggerer")!;
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0,
+      targets: [{ kind: "player", seat: 1 }]
+    });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.options).toContainEqual({ kind: "graveyard-card", seat: 0, instanceId: returned.instance_id });
+    game = applyAction(game, 0, {
+      type: "choose-trigger-target", sourceId: choice.sourceId,
+      target: { kind: "graveyard-card", seat: 0, instanceId: returned.instance_id }
+    });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.hand.some((card) => card.instance_id === returned.instance_id)).toBe(true);
   });
 
   it("refuses Llanowar Elves the turn it arrives and adds {G} once it can tap", () => {

@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-04T20:15:15.620701+00:00`
+- Generated: `2026-09-04T20:36:23.734686+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **205**
+- Exported profiles in scope: **341**; fully implemented: **206**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -259,7 +259,7 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **205/341** profiles complete; **58** unfinished cards have exactly one unmatched line.
+The engine export currently marks **206/341** profiles complete; **58** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
@@ -269,6 +269,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `c13-creatures-can-attack-you` | 1 | creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you — Propaganda |
 | `c13-forecast-cost-reveal-from` | 1 | forecast - {cost}, reveal ~ from your hand: each player draws <n> card — Skyscribing |
 | `c13-graft` | 1 | graft <n> — Llanowar Reborn |
+| `c13-horsemanship` | 1 | horsemanship — Lu Xun, Scholar General |
 | `c13-landfall-whenever-land-you` | 1 | landfall - whenever <n> land you control enters, you may gain <n> life — Grazing Gladehart |
 | `c13-return-all-permanents-the` | 1 | return all permanents of the color of your choice to their owners' hands — Wash Out |
 | `c13-the-beginning-your-end` | 1 | at the beginning of your end step, you may gain life equal to the power of target creature you control — Wall of Reverence |
@@ -314,7 +315,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `c13-whenever-creature-you-control-2` | 1 | whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target — Where Ancients Tread |
 | `c13-whenever-deals-combat-damage` | 1 | whenever ~ deals combat damage to <n> player, you and that player each draw that many cards — Diviner Spirit |
 | `c13-whenever-deals-combat-damage-2` | 1 | whenever ~ deals combat damage to <n> player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn — Fell Shepherd |
-| `c13-whenever-deals-damage-opponent` | 1 | whenever ~ deals damage to <n> opponent, you may return target card from your graveyard to your hand — Charnelhoard Wurm |
 | `c13-whenever-enters-attacks-deals` | 1 | whenever ~ enters or attacks, it deals <n> damage divided as you choose among <n>, <n>, or <n> targets — Inferno Titan |
 | `c13-whenever-player-draws-card` | 1 | whenever <n> player draws <n> card, ~ deals <n> damage to that player — Spiteful Visions |
 | `c13-whenever-spell-ability-causes` | 1 | whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library — Widespread Panic |

@@ -168,6 +168,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     enforced: "Se dispara por cada golpe que llega a un jugador, incluido el arrollar.",
     path: "M12 2 14.5 9H22l-6 4.5 2.3 7L12 16.2 5.7 20.5 8 13.5 2 9h7.5L12 2z"
   },
+  "deals-damage-to-player": {
+    label: "Al hacer daño a un jugador",
+    rule: "Se dispara cuando este permanente hace daño a un jugador.",
+    enforced: "Incluye daño de combate y daño de otras fuentes.",
+    path: "M3 12h7m0 0-3-3m3 3-3 3m7-7 5 5m0 0-5 5m5-5h4"
+  },
   "becomes-tapped": {
     label: "Al girarse",
     rule: "Se dispara cuando este permanente pasa de enderezado a girado.",

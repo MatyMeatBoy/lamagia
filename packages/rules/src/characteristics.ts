@@ -525,6 +525,7 @@ export type TriggerEvent =
   | "attacks"
   | "blocks"
   | "deals-combat-damage-to-player"
+  | "deals-damage-to-player"
   | "becomes-tapped"
   | "spell-cast"
   | "card-cycled"
@@ -567,6 +568,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   attacks: "habilidad de ataque",
   blocks: "habilidad de bloqueo",
   "deals-combat-damage-to-player": "habilidad de daño de combate",
+  "deals-damage-to-player": "habilidad de daño a un jugador",
   "becomes-tapped": "habilidad de giro",
   "spell-cast": "habilidad de lanzamiento",
  "card-cycled": "habilidad de cycling",
@@ -1622,6 +1624,9 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+one\s+of\s+your\s+opponents,?\s*(.+)$/i },
+  // This event is raised for both combat and noncombat damage from a
+  // permanent, unlike the combat-only templates above (CR 603.2).
+  { event: "deals-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+damage\s+to\s+an?\s+opponent,?\s*(.+)$/i },
 
   // A player is the subject.
   { event: "spell-cast", subject: "you", spellSubtype: "elf", pattern: /^whenever\s+you\s+cast\s+an\s+elf\s+spell,?\s*(.+)$/i },

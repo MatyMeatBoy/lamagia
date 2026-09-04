@@ -1789,5 +1789,7 @@ the appropriate Comprehensive Rules citation and scenario test. Regenerate with
 `npm run rules:engine:export`, `npm run rules:roadmap:c13`, then
 `npm run rules:oracle:plan:c13`; choose randomly among the highest-priority
 unclaimed jobs and re-check `docs/WORK_CLAIMS.md` immediately before editing.
-The current generated plan reports **16** Oracle needs-review card occurrences
-across its unclaimed C13 jobs and **32** one-line candidates in those jobs.
+After refreshing the engine export, the current plan reports **9** Oracle
+needs-review card occurrences across its unclaimed C13 jobs and **39**
+one-line candidates in those jobs. The authoritative C13 export is **206/341
+complete**, with **135** unfinished and **58** one-line-away cards.
