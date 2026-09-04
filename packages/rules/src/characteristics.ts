@@ -318,6 +318,8 @@ export type SpellEffect =
   | { readonly kind: "compound"; readonly effects: readonly SpellEffect[]; readonly targetOffsets?: readonly (number | null)[] }
   | { readonly kind: "incite-rebellion" }
   | { readonly kind: "draw"; readonly amount: number | "X" }
+  /** Both the source controller and combat-damaged player draw the event amount. */
+  | { readonly kind: "draw-combat-damage-participants" }
   /** Draw only if the controller currently has more life than an opponent. */
   | { readonly kind: "draw-if-life-more-than-opponent"; readonly amount: number }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
@@ -1884,6 +1886,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Draw a card for each (white|blue|black|red|green) creature you control$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
     return { effect: { kind: "draw-equal-controlled-color-creature", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };
+  }
+  if (/^You and that player each draw that many cards?$/i.test(text)) {
+    return { effect: { kind: "draw-combat-damage-participants" }, target: "none" };
   }
   if ((match = /^Each player draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);

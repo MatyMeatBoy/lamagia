@@ -471,6 +471,11 @@ const CREATURE_COMBAT_DRAWER = () => make({
   name: "Combat Chronicler", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "Whenever a creature deals combat damage to a player, draw a card."
 });
+const DIVINER_SPIRIT = () => make({
+  name: "Diviner Spirit", type_line: "Creature — Spirit", mana_cost: "{4}{U}", cmc: 5, power: "2", toughness: "4",
+  oracle_text: "Whenever this creature deals combat damage to a player, you and that player each draw that many cards.",
+  scryfall_id: "911b8849-dd0a-4383-8403-ea80227c5d7d"
+});
 const CREATURE_CAST_DRAWER = () => make({
   name: "Creature Scholar", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "Whenever you cast a creature spell, draw a card."
@@ -5403,6 +5408,22 @@ describe("combat", () => {
     expect(choice.sourceCard.name).toBe("Edric, Spymaster of Trest");
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     expect(game.players[0]!.hand.length).toBe(beforeHand + 1);
+  });
+
+  it("draws Diviner Spirit's combat damage amount for both players", () => {
+    let game = atAttackers([DIVINER_SPIRIT()], []);
+    const attacker = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Diviner Spirit")!;
+    const beforeController = game.players[0]!.hand.length;
+    const beforeDamaged = game.players[1]!.hand.length;
+    expect(profileOf(DIVINER_SPIRIT()).triggers[0]).toMatchObject({
+      event: "deals-combat-damage-to-player", subject: "self", effect: { kind: "draw-combat-damage-participants" }, targetKind: "none"
+    });
+
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "postcombat-main" || state.turn > 1);
+
+    expect(game.players[0]!.hand.length).toBe(beforeController + 2);
+    expect(game.players[1]!.hand.length).toBe(beforeDamaged + 2);
   });
 
   it("reveals the top card, puts it into hand, and gains its mana value", () => {
