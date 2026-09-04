@@ -107,6 +107,7 @@ feature name.
 | `c14-oblation-compulsive` | claude-c14 | done | Oblation, Compulsive Research |
 | `c14-devotion-cda-persecutor` | claude-c14 | done | Gray Merchant, Drove of Elves, Abyssal Persecutor |
 | `c14-split-second` | claude-c14 | done | Split second keyword (cosmetic, +8 catalog) |
+| `c14-butcher-condemn` | claude-c14 | done | Butcher of Malakir, Condemn |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |

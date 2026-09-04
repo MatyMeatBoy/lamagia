@@ -1412,6 +1412,37 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "each-opponent-sacrifice-creature": {
+      let next = state;
+      for (const player of state.players) {
+        if (player.seat === controller || player.lost) continue;
+        const creatures = playerAt(next, player.seat).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
+        if (!creatures.length) continue;
+        // Deterministic choice: give up the least valuable creature.
+        const victim = [...creatures].sort((left, right) =>
+          (powerOf(left, next) + toughnessOf(left, next)) - (powerOf(right, next) + toughnessOf(right, next)))[0]!;
+        next = movePermanentToZone(next, victim, "graveyard");
+        next = logged(next, player.seat, `${player.name} sacrifica ${victim.card.name}.`);
+      }
+      return next;
+    }
+    case "bottom-attacker-controller-gains-toughness": {
+      const target = object.targets[0];
+      if (target?.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const toughness = toughnessOf(permanent, state);
+      let next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      next = withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: [...player.library, permanent.card] }));
+      if (toughness > 0 && !playersCantGainLife(next)) {
+        next = withPlayer(next, permanent.controller, (player) => ({ ...player, life: player.life + toughness }));
+        next = raiseEvent(next, { kind: "life-gained", seat: permanent.controller, amount: toughness });
+      }
+      return logged(next, controller, `${sourceName}: ${permanent.card.name} al fondo de la biblioteca; su controlador gana ${Math.max(0, toughness)} vidas.`);
+    }
     case "devotion-drain": {
       // Devotion (CR 700.5): count coloured mana symbols of one colour in the mana costs of permanents you control.
       const devotion = playerAt(state, controller).battlefield.reduce((total, permanent) => {
@@ -3173,10 +3204,10 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       .filter((card) => isLand(cardProfile(card)))
       .map((card) => ({ kind: "graveyard-card", seat: player.seat, instanceId: card.instance_id }) as Target));
   }
-  if (kind === "attacking-or-blocking-creature") {
+  if (kind === "attacking-or-blocking-creature" || kind === "attacking-creature") {
     const inCombat = new Set<string>([
       ...state.combat.attackers.map((entry) => entry.instanceId),
-      ...state.combat.blockers.map((entry) => entry.instanceId)
+      ...(kind === "attacking-creature" ? [] : state.combat.blockers.map((entry) => entry.instanceId))
     ]);
     return allPermanents(state)
       .filter((permanent) => inCombat.has(permanent.instance_id) && isCreature(cardProfile(permanent.card)))

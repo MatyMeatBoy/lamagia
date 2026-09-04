@@ -347,6 +347,8 @@ export type SpellEffect =
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
+  | { readonly kind: "each-opponent-sacrifice-creature" }
+  | { readonly kind: "bottom-attacker-controller-gains-toughness" }
   | { readonly kind: "target-player-discard-unless-land"; readonly discard: number }
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
@@ -474,7 +476,7 @@ export type TargetKind =
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
-  | "attacking-or-blocking-creature"
+  | "attacking-or-blocking-creature" | "attacking-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
   | "creature-power-at-most-4"
@@ -1235,6 +1237,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "enters-battlefield", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
+  { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
@@ -1555,6 +1558,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^each opponent loses X life, where X is your devotion to (white|blue|black|red|green)\.?\s*You gain life equal to the life lost this way\.?$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
     return { effect: { kind: "devotion-drain", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };
+  }
+  if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
+    return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
+  }
+  if (/^Put target attacking creature on the bottom of its owner's library\. Its controller gains life equal to its toughness$/i.test(text)) {
+    return { effect: { kind: "bottom-attacker-controller-gains-toughness" }, target: "attacking-creature" };
   }
   if (/^Regenerate target creature$/i.test(text)) {
     return { effect: { kind: "regenerate-target-creature" }, target: "creature" };
