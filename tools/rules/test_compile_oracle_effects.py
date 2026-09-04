@@ -69,6 +69,14 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(result["operands"]["sacrifice_types"], ["Artifact"])
         self.assertEqual(result["primitive_cluster"], "draw|activated|sacrifice-types:Artifact|cost-context:activated-cost|cost-actions:sacrifice")
 
+    def test_memoizes_repeated_clause_classification(self) -> None:
+        classify.cache_clear()
+        clause = "Whenever a creature enters the battlefield under your control, draw a card."
+        first = classify(clause)
+        second = classify(clause)
+        self.assertIs(first, second)
+        self.assertEqual(classify.cache_info().hits, 1)
+
     def test_preserves_generic_permanent_trigger_subject(self) -> None:
         self.assertEqual(trigger_subject_hint("Whenever a permanent enters the battlefield under your control, draw a card."), "permanent-you-control")
         self.assertEqual(classify("Whenever a permanent enters the battlefield under your control, draw a card.")["trigger_subject"], "permanent-you-control")

@@ -20,6 +20,7 @@ import hashlib
 import json
 import re
 import sqlite3
+from functools import lru_cache
 from math import ceil
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
@@ -263,7 +264,15 @@ def return_target_hint(clause: str) -> str | None:
     return None
 
 
+@lru_cache(maxsize=8192)
 def classify(clause: str) -> dict[str, Any]:
+    """Classify one immutable clause with a bounded per-worker memoization cache.
+
+    Oracle wording is highly repetitive across printings and cards. The
+    returned structure is consumed read-only by the compiler, so caching the
+    pure result avoids re-running the same regex/operand extraction work while
+    keeping output deterministic and bounded for the 2 GB worker budget.
+    """
     lower = clause.lower()
     families = [name for name, pattern in VERB_PATTERNS if re.search(pattern, clause, re.I)]
     kind = "triggered" if TRIGGER_RE.search(clause) else "activated" if ACTIVATED_RE.match(clause) else "static-or-spell"

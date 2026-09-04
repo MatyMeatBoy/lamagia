@@ -1077,3 +1077,8 @@ behavior is covered by `test_worker_plan_colocates_overlapping_oracle_ids`.
 Fork integration policy remains strict: integrate only when **more than 10**
 new commits are available; the current fork tail has exactly 10, so it remains
 queued until at least one additional commit arrives.
+
+The compiler also memoizes identical clause classification with a bounded
+per-worker cache (`lru_cache(8192)`), covered by the Oracle Python tests. This
+removes repeated regex and operand extraction for recurring wording without
+changing the generated IR.
