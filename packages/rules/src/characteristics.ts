@@ -340,6 +340,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
   | { readonly kind: "counter-target-spell-to-battlefield" }
+  /** Counter a spell and schedule the Arcane Denial-style upkeep draws (CR 603.7). */
+  | { readonly kind: "counter-target-spell-with-delayed-draw"; readonly targetAmount: number; readonly casterAmount: number }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
@@ -449,6 +451,8 @@ export interface TriggerDefinition {
   readonly paymentBy?: "opponent";
   /** The event object's controller makes an optional choice, rather than the ability source's controller. */
   readonly choiceBy?: "event-controller";
+  /** Maximum cards for a delayed/up-to draw trigger; the player chooses 0..N on resolution. */
+  readonly drawUpTo?: number;
   readonly condition?:
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number };
@@ -1557,6 +1561,12 @@ function recognizeText(text: string): RecognizedText {
   if (/^Counter target spell\. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard\.?$/i.test(joined)) {
     return {
       effects: [{ kind: "counter-target-spell-to-battlefield" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Counter target spell\. Its controller may draw up to two cards at the beginning of the next turn's upkeep\. You draw a card at the beginning of the next turn's upkeep\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "counter-target-spell-with-delayed-draw", targetAmount: 2, casterAmount: 1 }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell", unimplementedText: [], covered: true
     };
   }

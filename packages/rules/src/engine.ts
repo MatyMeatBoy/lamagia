@@ -159,6 +159,17 @@ export interface TriggerInstance {
   readonly eventPermanentId?: string;
 }
 
+/** A delayed trigger created by a resolving spell (CR 603.7). */
+export interface DelayedDraw {
+  readonly id: string;
+  readonly triggerAtTurn: number;
+  readonly seat: SeatId;
+  readonly sourceCard: GameCard;
+  readonly amount: number;
+  readonly optional: boolean;
+  readonly sourceText: string;
+}
+
 /**
  * One thing that happened in the game.
  *
@@ -210,6 +221,8 @@ export interface GameState {
   readonly stack: readonly StackObject[];
   /** Triggered abilities waiting to be put onto the stack. */
   readonly triggerQueue: readonly TriggerInstance[];
+  /** Delayed draw triggers waiting for their next upkeep. */
+  readonly delayedDraws: readonly DelayedDraw[];
   readonly combat: CombatState;
   readonly log: readonly LogEntry[];
   readonly winnerSeat: SeatId | null;
@@ -295,6 +308,13 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       readonly amount: number;
       readonly remaining: number;
+    }
+  | {
+      readonly type: "draw-cards";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly maxAmount: number;
     };
 
 export type GameAction =
@@ -312,6 +332,7 @@ export type GameAction =
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
   | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean; readonly ordinal?: number }
+  | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
@@ -795,6 +816,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     passedSeats: [],
     stack: [],
     triggerQueue: [],
+    delayedDraws: [],
     combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false },
     log: [],
     winnerSeat: null,
@@ -1864,6 +1886,31 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
     }
+    case "counter-target-spell-with-delayed-draw": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "spell") return state;
+      const targetSpell = state.stack.find((entry) => entry.id === target.stackId);
+      if (!targetSpell) return state;
+      const triggerAtTurn = state.turn + 1;
+      const targetName = targetSpell.card.name;
+      const delayedDraws: readonly DelayedDraw[] = [
+        {
+          id: `${object.id}:target-draw`, triggerAtTurn, seat: targetSpell.controller, sourceCard: object.card,
+          amount: effect.targetAmount, optional: true,
+          sourceText: `${targetName}'s controller may draw up to ${effect.targetAmount} cards at the beginning of the next turn's upkeep.`
+        },
+        {
+          id: `${object.id}:caster-draw`, triggerAtTurn, seat: controller, sourceCard: object.card,
+          amount: effect.casterAmount, optional: false,
+          sourceText: `You draw ${effect.casterAmount} card${effect.casterAmount === 1 ? "" : "s"} at the beginning of the next turn's upkeep.`
+        }
+      ];
+      return {
+        ...state,
+        stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)),
+        delayedDraws: [...state.delayedDraws, ...delayedDraws]
+      };
+    }
     case "counter-target-spell-to-battlefield": {
       const target = object.targets[0];
       if (!target || target.kind !== "spell") return state;
@@ -2083,6 +2130,18 @@ function resolveTop(state: GameState): GameState {
   if (object.trigger) {
     const triggerScry = object.trigger.definition.effect.kind === "scry" ? object.trigger.definition.effect : null;
     if (triggerScry) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerScry.amount, false, false);
+    if (object.trigger.definition.drawUpTo !== undefined) {
+      return {
+        ...next,
+        pendingChoice: {
+          type: "draw-cards",
+          seat: object.controller,
+          sourceId: object.trigger.id,
+          sourceCard: object.trigger.sourceCard,
+          maxAmount: object.trigger.definition.drawUpTo
+        }
+      };
+    }
     if (object.trigger.definition.optional) {
       const payer = object.trigger.definition.paymentBy === "opponent"
         ? (object.trigger.eventController ?? opponentsOf(next, object.controller)[0] ?? object.controller)
@@ -2517,6 +2576,30 @@ function emptyManaPools(state: GameState): GameState {
   return { ...state, players: state.players.map((player) => ({ ...player, manaPool: emptyPool() })) };
 }
 
+function queueDelayedDraws(state: GameState): GameState {
+  const due = state.delayedDraws.filter((delayed) => delayed.triggerAtTurn === state.turn);
+  if (!due.length) return state;
+  const remaining = state.delayedDraws.filter((delayed) => delayed.triggerAtTurn !== state.turn);
+  const triggers: TriggerInstance[] = due.map((delayed) => ({
+    id: delayed.id,
+    controller: delayed.seat,
+    sourcePermanentId: `delayed:${delayed.id}`,
+    sourceCard: delayed.sourceCard,
+    definition: {
+      event: "upkeep",
+      subject: "you",
+      effect: { kind: "draw", amount: delayed.amount },
+      optional: delayed.optional,
+      targetKind: "none",
+      sourceText: delayed.sourceText,
+      ...(delayed.optional ? { drawUpTo: delayed.amount } : {})
+    },
+    cause: `${delayed.sourceCard.name}: delayed upkeep draw`,
+    eventController: delayed.seat
+  }));
+  return { ...state, delayedDraws: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
+}
+
 function beginStep(state: GameState, step: TurnStep): GameState {
   let next: GameState = { ...state, step, passedSeats: [], prioritySeat: state.activeSeat };
   next = emptyManaPools(next);
@@ -2586,7 +2669,10 @@ function beginStep(state: GameState, step: TurnStep): GameState {
 
   // Turn-structure triggers are raised as the step begins, before priority
   // opens, so they are already queued when a player would first receive it.
-  if (step === "upkeep") next = raiseEvent(next, { kind: "upkeep", activeSeat: next.activeSeat });
+  if (step === "upkeep") {
+    next = queueDelayedDraws(next);
+    next = raiseEvent(next, { kind: "upkeep", activeSeat: next.activeSeat });
+  }
   if (step === "draw") next = raiseEvent(next, { kind: "draw-step", activeSeat: next.activeSeat });
   if (step === "end") next = raiseEvent(next, { kind: "end-step", activeSeat: next.activeSeat });
 
@@ -2712,6 +2798,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.sourceCard.name}: coloca esta carta en el fondo.`
         });
       });
+      return actions;
+    }
+    if (choice.type === "draw-cards") {
+      const maxAmount = Math.min(choice.maxAmount, player.library.length);
+      for (let amount = 0; amount <= maxAmount; amount += 1) {
+        actions.push({
+          action: { type: "choose-draw", sourceId: choice.sourceId, amount },
+          label: amount === 0 ? "No robar" : `Robar ${amount} carta${amount === 1 ? "" : "s"}`,
+          note: `${choice.sourceCard.name}: puedes robar hasta ${choice.maxAmount}.`
+        });
+      }
       return actions;
     }
     if (choice.type === "discard-cards") {
@@ -3637,6 +3734,20 @@ function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAct
   return logged(next, seat, `${player.name} termina de adivinar.`);
 }
 
+function applyChooseDraw(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-draw" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "draw-cards" || choice.seat !== seat) throw new Error("No tienes una elección de robo pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes resolver la elección de robo pendiente.");
+  const maxAmount = Math.min(choice.maxAmount, playerAt(state, seat).library.length);
+  if (!Number.isInteger(action.amount) || action.amount < 0 || action.amount > maxAmount) {
+    throw new Error("Debes elegir una cantidad válida de cartas para robar.");
+  }
+  const next = drawCards({ ...state, pendingChoice: null }, seat, action.amount);
+  return logged(next, seat, action.amount === 0
+    ? `${playerAt(next, seat).name} no roba cartas.`
+    : `${playerAt(next, seat).name} elige robar ${action.amount} carta${action.amount === 1 ? "" : "s"}.`);
+}
+
 function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readonly AttackerDeclaration[]): GameState {
   if (state.step !== "declare-attackers" || seat !== state.activeSeat) throw new Error("No es tu paso de declarar atacantes.");
   if (state.combat.attackersDeclared) throw new Error("Los atacantes ya fueron declarados.");
@@ -3877,6 +3988,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-scry": next = applyChooseScry(state, seat, action); break;
+    case "choose-draw": next = applyChooseDraw(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
