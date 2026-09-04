@@ -2140,6 +2140,12 @@ describe("casting", () => {
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === fires.instance_id)).toBe(false);
   });
 
+  it("does not offer Goblin Bombardment without a creature to sacrifice", () => {
+    const game = readyToCast([], [GOBLIN_BOMBARDMENT()]);
+    const bombardment = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Bombardment")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === bombardment.instance_id)).toBe(false);
+  });
+
   it("reuses the landfall trigger subject when a land enters", () => {
     let game = readyToCast([LANDFALL_BEAST(), FOREST()], [FOREST(), FOREST(), FOREST()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
