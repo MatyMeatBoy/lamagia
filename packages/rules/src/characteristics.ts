@@ -415,6 +415,7 @@ export type TargetKind =
   | "creature-power-at-most-4"
   | "creature-toughness-at-most-4"
   | "creature-with-defender"
+  | "creature-with-deathtouch"
   | "card-in-your-graveyard" | "creature-card-in-your-graveyard" | "artifact-card-in-your-graveyard" | "enchantment-card-in-your-graveyard" | "land-card-in-a-graveyard" | `subtype:${string}` | "none";
   
 
@@ -1322,6 +1323,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonblack-creature" };
   if (/^Destroy target creature with flying$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-flying" };
   if (/^Destroy target creature with defender$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-defender" };
+  if (/^Destroy target creature with deathtouch$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-deathtouch" };
   if (/^Destroy target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };
   if (/^Destroy target creature with toughness 4 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-least-4" };

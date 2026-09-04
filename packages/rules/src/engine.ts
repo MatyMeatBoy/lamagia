@@ -2559,13 +2559,14 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     .filter((permanent) => !keywordOf(state, permanent, "shroud"));
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
-    if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
       if (!isCreature(profile)) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
       if (kind === "creature-with-flying" && !keywordOf(state, permanent, "flying")) return false;
       if (kind === "creature-with-defender" && !keywordOf(state, permanent, "defender")) return false;
+      if (kind === "creature-with-deathtouch" && !keywordOf(state, permanent, "deathtouch")) return false;
       if (kind === "creature-power-at-least-5" && powerOf(permanent, state) < 5) return false;
       if (kind === "creature-power-at-most-4" && powerOf(permanent, state) > 4) return false;
       if (kind === "creature-toughness-at-least-4" && toughnessOf(permanent, state) < 4) return false;
