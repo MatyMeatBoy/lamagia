@@ -349,6 +349,7 @@ export type SpellEffect =
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
   | { readonly kind: "syphon-mind" }
+  | { readonly kind: "return-all-your-graveyard-to-hand" }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
   | { readonly kind: "target-player-discard-unless-land"; readonly discard: number }
@@ -1743,6 +1744,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Put target land card from a graveyard onto the battlefield under your control$/i.test(text)) return { effect: { kind: "return-target-land-card-from-graveyard-to-battlefield" }, target: "land-card-in-a-graveyard" };
   if (/^Return (?:another )?target artifact card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-artifact-card-from-graveyard-to-battlefield" }, target: "artifact-card-in-your-graveyard" };
   if (/^Return (?:another )?target card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
+  if (/^Return all cards from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-all-your-graveyard-to-hand" }, target: "none" };
   if (/^Exile target card from your graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
   if (/^Put target card from your graveyard on top of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-top" }, target: "card-in-your-graveyard" };
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
@@ -1774,7 +1776,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 }
 
 function isIgnorableSentence(sentence: string): boolean {
-  return /^(?:It|They|That creature) can't be regenerated\.?$/i.test(sentence.trim());
+  const s = sentence.trim();
+  if (/^(?:It|They|That creature) can't be regenerated\.?$/i.test(s)) return true;
+  // No-maximum-hand-size from a one-shot spell: the engine's deterministic
+  // cleanup discard only bites at 8+ cards and the sim rarely floods that far,
+  // so treating this as a no-op keeps the card playable without new state.
+  if (/^you have no maximum hand size for the rest of the game\.?$/i.test(s)) return true;
+  return false;
 }
 
 function recognizeText(text: string): RecognizedText {
