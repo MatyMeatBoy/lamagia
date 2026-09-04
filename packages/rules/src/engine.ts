@@ -1199,6 +1199,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const sign = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
       return logged(next, controller, `${sourceName} obtiene ${sign(effect.power)}/${sign(effect.toughness)} hasta el final del turno.`);
     }
+    // The card's own move to exile / library is handled in resolveTop once every
+    // other effect has resolved.
+    case "exile-self":
+    case "shuffle-self-into-library":
+      return state;
     case "scry": {
       const player = playerAt(state, controller);
       const pending = player.library.slice(0, effect.amount).map((card) => card.instance_id);
@@ -1646,6 +1651,14 @@ function resolveTop(state: GameState): GameState {
   for (const effect of profile.effects) next = applyEffect(next, object, effect);
   if (!profile.effects.length) {
     next = logged(next, object.controller, `${object.card.name} se resuelve sin efecto: su texto todavía no está implementado.`);
+  }
+  const retire = profile.effects.find((effect) => effect.kind === "exile-self" || effect.kind === "shuffle-self-into-library");
+  if (retire?.kind === "exile-self") {
+    return withPlayer(next, object.card.owner, (player) => ({ ...player, exile: [...player.exile, object.card] }));
+  }
+  if (retire?.kind === "shuffle-self-into-library") {
+    const shuffled = shuffle([...playerAt(next, object.card.owner).library, object.card], next.rngState);
+    return withPlayer({ ...next, rngState: shuffled.state }, object.card.owner, (player) => ({ ...player, library: shuffled.items }));
   }
   next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
   return next;

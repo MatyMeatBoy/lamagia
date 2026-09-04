@@ -192,6 +192,8 @@ const WHIPFLARE = () => make({ name: "Whipflare", type_line: "Sorcery", mana_cos
 const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature — Bear", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2" });
 const MYR_RETRIEVER = () => make({ name: "Myr Retriever", type_line: "Artifact Creature — Myr", mana_cost: "{2}", cmc: 2, power: "1", toughness: "1", oracle_text: "When Myr Retriever dies, return another target artifact card from your graveyard to your hand." });
 const JALUM_TOME = () => make({ name: "Jalum Tome", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Draw a card, then discard a card." });
+const EXILE_SELF_SPELL = () => make({ name: "Vanishing Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Vanishing Bolt deals 2 damage to any target. Exile Vanishing Bolt." });
+const SHUFFLE_SELF_SPELL = () => make({ name: "Recurring Nova", type_line: "Sorcery", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 5 life. Shuffle Recurring Nova into its owner's library." });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
@@ -1177,6 +1179,27 @@ describe("scry and combat-restricted damage", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     game = passUntil(game, (state) => state.players[1]!.battlefield.length <= 1 || state.turn > 1);
     expect(game.players[1]!.battlefield.map((permanent) => permanent.card.name)).toEqual(["Iron Bear"]);
+  });
+
+  it("sends a spell that exiles or reshuffles itself to the right zone", () => {
+    expect(profileOf(EXILE_SELF_SPELL()).effects).toContainEqual({ kind: "exile-self" });
+    expect(profileOf(EXILE_SELF_SPELL()).fullyImplemented).toBe(true);
+    expect(profileOf(SHUFFLE_SELF_SPELL()).fullyImplemented).toBe(true);
+
+    let game = ready([EXILE_SELF_SPELL()], [MOUNTAIN()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = passUntil(game, (state) => state.players[1]!.life < 40 || state.turn > 1);
+    expect(game.players[1]!.life).toBe(38);
+    expect(game.players[0]!.exile.some((card) => card.name === "Vanishing Bolt")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Vanishing Bolt")).toBe(false);
+
+    let game2 = ready([SHUFFLE_SELF_SPELL()], [PLAINS(), PLAINS(), PLAINS()]);
+    const libBefore = game2.players[0]!.library.length;
+    game2 = applyAction(game2, 0, { type: "cast", cardId: "hand-0" });
+    game2 = passUntil(game2, (state) => state.players[0]!.life > 40 || state.turn > 1);
+    expect(game2.players[0]!.life).toBe(45);
+    expect(game2.players[0]!.library.length).toBe(libBefore + 1);
+    expect(game2.players[0]!.graveyard.some((card) => card.name === "Recurring Nova")).toBe(false);
   });
 
   it("draws then makes the controller discard for a {cost}: draw, then discard ability", () => {

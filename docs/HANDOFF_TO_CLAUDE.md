@@ -777,3 +777,12 @@ Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
 (206 rules tests); `npm run rules:test:oracle` PASS; `npm run simulate:engine`
 PASS (200 games, 160 finished, 0 failures). Catalog 7,210 -> 7,273; Commander
 2014 94 -> 97/337 (Myr Retriever, Junk Diver, Jalum Tome).
+
+### C14 race batch: spells that exile or reshuffle themselves
+
+`exile-self` / `shuffle-self-into-library` effects for `Exile ~` and `Shuffle ~
+into its owner's library` as trailing sentences; resolveTop routes the spell
+card to that zone instead of the graveyard once its other effects resolve.
+
+Validation: check PASS; 207 rules tests; oracle 22 OK; simulate:engine 200 games
+0 failures. Catalog 7,273 -> 7,277; Commander 2014 98/337.

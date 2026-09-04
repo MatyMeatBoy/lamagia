@@ -246,6 +246,8 @@ export type SpellEffect =
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "scry"; readonly amount: number; readonly thenDraw?: number }
   | { readonly kind: "draw-then-discard"; readonly draw: number; readonly discard: number }
+  | { readonly kind: "exile-self" }
+  | { readonly kind: "shuffle-self-into-library" }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
@@ -1110,6 +1112,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null && amount > 0) return { effect: { kind: "scry", amount }, target: "none" };
   }
+  if (/^Exile ~$/i.test(text)) return { effect: { kind: "exile-self" }, target: "none" };
+  if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-self-into-library" }, target: "none" };
   if ((match = /^Draw (\w+) cards?, then discard (\w+) cards?$/i.exec(text))) {
     const draw = toNumber(match[1]);
     const discard = toNumber(match[2]);
