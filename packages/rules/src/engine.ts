@@ -1240,6 +1240,7 @@ function triggerMatches(
 
   if (event.kind === "spell-cast") {
     if (definition.spellType === "creature" && !isCreature(cardProfile(event.card))) return false;
+    if (definition.spellType === "noncreature" && isCreature(cardProfile(event.card))) return false;
     if (definition.spellType === "instant-or-sorcery"
       && !cardProfile(event.card).types.some((type) => type === "Instant" || type === "Sorcery")) return false;
     if (subject === "you") return event.controller === watcher.controller;

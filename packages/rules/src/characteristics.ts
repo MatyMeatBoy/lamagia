@@ -41,7 +41,7 @@ const CARD_TYPES: readonly CardType[] = ["Land", "Creature", "Artifact", "Enchan
 export const ENFORCED_KEYWORDS = [
   "flying", "reach", "first strike", "double strike", "deathtouch", "trample",
   "vigilance", "lifelink", "menace", "defender", "haste", "indestructible",
-  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "split second"
+  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "prowess", "split second"
 ] as const;
 export type EnforcedKeyword = (typeof ENFORCED_KEYWORDS)[number];
 
@@ -631,7 +631,7 @@ export interface TriggerDefinition {
     | { readonly kind: "creature-died-this-turn" }
     | { readonly kind: "cast-from-hand" }
     | { readonly kind: "entering-power-at-most"; readonly amount: number };
-  readonly spellType?: "creature" | "instant-or-sorcery";
+  readonly spellType?: "creature" | "noncreature" | "instant-or-sorcery";
   readonly spellColor?: string;
   readonly spellSubtype?: string;
   readonly nontoken?: boolean;
@@ -2989,6 +2989,14 @@ export function cardProfile(card: CardData): CardProfile {
   const lowerKeywords = (card.keywords ?? []).map((keyword) => keyword.toLowerCase());
   if (lowerKeywords.includes("undying")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "+1/+1" }, optional: false, targetKind: "none", sourceText: "Undying" });
   if (lowerKeywords.includes("persist")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "-1/-1" }, optional: false, targetKind: "none", sourceText: "Persist" });
+  // Prowess (CR 702.108): a noncreature spell cast by this creature's
+  // controller creates a temporary +1/+1 self-trigger. Keep it on the same
+  // event/effect path used by ordinary triggered card text.
+  if (lowerKeywords.includes("prowess")) synthesizedTriggers.push({
+    event: "spell-cast", subject: "you", spellType: "noncreature",
+    effect: { kind: "modify-source-creature", power: 1, toughness: 1 },
+    optional: false, targetKind: "none", sourceText: "Prowess"
+  });
   const graftAmount = recognized.graftAmount ?? null;
   if (graftAmount !== null) synthesizedTriggers.push({
     event: "enters-battlefield", subject: "another-creature",

@@ -2799,6 +2799,31 @@ describe("casting", () => {
     expect(game.stack.some((entry) => entry.trigger?.definition.subject === "each-player")).toBe(true);
   });
 
+  it("fires Prowess only for noncreature spells and pumps its source", () => {
+    const prowess = make({
+      name: "Monk", type_line: "Creature — Human Monk", mana_cost: "{1}{U}", cmc: 2,
+      power: "1", toughness: "1", keywords: ["Prowess"], oracle_text: "Prowess"
+    });
+    expect(profileOf(prowess)).toMatchObject({
+      keywords: ["prowess"],
+      triggers: [{ event: "spell-cast", subject: "you", spellType: "noncreature", targetKind: "none", effect: { kind: "modify-source-creature", power: 1, toughness: 1 } }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([BOLT()], [prowess, MOUNTAIN()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    const trigger = game.stack.find((entry) => entry.trigger?.definition.sourceText === "Prowess");
+    expect(trigger?.trigger?.definition.spellType).toBe("noncreature");
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0
+      && state.players[0]!.battlefield.find((permanent) => permanent.card.name === "Monk")?.powerModifier === 1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Monk")?.toughnessModifier).toBe(1);
+
+    let creatureSpell = readyToCast([BEAR()], [prowess, FOREST(), FOREST()]);
+    creatureSpell = { ...creatureSpell, players: creatureSpell.players.map((player) => ({ ...player, autoPass: false })) };
+    creatureSpell = applyAction(creatureSpell, 0, { type: "cast", cardId: "hand-0" });
+    expect(creatureSpell.stack.some((entry) => entry.trigger?.definition.sourceText === "Prowess")).toBe(false);
+  });
+
   it("returns a targeted artifact permanent to its owner's hand", () => {
     expect(profileOf(ARTIFACT_BOUNCE()).targetKind).toBe("artifact");
     let game = readyToCast([ARTIFACT_BOUNCE()], [ISLAND(), ISLAND()], [], [TEST_ARTIFACT()]);
