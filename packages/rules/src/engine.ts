@@ -1158,6 +1158,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
       return state;
     }
+    case "damage-controller-equal-hand": {
+      return dealDamageToPlayer(state, controller, playerAt(state, controller).hand.length, sourceName);
+    }
     case "modify-all-creatures": {
       const next = modifyCreatures(state, effect.power, effect.toughness, () => true);
       return logged(next, controller, `${sourceName} modifica a todas las criaturas hasta el final del turno.`);
