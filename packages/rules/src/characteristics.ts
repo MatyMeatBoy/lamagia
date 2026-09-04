@@ -1269,6 +1269,13 @@ function parseMultiBasicSearch(text: string): SpellEffect | null {
   return null;
 }
 
+function parseSacrificePowerToken(text: string): SpellEffect | null {
+  const suffix = /,?\s*where x is the sacrificed creature's power$/i;
+  if (!suffix.test(text.trim())) return null;
+  const base = parseCreateToken(text.trim().replace(suffix, ""));
+  return base?.kind === "create-token" ? { ...base, amount: "X" } : null;
+}
+
 function parseOpponentHandScaledToken(text: string): SpellEffect | null {
   const suffix = /,?\s*where x is the number of your opponents with four or more cards in hand$/i;
   if (!suffix.test(text.trim())) return null;
