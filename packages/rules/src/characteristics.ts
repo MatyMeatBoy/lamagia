@@ -372,6 +372,7 @@ export type SpellEffect =
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
   | { readonly kind: "target-cant-block" }
+  | { readonly kind: "add-mana"; readonly pool: Readonly<Record<string, number>> }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
