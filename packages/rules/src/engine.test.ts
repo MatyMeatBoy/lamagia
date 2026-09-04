@@ -103,6 +103,7 @@ const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery"
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
+const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
@@ -1127,6 +1128,10 @@ describe("casting", () => {
 
   it("mills every player with the same deterministic amount", () => {
     expect(profileOf(ALL_MILL_SPELL()).effects).toEqual([{ kind: "mill-each-player", amount: 2 }]);
+  });
+
+  it("separates player-only damage from creature-and-player sweepers", () => {
+    expect(profileOf(ALL_PLAYER_DAMAGE()).effects).toEqual([{ kind: "damage-each-player", amount: 2 }]);
   });
 
   it("deals spell damage to every creature and lets state-based actions clear lethal damage", () => {

@@ -272,6 +272,7 @@ export type SpellEffect =
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean }
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
+  | { readonly kind: "damage-each-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-nonflying-creatures-and-players"; readonly amount: number | "X" }
   /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
@@ -1100,6 +1101,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "draw-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw-target-player", amount: "X" }, target: "player" };
+  }
+  if ((match = /^(?:~|This spell) deals (\w+) damage to each player$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-each-player", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-each-player", amount: "X" }, target: "none" };
   }
   if ((match = /^(?:~|Molten Disaster) deals (\w+) damage to each creature without flying and each player$/i.exec(text))) {
     const amount = toNumber(match[1]);
