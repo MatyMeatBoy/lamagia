@@ -106,6 +106,91 @@ export interface CyclingSearchAbility {
   readonly text: string;
 }
 
+/**
+ * Printed combat restrictions and evasion the engine enforces at declaration time.
+ *
+ * These are static abilities, not effects: nothing goes on the stack, they simply
+ * change which declarations are legal (CR 509.1a for blocking restrictions,
+ * CR 508.1d for attack requirements). Keeping them in one structure means
+ * `legalAttackers`, `legalBlockers` and `canBlock` all read the same source.
+ */
+export interface CombatRules {
+  /** "~ can't attack" (CR 506.3a). Distinct from defender only in wording. */
+  readonly cannotAttack: boolean;
+  /** "~ can't block" (CR 509.1a). */
+  readonly cannotBlock: boolean;
+  /** "~ attacks each combat if able" (CR 508.1d). */
+  readonly mustAttack: boolean;
+  /**
+   * "~ can block only creatures with flying" and its siblings. The creature is
+   * still a legal blocker, but only against an attacker that has the keyword.
+   */
+  readonly blocksOnlyWithKeyword: EnforcedKeyword | null;
+  /**
+   * Landwalk (CR 702.14): unblockable while the defending player controls a land
+   * with one of these subtypes. Stored as subtypes rather than as keywords
+   * because the check is about the defender's board, not the attacker's.
+   */
+  readonly landwalk: readonly string[];
+}
+
+export const NO_COMBAT_RULES: CombatRules = {
+  cannotAttack: false,
+  cannotBlock: false,
+  mustAttack: false,
+  blocksOnlyWithKeyword: null,
+  landwalk: []
+};
+
+/** Basic land types landwalk can name, plus the two most common nonbasic ones. */
+const LANDWALK_SUBTYPES = ["plains", "island", "swamp", "mountain", "forest", "desert", "legendary"] as const;
+
+/**
+ * Reads the closed set of combat restriction lines.
+ *
+ * Returns null when the line is not a combat restriction at all, so the caller
+ * can keep looking; returning an empty rule set would silently swallow text.
+ */
+function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
+  const text = line.trim().replace(/\.$/, "").toLowerCase();
+
+  if (/^~ can't attack$/.test(text)) return { cannotAttack: true };
+  if (/^~ can't block$/.test(text)) return { cannotBlock: true };
+  if (/^~ can't attack or block$/.test(text)) return { cannotAttack: true, cannotBlock: true };
+  if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
+
+  const blocksOnly = /^~ can block only creatures with (flying|reach|defender|flash|haste|menace|trample|vigilance|lifelink|deathtouch|first strike|double strike|indestructible|hexproof|shroud)$/.exec(text);
+  if (blocksOnly) return { blocksOnlyWithKeyword: blocksOnly[1] as EnforcedKeyword };
+
+  // Landwalk is printed as one word: "swampwalk", "islandwalk", "legendary landwalk".
+  const walk = new RegExp(`^(?:(${LANDWALK_SUBTYPES.join("|")})walk|(${LANDWALK_SUBTYPES.join("|")}) landwalk)$`).exec(text);
+  if (walk) return { landwalk: [(walk[1] ?? walk[2])!] };
+
+  return null;
+}
+
+/**
+ * Folds every recognised combat-restriction line of a card into one rule set.
+ *
+ * `lines` is the whole normalized Oracle body; anything not recognised is left
+ * for the caller to report as unimplemented.
+ */
+export function parseCombatRules(lines: readonly string[]): { rules: CombatRules; consumed: ReadonlySet<string> } {
+  let rules = NO_COMBAT_RULES;
+  const consumed = new Set<string>();
+  for (const line of lines) {
+    const parsed = parseCombatRuleLine(line);
+    if (!parsed) continue;
+    rules = {
+      ...rules,
+      ...parsed,
+      landwalk: [...rules.landwalk, ...(parsed.landwalk ?? [])]
+    };
+    consumed.add(line);
+  }
+  return { rules, consumed };
+}
+
 /** Static bonuses granted by an Equipment to its equipped creature. */
 export interface EquipmentModification {
   readonly power: number;
@@ -306,6 +391,8 @@ export interface CardProfile {
   readonly triggers: readonly TriggerDefinition[];
   readonly targetKind: TargetKind;
   readonly entersTapped: EntersTappedRule;
+  /** Printed attack/block restrictions and landwalk evasion. */
+  readonly combatRules: CombatRules;
   /** Counters with which this permanent enters the battlefield. */
   readonly entersWithCounters: readonly CounterCost[];
   readonly isPermanent: boolean;
@@ -1089,6 +1176,7 @@ function recognizeText(text: string): RecognizedText {
   const triggers: TriggerDefinition[] = [];
   const activatedAbilities: ActivatedAbility[] = [];
   const modalChoices: ModalChoice[] = [];
+  const combatRuleLines = parseCombatRules(body.map((entry) => entry.text)).consumed;
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
 
@@ -1125,6 +1213,9 @@ function recognizeText(text: string): RecognizedText {
     if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^level\s+\d+(?:-\d+|\+)?$/i.test(line) || /^\d+\/\d+$/.test(line)) continue;
     if (parseEquipmentModification(line)) continue;
+    // Combat restrictions and landwalk are static: they change which
+    // declarations are legal rather than resolving anything (CR 508.1d, 509.1a).
+    if (combatRuleLines.has(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -1207,6 +1298,7 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
+  const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
 
   const profile: CardProfile = {
     name: card.name,
@@ -1249,6 +1341,7 @@ export function cardProfile(card: CardData): CardProfile {
     effects: recognized.effects,
     triggers: recognized.triggers,
     targetKind: recognized.targetKind,
+    combatRules,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     entersWithCounters: isPermanent ? parseEntersWithCounters(text) : [],
     isPermanent,

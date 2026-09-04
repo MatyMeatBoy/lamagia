@@ -1724,6 +1724,121 @@ describe("commander rules", () => {
 // Combat
 // ---------------------------------------------------------------------------
 
+describe("combat restrictions and landwalk", () => {
+  const NO_BLOCKER = () => make({
+    name: "Gutter Skulk", type_line: "Creature — Zombie", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2",
+    oracle_text: "Gutter Skulk can't block."
+  });
+  const FLYING_ONLY_BLOCKER = () => make({
+    name: "Cloud Sentry", type_line: "Creature — Wall", mana_cost: "{2}", cmc: 2, power: "1", toughness: "4",
+    keywords: ["Reach"],
+    oracle_text: "Reach\nCloud Sentry can block only creatures with flying."
+  });
+  const MUST_ATTACK = () => make({
+    name: "Reckless Berserker", type_line: "Creature — Goblin", mana_cost: "{1}{R}", cmc: 2, power: "3", toughness: "1",
+    oracle_text: "Reckless Berserker attacks each combat if able."
+  });
+  const SWAMPWALKER = () => make({
+    name: "Bog Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
+    oracle_text: "Swampwalk"
+  });
+
+  it("reads each restriction off the printed line", () => {
+    expect(profileOf(NO_BLOCKER()).combatRules).toMatchObject({ cannotBlock: true, mustAttack: false });
+    expect(profileOf(FLYING_ONLY_BLOCKER()).combatRules.blocksOnlyWithKeyword).toBe("flying");
+    expect(profileOf(MUST_ATTACK()).combatRules.mustAttack).toBe(true);
+    expect(profileOf(SWAMPWALKER()).combatRules.landwalk).toEqual(["swamp"]);
+    // A recognised restriction is not left over as unimplemented text.
+    expect(profileOf(NO_BLOCKER()).fullyImplemented).toBe(true);
+    expect(profileOf(SWAMPWALKER()).fullyImplemented).toBe(true);
+  });
+
+  /** Both seats staged, attackers already declared by seat 0. */
+  function attackWith(attackers: CardData[], defenders: CardData[], defenderLands: CardData[] = []) {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: [] }));
+    game = stage(game, 1, () => ({ hand: [] }));
+    game = putOnBattlefield(game, 0, attackers);
+    if (defenders.length) game = putOnBattlefield(game, 1, defenders);
+    if (defenderLands.length) game = putOnBattlefield(game, 1, defenderLands);
+    return passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+  }
+
+  function permanentNamed(game: GameState, seat: SeatId, name: string) {
+    return game.players[seat]!.battlefield.find((permanent) => permanent.card.name === name)!;
+  }
+
+  it("keeps a creature that can't block out of the legal blockers", () => {
+    let game = attackWith([BEAR()], [NO_BLOCKER(), WALL()]);
+    const bear = permanentNamed(game, 0, "Grizzly Bears");
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
+    const blockers = legalBlockers(game, 1).map((permanent) => permanent.card.name);
+    expect(blockers).toContain("Stone Wall");
+    expect(blockers).not.toContain("Gutter Skulk");
+    const skulk = permanentNamed(game, 1, "Gutter Skulk");
+    expect(() => applyAction(game, 1, { type: "declare-blockers", blockers: [{ instanceId: skulk.instance_id, attackerId: bear.instance_id }] }))
+      .toThrow(/no puede bloquear/i);
+  });
+
+  it("lets a flying-only blocker stop a flier and nothing else", () => {
+    let ground = attackWith([BEAR()], [FLYING_ONLY_BLOCKER()]);
+    const bear = permanentNamed(ground, 0, "Grizzly Bears");
+    ground = applyAction(ground, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
+    expect(legalBlockers(ground, 1)).toHaveLength(0);
+
+    let air = attackWith([FLIER()], [FLYING_ONLY_BLOCKER()]);
+    const crow = permanentNamed(air, 0, "Storm Crow");
+    air = applyAction(air, 0, { type: "declare-attackers", attackers: [{ instanceId: crow.instance_id, defender: 1 }] });
+    expect(legalBlockers(air, 1).map((permanent) => permanent.card.name)).toEqual(["Cloud Sentry"]);
+  });
+
+  it("refuses a declaration that leaves out a creature which must attack", () => {
+    const game = attackWith([MUST_ATTACK(), BEAR()], []);
+    const berserker = permanentNamed(game, 0, "Reckless Berserker");
+    const bear = permanentNamed(game, 0, "Grizzly Bears");
+    expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [] }))
+      .toThrow(/ataca en cada combate/i);
+    expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] }))
+      .toThrow(/ataca en cada combate/i);
+    // Nobody owes a decision after the declaration, so the whole combat settles:
+    // assert the attack actually happened rather than a mid-combat snapshot.
+    const legal = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: berserker.instance_id, defender: 1 }] });
+    expect(legal.log.some((entry) => entry.text.includes("ataca con Reckless Berserker"))).toBe(true);
+    expect(legal.players[1]!.life).toBe(37);
+  });
+
+  it("does not require an attack from a creature that cannot make one", () => {
+    // Summoning sickness makes the requirement inapplicable (CR 508.1d), so the
+    // bear may attack alone and the sick berserker is not missing from anything.
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: [] }));
+    game = stage(game, 1, () => ({ hand: [] }));
+    game = putOnBattlefield(game, 0, [BEAR()]);
+    game = putOnBattlefield(game, 0, [MUST_ATTACK()], { sick: true });
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    expect(legalAttackers(game, 0).map((permanent) => permanent.card.name)).toEqual(["Grizzly Bears"]);
+    const bear = permanentNamed(game, 0, "Grizzly Bears");
+    const played = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
+    expect(played.players[1]!.life).toBe(38);
+  });
+
+  it("makes a swampwalker unblockable only against a defender with a Swamp", () => {
+    let dry = attackWith([SWAMPWALKER()], [BEAR()], [FOREST()]);
+    const stalker = permanentNamed(dry, 0, "Bog Stalker");
+    dry = applyAction(dry, 0, { type: "declare-attackers", attackers: [{ instanceId: stalker.instance_id, defender: 1 }] });
+    expect(legalBlockers(dry, 1).map((permanent) => permanent.card.name)).toEqual(["Grizzly Bears"]);
+
+    let wet = attackWith([SWAMPWALKER()], [BEAR()], [SWAMP()]);
+    const walker = permanentNamed(wet, 0, "Bog Stalker");
+    wet = applyAction(wet, 0, { type: "declare-attackers", attackers: [{ instanceId: walker.instance_id, defender: 1 }] });
+    expect(legalBlockers(wet, 1)).toHaveLength(0);
+    // The damage still lands because nothing could be declared as a blocker.
+    wet = passUntil(wet, (state) => state.players[1]!.life < 40);
+    expect(wet.players[1]!.life).toBe(38);
+  });
+});
+
+
 describe("combat", () => {
   function atAttackers(attacker: CardData[], defender: CardData[]) {
     let game = twoSeatGame([], []);
