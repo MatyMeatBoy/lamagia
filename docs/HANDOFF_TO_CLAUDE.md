@@ -886,3 +886,14 @@ finished 0 failures. Catalog 7,689 -> 7,728; Commander 2014 113 -> 115/337.
 
 Validation: check PASS; 274 tests; oracle 25 OK; simulate 200 games 0 failures.
 Catalog 7,728 -> 7,734; Commander 2014 115 -> 117/337.
+
+### C14 batch8: Evoke
+
+Evoke (CR 702.34): `Evoke {cost}` sets `profile.evokeCost` (an alternative cost
+that replaces the base), a cast variant pays it, and a synthesised
+enters-battlefield trigger with `requiresEvoked` sacrifices the creature
+(`sacrifice-source` effect) only when it was evoked. The ETB effect still
+resolves first.
+
+Validation: check PASS; 275 tests; oracle 25 OK; simulate 200 games 0 failures.
+Catalog 7,734 -> 7,744; Commander 2014 117 -> 119/337 (Mulldrifter, Shriekmaw).

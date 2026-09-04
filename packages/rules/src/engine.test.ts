@@ -1800,6 +1800,23 @@ describe("kicker and optional-cost triggers", () => {
     expect(game.players[0]!.graveyard.some((c) => c.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("casts an evoke creature for its alternative cost and sacrifices it on entry", () => {
+    const drifter = () => make({ name: "Mulldrifter", type_line: "Creature — Elemental", mana_cost: "{4}{U}", cmc: 5, power: "2", toughness: "2", keywords: ["Flying"], oracle_text: "Flying\nEvoke {2}{U}\nWhen Mulldrifter enters the battlefield, draw two cards." });
+    const p = profileOf(drifter());
+    expect(p.evokeCost?.raw).toBe("{2}{U}");
+    expect(p.triggers.some((t) => t.effect.kind === "sacrifice-source" && t.requiresEvoked)).toBe(true);
+    expect(p.fullyImplemented).toBe(true);
+
+    let game = ready([drifter()], [ISLAND(), ISLAND(), ISLAND()]);
+    const evoke = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.evoked);
+    expect(evoke).toBeDefined();
+    const hb = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", evoked: true });
+    game = passUntil(game, (state) => state.turn > 1 || (!state.stack.length && state.pendingChoice === null && !state.players[0]!.battlefield.some((x) => x.card.name === "Mulldrifter") && state.players[0]!.graveyard.some((c) => c.name === "Mulldrifter")));
+    expect(game.players[0]!.hand.length).toBe(hb - 1 + 2);
+    expect(game.players[0]!.graveyard.some((c) => c.name === "Mulldrifter")).toBe(true);
+  });
+
   it("parses a graveyard self-return dies trigger and a compound draw/loss spell", () => {
     const spine = () => make({ name: "Spine of Ish Sah", type_line: "Artifact", mana_cost: "{7}", cmc: 7, oracle_text: "When Spine of Ish Sah enters the battlefield, destroy target permanent.\nWhen Spine of Ish Sah is put into a graveyard from the battlefield, return it to its owner's hand." });
     expect(profileOf(spine()).triggers.some((t) => t.event === "dies" && t.effect.kind === "return-source-to-hand")).toBe(true);
