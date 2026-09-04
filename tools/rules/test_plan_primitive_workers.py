@@ -62,6 +62,21 @@ class WorkerPlanReviewPriorityTests(unittest.TestCase):
         self.assertEqual(len(non_empty), 1)
         self.assertEqual(len(non_empty[0]["jobs"]), 2)
 
+    def test_compositional_atoms_annotate_without_changing_assignment(self) -> None:
+        plan = build_worker_plan(
+            [{
+                "claim_key": "draw",
+                "template": "draw clause",
+                "affected_cards": [{"oracle_id": "draw-id", "name": "Draw"}],
+                "unlocks": 1,
+            }],
+            workers=1,
+            semantic_atoms_by_oracle={"draw-id": {"op:draw", "target:player", "zone:hand"}},
+        )
+        job = plan["workers"][0]["jobs"][0]
+        self.assertEqual(job["claim_key"], "draw")
+        self.assertEqual(job["semantic_atoms"], ["op:draw", "target:player", "zone:hand"])
+
 
 if __name__ == "__main__":
     unittest.main()

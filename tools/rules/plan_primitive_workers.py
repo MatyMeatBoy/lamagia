@@ -116,6 +116,7 @@ def build_worker_plan(
     claim_prefix: str = "",
     claimed_keys: set[str] | None = None,
     oracle_review_ids: set[str] | None = None,
+    semantic_atoms_by_oracle: dict[str, set[str]] | None = None,
 ) -> dict[str, Any]:
     """Build a deterministic greedy assignment of primitive work to workers.
 
@@ -150,6 +151,11 @@ def build_worker_plan(
         cluster = str(entry.get("cluster") or entry.get("template") or "")
         family = str(entry.get("family") or cluster.split("|", 1)[0] or "other")
         family = family.removeprefix("oracle:")
+        semantic_atoms = sorted({
+            atom
+            for oracle_id in cards
+            for atom in (semantic_atoms_by_oracle or {}).get(oracle_id, set())
+        })
         jobs.append(
             {
                 "claim_key": key,
@@ -165,6 +171,7 @@ def build_worker_plan(
                 "needs_review_cards": review_cards,
                 "one_line_count": int(entry.get("one_line_count") or len(one_line_cards)),
                 "one_line_cards": one_line_cards,
+                "semantic_atoms": semantic_atoms,
                 "priority": str(entry.get("priority") or (
                     "needs-review" if review_cards else
                     "quick-win" if entry.get("quick_win_count") or one_line_cards else
@@ -269,6 +276,7 @@ def render_document(plan: dict[str, Any]) -> str:
         "Each primitive is assigned to exactly one worker; jobs sharing an oracle_id are co-located, so parallel work cannot duplicate a card.",
         "Workers must randomly choose one unclaimed job from their assigned list, re-check `docs/WORK_CLAIMS.md` immediately before editing, and redraw if it was claimed.",
         "Jobs containing Oracle `needs-review` cards are scheduled first; within that tier, choose one-line candidates before multi-clause cards. `needs-review` is triage only: keep CR citations and scenario tests.",
+        "When a compact IR is supplied, `Reusable atoms` are navigational hints only; exact primitive keys and Oracle operands remain the safety boundary.",
         "",
         f"- Workers: **{plan['worker_count']}** (requested {plan['requested_workers']})",
         f"- Memory budget: **{plan['memory_budget_gb']:g} GB** ({plan['estimated_worker_mb']} MB reserved per worker)",
@@ -282,12 +290,14 @@ def render_document(plan: dict[str, Any]) -> str:
             lines.append("Idle — no unclaimed work in this queue.")
             lines.append("")
             continue
-        lines += ["| Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches |", "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |"]
+        lines += ["| Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches | Atoms |", "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
         for job in worker["jobs"]:
             lines.append(
                 f"| {job['priority']} | `{job['claim_key']}` | {job['family']} | {len(job['oracle_ids'])} |"
-                f" {job['needs_review_count']} | {job['one_line_count']} | {job['unlocks']} | {len(job['batches'])} |"
+                f" {job['needs_review_count']} | {job['one_line_count']} | {job['unlocks']} | {len(job['batches'])} | {len(job.get('semantic_atoms', []))} |"
             )
+            if job.get("semantic_atoms"):
+                lines += [f"Reusable atoms: `{', '.join(job['semantic_atoms'])}`", ""]
             cards = ", ".join(
                 f"{card.get('name', '?')} [{card.get('oracle_id', '?')}]" if isinstance(card, dict) else str(card)
                 for card in job.get("oracle_cards", [])
@@ -318,6 +328,12 @@ def main() -> None:
         default=None,
         help="Optional compile_oracle_effects JSON; needs-review cards are scheduled first.",
     )
+    parser.add_argument(
+        "--compact-ir",
+        type=Path,
+        default=None,
+        help="Optional compact Oracle IR; annotates jobs with reusable semantic atoms.",
+    )
     args = parser.parse_args()
     payload = json.loads(args.roadmap.read_text(encoding="utf-8"))
     oracle_review_ids: set[str] | None = None
@@ -328,6 +344,23 @@ def main() -> None:
             for card in oracle_payload.get("cards", [])
             if card.get("status") == "needs-review" and card.get("oracle_id")
         }
+    semantic_atoms_by_oracle: dict[str, set[str]] | None = None
+    if args.compact_ir and args.compact_ir.exists():
+        compact_payload = json.loads(args.compact_ir.read_text(encoding="utf-8"))
+        atom_values = {
+            str(symbol): str(value)
+            for value, symbol in (compact_payload.get("semantic_atoms") or {}).items()
+        }
+        semantic_atoms_by_oracle = {}
+        for card in compact_payload.get("cards", []):
+            oracle_id = str(card.get("oracle_id") or "")
+            atoms = {
+                atom_values.get(str(atom), str(atom))
+                for program in card.get("program", [])
+                for atom in program.get("atoms", [])
+            }
+            if oracle_id:
+                semantic_atoms_by_oracle[oracle_id] = atoms
     plan = build_worker_plan(
         payload.get("roadmap") or payload.get("clusters") or [],
         workers=args.workers,
@@ -338,6 +371,7 @@ def main() -> None:
         claim_prefix=args.claim_prefix or str(payload.get("claim_prefix") or ""),
         claimed_keys=load_claimed_keys(args.claims),
         oracle_review_ids=oracle_review_ids,
+        semantic_atoms_by_oracle=semantic_atoms_by_oracle,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
