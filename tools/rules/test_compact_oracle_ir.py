@@ -1,6 +1,7 @@
 import unittest
 
 from compact_oracle_ir import build_compact_ir, primitive_key, semantic_atoms
+from benchmark_compact_oracle_ir import compare
 
 
 def card(oracle_id: str, name: str, text: str, *, amount: int = 1) -> dict:
@@ -57,6 +58,21 @@ class CompactOracleIrTests(unittest.TestCase):
         self.assertGreater(result["semantic_atom_reference_count"], result["semantic_atom_count"])
         self.assertGreater(result["semantic_atom_reuse_ratio"], 0)
         self.assertEqual(result["cards"][0]["program"][0]["atoms"], result["cards"][1]["program"][0]["atoms"])
+
+    def test_compound_clause_keeps_every_reusable_operation_and_zone(self) -> None:
+        clause = card("a", "Compound", "Destroy target creature, then exile a card from your graveyard.")["clauses"][0]
+        clause.update({"primary_family": "other", "target_text": "target creature", "target_zone": None})
+        atoms = set(semantic_atoms(clause))
+        self.assertIn("op:destroy", atoms)
+        self.assertIn("op:exile", atoms)
+        self.assertIn("target:creature", atoms)
+        self.assertIn("zone:graveyard", atoms)
+
+    def test_legacy_comparison_preserves_identity_and_clause_count(self) -> None:
+        result = compare([card("a", "One", "Draw a card."), card("b", "Two", "Draw two cards.", amount=2)])
+        self.assertEqual(result["identity_and_clause_checks"], "PASS")
+        self.assertEqual(result["review_cards"], 2)
+        self.assertEqual(result["clause_references"], 2)
 
     def test_solved_clauses_do_not_enter_the_dictionary(self) -> None:
         solved = card("a", "Solved", "Draw a card.")

@@ -42,8 +42,16 @@ zones, types, costs, or timing.
 ```powershell
 npm run rules:oracle:compile
 npm run rules:oracle:compact
+npm run rules:oracle:benchmark:compact
 python -m unittest tools/rules/test_compact_oracle_ir.py -v
 ```
+
+The benchmark compares the old repeated-clause worker payload with the new
+short-reference payload and fails if card identities or clause counts change.
+On the full current catalog it reports 22,210 clause references, 9,745 exact
+shapes, 47 compositional atoms, 99.9% atom reuse, and a 5.0% worker-context
+byte reduction. Small batches may grow because a dictionary has fixed setup
+cost; use the full report and reuse ratio when deciding whether a batch benefits.
 
 The output reports `reuse_ratio` (repeated exact-clause references),
 `semantic_atom_reuse_ratio` (repeated compositional atoms), and

@@ -70,8 +70,7 @@ def semantic_atoms(clause: dict[str, Any]) -> list[str]:
         for operation, pattern in OPERATION_PATTERNS:
             if re.search(pattern, text):
                 values.add(f"op:{operation}")
-                break
-        else:
+        if not any(value.startswith("op:") for value in values):
             values.add("op:other")
 
     kind = str(clause.get("kind") or "").casefold()
@@ -99,12 +98,10 @@ def semantic_atoms(clause: dict[str, Any]) -> list[str]:
         for target_word in TARGET_WORDS:
             if re.search(rf"\b{target_word}\b", target):
                 values.add(f"target:{target_word}")
-                break
     else:
         for target_word in TARGET_WORDS:
             if re.search(rf"\b(?:target|each|that|another|any)\s+(?:an?\s+)?{target_word}\b", text):
                 values.add(f"target:{target_word}")
-                break
 
     target_zone = str(clause.get("target_zone") or "").casefold()
     if target_zone:
@@ -113,7 +110,6 @@ def semantic_atoms(clause: dict[str, Any]) -> list[str]:
         for zone in ZONE_WORDS:
             if re.search(rf"\b{zone}\b", text):
                 values.add(f"zone:{zone}")
-                break
 
     # Keep the output deterministic and avoid duplicate atom references.
     return sorted(values)
@@ -218,6 +214,7 @@ def build_compact_ir(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
         "semantic_atom_count": len(atom_values),
         "semantic_atom_reference_count": atom_reference_count,
         "semantic_atom_reuse_ratio": round(max(0, atom_reference_count - len(atom_values)) / atom_reference_count, 3) if atom_reference_count else 0.0,
+        "semantic_atoms": {value: atom_by_value[value] for value in sorted(atom_values)},
         "raw_clause_bytes": raw_bytes,
         "compact_program_bytes": compact_bytes,
         "compact_to_raw_ratio": ratio,
