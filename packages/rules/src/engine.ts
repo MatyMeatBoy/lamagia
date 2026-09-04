@@ -985,6 +985,9 @@ function triggerMatches(
     case "land-you-control": return isLand(cardProfile(object.card)) && object.controller === watcher.controller;
     case "another-creature": return !isSelf && objectIsCreature;
     case "any-creature": return objectIsCreature;
+    // The watcher is the Equipment; the event object must be the creature it is
+    // attached to (Skullclamp, Argentum Armor).
+    case "equipped-creature": return findPermanent(state, watcher.instanceId)?.attachedTo === object.permanentId;
     default: return false;
   }
 }
