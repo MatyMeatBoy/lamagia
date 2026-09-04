@@ -315,6 +315,7 @@ export type SpellEffect =
   | { readonly kind: "reanimate-own-best-creature-from-graveyard" }
   | { readonly kind: "return-random-creature-from-graveyard-to-hand" }
   | { readonly kind: "modify-all-attacking-creatures"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
@@ -1778,6 +1779,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if ((match = /^Attacking creatures get ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-all-attacking-creatures", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
+  }
+  if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
+    return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
   }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
