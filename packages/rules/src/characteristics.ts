@@ -371,6 +371,7 @@ export type TriggerEvent =
   | "deals-combat-damage-to-player"
   | "becomes-tapped"
   | "spell-cast"
+  | "card-cycled"
   | "upkeep"
   | "draw-step"
   | "end-step"
@@ -409,6 +410,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "deals-combat-damage-to-player": "habilidad de daño de combate",
   "becomes-tapped": "habilidad de giro",
   "spell-cast": "habilidad de lanzamiento",
+  "card-cycled": "habilidad de cycling",
   upkeep: "habilidad de mantenimiento",
   "draw-step": "habilidad del paso de robo",
   "end-step": "habilidad del paso final",
@@ -1136,6 +1138,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "spell-cast", subject: "each-player", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", pattern: /^whenever\s+you\s+cast\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+spell,?\s*(.+)$/i },
+  { event: "card-cycled", subject: "self", pattern: /^when\s+you\s+cycle\s+(?:this\s+card|~),?\s*(.+)$/i },
 
   // Turn-structure triggers (CR 603.2b).
   { event: "upkeep", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+upkeep,?\s*(.+)$/i },
@@ -1448,6 +1451,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^All creatures get -X\/-X until end of turn$/i.test(text)) {
     return { effect: { kind: "modify-all-creatures-minus-X" }, target: "none" };
   }
+  if ((match = /^All creatures get (-?\d+)\/(-?\d+) until end of turn$/i.exec(text))) {
+    return { effect: { kind: "modify-all-creatures", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
+  }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
@@ -1570,6 +1576,36 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
+  const decreeJoined = decreeBody.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  if (/^Destroy all creatures\. They can't be regenerated\. Draw a card for each creature destroyed this way\.?$/i.test(decreeJoined)) {
+    const cycleTrigger = body.find((entry) => /^when\s+you\s+cycle\s+(?:this\s+card|~),/i.test(entry.text));
+    const matchedCycle = cycleTrigger ? matchTriggerLine(cycleTrigger.text) : null;
+    const cycleEffect = matchedCycle ? recognizeSentence(matchedCycle.effectText) : null;
+    const unsupported = body
+      .filter((entry) => !/^cycling\s+/i.test(entry.text) && !decreeBody.includes(entry) && entry !== cycleTrigger)
+      .map((entry) => entry.text);
+    return {
+      effects: [{ kind: "destroy-all-creatures-draw-destroyed" }],
+      triggers: matchedCycle && cycleEffect ? [{
+        event: matchedCycle.event,
+        subject: matchedCycle.subject,
+        effect: cycleEffect.effect,
+        optional: false,
+        targetKind: cycleEffect.target,
+        sourceText: cycleTrigger!.text
+      }] : [],
+      activatedAbilities: [], modalChoices: [], targetKind: "none",
+      unimplementedText: cycleTrigger && !cycleEffect ? [cycleTrigger.text, ...unsupported] : unsupported,
+      covered: unsupported.length === 0 && Boolean(cycleEffect)
+    };
+  }
+  if (/^Counter target spell\. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "counter-target-spell-to-battlefield" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell", unimplementedText: [], covered: true
+    };
+  }
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library\.$/i.test(joined)) {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],

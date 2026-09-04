@@ -623,6 +623,62 @@ describe("casting", () => {
     expect(game.players[0]!.hand).toHaveLength(0);
   });
 
+  it("resolves Chaos Warp as an owner-library replacement", () => {
+    expect(cardProfile(CHAOS_WARP()).fullyImplemented).toBe(true);
+    let game = readyToCast([CHAOS_WARP()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [BEAR()]);
+    game = stage(game, 1, () => ({ library: toHand(1, [BOLT()], "warp-library") }));
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[1]!.library.some((card) => card.name === "Lightning Bolt")).toBe(true);
+  });
+
+  it("draws for each creature destroyed by Decree of Pain", () => {
+    expect(cardProfile(DECREE_OF_PAIN()).effects).toMatchObject([{ kind: "destroy-all-creatures-draw-destroyed" }]);
+    let game = readyToCast([DECREE_OF_PAIN()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), BEAR()], [], [BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.hand).toHaveLength(2);
+  });
+
+  it("resolves Decree of Pain's cycling trigger", () => {
+    const profile = profileOf(DECREE_OF_PAIN());
+    expect(profile.cyclingCost?.raw).toBe("{3}{B}{B}");
+    expect(profile.triggers).toMatchObject([{
+      event: "card-cycled",
+      subject: "self",
+      effect: { kind: "modify-all-creatures", power: -2, toughness: -2 }
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast(
+      [DECREE_OF_PAIN()],
+      [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), BEAR()],
+      [],
+      [BEAR()]
+    );
+    const decree = game.players[0]!.hand[0]!;
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === decree.instance_id);
+    expect(offered).toBeDefined();
+    game = applyAction(game, 0, offered!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Decree of Pain")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("puts an artifact or creature spell countered by Desertion onto its controller's battlefield", () => {
+    expect(cardProfile(DESERTION()).effects).toEqual([{ kind: "counter-target-spell-to-battlefield" }]);
+    let game = readyToCast([DESERTION()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
+    const spell = { ...BEAR(), instance_id: "desertion-spell", owner: 1 };
+    game = { ...game, stack: [{ id: "desertion-spell", controller: 1, card: spell, label: spell.name, targets: [], fromCommandZone: false, variableValue: 0, countered: false }] };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "spell", stackId: "desertion-spell" }] });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
   it("uses a fixed multicolor mana ability as its full printed output", () => {
     let game = readyToCast([AZORIUS_SPELL()], [AZORIUS_RELIC()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
