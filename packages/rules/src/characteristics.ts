@@ -300,6 +300,7 @@ export type SpellEffect =
   | { readonly kind: "sacrifice-own-creature-then-draw"; readonly amount: number }
   | { readonly kind: "reanimate-own-best-creature-from-graveyard" }
   | { readonly kind: "return-random-creature-from-graveyard-to-hand" }
+  | { readonly kind: "modify-all-attacking-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
@@ -558,6 +559,8 @@ export interface CardProfile {
   readonly attackersAssignAsUnblockedWhileAttacking: boolean;
   /** Abyssal Persecutor: "your opponents can't lose the game" (CR 104.3a). */
   readonly preventsOpponentLoss: boolean;
+  /** Warmonger Hellkite: "All creatures attack each combat if able" (CR 508.1d). */
+  readonly forcesAllCreaturesToAttack: boolean;
   readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
@@ -1682,6 +1685,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return a creature card at random from your graveyard to your hand$/i.test(text)) {
     return { effect: { kind: "return-random-creature-from-graveyard-to-hand" }, target: "none" };
   }
+  if ((match = /^Attacking creatures get ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
+    return { effect: { kind: "modify-all-attacking-creatures", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
+  }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
   }
@@ -2112,6 +2118,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
+    if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     // Rebound is synthesised from the keyword; consume the reminder line.
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
@@ -2401,6 +2408,7 @@ export function cardProfile(card: CardData): CardProfile {
   const additionalCostExileGraveyardX = text.split("\n").some((line) => /^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line.trim()));
   const additionalCostSacrificeLand = text.split("\n").some((line) => /^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line.trim()));
   const preventsOpponentLoss = text.split("\n").some((line) => /^you can't win the game and your opponents can't lose the game\.?$/i.test(line.trim()));
+  const forcesAllCreaturesToAttack = text.split("\n").some((line) => /^all creatures attack each combat if able\.?$/i.test(line.trim()));
   const hasRebound = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "rebound")
     || text.split("\n").some((line) => /^rebound\b/i.test(line.trim()));
   const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
@@ -2434,6 +2442,7 @@ export function cardProfile(card: CardData): CardProfile {
     grantsExtortToOthers,
     attackersAssignAsUnblockedWhileAttacking,
     preventsOpponentLoss,
+    forcesAllCreaturesToAttack,
     additionalCostExileGraveyardX,
     additionalCostSacrificeLand,
     hasRebound,
