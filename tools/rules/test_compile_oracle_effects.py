@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, top_card_reveal_hint, trigger_subject_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, reveal_until_type_hint, save_card_cache, search_criterion_hint, top_card_reveal_hint, trigger_subject_hint
 from export_set_coverage import is_ignored_edition, product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, resolve_claim_prefix, select_profiles, template_of
 from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
@@ -22,6 +22,13 @@ class OracleCompilerTests(unittest.TestCase):
         amount = classify("You gain life equal to its mana value.")
         self.assertTrue(amount["mana_value_dependency"])
         self.assertIn("amount:mana-value", amount["primitive_cluster"])
+
+    def test_extracts_reveal_until_type_operands(self) -> None:
+        clause = "If you do, reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest into your graveyard."
+        result = classify(clause)
+        self.assertEqual(reveal_until_type_hint(clause), "Creature")
+        self.assertEqual(result["reveal_until_type"], "Creature")
+        self.assertIn("reveal-until:Creature:hand:graveyard", result["primitive_cluster"])
 
     def test_preserves_open_subtype_for_steelshapers_gift(self) -> None:
         self.assertEqual(

@@ -247,6 +247,7 @@ const C13_TRANSGUILD_PROMENADE = () => make({ name: "Transguild Promenade", type
 const SCRY_TWO = () => make({ name: "Scry Two", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Scry 2." });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const AUGURY_ADEPT = () => make({ name: "Augury Adept", type_line: "Creature — Kithkin Wizard", mana_cost: "{1}{W/U}{W/U}", cmc: 3, power: "2", toughness: "2", colors: ["W", "U"], oracle_text: "Whenever this creature deals combat damage to a player, reveal the top card of your library and put that card into your hand. You gain life equal to its mana value.", scryfall_id: "be5a65fd-0d06-4771-bee7-0e42cc9871da" });
+const FOSTER = () => make({ name: "Foster", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature you control dies, you may pay {1}. If you do, reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest into your graveyard.", scryfall_id: "fb431500-152c-4524-b76b-de62922ff57f" });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
 const RHYSTIC_STUDY = () => make({ name: "Rhystic Study", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}." });
 const DUPLICANT = () => make({ name: "Duplicant", type_line: "Artifact Creature — Shapeshifter", mana_cost: "{6}", cmc: 6, power: "2", toughness: "4", oracle_text: "When Duplicant enters, you may exile target nontoken creature.\nAs long as a card exiled with Duplicant is a creature card, Duplicant has the power, toughness, and creature types of the last creature card exiled with Duplicant. It's still a Shapeshifter." });
@@ -3567,6 +3568,22 @@ describe("triggered abilities", () => {
     const before = game.players[1]!.hand.length;
     game = applyAction(game, 1, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     expect(game.players[1]!.hand).toHaveLength(before + 1);
+  });
+
+  it("pays Foster and reveals until a creature, sending the rest to the graveyard", () => {
+    const first = make({ name: "Revealed Land", type_line: "Land", cmc: 0 });
+    const found = make({ name: "Revealed Creature", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
+    let game = readyToCast([BOLT()], [FOSTER(), MOUNTAIN(), MOUNTAIN(), BEAR()]);
+    game = stage(game, 0, () => ({ library: toHand(0, [first, found], "foster-library") }));
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.sourceCard.name).toBe("Foster");
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.hand.some((card) => card.name === "Revealed Creature")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Revealed Land")).toBe(true);
+    expect(game.players[0]!.library).toHaveLength(0);
   });
 
   it("raises life-gained once and resolves a source counter trigger", () => {

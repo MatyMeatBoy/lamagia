@@ -539,6 +539,21 @@ describe("effect recognition", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("reuses the reveal-until type primitive for Foster", () => {
+    const profile = cardProfile(card({
+      name: "Foster", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3,
+      oracle_text: "Whenever a creature you control dies, you may pay {1}. If you do, reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest into your graveyard."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "dies",
+      subject: "creature-you-control",
+      optional: true,
+      payCost: { raw: "{1}" },
+      effect: { kind: "reveal-until-type-to-hand", type: "Creature", restDestination: "graveyard" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("treats a keyword-only body as fully covered", () => {
     const profile = cardProfile(card({ name: "Serra Angel", type_line: "Creature — Angel", mana_cost: "{3}{W}{W}", oracle_text: "Flying, vigilance", keywords: ["Flying", "Vigilance"], power: "4", toughness: "4" }));
     expect(profile.keywords).toEqual(["flying", "vigilance"]);

@@ -375,6 +375,8 @@ export type SpellEffect =
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control"; readonly token: TokenDefinition }
   /** Reveals one library card, moves it to hand, then gains its mana value. */
   | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
+  /** Reveals until a card type is found, then sends the rest to a zone. */
+  | { readonly kind: "reveal-until-type-to-hand"; readonly type: CardType; readonly restDestination: "graveyard" }
   | { readonly kind: "reveal-top-card-conditional"; readonly creatureToken: TokenDefinition; readonly landDestination: "battlefield"; readonly fallbackLife: number }
   | {
       readonly kind: "search-library";
@@ -1243,6 +1245,18 @@ function parseRevealTopCardToHandAndGainManaValue(text: string): SpellEffect | n
   return { kind: "reveal-top-card-to-hand-and-gain-mana-value" };
 }
 
+function parseRevealUntilTypeToHand(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const match = /^Reveal cards from the top of your library until you reveal a (artifact|creature|enchantment|instant|land|planeswalker|sorcery|battle) card\. Put that card into your hand and the rest into your graveyard\.?$/i.exec(normalized);
+  if (!match) return null;
+  const rawType = match[1]!;
+  return {
+    kind: "reveal-until-type-to-hand",
+    type: rawType[0]!.toUpperCase() + rawType.slice(1) as CardType,
+    restDestination: "graveyard"
+  };
+}
+
 /**
  * Recognises the trigger condition of one printed line.
  *
@@ -1449,6 +1463,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
     return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };
   }
+  const revealUntil = parseRevealUntilTypeToHand(text);
+  if (revealUntil) return { effect: revealUntil, target: "none" };
   if (/^Draw a card for each tapped creature target opponent controls$/i.test(text)) {
     return { effect: { kind: "draw-equal-tapped-creatures" }, target: "opponent" };
   }

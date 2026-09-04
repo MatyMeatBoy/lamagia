@@ -2211,6 +2211,29 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller,
         `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "reveal-until-type-to-hand": {
+      const player = playerAt(state, controller);
+      const foundIndex = player.library.findIndex((card) => cardProfile(card).types.includes(effect.type));
+      if (foundIndex < 0) {
+        if (!player.library.length) return logged(state, controller, `${player.name} no tiene cartas para revelar.`);
+        return logged(withPlayer(state, controller, (current) => ({
+          ...current,
+          library: [],
+          graveyard: [...current.graveyard, ...current.library]
+        })), controller, `${player.name} revela su biblioteca y no encuentra una carta de tipo ${effect.type}.`);
+      }
+      const revealed = player.library.slice(0, foundIndex + 1);
+      const selected = revealed[revealed.length - 1]!;
+      const rest = revealed.slice(0, -1);
+      const next = withPlayer(state, controller, (current) => ({
+        ...current,
+        library: current.library.slice(foundIndex + 1),
+        hand: [...current.hand, selected],
+        graveyard: [...current.graveyard, ...rest]
+      }));
+      return logged(next, controller,
+        `${player.name} revela ${revealed.map((card) => card.name).join(", ")}; pone ${selected.name} en su mano y el resto en su cementerio.`);
+    }
     case "create-token": {
       const amount = effect.amount === "lands-you-control"
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length

@@ -100,12 +100,19 @@ TRIGGER_SUBJECT_PATTERNS: tuple[tuple[str, str], ...] = (
 )
 
 TOP_CARD_TO_HAND_RE = re.compile(r"\breveal the top card of your library\b.*\bput that card into your hand\b", re.I)
+REVEAL_UNTIL_TYPE_RE = re.compile(r"\breveal cards from the top of your library until you reveal a[n]? (?P<type>[a-z]+) card\b.*\bput that card into your hand\b.*\brest into your graveyard\b", re.I)
 MANA_VALUE_RE = re.compile(r"\bmana value\b", re.I)
 
 
 def top_card_reveal_hint(clause: str) -> bool:
     """Identify the reusable reveal-top-to-hand operand used by combat triggers."""
     return bool(TOP_CARD_TO_HAND_RE.search(clause))
+
+
+def reveal_until_type_hint(clause: str) -> str | None:
+    """Extract the reusable type operand from reveal-until-found effects."""
+    match = REVEAL_UNTIL_TYPE_RE.search(clause)
+    return match.group("type").title() if match else None
 
 
 def mana_ability_hint(line: str) -> dict[str, Any] | None:
@@ -301,6 +308,7 @@ def classify(clause: str) -> dict[str, Any]:
     cost_context = "activated-cost" if ACTIVATED_RE.match(clause.strip()) else "additional-cast-cost" if ADDITIONAL_COST_RE.search(clause) else None
     trigger_subject = trigger_subject_hint(clause)
     top_card_reveal = top_card_reveal_hint(clause)
+    reveal_until_type = reveal_until_type_hint(clause)
     mana_value_dependency = bool(MANA_VALUE_RE.search(clause))
     return_target = return_target_hint(clause)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
@@ -331,6 +339,8 @@ def classify(clause: str) -> dict[str, Any]:
         cluster_parts.append("return-target:" + return_target)
     if top_card_reveal:
         cluster_parts.append("reveal-top:hand")
+    if reveal_until_type:
+        cluster_parts.append("reveal-until:" + reveal_until_type + ":hand:graveyard")
     if mana_value_dependency:
         cluster_parts.append("amount:mana-value")
     if modal:
@@ -349,6 +359,7 @@ def classify(clause: str) -> dict[str, Any]:
         "cost_context": cost_context,
         "return_target": return_target,
         "top_card_reveal": top_card_reveal,
+        "reveal_until_type": reveal_until_type,
         "mana_value_dependency": mana_value_dependency,
         "search_criterion": search_criterion,
         "operands": operands,
@@ -360,7 +371,7 @@ def classify(clause: str) -> dict[str, Any]:
         "primitive_cluster": "|".join(cluster_parts),
         "keyword_only": keyword_only,
         "known_static": known_static,
-        "candidate": bool(families or kind != "static-or-spell" or keyword_only or known_static or top_card_reveal),
+        "candidate": bool(families or kind != "static-or-spell" or keyword_only or known_static or top_card_reveal or reveal_until_type),
     }
 
 

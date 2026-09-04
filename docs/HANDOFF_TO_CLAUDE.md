@@ -544,6 +544,18 @@ combat-damage trigger and a four-mana-value revealed card.
 Rules reference: Comprehensive Rules 701.16, 608.2c and 119.3; official
 Wizards source: `https://magic.wizards.com/en/rules`.
 
+### Reusable reveal-until type primitive
+
+`reveal-until-type-to-hand` models Foster's optional `{1}` death trigger with
+the type preserved as an operand: reveal from the top until a Creature card,
+put the hit into hand, and move only the preceding revealed cards to the
+graveyard. If no matching card exists, the whole library is moved to the
+graveyard. The Python IR emits `reveal-until:<Type>:hand:graveyard`, allowing
+future artifact, land, or other type variants to reuse the same effect.
+
+Rules reference: Comprehensive Rules 701.16, 701.13 and 603.2; official
+Wizards source: `https://magic.wizards.com/en/rules`.
+
 ### Reusable triggered self-modifier primitive
 
 The parser maps `~ gets +N/+N and gains <keyword> until end of turn` inside a
