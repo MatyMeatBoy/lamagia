@@ -33,6 +33,7 @@ const ARTIFACT_ETB_DRAWER = () => make({ name: "Relic Archivist", type_line: "Cr
 const ENCHANTMENT_ETB_DRAWER = () => make({ name: "Oath Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever an enchantment enters the battlefield under your control, draw a card." });
 const PERMANENT_ETB_DRAWER = () => make({ name: "Permanent Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever a permanent enters the battlefield under your control, draw a card." });
 const ANOTHER_PERMANENT_ETB_DRAWER = () => make({ name: "Another Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever another permanent enters the battlefield under your control, draw a card." });
+const ANY_SPELL_TRIGGER = () => make({ name: "Spell Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever a player casts a spell, draw a card." });
 const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Optional Archivist enters the battlefield, you may draw a card." });
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
@@ -1361,6 +1362,14 @@ describe("casting", () => {
     let game = readyToCast([TEST_ARTIFACT()], [FOREST(), FOREST(), ANOTHER_PERMANENT_ETB_DRAWER()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[0]!.hand).toHaveLength(1);
+  });
+
+  it("raises a trigger when any player casts a spell", () => {
+    expect(profileOf(ANY_SPELL_TRIGGER()).triggers[0]).toMatchObject({ event: "spell-cast", subject: "each-player", effect: { kind: "draw", amount: 1 } });
+    let game = readyToCast([BEAR()], [FOREST(), FOREST()], [], [ANY_SPELL_TRIGGER()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.stack.some((entry) => entry.trigger?.definition.subject === "each-player")).toBe(true);
   });
 
   it("returns a targeted artifact permanent to its owner's hand", () => {
