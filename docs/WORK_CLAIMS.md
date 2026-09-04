@@ -113,7 +113,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `arsenal-miraris-wake-mana` | Mirari’s Wake adds one mana of a produced type when a controlled land produces mana (CR 605.1, 613.6) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-command-tower` | Command Tower produces mana restricted to the commander’s color identity (CR 903.5d, 106.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-chaos-warp` | Chaos Warp shuffles a target permanent into its owner’s library and conditionally puts the revealed top card onto the battlefield (CR 701.20, 701.34) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `arsenal-decree-of-pain` | Decree of Pain destroys all creatures and draws for creatures destroyed by that effect (CR 608.2c, 701.7) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-decree-of-pain` | Decree of Pain destroys all creatures/draws for creatures destroyed and its cycling -2/-2 trigger (CR 603.2, 608.2c, 701.7, 702.29) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-desertion` | Desertion counters a spell and puts an artifact or creature spell onto the battlefield under its controller’s control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-maelstrom-haste` | Reuse the static “creatures you control have haste” primitive for Maelstrom Wanderer; cascade remains separate | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-vela-intimidate` | Intimidate keyword/static grants plus Vela’s leaves-the-battlefield trigger (CR 603.6c, 702.13, 509.1a) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
