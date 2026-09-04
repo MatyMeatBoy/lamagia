@@ -1692,6 +1692,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return putOntoBattlefield(next, object.controller, card, false);
     }
+    case "return-target-legendary-creature-card-from-graveyard-to-battlefield": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      const profile = card ? cardProfile(card) : null;
+      if (!card || !profile || !isCreature(profile) || !profile.supertypes.some((value) => value.toLowerCase() === "legendary")) return state;
+      const next = withPlayer(state, target.seat, (current) => ({ ...current, graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id) }));
+      return putOntoBattlefield(next, object.controller, card, false);
+    }
     case "return-target-permanent-card-from-graveyard-to-battlefield": {
       const target = object.targets[0];
       if (!target || target.kind !== "graveyard-card") return state;
@@ -2776,7 +2786,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 /** Targets a spell could legally choose right now. */
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
-  if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-your-graveyard" || kind === "permanent-card-in-a-graveyard") {
+  if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-your-graveyard" || kind === "permanent-card-in-a-graveyard" || kind === "legendary-creature-card-in-your-graveyard") {
     const sources = kind === "card-in-a-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-a-graveyard" ? state.players : [playerAt(state, seat)];
     return sources.flatMap((player) => player.graveyard
       .filter((card) => kind === "card-in-your-graveyard"
@@ -2789,6 +2799,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
         || (kind === "enchantment-card-in-your-graveyard" && cardProfile(card).types.includes("Enchantment"))
         || (kind === "permanent-card-in-your-graveyard" && cardProfile(card).isPermanent)
         || (kind === "permanent-card-in-a-graveyard" && cardProfile(card).isPermanent))
+        || (kind === "legendary-creature-card-in-your-graveyard" && isCreature(cardProfile(card)) && cardProfile(card).supertypes.some((value) => value.toLowerCase() === "legendary")))
       .map((card) => ({ kind: "graveyard-card", seat: player.seat, instanceId: card.instance_id }) as Target));
   }
   if (kind === "land-card-in-a-graveyard") {
@@ -3048,6 +3059,7 @@ function activatableAbility(
     if (permanent.loyaltyUsedThisTurn) return { legal: false };
     if (ability.loyaltyCost < 0 && (permanent.counters.loyalty ?? 0) < -ability.loyaltyCost) return { legal: false };
   }
+  if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
   // the turn began. Non-creature permanents are unaffected by summoning sickness.
