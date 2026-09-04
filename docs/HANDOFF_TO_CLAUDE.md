@@ -1382,3 +1382,13 @@ Added a reusable cast-cost primitive for `As an additional cost to cast ~, pay
 N life`, including Toxic Deluge and a scenario proving the life payment occurs
 exactly once alongside normal mana payment (CR 118.8). The primitive is
 independent of the spell's effect, so future cards reuse it automatically.
+
+### Integrator checkpoint: Arcane Denial + graveyard exile batch (2026-09-04)
+
+Integrated the fork's 11-commit batch. Arcane Denial now schedules its two
+next-upkeep draws as a private 0..N choice, clamps to the available library and
+uses deterministic bot selection. Angel of Finality and Bojuka Bog reuse the
+exile-all-graveyards ETB path. C13 coverage is now **182/356 precon cards
+(51.1%)** and **167/341 unique set entries (49.0%)**; global export is
+**8,199/38,711 (21.2%)**. Validation: `npm run check` and `npm test` PASS
+(**424 rules tests**, simulator, **39 Oracle Python tests**).

@@ -2986,7 +2986,9 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   const cost = flashback ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
-  const lifeCost = flashback ? profile.flashbackLifeCost : profile.additionalLifeCost;
+  const lifeCost = flashback
+    ? profile.flashbackLifeCost
+    : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? variableValue : 0);
   if (flashback && (profile.isPermanent || !profile.flashbackCost)) return { legal: false };
   if (lifeCost >= player.life) return { legal: false };
   if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
@@ -3879,7 +3881,9 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
 
   const profile = cardProfile(card);
   const spellCost = fromGraveyard ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
-  const lifeCost = fromGraveyard ? profile.flashbackLifeCost : profile.additionalLifeCost;
+  const lifeCost = fromGraveyard
+    ? profile.flashbackLifeCost
+    : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? (action.variableValue ?? 0) : 0);
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));

@@ -223,7 +223,7 @@ const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
 const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
 const C13_SALTCRUSTED_STEPPE = () => make({ name: "Saltcrusted Steppe", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {G} and/or {W}.", produced_mana: ["C", "G", "W"], scryfall_id: "c13-saltcrusted-steppe" });
-const TOXIC_DELUGE = () => make({ name: "Toxic Deluge", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "As an additional cost to cast ~, pay 1 life.\nAll creatures get -X/-X until end of turn.", scryfall_id: "c13-toxic-deluge" });
+const TOXIC_DELUGE = () => make({ name: "Toxic Deluge", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "As an additional cost to cast ~, pay X life.\nAll creatures get -X/-X until end of turn.", scryfall_id: "c13-toxic-deluge" });
 const C13_AZAMI = () => make({ name: "Azami, Lady of Scrolls", type_line: "Legendary Creature — Human Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "0", toughness: "2", oracle_text: "Tap an untapped Wizard you control: Draw a card.", scryfall_id: "cafda395-840f-4359-9314-e1cbf137cc66" });
 const AZAMI_WIZARD = () => make({ name: "Library Wizard", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "1" });
 const C13_BRILLIANT_PLAN = () => make({ name: "Brilliant Plan", type_line: "Sorcery", mana_cost: "{4}{U}", cmc: 5, oracle_text: "Draw three cards.", scryfall_id: "4fc6b5a0-9a0f-4934-8a43-a0e5364832ec" });
@@ -1184,7 +1184,7 @@ describe("casting", () => {
 
   it("pays a spell's additional life cost exactly once", () => {
     const profile = profileOf(TOXIC_DELUGE());
-    expect(profile).toMatchObject({ additionalLifeCost: 1, fullyImplemented: true });
+    expect(profile).toMatchObject({ additionalLifeCost: 0, additionalLifeCostVariable: true, fullyImplemented: true });
     let game = readyToCast([TOXIC_DELUGE()], [SWAMP(), SWAMP(), SWAMP()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 1 });
     expect(game.players[0]!.life).toBe(39);

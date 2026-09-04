@@ -545,6 +545,8 @@ export interface CardProfile {
   readonly flashbackLifeCost: number;
   /** Additional life payment required when casting this spell (CR 118.8). */
   readonly additionalLifeCost: number;
+  /** Whether the additional life payment scales with the spell's X value. */
+  readonly additionalLifeCostVariable: boolean;
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
@@ -1856,7 +1858,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
-    if (/^as an additional cost to cast ~, pay \d+ life\.?$/i.test(line)) continue;
+    if (/^as an additional cost to cast ~, pay (?:X|\d+) life\.?$/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
    if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/i.test(line)) continue;
@@ -2031,8 +2033,9 @@ export function cardProfile(card: CardData): CardProfile {
   const cyclingSearches = parseCyclingSearches(text);
   const flashbackCost = parseFlashbackCost(text);
   const flashbackLifeCost = parseFlashbackLifeCost(text);
-  const additionalLifeMatch = /^as an additional cost to cast ~, pay (\d+) life\.?$/im.exec(text);
-  const additionalLifeCost = additionalLifeMatch ? Number(additionalLifeMatch[1]) : 0;
+  const additionalLifeMatch = /^as an additional cost to cast ~, pay (X|\d+) life\.?$/im.exec(text);
+  const additionalLifeCost = additionalLifeMatch && additionalLifeMatch[1] !== "X" ? Number(additionalLifeMatch[1]) : 0;
+  const additionalLifeCostVariable = additionalLifeMatch?.[1] === "X";
   const equipCost = parseEquipCost(text);
   // "~ costs {N} less to cast for each creature on the battlefield" (Blasphemous Act, CR 118.9).
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
@@ -2088,6 +2091,7 @@ export function cardProfile(card: CardData): CardProfile {
     flashbackCost,
     flashbackLifeCost,
     additionalLifeCost,
+    additionalLifeCostVariable,
     equipCost,
     equipmentModification,
     staticKeywordGrants,
