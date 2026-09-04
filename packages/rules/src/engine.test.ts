@@ -1046,6 +1046,18 @@ describe("casting", () => {
     expect(profileOf(C13_BOJUKA_BOG())).toMatchObject({ entersTapped: { kind: "tapped" }, manaAbilities: [{ produces: ["B"] }] });
   });
 
+  it("lets Angel of Finality choose a player and exile that graveyard", () => {
+    let game = readyToCast([C13_ANGEL_OF_FINALITY()], [PLAINS(), PLAINS(), PLAINS(), PLAINS()]);
+    game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR(), FOREST()], "angel-yard") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", targetKind: "player" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.graveyard).toHaveLength(0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Angel of Finality")).toBe(true);
+  });
+
   it("destroys only the legal nonblack target before drawing", () => {
     let game = readyToCast([C13_ANNIHILATE()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], [BEAR(), BLACK_BLOCKER()]);
     game = stage(game, 0, () => ({ library: toHand(0, [FOREST()], "annihilate-library") }));
