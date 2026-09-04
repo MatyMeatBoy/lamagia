@@ -55,6 +55,9 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(trigger_subject_hint("Whenever a permanent enters the battlefield under your control, draw a card."), "permanent-you-control")
         self.assertEqual(classify("Whenever a permanent enters the battlefield under your control, draw a card.")["trigger_subject"], "permanent-you-control")
 
+    def test_preserves_activated_cost_actions(self) -> None:
+        self.assertEqual(classify("{T}, Discard a card: Draw a card.")["operands"]["cost_actions"], ["discard"])
+
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
 

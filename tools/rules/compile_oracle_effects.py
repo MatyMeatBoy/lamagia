@@ -180,6 +180,11 @@ def operand_hints(clause: str, target_text: str | None, search_criterion: dict[s
         rf"\bsacrifice\s+(?:another\s+|a\s+|an\s+)?{re.escape(word)}\b", clause, re.I)})
     if sacrifice_types:
         result["sacrifice_types"] = sacrifice_types
+    if ACTIVATED_RE.match(clause.strip()):
+        cost_text = clause.split(":", 1)[0]
+        cost_actions = [action for action in ("discard", "exile", "sacrifice") if re.search(rf"\b{action}\b", cost_text, re.I)]
+        if cost_actions:
+            result["cost_actions"] = cost_actions
     return result
 
 
