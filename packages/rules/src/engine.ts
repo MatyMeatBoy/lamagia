@@ -2963,7 +2963,6 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     && cardProfile(candidate.card).doublesLandMana) ? ability.produces : [];
   const manaBonus = action.manaBonus ?? (manaBonusOptions[0]);
   if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
->>>>>>> 04e9026 (feat(arsenal): double controlled land mana)
   const next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost + (ability.gainLife ?? 0),
