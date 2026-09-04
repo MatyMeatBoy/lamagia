@@ -135,6 +135,7 @@ feature name.
 | `c14-draw-then-discard` | `Draw N, then discard M` effect (spell + activated) + bot discard-cards policy | `c14-batch2-clean` | merged (`02b40ed`) | 2026-09-04 |
 | `c14-self-zone` | `Exile ~` / `Shuffle ~ into its owner's library` spell self-destination; graveyard `another target` + nonland-permanent bounce | `c14-batch2-clean` | merged (`02b40ed`) | 2026-09-04 |
 | `bot-fear-block` | Bot chooseBlockers respects fear (CR 702.36b) | `c14-batch2-clean` | merged (`8f095af`) | 2026-09-04 |
+| `c14-any-creature-enters-trigger` | `Whenever another creature enters, X` — errata-modern trigger wording without "under your control" (watches every controller, still excludes the source itself); unlocks Essence Warden (C14) plus every Soul Warden/Wretched Anurid printing sharing the primitive | `worker-05` | ready | 2026-09-04 |
 | `rules-python-sacrifice-operands` | Preserve typed sacrifice operands and reusable primitive clusters in the Oracle compiler | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `rules-python-trigger-subjects` | Preserve reusable trigger subjects such as permanent-you-control in the Oracle compiler | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `rules-python-activated-cost-operands` | Preserve reusable discard, exile, and sacrifice cost operands for activated-ability batches | `codex/c13-equipment-cluster` | active | 2026-09-04 |

@@ -1267,6 +1267,11 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "artifact-you-control", pattern: /^whenever\s+an\s+artifact\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "enchantment-you-control", pattern: /^whenever\s+an\s+enchantment\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
+  // Errata dropped "under your control" from some printings (e.g. Essence
+  // Warden, Soul Warden): the trigger now watches every creature entering,
+  // not just the controller's own. Must stay after the "...under your
+  // control" patterns above so those remain the first match when present.
+  { event: "enters-battlefield", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },

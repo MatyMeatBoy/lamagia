@@ -335,6 +335,17 @@ const ANY_DEATH_WATCHER = () => make({
   name: "Blood Chronicler", type_line: "Creature — Vampire", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "3",
   oracle_text: "Whenever a creature dies, you gain 1 life."
 });
+// Modern errata dropped "under your control" from Essence Warden and Soul
+// Warden: the trigger now watches every creature entering, not only the
+// controller's own (still excluding the source itself, CR 109.5).
+const ANY_ENTER_WARDEN = () => make({
+  name: "Bramble Warden", type_line: "Creature — Elf Shaman", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1",
+  oracle_text: "Whenever another creature enters, you gain 1 life."
+});
+const ANY_ENTER_DRAINER = () => make({
+  name: "Anurid Sentinel", type_line: "Creature — Zombie", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2",
+  oracle_text: "Whenever another creature enters, you lose 1 life."
+});
 const RAIDER = () => make({
   name: "Bloodthirst Raider", type_line: "Creature — Orc", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2",
   oracle_text: "Whenever Bloodthirst Raider attacks, Bloodthirst Raider deals 1 damage to any target."
@@ -3483,6 +3494,10 @@ describe("triggered abilities", () => {
     expect(profileOf(ENCHANTMENT_ETB_DRAWER()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "enchantment-you-control", effect: { kind: "draw", amount: 1 } });
     expect(profileOf(DEATH_DRAIN()).triggers[0]).toMatchObject({ event: "dies", subject: "self" });
     expect(profileOf(WATCHER()).triggers[0]).toMatchObject({ event: "dies", subject: "another-creature-you-control" });
+    expect(profileOf(ANY_ENTER_WARDEN()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "another-creature", effect: { kind: "gain-life", amount: 1 } });
+    expect(profileOf(ANY_ENTER_WARDEN()).fullyImplemented).toBe(true);
+    expect(profileOf(ANY_ENTER_DRAINER()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "another-creature", effect: { kind: "lose-life", amount: 1 } });
+    expect(profileOf(ANY_ENTER_DRAINER()).fullyImplemented).toBe(true);
     expect(profileOf(RAIDER()).triggers[0]).toMatchObject({ event: "attacks", subject: "self", targetKind: "any" });
     expect(profileOf(UPKEEP_SAGE()).triggers[0]).toMatchObject({ event: "upkeep", subject: "you" });
     expect(profileOf(CREATURE_COMBAT_DRAWER()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", effect: { kind: "draw", amount: 1 } });
@@ -3810,6 +3825,33 @@ describe("triggered abilities", () => {
     solo = applyAction(solo, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: watcher.instance_id }] });
     solo = passUntil(solo, (state) => state.stack.length === 0 && !state.triggerQueue.length);
     expect(solo.players[1]!.life).toBe(before);
+  });
+
+  it("fires another creature's enter trigger under any player's control, but not for itself", () => {
+    // The controller's own creature entering triggers it.
+    let game = readyToCast([BEAR()], [ANY_ENTER_WARDEN(), FOREST(), FOREST()]);
+    const life = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0 && !state.triggerQueue.length);
+    expect(game.players[0]!.life).toBe(life + 1);
+
+    // So does an opponent's creature entering: the errata dropped "you control".
+    let cross = twoSeatGame([], []);
+    cross = stage(cross, 1, () => ({ hand: toHand(1, [BEAR()]) }));
+    cross = putOnBattlefield(cross, 0, [ANY_ENTER_WARDEN()]);
+    cross = putOnBattlefield(cross, 1, [FOREST(), FOREST()]);
+    cross = passUntil(cross, (state) => state.activeSeat === 1 && state.step === "precombat-main" && state.prioritySeat === 1);
+    const crossLife = cross.players[0]!.life;
+    cross = applyAction(cross, 1, { type: "cast", cardId: "hand-0" });
+    cross = passUntil(cross, (state) => state.stack.length === 0 && !state.triggerQueue.length);
+    expect(cross.players[0]!.life).toBe(crossLife + 1);
+
+    // The warden entering itself must not trigger its own ability (CR 109.5).
+    let solo = readyToCast([ANY_ENTER_WARDEN()], [FOREST()]);
+    const before = solo.players[0]!.life;
+    solo = applyAction(solo, 0, { type: "cast", cardId: "hand-0" });
+    solo = passUntil(solo, (state) => state.stack.length === 0 && !state.triggerQueue.length);
+    expect(solo.players[0]!.life).toBe(before);
   });
 
   it("fires an attack trigger when attackers are declared", () => {

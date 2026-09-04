@@ -1420,3 +1420,30 @@ rebase a stale full-tree branch. Current regenerated coverage is **184/356
 C13 precon cards**, **169/341 unique C13 entries**, **116/322 C14 cards**, and
 **8,223/38,711 global cards**. Commit `5f01afc` (C13 top-library selection)
 is queued for the next integration batch.
+
+### Worker-05: reusable "any creature enters" trigger (2026-09-04)
+
+Claim `c14-any-creature-enters-trigger`. Wizards dropped "under your control"
+from some `enters-the-battlefield` triggers as a functional errata (Essence
+Warden, Soul Warden, Wretched Anurid and others): the ability now watches
+*every* creature entering, not only the controller's own, while CR 109.5 still
+excludes the source itself. `TRIGGER_TEMPLATES` in
+`packages/rules/src/characteristics.ts` already had the `another-creature`
+subject (previously wired only to the `dies` event) and `engine.ts` already
+resolved that subject generically for any event; the only gap was a template
+line for `enters-battlefield` matching the "under your control"-less wording.
+Added one new template entry (ordered after every `...under your control`
+`enters-battlefield` template, so a card that does print that clause keeps
+matching the narrower, existing subject first).
+
+This single primitive line, with no other code changes, took Essence Warden
+(C14) from unimplemented to fully covered, and does the same for every
+Soul Warden and Wretched Anurid printing across the catalog by shared
+`oracle_id`. Regenerated coverage: **117/322 C14 cards (36.3%)**, global
+export **8,226/38,711**. `npm run check` and `npm test` PASS (**427 rules
+tests**, up from 426; simulator smoke tests and 40 Oracle Python tests PASS).
+
+`npm run simulate:engine` reproduces one pre-existing invariant failure (seed
+92, "P1 lost track of its commander") that is unrelated to this change — it
+reproduces identically on this same HEAD with this diff stashed out, so it is
+not attributable to this claim and is left for a separate investigation.
