@@ -25180,7 +25180,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Carnage Altar — `aa05900f-0f04-407e-931c-fea8f91e78e3`
 - [ ] Charmbreaker Devils — `1b9df437-6988-4ddc-80c4-893e11076067`
 - [ ] Charnelhoard Wurm — `4a430fa3-e693-424b-9981-d7d8193445e3`
-- [ ] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
+- [x] Command Tower — `0895c9b7-ae7d-4bb3-af17-3b75deb50a25`
 - [ ] Conjurer's Closet — `cd1eda60-53e4-44d0-9b2c-7a57395e291f`
 - [ ] Contested Cliffs — `b891a683-2ebc-4e9c-b402-5dd9c1b42b69`
 - [ ] Control Magic — `cd0d7141-46d2-4aa3-bc77-6b3b4513803e`
@@ -25198,7 +25198,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Deadwood Treefolk — `b7efcb42-aa52-4d13-8c7c-b2db2dd51afd`
 - [ ] Deathbringer Thoctar — `2500a811-2435-4915-ac83-9bfe2887621a`
 - [ ] Deceiver Exarch — `3c939ea6-68b7-4965-b1d3-af1d3dc79778`
-- [ ] Decree of Pain — `932668fa-d6e3-41c0-ad0c-8e0a00e68d11`
+- [x] Decree of Pain — `932668fa-d6e3-41c0-ad0c-8e0a00e68d11`
 - [ ] Deep Analysis — `579cbd92-797f-4cdf-91ed-fca7a523eae5`
 - [ ] Deepfire Elemental — `c8119ebe-aedd-4bdb-8f7f-368674a049fd`
 - [ ] Derevi, Empyrial Tactician — `afa49a09-146f-4439-850e-dd1938c93cef`
