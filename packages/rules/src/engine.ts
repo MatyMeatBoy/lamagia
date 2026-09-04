@@ -1207,6 +1207,11 @@ function triggerMatches(
     const permanent = entering && findPermanent(state, entering.permanentId);
     if (!permanent || powerOf(permanent, state) > condition.amount) return false;
   }
+  if (condition?.kind === "entering-power-at-least") {
+    const entering = eventObject(event);
+    const permanent = entering && findPermanent(state, entering.permanentId);
+    if (!permanent || powerOf(permanent, state) < condition.amount) return false;
+  }
   const subject = definition.subject;
 
   // Turn-structure triggers are about a player, not an object.
@@ -1406,7 +1411,7 @@ function dealDamageToPlayer(
 }
 
 function sourceForDamage(state: GameState, object: StackObject): DamageSource | undefined {
-  const sourceId = object.sourcePermanentId;
+  const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
   if (!sourceId) return undefined;
   const permanent = findPermanent(state, sourceId);
   return permanent

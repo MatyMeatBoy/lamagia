@@ -617,6 +617,7 @@ export interface TriggerDefinition {
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number }
     | { readonly kind: "controlled-subtype-at-least"; readonly subtype: string; readonly amount: number }
+    | { readonly kind: "entering-power-at-least"; readonly amount: number }
     | { readonly kind: "creature-died-this-turn" }
     | { readonly kind: "cast-from-hand" }
     | { readonly kind: "entering-power-at-most"; readonly amount: number };
@@ -2762,6 +2763,21 @@ function recognizeText(text: string): RecognizedText {
       }
     }
     // "Whenever another creature you control with power N or less enters, X" (Mentor of the Meek).
+    const highPowerEnters = /^whenever\s+(?:a|another)\s+creature\s+you\s+control\s+with\s+power\s+(\d+)\s+or\s+greater\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(line);
+    if (highPowerEnters) {
+      const rawEffect = highPowerEnters[2]!.trim();
+      const optional = /^you\s+may\b/i.test(rawEffect);
+      const executable = rawEffect.replace(/^you\s+may\s+have\s+/i, "").replace(/^you\s+may\s+/i, "").replace(/^~\s+deal\b/i, "~ deals");
+      const rec = recognizeSentence(executable);
+      if (rec) {
+        triggers.push({
+          event: "enters-battlefield", subject: "creature-you-control", effect: rec.effect,
+          optional, targetKind: rec.target, sourceText: line,
+          condition: { kind: "entering-power-at-least", amount: Number(highPowerEnters[1]) }
+        });
+      } else unimplementedText.push(line);
+      continue;
+    }
     const lowPowerEnters = /^whenever\s+another\s+creature\s+you\s+control\s+with\s+power\s+(\d+)\s+or\s+less\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(line);
     if (lowPowerEnters) {
       const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(lowPowerEnters[2]!);
