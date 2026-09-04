@@ -754,6 +754,10 @@ also shows multi-search progress. This follows CR 701.19, 701.23, 701.26 and
 400.7; the scope excludes searches with different per-card restrictions or
 non-deterministic destination choices.
 
+The same reusable primitive now recognizes Burnished Hart's variant, where
+both selected basics enter the battlefield tapped, with a scenario covering
+its sacrifice cost and destination order.
+
 The reprint-equivalence pass verifies C13's Command Tower and Decree of Pain
 against their shared oracle-driven implementations. Army of the Damned is now
 covered end to end, including Flashback from the graveyard and exile on
