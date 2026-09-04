@@ -138,6 +138,8 @@ export interface StackObject {
   readonly fromCommandZone: boolean;
   readonly variableValue: number;
   readonly countered: boolean;
+  /** Seat that countered this spell with a replacement-to-battlefield effect. */
+  readonly counteredToBattlefieldController?: SeatId;
   /** The spell was cast for its kicker cost (CR 702.33). */
   readonly kicked?: boolean;
   readonly evoked?: boolean;
@@ -1613,6 +1615,34 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
     }
+    case "chaos-warp": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+
+      // Chaos Warp removes the permanent without destroying it, then shuffles it
+      // into its owner's library before revealing that library's top card.
+      let next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      next = permanent.isCommander
+        ? withPlayer(next, permanent.card.owner, (player) => ({ ...player, commandZone: [...player.commandZone, permanent.card] }))
+        : withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: [...player.library, permanent.card] }));
+
+      const owner = playerAt(next, permanent.card.owner);
+      const shuffled = shuffle(owner.library, next.rngState);
+      next = { ...next, rngState: shuffled.state };
+      const top = shuffled.items[0];
+      next = withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: shuffled.items.slice(1) }));
+      if (top && cardProfile(top).isPermanent) {
+        next = putOntoBattlefield(next, permanent.card.owner, top, false);
+      } else if (top) {
+        next = withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: [top, ...player.library] }));
+      }
+      return logged(next, controller, `${permanent.card.name} se baraja en la biblioteca de su propietario.`);
+    }
     case "regenerate-source": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
       const source = findPermanent(state, sourceId);
@@ -1855,6 +1885,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return logged(next, controller, `${sourceName} destruye ${effect.tappedOnly ? "las criaturas giradas" : "todas las criaturas"}.`);
     }
+    case "destroy-all-creatures-draw-destroyed": {
+      const destroyed = allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))
+        && !keywordOf(state, permanent, "indestructible"));
+      let next = state;
+      for (const permanent of destroyed) next = destroyPermanent(next, permanent);
+      next = drawCards(next, controller, destroyed.length);
+      return logged(next, controller, `${sourceName} destruye ${destroyed.length} criatura(s) y roba ${destroyed.length}.`);
+    }
     case "destroy-all-artifacts-creatures-enchantments": {
       let next = state;
       for (const permanent of allPermanents(state)) {
@@ -1869,6 +1907,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const target = object.targets[0];
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
+    }
+    case "counter-target-spell-to-battlefield": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "spell") return state;
+      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId
+        ? { ...entry, countered: true, counteredToBattlefieldController: controller }
+        : entry)) };
     }
     case "add-counter-source": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
@@ -2008,6 +2053,11 @@ function resolveTop(state: GameState): GameState {
   if (object.countered) {
     if (object.trigger) return logged(next, object.controller, `Se contrarresta la habilidad disparada de ${object.card.name}.`);
     if (object.activated) return logged(next, object.controller, `Se contrarresta la habilidad activada de ${object.card.name}.`);
+    if (object.counteredToBattlefieldController !== undefined
+      && profile.isPermanent && (isArtifact(profile) || isCreature(profile))) {
+      const entered = putOntoBattlefield(next, object.counteredToBattlefieldController, object.card, false);
+      return logged(entered, object.counteredToBattlefieldController, `${object.card.name} entra al campo de batalla bajo su control.`);
+    }
     next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
   }
@@ -3025,6 +3075,7 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
   }
   const cost = searchAbility?.cost ?? profile?.cyclingCost ?? null;
   if (!card || !cost) throw new Error("Esa carta no tiene un coste de cycling válido.");
+  const cycledCard = card;
   const plan = planManaPayment(cost, player, { state });
   if (!plan) throw new Error(`No tienes maná suficiente para ciclar ${card.name}.`);
   let next = applyManaPlan(state, seat, plan);
@@ -3037,8 +3088,8 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     graveyard: [...current.graveyard, card]
   }));
   const cycledWatcher: Permanent = {
-    instance_id: card.instance_id,
-    card,
+    instance_id: cycledCard.instance_id,
+    card: cycledCard,
     controller: seat,
     tapped: false,
     summoningSick: false,
@@ -3049,7 +3100,7 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     toughnessModifier: 0,
     isCommander: false
   };
-  next = raiseEvent(next, { kind: "card-cycled", controller: seat, card }, [cycledWatcher]);
+  next = raiseEvent(next, { kind: "card-cycled", controller: seat, card: cycledCard }, [cycledWatcher]);
   if (!searchAbility) return logged(drawCards(next, seat, 1), seat, `${player.name} cicla ${card.name}.`);
 
   const search: Extract<import("./characteristics.js").SpellEffect, { kind: "search-library" }> = {
@@ -3074,8 +3125,6 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
       optionIds, sourceCard: card, search, returnSourceToGraveyard: false
     }
   }, seat, `${player.name} usa ${searchAbility.text} de ${card.name}.`);
-  next = drawCards(next, seat, 1);
-  return logged(next, seat, `${player.name} cicla ${card.name}.`);
 }
 
 function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "equip" }>): GameState {

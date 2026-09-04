@@ -180,6 +180,24 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     enforced: "Se dispara al ponerse el hechizo en la pila, no al resolverse.",
     path: "M5 19 17 7m0 0-1.5-3L19 5.5 20.5 9 17 7zM5 19l-1 2 2-1"
   },
+  "card-cycled": {
+    label: "Al ciclar una carta",
+    rule: "Se dispara cuando el jugador indicado cicla una carta.",
+    enforced: "Se registra después de pagar el coste y descartar la carta.",
+    path: "M4 12a8 8 0 0 1 14-5l2 2m0-5v5h-5M20 12a8 8 0 0 1-14 5l-2-2m0 5v-5h5"
+  },
+  "card-drawn": {
+    label: "Al robar una carta",
+    rule: "Se dispara cuando el jugador indicado roba una carta.",
+    enforced: "Se registra por cada carta robada, incluida la del paso de robo.",
+    path: "M6 3h8l4 4v14H6V3zm2 9h8m-8 4h5"
+  },
+  "leaves-battlefield": {
+    label: "Al dejar el campo",
+    rule: "Se dispara cuando el permanente indicado deja el campo de batalla.",
+    enforced: "Se registra antes de que desaparezca la información necesaria del permanente.",
+    path: "M21 12H7m0 0 4-4m-4 4 4 4M3 5v14"
+  },
   upkeep: {
     label: "En el mantenimiento",
     rule: "Se dispara al comenzar el paso de mantenimiento indicado.",

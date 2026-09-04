@@ -1050,10 +1050,11 @@ draw, Desertion's counter-and-return, Command Tower color identity, Mirari's
 Wake mana/P+T grants, Loyal Retainers restrictions, and Maelstrom Wanderer
 haste reuse. Duplicate or already-equivalent patches were retained once.
 
-Validation: `npm run check` PASS; `npm test` PASS (**315 rules tests**, simulator
-and **37 Oracle Python tests**). The current export is **7,991/38,711** fully
-implemented cards; C13 is **161/356**, C14 is **162/337**, and the filtered map
-is **21.4% (18,174/84,990 memberships) across 685 editions**.
+Validation: `npm run check` PASS; `npm test` PASS (**324 rules tests**, simulator
+and **38 Oracle Python tests**). The current export is **8,009/38,711** fully
+implemented cards; the refreshed C13 precon report is **163/356** and C14 is
+**128/337**. The filtered map is **21.5% (18,285/84,990 memberships) across
+685 editions**.
 
 The global queue remains incremental and reusable: five disjoint workers, a
 2 GB scheduler ceiling, up to 20 `oracle_id`s per commit, and `quick-win`
@@ -1075,8 +1076,22 @@ Worker estimates use unique cards, preventing misleading double-counting. The
 behavior is covered by `test_worker_plan_colocates_overlapping_oracle_ids`.
 
 Fork integration policy remains strict: integrate only when **more than 10**
-new commits are available; the current fork tail has exactly 10, so it remains
-queued until at least one additional commit arrives.
+new commits are available. The 13-commit C13 tail was integrated in full;
+future work must use a fresh disjoint claim after this checkpoint.
+
+### Integrator checkpoint: C13 batch accepted (2026-09-04)
+
+Integrated the fork's 13-commit batch for Vela, Decree, Edric, and Mind's Eye,
+including Intimidate, cycling triggers, combat-damage draw, and optional mana
+payment triggers. Compatibility aliases preserve both `payCost` and
+`manaCost`; Chaos Warp's shuffle/reveal dependency was completed locally after
+the fork's stale base exposed it during validation. Generated coverage and the
+public progress snapshot were refreshed.
+
+Validation: `npm run check` PASS; `npm test` PASS (**324 rules tests**, simulator
+tests, **38 Oracle Python tests**). C13: **163/356 implemented, 193 pending
+(45.8%)**. Do not count printings as separate logic: the engine keys cards by
+stable `oracle_id`.
 
 The compiler also memoizes identical clause classification with a bounded
 per-worker cache (`lru_cache(8192)`), covered by the Oracle Python tests. This

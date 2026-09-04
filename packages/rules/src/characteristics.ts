@@ -313,6 +313,7 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-permanent" }
+  | { readonly kind: "chaos-warp" }
   /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
   | { readonly kind: "regenerate-source" }
   /** Creates one destruction-replacement shield for the targeted creature (CR 701.19). */
@@ -338,7 +339,9 @@ export type SpellEffect =
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean }
+  | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
+  | { readonly kind: "counter-target-spell-to-battlefield" }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
@@ -1172,6 +1175,10 @@ function matchTriggerLine(line: string): { event: TriggerEvent; subject: Trigger
 function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind } | null {
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
   let match: RegExpExecArray | null;
+
+  if (/^The owner of target permanent shuffles it into their library, then reveals the top card of their library\. If it's a permanent card, they put it onto the battlefield$/i.test(text)) {
+    return { effect: { kind: "chaos-warp" }, target: "permanent" };
+  }
 
   if ((match = /^Draw a card and lose (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
