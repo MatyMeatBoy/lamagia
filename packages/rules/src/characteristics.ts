@@ -426,7 +426,9 @@ export interface TriggerDefinition {
   readonly targetKind: TargetKind;
   readonly sourceText: string;
   /** Mana that must be paid when an optional trigger is accepted. */
-  readonly manaCost?: ManaCost;
+ readonly manaCost?: ManaCost;
+  /** For "unless that player pays", the opponent is the payer and the trigger controller receives the effect if they decline. */
+  readonly paymentBy?: "opponent";
   readonly condition?:
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number };
@@ -1548,9 +1550,12 @@ function recognizeText(text: string): RecognizedText {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
       const conditionalPayment = /^you\s+may\s+pay\s+((?:\{[^}]+\})+)\.\s*if\s+you\s+do,\s*(.+)$/i.exec(triggered.effectText);
-      const paymentCost = conditionalPayment ? parseManaCost(conditionalPayment[1]!) : null;
-      const effectText = powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? conditionalPayment?.[2]?.trim() ?? triggered.effectText;
-      const optional = Boolean(conditionalPayment) || /^you\s+may\b/i.test(effectText);
+      const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
+      const paymentCost = conditionalPayment || unlessPayment
+        ? parseManaCost(conditionalPayment?.[1] ?? unlessPayment?.[2] ?? "")
+        : null;
+      const effectText = powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? conditionalPayment?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? triggered.effectText;
+      const optional = Boolean(conditionalPayment || unlessPayment) || /^you\s+may\b/i.test(effectText);
       const recognized = recognizeSentence(optional && !conditionalPayment ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {
         triggers.push({
@@ -1561,6 +1566,7 @@ function recognizeText(text: string): RecognizedText {
           targetKind: recognized.target,
           sourceText: line,
           ...(paymentCost ? { manaCost: paymentCost } : {}),
+          ...(unlessPayment && paymentCost ? { paymentBy: "opponent" as const } : {}),
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {})

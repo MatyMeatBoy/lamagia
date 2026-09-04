@@ -151,6 +151,8 @@ export interface TriggerInstance {
   readonly definition: TriggerDefinition;
   /** What raised it, for the log and for the client's stack strip. */
   readonly cause: string;
+  /** Player whose action raised the event, used by payment clauses such as Rhystic Study. */
+  readonly eventController?: SeatId;
 }
 
 /**
@@ -233,6 +235,8 @@ export type PendingChoice =
       readonly manaCost?: ManaCost;
       readonly targets?: readonly Target[];
       readonly sourcePermanentId?: string;
+      readonly sourceController?: SeatId;
+      readonly paymentBy?: "opponent";
     }
   | {
       /**
@@ -1031,7 +1035,8 @@ function raiseEvent(
         sourcePermanentId: watcher.instance_id,
         sourceCard: watcher.card,
         definition,
-        cause: causeOf(state, event)
+        cause: causeOf(state, event),
+        ...(event.kind === "spell-cast" ? { eventController: event.controller } : {})
       });
     }
   }
@@ -1931,16 +1936,21 @@ function resolveTop(state: GameState): GameState {
 
   if (object.trigger) {
     if (object.trigger.definition.optional) {
+      const payer = object.trigger.definition.paymentBy === "opponent"
+        ? (object.trigger.eventController ?? opponentsOf(next, object.controller)[0] ?? object.controller)
+        : object.controller;
       return {
         ...next,
         pendingChoice: {
           type: "optional-trigger",
-          seat: object.controller,
+          seat: payer,
           sourceId: object.trigger.id,
           triggerEffect: object.trigger.definition.effect,
           sourceCard: object.trigger.sourceCard,
           targets: object.targets,
           sourcePermanentId: object.trigger.sourcePermanentId,
+          sourceController: object.controller,
+          ...(object.trigger.definition.paymentBy ? { paymentBy: object.trigger.definition.paymentBy } : {}),
           ...(object.trigger.definition.manaCost ? { manaCost: object.trigger.definition.manaCost } : {})
         }
       };
@@ -2450,8 +2460,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (choice.type === "optional-trigger") {
       if (!choice.manaCost || planManaPayment(choice.manaCost, player, { state })) actions.push({
         action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true },
-        label: choice.manaCost ? `Pagar ${choice.manaCost.raw} y resolver habilidad` : "Sí, resolver habilidad",
-        note: choice.manaCost ? "Paga el coste y resuelve la habilidad opcional." : "La habilidad opcional se resuelve ahora."
+        label: choice.paymentBy ? `Pagar ${choice.manaCost?.raw ?? ""} para evitar` : choice.manaCost ? `Pagar ${choice.manaCost.raw} y resolver habilidad` : "Sí, resolver habilidad",
+        note: choice.paymentBy ? "Paga para evitar la habilidad." : choice.manaCost ? "Paga el coste y resuelve la habilidad opcional." : "La habilidad opcional se resuelve ahora."
       });
       actions.push({
         action: { type: "choose-trigger", sourceId: choice.sourceId, accept: false },
@@ -3168,6 +3178,31 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
   if (!choice || choice.type !== "optional-trigger" || choice.seat !== seat) throw new Error("No tienes una elección de trigger pendiente.");
   if (choice.sourceId !== action.sourceId) throw new Error("Esa elección de trigger ya no está pendiente.");
   let next: GameState = { ...state, pendingChoice: null };
+  if (choice.paymentBy === "opponent") {
+    if (!action.accept) {
+      const source: StackObject = {
+        id: choice.sourceId,
+        controller: choice.sourceController ?? seat,
+        card: choice.sourceCard,
+        label: choice.sourceCard.name + " · habilidad opcional",
+        targets: choice.targets ?? [],
+        fromCommandZone: false,
+        variableValue: 0,
+        countered: false,
+        sourcePermanentId: choice.sourcePermanentId
+      };
+      next = applyEffect(next, source, choice.triggerEffect);
+      return logged(next, source.controller, choice.sourceCard.name + " resuelve su habilidad porque el oponente no paga.");
+    }
+    if (!choice.manaCost) throw new Error("La habilidad de pago no tiene coste.");
+    const plan = planManaPayment(choice.manaCost, playerAt(next, seat), { state: next });
+    if (!plan) throw new Error("No tienes maná suficiente para pagar.");
+    next = applyManaPlan(next, seat, plan);
+    const payment = payCost(choice.manaCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+    if (!payment) throw new Error("No se pudo pagar el coste de la habilidad.");
+    next = withPlayer(next, seat, (current) => ({ ...current, manaPool: payment.remaining }));
+    return logged(next, seat, playerAt(next, seat).name + " paga " + choice.manaCost.raw + " para evitar la habilidad.");
+  }
   if (!action.accept) return logged(next, seat, `${playerAt(state, seat).name} no realiza la habilidad opcional de ${choice.sourceCard.name}.`);
   if (choice.manaCost) {
     const plan = planManaPayment(choice.manaCost, playerAt(next, seat), { state: next });
