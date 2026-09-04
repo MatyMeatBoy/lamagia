@@ -1724,6 +1724,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^exile all attacking creatures$/i.test(text)) {
     return { effect: { kind: "exile-all-attacking-creatures" }, target: "none" };
   }
+  if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
+    return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
+  }
   if ((match = /^each opponent loses X life, where X is your devotion to (white|blue|black|red|green)\.?\s*You gain life equal to the life lost this way\.?$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
     return { effect: { kind: "devotion-drain", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };

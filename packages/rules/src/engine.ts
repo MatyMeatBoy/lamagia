@@ -78,6 +78,8 @@ export interface Permanent {
   readonly evoked?: boolean;
   /** This permanent's spell was cast from hand, as opposed to put onto the battlefield another way (CR 601). */
   readonly castFromHand?: boolean;
+  /** Doesn't untap during its controller's next untap step (Breaching Leviathan, CR 502.1). */
+  readonly skipNextUntap?: boolean;
   /** A loyalty ability was activated on this planeswalker this turn (CR 606.3). */
   readonly loyaltyUsedThisTurn?: boolean;
   /** "Target creature can't block this turn"; cleared during cleanup. */
