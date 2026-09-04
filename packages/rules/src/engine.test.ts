@@ -2363,6 +2363,19 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Scry Two")).toBe(true);
   });
 
+  it("uses an opaque ordinal so duplicate Scry names remain independently selectable", () => {
+    let game = readyToCast([SCRY_TWO()], [ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), BEAR()], "scry-duplicates"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const sourceId = game.pendingChoice!.sourceId;
+    const actions = legalActions(game, 0).filter((entry) => entry.action.type === "choose-scry");
+    expect(actions.map((entry) => entry.action.type === "choose-scry" ? entry.action.ordinal : undefined)).toEqual([0, 0, 1, 1]);
+    game = applyAction(game, 0, { type: "choose-scry", sourceId, query: "Grizzly Bears", ordinal: 1, bottom: true });
+    game = applyAction(game, 0, { type: "choose-scry", sourceId, query: "Grizzly Bears", ordinal: 0, bottom: false });
+    expect(game.players[0]!.library[0]!.instance_id).toBe("scry-duplicates-0");
+    expect(game.players[0]!.library.at(-1)!.instance_id).toBe("scry-duplicates-1");
+  });
+
   it("returns Blue Sun's Zenith to its owner's library after drawing", () => {
     let game = readyToCast([C13_BLUE_SUN()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
     const beforeHand = game.players[0]!.hand.length;
