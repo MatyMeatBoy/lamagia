@@ -117,6 +117,25 @@ describe("enters tapped", () => {
   });
 });
 
+describe("payment trigger parsing", () => {
+  it("keeps the caster as the payer for an unless clause", () => {
+    const profile = cardProfile(card({
+      name: "Rhystic Study",
+      type_line: "Enchantment",
+      oracle_text: "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "spell-cast",
+      subject: "opponent",
+      optional: true,
+      paymentBy: "opponent",
+      manaCost: { raw: "{1}" },
+      effect: { kind: "draw", amount: 1 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("effect recognition", () => {
   it("recognizes a draw spell", () => {
     const profile = cardProfile(card({ name: "Test Draw", type_line: "Sorcery", mana_cost: "{2}{U}", oracle_text: "Draw three cards." }));
