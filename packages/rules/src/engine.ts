@@ -1257,6 +1257,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return next;
     }
+    case "damage-each-player": {
+      const amount = effectAmount(effect.amount, object);
+      let next = state;
+      for (const player of state.players) if (!player.lost) next = dealDamageToPlayer(next, player.seat, amount, sourceName);
+      return next;
+    }
     case "mill-each-player": {
       let next = state;
       const amount = effectAmount(effect.amount, object);
