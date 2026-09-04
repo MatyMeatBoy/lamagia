@@ -56,7 +56,9 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(classify("Whenever a permanent enters the battlefield under your control, draw a card.")["trigger_subject"], "permanent-you-control")
 
     def test_preserves_activated_cost_actions(self) -> None:
-        self.assertEqual(classify("{T}, Discard a card: Draw a card.")["operands"]["cost_actions"], ["discard"])
+        result = classify("{T}, Discard a card: Draw a card.")
+        self.assertEqual(result["operands"]["cost_actions"], ["discard"])
+        self.assertEqual(result["primitive_cluster"], "draw|activated|cost-actions:discard")
 
     def test_preserves_player_spell_trigger_subjects(self) -> None:
         self.assertEqual(trigger_subject_hint("Whenever an opponent casts a spell, draw a card."), "opponent")

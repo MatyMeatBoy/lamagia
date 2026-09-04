@@ -239,6 +239,9 @@ def classify(clause: str) -> dict[str, Any]:
         cluster_parts.append("sacrifice-types:" + ",".join(sacrifice_types))
     if trigger_subject:
         cluster_parts.append("trigger-subject:" + trigger_subject)
+    cost_actions = operands.get("cost_actions", [])
+    if cost_actions:
+        cluster_parts.append("cost-actions:" + ",".join(cost_actions))
     if modal:
         cluster_parts.append("modal")
     return {
