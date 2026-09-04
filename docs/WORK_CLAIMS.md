@@ -140,6 +140,11 @@ feature name.
 | `arsenal-miraris-wake-pt` | Mirari’s Wake static +1/+1 grant to creatures you control (CR 613.4, 613.5) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-miraris-wake-mana` | Mirari’s Wake adds one mana of a produced type when a controlled land produces mana (CR 605.1, 613.6) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-command-tower` | Command Tower produces mana restricted to the commander’s color identity (CR 903.5d, 106.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-chaos-warp` | Chaos Warp shuffles a target permanent into its owner’s library and conditionally puts the revealed top card onto the battlefield (CR 701.20, 701.34) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-decree-of-pain` | Decree of Pain destroys all creatures and draws for creatures destroyed by that effect (CR 608.2c, 701.7) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-desertion` | Desertion counters a spell and puts an artifact or creature spell onto the battlefield under its controller’s control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-maelstrom-haste` | Reuse the static “creatures you control have haste” primitive for Maelstrom Wanderer; cascade remains separate | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-vela-intimidate` | Intimidate keyword and static grants for Vela the Night-Clad (CR 702.13, 509.1a) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
