@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,939** · cobertura: **22.3%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,942** · cobertura: **22.3%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -257,7 +257,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,93
 | 2011-05-14 | Duel Decks: Mirrodin Pure vs. New Phyrexia (`TD2`) | duel-decks | duel-decks-mirrodin-pure-vs-new-phyrexia | other | 80 | 29 | 51 | 36.2% |
 | 2011-06-17 | Commander 2011 (`CMD`) | commander | 2011 | commander | 303 | 101 | 202 | 33.3% |
 | 2011-07-14 | Magic 2012 Promos (`PM12`) | promos | magic-2012 | other | 3 | 0 | 3 | 0.0% |
-| 2011-07-15 | Magic 2012 (`M12`) | core | 2010s | main | 234 | 92 | 142 | 39.3% |
+| 2011-07-15 | Magic 2012 (`M12`) | core | 2010s | main | 234 | 93 | 141 | 39.7% |
 | 2011-08-26 | From the Vault: Legends (`V11`) | from-the-vault | 2010s | other | 15 | 1 | 14 | 6.7% |
 | 2011-09-02 | Duel Decks: Ajani vs. Nicol Bolas (`DDH`) | duel-decks | duel-decks-ajani-vs-nicol-bolas | other | 77 | 34 | 43 | 44.2% |
 | 2011-09-24 | Innistrad Promos (`PISD`) | promos | innistrad | other | 5 | 2 | 3 | 40.0% |
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,93
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 24 | 44 | 35.3% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 64 | 170 | 27.4% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 161 | 180 | 47.2% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 162 | 179 | 47.5% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 3 | 9 | 25.0% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 5 | 9 | 35.7% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 1 | 8 | 11.1% |
@@ -490,7 +490,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,93
 | 2021-02-05 | Kaldheim Commander (`KHC`) | commander | 2021 | commander | 119 | 34 | 85 | 28.6% |
 | 2021-03-11 | Historic Anthology 4 (`HA4`) | anthologies | historic-anthology-4 | other | 25 | 3 | 22 | 12.0% |
 | 2021-03-19 | Time Spiral Remastered (`TSR`) | masters-remastered | time-spiral-remastered | other | 410 | 66 | 344 | 16.1% |
-| 2021-04-23 | Commander 2021 (`C21`) | commander | 2021 | commander | 329 | 80 | 249 | 24.3% |
+| 2021-04-23 | Commander 2021 (`C21`) | commander | 2021 | commander | 329 | 81 | 248 | 24.6% |
 | 2021-04-23 | Strixhaven Mystical Archive (`STA`) | masterpieces | strixhaven-mystical-archive | other | 63 | 18 | 45 | 28.6% |
 | 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | strixhaven | main | 290 | 41 | 249 | 14.1% |
 | 2021-04-23 | Strixhaven: School of Mages Promos (`PSTX`) | promos | strixhaven-school-of-mages | other | 90 | 2 | 88 | 2.2% |
@@ -740,7 +740,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,93
 | boxed-products | the-zeta-set | 1 | 121 | 31 | 90 | 25.6% |
 | commander | 2011 | 1 | 303 | 101 | 202 | 33.3% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 161 | 180 | 47.2% |
+| commander | 2013 | 1 | 341 | 162 | 179 | 47.5% |
 | commander | 2014 | 1 | 322 | 115 | 207 | 35.7% |
 | commander | 2015 | 1 | 327 | 110 | 217 | 33.6% |
 | commander | 2016 | 1 | 341 | 90 | 251 | 26.4% |
@@ -748,7 +748,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,93
 | commander | 2018 | 1 | 297 | 107 | 190 | 36.0% |
 | commander | 2019 | 1 | 292 | 91 | 201 | 31.2% |
 | commander | 2020 | 4 | 1001 | 273 | 728 | 27.3% |
-| commander | 2021 | 5 | 1022 | 245 | 777 | 24.0% |
+| commander | 2021 | 5 | 1022 | 246 | 776 | 24.1% |
 | commander | 2022 | 7 | 1802 | 404 | 1398 | 22.4% |
 | commander | 2023 | 6 | 1597 | 348 | 1249 | 21.8% |
 | commander | 2024 | 7 | 1887 | 460 | 1427 | 24.4% |
@@ -758,7 +758,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,93
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 52 | 169 | 23.5% |
 | core | 1990s | 10 | 3267 | 1035 | 2232 | 31.7% |
 | core | 2000s | 4 | 1389 | 630 | 759 | 45.4% |
-| core | 2010s | 8 | 2011 | 765 | 1246 | 38.0% |
+| core | 2010s | 8 | 2011 | 766 | 1245 | 38.1% |
 | core | 2020s | 3 | 1132 | 352 | 780 | 31.1% |
 | deck-products | coldsnap-theme-decks | 1 | 52 | 10 | 42 | 19.2% |
 | deck-products | magic-online-theme-decks | 1 | 174 | 77 | 97 | 44.3% |
@@ -19919,7 +19919,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,93
 - [ ] Djinn of Wishes — `a34c3012-f787-4998-93c7-89c4decaa1ba`
 - [ ] Doubling Chant — `be48877f-97b1-4a10-a618-cbc57515e617`
 - [ ] Dragon's Claw — `bd8d707d-1201-42c6-bce6-fbda12ce5ea8`
-- [ ] Druidic Satchel — `75a4ddf5-1b3c-4dde-a6e4-4346e46cebf1`
 - [ ] Dungrove Elder — `32083c9f-04c6-4b6f-9e24-cc8f3cae3e3e`
 - [ ] Duskhunter Bat — `6082f84a-3af2-4007-ab88-7b4b59b5c154`
 - [ ] Elixir of Immortality — `204b71fc-4d5f-40dd-903d-56c733171d84`
@@ -22324,7 +22323,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,93
 - [ ] Diviner Spirit — `911b8849-dd0a-4383-8403-ea80227c5d7d`
 - [ ] Divinity of Pride — `2c91c236-34d7-4454-a55a-784db7f68bde`
 - [ ] Djinn of Infinite Deceits — `f9de4cea-27c4-4343-8a7a-09b8f346c3b5`
-- [ ] Druidic Satchel — `75a4ddf5-1b3c-4dde-a6e4-4346e46cebf1`
 - [ ] Dungeon Geists — `ab5ebae2-cd77-4a7d-a93b-8042cd486429`
 - [ ] Echo Mage — `fb98f6b7-5986-4c5d-98fc-e5c4106f48bf`
 - [ ] Endrek Sahr, Master Breeder — `47a0079f-3544-45bc-a32a-bd93844c8c43`
@@ -44119,7 +44117,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,93
 - [ ] Digsite Engineer — `e57025ed-3de6-4b2f-92bd-5481fd33b7f1`
 - [ ] Diluvian Primordial — `f21ce158-2925-4658-ab7b-b73718d31965`
 - [ ] Dispatch — `133c99c0-3652-410f-8100-68015a47af9f`
-- [ ] Druidic Satchel — `75a4ddf5-1b3c-4dde-a6e4-4346e46cebf1`
 - [ ] Dualcaster Mage — `8eb7c0a5-6190-40de-b473-2d1daa3bbe28`
 - [ ] Duelist's Heritage — `5cdc4654-b8c5-4599-a1d2-9e9d5f6509cb`
 - [ ] Duplicant — `ea86abfa-6cab-4ef0-8463-34136fc25b59`

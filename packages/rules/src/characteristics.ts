@@ -365,6 +365,7 @@ export type SpellEffect =
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control"; readonly token: TokenDefinition }
+  | { readonly kind: "reveal-top-card-conditional"; readonly creatureToken: TokenDefinition; readonly landDestination: "battlefield"; readonly fallbackLife: number }
   | {
       readonly kind: "search-library";
       readonly types: readonly CardType[];
@@ -972,10 +973,13 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // The effect grammar is shared by spells, triggers and activations; do not
   // duplicate card-text patterns in the activation-cost parser.
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
+  const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
   const recognized = selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
     ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
+    : revealTopConditional
+    ? { effect: revealTopConditional, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 
@@ -1178,6 +1182,17 @@ function parseCreatureScaledToken(text: string): SpellEffect | null {
   if (!/\s+for each creature you control$/i.test(text.trim())) return null;
   const base = parseCreateToken(text.trim().replace(/\s+for each creature you control$/i, ""));
   return base?.kind === "create-token" ? { ...base, amount: "creatures-you-control" } : null;
+}
+
+function parseRevealTopCardConditional(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!/^Reveal the top card of your library\. If it's a creature card, create a 1\/1 green Saproling creature token\. If it's a land card, put that card onto the battlefield under your control\. If it's a noncreature, nonland card, you gain 2 life\.?$/i.test(normalized)) return null;
+  return {
+    kind: "reveal-top-card-conditional",
+    creatureToken: { name: "Saproling", typeLine: "Creature — Saproling", power: 1, toughness: 1, colors: ["G"], keywords: [], tapped: false },
+    landDestination: "battlefield",
+    fallbackLife: 2
+  };
 }
 
 /**

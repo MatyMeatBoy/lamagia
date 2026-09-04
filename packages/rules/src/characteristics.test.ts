@@ -410,6 +410,9 @@ describe("C13 primitive reuse", () => {
       subject: "each-player",
       effect: expect.objectContaining({ kind: "compound" })
     }));
+
+    const satchel = card({ name: "Druidic Satchel", type_line: "Artifact", oracle_text: "{2}, {T}: Reveal the top card of your library. If it's a creature card, create a 1/1 green Saproling creature token. If it's a land card, put that card onto the battlefield under your control. If it's a noncreature, nonland card, you gain 2 life." });
+    expect(cardProfile(satchel)).toMatchObject({ fullyImplemented: true, activatedAbilities: [{ effect: { kind: "reveal-top-card-conditional" } }] });
   });
 });
 

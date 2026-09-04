@@ -1325,3 +1325,14 @@ Current regenerated coverage: **176/356 C13 precon cards (49.4%)** and
 **161/341 unique C13 set entries (47.2%)**; global export **8,154/38,711
 (21.1%)**. Validation: `npm run check` PASS; `npm test` PASS (**389 rules
 tests**, simulator, **39 Oracle Python tests**).
+
+### Integrator checkpoint: C13 reusable basic-effects batch (2026-09-04)
+
+Integrated the fork's reusable-effect tests and opponent-only target primitive.
+Borrowing 100,000 Arrows now cannot target its controller; the same shared
+draw, typed-sacrifice damage/draw, and upkeep compound parsing is covered for
+Blood Rites, Carnage Altar, and Baleful Force (CR 603.2, 601.2c, 602.2b).
+
+Coverage remains **176/356 C13 precon cards (49.4%)** and **161/341 unique C13
+set entries (47.2%)**; global export **8,154/38,711 (21.1%)**. Validation:
+`npm test` PASS (**395 rules tests**, simulator, **39 Oracle Python tests**).

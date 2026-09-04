@@ -2098,6 +2098,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           ? { ...candidate, tapped: false } : candidate)
       }));
     }
+    case "reveal-top-card-conditional": {
+      const player = playerAt(state, controller);
+      const card = player.library[0];
+      if (!card) return logged(state, controller, `${player.name} revela la biblioteca vacía.`);
+      let next = withPlayer(state, controller, (current) => ({ ...current, library: current.library.slice(1) }));
+      next = logged(next, controller, `${player.name} revela ${card.name}.`);
+      const profile = cardProfile(card);
+      if (isCreature(profile)) {
+        return applyEffect(next, object, { kind: "create-token", amount: 1, token: effect.creatureToken });
+      }
+      if (isLand(profile)) return putOntoBattlefield(next, controller, card, false);
+      return applyEffect(next, object, { kind: "gain-life", amount: effect.fallbackLife });
+    }
     case "create-token": {
       const amount = effect.amount === "lands-you-control"
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
