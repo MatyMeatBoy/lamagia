@@ -110,6 +110,7 @@ const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature —
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const ANY_GRAVEYARD_EXILE = () => make({ name: "Cross Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from a graveyard." });
 const ANY_GRAVEYARD_RETURN = () => make({ name: "Cross Grave Reclaim", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Return target card from a graveyard to its owner's hand." });
+const ANY_CREATURE_EXILE = () => make({ name: "Cross Creature Purge", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Exile target creature card from a graveyard." });
 const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on top of your library." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
@@ -1252,6 +1253,13 @@ describe("casting", () => {
     const target = legalTargets(game, 0, "card-in-a-graveyard")[0]!;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [target] });
     expect(game.players[1]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("filters cross-graveyard exile to creature cards", () => {
+    expect(profileOf(ANY_CREATURE_EXILE()).targetKind).toBe("creature-card-in-a-graveyard");
+    let game = readyToCast([ANY_CREATURE_EXILE()], [SWAMP(), SWAMP()]);
+    game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR(), FOREST()], "cross-creature") }));
+    expect(legalTargets(game, 0, "creature-card-in-a-graveyard")).toHaveLength(1);
   });
 
   it("scales any-target damage from controlled creatures", () => {
