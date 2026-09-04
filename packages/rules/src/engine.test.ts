@@ -5,7 +5,7 @@ import {
   applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, manaSources, planManaPayment, powerOf, toughnessOf,
   hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
 } from "./engine.js";
-import { pendingSeat, playBotGame } from "./bot.js";
+import { botAction, pendingSeat, playBotGame } from "./bot.js";
 import { projectGame } from "./projection.js";
 
 // ---------------------------------------------------------------------------
@@ -815,6 +815,16 @@ describe("casting", () => {
     expect(legalActions(game, 0).map((entry) => entry.action.type === "choose-draw" ? entry.action.amount : -1)).toEqual([0, 1]);
     game = applyAction(game, 0, { type: "choose-draw", sourceId: choice.sourceId, amount: 0 });
     expect(game.players[0]!.library.map((card) => card.name)).toEqual(["Forest"]);
+  });
+
+  it("lets the deterministic bot choose the maximum delayed draw", () => {
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [C13_ARCANE_DENIAL()], [ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    const bolt = game.stack.at(-1)!;
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "draw-cards");
+    const action = botAction(game, 0);
+    expect(action?.action).toMatchObject({ type: "choose-draw", amount: 2 });
   });
 
   it("uses a fixed multicolor mana ability as its full printed output", () => {
