@@ -2954,6 +2954,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (player.graveyard.length < effect.threshold) return next;
       return putOntoBattlefield(next, object.controller, card, false);
     }
+    case "return-target-creature-card-from-graveyard-threshold": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card || !isCreature(cardProfile(card))) return state;
+      const next = withPlayer(state, target.seat, (current) => ({
+        ...current,
+        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id),
+        ...(current.graveyard.length >= effect.threshold
+          ? {}
+          : { hand: [...current.hand, card] })
+      }));
+      if (player.graveyard.length < effect.threshold) return next;
+      return putOntoBattlefield(next, object.controller, card, false);
+    }
     case "return-target-land-card-from-graveyard-to-battlefield": {
       const target = object.targets[0];
       if (!target || target.kind !== "graveyard-card") return state;
