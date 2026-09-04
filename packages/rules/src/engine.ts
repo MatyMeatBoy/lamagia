@@ -377,6 +377,8 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
   }).at(-1);
   if (level?.keywords.includes(keyword)) return true;
   if (permanent.temporaryKeywords?.includes(keyword)) return true;
+  if (isCreature(profile) && allPermanents(state).some((source) => source.controller === permanent.controller
+    && cardProfile(source.card).staticKeywordGrants.some((grant) => grant.scope === "creatures-you-control" && grant.keyword === keyword))) return true;
   return attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword));
 }
 
@@ -1735,8 +1737,7 @@ function canAttack(state: GameState, permanent: Permanent): boolean {
   if (profile.keywords.includes("defender")) return false;
   // A printed "can't attack" is the same restriction as defender (CR 506.3a).
   if (profile.combatRules.cannotAttack) return false;
-  if (permanent.summoningSick && !profile.keywords.includes("haste")) return false;
-  void state;
+  if (permanent.summoningSick && !keywordOf(state, permanent, "haste")) return false;
   return true;
 }
 

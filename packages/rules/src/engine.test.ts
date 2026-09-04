@@ -92,6 +92,7 @@ const GLOBAL_INDESTRUCTIBLE = () => make({
   name: "Global Indestructible", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
   oracle_text: "Permanents you control gain indestructible until end of turn."
 });
+const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — Goblin", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Creatures you control have haste." });
 const CROSIS_CHARM = () => make({
   name: "Crosis's Charm", type_line: "Instant", mana_cost: "{U}{B}{R}", cmc: 3,
   oracle_text: "Choose one —\n• Return target permanent to its owner's hand.\n• Destroy target nonblack creature. It can't be regenerated.\n• Destroy target artifact."
@@ -747,6 +748,15 @@ describe("casting", () => {
     const before = game.players[0]!.life;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: creature.instance_id }] });
     expect(game.players[0]!.life).toBe(before + 2);
+  });
+
+  it("applies static haste granted by another creature you control", () => {
+    const profile = profileOf(HASTE_LORD());
+    expect(profile.staticKeywordGrants).toEqual([{ scope: "creatures-you-control", keyword: "haste" }]);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [HASTE_LORD(), BEAR()], { sick: true });
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    expect(legalAttackers(game, 0).map((permanent) => permanent.card.name)).toEqual(expect.arrayContaining(["Haste Memory", "Grizzly Bears"]));
   });
 
   it("resolves a compound draw-and-life-loss instruction as one effect", () => {

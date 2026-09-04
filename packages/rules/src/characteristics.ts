@@ -207,6 +207,11 @@ export interface EquipmentModification {
   readonly text: string;
 }
 
+export interface StaticKeywordGrant {
+  readonly scope: "creatures-you-control";
+  readonly keyword: EnforcedKeyword;
+}
+
 /** Characteristics printed in one level band of a leveler card (CR 711). */
 export interface LevelDefinition {
   readonly minLevel: number;
@@ -394,6 +399,7 @@ export interface CardProfile {
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
+  readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
   readonly levelDefinitions: readonly LevelDefinition[];
@@ -699,6 +705,15 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
     }
   }
   return null;
+}
+
+function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {
+  const match = /^creatures you control have (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud)$/i.exec(line.trim().replace(/\.$/, ""));
+  return match ? { scope: "creatures-you-control", keyword: match[1]!.toLowerCase() as EnforcedKeyword } : null;
+}
+
+function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
+  return text.split("\n").map(parseStaticKeywordGrant).filter((grant): grant is StaticKeywordGrant => grant !== null);
 }
 
 /**
@@ -1236,6 +1251,7 @@ function recognizeText(text: string): RecognizedText {
     // Combat restrictions and landwalk are static: they change which
     // declarations are legal rather than resolving anything (CR 508.1d, 509.1a).
     if (combatRuleLines.has(line)) continue;
+    if (parseStaticKeywordGrant(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -1315,6 +1331,7 @@ export function cardProfile(card: CardData): CardProfile {
   const equipCost = parseEquipCost(text);
   const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
     ? parseEquipmentModification(text) : null;
+  const staticKeywordGrants = parseStaticKeywordGrants(text);
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
   const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
@@ -1337,6 +1354,7 @@ export function cardProfile(card: CardData): CardProfile {
     cyclingCost,
     equipCost,
     equipmentModification,
+    staticKeywordGrants,
     levelUpCost,
     levelDefinitions,
     activatedAbilities: isPermanent

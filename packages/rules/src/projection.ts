@@ -178,6 +178,14 @@ function abilitiesOf(permanent: Permanent, available: readonly LegalAction[]): A
 function effectiveKeywords(state: GameState, permanent: Permanent): readonly string[] {
   const keywords = new Set<string>(cardProfile(permanent.card).keywords);
   for (const keyword of permanent.temporaryKeywords ?? []) keywords.add(keyword);
+  if (cardProfile(permanent.card).types.includes("Creature")) {
+    for (const source of state.players.flatMap((player) => player.battlefield)) {
+      if (source.controller !== permanent.controller) continue;
+      for (const grant of cardProfile(source.card).staticKeywordGrants) {
+        if (grant.scope === "creatures-you-control") keywords.add(grant.keyword);
+      }
+    }
+  }
   for (const equipment of state.players.flatMap((player) => player.battlefield).filter((candidate) => candidate.attachedTo === permanent.instance_id)) {
     for (const keyword of cardProfile(equipment.card).equipmentModification?.keywords ?? []) keywords.add(keyword);
   }
