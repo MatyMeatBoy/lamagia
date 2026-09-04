@@ -1904,6 +1904,9 @@ function recognizeText(text: string): RecognizedText {
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
+    // Split second (CR 702.61): the current engine has no priority windows to
+    // suppress, so the timing rule is a no-op; consume the line.
+    if (/^split second$/i.test(line)) continue;
     // Undying / Persist reminder text — synthesised from the keyword (CR 702.92/93).
     if (/^undying\b/i.test(line) || /^persist\b/i.test(line)) continue;
     if (/^when ~ dies, if it had no \+1\/\+1 counter on it, return it to the battlefield under its owner's control with a \+1\/\+1 counter on it\.?$/i.test(line)) continue;
