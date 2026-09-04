@@ -350,6 +350,9 @@ const AZORIUS_SPELL = () => make({ name: "Azorius Lesson", type_line: "Sorcery",
 const AZORIUS_RELIC = () => make({ name: "Azorius Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{T}: Add {W}{U}.", produced_mana: ["W", "U"] });
 const SOL_RING = () => make({ name: "Sol Ring", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "{T}: Add {C}{C}.", produced_mana: ["C"] });
 const PRISTINE_TALISMAN = () => make({ name: "Pristine Talisman", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{T}: Add {C}. You gain 1 life.", produced_mana: ["C"] });
+// Pain lands / painful talismans: the colored half of the ability is
+// automatic damage, distinct from an up-front "Pay 1 life:" activation cost.
+const PAIN_LAND = () => make({ name: "Test Pain Land", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Add {U} or {R}. ~ deals 1 damage to you.", produced_mana: ["C", "U", "R"] });
 const TEMPLE_OF_FALSE_GOD = () => make({ name: "Temple of the False God", type_line: "Land", oracle_text: "{T}: Add {C}{C}. Activate only if you control five or more lands.", produced_mana: ["C"] });
 const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
 const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
@@ -752,6 +755,22 @@ describe("mana payment", () => {
     game = putOnBattlefield(game, 0, [FOREST()]);
     const temple = game.players[0]!.battlefield[0]!;
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === temple.instance_id)).toBe(true);
+  });
+
+  it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
+    const profile = profileOf(PAIN_LAND());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.manaAbilities[0]).toMatchObject({ produces: ["C"], lifeCost: 0 });
+    expect(profile.manaAbilities[1]).toMatchObject({ produces: ["U", "R"], lifeCost: 1 });
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [PAIN_LAND()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const land = game.players[0]!.battlefield[0]!;
+    const before = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: land.instance_id, abilityIndex: 1, mana: "R" });
+    expect(game.players[0]!.life).toBe(before - 1);
+    expect(game.players[0]!.manaPool.R).toBe(1);
   });
 
   it("finds the lands that pay a colored cost", () => {

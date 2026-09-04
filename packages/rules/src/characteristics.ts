@@ -909,16 +909,28 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
-function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number } | null {
+function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number } | null {
   let remainder = effect.trim().replace(/\.$/, "");
   let gainLife: number | undefined;
   let requiresLands: number | undefined;
+  let painDamage: number | undefined;
   const gain = /\.\s*You gain (\w+) life$/i.exec(remainder);
   if (gain) {
     const amount = toNumber(gain[1]);
     if (amount === null) return null;
     gainLife = amount;
     remainder = remainder.slice(0, gain.index).trim();
+  }
+  // "Pain lands" (Shivan Reef, Talisman of X): the tap-for-colored-mana half
+  // automatically deals damage to the controller, distinct from an
+  // activation cost paid up front (CR 605.1a, e.g. Karplusan Forest's own
+  // "Pay 1 life:" wording, already handled via the activation cost text).
+  const pain = /\.\s*~\s+deals\s+(\w+)\s+damage\s+to\s+you$/i.exec(remainder);
+  if (pain) {
+    const amount = toNumber(pain[1]);
+    if (amount === null) return null;
+    painDamage = amount;
+    remainder = remainder.slice(0, pain.index).trim();
   }
   const restriction = /\.\s*Activate only if you control (\w+) or more lands$/i.exec(remainder);
   if (restriction) {
@@ -928,7 +940,9 @@ function parseManaInstruction(effect: string): { produced: ReturnType<typeof par
     remainder = remainder.slice(0, restriction.index).trim();
   }
   const produced = parseAddClause(remainder);
-  return produced ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }) } : null;
+  return produced
+    ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }), ...(painDamage === undefined ? {} : { painDamage }) }
+    : null;
 }
 
 function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
@@ -978,7 +992,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // does not claim that trailing restriction is enforced.
     const instruction = parseManaInstruction(effectText) ?? (() => {
       const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
-      return produced ? { produced, gainLife: undefined, requiresLands: undefined } : null;
+      return produced ? { produced, gainLife: undefined, requiresLands: undefined, painDamage: undefined } : null;
     })();
     // "Add {C} for each <Subtype> on the battlefield / you control".
     const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(effectText.trim().replace(/\.$/, ""));
@@ -1000,7 +1014,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
-      requiresTap, lifeCost, text: line.trim()
+      requiresTap, lifeCost: lifeCost + (instruction.painDamage ?? 0), text: line.trim()
     });
   }
   if (abilities.length) return abilities;

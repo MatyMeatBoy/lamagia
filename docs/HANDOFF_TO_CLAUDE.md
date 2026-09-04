@@ -2047,3 +2047,46 @@ Worth flagging for a future claim: `parseEntersTapped`'s other branches
 (`unless-reveal-card` for Frostboil-style reveal lands, `unless-few-lands`,
 `unless-many-lands`) likely have the identical uncredited-but-working gap —
 not checked in this batch, scope was the decklist's shock lands only.
+
+### Worker-05: pain lands/talismans were producing colored mana for free (2026-09-04)
+
+Claim `rules-pain-mana-lifecost`, from the same decklist (Shivan Reef,
+Talisman of Dominance, Talisman of Indulgence). Unlike the shock-land claim
+above, this one is a **real correctness bug**, not just a missing credit:
+`parseManaInstruction` (`characteristics.ts`) recognized "{T}: Add {U} or
+{R}. ~ deals 1 damage to you." far enough to produce the mana ability, but
+had no handling for the trailing "~ deals N damage to you" clause, so it
+silently dropped it — the ability's `lifeCost` came out `0`. Every pain land
+and painful talisman was granting its colored mana for free.
+
+Added a strip step for that clause (same shape as the existing "You gain N
+life" strip immediately above it) and folded the amount into `lifeCost`,
+which was already fully wired everywhere else — activation legality (can't
+activate at lethal-or-lower life), the mana planner, and payment. No engine
+change was needed, only the parser gap. Added the primitive's first scenario
+test: activating the colored half at `abilityIndex: 1` now costs exactly 1
+life and produces the mana, while the colorless half at `abilityIndex: 0`
+stays free.
+
+Fully implements 30 cards: the complete pain-land cycle (Adarkar Wastes,
+Battlefield Forge, Brushland, Caves of Koilos, Karplusan Forest, Llanowar
+Wastes, Shivan Reef, Sulfurous Springs, Underground River, Yavimaya Coast)
+and the complete painful-talisman cycle (all 10 guild pairs), plus Ancient
+Tomb, Grand Coliseum, Tarnished Citadel, Fogwell's Gym, Elves of Deep Shadow,
+Scabland, Salt Flats, Pine Barrens, Skyshroud Forest, and Caldera Lake.
+Global export: **8,810/38,711** (+30 from 8,780 after the shock-land claim).
+`npm run check` and `npm test` PASS (**480 rules tests**, up from 479;
+simulator smoke tests and the full 55-test Python suite PASS).
+
+`npm run simulate:engine` now reports **2/200** invariant failures instead of
+the usual 1 — seed 92 (the known pre-existing "P1 lost track of its
+commander" bug) plus **seed 116, newly failing with the identical message**.
+Verified this is not a new bug: stashing this claim's diff and rerunning
+reproduces exactly the original 1/200 (seed 92 only) on the same commit.
+Since this claim legalizes new mana abilities the bot did not have before,
+it changes which legal actions exist at various decision points, which
+changes the deterministic-but-seed-dependent game path — so the same
+pre-existing bug is now reachable from one additional seed. The underlying
+bug itself is unrelated to mana/life and remains unfixed; it should be
+investigated on its own (seed 92 and seed 116 both point at the same commander-
+tracking invariant) rather than blocking this claim.
