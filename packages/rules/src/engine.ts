@@ -4387,11 +4387,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (ability.requiresTap) next = raiseTapEvents(next, state, [source.instance_id]);
   if (ability.lifeCost) next = logged(next, seat, `${player.name} paga ${ability.lifeCost} de vida por ${source.card.name}.`);
 
+  const abilityX = ability.manaCost?.hasVariable ? Math.max(0, action.variableValue ?? 0) : 0;
   if (ability.manaCost && ability.manaCost.symbols.length) {
     const plan = planManaPayment(ability.manaCost, playerAt(next, seat), { state: next });
     if (!plan) throw new Error(`No tienes maná suficiente para la habilidad de ${source.card.name}.`);
     next = applyManaPlan(next, seat, plan);
-    const payment = payCost(ability.manaCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+    const payment = payCost(ability.manaCost, playerAt(next, seat).manaPool, { additionalGeneric: abilityX, availableLife: playerAt(next, seat).life });
     if (!payment) throw new Error(`No se pudo pagar el coste de la habilidad de ${source.card.name}.`);
     next = withPlayer(next, seat, (current) => ({
       ...current,
@@ -4482,7 +4483,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} exilia ${exile.name} de su cementerio.`);
   }
 
-  next = pushActivatedOnStack(next, seat, source, ability, targets, sacrificedPower || sacrificedArtifactMv);
+  next = pushActivatedOnStack(next, seat, source, ability, targets, abilityX || sacrificedPower || sacrificedArtifactMv);
   return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
 }
 
