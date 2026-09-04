@@ -730,7 +730,8 @@ describe("casting", () => {
     };
     const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
     expect(activation).toBeDefined();
-    game = applyAction(game, 0, { ...activation!.action, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    if (!activation || activation.action.type !== "activate") throw new Error("Expected a counter-removal activation.");
+    game = applyAction(game, 0, { ...activation.action, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
     const updated = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
     expect(updated.counters["+1/+1"]).toBe(0);
   });

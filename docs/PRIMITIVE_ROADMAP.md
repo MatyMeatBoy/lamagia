@@ -9,88 +9,58 @@ primitive finishes the most cards next?* A clause that appears in thousands of
 cards but never completes one is correctly ranked low.
 
 - Catalog cards: **38,711**
-- Fully implemented: **6,816**
-- Unfinished: **31,895**, of which **15,182** are a single line away
-- This queue's 40 entries would finish **1,329** more cards
+- Fully implemented: **7,284**
+- Unfinished: **31,427**, of which **14,743** are a single line away
+- This queue's 40 entries would finish **890** more cards
 
 ## Queue
 
 | # | Unlocks | Cumulative | Blocks | Family | Claim key | Template |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 269 | 269 | 344 | modal | `c14-choose` | `choose <n> -` |
-| 2 | 122 | 391 | 283 | pump | `c14-cost-gets-until-end` | `{cost}: ~ gets +<n>/+<n> until end of turn` |
-| 3 | 60 | 451 | 121 | regenerate | `c14-cost-regenerate` | `{cost}: regenerate ~` |
-| 4 | 50 | 501 | 193 | keyword-ability | `c14-flashback-cost` | `flashback {cost}` |
-| 5 | 39 | 540 | 91 | library-look | `c14-scry` | `scry <n>` |
-| 6 | 38 | 578 | 141 | keyword-ability | `c14-morph-cost` | `morph {cost}` |
-| 7 | 38 | 616 | 103 | keyword-ability | `c14-convoke` | `convoke` |
-| 8 | 38 | 654 | 68 | library-look | `c14-when-enters-scry` | `when ~ enters, scry <n>` |
-| 9 | 37 | 691 | 85 | keyword-ability | `c14-prowess` | `prowess` |
-| 10 | 36 | 727 | 198 | keyword-ability | `c14-crew` | `crew <n>` |
-| 11 | 29 | 756 | 31 | keyword-ability | `c14-entwine-cost` | `entwine {cost}` |
-| 12 | 27 | 783 | 48 | keyword-ability | `c14-echo-cost` | `echo {cost}` |
-| 13 | 26 | 809 | 46 | library-look | `c14-when-enters-surveil` | `when ~ enters, surveil <n>` |
-| 14 | 25 | 834 | 47 | keyword-ability | `c14-infect` | `infect` |
-| 15 | 25 | 859 | 26 | activated | `c14-cost-add-cost-cost` | `{cost}: add {cost} or {cost}. ~ deals <n> damage to you` |
-| 16 | 24 | 883 | 72 | keyword-ability | `c14-changeling` | `changeling` |
-| 17 | 25 | 908 | 43 | pump | `c14-cost-gets-until-end-2` | `{cost}: ~ gets +<n>/-<n> until end of turn` |
-| 18 | 24 | 932 | 29 | pump | `c14-landfall-whenever-land-you` | `landfall - whenever <n> land you control enters, ~ gets +<n>/+<n> until end of turn` |
-| 19 | 21 | 953 | 60 | keyword-ability | `c14-madness-cost` | `madness {cost}` |
-| 20 | 22 | 975 | 91 | other | `c14-activate-only-once-each` | `activate only once each turn` |
-| 21 | 22 | 997 | 32 | transform | `c14-the-beginning-each-upkeep` | `at the beginning of each upkeep, if no spells were cast last turn, transform ~` |
-| 22 | 20 | 1017 | 72 | keyword-ability | `c14-suspend-cost` | `suspend <n>-{cost}` |
-| 23 | 20 | 1037 | 70 | other | `c14-can-blocked` | `~ can't be blocked` |
-| 24 | 20 | 1057 | 54 | other | `c14-counter-target-spell-unless` | `counter target spell unless its controller pays {cost}` |
-| 25 | 20 | 1077 | 33 | activated | `c14-cost-cost-draw-card` | `{cost}, {cost}: draw <n> card, then discard <n> card` |
-| 26 | 20 | 1097 | 35 | keyword-ability | `c14-exalted` | `exalted` |
-| 27 | 18 | 1115 | 45 | triggered | `c14-the-beginning-your-upkeep` | `at the beginning of your upkeep, sacrifice ~ unless you pay {cost}` |
-| 28 | 18 | 1133 | 22 | other | `c14-all-slivers-have-name` | `all slivers have <name>` |
-| 29 | 17 | 1150 | 39 | keyword-ability | `c14-storm` | `storm` |
-| 30 | 17 | 1167 | 32 | keyword-ability | `c14-buyback-cost` | `buyback {cost}` |
-| 31 | 17 | 1184 | 25 | activated | `c14-cost-prevent-the-next` | `{cost}: prevent the next <n> damage that would be dealt to any target this turn` |
-| 32 | 17 | 1201 | 21 | pump | `c14-whenever-attacks-gets-until` | `whenever ~ attacks, it gets +<n>/+<n> until end of turn` |
-| 33 | 16 | 1217 | 56 | other | `c14-additional-cost-cast-sacrifice` | `as <n> additional cost to cast ~, sacrifice <n> creature` |
-| 34 | 16 | 1233 | 36 | pump | `c14-creatures-you-control-get` | `creatures you control get +<n>/+<n>` |
-| 35 | 16 | 1249 | 35 | keyword-ability | `c14-cascade` | `cascade` |
-| 36 | 16 | 1265 | 38 | other | `c14-affinity-for-artifacts` | `affinity for artifacts` |
-| 37 | 17 | 1282 | 23 | other | `c14-deals-damage-target-attacking` | `~ deals <n> damage to target attacking or blocking creature` |
-| 38 | 16 | 1298 | 35 | other | `c14-bushido` | `bushido <n>` |
-| 39 | 16 | 1314 | 25 | keyword-ability | `c14-soulshift` | `soulshift <n>` |
-| 40 | 15 | 1329 | 41 | other | `c14-toxic` | `toxic <n>` |
+| 1 | 60 | 60 | 121 | regenerate | `c14-cost-regenerate` | `{cost}: regenerate ~` |
+| 2 | 52 | 112 | 193 | keyword-ability | `c14-flashback-cost` | `flashback {cost}` |
+| 3 | 40 | 152 | 141 | keyword-ability | `c14-morph-cost` | `morph {cost}` |
+| 4 | 38 | 190 | 85 | keyword-ability | `c14-prowess` | `prowess` |
+| 5 | 37 | 227 | 198 | keyword-ability | `c14-crew` | `crew <n>` |
+| 6 | 37 | 264 | 103 | keyword-ability | `c14-convoke` | `convoke` |
+| 7 | 31 | 295 | 48 | keyword-ability | `c14-echo-cost` | `echo {cost}` |
+| 8 | 27 | 322 | 47 | keyword-ability | `c14-infect` | `infect` |
+| 9 | 26 | 348 | 46 | library-look | `c14-when-enters-surveil` | `when ~ enters, surveil <n>` |
+| 10 | 25 | 373 | 72 | keyword-ability | `c14-changeling` | `changeling` |
+| 11 | 25 | 398 | 26 | activated | `c14-cost-add-cost-cost` | `{cost}: add {cost} or {cost}. ~ deals <n> damage to you` |
+| 12 | 22 | 420 | 136 | counters | `c14-enters-with-counters` | `~ enters with <n> +<n>/+<n> counters on it` |
+| 13 | 21 | 441 | 60 | keyword-ability | `c14-madness-cost` | `madness {cost}` |
+| 14 | 21 | 462 | 32 | transform | `c14-the-beginning-each-upkeep` | `at the beginning of each upkeep, if no spells were cast last turn, transform ~` |
+| 15 | 20 | 482 | 72 | keyword-ability | `c14-suspend-cost` | `suspend <n>-{cost}` |
+| 16 | 20 | 502 | 60 | other | `c14-counter-target-spell-unless` | `counter target spell unless its controller pays {cost}` |
+| 17 | 20 | 522 | 35 | keyword-ability | `c14-exalted` | `exalted` |
+| 18 | 21 | 543 | 33 | activated | `c14-cost-cost-draw-card` | `{cost}, {cost}: draw <n> card, then discard <n> card` |
+| 19 | 18 | 561 | 45 | triggered | `c14-the-beginning-your-upkeep` | `at the beginning of your upkeep, sacrifice ~ unless you pay {cost}` |
+| 20 | 18 | 579 | 25 | activated | `c14-cost-prevent-the-next` | `{cost}: prevent the next <n> damage that would be dealt to any target this turn` |
+| 21 | 18 | 597 | 22 | other | `c14-all-slivers-have-name` | `all slivers have <name>` |
+| 22 | 17 | 614 | 39 | keyword-ability | `c14-storm` | `storm` |
+| 23 | 17 | 631 | 32 | keyword-ability | `c14-buyback-cost` | `buyback {cost}` |
+| 24 | 16 | 647 | 56 | other | `c14-additional-cost-cast-sacrifice` | `as <n> additional cost to cast ~, sacrifice <n> creature` |
+| 25 | 16 | 663 | 38 | other | `c14-affinity-for-artifacts` | `affinity for artifacts` |
+| 26 | 17 | 680 | 35 | keyword-ability | `c14-cascade` | `cascade` |
+| 27 | 16 | 696 | 36 | pump | `c14-creatures-you-control-get` | `creatures you control get +<n>/+<n>` |
+| 28 | 16 | 712 | 35 | other | `c14-bushido` | `bushido <n>` |
+| 29 | 16 | 728 | 25 | keyword-ability | `c14-soulshift` | `soulshift <n>` |
+| 30 | 15 | 743 | 41 | other | `c14-toxic` | `toxic <n>` |
+| 31 | 15 | 758 | 37 | other | `c14-daybound` | `daybound` |
+| 32 | 15 | 773 | 34 | activated | `c14-cost-gains-flying-until` | `{cost}: ~ gains flying until end of turn` |
+| 33 | 15 | 788 | 28 | triggered | `c14-when-enters-attach-target` | `when ~ enters, attach it to target creature you control` |
+| 34 | 15 | 803 | 27 | keyword-ability | `c14-horsemanship` | `horsemanship` |
+| 35 | 15 | 818 | 26 | other | `c14-enters-prepared` | `~ enters prepared` |
+| 36 | 15 | 833 | 104 | other | `c14-ward-cost` | `ward {cost}` |
+| 37 | 15 | 848 | 15 | triggered | `c14-when-enters-explores` | `when ~ enters, it explores` |
+| 38 | 14 | 862 | 57 | keyword-ability | `c14-unearth-cost` | `unearth {cost}` |
+| 39 | 14 | 876 | 53 | modal | `c14-choose-both` | `choose <n> or both -` |
+| 40 | 14 | 890 | 49 | other | `c14-untap` | `untap it` |
 
 ## Work orders
 
-### 1. `c14-choose` — finishes 269 cards
-
-- Template: `choose <n> -`
-- Family: modal
-- Appears in 344 unfinished cards; it is the last blocker for 269.
-
-Printed examples:
-
-- **Cryptic Command** — Choose two —
-- **Brotherhood's End** — Choose one —
-- **Sheoldred's Edict** — Choose one —
-- **Glimpse the Core** — Choose one —
-
-Cards finished (first 12): A-Cabaretti Charm, A-Ready to Rumble, A-You Come to a River, Abzan Charm, Academic Probation, Active Volcano, Aerith Rescue Mission, Aether Shockwave, Agate Assault, Aim for the Head, Airbender's Reversal, Alabaster Potion.
-
-### 2. `c14-cost-gets-until-end` — finishes 122 cards
-
-- Template: `{cost}: ~ gets +<n>/+<n> until end of turn`
-- Family: pump
-- Appears in 283 unfinished cards; it is the last blocker for 122.
-
-Printed examples:
-
-- **Boros Challenger** — {2}{R}{W}: ~ gets +1/+1 until end of turn.
-- **Two-Headed Dragon** — {1}{R}: ~ gets +2/+0 until end of turn.
-- **Shivan Dragon** — {R}: ~ gets +1/+0 until end of turn.
-- **Skyship Stalker** — {R}: ~ gets +1/+0 until end of turn.
-
-Cards finished (first 12): Adarkar Sentinel, Almighty Brushwagg, Angelfire Crusader, Anointed Chorister, Augmenting Automaton, Aven Flock, Balshan Collaborator, Battlefield Percher, Bellows Lizard, Blistering Dieflyn, Boa Constrictor, Bold Impaler.
-
-### 3. `c14-cost-regenerate` — finishes 60 cards
+### 1. `c14-cost-regenerate` — finishes 60 cards
 
 - Template: `{cost}: regenerate ~`
 - Family: regenerate
@@ -105,11 +75,11 @@ Printed examples:
 
 Cards finished (first 12): Ancient Silverback, Asphodel Wanderer, Carnassid, Carrion Wall, Charging Troll, Clay Statue, Cudgel Troll, Darkling Stalker, Deathbellow Raider, Diabolic Machine, Drowned, Drudge Reavers.
 
-### 4. `c14-flashback-cost` — finishes 50 cards
+### 2. `c14-flashback-cost` — finishes 52 cards
 
 - Template: `flashback {cost}`
 - Family: keyword-ability
-- Appears in 193 unfinished cards; it is the last blocker for 50.
+- Appears in 193 unfinished cards; it is the last blocker for 52.
 
 Printed examples:
 
@@ -118,28 +88,13 @@ Printed examples:
 - **Roar of the Wurm** — Flashback {3}{G}
 - **Ancient Grudge** — Flashback {G}
 
-Cards finished (first 12): Ancient Grudge, Army of the Damned, Bash to Bits, Beast Attack, Call of the Herd, Call the Mountain Chocobo, Chatter of the Squirrel, Crush of Wurms, Deep Reconnaissance, Defy Gravity, Dematerialize, Devil's Play.
+Cards finished (first 12): Ancient Grudge, Army of the Damned, Bash to Bits, Beast Attack, Burning Oil, Call of the Herd, Call the Mountain Chocobo, Chatter of the Squirrel, Crush of Wurms, Deep Reconnaissance, Defy Gravity, Dematerialize.
 
-### 5. `c14-scry` — finishes 39 cards
-
-- Template: `scry <n>`
-- Family: library-look
-- Appears in 91 unfinished cards; it is the last blocker for 39.
-
-Printed examples:
-
-- **Samut, Tyrant Smasher** — Scry 1.
-- **Serum Visions** — Scry 2.
-- **Dissolve** — Scry 1.
-- **Magma Jet** — Scry 2.
-
-Cards finished (first 12): Artisan's Sorrow, Battlewise Valor, Bolt of Keranos, Chain to Memory, Coming In Hot, Cruel Finality, Daring Escape, Dissolve, Drown in Sorrow, Expose to Daylight, Fateful End, Ferocious Charge.
-
-### 6. `c14-morph-cost` — finishes 38 cards
+### 3. `c14-morph-cost` — finishes 40 cards
 
 - Template: `morph {cost}`
 - Family: keyword-ability
-- Appears in 141 unfinished cards; it is the last blocker for 38.
+- Appears in 141 unfinished cards; it is the last blocker for 40.
 
 Printed examples:
 
@@ -150,11 +105,41 @@ Printed examples:
 
 Cards finished (first 12): Abzan Guide, Ainok Tracker, Ascending Aven, Battering Craghorn, Birchlore Rangers, Branchsnap Lorian, Canyon Lurkers, Charging Slateback, Crude Rampart, Daru Lancer, Dwarven Blastminer, Fledgling Mawcor.
 
-### 7. `c14-convoke` — finishes 38 cards
+### 4. `c14-prowess` — finishes 38 cards
+
+- Template: `prowess`
+- Family: keyword-ability
+- Appears in 85 unfinished cards; it is the last blocker for 38.
+
+Printed examples:
+
+- **Seeker of the Way** — Prowess
+- **Niblis of Frost** — Prowess
+- **Abbot of Keral Keep** — Prowess
+- **Sage-Eye Avengers** — Prowess
+
+Cards finished (first 12): Agent of Atlas, Bloodfire Expert, Dragon Bell Monk, Dragon Elemental, Dragon-Style Twins, Elementalist Adept, Elsha, Threefold Master, Goblin Wizard, Iguana Parrot, Ingenious Skaab, Jeskai Brushmaster, Jeskai Sage.
+
+### 5. `c14-crew` — finishes 37 cards
+
+- Template: `crew <n>`
+- Family: keyword-ability
+- Appears in 198 unfinished cards; it is the last blocker for 37.
+
+Printed examples:
+
+- **Mysterious Limousine** — Crew 2
+- **Hoard Hauler** — Crew 3
+- **Unlicensed Hearse** — Crew 2
+- **Getaway Car** — Crew 1
+
+Cards finished (first 12): Air Response Unit, Aradara Express, Ballista Charger, Bomat Bazaar Barge, Broadcast Rambler, Brute Suit, Careening Mine Cart, Clamorous Ironclad, Consulate Dreadnought, Cultivator's Caravan, Dependable Quinjet, Dragonfly Suit.
+
+### 6. `c14-convoke` — finishes 37 cards
 
 - Template: `convoke`
 - Family: keyword-ability
-- Appears in 103 unfinished cards; it is the last blocker for 38.
+- Appears in 103 unfinished cards; it is the last blocker for 37.
 
 Printed examples:
 
@@ -165,71 +150,11 @@ Printed examples:
 
 Cards finished (first 12): Aerial Boost, Arboretum Elemental, Autochthon Wurm, Collective Nightmare, Conclave Equenaut, Crowd's Favor, Ephemeral Shields, Feral Incarnation, Flight of Equenauts, Gather Courage, Guardian of Vitu-Ghazi, Halo Hopper.
 
-### 8. `c14-when-enters-scry` — finishes 38 cards
-
-- Template: `when ~ enters, scry <n>`
-- Family: library-look
-- Appears in 68 unfinished cards; it is the last blocker for 38.
-
-Printed examples:
-
-- **Temple of Mystery** — When ~ enters, scry 1.
-- **Faerie Seer** — When ~ enters, scry 2.
-- **Threefold Signal** — When ~ enters, scry 3.
-- **Inga Rune-Eyes** — When ~ enters, scry 3.
-
-Cards finished (first 12): Augury Owl, Automatic Librarian, Bronze Walrus, Chrome Cat, Cloudreader Sphinx, Crystal Grotto, Faerie Seer, Galadhrim Guide, Glider Kids, Grey Havens Navigator, Horizon Scholar, Lost Legion.
-
-### 9. `c14-prowess` — finishes 37 cards
-
-- Template: `prowess`
-- Family: keyword-ability
-- Appears in 85 unfinished cards; it is the last blocker for 37.
-
-Printed examples:
-
-- **Seeker of the Way** — Prowess
-- **Niblis of Frost** — Prowess
-- **Abbot of Keral Keep** — Prowess
-- **Sage-Eye Avengers** — Prowess
-
-Cards finished (first 12): Agent of Atlas, Bloodfire Expert, Dragon Bell Monk, Dragon Elemental, Dragon-Style Twins, Elementalist Adept, Elsha, Threefold Master, Goblin Wizard, Iguana Parrot, Jeskai Brushmaster, Jeskai Sage, Jeskai Student.
-
-### 10. `c14-crew` — finishes 36 cards
-
-- Template: `crew <n>`
-- Family: keyword-ability
-- Appears in 198 unfinished cards; it is the last blocker for 36.
-
-Printed examples:
-
-- **Mysterious Limousine** — Crew 2
-- **Hoard Hauler** — Crew 3
-- **Unlicensed Hearse** — Crew 2
-- **Getaway Car** — Crew 1
-
-Cards finished (first 12): Air Response Unit, Aradara Express, Bomat Bazaar Barge, Broadcast Rambler, Brute Suit, Careening Mine Cart, Clamorous Ironclad, Consulate Dreadnought, Cultivator's Caravan, Dependable Quinjet, Dragonfly Suit, Dusk Legion Dreadnought.
-
-### 11. `c14-entwine-cost` — finishes 29 cards
-
-- Template: `entwine {cost}`
-- Family: keyword-ability
-- Appears in 31 unfinished cards; it is the last blocker for 29.
-
-Printed examples:
-
-- **Stir the Pride** — Entwine {1}{W}
-- **One Dozen Eyes** — Entwine {G}{G}{G}
-- **Savage Beating** — Entwine {1}{R}
-- **Tooth and Nail** — Entwine {2}
-
-Cards finished (first 12): Abuna's Chant, Barbed Lightning, Blinding Beam, Dream's Grip, Flourishing Strike, Goblin War Party, Grab the Reins, Gravedig, Incite War, Journey of Discovery, Mirage Mockery, One Dozen Eyes.
-
-### 12. `c14-echo-cost` — finishes 27 cards
+### 7. `c14-echo-cost` — finishes 31 cards
 
 - Template: `echo {cost}`
 - Family: keyword-ability
-- Appears in 48 unfinished cards; it is the last blocker for 27.
+- Appears in 48 unfinished cards; it is the last blocker for 31.
 
 Printed examples:
 
@@ -238,9 +163,24 @@ Printed examples:
 - **Pouncing Jaguar** — Echo {G}
 - **Albino Troll** — Echo {1}{G}
 
-Cards finished (first 12): Acridian, Albino Troll, Avalanche Riders, Basalt Gargoyle, Citanul Centaurs, Cradle Guard, Flamecore Elemental, Goblin Patrol, Goblin War Buggy, Hammerheim Deadeye, Henchfiend of Ukor, Herald of Serra.
+Cards finished (first 12): Acridian, Albino Troll, Avalanche Riders, Basalt Gargoyle, Citanul Centaurs, Cradle Guard, Crater Hellion, Flamecore Elemental, Ghitu Slinger, Goblin Patrol, Goblin War Buggy, Hammerheim Deadeye.
 
-### 13. `c14-when-enters-surveil` — finishes 26 cards
+### 8. `c14-infect` — finishes 27 cards
+
+- Template: `infect`
+- Family: keyword-ability
+- Appears in 47 unfinished cards; it is the last blocker for 27.
+
+Printed examples:
+
+- **Plague Stinger** — Infect
+- **Glistener Elf** — Infect
+- **Plague Myr** — Infect
+- **Blighted Agent** — Infect
+
+Cards finished (first 12): Blackcleave Goblin, Blight Mamba, Blighted Agent, Blightwidow, Contagious Nim, Cystbearer, Fallen Ferromancer, Flensermite, Flesh-Eater Imp, Glistener Elf, Insect, Lost Leonin.
+
+### 9. `c14-when-enters-surveil` — finishes 26 cards
 
 - Template: `when ~ enters, surveil <n>`
 - Family: library-look
@@ -255,22 +195,22 @@ Printed examples:
 
 Cards finished (first 12): A.I.M. Synthoids, Barrier of Bones, Broodspinner, Commercial District, Conduit Pylons, Dimir Informant, Elegant Parlor, Hedge Maze, Hidden Grotto, Imperious Inkmage, Lightshell Duo, Lush Portico.
 
-### 14. `c14-infect` — finishes 25 cards
+### 10. `c14-changeling` — finishes 25 cards
 
-- Template: `infect`
+- Template: `changeling`
 - Family: keyword-ability
-- Appears in 47 unfinished cards; it is the last blocker for 25.
+- Appears in 72 unfinished cards; it is the last blocker for 25.
 
 Printed examples:
 
-- **Plague Stinger** — Infect
-- **Glistener Elf** — Infect
-- **Plague Myr** — Infect
-- **Blighted Agent** — Infect
+- **Nameless Inversion** — Changeling
+- **Changeling Outcast** — Changeling
+- **Universal Automaton** — Changeling
+- **Moritte of the Frost** — Changeling
 
-Cards finished (first 12): Blackcleave Goblin, Blight Mamba, Blightwidow, Contagious Nim, Cystbearer, Fallen Ferromancer, Flensermite, Glistener Elf, Insect, Lost Leonin, Necropede, Ogre Menial.
+Cards finished (first 12): Avian Changeling, Changeling Sentinel, Changeling Wayfinder, Chitinous Graspling, Game-Trail Changeling, Gangly Stompling, Ghostly Changeling, Graveshifter, Guardian Gladewalker, Impostor of the Sixth Pride, Irregular Cohort, Mischievous Sneakling.
 
-### 15. `c14-cost-add-cost-cost` — finishes 25 cards
+### 11. `c14-cost-add-cost-cost` — finishes 25 cards
 
 - Template: `{cost}: add {cost} or {cost}. ~ deals <n> damage to you`
 - Family: activated
@@ -285,52 +225,22 @@ Printed examples:
 
 Cards finished (first 12): Adarkar Wastes, Battlefield Forge, Brushland, Caldera Lake, Caves of Koilos, Karplusan Forest, Llanowar Wastes, Pine Barrens, Salt Flats, Scabland, Shivan Reef, Skyshroud Forest.
 
-### 16. `c14-changeling` — finishes 24 cards
+### 12. `c14-enters-with-counters` — finishes 22 cards
 
-- Template: `changeling`
-- Family: keyword-ability
-- Appears in 72 unfinished cards; it is the last blocker for 24.
-
-Printed examples:
-
-- **Nameless Inversion** — Changeling
-- **Changeling Outcast** — Changeling
-- **Universal Automaton** — Changeling
-- **Moritte of the Frost** — Changeling
-
-Cards finished (first 12): Avian Changeling, Changeling Sentinel, Changeling Wayfinder, Chitinous Graspling, Game-Trail Changeling, Gangly Stompling, Ghostly Changeling, Graveshifter, Guardian Gladewalker, Impostor of the Sixth Pride, Irregular Cohort, Mischievous Sneakling.
-
-### 17. `c14-cost-gets-until-end-2` — finishes 25 cards
-
-- Template: `{cost}: ~ gets +<n>/-<n> until end of turn`
-- Family: pump
-- Appears in 43 unfinished cards; it is the last blocker for 25.
+- Template: `~ enters with <n> +<n>/+<n> counters on it`
+- Family: counters
+- Appears in 136 unfinished cards; it is the last blocker for 22.
 
 Printed examples:
 
-- **Morphling** — {1}: ~ gets +1/-1 until end of turn.
-- **Water Weird** — {1}{U}: ~ gets +1/-1 until end of turn.
-- **Flowstone Shambler** — {R}: ~ gets +1/-1 until end of turn.
-- **Frostburn Weird** — {U/R}: ~ gets +1/-1 until end of turn.
+- **Kalonian Hydra** — ~ enters with four +1/+1 counters on it.
+- **Noosegraf Mob** — ~ enters with five +1/+1 counters on it.
+- **Genesis Hydra** — ~ enters with X +1/+1 counters on it.
+- **Heroes' Bane** — ~ enters with four +1/+1 counters on it.
 
-Cards finished (first 12): Breathstealer, Cavern Crawler, Darklit Gargoyle, Flowstone Crusher, Flowstone Giant, Flowstone Hellion, Flowstone Kavu, Flowstone Mauler, Flowstone Shambler, Flowstone Wall, Flowstone Wyvern, Frostburn Weird.
+Cards finished (first 12): Adaptive Shimmerer, Endless One, Faithful Watchdog, Hangarback Walker, Ivy Elemental, Krakilin, Mikaeus, the Lunarch, Nimbus Swimmer, Pterafractyl, Salt Road Quartermasters, Shifting Wall, Shivan Devastator.
 
-### 18. `c14-landfall-whenever-land-you` — finishes 24 cards
-
-- Template: `landfall - whenever <n> land you control enters, ~ gets +<n>/+<n> until end of turn`
-- Family: pump
-- Appears in 29 unfinished cards; it is the last blocker for 24.
-
-Printed examples:
-
-- **Scythe Leopard** — Landfall — Whenever a land you control enters, ~ gets +1/+1 until end of turn.
-- **Akoum Hellhound** — Landfall — Whenever a land you control enters, ~ gets +2/+2 until end of turn.
-- **Kazandu Mammoth // Kazandu Valley** — Landfall — Whenever a land you control enters, ~ gets +2/+2 until end of turn.
-- **Skyclave Geopede** — Landfall — Whenever a land you control enters, ~ gets +2/+2 until end of turn.
-
-Cards finished (first 12): Akoum Hellhound, Attercop, Canopy Baloth, Geyserfield Stalker, Grove Rumbler, Hagra Crocodile, Hedron Rover, Hedron Scrabbler, Icecave Crasher, Kazandu Mammoth // Kazandu Valley, Makindi Sliderunner, Ondu Greathorn.
-
-### 19. `c14-madness-cost` — finishes 21 cards
+### 13. `c14-madness-cost` — finishes 21 cards
 
 - Template: `madness {cost}`
 - Family: keyword-ability
@@ -345,26 +255,11 @@ Printed examples:
 
 Cards finished (first 12): Alchemist's Greeting, Arrogant Wurm, Biting Rain, Broken Concentration, Dark Withering, Distemper of the Blood, Fiery Temper, Frantic Purification, Gisa's Bidding, Ichor Slick, Incorrigible Youths, Insatiable Gorgers.
 
-### 20. `c14-activate-only-once-each` — finishes 22 cards
-
-- Template: `activate only once each turn`
-- Family: other
-- Appears in 91 unfinished cards; it is the last blocker for 22.
-
-Printed examples:
-
-- **Quirion Ranger** — Activate only once each turn.
-- **Call the Bloodline** — Activate only once each turn.
-- **Basking Rootwalla** — Activate only once each turn.
-- **Steel Hellkite** — Activate only once each turn.
-
-Cards finished (first 12): Azimaet Drake, Basking Rootwalla, Blazing Rootwalla, Boreal Centaur, Darkthicket Wolf, Drake Hatchling, Fire Drake, Frilled Oculus, Frilled Sandwalla, Frostwalla, Ghor-Clan Bloodscale, Knight of the Skyward Eye.
-
-### 21. `c14-the-beginning-each-upkeep` — finishes 22 cards
+### 14. `c14-the-beginning-each-upkeep` — finishes 21 cards
 
 - Template: `at the beginning of each upkeep, if no spells were cast last turn, transform ~`
 - Family: transform
-- Appears in 32 unfinished cards; it is the last blocker for 22.
+- Appears in 32 unfinished cards; it is the last blocker for 21.
 
 Printed examples:
 
@@ -375,7 +270,7 @@ Printed examples:
 
 Cards finished (first 12): Afflicted Deserter // Werewolf Ransacker, Breakneck Rider // Neck Breaker, Convicted Killer // Branded Howler, Gatstaf Arsonists // Gatstaf Ravagers, Gatstaf Shepherd // Gatstaf Howler, Geier Reach Bandit // Vildin-Pack Alpha, Grizzled Outcasts // Krallenhorde Wantons, Hanweir Watchkeep // Bane of Hanweir, Hinterland Hermit // Hinterland Scourge, Hinterland Logger // Timber Shredder, Kruin Outlaw // Terror of Kruin Pass, Lambholt Elder // Silverpelt Werewolf.
 
-### 22. `c14-suspend-cost` — finishes 20 cards
+### 15. `c14-suspend-cost` — finishes 20 cards
 
 - Template: `suspend <n>-{cost}`
 - Family: keyword-ability
@@ -390,26 +285,11 @@ Printed examples:
 
 Cards finished (first 12): Ancestral Vision, Crashing Footfalls, Durkwood Baloth, Errant Ephemeron, Gargadon, Giant Dustwasp, Heroes Remembered, Keldon Halberdier, Lotus Bloom, Mindstab, Mox Tantalite, Profane Tutor.
 
-### 23. `c14-can-blocked` — finishes 20 cards
-
-- Template: `~ can't be blocked`
-- Family: other
-- Appears in 70 unfinished cards; it is the last blocker for 20.
-
-Printed examples:
-
-- **Mystic of the Hidden Way** — ~ can't be blocked.
-- **Latch Seeker** — ~ can't be blocked.
-- **Wilson, Subtle Bear** — ~ can't be blocked.
-- **Imoen, Occult Trickster** — ~ can't be blocked.
-
-Cards finished (first 12): Azorius Knight-Arbiter, Blighted Agent, Covert Operative, Fish, Hada Spy Patrol, Invisible Stalker, Jhessian Infiltrator, Latch Seeker, Metathran Soldier, Mist-Cloaked Herald, Mystic of the Hidden Way, Ninja.
-
-### 24. `c14-counter-target-spell-unless` — finishes 20 cards
+### 16. `c14-counter-target-spell-unless` — finishes 20 cards
 
 - Template: `counter target spell unless its controller pays {cost}`
 - Family: other
-- Appears in 54 unfinished cards; it is the last blocker for 20.
+- Appears in 60 unfinished cards; it is the last blocker for 20.
 
 Printed examples:
 
@@ -420,22 +300,7 @@ Printed examples:
 
 Cards finished (first 12): Censor, Clash of Wills, Condescend, Convolute, Flaccify, Flip the Switch, Force Spike, It'll Quench Ya!, Jwari Disruption // Jwari Ruins, Mana Leak, Mana Tithe, Mindstatic.
 
-### 25. `c14-cost-cost-draw-card` — finishes 20 cards
-
-- Template: `{cost}, {cost}: draw <n> card, then discard <n> card`
-- Family: activated
-- Appears in 33 unfinished cards; it is the last blocker for 20.
-
-Printed examples:
-
-- **Obelisk of Alara** — {1}{U}, {T}: Draw a card, then discard a card.
-- **Currency Converter** — {2}, {T}: Draw a card, then discard a card.
-- **Leonardo da Vinci** — {2}{U}, {T}: Draw a card, then discard a card.
-- **A-Dragonborn Looter** — {1}, {T}: Draw a card, then discard a card.
-
-Cards finished (first 12): A-Dragonborn Looter, Agna Qel'a, Bloodfire Mentor, Captain of Umbar, Collector's Vault, Daily Bugle Newspaper, Desolate Lighthouse, Dragonborn Looter, Erratic Visionary, Facet Reader, Furtive Analyst, Jalum Tome.
-
-### 26. `c14-exalted` — finishes 20 cards
+### 17. `c14-exalted` — finishes 20 cards
 
 - Template: `exalted`
 - Family: keyword-ability
@@ -448,9 +313,24 @@ Printed examples:
 - **Cathedral of War** — Exalted
 - **Glorifying Verse** — Exalted
 
-Cards finished (first 12): Akrasan Squire, Aven Squire, Cathedral of War, Court Archers, Duskmantle Prowler, Duty-Bound Dead, Ethercaste Knight, Frontline Sage, Goblin Champion, Guardians of Akrasa, Ignoble Hierarch, Noble Hierarch.
+Cards finished (first 12): Akrasan Squire, Aven Squire, Cathedral of War, Court Archers, Dawnray Archer, Duskmantle Prowler, Duty-Bound Dead, Ethercaste Knight, Goblin Champion, Guardians of Akrasa, Ignoble Hierarch, Noble Hierarch.
 
-### 27. `c14-the-beginning-your-upkeep` — finishes 18 cards
+### 18. `c14-cost-cost-draw-card` — finishes 21 cards
+
+- Template: `{cost}, {cost}: draw <n> card, then discard <n> card`
+- Family: activated
+- Appears in 33 unfinished cards; it is the last blocker for 21.
+
+Printed examples:
+
+- **Obelisk of Alara** — {1}{U}, {T}: Draw a card, then discard a card.
+- **Currency Converter** — {2}, {T}: Draw a card, then discard a card.
+- **Leonardo da Vinci** — {2}{U}, {T}: Draw a card, then discard a card.
+- **A-Dragonborn Looter** — {1}, {T}: Draw a card, then discard a card.
+
+Cards finished (first 12): A-Dragonborn Looter, Agna Qel'a, Bloodfire Mentor, Captain of Umbar, Collector's Vault, Daily Bugle Newspaper, Desolate Lighthouse, Dragonborn Looter, Erratic Visionary, Facet Reader, Frontline Sage, Furtive Analyst.
+
+### 19. `c14-the-beginning-your-upkeep` — finishes 18 cards
 
 - Template: `at the beginning of your upkeep, sacrifice ~ unless you pay {cost}`
 - Family: triggered
@@ -465,7 +345,22 @@ Printed examples:
 
 Cards finished (first 12): Breeding Pit, Child of Gaea, Darba, Dragon Tyrant, Drifting Djinn, Hungry Mist, Junún Efreet, Krosan Cloudscraper, Kuro, Pitlord, Molting Harpy, Palladia-Mors, Phantasmal Forces.
 
-### 28. `c14-all-slivers-have-name` — finishes 18 cards
+### 20. `c14-cost-prevent-the-next` — finishes 18 cards
+
+- Template: `{cost}: prevent the next <n> damage that would be dealt to any target this turn`
+- Family: activated
+- Appears in 25 unfinished cards; it is the last blocker for 18.
+
+Printed examples:
+
+- **Orim, Samite Healer** — {T}: Prevent the next 3 damage that would be dealt to any target this turn.
+- **Rakalite** — {2}: Prevent the next 1 damage that would be dealt to any target this turn.
+- **Combat Medic** — {1}{W}: Prevent the next 1 damage that would be dealt to any target this turn.
+- **Samite Healer** — {T}: Prevent the next 1 damage that would be dealt to any target this turn.
+
+Cards finished (first 12): Alabaster Wall, Aven Redeemer, Benevolent Ancestor, Clergy en-Vec, Combat Medic, D'Avenant Healer, Daru Healer, Femeref Healer, Kithkin Healer, Loxodon Anchorite, Master Healer, Militant Monk.
+
+### 21. `c14-all-slivers-have-name` — finishes 18 cards
 
 - Template: `all slivers have <name>`
 - Family: other
@@ -480,7 +375,7 @@ Printed examples:
 
 Cards finished (first 12): Acidic Sliver, Basal Sliver, Clot Sliver, Crypt Sliver, Darkheart Sliver, Gemhide Sliver, Harmonic Sliver, Hibernation Sliver, Mesmeric Sliver, Mindlash Sliver, Mnemonic Sliver, Necrotic Sliver.
 
-### 29. `c14-storm` — finishes 17 cards
+### 22. `c14-storm` — finishes 17 cards
 
 - Template: `storm`
 - Family: keyword-ability
@@ -495,7 +390,7 @@ Printed examples:
 
 Cards finished (first 12): Astral Steel, Brain Freeze, Chatterstorm, Chatterstorm and Awaken the Woods, Crow Storm, Dragonstorm, Elemental Eruption, Empty the Warrens, Grapeshot, Hindering Touch, Hunting Pack, Reaping the Graves.
 
-### 30. `c14-buyback-cost` — finishes 17 cards
+### 23. `c14-buyback-cost` — finishes 17 cards
 
 - Template: `buyback {cost}`
 - Family: keyword-ability
@@ -510,37 +405,7 @@ Printed examples:
 
 Cards finished (first 12): Allay, Capsize, Disturbed Burial, Elvish Fury, Evincar's Justice, Fanning the Flames, Haze of Rage, Lab Rats, Mind Peel, Mystic Speculation, Recruit the Worthy, Searing Touch.
 
-### 31. `c14-cost-prevent-the-next` — finishes 17 cards
-
-- Template: `{cost}: prevent the next <n> damage that would be dealt to any target this turn`
-- Family: activated
-- Appears in 25 unfinished cards; it is the last blocker for 17.
-
-Printed examples:
-
-- **Orim, Samite Healer** — {T}: Prevent the next 3 damage that would be dealt to any target this turn.
-- **Rakalite** — {2}: Prevent the next 1 damage that would be dealt to any target this turn.
-- **Combat Medic** — {1}{W}: Prevent the next 1 damage that would be dealt to any target this turn.
-- **Samite Healer** — {T}: Prevent the next 1 damage that would be dealt to any target this turn.
-
-Cards finished (first 12): Alabaster Wall, Aven Redeemer, Benevolent Ancestor, Clergy en-Vec, Combat Medic, Daru Healer, Femeref Healer, Kithkin Healer, Loxodon Anchorite, Master Healer, Militant Monk, Orim, Samite Healer.
-
-### 32. `c14-whenever-attacks-gets-until` — finishes 17 cards
-
-- Template: `whenever ~ attacks, it gets +<n>/+<n> until end of turn`
-- Family: pump
-- Appears in 21 unfinished cards; it is the last blocker for 17.
-
-Printed examples:
-
-- **Reckless Pangolin** — Whenever ~ attacks, it gets +1/+1 until end of turn.
-- **Steadfast Cathar** — Whenever ~ attacks, it gets +0/+2 until end of turn.
-- **Soltari Trooper** — Whenever ~ attacks, it gets +1/+1 until end of turn.
-- **Charging Paladin** — Whenever ~ attacks, it gets +0/+3 until end of turn.
-
-Cards finished (first 12): Benalish Veteran, Borderland Marauder, Bramble Creeper, Brazen Wolves, Charging Bandits, Charging Griffin, Charging Paladin, Graceful Cat, Hollow Dogs, Hungry Spriggan, Kiln Walker, Lurking Nightstalker.
-
-### 33. `c14-additional-cost-cast-sacrifice` — finishes 16 cards
+### 24. `c14-additional-cost-cast-sacrifice` — finishes 16 cards
 
 - Template: `as <n> additional cost to cast ~, sacrifice <n> creature`
 - Family: other
@@ -555,7 +420,37 @@ Printed examples:
 
 Cards finished (first 12): Altar of Bone, Altar's Reap, Blood Divination, Bone Splinters, Collateral Damage, Corrupted Conviction, Demon of Catastrophes, Diabolic Intent, Fiery Conclusion, Reckless Abandon, Skulltap, Spontaneous Combustion.
 
-### 34. `c14-creatures-you-control-get` — finishes 16 cards
+### 25. `c14-affinity-for-artifacts` — finishes 16 cards
+
+- Template: `affinity for artifacts`
+- Family: other
+- Appears in 38 unfinished cards; it is the last blocker for 16.
+
+Printed examples:
+
+- **Myr Enforcer** — Affinity for artifacts
+- **Furnace Dragon** — Affinity for artifacts
+- **Chromescale Drake** — Affinity for artifacts
+- **Slag Strider** — Affinity for artifacts
+
+Cards finished (first 12): Frogmite, Furnace Hellkite, Lens Flare, Memory Guardian, Myr Enforcer, Panther Robot, Plated Onslaught, Qumulox, Scale of Chiss-Goria, Sojourner's Companion, Somber Hoverguard, Thought Monitor.
+
+### 26. `c14-cascade` — finishes 17 cards
+
+- Template: `cascade`
+- Family: keyword-ability
+- Appears in 35 unfinished cards; it is the last blocker for 17.
+
+Printed examples:
+
+- **Bituminous Blast** — Cascade
+- **Shardless Agent** — Cascade
+- **Bloodbraid Elf** — Cascade
+- **The First Sliver** — Cascade
+
+Cards finished (first 12): Annoyed Altisaur, Ardent Plea, Bituminous Blast, Bloodbraid Elf, Boarding Party, Captured Sunlight, Deny Reality, Enlisted Wurm, Ethersworn Sphinx, Forceful Denial, Heralds of Tzeentch, Kathari Remnant.
+
+### 27. `c14-creatures-you-control-get` — finishes 16 cards
 
 - Template: `creatures you control get +<n>/+<n>`
 - Family: pump
@@ -570,52 +465,7 @@ Printed examples:
 
 Cards finished (first 12): Angelic Shield, Anthem of Champions, Collective Blessing, Dictate of Heliod, Fire Nation's Conquest, Fortifying Provisions, Gaea's Anthem, Gideon, Ally of Zendikar Emblem, Glorious Anthem, Lumithread Field, Maraxus, Power Boost.
 
-### 35. `c14-cascade` — finishes 16 cards
-
-- Template: `cascade`
-- Family: keyword-ability
-- Appears in 35 unfinished cards; it is the last blocker for 16.
-
-Printed examples:
-
-- **Bituminous Blast** — Cascade
-- **Shardless Agent** — Cascade
-- **Bloodbraid Elf** — Cascade
-- **The First Sliver** — Cascade
-
-Cards finished (first 12): Annoyed Altisaur, Ardent Plea, Bituminous Blast, Bloodbraid Elf, Boarding Party, Captured Sunlight, Deny Reality, Enlisted Wurm, Forceful Denial, Heralds of Tzeentch, Kathari Remnant, Maelstrom Colossus.
-
-### 36. `c14-affinity-for-artifacts` — finishes 16 cards
-
-- Template: `affinity for artifacts`
-- Family: other
-- Appears in 38 unfinished cards; it is the last blocker for 16.
-
-Printed examples:
-
-- **Myr Enforcer** — Affinity for artifacts
-- **Furnace Dragon** — Affinity for artifacts
-- **Chromescale Drake** — Affinity for artifacts
-- **Slag Strider** — Affinity for artifacts
-
-Cards finished (first 12): Ethersworn Sphinx, Frogmite, Furnace Hellkite, Memory Guardian, Myr Enforcer, Panther Robot, Plated Onslaught, Qumulox, Scale of Chiss-Goria, Sojourner's Companion, Somber Hoverguard, Thought Monitor.
-
-### 37. `c14-deals-damage-target-attacking` — finishes 17 cards
-
-- Template: `~ deals <n> damage to target attacking or blocking creature`
-- Family: other
-- Appears in 23 unfinished cards; it is the last blocker for 17.
-
-Printed examples:
-
-- **Dragon's Presence** — ~ deals 5 damage to target attacking or blocking creature.
-- **Impeccable Timing** — ~ deals 3 damage to target attacking or blocking creature.
-- **Response // Resurgence** — ~ deals 5 damage to target attacking or blocking creature.
-- **Piercing Light** — ~ deals 2 damage to target attacking or blocking creature.
-
-Cards finished (first 12): Arrows of Justice, Burning Oil, Cosmium Blast, Divine Arrow, Dragon's Presence, Gideon's Reproach, Hamato Ninpō, Impeccable Timing, Joust Through, Lens Flare, Piercing Light, Razorgrass Ambush // Razorgrass Field.
-
-### 38. `c14-bushido` — finishes 16 cards
+### 28. `c14-bushido` — finishes 16 cards
 
 - Template: `bushido <n>`
 - Family: other
@@ -630,7 +480,7 @@ Printed examples:
 
 Cards finished (first 12): Araba Mothrider, Battle-Mad Ronin, Cursed Ronin, Devoted Retainer, Inner-Chamber Guard, Jade Avenger, Kitsune Blademaster, Kitsune Dawnblade, Konda, Lord of Eiganjo, Kuro's Taken, Mothrider Samurai, Nezumi Ronin.
 
-### 39. `c14-soulshift` — finishes 16 cards
+### 29. `c14-soulshift` — finishes 16 cards
 
 - Template: `soulshift <n>`
 - Family: keyword-ability
@@ -645,7 +495,7 @@ Printed examples:
 
 Cards finished (first 12): Body of Jukai, Burr Grafter, Gibbering Kami, Hundred-Talon Kami, Kami of Empty Graves, Kami of Lunacy, Kami of the Palace Fields, Kami of the Tended Garden, Nightsoil Kami, Promised Kannushi, Pus Kami, Scuttling Death.
 
-### 40. `c14-toxic` — finishes 15 cards
+### 30. `c14-toxic` — finishes 15 cards
 
 - Template: `toxic <n>`
 - Family: other
@@ -659,4 +509,154 @@ Printed examples:
 - **Nettling Host** — Toxic 2
 
 Cards finished (first 12): Bilious Skulldweller, Branchblight Stalker, Crawling Chorus, Dune Mover, Ichorspit Basilisk, Jawbone Duelist, Myr Convert, Pestilent Syphoner, Phyrexian Beast, Phyrexian Mite, Phyrexian Wurm, Ribskiff.
+
+### 31. `c14-daybound` — finishes 15 cards
+
+- Template: `daybound`
+- Family: other
+- Appears in 37 unfinished cards; it is the last blocker for 15.
+
+Printed examples:
+
+- **Ill-Tempered Loner // Howlpack Avenger** — Daybound
+- **Avabruck Caretaker // Hollowhenge Huntmaster** — Daybound
+- **Howlpack Piper // Wildsong Howler** — Daybound
+- **Volatile Arsonist // Dire-Strain Anarchist** — Daybound
+
+Cards finished (first 12): Ballista Watcher // Ballista Wielder, Bird Admirer // Wing Shredder, Child of the Pack // Savage Packmate, Fearful Villager // Fearsome Werewolf, Harvesttide Infiltrator // Harvesttide Assailant, Hookhand Mariner // Riphook Raider, Hound Tamer // Untamed Pup, Outland Liberator // Frenzied Trapbreaker, Shady Traveler // Stalking Predator, Tavern Ruffian // Tavern Smasher, Tireless Hauler // Dire-Strain Brawler, Tovolar's Huntmaster // Tovolar's Packleader.
+
+### 32. `c14-cost-gains-flying-until` — finishes 15 cards
+
+- Template: `{cost}: ~ gains flying until end of turn`
+- Family: activated
+- Appears in 34 unfinished cards; it is the last blocker for 15.
+
+Printed examples:
+
+- **Morphling** — {U}: ~ gains flying until end of turn.
+- **Questing Phelddagrif** — {U}: ~ gains flying until end of turn.
+- **Zabaz, the Glimmerwasp** — {W}: ~ gains flying until end of turn.
+- **Spectacular Spider-Man** — {1}: ~ gains flying until end of turn.
+
+Cards finished (first 12): Cobalt Golem, Dukhara Peafowl, Goblin Balloon Brigade, Gust-Skimmer, Kavu Glider, Killer Whale, Kor Sky Climber, Leaping Master, Manta Riders, Patagia Golem, Roofstalker Wight, Sarcomite Myr.
+
+### 33. `c14-when-enters-attach-target` — finishes 15 cards
+
+- Template: `when ~ enters, attach it to target creature you control`
+- Family: triggered
+- Appears in 28 unfinished cards; it is the last blocker for 15.
+
+Printed examples:
+
+- **Skyclave Pick-Axe** — When ~ enters, attach it to target creature you control.
+- **Maul of the Skyclaves** — When ~ enters, attach it to target creature you control.
+- **Dueling Rapier** — When ~ enters, attach it to target creature you control.
+- **Biorganic Carapace** — When ~ enters, attach it to target creature you control.
+
+Cards finished (first 12): Biorganic Carapace, Bramble Armor, Cliffhaven Kitesail, Dueling Rapier, Falcon's Wing Harness, Infinity Formula, Malamet Scythe, Maul of the Skyclaves, Mechanical Glider, Meltstrider's Gear, Mirran Banesplitter, Paladin's Shield.
+
+### 34. `c14-horsemanship` — finishes 15 cards
+
+- Template: `horsemanship`
+- Family: keyword-ability
+- Appears in 27 unfinished cards; it is the last blocker for 15.
+
+Printed examples:
+
+- **Lady Zhurong, Warrior Queen** — Horsemanship
+- **Cao Ren, Wei Commander** — Horsemanship
+- **Ma Chao, Western Warrior** — Horsemanship
+- **Wei Strike Force** — Horsemanship
+
+Cards finished (first 12): Barbarian General, Cao Ren, Wei Commander, Lady Zhurong, Warrior Queen, Lu Meng, Wu General, Shu Cavalry, Shu Elite Companions, Sun Ce, Young Conquerer, Wei Elite Companions, Wei Scout, Wei Strike Force, Wu Elite Cavalry, Wu Light Cavalry.
+
+### 35. `c14-enters-prepared` — finishes 15 cards
+
+- Template: `~ enters prepared`
+- Family: other
+- Appears in 26 unfinished cards; it is the last blocker for 15.
+
+Printed examples:
+
+- **Ursine Guide // Ranger's Merit** — ~ enters prepared.
+- **Maelstrom Artisan // Rocket Volley** — ~ enters prepared.
+- **Skycoach Conductor // All Aboard** — ~ enters prepared.
+- **Jadzi, Steward of Fate // Oracle's Gift** — ~ enters prepared.
+
+Cards finished (first 12): Adventurous Eater // Have a Bite, Blazing Firesinger // Seething Song, Cheerful Osteomancer // Raise Dead, Elite Interceptor // Rejoinder, Goblin Glasswright // Craft with Pride, Honorbound Page // Forum's Favor, Infirmary Healer // Stream of Life, Landscape Painter // Vibrant Idea, Maelstrom Artisan // Rocket Volley, Pigment Wrangler // Striking Palette, Quill-Blade Laureate // Twofold Intent, Skycoach Conductor // All Aboard.
+
+### 36. `c14-ward-cost` — finishes 15 cards
+
+- Template: `ward {cost}`
+- Family: other
+- Appears in 104 unfinished cards; it is the last blocker for 15.
+
+Printed examples:
+
+- **Kappa Cannoneer** — Ward {4}
+- **Hamlet Vanguard** — Ward {2}
+- **Torrent Sculptor // Flamethrower Sonata** — Ward {2}
+- **Octavia, Living Thesis** — Ward {8}
+
+Cards finished (first 12): Archive Dragon, Burly Breaker // Dire-Strain Demolisher, Campus Composer // Aqueous Aria, Dirgur Island Dragon // Skimming Strike, Horned Loch-Whale // Lagoon Breach, Human, Lake-town Mariners // Gone Fishing, Marauding Brinefang, Punk Frogs, Rimeshield Frost Giant, Spider-Rex, Daring Dino, Toadstool Admirer.
+
+### 37. `c14-when-enters-explores` — finishes 15 cards
+
+- Template: `when ~ enters, it explores`
+- Family: triggered
+- Appears in 15 unfinished cards; it is the last blocker for 15.
+
+Printed examples:
+
+- **Cenote Scout** — When ~ enters, it explores.
+- **Emissary of Sunrise** — When ~ enters, it explores.
+- **Sunrise Seeker** — When ~ enters, it explores.
+- **Brazen Buccaneers** — When ~ enters, it explores.
+
+Cards finished (first 12): Brazen Buccaneers, Cenote Scout, Dire Fleet Interloper, Emissary of Sunrise, Ixalli's Diviner, Kinjalli's Dawnrunner, Merfolk Branchwalker, Pathfinding Axejaw, Queen's Agent, River Herald Guide, River Herald Scout, Seekers' Squire.
+
+### 38. `c14-unearth-cost` — finishes 14 cards
+
+- Template: `unearth {cost}`
+- Family: keyword-ability
+- Appears in 57 unfinished cards; it is the last blocker for 14.
+
+Printed examples:
+
+- **Hellspark Elemental** — Unearth {1}{R}
+- **Anathemancer** — Unearth {5}{B}{R}
+- **Perennial Behemoth** — Unearth {G}{G}
+- **Terisian Mindbreaker** — Unearth {1}{U}{U}{U}
+
+Cards finished (first 12): Combat Courier, Corpse Connoisseur, Dregscape Zombie, Etherium Abomination, Fire-Field Ogre, Kathari Screecher, Mishra's Juggernaut, Reconstructed Thopter, Scourge Devil, Scrapwork Cohort, Shambling Remains, Undead Leotau.
+
+### 39. `c14-choose-both` — finishes 14 cards
+
+- Template: `choose <n> or both -`
+- Family: modal
+- Appears in 53 unfinished cards; it is the last blocker for 14.
+
+Printed examples:
+
+- **Saheeli's Artistry** — Choose one or both —
+- **Paths of Tuinvale** — Choose one or both —
+- **Amazing Acrobatics** — Choose one or both —
+- **Borrowed Malevolence** — Choose one or both —
+
+Cards finished (first 12): Applied Biomancy, Artful Takedown, Azula Always Lies, Dawn to Dusk, Fissure Vent, Fortuitous Find, Remember the Fallen, Reviving Melody, Scour for Scrap, Season of Renewal, Soul Manipulation, Subtle Strike.
+
+### 40. `c14-untap` — finishes 14 cards
+
+- Template: `untap it`
+- Family: other
+- Appears in 49 unfinished cards; it is the last blocker for 14.
+
+Printed examples:
+
+- **Nissa, Who Shakes the World** — Untap it.
+- **Invoke the Winds** — Untap it.
+- **Tyvar Kell** — Untap it.
+- **Coveted Jewel** — Untap it.
+
+Cards finished (first 12): Acrobatic Leap, Arachnoid Adaptation, Bull's Strength, Escape from Orthanc, High Stride, Leaping Ambush, Pillar Launch, Refuse to Yield, Riverguard's Reflexes, Soldier On, Vault Skyward, Vines of the Recluse.
 
