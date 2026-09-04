@@ -129,6 +129,8 @@ export interface StackObject {
   readonly fromCommandZone: boolean;
   readonly variableValue: number;
   readonly countered: boolean;
+  /** Seat that countered this spell with a replacement-to-battlefield effect. */
+  readonly counteredToBattlefieldController?: SeatId;
   /** Selected `Choose one` mode, when the spell has supported modal text. */
   readonly selectedEffect?: SpellEffect;
   /** Present when this is a triggered ability rather than a spell. */
@@ -1722,6 +1724,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
     }
+    case "counter-target-spell-to-battlefield": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "spell") return state;
+      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId
+        ? { ...entry, countered: true, counteredToBattlefieldController: controller }
+        : entry)) };
+    }
     case "add-counter-source": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
       const source = findPermanent(state, sourceId);
@@ -1849,6 +1858,11 @@ function resolveTop(state: GameState): GameState {
   if (object.countered) {
     if (object.trigger) return logged(next, object.controller, `Se contrarresta la habilidad disparada de ${object.card.name}.`);
     if (object.activated) return logged(next, object.controller, `Se contrarresta la habilidad activada de ${object.card.name}.`);
+    if (object.counteredToBattlefieldController !== undefined
+      && profile.isPermanent && (isArtifact(profile) || isCreature(profile))) {
+      const entered = putOntoBattlefield(next, object.counteredToBattlefieldController, object.card, false);
+      return logged(entered, object.counteredToBattlefieldController, `${object.card.name} entra al campo de batalla bajo su control.`);
+    }
     next = withPlayer(next, object.card.owner, (player) => ({ ...player, graveyard: [...player.graveyard, object.card] }));
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
   }

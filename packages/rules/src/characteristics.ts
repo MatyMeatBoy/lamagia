@@ -329,6 +329,7 @@ export type SpellEffect =
   | { readonly kind: "destroy-all-creatures" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
+  | { readonly kind: "counter-target-spell-to-battlefield" }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
@@ -1420,6 +1421,12 @@ function recognizeText(text: string): RecognizedText {
       effects: [{ kind: "destroy-all-creatures-draw-destroyed" }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none",
       unimplementedText: unsupported, covered: unsupported.length === 0
+    };
+  }
+  if (/^Counter target spell\. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "counter-target-spell-to-battlefield" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell", unimplementedText: [], covered: true
     };
   }
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library\.$/i.test(joined)) {

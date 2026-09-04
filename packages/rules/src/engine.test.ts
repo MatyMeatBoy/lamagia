@@ -47,6 +47,7 @@ const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature —
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
+const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
 const CREATURE_COUNT_BOLT = () => make({ name: "Creature Count Bolt", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals damage equal to the number of creatures you control to any target." });
 const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Tap target creature." });
 const UNTAP_SPELL = () => make({ name: "Tactical Untap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Untap target permanent." });
@@ -624,6 +625,16 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(2);
+  });
+
+  it("puts an artifact or creature spell countered by Desertion onto its controller's battlefield", () => {
+    expect(cardProfile(DESERTION()).effects).toEqual([{ kind: "counter-target-spell-to-battlefield" }]);
+    let game = readyToCast([DESERTION()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
+    const spell = { ...BEAR(), instance_id: "desertion-spell", owner: 1 };
+    game = { ...game, stack: [{ id: "desertion-spell", controller: 1, card: spell, label: spell.name, targets: [], fromCommandZone: false, variableValue: 0, countered: false }] };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "spell", stackId: "desertion-spell" }] });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
   });
 
   it("uses a fixed multicolor mana ability as its full printed output", () => {
