@@ -1139,8 +1139,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       let next = state;
       const amount = effectAmount(effect.amount, object);
       for (const permanent of allPermanents(state)) {
-        if (!isCreature(cardProfile(permanent.card))) continue;
+        const profile = cardProfile(permanent.card);
+        if (!isCreature(profile)) continue;
         if (effect.excludeSource && permanent.instance_id === object.card.instance_id) continue;
+        if (effect.filter === "nonartifact" && profile.types.includes("Artifact")) continue;
+        if (effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
         next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
       }
       return next;

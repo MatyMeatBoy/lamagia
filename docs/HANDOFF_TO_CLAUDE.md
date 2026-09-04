@@ -740,3 +740,21 @@ simulate:engine` PASS (200 games, 160 finished, 0 invariant/projection
 failures). Catalog fully-implemented 6,995 -> 7,132; Commander 2014 91 -> 92/337
 (Read the Bones). The C14 set tail is now mostly one-off primitives; per-batch
 catalog yield stays high (+137) but per-batch C14 yield is small.
+
+### C14 race batch: "it deals" triggers and filtered damage sweeps
+
+- **Trigger self-reference**: `recognizeText` now rewrites a leading
+  `it deals|gets|gains|enters|fights` in a triggered-ability clause to `~`, so
+  "When ~ enters the battlefield, it deals 4 damage to target creature"
+  (Flametongue Kavu and the whole "it deals" family) parses through the
+  existing trigger bus and trigger-target flow.
+- **Filtered board damage**: `damage-all-creatures` takes an optional
+  `filter` (`nonartifact`, `without-flying`); `~ deals N damage to each
+  nonartifact creature` / `each creature without flying` reuse it.
+
+Files: `characteristics.ts`, `engine.ts`, `engine.test.ts` (2 scenarios).
+
+Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
+(204 rules tests); `npm run rules:test:oracle` PASS; `npm run simulate:engine`
+PASS (200 games, 160 finished, 0 failures). Catalog 7,132 -> 7,210; Commander
+2014 92 -> 94/337 (Flametongue Kavu, Whipflare).

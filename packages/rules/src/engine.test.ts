@@ -187,6 +187,9 @@ const SCRY_SPELL = () => make({ name: "Read the Bones Lite", type_line: "Sorcery
 const SCRY_ETB_CREATURE = () => make({ name: "Omen Owl", type_line: "Creature — Bird", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", oracle_text: "When Omen Owl enters the battlefield, scry 2." });
 const SCRY_DRAW_SPELL = () => make({ name: "Read the Bones", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Scry 2, then draw two cards. You lose 2 life." });
 const COMBAT_SEAR = () => make({ name: "Combat Sear", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Combat Sear deals 3 damage to target attacking or blocking creature." });
+const FLAMETONGUE = () => make({ name: "Flametongue Kavu", type_line: "Creature — Kavu", mana_cost: "{3}{R}", cmc: 4, power: "4", toughness: "2", oracle_text: "When Flametongue Kavu enters the battlefield, it deals 4 damage to target creature." });
+const WHIPFLARE = () => make({ name: "Whipflare", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Whipflare deals 2 damage to each nonartifact creature." });
+const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature — Bear", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2" });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
@@ -1145,6 +1148,33 @@ describe("scry and combat-restricted damage", () => {
     game = applyAction(game, 0, { type: "resolve-scry", sourceId: scryId, cardId: (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).pending[0]!, toBottom: false });
     expect(game.pendingChoice).toBeNull();
     expect(game.players[0]!.library[game.players[0]!.library.length - 1]!.name).toBe("Grizzly Bears");
+  });
+
+  it("normalises 'it deals' in an ETB trigger so Flametongue Kavu resolves", () => {
+    const profile = profileOf(FLAMETONGUE());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "enters-battlefield", subject: "self", effect: { kind: "damage-any-target", amount: 4 }, targetKind: "creature"
+    }));
+
+    let game = ready([FLAMETONGUE()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const foeBear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    if (game.pendingChoice?.type === "trigger-target") {
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "permanent", instanceId: foeBear.instance_id } });
+    }
+    game = passUntil(game, (state) => !state.players[1]!.battlefield.some((p) => p.card.name === "Grizzly Bears") || state.turn > 1);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("spares artifact creatures from a nonartifact damage sweep", () => {
+    expect(profileOf(WHIPFLARE()).effects).toContainEqual({ kind: "damage-all-creatures", amount: 2, excludeSource: false, filter: "nonartifact" });
+    expect(profileOf(WHIPFLARE()).fullyImplemented).toBe(true);
+
+    let game = ready([WHIPFLARE()], [MOUNTAIN(), MOUNTAIN()], [], [BEAR(), IRON_BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.players[1]!.battlefield.length <= 1 || state.turn > 1);
+    expect(game.players[1]!.battlefield.map((permanent) => permanent.card.name)).toEqual(["Iron Bear"]);
   });
 
   it("only offers an attacking or blocking creature to Combat Sear and deals lethal damage", () => {
