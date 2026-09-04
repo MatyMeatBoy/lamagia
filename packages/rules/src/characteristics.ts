@@ -1057,6 +1057,10 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
       effect: recognized.effect, targetKind: recognized.target, text: line.trim()
     };
   }
+  // "Activate only if an opponent controls N or more lands" (Tectonic Edge, CR 602.5).
+  const oppLandGate = /\.\s*Activate only if an opponent controls (\w+) or more lands\.?\s*$/i.exec(effectText);
+  const requiresOpponentLands = oppLandGate ? toNumber(oppLandGate[1]!) : null;
+  const effectBody = oppLandGate ? effectText.slice(0, oppLandGate.index) : effectText;
   // The effect grammar is shared by spells, triggers and activations; do not
   // duplicate card-text patterns in the activation-cost parser.
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
@@ -1122,6 +1126,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
+    ...(requiresOpponentLands !== null ? { requiresOpponentLands } : {}),
     lifeCost,
     manaCost,
     effect: recognized.effect,
