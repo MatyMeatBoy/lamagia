@@ -1360,6 +1360,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         }))
       };
     }
+    case "discard-target-player-hand": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const hand = playerAt(state, target.seat).hand;
+      if (!hand.length) return state;
+      return withPlayer(state, target.seat, (player) => ({ ...player, hand: [], graveyard: [...player.graveyard, ...hand] }));
+    }
     case "modify-and-grant-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
