@@ -2029,9 +2029,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           ? allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length
         : effect.amount === "equipment-attached-to-source"
           ? (() => { const src = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id); return src ? attachedEquipment(state, src).length : 0; })()
+        : effect.amount === "creatures-died-this-turn"
+          ? state.creaturesDiedThisTurn
         : effectAmount(effect.amount, object);
+      const stat = effect.statsFromAmount ? amount : null;
       let next = state;
-      for (let index = 0; index < amount; index += 1) {
+      for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
         const token: GameCard = {
           scryfall_id: `token:${object.id}:${index}`,
           instance_id: `token:${object.id}:${index}`,
@@ -2042,8 +2045,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           mana_cost: "",
           cmc: 0,
           oracle_text: effect.token.keywords.join(", "),
-          power: effect.token.power === null ? null : String(effect.token.power),
-          toughness: effect.token.toughness === null ? null : String(effect.token.toughness),
+          power: stat !== null ? String(stat) : effect.token.power === null ? null : String(effect.token.power),
+          toughness: stat !== null ? String(stat) : effect.token.toughness === null ? null : String(effect.token.toughness),
           colors: effect.token.colors,
           keywords: effect.token.keywords
         };

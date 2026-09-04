@@ -359,7 +359,7 @@ export type SpellEffect =
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "attach-equipment" }
-  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source"; readonly token: TokenDefinition }
+  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
   | {
       readonly kind: "search-library";
       readonly types: readonly CardType[];
@@ -1144,6 +1144,23 @@ function parseEquipmentScaledToken(text: string): SpellEffect | null {
   return base?.kind === "create-token" ? { ...base, amount: "equipment-attached-to-source" } : null;
 }
 
+function parseDeathScaledToken(text: string): SpellEffect | null {
+  const trimmed = text.trim();
+  // Spoils of Blood: "Create an X/X black Horror creature token, where X is the number of creatures that died this turn."
+  const xx = /^Create an? X\/X (.+? token),?\s*where x is the number of creatures that died this turn$/i.exec(trimmed);
+  if (xx) {
+    const base = parseCreateToken(`Create a 1/1 ${xx[1]!}`);
+    return base?.kind === "create-token" ? { ...base, amount: "creatures-died-this-turn", statsFromAmount: true } : null;
+  }
+  // Fresh Meat: "Create a 3/3 green Beast creature token for each creature put into your graveyard from the battlefield this turn."
+  const suffix = /\s+for each creature put into your graveyard from the battlefield this turn$/i;
+  if (suffix.test(trimmed)) {
+    const base = parseCreateToken(trimmed.replace(suffix, ""));
+    return base?.kind === "create-token" ? { ...base, amount: "creatures-died-this-turn" } : null;
+  }
+  return null;
+}
+
 function parseCreatureScaledToken(text: string): SpellEffect | null {
   const boardMatch = /\s*,?\s*where x is the number of creatures on the battlefield$/i;
   if (boardMatch.test(text.trim())) {
@@ -1671,7 +1688,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
-  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseEquipmentScaledToken(text) ?? parseCreateToken(text);
+  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseEquipmentScaledToken(text) ?? parseDeathScaledToken(text) ?? parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
   const genericSearch = parseLibrarySearch(text);
   if (genericSearch) return { effect: genericSearch, target: "none" };
