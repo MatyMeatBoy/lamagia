@@ -872,6 +872,14 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Zombie")).toBe(false);
   });
 
+  it("does not offer Flashback when its alternative cost cannot be paid", () => {
+    let game = readyToCast([], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({ graveyard: toHand(0, [C13_ARMY_OF_THE_DAMNED()], "insufficient-flashback") }));
+    const card = game.players[0]!.graveyard[0]!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast"
+      && entry.action.cardId === card.instance_id && entry.action.fromGraveyard === true)).toBe(false);
+  });
+
   it("returns a land from any graveyard under the caster's control", () => {
     const profile = profileOf(LAND_GRAVEYARD_BATTLEFIELD());
     expect(profile).toMatchObject({ targetKind: "land-card-in-a-graveyard", effects: [{ kind: "return-target-land-card-from-graveyard-to-battlefield" }] });
