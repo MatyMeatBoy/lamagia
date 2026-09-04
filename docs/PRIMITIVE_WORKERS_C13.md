@@ -17,34 +17,6 @@ Each primitive is assigned to exactly one worker; jobs sharing an oracle_id are 
 | normal | `c13-creatures-can-attack-you` | combat-restriction | 1 | 0 | 1 | 1 |
 Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 
-| normal | `c13-put-target-nonland-permanent` | other | 1 | 0 | 1 | 1 |
-Cards: Unexpectedly Absent [e8d78a83-c932-4b55-8f75-7094c672c3a9]
-
-| normal | `c13-then-you-have-more` | other | 1 | 0 | 1 | 1 |
-Cards: Survival Cache [5fb8be5a-3666-4680-84e2-341cb269df07]
-
-| normal | `c13-when-enters-exile-another` | triggered | 1 | 0 | 1 | 1 |
-Cards: Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
-
-| normal | `c13-when-enters-target-opponent` | triggered | 1 | 0 | 1 | 1 |
-Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
-
-| normal | `c13-when-you-cycle-you-2` | triggered | 1 | 0 | 1 | 1 |
-Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
-
-| normal | `c13-whenever-creature-you-control-2` | triggered | 1 | 0 | 1 | 1 |
-Cards: Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
-
-
-## Worker 2
-
-7 primitives / 7 unique cards
-
-| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
-| --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-entwine-cost` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
-
 | normal | `c13-remove-counter-from-deals` | activated | 1 | 0 | 1 | 1 |
 Cards: Deathbringer Thoctar [2500a811-2435-4915-ac83-9bfe2887621a]
 
@@ -64,14 +36,14 @@ Cards: Stalking Vengeance [5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb]
 Cards: Nekusar, the Mindrazer [8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6]
 
 
-## Worker 3
+## Worker 2
 
 7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
+| normal | `c13-entwine-cost` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: One Dozen Eyes [b1fbf818-6699-4f05-9a91-19aa296526bf]
 
 | normal | `c13-return-all-permanents-the` | other | 1 | 0 | 1 | 1 |
 Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
@@ -92,14 +64,14 @@ Cards: Sek'Kuar, Deathkeeper [94426127-65c2-435e-ba92-423a3c102061]
 Cards: Spiteful Visions [922cf963-2b1b-43ad-819e-6e49133e6aae]
 
 
-## Worker 4
+## Worker 3
 
 7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-graft` | keyword-ability | 1 | 0 | 1 | 1 |
-Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
+| normal | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
 
 | normal | `c13-sacrifice-beast-you-gain` | activated | 1 | 0 | 1 | 1 |
 Cards: Ravenous Baloth [ee771e66-72f8-480f-9920-92c68ab93c3b]
@@ -120,14 +92,14 @@ Cards: Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
 Cards: Widespread Panic [853a3c2b-3d37-453a-8a77-4d90bd3a1cb7]
 
 
-## Worker 5
+## Worker 4
 
-6 primitives / 6 unique cards
+7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 |
-Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
+| normal | `c13-graft` | keyword-ability | 1 | 0 | 1 | 1 |
+Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
 
 | normal | `c13-sacrifice-creatures-create-red` | token | 1 | 0 | 1 | 1 |
 Cards: Tooth and Claw [587368eb-068c-44a3-ba8c-5ad0f59f880f]
@@ -143,6 +115,34 @@ Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
 
 | normal | `c13-whenever-creature-you-control` | triggered | 1 | 0 | 1 | 1 |
 Cards: Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
+
+| normal | `c13-whenever-you-cast-instant` | triggered | 1 | 0 | 1 | 1 |
+Cards: Mirari [8f6a2fce-719e-4745-80d3-aabce5c9bafa]
+
+
+## Worker 5
+
+6 primitives / 6 unique cards
+
+| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| normal | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 |
+Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
+
+| normal | `c13-then-you-have-more` | other | 1 | 0 | 1 | 1 |
+Cards: Survival Cache [5fb8be5a-3666-4680-84e2-341cb269df07]
+
+| normal | `c13-when-enters-exile-another` | triggered | 1 | 0 | 1 | 1 |
+Cards: Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
+
+| normal | `c13-when-enters-target-opponent` | triggered | 1 | 0 | 1 | 1 |
+Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
+
+| normal | `c13-when-you-cycle-you-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
+
+| normal | `c13-whenever-creature-you-control-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
 
 
 ## Already claimed

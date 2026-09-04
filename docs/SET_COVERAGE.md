@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,758** · cobertura: **24.4%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,762** · cobertura: **24.4%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 26 | 42 | 38.2% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 65 | 169 | 27.8% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 192 | 149 | 56.3% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 193 | 148 | 56.6% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 3 | 9 | 25.0% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 5 | 9 | 35.7% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 1 | 8 | 11.1% |
@@ -357,7 +357,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 | 2016-04-08 | Shadows over Innistrad (`SOI`) | expansion | innistrad | main | 287 | 49 | 238 | 17.1% |
 | 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | promos | shadows-over-innistrad | other | 79 | 4 | 75 | 5.1% |
 | 2016-04-08 | Welcome Deck 2016 (`W16`) | starter | 2010s | other | 16 | 7 | 9 | 43.8% |
-| 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 99 | 150 | 39.8% |
+| 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 100 | 149 | 40.2% |
 | 2016-07-22 | Eldritch Moon (`EMN`) | expansion | 2010s | main | 208 | 32 | 176 | 15.4% |
 | 2016-07-22 | Eldritch Moon Promos (`PEMN`) | promos | eldritch-moon | other | 64 | 1 | 63 | 1.6% |
 | 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | 2010s | other | 15 | 0 | 15 | 0.0% |
@@ -380,7 +380,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 | 2017-04-28 | Amonkhet (`AKH`) | expansion | amonkhet | main | 272 | 80 | 192 | 29.4% |
 | 2017-04-28 | Amonkhet Invocations (`MP2`) | masterpieces | amonkhet-invocations | other | 54 | 8 | 46 | 14.8% |
 | 2017-04-28 | Amonkhet Promos (`PAKH`) | promos | amonkhet | other | 69 | 11 | 58 | 15.9% |
-| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 140 | 149 | 48.4% |
+| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 141 | 148 | 48.8% |
 | 2017-06-16 | Archenemy: Nicol Bolas (`E01`) | archenemy | 2010s | other | 101 | 40 | 61 | 39.6% |
 | 2017-07-14 | Hour of Devastation (`HOU`) | expansion | 2010s | main | 199 | 53 | 146 | 26.6% |
 | 2017-07-14 | Hour of Devastation Promos (`PHOU`) | promos | hour-of-devastation | other | 55 | 5 | 50 | 9.1% |
@@ -460,7 +460,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 50 | 223 | 18.3% |
 | 2020-01-24 | Theros Beyond Death Promos (`PTHB`) | promos | theros-beyond-death | other | 68 | 6 | 62 | 8.8% |
 | 2020-03-12 | Historic Anthology 2 (`HA2`) | anthologies | historic-anthology-2 | other | 25 | 9 | 16 | 36.0% |
-| 2020-04-17 | Commander 2020 (`C20`) | commander | 2020 | commander | 322 | 105 | 217 | 32.6% |
+| 2020-04-17 | Commander 2020 (`C20`) | commander | 2020 | commander | 322 | 106 | 216 | 32.9% |
 | 2020-04-24 | Ikoria: Lair of Behemoths (`IKO`) | expansion | 2020s | main | 266 | 59 | 207 | 22.2% |
 | 2020-04-24 | Ikoria: Lair of Behemoths Promos (`PIKO`) | promos | ikoria-lair-of-behemoths | other | 68 | 6 | 62 | 8.8% |
 | 2020-05-18 | Love Your LGS 2020 (`PLG20`) | promos | lgs-2020 | other | 2 | 1 | 1 | 50.0% |
@@ -700,7 +700,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 
 | Grupo | Subgrupo | Ediciones | Cartas únicas | Implementadas | Pendientes | % |
 |---|---|---:|---:|---:|---:|---:|
-| anthologies | 2017 | 1 | 289 | 140 | 149 | 48.4% |
+| anthologies | 2017 | 1 | 289 | 141 | 148 | 48.8% |
 | anthologies | 2018 | 1 | 279 | 114 | 165 | 40.9% |
 | anthologies | arena-anthology-1 | 1 | 26 | 11 | 15 | 42.3% |
 | anthologies | arena-anthology-2 | 1 | 25 | 9 | 16 | 36.0% |
@@ -740,14 +740,14 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 | boxed-products | the-zeta-set | 1 | 121 | 36 | 85 | 29.8% |
 | commander | 2011 | 1 | 303 | 119 | 184 | 39.3% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 192 | 149 | 56.3% |
+| commander | 2013 | 1 | 341 | 193 | 148 | 56.6% |
 | commander | 2014 | 1 | 322 | 191 | 131 | 59.3% |
 | commander | 2015 | 1 | 327 | 120 | 207 | 36.7% |
 | commander | 2016 | 1 | 341 | 98 | 243 | 28.7% |
 | commander | 2017 | 1 | 299 | 111 | 188 | 37.1% |
 | commander | 2018 | 1 | 297 | 120 | 177 | 40.4% |
 | commander | 2019 | 1 | 292 | 97 | 195 | 33.2% |
-| commander | 2020 | 4 | 1001 | 306 | 695 | 30.6% |
+| commander | 2020 | 4 | 1001 | 307 | 694 | 30.7% |
 | commander | 2021 | 5 | 1022 | 280 | 742 | 27.4% |
 | commander | 2022 | 7 | 1802 | 438 | 1364 | 24.3% |
 | commander | 2023 | 6 | 1597 | 380 | 1217 | 23.8% |
@@ -875,7 +875,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 | masters-remastered | dominaria-remastered | 1 | 266 | 83 | 183 | 31.2% |
 | masters-remastered | double-masters | 1 | 337 | 87 | 250 | 25.8% |
 | masters-remastered | double-masters-2022 | 1 | 332 | 67 | 265 | 20.2% |
-| masters-remastered | eternal-masters | 1 | 249 | 99 | 150 | 39.8% |
+| masters-remastered | eternal-masters | 1 | 249 | 100 | 149 | 40.2% |
 | masters-remastered | iconic-masters | 1 | 249 | 77 | 172 | 30.9% |
 | masters-remastered | innistrad-remastered | 1 | 300 | 54 | 246 | 18.0% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 56 | 236 | 19.2% |
@@ -21743,7 +21743,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 - [ ] Thraximundar — `9e0e4217-fefe-48dd-9153-032460192b19`
 - [ ] Tooth and Claw — `587368eb-068c-44a3-ba8c-5ad0f59f880f`
 - [ ] True-Name Nemesis — `112322ad-8f66-4cd4-98a1-f425d61a69ce`
-- [ ] Unexpectedly Absent — `e8d78a83-c932-4b55-8f75-7094c672c3a9`
 - [ ] Uyo, Silent Prophet — `93da1e63-54d6-4b05-af91-f13e7e111176`
 - [ ] Vile Requiem — `a72213e7-16f0-4fbe-91d3-750ca51a4336`
 - [ ] Vizkopa Guildmage — `f19e7c5c-67fa-4ae4-89b8-afa0e08a6c48`
@@ -25897,7 +25896,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 - [ ] Torrent of Souls — `3ec1b309-8c26-4dc4-b4c3-f97c2c3f8a68`
 - [ ] Trygon Predator — `c744b5f4-fbcf-48b8-9d60-5e9c6ac297e0`
 - [ ] Undying Rage — `622d783d-4201-4769-8a0f-442b358d8bf1`
-- [ ] Unexpectedly Absent — `e8d78a83-c932-4b55-8f75-7094c672c3a9`
 - [ ] Urborg Uprising — `882d3be7-1c0f-4d2b-8f2e-32369488ef82`
 - [ ] Victimize — `240e85d3-e495-4877-8609-4b4056c402f7`
 - [ ] Visara the Dreadful — `79b999bc-2d4b-41e1-b64e-f0c080a9a2c5`
@@ -28174,7 +28172,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 - [ ] Titania's Chosen — `a9e72fe7-c4b3-421a-8b2f-bb9448b04a44`
 - [ ] Titania, Protector of Argoth — `d0ade00d-a496-441d-9b7e-7dc033d3292c`
 - [ ] Tribute to the Wild — `ba0fc2ca-7084-454a-9d4e-5cbca945a7ca`
-- [ ] Unexpectedly Absent — `e8d78a83-c932-4b55-8f75-7094c672c3a9`
 - [ ] Victimize — `240e85d3-e495-4877-8609-4b4056c402f7`
 - [ ] Voice of All — `b1631e9c-a993-4d44-b009-b2624d79560c`
 - [ ] Vow of Duty — `1e7bddbd-e448-4aea-9d18-b44bd45837c5`
@@ -39301,7 +39298,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **20,75
 - [ ] Twinning Staff — `3ca8113b-f5b8-41a7-aae6-ebb32554dfe3`
 - [ ] Ukkima, Stalking Shadow — `b8c3cb84-0a30-420d-8fc3-bb85ce69b5e8`
 - [ ] Unclaimed Territory — `584b15f2-6ae9-413a-8b8d-9244dbea4878`
-- [ ] Unexpectedly Absent — `e8d78a83-c932-4b55-8f75-7094c672c3a9`
 - [ ] Vastwood Hydra — `7f10540f-eaba-4e06-a79e-101f7409ac6c`
 - [ ] Verge Rangers — `aece819e-3678-48bc-9677-d06ebfa58b4e`
 - [ ] Vigilante Justice — `9610176a-dcd6-4117-89db-45f56b16cdd6`

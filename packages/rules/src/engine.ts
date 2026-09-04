@@ -2245,6 +2245,27 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
     }
+    case "put-target-nonland-permanent-under-top": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || isLand(cardProfile(permanent.card))) return state;
+      const owner = permanent.card.owner;
+      const count = Math.max(0, object.variableValue);
+      let next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      next = raiseEvent(next, {
+        kind: "leaves-battlefield", permanentId: permanent.instance_id,
+        controller: permanent.controller, card: permanent.card
+      }, [permanent]);
+      next = withPlayer(next, owner, (player) => {
+        const offset = Math.min(count, player.library.length);
+        return { ...player, library: [...player.library.slice(0, offset), permanent.card, ...player.library.slice(offset)] };
+      });
+      return logged(next, permanent.controller, `${permanent.card.name} va bajo ${count} carta(s) de la biblioteca de su propietario.`);
+    }
     case "destroy-target-creature-then-life-loss": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

@@ -433,6 +433,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "return-target-permanent" }
   | { readonly kind: "put-target-creature-on-library-top" }
+  | { readonly kind: "put-target-nonland-permanent-under-top"; readonly count: number | "X" }
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
   /** Return N random instant/sorcery cards from your graveyard to hand. */
@@ -2387,6 +2388,16 @@ function recognizeText(text: string): RecognizedText {
       effects: [{ kind: "compound", effects: [{ kind: "destroy-n-creatures", count: "X", ...(dregs[1] ? { nonblack: true } : {}) }, { kind: "draw", amount: "X" }] }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
+  }
+  const unexpectedlyAbsent = /^Put target nonland permanent into its owner'?s library just beneath the top (X|one|two|three|four|five|six|seven|eight|nine|ten|\d+) cards? of that library\.?$/i.exec(joined);
+  if (unexpectedlyAbsent) {
+    const count = /^X$/i.test(unexpectedlyAbsent[1]!) ? "X" as const : toNumber(unexpectedlyAbsent[1]!);
+    if (count !== null) {
+      return {
+        effects: [{ kind: "put-target-nonland-permanent-under-top", count }],
+        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "nonland", unimplementedText: [], covered: true
+      };
+    }
   }
   // Reckless Spite: "Destroy two target nonblack creatures. You lose 5 life."
   const recklessSpite = /^Destroy two target nonblack creatures\.\s*You lose 5 life\.$/i.test(joined);

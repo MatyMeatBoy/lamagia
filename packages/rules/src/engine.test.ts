@@ -254,6 +254,7 @@ const C13_BALEFUL_STRIX = () => make({ name: "Baleful Strix", type_line: "Artifa
 const C13_PHYREXIAN_GARGANTUA = () => make({ name: "Phyrexian Gargantua", type_line: "Creature — Phyrexian Horror", mana_cost: "{4}{B}{B}", cmc: 6, power: "4", toughness: "4", oracle_text: "When this creature enters, you draw two cards and you lose 2 life.", scryfall_id: "56ae94c2-8bbb-4807-b1e0-8ef178dd1697" });
 const C13_ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Destroy target nonblack creature. It can't be regenerated.\nDraw a card.", scryfall_id: "595e8c26-672d-4978-87ec-9e0ed64ceaf0" });
 const C13_RECKLESS_SPITE = () => make({ name: "Reckless Spite", type_line: "Instant", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Destroy two target nonblack creatures. You lose 5 life.", scryfall_id: "a684df3a-5441-4daa-86d1-c47a91b35e6a" });
+const C13_UNEXPECTEDLY_ABSENT = () => make({ name: "Unexpectedly Absent", type_line: "Instant", mana_cost: "{X}{W}{U}", cmc: 2, oracle_text: "Put target nonland permanent into its owner's library just beneath the top X cards of that library.", scryfall_id: "e8d78a83-c932-4b55-8f75-7094c672c3a9" });
 const C13_ANGEL_OF_FINALITY = () => make({ name: "Angel of Finality", type_line: "Creature — Angel", mana_cost: "{3}{W}", cmc: 4, power: "3", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, exile target player's graveyard.", scryfall_id: "bd3c34c9-2072-4ebb-93ef-34173015bfb8" });
 const C13_BOJUKA_BOG = () => make({ name: "Bojuka Bog", type_line: "Land", oracle_text: "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", produced_mana: ["B"], scryfall_id: "2ef9848c-fe7f-4434-8936-4074f67883af" });
 const C13_ARCANE_DENIAL = () => make({ name: "Arcane Denial", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.", scryfall_id: "ab175817-da6a-4ae7-a016-c3bfb087eae0" });
@@ -1331,6 +1332,20 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets });
     expect(game.players[0]!.life).toBe(35);
     expect(game.players[1]!.battlefield).toHaveLength(0);
+  });
+
+  it("puts C13 Unexpectedly Absent's target beneath X cards of its owner's library", () => {
+    const profile = profileOf(C13_UNEXPECTEDLY_ABSENT());
+    expect(profile.effects).toEqual([{ kind: "put-target-nonland-permanent-under-top", count: "X" }]);
+    expect(profile.targetKind).toBe("nonland");
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([C13_UNEXPECTEDLY_ABSENT()], [PLAINS(), ISLAND(), PLAINS(), ISLAND()], [], [BEAR()]);
+    game = stage(game, 1, () => ({ library: toHand(1, [FOREST(), SWAMP(), MOUNTAIN()], "absent-library") }));
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.battlefield).toHaveLength(0);
+    expect(game.players[1]!.library.map((card) => card.name)).toEqual(["Forest", "Swamp", "Grizzly Bears", "Mountain"]);
   });
 
   it("reuses target graveyard exile for C13 ETB cards", () => {
