@@ -73,6 +73,7 @@ feature name.
 | `c14-scaled-mana-ability` | `{T}: Add {C} for each <Subtype> on the battlefield / you control` (Priest of Titania, Magus of the Coffers) | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-removal-and-sweep-variants` | `Destroy target nonartifact, nonblack creature`; `Destroy all creatures with flying`; `Target player draws N and loses N life` | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-graveyard-instant-return-and-graveyard-draw` | `Return target instant or sorcery card from your graveyard`; `Draw a card for each creature card in your graveyard` | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-destroy-then-controller-token` | `Destroy target creature. Its controller creates <token>` (Pongify, Afterlife) | `c14-batch2-clean` | active | 2026-09-04 |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |

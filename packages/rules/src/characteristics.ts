@@ -309,6 +309,7 @@ export type SpellEffect =
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-creature-then-life-loss" }
+  | { readonly kind: "destroy-target-creature-then-controller-token"; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent" }
   /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
   | { readonly kind: "regenerate-source" }
@@ -1568,6 +1569,17 @@ function recognizeText(text: string): RecognizedText {
       effects: [{ kind: "destroy-target-creature-then-life-loss" }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
     };
+  }
+  // "Destroy target creature. (It can't be regenerated.) Its controller creates <token>." (Pongify, Afterlife).
+  const destroyThenToken = /^Destroy target creature\.(?:\s+It can'?t be regenerated\.)?\s+Its controller creates (.+?)\.?$/i.exec(joined);
+  if (destroyThenToken) {
+    const token = parseCreateToken(`Create ${destroyThenToken[1]!}`);
+    if (token?.kind === "create-token") {
+      return {
+        effects: [{ kind: "destroy-target-creature-then-controller-token", token: token.token }],
+        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
+      };
+    }
   }
 
   const effects: SpellEffect[] = [];
