@@ -49,11 +49,19 @@ feature name.
 | `tools-primitive-roadmap` | `tools/rules/plan_primitive_roadmap.py` and its unit tests: rank Oracle primitives by cards actually finished | `codex-ready/c14-combat-restrictions` | merged (`3677066`) | 2026-09-03 |
 | `c14-combat-restrictions` | Printed can't attack / can't block / attacks each combat if able / can block only creatures with X | `codex-ready/c14-combat-restrictions` | merged (`3677066`) | 2026-09-03 |
 | `c14-landwalk` | Landwalk evasion for every basic land type plus legendary landwalk | `codex-ready/c14-combat-restrictions` | merged (`3677066`) | 2026-09-03 |
-| `c14-self-pump` | Firebreathing-style `{cost}: ~ gets +N/±N until end of turn` self activated pumps (`modify-source-creature` effect) | `c14-self-pump` | active | 2026-09-03 |
-| `c14-scry` | `Scry N` / `Scry N, then draw M` as a spell effect and ETB trigger; sequential keep/bottom pending choice | `c14-self-pump` | active | 2026-09-03 |
-| `c14-combat-damage-target` | `~ deals N damage to target attacking or blocking creature` (`attacking-or-blocking-creature` target kind) | `c14-self-pump` | active | 2026-09-03 |
-| `c14-it-deals-trigger` | Normalise leading "it deals/gets/gains/fights" in a trigger clause to the source (`~`) | `c14-self-pump` | active | 2026-09-03 |
-| `c14-damage-sweep-filter` | `~ deals N damage to each nonartifact creature` / `each creature without flying` | `c14-self-pump` | active | 2026-09-03 |
+| `c14-self-pump` | Firebreathing-style `{cost}: ~ gets +N/±N until end of turn` self activated pumps (`modify-source-creature` effect) | `c14-self-pump` | merged (`8d88bbb`) | 2026-09-03 |
+| `c14-scry` | `Scry N` / `Scry N, then draw M` as a spell effect and ETB trigger; sequential keep/bottom pending choice | `c14-self-pump` | merged (`ead5da1`) | 2026-09-03 |
+| `c14-combat-damage-target` | `~ deals N damage to target attacking or blocking creature` (`attacking-or-blocking-creature` target kind) | `c14-self-pump` | merged (`ead5da1`) | 2026-09-03 |
+| `c14-it-deals-trigger` | Normalise leading "it deals/gets/gains/fights" in a trigger clause to the source (`~`) | `c14-self-pump` | merged (`cbdceac`) | 2026-09-03 |
+| `c14-damage-sweep-filter` | `~ deals N damage to each nonartifact creature` / `each creature without flying` | `c14-self-pump` | merged (`cbdceac`) | 2026-09-03 |
+| `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
+| `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
+| `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |
+| `c13-global-temporary-keyword` | Static `Creatures you control have <keyword>` grants, including summoning-sickness checks and projection | `codex/c13-equipment-cluster` | merged (`a1b42d9`) | 2026-09-03 |
+| `c13-life-equals-power` | Gain life equal to the current power of a target creature you control | `codex/c13-equipment-cluster` | merged (`8c76cc9`) | 2026-09-03 |
+| `c13-compound-draw-life-loss` | Resolve a compound draw plus life-loss instruction as one effect | `codex/c13-equipment-cluster` | merged (`80c6d53`) | 2026-09-03 |
+| `c13-hand-count-damage` | Resolve damage equal to the controller's hand size | `codex/c13-equipment-cluster` | merged (`969c85d`) | 2026-09-03 |
+| `tools-parallel-workers` | Assign disjoint primitive clusters to bounded workers under the shared memory budget | `codex/c13-equipment-cluster` | merged (`96be7d7`) | 2026-09-03 |
 
 ## Claim format
 

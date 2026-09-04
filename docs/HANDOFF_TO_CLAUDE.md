@@ -132,9 +132,9 @@ never remove a card's own printed one.
 | Cards with a payable, resolvable activated ability | 0 (feature did not run) | 670 |
 | Cards with a recognised triggered ability | 87 | 1,185 |
 | Trigger events / subjects covered | 1 / 1 | 9 raised / 7 subjects |
-| Catalog cards fully implemented | 5,151 | 6,500 |
+| Catalog cards fully implemented | 5,151 | 7,284 |
 | …of those, with non-empty Oracle text | 2,090 | 2,981 |
-| C13 unique cards fully implemented | — | 125 / 356 (231 pending) |
+| C13 unique cards fully implemented | — | 141 / 356 (215 pending) |
 | cEDH pod (400 copies) fully implemented | 83 | 106 |
 
 Measured with `npm run rules:engine:export` over the local 38,711-card catalog.
@@ -275,13 +275,14 @@ npm run check                    PASS (0 errors)
 npm run test --workspace=@prossh/rules   197 passed
 python tools/rules/test_compile_oracle_effects.py   22 tests OK
 npm run simulate:engine          200 games, 0 invariant failures, 160 finished
-npm run rules:engine:export      38,711 cards; 6,816 fully implemented
+npm run rules:engine:export      38,711 cards; 7,284 fully implemented
 ```
 
 The Claude batch moved **6,500 → 6,654 (+154)** on its base, and every
 combat-restriction and landwalk template dropped out of its regenerated
-roadmap. After the C13 integrations, the current branch exports **6,816** fully
-implemented profiles; the roadmap is regenerated from that current result.
+roadmap. After the fork batches, the current branch exports **7,284** fully
+implemented profiles; C13 coverage is **141/356** and the roadmap is regenerated
+from that current result.
 
 ### Limits
 
@@ -406,6 +407,8 @@ npm run rules:compile     # 38k-card rules-family inventory in data/rules
 npm run rules:engine:export # actual engine profile for each unique card
 npm run rules:roadmap     # rank the primitives that finish the most cards next
 npm run rules:roadmap:c13  # same ROI queue limited to Commander 2013
+npm run rules:workers      # assign the current primitive queue to 5 bounded workers
+python tools/rules/plan_primitive_workers.py --roadmap data/rules/primitive-roadmap-c13.json --claims docs/WORK_CLAIMS.md --workers 5 --memory-budget-gb 2 --max-cards-per-commit 20 --output data/rules/primitive-worker-plan-c13.json --prompt-output docs/PRIMITIVE_WORKERS_C13.md
 npm run build             # production builds
 ```
 
@@ -518,7 +521,7 @@ unbounded pool.
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
 general; what limits coverage is the **effect vocabulary** they resolve into.
 1,185 cards have a recognised trigger and 670 a recognised activation, but only
-6,500 of 38,711 cards are fully implemented, because most printed effects are
+7,284 of 38,711 cards are fully implemented, because most printed effects are
 still outside `SpellEffect`.
 
 1. **Widen `SpellEffect`, one template plus one test at a time.** The highest
@@ -778,3 +781,23 @@ Validation: `npm run check` PASS; `npm test --workspace=@prossh/rules` PASS
 (204 rules tests); `npm run rules:test:oracle` PASS; `npm run simulate:engine`
 PASS (200 games, 160 finished, 0 failures). Catalog 7,132 -> 7,210; Commander
 2014 92 -> 94/337 (Flametongue Kavu, Whipflare).
+
+### Fork exception batch: C13 and C14 follow-ups
+
+The integrator accepted the available fork work as one exception batch. The
+reusable additions are static keyword grants to creatures you control, power-
+based life gain, compound draw/life-loss resolution, damage scaled by hand
+size, scry and combat-state damage targets, and `it` self-reference in triggers.
+The worker planner now assigns disjoint primitives across five workers under a
+2 GB budget, with at most 20 Oracle IDs per commit.
+
+Integrated source commits: `ed5e254`, `2ae95f3`, `69499d2`, `7ce1ade`,
+`6f19f20`, `86b3f9a`, `868bbcf`. Equivalent earlier implementations were kept
+once; `501f5e2` was rejected because it removed a test import still required by
+the current suite. The follow-up `06c888d` was already covered by the
+integrator's type-narrowing fix.
+
+Latest validation: `npm run check` PASS; `npm test` PASS (213 rules tests,
+simulator and 24 Python tests); `npm run simulate:engine` PASS (200 games,
+160 finished, 0 invariant/projection failures). The engine exports 7,284 fully
+implemented catalog cards; C13 is 141/356 (215 pending).
