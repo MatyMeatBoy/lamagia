@@ -2131,6 +2131,7 @@ function recognizeText(text: string): RecognizedText {
           ...(eventControllerChoice ? { choiceBy: "event-controller" as const } : {}),
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
+          ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
           ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),
