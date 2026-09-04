@@ -2994,6 +2994,25 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
       continue;
     }
 
+    // Siege Behemoth: while an "assign as though unblocked" creature attacks, this
+    // controller's attackers assign all their damage to the player (CR 510.1c).
+    const assignAsUnblocked = state.combat.attackers.some((other) => {
+      const source = findPermanent(state, other.instanceId);
+      return source && source.controller === attacker.controller
+        && cardProfile(source.card).attackersAssignAsUnblockedWhileAttacking;
+    });
+    if (assignAsUnblocked) {
+      toPlayers.push({
+        seat: entry.defender,
+        amount: power,
+        ...(attacker.isCommander ? { commanderId: attacker.instance_id } : {}),
+        sourceName: attacker.card.name,
+        sourceId: attacker.instance_id
+      });
+      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: power });
+      continue;
+    }
+
     // Damage is assigned in blocker order: lethal to each, then trample to the player.
     let remaining = power;
     for (const blocker of blockers) {
