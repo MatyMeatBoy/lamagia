@@ -509,6 +509,8 @@ export interface CardProfile {
   /** Generic cycling from hand. */
   readonly cyclingCost: ManaCost | null;
   readonly cyclingSearches: readonly CyclingSearchAbility[];
+  /** Alternative cost for casting this instant or sorcery from a graveyard. */
+  readonly flashbackCost: ManaCost | null;
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
@@ -863,6 +865,16 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
       if (keywords.length) return { power: 0, toughness: 0, keywords, text: line.trim() };
     }
+  }
+  return null;
+}
+
+function parseFlashbackCost(text: string): ManaCost | null {
+  for (const line of text.split("\n")) {
+    const match = /^flashback\s+(.+)$/i.exec(line.trim().replace(/\.$/, ""));
+    if (!match) continue;
+    const cost = parseManaCost(match[1]!.trim());
+    if (cost && !cost.hasVariable) return cost;
   }
   return null;
 }
@@ -1881,6 +1893,7 @@ export function cardProfile(card: CardData): CardProfile {
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
   const cyclingSearches = parseCyclingSearches(text);
+  const flashbackCost = parseFlashbackCost(text);
   const equipCost = parseEquipCost(text);
   // "~ costs {N} less to cast for each creature on the battlefield" (Blasphemous Act, CR 118.9).
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
@@ -1929,6 +1942,7 @@ export function cardProfile(card: CardData): CardProfile {
     manaAbilities,
     cyclingCost,
     cyclingSearches,
+    flashbackCost,
     equipCost,
     equipmentModification,
     staticKeywordGrants,
