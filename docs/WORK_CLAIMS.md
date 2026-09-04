@@ -217,3 +217,4 @@ rules citations and the integrator review remain mandatory.
 | `azorius-charm-library-top` | Azorius Charm's creature-to-owner-library-top mode, draw mode, and controlled-creature pump mode; shared card primitive (CR 601.2b, 701.18) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-naya-charm-modal` | Naya Charm's three modes, including damage to a creature and tapping all creatures controlled by a target player (CR 601.2b, 609.3, 701.21) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-gahiji-attack-buff` | Gahiji's attack trigger buffs the attacking creature only when it attacks one of its controller's opponents (CR 603.2, 508.1i, 613.4) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-guttersnipe-spell-trigger` | Guttersnipe triggers from your instant/sorcery casts and deals 2 damage to each opponent (CR 603.2, 603.5, 608.2c) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
