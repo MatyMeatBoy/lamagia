@@ -260,6 +260,7 @@ export type SpellEffect =
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
+  | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number | "X" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
@@ -1087,6 +1088,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
+  }
+  if ((match = /^Target player loses life equal to the number of (creatures|artifacts|enchantments) you control$/i.exec(text))) {
+    const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1, -1) as CardType;
+    return { effect: { kind: "lose-life-target-player-each-controlled-type", type }, target: "player" };
   }
   if (/^(?:~|This spell) deals damage to you equal to the number of cards in your hand$/i.test(text)) {
     return { effect: { kind: "damage-controller-equal-hand" }, target: "none" };

@@ -82,6 +82,7 @@ const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature —
 const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Target player gains 2 life." });
 const EACH_LIFE_SPELL = () => make({ name: "Common Blessing", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Each player gains 1 life." });
 const TARGET_LOSS_SPELL = () => make({ name: "Shared Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player loses 3 life." });
+const CREATURE_COUNT_LOSS = () => make({ name: "Creature Toll", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Target player loses life equal to the number of creatures you control." });
 const EACH_LOSS_SPELL = () => make({ name: "Common Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Each player loses 1 life." });
 const X_OPPONENT_LOSS = () => make({ name: "Scalable Burden", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Each opponent loses X life." });
 const X_DRAW = () => make({ name: "Scalable Insight", type_line: "Sorcery", mana_cost: "{X}{U}", cmc: 1, oracle_text: "Draw X cards." });
@@ -1165,6 +1166,14 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.hand).toHaveLength(0);
     expect(game.players[1]!.graveyard.filter((card) => card.name === "Grizzly Bears")).toHaveLength(2);
+  });
+
+  it("scales targeted life loss from the caster's creature count", () => {
+    expect(profileOf(CREATURE_COUNT_LOSS()).effects).toEqual([{ kind: "lose-life-target-player-each-controlled-type", type: "Creature" }]);
+    let game = readyToCast([CREATURE_COUNT_LOSS()], [SWAMP(), SWAMP(), SWAMP()], [], [BEAR()]);
+    game = putOnBattlefield(game, 0, [BEAR(), BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.life).toBe(38);
   });
 
   it("deals spell damage to every creature and lets state-based actions clear lethal damage", () => {

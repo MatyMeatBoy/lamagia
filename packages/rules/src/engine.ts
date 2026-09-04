@@ -1204,6 +1204,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = loseLife(state, target.seat, amount);
       return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${amount} vidas.`);
     }
+    case "lose-life-target-player-each-controlled-type": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const amount = playerAt(state, controller).battlefield.filter((permanent) => cardProfile(permanent.card).types.includes(effect.type)).length;
+      return loseLife(state, target.seat, amount);
+    }
     case "each-player-loses-life": {
       let next = state;
       const amount = effectAmount(effect.amount, object);
