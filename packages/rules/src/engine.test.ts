@@ -1290,6 +1290,16 @@ describe("casting", () => {
     expect(bane.counters["+1/+1"]).toBe(2);
   });
 
+  it("allows the Bane of Progress ETB to be countered before it sweeps", () => {
+    let game = readyToCast([C13_BANE_OF_PROGRESS()], [FOREST(), FOREST(), FOREST(), FOREST()], [COUNTER()], [SOL_RING(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const trigger = game.stack.at(-1)!;
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "spell", stackId: trigger.id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Sol Ring")).toBe(true);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Bane of Progress")?.counters["+1/+1"]).toBeUndefined();
+  });
+
   it("lets Angel of Finality choose a player and exile that graveyard", () => {
     let game = readyToCast([C13_ANGEL_OF_FINALITY()], [PLAINS(), PLAINS(), PLAINS(), PLAINS()]);
     game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR(), FOREST()], "angel-yard") }));
