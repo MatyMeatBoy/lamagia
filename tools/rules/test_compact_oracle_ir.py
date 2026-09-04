@@ -73,6 +73,7 @@ class CompactOracleIrTests(unittest.TestCase):
         self.assertEqual(result["identity_and_clause_checks"], "PASS")
         self.assertEqual(result["review_cards"], 2)
         self.assertEqual(result["clause_references"], 2)
+        self.assertEqual(result["recommended_workflow"], "legacy-payload-with-compositional-hints")
 
     def test_solved_clauses_do_not_enter_the_dictionary(self) -> None:
         solved = card("a", "Solved", "Draw a card.")

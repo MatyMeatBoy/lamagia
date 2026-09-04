@@ -50,8 +50,12 @@ The benchmark compares the old repeated-clause worker payload with the new
 short-reference payload and fails if card identities or clause counts change.
 On the full current catalog it reports 22,210 clause references, 9,745 exact
 shapes, 47 compositional atoms, 99.9% atom reuse, and a 5.0% worker-context
-byte reduction. Small batches may grow because a dictionary has fixed setup
-cost; use the full report and reuse ratio when deciding whether a batch benefits.
+byte reduction, so the compact payload is recommended there. The current C13
+batch is measured separately: 103 review cards, 143 clause references, 24
+atoms, and **-22.1%** reduction. That negative result is fixed dictionary
+cost, not a correctness failure; C13 therefore uses legacy card text plus
+compositional atom hints. The benchmark emits `recommended_workflow` so
+workers do not choose by intuition.
 
 The output reports `reuse_ratio` (repeated exact-clause references),
 `semantic_atom_reuse_ratio` (repeated compositional atoms), and

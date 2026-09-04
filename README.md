@@ -18,6 +18,11 @@ The reusable offline Commander deck generator is documented in
 imported-deck, and optional cached EDHREC sources without inventing unresolved
 cards.
 
+Rules workers use the compositional Oracle IR as a shared vocabulary. Its
+benchmark selects the payload mode per batch: full-catalog jobs use compact
+references when they reduce context, while small sets such as C13 retain exact
+card text and use atoms as reusable navigation hints.
+
 ## AI contributor quick start
 
 Read [AGENTS.md](AGENTS.md), [docs/HANDOFF_TO_CLAUDE.md](docs/HANDOFF_TO_CLAUDE.md)

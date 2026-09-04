@@ -71,6 +71,7 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
     new = compact_worker_payload(compact)
     old_bytes = len(json.dumps(old, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     new_bytes = len(json.dumps(new, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+    reduction = round(1 - (new_bytes / old_bytes), 3) if old_bytes else 0.0
     old_ids = sorted(card["oracle_id"] for card in old["cards"])
     new_ids = sorted(card["oracle_id"] for card in compact["cards"])
     if old_ids != new_ids:
@@ -89,7 +90,8 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
         "compositional_atom_references": compact["semantic_atom_reference_count"],
         "compositional_atom_reuse_ratio": compact["semantic_atom_reuse_ratio"],
         "compositional_bytes": new_bytes,
-        "context_byte_reduction": round(1 - (new_bytes / old_bytes), 3) if old_bytes else 0.0,
+        "context_byte_reduction": reduction,
+        "recommended_workflow": "compact-payload" if reduction > 0 else "legacy-payload-with-compositional-hints",
         "exact_primitive_reuse_ratio": compact["reuse_ratio"],
         "identity_and_clause_checks": "PASS",
     }
