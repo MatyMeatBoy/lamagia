@@ -418,6 +418,7 @@ export type TargetKind =
   | "creature-with-deathtouch"
   | "creature-with-lifelink"
   | "creature-with-menace"
+  | "creature-with-haste"
   | "card-in-your-graveyard" | "creature-card-in-your-graveyard" | "artifact-card-in-your-graveyard" | "enchantment-card-in-your-graveyard" | "land-card-in-a-graveyard" | `subtype:${string}` | "none";
   
 
@@ -1328,6 +1329,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature with deathtouch$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-deathtouch" };
   if (/^Destroy target creature with lifelink$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-lifelink" };
   if (/^Destroy target creature with menace$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-menace" };
+  if (/^Destroy target creature with haste$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-haste" };
   if (/^Destroy target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };
   if (/^Destroy target creature with toughness 4 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-least-4" };
