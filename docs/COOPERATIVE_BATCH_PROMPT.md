@@ -22,6 +22,9 @@ BASE: start from the current branch HEAD; do not assume prior chat context.
    fixture-specific aliases are allowed only in tests/data.
 4. Add scenario tests first (or in the same change) for normal resolution,
    invalid targets/costs, and the important zone or priority boundary.
+   For numeric mechanics, cover at least the smallest meaningful value, the
+   next value, a larger value, and an empty/short-zone boundary when relevant
+   (for example Scry 1, Scry 2, Scry 3, and a short library).
 5. Cite the applicable official Comprehensive Rules section in the handoff.
 6. Run npm run check, npm test, and the smallest relevant simulator/oracle
    test. Fix failures caused by the batch before committing.
