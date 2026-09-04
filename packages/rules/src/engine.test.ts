@@ -231,6 +231,7 @@ const C13_ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", ma
 const C13_ANGEL_OF_FINALITY = () => make({ name: "Angel of Finality", type_line: "Creature — Angel", mana_cost: "{3}{W}", cmc: 4, power: "3", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, exile target player's graveyard.", scryfall_id: "bd3c34c9-2072-4ebb-93ef-34173015bfb8" });
 const C13_BOJUKA_BOG = () => make({ name: "Bojuka Bog", type_line: "Land", oracle_text: "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", produced_mana: ["B"], scryfall_id: "2ef9848c-fe7f-4434-8936-4074f67883af" });
 const C13_ARCANE_DENIAL = () => make({ name: "Arcane Denial", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.", scryfall_id: "ab175817-da6a-4ae7-a016-c3bfb087eae0" });
+const C13_BANE_OF_PROGRESS = () => make({ name: "Bane of Progress", type_line: "Creature — Elemental", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "When Bane of Progress enters the battlefield, destroy all artifacts and enchantments, then put a +1/+1 counter on Bane of Progress for each permanent destroyed this way.", scryfall_id: "51f9a6cc-8eb2-44ed-a2d9-913ac514ad67" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
 const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantment", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target.", scryfall_id: "89d77b63-eeee-4d8a-9622-b1ea36dc70de" });
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
@@ -1100,6 +1101,21 @@ describe("casting", () => {
       expect(profile.fullyImplemented).toBe(true);
     }
     expect(profileOf(C13_BOJUKA_BOG())).toMatchObject({ entersTapped: { kind: "tapped" }, manaAbilities: [{ produces: ["B"] }] });
+  });
+
+  it("reuses the artifact/enchantment sweep for C13 Bane of Progress", () => {
+    const profile = profileOf(C13_BANE_OF_PROGRESS());
+    expect(profile.triggers).toMatchObject([{
+      event: "enters-battlefield",
+      effect: { kind: "destroy-all-artifacts-enchantments-add-counters", counter: "+1/+1" }
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([C13_BANE_OF_PROGRESS()], [FOREST(), FOREST(), FOREST(), FOREST()], [], [SOL_RING(), LIFE_LOCK()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const bane = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Bane of Progress")!;
+    expect(game.players[1]!.battlefield).toHaveLength(0);
+    expect(bane.counters["+1/+1"]).toBe(2);
+    expect(powerOf(bane, game)).toBe(4);
   });
 
   it("lets Angel of Finality choose a player and exile that graveyard", () => {

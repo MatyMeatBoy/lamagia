@@ -312,6 +312,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-permanent" }
   | { readonly kind: "chaos-warp" }
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
+  /** Destroy artifact/enchantment permanents, then count the ones destroyed. */
+  | { readonly kind: "destroy-all-artifacts-enchantments-add-counters"; readonly counter: string }
  | { readonly kind: "exile-target-permanent" }
   | { readonly kind: "exile-target-nontoken-creature" }
   | { readonly kind: "exile-target-graveyard" }
@@ -1497,6 +1499,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Destroy all artifacts, creatures, and enchantments$/i.test(text)) {
     return { effect: { kind: "destroy-all-artifacts-creatures-enchantments" }, target: "none" };
+  }
+  if ((match = /^Destroy all artifacts and enchantments, then put a (\+1\/\+1|-1\/-1) counter on ~ for each permanent destroyed this way$/i.exec(text))) {
+    return { effect: { kind: "destroy-all-artifacts-enchantments-add-counters", counter: match[1]! }, target: "none" };
   }
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
