@@ -2362,6 +2362,17 @@ describe("casting", () => {
     expect(game.players[0]!.library.some((card) => card.name === "Blue Sun's Zenith")).toBe(true);
   });
 
+  it("does not apply Blue Sun's library replacement when the spell is countered", () => {
+    let game = readyToCast([C13_BLUE_SUN()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()], [COUNTER()], [ISLAND(), ISLAND()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 1, targets: [{ kind: "player", seat: 0 }] });
+    const spell = game.stack.at(-1)!;
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "spell", stackId: spell.id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Blue Sun's Zenith")).toBe(true);
+    expect(game.players[0]!.library.some((card) => card.name === "Blue Sun's Zenith")).toBe(false);
+  });
+
   it("counters a spell whose target has left the battlefield", () => {
     let game = readyToCast([BOLT()], [MOUNTAIN()], [BOLT()], [MOUNTAIN(), BEAR()]);
     const bearId = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.instance_id;
