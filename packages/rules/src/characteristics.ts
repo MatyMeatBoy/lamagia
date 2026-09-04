@@ -86,6 +86,8 @@ export interface ActivatedAbility {
   readonly sacrificesCreature?: "any" | "another";
   /** Sacrifice an artifact you control as an activation cost. */
   readonly sacrificesArtifact?: boolean;
+  /** Discard a card as an activation cost (Trading Post, CR 602.1). */
+  readonly discardsCard?: boolean;
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
   readonly lifeCost: number;
@@ -915,6 +917,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sacrificesSelf = /sacrifice\s+~/i.test(costText);
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
   const sacrificesArtifact = /sacrifice\s+(?:a\s+|an\s+)?artifact/i.test(costText);
+  const discardsCard = /discard\s+a\s+card/i.test(costText);
   const removedCounters: CounterCost[] = [];
   for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+~/gi)) {
     const amount = toNumber(match[1]);
@@ -929,6 +932,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+~/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:a\s+|an\s+)?artifact/gi, "")
+    .replace(/discard\s+a\s+card/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
     .replace(/[,\s]/g, "");
   if (leftovers.length) return null;
@@ -938,6 +942,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     sacrificesSelf,
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
     ...(sacrificesArtifact ? { sacrificesArtifact: true as const } : {}),
+    ...(discardsCard ? { discardsCard: true as const } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     lifeCost,
     manaCost,
