@@ -1215,10 +1215,25 @@ function searchCriterion(text: string): { types: CardType[]; subtypes: string[] 
 }
 
 function parseLibrarySearch(text: string): SpellEffect | null {
-  const match = /^Search your library for (?:a |an |up to (?:one|two|three|five) )?(.+?) card, (.+)$/i.exec(text);
-  if (!match) return null;
-  const criterion = searchCriterion(match[1]!);
-  const instructions = match[2]!;
+  const single = /^Search your library for (?:a |an |up to (?:one|two|three|five) )?(.+?) card, (.+)$/i.exec(text);
+  // "up to N basic land cards, put them onto the battlefield tapped, then shuffle" (Burnished Hart, Harrow).
+  const multi = /^Search your library for up to (one|two|three) (.+?) cards(?:\s+that share a land type)?, put them onto the battlefield( tapped)?,?\s*(?:then shuffle)?\.?$/i.exec(text);
+  if (multi) {
+    const count = toNumber(multi[1]!) ?? 1;
+    const criterion = searchCriterion(multi[2]!);
+    return {
+      kind: "search-library",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      destination: "battlefield",
+      ...(multi[3] ? { tapped: true } : {}),
+      reveal: false,
+      count
+    };
+  }
+  if (!single) return null;
+  const criterion = searchCriterion(single[1]!);
+  const instructions = single[2]!;
   const selected = "(?:(?:that|the) card|it)";
   const destination = new RegExp(`(?:put|place) ${selected} on top(?: of your library)?`, "i").test(instructions) ? "top"
     : new RegExp(`put ${selected} into your hand`, "i").test(instructions) ? "hand"
