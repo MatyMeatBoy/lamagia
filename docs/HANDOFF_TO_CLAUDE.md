@@ -1376,3 +1376,9 @@ Current regenerated coverage: **180/356 C13 precon cards (50.6%)** and
 **165/341 unique C13 set entries (48.4%)**; global export **8,196/38,711
 (21.2%)**. Validation: `npm run check` and `npm test` PASS (**415 rules
 tests**, simulator, **39 Oracle Python tests**).
+### Integrator checkpoint: C13 additional life costs (2026-09-04)
+
+Added a reusable cast-cost primitive for `As an additional cost to cast ~, pay
+N life`, including Toxic Deluge and a scenario proving the life payment occurs
+exactly once alongside normal mana payment (CR 118.8). The primitive is
+independent of the spell's effect, so future cards reuse it automatically.
