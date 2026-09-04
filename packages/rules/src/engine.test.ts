@@ -1038,7 +1038,7 @@ describe("casting", () => {
     expect(profileOf(NO_MAX_HAND()).noMaximumHandSize).toBe(true);
     let game = twoSeatGame(Array.from({ length: 10 }, () => BEAR()), []);
     game = putOnBattlefield(game, 0, [NO_MAX_HAND()]);
-    game = stage(game, 0, (player) => ({ hand: [...player.hand, { ...BEAR(), instance_id: "staged-hand-bear", owner: 0 }] }));
+    game = stage(game, 0, (player) => ({ hand: [...player.hand, ...toHand(0, [BEAR()], "no-max-extra")] }));
     game = passUntil(game, (state) => state.turn === 2 && state.activeSeat === 0 && state.step === "untap");
     expect(game.log.some((entry) => entry.text.includes("descarta") && entry.seat === 0)).toBe(false);
   });
