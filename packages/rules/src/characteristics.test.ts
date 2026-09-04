@@ -369,6 +369,15 @@ describe("Bane of Progress primitives", () => {
     });
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("keeps the destruction-count primitive parameterized by counter type", () => {
+    const profile = cardProfile(card({
+      name: "Counter Sweep",
+      type_line: "Creature — Elemental",
+      oracle_text: "When this creature enters the battlefield, destroy all artifacts and enchantments, then put a -1/-1 counter on this creature for each permanent destroyed this way."
+    }));
+    expect(profile.triggers[0]!.effect).toEqual({ kind: "destroy-all-artifacts-enchantments-add-counters", counter: "-1/-1" });
+  });
 });
 
 describe("triggered self modifications", () => {
