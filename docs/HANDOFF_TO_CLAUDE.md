@@ -946,6 +946,16 @@ reports that limitation instead of trying to parse the Pages HTML 404 as JSON;
 local AI battle is verified through `npm run dev:server` + `npm run dev`. A real
 public AI battle requires deploying `services/match-server` and setting
 `window.__PROSSH_API_BASE__` to that backend origin.
+
+### Keyword audit and C13 worker queue
+
+The checked-in Comprehensive Rules snapshot was compared with the engine's
+reusable keyword contracts and catalog metadata. `KEYWORD_COVERAGE.md` now
+reports **22 implemented**, **2 partial**, and **170 backlog** keyword headings;
+catalog frequency is used only as a prioritization signal. Run
+`npm run rules:keyword:audit` after catalog or parser changes. The regenerated
+C13 queue contains **118** disjoint primitive jobs across five workers, with
+quick-wins ranked first and the existing 2 GB / 20-oracle-id / 11-commit policy.
 - `Return a creature you control to its owner's hand` reuses `return-target-
   creature` with a `creature-you-control` target, so Whitemane Lion-style ETB
   self-bounce resolves.
