@@ -279,6 +279,7 @@ export type SpellEffect =
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
   | { readonly kind: "destroy-target-creature" }
+  | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-permanent" }
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
   | { readonly kind: "exile-target-permanent" }
@@ -1162,6 +1163,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "creature" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
+  if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness$/i.test(`${text}.`)) {
+    return { effect: { kind: "destroy-target-creature-then-life-loss" }, target: "creature" };
+  }
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
   if (/^Destroy target enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "enchantment" };
