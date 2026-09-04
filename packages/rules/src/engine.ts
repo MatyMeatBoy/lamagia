@@ -165,6 +165,8 @@ export interface TriggerInstance {
   readonly cause: string;
   /** Player whose action raised the event, used by payment clauses such as Rhystic Study. */
   readonly eventController?: SeatId;
+  /** Permanent involved in the event, used by effects referring to "that creature". */
+  readonly eventPermanentId?: string;
 }
 
 /**
@@ -178,7 +180,7 @@ export type GameEvent =
   | { readonly kind: "enters-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "leaves-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
@@ -1030,6 +1032,8 @@ function triggerMatches(
   switch (subject) {
     case "self": return isSelf;
     case "self-or-another-creature-you-control": return objectIsCreature && object.controller === watcher.controller;
+    case "creature-attacks-opponent":
+      return event.kind === "attacks" && objectIsCreature && opponentsOf(state, watcher.controller).includes(event.defender);
     // Rule 109.5: "another" excludes the object the ability is printed on.
     case "another-creature-you-control": return !isSelf && objectIsCreature && object.controller === watcher.controller;
     case "another-permanent-you-control": return !isSelf && cardProfile(object.card).isPermanent && object.controller === watcher.controller;
@@ -1095,7 +1099,8 @@ function raiseEvent(
         sourceCard: watcher.card,
         definition,
         cause: causeOf(state, event),
-        ...(event.kind === "spell-cast" ? { eventController: event.controller } : {})
+        ...(event.kind === "spell-cast" ? { eventController: event.controller } : {}),
+        ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {})
       });
     }
   }
@@ -1529,6 +1534,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         ...state,
         pendingChoice: { type: "scry", seat: controller, sourceId: object.id, sourceCard: object.card, pending, kept: [], bottomed: [], thenDraw: effect.thenDraw ?? 0 }
       };
+    case "modify-triggered-creature": {
+      const targetId = object.trigger?.eventPermanentId;
+      if (!targetId) return state;
+      return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === targetId);
     }
     case "grant-target-creature-keyword": {
       const target = object.targets[0];
@@ -3622,7 +3631,7 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
   // Attack triggers fire once the whole declaration is made (CR 508.1i).
   for (const entry of attackers) {
     const attacker = findPermanent(next, entry.instanceId);
-    if (attacker) next = raiseEvent(next, { kind: "attacks", permanentId: attacker.instance_id, controller: attacker.controller, card: attacker.card });
+    if (attacker) next = raiseEvent(next, { kind: "attacks", permanentId: attacker.instance_id, controller: attacker.controller, card: attacker.card, defender: entry.defender });
   }
   next = { ...next, passedSeats: [], prioritySeat: seat, priorityOpen: true };
   if (attackers.length) {
