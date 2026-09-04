@@ -13,7 +13,7 @@
  */
 
 import {
-  cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
+  cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaType
@@ -54,6 +54,23 @@ function matchesSacrificeType(permanent: Permanent, type: "Artifact" | "Enchantm
   if (type === "Token") return Boolean(permanent.card.token);
   if (type === "Permanent") return profile.isPermanent;
   return isLand(profile);
+}
+
+function matchesSacrificeCreatureCost(permanent: Permanent, ability: ActivatedAbility, sourceId: string): boolean {
+  if (!isCreature(cardProfile(permanent.card))) return false;
+  if (ability.sacrificesCreature && ability.sacrificesCreature === "another" && permanent.instance_id === sourceId) return false;
+  const typed = ability.sacrificesCreatureSubtype;
+  if (typed && typed.mode === "another" && permanent.instance_id === sourceId) return false;
+  return !typed || cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === typed.subtype.toLowerCase());
+}
+
+function combinations<T>(items: readonly T[], amount: number): T[][] {
+  if (amount === 0) return [[]];
+  if (items.length < amount) return [];
+  const first = items[0]!;
+  const rest = items.slice(1);
+  return combinations(rest, amount - 1).map((choice) => [first, ...choice])
+    .concat(combinations(rest, amount));
 }
 
 export interface GameCard extends CardData {
@@ -215,6 +232,7 @@ export type GameEvent =
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
+  | { readonly kind: "deals-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
@@ -302,6 +320,18 @@ export type PendingChoice =
       readonly trigger: TriggerInstance;
       readonly targetKind: Exclude<TargetKind, "none">;
       readonly options: readonly Target[];
+      /** Present for multi-target triggers; selected targets are private state. */
+      readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+      readonly selectedTargets?: readonly Target[];
+      readonly minimumTargets?: number;
+    }
+  | {
+      /** Tidal Force-style choice after a target has been selected (CR 701.21). */
+      readonly type: "tap-or-untap";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly target: Target;
     }
   | {
       /** Tidal Force-style choice after a target has been selected (CR 701.21). */
@@ -396,14 +426,15 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[] }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly variableValue?: number }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
+  | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-tap-or-untap"; readonly sourceId: string; readonly mode: "tap" | "untap" }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
@@ -588,7 +619,8 @@ export interface ManaSource {
 /** Rule 302.6 applies to a creature's own tap ability, including Llanowar Elves. */
 function splitSecondActive(state: GameState): boolean {
   const top = state.stack.at(-1);
-  return Boolean(top && cardProfile(top.card).keywords.includes("split second"));
+  return Boolean(top && (cardProfile(top.card).keywords.includes("split second")
+    || (top.kicked && cardProfile(top.card).kickedKeywords.includes("split second"))));
 }
 
 function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: ManaAbility, state?: GameState): boolean {
@@ -1209,6 +1241,9 @@ function triggerMatches(
 
   const object = eventObject(event);
   if (!object) return false;
+  // The wording "to an opponent" is relative to the source controller, not
+  // to the watcher merely observing the event (CR 109.5).
+  if (event.kind === "deals-damage-to-player" && event.victim === watcher.controller) return false;
   if (definition.nontoken && object.card.token) return false;
   if (definition.excludeSubtype && cardProfile(object.card).subtypes.some((subtype) => subtype.toLowerCase() === definition.excludeSubtype!.toLowerCase())) return false;
   const isSelf = object.permanentId === watcher.instanceId;
@@ -1248,6 +1283,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "attacks": return `${object!.card.name} ataca`;
     case "blocks": return `${object!.card.name} bloquea`;
     case "deals-combat-damage-to-player": return `${object!.card.name} hace daño de combate a ${playerAt(state, event.victim).name}`;
+    case "deals-damage-to-player": return `${object!.card.name} hace daño a ${playerAt(state, event.victim).name}`;
     case "becomes-tapped": return `${object!.card.name} se gira`;
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
     case "card-cycled": return `${playerAt(state, event.controller).name} cicla ${event.card.name}`;
@@ -1344,10 +1380,40 @@ function effectAmount(amount: number | "X", object: StackObject): number {
   return amount === "X" ? object.variableValue : amount;
 }
 
-function dealDamageToPlayer(state: GameState, seat: SeatId, amount: number, sourceName: string): GameState {
+type DamageSource = Pick<GameEvent & { kind: "deals-damage-to-player" }, "permanentId" | "controller" | "card">;
+
+function dealDamageToPlayer(
+  state: GameState,
+  seat: SeatId,
+  amount: number,
+  sourceName: string,
+  source?: DamageSource
+): GameState {
   if (amount <= 0) return state;
-  const next = loseLife(state, seat, amount);
+  let next = loseLife(state, seat, amount);
+  if (source) {
+    next = raiseEvent(next, {
+      kind: "deals-damage-to-player",
+      permanentId: source.permanentId,
+      controller: source.controller,
+      card: source.card,
+      victim: seat
+    });
+  }
   return logged(next, seat, `${sourceName} hace ${amount} de daño a ${playerAt(next, seat).name}.`);
+}
+
+function sourceForDamage(state: GameState, object: StackObject): DamageSource | undefined {
+  const sourceId = object.sourcePermanentId;
+  if (!sourceId) return undefined;
+  const permanent = findPermanent(state, sourceId);
+  return permanent
+    ? { permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card }
+    : undefined;
+}
+
+function dealDamageFromObject(state: GameState, seat: SeatId, amount: number, sourceName: string, object: StackObject): GameState {
+  return dealDamageToPlayer(state, seat, amount, sourceName, sourceForDamage(state, object));
 }
 
 function loseLife(state: GameState, seat: SeatId, amount: number): GameState {
@@ -1361,12 +1427,23 @@ function playersCantGainLife(state: GameState): boolean {
 }
 
 function playerHasNoMaximumHandSize(state: GameState, seat: SeatId): boolean {
-  return playerAt(state, seat).battlefield.some((permanent) => cardProfile(permanent.card).noMaximumHandSize);
+  return allPermanents(state).some((permanent) => {
+    const profile = cardProfile(permanent.card);
+    return profile.noMaximumHandSizeForAllPlayers || (permanent.controller === seat && profile.noMaximumHandSize);
+  });
 }
 
-function dealDamageToPermanent(state: GameState, instanceId: string, amount: number, deathtouch: boolean, sourceName: string): GameState {
+function dealDamageToPermanent(
+  state: GameState,
+  instanceId: string,
+  amount: number,
+  deathtouch: boolean,
+  sourceName: string,
+  sourceProfile?: CardProfile
+): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
+  if (sourceProfile && hasProtectionFrom(sourceProfile, cardProfile(permanent.card))) return state;
   // Damage to a planeswalker removes that many loyalty counters (CR 120.3c).
   const isPlaneswalker = cardProfile(permanent.card).types.includes("Planeswalker") && "loyalty" in permanent.counters;
   const next = withPlayer(state, permanent.controller, (player) => ({
@@ -1412,6 +1489,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return next;
     }
     case "draw": return drawCards(state, controller, effectAmount(effect.amount, object));
+    case "draw-if-life-more-than-opponent": {
+      const life = playerAt(state, controller).life;
+      if (!opponentsOf(state, controller).some((seat) => life > playerAt(state, seat).life)) return state;
+      return drawCards(state, controller, effect.amount);
+    }
     case "draw-target-player": {
       const target = object.targets[0];
       return target?.kind === "player" ? drawCards(state, target.seat, effectAmount(effect.amount, object)) : state;
@@ -1733,7 +1815,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = playerAt(state, controller).battlefield.filter((permanent) =>
         cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
       if (amount <= 0) return state;
-      let next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
+      let next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
       if (!playersCantGainLife(next)) {
         next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + amount }));
         next = raiseEvent(next, { kind: "life-gained", seat: controller, amount });
@@ -1906,7 +1988,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const seat = object.trigger?.eventController;
       if (seat === undefined) return state;
       const amount = effectAmount(effect.amount, object);
-      return dealDamageToPlayer(state, seat, amount, sourceName);
+      return dealDamageFromObject(state, seat, amount, sourceName, object);
     }
     case "lose-life-target-player-each-controlled-type": {
       const target = object.targets[0];
@@ -1949,7 +2031,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     }
     case "damage-each-opponent": {
       let next = state;
-      for (const seat of opponentsOf(state, controller)) next = dealDamageToPlayer(next, seat, effectAmount(effect.amount, object), sourceName);
+      for (const seat of opponentsOf(state, controller)) next = dealDamageFromObject(next, seat, effectAmount(effect.amount, object), sourceName, object);
       return next;
     }
     case "damage-all-creatures": {
@@ -1963,7 +2045,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         if (!planeswalker && effect.filter === "nonartifact" && profile.types.includes("Artifact")) continue;
         if (!planeswalker && effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
         if (effect.filter === "with-flying" && !keywordOf(next, permanent, "flying")) continue;
-        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
       }
       return next;
     }
@@ -1971,17 +2053,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = effectAmount(effect.amount, object);
       let next = state;
       for (const permanent of allPermanents(state)) {
-        if (isCreature(cardProfile(permanent.card))) next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+        if (isCreature(cardProfile(permanent.card))) next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
       }
       for (const player of state.players) {
-        if (!player.lost) next = dealDamageToPlayer(next, player.seat, amount, sourceName);
+        if (!player.lost) next = dealDamageFromObject(next, player.seat, amount, sourceName, object);
       }
       return next;
     }
     case "damage-each-player": {
       const amount = effectAmount(effect.amount, object);
       let next = state;
-      for (const player of state.players) if (!player.lost) next = dealDamageToPlayer(next, player.seat, amount, sourceName);
+      for (const player of state.players) if (!player.lost) next = dealDamageFromObject(next, player.seat, amount, sourceName, object);
       return next;
     }
     case "mill-each-player": {
@@ -2004,10 +2086,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (const permanent of allPermanents(state)) {
         if (isCreature(cardProfile(permanent.card)) && !keywordOf(state, permanent, "flying")) {
-          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
         }
       }
-      for (const player of state.players) if (!player.lost) next = dealDamageToPlayer(next, player.seat, amount, sourceName);
+      for (const player of state.players) if (!player.lost) next = dealDamageFromObject(next, player.seat, amount, sourceName, object);
       return next;
     }
     case "damage-flying-creatures": {
@@ -2015,7 +2097,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (const permanent of allPermanents(state)) {
         if (isCreature(cardProfile(permanent.card)) && keywordOf(state, permanent, "flying")) {
-          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card));
         }
       }
       return next;
@@ -2024,8 +2106,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       if (!target) return state;
       const amount = effectAmount(effect.amount, object);
-      if (target.kind === "player") return dealDamageToPlayer(state, target.seat, amount, sourceName);
-      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
+      if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
       return state;
     }
     case "incite-rebellion": {
@@ -2035,8 +2117,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         const creatures = player.battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
         const amount = creatures.length;
         if (amount === 0) continue;
-        next = dealDamageToPlayer(next, player.seat, amount, sourceName);
-        for (const creature of creatures) next = dealDamageToPermanent(next, creature.instance_id, amount, false, sourceName);
+        next = dealDamageFromObject(next, player.seat, amount, sourceName, object);
+        for (const creature of creatures) next = dealDamageToPermanent(next, creature.instance_id, amount, false, sourceName, cardProfile(object.card));
       }
       return next;
     }
@@ -2044,15 +2126,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       if (!target) return state;
       const amount = playerAt(state, controller).battlefield.filter((permanent) => cardProfile(permanent.card).types.includes(effect.type)).length;
-      if (target.kind === "player") return dealDamageToPlayer(state, target.seat, amount, sourceName);
-      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
+      if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card));
       return state;
     }
     case "damage-controller-equal-hand": {
-      return dealDamageToPlayer(state, controller, playerAt(state, controller).hand.length, sourceName);
+      return dealDamageFromObject(state, controller, playerAt(state, controller).hand.length, sourceName, object);
     }
     case "damage-active-player-equal-hand": {
-      return dealDamageToPlayer(state, state.activeSeat, playerAt(state, state.activeSeat).hand.length, sourceName);
+      return dealDamageFromObject(state, state.activeSeat, playerAt(state, state.activeSeat).hand.length, sourceName, object);
     }
     case "lose-life-each-player-equal-hand": {
       let next = state;
@@ -2061,7 +2143,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     }
     case "damage-active-player-hand-minus": {
       const amount = Math.max(0, playerAt(state, state.activeSeat).hand.length - effect.offset);
-      return dealDamageToPlayer(state, state.activeSeat, amount, sourceName);
+      return dealDamageFromObject(state, state.activeSeat, amount, sourceName, object);
     }
     case "modify-all-creatures": {
       const next = modifyCreatures(state, effect.power, effect.toughness, () => true);
@@ -2249,10 +2331,31 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
     }
     case "destroy-target-creature": {
-      const target = object.targets[0];
+      const target = object.targets[targetIndex];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
+    }
+    case "put-target-nonland-permanent-under-top": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || isLand(cardProfile(permanent.card))) return state;
+      const owner = permanent.card.owner;
+      const count = Math.max(0, object.variableValue);
+      let next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      next = raiseEvent(next, {
+        kind: "leaves-battlefield", permanentId: permanent.instance_id,
+        controller: permanent.controller, card: permanent.card
+      }, [permanent]);
+      next = withPlayer(next, owner, (player) => {
+        const offset = Math.min(count, player.library.length);
+        return { ...player, library: [...player.library.slice(0, offset), permanent.card, ...player.library.slice(offset)] };
+      });
+      return logged(next, permanent.controller, `${permanent.card.name} va bajo ${count} carta(s) de la biblioteca de su propietario.`);
     }
     case "destroy-target-creature-then-life-loss": {
       const target = object.targets[0];
@@ -2301,6 +2404,36 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
+    }
+    case "return-owned-nontoken-permanents-to-control": {
+      const moved = allPermanents(state).filter((permanent) => !permanent.card.token && permanent.card.owner !== permanent.controller);
+      if (!moved.length) return state;
+      const movedIds = new Set(moved.map((permanent) => permanent.instance_id));
+      return {
+        ...state,
+        players: state.players.map((player) => ({
+          ...player,
+          battlefield: player.battlefield
+            .filter((permanent) => !movedIds.has(permanent.instance_id))
+            .concat(moved.filter((permanent) => permanent.card.owner === player.seat)
+              .map((permanent) => ({ ...permanent, controller: player.seat })))
+        }))
+      };
+    }
+    case "destroy-random-target-permanent": {
+      const candidates = object.targets
+        .filter((target): target is Extract<Target, { kind: "permanent" }> => target.kind === "permanent")
+        .map((target) => findPermanent(state, target.instanceId))
+        .filter((permanent): permanent is Permanent => Boolean(permanent));
+      let next = state;
+      for (let count = 0; count < effect.amount && candidates.length; count += 1) {
+        const rolled = nextRandom(next.rngState);
+        const index = Math.floor(rolled.value * candidates.length);
+        const selected = candidates.splice(index, 1)[0]!;
+        next = { ...next, rngState: rolled.state };
+        next = destroyPermanent(next, selected);
+      }
+      return next;
     }
     case "chaos-warp": {
       const target = object.targets[0];
@@ -2462,15 +2595,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "destroy-n-creatures": {
       const count = effect.count === "X" ? object.variableValue : effect.count;
       if (count <= 0) return state;
-      const targets = allPermanents(state)
-        .filter((permanent) => isCreature(cardProfile(permanent.card))
-          && (!effect.nonblack || !cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === "B")))
-        .sort((left, right) => {
-          const opp = (left.controller !== controller ? 0 : 1) - (right.controller !== controller ? 0 : 1);
-          if (opp !== 0) return opp;
-          return (powerOf(right, state) + toughnessOf(right, state)) - (powerOf(left, state) + toughnessOf(left, state));
-        })
-        .slice(0, count);
+      const eligible = (permanent: Permanent) => isCreature(cardProfile(permanent.card))
+        && (!effect.nonblack || !cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === "B"));
+      const requested = object.targets
+        .map((target) => target.kind === "permanent" ? findPermanent(state, target.instanceId) : null)
+        .filter((permanent): permanent is Permanent => permanent !== null && eligible(permanent));
+      const targets = requested.length
+        ? [...new Map(requested.map((permanent) => [permanent.instance_id, permanent])).values()].slice(0, count)
+        : allPermanents(state)
+            .filter(eligible)
+            .sort((left, right) => {
+              const opp = (left.controller !== controller ? 0 : 1) - (right.controller !== controller ? 0 : 1);
+              if (opp !== 0) return opp;
+              return (powerOf(right, state) + toughnessOf(right, state)) - (powerOf(left, state) + toughnessOf(left, state));
+            })
+            .slice(0, count);
       let next = state;
       for (const permanent of targets) {
         const live = findPermanent(next, permanent.instance_id);
@@ -3595,6 +3734,7 @@ function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): bo
   if (blockerProfile.combatRules.cannotBlock || blocker.cantBlockThisTurn) return false;
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
+  if (attackerProfile.protectionFrom.some((quality) => blockerProfile.colors.includes(quality))) return false;
   if (keywordOf(state, attacker, "flying") && !keywordOf(state, blocker, "flying") && !keywordOf(state, blocker, "reach")) return false;
   if (keywordOf(state, attacker, "fear") && !blockerProfile.colors.includes("B") && !blockerProfile.types.includes("Artifact")) return false;
   if (keywordOf(state, attacker, "intimidate") && !blockerProfile.types.includes("Artifact")
@@ -3604,6 +3744,12 @@ function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): bo
   if (only && !keywordOf(state, attacker, only)) return false;
   if (landwalkEvades(state, attacker, blocker.controller)) return false;
   return true;
+}
+
+/** CR 702.16: protection prevents targeting and damage from the named quality. */
+function hasProtectionFrom(source: CardProfile, target: CardProfile): boolean {
+  return target.protectionFrom.some((quality) => source.colors.includes(quality)
+    || (quality === "Artifact" && isArtifact(source)));
 }
 
 export function legalAttackers(state: GameState, seat: SeatId): Permanent[] {
@@ -3667,7 +3813,7 @@ function combatDamageAfterControllerPrevention(state: GameState, defender: SeatI
   return Math.max(0, amount - prevented);
 }
 
-interface DamageBatch { readonly toPlayers: { seat: SeatId; amount: number; commanderId?: string; sourceName: string; sourceId: string }[]; readonly toPermanents: { instanceId: string; amount: number; deathtouch: boolean; sourceName: string }[]; readonly lifelink: { seat: SeatId; amount: number }[] }
+interface DamageBatch { readonly toPlayers: { seat: SeatId; amount: number; commanderId?: string; sourceName: string; sourceId: string }[]; readonly toPermanents: { instanceId: string; amount: number; deathtouch: boolean; sourceName: string; sourceId: string }[]; readonly lifelink: { seat: SeatId; amount: number }[] }
 
 function computeCombatDamage(state: GameState, firstStrikeStep: boolean): DamageBatch {
   const toPlayers: DamageBatch["toPlayers"] = [];
@@ -3735,8 +3881,12 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
       if (remaining <= 0) break;
       const lethal = deathtouch ? 1 : Math.max(1, toughnessOf(blocker, state) - blocker.damage);
       const assigned = Math.min(remaining, lethal);
-      toPermanents.push({ instanceId: blocker.instance_id, amount: assigned, deathtouch, sourceName: attacker.card.name });
-      if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: assigned });
+      const blockerProfile = cardProfile(blocker.card);
+      if (!blockerProfile.combatRules.preventsAllCombatDamageToSelf
+        && !hasProtectionFrom(cardProfile(attacker.card), blockerProfile)) {
+        toPermanents.push({ instanceId: blocker.instance_id, amount: assigned, deathtouch, sourceName: attacker.card.name, sourceId: attacker.instance_id });
+        if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: assigned });
+      }
       remaining -= assigned;
     }
     if (remaining > 0 && keywordOf(state, attacker, "trample")) {
@@ -3762,8 +3912,12 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
     if (cardProfile(blocker.card).combatRules.preventsAllCombatDamage) continue;
     const power = powerOf(blocker, state);
     if (power <= 0) continue;
-    toPermanents.push({ instanceId: attacker.instance_id, amount: power, deathtouch: keywordOf(state, blocker, "deathtouch"), sourceName: blocker.card.name });
-    if (keywordOf(state, blocker, "lifelink")) lifelink.push({ seat: blocker.controller, amount: power });
+    const attackerProfile = cardProfile(attacker.card);
+    if (!attackerProfile.combatRules.preventsAllCombatDamageToSelf
+      && !hasProtectionFrom(cardProfile(blocker.card), attackerProfile)) {
+      toPermanents.push({ instanceId: attacker.instance_id, amount: power, deathtouch: keywordOf(state, blocker, "deathtouch"), sourceName: blocker.card.name, sourceId: blocker.instance_id });
+      if (keywordOf(state, blocker, "lifelink")) lifelink.push({ seat: blocker.controller, amount: power });
+    }
   }
 
   // Fog Bank and similar: no combat damage is dealt to them either.
@@ -3777,10 +3931,15 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
 function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameState {
   const batch = computeCombatDamage(state, firstStrikeStep);
   let next = state;
-  for (const hit of batch.toPermanents) next = dealDamageToPermanent(next, hit.instanceId, hit.amount, hit.deathtouch, hit.sourceName);
+  for (const hit of batch.toPermanents) {
+    const source = findPermanent(state, hit.sourceId);
+    next = dealDamageToPermanent(next, hit.instanceId, hit.amount, hit.deathtouch, hit.sourceName, source ? cardProfile(source.card) : undefined);
+  }
   for (const hit of batch.toPlayers) {
-    next = dealDamageToPlayer(next, hit.seat, hit.amount, hit.sourceName);
-    const dealer = findPermanent(next, hit.sourceId);
+    const dealer = findPermanent(state, hit.sourceId);
+    next = dealDamageToPlayer(next, hit.seat, hit.amount, hit.sourceName, dealer
+      ? { permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card }
+      : undefined);
     if (dealer && hit.amount > 0) {
       next = raiseEvent(next, {
         kind: "deals-combat-damage-to-player",
@@ -3998,6 +4157,7 @@ function boardCostReduction(state: GameState, seat: SeatId, card: GameCard, prof
     if (grant.color && !spellColors.includes(grant.color)) continue;
     if (grant.colors && !grant.colors.some((color) => spellColors.includes(color))) continue;
     if (grant.type && !profile.types.includes(grant.type)) continue;
+    if (grant.subtype && !profile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype!.toLowerCase())) continue;
     if (grant.types && !grant.types.some((type) => profile.types.includes(type))) continue;
     reduction += grant.amount;
   }
@@ -4014,17 +4174,38 @@ function withKicker(cost: ManaCost, kicker: ManaCost | null): ManaCost {
   };
 }
 
-/** The mana cost a cast actually pays, after kicker (added) or evoke (replaces base). */
-function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean): ManaCost {
-  if (evoked && profile.evokeCost) return profile.evokeCost;
-  return withKicker(profile.cost!, kicked ? profile.kickerCost : null);
+function combinedModalChoice(profile: CardProfile): ModalChoice | null {
+  if (!profile.modalChoices.length) return null;
+  let targetOffset = 0;
+  const targetKinds = profile.modalChoices.map((choice) => choice.targetKind)
+    .filter((kind): kind is Exclude<TargetKind, "none"> => kind !== "none");
+  return {
+    index: -1,
+    text: "Entwine",
+    effect: {
+      kind: "compound",
+      effects: profile.modalChoices.map((choice) => choice.effect),
+      targetOffsets: profile.modalChoices.map((choice) => choice.targetKind === "none" ? null : targetOffset++)
+    },
+    targetKind: targetKinds[0] ?? "none",
+    ...(targetKinds.length ? { targetKinds } : {})
+  };
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
+/** The mana cost a cast actually pays, after kicker/entwine (added) or evoke (replaces base). */
+function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean, entwined = false): ManaCost {
+  if (evoked && profile.evokeCost) return profile.evokeCost;
+  const cost = withKicker(profile.cost!, kicked ? profile.kickerCost : null);
+  return withKicker(cost, entwined ? profile.entwineCost : null);
+}
+
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
-  const cost = flashback ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
+  const cost = flashback
+    ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
+    : spellCostOf(profile, kicked, evoked, entwined);
   const lifeCost = flashback
     ? profile.flashbackLifeCost
     : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? variableValue : 0);
@@ -4033,6 +4214,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
   if (!flashback && kicked && !profile.kickerCost) return { legal: false };
   if (!flashback && evoked && !profile.evokeCost) return { legal: false };
+  if (entwined && (!profile.entwineCost || !profile.modalChoices.length)) return { legal: false };
+  if (entwined && mode !== undefined) return { legal: false };
   if (!cost) return { legal: false };
   if (!Number.isInteger(variableValue) || variableValue < 0) return { legal: false, note: "El valor de X debe ser un entero no negativo." };
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
@@ -4041,13 +4224,13 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
   const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
   if (!plan) return { legal: false };
-  const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
+  const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
   const targetKind = modal?.targetKind ?? profile.targetKind;
-  const targetKinds = modal?.targetKinds;
-  if (targetKinds?.some((kind) => !legalTargets(state, seat, kind).length)) return { legal: false };
-  if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind).length) return { legal: false };
-  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind).length) return { legal: false };
+  const targetKinds = modal?.targetKinds ?? profile.targetKinds;
+  if (targetKinds?.some((kind) => !legalTargets(state, seat, kind, profile).length)) return { legal: false };
+  if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind, profile).length) return { legal: false };
+  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, profile).length) return { legal: false };
   return {
     legal: true,
     ...(targetKind !== "none" ? { targetKind } : {}),
@@ -4088,6 +4271,13 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       return actions;
     }
     if (choice.type === "trigger-target") {
+      if (choice.targetKinds && (choice.selectedTargets?.length ?? 0) >= (choice.minimumTargets ?? 1)) {
+        actions.push({
+          action: { type: "finish-trigger-targets", sourceId: choice.sourceId },
+          label: "Finish target selection",
+          note: `${choice.trigger.sourceCard.name}: do not add another optional target.`
+        });
+      }
       for (const option of choice.options) {
         actions.push({
           action: { type: "choose-trigger-target", sourceId: choice.sourceId, target: option },
@@ -4273,18 +4463,21 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const profile = cardProfile(card);
     const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
-    const variants: { kicked: boolean; evoked: boolean }[] = [{ kicked: false, evoked: false }];
-    if (profile.kickerCost) variants.push({ kicked: true, evoked: false });
-    if (profile.evokeCost) variants.push({ kicked: false, evoked: true });
-    for (const variableValue of values) for (const mode of modes) for (const { kicked, evoked } of variants) {
-      const check = castableCard(state, seat, card, false, variableValue, mode, kicked, evoked);
+    const variants: { kicked: boolean; evoked: boolean; entwined: boolean }[] = [{ kicked: false, evoked: false, entwined: false }];
+    if (profile.kickerCost) variants.push({ kicked: true, evoked: false, entwined: false });
+    if (profile.evokeCost) variants.push({ kicked: false, evoked: true, entwined: false });
+    if (profile.entwineCost && profile.modalChoices.length) variants.push({ kicked: false, evoked: false, entwined: true });
+    for (const variableValue of values) for (const mode of modes) for (const { kicked, evoked, entwined } of variants) {
+      if (entwined && mode !== modes[0]) continue;
+      const selectedMode = entwined ? undefined : mode;
+      const check = castableCard(state, seat, card, false, variableValue, selectedMode, kicked, evoked, false, entwined);
       if (!check.legal) continue;
-      const modal = mode === undefined ? undefined : profile.modalChoices[mode];
+      const modal = entwined ? combinedModalChoice(profile) : selectedMode === undefined ? undefined : profile.modalChoices[selectedMode];
       actions.push({
-        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }), ...(kicked ? { kicked: true } : {}), ...(evoked ? { evoked: true } : {}) },
-        label: `${profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`}${kicked ? " (kicker)" : ""}${evoked ? " (evocar)" : ""}${modal ? ` — ${modal.text}` : ""}`,
+        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(kicked ? { kicked: true } : {}), ...(evoked ? { evoked: true } : {}), ...(entwined ? { entwined: true } : {}) },
+        label: `${profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`}${kicked ? " (kicker)" : ""}${evoked ? " (evocar)" : ""}${entwined ? " (entwine)" : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
-        manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0),
+        manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0) + (entwined ? (profile.entwineCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
@@ -4298,15 +4491,18 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (!cost || profile.isPermanent) continue;
     const values = cost.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
-    for (const variableValue of values) for (const mode of modes) {
-      const check = castableCard(state, seat, card, false, variableValue, mode, false, false, true);
+    const entwinedOptions = profile.entwineCost && profile.modalChoices.length ? [false, true] : [false];
+    for (const variableValue of values) for (const mode of modes) for (const entwined of entwinedOptions) {
+      if (entwined && mode !== modes[0]) continue;
+      const selectedMode = entwined ? undefined : mode;
+      const check = castableCard(state, seat, card, false, variableValue, selectedMode, false, false, true, entwined);
       if (!check.legal) continue;
-      const modal = mode === undefined ? undefined : profile.modalChoices[mode];
+      const modal = entwined ? combinedModalChoice(profile) : selectedMode === undefined ? undefined : profile.modalChoices[selectedMode];
       actions.push({
-        action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, flashback: true, ...(cost.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }) },
-        label: `Lanzar ${card.name} con Flashback${profile.flashbackLifeCost ? ` — Pay ${profile.flashbackLifeCost} life (paga ${profile.flashbackLifeCost} vidas)` : ""}${modal ? ` — ${modal.text}` : ""}`,
+        action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, flashback: true, ...(cost.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(entwined ? { entwined: true } : {}) },
+        label: `Lanzar ${card.name} con Flashback${profile.flashbackLifeCost ? ` — Pay ${profile.flashbackLifeCost} life (paga ${profile.flashbackLifeCost} vidas)` : ""}${entwined ? " (entwine)" : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
-        manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0),
+        manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0) + (entwined ? (profile.entwineCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
@@ -4321,15 +4517,18 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
     const kickers = profile.kickerCost ? [false, true] : [false];
-    for (const variableValue of values) for (const mode of modes) for (const kicked of kickers) {
-      const check = castableCard(state, seat, card, true, variableValue, mode, kicked);
+    const entwinedOptions = profile.entwineCost && profile.modalChoices.length ? [false, true] : [false];
+    for (const variableValue of values) for (const mode of modes) for (const kicked of kickers) for (const entwined of entwinedOptions) {
+      if (entwined && mode !== modes[0]) continue;
+      const selectedMode = entwined ? undefined : mode;
+      const check = castableCard(state, seat, card, true, variableValue, selectedMode, kicked, false, false, entwined);
       if (!check.legal) continue;
-      const modal = mode === undefined ? undefined : profile.modalChoices[mode];
+      const modal = entwined ? combinedModalChoice(profile) : selectedMode === undefined ? undefined : profile.modalChoices[selectedMode];
       actions.push({
-        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }), ...(kicked ? { kicked: true } : {}) },
-        label: `Lanzar comandante ${card.name}${tax ? ` (+${tax} impuesto)` : ""}${kicked ? " (kicker)" : ""}${profile.cost?.hasVariable ? ` (X=${variableValue})` : ""}${modal ? ` — ${modal.text}` : ""}`,
+        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(kicked ? { kicked: true } : {}), ...(entwined ? { entwined: true } : {}) },
+        label: `Lanzar comandante ${card.name}${tax ? ` (+${tax} impuesto)` : ""}${kicked ? " (kicker)" : ""}${entwined ? " (entwine)" : ""}${profile.cost?.hasVariable ? ` (X=${variableValue})` : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
-        manaValue: cardProfile(card).manaValue + tax + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0),
+        manaValue: cardProfile(card).manaValue + tax + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0) + (entwined ? (profile.entwineCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
@@ -4397,19 +4596,29 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       if (opponentsLocked && ["Artifact", "Creature", "Enchantment"].some((type) => profile.types.includes(type as CardType))) continue;
       const check = activatableAbility(state, seat, permanent, ability);
       if (!check.legal) continue;
-      const sacrifices = ability.sacrificesCreature
+      const sacrificeCandidates = ability.sacrificesCreatures
         ? player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
-          && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id))
-        : ability.sacrificesPermanent
-          ? player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
-            && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id))
-        : [undefined];
+          && (!ability.sacrificesCreatures!.subtype
+            || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.sacrificesCreatures!.subtype!.toLowerCase())))
+        : ability.sacrificesCreature || ability.sacrificesCreatureSubtype
+          ? player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))
+          : ability.sacrificesPermanent
+            ? player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
+              && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id))
+            : [];
+      const hasSacrificeCost = Boolean(ability.sacrificesCreatures || ability.sacrificesCreature || ability.sacrificesCreatureSubtype || ability.sacrificesPermanent);
+      const sacrificeSets: readonly (readonly Permanent[])[] = ability.sacrificesCreatures
+        ? combinations(sacrificeCandidates, ability.sacrificesCreatures!.amount)
+        : hasSacrificeCost ? sacrificeCandidates.map((candidate) => [candidate]) : [[]];
       const discards = ability.discardsCard ? player.hand : [undefined];
       const exiles = ability.exilesGraveyardCard ? player.graveyard : [undefined];
       const tapCreatures = ability.tapsCreature ? tapCostCandidates(state, seat, permanent, ability) : [undefined];
-      for (const sacrifice of sacrifices) for (const tapCreature of tapCreatures) for (const discard of discards) for (const exile of exiles) actions.push({
-        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}), ...(tapCreature ? { tapId: tapCreature.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}), ...(exile ? { exileCardId: exile.instance_id } : {}) },
-        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exile ? ` — Exile ${exile.name}` : ""}`,
+      for (const sacrificeSet of sacrificeSets) for (const tapCreature of tapCreatures) for (const discard of discards) for (const exile of exiles) actions.push({
+        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index,
+          ...(sacrificeSet.length === 1 ? { sacrificeId: sacrificeSet[0]!.instance_id } : {}),
+          ...(sacrificeSet.length > 1 ? { sacrificeIds: sacrificeSet.map((candidate) => candidate.instance_id) } : {}),
+          ...(tapCreature ? { tapId: tapCreature.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}), ...(exile ? { exileCardId: exile.instance_id } : {}) },
+        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exile ? ` — Exile ${exile.name}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         note: ability.text
@@ -4433,7 +4642,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 }
 
 /** Targets a spell could legally choose right now. */
-export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
+export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">, sourceProfile?: CardProfile): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "opponent") return state.players.filter((player) => player.seat !== seat && !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-your-graveyard" || kind === "permanent-card-in-a-graveyard" || kind === "legendary-creature-card-in-your-graveyard") {
@@ -4466,6 +4675,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     return allPermanents(state)
       .filter((permanent) => inCombat.has(permanent.instance_id) && isCreature(cardProfile(permanent.card)))
       .filter((permanent) => (!keywordOf(state, permanent, "hexproof") || permanent.controller === seat) && !keywordOf(state, permanent, "shroud"))
+      .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card)))
       .map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
   }
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
@@ -4479,7 +4689,8 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
   }
   const permanents = allPermanents(state)
     .filter((permanent) => !keywordOf(state, permanent, "hexproof") || permanent.controller === seat)
-    .filter((permanent) => !keywordOf(state, permanent, "shroud"));
+    .filter((permanent) => !keywordOf(state, permanent, "shroud"))
+    .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card)));
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
@@ -4523,6 +4734,8 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     }
     if (kind === "artifact-creature-or-planeswalker") return profile.types.some((type) => ["Artifact", "Creature", "Planeswalker"].includes(type));
     if (kind === "nonland") return !isLand(profile);
+    if (kind === "nonland-you-control") return !isLand(profile) && permanent.controller === seat;
+    if (kind === "nonland-opponent") return !isLand(profile) && permanent.controller !== seat;
     if (kind === "noncreature-permanent") return !isCreature(profile);
     return true;
   }).map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
@@ -4779,9 +4992,17 @@ function activatableAbility(
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return { legal: false };
   if (ability.lifeCost >= player.life) return { legal: false };
   if (ability.sacrificesCreature) {
-    const candidates = player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
-      && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id));
+    const candidates = player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id));
     if (!candidates.length) return { legal: false };
+  }
+  if (ability.sacrificesCreatures) {
+    const candidates = player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
+      && (!ability.sacrificesCreatures!.subtype
+        || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.sacrificesCreatures!.subtype!.toLowerCase())));
+    if (candidates.length < ability.sacrificesCreatures!.amount) return { legal: false };
+  }
+  if (ability.sacrificesCreatureSubtype && !player.battlefield.some((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))) {
+    return { legal: false };
   }
   if (ability.sacrificesPermanent) {
     const candidates = player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
@@ -4811,8 +5032,9 @@ function activatableAbility(
   }
   const targetKind = ability.targetKind;
   if (targetKind === "none") return { legal: true };
-  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind).length) return { legal: false };
-  if (!legalTargets(state, seat, targetKind).length) return { legal: false };
+  const sourceProfile = cardProfile(permanent.card);
+  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
+  if (!legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
   return { legal: true, targetKind };
 }
 
@@ -4845,17 +5067,34 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   // Targets are chosen while the ability is announced, before any cost is paid
   // (rule 601.2c applied to activations through 602.2b).
   let targets: readonly Target[] = action.targets ?? [];
-  let sacrifice: Permanent | undefined;
-  if (ability.sacrificesCreature) {
+  let sacrifices: Permanent[] = [];
+  if (ability.sacrificesCreatures) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
-      && (ability.sacrificesCreature !== "another" || candidate.instance_id !== source.instance_id));
-    sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
+      && (!ability.sacrificesCreatures!.subtype
+        || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.sacrificesCreatures!.subtype!.toLowerCase())));
+    const selectedIds = action.sacrificeIds ?? (action.sacrificeId ? [action.sacrificeId] : []);
+    const selected = selectedIds.map((id) => candidates.find((candidate) => candidate.instance_id === id));
+    if (selected.length !== ability.sacrificesCreatures!.amount || selected.some((candidate) => !candidate)
+      || new Set(selectedIds).size !== selectedIds.length) {
+      throw new Error(`Debes elegir ${ability.sacrificesCreatures!.amount} criaturas válidas para sacrificar.`);
+    }
+    sacrifices = selected as Permanent[];
+  } else if (ability.sacrificesCreature) {
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id));
+    const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error("Debes elegir una criatura para sacrificar.");
+    sacrifices = [sacrifice];
+  } else if (ability.sacrificesCreatureSubtype) {
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id));
+    const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
+    if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesCreatureSubtype.subtype} para sacrificar.`);
+    sacrifices = [sacrifice];
   } else if (ability.sacrificesPermanent) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== source.instance_id));
-    sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
+    const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesPermanent.type.toLowerCase()} para sacrificar.`);
+    sacrifices = [sacrifice];
   }
   let tapCreature: Permanent | undefined;
   if (ability.tapsCreature) {
@@ -4875,7 +5114,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   }
 
   if (check.targetKind) {
-    const allowed = legalTargets(state, seat, check.targetKind);
+    const allowed = legalTargets(state, seat, check.targetKind, cardProfile(source.card));
     const chosen = targets.length ? targets : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${source.card.name} necesita un objetivo legal.`);
     const valid = chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
@@ -4976,7 +5215,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
   let sacrificedPower = 0;
-  if (sacrifice) {
+  for (const sacrifice of sacrifices) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);
     if (!paid) throw new Error("La criatura elegida para sacrificar ya no está en el campo.");
     sacrificedPower = Math.max(0, powerOf(paid, next));
@@ -5013,7 +5252,7 @@ function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAc
   const profile = cardProfile(card);
   let chosen: readonly Target[] = action.targets ?? [];
   if (profile.targetKind !== "none" && profile.targetKind !== "any") {
-    const allowed = legalTargets(state, seat, profile.targetKind);
+    const allowed = legalTargets(state, seat, profile.targetKind, profile);
     chosen = chosen.length ? chosen : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${card.name} necesita un objetivo legal.`);
     if (!chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
@@ -5041,11 +5280,14 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!card) throw new Error("Esa carta no está en tu mano, cementerio ni zona de mando.");
   const kicked = Boolean(action.kicked);
   const evoked = Boolean(action.evoked);
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard);
+  const entwined = Boolean(action.entwined);
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
-  const spellCost = fromGraveyard ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
+  const spellCost = fromGraveyard
+    ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
+    : spellCostOf(profile, kicked, evoked, entwined);
   const lifeCost = fromGraveyard
     ? profile.flashbackLifeCost
     : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? (action.variableValue ?? 0) : 0);
@@ -5059,13 +5301,13 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (check.targetKinds?.length) {
     const chosen = requested.length
       ? requested
-      : check.targetKinds.flatMap((kind) => legalTargets(state, seat, kind).slice(0, 1));
+      : check.targetKinds.flatMap((kind) => legalTargets(state, seat, kind, profile).slice(0, 1));
     if (chosen.length !== check.targetKinds.length) throw new Error(`${card.name} necesita ${check.targetKinds.length} objetivos legales.`);
-    const valid = chosen.every((target, index) => legalTargets(state, seat, check.targetKinds![index]!).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
+    const valid = chosen.every((target, index) => legalTargets(state, seat, check.targetKinds![index]!, profile).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
     if (!valid) throw new Error(`Objetivo ilegal para ${card.name}.`);
     action = { ...action, targets: chosen };
   } else if (check.targetKind) {
-    const allowed = legalTargets(state, seat, check.targetKind);
+    const allowed = legalTargets(state, seat, check.targetKind, profile);
     const chosen = requested.length ? requested : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${card.name} necesita un objetivo legal.`);
     const valid = chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
@@ -5102,7 +5344,9 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
       exile: [...current.exile, ...doomed]
     }));
   }
-  const selectedEffect = profile.modalChoices[action.mode ?? -1]?.effect;
+  const selectedEffect = entwined
+    ? combinedModalChoice(profile)?.effect
+    : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard);
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card });
@@ -5625,7 +5869,11 @@ function putNextTriggerOnStack(state: GameState): GameState {
     return { ...state, triggerQueue: remaining, stack: [...state.stack, triggerStackObject(trigger, [])], ...opened };
   }
 
-  const options = legalTargets(state, trigger.controller, targetKind);
+  if (trigger.definition.targetKinds?.length) {
+    return openMultiTriggerTargetChoice({ ...state, triggerQueue: remaining }, trigger, [], opened);
+  }
+
+  const options = legalTargets(state, trigger.controller, targetKind, cardProfile(trigger.sourceCard));
   if (!options.length) {
     const dropped = logged({ ...state, triggerQueue: remaining }, trigger.controller,
       `La habilidad disparada de ${trigger.sourceCard.name} se retira de la pila: no hay objetivo legal.`);
@@ -5648,12 +5896,53 @@ function putNextTriggerOnStack(state: GameState): GameState {
   };
 }
 
+function openMultiTriggerTargetChoice(
+  state: GameState,
+  trigger: TriggerInstance,
+  selectedTargets: readonly Target[],
+  opened: { readonly prioritySeat: SeatId; readonly priorityOpen: boolean; readonly passedSeats: readonly SeatId[] }
+): GameState {
+  const targetKinds = trigger.definition.targetKinds ?? [];
+  const minimumTargets = trigger.definition.minimumTargets ?? targetKinds.length;
+  const nextKind = targetKinds[selectedTargets.length];
+  const selected = new Set(selectedTargets.map((target) => JSON.stringify(target)));
+  const options = nextKind
+    ? legalTargets(state, trigger.controller, nextKind).filter((target) => !selected.has(JSON.stringify(target)))
+    : [];
+  if (!nextKind || (!options.length && selectedTargets.length >= minimumTargets)) {
+    return { ...state, stack: [...state.stack, triggerStackObject(trigger, selectedTargets)], pendingChoice: null, ...opened };
+  }
+  if (!options.length) {
+    return logged(state, trigger.controller, `La habilidad disparada de ${trigger.sourceCard.name} se retira: no hay objetivos legales.`);
+  }
+  return {
+    ...state,
+    pendingChoice: {
+      type: "trigger-target",
+      seat: trigger.controller,
+      sourceId: trigger.id,
+      trigger,
+      targetKind: nextKind,
+      options,
+      targetKinds,
+      selectedTargets,
+      minimumTargets
+    }
+  };
+}
+
 function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger-target" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "trigger-target" || choice.seat !== seat) throw new Error("No tienes un objetivo de habilidad pendiente.");
   if (choice.sourceId !== action.sourceId) throw new Error("Esa habilidad ya no espera un objetivo.");
   const valid = choice.options.some((option) => JSON.stringify(option) === JSON.stringify(action.target));
   if (!valid) throw new Error(`Objetivo ilegal para ${choice.trigger.sourceCard.name}.`);
+  if (choice.targetKinds) {
+    const selectedTargets = [...(choice.selectedTargets ?? []), action.target];
+    const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+    const next = openMultiTriggerTargetChoice({ ...state, pendingChoice: null }, choice.trigger, selectedTargets, { prioritySeat: active, priorityOpen: true, passedSeats: [] });
+    return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
+  }
   const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
   const next: GameState = {
     ...state,
@@ -5664,6 +5953,23 @@ function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extrac
     passedSeats: []
   };
   return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
+}
+
+function applyFinishTriggerTargets(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-trigger-targets" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "trigger-target" || !choice.targetKinds || choice.seat !== seat) throw new Error("No tienes objetivos opcionales pendientes.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa elección ya no corresponde a la habilidad pendiente.");
+  if ((choice.selectedTargets?.length ?? 0) < (choice.minimumTargets ?? 1)) throw new Error("Debes elegir el objetivo obligatorio.");
+  const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+  const next: GameState = {
+    ...state,
+    pendingChoice: null,
+    stack: [...state.stack, triggerStackObject(choice.trigger, choice.selectedTargets ?? [])],
+    prioritySeat: active,
+    priorityOpen: true,
+    passedSeats: []
+  };
+  return logged(next, seat, `${choice.trigger.sourceCard.name} termina la selección de objetivos.`);
 }
 
 function applyChooseTapOrUntap(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-tap-or-untap" }>): GameState {
@@ -5720,6 +6026,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
+    case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
     case "choose-tap-or-untap": next = applyChooseTapOrUntap(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "resolve-library-pick": next = applyResolveLibraryPick(state, seat, action); break;

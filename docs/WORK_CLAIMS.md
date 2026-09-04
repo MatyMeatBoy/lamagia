@@ -5,6 +5,9 @@ The claim key is a reusable primitive or a disjoint card batch, never a vague
 feature name.
 | Cluster | Worker branch | Scope | Status |
 | --- | --- | --- | --- |
+| `c13-until-end-turn-creatures` | `codex/local-c13` | Sudden Spoiling: remove abilities and set target player's creatures to base 0/2 until end of turn | active |
+| `c13-whenever-deals-damage-opponent` | `codex/local-c13` | Reusable any-damage-to-opponent event for Charnelhoard Wurm's graveyard-return trigger | active |
+| `c13-remove-counter-from-deals` | `codex/local-c13` | Reusable activated cost for removing a counter, then dealing parameterized damage to any legal target; Deathbringer Thoctar | active |
 | `rules-equipment` | `codex/c13-equipment-cluster` | Equip, attachment, Equipment static bonuses, and Sword of the Paruns untap abilities | Ready for integrator review |
 | `rules-c13-reprint-equivalence` | `codex/c13-equipment-cluster` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | Ready for integrator review |
 | `rules-flashback` | `codex/c13-equipment-cluster` | Flashback cost parsing, graveyard casting, and exile replacement for instant and sorcery cards | Ready for integrator review |
@@ -101,6 +104,10 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-delayed-draw-choice` | Arcane Denial's delayed upkeep draws with private 0..N choice, deterministic bot selection and library clamping | `feat/activated-abilities-and-triggers` | merged (`a439b56`) | 2026-09-04 |
 | `c13-graveyard-exile-etb` | ETB exile all graveyards for Angel of Finality and Bojuka Bog, reusing zone-exile primitives | `feat/activated-abilities-and-triggers` | merged (`054e82a`) | 2026-09-04 |
 | `c13-split-second` | Enforce Split second's prohibition on non-mana spells and activated abilities while the spell is on the stack | `feat/activated-abilities-and-triggers` | merged (pending commit) | 2026-09-04 |
+| `c13-protection` | Parse color protection and enforce its targeting, blocking, and combat-damage prevention rules; Sphinx of the Steel Wind | `feat/activated-abilities-and-triggers` | merged (`2c228ee`) | 2026-09-04 |
+| `c13-destroy-target-nonblack-creatures` | Reusable multiple-target nonblack creature destruction with a controller life-loss follow-up; Reckless Spite | `feat/activated-abilities-and-triggers` | merged (`pending`) | 2026-09-04 |
+| `c13-prevent-all-combat-damage` | Reuse combat-damage prevention for damage dealt to the source creature only; Guard Gomazoa | `feat/activated-abilities-and-triggers` | merged (`pending`) | 2026-09-04 |
+| `c13-put-target-nonland-permanent` | Put a targeted nonland permanent beneath X cards of its owner's library; Unexpectedly Absent | `feat/activated-abilities-and-triggers` | active | 2026-09-04 |
 | `rules-level-up` | Level up costs, level counters, and the three C13 cards: Echo Mage, Hada Spy Patrol, Kazandu Tuskcaller | `codex/c13-equipment-cluster` | merged (`f325052`) | 2026-09-03 |
 | `rules-tap-untap` | Targeted Tap target creature and Untap target permanent effects | `codex/c13-equipment-cluster` | merged (`4fa0290`) | 2026-09-03 |
 | `rules-mill` | Target player mills a bounded number of cards into their graveyard | `codex/c13-equipment-cluster` | merged (`2842700`) | 2026-09-03 |
@@ -236,6 +243,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `arsenal-vela-intimidate` | Intimidate keyword/static grants plus Vela’s leaves-the-battlefield trigger (CR 603.6c, 702.13, 509.1a) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-then-you-have-more` | Sequential life comparison followed by conditional self-draw, reusable for Survival Cache (CR 608.2c) | `codex/c13-life-comparison-f99` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
@@ -315,6 +323,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-reveal-until-creature` | Foster reveal until a creature, move it to hand and revealed cards to graveyard | `codex/c13-foster` | active | 2026-09-04 |
 | `c13-threshold-graveyard-return` | Stitch Together threshold branch between battlefield and hand | `codex/c13-stitch-together` | active | 2026-09-04 |
 | `c13-choose-both` | Soul Manipulation and Fissure Vent modal one-or-both selection | `codex/c13-choose-both` | active | 2026-09-04 |
+| `c13-choose-more` | Parameterized modal subsets for `Choose N or more`, including ordered target slots for Rain of Thorns (CR 700.2, 601.2b) | `codex/c13-choose-more-a32` | active | 2026-09-04 |
 
 ## Claim format
 
@@ -343,6 +352,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-fecundity-death-draw` | Fecundity lets the controller of each creature that dies optionally draw a card (CR 603.2, 603.5, 603.6a, 121.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-fires-yavimaya-activation` | Fires of Yavimaya grants haste and sacrifices itself for a controlled-creature +2/+2 activation (CR 602.2b, 613.4, 611.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-goblin-bombardment-activation` | Goblin Bombardment sacrifices a creature as a cost to deal 1 damage to any target (CR 602.2b, 117.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-krosan-warchief-beast-reduction` | Static reduction for Beast spells you cast, reusable subtype-aware cost modifier (CR 118.9) | `codex/c13-krosan-warchief-a32` | active | 2026-09-04 |
 | `c13-charmbreaker-random-spell-recovery` | Beginning-of-upkeep recovery of a random instant or sorcery card from your graveyard to your hand | `codex/c13-charmbreaker-devils` | active | 2026-09-04 |
 | `c13-conjurers-closet-blink` | Optional end-step exile and return of a target creature you control, reusable blink primitive for Conjurer's Closet (CR 603.2, 603.5, 610.3, 400.7) | `codex/c13-conjurers-closet` | active | 2026-09-04 |
 | `c13-tidal-force-tap-untap-choice` | Optional each-upkeep choice to tap or untap a target permanent for Tidal Force (CR 603.2, 603.5, 701.21) | `codex/c13-tidal-force` | active | 2026-09-04 |

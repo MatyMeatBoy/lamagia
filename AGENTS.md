@@ -9,3 +9,7 @@
 - Keep assistant output as short as possible to save context. Work through the tools silently; report only substantive changes, blockers, validation failures, or a needed decision.
 - For parallel workers, claim a disjoint primitive before editing and return a compact `CLAIM/BASE/COMMIT/FILES/TESTS/SCENARIOS/LIMITS` report. The integrator batches 11 or more incoming commits before processing them, unless a safety or blocking issue requires an exception; never use `git add -A` or include unrelated/generated assets.
 - Every worker report must also list each completed card as `<name> | <oracle_id>`; publish the focused commit with `git push origin HEAD`, keep one cluster per commit and at most 20 new `oracle_id`s. A card count without this mapping is not integrable evidence.
+- Workers must start from the same published integration SHA, then choose one
+  unclaimed cluster at random from the generated roadmap. Re-check
+  `docs/WORK_CLAIMS.md` immediately before editing; if another worker claimed
+  it, draw again.

@@ -37,6 +37,7 @@ const ANY_SPELL_TRIGGER = () => make({ name: "Spell Archivist", type_line: "Crea
 const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Optional Archivist enters the battlefield, you may draw a card." });
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
+const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature — Jellyfish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", keywords: ["Defender", "Flying"], oracle_text: "Defender, flying\nPrevent all combat damage that would be dealt to this creature." });
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
 const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — Snake", mana_cost: "{B}", cmc: 1, power: "1", toughness: "1", keywords: ["Deathtouch"], oracle_text: "Deathtouch" });
 const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
@@ -44,6 +45,12 @@ const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Ba
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
 const LIFELINKER = () => make({ name: "Kind Knight", type_line: "Creature — Knight", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink" });
 const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature — Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["First strike"], oracle_text: "First strike" });
+const SPHINX_OF_THE_STEEL_WIND = () => make({
+  name: "Sphinx of the Steel Wind", type_line: "Artifact Creature — Sphinx", mana_cost: "{5}{W}{U}{B}", cmc: 8,
+  power: "6", toughness: "6", colors: ["W", "U", "B"],
+  oracle_text: "Flying, first strike, vigilance, lifelink, protection from red and from green"
+});
+const RED_RAIDER = () => make({ name: "Red Raider", type_line: "Creature — Goblin", mana_cost: "{1}{R}", cmc: 2, power: "3", toughness: "3", colors: ["R"] });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
 const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Regenerate target creature." });
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
@@ -73,7 +80,11 @@ const PLANESWALKER_LIFE_SPELL = () => make({ name: "Walker Blessing", type_line:
 const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each battle you control." });
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
+const BROODING_SAURIAN = () => make({ name: "Brooding Saurian", type_line: "Creature — Lizard", mana_cost: "{2}{G}{G}", cmc: 4, power: "4", toughness: "4", oracle_text: "At the beginning of each end step, each player gains control of all nontoken permanents they own.", scryfall_id: "2fb7f844-edaf-43ef-9121-318baf9ec9ce" });
+const CAPRICIOUS_EFREET = () => make({ name: "Capricious Efreet", type_line: "Creature — Efreet", mana_cost: "{3}{R}{R}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of your upkeep, choose target nonland permanent you control and up to two target nonland permanents you don't control. Destroy one of them at random.", scryfall_id: "9abd2286-23e9-49cd-be53-39423890f35c" });
 const CHARMBREAKER_DEVILS = () => make({ name: "Charmbreaker Devils", type_line: "Creature — Devil", mana_cost: "{5}{R}", cmc: 6, power: "5", toughness: "4", oracle_text: "At the beginning of your upkeep, return an instant or sorcery card at random from your graveyard to your hand.", scryfall_id: "1b9df437-6988-4ddc-80c4-893e11076067" });
+const CHARNELHOARD_WURM = () => make({ name: "Charnelhoard Wurm", type_line: "Creature — Wurm", mana_cost: "{4}{B}{R}{G}", cmc: 7, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample\nWhenever this creature deals damage to an opponent, you may return target card from your graveyard to your hand.", scryfall_id: "4a430fa3-e693-424b-9981-d7d8193445e3" });
+const DAMAGE_TRIGGERER = () => make({ name: "Damage Triggerer", type_line: "Creature — Wurm", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3", oracle_text: "Whenever this creature deals damage to an opponent, you may return target card from your graveyard to your hand.\n{T}: ~ deals 1 damage to any target." });
 const CONJURERS_CLOSET = () => make({ name: "Conjurer's Closet", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.", scryfall_id: "cd1eda60-53e4-44d0-9b2c-7a57395e291f" });
 const TIDAL_FORCE = () => make({ name: "Tidal Force", type_line: "Creature — Elemental", mana_cost: "{5}{U}{U}", cmc: 7, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you may tap or untap target permanent.", scryfall_id: "1b25e262-e2df-4768-b55e-1b7b8d3ee993" });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
@@ -128,8 +139,11 @@ const DOUBLE_STRIKE_SPELL = () => make({ name: "Twin Edge", type_line: "Instant"
 const TRAMPLE_BOOST = () => make({ name: "Selesnya Memory", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Target creature gets +2/+2 and gains trample until end of turn." });
 const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "{R}: This creature gets +1/+0 until end of turn." });
 const MARROW_BATS = () => make({ name: "Marrow Bats", type_line: "Creature — Bat", mana_cost: "{3}{B}", cmc: 4, power: "2", toughness: "2", oracle_text: "{B}, Pay 4 life: Regenerate Marrow Bats." });
-const COUNTER_DAMAGE = () => make({ name: "Thoctar Memory", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from this creature: This creature deals 1 damage to any target." });
+const COUNTER_DAMAGE = () => make({ name: "Deathbringer Thoctar", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from ~: It deals 1 damage to any target." });
 const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
+const TOOTH_AND_CLAW = () => make({ name: "Tooth and Claw", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Sacrifice two creatures: Create a 3/1 red Beast creature token named Carnivore." });
+const SURVIVAL_CACHE = () => make({ name: "Survival Cache", type_line: "Sorcery", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 2 life. Then if you have more life than an opponent, draw a card." });
+const RAVENOUS_BALOTH = () => make({ name: "Ravenous Baloth", type_line: "Creature — Beast", mana_cost: "{2}{G}{G}", cmc: 4, power: "4", toughness: "4", oracle_text: "Sacrifice a Beast: You gain 4 life." });
 const ARTIFACT_SAC_ALTAR = () => make({ name: "Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact: Draw a card." });
 const ENCHANTMENT_SAC_ALTAR = () => make({ name: "Enchantment Memory", type_line: "Enchantment", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an enchantment: Draw a card." });
 const LAND_SAC_ALTAR = () => make({ name: "Land Memory", type_line: "Land", oracle_text: "Sacrifice a land: Draw a card." });
@@ -215,6 +229,10 @@ const FISSURE_VENT = () => make({
   name: "Fissure Vent", type_line: "Sorcery", mana_cost: "{3}{R}", cmc: 4,
   oracle_text: "Choose one or both —\n• Destroy target artifact.\n• Destroy target nonbasic land."
 });
+const ONE_DOZEN_EYES = () => make({
+  name: "One Dozen Eyes", type_line: "Sorcery", mana_cost: "{4}{G}", cmc: 5,
+  oracle_text: "Choose one —\n• Create a 3/3 green Beast creature token.\n• Create five 1/1 green Insect creature tokens.\nEntwine {5}"
+});
 const GLOBAL_INDESTRUCTIBLE = () => make({
   name: "Global Indestructible", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
   oracle_text: "Permanents you control gain indestructible until end of turn."
@@ -255,6 +273,8 @@ const C13_DEEP_ANALYSIS = () => make({ name: "Deep Analysis", type_line: "Sorcer
 const C13_BALEFUL_STRIX = () => make({ name: "Baleful Strix", type_line: "Artifact Creature — Bird", mana_cost: "{U}{B}", cmc: 2, power: "1", toughness: "1", keywords: ["Flying", "Deathtouch"], oracle_text: "Flying\nDeathtouch\nWhen this creature enters, draw a card.", scryfall_id: "47ac0f77-1294-4de9-93d1-141a9f314f98" });
 const C13_PHYREXIAN_GARGANTUA = () => make({ name: "Phyrexian Gargantua", type_line: "Creature — Phyrexian Horror", mana_cost: "{4}{B}{B}", cmc: 6, power: "4", toughness: "4", oracle_text: "When this creature enters, you draw two cards and you lose 2 life.", scryfall_id: "56ae94c2-8bbb-4807-b1e0-8ef178dd1697" });
 const C13_ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Destroy target nonblack creature. It can't be regenerated.\nDraw a card.", scryfall_id: "595e8c26-672d-4978-87ec-9e0ed64ceaf0" });
+const C13_RECKLESS_SPITE = () => make({ name: "Reckless Spite", type_line: "Instant", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Destroy two target nonblack creatures. You lose 5 life.", scryfall_id: "a684df3a-5441-4daa-86d1-c47a91b35e6a" });
+const C13_UNEXPECTEDLY_ABSENT = () => make({ name: "Unexpectedly Absent", type_line: "Instant", mana_cost: "{X}{W}{U}", cmc: 2, oracle_text: "Put target nonland permanent into its owner's library just beneath the top X cards of that library.", scryfall_id: "e8d78a83-c932-4b55-8f75-7094c672c3a9" });
 const C13_ANGEL_OF_FINALITY = () => make({ name: "Angel of Finality", type_line: "Creature — Angel", mana_cost: "{3}{W}", cmc: 4, power: "3", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, exile target player's graveyard.", scryfall_id: "bd3c34c9-2072-4ebb-93ef-34173015bfb8" });
 const C13_BOJUKA_BOG = () => make({ name: "Bojuka Bog", type_line: "Land", oracle_text: "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", produced_mana: ["B"], scryfall_id: "2ef9848c-fe7f-4434-8936-4074f67883af" });
 const C13_ARCANE_DENIAL = () => make({ name: "Arcane Denial", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.", scryfall_id: "ab175817-da6a-4ae7-a016-c3bfb087eae0" });
@@ -752,6 +772,14 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(0);
+  });
+
+  it("checks the life comparison after Survival Cache gains life", () => {
+    let game = readyToCast([SURVIVAL_CACHE()], [PLAINS(), PLAINS(), PLAINS()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(42);
+    expect(game.players[0]!.hand).toHaveLength(1);
   });
 
   it("parses echo and sacrifices the permanent when its next-upkeep cost is declined", () => {
@@ -1355,6 +1383,33 @@ describe("casting", () => {
     });
   });
 
+  it("reuses distinct nonblack creature targets for C13 Reckless Spite", () => {
+    const profile = profileOf(C13_RECKLESS_SPITE());
+    expect(profile.effects).toEqual([{ kind: "compound", effects: [{ kind: "destroy-n-creatures", count: 2, nonblack: true }, { kind: "lose-life", amount: 5 }] }]);
+    expect(profile.targetKinds).toEqual(["nonblack-creature", "nonblack-creature"]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([C13_RECKLESS_SPITE()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], [BEAR(), FLIER()]);
+    const targets = game.players[1]!.battlefield.map((permanent) => ({ kind: "permanent" as const, instanceId: permanent.instance_id }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets });
+    expect(game.players[0]!.life).toBe(35);
+    expect(game.players[1]!.battlefield).toHaveLength(0);
+  });
+
+  it("puts C13 Unexpectedly Absent's target beneath X cards of its owner's library", () => {
+    const profile = profileOf(C13_UNEXPECTEDLY_ABSENT());
+    expect(profile.effects).toEqual([{ kind: "put-target-nonland-permanent-under-top", count: "X" }]);
+    expect(profile.targetKind).toBe("nonland");
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([C13_UNEXPECTEDLY_ABSENT()], [PLAINS(), ISLAND(), PLAINS(), ISLAND()], [], [BEAR()]);
+    game = stage(game, 1, () => ({ library: toHand(1, [FOREST(), SWAMP(), MOUNTAIN()], "absent-library") }));
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.battlefield).toHaveLength(0);
+    expect(game.players[1]!.library.map((card) => card.name)).toEqual(["Forest", "Swamp", "Grizzly Bears", "Mountain"]);
+  });
+
   it("reuses target graveyard exile for C13 ETB cards", () => {
     for (const card of [C13_ANGEL_OF_FINALITY(), C13_BOJUKA_BOG()]) {
       const profile = profileOf(card);
@@ -1662,6 +1717,26 @@ describe("casting", () => {
     expect(game.players[0]!.hand).toHaveLength(1);
   });
 
+  it("restricts Ravenous Baloth's sacrifice cost to Beasts and gains life", () => {
+    const baloth = RAVENOUS_BALOTH();
+    let game = readyToCast([], [baloth, TRAMPLER(), BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === baloth.name)!;
+    const beast = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.sacrificeId === beast.instance_id)).toBe(true);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.sacrificeId === game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.instance_id)).toBe(false);
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0, sacrificeId: beast.instance_id
+    });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(44);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Big Stomper")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === baloth.name)).toBe(true);
+  });
+
   it("offers typed permanent sacrifice costs and moves the chosen permanent", () => {
     for (const [altar, sacrificedName, expectedType] of [
       [ARTIFACT_SAC_ALTAR(), "Artifact Memory", "Artifact"],
@@ -1684,6 +1759,19 @@ describe("casting", () => {
       expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
       expect(game.players[0]!.graveyard.some((card) => card.name === sacrificedName)).toBe(true);
     }
+  });
+
+  it("offers and pays two distinct creature sacrifice costs for Tooth and Claw", () => {
+    let game = readyToCast([], [TOOTH_AND_CLAW(), BEAR(), TRAMPLER()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Tooth and Claw")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.sacrificeIds?.length === 2);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Grizzly Bears", "Big Stomper"]));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Carnivore")).toBe(true);
   });
 
   it("does not offer the source for an another-artifact sacrifice cost", () => {
@@ -1936,7 +2024,7 @@ describe("casting", () => {
       targetKind: "any"
     });
     let game = readyToCast([], [COUNTER_DAMAGE()], [], [BEAR()]);
-    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Thoctar Memory")!;
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Deathbringer Thoctar")!;
     const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
     game = {
       ...game,
@@ -2260,6 +2348,16 @@ describe("casting", () => {
     expect(game.log.some((entry) => entry.text.includes("descarta") && entry.seat === 0)).toBe(false);
   });
 
+  it("applies a global no-maximum-hand-size effect to every player", () => {
+    const price = make({ name: "Price of Knowledge", type_line: "Enchantment", mana_cost: "{5}{U}", cmc: 6, oracle_text: "Players have no maximum hand size." });
+    expect(profileOf(price)).toMatchObject({ noMaximumHandSizeForAllPlayers: true, fullyImplemented: true });
+    let game = twoSeatGame(Array.from({ length: 12 }, () => BEAR()), Array.from({ length: 12 }, () => BEAR()));
+    game = putOnBattlefield(game, 0, [price]);
+    game = stage(game, 1, (player) => ({ ...player, hand: [...player.hand, ...toHand(1, [BEAR(), BEAR()], "global-no-max")] }));
+    game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 0 && state.step === "untap");
+    expect(game.players[1]!.hand.length).toBeGreaterThan(7);
+  });
+
   it("applies static bonuses to other creatures without buffing the source", () => {
     const profile = profileOf(PUMP_LORD());
     expect(profile.staticPowerToughnessGrants).toEqual([{ scope: "other-creatures-you-control", power: 1, toughness: 1 }]);
@@ -2346,6 +2444,33 @@ describe("casting", () => {
   it("gates an optional end-step draw on a controlled power threshold", () => {
     const profile = profileOf(POWER_DRAW_TRIGGER());
     expect(profile.triggers[0]).toMatchObject({ condition: { kind: "controlled-creature-power-at-least", amount: 5 }, effect: { kind: "draw", amount: 1 } });
+  });
+
+  it("selects Capricious Efreet's required and optional random targets", () => {
+    const profile = profileOf(CAPRICIOUS_EFREET());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "upkeep", subject: "you", optional: false,
+      effect: { kind: "destroy-random-target-permanent", amount: 1 },
+      targetKind: "nonland-you-control",
+      targetKinds: ["nonland-you-control", "nonland-opponent", "nonland-opponent"],
+      minimumTargets: 1
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [CAPRICIOUS_EFREET(), BEAR()], [], [BEAR(), TEST_ARTIFACT()]);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    let choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.options).toHaveLength(2);
+    const ownBear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "permanent", instanceId: ownBear.instance_id } });
+    choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.options).toHaveLength(2);
+    const enemyBear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "permanent", instanceId: enemyBear.instance_id } });
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "finish-trigger-targets")).toBe(true);
+    game = applyAction(game, 0, { type: "finish-trigger-targets", sourceId: game.pendingChoice!.sourceId });
+    game = passUntil(game, (state) => state.players.some((player) => player.graveyard.some((card) => ["Grizzly Bears", "Test Relic"].includes(card.name))));
+    expect(game.players.some((player) => player.graveyard.some((card) => ["Grizzly Bears", "Test Relic"].includes(card.name)))).toBe(true);
   });
 
   it("damages only nonfliers while still damaging every player", () => {
@@ -2935,6 +3060,36 @@ describe("casting", () => {
     });
     expect(game.players[1]!.battlefield).toHaveLength(0);
     expect(game.players[1]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Sol Ring", "Command Tower"]));
+  });
+
+  it("generates every legal subset for Choose one or more", () => {
+    const rain = make({
+      name: "Rain of Thorns", type_line: "Sorcery", mana_cost: "{4}{G}{G}", cmc: 6,
+      oracle_text: "Choose one or more —\n• Destroy target artifact.\n• Destroy target creature.\n• Destroy target land."
+    });
+    const profile = profileOf(rain);
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.modalChoices).toHaveLength(7);
+    expect(profile.modalChoices.filter((choice) => choice.targetKinds?.length === 3)).toHaveLength(1);
+    const minimumTwo = profileOf({ ...rain, name: "Rain of Thorns (minimum two)", scryfall_id: "test-rain-minimum-two", oracle_text: rain.oracle_text!.replace("one or more", "two or more") });
+    expect(minimumTwo.modalChoices).toHaveLength(4);
+
+    let game = readyToCast([rain], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()], [], [SOL_RING(), BEAR(), COMMAND_TOWER()]);
+    const all = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode !== undefined && entry.requiresTargets?.length === 3);
+    expect(all?.requiresTargets).toEqual(["artifact", "creature", "land"]);
+    if (!all || all.action.type !== "cast") throw new Error("Rain of Thorns should expose the all-target modal action.");
+    const artifact = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    const creature = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const land = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Command Tower")!;
+    game = applyAction(game, 0, {
+      type: "cast", cardId: "hand-0", mode: all.action.mode,
+      targets: [
+        { kind: "permanent", instanceId: artifact.instance_id },
+        { kind: "permanent", instanceId: creature.instance_id },
+        { kind: "permanent", instanceId: land.instance_id }
+      ]
+    });
+    expect(game.players[1]!.battlefield).toHaveLength(0);
   });
 
   it("resolves all Boros Charm modes after normalizing its printed name", () => {
@@ -3554,6 +3709,7 @@ describe("scry and combat-restricted damage", () => {
 
 describe("kicker and optional-cost triggers", () => {
   const INTO_THE_ROIL = () => make({ name: "Into the Roil", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Kicker {1}{U} (You may pay an additional {1}{U} as you cast this spell.)\nReturn target nonland permanent to its owner's hand. If this spell was kicked, draw a card." });
+  const KICKED_SPLIT = () => make({ name: "Kicked Split", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, colors: ["R"], oracle_text: "Kicker {R}\nEach player loses 1 life.\nIf this spell was kicked, it has split second." });
   const KOR_SANCTIFIERS = () => make({ name: "Kor Sanctifiers", type_line: "Creature — Kor Cleric", mana_cost: "{3}{W}", cmc: 4, power: "2", toughness: "3", oracle_text: "Kicker {W} (You may pay an additional {W} as you cast this spell.)\nWhen Kor Sanctifiers enters the battlefield, if it was kicked, destroy target artifact or enchantment." });
   const JALUM_TOME = () => make({ name: "Jalum Tome", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Draw a card, then discard a card." });
   const PAY_DRAWER = () => make({ name: "Ledger Keeper", type_line: "Creature — Human", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Ledger Keeper enters the battlefield, you may pay {1}. If you do, draw a card." });
@@ -3583,6 +3739,18 @@ describe("kicker and optional-cost triggers", () => {
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[1]!.hand.some((c) => c.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand.length).toBe(hb - 1 + 1);
+  });
+
+  it("enables Split second only for a kicked spell", () => {
+    const profile = profileOf(KICKED_SPLIT());
+    expect(profile.kickedKeywords).toEqual(["split second"]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = ready([KICKED_SPLIT()], [MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 1, () => ({ autoPass: false, hand: toHand(1, [BOLT()], "response") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", kicked: true });
+    if (game.prioritySeat === 0) game = applyAction(game, 0, { type: "pass" });
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "cast")).toBe(false);
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "pass")).toBe(true);
   });
 
   it("fires a kicked-only enters trigger only on the kicked cast", () => {
@@ -3719,6 +3887,23 @@ describe("kicker and optional-cost triggers", () => {
     expect(cast).toBeDefined();
   });
 
+  it("applies subtype and multi-color spell cost reductions", () => {
+    const warchief = () => make({ name: "Krosan Warchief", type_line: "Creature — Goblin Warrior", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Beast spells you cast cost {1} less to cast." });
+    const beast = () => make({ name: "Test Beast", type_line: "Creature — Beast", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", colors: ["G"] });
+    const nonBeast = () => make({ name: "Test Elf", type_line: "Creature — Elf", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", colors: ["G"] });
+    expect(profileOf(warchief())).toMatchObject({ spellCostReductionGrant: { amount: 1, subtype: "Beast" }, fullyImplemented: true });
+    let game = ready([beast()], [FOREST(), warchief()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(true);
+    game = ready([nonBeast()], [FOREST(), warchief()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(false);
+
+    const familiar = () => make({ name: "Nightscape Familiar", type_line: "Creature — Zombie", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Blue spells and red spells you cast cost {1} less to cast." });
+    const blueSpell = () => make({ name: "Test Blue Spell", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, colors: ["U"], oracle_text: "You gain 1 life." });
+    expect(profileOf(familiar())).toMatchObject({ spellCostReductionGrant: { amount: 1, colors: ["U", "R"] }, fullyImplemented: true });
+    game = ready([blueSpell()], [ISLAND(), familiar()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(true);
+  });
+
   it("reduces a spell's generic cost by {N} per creature on the battlefield", () => {
     const act = () => make({ name: "Blasphemous Act", type_line: "Sorcery", mana_cost: "{8}{R}", cmc: 9, oracle_text: "This spell costs {1} less to cast for each creature on the battlefield.\nBlasphemous Act deals 13 damage to each creature." });
     expect(profileOf(act()).costReducesPerBoardCreature).toBe(1);
@@ -3850,6 +4035,26 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.exile.some((card) => card.instance_id === bear.instance_id)).toBe(false);
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")).toHaveLength(1);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.summoningSick).toBe(true);
+  });
+
+  it("returns owned nontoken permanents to their owners with Brooding Saurian", () => {
+    const profile = profileOf(BROODING_SAURIAN());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "end-step", subject: "each-player", optional: false,
+      effect: { kind: "return-owned-nontoken-permanents-to-control" }, targetKind: "none"
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BROODING_SAURIAN(), BEAR()]);
+    const owned = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== owned.instance_id) }));
+    game = stage(game, 1, (player) => ({ battlefield: [...player.battlefield, { ...owned, controller: 1 }] }));
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [] });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.some((permanent) => permanent.instance_id === owned.instance_id));
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === owned.instance_id)!.controller).toBe(0);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === owned.instance_id)).toBe(false);
   });
 
   it("lets Duplicant imprint a nontoken creature on entry", () => {
@@ -4413,6 +4618,37 @@ describe("activated abilities", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: false });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Transguild Promenade")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Transguild Promenade")).toBe(true);
+  });
+
+  it("fires an any-damage trigger from a permanent source", () => {
+    expect(profileOf(CHARNELHOARD_WURM()).triggers[0]).toMatchObject({
+      event: "deals-damage-to-player", subject: "self", optional: true,
+      targetKind: "card-in-your-graveyard", effect: { kind: "return-target-card-from-graveyard" }
+    });
+    expect(profileOf(CHARNELHOARD_WURM()).fullyImplemented).toBe(true);
+
+    let game = readyOnBoard([DAMAGE_TRIGGERER()], { hold: true });
+    const yard = toHand(0, [BEAR(), FLIER()], "damage-yard");
+    const returned = yard[0]!;
+    const other = yard[1]!;
+    game = stage(game, 0, (player) => ({ graveyard: [returned, other] }));
+    const source = permanentNamed(game, 0, "Damage Triggerer")!;
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0,
+      targets: [{ kind: "player", seat: 1 }]
+    });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.options).toContainEqual({ kind: "graveyard-card", seat: 0, instanceId: returned.instance_id });
+    game = applyAction(game, 0, {
+      type: "choose-trigger-target", sourceId: choice.sourceId,
+      target: { kind: "graveyard-card", seat: 0, instanceId: returned.instance_id }
+    });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.hand.some((card) => card.instance_id === returned.instance_id)).toBe(true);
   });
 
   it("refuses Llanowar Elves the turn it arrives and adds {G} once it can tap", () => {
@@ -5087,6 +5323,50 @@ describe("combat", () => {
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: tappedBear.instance_id, defender: 1 }] });
     game = passUntil(game, (state) => state.step === "postcombat-main" || state.turn > 1);
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("enforces protection from red for targets, blocking, and combat damage", () => {
+    const sphinx = SPHINX_OF_THE_STEEL_WIND();
+    const redRaider = RED_RAIDER();
+    expect(profileOf(sphinx).protectionFrom).toEqual(["R", "G"]);
+    expect(profileOf(sphinx).fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 1, [sphinx]);
+    game = putOnBattlefield(game, 0, [redRaider]);
+    expect(legalTargets(game, 0, "creature", profileOf(redRaider)))
+      .not.toContainEqual({ kind: "permanent", instanceId: game.players[1]!.battlefield[0]!.instance_id });
+
+    game = atAttackers([sphinx], [redRaider]);
+    const sphinxId = game.players[0]!.battlefield[0]!.instance_id;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: sphinxId, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    expect(legalBlockers(game, 1)).toHaveLength(0);
+
+    game = atAttackers([redRaider], [sphinx]);
+    const raiderId = game.players[0]!.battlefield[0]!.instance_id;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: raiderId, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    const sphinxIdAsBlocker = game.players[1]!.battlefield[0]!.instance_id;
+    game = applyAction(game, 1, { type: "declare-blockers", blockers: [{ instanceId: sphinxIdAsBlocker, attackerId: raiderId }] });
+    game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 1);
+    expect(game.players[0]!.battlefield).toHaveLength(0);
+    expect(game.players[1]!.battlefield[0]!.damage).toBe(0);
+  });
+
+  it("prevents combat damage dealt to Guard Gomazoa without preventing its own damage", () => {
+    const profile = profileOf(GUARD_GOMAZOA());
+    expect(profile.combatRules.preventsAllCombatDamageToSelf).toBe(true);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = atAttackers([TRAMPLER()], [GUARD_GOMAZOA()]);
+    const attacker = game.players[0]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    const blocker = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 1, { type: "declare-blockers", blockers: [{ instanceId: blocker.instance_id, attackerId: attacker.instance_id }] });
+    game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 1);
+    expect(game.players[1]!.battlefield[0]!.damage).toBe(0);
+    expect(game.players[1]!.life).toBe(37);
   });
 
   it("keeps a vigilant attacker untapped", () => {

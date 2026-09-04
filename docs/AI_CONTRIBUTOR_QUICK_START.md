@@ -7,6 +7,9 @@ Use this contract when adding rules to **La Magia**. Read `AGENTS.md`,
 
 - Claim one disjoint reusable primitive in `docs/WORK_CLAIMS.md`.
 - Work from the published integration branch and record its exact `BASE` SHA.
+- Start from the same published integration SHA as every other worker. Select
+  one unclaimed cluster at random from the refreshed roadmap; re-check claims
+  immediately before editing and redraw if it was claimed.
 - Use `oracle_id`/Scryfall ID for identity; card names and set codes are never
   implementation keys. Reprints inherit the same rules automatically.
 - Reuse an existing primitive before adding a parser branch. Add structured
@@ -21,15 +24,26 @@ Use this contract when adding rules to **La Magia**. Read `AGENTS.md`,
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
-queue, then claim one generated cluster:
+queue, choose one unclaimed generated cluster at random, then claim it:
 
 ```text
 npm run rules:engine:export
 npm run rules:roadmap:c13
 npm run rules:oracle:plan:c13
+npm run rules:dictionary:c13
 ```
 
 Read `docs/PRIMITIVE_ROADMAP_C13.md` and `docs/PRIMITIVE_WORKERS_C13.md`.
+Use `docs/PRIMITIVE_DICTIONARY_C13.md` to link common wording to existing
+parser fields and engine handlers before creating a new primitive; its
+one-line queue is the mass-review starting point, not a substitute for tests.
+For work outside C13, use the same generated index with `npm run
+rules:dictionary`.
+The worker plan is review-first: jobs containing Oracle `needs-review` cards
+are scheduled before broad work, and one-line candidates are preferred inside
+that tier. Pick randomly among the highest-priority unclaimed jobs, then
+re-check the claims ledger immediately before editing. `needs-review` is only
+triage; cite the Comprehensive Rules and add scenario coverage as usual.
 The roadmap ranks work by cards actually closed (last-blocker wins), while the
 worker plan co-locates overlapping `oracle_id`s and assigns disjoint primitives
 to five workers within the 2 GB budget. The raw Oracle IR command

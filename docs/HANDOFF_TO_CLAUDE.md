@@ -1906,3 +1906,114 @@ Plowshares (`exile-target-creature-then-life-gain-power`) were not duplicated
 and remain worker-05's own contribution. Full check/test/simulate rerun green
 after the merge; `npm run rules:engine:export` and `rules:set:coverage`
 regenerated against the merged tree before the next claim.
+
+### Integrator checkpoint: Protection quality (2026-09-04)
+
+Protection from color is now represented as a reusable profile operand and
+enforced for legal permanent targets, blocking declarations, and combat damage
+prevention (CR 702.16). The scenario uses Sphinx of the Steel Wind and a red
+creature; it also verifies that first-strike combat can destroy the red creature
+without marking damage on the protected Sphinx. Non-color protection qualities
+remain intentionally unparsed until a fixture requires them. The refreshed
+export is **190/341 C13 (55.7%)**, with **151 unfinished** and **73 one-line-away**.
+
+### Incoming worker patch queue
+
+`commitsv1.patch` / `commitsv1.md` report one external commit
+(`83872d6`, `worker/c13-primitives-batch1`), not a batch. It overlaps the
+already-integrated multi-color reduction and combat-prevention work, so it is
+queued for comparison rather than applied wholesale. The integrator continues
+to process incoming fork work in batches of 11+ commits; use the exact
+card-to-commit map when rescuing additional changes.
+
+### C13 conditional kicked Split second (2026-09-04)
+
+The Oracle compiler preserves `If ~ was kicked, it has split second` as the
+reusable `kickedKeywords` operand. The engine activates that keyword only while
+the kicked spell is on the stack, reusing the normal Split second priority lock
+without changing non-kicked casts (CR 702.33e, 702.61). Scenarios cover profile
+completeness, kicked casting, and the opponent response window.
+
+### Integrator checkpoint: multiple nonblack targets (2026-09-04)
+
+The compiler now carries ordered target requirements on the card profile, not
+only on modal choices. This makes the reusable `destroy-n-creatures` primitive
+honor explicit targets while retaining its deterministic fallback for effects
+without target selection. `Reckless Spite` is covered as two distinct nonblack
+creature targets followed by controller life loss (CR 601.2c, 608.2b). C13 is
+now **191/341 (56.0%)**, with **150 unfinished** and **72 one-line-away**.
+
+### Integrator checkpoint: source-only combat prevention (2026-09-04)
+
+`CombatRules` now distinguishes prevention to-and-by the source from
+prevention only to the source. `Guard Gomazoa` uses the latter; combat damage
+assignment, trample overflow, and its own outgoing damage remain correct under
+CR 615.1. The reusable profile closes equivalent Oracle printings as well.
+The refreshed export is **192/341 C13 (56.3%)**, with **149 unfinished** and
+**71 one-line-away**. The fork report `3af0cb0` (conditional Split second) is
+also queued as one incoming commit and remains outside the integration batch.
+
+### C13 conditional life-comparison draw (2026-09-04)
+
+The effect IR now supports “Then if you have more life than an opponent, draw
+N cards” as a reusable conditional draw. It evaluates after preceding effects,
+so Survival Cache gains life before checking the comparison (CR 608.2c).
+
+### Primitive dictionary and mass one-line audit (2026-09-04)
+
+Added `tools/rules/build_primitive_dictionary.py` and the generated
+`docs/PRIMITIVE_DICTIONARY_C13.md`. It indexes common wording such as
+`sacrifice`, `search`, `exile`, `return`, `draw`, `discard`, `counter`,
+`damage`, `token`, triggers and activated abilities against the actual parser
+fields and engine handlers. The sacrifice section explicitly distinguishes
+costs from effects and links typed and multi-permanent candidate selection.
+The generated C13 audit currently reports **205/341 complete**, **136
+unfinished**, and **58 cards one unmatched line away**. Those candidates are
+grouped by normalized blocker and suggested claim, so a worker fixes the shared
+primitive instead of repeating a card-name patch. Run
+`npm run rules:engine:export`, `npm run rules:roadmap:c13`,
+`npm run rules:oracle:plan:c13`, and `npm run rules:dictionary:c13` after each
+accepted batch.
+
+The mass audit closed Deathbringer Thoctar by reusing the activated-ability
+parser's source normalization for Oracle's “It deals...” wording; the scenario
+still exercises counter payment, target legality and stack resolution. This is
+the model for future one-line fixes: only mark a card complete after the fresh
+engine export confirms every line.
+
+### External commit rescue protocol
+
+When worker commits arrive, fetch all refs only at the scheduled ten-minute
+integration check (or on an explicit exception), then inspect each candidate's
+stat, diff and tests. Rescue code and scenarios selectively; never merge a
+stale full tree or generated status file wholesale. Preserve existing parser
+fields and engine handlers, resolve conflicts explicitly, regenerate coverage,
+run the full checks, and record each head as accepted, duplicate, rejected or
+pending with its reason. Accepted incoming work is consolidated into one batch
+commit when the queue reaches eleven or more commits, unless a safety or
+blocking fix requires earlier integration.
+
+### Pages and local match server
+
+GitHub Pages remains a static client and cannot execute Fastify/Socket.IO. The
+local authoritative server is currently healthy at `http://localhost:8787`
+(`GET /health` returned `{"ok":true,"service":"prossh-match-server"}`). Use
+`npm run dev:server` alongside `npm run dev` for AI-battle testing. A public
+AI battle requires a separately deployed match-server origin configured through
+`window.__PROSSH_API_BASE__`; Pages must never treat its HTML fallback as the
+match API.
+
+### Review-first worker queue (2026-09-04)
+
+The C13 worker planner now accepts `data/rules/oracle-effects-c13.json` and
+promotes cards with status `needs-review` before broad primitive work. It also
+tracks the exact engine `one_line_cards` queue, so workers can close cards with
+one unresolved Oracle line first. This is triage only: each change still needs
+the appropriate Comprehensive Rules citation and scenario test. Regenerate with
+`npm run rules:engine:export`, `npm run rules:roadmap:c13`, then
+`npm run rules:oracle:plan:c13`; choose randomly among the highest-priority
+unclaimed jobs and re-check `docs/WORK_CLAIMS.md` immediately before editing.
+After refreshing the engine export, the current plan reports **9** Oracle
+needs-review card occurrences across its unclaimed C13 jobs and **39**
+one-line candidates in those jobs. The authoritative C13 export is **206/341
+complete**, with **135** unfinished and **58** one-line-away cards.

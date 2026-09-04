@@ -219,6 +219,35 @@ describe("C13 sacrifice-card parsing", () => {
     expect(fires.fullyImplemented).toBe(true);
     expect(bombardment.fullyImplemented).toBe(true);
   });
+
+  it("preserves a creature subtype in a sacrifice cost", () => {
+    const baloth = cardProfile(card({
+      name: "Ravenous Baloth",
+      type_line: "Creature — Beast",
+      oracle_text: "Sacrifice a Beast: You gain 4 life."
+    }));
+    expect(baloth.activatedAbilities[0]).toMatchObject({
+      sacrificesCreatureSubtype: { subtype: "Beast", mode: "any" },
+      effect: { kind: "gain-life", amount: 4 },
+      targetKind: "none"
+    });
+    expect(baloth.fullyImplemented).toBe(true);
+  });
+});
+
+describe("conditional life comparison parsing", () => {
+  it("keeps a sequential life gain before the conditional draw", () => {
+    const profile = cardProfile(card({
+      name: "Survival Cache",
+      type_line: "Sorcery",
+      oracle_text: "You gain 2 life. Then if you have more life than an opponent, draw a card."
+    }));
+    expect(profile.effects).toEqual([
+      { kind: "gain-life", amount: 2 },
+      { kind: "draw-if-life-more-than-opponent", amount: 1 }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("flashback parsing", () => {
