@@ -928,7 +928,7 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [target] });
     expect(game.players[0]!.graveyard.some((card) => card.instance_id === returned.instance_id)).toBe(false);
     expect(game.players[0]!.library).toHaveLength(before + 1);
-    expect(game.players[0]!.library.at(-1)!.instance_id).toBe(returned.instance_id);
+    expect(game.players[0]!.library.at(-1)!.instance_id).toBe(target.kind === "graveyard-card" ? target.instanceId : "");
   });
 
   it("offers and pays an activated counter-removal cost", () => {
