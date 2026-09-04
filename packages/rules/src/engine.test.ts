@@ -50,6 +50,7 @@ const X_DISCARD_SPELL = () => make({ name: "Scalable Mind Twist", type_line: "So
 const LIFE_SPELL = () => make({ name: "Simple Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain 1 life." });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
+const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "You lose 2 life." });
 const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you lose life, put a +1/+1 counter on Pain Counter." });
 const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Target player gains 2 life." });
@@ -751,12 +752,21 @@ describe("casting", () => {
   it("resolves a compound draw-and-life-loss instruction as one effect", () => {
     const profile = profileOf(DRAW_AND_LOSE());
     expect(profile.effects).toEqual([{ kind: "compound", effects: [{ kind: "draw", amount: 1 }, { kind: "lose-life", amount: 1 }] }]);
-    let game = readyToCast([DRAW_AND_LOSE()], [SWAMP(), SWAMP(), SWAMP()]);
+    let game = readyToCast([DRAW_AND_LOSE(), BEAR()], [SWAMP(), SWAMP(), SWAMP()]);
     const beforeLife = game.players[0]!.life;
     const beforeHand = game.players[0]!.hand.length;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[0]!.life).toBe(beforeLife - 1);
     expect(game.players[0]!.hand.length).toBe(beforeHand);
+  });
+
+  it("computes hand-count damage at resolution", () => {
+    const profile = profileOf(HAND_DAMAGE());
+    expect(profile.effects).toEqual([{ kind: "damage-controller-equal-hand" }]);
+    let game = readyToCast([HAND_DAMAGE(), BEAR(), BEAR()], [SWAMP(), SWAMP(), SWAMP()]);
+    const before = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.life).toBe(before - 2);
   });
 
   it("scales token creation from the controller's current land count", () => {
