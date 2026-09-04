@@ -556,6 +556,16 @@ const CREATURE_COMBAT_DRAWER = () => make({
   name: "Combat Chronicler", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "Whenever a creature deals combat damage to a player, draw a card."
 });
+const DIVINER_SPIRIT = () => make({
+  name: "Diviner Spirit", type_line: "Creature — Spirit", mana_cost: "{4}{U}", cmc: 5, power: "2", toughness: "4",
+  oracle_text: "Whenever this creature deals combat damage to a player, you and that player each draw that many cards.",
+  scryfall_id: "911b8849-dd0a-4383-8403-ea80227c5d7d"
+});
+const SEKKUAR_DEATHKEEPER = () => make({
+  name: "Sek'Kuar, Deathkeeper", type_line: "Legendary Creature — Orc Shaman", mana_cost: "{2}{B}{R}{G}", cmc: 5, power: "4", toughness: "3",
+  oracle_text: "Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.",
+  scryfall_id: "94426127-65c2-435e-ba92-423a3c102061"
+});
 const CREATURE_CAST_DRAWER = () => make({
   name: "Creature Scholar", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "Whenever you cast a creature spell, draw a card."
@@ -4445,6 +4455,26 @@ describe("triggered abilities", () => {
     if (opponentBoard.length) game = putOnBattlefield(game, 1, opponentBoard);
     return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
   }
+
+  it("creates Sek'Kuar's Graveborn token when another nontoken creature dies", () => {
+    let game = readyToCast([], [SEKKUAR_DEATHKEEPER(), GOBLIN_BOMBARDMENT(), BEAR()]);
+    const sacrifice = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const bombardment = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Bombardment")!;
+    const before = game.players[0]!.battlefield.length;
+    expect(profileOf(SEKKUAR_DEATHKEEPER()).triggers[0]).toMatchObject({
+      event: "dies", subject: "another-creature-you-control", nontoken: true,
+      effect: { kind: "create-token", amount: 1, token: { power: 3, toughness: 1, colors: ["B", "R"], keywords: ["haste"] } }
+    });
+
+    game = applyAction(game, 0, { type: "activate", sourceId: bombardment.instance_id, abilityIndex: 0,
+      sacrificeId: sacrifice.instance_id, targets: [{ kind: "player", seat: 1 }] });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.some((permanent) => permanent.card.name === "Graveborn"));
+
+    expect(game.players[0]!.battlefield).toHaveLength(before);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Graveborn")).toMatchObject({
+      card: { type_line: "Creature — Graveborn", power: "3", toughness: "1", colors: ["B", "R"] }
+    });
+  });
 
   it("aims Acidic Slime at an artifact, enchantment, or land", () => {
     const profile = profileOf(ACIDIC_SLIME());
