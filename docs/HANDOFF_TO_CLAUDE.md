@@ -2223,3 +2223,10 @@ this claim.
 The artifact-graveyard return primitive now supports optional recovery followed
 by life gain equal to the recovered card's mana value. Razor Hippogriff is the
 covered C13 application (CR 603.2, 608.2).
+### Worker checkpoint: Brooding Saurian ownership reset (2026-09-04)
+
+Added the reusable `return-owned-nontoken-permanents-to-control` trigger
+primitive. At each end step it restores control of every nontoken permanent
+to its owner without changing zones, covering Brooding Saurian (CR 603.2,
+603.6, 110.2). Commit `f6f8031` is queued for integration; this
+branch is based on `b008385` and excludes sibling worker commits.

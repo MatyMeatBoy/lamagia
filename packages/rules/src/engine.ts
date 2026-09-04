@@ -2533,6 +2533,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       });
       return logged(next, permanent.controller, `${permanent.card.name} va bajo ${count} carta(s) de la biblioteca de su propietario.`);
     }
+    case "return-owned-nontoken-permanents-to-control": {
+      const moved = allPermanents(state).filter((permanent) => !permanent.card.token && permanent.card.owner !== permanent.controller);
+      if (!moved.length) return state;
+      const movedIds = new Set(moved.map((permanent) => permanent.instance_id));
+      return {
+        ...state,
+        players: state.players.map((player) => ({
+          ...player,
+          battlefield: player.battlefield
+            .filter((permanent) => !movedIds.has(permanent.instance_id))
+            .concat(moved.filter((permanent) => permanent.card.owner === player.seat)
+              .map((permanent) => ({ ...permanent, controller: player.seat })))
+        }))
+      };
+    }
     case "destroy-target-creature-then-life-loss": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

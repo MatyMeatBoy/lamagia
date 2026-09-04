@@ -463,6 +463,8 @@ export type SpellEffect =
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Return each non-token creature to its owner's control without changing zones. */
   | { readonly kind: "return-owned-creatures-to-control" }
+  /** Return each non-token permanent to its owner's control without changing zones. */
+  | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   | { readonly kind: "chaos-warp" }
   /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
   | { readonly kind: "regenerate-source" }
