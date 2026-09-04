@@ -964,6 +964,12 @@ describe("casting", () => {
     expect(game.players[0]!.manaPool.G).toBe(2);
   });
 
+  it("lets the automatic mana planner use Mirari's Wake's extra mana", () => {
+    const game = readyToCast([BEAR()], [MIRARIS_WAKE(), FOREST()]);
+    expect(legalActions(game, 0).some((candidate) => candidate.action.type === "cast"
+      && candidate.action.cardId === game.players[0]!.hand[0]!.instance_id)).toBe(true);
+  });
+
   it("offers only generated tokens for a token sacrifice cost", () => {
     const sourceCard = TOKEN_SAC_ACTIVATION();
     expect(profileOf(sourceCard).activatedAbilities[0]).toMatchObject({ sacrificesPermanent: { type: "Token", mode: "any" } });
