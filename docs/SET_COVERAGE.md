@@ -25223,7 +25223,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Fiery Justice — `333809cb-e196-45f2-8a67-31374438e56e`
 - [ ] Filigree Angel — `4a261c42-825d-4965-8ea7-80d50c43474e`
 - [ ] Fireball — `aa7714b0-2bfb-458a-8ebf-37ec2c53383e`
-- [ ] Fires of Yavimaya — `e23d6f3b-0e18-423b-943b-15db7837255b`
+- [x] Fires of Yavimaya — `e23d6f3b-0e18-423b-943b-15db7837255b`
 - [ ] Fissure Vent — `f5bac25d-72e9-4655-8a04-3646fc10be27`
 - [ ] Flickerform — `e5345c28-7046-4ff3-a5d6-eeb7a0fb230b`
 - [ ] Flickerwisp — `b23a3d30-6b8e-4aad-890f-db0c3af43ace`
@@ -25233,7 +25233,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Furnace Celebration — `af6d6844-c612-4731-86da-59a8fa02956b`
 - [x] Gahiji, Honored One — `110d5d45-7174-4d1b-9e9c-e1ccd950ee3b`
 - [x] Guttersnipe — `c6bdaf76-6a03-4695-9c4b-f040e73435af`
-- [ ] Goblin Bombardment — `edad60c6-80de-4033-af1b-a703ac332983`
+- [x] Goblin Bombardment — `edad60c6-80de-4033-af1b-a703ac332983`
 - [ ] Goblin Sharpshooter — `d81285b7-a718-411a-8be3-ecc0cfe0bcb0`
 - [ ] Golgari Guildmage — `46dad873-11f5-4269-8ec2-f126419fbd7d`
 - [ ] Grazing Gladehart — `f19f28e5-9cad-4398-b2d4-9e7fefb23cb4`
