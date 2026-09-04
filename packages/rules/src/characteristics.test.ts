@@ -791,4 +791,18 @@ describe("faces and oracle normalisation", () => {
     expect(profile.targetKind).toBe("player");
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("recognises Graft as entry counters plus a reusable transfer trigger", () => {
+    const profile = cardProfile(card({
+      name: "Llanowar Reborn", type_line: "Land — Forest", produced_mana: ["G"],
+      oracle_text: "Llanowar Reborn enters the battlefield tapped.\n{T}: Add {G}.\nGraft 1"
+    }));
+    expect(profile.graftAmount).toBe(1);
+    expect(profile.entersWithCounters).toEqual([{ kind: "+1/+1", amount: 1 }]);
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "enters-battlefield", subject: "another-creature", optional: true,
+      effect: { kind: "move-counter-from-source-to-triggered-creature", counter: "+1/+1" }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
