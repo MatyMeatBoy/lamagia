@@ -29,7 +29,7 @@ from typing import Any
 
 
 DEFAULT_COMMIT_CARD_LIMIT = 20
-ORACLE_IR_PARSER_VERSION = "v6"
+ORACLE_IR_PARSER_VERSION = "v7"
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -55,6 +55,7 @@ TRIGGER_RE = re.compile(r"\b(?:when(?:ever)?|at the beginning of|at the end of)\
 ACTIVATED_RE = re.compile(r"^[^:\n]{1,160}:\s*", re.I)
 TARGET_RE = re.compile(r"\btarget\s+([^.;]+)", re.I)
 MANA_ABILITY_RE = re.compile(r"^(?P<cost>[^:\n]{1,160}):\s*(?P<effect>add\b.+)$", re.I)
+ADDITIONAL_COST_RE = re.compile(r"\bas an additional cost to (?:cast|play)\b", re.I)
 SEARCH_RE = re.compile(r"\bsearch your library for (?:an? |up to (?:one|two|three|five) )?(.+?\bcard(?:s)?(?:\s+with\b[^.;]+)?)", re.I)
 NUMBER_RE = re.compile(r"\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b", re.I)
 WORD_NUMBERS = {
@@ -167,7 +168,7 @@ def search_criterion_hint(clause: str) -> dict[str, list[str]] | None:
     return {"types": types, "subtypes": subtypes}
 
 
-def operand_hints(clause: str, target_text: str | None, search_criterion: dict[str, list[str]] | None) -> dict[str, list[str]]:
+def operand_hints(clause: str, target_text: str | None, search_criterion: dict[str, list[str]] | None) -> dict[str, Any]:
     """Preserve reusable nouns/locations so later workers do not re-parse text.
 
     This is intentionally an inventory, not a legality decision. ``Equipment``
@@ -183,12 +184,17 @@ def operand_hints(clause: str, target_text: str | None, search_criterion: dict[s
                 and target_operand.lower() not in CARD_TYPES
                 and target_operand.lower() not in {value.casefold() for value in subtypes}):
             subtypes.append(target_operand)
-    result: dict[str, list[str]] = {"actions": [name for name, _ in VERB_PATTERNS if re.search(_, clause, re.I)],
+    result: dict[str, Any] = {"actions": [name for name, _ in VERB_PATTERNS if re.search(_, clause, re.I)],
             "zones": zones, "card_types": card_types, "subtypes": sorted(subtypes, key=str.casefold)}
     sacrifice_types = sorted({word.title() for word in CARD_TYPES if re.search(
         rf"\bsacrifice\s+(?:another\s+|a\s+|an\s+)?{re.escape(word)}\b", clause, re.I)})
     if sacrifice_types:
         result["sacrifice_types"] = sacrifice_types
+    if ACTIVATED_RE.match(clause) or ADDITIONAL_COST_RE.search(clause):
+        cost_text = clause.split(":", 1)[0] if ACTIVATED_RE.match(clause) else clause
+        discard = re.search(r"\bdiscard\s+(a|an|one|two|three|four|five|\d+)\s+cards?\b", cost_text, re.I)
+        if discard:
+            result["discard_card_count"] = number_hint(discard.group(1))
     return result
 
 
@@ -235,6 +241,9 @@ def classify(clause: str) -> dict[str, Any]:
     sacrifice_types = operands.get("sacrifice_types", [])
     if sacrifice_types:
         cluster_parts.append("sacrifice-types:" + ",".join(sacrifice_types))
+    discard_card_count = operands.get("discard_card_count")
+    if discard_card_count is not None:
+        cluster_parts.append("discard-card-cost:" + str(discard_card_count))
     if modal:
         cluster_parts.append("modal")
     return {

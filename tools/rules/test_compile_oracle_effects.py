@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint
-from export_set_coverage import product_group
+from export_set_coverage import is_ignored_edition, product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, select_profiles, template_of
 from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
 
@@ -104,7 +104,19 @@ class OracleCompilerTests(unittest.TestCase):
             self.assertEqual(load_card_cache(path)["oracle-1"], entry)
             path.write_text(json.dumps({"format": "prossh-oracle-card-cache/v1", "parser_version": "old", "cards": {"oracle-1": entry}}), encoding="utf-8")
             self.assertEqual(load_card_cache(path), {})
-        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v6")
+        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v7")
+
+    def test_separates_discard_activation_cost_from_discard_effect(self) -> None:
+        result = classify("{T}, Discard a card: Draw a card.")
+        self.assertEqual(result["operands"]["discard_card_count"], 1)
+        self.assertEqual(result["primitive_cluster"], "draw|activated|discard-card-cost:1")
+        self.assertNotIn("discard_card_count", classify("Discard a card.")["operands"])
+
+    def test_recognizes_discard_as_an_additional_cast_cost(self) -> None:
+        result = classify("As an additional cost to cast this spell, discard a card.")
+        self.assertEqual(result["operands"]["discard_card_count"], 1)
+        self.assertIn("discard-card-cost:1", result["primitive_cluster"])
+        self.assertNotIn("discard_card_count", classify("Target opponent discards a card.")["operands"])
 
     def test_excludes_known_closed_static_primitives_from_review(self) -> None:
         for text in (
@@ -151,6 +163,11 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(product_group("draft_innovation", "Jumpstart 2022", "2022-12-02"), "jumpstart")
         self.assertEqual(product_group("duel_deck", "Duel Decks: Elves vs. Goblins", "2007-11-16"), "duel-decks")
         self.assertEqual(product_group("promo", "Friday Night Magic 2013", "2013-01-01"), "promos")
+
+    def test_excludes_arena_only_and_un_sets_from_active_coverage(self) -> None:
+        self.assertTrue(is_ignored_edition("ydsk", "alchemy", "Alchemy: Duskmourn"))
+        self.assertTrue(is_ignored_edition("unf", "funny", "Unfinity"))
+        self.assertFalse(is_ignored_edition("c13", "commander", "Commander 2013"))
 
     def test_plans_disjoint_worker_clusters(self) -> None:
         clusters = [

@@ -24,6 +24,7 @@ def slim_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "membershipCount": payload.get("membershipCount", 0),
         "implementedMembershipCount": payload.get("implementedMembershipCount", 0),
         "percentage": payload.get("percentage", 0),
+        "excludedEditions": payload.get("excludedEditions", []),
         "sets": sets,
     }
 

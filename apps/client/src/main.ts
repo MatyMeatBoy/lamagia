@@ -42,7 +42,7 @@ type CoverageSet = {
 };
 type SetCoverageReport = {
   generatedAt: string; setCount: number; membershipCount: number; implementedMembershipCount: number;
-  percentage: number; sets: CoverageSet[];
+  percentage: number; excludedEditions?: { code: string; name: string; setType: string }[]; sets: CoverageSet[];
 };
 type AvatarChoice = { name: string; image: string };
 type MatchSession = { matchId: string; token: string; seat: number };
@@ -1316,6 +1316,27 @@ function coverageSetRows(sets: readonly CoverageSet[]): string {
   }).join("") : `<p class="zone-private">No hay ediciones para este filtro.</p>`;
 }
 
+function coverageSubgroupRows(sets: readonly CoverageSet[]): string {
+  const buckets = new Map<string, { group: string; subgroup: string; editions: number; uniqueCards: number; implemented: number }>();
+  for (const set of sets) {
+    const key = `${set.group}\u0000${set.subgroup}`;
+    const bucket = buckets.get(key) ?? { group: set.group, subgroup: set.subgroup, editions: 0, uniqueCards: 0, implemented: 0 };
+    bucket.editions += 1;
+    bucket.uniqueCards += set.uniqueCards;
+    bucket.implemented += set.implemented;
+    buckets.set(key, bucket);
+  }
+  const rows = [...buckets.values()].sort((left, right) => left.group.localeCompare(right.group) || left.subgroup.localeCompare(right.subgroup));
+  return rows.length ? rows.map((bucket) => {
+    const percentage = bucket.uniqueCards ? Math.round(bucket.implemented / bucket.uniqueCards * 1000) / 10 : 100;
+    return `<button class="coverage-subgroup-row" type="button" data-coverage-subgroup="${escapeHtml(bucket.subgroup)}" data-coverage-subgroup-group="${escapeHtml(bucket.group)}">
+      <span class="coverage-row-title"><b>${escapeHtml(coverageSubgroupLabel(bucket.group, bucket.subgroup))}</b><small>${escapeHtml(coverageGroupLabel(bucket.group))} · ${bucket.editions} ediciones</small></span>
+      <span class="coverage-track"><i style="width:${percentage}%"></i></span>
+      <span class="coverage-number"><b>${percentage}%</b><small>${bucket.implemented}/${bucket.uniqueCards}</small></span>
+    </button>`;
+  }).join("") : `<p class="zone-private">No hay subgrupos para este filtro.</p>`;
+}
+
 function renderCoverageReport(report: SetCoverageReport): void {
   const body = document.querySelector<HTMLElement>("#coverage-dialog .panel-body");
   if (!body) return;
@@ -1325,6 +1346,10 @@ function renderCoverageReport(report: SetCoverageReport): void {
     && (coverageGroup === "all" || set.group === coverageGroup)
     && (coverageSubgroup === "all" || set.subgroup === coverageSubgroup)
     && (!coverageQuery || `${set.name} ${set.code}`.toLocaleLowerCase().includes(coverageQuery.toLocaleLowerCase())));
+  const subgroupSource = report.sets.filter((set) => (coverageFilter === "all" || set.category === coverageFilter)
+    && (coverageGroup === "all" || set.group === coverageGroup)
+    && (!coverageQuery || `${set.name} ${set.code}`.toLocaleLowerCase().includes(coverageQuery.toLocaleLowerCase())));
+  const excluded = report.excludedEditions?.length ? ` · ${report.excludedEditions.length} ediciones pausadas (Alchemy y Un-)` : "";
   body.innerHTML = `<div class="coverage-toolbar">
       <div class="coverage-filters">${(["all", "main", "commander", "secret-lair", "other"] as const).map((category) =>
         `<button type="button" class="text-button${coverageFilter === category ? " selected" : ""}" data-coverage-filter="${category}">${COVERAGE_LABELS[category]}</button>`).join("")}</div>
@@ -1333,7 +1358,8 @@ function renderCoverageReport(report: SetCoverageReport): void {
       <input id="coverage-query" value="${escapeHtml(coverageQuery)}" placeholder="Filtrar edición" autocomplete="off"/>
     </div>
     <div class="coverage-total"><b>${report.percentage}% global</b><span>${report.setCount} ediciones · ${report.implementedMembershipCount.toLocaleString()} / ${report.membershipCount.toLocaleString()} cartas únicas por edición</span></div>
-    <p class="panel-note">Orden cronológico: Alpha → ediciones nuevas. Las reimpresiones heredan el estado de su <code>oracle_id</code>; abre una edición para ver sus pendientes.</p>
+    <p class="panel-note">Orden cronológico: Alpha → ediciones nuevas. Las reimpresiones heredan el estado de su <code>oracle_id</code>; entra a un subgrupo y luego a una edición para ver sus pendientes${escapeHtml(excluded)}.</p>
+    <div class="coverage-subgroups"><h3>Subgrupos${coverageGroup === "all" ? "" : ` · ${escapeHtml(coverageGroupLabel(coverageGroup))}`}</h3><div class="coverage-list">${coverageSubgroupRows(subgroupSource)}</div></div>
     <div class="coverage-list">${coverageSetRows(filtered)}</div>`;
   body.querySelectorAll<HTMLButtonElement>("[data-coverage-filter]").forEach((button) => button.addEventListener("click", () => {
     coverageFilter = button.dataset.coverageFilter as CoverageSet["category"] | "all";
@@ -1357,6 +1383,11 @@ function renderCoverageReport(report: SetCoverageReport): void {
     coverageSubgroup = (event.target as HTMLSelectElement).value;
     renderCoverageReport(report);
   });
+  body.querySelectorAll<HTMLButtonElement>("[data-coverage-subgroup]").forEach((button) => button.addEventListener("click", () => {
+    coverageGroup = button.dataset.coverageSubgroupGroup ?? "all";
+    coverageSubgroup = button.dataset.coverageSubgroup ?? "all";
+    renderCoverageReport(report);
+  }));
   body.querySelectorAll<HTMLButtonElement>("[data-coverage-set]").forEach((button) => button.addEventListener("click", () => void loadCoverageSet(button.dataset.coverageSet!)));
 }
 

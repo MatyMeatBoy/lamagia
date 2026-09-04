@@ -18,6 +18,15 @@ from typing import Any
 
 
 PLAYABLE_ONLY = "layout NOT IN ('token','double_faced_token','emblem','art_series','scheme','planar','vanguard','reversible_card') AND (set_type IS NULL OR set_type NOT IN ('token','memorabilia','minigame','vanguard'))"
+IGNORED_SET_TYPES = frozenset({"alchemy"})
+IGNORED_UN_SET_CODES = frozenset({"ugl", "unh", "ust", "und", "unf"})
+
+
+def is_ignored_edition(set_code: str, set_type: str, set_name: str) -> bool:
+    """Keep Arena-only Alchemy and joke Un- sets out of the active roadmap."""
+    return (set_type.casefold() in IGNORED_SET_TYPES
+            or "alchemy" in set_name.casefold()
+            or set_code.casefold() in IGNORED_UN_SET_CODES)
 
 
 def category(set_type: str, set_name: str) -> str:
@@ -204,7 +213,11 @@ def build(catalog: Path, profiles_path: Path) -> dict[str, Any]:
         database.close()
 
     sets: list[dict[str, Any]] = []
+    ignored: list[dict[str, str]] = []
     for code, meta in grouped.items():
+        if is_ignored_edition(code, meta["setType"], meta["name"]):
+            ignored.append({"code": code, "name": meta["name"], "setType": meta["setType"]})
+            continue
         entries = []
         for identity, row in cards_by_set[code].items():
             profile = profiles.get(identity) or profiles.get(str(row["id"]), {})
@@ -238,6 +251,7 @@ def build(catalog: Path, profiles_path: Path) -> dict[str, Any]:
         "membershipCount": total_cards,
         "implementedMembershipCount": total_implemented,
         "percentage": round((total_implemented / total_cards) * 100, 1) if total_cards else 100.0,
+        "excludedEditions": sorted(ignored, key=lambda entry: (entry["name"].casefold(), entry["code"])),
         "sets": sets,
     }
 
@@ -250,6 +264,7 @@ def markdown(payload: dict[str, Any]) -> str:
         "> Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.",
         "",
         f"Ediciones: **{payload['setCount']:,}** · pertenencias únicas: **{payload['membershipCount']:,}** · implementadas: **{payload['implementedMembershipCount']:,}** · cobertura: **{payload['percentage']}%**",
+        f"> Fuera del roadmap por ahora: **{len(payload.get('excludedEditions', []))}** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).",
         "",
         "## Resumen cronológico",
         "",

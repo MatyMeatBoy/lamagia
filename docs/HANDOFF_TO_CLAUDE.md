@@ -806,19 +806,23 @@ implemented catalog cards; C13 is 141/356 (215 pending).
 
 The C13 fork exception batch was integrated through the latest available
 commits. It adds reusable counted effects, keyword-aware target filters,
-continuous static keyword/P+T layers, reach/flying-only sweeps, and
-planeswalker/battle counting. Duplicate claims were collapsed into grouped
+continuous static keyword/P+T layers, reach/flying-only sweeps,
+planeswalker/battle counting, typed permanent sacrifice costs, and chosen
+discard-card activation costs. Duplicate claims were collapsed into grouped
 rows in `docs/WORK_CLAIMS.md`; commits with equivalent fixes were skipped after
 review. No incoming commit identified itself as Hermes/Nemotron; the visible
 author metadata was `MatyMeatBoy`.
 
-Verified after integration: `npm run check` PASS; `npm test` PASS (282 rules
-tests, simulator and Oracle compiler tests); C13 is **150/356** implemented
-and the engine export is **7,559/38,711** fully implemented cards. The current
-set map reports **19.5%** across 708 editions. The latest fork batch also adds
-reusable ETB trigger subjects for artifacts and enchantments under your control.
+Verified after integration: `npm run check` PASS; `npm test` PASS (286 rules
+tests, simulator and Oracle compiler tests); C13 remains **150/356** in the
+precon coverage report and the engine export is **7,661/38,711** fully
+implemented cards. The current set map reports **19.7%** across 708 editions.
+The latest fork batch also adds reusable ETB trigger subjects for artifacts and
+enchantments under your control.
 
-The primitive compiler now reuses its incremental cache and emits a valid
+The primitive compiler is now parser version `v7`: it reuses its incremental
+cache, preserves typed sacrifice operands, distinguishes discard activation
+costs from discard effects, and emits a valid
 one-command C13 worker plan (`npm run rules:oracle:plan:c13`): 5 disjoint
 workers, a 2 GB scheduler ceiling, 20 `oracle_id`s per commit, and an
 11-commit integration threshold. The latest benchmark classified 38,711 cards
@@ -829,5 +833,5 @@ The Pages workflow and refreshed `site/coverage.json` are committed on
 `feat/activated-abilities-and-triggers`. The repository is now public and
 Pages is configured to use GitHub Actions; the `github-pages` environment
 allows both `master` and `feat/activated-abilities-and-triggers`. The expected
-URL is `https://matymeatboy.github.io/lamagia/`; the next push should deploy
-the workflow artifact there.
+URL is `https://matymeatboy.github.io/lamagia/`; the latest workflow deploys
+successfully and the public page is live there.
