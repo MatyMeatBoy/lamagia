@@ -855,8 +855,9 @@ describe("casting", () => {
     const source = game.players[0]!.battlefield[0]!;
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)).toBe(false);
     game = readyToCast([], [sourceCard, ARTIFACT_SAC_ALTAR()]);
-    const second = game.players[0]!.battlefield.find((permanent) => permanent.instance_id !== source.instance_id)!;
-    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === second.instance_id);
+    const sourceAgain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sourceCard.name)!;
+    const second = game.players[0]!.battlefield.find((permanent) => permanent.instance_id !== sourceAgain.instance_id)!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === sourceAgain.instance_id && entry.action.sacrificeId === second.instance_id);
     expect(activation).toBeDefined();
   });
 
