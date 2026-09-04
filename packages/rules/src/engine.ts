@@ -392,13 +392,32 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     const count = permanent.counters.level ?? 0;
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
   }).at(-1) : undefined;
-  const staticBonus = state ? allPermanents(state)
-    .filter((source) => source.controller === permanent.controller && source.instance_id !== permanent.instance_id)
-    .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
-    .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
-    .reduce((total, grant) => total + grant.power, 0) : 0;
+  const staticBonus = state ? staticPtBonus(state, permanent).power : 0;
   const base = profile.cdaPowerToughness && state ? cdaCount(state, permanent, profile.cdaPowerToughness) : (level?.power ?? profile.power ?? 0);
   return base + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus;
+}
+
+/** Static "get +N/+N" grants that reach `permanent` (anthem layer 7c, CR 613.4c). */
+function staticPtBonus(state: GameState, permanent: Permanent): { power: number; toughness: number } {
+  const target = cardProfile(permanent.card);
+  let power = 0;
+  let toughness = 0;
+  for (const source of allPermanents(state)) {
+    for (const grant of cardProfile(source.card).staticPowerToughnessGrants) {
+      if (grant.scope === "other-creatures-you-control") {
+        if (source.controller !== permanent.controller || source.instance_id === permanent.instance_id) continue;
+        if (grant.color && !target.colors.some((color) => color.toUpperCase() === grant.color)) continue;
+      } else if (grant.scope === "all-color-creatures") {
+        if (!isCreature(target) || !target.colors.some((color) => color.toUpperCase() === grant.color)) continue;
+      } else if (grant.scope === "subtype-creatures-you-control") {
+        if (source.controller !== permanent.controller || source.instance_id === permanent.instance_id) continue;
+        if (!target.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype!.toLowerCase())) continue;
+      }
+      power += grant.power;
+      toughness += grant.toughness;
+    }
+  }
+  return { power, toughness };
 }
 
 /** Characteristic-defining P/T: count of a permanent type the controller has (CR 604.3). */
@@ -412,11 +431,7 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     const count = permanent.counters.level ?? 0;
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
   }).at(-1) : undefined;
-  const staticBonus = state ? allPermanents(state)
-    .filter((source) => source.controller === permanent.controller && source.instance_id !== permanent.instance_id)
-    .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
-    .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
-    .reduce((total, grant) => total + grant.toughness, 0) : 0;
+  const staticBonus = state ? staticPtBonus(state, permanent).toughness : 0;
   const base = profile.cdaPowerToughness && state ? cdaCount(state, permanent, profile.cdaPowerToughness) : (level?.toughness ?? profile.toughness ?? 0);
   return base + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus;
 }

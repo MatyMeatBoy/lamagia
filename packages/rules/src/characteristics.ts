@@ -217,10 +217,11 @@ export interface StaticKeywordGrant {
 }
 
 export interface StaticPowerToughnessGrant {
-  readonly scope: "other-creatures-you-control";
+  readonly scope: "other-creatures-you-control" | "all-color-creatures" | "subtype-creatures-you-control";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
+  readonly subtype?: string;
 }
 
 /** Characteristics printed in one level band of a leveler card (CR 711). */
@@ -833,12 +834,21 @@ function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
-  const match = /^other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(line.trim().replace(/\.$/, ""));
-  return match ? {
+  const clean = line.trim().replace(/\.$/, "");
+  const own = /^other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  if (own) return {
     scope: "other-creatures-you-control",
-    ...(match[1] ? { color: match[1].toUpperCase() } : {}),
-    power: Number(match[2]), toughness: Number(match[3])
-  } : null;
+    ...(own[1] ? { color: own[1].toUpperCase() } : {}),
+    power: Number(own[2]), toughness: Number(own[3])
+  };
+  // "Black creatures get +1/+1" (Bad Moon) — every creature of the colour.
+  const color = /^(white|blue|black|red|green)\s+creatures\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
+  if (color) return { scope: "all-color-creatures", color: COLOR[color[1]!.toLowerCase()], power: Number(color[2]), toughness: Number(color[3]) };
+  // "Other Elves you control get +1/+1" (Imperious Perfect).
+  const subtype = /^other\s+([A-Za-z][A-Za-z'’-]*?)s?\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  if (subtype && !/^creature$/i.test(subtype[1]!)) return { scope: "subtype-creatures-you-control", subtype: subtype[1]!, power: Number(subtype[2]), toughness: Number(subtype[3]) };
+  return null;
 }
 
 function parseStaticPowerToughnessGrants(text: string): StaticPowerToughnessGrant[] {
