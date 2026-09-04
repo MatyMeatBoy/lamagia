@@ -1727,7 +1727,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
-      const count = playerAt(state, controller).battlefield.filter((p) => cardProfile(p.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+      const pool = effect.anywhere ? allPermanents(state) : playerAt(state, controller).battlefield;
+      const count = pool.filter((p) => cardProfile(p.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
       return modifyCreatures(state, count, count, (candidate) => candidate.instance_id === permanent.instance_id);
     }
     case "add-counter-target-per-subtype": {
@@ -1735,7 +1736,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
-      const count = playerAt(state, controller).battlefield.filter((p) => cardProfile(p.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+      const pool = effect.anywhere ? allPermanents(state) : playerAt(state, controller).battlefield;
+      const count = pool.filter((p) => cardProfile(p.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
       if (count === 0) return state;
       return withPlayer(state, permanent.controller, (player) => ({
         ...player,
