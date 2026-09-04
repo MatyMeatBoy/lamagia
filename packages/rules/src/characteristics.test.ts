@@ -828,4 +828,17 @@ describe("faces and oracle normalisation", () => {
     }));
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("recognises the optional power-threshold entering trigger", () => {
+    const profile = cardProfile(card({
+      name: "Where Ancients Tread", type_line: "Enchantment", mana_cost: "{4}{R}",
+      oracle_text: "Whenever a creature you control with power 5 or greater enters the battlefield, you may have ~ deal 5 damage to any target."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "enters-battlefield", subject: "creature-you-control", optional: true,
+      targetKind: "any", condition: { kind: "entering-power-at-least", amount: 5 },
+      effect: { kind: "damage-any-target", amount: 5 }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });

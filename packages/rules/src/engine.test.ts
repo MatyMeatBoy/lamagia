@@ -366,6 +366,11 @@ const WARSTORM_SURGE = () => make({
   oracle_text: "Whenever a creature you control enters the battlefield, it deals damage equal to its power to any target.",
   scryfall_id: "42fb1a1c-ab3d-4cdc-a6ff-a591f7481583"
 });
+const WHERE_ANCIENTS_TREAD = () => make({
+  name: "Where Ancients Tread", type_line: "Enchantment", mana_cost: "{4}{R}",
+  oracle_text: "Whenever a creature you control with power 5 or greater enters the battlefield, you may have ~ deal 5 damage to any target.",
+  scryfall_id: "fca2fcab-4f17-448d-bf6d-f6c913159df8"
+});
 const CYCLING_LAND = () => make({
   name: "Barren Moor", type_line: "Land", oracle_text: "This land enters tapped.\n{T}: Add {B}.\nCycling {B} ({B}, Discard this card: Draw a card.)"
 });
@@ -782,6 +787,24 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
     game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("offers Where Ancients Tread only for creatures meeting its power threshold", () => {
+    let game = readyToCast([TRAMPLER()], [WHERE_ANCIENTS_TREAD(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", targetKind: "any" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", sourceCard: { name: "Where Ancients Tread" } });
+    const optional = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[1]!.life).toBe(35);
+
+    game = readyToCast([BEAR()], [WHERE_ANCIENTS_TREAD(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[1]!.life).toBe(40);
   });
 
   it("checks the life comparison after Survival Cache gains life", () => {
