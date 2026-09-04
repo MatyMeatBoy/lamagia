@@ -84,6 +84,14 @@ ZONE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("command", r"\bcommand zone\b"),
 )
 
+TRIGGER_SUBJECT_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("another-permanent-you-control", r"another\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control"),
+    ("permanent-you-control", r"a\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control"),
+    ("artifact-you-control", r"an\s+artifact\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control"),
+    ("enchantment-you-control", r"an\s+enchantment\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control"),
+    ("land-you-control", r"a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?"),
+)
+
 
 def mana_ability_hint(line: str) -> dict[str, Any] | None:
     """Extract reusable mana-ability structure without declaring it executable."""
@@ -210,6 +218,13 @@ def cluster_text(clause: str) -> str:
     return normalized[:160]
 
 
+def trigger_subject_hint(clause: str) -> str | None:
+    """Extract the object subject of common ETB triggers for cluster reuse."""
+    if not TRIGGER_RE.search(clause):
+        return None
+    return next((subject for subject, pattern in TRIGGER_SUBJECT_PATTERNS if re.search(pattern, clause, re.I)), None)
+
+
 def classify(clause: str) -> dict[str, Any]:
     lower = clause.lower()
     families = [name for name, pattern in VERB_PATTERNS if re.search(pattern, clause, re.I)]
@@ -227,6 +242,7 @@ def classify(clause: str) -> dict[str, Any]:
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
     known_static = bool(KNOWN_STATIC_RE.fullmatch(clause.strip()) or KNOWN_STATIC_LINE_RE.fullmatch(clause.strip()))
     operands = operand_hints(clause, target_text, search_criterion)
+    trigger_subject = trigger_subject_hint(clause)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
         cluster_parts.append("shape:" + cluster_text(clause))
@@ -244,6 +260,8 @@ def classify(clause: str) -> dict[str, Any]:
     discard_card_count = operands.get("discard_card_count")
     if discard_card_count is not None:
         cluster_parts.append("discard-card-cost:" + str(discard_card_count))
+    if trigger_subject:
+        cluster_parts.append("trigger-subject:" + trigger_subject)
     if modal:
         cluster_parts.append("modal")
     return {
@@ -256,6 +274,7 @@ def classify(clause: str) -> dict[str, Any]:
         "target_subtype": target_subtype,
         "target_types": target_types,
         "target_zone": target_zone,
+        "trigger_subject": trigger_subject,
         "search_criterion": search_criterion,
         "operands": operands,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, trigger_subject_hint
 from export_set_coverage import is_ignored_edition, product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, select_profiles, template_of
 from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
@@ -66,6 +66,10 @@ class OracleCompilerTests(unittest.TestCase):
         result = classify("Sacrifice an artifact: Draw a card.")
         self.assertEqual(result["operands"]["sacrifice_types"], ["Artifact"])
         self.assertEqual(result["primitive_cluster"], "draw|activated|sacrifice-types:Artifact")
+
+    def test_preserves_generic_permanent_trigger_subject(self) -> None:
+        self.assertEqual(trigger_subject_hint("Whenever a permanent enters the battlefield under your control, draw a card."), "permanent-you-control")
+        self.assertEqual(classify("Whenever a permanent enters the battlefield under your control, draw a card.")["trigger_subject"], "permanent-you-control")
 
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
