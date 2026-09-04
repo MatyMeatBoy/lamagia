@@ -261,6 +261,7 @@ export type SpellEffect =
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number | "X" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   | { readonly kind: "damage-controller-equal-hand" }
+  | { readonly kind: "damage-active-player-equal-hand" }
   | { readonly kind: "damage-active-player-hand-minus"; readonly offset: number }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" }
@@ -1077,6 +1078,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   const handMinus = /^(?:~|This creature) deals X damage to that player, where X is the number of cards in their hand minus (\d+)$/i.exec(text);
   if (handMinus) return { effect: { kind: "damage-active-player-hand-minus", offset: Number(handMinus[1]) }, target: "none" };
+  if (/^(?:~|This creature) deals damage to that player equal to the number of cards in that player's hand$/i.test(text)) {
+    return { effect: { kind: "damage-active-player-equal-hand" }, target: "none" };
+  }
   if ((match = /^~ deals (\w+) damage to (?:each opponent|each of your opponents)$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-each-opponent", amount }, target: "none" };
