@@ -58,6 +58,9 @@ class OracleCompilerTests(unittest.TestCase):
     def test_preserves_activated_cost_actions(self) -> None:
         self.assertEqual(classify("{T}, Discard a card: Draw a card.")["operands"]["cost_actions"], ["discard"])
 
+    def test_preserves_player_spell_trigger_subjects(self) -> None:
+        self.assertEqual(trigger_subject_hint("Whenever an opponent casts a spell, draw a card."), "opponent")
+
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
 
