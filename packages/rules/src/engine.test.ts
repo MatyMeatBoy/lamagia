@@ -224,6 +224,7 @@ const SANGUINE_BOND = () => make({ name: "Sanguine Bond", type_line: "Enchantmen
 const AERIE_MYSTICS = () => make({ name: "Aerie Mystics", type_line: "Creature — Bird Wizard", mana_cost: "{3}{G}{U}", cmc: 5, power: "3", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\n{1}{G}{U}: Creatures you control gain shroud until end of turn.", scryfall_id: "12134f7d-433a-416a-b668-c1a21984c94b" });
 const RAKECLAW_GARGANTUAN = () => make({ name: "Rakeclaw Gargantuan", type_line: "Creature — Beast", mana_cost: "{2}{R}{G}{W}", cmc: 5, power: "5", toughness: "3", oracle_text: "{1}: Target creature with power 5 or greater gains first strike until end of turn.", scryfall_id: "8dbb4a8f-78e9-4ceb-824d-bb67bdf939db" });
 const HOMEWARD_PATH = () => make({ name: "Homeward Path", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Each player gains control of all creatures they own.", scryfall_id: "cb8ec2e4-8223-4172-8f2c-37c918a573fa" });
+const AZORIUS_KEYRUNE = () => make({ name: "Azorius Keyrune", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{T}: Add {W} or {U}.\n{W}{U}: This artifact becomes a 2/2 white and blue Bird artifact creature with flying until end of turn.", scryfall_id: "7266b491-54e6-4393-a448-d5ae99d965c6" });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
@@ -4685,6 +4686,29 @@ describe("activated abilities", () => {
     expect(permanentNamed(game, 1, "Storm Crow")!.controller).toBe(1);
     expect(permanentNamed(game, 1, "Grizzly Bears")).toBeUndefined();
     expect(permanentNamed(game, 0, "Storm Crow")).toBeUndefined();
+  });
+
+  it("animates Azorius Keyrune as a temporary flying creature", () => {
+    let game = readyOnBoard([AZORIUS_KEYRUNE(), PLAINS(), ISLAND()], { hold: true });
+    const source = permanentNamed(game, 0, "Azorius Keyrune")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    expect(profileOf(AZORIUS_KEYRUNE()).activatedAbilities[0]).toMatchObject({
+      manaCost: { raw: "{W}{U}" }, targetKind: "none",
+      effect: { kind: "animate-source", power: 2, toughness: 2, colors: ["W", "U"], subtypes: ["Bird"], keywords: ["flying"] }
+    });
+
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    const animated = permanentNamed(game, 0, "Azorius Keyrune")!;
+    expect(animated.temporaryAnimation).toMatchObject({ power: 2, toughness: 2, types: ["Artifact", "Creature"], subtypes: ["Bird"] });
+    expect(powerOf(animated, game)).toBe(2);
+    expect(legalAttackers(game, 0).some((permanent) => permanent.instance_id === animated.instance_id)).toBe(true);
+    expect(cardProfile(animated.card).types).not.toContain("Creature");
+
+    game = passUntil(game, (state) => state.turn > 1);
+    expect(permanentNamed(game, 0, "Azorius Keyrune")!.temporaryAnimation).toBeUndefined();
+    expect(legalAttackers(game, 0).some((permanent) => permanent.card.name === "Azorius Keyrune")).toBe(false);
   });
 
   it("resolves Druidic Satchel's conditional top-card reveal", () => {

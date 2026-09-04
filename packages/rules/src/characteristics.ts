@@ -415,6 +415,8 @@ export type SpellEffect =
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
+  /** Temporary characteristic-setting animation for artifact manlands (CR 613.6). */
+  | { readonly kind: "animate-source"; readonly power: number; readonly toughness: number; readonly colors: readonly string[]; readonly subtypes: readonly string[]; readonly keywords: readonly EnforcedKeyword[] }
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
@@ -2134,6 +2136,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     effect: { kind: "modify-source-creature", power: Number(triggeredSelfPump[1]), toughness: Number(triggeredSelfPump[2]) },
     target: "none"
   };
+  if (/^(?:~|This artifact) becomes a 2\/2 white and blue Bird artifact creature with flying until end of turn$/i.test(text)) {
+    return {
+      effect: { kind: "animate-source", power: 2, toughness: 2, colors: ["W", "U"], subtypes: ["Bird"], keywords: ["flying"] },
+      target: "none"
+    };
+  }
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };
