@@ -991,8 +991,8 @@ describe("casting", () => {
     const source = game.players[0]!.battlefield[0]!;
     const target = legalTargets(game, 0, "legendary-creature-card-in-your-graveyard")[0]!;
     const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
-    expect(activation).toBeDefined();
-    game = applyAction(game, 0, { ...activation!.action, targets: [target] });
+    if (!activation || activation.action.type !== "activate") throw new Error("Loyal Retainers activation was not generated");
+    game = applyAction(game, 0, { ...activation.action, targets: [target] });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Dead General")).toBe(true);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Loyal Retainers")).toBe(false);
   });
