@@ -1063,6 +1063,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "gain-life-equal-target-power": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const creature = findPermanent(state, target.instanceId);
+      if (!creature || !isCreature(cardProfile(creature.card))) return state;
+      const amount = powerOf(creature, state);
+      const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
+    }
     case "lose-life": {
       const amount = effectAmount(effect.amount, object);
       const next = loseLife(state, controller, amount);
