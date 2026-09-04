@@ -1034,6 +1034,10 @@ function loseLife(state: GameState, seat: SeatId, amount: number): GameState {
   return raiseEvent(next, { kind: "life-lost", seat, amount });
 }
 
+function playersCantGainLife(state: GameState): boolean {
+  return allPermanents(state).some((permanent) => cardProfile(permanent.card).preventsLifeGain);
+}
+
 function dealDamageToPermanent(state: GameState, instanceId: string, amount: number, deathtouch: boolean, sourceName: string): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
@@ -1127,11 +1131,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return next;
     }
     case "gain-life": {
+      if (playersCantGainLife(state)) return state;
       const amount = effectAmount(effect.amount, object);
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
     case "gain-life-equal-target-power": {
+      if (playersCantGainLife(state)) return state;
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const creature = findPermanent(state, target.instanceId);
@@ -1148,11 +1154,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "gain-life-target-player": {
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
+      if (playersCantGainLife(state)) return state;
       const amount = effectAmount(effect.amount, object);
       const next = withPlayer(state, target.seat, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: target.seat, amount }), controller, `${playerAt(next, target.seat).name} gana ${amount} vidas.`);
     }
     case "each-player-gains-life": {
+      if (playersCantGainLife(state)) return state;
       let next = state;
       const amount = effectAmount(effect.amount, object);
       for (const player of state.players) {
