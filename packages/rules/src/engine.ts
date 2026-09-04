@@ -75,6 +75,8 @@ export interface Permanent {
   readonly evoked?: boolean;
   /** A loyalty ability was activated on this planeswalker this turn (CR 606.3). */
   readonly loyaltyUsedThisTurn?: boolean;
+  /** "Target creature can't block this turn"; cleared during cleanup. */
+  readonly cantBlockThisTurn?: boolean;
   /** Layer 7c modifications that expire in the cleanup step. */
   readonly powerModifier: number;
   readonly toughnessModifier: number;
@@ -1872,6 +1874,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return raiseTapEvents(next, state, [permanent.instance_id]);
     }
+    case "target-cant-block": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, cantBlockThisTurn: true } : candidate)
+      }));
+    }
     case "untap-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -2196,7 +2209,7 @@ function landwalkEvades(state: GameState, attacker: Permanent, defenderSeat: Sea
 function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): boolean {
   const blockerProfile = cardProfile(blocker.card);
   if (!isCreature(blockerProfile) || blocker.tapped) return false;
-  if (blockerProfile.combatRules.cannotBlock) return false;
+  if (blockerProfile.combatRules.cannotBlock || blocker.cantBlockThisTurn) return false;
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
   if (keywordOf(state, attacker, "flying") && !keywordOf(state, blocker, "flying") && !keywordOf(state, blocker, "reach")) return false;
@@ -2421,7 +2434,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         ...next,
         players: next.players.map((current) => ({
           ...current,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], regenerationShields: 0 }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], regenerationShields: 0, cantBlockThisTurn: false }))
         }))
       };
       break;
