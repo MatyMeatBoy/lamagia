@@ -1257,6 +1257,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = modifyCreatures(state, effect.power, effect.toughness, () => true);
       return logged(next, controller, `${sourceName} modifica a todas las criaturas hasta el final del turno.`);
     }
+    case "modify-all-creatures-minus-X": {
+      const amount = -object.variableValue;
+      const next = modifyCreatures(state, amount, amount, () => true);
+      return logged(next, controller, `${sourceName} da -${Math.abs(amount)}/-${Math.abs(amount)} a todas las criaturas hasta el final del turno.`);
+    }
     case "modify-creatures-you-control": {
       const next = modifyCreatures(state, effect.power, effect.toughness, (permanent) => permanent.controller === controller);
       return logged(next, controller, `${sourceName} modifica tus criaturas hasta el final del turno.`);

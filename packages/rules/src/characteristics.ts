@@ -267,6 +267,7 @@ export type SpellEffect =
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "modify-all-creatures-minus-X" }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
@@ -1224,6 +1225,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness$/i.test(`${text}.`)) {
     return { effect: { kind: "destroy-target-creature-then-life-loss" }, target: "creature" };
+  }
+  if (/^All creatures get -X\/-X until end of turn$/i.test(text)) {
+    return { effect: { kind: "modify-all-creatures-minus-X" }, target: "none" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
