@@ -234,6 +234,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `arsenal-vela-intimidate` | Intimidate keyword/static grants plus Vela’s leaves-the-battlefield trigger (CR 603.6c, 702.13, 509.1a) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-then-you-have-more` | Sequential life comparison followed by conditional self-draw, reusable for Survival Cache (CR 608.2c) | `codex/c13-life-comparison-f99` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
@@ -313,6 +314,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-reveal-until-creature` | Foster reveal until a creature, move it to hand and revealed cards to graveyard | `codex/c13-foster` | active | 2026-09-04 |
 | `c13-threshold-graveyard-return` | Stitch Together threshold branch between battlefield and hand | `codex/c13-stitch-together` | active | 2026-09-04 |
 | `c13-choose-both` | Soul Manipulation and Fissure Vent modal one-or-both selection | `codex/c13-choose-both` | active | 2026-09-04 |
+| `c13-choose-more` | Parameterized modal subsets for `Choose N or more`, including ordered target slots for Rain of Thorns (CR 700.2, 601.2b) | `codex/c13-choose-more-a32` | active | 2026-09-04 |
 
 ## Claim format
 
@@ -341,6 +343,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-fecundity-death-draw` | Fecundity lets the controller of each creature that dies optionally draw a card (CR 603.2, 603.5, 603.6a, 121.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-fires-yavimaya-activation` | Fires of Yavimaya grants haste and sacrifices itself for a controlled-creature +2/+2 activation (CR 602.2b, 613.4, 611.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-goblin-bombardment-activation` | Goblin Bombardment sacrifices a creature as a cost to deal 1 damage to any target (CR 602.2b, 117.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-krosan-warchief-beast-reduction` | Static reduction for Beast spells you cast, reusable subtype-aware cost modifier (CR 118.9) | `codex/c13-krosan-warchief-a32` | active | 2026-09-04 |
 | `c13-charmbreaker-random-spell-recovery` | Beginning-of-upkeep recovery of a random instant or sorcery card from your graveyard to your hand | `codex/c13-charmbreaker-devils` | active | 2026-09-04 |
 | `c13-conjurers-closet-blink` | Optional end-step exile and return of a target creature you control, reusable blink primitive for Conjurer's Closet (CR 603.2, 603.5, 610.3, 400.7) | `codex/c13-conjurers-closet` | active | 2026-09-04 |
 | `c13-tidal-force-tap-untap-choice` | Optional each-upkeep choice to tap or untap a target permanent for Tidal Force (CR 603.2, 603.5, 701.21) | `codex/c13-tidal-force` | active | 2026-09-04 |
