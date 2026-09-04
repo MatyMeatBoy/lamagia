@@ -364,6 +364,7 @@ export type TriggerEvent =
   | "upkeep"
   | "draw-step"
   | "end-step"
+  | "leaves-battlefield"
   | "life-gained"
   | "life-lost";
 
@@ -384,6 +385,7 @@ export type TriggerSubject =
   | "artifact-you-control"
   | "enchantment-you-control"
   | "another-creature"
+  | "self-or-another-creature-you-control"
   | "any-creature"
   | "you"
   | "each-player"
@@ -400,6 +402,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   upkeep: "habilidad de mantenimiento",
   "draw-step": "habilidad del paso de robo",
   "end-step": "habilidad del paso final",
+  "leaves-battlefield": "habilidad de salida del campo de batalla",
   "life-gained": "habilidad de ganancia de vida",
   "life-lost": "habilidad de pérdida de vida"
 };
@@ -1032,6 +1035,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
+  { event: "leaves-battlefield", subject: "self-or-another-creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", pattern: /^whenever\s+an\s+artifact\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
