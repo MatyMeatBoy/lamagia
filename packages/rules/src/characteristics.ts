@@ -365,6 +365,7 @@ export type SpellEffect =
   | { readonly kind: "exile-all-attacking-creatures" }
   | { readonly kind: "tap-all-nonblue-skip-untap" }
   | { readonly kind: "shuffle-source-into-library" }
+  | { readonly kind: "destroy-all-then-reanimate-one" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
@@ -1925,6 +1926,13 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "modify-target-creature-morbid", power: Number(morbidPump[1]), toughness: Number(morbidPump[2]), morbidPower: Number(morbidPump[3]), morbidToughness: Number(morbidPump[4]) }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
+    };
+  }
+  // Necromantic Selection: destroy all creatures, reanimate one of them under your control, then exile self.
+  if (/^Destroy all creatures, then return a creature card put into a graveyard this way to the battlefield under your control\.\s*It'?s a black Zombie in addition to its other colors and types\.\s*Exile ~\.$/i.test(joined)) {
+    return {
+      effects: [{ kind: "destroy-all-then-reanimate-one" }, { kind: "exile-self" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
   // Martial Coup: "Create X 1/1 white Soldier creature tokens. If X is 5 or more, destroy all other creatures."
