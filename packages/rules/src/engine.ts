@@ -906,6 +906,7 @@ function triggerMatches(
     }
     case "land-you-control": return isLand(cardProfile(object.card)) && object.controller === watcher.controller;
     case "artifact-you-control": return cardProfile(object.card).types.includes("Artifact") && object.controller === watcher.controller;
+    case "enchantment-you-control": return cardProfile(object.card).types.includes("Enchantment") && object.controller === watcher.controller;
     case "another-creature": return !isSelf && objectIsCreature;
     case "any-creature": return objectIsCreature;
     default: return false;
