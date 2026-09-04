@@ -262,6 +262,7 @@ export type SpellEffect =
   | { readonly kind: "exile-self" }
   | { readonly kind: "shuffle-self-into-library" }
   | { readonly kind: "return-source-to-hand" }
+  | { readonly kind: "sacrifice-source" }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
@@ -424,6 +425,8 @@ export interface TriggerDefinition {
   readonly spellType?: "creature";
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
+  /** "if its evoke cost was paid" gate on the sacrifice trigger (CR 702.34c). */
+  readonly requiresEvoked?: boolean;
   /** Optional mana cost to get the effect ("you may pay {cost}. If you do, ..."). */
   readonly payCost?: ManaCost;
 }
@@ -489,6 +492,8 @@ export interface CardProfile {
   readonly targetKind: TargetKind;
   readonly kickerCost: ManaCost | null;
   readonly kickedEffects: readonly SpellEffect[];
+  /** Evoke alternative cost (CR 702.34), null when absent. */
+  readonly evokeCost: ManaCost | null;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static "<color/type> spells you cast cost {N} less to cast" grant (Medallion cycle, CR 118.9). */
@@ -952,6 +957,7 @@ interface RecognizedText {
   readonly targetKind: TargetKind;
   kickerCost?: ManaCost | null;
   kickedEffects?: SpellEffect[];
+  evokeCost?: ManaCost | null;
   /** Exact normalized clauses the closed engine intentionally does not execute. */
   readonly unimplementedText: readonly string[];
   readonly covered: boolean;
@@ -1538,11 +1544,15 @@ function recognizeText(text: string): RecognizedText {
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
+  let evokeCost: ManaCost | null = null;
   const kickedEffects: SpellEffect[] = [];
 
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Evoke alternative cost (CR 702.34). Reminder text is dropped.
+    const evoke = /^Evoke\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (evoke) { evokeCost = parseManaCost(evoke[1]!); continue; }
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
@@ -1684,7 +1694,15 @@ function recognizeText(text: string): RecognizedText {
       if (recognized.target !== "none") targetKind = recognized.target;
     }
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, unimplementedText, covered: unimplementedText.length === 0 };
+  if (evokeCost) {
+    // The evoke self-sacrifice is a triggered ability (CR 702.34c), gated on
+    // whether the evoke cost was actually paid.
+    triggers.push({
+      event: "enters-battlefield", subject: "self", effect: { kind: "sacrifice-source" },
+      optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
+    });
+  }
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, evokeCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -1775,6 +1793,7 @@ export function cardProfile(card: CardData): CardProfile {
     triggers: recognized.triggers,
     targetKind: recognized.targetKind,
     kickerCost: recognized.kickerCost ?? null,
+    evokeCost: recognized.evokeCost ?? null,
     kickedEffects: recognized.kickedEffects ?? [],
     costReducesPerBoardCreature,
     spellCostReductionGrant,
