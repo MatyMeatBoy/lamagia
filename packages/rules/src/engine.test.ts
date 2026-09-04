@@ -1025,6 +1025,31 @@ describe("casting", () => {
     expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears", "Mountain", "Swamp"]);
   });
 
+  it("reuses target draw for Deep Analysis and pays its Flashback life", () => {
+    let game = readyToCast([C13_DEEP_ANALYSIS()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()], [BEAR()]);
+    game = stage(game, 1, () => ({ library: toHand(1, [FOREST(), PLAINS()], "analysis-target") }));
+    game = applyAction(game, 0, {
+      type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }]
+    });
+    expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears", "Forest", "Plains"]);
+
+    game = readyToCast([], [ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({
+      life: 10,
+      graveyard: toHand(0, [C13_DEEP_ANALYSIS()], "analysis-flashback"),
+      library: toHand(0, [FOREST(), PLAINS()], "analysis-flashback-library")
+    }));
+    const flashback = legalActions(game, 0).find((entry) => entry.action.type === "cast"
+      && entry.action.fromGraveyard
+      && entry.action.cardId === "analysis-flashback-0");
+    expect(flashback).toBeDefined();
+    game = applyAction(game, 0, flashback!.action);
+    expect(game.players[0]!.life).toBe(7);
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Forest", "Plains"]);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Deep Analysis")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Deep Analysis")).toBe(true);
+  });
+
   it("offers and pays a chosen untapped Wizard for Azami", () => {
     let game = readyToCast([], [C13_AZAMI(), AZAMI_WIZARD(), BEAR()]);
     const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;
