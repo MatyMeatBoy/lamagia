@@ -173,7 +173,6 @@ export type SpellEffect =
   | { readonly kind: "return-target-card-from-graveyard" }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-land-card-from-graveyard-to-battlefield" }
-  | { readonly kind: "return-target-land-card-from-graveyard-to-battlefield" }
   | { readonly kind: "exile-target-card-from-graveyard" }
   | { readonly kind: "return-target-card-to-library-top" }
   | { readonly kind: "untap-equipped-creature" }
