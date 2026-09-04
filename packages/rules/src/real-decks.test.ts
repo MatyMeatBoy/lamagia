@@ -65,9 +65,10 @@ describe.skipIf(!hasPod)("imported cEDH pod", () => {
     expect(result.state.log.some((entry) => entry.text.includes("ataca con"))).toBe(true);
     expect(result.state.players.some((player) => player.life !== 40)).toBe(true);
     for (const player of result.state.players) {
-      const owned = player.library.length + player.hand.length + player.battlefield.length
+      // Tokens are created game objects, not cards from the imported 100-card deck.
+      const owned = player.library.length + player.hand.length + player.battlefield.filter((permanent) => !permanent.card.token).length
         + player.graveyard.length + player.exile.length + player.commandZone.length
-        + result.state.stack.filter((object) => object.card.owner === player.seat).length;
+        + result.state.stack.filter((object) => object.card.owner === player.seat && !object.card.token && !object.trigger && !object.activated).length;
       expect(owned).toBe(100);
     }
   });

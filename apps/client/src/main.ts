@@ -14,6 +14,8 @@
 import type { AbilityView, CardView, GameView, LegalAction, PermanentView, PlayerView, Target, TargetKind, TurnStep } from "@prossh/rules";
 import { ACTIVATION_GLYPHS, KEYWORD_GLYPHS, TRIGGER_GLYPHS, glyphSvg, keywordGlyph, type AbilityGlyph } from "./abilities.js";
 import "./styles.css";
+import { manaImageUrl, recoverManaImage } from "./mana-images.js";
+import { hasCreatureStats } from "./card-stats.js";
 
 declare global {
   interface Window { __PROSSH_API_BASE__?: string; }
@@ -162,7 +164,8 @@ function manaAssetId(symbol: string): string | undefined {
 function manaSymbolHtml(symbol: string): string {
   const upper = symbol.toUpperCase();
   const asset = manaAssetId(upper);
-  if (asset) return `<i class="pip mana-asset" aria-label="${escapeHtml(upper)}"><img src="/assets/mana/${asset}.svg" alt="" draggable="false"/></i>`;
+  const url = asset && manaImageUrl(asset);
+  if (url) return `<i class="pip mana-asset" role="img" aria-label="${escapeHtml(upper)}"><img src="${escapeHtml(url)}" data-mana-symbol="${escapeHtml(upper)}" alt="" draggable="false"/></i>`;
   return `<i class="pip p-${escapeHtml(/^\d+$/.test(upper) ? "generic" : upper.toLowerCase())}" aria-label="${escapeHtml(upper)}">${escapeHtml(upper)}</i>`;
 }
 
@@ -223,7 +226,12 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return payload;
 }
 
-async function startMatch(mode: "cedh" | "precon", deckId?: string): Promise<void> {
+document.addEventListener("error", (event) => {
+  const image = event.target;
+  if (image instanceof HTMLImageElement) recoverManaImage(image);
+}, true);
+
+async function startMatch(mode: "cedh" | "precon" | "tested", deckId?: string): Promise<void> {
   ui.notice = "Repartiendo mazos…";
   render();
   try {
@@ -273,6 +281,25 @@ async function submit(action: LegalAction["action"]): Promise<void> {
     applyView(next);
   } catch (error) {
     ui.notice = error instanceof Error ? error.message : "La acción fue rechazada.";
+    ui.busy = false;
+    render();
+  }
+}
+
+async function undoLatestMana(): Promise<void> {
+  if (!session || !view?.undoAvailable || ui.busy) return;
+  ui.busy = true;
+  render();
+  try {
+    const next = await api<GameView>(`/api/matches/${session.matchId}/undo`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.token, version: view.version })
+    });
+    ui.notice = "";
+    ui.busy = false;
+    applyView(next);
+  } catch (error) {
+    ui.notice = error instanceof Error ? error.message : "La acción ya no se puede deshacer.";
     ui.busy = false;
     render();
   }
@@ -668,7 +695,7 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
   if (activations.some((entry) => entry.action.type === "activate" || entry.action.type === "equip")) classes.push("can-activate");
   if (ui.abilityMenu === permanent.instance_id) classes.push("menu-open");
 
-  const stats = permanent.power !== null && permanent.toughness !== null
+  const stats = hasCreatureStats(permanent)
     ? `<b class="pt">${permanent.power}/${permanent.toughness}${permanent.damage ? `<i> -${permanent.damage}</i>` : ""}</b>` : "";
   const badges = [
     permanent.isCommander ? `<i class="tile-badge cmd" title="Comandante">C</i>` : "",
@@ -898,6 +925,7 @@ function landingHtml(): string {
       <p>Controlas el asiento inferior. Los otros tres los juega el bot determinista del motor, eligiendo solo entre las mismas acciones legales que se te ofrecen a ti.</p>
       <div class="landing-actions">
         <button id="start-cedh" class="primary-button">Jugar pod cEDH</button>
+        <button id="start-tested" class="text-button">Jugar modo probado</button>
         <button id="start-precon" class="text-button">Elegir mazo precon</button>
         <button id="open-catalog" class="text-button">Buscar cartas</button>
         <button id="open-coverage" class="text-button">Implementación por edición</button>
@@ -986,6 +1014,7 @@ function render(): void {
             ${actionMenuHtml()}
             ${graveyardTargetHtml()}
             ${ui.pendingTarget ? `<button id="cancel-target" class="text-button">Cancelar objetivo</button>` : ""}
+            ${view.undoAvailable ? `<button id="undo" class="text-button" title="Deshacer la última activación de maná">Deshacer</button>` : ""}
             <button id="pass" class="primary-button" ${pass ? "" : "disabled"}>${escapeHtml(pass?.label ?? "Sin prioridad")}<kbd>Espacio</kbd></button>
             <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar</label>
           </div>
@@ -1019,7 +1048,7 @@ function showPreview(card: CardView, anchor: HTMLElement): void {
   panel.innerHTML = `${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt=""/>` : ""}
     <div class="preview-body">
       <div class="preview-type">${escapeHtml(card.type_line)} ${manaHtml(card.mana_cost)}</div>
-      ${card.power !== null ? `<div class="preview-type">${card.power}/${card.toughness}</div>` : ""}
+      ${hasCreatureStats(card) ? `<div class="preview-type">${card.power}/${card.toughness}</div>` : ""}
       <div class="preview-rules">${oracleHtml(card.oracle_text || "Sin texto de reglas.")}</div>
       <div class="preview-cover ${card.fullyImplemented ? "ok" : "partial"}">${card.fullyImplemented
         ? "El motor ejecuta todo el texto de esta carta."
@@ -1038,6 +1067,7 @@ function hidePreview(): void {
 
 function wireLanding(): void {
   document.querySelector("#start-cedh")?.addEventListener("click", () => void startMatch("cedh"));
+  document.querySelector("#start-tested")?.addEventListener("click", () => void startMatch("tested"));
   document.querySelector("#start-precon")?.addEventListener("click", () => openPrecons());
   document.querySelector("#open-catalog")?.addEventListener("click", () => dialog("catalog")?.showModal());
   document.querySelector("#open-coverage")?.addEventListener("click", () => openCoverage());
@@ -1053,6 +1083,7 @@ function wireBoard(): void {
   on("#coverage", () => openCoverage());
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
+  on("#undo", () => void undoLatestMana());
   document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
     button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
   on("#close-ability-menu", () => { ui.abilityMenu = null; render(); });
@@ -1182,7 +1213,7 @@ function cardDetailHtml(card: CardView, extra?: CatalogCard): string {
     ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="${escapeHtml(card.name)}"/>` : ""}
     <div class="detail-body">
       <div class="detail-type">${escapeHtml(card.type_line)} ${manaHtml(card.mana_cost)}</div>
-      ${card.power !== null ? `<div class="detail-type stats">${card.power}/${card.toughness}</div>` : ""}
+      ${hasCreatureStats(card) ? `<div class="detail-type stats">${card.power}/${card.toughness}</div>` : ""}
       <div class="oracle-text">${oracleHtml(card.oracle_text || "Sin texto de reglas.")}</div>
       <div class="coverage ${card.fullyImplemented ? "ok" : "partial"}">${card.fullyImplemented
         ? "El motor ejecuta todo el texto impreso de esta carta."
@@ -1323,7 +1354,7 @@ async function showCatalogCard(id: string): Promise<void> {
       ${card.image_uris.normal ? `<img class="gallery-main" src="${escapeHtml(card.image_uris.normal)}" alt="${escapeHtml(card.name)}"/>` : ""}
       <div class="detail-body">
         <div class="detail-type">${escapeHtml(card.type_line)} ${manaHtml(card.mana_cost)}</div>
-        ${card.power !== null ? `<div class="detail-type stats">${escapeHtml(card.power ?? "")}/${escapeHtml(card.toughness ?? "")}</div>` : ""}
+        ${hasCreatureStats(card) ? `<div class="detail-type stats">${escapeHtml(card.power ?? "")}/${escapeHtml(card.toughness ?? "")}</div>` : ""}
         <div class="oracle-text">${oracleHtml(card.oracle_text || "Sin texto de reglas.")}</div>
         <div class="detail-type" data-gallery-meta>${escapeHtml(card.set_name)} · ${escapeHtml(card.released_at)} · ${escapeHtml(card.rarity)}</div>
         ${printingGalleryHtml(card)}

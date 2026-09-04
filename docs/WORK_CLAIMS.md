@@ -1,5 +1,9 @@
 # Work claims
 
+Client scope extension (2026-09-04): `client-mana-images` also owns creature-only P/T display in main.ts plus focused display helper/tests. Darwin owns authoritative current-creature projection; client honors that flag over printed types. main.ts retained until image/stats commit, then released for Undo UI.
+
+CLIENT IMAGE CLAIM (2026-09-04): Astra owns `client-mana-images`: apps/client/src/main.ts existing image patch, focused image helper/tests, Vite types/config, and apps/client/src/assets/mana copies of referenced SVGs (public assets read-only, never staged). Base 470cad0cfc7e58c29d5c174de4354d1818ea4db6. Active; shared integration, no push per user.
+
 This is the lightweight coordination ledger for parallel card and rules work.
 The claim key is a reusable primitive or a disjoint card batch, never a vague
 feature name.
@@ -77,8 +81,12 @@ integrator owns merge order and reruns coverage after each accepted commit.
 
 ## Active claims
 
+Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-response relevance, safe mana undo rules/server endpoint and private projection, focused scenarios/docs. Base `470cad0cfc7e58c29d5c174de4354d1818ea4db6`; active 2026-09-04. Excludes client main.ts/styles. Explicit user assignment supersedes random card allocation; local commit only, no push.
+
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
+| `global-prowess` | Prowess noncreature-spell trigger and temporary self pump (CR 702.108) | `feat/activated-abilities-and-triggers` | merged (`100f464`) | 2026-09-04 |
+| `c13-horsemanship` | Global Horsemanship evasion keyword and Lu Xun C13 regression scenario (CR 702.31) | `feat/activated-abilities-and-triggers` | active | 2026-09-04 |
 | `rules-land-search` | Landcycling variants and land-subtype search resolution | `feat/activated-abilities-and-triggers` | merged (`7c7f77c`) | 2026-09-03 |
 | `rules-equipment` | Equip actions, attachment state, and Equipment static bonuses | `codex/c13-equipment-cluster` | merged (`f61a096`) | 2026-09-03 |
 | `rules-c13-reprint-equivalence` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | `codex/c13-equipment-cluster` | merged (`44d0e78`) | 2026-09-04 |
@@ -235,6 +243,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-return-permanent-card-from-any-graveyard` | Return a targeted permanent card from any graveyard to the battlefield (CR 400.7, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-exile-permanent-card-from-graveyard` | Exile a targeted permanent card from your graveyard (CR 400.7, 701.11) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-exile-permanent-card-from-any-graveyard` | Exile a targeted permanent card from any graveyard (CR 400.7, 701.11) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c17-when-enters-return-target` | Archaeomancer and Izzet Chronarch return a target instant or sorcery card from your graveyard to your hand (CR 109.2a, 400.7, 603.2, 603.3d, 608.2b-c) | `feat/activated-abilities-and-triggers` | active | 2026-09-04 |
 | `arsenal-loyal-retainers` | Loyal Retainers: precombat activated sacrifice and legendary-creature graveyard return (CR 602.2b, 608.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-miraris-wake-pt` | Mirari’s Wake static +1/+1 grant to creatures you control (CR 613.4, 613.5) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-miraris-wake-mana` | Mirari’s Wake adds one mana of a produced type when a controlled land produces mana (CR 605.1, 613.6) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
@@ -247,6 +256,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-then-you-have-more` | Sequential life comparison followed by conditional self-draw, reusable for Survival Cache (CR 608.2c) | `codex/c13-life-comparison-f99` | active | 2026-09-04 |
+| `c13-when-enters-return-target` | Optional ETB artifact recovery with life gain equal to the returned card's mana value, applied to Razor Hippogriff (CR 603.2, 608.2) | `codex/c13-hippogriff-reclaim-f99` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
@@ -327,6 +337,17 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-threshold-graveyard-return` | Stitch Together threshold branch between battlefield and hand | `codex/c13-stitch-together` | active | 2026-09-04 |
 | `c13-choose-both` | Soul Manipulation and Fissure Vent modal one-or-both selection | `codex/c13-choose-both` | active | 2026-09-04 |
 | `c13-choose-more` | Parameterized modal subsets for `Choose N or more`, including ordered target slots for Rain of Thorns (CR 700.2, 601.2b) | `codex/c13-choose-more-a32` | active | 2026-09-04 |
+| `c13-graft` | Reusable Graft entry counters and optional counter transfer to another entering creature (CR 702.58, 122.1, 603.2) | `codex/c13-graft-f99` | active | 2026-09-04 |
+| `c13-whenever-creature-dies-untap` | Reusable death-triggered source untap (CR 603.2, 701.21) | `codex/c13-goblin-sharpshooter-f99` | active | 2026-09-04 |
+| `c13-whenever-creature-you-control` | Reusable entering-creature power damage to any target (CR 603.2, 120.2, 603.3d) | `codex/c13-warstorm-surge-f99` | active | 2026-09-04 |
+| `c13-whenever-creature-you-control-2` | Power-threshold entering-creature trigger with optional targeted damage (CR 603.2, 603.4, 120.2) | `codex/c13-where-ancients-tread-f99` | active | 2026-09-04 |
+| `c13-oracle-damage-triggered-shape-4` | Any-player draw trigger that deals damage to the drawing player (CR 603.2, 603.3d, 120.2) | `codex/c13-spiteful-visions-f99` | active | 2026-09-04 |
+| `c13-oracle-damage-triggered-shape-5` | Optional attack trigger that taps a chosen number of untapped creatures of a subtype, then pumps and damages the attacked player (CR 508.1i, 601.2) | `codex/c13-myr-battlesphere-f99` | active | 2026-09-04 |
+| `c13-oracle-gain-life-triggered-5` | Life-gain event carries its amount into a targeted opponent life-loss trigger (CR 603.2, 120.3) | `codex/c13-sanguine-bond-f99` | active | 2026-09-04 |
+| `c13-oracle-other-activated-shape-2` | Activated global shroud grant for creatures you control until end of turn (CR 113.6, 702.18) | `codex/c13-aerie-mystics-f99` | active | 2026-09-04 |
+| `c13-oracle-other-activated-shape-4` | Activated target power threshold grant: target creature with power 5 or greater gains first strike until end of turn (CR 601.2c, 702.7) | `codex/c13-rakeclaw-f99` | active | 2026-09-04 |
+| `c13-oracle-other-activated-shape-3` | Activated creature-only control reset: each player gains control of all creatures they own (CR 110.2,  control-change effects) | `codex/c13-homeward-path-f99` | active | 2026-09-04 |
+| `c13-oracle-other-activated-shape-6` | Activated temporary animation: source becomes a 2/2 white and blue Bird artifact creature with flying until end of turn (CR 613.6, 707.2) | `codex/c13-azorius-keyrune-f99` | active | 2026-09-04 |
 
 ## Claim format
 
@@ -368,3 +389,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
 | `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
+

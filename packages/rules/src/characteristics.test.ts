@@ -622,6 +622,19 @@ describe("effect recognition", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises artifact recovery triggers that gain the recovered mana value", () => {
+    const profile = cardProfile(card({
+      name: "Razor Hippogriff", type_line: "Creature — Hippogriff",
+      oracle_text: "When Razor Hippogriff enters the battlefield, you may return target artifact card from your graveyard to your hand. You gain life equal to that card's converted mana cost."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      optional: true,
+      targetKind: "artifact-card-in-your-graveyard",
+      effect: { kind: "return-target-artifact-and-gain-mana-value" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("recognises reusable landfall and artifact-creature trigger subjects", () => {
     const landfall = cardProfile(card({
       name: "Landfall Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", power: "4", toughness: "4",
@@ -776,6 +789,105 @@ describe("faces and oracle normalisation", () => {
     }));
     expect(profile.effects).toEqual([{ kind: "target-player-sacrifice-attacking-creature" }]);
     expect(profile.targetKind).toBe("player");
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises Graft as entry counters plus a reusable transfer trigger", () => {
+    const profile = cardProfile(card({
+      name: "Llanowar Reborn", type_line: "Land — Forest", produced_mana: ["G"],
+      oracle_text: "Llanowar Reborn enters the battlefield tapped.\n{T}: Add {G}.\nGraft 1"
+    }));
+    expect(profile.graftAmount).toBe(1);
+    expect(profile.entersWithCounters).toEqual([{ kind: "+1/+1", amount: 1 }]);
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "enters-battlefield", subject: "another-creature", optional: true,
+      effect: { kind: "move-counter-from-source-to-triggered-creature", counter: "+1/+1" }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises a death-triggered source untap", () => {
+    const profile = cardProfile(card({
+      name: "Goblin Sharpshooter", type_line: "Creature — Goblin", mana_cost: "{2}{R}",
+      oracle_text: "Whenever a creature dies, untap ~."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "dies", subject: "any-creature", effect: { kind: "untap-source" }, targetKind: "none"
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises entering-creature power damage as a targeted trigger", () => {
+    const profile = cardProfile(card({
+      name: "Warstorm Surge", type_line: "Enchantment", mana_cost: "{5}{R}",
+      oracle_text: "Whenever a creature you control enters the battlefield, it deals damage equal to its power to any target."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "enters-battlefield", subject: "creature-you-control", targetKind: "any",
+      effect: { kind: "damage-triggered-creature-power" }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises the optional power-threshold entering trigger", () => {
+    const profile = cardProfile(card({
+      name: "Where Ancients Tread", type_line: "Enchantment", mana_cost: "{4}{R}",
+      oracle_text: "Whenever a creature you control with power 5 or greater enters the battlefield, you may have ~ deal 5 damage to any target."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "enters-battlefield", subject: "creature-you-control", optional: true,
+      targetKind: "any", condition: { kind: "entering-power-at-least", amount: 5 },
+      effect: { kind: "damage-any-target", amount: 5 }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises draw triggers that refer to any player", () => {
+    const profile = cardProfile(card({
+      name: "Spiteful Visions", type_line: "Enchantment", mana_cost: "{2}{B}{R}",
+      oracle_text: "Whenever a player draws a card, Spiteful Visions deals 1 damage to that player."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "card-drawn", subject: "each-player", effect: { kind: "damage-event-player", amount: 1 }, targetKind: "none"
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises Myr Battlesphere's variable tap-and-attack trigger", () => {
+    const profile = cardProfile(card({
+      name: "Myr Battlesphere", type_line: "Artifact Creature — Construct", mana_cost: "{7}",
+      oracle_text: "When this creature enters, create four 1/1 colorless Myr artifact creature tokens.\nWhenever this creature attacks, you may tap X untapped Myr you control. If you do, this creature gets +X/+0 until end of turn and deals X damage to the player or planeswalker it's attacking."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "attacks", subject: "self", optional: true,
+      tapCost: { amount: "any", subtype: "Myr", mode: "any" },
+      effect: { kind: "tap-creatures-pump-source-damage-attacker", subtype: "Myr" },
+      targetKind: "none"
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises proportional life-gain triggers", () => {
+    const profile = cardProfile(card({
+      name: "Sanguine Bond", type_line: "Enchantment", mana_cost: "{3}{B}{B}",
+      oracle_text: "Whenever you gain life, target opponent loses that much life."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "life-gained", subject: "you", targetKind: "opponent",
+      effect: { kind: "lose-life-target-event-amount" }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("keeps creature-only keyword grants limited to creatures", () => {
+    const profile = cardProfile(card({
+      name: "Aerie Mystics", type_line: "Creature — Bird Wizard", mana_cost: "{3}{G}{U}",
+      oracle_text: "Flying\n{1}{G}{U}: Creatures you control gain shroud until end of turn."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      manaCost: { raw: "{1}{G}{U}" }, targetKind: "none",
+      effect: { kind: "grant-creatures-you-control-keyword", keyword: "shroud" }
+    });
     expect(profile.fullyImplemented).toBe(true);
   });
 });

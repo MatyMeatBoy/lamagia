@@ -4,6 +4,29 @@
 
 Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
+## Current published checkpoint — 2026-09-04
+
+The latest source checkpoint is the Prowess rules change being published from
+this branch; verify the Pages run before reporting it as live.
+Coverage numbers have two deliberate units:
+
+- **Unique engine profiles:** 8,932 / 38,711 fully implemented. These are
+  deduplicated by stable `oracle_id`; one implementation covers every printing.
+- **Edition memberships:** 21,698 / 84,990 implemented (25.5%) across 685
+  editions. This is what the public implementation-by-edition view displays,
+  so it is expected to be lower than the total catalog size and to count a
+  shared card once per edition.
+- **Commander 2013:** 220 / 341 unique cards (64.5%), 121 pending.
+- **Commander 2014:** 195 / 322 unique cards (60.6%), 127 pending.
+- **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
+  component references; 99.9% are reused across clauses. The full-catalog
+  benchmark reduces worker context by 5.0% while preserving exact identities
+  and clause counts. This is scheduling
+  compression only: it does not mark a card implemented.
+
+Do not report the 38,711 profile catalog as implemented cards. Recompute both
+views after accepted rules commits and publish the generated `site/coverage.json`.
+
 ## Product objective
 
 ProsshTCG is a Commander simulator built for a four-player pod but architected for 2–8 seats. It targets the browser first, with Android (Capacitor) and desktop (Tauri) planned from the same client. The visual reference is a modernised MTGO: three opponents share the upper band, the local player owns the lower band, phases and priority are explicit, and public zones can be inspected without leaking hidden information.
@@ -2142,3 +2165,9 @@ simulator and the full 55-test Python suite PASS). `npm run simulate:engine`
 still reports 2/200 (seeds 92 and 116, both the same pre-existing bug
 already flagged above and as a separate task) — no new seed introduced by
 this claim.
+
+### C13 Razor Hippogriff artifact recovery (2026-09-04)
+
+The artifact-graveyard return primitive now supports optional recovery followed
+by life gain equal to the recovered card's mana value. Razor Hippogriff is the
+covered C13 application (CR 603.2, 608.2).

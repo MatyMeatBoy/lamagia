@@ -9,5 +9,7 @@ export * from "./mana.js";
 export * from "./characteristics.js";
 export * from "./engine.js";
 export * from "./projection.js";
+export * from "./undo.js";
+export * from "./tested.js";
 export * from "./bot.js";
 export * from "./simulator.js";

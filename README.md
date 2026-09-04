@@ -7,6 +7,17 @@ Community Magic rules engine and Commander client. Implement reusable rules
 clusters, not one-off card names. Cards share logic by stable `oracle_id`, so
 one good primitive improves every printing and set.
 
+Published coverage is currently **8,932/38,711 unique engine profiles** and
+**21,698/84,990 edition memberships (25.5%)**. The public set map uses edition
+memberships; reprints therefore appear there separately even though their
+rules implementation is shared. Current C13 is **220/341** and C14 is
+**195/322**. See the [current handoff checkpoint](docs/HANDOFF_TO_CLAUDE.md).
+
+The reusable offline Commander deck generator is documented in
+[docs/DECK_GENERATOR.md](docs/DECK_GENERATOR.md); it composes local catalog,
+imported-deck, and optional cached EDHREC sources without inventing unresolved
+cards.
+
 ## AI contributor quick start
 
 Read [AGENTS.md](AGENTS.md), [docs/HANDOFF_TO_CLAUDE.md](docs/HANDOFF_TO_CLAUDE.md)
@@ -23,6 +34,16 @@ Report `CLAIM`, `BASE SHA`, `COMMIT SHA`, `FILES`, `TESTS`, `SCENARIOS`, and
 `LIMITS`. Never stage `data/`, assets, secrets, or unrelated changes. Full
 instructions: [CONTRIBUTING.md](CONTRIBUTING.md) and
 [IMPLEMENTATION_CLUSTERS.md](IMPLEMENTATION_CLUSTERS.md).
+
+Before asking for integration, run the read-only [worker commit audit](docs/WORKER_COMMIT_AUDIT.md).
+Type-only declarations, repeated union variants, parser-only patches, and
+commits without an executor plus scenario test are rejected and do not count as
+cards.
+
+Workers should use their available compute only for useful, test-backed
+changes. Small correct primitives, executor fixes, regression scenarios, and
+accurate coverage reports all count; placeholders, duplicate effect kinds,
+guessed card totals, and malformed parser fragments do not.
 
 Required direct-commit report (one cluster, at most 20 `oracle_id`s):
 
@@ -68,6 +89,9 @@ instead of reimplementing a keyword per card.
 For the current C13 sprint, use `npm run rules:oracle:c13` to generate the same
 queue from only the 356 cards in that set, then
 `npm run rules:oracle:plan:c13` to assign five disjoint primitive clusters.
+For compact, reusable worker context, run `npm run rules:oracle:compact` (or
+the `:c13` variant) after compiling the Oracle IR. It interns only review
+symbols; it never replaces the authoritative raw text or rules engine.
 When generating a scoped roadmap directly, `--set-code c13` now automatically
 names claims in the `c13-*` namespace; pass `--claim-prefix` only for an
 intentional shared primitive.
