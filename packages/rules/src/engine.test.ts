@@ -116,6 +116,7 @@ const GLOBAL_INDESTRUCTIBLE = () => make({
   oracle_text: "Permanents you control gain indestructible until end of turn."
 });
 const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — Goblin", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Creatures you control have haste." });
+const FLYING_LORD = () => make({ name: "Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control have flying." });
 const CROSIS_CHARM = () => make({
   name: "Crosis's Charm", type_line: "Instant", mana_cost: "{U}{B}{R}", cmc: 3,
   oracle_text: "Choose one —\n• Return target permanent to its owner's hand.\n• Destroy target nonblack creature. It can't be regenerated.\n• Destroy target artifact."
@@ -1117,6 +1118,12 @@ describe("casting", () => {
     const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(false);
+  });
+
+  it("uses continuous flying grants when filtering flying targets", () => {
+    let game = readyToCast([FLYING_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [FLYING_LORD(), BEAR()]);
+    expect(legalTargets(game, 0, "creature-with-flying")).toHaveLength(1);
+    expect(legalTargets(game, 0, "creature-with-flying")[0]).toMatchObject({ kind: "permanent" });
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {

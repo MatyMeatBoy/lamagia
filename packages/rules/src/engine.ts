@@ -2399,7 +2399,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
-      if (kind === "creature-with-flying" && !profile.keywords.includes("flying")) return false;
+      if (kind === "creature-with-flying" && !keywordOf(state, permanent, "flying")) return false;
       if (kind === "creature-power-at-least-5" && powerOf(permanent, state) < 5) return false;
       return true;
     }
