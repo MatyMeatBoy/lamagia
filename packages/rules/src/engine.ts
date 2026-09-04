@@ -1086,6 +1086,7 @@ function triggerMatches(
       cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype)).length;
     if (count < condition.amount) return false;
   }
+  if (condition?.kind === "creature-died-this-turn" && state.creaturesDiedThisTurn < 1) return false;
   const subject = definition.subject;
 
   // Turn-structure triggers are about a player, not an object.
@@ -3566,6 +3567,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
       if (kind === "nonartifact-nonblack-creature" && (profile.types.includes("Artifact") || profile.colors.some((color) => color.toUpperCase() === "B"))) return false;
+      if (kind === "non-demon-creature" && profile.subtypes.some((subtype) => subtype.toLowerCase() === "demon")) return false;
       if (kind === "creature-with-flying" && !keywordOf(state, permanent, "flying")) return false;
       if (kind === "creature-with-defender" && !keywordOf(state, permanent, "defender")) return false;
       if (kind === "creature-with-deathtouch" && !keywordOf(state, permanent, "deathtouch")) return false;
