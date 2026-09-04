@@ -7,6 +7,58 @@ import {
 } from "./engine.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
 import { projectGame } from "./projection.js";
+import { isSafeManaUndo } from "./undo.js";
+
+describe("smart counter response and safe mana undo", () => {
+  it("projects creature status without invented noncreature 0/0 stats", () => {
+    const game = putOnBattlefield(twoSeatGame([], []), 0, [ISLAND(), make({ name: "Zero", type_line: "Creature", power: "0", toughness: "0" })]);
+    const permanents = projectGame(game, 0).players[0]!.battlefield;
+    expect(permanents.at(-2)).toMatchObject({ isCreature: false, power: null, toughness: null });
+    expect(permanents.at(-1)).toMatchObject({ isCreature: true, power: 0, toughness: 0 });
+  });
+  function board(text = "Counter target spell with mana value 1.") {
+    let game = twoSeatGame([], []);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null,
+      players: game.players.map(p => ({ ...p, autoPass: false, hand: [], commandZone: [] })) };
+    game = stage(game, 0, () => ({ hand: toHand(0, [make({ name: "Mental Misstep", type_line: "Instant", mana_cost: "{U/P}", cmc: 1, oracle_text: text })]) }));
+    return putOnBattlefield(game, 0, [ISLAND(), ISLAND()]);
+  }
+  function spell(game: GameState, mv: number, text = "") {
+    const card = toHand(1, [make({ name: "Response subject", type_line: "Instant", mana_cost: `{${mv}}`, cmc: mv, oracle_text: text })])[0]!;
+    return { ...game, stack: [{ id: "subject", controller: 1, card, label: card.name, targets: [], fromCommandZone: false, variableValue: 0, countered: false }] };
+  }
+  it("requires exactly MV 1, not an empty stack or a different MV", () => {
+    const game = board();
+    expect(hasRealChoice(game, 0)).toBe(false);
+    expect(hasRealChoice(spell(game, 2), 0)).toBe(false);
+    expect(hasRealChoice(spell(game, 0), 0)).toBe(false);
+    expect(hasRealChoice(spell(game, 1), 0)).toBe(true);
+  });
+  it("keeps uncounterable targets legal in full control but skips counter-only responses", () => {
+    const game = spell(board(), 1, "This spell can't be countered.");
+    expect(hasRealChoice(game, 0)).toBe(false);
+    const cast = legalActions(game, 0).find(a => a.action.type === "cast")!;
+    expect(cast).toBeDefined();
+    let next = applyAction(game, 0, { ...cast.action, targets: [{ kind: "spell", stackId: "subject" }] } as Extract<import("./engine.js").GameAction, { type: "cast" }>);
+    next = applyAction(next, 0, { type: "pass" });
+    next = applyAction(next, 1, { type: "pass" });
+    expect(next.stack.find(s => s.id === "subject")?.countered).toBe(false);
+    expect(hasRealChoice(spell(board("Counter target spell. Draw a card."), 1, "This spell can't be countered."), 0)).toBe(true);
+  });
+  it("allows only unchanged-state mana/tap deltas and rejects City of Brass triggers", () => {
+    const game = board();
+    const action = legalActions(game, 0).find(a => a.action.type === "activate-mana")!.action;
+    const next = applyAction(game, 0, action);
+    expect(isSafeManaUndo(game, next, 0, action)).toBe(true);
+    expect(isSafeManaUndo(game, { ...next, players: next.players.map(p => p.seat === 0 ? { ...p, life: p.life - 1 } : p) }, 0, action)).toBe(false);
+    expect(isSafeManaUndo(game, applyAction(next, 0, { type: "pass" }), 0, action)).toBe(false);
+    const city = putOnBattlefield(game, 0, [make({ name: "City of Brass", type_line: "Land", oracle_text: "Whenever City of Brass becomes tapped, it deals 1 damage to you.\n{T}: Add one mana of any color." })]);
+    const cityAction = legalActions(city, 0).find(a => a.action.type === "activate-mana" && a.action.sourceId === city.players[0]!.battlefield.at(-1)!.instance_id)!.action;
+    const tapped = applyAction(city, 0, cityAction);
+    expect(tapped.stack.length).toBeGreaterThan(0);
+    expect(isSafeManaUndo(city, tapped, 0, cityAction)).toBe(false);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -83,6 +135,8 @@ const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instan
 const BROODING_SAURIAN = () => make({ name: "Brooding Saurian", type_line: "Creature — Lizard", mana_cost: "{2}{G}{G}", cmc: 4, power: "4", toughness: "4", oracle_text: "At the beginning of each end step, each player gains control of all nontoken permanents they own.", scryfall_id: "2fb7f844-edaf-43ef-9121-318baf9ec9ce" });
 const CAPRICIOUS_EFREET = () => make({ name: "Capricious Efreet", type_line: "Creature — Efreet", mana_cost: "{3}{R}{R}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of your upkeep, choose target nonland permanent you control and up to two target nonland permanents you don't control. Destroy one of them at random.", scryfall_id: "9abd2286-23e9-49cd-be53-39423890f35c" });
 const CHARMBREAKER_DEVILS = () => make({ name: "Charmbreaker Devils", type_line: "Creature — Devil", mana_cost: "{5}{R}", cmc: 6, power: "5", toughness: "4", oracle_text: "At the beginning of your upkeep, return an instant or sorcery card at random from your graveyard to your hand.", scryfall_id: "1b9df437-6988-4ddc-80c4-893e11076067" });
+const ARCHAEOMANCER = () => make({ name: "Archaeomancer", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "1", toughness: "2", oracle_text: "When Archaeomancer enters the battlefield, return target instant or sorcery card from your graveyard to your hand.", oracle_id: "a91a3266-cadd-47a0-9b20-160307f14c07", scryfall_id: "dd94eb97-d231-4880-9c6f-e25da02782b4" });
+const IZZET_CHRONARCH = () => make({ name: "Izzet Chronarch", type_line: "Creature — Human Wizard", mana_cost: "{3}{U}{R}", cmc: 5, power: "2", toughness: "2", oracle_text: "When Izzet Chronarch enters the battlefield, return target instant or sorcery card from your graveyard to your hand.", oracle_id: "1da438f3-db1c-4713-a60c-e078f31d809c", scryfall_id: "d2f8fe93-8d20-41d4-8205-597a9c9b8bbe" });
 const CHARNELHOARD_WURM = () => make({ name: "Charnelhoard Wurm", type_line: "Creature — Wurm", mana_cost: "{4}{B}{R}{G}", cmc: 7, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample\nWhenever this creature deals damage to an opponent, you may return target card from your graveyard to your hand.", scryfall_id: "4a430fa3-e693-424b-9981-d7d8193445e3" });
 const DAMAGE_TRIGGERER = () => make({ name: "Damage Triggerer", type_line: "Creature — Wurm", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3", oracle_text: "Whenever this creature deals damage to an opponent, you may return target card from your graveyard to your hand.\n{T}: ~ deals 1 damage to any target." });
 const CONJURERS_CLOSET = () => make({ name: "Conjurer's Closet", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.", scryfall_id: "cd1eda60-53e4-44d0-9b2c-7a57395e291f" });
@@ -939,6 +993,43 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it.each([
+    ["Archaeomancer", ARCHAEOMANCER],
+    ["Izzet Chronarch", IZZET_CHRONARCH]
+  ] as const)("%s returns only an instant or sorcery card from its graveyard", (_name, makeSource) => {
+    const source = makeSource();
+    const profile = profileOf(source);
+    expect(profile.triggers).toMatchObject([{
+      event: "enters-battlefield", subject: "self",
+      effect: { kind: "return-target-card-from-graveyard" },
+      targetKind: "instant-or-sorcery-card-in-your-graveyard"
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    const spell = BOLT();
+    const creature = BEAR();
+    let game = readyToCast([source], [ISLAND(), ISLAND(), ISLAND(), ISLAND(), MOUNTAIN()]);
+    game = stage(game, 0, () => ({ autoPass: false, graveyard: toHand(0, [creature, spell], `${_name}-yard`) }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    expect(legalTargets(game, 0, "instant-or-sorcery-card-in-your-graveyard")).toEqual([
+      { kind: "graveyard-card", seat: 0, instanceId: `${_name}-yard-1` }
+    ]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.stack.at(-1)?.trigger?.definition).toMatchObject({
+      targetKind: "instant-or-sorcery-card-in-your-graveyard"
+    });
+    expect(game.stack.at(-1)?.targets).toEqual([
+      { kind: "graveyard-card", seat: 0, instanceId: `${_name}-yard-1` }
+    ]);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
   it("moves the chosen graveyard card to exile", () => {
@@ -2471,17 +2562,15 @@ describe("casting", () => {
     expect(game.players[0]!.hand).toHaveLength(1);
   });
 
-  it("lets an opponent respond to and counter the ETB ability", () => {
+  it("does not let a spell counter target an ETB ability", () => {
     let game = readyToCast([ETB_DRAWER()], [FOREST(), FOREST()], [COUNTER()], [ISLAND(), ISLAND()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Archivist Bear")).toBe(true);
-    const triggerId = game.stack[0]!.id;
-    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "spell", stackId: triggerId }] });
-    expect(game.players[0]!.hand).toHaveLength(0);
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "cast" && entry.cardId === "foe-0")).toBe(false);
+    expect(game.players[1]!.hand).toHaveLength(1);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Archivist Bear")).toBe(true);
-    expect(game.players[0]!.library).toHaveLength(32);
-    expect(game.players[1]!.graveyard.some((card) => card.name === "Cancel Spell")).toBe(true);
+    expect(game.players[0]!.library).toHaveLength(31);
   });
 
   it("asks the controller to accept or decline a simple optional ETB", () => {

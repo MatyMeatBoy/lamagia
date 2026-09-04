@@ -12,6 +12,7 @@ import {
   applyAction, createGame, pendingSeat, projectGame, runBots, settle,
   type CardData, type DeckInput, type GameAction, type GameState, type GameView, type SeatId
 } from "@prossh/rules";
+import { isSafeManaUndo } from "@prossh/rules";
 
 export interface ImportedDeck {
   readonly id: string;
@@ -30,6 +31,8 @@ export interface MatchRecord {
   lastActivityAt: number;
   readonly source: string;
   readonly deckNames: readonly string[];
+  /** Consecutive cost-free mana activations that are still reversible. */
+  undoHistory: readonly { before: GameState; after: GameState; seat: SeatId }[];
 }
 
 export interface CreatedMatch {
@@ -88,11 +91,12 @@ export function createMatch(decks: readonly ImportedDeck[], options: { seed?: nu
     createdAt: Date.now(),
     lastActivityAt: Date.now(),
     source: options.source,
-    deckNames: decks.map((deck) => deck.name)
+    deckNames: decks.map((deck) => deck.name),
+    undoHistory: []
   };
   matches.set(id, record);
   driveBots(record);
-  return { matchId: id, seat: 0, token, view: projectGame(record.state, 0) };
+  return { matchId: id, seat: 0, token, view: { ...projectGame(record.state, 0), undoAvailable: false } };
 }
 
 export function getMatch(matchId: string): MatchRecord {
@@ -111,7 +115,15 @@ export function seatForToken(match: MatchRecord, token: string | undefined): Sea
 export function viewMatch(matchId: string, token: string | undefined): GameView {
   const match = getMatch(matchId);
   const seat = seatForToken(match, token);
-  return projectGame(match.state, seat);
+  return { ...projectGame(match.state, seat), undoAvailable: canUndo(match, seat) };
+}
+
+function canUndo(match: MatchRecord, seat: SeatId): boolean {
+  const entry = match.undoHistory.at(-1);
+  if (entry?.seat !== seat) return false;
+  const { version: _currentVersion, ...current } = match.state;
+  const { version: _recordedVersion, ...recorded } = entry.after;
+  return JSON.stringify(current) === JSON.stringify(recorded);
 }
 
 export function actInMatch(matchId: string, token: string | undefined, action: GameAction): GameView {
@@ -120,23 +132,45 @@ export function actInMatch(matchId: string, token: string | undefined, action: G
   if (match.state.finished) throw new Error("La partida ya terminó.");
   const owed = pendingSeat(match.state);
   if (owed !== seat) throw new Error("Todavía no es tu turno de decidir.");
-  match.state = applyAction(match.state, seat, action);
+  const before = match.state;
+  const next = applyAction(before, seat, action);
+  if (isSafeManaUndo(before, next, seat, action)) {
+    match.undoHistory = [...match.undoHistory, { before, after: next, seat }].slice(-8);
+  } else {
+    match.undoHistory = [];
+  }
+  match.state = next;
   driveBots(match);
-  return projectGame(match.state, seat);
+  return { ...projectGame(match.state, seat), undoAvailable: canUndo(match, seat) };
 }
 
 export function setAutoPass(matchId: string, token: string | undefined, autoPass: boolean): GameView {
   const match = getMatch(matchId);
   const seat = seatForToken(match, token);
+  match.undoHistory = [];
   match.state = {
     ...match.state,
+    version: match.state.version + 1,
     players: match.state.players.map((player) => (player.seat === seat ? { ...player, autoPass } : player))
   };
   // Enabling auto-pass must immediately consume empty priority windows. Without
   // this settle call, a new match stays visibly parked in upkeep until a click.
   match.state = settle(match.state);
   driveBots(match);
-  return projectGame(match.state, seat);
+  return { ...projectGame(match.state, seat), undoAvailable: false };
+}
+
+/** Undo only the latest safe mana activation for the authenticated seat. */
+export function undoInMatch(matchId: string, token: string | undefined, version: number): GameView {
+  const match = getMatch(matchId);
+  const seat = seatForToken(match, token);
+  const entry = match.undoHistory.at(-1);
+  if (!entry || !canUndo(match, seat) || match.state.version !== version) throw new Error("Esta acción ya no se puede deshacer.");
+  const restored = { ...entry.before, version: match.state.version + 1 };
+  match.state = restored;
+  match.undoHistory = match.undoHistory.slice(0, -1);
+  match.lastActivityAt = Date.now();
+  return { ...projectGame(match.state, seat), undoAvailable: canUndo(match, seat) };
 }
 
 export function matchSummary(match: MatchRecord) {

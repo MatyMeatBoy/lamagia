@@ -1,5 +1,9 @@
 # Work claims
 
+Client scope extension (2026-09-04): `client-mana-images` also owns creature-only P/T display in main.ts plus focused display helper/tests. Darwin owns authoritative current-creature projection; client honors that flag over printed types. main.ts retained until image/stats commit, then released for Undo UI.
+
+CLIENT IMAGE CLAIM (2026-09-04): Astra owns `client-mana-images`: apps/client/src/main.ts existing image patch, focused image helper/tests, Vite types/config, and apps/client/src/assets/mana copies of referenced SVGs (public assets read-only, never staged). Base 470cad0cfc7e58c29d5c174de4354d1818ea4db6. Active; shared integration, no push per user.
+
 This is the lightweight coordination ledger for parallel card and rules work.
 The claim key is a reusable primitive or a disjoint card batch, never a vague
 feature name.
@@ -76,6 +80,8 @@ integrator owns merge order and reruns coverage after each accepted commit.
    later worker stops or chooses another batch.
 
 ## Active claims
+
+Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-response relevance, safe mana undo rules/server endpoint and private projection, focused scenarios/docs. Base `470cad0cfc7e58c29d5c174de4354d1818ea4db6`; active 2026-09-04. Excludes client main.ts/styles. Explicit user assignment supersedes random card allocation; local commit only, no push.
 
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
@@ -226,6 +232,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-return-permanent-card-from-any-graveyard` | Return a targeted permanent card from any graveyard to the battlefield (CR 400.7, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-exile-permanent-card-from-graveyard` | Exile a targeted permanent card from your graveyard (CR 400.7, 701.11) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-exile-permanent-card-from-any-graveyard` | Exile a targeted permanent card from any graveyard (CR 400.7, 701.11) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c17-when-enters-return-target` | Archaeomancer and Izzet Chronarch return a target instant or sorcery card from your graveyard to your hand (CR 109.2a, 400.7, 603.2, 603.3d, 608.2b-c) | `feat/activated-abilities-and-triggers` | active | 2026-09-04 |
 | `arsenal-loyal-retainers` | Loyal Retainers: precombat activated sacrifice and legendary-creature graveyard return (CR 602.2b, 608.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-miraris-wake-pt` | Mirari’s Wake static +1/+1 grant to creatures you control (CR 613.4, 613.5) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-miraris-wake-mana` | Mirari’s Wake adds one mana of a produced type when a controlled land produces mana (CR 605.1, 613.6) | `codex/c13-equipment-cluster` | active | 2026-09-04 |

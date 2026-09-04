@@ -384,6 +384,8 @@ export type SpellEffect =
   /** "that player" in a triggered ability referring back to the event's own player (e.g. the opponent who drew) — CR 603.3d, not a chosen target. */
   | { readonly kind: "lose-life-event-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
+  /** Noncombat damage to the controller of the permanent source. */
+  | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
@@ -629,6 +631,7 @@ export interface TriggerDefinition {
 }
 
 export type TargetKind =
+  | `spell-mana-value-${number}`
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
@@ -656,6 +659,8 @@ export type TargetKind =
   
 
 export interface CardProfile {
+  /** Unconditional self prohibition; targeting remains legal (CR 101.2). */
+  readonly cantBeCountered: boolean;
   readonly name: string;
   readonly typeLine: string;
   readonly types: readonly CardType[];
@@ -1758,6 +1763,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "damage-event-player", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-event-player", amount: "X" }, target: "none" };
   }
+  if ((match = /^~ deals (\w+) damage to you$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-controller", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-controller", amount: "X" }, target: "none" };
+  }
   if ((match = /^That player loses (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "lose-life-event-player", amount }, target: "none" };
@@ -2260,6 +2270,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
   if (/^Return a creature you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature-you-control" };
   if (/^Return (?:another )?target creature card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "creature-card-in-your-graveyard" };
+  // CR 109.2a identifies a card type in a named zone; the triggered ability
+  // chooses this target as it is put on the stack (CR 603.3d).
+  if (/^Return target instant or sorcery card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "instant-or-sorcery-card-in-your-graveyard" };
   if (/^Return (?:another )?target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
   if (/^Return (?:another )?target permanent card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-your-graveyard" };
   if (/^Return (?:another )?target permanent card from a graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-a-graveyard" };
@@ -2311,6 +2324,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const exileAndTransfer = parseExileAndTransferSource(text);
   if (exileAndTransfer) return { effect: exileAndTransfer, target: "artifact-or-enchantment" };
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
+  const exactSpellValue = /^Counter target spell with (?:mana value|converted mana cost) (\d+)$/i.exec(text);
+  if (exactSpellValue) return { effect: { kind: "counter-target-spell" }, target: `spell-mana-value-${Number(exactSpellValue[1])}` };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
   const multiBasicSearch = parseMultiBasicSearch(text);
@@ -2879,7 +2894,8 @@ export function cardProfile(card: CardData): CardProfile {
   const changeling = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "changeling");
   const isPermanent = types.some((type) => type === "Land" || type === "Creature" || type === "Artifact" || type === "Enchantment" || type === "Planeswalker" || type === "Battle");
   const cost = parseManaCost(face.mana_cost);
-  const recognized = recognizeText(text);
+  const cantBeCountered = /(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/i.test(text);
+  const recognized = recognizeText(text.replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n"));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
   const hasExtort = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "extort");
@@ -2985,6 +3001,7 @@ export function cardProfile(card: CardData): CardProfile {
     subtypes,
     cost,
     manaValue: cost?.manaValue ?? Math.round(card.cmc ?? 0),
+    cantBeCountered,
     colors: [...(face.colors ?? card.colors ?? [])],
     colorIdentity: [...(card.color_identity ?? [])],
     keywords,

@@ -1988,6 +1988,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = effectAmount(effect.amount, object);
       return dealDamageFromObject(state, seat, amount, sourceName, object);
     }
+    case "damage-controller": {
+      const source = object.sourcePermanentId ? findPermanent(state, object.sourcePermanentId) : undefined;
+      const seat = source?.controller ?? object.controller;
+      return dealDamageFromObject(state, seat, effectAmount(effect.amount, object), sourceName, object);
+    }
     case "lose-life-target-player-each-controlled-type": {
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
@@ -2929,7 +2934,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "counter-target-spell": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
-      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
+      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry) ? { ...entry, countered: true } : entry)) };
     }
     case "counter-target-spell-with-delayed-draw": {
       const target = object.targets[0];
@@ -2952,14 +2957,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       ];
       return {
         ...state,
-        stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)),
+        stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry) ? { ...entry, countered: true } : entry)),
         delayedDraws: [...state.delayedDraws, ...delayedDraws]
       };
     }
     case "counter-target-spell-to-battlefield": {
       const target = object.targets[0];
       if (!target || target.kind !== "spell") return state;
-      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId
+      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry)
         ? { ...entry, countered: true, counteredToBattlefieldController: controller }
         : entry)) };
     }
@@ -4605,7 +4610,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">, sourceProfile?: CardProfile): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "opponent") return state.players.filter((player) => player.seat !== seat && !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
-  if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-your-graveyard" || kind === "permanent-card-in-a-graveyard" || kind === "legendary-creature-card-in-your-graveyard") {
+  if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-your-graveyard" || kind === "permanent-card-in-a-graveyard" || kind === "legendary-creature-card-in-your-graveyard" || kind === "instant-or-sorcery-card-in-your-graveyard") {
     const sources = kind === "card-in-a-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-a-graveyard" ? state.players : [playerAt(state, seat)];
     return sources.flatMap((player) => player.graveyard
       .filter((card) => kind === "card-in-your-graveyard"
@@ -4619,6 +4624,8 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
         || (kind === "permanent-card-in-your-graveyard" && cardProfile(card).isPermanent)
         || (kind === "permanent-card-in-a-graveyard" && cardProfile(card).isPermanent)
         || (kind === "legendary-creature-card-in-your-graveyard" && isCreature(cardProfile(card)) && cardProfile(card).supertypes.some((value) => value.toLowerCase() === "legendary"))
+        // CR 109.2a: a card type plus a named zone describes matching cards in that zone.
+        || (kind === "instant-or-sorcery-card-in-your-graveyard" && cardProfile(card).types.some((type) => type === "Instant" || type === "Sorcery"))
       )
       .map((card) => ({ kind: "graveyard-card", seat: player.seat, instanceId: card.instance_id }) as Target));
   }
@@ -4638,7 +4645,10 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card)))
       .map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
   }
-  if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
+  if (kind === "spell" || kind.startsWith("spell-mana-value-")) return state.stack
+    .filter(entry => !entry.activated && !entry.trigger)
+    .filter(entry => kind === "spell" || stackSpellManaValue(entry) === Number(kind.slice("spell-mana-value-".length)))
+    .map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   if (kind === "creature-spell" || kind === "noncreature-spell") {
     return state.stack
       .filter((entry) => !entry.activated && !entry.trigger)
@@ -6030,9 +6040,43 @@ export function hasRealChoice(state: GameState, seat: SeatId): boolean {
   return legalActions(state, seat).some((entry) => {
     if (entry.action.type === "pass" || entry.action.type === "concede") return false;
     if (entry.action.type === "activate-mana") return false;
-    if (entry.action.type === "activate") return true;
+    const action = entry.action;
+    let effects: readonly SpellEffect[] | undefined;
+    let sourceProfile: CardProfile | undefined;
+    if (action.type === "cast") {
+      const player = playerAt(state, seat);
+      const card = [...player.hand, ...player.graveyard, ...player.commandZone].find(c => c.instance_id === action.cardId);
+      if (card) {
+        sourceProfile = cardProfile(card);
+        const modal = action.entwined ? combinedModalChoice(sourceProfile) : action.mode === undefined ? undefined : sourceProfile.modalChoices[action.mode];
+        effects = modal ? [modal.effect] : sourceProfile.effects;
+        if (action.kicked) effects = [...effects, ...sourceProfile.kickedEffects];
+      }
+    } else if (action.type === "activate") {
+      const source = findPermanent(state, action.sourceId);
+      if (source) { sourceProfile = cardProfile(source.card); const ability = sourceProfile.activatedAbilities[action.abilityIndex]; if (ability) effects = [ability.effect]; }
+    }
+    if (effects?.length && effects.every(isCounterOnlyEffect) && entry.requiresTarget) {
+      return legalTargets(state, seat, entry.requiresTarget, sourceProfile).some(target => target.kind === "spell"
+        && state.stack.some(spell => spell.id === target.stackId && canCounterSpell(spell)));
+    }
     return true;
   });
+}
+
+/** Casting costs (kicker, tax, alternate payment) do not change mana value. */
+export function stackSpellManaValue(spell: StackObject): number {
+  const profile = cardProfile(spell.card);
+  return profile.manaValue + (profile.cost?.symbols.filter(symbol => symbol.kind === "variable").length ?? 0) * spell.variableValue;
+}
+
+export function canCounterSpell(spell: StackObject): boolean {
+  return !spell.trigger && !spell.activated && !spell.countered && !cardProfile(spell.card).cantBeCountered;
+}
+
+function isCounterOnlyEffect(effect: SpellEffect): boolean {
+  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-to-battlefield"
+    || (effect.kind === "compound" && effect.effects.length > 0 && effect.effects.every(isCounterOnlyEffect));
 }
 
 function shouldAutoPass(state: GameState, seat: SeatId): boolean {

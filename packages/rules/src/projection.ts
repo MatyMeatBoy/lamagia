@@ -43,6 +43,7 @@ export interface AbilityView {
 }
 
 export interface PermanentView extends CardView {
+  readonly isCreature: boolean;
   readonly abilities: readonly AbilityView[];
   readonly controller: SeatId;
   readonly tapped: boolean;
@@ -122,6 +123,8 @@ export interface TopSelectionView {
 }
 
 export interface GameView {
+  /** Set by the authoritative match registry; no undo snapshots leave it. */
+  readonly undoAvailable: boolean;
   readonly viewerSeat: SeatId;
   readonly version: number;
   readonly turn: number;
@@ -218,14 +221,16 @@ function effectiveKeywords(state: GameState, permanent: Permanent): readonly str
 }
 
 function permanentView(state: GameState, permanent: Permanent, available: readonly LegalAction[]): PermanentView {
+  const isCreature = cardProfile(permanent.card).types.includes("Creature");
   const attacking = state.combat.attackers.find((entry) => entry.instanceId === permanent.instance_id);
   const blocking = state.combat.blockers.find((entry) => entry.instanceId === permanent.instance_id);
   const blockedBy = state.combat.blockers.filter((entry) => entry.attackerId === permanent.instance_id).map((entry) => entry.instanceId);
   return {
     ...cardView(permanent.card),
     instance_id: permanent.instance_id,
-    power: powerOf(permanent, state),
-    toughness: toughnessOf(permanent, state),
+    isCreature,
+    power: isCreature ? powerOf(permanent, state) : null,
+    toughness: isCreature ? toughnessOf(permanent, state) : null,
     keywords: effectiveKeywords(state, permanent),
     abilities: abilitiesOf(permanent, available),
     controller: permanent.controller,
@@ -339,6 +344,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
   return {
     viewerSeat,
     version: state.version,
+    undoAvailable: false,
     turn: state.turn,
     step: state.step,
     stepLabel: STEP_LABELS[state.step],

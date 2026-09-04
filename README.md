@@ -7,6 +7,11 @@ Community Magic rules engine and Commander client. Implement reusable rules
 clusters, not one-off card names. Cards share logic by stable `oracle_id`, so
 one good primitive improves every printing and set.
 
+The reusable offline Commander deck generator is documented in
+[docs/DECK_GENERATOR.md](docs/DECK_GENERATOR.md); it composes local catalog,
+imported-deck, and optional cached EDHREC sources without inventing unresolved
+cards.
+
 ## AI contributor quick start
 
 Read [AGENTS.md](AGENTS.md), [docs/HANDOFF_TO_CLAUDE.md](docs/HANDOFF_TO_CLAUDE.md)
@@ -23,6 +28,16 @@ Report `CLAIM`, `BASE SHA`, `COMMIT SHA`, `FILES`, `TESTS`, `SCENARIOS`, and
 `LIMITS`. Never stage `data/`, assets, secrets, or unrelated changes. Full
 instructions: [CONTRIBUTING.md](CONTRIBUTING.md) and
 [IMPLEMENTATION_CLUSTERS.md](IMPLEMENTATION_CLUSTERS.md).
+
+Before asking for integration, run the read-only [worker commit audit](docs/WORKER_COMMIT_AUDIT.md).
+Type-only declarations, repeated union variants, parser-only patches, and
+commits without an executor plus scenario test are rejected and do not count as
+cards.
+
+Workers should use their available compute only for useful, test-backed
+changes. Small correct primitives, executor fixes, regression scenarios, and
+accurate coverage reports all count; placeholders, duplicate effect kinds,
+guessed card totals, and malformed parser fragments do not.
 
 Required direct-commit report (one cluster, at most 20 `oracle_id`s):
 

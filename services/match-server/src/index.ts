@@ -6,7 +6,8 @@ import { existsSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { GameAction } from "@prossh/rules";
-import { actInMatch, createMatch, getMatch, listMatches, matchSummary, seatForToken, setAutoPass, viewMatch, type ImportedDeck } from "./matches.js";
+import { actInMatch, createMatch, getMatch, listMatches, matchSummary, seatForToken, setAutoPass, undoInMatch, viewMatch, type ImportedDeck } from "./matches.js";
+import { readCompletedOracleIds, selectTestedPod } from "./tested-mode.js";
 
 const port = Number(process.env.PORT ?? 8787);
 const clientOrigin = process.env.CLIENT_ORIGIN ?? "http://localhost:5173";
@@ -18,6 +19,7 @@ const catalogDbPath = process.env.CATALOG_DB_PATH ?? fileURLToPath(new URL("../.
 const activePodPath = process.env.ACTIVE_POD_PATH ?? fileURLToPath(new URL("../../../data/decks/cedh-pod.json", import.meta.url));
 const preconsPath = process.env.PRECONS_PATH ?? fileURLToPath(new URL("../../../data/decks/commander-precons.json", import.meta.url));
 const engineReportPath = process.env.ENGINE_REPORT_PATH ?? fileURLToPath(new URL("../../../data/simulations/engine-matrix-last.json", import.meta.url));
+const engineProfilesPath = process.env.ENGINE_PROFILES_PATH ?? fileURLToPath(new URL("../../../data/rules/engine-card-profiles.json", import.meta.url));
 const setCoveragePath = process.env.SET_COVERAGE_PATH ?? fileURLToPath(new URL("../../../data/rules/set-coverage.json", import.meta.url));
 
 interface ImportedPod { readonly source: string; readonly synced_at: string; readonly decks: readonly ImportedDeck[] }
@@ -457,7 +459,7 @@ app.get<{ Querystring: { q?: string; offset?: string; limit?: string; grouped?: 
 // Matches
 // ---------------------------------------------------------------------------
 
-interface CreateBody { readonly mode?: "cedh" | "precon"; readonly deckId?: string; readonly seed?: number }
+interface CreateBody { readonly mode?: "cedh" | "precon" | "tested"; readonly deckId?: string; readonly seed?: number }
 
 app.post<{ Body: CreateBody }>("/api/matches", async (request, reply) => {
   try {
@@ -476,6 +478,17 @@ app.post<{ Body: CreateBody }>("/api/matches", async (request, reply) => {
       const filler = precons.decks.filter((deck) => deck.set_code !== chosen.set_code);
       decks = [chosen, ...sameProduct, ...filler].slice(0, 4);
       source = precons.source;
+    } else if (mode === "tested") {
+      const completeOracleIds = await readCompletedOracleIds(engineProfilesPath);
+      const precons = await readPrecons();
+      const pod = await readActivePod();
+      const tested = selectTestedPod(
+        [{ source: precons.source, decks: precons.decks }, { source: pod.source, decks: pod.decks }],
+        completeOracleIds,
+        request.body?.deckId
+      );
+      decks = tested.decks;
+      source = tested.source;
     } else {
       const pod = await readActivePod();
       decks = [...pod.decks.slice(0, 4)];
@@ -506,6 +519,15 @@ app.post<{ Params: { id: string }; Body: { token?: string; autoPass?: boolean } 
   catch (error) { return reply.code(400).send({ error: failure(error, "No se pudo cambiar la preferencia.") }); }
 });
 
+app.post<{ Params: { id: string }; Body: { token?: string; version?: number } }>("/api/matches/:id/undo", async (request, reply) => {
+  try {
+    if (!Number.isInteger(request.body?.version)) return reply.code(400).send({ error: "Falta la versión de la acción." });
+    const view = undoInMatch(request.params.id, request.body?.token, Number(request.body.version));
+    io.to(`match:${request.params.id}`).emit("match:updated", { matchId: request.params.id, version: view.version });
+    return view;
+  } catch (error) { return reply.code(400).send({ error: failure(error, "La acción ya no se puede deshacer.") }); }
+});
+
 app.get<{ Params: { id: string }; Querystring: { token?: string } }>("/api/matches/:id/summary", async (request, reply) => {
   try {
     const match = getMatch(request.params.id);
@@ -522,5 +544,9 @@ io.on("connection", (socket) => {
   });
 });
 
-await app.listen({ port, host: "0.0.0.0" });
-console.log(`ProsshTCG match server escuchando en http://localhost:${port}`);
+export { app };
+
+if (process.env.NODE_ENV !== "test") {
+  await app.listen({ port, host: "0.0.0.0" });
+  console.log(`ProsshTCG match server escuchando en http://localhost:${port}`);
+}

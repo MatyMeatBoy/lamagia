@@ -21,6 +21,10 @@ Use this contract when adding rules to **La Magia**. Read `AGENTS.md`,
 - Cite the applicable official Comprehensive Rules number in the test or
   handoff. Do not copy XMage, Forge, Arena, Scryfall, or Wizards code/assets.
 
+For deck-generation work, use [the Commander generator contract](DECK_GENERATOR.md):
+keep source adapters reusable, use stable `oracle_id` identity, preserve
+per-card provenance, and keep network disabled in tests.
+
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
@@ -67,11 +71,47 @@ Only report a card as complete when the engine export marks every Oracle clause
 as `fullyImplemented`. A rules/test-only commit may add zero cards; report the
 before/after coverage instead of inventing a card count.
 
+## Use compute only for useful work
+
+More tokens or workers are useful only when they produce verified executable
+behavior. Never spend a run manufacturing type-union entries, duplicate
+keywords, guessed card counts, empty stubs, parser-only branches, or cosmetic
+changes presented as card implementations. If the remaining work is small,
+submit the small useful fix: a reusable parameter, an executor correction, a
+scenario regression, a coverage/claim update, or a precise blocker report.
+
+The Nemotron intake on 2026-09-04 is the permanent example: 81 incoming
+commits were inspected, but 79 were duplicate one-line union additions and the
+others were malformed/incomplete; none added executable cards. This is not a
+failure of effort to hide—return the useful subset and clearly label the rest
+as rejected. Run the audit before reporting a commit as ready.
+
+Rules that must never be repeated:
+
+- one semantic primitive with structured parameters, not one new kind per card
+  or numeric variant;
+- parser/profile + authoritative executor + scenario test + exact oracle map;
+- no card count without `<name> | <oracle_id>` evidence;
+- no edits outside the claimed cluster and no rebasing another worker's base;
+- if no executable improvement is possible, stop and report the exact blocker.
+
 ## Commit contract
 
 One commit contains one cluster and at most 20 new `oracle_id`s. Stage only
 explicit files; never use `git add -A` or include generated data, secrets,
 `ChromaKey/`, `apps/client/public/`, or `site/assets/`.
+
+Before publishing, run the read-only audit against the exact published base:
+
+```text
+python tools/rules/audit_worker_commit.py --base <published-integration-sha> --commit HEAD
+```
+
+Do not add a new `SpellEffect` union member repeatedly for parameter variants.
+Use one structured effect with parameters. A card is only a completion when its
+parser/profile, authoritative executor, scenario test, and Oracle mapping all
+exist. Parser-only or type-only commits are useful review notes but must not be
+reported as implemented cards.
 
 ```bash
 git add -- packages/rules/src/characteristics.ts packages/rules/src/engine.ts packages/rules/src/characteristics.test.ts packages/rules/src/engine.test.ts docs/WORK_CLAIMS.md docs/HANDOFF_TO_CLAUDE.md
