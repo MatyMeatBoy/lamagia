@@ -773,6 +773,8 @@ export interface CardProfile {
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   /** Characteristic-defining P/T "equal to the number of X you control" (CR 604.3). */
   readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | "your-life-total" | null;
+  /** Dynamic +1/+1 bonus for each creature card in all graveyards. */
+  readonly powerToughnessPerGraveyardCreature: boolean;
   /** Lieutenant (Commander 2014): commander-conditional static bonuses. */
   readonly lieutenant: {
     readonly selfPower: number;
@@ -2713,6 +2715,7 @@ function recognizeText(text: string): RecognizedText {
     if (parseProtectionFromLine(line)) continue;
     if (parseStaticKeywordGrant(line).length) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
+    if (/^~ gets \+1\/\+1 for each creature card in all graveyards\.?$/i.test(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     if (/^players have no maximum hand size\.?$/i.test(line)) continue;
@@ -3044,6 +3047,7 @@ export function cardProfile(card: CardData): CardProfile {
     : cdaMatch
       ? (/green permanent/i.test(cdaMatch[1]!) ? "green-permanents-you-control" : `${cdaMatch[1]!.toLowerCase()}s-you-control`) as CardProfile["cdaPowerToughness"]
       : null;
+  const powerToughnessPerGraveyardCreature = /~ gets \+1\/\+1 for each creature card in all graveyards\.?/i.test(text);
   // Lieutenant (Commander 2014): "As long as you control your commander, ~ gets
   // +N/+N and <bonus>." The quoted-ability variants are not covered.
   const lieutenantMatch = /Lieutenant\s+[—–-]\s+As long as you control your commander, ~ gets \+(\d+)\/\+(\d+)(?:\s+and\s+(.+?))?\.?(?:\n|$)/i.exec(text);
@@ -3186,6 +3190,7 @@ export function cardProfile(card: CardData): CardProfile {
     spellCostReductionGrant,
     staticLandManaBonus,
     cdaPowerToughness,
+    powerToughnessPerGraveyardCreature,
     lieutenant,
     combatRules,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
