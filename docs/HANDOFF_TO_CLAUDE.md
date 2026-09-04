@@ -612,6 +612,19 @@ replacement effects.
 Validation: targeted engine tests PASS (164 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: graveyard creature return
+
+The branch recognises `Return target creature card from your graveyard to the
+battlefield`, filters legal choices to creature cards in the caster's graveyard,
+and returns the selected card under the spell controller's control through the
+standard battlefield-entry path. This follows CR 400.1, 400.7 and 608.2c.
+Scenario coverage verifies the card leaves the graveyard and enters the
+battlefield. The scope excludes reanimation costs, replacement effects and
+non-creature cards.
+
+Validation: targeted engine tests PASS (176 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: land-scaled token creation
 
 The branch adds the reusable `Create a token for each land you control`
