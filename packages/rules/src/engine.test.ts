@@ -188,6 +188,10 @@ const AZORIUS_CHARM = () => make({
   name: "Azorius Charm", type_line: "Instant", mana_cost: "{W}{U}", cmc: 2,
   oracle_text: "Choose one —\n• Put target creature on top of its owner's library.\n• Draw a card.\n• Creatures you control get +1/+1 until end of turn."
 });
+const NAYA_CHARM = () => make({
+  name: "Naya Charm", type_line: "Instant", mana_cost: "{R}{G}{W}", cmc: 3,
+  oracle_text: "Choose one —\n• Naya Charm deals 3 damage to target creature.\n• Return target card from a graveyard to its owner's hand.\n• Tap all creatures target player controls."
+});
 const GLOBAL_INDESTRUCTIBLE = () => make({
   name: "Global Indestructible", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
   oracle_text: "Permanents you control gain indestructible until end of turn."
@@ -2034,6 +2038,22 @@ describe("casting", () => {
     });
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Top Bear")).toBe(false);
     expect(game.players[1]!.library[0]!.name).toBe("Top Bear");
+  });
+
+  it("resolves Naya Charm's damage, graveyard return, and tap-all modes", () => {
+    const charm = NAYA_CHARM();
+    expect(profileOf(charm).fullyImplemented).toBe(true);
+    expect(profileOf(charm).modalChoices).toHaveLength(3);
+    const creature = make({ name: "Naya Target", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
+    let game = readyToCast([charm], [MOUNTAIN(), FOREST(), PLAINS()], [], [creature]);
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 0, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Naya Target")).toBe(true);
+
+    game = readyToCast([NAYA_CHARM()], [MOUNTAIN(), FOREST(), PLAINS()], [], [BEAR(), SOL_RING()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 2, targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")[0]!.tapped).toBe(true);
+    expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Sol Ring")[0]!.tapped).toBe(false);
   });
 
   it("reuses the landfall trigger subject when a land enters", () => {

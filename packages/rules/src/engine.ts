@@ -1761,6 +1761,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
             ? { ...permanent, tapped: false } : permanent)
       }));
     }
+    case "tap-all-creatures-target-player": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "player") return state;
+      const ids = playerAt(state, target.seat).battlefield
+        .filter((permanent) => isCreature(cardProfile(permanent.card)))
+        .map((permanent) => permanent.instance_id);
+      const next = withPlayer(state, target.seat, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) =>
+          ids.includes(permanent.instance_id) ? { ...permanent, tapped: true } : permanent)
+      }));
+      return raiseTapEvents(next, state, ids);
+    }
     case "destroy-all-creatures": {
       let next = state;
       for (const permanent of allPermanents(state)) {
