@@ -92,6 +92,9 @@ feature name.
 | `rules-python-cost-actions` | Preserve reusable activated-cost actions (`discard`, `exile`, `sacrifice`) in Oracle IR clusters | `codex/c13-equipment-cluster` | merged (local `2ccfbed`) | 2026-09-04 |
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell | `codex/c13-equipment-cluster` | merged (local `a40b295`) | 2026-09-04 |
 | `c13-trigger-subject-clusters` | Reuse generic permanent ETB subjects instead of rediscovering them per card | `feat/activated-abilities-and-triggers` | merged (local `df3db32`) | 2026-09-04 |
+| `c13-generic-permanent-sacrifice-cost` | Activated costs that sacrifice any permanent, with server-side legal choice validation | `codex/c13-equipment-cluster` | merged (local `f821ede`) | 2026-09-04 |
+| `c13-graveyard-permanent-return` | Return a permanent card from your or any graveyard to the battlefield | `codex/c13-equipment-cluster` | merged (local `eaa7159`) | 2026-09-04 |
+| `c13-graveyard-permanent-exile` | Exile a permanent card from any graveyard with privacy-safe target filtering | `codex/c13-equipment-cluster` | merged (local `e38277a`) | 2026-09-04 |
 
 ## Claim format
 

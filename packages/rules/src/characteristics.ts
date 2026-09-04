@@ -314,6 +314,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
+  | { readonly kind: "return-target-permanent-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-land-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-artifact-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-enchantment-card-from-graveyard-to-battlefield" }

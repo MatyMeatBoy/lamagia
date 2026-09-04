@@ -869,11 +869,12 @@ activated or additional cast cost (for example, Bone Shards-style text) emits
 `discard_card_count` and `cost_actions`. Combined costs preserve both fields,
 so later cards reuse the primitive instead of reparsing the same meaning.
 
-The latest accepted rules batch also covers any-player spell triggers and
-strict validation of explicit activated-cost choices. Validation is green:
-`npm run check`, `npm test` (295 rules tests plus simulator), 34 Oracle Python
-tests, and `git diff --check`. The current export is **7,671/38,711** fully
-implemented catalog cards; the filtered set map is **20.0% across 685
+The latest accepted rules batch also covers any-player spell triggers, generic
+permanent sacrifice costs, and privacy-safe permanent return/exile targets.
+Validation is green: `npm run check`, `npm test` (300 rules tests plus
+simulator), 35 Oracle Python tests, and `git diff --check`. The current export is
+**7,678/38,711** fully
+implemented catalog cards; the filtered set map is **20.1% across 685
 editions**. Alchemy and Un- joke editions are excluded from active totals and
 listed separately in the generated coverage report.
 

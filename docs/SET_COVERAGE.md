@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,037** · cobertura: **20.0%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,043** · cobertura: **20.1%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -55,7 +55,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 | 1998-06-24 | Portal Second Age (`P02`) | starter | 1990s | other | 155 | 79 | 76 | 51.0% |
 | 1998-09-01 | Asia Pacific Land Program (`PALP`) | promos | asia-pacific-land-program | other | 5 | 5 | 0 | 100.0% |
 | 1998-09-26 | Urza's Saga Promos (`PUSG`) | promos | urza-s-saga | other | 1 | 0 | 1 | 0.0% |
-| 1998-10-12 | Urza's Saga (`USG`) | expansion | urza | main | 335 | 69 | 266 | 20.6% |
+| 1998-10-12 | Urza's Saga (`USG`) | expansion | urza | main | 335 | 71 | 264 | 21.2% |
 | 1998-11-01 | Anthologies (`ATH`) | boxed-products | anthologies | other | 81 | 35 | 46 | 43.2% |
 | 1999-01-01 | Arena League 1999 (`PAL99`) | promos | arena-1999 | other | 9 | 5 | 4 | 55.6% |
 | 1999-01-01 | Judge Gift Cards 1999 (`G99`) | promos | judge-1999 | other | 1 | 0 | 1 | 0.0% |
@@ -108,7 +108,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 | 2002-05-27 | Judgment (`JUD`) | expansion | 2000s | main | 143 | 13 | 130 | 9.1% |
 | 2002-07-01 | Hobby Japan Promos (`JP1`) | promos | hobby-japan | other | 5 | 0 | 5 | 0.0% |
 | 2002-09-28 | Onslaught Promos (`PONS`) | promos | onslaught | other | 1 | 0 | 1 | 0.0% |
-| 2002-10-07 | Onslaught (`ONS`) | expansion | onslaught | main | 335 | 48 | 287 | 14.3% |
+| 2002-10-07 | Onslaught (`ONS`) | expansion | onslaught | main | 335 | 49 | 286 | 14.6% |
 | 2003-01-01 | Arena League 2003 (`PAL03`) | promos | arena-2003 | other | 8 | 7 | 1 | 87.5% |
 | 2003-01-01 | Friday Night Magic 2003 (`F03`) | promos | fnm-2003 | other | 13 | 4 | 9 | 30.8% |
 | 2003-01-01 | Japan Junior Tournament (`PJJT`) | promos | junior-2003 | other | 12 | 3 | 9 | 25.0% |
@@ -167,7 +167,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 | 2006-07-21 | Coldsnap Theme Decks (`CST`) | deck-products | coldsnap-theme-decks | other | 52 | 10 | 42 | 19.2% |
 | 2006-09-23 | Time Spiral Promos (`PTSP`) | promos | time-spiral | other | 3 | 0 | 3 | 0.0% |
 | 2006-10-06 | Time Spiral (`TSP`) | expansion | time-spiral | main | 286 | 28 | 258 | 9.8% |
-| 2006-10-06 | Time Spiral Timeshifted (`TSB`) | expansion | time-spiral | main | 121 | 19 | 102 | 15.7% |
+| 2006-10-06 | Time Spiral Timeshifted (`TSB`) | expansion | time-spiral | main | 121 | 20 | 101 | 16.5% |
 | 2006-10-20 | Pro Tour Promos (`PPRO`) | promos | pro-tour | other | 18 | 1 | 17 | 5.6% |
 | 2006-10-31 | DCI Promos (`DCI`) | promos | dci | other | 67 | 20 | 47 | 29.9% |
 | 2006-12-01 | Happy Holidays (`HHO`) | funny-special | happy-holidays | other | 20 | 0 | 20 | 0.0% |
@@ -290,7 +290,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 | 2013-03-15 | Duel Decks: Sorin vs. Tibalt (`DDK`) | duel-decks | duel-decks-sorin-vs-tibalt | other | 71 | 21 | 50 | 29.6% |
 | 2013-04-06 | World Magic Cup Qualifiers (`WMC`) | promos | world-magic-cup-qualifiers | other | 5 | 1 | 4 | 20.0% |
 | 2013-04-27 | Dragon's Maze Promos (`PDGM`) | promos | dragon-s-maze | other | 6 | 2 | 4 | 33.3% |
-| 2013-05-03 | Dragon's Maze (`DGM`) | expansion | 2010s | main | 156 | 38 | 118 | 24.4% |
+| 2013-05-03 | Dragon's Maze (`DGM`) | expansion | 2010s | main | 156 | 39 | 117 | 25.0% |
 | 2013-06-07 | Modern Masters (`MMA`) | masters-remastered | modern-masters | other | 229 | 29 | 200 | 12.7% |
 | 2013-07-18 | Magic 2014 Promos (`PM14`) | promos | magic-2014 | other | 6 | 1 | 5 | 16.7% |
 | 2013-07-18 | San Diego Comic-Con 2013 (`PSDC`) | promos | comic-con-2013 | other | 5 | 0 | 5 | 0.0% |
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 8 | 60 | 11.8% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 9 | 111 | 7.5% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 952 | 4269 | 18.2% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 953 | 4268 | 18.3% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 16 | 43 | 27.1% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 6 | 14 | 30.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 216 | 1480 | 12.7% |
@@ -794,7 +794,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 | eternal | 2020s | 6 | 537 | 88 | 449 | 16.4% |
 | expansion | 1990s | 11 | 1573 | 251 | 1322 | 16.0% |
 | expansion | 2000s | 19 | 3082 | 417 | 2665 | 13.5% |
-| expansion | 2010s | 14 | 2735 | 497 | 2238 | 18.2% |
+| expansion | 2010s | 14 | 2735 | 498 | 2237 | 18.2% |
 | expansion | 2020s | 17 | 3738 | 447 | 3291 | 12.0% |
 | expansion | alara | 2 | 379 | 103 | 276 | 27.2% |
 | expansion | amonkhet | 1 | 272 | 73 | 199 | 26.8% |
@@ -814,7 +814,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 | expansion | mirage | 1 | 335 | 64 | 271 | 19.1% |
 | expansion | mirrodin | 3 | 675 | 174 | 501 | 25.8% |
 | expansion | odyssey | 1 | 335 | 61 | 274 | 18.2% |
-| expansion | onslaught | 1 | 335 | 48 | 287 | 14.3% |
+| expansion | onslaught | 1 | 335 | 49 | 286 | 14.6% |
 | expansion | phyrexia | 4 | 787 | 93 | 694 | 11.8% |
 | expansion | ravnica | 4 | 1081 | 256 | 825 | 23.7% |
 | expansion | strixhaven | 2 | 561 | 66 | 495 | 11.8% |
@@ -822,8 +822,8 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 | expansion | tempest | 1 | 335 | 67 | 268 | 20.0% |
 | expansion | theros | 2 | 507 | 109 | 398 | 21.5% |
 | expansion | thunder-junction | 1 | 276 | 25 | 251 | 9.1% |
-| expansion | time-spiral | 2 | 407 | 47 | 360 | 11.5% |
-| expansion | urza | 3 | 621 | 132 | 489 | 21.3% |
+| expansion | time-spiral | 2 | 407 | 48 | 359 | 11.8% |
+| expansion | urza | 3 | 621 | 134 | 487 | 21.6% |
 | expansion | zendikar | 3 | 773 | 175 | 598 | 22.6% |
 | from-the-vault | 2000s | 2 | 30 | 6 | 24 | 20.0% |
 | from-the-vault | 2010s | 8 | 126 | 16 | 110 | 12.7% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 | masters-remastered | shadows-of-the-past | 1 | 76 | 10 | 66 | 13.2% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 37 | 247 | 13.0% |
 | masters-remastered | tempest-remastered | 1 | 254 | 59 | 195 | 23.2% |
-| masters-remastered | the-list | 1 | 5221 | 952 | 4269 | 18.2% |
+| masters-remastered | the-list | 1 | 5221 | 953 | 4268 | 18.3% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 50 | 363 | 12.1% |
 | masters-remastered | ultimate-masters | 1 | 254 | 34 | 220 | 13.4% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -6283,7 +6283,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 - [ ] Attunement — `5ea46ccf-5e36-4889-bf64-00d4f327e9b2`
 - [ ] Back to Basics — `05c2dec2-d2f7-4036-b91f-4fccba10a8bb`
 - [ ] Barrin's Codex — `f7c237e6-17a4-4e72-8cc3-456aec738394`
-- [ ] Barrin, Master Wizard — `8c6d6684-1943-4af3-98da-951604193911`
 - [ ] Bedlam — `c28d4caf-9b7c-40b1-9cbe-275ca9dae06a`
 - [ ] Befoul — `c573c59a-5a79-4fe1-a6d8-5e0153b5c059`
 - [ ] Bereavement — `fae834ee-2b2e-4f68-b4a4-81592cbecefb`
@@ -6304,7 +6303,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 - [ ] Citanul Centaurs — `831487cf-a377-4c9b-920d-c5bc68f17f24`
 - [ ] Citanul Flute — `6b8183bb-20c4-4d45-b944-508a6a874bb3`
 - [ ] Citanul Hierophants — `f67df84f-667e-41cf-80f9-911abafe70ac`
-- [ ] Claws of Gix — `c4d384d7-f294-4b2d-9971-a4689c150255`
 - [ ] Cloak of Mists — `13358b1d-0a35-48ed-a7fb-70359fa3998f`
 - [ ] Confiscate — `d599a38c-7719-443e-bb59-55bd43a8fee6`
 - [ ] Congregate — `d139294c-36bb-4a1e-800d-50c4a4ae9877`
@@ -9317,7 +9315,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 - [ ] Disciple of Grace — `7f4ceca9-0f55-4fa6-8e64-befbc4303d4e`
 - [ ] Disciple of Malice — `63d92baf-0007-4519-a5bc-d189448ea126`
 - [ ] Discombobulate — `b58d7a20-4bcd-4c33-8cda-955362525f48`
-- [ ] Dispersing Orb — `dabc4ba1-3f90-4cea-a737-d41537cce729`
 - [ ] Disruptive Pitmage — `c7a60f81-f7cb-4fd7-b422-963290964069`
 - [ ] Dive Bomber — `9c121cc4-1ef4-4b8c-bcb1-d3f56f576d84`
 - [ ] Doom Cannon — `c761af28-d7d8-46d3-9bc7-1e44fdf6d0a0`
@@ -15015,7 +15012,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 - [ ] Browbeat — `11cd0c42-4148-4d82-9172-b1a1967fe319`
 - [ ] Call of the Herd — `ee243f81-f51c-4d9a-a396-f7cef84b46c1`
 - [ ] Celestial Dawn — `b4d27fad-9a94-4760-80a6-6a2948109864`
-- [ ] Claws of Gix — `c4d384d7-f294-4b2d-9971-a4689c150255`
 - [ ] Coalition Victory — `e9e25800-9ee7-40c9-b22d-611c7281c125`
 - [ ] Cockatrice — `af354337-424c-4c7e-8ca5-6149261368d2`
 - [ ] Consecrate Land — `4627691c-4ed4-4add-9cc3-2e019be2f9fd`
@@ -22132,7 +22128,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 - [ ] Mutant's Prey — `3836cf33-bd1d-485d-94a2-85ea210ddf7a`
 - [ ] Nivix Cyclops — `68b8bfac-63f7-4dbd-bb2e-4ad394c77335`
 - [ ] Notion Thief — `f8dab16e-1d50-443e-9431-8b6f1cf61c9c`
-- [ ] Obzedat's Aid — `f3be91ce-e99b-4a51-a0f7-a000fd9d0e14`
 - [ ] Opal Lake Gatekeepers — `a5375366-7ddc-4bd5-91c9-dc08f8beb3f6`
 - [ ] Plasm Capture — `3673219d-d2b5-43ad-b0c8-58b583491158`
 - [ ] Pontiff of Blight — `f5a95092-fb71-4b55-bc54-782bd1c603e1`
@@ -36083,7 +36078,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **17,03
 - [ ] Claim // Fame — `16da9e4b-c6ee-4e70-8653-31ca147f3b01`
 - [ ] Clarion Spirit — `dec20b18-afe6-405e-b47d-a757a5645c63`
 - [ ] Claustrophobia — `62d8c8c8-bc24-42f2-9e2e-9efd08e47bb1`
-- [ ] Claws of Gix — `c4d384d7-f294-4b2d-9971-a4689c150255`
 - [ ] Cleansing Nova — `aff34f28-f707-4458-8af3-1bd5b13a6b10`
 - [ ] Clear Shot — `0b8defd2-8530-47d7-a0c6-27aa5162dff6`
 - [ ] Clear the Mind — `141c33be-7a25-4981-b62c-efee8e8ec91d`
