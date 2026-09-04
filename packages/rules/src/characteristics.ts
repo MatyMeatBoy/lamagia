@@ -348,6 +348,13 @@ export type SpellEffect =
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
       readonly reveal: boolean;
+    }
+  | {
+      readonly kind: "search-library-multi";
+      readonly types: readonly CardType[];
+      readonly subtypes?: readonly string[];
+      readonly destinations: readonly ("hand" | "battlefield-tapped")[];
+      readonly reveal: boolean;
     };
 
 /**
@@ -856,7 +863,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // A cost the mana parser rejects, or one carrying `{X}`, is not payable here.
   if (manaSymbols.length && (!manaCost || manaCost.hasVariable)) return null;
 
-  const sacrificesSelf = /sacrifice\s+~/i.test(costText);
+  const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
+  const sacrificesSelf = /sacrifice\s+~/i.test(costText) || namedSelfSacrifice;
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
   const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
@@ -873,6 +881,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/\{[^}]*\}/g, "")
     .replace(/pay\s+\d+\s+life/gi, "")
     .replace(/sacrifice\s+~/gi, "")
+    .replace(/\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/g, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
@@ -1021,6 +1030,17 @@ function parseLandScaledToken(text: string): SpellEffect | null {
   if (!/\s+for each land you control$/i.test(text.trim())) return null;
   const base = parseCreateToken(text.trim().replace(/\s+for each land you control$/i, ""));
   return base?.kind === "create-token" ? { ...base, amount: "lands-you-control" } : null;
+}
+
+function parseMultiBasicSearch(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (/^Search your library for up to two basic land cards, (?:reveal those cards, )?put one onto the battlefield tapped and (?:the other|the rest) into your hand, then shuffle\.?$/i.test(normalized)) {
+    return { kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"], destinations: ["battlefield-tapped", "hand"], reveal: /reveal those cards/i.test(normalized) };
+  }
+  if (/^Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle\.?$/i.test(normalized)) {
+    return { kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"], destinations: ["hand", "hand"], reveal: true };
+  }
+  return null;
 }
 
 function parseCreatureScaledToken(text: string): SpellEffect | null {
@@ -1431,6 +1451,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
+  const multiBasicSearch = parseMultiBasicSearch(text);
+  if (multiBasicSearch) return { effect: multiBasicSearch, target: "none" };
   const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
   const genericSearch = parseLibrarySearch(text);

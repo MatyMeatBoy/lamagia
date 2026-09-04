@@ -183,6 +183,47 @@ describe("flashback parsing", () => {
   });
 });
 
+describe("multi-card library searches", () => {
+  it("recognises Cultivate's battlefield-and-hand basic-land destinations", () => {
+    const profile = cardProfile(card({
+      name: "Cultivate",
+      type_line: "Sorcery",
+      mana_cost: "{2}{G}",
+      oracle_text: "Search your library for up to two basic land cards, put one onto the battlefield tapped and the other into your hand, then shuffle."
+    }));
+    expect(profile.effects[0]).toEqual({
+      kind: "search-library-multi",
+      types: ["Land"],
+      subtypes: ["Basic"],
+      destinations: ["battlefield-tapped", "hand"],
+      reveal: false
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises Armillary Sphere's two-card hand search", () => {
+    const profile = cardProfile(card({
+      name: "Armillary Sphere",
+      type_line: "Artifact",
+      oracle_text: "Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle."
+    }));
+    expect(profile.effects[0]).toMatchObject({ kind: "search-library-multi", destinations: ["hand", "hand"], reveal: true });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises Armillary Sphere's named self-sacrifice activation", () => {
+    const profile = cardProfile(card({
+      name: "Armillary Sphere",
+      type_line: "Artifact",
+      mana_cost: "{2}",
+      oracle_text: "{2}, {T}, Sacrifice Armillary Sphere: Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({ requiresTap: true, sacrificesSelf: true, manaCost: { raw: "{2}" } });
+    expect(profile.activatedAbilities[0]?.effect).toMatchObject({ kind: "search-library-multi", destinations: ["hand", "hand"] });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("effect recognition", () => {
   it("recognizes a draw spell", () => {
     const profile = cardProfile(card({ name: "Test Draw", type_line: "Sorcery", mana_cost: "{2}{U}", oracle_text: "Draw three cards." }));
