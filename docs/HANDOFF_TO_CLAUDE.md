@@ -17,6 +17,9 @@ Coverage numbers have two deliberate units:
   shared card once per edition.
 - **Commander 2013:** 219 / 341 unique cards (64.2%), 122 pending.
 - **Commander 2014:** 195 / 322 unique cards (60.6%), 127 pending.
+- **Composable review vocabulary:** 46 semantic atoms cover 69,497 unresolved
+  component references; 99.9% are reused across clauses. This is scheduling
+  compression only: it does not mark a card implemented.
 
 Do not report the 38,711 profile catalog as implemented cards. Recompute both
 views after accepted rules commits and publish the generated `site/coverage.json`.

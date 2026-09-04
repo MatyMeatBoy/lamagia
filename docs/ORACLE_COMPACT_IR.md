@@ -28,6 +28,15 @@ Target/zone/type differences remain different keys. Original Oracle text is
 never discarded from the normal IR, and compact IR is never imported by the
 rules runtime. It is a context and scheduling artifact only.
 
+The artifact also contains a second, compositional dictionary of semantic
+atoms. For example, two clauses can share `op:draw` and `zone:hand` while
+retaining distinct `target:player` / `target:creature` atoms and their exact
+primitive keys. This is the kanji-like layer: workers can reuse the known
+operation and inspect only the differing operands instead of relearning the
+whole sentence. `semantic_atom_reuse_ratio` measures this reuse. It is still
+review metadata, never permission to merge effects with different targeting,
+zones, types, costs, or timing.
+
 ## Commands
 
 ```powershell
@@ -36,8 +45,9 @@ npm run rules:oracle:compact
 python -m unittest tools/rules/test_compact_oracle_ir.py -v
 ```
 
-The output reports `reuse_ratio` (repeated clause references after interning)
-and `compact_to_raw_ratio` as measurements, not correctness claims. The latter
+The output reports `reuse_ratio` (repeated exact-clause references),
+`semantic_atom_reuse_ratio` (repeated compositional atoms), and
+`compact_to_raw_ratio` as measurements, not correctness claims. The latter
 includes the explanatory symbol table and operands, so it can be larger than
 the raw text when most clauses are unique; `reuse_ratio` is the useful signal
 for worker scheduling. A symbol is useful only when a worker maps it to a structured parser or

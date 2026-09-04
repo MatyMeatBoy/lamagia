@@ -1,6 +1,6 @@
 import unittest
 
-from compact_oracle_ir import build_compact_ir, primitive_key
+from compact_oracle_ir import build_compact_ir, primitive_key, semantic_atoms
 
 
 def card(oracle_id: str, name: str, text: str, *, amount: int = 1) -> dict:
@@ -35,6 +35,28 @@ class CompactOracleIrTests(unittest.TestCase):
         second["clauses"][0]["primitive_cluster"] = "exile|static-or-spell|target-subtype:Equipment|zone:graveyard"
         result = build_compact_ir([first, second])
         self.assertEqual(result["primitive_count"], 2)
+
+    def test_compositional_atoms_share_the_operation_but_not_target_or_zone(self) -> None:
+        player = card("a", "Player Draw", "Target player draws a card.")
+        player["clauses"][0].update({"target_text": "player draws a card", "target_zone": "hand"})
+        creature = card("b", "Creature Draw", "Target creature draws a card.")
+        creature["clauses"][0].update({"target_text": "creature draws a card", "target_zone": "hand", "target_types": ["Creature"]})
+        player_atoms = set(semantic_atoms(player["clauses"][0]))
+        creature_atoms = set(semantic_atoms(creature["clauses"][0]))
+        self.assertIn("op:draw", player_atoms & creature_atoms)
+        self.assertIn("target:player", player_atoms)
+        self.assertIn("target:creature", creature_atoms)
+        self.assertNotEqual(player_atoms, creature_atoms)
+
+    def test_atom_dictionary_is_deterministic_and_reused(self) -> None:
+        result = build_compact_ir([
+            card("a", "One", "Draw a card."),
+            card("b", "Two", "Draw two cards.", amount=2),
+        ])
+        self.assertGreater(result["semantic_atom_count"], 0)
+        self.assertGreater(result["semantic_atom_reference_count"], result["semantic_atom_count"])
+        self.assertGreater(result["semantic_atom_reuse_ratio"], 0)
+        self.assertEqual(result["cards"][0]["program"][0]["atoms"], result["cards"][1]["program"][0]["atoms"])
 
     def test_solved_clauses_do_not_enter_the_dictionary(self) -> None:
         solved = card("a", "Solved", "Draw a card.")
