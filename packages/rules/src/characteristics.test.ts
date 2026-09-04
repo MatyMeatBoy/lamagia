@@ -166,6 +166,27 @@ describe("enters tapped", () => {
     const profile = cardProfile(card({ name: "Test Guildgate", type_line: "Land — Gate", oracle_text: "This land enters tapped.\n{T}: Add {W} or {U}." }));
     expect(profile.fullyImplemented).toBe(true);
   });
+  // CR 614.12: entering-the-battlefield replacement effects worded as "As
+  // [this permanent] enters, ..." are executed as the permanent enters, not
+  // as a later resolved instruction — the two-sentence shock/reveal land
+  // wording must not leak into unimplementedText once entersTapped already
+  // captures the same replacement structurally.
+  it("does not flag a shock land's two-sentence pay-life wording as unimplemented", () => {
+    const profile = cardProfile(card({
+      name: "Test Shock Land", type_line: "Land — Island Swamp",
+      oracle_text: "({T}: Add {U} or {B}.)\nAs Test Shock Land enters, you may pay 2 life. If you don't, it enters tapped."
+    }));
+    expect(profile.entersTapped).toEqual({ kind: "unless-pay-life", life: 2 });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+  it("does not flag a reveal land's two-sentence wording as unimplemented", () => {
+    const profile = cardProfile(card({
+      name: "Test Reveal Land", type_line: "Land",
+      oracle_text: "As Test Reveal Land enters, you may reveal an Island or Swamp card from your hand. If you don't, Test Reveal Land enters tapped.\n{T}: Add {U} or {B}."
+    }));
+    expect(profile.entersTapped).toEqual({ kind: "unless-reveal-card", subtypes: ["Island", "Swamp"] });
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("payment trigger parsing", () => {
