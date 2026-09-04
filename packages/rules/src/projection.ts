@@ -103,6 +103,14 @@ export interface LibrarySearchView {
   readonly allCards: readonly CardView[];
 }
 
+/** The top card is disclosed only to the player resolving Scry. */
+export interface ScryView {
+  readonly sourceId: string;
+  readonly sourceName: string;
+  readonly topCards: readonly CardView[];
+  readonly remaining: number;
+}
+
 export interface GameView {
   readonly viewerSeat: SeatId;
   readonly version: number;
@@ -118,6 +126,8 @@ export interface GameView {
   readonly stack: readonly StackView[];
   /** Present only for the player currently resolving a library search. */
   readonly librarySearch: LibrarySearchView | null;
+  /** Present only for the player currently resolving Scry. */
+  readonly scry: ScryView | null;
   readonly combat: {
     readonly attackers: readonly { readonly instanceId: string; readonly name: string; readonly defender: SeatId }[];
     readonly blockers: readonly { readonly instanceId: string; readonly name: string; readonly attackerId: string }[];
@@ -285,6 +295,14 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
         allCards: state.players[viewerSeat]!.library.map(cardView)
       }
     : null;
+  const pendingScry = state.pendingChoice?.type === "scry" && state.pendingChoice.seat === viewerSeat
+    ? state.pendingChoice : null;
+  const scry: ScryView | null = pendingScry ? {
+    sourceId: pendingScry.sourceId,
+    sourceName: pendingScry.sourceCard.name,
+    topCards: pendingScry.remainingCards.map(cardView),
+    remaining: pendingScry.remainingCards.length
+  } : null;
 
   const targetKinds = new Set<string>([
     "any", "player", "creature", "spell", "creature-spell", "noncreature-spell", "permanent", "artifact-or-enchantment", "creature-with-defender", "creature-with-deathtouch", "creature-with-lifelink", "creature-with-menace", "creature-with-haste", "creature-with-first-strike", "creature-with-double-strike", "creature-with-trample", "creature-with-vigilance", "creature-with-indestructible", "creature-with-hexproof", "creature-with-shroud", "creature-with-reach", "creature-power-at-least-5", "creature-power-at-most-4", "creature-toughness-at-least-4", "creature-toughness-at-most-4",
@@ -321,6 +339,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
       countered: object.countered
     })),
     librarySearch,
+    scry,
     combat: {
       attackers: state.combat.attackers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), defender: entry.defender })),
       blockers: state.combat.blockers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), attackerId: entry.attackerId })),
