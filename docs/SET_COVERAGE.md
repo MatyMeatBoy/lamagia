@@ -25166,7 +25166,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Azami, Lady of Scrolls — `0f8b97fe-3e5e-47c2-9a9d-7f77482aa159`
 - [ ] Azorius Herald — `a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6`
 - [ ] Azorius Keyrune — `7266b491-54e6-4393-a448-d5ae99d965c6`
-- [ ] Baleful Force — `f26fa9e4-f528-4e22-8f7c-329fc3b633e4`
+- [x] Baleful Force — `f26fa9e4-f528-4e22-8f7c-329fc3b633e4`
 - [x] Baloth Woodcrasher — `faaf9975-74df-4e9d-be0c-19a446cd507c`
 - [ ] Bane of Progress — `51f9a6cc-8eb2-44ed-a2d9-913ac514ad67`
 - [x] Basalt Monolith — `6b8cf2a0-b045-4d91-9d91-c602d40c6237`
