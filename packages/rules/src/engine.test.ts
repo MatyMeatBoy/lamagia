@@ -32,6 +32,7 @@ const ETB_DRAWER = () => make({ name: "Archivist Bear", type_line: "Creature —
 const ARTIFACT_ETB_DRAWER = () => make({ name: "Relic Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever an artifact enters the battlefield under your control, draw a card." });
 const ENCHANTMENT_ETB_DRAWER = () => make({ name: "Oath Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever an enchantment enters the battlefield under your control, draw a card." });
 const PERMANENT_ETB_DRAWER = () => make({ name: "Permanent Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever a permanent enters the battlefield under your control, draw a card." });
+const ANOTHER_PERMANENT_ETB_DRAWER = () => make({ name: "Another Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever another permanent enters the battlefield under your control, draw a card." });
 const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Optional Archivist enters the battlefield, you may draw a card." });
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
@@ -1296,6 +1297,13 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[0]!.hand).toHaveLength(1);
     expect(game.players[0]!.library.length).toBeLessThan(99);
+  });
+
+  it("keeps another-permanent ETB triggers from matching their own source", () => {
+    expect(profileOf(ANOTHER_PERMANENT_ETB_DRAWER()).triggers[0]!.subject).toBe("another-permanent-you-control");
+    let game = readyToCast([TEST_ARTIFACT()], [FOREST(), FOREST(), ANOTHER_PERMANENT_ETB_DRAWER()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.hand).toHaveLength(1);
   });
 
   it("returns a targeted artifact permanent to its owner's hand", () => {
