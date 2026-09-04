@@ -96,6 +96,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-compound-draw-life-loss` | Compound draw-and-life-loss effects used by upkeep triggers | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-damage-equal-hand` | Damage to a player equal to cards in that player's hand | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-static-haste-grant` | Static “creatures you control have haste” grants | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-draw-step-additional-card` | Draw-step triggers that draw an additional card for the active player | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 
 ## Claim format
 
