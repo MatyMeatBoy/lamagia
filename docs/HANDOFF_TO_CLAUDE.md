@@ -812,10 +812,11 @@ rows in `docs/WORK_CLAIMS.md`; commits with equivalent fixes were skipped after
 review. No incoming commit identified itself as Hermes/Nemotron; the visible
 author metadata was `MatyMeatBoy`.
 
-Verified after integration: `npm run check` PASS; `npm test` PASS (273 rules
+Verified after integration: `npm run check` PASS; `npm test` PASS (282 rules
 tests, simulator and Oracle compiler tests); C13 is **150/356** implemented
-and the engine export is **7,540/38,711** fully implemented cards. The current
-set map reports **19.4%** across 708 editions.
+and the engine export is **7,559/38,711** fully implemented cards. The current
+set map reports **19.5%** across 708 editions. The latest fork batch also adds
+reusable ETB trigger subjects for artifacts and enchantments under your control.
 
 The primitive compiler now reuses its incremental cache and emits a valid
 one-command C13 worker plan (`npm run rules:oracle:plan:c13`): 5 disjoint
@@ -824,8 +825,8 @@ workers, a 2 GB scheduler ceiling, 20 `oracle_id`s per commit, and an
 in 17.00 s with one process versus 7.92 s with eight processes (2.15x); five
 threads took 22.97 s, so processes remain the default.
 
-The Pages workflow and refreshed `site/coverage.json` were pushed to
-`feat/activated-abilities-and-triggers`. Pages is not yet publicly reachable:
-the repository/API session still returns 404 for the workflow/repository, so
-activation or visibility must be completed in GitHub settings before a live
-URL can be claimed.
+The Pages workflow and refreshed `site/coverage.json` are committed on
+`feat/activated-abilities-and-triggers`. The expected URL is
+`https://matymeatboy.github.io/lamagia/`; GitHub still requires the owner's
+email reauthentication before the private repository can be made public and
+Pages can deploy.
