@@ -176,6 +176,10 @@ const DROMARS_CHARM = () => make({
   name: "Dromar's Charm", type_line: "Instant", mana_cost: "{W}{U}{B}", cmc: 3,
   oracle_text: "Choose one —\n• You gain 5 life.\n• Counter target spell.\n• Target creature gets -2/-2 until end of turn."
 });
+const BOROS_CHARM = () => make({
+  name: "Boros Charm", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
+  oracle_text: "Choose one —\n• Boros Charm deals 4 damage to target player or planeswalker.\n• Permanents you control gain indestructible until end of turn.\n• Target creature gains double strike until end of turn."
+});
 const GLOBAL_INDESTRUCTIBLE = () => make({
   name: "Global Indestructible", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
   oracle_text: "Permanents you control gain indestructible until end of turn."
@@ -1959,6 +1963,28 @@ describe("casting", () => {
     expect(destroy?.requiresTarget).toBe("artifact");
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 2, targets: [{ kind: "permanent", instanceId: ring.instance_id }] });
     expect(game.players[1]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+
+  it("resolves all Boros Charm modes after normalizing its printed name", () => {
+    const charm = BOROS_CHARM();
+    expect(profileOf(charm).fullyImplemented).toBe(true);
+    expect(profileOf(charm).modalChoices).toHaveLength(3);
+
+    let game = readyToCast([charm], [MOUNTAIN(), PLAINS()]);
+    const damage = legalActions(game, 0).find((entry) =>
+      entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode === 0);
+    expect(damage?.requiresTarget).toBe("player-or-planeswalker");
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 0, targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.life).toBe(36);
+
+    game = readyToCast([BOROS_CHARM()], [MOUNTAIN(), PLAINS(), BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 1 });
+    expect(game.players[0]!.battlefield.every((permanent) => permanent.temporaryKeywords?.includes("indestructible"))).toBe(true);
+
+    game = readyToCast([BOROS_CHARM()], [MOUNTAIN(), PLAINS(), BEAR()]);
+    const doubleStrike = legalActions(game, 0).find((entry) =>
+      entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode === 2);
+    expect(doubleStrike?.requiresTarget).toBe("creature");
   });
 
   it("reuses the landfall trigger subject when a land enters", () => {
