@@ -997,7 +997,7 @@ describe("casting", () => {
     expect(genericProfile.activatedAbilities[0]!.tapsCreature?.subtype).toBeUndefined();
   });
 
-  it("reuses draw primitives for C13 draw-only spells", () => {
+  it("reuses draw primitives for C13 draw spells", () => {
     expect(profileOf(C13_BRILLIANT_PLAN())).toMatchObject({ effects: [{ kind: "draw", amount: 3 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_HARMONIZE())).toMatchObject({ effects: [{ kind: "draw", amount: 3 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_VISION_SKEINS())).toMatchObject({ effects: [{ kind: "each-player-draw", amount: 2 }], targetKind: "none", fullyImplemented: true });
