@@ -1111,6 +1111,7 @@ function triggerMatches(
 
   const object = eventObject(event);
   if (!object) return false;
+  if (definition.nontoken && object.card.token) return false;
   const isSelf = object.permanentId === watcher.instanceId;
   const objectIsCreature = isCreature(cardProfile(object.card));
   switch (subject) {

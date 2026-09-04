@@ -1311,6 +1311,8 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+one\s+of\s+your\s+opponents,?\s*(.+)$/i },
 
   // A player is the subject.
+  { event: "spell-cast", subject: "you", spellSubtype: "elf", pattern: /^whenever\s+you\s+cast\s+an\s+elf\s+spell,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "instant-or-sorcery", pattern: /^whenever\s+you\s+cast\s+an?\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
@@ -1337,7 +1339,7 @@ function matchTriggerLine(line: string): { event: TriggerEvent; subject: Trigger
   const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
-    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}) };
+    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}), ...(template.spellSubtype ? { spellSubtype: template.spellSubtype } : {}), ...(template.nontoken ? { nontoken: true } : {}) };
   }
   return null;
 }
@@ -2072,6 +2074,8 @@ function recognizeText(text: string): RecognizedText {
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
+          ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),
+          ...(triggered.nontoken ? { nontoken: true } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
           ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment ? { payCost, manaCost: payCost } : {}),
           ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {})
