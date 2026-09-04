@@ -246,6 +246,7 @@ export type SpellEffect =
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "draw-active-player" }
   | { readonly kind: "draw-equal-tapped-creatures" }
+  | { readonly kind: "draw-equal-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
@@ -1122,6 +1123,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Draw a card for each tapped creature target opponent controls$/i.test(text)) {
     return { effect: { kind: "draw-equal-tapped-creatures" }, target: "player" };
+  }
+  if ((match = /^Draw a card for each (creature|artifact|enchantment|land) you control$/i.exec(text))) {
+    const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1) as CardType;
+    return { effect: { kind: "draw-equal-controlled-type", type }, target: "none" };
   }
   if ((match = /^Each player draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);

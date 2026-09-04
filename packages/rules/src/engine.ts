@@ -1060,6 +1060,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const amount = playerAt(state, target.seat).battlefield.filter((permanent) => permanent.tapped && isCreature(cardProfile(permanent.card))).length;
       return drawCards(state, target.seat, amount);
     }
+    case "draw-equal-controlled-type": {
+      const amount = playerAt(state, controller).battlefield.filter((permanent) => cardProfile(permanent.card).types.includes(effect.type)).length;
+      return drawCards(state, controller, amount);
+    }
     case "each-player-draw": {
       let next = state;
       for (const player of state.players) if (!player.lost) next = drawCards(next, player.seat, effectAmount(effect.amount, object));
