@@ -2158,6 +2158,15 @@ describe("kicker and optional-cost triggers", () => {
     expect(game.players[0]!.graveyard.some((c) => c.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("parses a graveyard self-return dies trigger and a compound draw/loss spell", () => {
+    const spine = () => make({ name: "Spine of Ish Sah", type_line: "Artifact", mana_cost: "{7}", cmc: 7, oracle_text: "When Spine of Ish Sah enters the battlefield, destroy target permanent.\nWhen Spine of Ish Sah is put into a graveyard from the battlefield, return it to its owner's hand." });
+    expect(profileOf(spine()).triggers.some((t) => t.event === "dies" && t.effect.kind === "return-source-to-hand")).toBe(true);
+    expect(profileOf(spine()).fullyImplemented).toBe(true);
+
+    const scrying = () => make({ name: "Skeletal Scrying", type_line: "Instant", mana_cost: "{X}{B}", cmc: 1, oracle_text: "You draw X cards and you lose X life." });
+    expect(profileOf(scrying()).effects.some((e) => e.kind === "compound")).toBe(true);
+  });
+
   it("applies a Medallion-style static cost reduction to matching spells only", () => {
     const medallion = () => make({ name: "Ruby Medallion", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Red spells you cast cost {1} less to cast." });
     const redSpell = () => make({ name: "Fire Jolt", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, colors: ["R"], oracle_text: "Fire Jolt deals 2 damage to any target." });

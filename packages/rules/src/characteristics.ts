@@ -261,6 +261,7 @@ export type SpellEffect =
   | { readonly kind: "draw-then-discard"; readonly draw: number; readonly discard: number }
   | { readonly kind: "exile-self" }
   | { readonly kind: "shuffle-self-into-library" }
+  | { readonly kind: "return-source-to-hand" }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
@@ -1058,6 +1059,7 @@ const TRIGGER_TEMPLATES: readonly {
   // The permanent that carries the ability is the object the event is about.
   { event: "enters-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+dies,?\s*(.+)$/i },
+  { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+is\s+put\s+into\s+a\s+graveyard\s+from\s+the\s+battlefield,?\s*(.+)$/i },
   { event: "attacks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+attacks(?:\s+for\s+the\s+first\s+time)?,?\s*(.+)$/i },
   { event: "blocks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+blocks(?:\s+a\s+creature)?,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
@@ -1125,6 +1127,20 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return {
       effect: { kind: "compound", effects: [{ kind: "draw", amount: 1 }, { kind: "lose-life", amount }] },
+      target: "none"
+    };
+  }
+  if ((match = /^You draw (\w+) cards? and you lose (\w+) life$/i.exec(text))) {
+    const draw = toNumber(match[1]);
+    const life = toNumber(match[2]);
+    if (draw !== null && life !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: draw }, { kind: "lose-life", amount: life }] },
+      target: "none"
+    };
+    const dX = draw ?? (match[1]!.toUpperCase() === "X" ? "X" as const : null);
+    const lX = life ?? (match[2]!.toUpperCase() === "X" ? "X" as const : null);
+    if (dX !== null && lX !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: dX }, { kind: "lose-life", amount: lX }] },
       target: "none"
     };
   }
@@ -1274,6 +1290,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (draw !== null && draw > 0 && discard !== null && discard > 0) return { effect: { kind: "draw-then-discard", draw, discard }, target: "none" };
   }
   if (/^Exile ~$/i.test(text)) return { effect: { kind: "exile-self" }, target: "none" };
+  if (/^Return (?:it|~) to its owner's hand$/i.test(text)) return { effect: { kind: "return-source-to-hand" }, target: "none" };
   if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-self-into-library" }, target: "none" };
   if ((match = /^Target player mills (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);

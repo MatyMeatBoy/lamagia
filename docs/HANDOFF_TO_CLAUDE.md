@@ -950,3 +950,15 @@ the caster's battlefield that match the spell's color/type.
 Validation: check PASS; 273 tests; oracle 25 OK; simulate 200 games 162
 finished 0 failures. Catalog 7,672 -> 7,689; Commander 2014 108 -> 113/337
 (Ruby/Sapphire/Jet/Emerald/Pearl Medallion).
+
+### C14 batch6: graveyard self-return dies trigger + compound draw/loss
+
+- `When ~ is put into a graveyard from the battlefield, return it to its owner's
+  hand` (Fool's Demise, Spine of Ish Sah): a new `dies`/`self` trigger template
+  plus a `return-source-to-hand` effect that lifts the card back out of the
+  graveyard on resolution.
+- `You draw N cards and you lose N life` (Promise of Power, Skeletal Scrying)
+  extends the existing compound draw/life-loss recogniser to N and X.
+
+Validation: check PASS; 274 tests; oracle 25 OK; simulate 200 games 162
+finished 0 failures. Catalog 7,689 -> 7,728; Commander 2014 113 -> 115/337.
