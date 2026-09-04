@@ -185,6 +185,7 @@ const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "
 const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Creature — Vampire", mana_cost: "{3}{U}{B}", cmc: 5, power: "4", toughness: "4", colors: ["U", "B"], keywords: ["Intimidate"], oracle_text: "Intimidate\nOther creatures you control have intimidate.\nWhenever Vela the Night-Clad or another creature you control leaves the battlefield, each opponent loses 1 life." });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
+const DUPLICANT = () => make({ name: "Duplicant", type_line: "Artifact Creature — Shapeshifter", mana_cost: "{6}", cmc: 6, power: "2", toughness: "4", oracle_text: "When Duplicant enters, you may exile target nontoken creature.\nAs long as a card exiled with Duplicant is a creature card, Duplicant has the power, toughness, and creature types of the last creature card exiled with Duplicant. It's still a Shapeshifter." });
 const FLYING_LORD = () => make({ name: "Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control have flying." });
 const OTHER_FLYING_LORD = () => make({ name: "Other Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Other creatures you control have flying." });
 const GAIN_FLYING_LORD = () => make({ name: "Gain Sky Lord", type_line: "Creature — Bird", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Creatures you control gain flying." });
@@ -2105,7 +2106,16 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
   });
 
-  it("reads the event and the subject of each recognised trigger line", () => {
+ it("reads the event and the subject of each recognised trigger line", () => {
+    expect(profileOf(DUPLICANT()).triggers[0]).toMatchObject({
+      event: "enters-battlefield",
+      subject: "self",
+      optional: true,
+      targetKind: "nontoken-creature",
+      effect: { kind: "exile-target-nontoken-creature" }
+    });
+    expect(profileOf(DUPLICANT()).copiesImprintedCreatureStats).toBe(true);
+    expect(profileOf(DUPLICANT()).fullyImplemented).toBe(true);
     expect(profileOf(ETB_DRAWER()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "self", targetKind: "none" });
     expect(profileOf(ARTIFACT_ETB_DRAWER()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "artifact-you-control", effect: { kind: "draw", amount: 1 } });
     expect(profileOf(ENCHANTMENT_ETB_DRAWER()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "enchantment-you-control", effect: { kind: "draw", amount: 1 } });
@@ -2115,10 +2125,26 @@ describe("triggered abilities", () => {
     expect(profileOf(UPKEEP_SAGE()).triggers[0]).toMatchObject({ event: "upkeep", subject: "you" });
     expect(profileOf(CREATURE_COMBAT_DRAWER()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", effect: { kind: "draw", amount: 1 } });
     expect(profileOf(EDRIC()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", optional: true, effect: { kind: "draw", amount: 1 } });
-    expect(profileOf(CREATURE_CAST_DRAWER()).triggers[0]).toMatchObject({ event: "spell-cast", subject: "you", spellType: "creature" });
+   expect(profileOf(CREATURE_CAST_DRAWER()).triggers[0]).toMatchObject({ event: "spell-cast", subject: "you", spellType: "creature" });
+ });
+
+  it("lets Duplicant imprint a nontoken creature on entry", () => {
+    let game = readyToCast([DUPLICANT()], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()], [BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.options).toHaveLength(2);
+    const target = { kind: "permanent" as const, instanceId: game.players[1]!.battlefield[0]!.instance_id };
+   game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+   const duplicant = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Duplicant")!;
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(duplicant.exiledWith?.name).toBe("Grizzly Bears");
+    expect(powerOf(duplicant, game)).toBe(2);
+    expect(toughnessOf(duplicant, game)).toBe(2);
   });
 
-  it("fires creature-spell triggers only for creature spells", () => {
+ it("fires creature-spell triggers only for creature spells", () => {
     let game = readyToCast([BEAR()], [FOREST(), FOREST(), CREATURE_CAST_DRAWER()]);
     game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
