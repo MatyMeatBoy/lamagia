@@ -1118,6 +1118,15 @@ describe("casting", () => {
     expect(powerOf(bane, game)).toBe(4);
   });
 
+  it("counts only destructible permanents for Bane of Progress", () => {
+    const indestructibleRelic = make({ name: "Indestructible Relic", type_line: "Artifact", keywords: ["Indestructible"] });
+    let game = readyToCast([C13_BANE_OF_PROGRESS()], [FOREST(), FOREST(), FOREST(), FOREST()], [], [SOL_RING(), LIFE_LOCK(), indestructibleRelic]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const bane = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Bane of Progress")!;
+    expect(game.players[1]!.battlefield.map((permanent) => permanent.card.name)).toEqual(["Indestructible Relic"]);
+    expect(bane.counters["+1/+1"]).toBe(2);
+  });
+
   it("lets Angel of Finality choose a player and exile that graveyard", () => {
     let game = readyToCast([C13_ANGEL_OF_FINALITY()], [PLAINS(), PLAINS(), PLAINS(), PLAINS()]);
     game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR(), FOREST()], "angel-yard") }));
