@@ -845,7 +845,7 @@ implemented cards. The current set map reports **19.7%** across 708 editions.
 The latest fork batch also adds reusable ETB trigger subjects for artifacts and
 enchantments under your control.
 
-The primitive compiler is now parser version `v8`: it reuses its incremental
+The primitive compiler is now parser version `v9`: it reuses its incremental
 cache, preserves typed sacrifice operands, distinguishes discard activation
 costs from discard effects, and emits a valid
 one-command C13 worker plan (`npm run rules:oracle:plan:c13`): 5 disjoint
@@ -955,7 +955,7 @@ reports **22 implemented**, **2 partial**, and **170 backlog** keyword headings;
 catalog frequency is used only as a prioritization signal. Run
 `npm run rules:keyword:audit` after catalog or parser changes. The regenerated
 C13 queue contains **118** disjoint primitive jobs across five workers, with
-quick-wins ranked first and the existing 2 GB / 20-oracle-id / 11-commit policy.
+**74 quick-wins** ranked first and the existing 2 GB / 20-oracle-id / 11-commit policy.
 - `Return a creature you control to its owner's hand` reuses `return-target-
   creature` with a `creature-you-control` target, so Whitemane Lion-style ETB
   self-bounce resolves.

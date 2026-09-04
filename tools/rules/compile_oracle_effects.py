@@ -29,7 +29,9 @@ from typing import Any
 
 
 DEFAULT_COMMIT_CARD_LIMIT = 20
-ORACLE_IR_PARSER_VERSION = "v8"
+# Bump whenever the emitted IR schema or classification semantics change so
+# incremental runs cannot silently reuse cards compiled by an older parser.
+ORACLE_IR_PARSER_VERSION = "v9"
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (

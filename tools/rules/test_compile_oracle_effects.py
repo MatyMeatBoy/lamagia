@@ -129,7 +129,7 @@ class OracleCompilerTests(unittest.TestCase):
             self.assertEqual(load_card_cache(path)["oracle-1"], entry)
             path.write_text(json.dumps({"format": "prossh-oracle-card-cache/v1", "parser_version": "old", "cards": {"oracle-1": entry}}), encoding="utf-8")
             self.assertEqual(load_card_cache(path), {})
-        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v8")
+        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v9")
 
     def test_separates_discard_activation_cost_from_discard_effect(self) -> None:
         result = classify("{T}, Discard a card: Draw a card.")
