@@ -562,6 +562,20 @@ test --workspace=@prossh/rules`, and `python
 tools/rules/test_compile_oracle_effects.py` PASS; latest rules result 274
 passed, 6 skipped, compiler result 23 passed.
 
+### Reusable untap restriction and source-untap primitive
+
+The profile records `doesNotUntapDuringUntap` for the static text “This
+artifact doesn't untap during your untap step.” The turn engine respects it
+only during the untap step, while a separate `untap-source` activated effect
+resolves through the stack and can untap the controlled source normally. The
+parser accepts straight and typographic apostrophes and normalizes self names,
+so Basalt Monolith is a C13 application of the primitive rather than a named
+exception. Its `{T}: Add {C}{C}{C}` mana ability remains the existing generic
+structured-mana path.
+
+Rules reference: Comprehensive Rules 502.2, 602.1 and 701.21; official
+Wizards source: `https://magic.wizards.com/en/rules`.
+
 ## Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
