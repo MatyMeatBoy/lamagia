@@ -156,6 +156,13 @@ export type SpellEffect =
   | { readonly kind: "this-land-enters-tapped"; readonly basic?: boolean }
   | { readonly kind: "choose-<n>-|-modal"; readonly choices: readonly string[] }
   | { readonly kind: "enchant-creature"; readonly aura?: boolean }
+  if ((match = /^Enchant creature$/i.exec(text)))
+    return { effect: { kind: "enchant-creature", aura: false }, target: "any" };
+  if ((match = /^Enchant (\w+) creature$/i.exec(text)))
+    const type = match[1].toLowerCase();
+    return { effect: { kind: "enchant-creature", aura: type === "aura" }, target: "any" };
+  }
+  
   | { readonly kind: "fortify-{effect}"; readonly effect: string }
   | { readonly kind: "activate-only-as-<n>-sorcery"; readonly n: number }
     | { readonly kind: "damage-prevent-target"; readonly amount: number | "X" }
