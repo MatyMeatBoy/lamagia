@@ -74,7 +74,10 @@ def load_claimed_keys(path: Path | None) -> set[str]:
 
 
 def _entry_key(entry: dict[str, Any], prefix: str) -> str:
-    key = str(entry.get("claim_key") or entry.get("template") or "primitive")
+    # `oracle-clusters.json` uses `cluster`; roadmap JSON uses `claim_key`.
+    # Accept both so the generated C13 plan never collapses every job into the
+    # misleading fallback key `primitive`.
+    key = str(entry.get("claim_key") or entry.get("cluster") or entry.get("template") or "primitive")
     if prefix and not key.startswith(f"{prefix}-"):
         return f"{prefix}-{key.lstrip('-')}"
     return key
@@ -130,11 +133,13 @@ def build_worker_plan(
         batches = [cards[start:start + max_cards_per_commit] for start in range(0, len(cards), max_cards_per_commit)]
         if not batches:
             batches = [[]]
+        cluster = str(entry.get("cluster") or entry.get("template") or "")
+        family = str(entry.get("family") or cluster.split("|", 1)[0] or "other")
         jobs.append(
             {
                 "claim_key": key,
-                "template": str(entry.get("template") or ""),
-                "family": str(entry.get("family") or "other"),
+                "template": str(entry.get("template") or cluster),
+                "family": family,
                 "unlocks": int(entry.get("unlocks") or len(cards)),
                 "blocks": int(entry.get("blocks") or 0),
                 "oracle_ids": cards,
@@ -218,6 +223,7 @@ def main() -> None:
     parser.add_argument("--estimated-worker-mb", type=int, default=256)
     parser.add_argument("--max-cards-per-commit", type=int, default=DEFAULT_COMMIT_CARD_LIMIT)
     parser.add_argument("--min-integration-commits", type=int, default=DEFAULT_INTEGRATION_COMMIT_THRESHOLD)
+    parser.add_argument("--claim-prefix", default="", help="Prefix for generated claim keys, e.g. c13.")
     args = parser.parse_args()
     payload = json.loads(args.roadmap.read_text(encoding="utf-8"))
     plan = build_worker_plan(
@@ -227,7 +233,7 @@ def main() -> None:
         estimated_worker_mb=args.estimated_worker_mb,
         max_cards_per_commit=args.max_cards_per_commit,
         min_integration_commits=args.min_integration_commits,
-        claim_prefix=str(payload.get("claim_prefix") or ""),
+        claim_prefix=args.claim_prefix or str(payload.get("claim_prefix") or ""),
         claimed_keys=load_claimed_keys(args.claims),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)

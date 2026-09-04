@@ -882,3 +882,9 @@ GitHub Pages now builds and publishes the complete client shell, not the old
 standalone map. The client can consume a future public match-server origin via
 `window.__PROSSH_API_BASE__`; without that backend, Pages provides the landing
 screen and static grouped coverage summary while gameplay remains local-only.
+
+The worker planner was hardened for the raw `oracle-clusters.json` schema: it
+now preserves the real cluster key, derives its family, and accepts an explicit
+claim prefix. The C13 plan therefore produces 119 distinct primitive jobs
+across five workers instead of collapsing them under `primitive`; use
+`npm run rules:oracle:plan:c13` to regenerate it after each accepted batch.

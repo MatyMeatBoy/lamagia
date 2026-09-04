@@ -212,6 +212,16 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(plan["min_integration_commits"], DEFAULT_INTEGRATION_COMMIT_THRESHOLD)
         self.assertEqual(DEFAULT_INTEGRATION_COMMIT_THRESHOLD, 11)
 
+    def test_worker_plan_accepts_oracle_cluster_schema_without_collapsing_keys(self) -> None:
+        plan = build_worker_plan([
+            {"cluster": "search-library|static-or-spell|search:Equipment", "card_count": 2,
+             "cards": [{"oracle_id": "a"}, {"oracle_id": "b"}]},
+        ], workers=1, memory_budget_gb=2)
+        job = plan["workers"][0]["jobs"][0]
+        self.assertEqual(job["claim_key"], "search-library|static-or-spell|search:Equipment")
+        self.assertEqual(job["family"], "search-library")
+        self.assertEqual(job["oracle_ids"], ["a", "b"])
+
     def test_reads_only_exact_active_claim_statuses(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "claims.md"
