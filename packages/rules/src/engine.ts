@@ -1104,6 +1104,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "gain-life-each-controlled-type": {
+      if (playersCantGainLife(state)) return state;
+      const amount = allPermanents(state).filter((permanent) => permanent.controller === controller
+        && cardProfile(permanent.card).types.includes(effect.type)).length * effect.amount;
+      if (amount === 0) return state;
+      const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
+    }
     case "gain-life-equal-target-power": {
       if (playersCantGainLife(state)) return state;
       const target = object.targets[0];
