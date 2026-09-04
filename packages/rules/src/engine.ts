@@ -73,6 +73,8 @@ export interface Permanent {
   /** The spell that became this permanent was kicked (CR 702.33e). */
   readonly kicked?: boolean;
   readonly evoked?: boolean;
+  /** A loyalty ability was activated on this planeswalker this turn (CR 606.3). */
+  readonly loyaltyUsedThisTurn?: boolean;
   /** Layer 7c modifications that expire in the cleanup step. */
   readonly powerModifier: number;
   readonly toughnessModifier: number;
@@ -900,7 +902,11 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     deathtouched: false,
     ...(kicked ? { kicked: true } : {}),
     ...(evoked ? { evoked: true } : {}),
-    counters: Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
+    counters: {
+      ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
+      // A planeswalker enters with loyalty counters equal to its printed value (CR 306.5b).
+      ...(profile.types.includes("Planeswalker") && profile.loyalty !== null ? { loyalty: profile.loyalty } : {})
+    },
     powerModifier: 0,
     toughnessModifier: 0,
     temporaryKeywords: [],
@@ -1154,6 +1160,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     }
     case "draw-equal-controlled-type": {
       const amount = playerAt(state, controller).battlefield.filter((permanent) => cardProfile(permanent.card).types.includes(effect.type)).length;
+      return drawCards(state, controller, amount);
+    }
+    case "draw-equal-controlled-color-creature": {
+      const amount = playerAt(state, controller).battlefield.filter((permanent) => {
+        const p = cardProfile(permanent.card);
+        return isCreature(p) && p.colors.includes(effect.color);
+      }).length;
       return drawCards(state, controller, amount);
     }
     case "each-player-draw": {
@@ -2069,6 +2082,15 @@ function applyStateBasedActions(state: GameState): GameState {
       changed = true;
     }
 
+    // Rule 704.5i: a planeswalker with 0 loyalty is put into its owner's graveyard.
+    for (const permanent of allPermanents(next)) {
+      const profile = cardProfile(permanent.card);
+      if (!profile.types.includes("Planeswalker") || !("loyalty" in permanent.counters)) continue;
+      if ((permanent.counters.loyalty ?? 0) > 0) continue;
+      next = movePermanentToZone(next, permanent, "graveyard");
+      changed = true;
+    }
+
     for (const permanent of allPermanents(next)) {
       const profile = cardProfile(permanent.card);
       if (!isCreature(profile)) continue;
@@ -2353,7 +2375,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,
-        battlefield: player.battlefield.map((permanent) => ({ ...permanent, tapped: false, summoningSick: false }))
+        battlefield: player.battlefield.map((permanent) => ({ ...permanent, tapped: false, summoningSick: false, loyaltyUsedThisTurn: false }))
       }));
       next = { ...next, combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
       next = logged(next, next.activeSeat, `Turno ${next.turn} · ${playerAt(next, next.activeSeat).name} endereza sus permanentes.`);
@@ -3007,6 +3029,12 @@ function activatableAbility(
   const player = playerAt(state, seat);
   if (permanent.controller !== seat) return { legal: false };
   if (ability.sorcerySpeed && !sorcerySpeed(state, seat)) return { legal: false };
+  if (ability.loyaltyCost !== undefined) {
+    // One loyalty ability per planeswalker per turn (CR 606.3); a minus ability
+    // needs enough loyalty to pay it (CR 606.5).
+    if (permanent.loyaltyUsedThisTurn) return { legal: false };
+    if (ability.loyaltyCost < 0 && (permanent.counters.loyalty ?? 0) < -ability.loyaltyCost) return { legal: false };
+  }
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
   // the turn began. Non-creature permanents are unaffected by summoning sickness.
@@ -3094,12 +3122,23 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     targets = chosen;
   }
 
-  // Costs are paid in one lump: tap, life, mana, then the sacrifice.
+  // Costs are paid in one lump: tap, life, mana, loyalty, then the sacrifice.
   let next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost,
-    battlefield: current.battlefield.map((permanent) =>
-      permanent.instance_id === source.instance_id && ability.requiresTap ? { ...permanent, tapped: true } : permanent)
+    battlefield: current.battlefield.map((permanent) => {
+      if (permanent.instance_id !== source.instance_id) return permanent;
+      let updated = permanent;
+      if (ability.requiresTap) updated = { ...updated, tapped: true };
+      if (ability.loyaltyCost !== undefined) {
+        updated = {
+          ...updated,
+          counters: { ...updated.counters, loyalty: (updated.counters.loyalty ?? 0) + ability.loyaltyCost },
+          loyaltyUsedThisTurn: true
+        };
+      }
+      return updated;
+    })
   }));
   if (ability.requiresTap) next = raiseTapEvents(next, state, [source.instance_id]);
   if (ability.lifeCost) next = logged(next, seat, `${player.name} paga ${ability.lifeCost} de vida por ${source.card.name}.`);

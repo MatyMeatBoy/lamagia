@@ -97,6 +97,8 @@ export interface ActivatedAbility {
   readonly targetKind: TargetKind;
   /** Level up is an activated ability with a sorcery-speed restriction. */
   readonly sorcerySpeed?: boolean;
+  /** Planeswalker loyalty ability: signed loyalty change paid as the cost (CR 606). */
+  readonly loyaltyCost?: number;
   readonly text: string;
 }
 
@@ -253,6 +255,7 @@ export type SpellEffect =
   | { readonly kind: "draw-active-player" }
   | { readonly kind: "draw-equal-tapped-creatures" }
   | { readonly kind: "draw-equal-controlled-type"; readonly type: CardType }
+  | { readonly kind: "draw-equal-controlled-color-creature"; readonly color: string }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
@@ -866,8 +869,19 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const [, costText, effectText] = activated as unknown as [string, string, string];
   // Mana abilities have their own immediate-resolution path (CR 605.1a).
   if (/^add\b/i.test(effectText.trim())) return null;
-  // Loyalty abilities are a separate cost system the engine does not model yet.
-  if (/^\s*[+\u2212\u2013-]?\d+\s*:/.test(line)) return null;
+  // Planeswalker loyalty abilities (CR 606): the cost is a signed loyalty change.
+  const loyalty = /^\s*([+\u2212\u2013-])?\s*(\d+)\s*$/.exec(costText);
+  if (loyalty) {
+    const recognized = recognizeSentence(effectText);
+    if (!recognized) return null;
+    const magnitude = Number(loyalty[2]);
+    const sign = loyalty[1] && /[\u2212\u2013-]/.test(loyalty[1]) ? -1 : 1;
+    return {
+      index, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost: null,
+      loyaltyCost: magnitude === 0 ? 0 : sign * magnitude, sorcerySpeed: true,
+      effect: recognized.effect, targetKind: recognized.target, text: line.trim()
+    };
+  }
   // The effect grammar is shared by spells, triggers and activations; do not
   // duplicate card-text patterns in the activation-cost parser.
   const recognized = recognizeSentence(effectText);
@@ -1260,6 +1274,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1) as CardType;
     return { effect: { kind: "draw-equal-controlled-type", type }, target: "none" };
   }
+  if ((match = /^Draw a card for each (white|blue|black|red|green) creature you control$/i.exec(text))) {
+    const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
+    return { effect: { kind: "draw-equal-controlled-color-creature", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };
+  }
   if ((match = /^Each player draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-player-draw", amount }, target: "none" };
@@ -1608,6 +1626,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
+    // A deck-construction rule (CR 903.3), not an in-game effect.
+    if (/^~ can be your commander\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;

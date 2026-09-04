@@ -205,7 +205,7 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
         const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
         if (!source) return false;
         const ability = cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
-        return Boolean(ability && (ability.requiresTap || ability.sacrificesSelf));
+        return Boolean(ability && (ability.requiresTap || ability.sacrificesSelf || ability.loyaltyCost !== undefined));
       });
       if (activation && activation.action.type === "activate") {
         const targets = activation.requiresTarget ? pickTargets(state, seat, activation.requiresTarget) : undefined;
