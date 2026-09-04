@@ -25322,7 +25322,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Scarland Thrinax — `1a185f90-69eb-496b-8e38-8dcf241a84a4`
 - [ ] Seer's Sundial — `9929d7ba-cdc5-4099-a0ee-3a15073336f3`
 - [ ] Sek'Kuar, Deathkeeper — `94426127-65c2-435e-ba92-423a3c102061`
-- [ ] Selesnya Charm — `a1a49639-bcc4-4522-8862-c9fb13d40880`
+- [x] Selesnya Charm — `a1a49639-bcc4-4522-8862-c9fb13d40880`
 - [ ] Serene Master — `2ce0d583-81ca-4dca-bde0-52f86b683afd`
 - [ ] Serra Avatar — `c363725f-15cf-4955-aaf1-536b1f8daaed`
 - [ ] Sharuum the Hegemon — `037e7fc9-3aa6-484c-a2c8-43009e45f1d8`
