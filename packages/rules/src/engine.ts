@@ -1321,6 +1321,43 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         pendingChoice: { type: "discard-cards", seat: controller, sourceId: object.id, sourceCard: object.card, amount, remaining: amount }
       };
     }
+    case "oblation": {
+      const target = object.targets[0];
+      if (target?.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const owner = permanent.card.owner;
+      let next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+      }));
+      if (!permanent.card.token) {
+        const shuffled = shuffle([...playerAt(next, owner).library, permanent.card], next.rngState);
+        next = withPlayer({ ...next, rngState: shuffled.state }, owner, (player) => ({ ...player, library: shuffled.items }));
+      }
+      next = drawCards(next, owner, effect.draw);
+      return logged(next, controller, `${sourceName}: ${permanent.card.name} se baraja en la biblioteca; su dueño roba ${effect.draw}.`);
+    }
+    case "target-player-discard-unless-land": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const hand = playerAt(state, target.seat).hand;
+      const land = hand.find((card) => isLand(cardProfile(card)));
+      if (land) {
+        return withPlayer(state, target.seat, (player) => ({
+          ...player,
+          hand: player.hand.filter((card) => card.instance_id !== land.instance_id),
+          graveyard: [...player.graveyard, land]
+        }));
+      }
+      const amount = Math.min(effect.discard, hand.length);
+      if (amount <= 0) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: { type: "discard-cards", seat: target.seat, sourceId: object.id, sourceCard: object.card, amount, remaining: amount }
+      };
+    }
     case "discard-target-player": {
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
