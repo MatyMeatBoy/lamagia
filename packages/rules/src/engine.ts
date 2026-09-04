@@ -1239,6 +1239,7 @@ function triggerMatches(
   }
 
   if (event.kind === "card-drawn") {
+    if (definition.subject === "each-player") return true;
     return definition.subject === "opponent" && event.seat !== watcher.controller;
   }
 

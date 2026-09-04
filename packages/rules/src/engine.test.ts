@@ -425,6 +425,11 @@ const WHERE_ANCIENTS_TREAD = () => make({
   oracle_text: "Whenever a creature you control with power 5 or greater enters the battlefield, you may have ~ deal 5 damage to any target.",
   scryfall_id: "fca2fcab-4f17-448d-bf6d-f6c913159df8"
 });
+const SPITEFUL_VISIONS = () => make({
+  name: "Spiteful Visions", type_line: "Enchantment", mana_cost: "{2}{B}{R}",
+  oracle_text: "Whenever a player draws a card, Spiteful Visions deals 1 damage to that player.",
+  scryfall_id: "922cf963-2b1b-43ad-819e-6e49133e6aae"
+});
 const CYCLING_LAND = () => make({
   name: "Barren Moor", type_line: "Land", oracle_text: "This land enters tapped.\n{T}: Add {B}.\nCycling {B} ({B}, Discard this card: Draw a card.)"
 });
@@ -859,6 +864,14 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.pendingChoice).toBeNull();
     expect(game.players[1]!.life).toBe(40);
+  });
+
+  it("damages the player who draws through Spiteful Visions", () => {
+    let game = readyToCast([DRAW_TWO_TARGET()], [SPITEFUL_VISIONS(), ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 0 }] });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(38);
+    expect(game.log.filter((entry) => entry.text.includes("hace 1 de daño")).length).toBe(2);
   });
 
   it("checks the life comparison after Survival Cache gains life", () => {
