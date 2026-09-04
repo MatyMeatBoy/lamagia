@@ -70,6 +70,7 @@ feature name.
 | `c13-global-creature-keyword` | Temporary keyword grants to all creatures on the battlefield | `codex/c13-equipment-cluster` | merged (`7426cf7`) | 2026-09-03 |
 | `c13-life-gain-prevention` | Static prevention of all player life gain | `codex/c13-equipment-cluster` | merged (`4fc6670`) | 2026-09-03 |
 | `c13-no-maximum-hand-size` | Static removal of the cleanup maximum-hand-size discard | `codex/c13-equipment-cluster` | merged (`64dd7a3`) | 2026-09-03 |
+| `c13-static-creature-pt-grant` | Static +P/+T bonuses for other creatures you control | `codex/c13-equipment-cluster` | merged (`5f1b014`) | 2026-09-03 |
 
 ## Claim format
 
