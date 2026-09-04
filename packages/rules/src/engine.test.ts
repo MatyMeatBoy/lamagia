@@ -3860,15 +3860,38 @@ describe("combat restrictions and landwalk", () => {
     name: "Bog Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
     oracle_text: "Swampwalk"
   });
+  const CRAWLSPACE = () => make({
+    name: "Crawlspace", type_line: "Artifact", mana_cost: "{3}", cmc: 3,
+    oracle_text: "No more than one creature can attack you each combat."
+  });
 
   it("reads each restriction off the printed line", () => {
     expect(profileOf(NO_BLOCKER()).combatRules).toMatchObject({ cannotBlock: true, mustAttack: false });
     expect(profileOf(FLYING_ONLY_BLOCKER()).combatRules.blocksOnlyWithKeyword).toBe("flying");
     expect(profileOf(MUST_ATTACK()).combatRules.mustAttack).toBe(true);
     expect(profileOf(SWAMPWALKER()).combatRules.landwalk).toEqual(["swamp"]);
+    expect(profileOf(CRAWLSPACE()).combatRules.maxAttackers).toBe(1);
     // A recognised restriction is not left over as unimplemented text.
     expect(profileOf(NO_BLOCKER()).fullyImplemented).toBe(true);
     expect(profileOf(SWAMPWALKER()).fullyImplemented).toBe(true);
+    expect(profileOf(CRAWLSPACE()).fullyImplemented).toBe(true);
+  });
+
+  it("enforces a defender-controlled attacker limit", () => {
+    let game = attackWith([BEAR(), FLIER()], [CRAWLSPACE()]);
+    const bear = permanentNamed(game, 0, "Grizzly Bears");
+    const flier = permanentNamed(game, 0, "Storm Crow");
+    expect(() => applyAction(game, 0, {
+      type: "declare-attackers",
+      attackers: [
+        { instanceId: bear.instance_id, defender: 1 },
+        { instanceId: flier.instance_id, defender: 1 }
+      ]
+    })).toThrow(/más de 1 criatura/i);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
+    expect(game.combat.attackers).toHaveLength(1);
   });
 
   /** Both seats staged, attackers already declared by seat 0. */

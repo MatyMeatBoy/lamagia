@@ -2504,6 +2504,14 @@ function requiredAttackers(state: GameState, seat: SeatId): Permanent[] {
     cardProfile(permanent.card).combatRules.mustAttack && canAttack(state, permanent));
 }
 
+/** The tightest defender-controlled attacker limit (CR 508.1d). */
+export function maxAttackersForDefender(state: GameState, defenderSeat: SeatId): number | null {
+  const limits = playerAt(state, defenderSeat).battlefield
+    .map((permanent) => cardProfile(permanent.card).combatRules.maxAttackers)
+    .filter((limit): limit is number => limit !== null);
+  return limits.length ? Math.min(...limits) : null;
+}
+
 /** True while the defending player controls a land matching the attacker's landwalk. */
 function landwalkEvades(state: GameState, attacker: Permanent, defenderSeat: SeatId): boolean {
   const walks = cardProfile(attacker.card).combatRules.landwalk;
@@ -3910,6 +3918,12 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
   }
   const unique = new Set(attackers.map((entry) => entry.instanceId));
   if (unique.size !== attackers.length) throw new Error("Una criatura no puede atacar dos veces.");
+  const byDefender = new Map<SeatId, number>();
+  for (const entry of attackers) byDefender.set(entry.defender, (byDefender.get(entry.defender) ?? 0) + 1);
+  for (const [defender, count] of byDefender) {
+    const limit = maxAttackersForDefender(state, defender);
+    if (limit !== null && count > limit) throw new Error(`No puedes atacar a ese jugador con más de ${limit} criatura${limit === 1 ? "" : "s"}.`);
+  }
   // Attack requirements are checked against the whole declaration (CR 508.1d).
   const missing = requiredAttackers(state, seat).find((permanent) => !unique.has(permanent.instance_id));
   if (missing) throw new Error(`${missing.card.name} ataca en cada combate si puede.`);

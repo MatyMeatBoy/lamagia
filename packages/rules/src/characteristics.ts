@@ -139,6 +139,8 @@ export interface CombatRules {
   readonly cannotBeBlocked: boolean;
   /** "~ attacks each combat if able" (CR 508.1d). */
   readonly mustAttack: boolean;
+  /** "No more than N creatures can attack you each combat" (CR 508.1d). */
+  readonly maxAttackers: number | null;
   /**
    * "~ can block only creatures with flying" and its siblings. The creature is
    * still a legal blocker, but only against an attacker that has the keyword.
@@ -157,6 +159,7 @@ export const NO_COMBAT_RULES: CombatRules = {
   cannotBlock: false,
   cannotBeBlocked: false,
   mustAttack: false,
+  maxAttackers: null,
   blocksOnlyWithKeyword: null,
   landwalk: []
 };
@@ -178,6 +181,9 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   if (/^~ can't be blocked$/.test(text)) return { cannotBeBlocked: true };
   if (/^~ can't attack or block$/.test(text)) return { cannotAttack: true, cannotBlock: true };
   if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
+
+  const attackLimit = /^no more than (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) creatures? can attack you each combat$/.exec(text);
+  if (attackLimit) return { maxAttackers: toNumber(attackLimit[1]) ?? 0 };
 
   const blocksOnly = /^~ can block only creatures with (flying|reach|defender|flash|haste|menace|trample|vigilance|lifelink|deathtouch|first strike|double strike|indestructible|hexproof|shroud)$/.exec(text);
   if (blocksOnly) return { blocksOnlyWithKeyword: blocksOnly[1] as EnforcedKeyword };

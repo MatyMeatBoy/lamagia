@@ -28,6 +28,7 @@ feature name.
 | `c13-global-spell-cost-reduction` | Global instant/sorcery spell cost reductions, including Arcane Melee; reusable for equivalent Oracle text | `feat/activated-abilities-and-triggers` | merged (`HEAD`) | 2026-09-04 |
 | `rules-c13-scry` | Scry N private ordered choices, including chained draw and ETB resolution | `codex/c13-equipment-cluster` | merged (`94eb93d`) | 2026-09-04 |
 | `rules-c13-landfall-pump` | Triggered source self-pump (`~ gets +N/+N`, optional keyword) with reusable source identity | `codex/c13-equipment-cluster` | merged (`285a34c`) | 2026-09-04 |
+| `c13-attack-limit` | Static defender-side limit on the number of creatures that can attack a player each combat; Crawlspace | `feat/activated-abilities-and-triggers` | merged (`HEAD`) | 2026-09-04 |
 | `rules-level-up` | Level up costs, level counters, and the three C13 cards: Echo Mage, Hada Spy Patrol, Kazandu Tuskcaller | `codex/c13-equipment-cluster` | merged (`f325052`) | 2026-09-03 |
 | `rules-tap-untap` | Targeted Tap target creature and Untap target permanent effects | `codex/c13-equipment-cluster` | merged (`4fa0290`) | 2026-09-03 |
 | `rules-mill` | Target player mills a bounded number of cards into their graveyard | `codex/c13-equipment-cluster` | merged (`2842700`) | 2026-09-03 |

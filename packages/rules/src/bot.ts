@@ -8,7 +8,7 @@
 
 import { cardProfile, isCreature, isLand } from "./characteristics.js";
 import {
-  applyAction, defendersAwaitingBlocks, legalAttackers, legalBlockers, legalTargets, legalActions,
+  applyAction, defendersAwaitingBlocks, legalAttackers, legalBlockers, legalTargets, legalActions, maxAttackersForDefender,
   type AttackerDeclaration, type BlockerDeclaration, type GameAction, type GameState, type Permanent, type SeatId
 } from "./engine.js";
 import type { TargetKind } from "./characteristics.js";
@@ -48,6 +48,7 @@ function chooseAttackers(state: GameState, seat: SeatId): AttackerDeclaration[] 
       if (keyword(attacker, "indestructible") || keyword(attacker, "deathtouch")) return true;
       return toughness(attacker) > biggestBlocker || power(attacker) >= 4;
     })
+    .slice(0, maxAttackersForDefender(state, defender) ?? Number.MAX_SAFE_INTEGER)
     .map((attacker) => ({ instanceId: attacker.instance_id, defender }));
 }
 
