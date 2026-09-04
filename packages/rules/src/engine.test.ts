@@ -2216,6 +2216,16 @@ describe("casting", () => {
     expect(game.log.some((entry) => entry.text.includes("descarta") && entry.seat === 0)).toBe(false);
   });
 
+  it("applies a global no-maximum-hand-size effect to every player", () => {
+    const price = make({ name: "Price of Knowledge", type_line: "Enchantment", mana_cost: "{5}{U}", cmc: 6, oracle_text: "Players have no maximum hand size." });
+    expect(profileOf(price)).toMatchObject({ noMaximumHandSizeForAllPlayers: true, fullyImplemented: true });
+    let game = twoSeatGame(Array.from({ length: 12 }, () => BEAR()), Array.from({ length: 12 }, () => BEAR()));
+    game = putOnBattlefield(game, 0, [price]);
+    game = stage(game, 1, (player) => ({ ...player, hand: [...player.hand, ...toHand(1, [BEAR(), BEAR()], "global-no-max")] }));
+    game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 0 && state.step === "untap");
+    expect(game.players[1]!.hand.length).toBeGreaterThan(7);
+  });
+
   it("applies static bonuses to other creatures without buffing the source", () => {
     const profile = profileOf(PUMP_LORD());
     expect(profile.staticPowerToughnessGrants).toEqual([{ scope: "other-creatures-you-control", power: 1, toughness: 1 }]);

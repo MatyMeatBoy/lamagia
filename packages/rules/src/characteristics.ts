@@ -649,6 +649,7 @@ export interface CardProfile {
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
+  readonly noMaximumHandSizeForAllPlayers: boolean;
   readonly locksOpponentsOnYourTurn: boolean;
   readonly grantsExtortToOthers: boolean;
   readonly attackersAssignAsUnblockedWhileAttacking: boolean;
@@ -2481,6 +2482,7 @@ function recognizeText(text: string): RecognizedText {
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
+    if (/^players have no maximum hand size\.?$/i.test(line)) continue;
     if (/^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line)) continue;
     if (/^other creatures you control have extort\.?$/i.test(line)) continue;
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
@@ -2786,6 +2788,7 @@ export function cardProfile(card: CardData): CardProfile {
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
+  const noMaximumHandSizeForAllPlayers = text.split("\n").some((line) => /^players have no maximum hand size\.?$/i.test(line.trim()));
   const locksOpponentsOnYourTurn = /during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?/i.test(text);
   const grantsExtortToOthers = /other creatures you control have extort\.?/i.test(text);
   const attackersAssignAsUnblockedWhileAttacking = /for each creature you control, you may have that creature assign its combat damage as though it weren't blocked/i.test(text);
@@ -2829,6 +2832,7 @@ export function cardProfile(card: CardData): CardProfile {
     staticKeywordGrants,
     preventsLifeGain,
     noMaximumHandSize,
+    noMaximumHandSizeForAllPlayers,
     locksOpponentsOnYourTurn,
     grantsExtortToOthers,
     attackersAssignAsUnblockedWhileAttacking,

@@ -1359,7 +1359,10 @@ function playersCantGainLife(state: GameState): boolean {
 }
 
 function playerHasNoMaximumHandSize(state: GameState, seat: SeatId): boolean {
-  return playerAt(state, seat).battlefield.some((permanent) => cardProfile(permanent.card).noMaximumHandSize);
+  return allPermanents(state).some((permanent) => {
+    const profile = cardProfile(permanent.card);
+    return profile.noMaximumHandSizeForAllPlayers || (permanent.controller === seat && profile.noMaximumHandSize);
+  });
 }
 
 function dealDamageToPermanent(state: GameState, instanceId: string, amount: number, deathtouch: boolean, sourceName: string): GameState {
