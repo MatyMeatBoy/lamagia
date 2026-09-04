@@ -1829,6 +1829,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target enchantment to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "enchantment" };
   if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
   if (/^Return target nonland permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "nonland" };
+  if ((match = /^The owner of target nonland permanent shuffles it into their library, then draws (\w+) cards?$/i.exec(text))) {
+    const draw = toNumber(match[1]);
+    if (draw !== null) return { effect: { kind: "oblation", draw }, target: "nonland" };
+  }
   if ((match = /^Return (X|two|three|four|five|six|seven|\d+) target nonland permanents to their owners' hands$/i.exec(text))) {
     const count = /^X$/i.test(match[1]!) ? "X" as const : toNumber(match[1]);
     if (count !== null) return { effect: { kind: "return-n-nonland-permanents", count }, target: "none" };
@@ -1984,6 +1988,18 @@ function recognizeText(text: string): RecognizedText {
       return {
         effects: [{ kind: "compound", effects: [tokenEffect, { kind: "destroy-all-creatures", xThreshold: Number(martialCoup[2]), excludeSource: true }] }],
         triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+      };
+    }
+  }
+  // Compulsive Research: "Target player draws three cards. Then that player discards two cards unless they discard a land card."
+  const compulsive = /^Target player draws (\w+) cards\.\s*Then that player discards (\w+) cards unless they discard a land card\.$/i.exec(joined);
+  if (compulsive) {
+    const draw = toNumber(compulsive[1]!);
+    const discard = toNumber(compulsive[2]!);
+    if (draw !== null && discard !== null) {
+      return {
+        effects: [{ kind: "compound", effects: [{ kind: "draw-target-player", amount: draw }, { kind: "target-player-discard-unless-land", discard }] }],
+        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "player", unimplementedText: [], covered: true
       };
     }
   }
