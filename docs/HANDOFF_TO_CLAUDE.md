@@ -1082,3 +1082,7 @@ The compiler also memoizes identical clause classification with a bounded
 per-worker cache (`lru_cache(8192)`), covered by the Oracle Python tests. This
 removes repeated regex and operand extraction for recurring wording without
 changing the generated IR.
+
+The accepted fork batch also adds Vela's reusable intimidate/static-grant and
+leaves-battlefield trigger coverage; its detailed historical notes were
+condensed here to avoid reintroducing stale handoff snapshots.
