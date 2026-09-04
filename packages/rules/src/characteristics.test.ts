@@ -382,6 +382,14 @@ describe("untap restrictions", () => {
     expect(profile.doesNotUntapDuringUntap).toBe(true);
     expect(profile.activatedAbilities).toContainEqual(expect.objectContaining({ effect: { kind: "untap-source" } }));
     expect(profile.fullyImplemented).toBe(true);
+
+    const curly = cardProfile(card({
+      name: "Curly Basalt",
+      type_line: "Artifact",
+      oracle_text: "This artifact doesn’t untap during your untap step."
+    }));
+    expect(curly.doesNotUntapDuringUntap).toBe(true);
+    expect(curly.fullyImplemented).toBe(true);
   });
 });
 
