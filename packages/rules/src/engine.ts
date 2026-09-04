@@ -2394,11 +2394,21 @@ function sorcerySpeed(state: GameState, seat: SeatId): boolean {
   return state.activeSeat === seat && MAIN_STEPS.includes(state.step) && state.stack.length === 0;
 }
 
-/** Generic cost reduction from the card's own board-scaled text (CR 118.9). */
-function boardCostReduction(state: GameState, profile: CardProfile): number {
-  if (!profile.costReducesPerBoardCreature) return 0;
-  const creatures = allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length;
-  return profile.costReducesPerBoardCreature * creatures;
+/** Generic cost reduction from board-scaled self text and Medallion-style grants (CR 118.9). */
+function boardCostReduction(state: GameState, seat: SeatId, card: GameCard, profile: CardProfile): number {
+  let reduction = 0;
+  if (profile.costReducesPerBoardCreature) {
+    reduction += profile.costReducesPerBoardCreature * allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length;
+  }
+  const spellColors = profile.colors;
+  for (const permanent of playerAt(state, seat).battlefield) {
+    const grant = cardProfile(permanent.card).spellCostReductionGrant;
+    if (!grant) continue;
+    if (grant.color && !spellColors.includes(grant.color)) continue;
+    if (grant.type && !profile.types.includes(grant.type)) continue;
+    reduction += grant.amount;
+  }
+  return reduction;
 }
 
 function withKicker(cost: ManaCost, kicker: ManaCost | null): ManaCost {
@@ -2419,7 +2429,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!Number.isInteger(variableValue) || variableValue < 0) return { legal: false, note: "El valor de X debe ser un entero no negativo." };
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
-  const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0) - boardCostReduction(state, profile);
+  const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0) - boardCostReduction(state, seat, card, profile);
   const plan = planManaPayment(withKicker(profile.cost, kicked ? profile.kickerCost : null), player, { additionalGeneric, variableValue });
   if (!plan) return { legal: false };
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
@@ -3103,7 +3113,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
 
   const profile = cardProfile(card);
   const spellCost = withKicker(profile.cost!, kicked ? profile.kickerCost : null);
-  const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0) - boardCostReduction(state, profile);
+  const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0) - boardCostReduction(state, seat, card, profile);
   const plan = planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0 });
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 

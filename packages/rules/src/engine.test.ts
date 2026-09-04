@@ -2158,6 +2158,19 @@ describe("kicker and optional-cost triggers", () => {
     expect(game.players[0]!.graveyard.some((c) => c.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("applies a Medallion-style static cost reduction to matching spells only", () => {
+    const medallion = () => make({ name: "Ruby Medallion", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Red spells you cast cost {1} less to cast." });
+    const redSpell = () => make({ name: "Fire Jolt", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, colors: ["R"], oracle_text: "Fire Jolt deals 2 damage to any target." });
+    expect(profileOf(medallion())).toMatchObject({ spellCostReductionGrant: { amount: 1, color: "R" }, fullyImplemented: true });
+    // With Ruby Medallion out, {1}{R} costs just {R}: one Mountain pays it.
+    let game = ready([redSpell()], [MOUNTAIN(), medallion()]);
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.life).toBe(38);
+  });
+
   it("reduces a spell's generic cost by {N} per creature on the battlefield", () => {
     const act = () => make({ name: "Blasphemous Act", type_line: "Sorcery", mana_cost: "{8}{R}", cmc: 9, oracle_text: "This spell costs {1} less to cast for each creature on the battlefield.\nBlasphemous Act deals 13 damage to each creature." });
     expect(profileOf(act()).costReducesPerBoardCreature).toBe(1);
