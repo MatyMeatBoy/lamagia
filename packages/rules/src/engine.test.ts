@@ -1022,6 +1022,15 @@ describe("casting", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("resolves Phyrexian Gargantua's compound ETB draw and life loss", () => {
+    let game = readyToCast([C13_PHYREXIAN_GARGANTUA()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, () => ({ library: toHand(0, [FOREST(), PLAINS()], "gargantua-library") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.life).toBe(38);
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Forest", "Plains"]);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Phyrexian Gargantua")).toBe(true);
+  });
+
   it("resolves Baleful Strix ETB draw when the artifact creature enters", () => {
     let game = readyToCast([C13_BALEFUL_STRIX()], [ISLAND(), SWAMP()]);
     game = stage(game, 0, () => ({ library: toHand(0, [FOREST()], "strix-library") }));
