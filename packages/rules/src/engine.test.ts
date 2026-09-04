@@ -894,6 +894,14 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((candidate) => candidate.instance_id === card.instance_id)).toBe(true);
   });
 
+  it("rejects an activation that names a card outside the available cost choices", () => {
+    let game = readyToCast([BEAR()], [DISCARD_ACTIVATION()]);
+    const source = game.players[0]!.battlefield[0]!;
+    expect(() => applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0, discardCardId: "not-in-hand"
+    })).toThrow();
+  });
+
   it("offers only generated tokens for a token sacrifice cost", () => {
     const sourceCard = TOKEN_SAC_ACTIVATION();
     expect(profileOf(sourceCard).activatedAbilities[0]).toMatchObject({ sacrificesPermanent: { type: "Token", mode: "any" } });
