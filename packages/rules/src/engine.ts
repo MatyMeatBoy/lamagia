@@ -2071,9 +2071,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       for (const permanent of allPermanents(state)) {
         if (!isCreature(cardProfile(permanent.card))) continue;
         if (effect.tappedOnly && !permanent.tapped) continue;
+        if (effect.flyingOnly && !keywordOf(state, permanent, "flying")) continue;
         next = destroyPermanent(next, permanent);
       }
-      return logged(next, controller, `${sourceName} destruye ${effect.tappedOnly ? "las criaturas giradas" : "todas las criaturas"}.`);
+      return logged(next, controller, `${sourceName} destruye ${effect.tappedOnly ? "las criaturas giradas" : effect.flyingOnly ? "las criaturas voladoras" : "todas las criaturas"}.`);
     }
     case "destroy-all-creatures-draw-destroyed": {
       const destroyed = allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))
@@ -3451,6 +3452,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
+      if (kind === "nonartifact-nonblack-creature" && (profile.types.includes("Artifact") || profile.colors.some((color) => color.toUpperCase() === "B"))) return false;
       if (kind === "creature-with-flying" && !keywordOf(state, permanent, "flying")) return false;
       if (kind === "creature-with-defender" && !keywordOf(state, permanent, "defender")) return false;
       if (kind === "creature-with-deathtouch" && !keywordOf(state, permanent, "deathtouch")) return false;
