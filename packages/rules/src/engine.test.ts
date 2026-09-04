@@ -980,6 +980,22 @@ describe("casting", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("offers and pays a chosen untapped Wizard for Azami", () => {
+    let game = readyToCast([], [C13_AZAMI(), AZAMI_WIZARD(), BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;
+    const wizard = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Library Wizard")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.tapId === wizard.instance_id);
+    expect(activation).toBeDefined();
+    expect(activation!.label).toContain("Tap Library Wizard");
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand).toHaveLength(1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === wizard.instance_id)!.tapped).toBe(true);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.tapped).toBe(false);
+  });
+
   it("offers and pays a chosen creature sacrifice activation cost", () => {
     const profile = profileOf(CARNAGE_ALTAR());
     expect(profile.activatedAbilities[0]).toMatchObject({ sacrificesCreature: "any", effect: { kind: "draw", amount: 1 } });
