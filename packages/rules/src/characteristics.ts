@@ -424,6 +424,7 @@ export type TargetKind =
   | "creature-with-trample"
   | "creature-with-vigilance"
   | "creature-with-indestructible"
+  | "creature-with-hexproof"
   | "card-in-your-graveyard" | "creature-card-in-your-graveyard" | "artifact-card-in-your-graveyard" | "enchantment-card-in-your-graveyard" | "land-card-in-a-graveyard" | `subtype:${string}` | "none";
   
 
@@ -1340,6 +1341,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature with trample$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-trample" };
   if (/^Destroy target creature with vigilance$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-vigilance" };
   if (/^Destroy target creature with indestructible$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-indestructible" };
+  if (/^Destroy target creature with hexproof$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-hexproof" };
   if (/^Destroy target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };
   if (/^Destroy target creature with toughness 4 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-least-4" };

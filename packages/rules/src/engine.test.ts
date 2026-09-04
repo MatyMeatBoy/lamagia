@@ -126,6 +126,7 @@ const DOUBLE_STRIKE_REMOVAL = () => make({ name: "Double Strike Bane", type_line
 const TRAMPLE_REMOVAL = () => make({ name: "Trample Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with trample." });
 const VIGILANCE_REMOVAL = () => make({ name: "Vigilance Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with vigilance." });
 const INDESTRUCTIBLE_REMOVAL = () => make({ name: "Indestructible Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with indestructible." });
+const HEXPROOF_REMOVAL = () => make({ name: "Hexproof Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with hexproof." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
@@ -1338,6 +1339,13 @@ describe("casting", () => {
     expect(profileOf(INDESTRUCTIBLE_REMOVAL()).targetKind).toBe("creature-with-indestructible");
     const game = readyToCast([INDESTRUCTIBLE_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [make({ name: "Iron Saint", type_line: "Creature — Angel", power: "4", toughness: "4", keywords: ["Indestructible"] }), BEAR()]);
     expect(legalTargets(game, 0, "creature-with-indestructible")).toHaveLength(1);
+  });
+
+  it("allows the controller to select its own hexproof creature", () => {
+    expect(profileOf(HEXPROOF_REMOVAL()).targetKind).toBe("creature-with-hexproof");
+    let game = readyToCast([HEXPROOF_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [make({ name: "Hex Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Hexproof"] })]);
+    game = putOnBattlefield(game, 0, [make({ name: "Own Hex Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Hexproof"] })]);
+    expect(legalTargets(game, 0, "creature-with-hexproof")).toHaveLength(1);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
