@@ -1654,7 +1654,22 @@ function recognizeText(text: string): RecognizedText {
     // resolved through the normal stack. A trigger's own target is chosen when
     // it goes on the stack (CR 603.3d), so it never leaks into the card-level
     // `targetKind` a spell uses when it is cast.
-    const triggered = matchTriggerLine(line);
+    // "When ~ enters or is put into a graveyard from the battlefield, X" is two
+    // triggers on one line (Ichor Wellspring). "leaves the battlefield" is
+    // approximated as the dies event.
+    const entersOrDies = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?\s+or\s+is\s+put\s+into\s+a\s+graveyard\s+from\s+the\s+battlefield,?\s*(.+)$/i.exec(line);
+    if (entersOrDies) {
+      const rec = recognizeSentence(entersOrDies[1]!.replace(/^you\s+may\s+/i, "").replace(/^it\s+(deals|gets|gains)/i, "~ $1"));
+      const optional = /^you\s+may\b/i.test(entersOrDies[1]!);
+      if (rec) {
+        for (const event of ["enters-battlefield", "dies"] as const) {
+          triggers.push({ event, subject: "self", effect: rec.effect, optional, targetKind: rec.target, sourceText: line });
+        }
+        continue;
+      }
+    }
+    const leavesLine = line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
+    const triggered = matchTriggerLine(leavesLine !== line ? leavesLine : line);
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
