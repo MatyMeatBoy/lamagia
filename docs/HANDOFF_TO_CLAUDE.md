@@ -461,6 +461,21 @@ Five workers are not automatically faster for the current lightweight parser;
 the budget is ready for heavier primitive/review tasks without spawning an
 unbounded pool.
 
+### Reusable Scry primitive
+
+`SpellEffect.kind === "scry"` stores the numeric amount instead of creating a
+card-specific implementation. The engine peeks at `min(N, library.length)`
+cards and gives only the resolving player private choices. Each choice puts one
+card on top or appends it to the bottom; ordinal slots keep duplicate names
+distinct. Selecting top cards prepends them so the player can determine the
+final top order. Scry 1 therefore uses the same flow with one choice, while
+Scry 2 and larger values expose the full arbitrary partition and ordering
+allowed by the rule. Countered spells never open the choice; empty or short
+libraries finish without inventing cards.
+
+Rules reference: Comprehensive Rules 701.22a–d; official Wizards source:
+`https://magic.wizards.com/en/rules`.
+
 ## Recommended next sequence
 
 The bottleneck has moved. Trigger *conditions* and activation *costs* are now
