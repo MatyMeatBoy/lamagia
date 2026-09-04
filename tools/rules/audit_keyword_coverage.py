@@ -41,6 +41,7 @@ IMPLEMENTED = {
     "evoke": "alternative cast cost and sacrifice trigger",
     "extort": "optional spell-cast drain trigger",
     "level up": "activated level counters and level layers",
+    "changeling": "every creature subtype for subtype checks",
 }
 
 PARTIAL = {

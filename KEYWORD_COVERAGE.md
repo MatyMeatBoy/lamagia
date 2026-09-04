@@ -2,7 +2,7 @@
 
 Generated from the local Comprehensive Rules snapshot and the normalized catalog. The report distinguishes keyword abilities from keyword actions and ability words; a high catalog count is a prioritization signal, not proof that all variants share one implementation.
 
-**Summary:** 22 implemented · 2 partial · 170 backlog
+**Summary:** 23 implemented · 2 partial · 169 backlog
 
 `catalog occurrences` counts Scryfall keyword metadata and is used to prioritize reusable primitives. Every implementation still requires a scenario test and a Comprehensive Rules citation.
 
@@ -81,7 +81,7 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.70 | Poisonous | backlog | 0 | Needs a dedicated rules primitive and scenario tests |
 | 702.71 | Transfigure | backlog | 1 | Needs a dedicated rules primitive and scenario tests |
 | 702.72 | Champion | backlog | 24 | Needs a dedicated rules primitive and scenario tests |
-| 702.73 | Changeling | backlog | 251 | Needs a dedicated rules primitive and scenario tests |
+| 702.73 | Changeling | implemented | 251 | every creature subtype for subtype checks |
 | 702.74 | Evoke | implemented | 190 | alternative cast cost and sacrifice trigger |
 | 702.75 | Hideaway | backlog | 93 | Needs a dedicated rules primitive and scenario tests |
 | 702.76 | Prowl | backlog | 19 | Needs a dedicated rules primitive and scenario tests |

@@ -476,6 +476,8 @@ export interface CardProfile {
   readonly colors: readonly string[];
   readonly colorIdentity: readonly string[];
   readonly keywords: readonly EnforcedKeyword[];
+  /** Changeling means this creature has every creature type (CR 702.73). */
+  readonly changeling: boolean;
   readonly power: number | null;
   readonly toughness: number | null;
   readonly loyalty: number | null;
@@ -1782,6 +1784,7 @@ export function cardProfile(card: CardData): CardProfile {
   const keywords = (card.keywords ?? [])
     .map((keyword) => keyword.toLowerCase())
     .filter((keyword): keyword is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(keyword));
+  const changeling = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "changeling");
   const isPermanent = types.some((type) => type === "Land" || type === "Creature" || type === "Artifact" || type === "Enchantment" || type === "Planeswalker" || type === "Battle");
   const cost = parseManaCost(face.mana_cost);
   const recognized = recognizeText(text);
@@ -1834,6 +1837,7 @@ export function cardProfile(card: CardData): CardProfile {
     colors: [...(face.colors ?? card.colors ?? [])],
     colorIdentity: [...(card.color_identity ?? [])],
     keywords,
+    changeling,
     power: numeric(face.power),
     toughness: numeric(face.toughness),
     loyalty: numeric(face.loyalty),
@@ -1896,3 +1900,8 @@ export function isLand(profile: CardProfile): boolean { return profile.types.inc
 export function isArtifact(profile: CardProfile): boolean { return profile.types.includes("Artifact"); }
 export function isEnchantment(profile: CardProfile): boolean { return profile.types.includes("Enchantment"); }
 export function hasKeyword(profile: CardProfile, keyword: EnforcedKeyword): boolean { return profile.keywords.includes(keyword); }
+/** CR 702.73a: a changeling creature has every creature type in every zone. */
+export function hasSubtype(profile: CardProfile, subtype: string): boolean {
+  return profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype.toLowerCase())
+    || (profile.changeling && isCreature(profile));
+}

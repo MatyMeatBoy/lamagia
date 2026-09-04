@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardProfile, normalizedOracle, type CardData } from "./characteristics.js";
+import { cardProfile, hasSubtype, normalizedOracle, type CardData } from "./characteristics.js";
 
 let counter = 0;
 function card(overrides: Partial<CardData> & { name: string; type_line: string }): CardData {
@@ -19,6 +19,13 @@ describe("type line parsing", () => {
   it("marks instants and sorceries as non-permanents", () => {
     expect(cardProfile(card({ name: "Test Bolt", type_line: "Instant" })).isPermanent).toBe(false);
     expect(cardProfile(card({ name: "Test Wrath", type_line: "Sorcery" })).isPermanent).toBe(false);
+  });
+
+  it("models changeling as every creature subtype", () => {
+    const profile = cardProfile(card({ name: "Shapeshifter", type_line: "Creature — Shapeshifter", keywords: ["Changeling"] }));
+    expect(profile.changeling).toBe(true);
+    expect(hasSubtype(profile, "Elf")).toBe(true);
+    expect(hasSubtype(profile, "Goblin")).toBe(true);
   });
 });
 

@@ -13,7 +13,7 @@
  */
 
 import {
-  cardProfile, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
+  cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, payCost, poolTotal, type ManaCost, type ManaPool, type ManaType
@@ -485,7 +485,7 @@ export function manaSources(player: PlayerState, state?: GameState): ManaSource[
       // "<Basic type>s you control produce an additional {C}" (Crypt Ghast):
       // a matching land's ability produces one extra of the granted colour.
       const bonus = landBonuses.find((entry) =>
-        profile.subtypes.some((subtype) => subtype.toLowerCase() === entry.subtype.toLowerCase())
+        isLand(profile) && hasSubtype(profile, entry.subtype)
         && (ability.produces as readonly string[]).includes(entry.mana));
       sources.push({
         permanentId: permanent.instance_id,
@@ -960,7 +960,7 @@ function triggerMatches(
   const condition = definition.condition;
   if (condition?.kind === "no-controlled-subtype") {
     const subtype = condition.subtype.toLowerCase();
-    if (playerAt(state, watcher.controller).battlefield.some((permanent) => cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype))) return false;
+    if (playerAt(state, watcher.controller).battlefield.some((permanent) => hasSubtype(cardProfile(permanent.card), subtype))) return false;
   }
   if (condition?.kind === "controlled-creature-power-at-least") {
     if (!playerAt(state, watcher.controller).battlefield.some((permanent) => isCreature(cardProfile(permanent.card))
@@ -1076,7 +1076,7 @@ function raiseTapEvents(state: GameState, before: GameState, ids: Iterable<strin
 
 function revealOptions(player: PlayerState, subtypes: readonly string[]): GameCard[] {
   const wanted = new Set(subtypes.map((subtype) => subtype.toLowerCase()));
-  return player.hand.filter((card) => cardProfile(card).subtypes.some((subtype) => wanted.has(subtype.toLowerCase())));
+  return player.hand.filter((card) => Array.from(wanted).some((subtype) => hasSubtype(cardProfile(card), subtype)));
 }
 
 function pendingRevealFor(state: GameState, seat: SeatId, sourceId: string, subtypes: readonly string[]): PendingChoice {
@@ -1860,7 +1860,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         ...player,
         battlefield: player.battlefield.map((permanent) => {
           const profile = cardProfile(permanent.card);
-          if (!isCreature(profile) || !profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype)) return permanent;
+          if (!isCreature(profile) || !hasSubtype(profile, subtype)) return permanent;
           return { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } };
         })
       }));
@@ -2031,7 +2031,7 @@ function resolveTop(state: GameState): GameState {
         const typeMatches = !search.types.length || search.types.some((type) => profile.types.includes(type));
         const subtypeMatches = !search.subtypes?.length || search.subtypes.some((subtype) =>
           subtype.toLowerCase() === "basic" ? profile.supertypes.some((value) => value.toLowerCase() === "basic")
-            : profile.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase()));
+            : hasSubtype(profile, subtype));
         return typeMatches && subtypeMatches;
       })
       .map((card) => card.instance_id);
@@ -2882,7 +2882,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "artifact") return profile.types.includes("Artifact");
     if (kind.startsWith("subtype:")) {
       const subtype = kind.slice("subtype:".length).toLowerCase();
-      return profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype);
+      return hasSubtype(profile, subtype);
     }
     if (kind === "artifact-creature-or-planeswalker") return profile.types.some((type) => ["Artifact", "Creature", "Planeswalker"].includes(type));
     if (kind === "nonland") return !isLand(profile);
@@ -3015,7 +3015,7 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     return candidateProfile.types.includes("Land") && search.subtypes?.some((subtype) =>
       subtype.toLowerCase() === "basic"
         ? candidateProfile.supertypes.some((supertype) => supertype.toLowerCase() === "basic")
-        : candidateProfile.subtypes.some((candidateSubtype) => candidateSubtype.toLowerCase() === subtype.toLowerCase()));
+        : hasSubtype(candidateProfile, subtype));
   }).map((candidate) => candidate.instance_id);
   if (!optionIds.length) {
     const shuffled = shuffle(playerAt(next, seat).library, next.rngState);

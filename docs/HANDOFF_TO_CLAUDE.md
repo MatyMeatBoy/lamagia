@@ -956,6 +956,10 @@ catalog frequency is used only as a prioritization signal. Run
 `npm run rules:keyword:audit` after catalog or parser changes. The regenerated
 C13 queue contains **118** disjoint primitive jobs across five workers, with
 **74 quick-wins** ranked first and the existing 2 GB / 20-oracle-id / 11-commit policy.
+
+The keyword audit also closed Changeling (CR 702.73): subtype predicates now
+reuse `hasSubtype`, so a changeling creature matches creature-type searches and
+subtype-wide effects without duplicating logic per card.
 - `Return a creature you control to its owner's hand` reuses `return-target-
   creature` with a `creature-you-control` target, so Whitemane Lion-style ETB
   self-bounce resolves.
@@ -1046,7 +1050,7 @@ draw, Desertion's counter-and-return, Command Tower color identity, Mirari's
 Wake mana/P+T grants, Loyal Retainers restrictions, and Maelstrom Wanderer
 haste reuse. Duplicate or already-equivalent patches were retained once.
 
-Validation: `npm run check` PASS; `npm test` PASS (**314 rules tests**, simulator
+Validation: `npm run check` PASS; `npm test` PASS (**315 rules tests**, simulator
 and **36 Oracle Python tests**). The current export is **7,991/38,711** fully
 implemented cards; C13 is **161/356**, C14 is **127/337**, and the filtered map
 is **21.4% (18,174/84,990 memberships) across 685 editions**.
