@@ -128,6 +128,7 @@ const VIGILANCE_REMOVAL = () => make({ name: "Vigilance Bane", type_line: "Insta
 const INDESTRUCTIBLE_REMOVAL = () => make({ name: "Indestructible Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with indestructible." });
 const HEXPROOF_REMOVAL = () => make({ name: "Hexproof Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with hexproof." });
 const SHROUD_REMOVAL = () => make({ name: "Shroud Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with shroud." });
+const REACH_REMOVAL = () => make({ name: "Reach Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with reach." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
@@ -1354,6 +1355,12 @@ describe("casting", () => {
     let game = readyToCast([SHROUD_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [make({ name: "Shrouded Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Shroud"] })]);
     game = putOnBattlefield(game, 0, [make({ name: "Own Shrouded Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Shroud"] })]);
     expect(legalTargets(game, 0, "creature-with-shroud")).toHaveLength(0);
+  });
+
+  it("supports reach creature target filtering", () => {
+    expect(profileOf(REACH_REMOVAL()).targetKind).toBe("creature-with-reach");
+    const game = readyToCast([REACH_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [make({ name: "Reach Spider", type_line: "Creature — Spider", power: "2", toughness: "4", keywords: ["Reach"] }), BEAR()]);
+    expect(legalTargets(game, 0, "creature-with-reach")).toHaveLength(1);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
