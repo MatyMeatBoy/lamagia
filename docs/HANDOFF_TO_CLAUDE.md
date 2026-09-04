@@ -1111,3 +1111,7 @@ Duplicant imprint and Rhystic Study's caster-specific optional payment. Its
 scenario tests cover accept/decline imprint, payer identity, and hiding an
 unaffordable payment action. Integrate the complete batch only after validation;
 do not import stale handoff snapshots or untracked user folders.
+
+This batch's implementation is validated below after the complete commit set is
+processed; Rhystic Study uses the exact opponent who drew the card as payer,
+and its accept action is omitted when that player cannot pay.
