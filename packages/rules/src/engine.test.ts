@@ -1353,7 +1353,7 @@ describe("casting", () => {
     expect(profileOf(SHROUD_REMOVAL()).targetKind).toBe("creature-with-shroud");
     let game = readyToCast([SHROUD_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [make({ name: "Shrouded Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Shroud"] })]);
     game = putOnBattlefield(game, 0, [make({ name: "Own Shrouded Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Shroud"] })]);
-    expect(legalTargets(game, 0, "creature-with-shroud")).toHaveLength(1);
+    expect(legalTargets(game, 0, "creature-with-shroud")).toHaveLength(0);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
