@@ -1436,5 +1436,5 @@ you may gain life equal to the power of target creature you control”, includin
 target selection before the optional choice and a scenario for Wall of
 Reverence (CR 603.2, 603.5, 608.2h). Optional trigger normalization now keeps
 the subject when parsing “you may ...”, so future optional triggers can reuse
-the same parser path. Commit `WALL_COMMIT` is queued for integration; this
+the same parser path. Commit `b42e985` is queued for integration; this
 branch is based on `b008385` and does not include sibling worker commits.
