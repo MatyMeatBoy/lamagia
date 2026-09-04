@@ -353,6 +353,10 @@ const DELTA = () => make({
   name: "Polluted Delta", type_line: "Land",
   oracle_text: "{T}, Pay 1 life, Sacrifice Polluted Delta: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle."
 });
+const GRAFT_LAND = () => make({
+  name: "Llanowar Reborn", type_line: "Land — Forest", oracle_text: "Llanowar Reborn enters the battlefield tapped.\n{T}: Add {G}.\nGraft 1",
+  produced_mana: ["G"]
+});
 const CYCLING_LAND = () => make({
   name: "Barren Moor", type_line: "Land", oracle_text: "This land enters tapped.\n{T}: Add {B}.\nCycling {B} ({B}, Discard this card: Draw a card.)"
 });
@@ -733,6 +737,21 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(0);
+  });
+
+  it("moves a Graft counter to the next creature that enters", () => {
+    const land = GRAFT_LAND();
+    let game = readyToCast([BEAR()], [land, FOREST()]);
+    const graft = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Llanowar Reborn")!;
+    expect(graft.counters["+1/+1"]).toBe(1);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", sourceCard: { name: "Llanowar Reborn" } });
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    const movedLand = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Llanowar Reborn")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(movedLand.counters["+1/+1"]).toBe(0);
+    expect(bear.counters["+1/+1"]).toBe(1);
   });
 
   it("checks the life comparison after Survival Cache gains life", () => {
