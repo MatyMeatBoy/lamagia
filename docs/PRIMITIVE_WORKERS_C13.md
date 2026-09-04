@@ -17,34 +17,6 @@ Each primitive is assigned to exactly one worker; jobs sharing an oracle_id are 
 | normal | `c13-creatures-can-attack-you` | combat-restriction | 1 | 0 | 1 | 1 |
 Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 
-| normal | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 |
-Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
-
-| normal | `c13-sacrifice-beast-you-gain` | activated | 1 | 0 | 1 | 1 |
-Cards: Ravenous Baloth [ee771e66-72f8-480f-9920-92c68ab93c3b]
-
-| normal | `c13-was-kicked-has-split` | replacement | 1 | 0 | 1 | 1 |
-Cards: Molten Disaster [21390513-1ed0-48f2-a7fa-020da8f803c0]
-
-| normal | `c13-when-enters-sacrifice-unless` | triggered | 1 | 0 | 1 | 1 |
-Cards: Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
-
-| normal | `c13-when-you-cast-create` | triggered | 1 | 0 | 1 | 1 |
-Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
-
-| normal | `c13-whenever-creature-you-control-2` | triggered | 1 | 0 | 1 | 1 |
-Cards: Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
-
-
-## Worker 2
-
-7 primitives / 7 unique cards
-
-| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
-| --- | --- | --- | ---: | ---: | ---: | ---: |
-| normal | `c13-destroy-target-nonblack-creatures` | other | 1 | 0 | 1 | 1 |
-Cards: Reckless Spite [a684df3a-5441-4daa-86d1-c47a91b35e6a]
-
 | normal | `c13-prevent-all-combat-damage` | other | 1 | 0 | 1 | 1 |
 Cards: Guard Gomazoa [7c565975-aebc-4599-ac32-5594c718e2cb]
 
@@ -60,11 +32,11 @@ Cards: Dungeon Geists [ab5ebae2-cd77-4a7d-a93b-8042cd486429]
 | normal | `c13-when-you-cycle-you` | triggered | 1 | 0 | 1 | 1 |
 Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
 
-| normal | `c13-whenever-opponent-draws-card` | triggered | 1 | 0 | 1 | 1 |
-Cards: Nekusar, the Mindrazer [8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6]
+| normal | `c13-whenever-creature-you-control-2` | triggered | 1 | 0 | 1 | 1 |
+Cards: Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
 
 
-## Worker 3
+## Worker 2
 
 7 primitives / 7 unique cards
 
@@ -88,11 +60,11 @@ Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
 | normal | `c13-when-you-cycle-you-2` | triggered | 1 | 0 | 1 | 1 |
 Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
 
-| normal | `c13-whenever-player-draws-card` | triggered | 1 | 0 | 1 | 1 |
-Cards: Spiteful Visions [922cf963-2b1b-43ad-819e-6e49133e6aae]
+| normal | `c13-whenever-opponent-draws-card` | triggered | 1 | 0 | 1 | 1 |
+Cards: Nekusar, the Mindrazer [8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6]
 
 
-## Worker 4
+## Worker 3
 
 7 primitives / 7 unique cards
 
@@ -113,16 +85,16 @@ Cards: Razor Hippogriff [d121108e-f0bc-469b-bf94-e5e5308014a2]
 | normal | `c13-when-enters-you-may` | triggered | 1 | 0 | 1 | 1 |
 Cards: Mnemonic Wall [f2933616-211b-4d3f-8064-2be61c26079a]
 
-| normal | `c13-whenever-creature-dies-untap` | triggered | 1 | 0 | 1 | 1 |
-Cards: Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
+| normal | `c13-whenever-another-creature-you` | triggered | 1 | 0 | 1 | 1 |
+Cards: Stalking Vengeance [5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb]
 
-| normal | `c13-whenever-spell-ability-causes` | triggered | 1 | 0 | 1 | 1 |
-Cards: Widespread Panic [853a3c2b-3d37-453a-8a77-4d90bd3a1cb7]
+| normal | `c13-whenever-player-draws-card` | triggered | 1 | 0 | 1 | 1 |
+Cards: Spiteful Visions [922cf963-2b1b-43ad-819e-6e49133e6aae]
 
 
-## Worker 5
+## Worker 4
 
-6 primitives / 6 unique cards
+7 primitives / 7 unique cards
 
 | Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
@@ -140,6 +112,34 @@ Cards: Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
 
 | normal | `c13-when-sharuum-enters-you` | triggered | 1 | 0 | 1 | 1 |
 Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
+
+| normal | `c13-whenever-creature-dies-untap` | triggered | 1 | 0 | 1 | 1 |
+Cards: Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
+
+| normal | `c13-whenever-spell-ability-causes` | triggered | 1 | 0 | 1 | 1 |
+Cards: Widespread Panic [853a3c2b-3d37-453a-8a77-4d90bd3a1cb7]
+
+
+## Worker 5
+
+6 primitives / 6 unique cards
+
+| Priority | Claim | Family | Cards | Quick wins | Unlocks | Batches |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| normal | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 |
+Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
+
+| normal | `c13-sacrifice-beast-you-gain` | activated | 1 | 0 | 1 | 1 |
+Cards: Ravenous Baloth [ee771e66-72f8-480f-9920-92c68ab93c3b]
+
+| normal | `c13-was-kicked-has-split` | replacement | 1 | 0 | 1 | 1 |
+Cards: Molten Disaster [21390513-1ed0-48f2-a7fa-020da8f803c0]
+
+| normal | `c13-when-enters-sacrifice-unless` | triggered | 1 | 0 | 1 | 1 |
+Cards: Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
+
+| normal | `c13-when-you-cast-create` | triggered | 1 | 0 | 1 | 1 |
+Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
 
 | normal | `c13-whenever-creature-you-control` | triggered | 1 | 0 | 1 | 1 |
 Cards: Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]

@@ -1701,3 +1701,12 @@ already-integrated multi-color reduction and combat-prevention work, so it is
 queued for comparison rather than applied wholesale. The integrator continues
 to process incoming fork work in batches of 11+ commits; use the exact
 card-to-commit map when rescuing additional changes.
+
+### Integrator checkpoint: multiple nonblack targets (2026-09-04)
+
+The compiler now carries ordered target requirements on the card profile, not
+only on modal choices. This makes the reusable `destroy-n-creatures` primitive
+honor explicit targets while retaining its deterministic fallback for effects
+without target selection. `Reckless Spite` is covered as two distinct nonblack
+creature targets followed by controller life loss (CR 601.2c, 608.2b). C13 is
+now **191/341 (56.0%)**, with **150 unfinished** and **72 one-line-away**.

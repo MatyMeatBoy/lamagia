@@ -688,6 +688,8 @@ export interface CardProfile {
   readonly effects: readonly SpellEffect[];
   readonly triggers: readonly TriggerDefinition[];
   readonly targetKind: TargetKind;
+  /** Ordered target requirements for non-modal spells with multiple targets. */
+  readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   readonly kickerCost: ManaCost | null;
   readonly kickedEffects: readonly SpellEffect[];
   /** Evoke alternative cost (CR 702.34), null when absent. */
@@ -1297,6 +1299,7 @@ interface RecognizedText {
   readonly activatedAbilities: ActivatedAbility[];
   readonly modalChoices: ModalChoice[];
   readonly targetKind: TargetKind;
+  readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   kickerCost?: ManaCost | null;
   kickedEffects?: SpellEffect[];
   echoCost?: ManaCost | null;
@@ -2381,6 +2384,15 @@ function recognizeText(text: string): RecognizedText {
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
+  // Reckless Spite: "Destroy two target nonblack creatures. You lose 5 life."
+  const recklessSpite = /^Destroy two target nonblack creatures\.\s*You lose 5 life\.$/i.test(joined);
+  if (recklessSpite) {
+    return {
+      effects: [{ kind: "compound", effects: [{ kind: "destroy-n-creatures", count: 2, nonblack: true }, { kind: "lose-life", amount: 5 }] }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "nonblack-creature",
+      targetKinds: ["nonblack-creature", "nonblack-creature"], unimplementedText: [], covered: true
+    };
+  }
   // Rite of Replication: one copy, or five instead when kicked.
   if (/^Create a token that's a copy of target creature\.\s*If this spell was kicked, create five tokens that are copies of that creature instead\.$/i.test(joined)) {
     return {
@@ -2893,6 +2905,7 @@ export function cardProfile(card: CardData): CardProfile {
     effects: recognized.effects,
     triggers: [...recognized.triggers, ...synthesizedTriggers],
     targetKind: recognized.targetKind,
+    ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
     kickerCost: recognized.kickerCost ?? null,
     evokeCost: recognized.evokeCost ?? null,
     flashbackCost,

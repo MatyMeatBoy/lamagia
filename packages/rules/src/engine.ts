@@ -2438,15 +2438,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "destroy-n-creatures": {
       const count = effect.count === "X" ? object.variableValue : effect.count;
       if (count <= 0) return state;
-      const targets = allPermanents(state)
-        .filter((permanent) => isCreature(cardProfile(permanent.card))
-          && (!effect.nonblack || !cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === "B")))
-        .sort((left, right) => {
-          const opp = (left.controller !== controller ? 0 : 1) - (right.controller !== controller ? 0 : 1);
-          if (opp !== 0) return opp;
-          return (powerOf(right, state) + toughnessOf(right, state)) - (powerOf(left, state) + toughnessOf(left, state));
-        })
-        .slice(0, count);
+      const eligible = (permanent: Permanent) => isCreature(cardProfile(permanent.card))
+        && (!effect.nonblack || !cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === "B"));
+      const requested = object.targets
+        .map((target) => target.kind === "permanent" ? findPermanent(state, target.instanceId) : null)
+        .filter((permanent): permanent is Permanent => permanent !== null && eligible(permanent));
+      const targets = requested.length
+        ? [...new Map(requested.map((permanent) => [permanent.instance_id, permanent])).values()].slice(0, count)
+        : allPermanents(state)
+            .filter(eligible)
+            .sort((left, right) => {
+              const opp = (left.controller !== controller ? 0 : 1) - (right.controller !== controller ? 0 : 1);
+              if (opp !== 0) return opp;
+              return (powerOf(right, state) + toughnessOf(right, state)) - (powerOf(left, state) + toughnessOf(left, state));
+            })
+            .slice(0, count);
       let next = state;
       for (const permanent of targets) {
         const live = findPermanent(next, permanent.instance_id);
@@ -4011,7 +4017,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
   const targetKind = modal?.targetKind ?? profile.targetKind;
-  const targetKinds = modal?.targetKinds;
+  const targetKinds = modal?.targetKinds ?? profile.targetKinds;
   if (targetKinds?.some((kind) => !legalTargets(state, seat, kind, profile).length)) return { legal: false };
   if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind, profile).length) return { legal: false };
   if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, profile).length) return { legal: false };
