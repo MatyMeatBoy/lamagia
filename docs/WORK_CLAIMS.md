@@ -338,6 +338,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-oracle-other-activated-shape-3` | Activated creature-only control reset: each player gains control of all creatures they own (CR 110.2,  control-change effects) | `codex/c13-homeward-path-f99` | active | 2026-09-04 |
 | `c13-oracle-other-activated-shape-6` | Activated temporary animation: source becomes a 2/2 white and blue Bird artifact creature with flying until end of turn (CR 613.6, 707.2) | `codex/c13-azorius-keyrune-f99` | active | 2026-09-04 |
 | `c13-oracle-damage-triggered-shape-6` | Combat-damage trigger draws the damage amount for both the source controller and damaged player (CR 510.2, 603.2) | `codex/c13-diviner-spirit-f99` | active | 2026-09-04 |
+| `c13-oracle-create-token-triggered` | Another nontoken creature you control dying creates a 3/1 black-red Graveborn token with haste (CR 603.2, 603.6d) | `codex/c13-sekkuar-f99` | active | 2026-09-04 |
 
 ## Claim format
 
