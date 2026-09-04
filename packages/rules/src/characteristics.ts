@@ -338,6 +338,7 @@ export type SpellEffect =
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean; readonly flyingOnly?: boolean }
+  | { readonly kind: "destroy-creatures-power-greater-than-target" }
   | { readonly kind: "counter-target-spell" }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
@@ -347,7 +348,7 @@ export type SpellEffect =
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "attach-equipment" }
-  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control"; readonly token: TokenDefinition }
+  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield"; readonly token: TokenDefinition }
   | {
       readonly kind: "search-library";
       readonly types: readonly CardType[];
@@ -1102,6 +1103,11 @@ function parseLandScaledToken(text: string): SpellEffect | null {
 }
 
 function parseCreatureScaledToken(text: string): SpellEffect | null {
+  const boardMatch = /\s*,?\s*where x is the number of creatures on the battlefield$/i;
+  if (boardMatch.test(text.trim())) {
+    const base = parseCreateToken(text.trim().replace(boardMatch, "").replace(/^Create X\b/i, "Create a"));
+    return base?.kind === "create-token" ? { ...base, amount: "creatures-on-battlefield" } : null;
+  }
   if (!/\s+for each creature you control$/i.test(text.trim())) return null;
   const base = parseCreateToken(text.trim().replace(/\s+for each creature you control$/i, ""));
   return base?.kind === "create-token" ? { ...base, amount: "creatures-you-control" } : null;
@@ -1514,6 +1520,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonblack-creature" };
   if (/^Destroy target nonartifact,? nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-nonblack-creature" };
   if (/^Destroy all creatures with flying$/i.test(text)) return { effect: { kind: "destroy-all-creatures", flyingOnly: true }, target: "none" };
+  if (/^Destroy all creatures with power greater than target creature'?s power$/i.test(text)) return { effect: { kind: "destroy-creatures-power-greater-than-target" }, target: "creature" };
   if (/^Destroy target creature with flying$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-flying" };
   if (/^Destroy target creature with defender$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-defender" };
   if (/^Destroy target creature with deathtouch$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-deathtouch" };

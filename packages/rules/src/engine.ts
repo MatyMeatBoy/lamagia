@@ -1819,6 +1819,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return logged(next, controller, `${sourceName} destruye ${effect.tappedOnly ? "las criaturas giradas" : effect.flyingOnly ? "las criaturas voladoras" : "todas las criaturas"}.`);
     }
+    case "destroy-creatures-power-greater-than-target": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const anchor = findPermanent(state, target.instanceId);
+      if (!anchor) return state;
+      const threshold = powerOf(anchor, state);
+      let next = state;
+      for (const permanent of allPermanents(state)) {
+        if (!isCreature(cardProfile(permanent.card))) continue;
+        if (powerOf(permanent, next) <= threshold) continue;
+        next = destroyPermanent(next, permanent);
+      }
+      return logged(next, controller, `${sourceName} destruye las criaturas con más fuerza que ${anchor.card.name}.`);
+    }
     case "destroy-all-artifacts-creatures-enchantments": {
       let next = state;
       for (const permanent of allPermanents(state)) {
@@ -1919,6 +1933,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
         : effect.amount === "creatures-you-control"
           ? playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
+        : effect.amount === "creatures-on-battlefield"
+          ? allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length
         : effectAmount(effect.amount, object);
       let next = state;
       for (let index = 0; index < amount; index += 1) {
