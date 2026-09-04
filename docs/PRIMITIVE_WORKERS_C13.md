@@ -6,78 +6,158 @@ Each primitive is assigned to exactly one worker, so parallel work cannot claim 
 - Workers: **5** (requested 5)
 - Memory budget: **2 GB** (256 MB reserved per worker)
 - Maximum cards per commit batch: **20**
+- Integrate fork commits only after **11** are available (unless explicitly overridden)
 
 ## Worker 1
 
-8 primitives / 9 cards
+23 primitives / 29 cards
 
 | Claim | Family | Cards | Unlocks | Batches |
 | --- | --- | ---: | ---: | ---: |
-| `c13-choose-both` | modal | 2 | 2 | 1 |
-| `c13-flashback-cost` | keyword-ability | 1 | 1 | 1 |
-| `c13-graft` | keyword-ability | 1 | 1 | 1 |
-| `c13-long-your-graveyard-and` | static-continuous | 1 | 1 | 1 |
-| `c13-prevent-all-combat-damage-2` | other | 1 | 1 | 1 |
-| `c13-sacrifice-creatures-create-red` | token | 1 | 1 | 1 |
-| `c13-the-beginning-each-upkeep-2` | triggered | 1 | 1 | 1 |
-| `c13-the-beginning-your-upkeep` | triggered | 1 | 1 | 1 |
+| `primitive` | other | 5 | 5 | 1 |
+| `primitive` | other | 2 | 2 | 1 |
+| `primitive` | other | 2 | 2 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
 
 ## Worker 2
 
-8 primitives / 9 cards
+24 primitives / 29 cards
 
 | Claim | Family | Cards | Unlocks | Batches |
 | --- | --- | ---: | ---: | ---: |
-| `c13-when-enters-sacrifice-unless` | triggered | 2 | 2 | 1 |
-| `c13-flashback-cost-pay-life` | keyword-ability | 1 | 1 | 1 |
-| `c13-instant-and-sorcery-spells` | other | 1 | 1 | 1 |
-| `c13-more-than-creatures-can` | other | 1 | 1 | 1 |
-| `c13-put-target-nonland-permanent` | other | 1 | 1 | 1 |
-| `c13-split-second` | keyword-ability | 1 | 1 | 1 |
-| `c13-the-beginning-each-upkeep-3` | triggered | 1 | 1 | 1 |
-| `c13-the-beginning-your-upkeep-2` | triggered | 1 | 1 | 1 |
+| `primitive` | other | 5 | 5 | 1 |
+| `primitive` | other | 2 | 2 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
 
 ## Worker 3
 
-8 primitives / 8 cards
+24 primitives / 29 cards
 
 | Claim | Family | Cards | Unlocks | Batches |
 | --- | --- | ---: | ---: | ---: |
-| `c13-choose-more` | modal | 1 | 1 | 1 |
-| `c13-draw-card-for-each` | other | 1 | 1 | 1 |
-| `c13-flying-first-strike-vigilance` | other | 1 | 1 | 1 |
-| `c13-landfall-whenever-land-you` | other | 1 | 1 | 1 |
-| `c13-other-creatures-you-control` | pump | 1 | 1 | 1 |
-| `c13-remove-counter-from-deals` | activated | 1 | 1 | 1 |
-| `c13-the-beginning-each-end` | triggered | 1 | 1 | 1 |
-| `c13-the-beginning-your-end` | triggered | 1 | 1 | 1 |
+| `primitive` | other | 4 | 4 | 1 |
+| `primitive` | other | 2 | 2 | 1 |
+| `primitive` | other | 2 | 2 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
 
 ## Worker 4
 
-8 primitives / 8 cards
+24 primitives / 29 cards
 
 | Claim | Family | Cards | Unlocks | Batches |
 | --- | --- | ---: | ---: | ---: |
-| `c13-creatures-can-attack-you` | combat-restriction | 1 | 1 | 1 |
-| `c13-echo-cost` | keyword-ability | 1 | 1 | 1 |
-| `c13-flying-protection-from-black` | other | 1 | 1 | 1 |
-| `c13-landfall-whenever-land-you-2` | other | 1 | 1 | 1 |
-| `c13-pay-life-regenerate` | regenerate | 1 | 1 | 1 |
-| `c13-return-all-permanents-the` | other | 1 | 1 | 1 |
-| `c13-the-beginning-each-opponent` | triggered | 1 | 1 | 1 |
-| `c13-the-beginning-your-end-2` | triggered | 1 | 1 | 1 |
+| `primitive` | other | 4 | 4 | 1 |
+| `primitive` | other | 2 | 2 | 1 |
+| `primitive` | other | 2 | 2 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
 
 ## Worker 5
 
-8 primitives / 8 cards
+24 primitives / 28 cards
 
 | Claim | Family | Cards | Unlocks | Batches |
 | --- | --- | ---: | ---: | ---: |
-| `c13-destroy-target-nonblack-creatures` | other | 1 | 1 | 1 |
-| `c13-entwine-cost` | keyword-ability | 1 | 1 | 1 |
-| `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 1 | 1 |
-| `c13-landfall-whenever-land-you-3` | pump | 1 | 1 | 1 |
-| `c13-prevent-all-combat-damage` | other | 1 | 1 | 1 |
-| `c13-sacrifice-beast-you-gain` | activated | 1 | 1 | 1 |
-| `c13-the-beginning-each-upkeep` | token | 1 | 1 | 1 |
-| `c13-the-beginning-your-end-3` | triggered | 1 | 1 | 1 |
+| `primitive` | other | 3 | 3 | 1 |
+| `primitive` | other | 2 | 2 | 1 |
+| `primitive` | other | 2 | 2 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |
+| `primitive` | other | 1 | 1 | 1 |

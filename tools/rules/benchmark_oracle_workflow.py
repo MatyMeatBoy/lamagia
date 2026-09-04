@@ -50,7 +50,7 @@ def main() -> None:
     result = {
         "format": "prossh-oracle-workflow-benchmark/v1",
         "catalog": str(args.catalog),
-        "runs": [one, five],
+        "runs": [one, five, eight, threads],
         "parallel_speedup": round(one["seconds"] / eight["seconds"], 2) if eight["seconds"] else None,
         "fastest": {"backend": fastest["backend"], "workers": fastest["workers"], "seconds": fastest["seconds"]},
         "method": "compile once, group unresolved clauses by primitive_cluster, assign disjoint clusters to workers",

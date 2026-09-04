@@ -8,7 +8,7 @@ from pathlib import Path
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint
 from export_set_coverage import product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, select_profiles, template_of
-from plan_primitive_workers import load_claimed_keys, plan_workers
+from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
 
 
 class OracleCompilerTests(unittest.TestCase):
@@ -156,6 +156,11 @@ class OracleCompilerTests(unittest.TestCase):
         plan = plan_workers(clusters, worker_count=2)
         self.assertEqual([entry["cluster"] for entry in plan], ["a", "b"])
         self.assertEqual(plan_workers(clusters, worker_count=2, offset=2)[0]["cluster"], "c")
+
+    def test_worker_plan_carries_batch_integration_threshold(self) -> None:
+        plan = build_worker_plan([], workers=5, memory_budget_gb=2)
+        self.assertEqual(plan["min_integration_commits"], DEFAULT_INTEGRATION_COMMIT_THRESHOLD)
+        self.assertEqual(DEFAULT_INTEGRATION_COMMIT_THRESHOLD, 11)
 
     def test_reads_only_exact_active_claim_statuses(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

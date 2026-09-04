@@ -29,6 +29,7 @@ from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, effective_worker_c
 
 WORKER_PLAN_FORMAT = "prossh-primitive-worker-plan/v1"
 ACTIVE_STATUSES = ("active", "ready", "in progress", "review")
+DEFAULT_INTEGRATION_COMMIT_THRESHOLD = 11
 
 
 def plan_workers(
@@ -102,6 +103,7 @@ def build_worker_plan(
     memory_budget_gb: float = 2.0,
     estimated_worker_mb: int = 256,
     max_cards_per_commit: int = DEFAULT_COMMIT_CARD_LIMIT,
+    min_integration_commits: int = DEFAULT_INTEGRATION_COMMIT_THRESHOLD,
     claim_prefix: str = "",
     claimed_keys: set[str] | None = None,
 ) -> dict[str, Any]:
@@ -113,6 +115,8 @@ def build_worker_plan(
     """
     if max_cards_per_commit <= 0:
         raise ValueError("max_cards_per_commit debe ser positivo.")
+    if min_integration_commits <= 0:
+        raise ValueError("min_integration_commits debe ser positivo.")
     worker_count = effective_worker_count(workers, memory_budget_gb, estimated_worker_mb)
     claimed = claimed_keys or set()
     jobs: list[dict[str, Any]] = []
@@ -166,6 +170,7 @@ def build_worker_plan(
         "memory_budget_gb": memory_budget_gb,
         "estimated_worker_mb": estimated_worker_mb,
         "max_cards_per_commit": max_cards_per_commit,
+        "min_integration_commits": min_integration_commits,
         "skipped_claims": sorted(skipped),
         "workers": worker_payload,
     }
@@ -181,6 +186,7 @@ def render_document(plan: dict[str, Any]) -> str:
         f"- Workers: **{plan['worker_count']}** (requested {plan['requested_workers']})",
         f"- Memory budget: **{plan['memory_budget_gb']:g} GB** ({plan['estimated_worker_mb']} MB reserved per worker)",
         f"- Maximum cards per commit batch: **{plan['max_cards_per_commit']}**",
+        f"- Integrate fork commits only after **{plan['min_integration_commits']}** are available (unless explicitly overridden)",
         "",
     ]
     for worker in plan["workers"]:
@@ -211,6 +217,7 @@ def main() -> None:
     parser.add_argument("--memory-budget-gb", type=float, default=2.0)
     parser.add_argument("--estimated-worker-mb", type=int, default=256)
     parser.add_argument("--max-cards-per-commit", type=int, default=DEFAULT_COMMIT_CARD_LIMIT)
+    parser.add_argument("--min-integration-commits", type=int, default=DEFAULT_INTEGRATION_COMMIT_THRESHOLD)
     args = parser.parse_args()
     payload = json.loads(args.roadmap.read_text(encoding="utf-8"))
     plan = build_worker_plan(
@@ -219,6 +226,7 @@ def main() -> None:
         memory_budget_gb=args.memory_budget_gb,
         estimated_worker_mb=args.estimated_worker_mb,
         max_cards_per_commit=args.max_cards_per_commit,
+        min_integration_commits=args.min_integration_commits,
         claim_prefix=str(payload.get("claim_prefix") or ""),
         claimed_keys=load_claimed_keys(args.claims),
     )

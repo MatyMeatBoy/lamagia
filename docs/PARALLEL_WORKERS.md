@@ -18,3 +18,9 @@ The JSON plan is intended for agents or scripts; the Markdown plan is the
 human-readable handoff. Re-run both after integrating a batch so the remaining
 claims and card IDs are recalculated. This coordinates parallel work but does
 not authorize concurrent edits to the same engine files.
+
+Fork protocol: workers do not push directly. They accumulate at least 11
+commits, report all SHAs in one message, and keep each commit at no more than
+20 new `oracle_id` values. The integrator reviews and imports the complete
+batch together, then regenerates the queue. This reduces polling and prevents
+two workers from rediscovering the same primitive.
