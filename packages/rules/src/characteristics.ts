@@ -1500,6 +1500,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature with shroud$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-shroud" };
   if (/^Destroy target creature with reach$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-reach" };
   if (/^Destroy target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-least-5" };
+  if (/^Exile target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };
   if (/^Destroy target creature with toughness 4 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-least-4" };
   if (/^Destroy target creature with toughness 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-most-4" };

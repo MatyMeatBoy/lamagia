@@ -182,6 +182,10 @@ const BOROS_CHARM = () => make({
   name: "Boros Charm", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
   oracle_text: "Choose one —\n• Boros Charm deals 4 damage to target player or planeswalker.\n• Permanents you control gain indestructible until end of turn.\n• Target creature gains double strike until end of turn."
 });
+const SELESNYA_CHARM = () => make({
+  name: "Selesnya Charm", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2,
+  oracle_text: "Choose one —\n• Create a 2/2 white Knight creature token with vigilance.\n• Exile target creature with power 5 or greater.\n• Target creature gets +2/+2 and gains trample until end of turn."
+});
 const GLOBAL_INDESTRUCTIBLE = () => make({
   name: "Global Indestructible", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
   oracle_text: "Permanents you control gain indestructible until end of turn."
@@ -2015,6 +2019,27 @@ describe("casting", () => {
     const doubleStrike = legalActions(game, 0).find((entry) =>
       entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode === 2);
     expect(doubleStrike?.requiresTarget).toBe("creature");
+  });
+
+  it("resolves Selesnya Charm's token, power-filtered exile, and pump modes", () => {
+    const charm = SELESNYA_CHARM();
+    expect(profileOf(charm).fullyImplemented).toBe(true);
+    expect(profileOf(charm).modalChoices).toHaveLength(3);
+
+    let game = readyToCast([charm], [FOREST(), PLAINS()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 0 });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Knight")).toBe(true);
+
+    const large = make({ name: "Large Bear", type_line: "Creature — Bear", mana_cost: "{4}", cmc: 4, power: "5", toughness: "5" });
+    game = readyToCast([SELESNYA_CHARM()], [FOREST(), PLAINS()], [], [large]);
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 1, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.exile.some((card) => card.name === "Large Bear")).toBe(true);
+
+    game = readyToCast([SELESNYA_CHARM()], [FOREST(), PLAINS(), BEAR()]);
+    const pump = legalActions(game, 0).find((entry) =>
+      entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.mode === 2);
+    expect(pump?.requiresTarget).toBe("creature");
   });
 
   it("reuses the landfall trigger subject when a land enters", () => {
