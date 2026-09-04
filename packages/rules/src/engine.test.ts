@@ -630,6 +630,31 @@ describe("casting", () => {
     expect(game.players[0]!.hand).toHaveLength(2);
   });
 
+  it("resolves Decree of Pain's cycling trigger", () => {
+    const profile = profileOf(DECREE_OF_PAIN());
+    expect(profile.cyclingCost?.raw).toBe("{3}{B}{B}");
+    expect(profile.triggers).toMatchObject([{
+      event: "card-cycled",
+      subject: "self",
+      effect: { kind: "modify-all-creatures", power: -2, toughness: -2 }
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast(
+      [DECREE_OF_PAIN()],
+      [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), BEAR()],
+      [],
+      [BEAR()]
+    );
+    const decree = game.players[0]!.hand[0]!;
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === decree.instance_id);
+    expect(offered).toBeDefined();
+    game = applyAction(game, 0, offered!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Decree of Pain")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
   it("puts an artifact or creature spell countered by Desertion onto its controller's battlefield", () => {
     expect(cardProfile(DESERTION()).effects).toEqual([{ kind: "counter-target-spell-to-battlefield" }]);
     let game = readyToCast([DESERTION()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()]);

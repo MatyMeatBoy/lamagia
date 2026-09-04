@@ -167,6 +167,7 @@ export type GameEvent =
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
 
@@ -939,6 +940,12 @@ function triggerMatches(
     return false;
   }
 
+  if (event.kind === "card-cycled") {
+    return definition.subject === "self"
+      && event.controller === watcher.controller
+      && event.card.instance_id === watcher.instanceId;
+  }
+
   if (event.kind === "life-gained" || event.kind === "life-lost") {
     return subject === "you" && event.seat === watcher.controller;
   }
@@ -979,6 +986,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "deals-combat-damage-to-player": return `${object!.card.name} hace daño de combate a ${playerAt(state, event.victim).name}`;
     case "becomes-tapped": return `${object!.card.name} se gira`;
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
+    case "card-cycled": return `${playerAt(state, event.controller).name} cicla ${event.card.name}`;
     case "life-gained": return `${playerAt(state, event.seat).name} gana ${event.amount} vidas`;
     case "life-lost": return `${playerAt(state, event.seat).name} pierde ${event.amount} vidas`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
@@ -2806,6 +2814,20 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     hand: current.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
     graveyard: [...current.graveyard, card]
   }));
+  const cycledWatcher: Permanent = {
+    instance_id: card.instance_id,
+    card,
+    controller: seat,
+    tapped: false,
+    summoningSick: false,
+    damage: 0,
+    deathtouched: false,
+    counters: {},
+    powerModifier: 0,
+    toughnessModifier: 0,
+    isCommander: false
+  };
+  next = raiseEvent(next, { kind: "card-cycled", controller: seat, card }, [cycledWatcher]);
   next = drawCards(next, seat, 1);
   return logged(next, seat, `${player.name} cicla ${card.name}.`);
 }
