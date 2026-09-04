@@ -128,6 +128,16 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-player-only-global-damage` | Damage every player without affecting permanents | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-counted-land-life` | Count controlled lands in scalable life gain | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-per-permanent` | Life gain scaled by all controlled permanents | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-draw-controlled-type` | Draw one card per controlled creature, artifact, enchantment or land | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-counted-any-target-damage` | Any-target damage scaled by a controlled type count | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-toughness-threshold-targets` | Creature targets filtered by toughness four or greater | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-low-power-targets` | Creature targets filtered by power four or less | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-low-toughness-targets` | Creature targets filtered by toughness four or less | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-defender-targets` | Creature targets filtered by enforced defender | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-deathtouch-targets` | Creature targets filtered by enforced deathtouch | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-lifelink-targets` | Creature targets filtered by enforced lifelink | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-menace-targets` | Creature targets filtered by enforced menace | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-haste-targets` | Creature targets filtered by enforced haste | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 
 ## Claim format
 
