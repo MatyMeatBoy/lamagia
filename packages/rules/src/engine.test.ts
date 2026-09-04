@@ -61,6 +61,7 @@ const HAND_MINUS_DAMAGE = () => make({ name: "Hand Minus Damage", type_line: "Cr
 const HAND_EQUAL_DAMAGE = () => make({ name: "Hand Equal Damage", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of each opponent's upkeep, this creature deals damage to that player equal to the number of cards in that player's hand." });
 const TAPPED_DRAW = () => make({ name: "Tapped Draw", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls." });
 const GLOBAL_FEAR = () => make({ name: "Global Fear", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain menace until end of turn." });
+const GLOBAL_REAL_FEAR = () => make({ name: "Global Real Fear", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn." });
 const LIFE_LOCK = () => make({ name: "Life Lock", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Players can't gain life." });
 const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment", mana_cost: "{3}", cmc: 3, oracle_text: "You have no maximum hand size." });
 const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other creatures you control get +1/+1." });
@@ -872,6 +873,14 @@ describe("casting", () => {
     expect(game.players.flatMap((player) => player.battlefield)
       .filter((permanent) => permanent.card.type_line.includes("Creature"))
       .every((permanent) => permanent.temporaryKeywords?.includes("menace"))).toBe(true);
+  });
+
+  it("recognizes fear as a global evasion keyword", () => {
+    expect(profileOf(GLOBAL_REAL_FEAR()).effects).toEqual([{ kind: "grant-all-creatures-keyword", keyword: "fear" }]);
+    let game = readyToCast([GLOBAL_REAL_FEAR()], [SWAMP(), SWAMP(), SWAMP()], [], [BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const enemy = game.players[1]!.battlefield[0]!;
+    expect(enemy.temporaryKeywords).toContain("fear");
   });
 
   it("prevents life gain while a static life-gain lock remains on the battlefield", () => {
