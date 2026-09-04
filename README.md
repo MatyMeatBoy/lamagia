@@ -21,6 +21,16 @@ Report `CLAIM`, `BASE SHA`, `COMMIT SHA`, `FILES`, `TESTS`, `SCENARIOS`, and
 instructions: [CONTRIBUTING.md](CONTRIBUTING.md) and
 [IMPLEMENTATION_CLUSTERS.md](IMPLEMENTATION_CLUSTERS.md).
 
+### Parallel bot handoff
+
+Workers claim disjoint primitives, commit locally, and report only the compact
+contract above. The integrator accumulates **11+ commits** (up to 20
+`oracle_id`s each), reviews them as one batch, cherry-picks only green commits,
+then runs the full checks and updates the claim ledger. Workers may keep going
+after each commit, but must stop when a claim is taken. Keep bot output to one
+short status line per commit; include details only for failures, blockers, or
+limits. This saves context without losing reproducibility.
+
 To refresh the reusable work queue, run `npm run rules:oracle:compile` and claim
 one entry from `data/rules/oracle-clusters.json`; it already carries stable
 `oracle_id`s and twenty-card commit batch counts. The compiler keeps an ignored

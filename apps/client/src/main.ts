@@ -15,6 +15,10 @@ import type { AbilityView, CardView, GameView, LegalAction, PermanentView, Playe
 import { ACTIVATION_GLYPHS, KEYWORD_GLYPHS, TRIGGER_GLYPHS, glyphSvg, keywordGlyph, type AbilityGlyph } from "./abilities.js";
 import "./styles.css";
 
+declare global {
+  interface Window { __PROSSH_API_BASE__?: string; }
+}
+
 type PreconSummary = {
   id: string; name: string; commanders: string[]; set_code: string; set_name?: string;
   released_at: string; cover_art_uri?: string; cover_art_kind: string; set_icon_uri?: string;
@@ -194,8 +198,15 @@ function oracleHtml(text: string): string {
 // Server access
 // ---------------------------------------------------------------------------
 
+/** Optional public match-server origin; empty keeps local relative `/api` calls. */
+const API_BASE = (window.__PROSSH_API_BASE__ ?? "").replace(/\/$/, "");
+
+function apiUrl(path: string): string {
+  return `${API_BASE}${path}`;
+}
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, init);
+  const response = await fetch(apiUrl(path), init);
   const payload = (await response.json()) as T & { error?: string };
   if (!response.ok) throw new Error(payload.error ?? `La petición falló (${response.status}).`);
   return payload;
@@ -836,7 +847,7 @@ function librarySearchHtml(): string {
 
 function landingHtml(): string {
   return `<main class="shell landing">
-    <header class="topbar"><a class="brand" href="#">PROSSH<span>TCG</span></a><span class="turn-readout">Simulador de Commander</span></header>
+    <header class="topbar"><a class="brand" href="#">LAMAGIA</a><span class="turn-readout">Simulador de Commander</span></header>
     <section class="landing-body">
       <h1>Mesa de Commander de cuatro jugadores</h1>
       <p>Controlas el asiento inferior. Los otros tres los juega el bot determinista del motor, eligiendo solo entre las mismas acciones legales que se te ofrecen a ti.</p>
@@ -877,7 +888,7 @@ function render(): void {
 
   root!.innerHTML = `<main class="shell${ui.busy ? " busy" : ""}" data-layout="${ui.layout}">
     <header class="topbar">
-      <a class="brand" href="#">PROSSH<span>TCG</span></a>
+      <a class="brand" href="#">LAMAGIA</a>
       <span class="turn-readout"><span class="badge-pill">Turno <b>${view.turn}</b></span>
         <span class="badge-pill accent">${escapeHtml(view.stepLabel)}</span>
         <span>Activo: <b style="color: var(--seat-${view.activeSeat})">${escapeHtml(seatOf(view.activeSeat)?.name ?? "")}</b></span></span>
@@ -1397,13 +1408,35 @@ async function loadCoverageSet(code: string): Promise<void> {
   body.innerHTML = `<p class="zone-private">Cargando pendientes…</p>`;
   try {
     const set = await api<CoverageSet>(`/api/rules/coverage/sets/${encodeURIComponent(code)}`);
-    body.innerHTML = `<button type="button" class="text-button" data-coverage-back>← Volver al mapa</button>
+    renderCoverageSetDetail(body, set, false);
+  } catch {
+    try {
+      const report = await loadStaticCoverage();
+      const set = report.sets.find((entry) => entry.code === code);
+      if (!set) throw new Error("No se encontró esa edición en el mapa público.");
+      renderCoverageSetDetail(body, set, true);
+    } catch (error) { body.innerHTML = `<p class="zone-private">${escapeHtml(error instanceof Error ? error.message : "No se pudo cargar la edición.")}</p>`; }
+  }
+}
+
+function renderCoverageSetDetail(body: HTMLElement, set: CoverageSet, publicSummary: boolean): void {
+  const pendingMarkup = set.pendingCards
+    ? set.pendingCards.length
+      ? set.pendingCards.map((card) => `<div><span>□ ${escapeHtml(card.name)}</span><code>${escapeHtml(card.oracleId)}</code></div>`).join("")
+      : `<p class="zone-private">Edición completa.</p>`
+    : `<p class="zone-private">Resumen público disponible. Los <code>oracle_id</code> pendientes se muestran con el servidor de reglas conectado.</p>`;
+  body.innerHTML = `<button type="button" class="text-button" data-coverage-back>← Volver al mapa</button>
       <div class="coverage-detail-head"><div><h3>${escapeHtml(set.name)}</h3><small>${escapeHtml(set.code.toUpperCase())} · ${escapeHtml(set.releasedAt)} · ${escapeHtml(coverageGroupLabel(set.group))} / ${escapeHtml(coverageSubgroupLabel(set.group, set.subgroup))}</small></div><b>${set.percentage}%</b></div>
       <div class="coverage-track large"><i style="width:${Math.max(0, Math.min(100, set.percentage))}%"></i></div>
-      <p class="panel-note">${set.implemented} implementadas · ${set.pending} pendientes. Cada pendiente identifica su lógica con <code>oracle_id</code>.</p>
-      <div class="coverage-pending">${set.pendingCards?.length ? set.pendingCards.map((card) => `<div><span>□ ${escapeHtml(card.name)}</span><code>${escapeHtml(card.oracleId)}</code></div>`).join("") : `<p class="zone-private">Edición completa.</p>`}</div>`;
-    body.querySelector("[data-coverage-back]")?.addEventListener("click", () => void loadCoverage());
-  } catch (error) { body.innerHTML = `<p class="zone-private">${escapeHtml(error instanceof Error ? error.message : "No se pudo cargar la edición.")}</p>`; }
+      <p class="panel-note">${set.implemented} implementadas · ${set.pending} pendientes.${publicSummary ? " Este es el resumen estático de GitHub Pages." : " Cada pendiente identifica su lógica con <code>oracle_id</code>."}</p>
+      <div class="coverage-pending">${pendingMarkup}</div>`;
+  body.querySelector("[data-coverage-back]")?.addEventListener("click", () => void loadCoverage());
+}
+
+async function loadStaticCoverage(): Promise<SetCoverageReport> {
+  const response = await fetch("./coverage.json");
+  if (!response.ok) throw new Error(`No se pudo cargar el resumen público (${response.status}).`);
+  return await response.json() as SetCoverageReport;
 }
 
 async function loadCoverage(): Promise<void> {
@@ -1411,7 +1444,10 @@ async function loadCoverage(): Promise<void> {
   if (!body) return;
   body.innerHTML = `<p class="zone-private">Cargando mapa de implementación…</p>`;
   try { renderCoverageReport(await api<SetCoverageReport>("/api/rules/coverage/sets")); }
-  catch (error) { body.innerHTML = `<p class="zone-private">${escapeHtml(error instanceof Error ? error.message : "No se pudo cargar el mapa.")}</p>`; }
+  catch {
+    try { renderCoverageReport(await loadStaticCoverage()); }
+    catch (error) { body.innerHTML = `<p class="zone-private">${escapeHtml(error instanceof Error ? error.message : "No se pudo cargar el mapa.")}</p>`; }
+  }
 }
 
 function openCoverage(): void {

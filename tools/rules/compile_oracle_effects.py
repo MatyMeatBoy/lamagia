@@ -153,6 +153,20 @@ def has_card_type(text: str, card_type: str) -> bool:
     return bool(re.search(rf"\b{re.escape(card_type)}(?:s|es)?\b", text, re.I))
 
 
+def clause_cost_effect_parts(clause: str) -> tuple[str | None, str]:
+    """Split a cost-bearing clause without losing its original wording."""
+    if ACTIVATED_RE.match(clause.strip()):
+        cost, effect = clause.split(":", 1)
+        return cost.strip(), effect.strip()
+    if ADDITIONAL_COST_RE.search(clause):
+        return clause.strip(), ""
+    return None, clause.strip()
+
+
+def action_names(text: str) -> list[str]:
+    return [name for name, pattern in VERB_PATTERNS if re.search(pattern, text, re.I)]
+
+
 def search_criterion_hint(clause: str) -> dict[str, list[str]] | None:
     """Extract type/subtype operands without pretending the search is executable.
 
@@ -195,22 +209,28 @@ def operand_hints(clause: str, target_text: str | None, search_criterion: dict[s
                 and target_operand.lower() not in CARD_TYPES
                 and target_operand.lower() not in {value.casefold() for value in subtypes}):
             subtypes.append(target_operand)
-    result: dict[str, Any] = {"actions": [name for name, _ in VERB_PATTERNS if re.search(_, clause, re.I)],
+    cost_text, effect_text = clause_cost_effect_parts(clause)
+    result: dict[str, Any] = {"actions": action_names(clause),
             "zones": zones, "card_types": card_types, "subtypes": sorted(subtypes, key=str.casefold)}
+    if cost_text is not None:
+        cost_actions = action_names(cost_text)
+        effect_actions = action_names(effect_text)
+        if cost_actions:
+            result["cost_actions"] = cost_actions
+        if effect_actions:
+            result["effect_actions"] = effect_actions
+    else:
+        effect_actions = action_names(effect_text)
+        if effect_actions:
+            result["effect_actions"] = effect_actions
     sacrifice_types = sorted({word.title() for word in CARD_TYPES if re.search(
         rf"\bsacrifice\s+(?:another\s+|a\s+|an\s+)?{re.escape(word)}\b", clause, re.I)})
     if sacrifice_types:
         result["sacrifice_types"] = sacrifice_types
-    if ACTIVATED_RE.match(clause) or ADDITIONAL_COST_RE.search(clause):
-        cost_text = clause.split(":", 1)[0] if ACTIVATED_RE.match(clause) else clause
+    if cost_text is not None:
         discard = re.search(r"\bdiscard\s+(a|an|one|two|three|four|five|\d+)\s+cards?\b", cost_text, re.I)
         if discard:
             result["discard_card_count"] = number_hint(discard.group(1))
-    if ACTIVATED_RE.match(clause.strip()):
-        cost_text = clause.split(":", 1)[0]
-        cost_actions = [action for action in ("discard", "exile", "sacrifice") if re.search(rf"\b{action}\b", cost_text, re.I)]
-        if cost_actions:
-            result["cost_actions"] = cost_actions
     return result
 
 
@@ -250,6 +270,8 @@ def classify(clause: str) -> dict[str, Any]:
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
     known_static = bool(KNOWN_STATIC_RE.fullmatch(clause.strip()) or KNOWN_STATIC_LINE_RE.fullmatch(clause.strip()))
     operands = operand_hints(clause, target_text, search_criterion)
+    cost_text, _ = clause_cost_effect_parts(clause)
+    cost_context = "activated-cost" if ACTIVATED_RE.match(clause.strip()) else "additional-cast-cost" if ADDITIONAL_COST_RE.search(clause) else None
     trigger_subject = trigger_subject_hint(clause)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
@@ -268,6 +290,8 @@ def classify(clause: str) -> dict[str, Any]:
     discard_card_count = operands.get("discard_card_count")
     if discard_card_count is not None:
         cluster_parts.append("discard-card-cost:" + str(discard_card_count))
+    if cost_context:
+        cluster_parts.append("cost-context:" + cost_context)
     if trigger_subject:
         cluster_parts.append("trigger-subject:" + trigger_subject)
     cost_actions = operands.get("cost_actions", [])
@@ -286,6 +310,7 @@ def classify(clause: str) -> dict[str, Any]:
         "target_types": target_types,
         "target_zone": target_zone,
         "trigger_subject": trigger_subject,
+        "cost_context": cost_context,
         "search_criterion": search_criterion,
         "operands": operands,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),

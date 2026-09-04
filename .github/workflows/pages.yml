@@ -22,7 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Build the public client
+        run: |
+          npm ci
+          npm run build --workspace=@prossh/client
       - uses: actions/configure-pages@v5
+      - name: Assemble the Pages app
+        run: |
+          rm -rf site/assets site/index.html
+          cp -R apps/client/dist/. site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

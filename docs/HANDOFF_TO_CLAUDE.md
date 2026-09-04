@@ -853,3 +853,24 @@ Pages is configured to use GitHub Actions; the `github-pages` environment
 allows both `master` and `feat/activated-abilities-and-triggers`. The expected
 URL is `https://matymeatboy.github.io/lamagia/`; the latest workflow deploys
 successfully and the public page is live there.
+
+### Integrator checkpoint: public app and reusable cost grammar
+
+The Oracle compiler now keeps both dimensions of a discard clause: a discard
+effect (for example, Thoughtseize) remains an effect, while discard in an
+activated or additional cast cost (for example, Bone Shards-style text) emits
+`discard_card_count` and `cost_actions`. Combined costs preserve both fields,
+so later cards reuse the primitive instead of reparsing the same meaning.
+
+The latest accepted rules batch also covers any-player spell triggers and
+strict validation of explicit activated-cost choices. Validation is green:
+`npm run check`, `npm test` (295 rules tests plus simulator), 34 Oracle Python
+tests, and `git diff --check`. The current export is **7,671/38,711** fully
+implemented catalog cards; the filtered set map is **20.0% across 685
+editions**. Alchemy and Un- joke editions are excluded from active totals and
+listed separately in the generated coverage report.
+
+GitHub Pages now builds and publishes the complete client shell, not the old
+standalone map. The client can consume a future public match-server origin via
+`window.__PROSSH_API_BASE__`; without that backend, Pages provides the landing
+screen and static grouped coverage summary while gameplay remains local-only.

@@ -126,6 +126,17 @@ El worker no entrega una carpeta modificada: entrega un commit reproducible.
 Esto permite que el integrador revise exactamente el cambio y lo aplique con
 `cherry-pick`, incluso si otro worker ya terminó un cluster distinto.
 
+### Economía de contexto y cola de integración
+
+El worker puede entregar commits pequeños en cuanto estén verdes; el umbral de
+**11 commits** es del integrador, no del worker. El integrador los acumula,
+revisa en conjunto y ejecuta la validación completa una sola vez por tanda.
+Cada commit puede contener hasta 20 `oracle_id`, siempre dentro de un único
+cluster. Las actualizaciones del worker deben ser de una sola línea con
+`CLAIM`, `BASE`, `COMMIT`, `FILES`, `TESTS`, `SCENARIOS` y `LIMITS`; solo añade
+explicación si hay un fallo, bloqueo o decisión pendiente. Nunca repitas logs
+completos ni el texto de cartas ya procesadas.
+
 ### Instrucción para copiar al fork
 
 ```text

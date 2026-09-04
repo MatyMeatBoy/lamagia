@@ -7,3 +7,4 @@
 - Before implementing a card interaction, add a scenario test for rules behavior. Validate Comprehensive Rules citations from the official Wizards rules source.
 
 - Keep assistant output as short as possible to save context. Work through the tools silently; report only substantive changes, blockers, validation failures, or a needed decision.
+- For parallel workers, claim a disjoint primitive before editing and return a compact `CLAIM/BASE/COMMIT/FILES/TESTS/SCENARIOS/LIMITS` report. The integrator batches 11 or more incoming commits before processing them, unless a safety or blocking issue requires an exception; never use `git add -A` or include unrelated/generated assets.

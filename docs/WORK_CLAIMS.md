@@ -89,6 +89,9 @@ feature name.
 | `c13-activated-sacrifice-land` | Activated costs that sacrifice a land, including “another” | `codex/c13-equipment-cluster` | merged (local `e1a0518`) | 2026-09-04 |
 | `c13-activated-sacrifice-noncreature` | Activated costs that sacrifice any noncreature permanent | `codex/c13-equipment-cluster` | merged (local `98df4aa`) | 2026-09-04 |
 | `c13-activated-discard-cost` | Activated costs that discard one card from the controller’s hand | `codex/c13-equipment-cluster` | merged (local `bea78a5`) | 2026-09-04 |
+| `rules-python-cost-actions` | Preserve reusable activated-cost actions (`discard`, `exile`, `sacrifice`) in Oracle IR clusters | `codex/c13-equipment-cluster` | merged (local `2ccfbed`) | 2026-09-04 |
+| `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell | `codex/c13-equipment-cluster` | merged (local `a40b295`) | 2026-09-04 |
+| `c13-trigger-subject-clusters` | Reuse generic permanent ETB subjects instead of rediscovering them per card | `feat/activated-abilities-and-triggers` | merged (local `df3db32`) | 2026-09-04 |
 
 ## Claim format
 

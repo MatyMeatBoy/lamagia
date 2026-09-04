@@ -46,10 +46,11 @@ class OracleCompilerTests(unittest.TestCase):
             "zones": ["battlefield"],
             "card_types": [],
             "subtypes": ["Equipment"],
+            "effect_actions": ["exile"],
         })
         self.assertEqual(
             operand_hints("Search your library for an Equipment card.", None, {"types": [], "subtypes": ["Equipment"]}),
-            {"actions": ["search-library"], "zones": ["library"], "card_types": [], "subtypes": ["Equipment"]},
+            {"actions": ["search-library"], "zones": ["library"], "card_types": [], "subtypes": ["Equipment"], "effect_actions": ["search-library"]},
         )
 
     def test_keeps_multiple_target_types(self) -> None:
@@ -65,7 +66,7 @@ class OracleCompilerTests(unittest.TestCase):
     def test_preserves_typed_sacrifice_operands_for_workers(self) -> None:
         result = classify("Sacrifice an artifact: Draw a card.")
         self.assertEqual(result["operands"]["sacrifice_types"], ["Artifact"])
-        self.assertEqual(result["primitive_cluster"], "draw|activated|sacrifice-types:Artifact|cost-actions:sacrifice")
+        self.assertEqual(result["primitive_cluster"], "draw|activated|sacrifice-types:Artifact|cost-context:activated-cost|cost-actions:sacrifice")
 
     def test_preserves_generic_permanent_trigger_subject(self) -> None:
         self.assertEqual(trigger_subject_hint("Whenever a permanent enters the battlefield under your control, draw a card."), "permanent-you-control")
@@ -74,7 +75,8 @@ class OracleCompilerTests(unittest.TestCase):
     def test_preserves_activated_cost_actions(self) -> None:
         result = classify("{T}, Discard a card: Draw a card.")
         self.assertEqual(result["operands"]["cost_actions"], ["discard"])
-        self.assertEqual(result["primitive_cluster"], "draw|activated|cost-actions:discard")
+        self.assertEqual(result["primitive_cluster"], "draw|activated|discard-card-cost:1|cost-context:activated-cost|cost-actions:discard")
+        self.assertEqual(result["operands"]["effect_actions"], ["draw"])
 
     def test_groups_combined_activated_costs_without_losing_type(self) -> None:
         result = classify("Sacrifice an artifact, Discard a card: Draw a card.")
@@ -126,7 +128,8 @@ class OracleCompilerTests(unittest.TestCase):
     def test_separates_discard_activation_cost_from_discard_effect(self) -> None:
         result = classify("{T}, Discard a card: Draw a card.")
         self.assertEqual(result["operands"]["discard_card_count"], 1)
-        self.assertEqual(result["primitive_cluster"], "draw|activated|discard-card-cost:1")
+        self.assertEqual(result["primitive_cluster"], "draw|activated|discard-card-cost:1|cost-context:activated-cost|cost-actions:discard")
+        self.assertEqual(classify("Target opponent discards a card.")["operands"]["effect_actions"], ["discard"])
         self.assertNotIn("discard_card_count", classify("Discard a card.")["operands"])
 
     def test_recognizes_discard_as_an_additional_cast_cost(self) -> None:
@@ -134,6 +137,8 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(result["operands"]["discard_card_count"], 1)
         self.assertIn("discard-card-cost:1", result["primitive_cluster"])
         self.assertNotIn("discard_card_count", classify("Target opponent discards a card.")["operands"])
+        self.assertEqual(classify("As an additional cost to cast this spell, discard a card.")["operands"]["cost_actions"], ["discard"])
+        self.assertNotIn("effect_actions", classify("As an additional cost to cast this spell, discard a card.")["operands"])
 
     def test_excludes_known_closed_static_primitives_from_review(self) -> None:
         for text in (
