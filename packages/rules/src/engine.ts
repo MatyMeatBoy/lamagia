@@ -267,6 +267,17 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      readonly type: "search-library-multi";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly optionIds: readonly string[];
+      readonly selectedIds: readonly string[];
+      readonly sourceCard: GameCard;
+      readonly search: Extract<SpellEffect, { kind: "search-library-multi" }>;
+      readonly returnSourceToGraveyard: boolean;
+      readonly exileSourceAfterResolution: boolean;
+    }
+  | {
       readonly type: "discard-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -288,6 +299,7 @@ export type GameAction =
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
+  | { readonly type: "finish-library-search"; readonly sourceId: string }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
@@ -1921,6 +1933,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "search-library":
       // Search is resolved through the explicit library-choice action below.
       return state;
+    case "search-library-multi":
+      // Multi-card searches are completed through the explicit choice action below.
+      return state;
     case "attach-equipment": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -2043,6 +2058,40 @@ function resolveTop(state: GameState): GameState {
         optionIds: options,
         sourceCard: object.card,
         search,
+        returnSourceToGraveyard: !object.activated,
+        exileSourceAfterResolution: Boolean(object.flashback)
+      }
+    };
+  }
+
+  const multiSearch = activatedEffect?.kind === "search-library-multi"
+    ? activatedEffect
+    : profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "search-library-multi" }> => effect.kind === "search-library-multi");
+  if (multiSearch) {
+    const options = playerAt(next, object.controller).library
+      .filter((card) => {
+        const candidate = cardProfile(card);
+        const typeMatches = multiSearch.types.some((type) => candidate.types.includes(type));
+        const subtypeMatches = multiSearch.subtypes?.every((subtype) => subtype.toLowerCase() === "basic"
+          ? candidate.supertypes.some((value) => value.toLowerCase() === "basic")
+          : candidate.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase())) ?? true;
+        return typeMatches && subtypeMatches;
+      })
+      .map((card) => card.instance_id);
+    if (!options.length) {
+      if (!object.activated) next = sendSpellToOwnerZone(next, object);
+      return logged(next, object.controller, `${object.card.name} se resuelve: no hay tierras básicas válidas en la biblioteca.`);
+    }
+    return {
+      ...next,
+      pendingChoice: {
+        type: "search-library-multi",
+        seat: object.controller,
+        sourceId: object.id,
+        optionIds: options,
+        selectedIds: [],
+        sourceCard: object.card,
+        search: multiSearch,
         returnSourceToGraveyard: !object.activated,
         exileSourceAfterResolution: Boolean(object.flashback)
       }
@@ -2541,6 +2590,19 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         action: { type: "choose-library-card", sourceId: choice.sourceId, query: "" },
         label: "Elegir carta de la biblioteca",
         note: "Escribe el nombre de una carta legal de tu biblioteca. La biblioteca permanece oculta hasta la elección."
+      });
+      return actions;
+    }
+    if (choice.type === "search-library-multi") {
+      actions.push({
+        action: { type: "choose-library-card", sourceId: choice.sourceId, query: "" },
+        label: `Elegir carta de la biblioteca (${choice.selectedIds.length}/${choice.search.destinations.length})`,
+        note: "Escribe el nombre de una carta legal de tu biblioteca; puedes terminar después de elegir una o más."
+      });
+      actions.push({
+        action: { type: "finish-library-search", sourceId: choice.sourceId },
+        label: "Terminar búsqueda",
+        note: "Deja de elegir cartas y baraja la biblioteca."
       });
       return actions;
     }
@@ -3314,7 +3376,8 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
 
 function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-library-card" }>): GameState {
   const choice = state.pendingChoice;
-  if (!choice || choice.type !== "search-library" || choice.seat !== seat) throw new Error("No tienes una búsqueda de biblioteca pendiente.");
+  if (!choice || choice.seat !== seat || (choice.type !== "search-library" && choice.type !== "search-library-multi")) throw new Error("No tienes una búsqueda de biblioteca pendiente.");
+  if (choice.type === "search-library-multi") return applyChooseMultiLibraryCard(state, seat, action, choice);
   if (choice.sourceId !== action.sourceId) throw new Error("Debes elegir una carta de la búsqueda pendiente.");
   const player = playerAt(state, seat);
   const query = action.query.trim().toLocaleLowerCase();
@@ -3347,6 +3410,57 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
     : choice.search.destination === "hand" ? "su mano"
     : choice.search.destination === "graveyard" ? "su cementerio" : "el campo de batalla";
   return logged(next, seat, `${player.name} ${choice.search.reveal ? `revela ${selected.name} y la pone en ${destination}` : `pone ${selected.name} en ${destination}`}.`);
+}
+
+function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extract<PendingChoice, { type: "search-library-multi" }>, selectedIds: readonly string[]): GameState {
+  const player = playerAt(state, seat);
+  const selected = selectedIds
+    .map((id) => player.library.find((card) => card.instance_id === id))
+    .filter((card): card is GameCard => Boolean(card));
+  const selectedSet = new Set(selected.map((card) => card.instance_id));
+  const shuffled = shuffle(player.library.filter((card) => !selectedSet.has(card.instance_id)), state.rngState);
+  let next: GameState = { ...state, pendingChoice: null, rngState: shuffled.state };
+  const handCards = selected.filter((_, index) => choice.search.destinations[index] === "hand");
+  next = withPlayer(next, seat, (current) => ({
+    ...current,
+    library: shuffled.items,
+    hand: [...current.hand, ...handCards],
+    graveyard: [
+      ...current.graveyard,
+      ...(choice.returnSourceToGraveyard && !choice.exileSourceAfterResolution ? [choice.sourceCard] : [])
+    ],
+    exile: choice.exileSourceAfterResolution ? [...current.exile, choice.sourceCard] : current.exile
+  }));
+  for (const [index, card] of selected.entries()) {
+    if (choice.search.destinations[index] === "battlefield-tapped") next = putOntoBattlefield(next, seat, card, false, true);
+  }
+  const names = selected.map((card) => card.name).join(", ");
+  return logged(next, seat, `${player.name} ${selected.length ? `elige ${names} y baraja su biblioteca` : "termina la búsqueda y baraja su biblioteca"}.`);
+}
+
+function applyChooseMultiLibraryCard(
+  state: GameState,
+  seat: SeatId,
+  action: Extract<GameAction, { type: "choose-library-card" }>,
+  choice: Extract<PendingChoice, { type: "search-library-multi" }>
+): GameState {
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes elegir una carta de la búsqueda pendiente.");
+  const query = action.query.trim().toLocaleLowerCase();
+  if (!query) throw new Error("Escribe el nombre de la carta que quieres buscar.");
+  const selectedSet = new Set(choice.selectedIds);
+  const selected = playerAt(state, seat).library.find((card) => choice.optionIds.includes(card.instance_id)
+    && !selectedSet.has(card.instance_id) && card.name.trim().toLocaleLowerCase() === query);
+  if (!selected) throw new Error("La carta elegida ya no está en la biblioteca o ya fue elegida.");
+  const selectedIds = [...choice.selectedIds, selected.instance_id];
+  if (selectedIds.length >= choice.search.destinations.length) return finishMultiLibrarySearch(state, seat, choice, selectedIds);
+  return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${selected.name}.`);
+}
+
+function applyFinishLibrarySearch(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-library-search" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "search-library-multi" || choice.seat !== seat) throw new Error("No tienes una búsqueda múltiple pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes terminar la búsqueda pendiente.");
+  return finishMultiLibrarySearch(state, seat, choice, choice.selectedIds);
 }
 
 function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readonly AttackerDeclaration[]): GameState {
@@ -3587,6 +3701,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
+    case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
