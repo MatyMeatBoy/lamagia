@@ -1112,6 +1112,7 @@ function triggerMatches(
   const object = eventObject(event);
   if (!object) return false;
   if (definition.nontoken && object.card.token) return false;
+  if (definition.excludeSubtype && cardProfile(object.card).subtypes.some((subtype) => subtype.toLowerCase() === definition.excludeSubtype!.toLowerCase())) return false;
   const isSelf = object.permanentId === watcher.instanceId;
   const objectIsCreature = isCreature(cardProfile(object.card));
   switch (subject) {

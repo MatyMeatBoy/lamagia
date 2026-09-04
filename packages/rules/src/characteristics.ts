@@ -2035,6 +2035,19 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    // "Whenever another non-<Subtype> creature you control dies, X" (Requiem Angel).
+    const nonSubtypeDies = /^whenever\s+another\s+non-([A-Za-z][A-Za-z'’-]*)\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i.exec(line);
+    if (nonSubtypeDies) {
+      const rec = recognizeSentence(nonSubtypeDies[2]!.replace(/^you\s+may\s+/i, ""));
+      if (rec) {
+        triggers.push({
+          event: "dies", subject: "another-creature-you-control", effect: rec.effect,
+          optional: /^you\s+may\b/i.test(nonSubtypeDies[2]!), targetKind: rec.target, sourceText: line,
+          excludeSubtype: nonSubtypeDies[1]!
+        });
+        continue;
+      }
+    }
     const leavesLine = line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
     const triggered = matchTriggerLine(leavesLine !== line ? leavesLine : line);
     if (triggered) {
