@@ -206,6 +206,10 @@ const FISSURE_VENT = () => make({
   name: "Fissure Vent", type_line: "Sorcery", mana_cost: "{3}{R}", cmc: 4,
   oracle_text: "Choose one or both —\n• Destroy target artifact.\n• Destroy target nonbasic land."
 });
+const ONE_DOZEN_EYES = () => make({
+  name: "One Dozen Eyes", type_line: "Sorcery", mana_cost: "{4}{G}", cmc: 5,
+  oracle_text: "Choose one —\n• Create a 3/3 green Beast creature token.\n• Create five 1/1 green Insect creature tokens.\nEntwine {5}"
+});
 const GLOBAL_INDESTRUCTIBLE = () => make({
   name: "Global Indestructible", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
   oracle_text: "Permanents you control gain indestructible until end of turn."
@@ -2841,6 +2845,20 @@ describe("casting", () => {
     });
     expect(game.players[1]!.battlefield).toHaveLength(0);
     expect(game.players[1]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Sol Ring", "Command Tower"]));
+  });
+
+  it("offers Entwine as an additional cost and resolves every modal branch", () => {
+    const eyes = ONE_DOZEN_EYES();
+    const profile = profileOf(eyes);
+    expect(profile).toMatchObject({ entwineCost: { raw: "{5}" }, fullyImplemented: true });
+    expect(profile.modalChoices).toHaveLength(2);
+    const game = readyToCast([eyes], Array.from({ length: 10 }, () => FOREST()));
+    const entwined = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.entwined);
+    expect(entwined).toBeDefined();
+    const resolved = applyAction(game, 0, entwined!.action);
+    expect(resolved.players[0]!.battlefield.filter((permanent) => permanent.card.name !== "Forest").map((permanent) => permanent.card.name)).toEqual([
+      "Beast", "Insect", "Insect", "Insect", "Insect", "Insect"
+    ]);
   });
 
   it("resolves all Boros Charm modes after normalizing its printed name", () => {

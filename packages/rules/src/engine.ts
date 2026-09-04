@@ -13,7 +13,7 @@
  */
 
 import {
-  cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
+  cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaType
@@ -396,7 +396,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[] }
@@ -3958,17 +3958,38 @@ function withKicker(cost: ManaCost, kicker: ManaCost | null): ManaCost {
   };
 }
 
-/** The mana cost a cast actually pays, after kicker (added) or evoke (replaces base). */
-function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean): ManaCost {
-  if (evoked && profile.evokeCost) return profile.evokeCost;
-  return withKicker(profile.cost!, kicked ? profile.kickerCost : null);
+function combinedModalChoice(profile: CardProfile): ModalChoice | null {
+  if (!profile.modalChoices.length) return null;
+  let targetOffset = 0;
+  const targetKinds = profile.modalChoices.map((choice) => choice.targetKind)
+    .filter((kind): kind is Exclude<TargetKind, "none"> => kind !== "none");
+  return {
+    index: -1,
+    text: "Entwine",
+    effect: {
+      kind: "compound",
+      effects: profile.modalChoices.map((choice) => choice.effect),
+      targetOffsets: profile.modalChoices.map((choice) => choice.targetKind === "none" ? null : targetOffset++)
+    },
+    targetKind: targetKinds[0] ?? "none",
+    ...(targetKinds.length ? { targetKinds } : {})
+  };
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
+/** The mana cost a cast actually pays, after kicker/entwine (added) or evoke (replaces base). */
+function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean, entwined = false): ManaCost {
+  if (evoked && profile.evokeCost) return profile.evokeCost;
+  const cost = withKicker(profile.cost!, kicked ? profile.kickerCost : null);
+  return withKicker(cost, entwined ? profile.entwineCost : null);
+}
+
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
-  const cost = flashback ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
+  const cost = flashback
+    ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
+    : spellCostOf(profile, kicked, evoked, entwined);
   const lifeCost = flashback
     ? profile.flashbackLifeCost
     : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? variableValue : 0);
@@ -3977,6 +3998,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
   if (!flashback && kicked && !profile.kickerCost) return { legal: false };
   if (!flashback && evoked && !profile.evokeCost) return { legal: false };
+  if (entwined && (!profile.entwineCost || !profile.modalChoices.length)) return { legal: false };
+  if (entwined && mode !== undefined) return { legal: false };
   if (!cost) return { legal: false };
   if (!Number.isInteger(variableValue) || variableValue < 0) return { legal: false, note: "El valor de X debe ser un entero no negativo." };
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
@@ -3985,7 +4008,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
   const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
   if (!plan) return { legal: false };
-  const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
+  const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
   const targetKind = modal?.targetKind ?? profile.targetKind;
   const targetKinds = modal?.targetKinds;
@@ -4217,18 +4240,21 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const profile = cardProfile(card);
     const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
-    const variants: { kicked: boolean; evoked: boolean }[] = [{ kicked: false, evoked: false }];
-    if (profile.kickerCost) variants.push({ kicked: true, evoked: false });
-    if (profile.evokeCost) variants.push({ kicked: false, evoked: true });
-    for (const variableValue of values) for (const mode of modes) for (const { kicked, evoked } of variants) {
-      const check = castableCard(state, seat, card, false, variableValue, mode, kicked, evoked);
+    const variants: { kicked: boolean; evoked: boolean; entwined: boolean }[] = [{ kicked: false, evoked: false, entwined: false }];
+    if (profile.kickerCost) variants.push({ kicked: true, evoked: false, entwined: false });
+    if (profile.evokeCost) variants.push({ kicked: false, evoked: true, entwined: false });
+    if (profile.entwineCost && profile.modalChoices.length) variants.push({ kicked: false, evoked: false, entwined: true });
+    for (const variableValue of values) for (const mode of modes) for (const { kicked, evoked, entwined } of variants) {
+      if (entwined && mode !== modes[0]) continue;
+      const selectedMode = entwined ? undefined : mode;
+      const check = castableCard(state, seat, card, false, variableValue, selectedMode, kicked, evoked, false, entwined);
       if (!check.legal) continue;
-      const modal = mode === undefined ? undefined : profile.modalChoices[mode];
+      const modal = entwined ? combinedModalChoice(profile) : selectedMode === undefined ? undefined : profile.modalChoices[selectedMode];
       actions.push({
-        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }), ...(kicked ? { kicked: true } : {}), ...(evoked ? { evoked: true } : {}) },
-        label: `${profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`}${kicked ? " (kicker)" : ""}${evoked ? " (evocar)" : ""}${modal ? ` — ${modal.text}` : ""}`,
+        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(kicked ? { kicked: true } : {}), ...(evoked ? { evoked: true } : {}), ...(entwined ? { entwined: true } : {}) },
+        label: `${profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`}${kicked ? " (kicker)" : ""}${evoked ? " (evocar)" : ""}${entwined ? " (entwine)" : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
-        manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0),
+        manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0) + (entwined ? (profile.entwineCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
@@ -4242,15 +4268,18 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (!cost || profile.isPermanent) continue;
     const values = cost.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
-    for (const variableValue of values) for (const mode of modes) {
-      const check = castableCard(state, seat, card, false, variableValue, mode, false, false, true);
+    const entwinedOptions = profile.entwineCost && profile.modalChoices.length ? [false, true] : [false];
+    for (const variableValue of values) for (const mode of modes) for (const entwined of entwinedOptions) {
+      if (entwined && mode !== modes[0]) continue;
+      const selectedMode = entwined ? undefined : mode;
+      const check = castableCard(state, seat, card, false, variableValue, selectedMode, false, false, true, entwined);
       if (!check.legal) continue;
-      const modal = mode === undefined ? undefined : profile.modalChoices[mode];
+      const modal = entwined ? combinedModalChoice(profile) : selectedMode === undefined ? undefined : profile.modalChoices[selectedMode];
       actions.push({
-        action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, flashback: true, ...(cost.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }) },
-        label: `Lanzar ${card.name} con Flashback${profile.flashbackLifeCost ? ` — Pay ${profile.flashbackLifeCost} life (paga ${profile.flashbackLifeCost} vidas)` : ""}${modal ? ` — ${modal.text}` : ""}`,
+        action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, flashback: true, ...(cost.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(entwined ? { entwined: true } : {}) },
+        label: `Lanzar ${card.name} con Flashback${profile.flashbackLifeCost ? ` — Pay ${profile.flashbackLifeCost} life (paga ${profile.flashbackLifeCost} vidas)` : ""}${entwined ? " (entwine)" : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
-        manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0),
+        manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0) + (entwined ? (profile.entwineCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
@@ -4265,15 +4294,18 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
     const kickers = profile.kickerCost ? [false, true] : [false];
-    for (const variableValue of values) for (const mode of modes) for (const kicked of kickers) {
-      const check = castableCard(state, seat, card, true, variableValue, mode, kicked);
+    const entwinedOptions = profile.entwineCost && profile.modalChoices.length ? [false, true] : [false];
+    for (const variableValue of values) for (const mode of modes) for (const kicked of kickers) for (const entwined of entwinedOptions) {
+      if (entwined && mode !== modes[0]) continue;
+      const selectedMode = entwined ? undefined : mode;
+      const check = castableCard(state, seat, card, true, variableValue, selectedMode, kicked, false, false, entwined);
       if (!check.legal) continue;
-      const modal = mode === undefined ? undefined : profile.modalChoices[mode];
+      const modal = entwined ? combinedModalChoice(profile) : selectedMode === undefined ? undefined : profile.modalChoices[selectedMode];
       actions.push({
-        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }), ...(kicked ? { kicked: true } : {}) },
-        label: `Lanzar comandante ${card.name}${tax ? ` (+${tax} impuesto)` : ""}${kicked ? " (kicker)" : ""}${profile.cost?.hasVariable ? ` (X=${variableValue})` : ""}${modal ? ` — ${modal.text}` : ""}`,
+        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(kicked ? { kicked: true } : {}), ...(entwined ? { entwined: true } : {}) },
+        label: `Lanzar comandante ${card.name}${tax ? ` (+${tax} impuesto)` : ""}${kicked ? " (kicker)" : ""}${entwined ? " (entwine)" : ""}${profile.cost?.hasVariable ? ` (X=${variableValue})` : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
-        manaValue: cardProfile(card).manaValue + tax + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0),
+        manaValue: cardProfile(card).manaValue + tax + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0) + (entwined ? (profile.entwineCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
@@ -4985,11 +5017,14 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!card) throw new Error("Esa carta no está en tu mano, cementerio ni zona de mando.");
   const kicked = Boolean(action.kicked);
   const evoked = Boolean(action.evoked);
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard);
+  const entwined = Boolean(action.entwined);
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
-  const spellCost = fromGraveyard ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
+  const spellCost = fromGraveyard
+    ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
+    : spellCostOf(profile, kicked, evoked, entwined);
   const lifeCost = fromGraveyard
     ? profile.flashbackLifeCost
     : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? (action.variableValue ?? 0) : 0);
@@ -5046,7 +5081,9 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
       exile: [...current.exile, ...doomed]
     }));
   }
-  const selectedEffect = profile.modalChoices[action.mode ?? -1]?.effect;
+  const selectedEffect = entwined
+    ? combinedModalChoice(profile)?.effect
+    : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard);
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card });

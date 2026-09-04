@@ -673,6 +673,8 @@ export interface CardProfile {
   readonly triggers: readonly TriggerDefinition[];
   readonly targetKind: TargetKind;
   readonly kickerCost: ManaCost | null;
+  /** Entwine additional cost for selecting every modal branch (CR 702.42). */
+  readonly entwineCost: ManaCost | null;
   readonly kickedEffects: readonly SpellEffect[];
   /** Evoke alternative cost (CR 702.34), null when absent. */
   readonly evokeCost: ManaCost | null;
@@ -1280,6 +1282,7 @@ interface RecognizedText {
   readonly modalChoices: ModalChoice[];
   readonly targetKind: TargetKind;
   kickerCost?: ManaCost | null;
+  entwineCost?: ManaCost | null;
   kickedEffects?: SpellEffect[];
   echoCost?: ManaCost | null;
   evokeCost?: ManaCost | null;
@@ -2396,6 +2399,7 @@ function recognizeText(text: string): RecognizedText {
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
+  let entwineCost: ManaCost | null = null;
   let echoCost: ManaCost | null = null;
   let evokeCost: ManaCost | null = null;
   let flashbackCost: ManaCost | null = null;
@@ -2414,6 +2418,10 @@ function recognizeText(text: string): RecognizedText {
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
+    // Entwine is an additional cost to choose every mode of a modal spell
+    // (CR 702.42a). Reminder text is not executable.
+    const entwine = /^Entwine\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (entwine) { entwineCost = parseManaCost(entwine[1]!); continue; }
     // Flashback: cast from the graveyard for this cost, then exile (CR 702.34 → 702.34a numbering aside, 702.33 family).
     const flashback = /^Flashback\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (flashback) { flashbackCost = parseManaCost(flashback[1]!); continue; }
@@ -2702,7 +2710,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, evokeCost, flashbackCost, echoCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, kickedEffects, evokeCost, flashbackCost, echoCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -2865,6 +2873,7 @@ export function cardProfile(card: CardData): CardProfile {
     triggers: [...recognized.triggers, ...synthesizedTriggers],
     targetKind: recognized.targetKind,
     kickerCost: recognized.kickerCost ?? null,
+    entwineCost: recognized.entwineCost ?? null,
     evokeCost: recognized.evokeCost ?? null,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
