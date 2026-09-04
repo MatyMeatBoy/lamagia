@@ -56,6 +56,8 @@ export interface ManaAbility {
   readonly fixedProduces?: readonly ManaType[];
   /** Restricts choices to the controller's commander color identity. */
   readonly commanderIdentity?: boolean;
+  /** The produced mana can add Opal Palace's commander-entry counters when spent to cast that commander. */
+  readonly commanderEntryCounters?: boolean;
   readonly requiresTap: boolean;
   /** Life the ability costs (pain and filter lands). */
   readonly lifeCost: number;
@@ -925,10 +927,16 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
-function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number } | null {
+function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; commanderEntryCounters?: boolean } | null {
   let remainder = effect.trim().replace(/\.$/, "");
   let gainLife: number | undefined;
   let requiresLands: number | undefined;
+  let commanderEntryCounters = false;
+  const commanderEntry = /\.\s*If you spend this mana to cast your commander, it enters with a number of additional \+1\/\+1 counters on it equal to the number of times it's been cast from the command zone this game$/i.exec(remainder);
+  if (commanderEntry) {
+    commanderEntryCounters = true;
+    remainder = remainder.slice(0, commanderEntry.index).trim();
+  }
   const gain = /\.\s*You gain (\w+) life$/i.exec(remainder);
   if (gain) {
     const amount = toNumber(gain[1]);
@@ -944,7 +952,7 @@ function parseManaInstruction(effect: string): { produced: ReturnType<typeof par
     remainder = remainder.slice(0, restriction.index).trim();
   }
   const produced = parseAddClause(remainder);
-  return produced ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }) } : null;
+  return produced ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }), ...(commanderEntryCounters ? { commanderEntryCounters: true } : {}) } : null;
 }
 
 function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
@@ -977,10 +985,14 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const removeCounters = counterMatch && counterAmount
       ? [{ kind: counterMatch[1]!.trim().replace(/\s+/g, " ").toLowerCase(), amount: counterAmount }]
       : [];
-    // Costs beyond tapping, life, and counters on the source (mana, sacrifice,
-    // discard) are not modeled.
+    // Costs beyond tapping, life, counters on the source, and mana are not
+    // modeled here; sacrifice/discard still stay excluded from mana abilities.
+    const manaSymbols = (costText.match(/\{[^}]+\}/g) ?? []).filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
+    const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
+    if (manaSymbols.length && !manaCost) continue;
     const leftovers = costText
       .replace(/\{T\}/g, "")
+      .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
       .replace(/remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+from\s+~/gi, "")
       .replace(/[,\s]/g, "");
@@ -994,7 +1006,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // does not claim that trailing restriction is enforced.
     const instruction = parseManaInstruction(effectText) ?? (() => {
       const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
-      return produced ? { produced, gainLife: undefined, requiresLands: undefined } : null;
+      return produced ? { produced, gainLife: undefined, requiresLands: undefined, commanderEntryCounters: false } : null;
     })();
     // "Add {C} for each <Subtype> on the battlefield / you control".
     const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(effectText.trim().replace(/\.$/, ""));
@@ -1013,9 +1025,11 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       index: abilities.length, produces: produced.produces, amount: produced.amount,
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
       ...(produced.commanderIdentity ? { commanderIdentity: true } : {}),
+      ...(instruction.commanderEntryCounters ? { commanderEntryCounters: true } : {}),
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
+      ...(manaCost ? { manaCost } : {}),
       requiresTap, lifeCost, text: line.trim()
     });
   }

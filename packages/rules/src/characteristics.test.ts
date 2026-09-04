@@ -47,6 +47,19 @@ describe("mana abilities", () => {
     expect(profile.manaAbilities[0]?.amount).toBe(1);
   });
 
+  it("recognises Opal Palace's commander-entry counter rider", () => {
+    const profile = cardProfile(card({
+      name: "Opal Palace", type_line: "Land",
+      oracle_text: "{T}: Add {C}.\n{1}, {T}: Add one mana of any color in your commander's color identity. If you spend this mana to cast your commander, it enters with a number of additional +1/+1 counters on it equal to the number of times it's been cast from the command zone this game.",
+      produced_mana: ["B", "C", "G", "R", "U", "W"]
+    }));
+    expect(profile.manaAbilities[1]).toMatchObject({
+      produces: ["W", "U", "B", "R", "G"], amount: 1,
+      commanderIdentity: true, commanderEntryCounters: true, manaCost: { raw: "{1}" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("reads an either-or ability as a single mana with a choice", () => {
     const profile = cardProfile(card({ name: "Test Dual", type_line: "Land", oracle_text: "{T}: Add {W} or {U}.", produced_mana: ["W", "U"] }));
     expect(profile.manaAbilities[0]).toMatchObject({ produces: ["W", "U"], amount: 1 });
@@ -57,9 +70,9 @@ describe("mana abilities", () => {
     expect(profile.manaAbilities[0]).toMatchObject({ produces: ["C"], lifeCost: 0 });
   });
 
-  it("ignores an ability whose cost is not modeled", () => {
+  it("reads a mana ability with a generic activation cost", () => {
     const profile = cardProfile(card({ name: "Test Filter", type_line: "Land", oracle_text: "{1}, {T}: Add {W}{U}." }));
-    expect(profile.manaAbilities).toHaveLength(0);
+    expect(profile.manaAbilities[0]).toMatchObject({ manaCost: { raw: "{1}" }, produces: ["W", "U"], fixedProduces: ["W", "U"] });
   });
 
   it("gives a fetch land no mana ability", () => {
