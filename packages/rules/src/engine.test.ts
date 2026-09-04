@@ -203,6 +203,7 @@ const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "
 const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Creature — Vampire", mana_cost: "{3}{U}{B}", cmc: 5, power: "4", toughness: "4", colors: ["U", "B"], keywords: ["Intimidate"], oracle_text: "Intimidate\nOther creatures you control have intimidate.\nWhenever Vela the Night-Clad or another creature you control leaves the battlefield, each opponent loses 1 life." });
 const GAHIJI = () => make({ name: "Gahiji, Honored One", type_line: "Legendary Creature — Beast", mana_cost: "{3}{R}{G}{W}", cmc: 6, power: "4", toughness: "4", oracle_text: "Whenever a creature attacks one of your opponents or a planeswalker an opponent controls, that creature gets +2/+0 until end of turn." });
 const GUTTERSNIPE = () => make({ name: "Guttersnipe", type_line: "Creature — Goblin Shaman", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever you cast an instant or sorcery spell, Guttersnipe deals 2 damage to each opponent." });
+const FECUNDITY = () => make({ name: "Fecundity", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature dies, that creature's controller may draw a card." });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
 const RHYSTIC_STUDY = () => make({ name: "Rhystic Study", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}." });
@@ -2663,6 +2664,29 @@ describe("triggered abilities", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
     game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.players[1]!.life === 35);
     expect(game.players[1]!.life).toBe(35);
+  });
+
+  it("lets the controller of a dead creature choose Fecundity's draw", () => {
+    const profile = profileOf(FECUNDITY());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "dies",
+      subject: "any-creature",
+      choiceBy: "event-controller",
+      optional: true,
+      effect: { kind: "draw", amount: 1 }
+    });
+    let game = readyToCast([BOLT()], [FECUNDITY(), MOUNTAIN()], [BEAR()]);
+    game = applyAction(game, 0, {
+      type: "cast",
+      cardId: "hand-0",
+      targets: [{ kind: "permanent", instanceId: game.players[1]!.battlefield[0]!.instance_id }]
+    });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.seat).toBe(1);
+    const before = game.players[1]!.hand.length;
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[1]!.hand).toHaveLength(before + 1);
   });
 
   it("raises life-gained once and resolves a source counter trigger", () => {
