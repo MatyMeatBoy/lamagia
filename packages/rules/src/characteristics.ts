@@ -82,6 +82,8 @@ export interface ActivatedAbility {
   readonly index: number;
   readonly requiresTap: boolean;
   readonly sacrificesSelf: boolean;
+  /** Untapped creature chosen as an activation cost, optionally by subtype. */
+  readonly tapsCreature?: { readonly subtype?: string; readonly mode: "any" | "another" };
   /** Creature chosen as an activation cost, optionally excluding the source. */
   readonly sacrificesCreature?: "any" | "another";
   /** Noncreature permanent chosen as an activation cost, optionally excluding the source. */
@@ -994,6 +996,11 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
 
   const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
   const sacrificesSelf = /sacrifice\s+~/i.test(costText) || namedSelfSacrifice;
+  const tapCreatureMatch = /tap\s+an\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control/i.exec(costText);
+  const tapsCreature = tapCreatureMatch ? {
+    mode: "any" as const,
+    ...(tapCreatureMatch[1]!.toLowerCase() === "creature" ? {} : { subtype: tapCreatureMatch[1]! })
+  } : undefined;
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
   const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
@@ -1013,6 +1020,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/g, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
+    .replace(/tap\s+an\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
@@ -1022,6 +1030,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     index,
     requiresTap,
     sacrificesSelf,
+    ...(tapsCreature ? { tapsCreature } : {}),
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]!.slice(1).toLowerCase()}` as "Artifact" | "Enchantment" | "Land" } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
