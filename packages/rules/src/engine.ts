@@ -4381,11 +4381,13 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${source.card.name}.`);
   }
+  let sacrificedArtifactMv = 0;
   if (ability.sacrificesArtifact) {
     const board = playerAt(next, seat).battlefield.filter((permanent) => cardProfile(permanent.card).types.includes("Artifact"));
     const paid = board.find((permanent) => permanent.instance_id === action.sacrificeId)
       ?? board.find((permanent) => permanent.instance_id !== source.instance_id) ?? board[0];
     if (!paid) throw new Error("No hay un artefacto para sacrificar.");
+    sacrificedArtifactMv = cardProfile(paid.card).manaValue;
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
@@ -4433,7 +4435,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} exilia ${exile.name} de su cementerio.`);
   }
 
-  next = pushActivatedOnStack(next, seat, source, ability, targets, sacrificedPower);
+  next = pushActivatedOnStack(next, seat, source, ability, targets, sacrificedPower || sacrificedArtifactMv);
   return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
 }
 
