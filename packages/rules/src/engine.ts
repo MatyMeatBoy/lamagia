@@ -323,7 +323,7 @@ export type GameAction =
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly discardCardId?: string; readonly exileCardId?: string }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -3159,9 +3159,10 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         : [undefined];
       const discards = ability.discardsCard ? player.hand : [undefined];
       const exiles = ability.exilesGraveyardCard ? player.graveyard : [undefined];
-      for (const sacrifice of sacrifices) for (const discard of discards) for (const exile of exiles) actions.push({
-        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}), ...(exile ? { exileCardId: exile.instance_id } : {}) },
-        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exile ? ` — Exile ${exile.name}` : ""}`,
+      const tapCreatures = ability.tapsCreature ? tapCostCandidates(state, seat, permanent, ability) : [undefined];
+      for (const sacrifice of sacrifices) for (const tapCreature of tapCreatures) for (const discard of discards) for (const exile of exiles) actions.push({
+        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}), ...(tapCreature ? { tapId: tapCreature.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}), ...(exile ? { exileCardId: exile.instance_id } : {}) },
+        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exile ? ` — Exile ${exile.name}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         note: ability.text
@@ -3503,6 +3504,7 @@ function activatableAbility(
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id));
     if (!candidates.length) return { legal: false };
   }
+  if (ability.tapsCreature && !tapCostCandidates(state, seat, permanent, ability).length) return { legal: false };
   if (ability.discardsCard && !player.hand.length) return { legal: false };
   if (ability.exilesGraveyardCard && !player.graveyard.length) return { legal: false };
   if (ability.removeCounters && !ability.removeCounters.every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) {
@@ -3530,6 +3532,22 @@ function activatableAbility(
   return { legal: true, targetKind };
 }
 
+/** Returns permanents that can pay a typed "tap an untapped ..." cost. */
+function tapCostCandidates(
+  state: GameState,
+  seat: SeatId,
+  source: Permanent,
+  ability: ActivatedAbility
+): Permanent[] {
+  const cost = ability.tapsCreature;
+  if (!cost) return [];
+  return playerAt(state, seat).battlefield.filter((candidate) => {
+    if (candidate.tapped || !isCreature(cardProfile(candidate.card))) return false;
+    if (cost.mode === "another" && candidate.instance_id === source.instance_id) return false;
+    return !cost.subtype || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === cost.subtype!.toLowerCase());
+  });
+}
+
 function applyActivate(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate" }>): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para activar esa habilidad.");
   const player = playerAt(state, seat);
@@ -3554,6 +3572,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== source.instance_id));
     sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesPermanent.type.toLowerCase()} para sacrificar.`);
+  }
+  let tapCreature: Permanent | undefined;
+  if (ability.tapsCreature) {
+    const candidates = tapCostCandidates(state, seat, source, ability);
+    tapCreature = action.tapId ? candidates.find((candidate) => candidate.instance_id === action.tapId) : candidates[0];
+    if (!tapCreature) throw new Error("Debes elegir una criatura enderezada válida para girar.");
   }
   let discard: GameCard | undefined;
   if (ability.discardsCard) {
@@ -3607,6 +3631,16 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       manaPool: payment.remaining,
       life: current.life - payment.lifePaid
     }));
+  }
+
+  if (tapCreature) {
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      battlefield: current.battlefield.map((permanent) =>
+        permanent.instance_id === tapCreature!.instance_id ? { ...permanent, tapped: true } : permanent)
+    }));
+    next = raiseTapEvents(next, state, [tapCreature.instance_id]);
+    next = logged(next, seat, `${player.name} gira ${tapCreature.card.name} como coste.`);
   }
 
   if (ability.removeCounters?.length) {
