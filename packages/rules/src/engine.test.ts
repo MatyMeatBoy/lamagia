@@ -125,6 +125,7 @@ const TRAMPLE_REMOVAL = () => make({ name: "Trample Bane", type_line: "Instant",
 const VIGILANCE_REMOVAL = () => make({ name: "Vigilance Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with vigilance." });
 const INDESTRUCTIBLE_REMOVAL = () => make({ name: "Indestructible Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with indestructible." });
 const HEXPROOF_REMOVAL = () => make({ name: "Hexproof Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with hexproof." });
+const SHROUD_REMOVAL = () => make({ name: "Shroud Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with shroud." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
@@ -1294,6 +1295,13 @@ describe("casting", () => {
     let game = readyToCast([HEXPROOF_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [make({ name: "Hex Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Hexproof"] })]);
     game = putOnBattlefield(game, 0, [make({ name: "Own Hex Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Hexproof"] })]);
     expect(legalTargets(game, 0, "creature-with-hexproof")).toHaveLength(1);
+  });
+
+  it("allows shroud creatures only through legal-target ownership rules", () => {
+    expect(profileOf(SHROUD_REMOVAL()).targetKind).toBe("creature-with-shroud");
+    let game = readyToCast([SHROUD_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [make({ name: "Shrouded Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Shroud"] })]);
+    game = putOnBattlefield(game, 0, [make({ name: "Own Shrouded Saint", type_line: "Creature — Spirit", power: "2", toughness: "2", keywords: ["Shroud"] })]);
+    expect(legalTargets(game, 0, "creature-with-shroud")).toHaveLength(1);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
