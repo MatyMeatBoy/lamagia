@@ -234,6 +234,10 @@ export interface EquipmentModification {
 export interface StaticKeywordGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
   readonly keyword: EnforcedKeyword;
+  /** Zone where the source supplies the static ability (battlefield by default). */
+  readonly sourceZone?: "battlefield" | "graveyard";
+  /** Land subtype required when the source ability is active in a graveyard. */
+  readonly requiresControlledLandSubtype?: string;
 }
 
 export interface StaticPowerToughnessGrant {
@@ -951,6 +955,13 @@ function parseFlashbackLifeCost(text: string): number {
 }
 
 function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {
+  const graveyard = /^As long as (?:this card|~) is in your graveyard and you control (?:a|an) ([A-Za-z][A-Za-z'’ -]*), creatures you control have (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate)$/i.exec(line.trim().replace(/\.$/, ""));
+  if (graveyard) return {
+    scope: "creatures-you-control",
+    keyword: graveyard[2]!.toLowerCase() as EnforcedKeyword,
+    sourceZone: "graveyard",
+    requiresControlledLandSubtype: graveyard[1]!.trim()
+  };
   const match = /^(?:(other )?creatures you control|all creatures) (?:have|gain) (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate)$/i.exec(line.trim().replace(/\.$/, ""));
   return match ? { scope: match[1] ? "other-creatures-you-control" : /^all creatures/i.test(match[0]!) ? "all-creatures" : "creatures-you-control", keyword: match[2]!.toLowerCase() as EnforcedKeyword } : null;
 }

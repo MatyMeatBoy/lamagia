@@ -1428,3 +1428,11 @@ stale full tree. The clean branch currently exports **186/356 C13 printings**,
 **171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
 `5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
 queued for the next integration batch.
+
+### C13 Wonder graveyard static primitive (2026-09-04)
+
+`Wonder` (`232284f7-c623-4895-9ab9-8b1a39926830`) now records its static grant
+with explicit `sourceZone: "graveyard"` and `requiresControlledLandSubtype:
+"Island"`. The engine applies the grant only to creatures controlled by that
+player while the required land subtype is present; the Python IR preserves the
+same zone, subtype, and keyword operands for future cards.

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, delayed_draw_hint, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, trigger_subject_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, delayed_draw_hint, effective_worker_count, graveyard_static_hint, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint, trigger_subject_hint
 from export_set_coverage import is_ignored_edition, product_group
 from check_precon_coverage import identity_of
 from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, resolve_claim_prefix, select_profiles, template_of
@@ -114,6 +114,18 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(return_target_hint(clause), "permanent-card-in-your-graveyard")
         self.assertEqual(classify(clause)["return_target"], "permanent-card-in-your-graveyard")
 
+    def test_preserves_graveyard_static_zone_and_land_subtype(self) -> None:
+        clause = "As long as this card is in your graveyard and you control an Island, creatures you control have flying."
+        self.assertEqual(graveyard_static_hint(clause), {
+            "source_zone": "graveyard",
+            "requires_controlled_land_subtype": "Island",
+            "keyword": "flying",
+        })
+        result = classify(clause)
+        self.assertTrue(result["known_static"])
+        self.assertIn("source-zone:graveyard", result["primitive_cluster"])
+        self.assertIn("requires-land-subtype:Island", result["primitive_cluster"])
+
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
         self.assertEqual(cluster_text("Choose one �"), "choose <n> <mode>")
@@ -151,7 +163,7 @@ class OracleCompilerTests(unittest.TestCase):
             self.assertEqual(load_card_cache(path)["oracle-1"], entry)
             path.write_text(json.dumps({"format": "prossh-oracle-card-cache/v1", "parser_version": "old", "cards": {"oracle-1": entry}}), encoding="utf-8")
             self.assertEqual(load_card_cache(path), {})
-        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v9")
+        self.assertEqual(ORACLE_IR_PARSER_VERSION, "v10")
 
     def test_separates_discard_activation_cost_from_discard_effect(self) -> None:
         result = classify("{T}, Discard a card: Draw a card.")

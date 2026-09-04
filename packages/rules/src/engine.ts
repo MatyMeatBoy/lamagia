@@ -499,8 +499,16 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
   if (level?.keywords.includes(keyword)) return true;
   if (permanent.temporaryKeywords?.includes(keyword)) return true;
   if (isCreature(profile) && allPermanents(state).some((source) => cardProfile(source.card).staticKeywordGrants.some((grant) => grant.keyword === keyword
+      && grant.sourceZone !== "graveyard"
       && (grant.scope === "all-creatures" || (source.controller === permanent.controller
         && (grant.scope === "creatures-you-control" || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))))))) return true;
+  if (isCreature(profile) && state.players.some((player) => player.seat === permanent.controller
+      && player.graveyard.some((card) => cardProfile(card).staticKeywordGrants.some((grant) => grant.sourceZone === "graveyard"
+        && grant.keyword === keyword
+        && grant.scope === "creatures-you-control"
+        && grant.requiresControlledLandSubtype
+        && player.battlefield.some((source) => isLand(cardProfile(source.card))
+          && hasSubtype(cardProfile(source.card), grant.requiresControlledLandSubtype!)))))) return true;
   return attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword));
 }
 

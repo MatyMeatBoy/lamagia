@@ -151,6 +151,7 @@ const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
+const WONDER = () => make({ name: "Wonder", type_line: "Creature — Incarnation", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Flying\nAs long as this card is in your graveyard and you control an Island, creatures you control have flying.", scryfall_id: "232284f7-c623-4895-9ab9-8b1a39926830" });
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
 const TOUGH_CREATURE_REMOVAL = () => make({ name: "Tough Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with toughness 4 or greater." });
 const SMALL_CREATURE_REMOVAL = () => make({ name: "Small Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 4 or less." });
@@ -1856,6 +1857,19 @@ describe("casting", () => {
     let game = readyToCast([FLYING_REMOVAL()], [FOREST(), FOREST(), FOREST()]);
     game = putOnBattlefield(game, 0, [OTHER_FLYING_LORD(), BEAR()]);
     expect(legalTargets(game, 0, "creature-with-flying")).toHaveLength(1);
+  });
+
+  it("applies Wonder's graveyard static grant only while its controller has an Island", () => {
+    expect(profileOf(WONDER()).staticKeywordGrants).toEqual([{
+      scope: "creatures-you-control", keyword: "flying", sourceZone: "graveyard", requiresControlledLandSubtype: "Island"
+    }]);
+    let game = readyToCast([FLYING_REMOVAL()], [FOREST(), FOREST(), FOREST(), BEAR()]);
+    game = stage(game, 0, (player) => ({ graveyard: toHand(0, [WONDER()], "wonder-yard") }));
+    const ownBear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(legalTargets(game, 0, "creature-with-flying")).not.toContainEqual({ kind: "permanent", instanceId: ownBear.instance_id });
+
+    game = putOnBattlefield(game, 0, [ISLAND()]);
+    expect(legalTargets(game, 0, "creature-with-flying")).toContainEqual({ kind: "permanent", instanceId: ownBear.instance_id });
   });
 
   it("accepts gain as an alternate static keyword verb", () => {

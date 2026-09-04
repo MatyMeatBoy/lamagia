@@ -32,7 +32,7 @@ from typing import Any
 DEFAULT_COMMIT_CARD_LIMIT = 20
 # Bump whenever the emitted IR schema or classification semantics change so
 # incremental runs cannot silently reuse cards compiled by an older parser.
-ORACLE_IR_PARSER_VERSION = "v9"
+ORACLE_IR_PARSER_VERSION = "v10"
 
 
 VERB_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -77,6 +77,10 @@ KNOWN_STATIC_RE = re.compile(
     re.I,
 )
 KNOWN_STATIC_LINE_RE = re.compile(r"^(?:level\s+\d+(?:-\d+|\+)?|\d+\/\d+|choose\s+(?:one|two|one or both)\s+(?:-|—|–|�))\.?$", re.I)
+GRAVEYARD_STATIC_RE = re.compile(
+    r"^as long as (?:this card|~) is in your graveyard and you control (?:a|an) (?P<land>[A-Za-z][A-Za-z'’ -]*), creatures you control have (?P<keyword>[A-Za-z ]+?)\.?$",
+    re.I,
+)
 ZONE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("library", r"\blibrar(?:y|ies)\b"),
     ("hand", r"\bhand\b"),
@@ -150,6 +154,18 @@ def number_hint(text: str) -> int | str | None:
         return "X" if re.search(r"\bX\b|\{X\}", text, re.I) else None
     token = match.group(0).lower()
     return WORD_NUMBERS.get(token, int(token) if token.isdigit() else None)
+
+
+def graveyard_static_hint(clause: str) -> dict[str, str] | None:
+    """Extract the zone and land-subtype operands from a Wonder-style grant."""
+    match = GRAVEYARD_STATIC_RE.fullmatch(clause.strip())
+    if not match:
+        return None
+    return {
+        "source_zone": "graveyard",
+        "requires_controlled_land_subtype": match.group("land").strip(),
+        "keyword": match.group("keyword").strip().lower(),
+    }
 
 
 def has_card_type(text: str, card_type: str) -> bool:
@@ -306,7 +322,8 @@ def classify(clause: str) -> dict[str, Any]:
         target_zone = "graveyard" if re.search(r"\bgraveyard\b", target_text, re.I) else "hand" if re.search(r"\bhand\b", target_text, re.I) else "battlefield"
     modal = bool(re.search(r"\bchoose (?:one|two|three|one or more)\b", lower))
     keyword_only = bool(KEYWORD_ONLY_RE.fullmatch(clause.strip()))
-    known_static = bool(KNOWN_STATIC_RE.fullmatch(clause.strip()) or KNOWN_STATIC_LINE_RE.fullmatch(clause.strip()))
+    graveyard_static = graveyard_static_hint(clause)
+    known_static = bool(KNOWN_STATIC_RE.fullmatch(clause.strip()) or KNOWN_STATIC_LINE_RE.fullmatch(clause.strip()) or graveyard_static)
     operands = operand_hints(clause, target_text, search_criterion)
     cost_text, _ = clause_cost_effect_parts(clause)
     cost_context = "activated-cost" if ACTIVATED_RE.match(clause.strip()) else "additional-cast-cost" if ADDITIONAL_COST_RE.search(clause) else None
@@ -345,6 +362,8 @@ def classify(clause: str) -> dict[str, Any]:
         cluster_parts.append("return-target:" + return_target)
     if modal:
         cluster_parts.append("modal")
+    if graveyard_static:
+        cluster_parts.extend(["source-zone:graveyard", "requires-land-subtype:" + graveyard_static["requires_controlled_land_subtype"]])
     return {
         "text": clause,
         "kind": kind,
@@ -363,6 +382,7 @@ def classify(clause: str) -> dict[str, Any]:
         "operands": operands,
         "mana_symbols": re.findall(r"\{([^}]+)\}", clause),
         "modal": modal,
+        "graveyard_static": graveyard_static,
         "conditional": bool(re.search(r"\b(?:if|unless|as long as|whenever)\b", lower)),
         # Stable grouping key for AI/contributor batches. It preserves the
         # reusable mechanic constraints without using card names as identity.
