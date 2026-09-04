@@ -1284,12 +1284,15 @@ function playerHasNoMaximumHandSize(state: GameState, seat: SeatId): boolean {
 function dealDamageToPermanent(state: GameState, instanceId: string, amount: number, deathtouch: boolean, sourceName: string): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
+  // Damage to a planeswalker removes that many loyalty counters (CR 120.3c).
+  const isPlaneswalker = cardProfile(permanent.card).types.includes("Planeswalker") && "loyalty" in permanent.counters;
   const next = withPlayer(state, permanent.controller, (player) => ({
     ...player,
-    battlefield: player.battlefield.map((candidate) =>
-      candidate.instance_id === instanceId
-        ? { ...candidate, damage: candidate.damage + amount, deathtouched: candidate.deathtouched || deathtouch }
-        : candidate)
+    battlefield: player.battlefield.map((candidate) => {
+      if (candidate.instance_id !== instanceId) return candidate;
+      if (isPlaneswalker) return { ...candidate, counters: { ...candidate.counters, loyalty: Math.max(0, (candidate.counters.loyalty ?? 0) - amount) } };
+      return { ...candidate, damage: candidate.damage + amount, deathtouched: candidate.deathtouched || deathtouch };
+    })
   }));
   return logged(next, permanent.controller, `${sourceName} hace ${amount} de daño a ${permanent.card.name}.`);
 }
@@ -1648,10 +1651,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const amount = effectAmount(effect.amount, object);
       for (const permanent of allPermanents(state)) {
         const profile = cardProfile(permanent.card);
-        if (!isCreature(profile)) continue;
+        const planeswalker = effect.alsoPlaneswalkers && profile.types.includes("Planeswalker");
+        if (!isCreature(profile) && !planeswalker) continue;
         if (effect.excludeSource && permanent.instance_id === object.card.instance_id) continue;
-        if (effect.filter === "nonartifact" && profile.types.includes("Artifact")) continue;
-        if (effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
+        if (!planeswalker && effect.filter === "nonartifact" && profile.types.includes("Artifact")) continue;
+        if (!planeswalker && effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
         next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
       }
       return next;

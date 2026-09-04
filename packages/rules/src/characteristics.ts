@@ -318,7 +318,7 @@ export type SpellEffect =
   | { readonly kind: "lose-life-each-player-equal-hand" }
   | { readonly kind: "damage-active-player-hand-minus"; readonly offset: number }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
-  | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" }
+  | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying"; readonly alsoPlaneswalkers?: boolean }
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-nonflying-creatures-and-players"; readonly amount: number | "X" }
@@ -1633,6 +1633,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]) ?? (match[1]!.toUpperCase() === "X" ? "X" : null);
     const filter = /nonartifact/i.test(match[2]!) ? "nonartifact" as const : "without-flying" as const;
     if (amount !== null) return { effect: { kind: "damage-all-creatures", amount, excludeSource: false, filter }, target: "none" };
+  }
+  if ((match = /^~ deals (\w+) damage to each creature without flying and each planeswalker$/i.exec(text))) {
+    const amount = toNumber(match[1]) ?? (match[1]!.toUpperCase() === "X" ? "X" : null);
+    if (amount !== null) return { effect: { kind: "damage-all-creatures", amount, excludeSource: false, filter: "without-flying", alsoPlaneswalkers: true }, target: "none" };
   }
   if ((match = /^(All creatures|Creatures you control|Target creature) gets? ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     const power = Number(match[2]);
