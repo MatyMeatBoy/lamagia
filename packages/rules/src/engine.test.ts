@@ -1014,6 +1014,15 @@ describe("casting", () => {
     }
   });
 
+  it("resolves Vision Skeins for every living player", () => {
+    let game = readyToCast([C13_VISION_SKEINS()], [ISLAND(), ISLAND()], [BEAR()]);
+    game = stage(game, 0, () => ({ library: toHand(0, [FOREST(), PLAINS()], "vision-caster") }));
+    game = stage(game, 1, () => ({ library: toHand(1, [MOUNTAIN(), SWAMP()], "vision-opponent") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Forest", "Plains"]);
+    expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears", "Mountain", "Swamp"]);
+  });
+
   it("offers and pays a chosen untapped Wizard for Azami", () => {
     let game = readyToCast([], [C13_AZAMI(), AZAMI_WIZARD(), BEAR()]);
     const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;
