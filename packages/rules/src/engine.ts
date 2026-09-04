@@ -1281,6 +1281,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         }))
       }));
     }
+    case "grant-all-creatures-keyword": {
+      return {
+        ...state,
+        players: state.players.map((player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
+            ? { ...permanent, temporaryKeywords: [...new Set([...(permanent.temporaryKeywords ?? []), effect.keyword])] }
+            : permanent)
+        }))
+      };
+    }
     case "modify-and-grant-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

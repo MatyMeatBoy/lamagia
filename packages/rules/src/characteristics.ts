@@ -266,6 +266,7 @@ export type SpellEffect =
   | { readonly kind: "scry"; readonly amount: number; readonly thenDraw?: number }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-permanents-you-control-keyword"; readonly keyword: EnforcedKeyword }
+  | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
@@ -1154,6 +1155,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };
   const globalKeyword = /^Permanents you control gain (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud) until end of turn$/i.exec(text);
   if (globalKeyword) return { effect: { kind: "grant-permanents-you-control-keyword", keyword: globalKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "none" };
+  const allKeyword = /^All creatures gain (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud) until end of turn$/i.exec(text);
+  if (allKeyword) return { effect: { kind: "grant-all-creatures-keyword", keyword: allKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "none" };
   const combined = /^Target creature gets ([+-]\d+)\/([+-]\d+) and gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud) until end of turn$/i.exec(text);
   if (combined) return {
     effect: { kind: "modify-and-grant-target-creature", power: Number(combined[1]), toughness: Number(combined[2]), keyword: combined[3]!.toLowerCase() as EnforcedKeyword },
