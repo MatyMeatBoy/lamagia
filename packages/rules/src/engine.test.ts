@@ -1488,6 +1488,22 @@ describe("casting", () => {
     expect(game.players[1]!.hand.length).toBe(before + 2);
   });
 
+  it("reuses typed sacrifice and any-target damage for C13 Blood Rites", () => {
+    let game = readyToCast([], [C13_BLOOD_RITES(), MOUNTAIN(), MOUNTAIN(), BEAR()], [], [BEAR()]);
+    const rites = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Blood Rites")!;
+    const victim = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === rites.instance_id);
+    expect(activation?.action.type).toBe("activate");
+    expect(activation?.action.type === "activate" ? activation.action.sacrificeId : undefined).toBeDefined();
+    game = applyAction(game, 0, {
+      ...(activation!.action),
+      targets: [{ kind: "permanent", instanceId: victim.instance_id }]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears"));
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
   it("draws once per creature controlled by the caster", () => {
     expect(profileOf(CREATURE_DRAW()).effects).toEqual([{ kind: "draw-equal-controlled-type", type: "Creature" }]);
   });
