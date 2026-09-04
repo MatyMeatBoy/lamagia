@@ -1192,6 +1192,16 @@ is paid together with mana (CR 702.34, 118.8).
 Coverage after this refinement: **170/356 C13 cards (47.8%)** and
 **8,114/38,711 globally**.
 
+### Integrator checkpoint: self-shuffle and life-gain batch (2026-09-04)
+
+Integrated the functional portion of the fork's 11-commit batch: reusable
+self-shuffling spell resolution for Blue Sun's Zenith, countered-spell
+destination coverage, and Ajani's Pridemate life-gain/+1/+1 trigger reuse.
+Snapshots were regenerated locally. Validation: `npm run check` PASS; `npm
+test` PASS (**370 rules tests**, simulator, **38 Oracle Python tests**).
+C13 remains **171/356 (48.0%)** because the covered reprints are shared outside
+the C13 unique-card list; global export remains **8,121/38,711 (21.0%)**.
+
 ### Integrator checkpoint: C13 multi-basic search batch accepted (2026-09-04)
 
 Integrated the fork's 11-commit functional batch for multi-card basic-land

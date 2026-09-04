@@ -295,7 +295,7 @@ describe("self-shuffle replacement", () => {
     }));
     expect(profile.effects).toEqual([
       { kind: "draw-target-player", amount: "X" },
-      { kind: "shuffle-source-into-library" }
+      { kind: "shuffle-self-into-library" }
     ]);
     expect(profile.fullyImplemented).toBe(true);
   });

@@ -2314,6 +2314,11 @@ function resolveTop(state: GameState): GameState {
   if (!profile.effects.length && !(object.kicked && profile.kickedEffects.length)) {
     next = logged(next, object.controller, `${object.card.name} se resuelve sin efecto: su texto todavía no está implementado.`);
   }
+  // A spell that explicitly shuffles itself has already moved through its
+  // effect (CR 701.20); do not send that same object to the graveyard.
+  if (profile.effects.some(hasSelfShuffle)) {
+    return logged(next, object.controller, `${object.card.name} se baraja en la biblioteca de su propietario.`);
+  }
   const retire = profile.effects.find((effect) => effect.kind === "exile-self" || effect.kind === "shuffle-self-into-library");
   if (retire?.kind === "exile-self") {
     return withPlayer(next, object.card.owner, (player) => ({ ...player, exile: [...player.exile, object.card] }));
