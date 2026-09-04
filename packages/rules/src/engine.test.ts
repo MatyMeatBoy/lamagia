@@ -62,6 +62,7 @@ const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "
 const X_MINUS_SWEEP = () => make({ name: "X Minus Sweep", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "All creatures get -X/-X until end of turn." });
 const POWER_DRAW_TRIGGER = () => make({ name: "Power Draw Trigger", type_line: "Creature — Human Druid", mana_cost: "{3}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your end step, if you control a creature with power 5 or greater, you may draw a card." });
 const NONFLYING_SWEEP = () => make({ name: "Nonflying Sweep", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell deals X damage to each creature without flying and each player." });
+const UPKEEP_DRAW_LOSS = () => make({ name: "Upkeep Draw Loss", type_line: "Creature — Demon", mana_cost: "{5}{B}", cmc: 6, power: "2", toughness: "2", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life." });
 const Ophiomancer_MEMORY = () => make({ name: "Ophiomancer Memory", type_line: "Creature — Human Shaman", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "At the beginning of each upkeep, if you control no Snakes, create a 1/1 black Snake creature token with deathtouch." });
 const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "You lose 2 life." });
 const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you lose life, put a +1/+1 counter on Pain Counter." });
@@ -901,6 +902,10 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === flying.instance_id)).toBe(true);
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("reuses compound resolution for upkeep draw-and-life-loss triggers", () => {
+    expect(profileOf(UPKEEP_DRAW_LOSS()).triggers[0]).toMatchObject({ event: "upkeep", effect: { kind: "compound", effects: [{ kind: "draw", amount: 1 }, { kind: "lose-life", amount: 1 }] } });
   });
 
   it("scales token creation from the controller's current land count", () => {

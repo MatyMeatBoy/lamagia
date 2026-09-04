@@ -1014,6 +1014,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: "none"
     };
   }
+  if ((match = /^You draw a card and you lose (\w+) life$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: 1 }, { kind: "lose-life", amount }] },
+      target: "none"
+    };
+  }
   if ((match = /^Draw (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "draw", amount }, target: "none" };
