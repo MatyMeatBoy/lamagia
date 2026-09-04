@@ -3315,7 +3315,7 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
 }
 
-function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent, ability: ActivatedAbility, targets: readonly Target[]): GameState {
+function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent, ability: ActivatedAbility, targets: readonly Target[], variableValue = 0): GameState {
   const object: StackObject = {
     id: `ability:${state.version}:${source.instance_id}:${ability.index}`,
     controller: seat,
@@ -3323,7 +3323,7 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
     label: `${source.card.name} · habilidad activada`,
     targets,
     fromCommandZone: false,
-    variableValue: 0,
+    variableValue,
     countered: false,
     activated: ability,
     sourcePermanentId: source.instance_id
@@ -3614,14 +3614,16 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
+  let sacrificedPower = 0;
   if (sacrifice) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);
     if (!paid) throw new Error("La criatura elegida para sacrificar ya no está en el campo.");
+    sacrificedPower = Math.max(0, powerOf(paid, next));
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
 
-  next = pushActivatedOnStack(next, seat, source, ability, targets);
+  next = pushActivatedOnStack(next, seat, source, ability, targets, sacrificedPower);
   return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
 }
 

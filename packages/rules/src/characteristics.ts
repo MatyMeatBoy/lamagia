@@ -1166,6 +1166,13 @@ function parseEquipmentScaledToken(text: string): SpellEffect | null {
   return base?.kind === "create-token" ? { ...base, amount: "equipment-attached-to-source" } : null;
 }
 
+function parseSacrificePowerToken(text: string): SpellEffect | null {
+  const suffix = /,?\s*where x is the sacrificed creature's power$/i;
+  if (!suffix.test(text.trim())) return null;
+  const base = parseCreateToken(text.trim().replace(suffix, ""));
+  return base?.kind === "create-token" ? { ...base, amount: "X" } : null;
+}
+
 function parseOpponentHandScaledToken(text: string): SpellEffect | null {
   const suffix = /,?\s*where x is the number of your opponents with four or more cards in hand$/i;
   if (!suffix.test(text.trim())) return null;
@@ -1746,7 +1753,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
-  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseEquipmentScaledToken(text) ?? parseDeathScaledToken(text) ?? parseOpponentHandScaledToken(text) ?? parseCreateToken(text);
+  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseEquipmentScaledToken(text) ?? parseDeathScaledToken(text) ?? parseSacrificePowerToken(text) ?? parseOpponentHandScaledToken(text) ?? parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
   const genericSearch = parseLibrarySearch(text);
   if (genericSearch) return { effect: genericSearch, target: "none" };
