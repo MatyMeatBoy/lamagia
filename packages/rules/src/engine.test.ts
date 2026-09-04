@@ -2490,6 +2490,18 @@ describe("casting", () => {
     expect(game.players[0]!.library.at(-1)!.instance_id).toBe("scry-duplicates-1");
   });
 
+  it("does not start Scry when the spell is countered", () => {
+    let game = readyToCast([SCRY_TWO()], [ISLAND()], [COUNTER()], [ISLAND(), ISLAND()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const spell = game.stack.at(-1)!;
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "spell", stackId: spell.id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Scry Two")).toBe(true);
+    expect(game.players[0]!.library.some((card) => card.name === "Scry Two")).toBe(false);
+  });
+
   it("returns Blue Sun's Zenith to its owner's library after drawing", () => {
     let game = readyToCast([C13_BLUE_SUN()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
     const beforeHand = game.players[0]!.hand.length;
