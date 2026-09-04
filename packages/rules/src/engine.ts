@@ -1702,16 +1702,50 @@ function canAttack(state: GameState, permanent: Permanent): boolean {
   if (!isCreature(profile)) return false;
   if (permanent.tapped) return false;
   if (profile.keywords.includes("defender")) return false;
+  // A printed "can't attack" is the same restriction as defender (CR 506.3a).
+  if (profile.combatRules.cannotAttack) return false;
   if (permanent.summoningSick && !profile.keywords.includes("haste")) return false;
   void state;
   return true;
 }
 
-function canBlock(attacker: Permanent, blocker: Permanent): boolean {
+/**
+ * Creatures that must be declared as attackers this combat (CR 508.1d).
+ *
+ * "Attacks each combat if able" is a requirement, not a restriction: the
+ * declaration is illegal unless it includes every such creature that could
+ * legally attack.
+ */
+function requiredAttackers(state: GameState, seat: SeatId): Permanent[] {
+  return playerAt(state, seat).battlefield.filter((permanent) =>
+    cardProfile(permanent.card).combatRules.mustAttack && canAttack(state, permanent));
+}
+
+/** True while the defending player controls a land matching the attacker's landwalk. */
+function landwalkEvades(state: GameState, attacker: Permanent, defenderSeat: SeatId): boolean {
+  const walks = cardProfile(attacker.card).combatRules.landwalk;
+  if (!walks.length) return false;
+  const wanted = new Set(walks.map((subtype) => subtype.toLowerCase()));
+  return playerAt(state, defenderSeat).battlefield.some((permanent) => {
+    const profile = cardProfile(permanent.card);
+    if (!isLand(profile)) return false;
+    // Rule 702.14a reads the land's subtypes, so "legendary landwalk" checks the
+    // supertype list instead.
+    return profile.subtypes.some((subtype) => wanted.has(subtype.toLowerCase()))
+      || profile.supertypes.some((supertype) => wanted.has(supertype.toLowerCase()));
+  });
+}
+
+function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): boolean {
   const blockerProfile = cardProfile(blocker.card);
   if (!isCreature(blockerProfile) || blocker.tapped) return false;
+  if (blockerProfile.combatRules.cannotBlock) return false;
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.keywords.includes("flying") && !blockerProfile.keywords.includes("flying") && !blockerProfile.keywords.includes("reach")) return false;
+  // "Can block only creatures with X" is an evasion check read from the blocker.
+  const only = blockerProfile.combatRules.blocksOnlyWithKeyword;
+  if (only && !attackerProfile.keywords.includes(only)) return false;
+  if (landwalkEvades(state, attacker, blocker.controller)) return false;
   return true;
 }
 
@@ -1725,7 +1759,7 @@ export function legalBlockers(state: GameState, seat: SeatId): Permanent[] {
   return playerAt(state, seat).battlefield.filter((blocker) =>
     attackers.some((entry) => {
       const attacker = findPermanent(state, entry.instanceId);
-      return attacker ? canBlock(attacker, blocker) : false;
+      return attacker ? canBlock(state, attacker, blocker) : false;
     }));
 }
 
@@ -2648,6 +2682,9 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
   }
   const unique = new Set(attackers.map((entry) => entry.instanceId));
   if (unique.size !== attackers.length) throw new Error("Una criatura no puede atacar dos veces.");
+  // Attack requirements are checked against the whole declaration (CR 508.1d).
+  const missing = requiredAttackers(state, seat).find((permanent) => !unique.has(permanent.instance_id));
+  if (missing) throw new Error(`${missing.card.name} ataca en cada combate si puede.`);
 
   let next: GameState = { ...state, combat: { ...state.combat, attackers: [...attackers], attackersDeclared: true } };
   next = tapAttackers(next, attackers);
@@ -2677,7 +2714,7 @@ function applyDeclareBlockers(state: GameState, seat: SeatId, blockers: readonly
     const blocker = findPermanent(state, entry.instanceId);
     const declaration = state.combat.attackers.find((candidate) => candidate.instanceId === entry.attackerId);
     if (!attacker || !blocker || !declaration || declaration.defender !== seat) throw new Error("Esa criatura no te está atacando.");
-    if (!canBlock(attacker, blocker)) throw new Error(`${blocker.card.name} no puede bloquear a ${attacker.card.name}.`);
+    if (!canBlock(state, attacker, blocker)) throw new Error(`${blocker.card.name} no puede bloquear a ${attacker.card.name}.`);
   }
   const unique = new Set(blockers.map((entry) => entry.instanceId));
   if (unique.size !== blockers.length) throw new Error("Una criatura solo puede bloquear a un atacante.");

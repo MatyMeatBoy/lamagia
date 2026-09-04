@@ -188,6 +188,89 @@ loads pending IDs only when an edition is opened.
   full IR therefore reduced actionable pending entries from 22,678 to 18,254
   without changing executable-card coverage.
 
+## Batch C14 — primitive roadmap tool and combat restrictions
+
+### Why a new planner
+
+Card work was being scheduled from `data/rules/oracle-clusters.json`, which ranks
+clauses by **how often they appear**. That is the wrong number: a card is only
+implemented when *every* one of its lines is executable, so the most frequent
+clause can appear in thousands of cards and finish none of them. With 11,072
+clusters and a 20-card commit budget, the queue was effectively unordered.
+
+`tools/rules/plan_primitive_roadmap.py` (`npm run rules:roadmap`) replaces that
+ranking. It reads the profile export produced by the real engine — so the ground
+truth is `packages/rules` itself, not a parallel Python approximation — folds
+each line the engine failed to execute into a parameterised template, and then
+runs a **greedy set cover**:
+
+* `blocks`  — unfinished cards containing the template.
+* `unlocks` — cards it is the **last** blocker for.
+* Each round schedules the template that finishes the most cards *given what is
+  already scheduled*, then retires it. A template that finishes nothing today
+  rises the moment the template sharing its cards is scheduled, which is why the
+  tie-break is coverage rather than an arbitrary order.
+
+Measured on the current catalog: **15,217 of 32,057 unfinished cards are exactly
+one line away**, and the top 40 templates would finish 1,326 of them. The
+generated `docs/PRIMITIVE_ROADMAP.md` is a work order with claim keys, printed
+examples and the exact card list per entry, so a contributor can pick one up
+cold. Regenerate it after every batch; it is not hand-editable.
+
+The tool derives every template from the local Scryfall catalog text. It does
+not read or transcribe XMage or Forge code, and the repository policy in
+`docs/RULES_RESEARCH.md` is unchanged.
+
+### First batch driven by it
+
+Claims `c14-combat-restrictions` and `c14-landwalk`, taken from the top of the
+generated queue and disjoint from the C13 equipment/counters/life work.
+
+* `packages/rules/src/characteristics.ts` — `CombatRules` plus `parseCombatRules`
+  read four printed restrictions and landwalk off the Oracle body. They are
+  static abilities, so they are consumed as covered text rather than resolved.
+* `packages/rules/src/engine.ts`
+  * `canAttack` honours a printed "can't attack" (CR 506.3a).
+  * `canBlock` takes the game state and honours "can't block" (CR 509.1a),
+    "can block only creatures with X", and landwalk.
+  * `landwalkEvades` checks the **defending** player's lands for the named
+    subtype, and the supertype list for legendary landwalk (CR 702.14a).
+  * `requiredAttackers` enforces "attacks each combat if able" against the whole
+    declaration, so leaving such a creature out is rejected (CR 508.1d). A
+    creature that cannot legally attack does not make the declaration illegal.
+* `packages/rules/src/engine.test.ts` — six scenarios: profile reading, a
+  can't-block creature absent from `legalBlockers` and refused by the
+  authoritative path, a flying-only blocker against both a ground creature and a
+  flier, an attack requirement refusing an incomplete declaration, the same
+  requirement not applying to a summoning-sick creature, and a swampwalker
+  unblockable only when the defender controls a Swamp.
+
+### Verification
+
+```text
+npm run check                    PASS (0 errors)
+npm run test --workspace=@prossh/rules   182 passed, 6 skipped
+python tools/rules/test_compile_oracle_effects.py   22 tests OK
+npm run simulate:engine          200 games, 0 invariant failures, 160 finished
+npm run rules:engine:export      38,711 cards; 6,654 fully implemented
+```
+
+Fully implemented moved **6,500 → 6,654 (+154)**, and every combat-restriction
+and landwalk template dropped out of the regenerated roadmap, which is the
+tool checking its own prediction.
+
+### Limits
+
+* Landwalk reads printed land subtypes only; an effect that changes a land's
+  type at runtime is not modelled, because the engine has no layer system yet.
+* "Can block only creatures with X" is limited to the enforced keyword set.
+* Attack requirements are checked, but attack **restrictions** that would make a
+  requirement impossible in combination (CR 508.1d's "maximum subset" rule) are
+  not solved; with a single requirement family that cannot yet produce a
+  contradiction.
+* `blocksOnlyWithKeyword` and `cannotBlock` are read from the printed card only.
+  Granting or removing them at runtime needs continuous effects.
+
 ## Current verified state
 
 | Area | Implemented now | Evidence |
@@ -297,6 +380,7 @@ npm run simulate:engine   # 200 seeded games through the real engine
 npm run rules:pool:sync   # 1,500-card EDHREC popularity pool in data/rules
 npm run rules:compile     # 38k-card rules-family inventory in data/rules
 npm run rules:engine:export # actual engine profile for each unique card
+npm run rules:roadmap     # rank the primitives that finish the most cards next
 npm run build             # production builds
 ```
 
