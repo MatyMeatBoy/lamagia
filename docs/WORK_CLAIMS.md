@@ -17,6 +17,7 @@ feature name.
 
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
+| `c13-reveal-top-gain-mana-value` | Augury Adept's combat-damage trigger: reveal the top library card, put it into hand, then gain life equal to its mana value; reusable top-card reveal-to-hand primitive (CR 701.16, 608.2c) | `codex/c13-augury-adept` | active | 2026-09-04 |
 | `rules-land-search` | Landcycling variants and land-subtype search resolution | `feat/activated-abilities-and-triggers` | merged (`7c7f77c`) | 2026-09-03 |
 | `rules-equipment` | Equip actions, attachment state, and Equipment static bonuses | `codex/c13-equipment-cluster` | merged (`f61a096`) | 2026-09-03 |
 | `rules-c13-reprint-equivalence` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | `codex/c13-equipment-cluster` | merged (`44d0e78`) | 2026-09-04 |
