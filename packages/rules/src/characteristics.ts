@@ -953,7 +953,7 @@ function parseCreateToken(text: string): SpellEffect | null {
   const creature = /\bcreature\b/i.test(descriptor);
   const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature)$/i.test(word)).join(" ");
   const name = (match[5]?.trim() || (subtype || (artifact ? "Treasure" : "Token"))).replace(/\s+token$/i, "");
-  const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud/gi) ?? [])
+  const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
   const typeLine = subtype ? `${artifact ? "Artifact " : ""}${creature ? "Creature" : "Artifact"} — ${subtype}` : `${artifact ? "Artifact" : "Creature"}`;
   return {
