@@ -358,6 +358,11 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-oracle-other-activated-shape-3` | Activated creature-only control reset: each player gains control of all creatures they own (CR 110.2,  control-change effects) | `codex/c13-homeward-path-f99` | active | 2026-09-04 |
 | `c13-oracle-other-activated-shape-6` | Activated temporary animation: source becomes a 2/2 white and blue Bird artifact creature with flying until end of turn (CR 613.6, 707.2) | `codex/c13-azorius-keyrune-f99` | active | 2026-09-04 |
 
+| `c13-oracle-counter-activated-cost` | Opal Palace commander-identity mana ability marks mana used for a commander cast and applies its cast-count +1/+1 counters (CR 605.1a, 614.1c, 903.8) | `codex/c13-mana-priority-f99` | active | 2026-09-04 |
+| `c13-oracle-damage-activated-cost` | Leonin Bladetrap sacrifices itself to deal damage to attacking creatures without flying (CR 602.2b, 608.2c, 120.4) | `codex/c13-leonin-bladetrap-f99` | active | 2026-09-04 |
+| `c13-oracle-damage-triggered-shape-7` | Fell Shepherd returns all creature cards put into your graveyard from the battlefield this turn after combat damage to a player (CR 603.2, 603.3d, 400.7) | `codex/c13-fell-shepherd-f99` | active | 2026-09-04 |
+| `c13-oracle-damage-triggered-target` | Stalking Vengeance uses a dead creature's last-known power to damage a target player or planeswalker (CR 603.2, 603.3d, 109.5) | `codex/c13-stalking-vengeance-f99` | active | 2026-09-04 |
+| `c13-oracle-destroy-activated-target` | Deepfire Elemental pays {X}{X}{1} and destroys a target artifact or creature with mana value X (CR 602.2b, 107.3, 608.2b) | `codex/c13-deepfire-elemental-f99` | active | 2026-09-04 |
 ## Claim format
 
 Copy this row when starting work:

@@ -483,6 +483,22 @@ const DEATH_DRAIN = () => make({
   name: "Grave Pact Acolyte", type_line: "Creature — Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",
   oracle_text: "When Grave Pact Acolyte dies, each opponent loses 2 life."
 });
+const FELL_SHEPHERD = () => make({
+  name: "Fell Shepherd", type_line: "Creature — Demon", mana_cost: "{5}{B}{B}", cmc: 7, power: "8", toughness: "6",
+  oracle_text: "Whenever Fell Shepherd deals combat damage to a player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn.",
+  scryfall_id: "5fd78088-53db-453b-90a3-b8426b0a826e"
+});
+const STALKING_VENGEANCE = () => make({
+  name: "Stalking Vengeance", type_line: "Creature — Avatar", mana_cost: "{6}{R}", cmc: 7, power: "5", toughness: "5",
+  keywords: ["Haste"],
+  oracle_text: "Haste\nWhenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.",
+  scryfall_id: "5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb"
+});
+const DEEPFIRE_ELEMENTAL = () => make({
+  name: "Deepfire Elemental", type_line: "Creature — Elemental", mana_cost: "{4}{R}{R}", cmc: 6, power: "4", toughness: "4",
+  oracle_text: "{X}{X}{1}: Destroy target artifact or creature with mana value X.",
+  scryfall_id: "c8119ebe-aedd-4bdb-8f7f-368674a049fd"
+});
 const WATCHER = () => make({
   name: "Mortuary Watcher", type_line: "Creature — Spirit", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
   oracle_text: "Whenever another creature you control dies, you gain 1 life."
@@ -5136,6 +5152,26 @@ describe("activated abilities", () => {
     expect(game.players[1]!.graveyard.some((card) => card.instance_id === attacker.card.instance_id)).toBe(true);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === flier.instance_id)).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Leonin Bladetrap")).toBe(true);
+  });
+
+  it("offers Deepfire Elemental targets and payment values for X", () => {
+    let game = readyOnBoard([DEEPFIRE_ELEMENTAL(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR(), ARTIFACT_BLOCKER()]);
+    const source = permanentNamed(game, 0, "Deepfire Elemental")!;
+    const profile = profileOf(DEEPFIRE_ELEMENTAL());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      effect: { kind: "destroy-target-artifact-or-creature-mana-value" },
+      targetKind: "artifact-or-creature"
+    });
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.variableValue === 2);
+    expect(activation).toMatchObject({ requiresTarget: "artifact-or-creature-mana-value-2" });
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { ...activation!.action, targets: [{ kind: "permanent", instanceId: bear.instance_id }] } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears"));
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Iron Construct")).toBe(true);
   });
 
   it("grants Aerie Mystics' activated shroud to creatures only", () => {
