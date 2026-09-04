@@ -25231,7 +25231,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Foster — `fb431500-152c-4524-b76b-de62922ff57f`
 - [ ] From the Ashes — `3e229329-65e4-4240-959a-b97b26908c0e`
 - [ ] Furnace Celebration — `af6d6844-c612-4731-86da-59a8fa02956b`
-- [ ] Gahiji, Honored One — `110d5d45-7174-4d1b-9e9c-e1ccd950ee3b`
+- [x] Gahiji, Honored One — `110d5d45-7174-4d1b-9e9c-e1ccd950ee3b`
 - [ ] Goblin Bombardment — `edad60c6-80de-4033-af1b-a703ac332983`
 - [ ] Goblin Sharpshooter — `d81285b7-a718-411a-8be3-ecc0cfe0bcb0`
 - [ ] Golgari Guildmage — `46dad873-11f5-4269-8ec2-f126419fbd7d`
