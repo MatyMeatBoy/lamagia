@@ -627,6 +627,21 @@ official Wizards source: `https://magic.wizards.com/en/rules`.
 Validation: `npm run check --workspace=@prossh/rules` PASS and `npm test
 --workspace=@prossh/rules` PASS — 367 passed, 6 skipped.
 
+### Cooperative C13 cluster: ETB draw and destroy-then-draw reuse
+
+Baleful Strix now verifies the existing ETB draw trigger and flying/deathtouch
+characteristics as a C13 printing. Phyrexian Gargantua generalizes the
+compound `draw N and lose N life` recognizer, so its ETB uses the same ordered
+draw and life-loss effects without a card-specific branch. Annihilate verifies
+that typed nonblack-creature destruction and the shared draw effect resolve in
+sequence, while black creatures remain illegal targets.
+
+Rules reference: Comprehensive Rules 603.2, 608.2b, 608.2c and 700.4;
+official Wizards source: `https://magic.wizards.com/en/rules`.
+
+Validation: `npm run check --workspace=@prossh/rules` PASS and `npm test
+--workspace=@prossh/rules` PASS — 373 passed, 6 skipped.
+
 ## Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
