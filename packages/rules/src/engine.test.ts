@@ -227,6 +227,7 @@ const C13_BRILLIANT_PLAN = () => make({ name: "Brilliant Plan", type_line: "Sorc
 const C13_HARMONIZE = () => make({ name: "Harmonize", type_line: "Sorcery", mana_cost: "{2}{G}{G}", cmc: 4, oracle_text: "Draw three cards.", scryfall_id: "83da2456-0c5c-4b2b-8183-20c332566127" });
 const C13_VISION_SKEINS = () => make({ name: "Vision Skeins", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Each player draws two cards.", scryfall_id: "b4b032de-808e-4c47-ba86-ac59609378e0" });
 const C13_DEEP_ANALYSIS = () => make({ name: "Deep Analysis", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Target player draws two cards.\nFlashback—{1}{U}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)", scryfall_id: "952800af-f52c-44bf-a98b-51c5f8142dc9" });
+const C13_BALEFUL_STRIX = () => make({ name: "Baleful Strix", type_line: "Artifact Creature — Bird", mana_cost: "{U}{B}", cmc: 2, power: "1", toughness: "1", keywords: ["Flying", "Deathtouch"], oracle_text: "Flying\nDeathtouch\nWhen this creature enters, draw a card.", scryfall_id: "47ac0f77-1294-4de9-93d1-141a9f314f98" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
 const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantment", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target.", scryfall_id: "89d77b63-eeee-4d8a-9622-b1ea36dc70de" });
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
@@ -1122,6 +1123,13 @@ describe("casting", () => {
     expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Forest", "Plains"]);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Deep Analysis")).toBe(false);
     expect(game.players[0]!.exile.some((card) => card.name === "Deep Analysis")).toBe(true);
+  });
+
+  it("reuses ETB draw and combat keywords for C13 Baleful Strix", () => {
+    const profile = profileOf(C13_BALEFUL_STRIX());
+    expect(profile.keywords).toEqual(expect.arrayContaining(["flying", "deathtouch"]));
+    expect(profile.triggers).toMatchObject([{ event: "enters-battlefield", effect: { kind: "draw", amount: 1 } }]);
+    expect(profile.fullyImplemented).toBe(true);
   });
 
   it("resolves C13 draw-only spells through the shared draw engine", () => {
