@@ -92,6 +92,8 @@ export interface ActivatedAbility {
   readonly tapsCreature?: { readonly subtype?: string; readonly mode: "any" | "another" };
   /** Creature chosen as an activation cost, optionally excluding the source. */
   readonly sacrificesCreature?: "any" | "another";
+  /** Creature subtype required by the activation cost, e.g. "Sacrifice a Beast". */
+  readonly sacrificesCreatureSubtype?: { readonly subtype: string; readonly mode: "any" | "another" };
   readonly sacrificesArtifact?: boolean;
   readonly sacrificesLand?: boolean;
   /** Noncreature permanent chosen as an activation cost, optionally excluding the source. */
@@ -417,6 +419,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-creature-then-controller-token"; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent" }
+  /** Return each non-token permanent to its owner's control without changing zones. */
+  | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   | { readonly kind: "chaos-warp" }
   /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
   | { readonly kind: "regenerate-source" }
@@ -1224,7 +1228,11 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     mode: tapCreatureMatch[1]!.toLowerCase() === "another" ? "another" as const : "any" as const,
     ...(tapCreatureMatch[2]!.toLowerCase() === "creature" ? {} : { subtype: tapCreatureMatch[2]! })
   } : undefined;
-  const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
+  const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature\b/i.exec(costText);
+  const sacrificeCreatureSubtype = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?([A-Za-z][A-Za-z'’-]*)\b/i.exec(costText);
+  const typedCreature = sacrificeCreatureSubtype && !/^(?:creature|artifact|enchantment|land|noncreature|token|permanent)$/i.test(sacrificeCreatureSubtype[2]!)
+    ? sacrificeCreatureSubtype
+    : null;
   const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
   const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
@@ -1242,6 +1250,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+~/gi, "")
     .replace(/\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/g, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
+    .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?[A-Za-z][A-Za-z'’-]*\b/gi, (match) => typedCreature ? "" : match)
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
@@ -1255,6 +1264,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     sacrificesSelf,
     ...(tapsCreature ? { tapsCreature } : {}),
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
+    ...(typedCreature ? { sacrificesCreatureSubtype: { subtype: typedCreature[2]!, mode: typedCreature[1] ? "another" as const : "any" as const } } : {}),
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]!.slice(1).toLowerCase()}` as "Artifact" | "Enchantment" | "Land" } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
@@ -2089,6 +2099,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness$/i.test(`${text}.`)) {
     return { effect: { kind: "destroy-target-creature-then-life-loss" }, target: "creature" };
+  }
+  if (/^Each player gains control of all nontoken permanents they own$/i.test(text)) {
+    return { effect: { kind: "return-owned-nontoken-permanents-to-control" }, target: "none" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if ((match = /^That creature gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {

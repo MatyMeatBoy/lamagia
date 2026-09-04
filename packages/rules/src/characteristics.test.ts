@@ -219,6 +219,20 @@ describe("C13 sacrifice-card parsing", () => {
     expect(fires.fullyImplemented).toBe(true);
     expect(bombardment.fullyImplemented).toBe(true);
   });
+
+  it("preserves a creature subtype in a sacrifice cost", () => {
+    const baloth = cardProfile(card({
+      name: "Ravenous Baloth",
+      type_line: "Creature — Beast",
+      oracle_text: "Sacrifice a Beast: You gain 4 life."
+    }));
+    expect(baloth.activatedAbilities[0]).toMatchObject({
+      sacrificesCreatureSubtype: { subtype: "Beast", mode: "any" },
+      effect: { kind: "gain-life", amount: 4 },
+      targetKind: "none"
+    });
+    expect(baloth.fullyImplemented).toBe(true);
+  });
 });
 
 describe("flashback parsing", () => {
