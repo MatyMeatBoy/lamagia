@@ -223,6 +223,22 @@ class OracleCompilerTests(unittest.TestCase):
         self.assertEqual(job["family"], "search-library")
         self.assertEqual(job["oracle_ids"], ["a", "b"])
 
+    def test_worker_plan_colocates_overlapping_oracle_ids(self) -> None:
+        plan = build_worker_plan([
+            {"cluster": "search-library|equipment", "cards": [{"oracle_id": "shared"}, {"oracle_id": "a"}]},
+            {"cluster": "exile|equipment", "cards": [{"oracle_id": "shared"}, {"oracle_id": "b"}]},
+            {"cluster": "draw", "cards": [{"oracle_id": "c"}]},
+        ], workers=2, memory_budget_gb=2)
+        owners = {
+            oracle_id: worker["worker"]
+            for worker in plan["workers"]
+            for job in worker["jobs"]
+            for oracle_id in job["oracle_ids"]
+            if oracle_id in {"shared", "a", "b"}
+        }
+        self.assertEqual({owners["shared"], owners["a"], owners["b"]}, {owners["shared"]})
+        self.assertEqual(sum(worker["estimated_cards"] for worker in plan["workers"]), 4)
+
     def test_reads_only_exact_active_claim_statuses(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "claims.md"

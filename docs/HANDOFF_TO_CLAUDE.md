@@ -1064,3 +1064,16 @@ instead of throwing `Unexpected token '<'` when Pages returns HTML. GitHub Pages
 is static, so local AI play is verified but a public AI match still requires a
 hosted `services/match-server` origin configured through
 `window.__PROSSH_API_BASE__`.
+
+### Planner optimization: overlap-aware worker assignment (2026-09-04)
+
+`tools/rules/plan_primitive_workers.py` now builds connected components over
+shared `oracle_id`s before assigning work to the five-worker/2 GB queue. A card
+with several unresolved clauses therefore remains on one worker, while its
+primitive jobs stay separately visible and retain their 20-card commit batches.
+Worker estimates use unique cards, preventing misleading double-counting. The
+behavior is covered by `test_worker_plan_colocates_overlapping_oracle_ids`.
+
+Fork integration policy remains strict: integrate only when **more than 10**
+new commits are available; the current fork tail has exactly 10, so it remains
+queued until at least one additional commit arrives.

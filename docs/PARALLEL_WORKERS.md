@@ -19,6 +19,11 @@ human-readable handoff. Re-run both after integrating a batch so the remaining
 claims and card IDs are recalculated. This coordinates parallel work but does
 not authorize concurrent edits to the same engine files.
 
+The planner also co-locates connected jobs: when multiple unresolved primitives
+share an `oracle_id`, their jobs stay on one worker and the worker estimate
+counts that card once. This preserves primitive-level reuse without allowing
+parallel agents to modify the same card in separate worktrees.
+
 Fork protocol: workers do not push directly. They accumulate at least 11
 commits, report all SHAs in one message, and keep each commit at no more than
 20 new `oracle_id` values. The integrator reviews and imports the complete
