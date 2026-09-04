@@ -357,6 +357,19 @@ describe("triggered self modifications", () => {
     });
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("recognises a triggered self P/T-only modifier", () => {
+    const profile = cardProfile(card({
+      name: "Landfall Self Pump",
+      type_line: "Creature — Beast",
+      oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield",
+      effect: { kind: "modify-source-creature", power: 2, toughness: 2 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("effect recognition", () => {
