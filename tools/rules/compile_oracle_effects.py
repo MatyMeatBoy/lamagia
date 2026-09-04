@@ -183,8 +183,13 @@ def operand_hints(clause: str, target_text: str | None, search_criterion: dict[s
                 and target_operand.lower() not in CARD_TYPES
                 and target_operand.lower() not in {value.casefold() for value in subtypes}):
             subtypes.append(target_operand)
-    return {"actions": [name for name, _ in VERB_PATTERNS if re.search(_, clause, re.I)],
+    result: dict[str, list[str]] = {"actions": [name for name, _ in VERB_PATTERNS if re.search(_, clause, re.I)],
             "zones": zones, "card_types": card_types, "subtypes": sorted(subtypes, key=str.casefold)}
+    sacrifice_types = sorted({word.title() for word in CARD_TYPES if re.search(
+        rf"\bsacrifice\s+(?:another\s+|a\s+|an\s+)?{re.escape(word)}\b", clause, re.I)})
+    if sacrifice_types:
+        result["sacrifice_types"] = sacrifice_types
+    return result
 
 
 def cluster_text(clause: str) -> str:
@@ -227,6 +232,9 @@ def classify(clause: str) -> dict[str, Any]:
         cluster_parts.append("target-types:" + ",".join(target_types))
     if target_zone:
         cluster_parts.append("zone:" + target_zone)
+    sacrifice_types = operands.get("sacrifice_types", [])
+    if sacrifice_types:
+        cluster_parts.append("sacrifice-types:" + ",".join(sacrifice_types))
     if modal:
         cluster_parts.append("modal")
     return {

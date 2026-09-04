@@ -62,6 +62,11 @@ class OracleCompilerTests(unittest.TestCase):
         result = classify("Search your library for an Equipment card, reveal it, then shuffle.")
         self.assertEqual(result["primitive_cluster"], "search-library|static-or-spell|search:Equipment")
 
+    def test_preserves_typed_sacrifice_operands_for_workers(self) -> None:
+        result = classify("Sacrifice an artifact: Draw a card.")
+        self.assertEqual(result["operands"]["sacrifice_types"], ["Artifact"])
+        self.assertEqual(result["primitive_cluster"], "draw|activated|sacrifice-types:Artifact")
+
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
         self.assertEqual(cluster_text("Choose one �"), "choose <n> <mode>")
