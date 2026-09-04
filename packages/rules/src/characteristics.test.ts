@@ -211,6 +211,18 @@ describe("multi-card library searches", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises Burnished Hart's two tapped basic-land destinations", () => {
+    const profile = cardProfile(card({
+      name: "Burnished Hart",
+      type_line: "Artifact Creature — Elk",
+      mana_cost: "{3}",
+      oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({ sacrificesSelf: true, manaCost: { raw: "{3}" } });
+    expect(profile.activatedAbilities[0]?.effect).toMatchObject({ kind: "search-library-multi", destinations: ["battlefield-tapped", "battlefield-tapped"] });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("recognises Armillary Sphere's named self-sacrifice activation", () => {
     const profile = cardProfile(card({
       name: "Armillary Sphere",
