@@ -3300,6 +3300,22 @@ describe("activated abilities", () => {
     expect(projectGame(game, 1).librarySearch).toBeNull();
   });
 
+  it("projects multi-card search targets and progress privately", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [C13_CULTIVATE()], "multi"), library: toHand(0, [ISLAND(), SWAMP(), MOUNTAIN()], "library") }));
+    game = putOnBattlefield(game, 0, [FOREST(), ISLAND(), ISLAND()]);
+    game = { ...game, activeSeat: 0, prioritySeat: 0, step: "precombat-main", priorityOpen: true, passedSeats: [] };
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId, query: "Island" });
+    const own = projectGame(game, 0);
+    expect(own.librarySearch).toMatchObject({ destination: "multiple", selectedCount: 1, maxSelections: 2 });
+    expect(own.librarySearch?.candidates.map((card) => card.name)).toContain("Swamp");
+    expect(own.librarySearch?.candidates.map((card) => card.name)).not.toContain("Island");
+    expect(own.librarySearch?.allCards.map((card) => card.name)).toEqual(expect.arrayContaining(["Island", "Swamp", "Mountain"]));
+    expect(projectGame(game, 1).librarySearch).toBeNull();
+  });
+
   it("resolves a bounce land's ETB by returning a land its controller chose", () => {
     expect(profileOf(AZORIUS_CHANCERY()).fullyImplemented).toBe(true);
     let game = readyOnBoard([PLAINS()]);
