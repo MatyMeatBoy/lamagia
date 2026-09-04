@@ -2511,6 +2511,7 @@ describe("triggered abilities", () => {
     game = applyAction(game, 1, { type: "cast", cardId: spell.instance_id });
     const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
     expect(choice.seat).toBe(1);
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "choose-trigger" && entry.action.accept)).toBe(false);
     game = applyAction(game, 1, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
     expect(game.players[0]!.hand).toHaveLength(1);
   });
