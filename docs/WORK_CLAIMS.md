@@ -8,6 +8,7 @@
 | `rules-c13-multi-basic-search` | `codex/c13-equipment-cluster` | Multi-card basic-land searches with ordered destinations for Cultivate and Armillary Sphere | Ready for integrator review |
 | `rules-c13-life-gain-counter` | `codex/c13-equipment-cluster` | Reuse the life-gained trigger and +1/+1 counter primitive for Ajani's Pridemate | Ready for integrator review |
 | `rules-c13-shuffle-source` | `codex/c13-equipment-cluster` | Shuffle-self replacement for Blue Sun's Zenith after its target draw resolves | Ready for integrator review |
+| `rules-c13-scry-one` | `codex/c13-equipment-cluster` | Scry 1 choice flow for New Benalia's enter-the-battlefield trigger | In progress |
 | `rules-level-up` | `codex/c13-equipment-cluster` | Level up activation, level counters, and level-band P/T/keyword characteristics | Ready for integrator review |
 | `rules-tap-untap` | `codex/c13-equipment-cluster` | Targeted Tap target creature and Untap target permanent effects | Ready for integrator review |
 | `rules-mill` | `codex/c13-equipment-cluster` | Target player mills a bounded number of cards into their graveyard | Ready for integrator review |
