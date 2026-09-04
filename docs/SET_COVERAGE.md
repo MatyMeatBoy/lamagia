@@ -300,7 +300,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 12 | 56 | 17.6% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 33 | 201 | 14.1% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 106 | 235 | 31.1% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 107 | 234 | 31.4% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 2 | 10 | 16.7% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 5 | 9 | 35.7% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 0 | 9 | 0.0% |
@@ -25172,7 +25172,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Basalt Monolith — `6b8cf2a0-b045-4d91-9d91-c602d40c6237`
 - [ ] Behemoth Sledge — `00573e77-8ff6-4acb-8683-8827d965288f`
 - [ ] Blood Rites — `69757aaf-182e-41a0-a5b4-4404e4c81c45`
-- [ ] Blue Sun's Zenith — `613a41b8-0b4f-4995-bf1e-ca41f96e6438`
+- [x] Blue Sun's Zenith — `613a41b8-0b4f-4995-bf1e-ca41f96e6438`
 - [x] Boros Charm — `2679d0dd-ba30-4a1c-b6a0-b3ac6c790496`
 - [ ] Borrowing 100,000 Arrows — `a3f10772-d055-419d-a535-4f094eaf437c`
 - [ ] Brooding Saurian — `2fb7f844-edaf-43ef-9121-318baf9ec9ce`
