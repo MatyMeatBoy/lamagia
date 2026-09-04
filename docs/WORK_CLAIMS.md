@@ -239,3 +239,4 @@ Claims coordinate contributors but do not replace review: CI, scenario tests,
 rules citations and the integrator review remain mandatory.
 | `arsenal-edric-combat-draw` | Edric draws optionally when a creature deals combat damage to one of his opponents (CR 603.2, 603.5, 120.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-minds-eye` | Mind's Eye watches opponent card draws and supports optional payment of {1} before drawing (CR 603.2, 603.5, 121.1) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-duplicant-etb-imprint` | Duplicant optionally exiles a target nontoken creature on ETB and copies its power/toughness through last-known imprint (CR 603.2, 603.5, 607.2, 707.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
