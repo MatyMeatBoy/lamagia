@@ -2242,3 +2242,10 @@ primitive. At each end step it restores control of every nontoken permanent
 to its owner without changing zones, covering Brooding Saurian (CR 603.2,
 603.6, 110.2). Commit `f6f8031` is queued for integration; this
 branch is based on `b008385` and excludes sibling worker commits.
+
+### C13 optional cycle “may have” triggers (2026-09-04)
+
+The generic `card-cycled` trigger parser now normalizes “you may have it deal …”
+and “you may have target creature gain …” into existing reusable effects. Slice
+and Dice uses the all-creature damage path; Dirge of Dread uses the targeted
+temporary keyword path (CR 603.2, 702.29).

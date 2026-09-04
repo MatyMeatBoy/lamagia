@@ -108,6 +108,7 @@ const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Inst
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
 const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
+const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle this card, you may have it deal 1 damage to each creature." });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
 const CREATURE_COUNT_BOLT = () => make({ name: "Creature Count Bolt", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals damage equal to the number of creatures you control to any target." });
 const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Tap target creature." });
@@ -1095,6 +1096,32 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Decree of Pain")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("resolves Slice and Dice's optional cycling damage trigger", () => {
+    const profile = profileOf(SLICE_AND_DICE());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "card-cycled",
+      subject: "self",
+      optional: true,
+      effect: { kind: "damage-all-creatures", amount: 1 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast(
+      [SLICE_AND_DICE()],
+      [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()],
+      [],
+      [BEAR()]
+    );
+    const slice = game.players[0]!.hand[0]!;
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === slice.instance_id);
+    expect(offered).toBeDefined();
+    game = applyAction(game, 0, offered!.action);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.damage).toBe(1);
   });
 
   it("lets Mind's Eye pay for opponent draws", () => {
