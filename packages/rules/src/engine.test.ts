@@ -206,6 +206,7 @@ const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "En
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
+const C13_ARMY_OF_THE_DAMNED = () => ({ ...TAPPED_ZOMBIES(), scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
 const RHYSTIC_STUDY = () => make({ name: "Rhystic Study", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}." });
@@ -817,6 +818,17 @@ describe("casting", () => {
     const zombies = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Zombie");
     expect(zombies).toHaveLength(13);
     expect(zombies.every((permanent) => permanent.tapped)).toBe(true);
+  });
+
+  it("reuses tapped-token creation for the C13 Army of the Damned print", () => {
+    const card = C13_ARMY_OF_THE_DAMNED();
+    expect(card.scryfall_id).toBe("75d667ec-86f4-4850-a3b6-e7a9fc7053b0");
+    expect(cardProfile(card).fullyImplemented).toBe(true);
+    expect(cardProfile(card).effects[0]).toMatchObject({
+      kind: "create-token",
+      amount: 13,
+      token: { name: "Zombie", power: 2, toughness: 2, tapped: true }
+    });
   });
 
   it("returns a land from any graveyard under the caster's control", () => {
