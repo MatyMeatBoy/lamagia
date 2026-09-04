@@ -276,6 +276,21 @@ describe("scry", () => {
   });
 });
 
+describe("look-top selection", () => {
+  it("parameterizes Augur's top-three instant/sorcery selection", () => {
+    const profile = cardProfile(card({
+      name: "Augur of Bolas",
+      type_line: "Creature — Merfolk Wizard",
+      oracle_text: "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield",
+      effect: { kind: "look-top-select", amount: 3, types: ["Instant", "Sorcery"], destination: "hand" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("delayed draw primitives", () => {
   it("recognises Arcane Denial as one counter plus two parametrized delayed draws", () => {
     const profile = cardProfile(card({

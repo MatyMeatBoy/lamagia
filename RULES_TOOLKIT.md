@@ -81,6 +81,12 @@ it should not add a card-name branch when an existing primitive can consume its
 parameters. The compiler's IR is review input only; approved semantics still
 need a closed TypeScript effect, server-side legal action and regression test.
 
+The same compiler path now extracts the Augur-style shape as
+`look-top:<N>:<types>:hand:bottom`: the engine receives `N` and the card-type
+set as parameters, while the private top-card projection and bottom ordering
+remain one shared procedure. This means a future “look at the top five ...”
+card extends the parameter vocabulary instead of duplicating the card logic.
+
 ## Prioridades actuales
 
 - Búsquedas de biblioteca y reemplazos de entrada al campo.

@@ -2,7 +2,7 @@
 
 import unittest
 
-from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, classify, cluster_text, delayed_draw_hint, effective_worker_count, mana_ability_hint, operand_hints, primitive_cluster_inventory, return_target_hint, search_criterion_hint, trigger_subject_hint
+from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, classify, cluster_text, delayed_draw_hint, effective_worker_count, look_top_hint, mana_ability_hint, operand_hints, primitive_cluster_inventory, return_target_hint, search_criterion_hint, trigger_subject_hint
 from export_set_coverage import product_group
 from plan_primitive_roadmap import build_roadmap, claim_key, load_blocked_cards, template_of
 from plan_primitive_workers import build_worker_plan
@@ -76,6 +76,18 @@ class OracleCompilerTests(unittest.TestCase):
         result = classify("You draw a card at the beginning of the next turn's upkeep.")
         self.assertEqual(result["delayed_draw"], {"optional": False, "amount": 1})
         self.assertIn("delayed-draw:mandatory:1", result["primitive_cluster"])
+
+    def test_preserves_look_top_amount_and_card_types(self) -> None:
+        clause = "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order."
+        self.assertEqual(look_top_hint(clause), {
+            "amount": 3,
+            "types": ["instant", "sorcery"],
+            "destination": "hand",
+            "rest_destination": "bottom",
+        })
+        result = classify(clause)
+        self.assertEqual(result["look_top"]["amount"], 3)
+        self.assertIn("look-top:3:instant,sorcery:hand:bottom", result["primitive_cluster"])
 
     def test_preserves_permanent_graveyard_return_target(self) -> None:
         clause = "Return target permanent card from your graveyard to the battlefield."

@@ -153,6 +153,16 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
       ?? available.find((entry) => entry.action.type === "choose-draw");
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
+  if (state.pendingChoice?.type === "look-top-select" && state.pendingChoice.seat === seat) {
+    // Prefer the first eligible card, then deterministically bottom-order the
+    // remaining private cards so the bot uses the same public action path.
+    const choose = available.find((entry) => entry.action.type === "choose-look-top");
+    if (choose) return { action: choose.action, label: choose.label };
+    const finish = available.find((entry) => entry.action.type === "finish-look-top");
+    if (state.pendingChoice.stage === "select" && finish) return { action: finish.action, label: finish.label };
+    const bottom = available.find((entry) => entry.action.type === "choose-look-top-bottom");
+    if (bottom) return { action: bottom.action, label: bottom.label };
+  }
   const searchChoice = state.pendingChoice?.type === "search-library" ? state.pendingChoice : null;
   if (searchChoice && searchChoice.seat === seat) {
     const chosen = available.find((entry) => entry.action.type === "choose-library-card");

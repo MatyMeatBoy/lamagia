@@ -679,7 +679,22 @@ Validation: `npm run check --workspace=@prossh/rules` PASS; Bane of Progress
 scenarios and the Python compiler suite PASS. Full workspace tests should be
 rerun after integration.
 
-## Cooperative C13 cluster: Level Up
+### Cooperative C13 cluster: private top-N selection
+
+The C13 Augur of Bolas fixture now uses a parameterized `look-top-select`
+primitive. It privately exposes the top N cards to the controller, offers only
+matching card types for the optional hand selection, then requires the
+remaining cards to be ordered on the bottom. The primitive is deliberately
+name-independent so future “look at the top N ...” cards can reuse it.
+
+The engine keeps the viewed cards out of every other player's projection and
+uses ordinal actions rather than leaking library instance IDs. The parser
+extracts N and the requested card types from Oracle text. Scenarios cover
+selecting an instant, declining, ordering the remainder, and opponent
+privacy. This follows CR 401.1, 401.4, 401.5, 701.20e and 701.23a; verify
+against the official [Wizards Comprehensive Rules](https://magic.wizards.com/en/rules).
+
+### Cooperative C13 cluster: Level Up
 
 This branch adds the reusable Level Up primitive. `Level up {cost}` is exposed
 as a sorcery-speed activated ability, pays through the existing mana planner,

@@ -302,6 +302,19 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /** Private top-of-library review for effects such as Augur of Bolas. */
+      readonly type: "look-top-select";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly types: readonly CardType[];
+      readonly lookedCount: number;
+      readonly remainingCards: readonly GameCard[];
+      readonly bottomCards: readonly GameCard[];
+      readonly stage: "select" | "bottom";
+      readonly selectedCardId?: string;
+    }
+  | {
       readonly type: "discard-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -332,6 +345,9 @@ export type GameAction =
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
   | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean; readonly ordinal?: number }
+  | { readonly type: "choose-look-top"; readonly sourceId: string; readonly ordinal?: number }
+  | { readonly type: "finish-look-top"; readonly sourceId: string }
+  | { readonly type: "choose-look-top-bottom"; readonly sourceId: string; readonly ordinal?: number }
   | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
@@ -2046,6 +2062,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "scry":
       // Scry is completed through the private top-card choice below.
       return state;
+    case "look-top-select":
+      // Top-card selection is completed through the private choice below.
+      return state;
     case "attach-equipment": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -2115,6 +2134,33 @@ function beginScry(
   };
 }
 
+function beginLookTopSelection(
+  state: GameState,
+  seat: SeatId,
+  sourceId: string,
+  sourceCard: GameCard,
+  amount: number,
+  types: readonly CardType[]
+): GameState {
+  const visible = playerAt(state, seat).library.slice(0, Math.max(0, amount));
+  if (!visible.length) return state;
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "look-top-select",
+      seat,
+      sourceId,
+      sourceCard,
+      types,
+      lookedCount: visible.length,
+      remainingCards: visible,
+      bottomCards: [],
+      stage: "select"
+    }
+  };
+}
+
 function resolveTop(state: GameState): GameState {
   const object = state.stack.at(-1);
   if (!object) return state;
@@ -2149,6 +2195,8 @@ function resolveTop(state: GameState): GameState {
   if (object.trigger) {
     const triggerScry = object.trigger.definition.effect.kind === "scry" ? object.trigger.definition.effect : null;
     if (triggerScry) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerScry.amount, false, false);
+    const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
+    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types);
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,
@@ -2817,6 +2865,33 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.sourceCard.name}: coloca esta carta en el fondo.`
         });
       });
+      return actions;
+    }
+    if (choice.type === "look-top-select") {
+      if (choice.stage === "select") {
+        choice.remainingCards.forEach((card, ordinal) => {
+          const profile = cardProfile(card);
+          if (!choice.types.some((type) => profile.types.includes(type))) return;
+          actions.push({
+            action: { type: "choose-look-top", sourceId: choice.sourceId, ordinal },
+            label: `Revelar ${card.name} y ponerla en la mano`,
+            cardId: card.instance_id,
+            note: `${choice.sourceCard.name}: carta válida entre las cartas superiores.`
+          });
+        });
+        actions.push({
+          action: { type: "finish-look-top", sourceId: choice.sourceId },
+          label: "No elegir carta",
+          note: "No eliges una carta válida; luego ordenas todas en el fondo."
+        });
+        return actions;
+      }
+      choice.remainingCards.forEach((card, ordinal) => actions.push({
+        action: { type: "choose-look-top-bottom", sourceId: choice.sourceId, ordinal },
+        label: `Poner ${card.name} en el fondo`,
+        cardId: card.instance_id,
+        note: `${choice.sourceCard.name}: ordena las cartas restantes.`
+      }));
       return actions;
     }
     if (choice.type === "draw-cards") {
@@ -3753,6 +3828,67 @@ function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAct
   return logged(next, seat, `${player.name} termina de adivinar.`);
 }
 
+function finishLookTopSelection(
+  state: GameState,
+  seat: SeatId,
+  choice: Extract<PendingChoice, { type: "look-top-select" }>
+): GameState {
+  if (choice.remainingCards.length) throw new Error("Debes ordenar las cartas restantes en el fondo.");
+  const selected = choice.selectedCardId
+    ? playerAt(state, seat).library.find((card) => card.instance_id === choice.selectedCardId)
+    : undefined;
+  const bottom = choice.bottomCards;
+  const player = playerAt(state, seat);
+  const next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    library: [...current.library.slice(choice.lookedCount), ...bottom],
+    ...(selected ? { hand: [...current.hand, selected] } : {})
+  }));
+  return logged(next, seat, selected
+    ? `${player.name} pone ${selected.name} en su mano y ordena el resto en el fondo.`
+    : `${player.name} no elige una carta y ordena las cartas en el fondo.`);
+}
+
+function applyChooseLookTop(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-look-top" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "look-top-select" || choice.seat !== seat || choice.stage !== "select") {
+    throw new Error("No tienes una selección superior pendiente.");
+  }
+  if (choice.sourceId !== action.sourceId || action.ordinal === undefined) throw new Error("Debes elegir una carta visible de la selección superior.");
+  const selected = choice.remainingCards[action.ordinal];
+  if (!selected) throw new Error("Debes elegir una carta visible de la selección superior.");
+  if (!choice.types.some((type) => cardProfile(selected).types.includes(type))) throw new Error("Esa carta no cumple el tipo requerido.");
+  const remainingCards = choice.remainingCards.filter((card) => card.instance_id !== selected.instance_id);
+  const nextChoice = { ...choice, remainingCards, stage: "bottom" as const, selectedCardId: selected.instance_id };
+  if (!remainingCards.length) return finishLookTopSelection({ ...state, pendingChoice: nextChoice }, seat, nextChoice);
+  return logged({ ...state, pendingChoice: nextChoice }, seat, `${playerAt(state, seat).name} elige ${selected.name}.`);
+}
+
+function applyFinishLookTop(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-look-top" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "look-top-select" || choice.seat !== seat || choice.stage !== "select") {
+    throw new Error("No tienes una selección superior pendiente.");
+  }
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes terminar la selección superior pendiente.");
+  if (!choice.remainingCards.length) return finishLookTopSelection(state, seat, { ...choice, stage: "bottom" });
+  return logged({ ...state, pendingChoice: { ...choice, stage: "bottom" } }, seat,
+    `${playerAt(state, seat).name} no elige una carta.`);
+}
+
+function applyChooseLookTopBottom(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-look-top-bottom" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "look-top-select" || choice.seat !== seat || choice.stage !== "bottom") {
+    throw new Error("No tienes cartas superiores pendientes de ordenar.");
+  }
+  if (choice.sourceId !== action.sourceId || action.ordinal === undefined) throw new Error("Debes elegir una carta visible para el fondo.");
+  const selected = choice.remainingCards[action.ordinal];
+  if (!selected) throw new Error("Debes elegir una carta visible para el fondo.");
+  const remainingCards = choice.remainingCards.filter((card) => card.instance_id !== selected.instance_id);
+  const nextChoice = { ...choice, remainingCards, bottomCards: [...choice.bottomCards, selected] };
+  if (!remainingCards.length) return finishLookTopSelection({ ...state, pendingChoice: nextChoice }, seat, nextChoice);
+  return logged({ ...state, pendingChoice: nextChoice }, seat, `${playerAt(state, seat).name} coloca ${selected.name} en el fondo.`);
+}
+
 function applyChooseDraw(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-draw" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "draw-cards" || choice.seat !== seat) throw new Error("No tienes una elección de robo pendiente.");
@@ -4007,6 +4143,9 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-scry": next = applyChooseScry(state, seat, action); break;
+    case "choose-look-top": next = applyChooseLookTop(state, seat, action); break;
+    case "finish-look-top": next = applyFinishLookTop(state, seat, action); break;
+    case "choose-look-top-bottom": next = applyChooseLookTopBottom(state, seat, action); break;
     case "choose-draw": next = applyChooseDraw(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;

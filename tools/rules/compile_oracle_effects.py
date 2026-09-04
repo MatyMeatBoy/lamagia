@@ -54,6 +54,10 @@ ACTIVATED_RE = re.compile(r"^[^:\n]{1,160}:\s*", re.I)
 TARGET_RE = re.compile(r"\btarget\s+([^.;]+)", re.I)
 MANA_ABILITY_RE = re.compile(r"^(?P<cost>[^:\n]{1,160}):\s*(?P<effect>add\b.+)$", re.I)
 SEARCH_RE = re.compile(r"\bsearch your library for (?:an? |up to (?:one|two|three|five) )?(.+?) card\b", re.I)
+LOOK_TOP_RE = re.compile(
+    r"\blook at the top (?P<amount>a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) cards? of your library\."
+    r"\s+you may reveal (?:an? )?(?P<types>.+?) card from among them and put it into your hand\."
+    r"\s+put the rest on the bottom of your library in any order\b", re.I)
 NUMBER_RE = re.compile(r"\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b", re.I)
 WORD_NUMBERS = {
     "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4,
@@ -225,6 +229,21 @@ def delayed_draw_hint(clause: str) -> dict[str, Any] | None:
     return None
 
 
+def look_top_hint(clause: str) -> dict[str, Any] | None:
+    """Extract the reusable look-at-top-N/select-one/bottom-rest shape."""
+    match = LOOK_TOP_RE.search(re.sub(r"\s+", " ", clause.strip()))
+    if not match:
+        return None
+    raw_types = re.sub(r"\s+or\s+", ",", match.group("types"), flags=re.I)
+    types = sorted({part.strip().lower() for part in raw_types.split(",") if part.strip()}, key=str.casefold)
+    return {
+        "amount": number_hint(match.group("amount")),
+        "types": types,
+        "destination": "hand",
+        "rest_destination": "bottom",
+    }
+
+
 def return_target_hint(clause: str) -> str | None:
     """Preserve the closed parser's graveyard-return target family."""
     if re.search(r"\breturn\s+target\s+permanent\s+card\s+from\s+your\s+graveyard\s+to\s+the\s+battlefield\b", clause, re.I):
@@ -250,6 +269,7 @@ def classify(clause: str) -> dict[str, Any]:
     operands = operand_hints(clause, target_text, search_criterion)
     trigger_subject = trigger_subject_hint(clause)
     delayed_draw = delayed_draw_hint(clause)
+    look_top = look_top_hint(clause)
     return_target = return_target_hint(clause)
     cluster_parts = [next((family for family in FAMILY_ORDER if family in families), "other"), kind]
     if not families:
@@ -271,6 +291,8 @@ def classify(clause: str) -> dict[str, Any]:
         amount = delayed_draw.get("max_amount", delayed_draw.get("amount"))
         mode = "optional" if delayed_draw.get("optional") else "mandatory"
         cluster_parts.append(f"delayed-draw:{mode}:{amount}")
+    if look_top:
+        cluster_parts.append(f"look-top:{look_top['amount']}:{','.join(look_top['types'])}:hand:bottom")
     cost_actions = operands.get("cost_actions", [])
     if cost_actions:
         cluster_parts.append("cost-actions:" + ",".join(cost_actions))
@@ -290,6 +312,7 @@ def classify(clause: str) -> dict[str, Any]:
         "target_zone": target_zone,
         "trigger_subject": trigger_subject,
         "delayed_draw": delayed_draw,
+        "look_top": look_top,
         "return_target": return_target,
         "search_criterion": search_criterion,
         "operands": operands,

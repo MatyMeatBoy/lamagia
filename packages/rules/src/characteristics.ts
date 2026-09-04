@@ -260,6 +260,8 @@ export type SpellEffect =
   | { readonly kind: "draw-equal-tapped-creatures" }
   | { readonly kind: "draw-equal-controlled-type"; readonly type: CardType }
   | { readonly kind: "scry"; readonly amount: number }
+  /** Look at the top N cards, optionally take one matching card, bottom the rest. */
+  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
@@ -1069,6 +1071,26 @@ function parseLandScaledToken(text: string): SpellEffect | null {
   return base?.kind === "create-token" ? { ...base, amount: "lands-you-control" } : null;
 }
 
+/**
+ * Shared top-of-library selection primitive (CR 401.5, 401.4, 701.20e): disclose a
+ * bounded private slice, optionally select one card of the requested types,
+ * then order every other card on the bottom. The amount is deliberately a
+ * parameter so Augur of Bolas and future look-top templates share one rule.
+ */
+function parseLookTopSelection(text: string): SpellEffect | null {
+  const match = /^Look at the top (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) cards? of your library\. You may reveal (?:an? )?(.+?) card from among them and put it into your hand\. Put the rest on the bottom of your library in any order$/i.exec(text.trim().replace(/\.$/, ""));
+  if (!match) return null;
+  const amount = toNumber(match[1]);
+  if (amount === null || amount < 0) return null;
+  const types = match[2]!
+    .split(/\s+or\s+/i)
+    .map((type) => type.trim())
+    .filter((type): type is CardType => CARD_TYPES.some((cardType) => cardType.toLowerCase() === type.toLowerCase()))
+    .map((type) => CARD_TYPES.find((cardType) => cardType.toLowerCase() === type.toLowerCase())!);
+  if (!types.length) return null;
+  return { kind: "look-top-select", amount, types, destination: "hand" };
+}
+
 function parseMultiBasicSearch(text: string): SpellEffect | null {
   const normalized = text.replace(/\s+/g, " ").trim();
   if (/^Search your library for up to two basic land cards, (?:reveal those cards, )?put one onto the battlefield tapped and (?:the other|the rest) into your hand, then shuffle\.?$/i.test(normalized)) {
@@ -1669,7 +1691,11 @@ function recognizeText(text: string): RecognizedText {
         : null;
       const effectText = powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? conditionalPayment?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText;
       const optional = Boolean(conditionalPayment || unlessPayment || eventControllerChoice) || /^you\s+may\b/i.test(effectText);
-      const recognized = recognizeSentence(optional && !conditionalPayment ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
+      const executableText = optional && !conditionalPayment ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
+      const recognized = (() => {
+        const lookTop = parseLookTopSelection(executableText);
+        return lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
+      })();
       if (recognized) {
         triggers.push({
           event: triggered.event,
