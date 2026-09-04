@@ -923,6 +923,29 @@ failures). Engine catalog fully-implemented 7,529 -> 7,655; Commander 2014
 
 - `Destroy target permanent` (any permanent) recognised — unblocks the sac
   activated ability on Unstable Obelisk and similar.
+
+### Integrator checkpoint: C14 batch2 accepted
+
+The rebased C14 fork batch was integrated as 14 commits, including kicker,
+optional-pay triggers, draw-then-discard, self-zone spells, Evoke, Extort,
+static land mana, planeswalker loyalty, enters-or-dies triggers, and the bot
+fear blocker fix. Validation is green: **310 rules tests**, simulator tests,
+and **36 Oracle Python tests**. The current export is **7,960/38,711** fully
+implemented cards; C13 is **161/356**, C14 is **127/337**, and the filtered map
+is **21.3% across 685 editions**.
+
+The global Oracle queue now has a one-command planner:
+`npm run rules:oracle:compile && npm run rules:oracle:plan`. It emits five
+disjoint workers under a 2 GB scheduler budget, batches up to 20
+`oracle_id`s, and labels a card `quick-win` when it has exactly one unresolved
+clause. This is the correct signal for closing cards quickly; a primitive-only
+commit may still add zero cards until all clauses of its dependants are covered.
+
+GitHub Pages is static and cannot host the Fastify match-server. The client now
+reports that limitation instead of trying to parse the Pages HTML 404 as JSON;
+local AI battle is verified through `npm run dev:server` + `npm run dev`. A real
+public AI battle requires deploying `services/match-server` and setting
+`window.__PROSSH_API_BASE__` to that backend origin.
 - `Return a creature you control to its owner's hand` reuses `return-target-
   creature` with a `creature-you-control` target, so Whitemane Lion-style ETB
   self-bounce resolves.
