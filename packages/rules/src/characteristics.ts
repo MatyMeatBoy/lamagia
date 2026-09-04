@@ -158,6 +158,7 @@ export type SpellEffect =
   | { readonly kind: "this-land-enters-tapped"; readonly basic?: boolean }
   | { readonly kind: "choose-<n>-|-modal"; readonly choices: readonly string[] }
   | { readonly kind: "enchant-creature"; readonly aura?: boolean }
+  | { readonly kind: "enchant-creature-static"; readonly aura?: boolean, readonly target: string }
   if ((match = /^Enchant creature$/i.exec(text)))
     return { effect: { kind: "enchant-creature", aura: false }, target: "any" };
   if ((match = /^Enchant (\w+) creature$/i.exec(text)))
