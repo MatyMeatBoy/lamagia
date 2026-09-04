@@ -2644,8 +2644,8 @@ describe("scry and combat-restricted damage", () => {
     // Keep Grizzly Bears, bottom Forest, keep Mountain.
     const scryId = game.pendingChoice!.sourceId;
     const decide = (toBottom: boolean) => {
-      const top = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).pending[0]!;
-      game = applyAction(game, 0, { type: "resolve-scry", sourceId: scryId, cardId: top, toBottom });
+      const top = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).remainingCards[0]!;
+      game = applyAction(game, 0, { type: "choose-scry", sourceId: scryId, query: top.name, ordinal: 0, bottom: toBottom });
     };
     decide(false);
     decide(true);
@@ -2653,7 +2653,7 @@ describe("scry and combat-restricted damage", () => {
 
     expect(game.pendingChoice).toBeNull();
     const library = game.players[0]!.library.map((card) => card.name);
-    expect(library.slice(0, 3)).toEqual(["Grizzly Bears", "Mountain", topNames[3]]);
+    expect(library.slice(0, 3)).toEqual(["Mountain", "Grizzly Bears", topNames[3]]);
     expect(library[library.length - 1]).toBe("Forest");
     expect(game.players[0]!.graveyard.some((card) => card.name === "Read the Bones Lite")).toBe(true);
   });
@@ -2670,8 +2670,8 @@ describe("scry and combat-restricted damage", () => {
     expect(game.pendingChoice?.type).toBe("scry");
     const scryId = game.pendingChoice!.sourceId;
     for (let i = 0; i < 2; i += 1) {
-      const top = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).pending[0]!;
-      game = applyAction(game, 0, { type: "resolve-scry", sourceId: scryId, cardId: top, toBottom: false });
+      const top = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).remainingCards[0]!;
+      game = applyAction(game, 0, { type: "choose-scry", sourceId: scryId, query: top.name, ordinal: 0, bottom: false });
     }
     expect(game.pendingChoice).toBeNull();
     expect(game.players[0]!.hand.length).toBe(handBefore - 1 + 2);
@@ -2685,8 +2685,10 @@ describe("scry and combat-restricted damage", () => {
     game = passUntil(game, (state) => state.pendingChoice?.type === "scry" || state.players[0]!.battlefield.some((p) => p.card.name === "Omen Owl") && !state.stack.length);
     expect(game.pendingChoice?.type).toBe("scry");
     const scryId = game.pendingChoice!.sourceId;
-    game = applyAction(game, 0, { type: "resolve-scry", sourceId: scryId, cardId: (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).pending[0]!, toBottom: true });
-    game = applyAction(game, 0, { type: "resolve-scry", sourceId: scryId, cardId: (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).pending[0]!, toBottom: false });
+    const first = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).remainingCards[0]!;
+    game = applyAction(game, 0, { type: "choose-scry", sourceId: scryId, query: first.name, ordinal: 0, bottom: true });
+    const second = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).remainingCards[0]!;
+    game = applyAction(game, 0, { type: "choose-scry", sourceId: scryId, query: second.name, ordinal: 0, bottom: false });
     expect(game.pendingChoice).toBeNull();
     expect(game.players[0]!.library[game.players[0]!.library.length - 1]!.name).toBe("Grizzly Bears");
   });
@@ -2861,6 +2863,21 @@ describe("kicker and optional-cost triggers", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("applies Arcane Melee's global reduction to an opponent's spell", () => {
+    const melee = () => make({ name: "Arcane Melee", type_line: "Enchantment", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Instant and sorcery spells cost {2} less to cast." });
+    const instant = () => make({ name: "Cheap Insight", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, colors: ["U"], oracle_text: "You gain 1 life." });
+    expect(profileOf(melee())).toMatchObject({
+      spellCostReductionGrant: { amount: 2, types: ["Instant", "Sorcery"], appliesToAllPlayers: true },
+      fullyImplemented: true
+    });
+    // Seat 1 has only one Island; the global {2} reduction makes {1}{U} payable.
+    let game = ready([], [melee()], [ISLAND()]);
+    game = stage(game, 1, () => ({ hand: toHand(1, [instant()]) }));
+    game = { ...game, activeSeat: 1, prioritySeat: 1, step: "precombat-main", priorityOpen: true, passedSeats: [] };
+    const cast = legalActions(game, 1).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(cast).toBeDefined();
   });
 
   it("reduces a spell's generic cost by {N} per creature on the battlefield", () => {

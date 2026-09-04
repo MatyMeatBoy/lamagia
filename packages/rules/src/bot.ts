@@ -171,12 +171,11 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     // Deterministic policy: bottom the top card only when the bot is flooded on
     // lands (5+ in play and the card is another land), otherwise keep it.
     const scry = state.pendingChoice;
-    const topId = scry.pending[0];
-    const card = state.players[seat]!.library.find((candidate) => candidate.instance_id === topId);
+    const card = scry.remainingCards[0];
     const landsInPlay = state.players[seat]!.battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length;
     const flooded = Boolean(card && isLand(cardProfile(card)) && landsInPlay >= 5);
-    const wanted = available.find((entry) => entry.action.type === "resolve-scry" && entry.action.toBottom === flooded)
-      ?? available.find((entry) => entry.action.type === "resolve-scry");
+    const wanted = available.find((entry) => entry.action.type === "choose-scry" && entry.action.ordinal === 0 && entry.action.bottom === flooded)
+      ?? available.find((entry) => entry.action.type === "choose-scry" && entry.action.ordinal === 0);
     if (wanted) return { action: wanted.action, label: wanted.label };
   }
 

@@ -260,7 +260,6 @@ export type SpellEffect =
   | { readonly kind: "draw-equal-tapped-creatures" }
   | { readonly kind: "draw-equal-controlled-type"; readonly type: CardType }
   | { readonly kind: "draw-equal-controlled-color-creature"; readonly color: string }
-  | { readonly kind: "scry"; readonly amount: number }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
@@ -548,8 +547,14 @@ export interface CardProfile {
   readonly evokeCost: ManaCost | null;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
-  /** Static "<color/type> spells you cast cost {N} less to cast" grant (Medallion cycle, CR 118.9). */
-  readonly spellCostReductionGrant: { readonly amount: number; readonly color?: string; readonly type?: CardType } | null;
+  /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
+  readonly spellCostReductionGrant: {
+    readonly amount: number;
+    readonly color?: string;
+    readonly type?: CardType;
+    readonly types?: readonly CardType[];
+    readonly appliesToAllPlayers?: boolean;
+  } | null;
   /** "<Basic type>s you control produce an additional {C}" (Crypt Ghast, CR 605). */
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   readonly entersTapped: EntersTappedRule;
@@ -1736,6 +1741,7 @@ function recognizeText(text: string): RecognizedText {
     // Board-scaled self cost reduction is consumed by cardProfile, not resolved here.
     if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
     if (/^(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
+    if (/^instant and sorcery spells cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
@@ -1950,8 +1956,11 @@ export function cardProfile(card: CardData): CardProfile {
     ? { subtype: landBonusMatch[1]!.replace(/s$/i, "").replace(/^./, (c) => c.toUpperCase()), mana: landBonusMatch[2]!.toUpperCase() }
     : null;
   const grantMatch = /^(?:(white|blue|black|red|green) )?(artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
+  const globalInstantSorceryMatch = /^instant and sorcery spells cost \{(\d+)\} less to cast\.?$/im.exec(text);
   const COLOR_LETTER: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
-  const spellCostReductionGrant = grantMatch
+  const spellCostReductionGrant = globalInstantSorceryMatch
+    ? { amount: Number(globalInstantSorceryMatch[1]), types: ["Instant", "Sorcery"] as const, appliesToAllPlayers: true }
+    : grantMatch
     ? {
         amount: Number(grantMatch[3]),
         ...(grantMatch[1] ? { color: COLOR_LETTER[grantMatch[1].toLowerCase()] } : {}),

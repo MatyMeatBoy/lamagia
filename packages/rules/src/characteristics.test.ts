@@ -285,6 +285,24 @@ describe("multi-card library searches", () => {
   });
 });
 
+describe("global spell cost reductions", () => {
+  it("recognises Arcane Melee as a global instant-and-sorcery reduction", () => {
+    const profile = cardProfile(card({
+      name: "Arcane Melee",
+      type_line: "Enchantment",
+      mana_cost: "{2}{U}{U}",
+      oracle_text: "Instant and sorcery spells cost {2} less to cast."
+    }));
+    expect(profile.spellCostReductionGrant).toEqual({
+      amount: 2,
+      types: ["Instant", "Sorcery"],
+      appliesToAllPlayers: true
+    });
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+});
+
 describe("self-shuffle replacement", () => {
   it("recognises Blue Sun's Zenith returning itself to its owner's library", () => {
     const profile = cardProfile(card({

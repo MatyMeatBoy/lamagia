@@ -294,17 +294,6 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
-      readonly type: "scry";
-      readonly seat: SeatId;
-      readonly sourceId: string;
-      readonly sourceCard: GameCard;
-      readonly remainingCards: readonly GameCard[];
-      readonly topCards: readonly GameCard[];
-      readonly bottomCards: readonly GameCard[];
-      readonly returnSourceToGraveyard: boolean;
-      readonly exileSourceAfterResolution: boolean;
-    }
-  | {
       readonly type: "discard-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -313,23 +302,18 @@ export type PendingChoice =
       readonly remaining: number;
     }
   | {
-      /**
-       * Scry (CR 701.17): the player looks at the top N cards one at a time and
-       * puts each on the bottom or keeps it on top. Kept cards stay in their
-       * printed order; reordering the kept pile is not modelled.
-       */
+      /** Scry (CR 701.17): inspect the top N cards and order each to top or bottom. */
       readonly type: "scry";
       readonly seat: SeatId;
       readonly sourceId: string;
       readonly sourceCard: GameCard;
-      /** Library instance ids still to be decided, top of library first. */
-      readonly pending: readonly string[];
-      /** Instance ids already kept on top, in final order. */
-      readonly kept: readonly string[];
-      /** Instance ids already sent to the bottom, in final order. */
-      readonly bottomed: readonly string[];
-      /** Cards to draw once every looked-at card has a decision (CR 701.17e / "then draw"). */
+      readonly remainingCards: readonly GameCard[];
+      readonly topCards: readonly GameCard[];
+      readonly bottomCards: readonly GameCard[];
+      /** Cards drawn after all Scry decisions, for "Scry N, then draw M". */
       readonly thenDraw: number;
+      readonly returnSourceToGraveyard: boolean;
+      readonly exileSourceAfterResolution: boolean;
     };
 
 export type GameAction =
@@ -348,7 +332,6 @@ export type GameAction =
   | { readonly type: "finish-library-search"; readonly sourceId: string }
   | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean; readonly ordinal?: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
-  | { readonly type: "resolve-scry"; readonly sourceId: string; readonly cardId: string; readonly toBottom: boolean }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -1568,15 +1551,6 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!source || !isCreature(cardProfile(source.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === source.instance_id);
     }
-    case "scry": {
-      const player = playerAt(state, controller);
-      const pending = player.library.slice(0, effect.amount).map((card) => card.instance_id);
-      if (!pending.length) return state;
-      return {
-        ...state,
-        pendingChoice: { type: "scry", seat: controller, sourceId: object.id, sourceCard: object.card, pending, kept: [], bottomed: [], thenDraw: effect.thenDraw ?? 0 }
-      };
-    }
     case "modify-triggered-creature": {
       const targetId = object.trigger?.eventPermanentId;
       if (!targetId) return state;
@@ -2182,13 +2156,16 @@ function beginScry(
   sourceCard: GameCard,
   amount: number,
   returnSourceToGraveyard: boolean,
-  exileSourceAfterResolution: boolean
+  exileSourceAfterResolution: boolean,
+  thenDraw = 0
 ): GameState {
   if (amount <= 0) return state;
   const topCard = playerAt(state, seat).library[0];
   if (!topCard) {
-    if (!returnSourceToGraveyard) return state;
-    return withPlayer(state, sourceCard.owner, (player) => exileSourceAfterResolution
+    let next = state;
+    if (thenDraw > 0) next = drawCards(next, seat, thenDraw);
+    if (!returnSourceToGraveyard) return next;
+    return withPlayer(next, sourceCard.owner, (player) => exileSourceAfterResolution
       ? { ...player, exile: [...player.exile, sourceCard] }
       : { ...player, graveyard: [...player.graveyard, sourceCard] });
   }
@@ -2202,6 +2179,7 @@ function beginScry(
       remainingCards: playerAt(state, seat).library.slice(0, amount),
       topCards: [],
       bottomCards: [],
+      thenDraw,
       returnSourceToGraveyard,
       exileSourceAfterResolution
     }
@@ -2241,7 +2219,7 @@ function resolveTop(state: GameState): GameState {
 
   if (object.trigger) {
     const triggerScry = object.trigger.definition.effect.kind === "scry" ? object.trigger.definition.effect : null;
-    if (triggerScry) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerScry.amount, false, false);
+    if (triggerScry) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerScry.amount, false, false, triggerScry.thenDraw ?? 0);
     if (object.trigger.definition.optional) {
       const payer = object.trigger.definition.paymentBy === "opponent"
         ? (object.trigger.eventController ?? opponentsOf(next, object.controller)[0] ?? object.controller)
@@ -2274,7 +2252,15 @@ function resolveTop(state: GameState): GameState {
   const activatedEffect = object.activated?.effect;
   const selectedEffect = object.selectedEffect;
   const scry = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "scry" }> => effect.kind === "scry");
-  if (scry) return beginScry(next, object.controller, object.id, object.card, scry.amount, !object.activated, Boolean(object.flashback));
+  if (scry) {
+    // Resolve sibling instructions before opening the private Scry choice;
+    // otherwise an early return would silently drop text such as "then draw"
+    // or "you lose life" on the same spell (CR 608.2c).
+    for (const effect of profile.effects) {
+      if (effect.kind !== "scry") next = applyEffect(next, object, effect);
+    }
+    return beginScry(next, object.controller, object.id, object.card, scry.amount, !object.activated, Boolean(object.flashback), scry.thenDraw ?? 0);
+  }
   const search = activatedEffect?.kind === "search-library"
     ? activatedEffect
     : selectedEffect?.kind === "search-library"
@@ -2800,11 +2786,15 @@ function boardCostReduction(state: GameState, seat: SeatId, card: GameCard, prof
     reduction += profile.costReducesPerBoardCreature * allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length;
   }
   const spellColors = profile.colors;
-  for (const permanent of playerAt(state, seat).battlefield) {
+  const battlefield = allPermanents(state).filter((permanent) =>
+    permanent.controller === seat || cardProfile(permanent.card).spellCostReductionGrant?.appliesToAllPlayers
+  );
+  for (const permanent of battlefield) {
     const grant = cardProfile(permanent.card).spellCostReductionGrant;
     if (!grant) continue;
     if (grant.color && !spellColors.includes(grant.color)) continue;
     if (grant.type && !profile.types.includes(grant.type)) continue;
+    if (grant.types && !grant.types.some((type) => profile.types.includes(type))) continue;
     reduction += grant.amount;
   }
   return reduction;
@@ -2942,16 +2932,6 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.sourceCard.name}: choose a card (${choice.remaining} remaining).`
         });
       }
-      return actions;
-    }
-    if (choice.type === "scry") {
-      const topId = choice.pending[0]!;
-      const card = player.library.find((candidate) => candidate.instance_id === topId);
-      const name = card?.name ?? "la carta superior";
-      const position = choice.kept.length + choice.bottomed.length + 1;
-      const note = `${choice.sourceCard.name}: vistazo, carta ${position} de ${position + choice.pending.length - 1}.`;
-      actions.push({ action: { type: "resolve-scry", sourceId: choice.sourceId, cardId: topId, toBottom: false }, label: `Dejar arriba: ${name}`, note });
-      actions.push({ action: { type: "resolve-scry", sourceId: choice.sourceId, cardId: topId, toBottom: true }, label: `Poner abajo: ${name}`, note });
       return actions;
     }
     if (choice.stage === "confirm") {
@@ -3904,6 +3884,7 @@ function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAct
       ? { ...current, exile: [...current.exile, choice.sourceCard] }
       : { ...current, graveyard: [...current.graveyard, choice.sourceCard] });
   }
+  if (choice.thenDraw > 0) next = drawCards(next, seat, choice.thenDraw);
   return logged(next, seat, `${player.name} termina de adivinar.`);
 }
 
@@ -4126,37 +4107,6 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
   return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
 }
 
-function applyResolveScry(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "resolve-scry" }>): GameState {
-  const choice = state.pendingChoice;
-  if (!choice || choice.type !== "scry" || choice.seat !== seat) throw new Error("No tienes un vistazo pendiente.");
-  if (choice.sourceId !== action.sourceId) throw new Error("Ese vistazo ya no corresponde a la habilidad pendiente.");
-  if (choice.pending[0] !== action.cardId) throw new Error("Debes decidir sobre la carta superior de la biblioteca primero.");
-  const player = playerAt(state, seat);
-  if (!player.library.some((card) => card.instance_id === action.cardId)) throw new Error("Esa carta ya no está en tu biblioteca.");
-  const pending = choice.pending.slice(1);
-  const kept = action.toBottom ? choice.kept : [...choice.kept, action.cardId];
-  const bottomed = action.toBottom ? [...choice.bottomed, action.cardId] : choice.bottomed;
-
-  if (pending.length) {
-    return { ...state, pendingChoice: { ...choice, pending, kept, bottomed } };
-  }
-
-  // Every looked-at card has a decision: rebuild the library as
-  // [kept..., untouched remainder, bottomed...] (CR 701.17b-c).
-  const looked = new Set([...kept, ...bottomed]);
-  const byId = new Map(player.library.map((card) => [card.instance_id, card] as const));
-  const remainder = player.library.filter((card) => !looked.has(card.instance_id));
-  const nextLibrary = [
-    ...kept.map((id) => byId.get(id)!).filter(Boolean),
-    ...remainder,
-    ...bottomed.map((id) => byId.get(id)!).filter(Boolean)
-  ];
-  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({ ...current, library: nextLibrary }));
-  next = logged(next, seat, `${player.name} mira ${choice.kept.length + choice.bottomed.length + 1} carta(s) y pone ${bottomed.length} abajo.`);
-  if (choice.thenDraw > 0) next = drawCards(next, seat, choice.thenDraw);
-  return next;
-}
-
 /** Applies one action for one seat, then settles the game to its next decision point. */
 export function applyAction(state: GameState, seat: SeatId, action: GameAction): GameState {
   if (state.finished) throw new Error("La partida ya terminó.");
@@ -4179,7 +4129,6 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-scry": next = applyChooseScry(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
-    case "resolve-scry": next = applyResolveScry(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {

@@ -1241,3 +1241,20 @@ Validation: `npm run check` PASS; `npm test` PASS (**366 rules tests**,
 simulator, **38 Oracle Python tests**). C13 is **171/356 (48.0%)** and global
 export is **8,121/38,711**. The fork's client glyph warning was not reproduced
 on the integrator branch.
+
+### Integrator checkpoint: Scry batch and Arcane Melee (2026-09-04)
+
+Integrated the fork's functional Scry batch and reconciled it with the prior
+choice model: one private `choose-scry` flow now handles ordered top/bottom
+decisions, duplicate names, short libraries, countered spells, ETB Scry, and
+`Scry N, then draw M` without dropping sibling effects (CR 701.22, 608.2c).
+The bot policy was migrated to the same action shape.
+
+Added the reusable global spell-cost reduction primitive for `Instant and
+sorcery spells cost {N} less to cast`, including Arcane Melee. Unlike
+controller-only Medallion grants, this applies to every player's matching
+spells (CR 118.9), with an opponent-cast scenario.
+
+Validation before the next coverage export: `npm test` PASS (**382 rules
+tests**, simulator, **39 Oracle Python tests**). Coverage snapshots are
+regenerated after the next accepted batch.
