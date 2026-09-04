@@ -50,6 +50,8 @@ export interface ManaAbility {
   /** The mana types the controller may choose between for each mana produced. */
   readonly produces: readonly ManaType[];
   readonly amount: number;
+  /** "Add {C} for each <Subtype> on the battlefield / you control" (Priest of Titania, Magus of the Coffers). */
+  readonly scalesWith?: { readonly kind: "subtype-anywhere" | "subtype-you-control"; readonly subtype: string };
   /** Fixed mixed output, such as `{T}: Add {W}{U}`, rather than a choice. */
   readonly fixedProduces?: readonly ManaType[];
   /** Restricts choices to the controller's commander color identity. */
@@ -808,6 +810,17 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
       return produced ? { produced, gainLife: undefined, requiresLands: undefined } : null;
     })();
+    // "Add {C} for each <Subtype> on the battlefield / you control".
+    const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(effectText.trim().replace(/\.$/, ""));
+    if (scaled && (!instruction?.produced)) {
+      abilities.push({
+        index: abilities.length, produces: [scaled[1]!.toUpperCase() as ManaType], amount: 1,
+        scalesWith: { kind: /you control/i.test(scaled[3]!) ? "subtype-you-control" : "subtype-anywhere", subtype: scaled[2]! },
+        ...(removeCounters.length ? { removeCounters } : {}),
+        requiresTap, lifeCost, text: line.trim()
+      });
+      continue;
+    }
     if (!instruction?.produced) continue;
     const produced = instruction.produced;
     abilities.push({
