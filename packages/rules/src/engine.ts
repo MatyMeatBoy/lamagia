@@ -66,6 +66,8 @@ export interface Permanent {
   /** The spell that became this permanent was kicked (CR 702.33e). */
   readonly kicked?: boolean;
   readonly evoked?: boolean;
+  /** This permanent's spell was cast from hand, as opposed to put onto the battlefield another way (CR 601). */
+  readonly castFromHand?: boolean;
   /** A loyalty ability was activated on this planeswalker this turn (CR 606.3). */
   readonly loyaltyUsedThisTurn?: boolean;
   /** "Target creature can't block this turn"; cleared during cleanup. */
@@ -960,7 +962,7 @@ function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { t
   }
 }
 
-function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false): GameState {
+function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false): GameState {
   const profile = cardProfile(card);
   const printed = entersTapped(state, seat, profile);
   // An effect that says "onto the battlefield tapped" overrides the card's own
@@ -976,6 +978,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     deathtouched: false,
     ...(kicked ? { kicked: true } : {}),
     ...(evoked ? { evoked: true } : {}),
+    ...(castFromHand ? { castFromHand: true } : {}),
     counters: {
       ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
       // A planeswalker enters with loyalty counters equal to its printed value (CR 306.5b).
@@ -1130,6 +1133,8 @@ function raiseEvent(
       // "if it was kicked" gate (CR 702.33e): only the kicked cast fires it.
       if (definition.requiresKicked && !watcher.kicked) continue;
       if (definition.requiresEvoked && !watcher.evoked) continue;
+      // "if you cast it from your hand" gate (Angel of the Dire Hour, CR 601.2a).
+      if (definition.condition?.kind === "cast-from-hand" && !watcher.castFromHand) continue;
       // Undying / Persist only fire when the creature died without the relevant counter (CR 702.92c/702.93c).
       if (definition.effect.kind === "undying-return" && (watcher.counters[definition.effect.counter] ?? 0) > 0) continue;
       queued.push({
@@ -1809,6 +1814,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       if (!source || !isCreature(cardProfile(source.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === source.instance_id);
+    }
+    case "exile-all-attacking-creatures": {
+      let next = state;
+      for (const entry of state.combat.attackers) {
+        const permanent = findPermanent(next, entry.instanceId);
+        if (permanent) next = movePermanentToZone(next, permanent, "exile");
+      }
+      return logged(next, controller, `${sourceName} exilia a todas las criaturas atacantes.`);
     }
     case "drain-target-toughness-pump-source-power": {
       const target = object.targets[0];
@@ -2573,7 +2586,8 @@ function resolveTop(state: GameState): GameState {
   }
 
   if (profile.isPermanent) {
-    next = putOntoBattlefield(next, object.controller, object.card, object.fromCommandZone || playerAt(next, object.card.owner).commanderIds.includes(object.card.instance_id), false, Boolean(object.kicked), Boolean(object.evoked));
+    const castFromHand = !object.fromCommandZone && !object.fromFlashback && !object.fromRebound && !object.trigger && !object.activated;
+    next = putOntoBattlefield(next, object.controller, object.card, object.fromCommandZone || playerAt(next, object.card.owner).commanderIds.includes(object.card.instance_id), false, Boolean(object.kicked), Boolean(object.evoked), castFromHand);
     next = logged(next, object.controller, `${playerAt(next, object.controller).name} resuelve ${object.card.name} al campo de batalla.`);
     return next;
   }

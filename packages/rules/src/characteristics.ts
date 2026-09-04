@@ -362,6 +362,7 @@ export type SpellEffect =
   | { readonly kind: "disciple-of-bolas" }
   | { readonly kind: "create-copy-token"; readonly amount: number; readonly kickedAmount?: number }
   | { readonly kind: "drain-target-toughness-pump-source-power" }
+  | { readonly kind: "exile-all-attacking-creatures" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
@@ -471,7 +472,8 @@ export interface TriggerDefinition {
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number }
     | { readonly kind: "controlled-subtype-at-least"; readonly subtype: string; readonly amount: number }
-    | { readonly kind: "creature-died-this-turn" };
+    | { readonly kind: "creature-died-this-turn" }
+    | { readonly kind: "cast-from-hand" };
   readonly spellType?: "creature";
   /** Colour filter on a spell-cast trigger (Titania's Chosen). */
   readonly spellColor?: string;
@@ -1625,6 +1627,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Target creature gets -0\/-X until end of turn and ~ gets \+X\/\+0 until end of turn$/i.test(text)) {
     return { effect: { kind: "drain-target-toughness-pump-source-power" }, target: "creature" };
   }
+  if (/^exile all attacking creatures$/i.test(text)) {
+    return { effect: { kind: "exile-all-attacking-creatures" }, target: "none" };
+  }
   if ((match = /^each opponent loses X life, where X is your devotion to (white|blue|black|red|green)\.?\s*You gain life equal to the life lost this way\.?$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
     return { effect: { kind: "devotion-drain", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };
@@ -2142,12 +2147,13 @@ function recognizeText(text: string): RecognizedText {
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
       const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggered.effectText);
       const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggered.effectText);
+      const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
       const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
       let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim()
         ?? (countCondition && countConditionAmount !== null ? countCondition[3]!.trim() : undefined)
-        ?? diedCondition?.[1]?.trim() ?? triggered.effectText)
+        ?? diedCondition?.[1]?.trim() ?? castFromHandCondition?.[1]?.trim() ?? triggered.effectText)
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "if it was kicked" gate (CR 702.33e).
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
@@ -2174,6 +2180,7 @@ function recognizeText(text: string): RecognizedText {
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),
           ...(diedCondition ? { condition: { kind: "creature-died-this-turn" as const } } : {}),
+          ...(castFromHandCondition ? { condition: { kind: "cast-from-hand" as const } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
           ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),
