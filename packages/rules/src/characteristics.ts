@@ -1829,6 +1829,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target enchantment to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "enchantment" };
   if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
   if (/^Return target nonland permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "nonland" };
+  if ((match = /^Return (X|two|three|four|five|six|seven|\d+) target nonland permanents to their owners' hands$/i.exec(text))) {
+    const count = /^X$/i.test(match[1]!) ? "X" as const : toNumber(match[1]);
+    if (count !== null) return { effect: { kind: "return-n-nonland-permanents", count }, target: "none" };
+  }
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
   if (/^Return a creature you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature-you-control" };
   if (/^Return (?:another )?target creature card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "creature-card-in-your-graveyard" };
