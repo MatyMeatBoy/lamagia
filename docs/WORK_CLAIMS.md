@@ -85,6 +85,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
+| `global-exalted` | Exalted sole-attacker trigger and temporary pump (CR 702.83) | `feat/activated-abilities-and-triggers` | merged (`94c813e`) | 2026-09-04 |
 | `global-shadow` | Shadow evasion and blocking symmetry (CR 702.28) | `feat/activated-abilities-and-triggers` | merged (`64f9641`) | 2026-09-04 |
 | `global-changeling` | Changeling keyword coverage using the existing all-creature-types model (CR 702.73) | `feat/activated-abilities-and-triggers` | merged (`aa453c7`) | 2026-09-04 |
 | `global-prowess` | Prowess noncreature-spell trigger and temporary self pump (CR 702.108) | `feat/activated-abilities-and-triggers` | merged (`8d53f24`) | 2026-09-04 |
@@ -382,6 +383,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
 | `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
+
 
 
 

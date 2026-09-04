@@ -1218,6 +1218,7 @@ function triggerMatches(
     if (count < condition.amount) return false;
   }
   if (condition?.kind === "creature-died-this-turn" && state.creaturesDiedThisTurn < 1) return false;
+  if (condition?.kind === "attacking-alone" && (event.kind !== "attacks" || state.combat.attackers.length !== 1)) return false;
   if (condition?.kind === "entering-power-at-most") {
     const entering = eventObject(event);
     const permanent = entering && findPermanent(state, entering.permanentId);
