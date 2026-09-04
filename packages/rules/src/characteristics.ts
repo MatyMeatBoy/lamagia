@@ -1348,6 +1348,7 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "enters-battlefield", subject: "artifact-you-control", pattern: /^whenever\s+an\s+artifact\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "enchantment-you-control", pattern: /^whenever\s+an\s+enchantment\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
+  { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(that\s+creature[’']s\s+controller\s+may\s+.+)$/i },
@@ -1667,6 +1668,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^each opponent loses X life, where X is your devotion to (white|blue|black|red|green)\.?\s*You gain life equal to the life lost this way\.?$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
     return { effect: { kind: "devotion-drain", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };
+  }
+  if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
+    return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
+  }
+  if (/^Put target attacking creature on the bottom of its owner's library\. Its controller gains life equal to its toughness$/i.test(text)) {
+    return { effect: { kind: "bottom-attacker-controller-gains-toughness" }, target: "attacking-creature" };
   }
   if (/^Regenerate target creature$/i.test(text)) {
     return { effect: { kind: "regenerate-target-creature" }, target: "creature" };
