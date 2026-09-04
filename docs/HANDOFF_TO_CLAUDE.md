@@ -1416,7 +1416,15 @@ attacking-creature sacrifice). Check, full tests, simulator and 40 Oracle
 Python tests pass. Fork protocol: update from the current integration branch,
 claim one disjoint primitive, commit directly with tests and a compact
 `CLAIM/BASE/COMMIT/FILES/TESTS/SCENARIOS/LIMITS` report; never accumulate or
-rebase a stale full-tree branch. Current regenerated coverage is **184/356
-C13 precon cards**, **169/341 unique C13 entries**, **116/322 C14 cards**, and
-**8,223/38,711 global cards**. Commit `5f01afc` (C13 top-library selection)
-is queued for the next integration batch.
+rebase a stale full-tree branch.
+
+The reported `241/337` C14 figure cannot be reproduced from the current
+canonical profiles or from the worker branch history (the latter records
+120/337 at its last checkpoint). The current reproducible five-precon union
+is **131/337** via `check_precon_coverage.py`; the separate `116/322` figure
+in `SET_COVERAGE.md` counts edition memberships from the catalog, so it is a
+different denominator. The useful C14 functionality from the stale worker
+tree is already rescued through the integrated batch history plus `893730c`;
+importing its remaining files would discard newer C13 rules and is
+prohibited. Commit `5f01afc` (C13 top-library selection) is queued for the
+next integration batch.
