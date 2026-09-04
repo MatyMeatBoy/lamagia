@@ -115,6 +115,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `arsenal-chaos-warp` | Chaos Warp shuffles a target permanent into its owner’s library and conditionally puts the revealed top card onto the battlefield (CR 701.20, 701.34) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-decree-of-pain` | Decree of Pain destroys all creatures and draws for creatures destroyed by that effect (CR 608.2c, 701.7) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `arsenal-desertion` | Desertion counters a spell and puts an artifact or creature spell onto the battlefield under its controller’s control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-maelstrom-haste` | Reuse the static “creatures you control have haste” primitive for Maelstrom Wanderer; cascade remains separate | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
