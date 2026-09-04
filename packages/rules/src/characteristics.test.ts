@@ -816,4 +816,16 @@ describe("faces and oracle normalisation", () => {
     }));
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("recognises entering-creature power damage as a targeted trigger", () => {
+    const profile = cardProfile(card({
+      name: "Warstorm Surge", type_line: "Enchantment", mana_cost: "{5}{R}",
+      oracle_text: "Whenever a creature you control enters the battlefield, it deals damage equal to its power to any target."
+    }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "enters-battlefield", subject: "creature-you-control", targetKind: "any",
+      effect: { kind: "damage-triggered-creature-power" }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });

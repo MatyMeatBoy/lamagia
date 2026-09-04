@@ -388,6 +388,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  /** Damage equal to the power of the creature that caused this trigger. */
+  | { readonly kind: "damage-triggered-creature-power" }
   | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
   | { readonly kind: "damage-any-target-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "damage-controller-equal-hand" }
@@ -1616,6 +1618,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
 
   // Another object triggers it. `another` excludes the source itself (CR 109.5).
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "another-permanent-you-control", pattern: /^whenever\s+another\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "permanent-you-control", pattern: /^whenever\s+a\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
@@ -1785,6 +1788,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
+  }
+  if (/^~ deals damage equal to its power to any target$/i.test(text)) {
+    return { effect: { kind: "damage-triggered-creature-power" }, target: "any" };
   }
   if ((match = /^(?:~|This spell) deals damage equal to the number of (creatures|artifacts|enchantments|lands) you control to any target$/i.exec(text))) {
     const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1, -1) as CardType;
