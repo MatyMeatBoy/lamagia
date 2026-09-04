@@ -1504,6 +1504,17 @@ describe("casting", () => {
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("reuses the generic sacrifice-cost draw activation for C13 Carnage Altar", () => {
+    let game = readyToCast([], [C13_CARNAGE_ALTAR(), FOREST(), FOREST(), FOREST(), BEAR()]);
+    const altar = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Carnage Altar")!;
+    const beforeHand = game.players[0]!.hand.length;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === altar.instance_id);
+    expect(activation?.action.type).toBe("activate");
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.hand.length === beforeHand + 1);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
   it("draws once per creature controlled by the caster", () => {
     expect(profileOf(CREATURE_DRAW()).effects).toEqual([{ kind: "draw-equal-controlled-type", type: "Creature" }]);
   });
