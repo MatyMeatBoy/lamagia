@@ -65,6 +65,7 @@ const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", t
 const DOUBLE_STRIKE_SPELL = () => make({ name: "Twin Edge", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Target creature gains double strike until end of turn." });
 const TRAMPLE_BOOST = () => make({ name: "Selesnya Memory", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Target creature gets +2/+2 and gains trample until end of turn." });
 const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "{R}: This creature gets +1/+0 until end of turn." });
+const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
 const GRAVEYARD_EXILE = () => make({ name: "Grave Purge", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target card from your graveyard." });
 const GRAVEYARD_TOP = () => make({ name: "Library Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on top of your library." });
 const LIFE_COUNTER = () => make({ name: "Life Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you gain life, put a +1/+1 counter on Life Counter." });
@@ -670,6 +671,16 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
     const boosted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
     expect([powerOf(boosted), toughnessOf(boosted)]).toEqual([7, 6]);
+  });
+
+  it("enforces a creature's cannot-be-blocked restriction", () => {
+    const profile = profileOf(UNBLOCKABLE());
+    expect(profile.combatRules.cannotBeBlocked).toBe(true);
+    let game = readyToCast([], [UNBLOCKABLE()], [], [BEAR()]);
+    const attacker = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Herald Memory")!;
+    const blocker = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = { ...game, step: "declare-blockers", combat: { ...game.combat, attackers: [{ instanceId: attacker.instance_id, defender: 1 }] } };
+    expect(legalBlockers(game, 1)).not.toContainEqual(blocker);
   });
 
   it("scales token creation from the controller's current land count", () => {

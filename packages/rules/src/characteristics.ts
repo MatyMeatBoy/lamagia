@@ -119,6 +119,8 @@ export interface CombatRules {
   readonly cannotAttack: boolean;
   /** "~ can't block" (CR 509.1a). */
   readonly cannotBlock: boolean;
+  /** "~ can't be blocked" (CR 509.1a). */
+  readonly cannotBeBlocked: boolean;
   /** "~ attacks each combat if able" (CR 508.1d). */
   readonly mustAttack: boolean;
   /**
@@ -137,6 +139,7 @@ export interface CombatRules {
 export const NO_COMBAT_RULES: CombatRules = {
   cannotAttack: false,
   cannotBlock: false,
+  cannotBeBlocked: false,
   mustAttack: false,
   blocksOnlyWithKeyword: null,
   landwalk: []
@@ -156,6 +159,7 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
 
   if (/^~ can't attack$/.test(text)) return { cannotAttack: true };
   if (/^~ can't block$/.test(text)) return { cannotBlock: true };
+  if (/^~ can't be blocked$/.test(text)) return { cannotBeBlocked: true };
   if (/^~ can't attack or block$/.test(text)) return { cannotAttack: true, cannotBlock: true };
   if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
 

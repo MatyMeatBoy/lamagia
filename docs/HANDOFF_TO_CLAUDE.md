@@ -794,6 +794,17 @@ costs, non-self targets and other activated costs.
 Validation: targeted engine tests and full `npm run check`/`npm test` required
 before integration.
 
+### Cooperative C13 cluster: can't-be-blocked restriction
+
+The branch recognises `This creature can't be blocked` as a static combat rule
+and rejects all blocker declarations against that attacker. This follows CR
+509.1a. Scenario coverage verifies the restriction through `legalBlockers`.
+The scope excludes conditional evasion, protection and unblockable effects
+granted by other objects.
+
+Validation: targeted engine tests and full `npm run check`/`npm test` required
+before integration.
+
 ### Cooperative C13 cluster: land-scaled token creation
 
 The branch adds the reusable `Create a token for each land you control`
