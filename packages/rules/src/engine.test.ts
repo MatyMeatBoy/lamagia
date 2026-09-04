@@ -128,6 +128,7 @@ const INFERNO_PUMP = () => make({ name: "Inferno Memory", type_line: "Creature �
 const MARROW_BATS = () => make({ name: "Marrow Bats", type_line: "Creature — Bat", mana_cost: "{3}{B}", cmc: 4, power: "2", toughness: "2", oracle_text: "{B}, Pay 4 life: Regenerate Marrow Bats." });
 const COUNTER_DAMAGE = () => make({ name: "Thoctar Memory", type_line: "Creature — Beast", mana_cost: "{2}{R}{R}", cmc: 4, power: "5", toughness: "5", oracle_text: "Remove a +1/+1 counter from this creature: This creature deals 1 damage to any target." });
 const CARNAGE_ALTAR = () => make({ name: "Carnage Memory", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{3}, Sacrifice a creature: Draw a card." });
+const RAVENOUS_BALOTH = () => make({ name: "Ravenous Baloth", type_line: "Creature — Beast", mana_cost: "{2}{G}{G}", cmc: 4, power: "4", toughness: "4", oracle_text: "Sacrifice a Beast: You gain 4 life." });
 const ARTIFACT_SAC_ALTAR = () => make({ name: "Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact: Draw a card." });
 const ENCHANTMENT_SAC_ALTAR = () => make({ name: "Enchantment Memory", type_line: "Enchantment", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an enchantment: Draw a card." });
 const LAND_SAC_ALTAR = () => make({ name: "Land Memory", type_line: "Land", oracle_text: "Sacrifice a land: Draw a card." });
@@ -1638,6 +1639,26 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === creature.instance_id)).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(1);
+  });
+
+  it("restricts Ravenous Baloth's sacrifice cost to Beasts and gains life", () => {
+    const baloth = RAVENOUS_BALOTH();
+    let game = readyToCast([], [baloth, TRAMPLER(), BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === baloth.name)!;
+    const beast = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.sacrificeId === beast.instance_id)).toBe(true);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.sacrificeId === game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.instance_id)).toBe(false);
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0, sacrificeId: beast.instance_id
+    });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(44);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Big Stomper")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === baloth.name)).toBe(true);
   });
 
   it("offers typed permanent sacrifice costs and moves the chosen permanent", () => {

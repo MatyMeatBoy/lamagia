@@ -1702,6 +1702,14 @@ queued for comparison rather than applied wholesale. The integrator continues
 to process incoming fork work in batches of 11+ commits; use the exact
 card-to-commit map when rescuing additional changes.
 
+### C13 typed Beast sacrifice cost (2026-09-04)
+
+The activated-ability IR now preserves a creature subtype in costs such as
+“Sacrifice a Beast”, and the authoritative engine filters selectable
+permanents by that subtype before paying the cost (CR 117.3b, 602.2b). This
+reuses the existing gain-life effect for Ravenous Baloth and leaves generic
+“Sacrifice a creature” costs unchanged.
+
 ### Integrator checkpoint: multiple nonblack targets (2026-09-04)
 
 The compiler now carries ordered target requirements on the card profile, not

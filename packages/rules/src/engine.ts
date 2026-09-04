@@ -56,6 +56,14 @@ function matchesSacrificeType(permanent: Permanent, type: "Artifact" | "Enchantm
   return isLand(profile);
 }
 
+function matchesSacrificeCreatureCost(permanent: Permanent, ability: ActivatedAbility, sourceId: string): boolean {
+  if (!isCreature(cardProfile(permanent.card))) return false;
+  if (ability.sacrificesCreature && ability.sacrificesCreature === "another" && permanent.instance_id === sourceId) return false;
+  const typed = ability.sacrificesCreatureSubtype;
+  if (typed && typed.mode === "another" && permanent.instance_id === sourceId) return false;
+  return !typed || cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === typed.subtype.toLowerCase());
+}
+
 export interface GameCard extends CardData {
   readonly instance_id: string;
   readonly owner: SeatId;
@@ -4374,9 +4382,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       if (opponentsLocked && ["Artifact", "Creature", "Enchantment"].some((type) => profile.types.includes(type as CardType))) continue;
       const check = activatableAbility(state, seat, permanent, ability);
       if (!check.legal) continue;
-      const sacrifices = ability.sacrificesCreature
-        ? player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
-          && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id))
+      const sacrifices = ability.sacrificesCreature || ability.sacrificesCreatureSubtype
+        ? player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))
         : ability.sacrificesPermanent
           ? player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
             && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id))
@@ -4758,9 +4765,11 @@ function activatableAbility(
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return { legal: false };
   if (ability.lifeCost >= player.life) return { legal: false };
   if (ability.sacrificesCreature) {
-    const candidates = player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
-      && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id));
+    const candidates = player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id));
     if (!candidates.length) return { legal: false };
+  }
+  if (ability.sacrificesCreatureSubtype && !player.battlefield.some((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))) {
+    return { legal: false };
   }
   if (ability.sacrificesPermanent) {
     const candidates = player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
@@ -4827,10 +4836,13 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   let targets: readonly Target[] = action.targets ?? [];
   let sacrifice: Permanent | undefined;
   if (ability.sacrificesCreature) {
-    const candidates = playerAt(state, seat).battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
-      && (ability.sacrificesCreature !== "another" || candidate.instance_id !== source.instance_id));
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id));
     sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error("Debes elegir una criatura para sacrificar.");
+  } else if (ability.sacrificesCreatureSubtype) {
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id));
+    sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
+    if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesCreatureSubtype.subtype} para sacrificar.`);
   } else if (ability.sacrificesPermanent) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== source.instance_id));
