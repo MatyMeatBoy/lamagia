@@ -1139,6 +1139,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
     case "shuffle-self-into-library":
       // The card's own move is handled by resolveTop after other effects run.
       return state;
+    case "return-source-to-hand": {
+      // "When ~ is put into a graveyard from the battlefield, return it to its
+      // owner's hand" (Fool's Demise, Spine of Ish Sah). By the time this
+      // resolves the card is already in the graveyard.
+      const owner = object.card.owner;
+      if (!playerAt(state, owner).graveyard.some((card) => card.instance_id === object.card.instance_id)) return state;
+      return withPlayer(state, owner, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((card) => card.instance_id !== object.card.instance_id),
+        hand: [...player.hand, object.card]
+      }));
+    }
     case "draw-then-discard": {
       let next = drawCards(state, controller, effect.draw);
       const amount = Math.min(effect.discard, playerAt(next, controller).hand.length);
