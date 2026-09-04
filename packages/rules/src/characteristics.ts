@@ -366,6 +366,8 @@ export type SpellEffect =
   | { readonly kind: "tap-all-nonblue-skip-untap" }
   | { readonly kind: "shuffle-source-into-library" }
   | { readonly kind: "destroy-all-then-reanimate-one" }
+  | { readonly kind: "you-and-opponent-each"; readonly effect: SpellEffect }
+  | { readonly kind: "untap-all-nonland-both" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
@@ -1637,6 +1639,27 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^exile all attacking creatures$/i.test(text)) {
     return { effect: { kind: "exile-all-attacking-creatures" }, target: "none" };
+  }
+  // The "Choose an opponent" offering cycle (Commander 2014): each line stands
+  // on its own, picking a (possibly different) opponent each time.
+  if ((match = /^Choose an opponent\.\s*You and that player each draw (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "you-and-opponent-each", effect: { kind: "draw", amount } }, target: "none" };
+  }
+  if (/^Choose an opponent\.\s*Untap all nonland permanents you control and all nonland permanents that player controls$/i.test(text)) {
+    return { effect: { kind: "untap-all-nonland-both" }, target: "none" };
+  }
+  if (/^Choose an opponent\.\s*You and that player each create an X\/X green Treefolk creature token$/i.test(text)) {
+    return {
+      effect: { kind: "you-and-opponent-each", effect: { kind: "create-token", amount: "X", statsFromAmount: true, token: { name: "Treefolk", typeLine: "Creature — Treefolk", power: null, toughness: null, colors: ["G"], keywords: [], tapped: false } } },
+      target: "none"
+    };
+  }
+  if (/^Choose an opponent\.\s*You and that player each create X 1\/1 green Elf Warrior creature tokens$/i.test(text)) {
+    return {
+      effect: { kind: "you-and-opponent-each", effect: { kind: "create-token", amount: "X", token: { name: "Elf Warrior", typeLine: "Creature — Elf Warrior", power: 1, toughness: 1, colors: ["G"], keywords: [], tapped: false } } },
+      target: "none"
+    };
   }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };

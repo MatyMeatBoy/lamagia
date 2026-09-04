@@ -1322,6 +1322,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         hand: [...player.hand, object.card]
       }));
     }
+    case "you-and-opponent-each": {
+      // "Choose an opponent" (Commander 2014 offering cycle): with more than
+      // one opponent, deterministically picks the first living one.
+      const opponent = opponentsOf(state, controller)[0];
+      let next = applyEffect(state, object, effect.effect);
+      if (opponent !== undefined) next = applyEffect(next, { ...object, controller: opponent }, effect.effect);
+      return next;
+    }
+    case "untap-all-nonland-both": {
+      const opponent = opponentsOf(state, controller)[0];
+      let next = state;
+      for (const seat of opponent === undefined ? [controller] : [controller, opponent]) {
+        next = withPlayer(next, seat, (player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => isLand(cardProfile(permanent.card)) ? permanent : { ...permanent, tapped: false })
+        }));
+      }
+      return logged(next, controller, `${sourceName} endereza los permanentes que no son tierra de ambos jugadores.`);
+    }
     case "destroy-all-then-reanimate-one": {
       const doomed = allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card)));
       if (!doomed.length) return state;
