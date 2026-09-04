@@ -385,7 +385,9 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, grant) => total + grant.power, 0) : 0;
-  return (level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus;
+  const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
+    .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
+  return (level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -398,7 +400,9 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, grant) => total + grant.toughness, 0) : 0;
-  return (level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus;
+  const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
+    .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.toughness, 0) : 0;
+  return (level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const profile = cardProfile(permanent.card);
