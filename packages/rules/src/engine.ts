@@ -130,6 +130,8 @@ export interface PlayerState {
   readonly autoPass: boolean;
   /** Rebound (CR 702.88): instance ids exiled this way, castable free at the next upkeep. */
   readonly reboundPending: readonly string[];
+  /** Extra land plays granted this turn ("you may play an additional land"), reset each turn (CR 305.2). */
+  readonly extraLandDrops: number;
 }
 
 export type Target =
@@ -868,6 +870,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       lost: false,
       drewFromEmptyLibrary: false,
       reboundPending: [],
+      extraLandDrops: 0,
       autoPass: kind === "bot"
     } satisfies PlayerState;
   });
@@ -1555,6 +1558,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const returned = player.graveyard;
       const next = withPlayer(state, controller, (current) => ({ ...current, graveyard: [], hand: [...current.hand, ...returned] }));
       return logged(next, controller, `${sourceName} devuelve ${returned.length} carta(s) del cementerio a la mano.`);
+    }
+    case "play-additional-land": {
+      return withPlayer(state, controller, (player) => ({ ...player, extraLandDrops: player.extraLandDrops + effect.amount }));
     }
     case "syphon-mind": {
       let next = state;
@@ -3742,7 +3748,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     cardProfile(permanent.card).locksOpponentsOnYourTurn
     && permanent.controller === state.activeSeat && permanent.controller !== seat);
 
-  if (sorcerySpeed(state, seat) && player.landsPlayedThisTurn < 1) {
+  if (sorcerySpeed(state, seat) && player.landsPlayedThisTurn < 1 + player.extraLandDrops) {
     for (const card of player.hand) {
       if (!isLand(cardProfile(card))) continue;
       actions.push({ action: { type: "play-land", cardId: card.instance_id }, label: `Jugar ${card.name}`, cardId: card.instance_id });
@@ -4553,6 +4559,12 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     commandZone: fromCommand ? current.commandZone.filter((candidate) => candidate.instance_id !== card.instance_id) : current.commandZone,
     ...(fromCommand ? { commanderCasts: { ...current.commanderCasts, [card.instance_id]: (current.commanderCasts[card.instance_id] ?? 0) + 1 } } : {})
   }));
+  if (profile.additionalCostSacrificeLand) {
+    const lands = playerAt(next, seat).battlefield.filter((p) => isLand(cardProfile(p.card)));
+    if (!lands.length) throw new Error(`No tienes una tierra para sacrificar por ${card.name}.`);
+    next = movePermanentToZone(next, lands[0]!, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${lands[0]!.card.name} por ${card.name}.`);
+  }
   if (profile.additionalCostExileGraveyardX) {
     const count = action.variableValue ?? 0;
     const doomed = playerAt(next, seat).graveyard.slice(0, count);
@@ -4574,7 +4586,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
 function applyPlayLand(state: GameState, seat: SeatId, cardId: string): GameState {
   const player = playerAt(state, seat);
   if (!sorcerySpeed(state, seat)) throw new Error("Solo puedes jugar una tierra en tu fase principal con la pila vacía.");
-  if (player.landsPlayedThisTurn >= 1) throw new Error("Ya jugaste una tierra este turno.");
+  if (player.landsPlayedThisTurn >= 1 + player.extraLandDrops) throw new Error("Ya jugaste todas tus tierras este turno.");
   const card = player.hand.find((candidate) => candidate.instance_id === cardId);
   if (!card || !isLand(cardProfile(card))) throw new Error("Esa carta no es una tierra en tu mano.");
   let next = withPlayer(state, seat, (current) => ({
