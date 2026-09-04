@@ -17,6 +17,7 @@ feature name.
 
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
+| `c13-choose-both` | Reusable modal "Choose one or both" selection for Soul Manipulation (`419c2ae1-fec7-4c27-a7a0-99f777abb4de`) and Fissure Vent (`f5bac25d-72e9-4655-8a04-3646fc10be27`) | `codex/c13-choose-both` | active | 2026-09-04 |
 | `rules-land-search` | Landcycling variants and land-subtype search resolution | `feat/activated-abilities-and-triggers` | merged (`7c7f77c`) | 2026-09-03 |
 | `rules-equipment` | Equip actions, attachment state, and Equipment static bonuses | `codex/c13-equipment-cluster` | merged (`f61a096`) | 2026-09-03 |
 | `rules-c13-reprint-equivalence` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | `codex/c13-equipment-cluster` | merged (`44d0e78`) | 2026-09-04 |
