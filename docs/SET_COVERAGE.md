@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **19,079** · cobertura: **22.4%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **19,080** · cobertura: **22.4%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -37,7 +37,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **19,07
 | 1996-07-01 | Rivals Quick Start Set (`RQS`) | boxed-products | rivals-quick-start-set | other | 56 | 25 | 31 | 44.6% |
 | 1996-08-02 | Arena League 1996 (`PARL`) | promos | arena-1996 | other | 7 | 6 | 1 | 85.7% |
 | 1996-10-01 | Redemption Program (`PRED`) | promos | redemption-program | other | 1 | 0 | 1 | 0.0% |
-| 1996-10-08 | Mirage (`MIR`) | expansion | mirage | main | 335 | 66 | 269 | 19.7% |
+| 1996-10-08 | Mirage (`MIR`) | expansion | mirage | main | 335 | 67 | 268 | 20.0% |
 | 1996-11-01 | Multiverse Gift Box (`MGB`) | boxed-products | multiverse-gift-box | other | 10 | 1 | 9 | 10.0% |
 | 1996-12-31 | Introductory Two-Player Set (`ITP`) | starter | 1990s | other | 57 | 26 | 31 | 45.6% |
 | 1997-02-03 | Visions (`VIS`) | expansion | 1990s | main | 167 | 29 | 138 | 17.4% |
@@ -811,7 +811,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **19,07
 | expansion | kamigawa | 4 | 925 | 101 | 824 | 10.9% |
 | expansion | lorwyn | 2 | 559 | 81 | 478 | 14.5% |
 | expansion | masques | 1 | 335 | 77 | 258 | 23.0% |
-| expansion | mirage | 1 | 335 | 66 | 269 | 19.7% |
+| expansion | mirage | 1 | 335 | 67 | 268 | 20.0% |
 | expansion | mirrodin | 3 | 675 | 194 | 481 | 28.7% |
 | expansion | odyssey | 1 | 335 | 86 | 249 | 25.7% |
 | expansion | onslaught | 1 | 335 | 51 | 284 | 15.2% |
@@ -4807,7 +4807,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **19,07
 - [ ] Wellspring — `8650bd97-ecf6-420f-9b72-a749970afcd4`
 - [ ] Wildfire Emissary — `8fb44b03-017f-4cf3-a79b-8f6cc33570ca`
 - [ ] Windreaper Falcon — `aa17782b-d8e7-423b-9f03-01ccb600f69a`
-- [ ] Withering Boon — `6d87415b-0618-48e1-9510-320c4611ecda`
 - [ ] Yare — `f0f24c6d-80fb-4e99-a74d-6ed9d349ed3d`
 - [ ] Zebra Unicorn — `2f91818f-a6fe-4472-b52b-ab574f790905`
 - [ ] Zhalfirin Commander — `1053a778-da6a-4b8e-81fb-537a355d4bfe`
