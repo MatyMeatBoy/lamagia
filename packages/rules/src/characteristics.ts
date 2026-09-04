@@ -313,6 +313,7 @@ export type SpellEffect =
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
   | { readonly kind: "sacrifice-own-creature-then-draw"; readonly amount: number }
   | { readonly kind: "reanimate-own-best-creature-from-graveyard" }
+  | { readonly kind: "return-random-creature-from-graveyard-to-hand" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
@@ -1765,6 +1766,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Choose an opponent\.\s*Return a creature card from your graveyard to the battlefield, then that player returns a creature card from their graveyard to the battlefield$/i.test(text)) {
     return { effect: { kind: "you-and-opponent-each", effect: { kind: "reanimate-own-best-creature-from-graveyard" } }, target: "none" };
+  }
+  if (/^Return a creature card at random from your graveyard to your hand$/i.test(text)) {
+    return { effect: { kind: "return-random-creature-from-graveyard-to-hand" }, target: "none" };
   }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
