@@ -93,17 +93,17 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-activated-pump` | Activated self-creature P/T bonuses through end of turn | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-unblockable` | Printed creature can't-be-blocked restriction | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature, including “another” | `codex/c13-equipment-cluster` | active | 2026-09-03 |
-| `c13-activated-sacrifice-artifact` | Activated costs that sacrifice an artifact, including “another” | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-activated-sacrifice-enchantment` | Activated costs that sacrifice an enchantment, including “another” | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-activated-sacrifice-land` | Activated costs that sacrifice a land, including “another” | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-activated-sacrifice-noncreature` | Activated costs that sacrifice any noncreature permanent | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-activated-discard-cost` | Activated costs that discard one card from the controller’s hand | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-activated-sacrifice-token` | Activated costs that sacrifice a token permanent | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-activated-exile-graveyard-cost` | Activated costs that exile one card from the controller’s graveyard | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-graveyard-to-library-bottom` | Return a targeted card from your graveyard to the bottom of your library | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-graveyard-shuffle-into-library` | Shuffle a targeted card from your graveyard into your library | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell | `codex/c13-equipment-cluster` | active | 2026-09-04 |
-| `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-artifact` | Activated costs that sacrifice an artifact, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-enchantment` | Activated costs that sacrifice an enchantment, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-land` | Activated costs that sacrifice a land, including “another” (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-noncreature` | Activated costs that sacrifice any noncreature permanent (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-discard-cost` | Activated costs that discard one card from the controller’s hand (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-sacrifice-token` | Activated costs that sacrifice a token permanent (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-activated-exile-graveyard-cost` | Activated costs that exile one card from the controller’s graveyard (CR 117.3b, 602.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-graveyard-to-library-bottom` | Return a targeted card from your graveyard to the bottom of your library (CR 400.7, 701.19) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-graveyard-shuffle-into-library` | Shuffle a targeted card from your graveyard into your library (CR 400.7, 701.20) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
