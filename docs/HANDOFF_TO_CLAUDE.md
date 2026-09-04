@@ -854,3 +854,13 @@ Act, CR 118.9). `planManaPayment` / `payCost` now accept a negative
 
 Validation: check PASS; 272 tests; oracle 25 OK; simulate 200 games 162 finished
 0 failures. Catalog 7,670 -> 7,672; Commander 2014 107 -> 108/337.
+
+### C14 batch5: Medallion-style static cost reduction
+
+`<color/type> spells you cast cost {N} less to cast` (Medallion cycle, CR 118.9)
+is a `spellCostReductionGrant` on the permanent; the cast paths sum grants from
+the caster's battlefield that match the spell's color/type.
+
+Validation: check PASS; 273 tests; oracle 25 OK; simulate 200 games 162
+finished 0 failures. Catalog 7,672 -> 7,689; Commander 2014 108 -> 113/337
+(Ruby/Sapphire/Jet/Emerald/Pearl Medallion).
