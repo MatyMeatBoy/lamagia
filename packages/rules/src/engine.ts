@@ -1355,6 +1355,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
     }
+    case "destroy-target-creature-then-life-loss": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card)) || keywordOf(state, permanent, "indestructible")) return state;
+      const loss = powerOf(permanent, state) + toughnessOf(permanent, state);
+      let next = movePermanentToZone(state, permanent, "graveyard");
+      next = loseLife(next, permanent.controller, loss);
+      return logged(next, controller, `${permanent.card.name} es destruida y su controlador pierde ${loss} vidas.`);
+    }
     case "destroy-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
