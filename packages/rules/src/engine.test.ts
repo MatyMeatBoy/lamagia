@@ -129,6 +129,7 @@ const CROSS_GENERIC_REANIMATE = () => make({ name: "Cross Permanent Reclaim", ty
 const PERMANENT_GRAVEYARD_EXILE = () => make({ name: "Permanent Exile", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Exile target permanent card from your graveyard." });
 const CROSS_PERMANENT_GRAVEYARD_EXILE = () => make({ name: "Cross Permanent Exile", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Exile target permanent card from a graveyard." });
 const LOYAL_RETAINERS = () => make({ name: "Loyal Retainers", type_line: "Creature — Human Advisor", mana_cost: "{2}{W}", cmc: 3, power: "1", toughness: "1", oracle_text: "Sacrifice this creature: Return target legendary creature card from your graveyard to the battlefield. Activate only during your turn, before attackers are declared." });
+const MIRARIS_WAKE = () => make({ name: "Mirari's Wake", type_line: "Enchantment", mana_cost: "{3}{G}{W}", cmc: 5, oracle_text: "Creatures you control get +1/+1." });
 const BOTTOM_RETURN = () => make({ name: "Bottom Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put target card from your graveyard on the bottom of your library." });
 const SHUFFLE_RETURN = () => make({ name: "Shuffle Reclaim", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Shuffle target card from your graveyard into your library." });
 const UNBLOCKABLE = () => make({ name: "Herald Memory", type_line: "Creature — Spirit", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "This creature can't be blocked." });
@@ -995,6 +996,14 @@ describe("casting", () => {
     game = applyAction(game, 0, { ...activation.action, targets: [target] });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Dead General")).toBe(true);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Loyal Retainers")).toBe(false);
+  });
+
+  it("applies Mirari's Wake to each creature its controller controls", () => {
+    const game = readyToCast([], [MIRARIS_WAKE(), BEAR(), WALL()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const wall = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Stone Wall")!;
+    expect([powerOf(bear, game), toughnessOf(bear, game)]).toEqual([3, 3]);
+    expect([powerOf(wall, game), toughnessOf(wall, game)]).toEqual([1, 5]);
   });
 
   it("offers only generated tokens for a token sacrifice cost", () => {
