@@ -105,6 +105,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-graveyard-to-library-bottom` | Return a targeted card from your graveyard to the bottom of your library (CR 400.7, 701.19) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-graveyard-shuffle-into-library` | Shuffle a targeted card from your graveyard into your library (CR 400.7, 701.20) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-return-permanent-card-to-battlefield` | Return a targeted permanent card from your graveyard to the battlefield (CR 400.7, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `c13-return-permanent-card-from-any-graveyard` | Return a targeted permanent card from any graveyard to the battlefield (CR 400.7, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
