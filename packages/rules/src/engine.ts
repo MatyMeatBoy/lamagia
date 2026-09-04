@@ -1189,6 +1189,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return next;
     }
+    case "damage-nonflying-creatures-and-players": {
+      const amount = effectAmount(effect.amount, object);
+      let next = state;
+      for (const permanent of allPermanents(state)) {
+        if (isCreature(cardProfile(permanent.card)) && !keywordOf(state, permanent, "flying")) {
+          next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName);
+        }
+      }
+      for (const player of state.players) if (!player.lost) next = dealDamageToPlayer(next, player.seat, amount, sourceName);
+      return next;
+    }
     case "damage-any-target": {
       const target = object.targets[0];
       if (!target) return state;
