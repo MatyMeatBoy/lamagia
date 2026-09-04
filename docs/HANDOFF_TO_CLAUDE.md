@@ -1105,3 +1105,9 @@ condensed here to avoid reintroducing stale handoff snapshots.
 The same accepted batch adds Decree of Pain's cycling trigger, Edric's combat
 damage draw trigger, and the associated scenario coverage. The remaining fork
 tail is still being accumulated before the next >10-commit integration batch.
+
+The next C13 batch is now staged for review as 11 commits from base `95fbe83`:
+Duplicant imprint and Rhystic Study's caster-specific optional payment. Its
+scenario tests cover accept/decline imprint, payer identity, and hiding an
+unaffordable payment action. Integrate the complete batch only after validation;
+do not import stale handoff snapshots or untracked user folders.
