@@ -319,6 +319,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-enchantment-card-from-graveyard-to-battlefield" }
   | { readonly kind: "exile-target-card-from-graveyard" }
   | { readonly kind: "return-target-card-to-library-top" }
+  | { readonly kind: "return-target-card-to-library-bottom" }
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures" }
@@ -1414,6 +1415,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Exile target enchantment card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "enchantment-card-in-a-graveyard" };
   if (/^Exile target land card from a graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "land-card-in-a-graveyard" };
   if (/^Put target card from your graveyard on top of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-top" }, target: "card-in-your-graveyard" };
+  if (/^Put target card from your graveyard on the bottom of your library$/i.test(text)) return { effect: { kind: "return-target-card-to-library-bottom" }, target: "card-in-your-graveyard" };
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
