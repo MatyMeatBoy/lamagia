@@ -2559,7 +2559,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     .filter((permanent) => !keywordOf(state, permanent, "shroud"));
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
-    if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
       if (!isCreature(profile)) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
@@ -2576,6 +2576,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       if (kind === "creature-with-vigilance" && !keywordOf(state, permanent, "vigilance")) return false;
       if (kind === "creature-with-indestructible" && !keywordOf(state, permanent, "indestructible")) return false;
       if (kind === "creature-with-hexproof" && !keywordOf(state, permanent, "hexproof")) return false;
+      if (kind === "creature-with-shroud" && !keywordOf(state, permanent, "shroud")) return false;
       if (kind === "creature-power-at-least-5" && powerOf(permanent, state) < 5) return false;
       if (kind === "creature-power-at-most-4" && powerOf(permanent, state) > 4) return false;
       if (kind === "creature-toughness-at-least-4" && toughnessOf(permanent, state) < 4) return false;
