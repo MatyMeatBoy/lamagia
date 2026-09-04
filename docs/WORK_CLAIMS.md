@@ -15,6 +15,7 @@
 | `rules-c13-tap-typed-cost` | `codex/c13-equipment-cluster` | Reusable activation cost for tapping an untapped creature or subtype you control, applied to Azami, Lady of Scrolls | Ready for integrator review |
 | `rules-c13-draw-spell-reuse` | `codex/c13-equipment-cluster` | Verify C13 draw spells reuse the existing draw primitives: Brilliant Plan, Harmonize, Vision Skeins, and Deep Analysis with Flashback | Ready for integrator review |
 | `rules-c13-baleful-strix-etb` | `codex/c13-equipment-cluster` | Apply the existing ETB draw and combat-keyword primitives to the C13 Baleful Strix printing | In progress |
+| `rules-c13-etb-draw-life` | `codex/c13-equipment-cluster` | Reuse the compound draw-and-life-loss effect for the C13 Phyrexian Gargantua ETB | In progress |
 | `rules-level-up` | `codex/c13-equipment-cluster` | Level up activation, level counters, and level-band P/T/keyword characteristics | Ready for integrator review |
 | `rules-tap-untap` | `codex/c13-equipment-cluster` | Targeted Tap target creature and Untap target permanent effects | Ready for integrator review |
 | `rules-mill` | `codex/c13-equipment-cluster` | Target player mills a bounded number of cards into their graveyard | Ready for integrator review |
