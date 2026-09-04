@@ -108,6 +108,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-return-permanent-card-from-any-graveyard` | Return a targeted permanent card from any graveyard to the battlefield (CR 400.7, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-exile-permanent-card-from-graveyard` | Exile a targeted permanent card from your graveyard (CR 400.7, 701.11) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-exile-permanent-card-from-any-graveyard` | Exile a targeted permanent card from any graveyard (CR 400.7, 701.11) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
+| `arsenal-loyal-retainers` | Loyal Retainers: precombat activated sacrifice and legendary-creature graveyard return (CR 602.2b, 608.2b) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-each-player-spell-trigger` | Triggered abilities that watch any player cast a spell (CR 603.2, 603.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-permanent-etb-trigger-subject` | ETB triggers for any permanent entering under the controller’s control (CR 603.2) | `codex/c13-equipment-cluster` | active | 2026-09-04 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
