@@ -346,7 +346,7 @@ export type GameAction =
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
-  | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean }
+  | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean; readonly ordinal?: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "resolve-scry"; readonly sourceId: string; readonly cardId: string; readonly toBottom: boolean }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
@@ -2919,18 +2919,18 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       return actions;
     }
     if (choice.type === "scry") {
-      for (const card of choice.remainingCards) {
+      choice.remainingCards.forEach((card, ordinal) => {
         actions.push({
-          action: { type: "choose-scry", sourceId: choice.sourceId, query: card.name, bottom: false },
+          action: { type: "choose-scry", sourceId: choice.sourceId, query: card.name, bottom: false, ordinal },
           label: `Mantener ${card.name} arriba`,
           note: `${choice.sourceCard.name}: coloca esta carta arriba.`
         });
         actions.push({
-          action: { type: "choose-scry", sourceId: choice.sourceId, query: card.name, bottom: true },
+          action: { type: "choose-scry", sourceId: choice.sourceId, query: card.name, bottom: true, ordinal },
           label: `Poner ${card.name} en el fondo`,
           note: `${choice.sourceCard.name}: coloca esta carta en el fondo.`
         });
-      }
+      });
       return actions;
     }
     if (choice.type === "discard-cards") {
@@ -3883,7 +3883,9 @@ function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAct
   if (!choice || choice.type !== "scry" || choice.seat !== seat) throw new Error("No tienes una elección de adivinar pendiente.");
   if (choice.sourceId !== action.sourceId) throw new Error("Debes resolver la elección de adivinar pendiente.");
   const player = playerAt(state, seat);
-  const selected = choice.remainingCards.find((card) => card.name.trim().toLocaleLowerCase() === action.query.trim().toLocaleLowerCase());
+  const selected = action.ordinal !== undefined
+    ? choice.remainingCards[action.ordinal]
+    : choice.remainingCards.find((card) => card.name.trim().toLocaleLowerCase() === action.query.trim().toLocaleLowerCase());
   if (!selected) throw new Error("Debes elegir una carta visible de la selección de adivinar.");
   const remainingCards = choice.remainingCards.filter((card) => card.instance_id !== selected.instance_id);
   const topCards = action.bottom ? choice.topCards : [selected, ...choice.topCards];
