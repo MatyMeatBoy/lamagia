@@ -22595,7 +22595,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **18,29
 - [ ] Saltcrusted Steppe — `021e4165-2f02-4bd4-86ca-cb7bf4c9e23d`
 - [ ] Sanguine Bond — `73089a39-a2f6-4aa2-a058-e6551475153d`
 - [ ] Sek'Kuar, Deathkeeper — `94426127-65c2-435e-ba92-423a3c102061`
-- [ ] Selesnya Charm — `a1a49639-bcc4-4522-8862-c9fb13d40880`
+- [x] Selesnya Charm — `a1a49639-bcc4-4522-8862-c9fb13d40880`
 - [ ] Serene Master — `2ce0d583-81ca-4dca-bde0-52f86b683afd`
 - [ ] Serra Avatar — `c363725f-15cf-4955-aaf1-536b1f8daaed`
 - [ ] Sharuum the Hegemon — `037e7fc9-3aa6-484c-a2c8-43009e45f1d8`
