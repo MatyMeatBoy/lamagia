@@ -817,6 +817,13 @@ tests, simulator and Oracle compiler tests); C13 is **150/356** implemented
 and the engine export is **7,540/38,711** fully implemented cards. The current
 set map reports **19.4%** across 708 editions.
 
+The primitive compiler now reuses its incremental cache and emits a valid
+one-command C13 worker plan (`npm run rules:oracle:plan:c13`): 5 disjoint
+workers, a 2 GB scheduler ceiling, 20 `oracle_id`s per commit, and an
+11-commit integration threshold. The latest benchmark classified 38,711 cards
+in 17.00 s with one process versus 7.92 s with eight processes (2.15x); five
+threads took 22.97 s, so processes remain the default.
+
 The Pages workflow and refreshed `site/coverage.json` were pushed to
 `feat/activated-abilities-and-triggers`. Pages is not yet publicly reachable:
 the repository/API session still returns 404 for the workflow/repository, so
