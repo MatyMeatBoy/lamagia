@@ -2094,11 +2094,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "damage-all-creatures": {
       let next = state;
       const amount = effectAmount(effect.amount, object);
+      const attackingIds = new Set(state.combat.attackers.map((attacker) => attacker.instanceId));
       for (const permanent of allPermanents(state)) {
         const profile = cardProfile(permanent.card);
         const planeswalker = effect.alsoPlaneswalkers && profile.types.includes("Planeswalker");
         if (!isCreature(profile) && !planeswalker) continue;
         if (effect.excludeSource && permanent.instance_id === object.card.instance_id) continue;
+        if (effect.attackingOnly && !attackingIds.has(permanent.instance_id)) continue;
         if (!planeswalker && effect.filter === "nonartifact" && profile.types.includes("Artifact")) continue;
         if (!planeswalker && effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
         if (effect.filter === "with-flying" && !keywordOf(next, permanent, "flying")) continue;

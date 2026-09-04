@@ -503,6 +503,7 @@ const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendar
 const GREEN_COMMANDER = () => make({ name: "Green Commander", type_line: "Legendary Creature — Human", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"], color_identity: ["G"] });
 const COMMAND_TOWER = () => make({ name: "Command Tower", type_line: "Land", oracle_text: "{T}: Add one mana of any color in your commander's color identity.", produced_mana: ["W", "U", "B", "R", "G"] });
 const OPAL_PALACE = () => make({ name: "Opal Palace", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Add one mana of any color in your commander's color identity. If you spend this mana to cast your commander, it enters with a number of additional +1/+1 counters on it equal to the number of times it's been cast from the command zone this game.", produced_mana: ["B", "C", "G", "R", "U", "W"], scryfall_id: "912553e7-1e67-4045-84fd-0a791754cf6c" });
+const LEONIN_BLADETRAP = () => make({ name: "Leonin Bladetrap", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "Flash\n{2}, Sacrifice this artifact: It deals 2 damage to each attacking creature without flying.", scryfall_id: "de829013-dd6a-47a7-afd4-a2bda0da6ac5" });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
   const cards = [commander, ...contents];
@@ -4710,6 +4711,27 @@ describe("activated abilities", () => {
     game = passUntil(game, (state) => state.turn > 1);
     expect(permanentNamed(game, 0, "Azorius Keyrune")!.temporaryAnimation).toBeUndefined();
     expect(legalAttackers(game, 0).some((permanent) => permanent.card.name === "Azorius Keyrune")).toBe(false);
+  });
+
+  it("sacrifices Leonin Bladetrap to damage attacking nonfliers", () => {
+    let game = readyOnBoard([LEONIN_BLADETRAP(), BEAR(), FLIER(), FOREST(), FOREST()], { hold: true });
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = permanentNamed(game, 0, "Grizzly Bears")!;
+    const flier = permanentNamed(game, 0, "Storm Crow")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [
+      { instanceId: bear.instance_id, defender: 1 }, { instanceId: flier.instance_id, defender: 1 }
+    ] });
+    const trap = permanentNamed(game, 0, "Leonin Bladetrap")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === trap.instance_id);
+    expect(activation).toBeDefined();
+    expect(profileOf(LEONIN_BLADETRAP()).activatedAbilities[0]).toMatchObject({
+      manaCost: { raw: "{2}" }, sacrificesSelf: true,
+      effect: { kind: "damage-all-creatures", amount: 2, attackingOnly: true, filter: "without-flying" }
+    });
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === flier.instance_id)).toBe(true);
   });
 
   it("resolves Druidic Satchel's conditional top-card reveal", () => {
