@@ -1101,6 +1101,23 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.tapped).toBe(false);
   });
 
+  it("does not offer a typed tap activation without an untapped matching creature", () => {
+    let game = readyToCast([], [C13_AZAMI(), BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: true } : permanent)
+    }));
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)).toBe(false);
+
+    game = readyToCast([], [C13_AZAMI(), AZAMI_WIZARD()], [], []);
+    const wizard = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Library Wizard")!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === wizard.instance_id || permanent.card.name === "Azami, Lady of Scrolls" ? { ...permanent, tapped: true } : permanent)
+    }));
+    const stagedSource = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === stagedSource.instance_id)).toBe(false);
+  });
+
   it("offers and pays a chosen creature sacrifice activation cost", () => {
     const profile = profileOf(CARNAGE_ALTAR());
     expect(profile.activatedAbilities[0]).toMatchObject({ sacrificesCreature: "any", effect: { kind: "draw", amount: 1 } });
