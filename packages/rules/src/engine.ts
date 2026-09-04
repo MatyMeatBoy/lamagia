@@ -310,7 +310,7 @@ export type GameAction =
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -3338,13 +3338,20 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         ? player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
           && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id))
         : [undefined];
-      for (const sacrifice of sacrifices) actions.push({
-        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}) },
-        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}`,
-        cardId: permanent.instance_id,
-        ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
-        note: ability.text
-      });
+      // An {X} mana cost is chosen when the ability is announced (CR 602.2b).
+      const xValues = ability.manaCost?.hasVariable
+        ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()]
+        : [0];
+      for (const xValue of xValues) for (const sacrifice of sacrifices) {
+        if (ability.manaCost?.hasVariable && !planManaPayment(ability.manaCost, player, { additionalGeneric: xValue })) continue;
+        actions.push({
+          action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}), ...(ability.manaCost?.hasVariable ? { variableValue: xValue } : {}) },
+          label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${xValue})` : ""}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}`,
+          cardId: permanent.instance_id,
+          ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+          note: ability.text
+        });
+      }
     }
     if (profile.equipCost && profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
       && planManaPayment(profile.equipCost, player)
@@ -3735,11 +3742,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (ability.requiresTap) next = raiseTapEvents(next, state, [source.instance_id]);
   if (ability.lifeCost) next = logged(next, seat, `${player.name} paga ${ability.lifeCost} de vida por ${source.card.name}.`);
 
+  const abilityX = ability.manaCost?.hasVariable ? Math.max(0, action.variableValue ?? 0) : 0;
   if (ability.manaCost && ability.manaCost.symbols.length) {
-    const plan = planManaPayment(ability.manaCost, playerAt(next, seat));
+    const plan = planManaPayment(ability.manaCost, playerAt(next, seat), { additionalGeneric: abilityX });
     if (!plan) throw new Error(`No tienes maná suficiente para la habilidad de ${source.card.name}.`);
     next = applyManaPlan(next, seat, plan);
-    const payment = payCost(ability.manaCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+    const payment = payCost(ability.manaCost, playerAt(next, seat).manaPool, { additionalGeneric: abilityX, availableLife: playerAt(next, seat).life });
     if (!payment) throw new Error(`No se pudo pagar el coste de la habilidad de ${source.card.name}.`);
     next = withPlayer(next, seat, (current) => ({
       ...current,
@@ -3804,7 +3812,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
 
-  next = pushActivatedOnStack(next, seat, source, ability, targets, sacrificedPower || sacrificedArtifactMv);
+  next = pushActivatedOnStack(next, seat, source, ability, targets, abilityX || sacrificedPower || sacrificedArtifactMv);
   return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
 }
 

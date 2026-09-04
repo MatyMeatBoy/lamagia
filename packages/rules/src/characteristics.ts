@@ -976,6 +976,14 @@ function parseStaticPowerToughnessGrants(text: string): StaticPowerToughnessGran
  * other permanents or discarding — leaves the ability out of
  * the profile rather than letting the table activate a cost it cannot pay.
  */
+/** True when an effect reads the spell/ability's X (so an `{X}` cost is meaningful). */
+function effectUsesVariable(effect: SpellEffect): boolean {
+  const anyEffect = effect as Record<string, unknown>;
+  if (anyEffect.amount === "X" || anyEffect.count === "X") return true;
+  if (effect.kind === "compound") return effect.effects.some(effectUsesVariable);
+  return false;
+}
+
 function parseActivatedAbility(line: string, index: number): ActivatedAbility | null {
   const activated = /^([^:]{1,120}):\s*(.+)$/.exec(line.trim());
   if (!activated) return null;
@@ -1010,8 +1018,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   if (symbols.some((symbol) => /^\{Q\}$/i.test(symbol))) return null;
   const manaSymbols = symbols.filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
   const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
-  // A cost the mana parser rejects, or one carrying `{X}`, is not payable here.
-  if (manaSymbols.length && (!manaCost || manaCost.hasVariable)) return null;
+  if (manaSymbols.length && !manaCost) return null;
+  // An {X} cost is payable only when the effect actually consumes X (CR 107.3).
+  if (manaCost?.hasVariable && !effectUsesVariable(recognized.effect)) return null;
 
   const sacrificesSelf = /sacrifice\s+~/i.test(costText);
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature/i.exec(costText);
