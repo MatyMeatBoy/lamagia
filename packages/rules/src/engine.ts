@@ -1493,6 +1493,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName);
       return state;
     }
+    case "incite-rebellion": {
+      let next = state;
+      for (const player of state.players) {
+        if (player.lost) continue;
+        const creatures = player.battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
+        const amount = creatures.length;
+        if (amount === 0) continue;
+        next = dealDamageToPlayer(next, player.seat, amount, sourceName);
+        for (const creature of creatures) next = dealDamageToPermanent(next, creature.instance_id, amount, false, sourceName);
+      }
+      return next;
+    }
     case "damage-any-target-each-controlled-type": {
       const target = object.targets[0];
       if (!target) return state;
@@ -1902,11 +1914,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
     }
     case "destroy-all-creatures": {
+      if (effect.xThreshold !== undefined && object.variableValue < effect.xThreshold) return state;
+      const sourceId = object.sourcePermanentId ?? object.card.instance_id;
       let next = state;
       for (const permanent of allPermanents(state)) {
         if (!isCreature(cardProfile(permanent.card))) continue;
         if (effect.tappedOnly && !permanent.tapped) continue;
         if (effect.flyingOnly && !keywordOf(state, permanent, "flying")) continue;
+        if (effect.excludeSource && permanent.instance_id === sourceId) continue;
         next = destroyPermanent(next, permanent);
       }
       return logged(next, controller, `${sourceName} destruye ${effect.tappedOnly ? "las criaturas giradas" : effect.flyingOnly ? "las criaturas voladoras" : "todas las criaturas"}.`);

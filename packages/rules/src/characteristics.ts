@@ -260,6 +260,7 @@ export interface TokenDefinition {
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
   | { readonly kind: "compound"; readonly effects: readonly SpellEffect[] }
+  | { readonly kind: "incite-rebellion" }
   | { readonly kind: "draw"; readonly amount: number | "X" }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "draw-active-player" }
@@ -348,7 +349,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-card-to-library-top" }
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
-  | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean; readonly flyingOnly?: boolean }
+  | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean; readonly flyingOnly?: boolean; readonly xThreshold?: number; readonly excludeSource?: boolean }
   | { readonly kind: "destroy-creatures-power-greater-than-target" }
   | { readonly kind: "counter-target-spell" }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
@@ -1738,6 +1739,24 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "modify-target-creature-morbid", power: Number(morbidPump[1]), toughness: Number(morbidPump[2]), morbidPower: Number(morbidPump[3]), morbidToughness: Number(morbidPump[4]) }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
+    };
+  }
+  // Martial Coup: "Create X 1/1 white Soldier creature tokens. If X is 5 or more, destroy all other creatures."
+  const martialCoup = /^Create X (.+? tokens)\.\s*If X is (\d+) or more, destroy all other creatures\.$/i.exec(joined);
+  if (martialCoup) {
+    const tokenEffect = parseCreateToken(`Create X ${martialCoup[1]!}`);
+    if (tokenEffect?.kind === "create-token") {
+      return {
+        effects: [{ kind: "compound", effects: [tokenEffect, { kind: "destroy-all-creatures", xThreshold: Number(martialCoup[2]), excludeSource: true }] }],
+        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+      };
+    }
+  }
+  // Incite Rebellion: each player takes damage and their creatures take damage equal to their creature count.
+  if (/^For each player, ~ deals damage to that player and each creature that player controls equal to the number of creatures they control\.$/i.test(joined)) {
+    return {
+      effects: [{ kind: "incite-rebellion" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
   const destroyThenToken = /^Destroy target creature\.(?:\s+It can'?t be regenerated\.)?\s+Its controller creates (.+?)\.?$/i.exec(joined);
