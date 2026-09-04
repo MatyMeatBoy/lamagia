@@ -118,6 +118,16 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-counted-creature-tokens` | Token creation scaled by controlled creature count | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-power-threshold-targets` | Legal target filtering for creatures with power five or greater | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-continuous-flying-targets` | Continuous flying grants respected by flying-target filters | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-other-creature-keyword-grants` | Static keyword grants excluding their source creature | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-fear-token-keywords` | Preserve fear when parsing generated token keywords | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-equal-hand-life-loss` | Life loss equal to each player's hand size | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-wheel-discard-draw` | Deterministic discard-hand then draw count effect | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-targeted-hand-discard` | Move a targeted player's full hand to graveyard | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-target-life-loss` | Targeted life loss scaled by controlled type count | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-mill-each-player` | Mill a fixed or X amount from every library | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-player-only-global-damage` | Damage every player without affecting permanents | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-counted-land-life` | Count controlled lands in scalable life gain | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-life-per-permanent` | Life gain scaled by all controlled permanents | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 
 ## Claim format
 
