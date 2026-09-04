@@ -1344,6 +1344,20 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: "none"
     };
   }
+  if ((match = /^You draw (\w+) cards? and you lose (\w+) life$/i.exec(text))) {
+    const draw = toNumber(match[1]);
+    const life = toNumber(match[2]);
+    if (draw !== null && life !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: draw }, { kind: "lose-life", amount: life }] },
+      target: "none"
+    };
+    const dX = draw ?? (match[1]!.toUpperCase() === "X" ? "X" as const : null);
+    const lX = life ?? (match[2]!.toUpperCase() === "X" ? "X" as const : null);
+    if (dX !== null && lX !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: dX }, { kind: "lose-life", amount: lX }] },
+      target: "none"
+    };
+  }
   if ((match = /^Draw (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "draw", amount }, target: "none" };
