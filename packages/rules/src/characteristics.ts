@@ -258,6 +258,9 @@ export type SpellEffect =
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
+  | { readonly kind: "draw-then-discard"; readonly draw: number; readonly discard: number }
+  | { readonly kind: "exile-self" }
+  | { readonly kind: "shuffle-self-into-library" }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
@@ -418,6 +421,10 @@ export interface TriggerDefinition {
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number };
   readonly spellType?: "creature";
+  /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
+  readonly requiresKicked?: boolean;
+  /** Optional mana cost to get the effect ("you may pay {cost}. If you do, ..."). */
+  readonly payCost?: ManaCost;
 }
 
 export type TargetKind =
@@ -479,6 +486,8 @@ export interface CardProfile {
   readonly effects: readonly SpellEffect[];
   readonly triggers: readonly TriggerDefinition[];
   readonly targetKind: TargetKind;
+  readonly kickerCost: ManaCost | null;
+  readonly kickedEffects: readonly SpellEffect[];
   readonly entersTapped: EntersTappedRule;
   /** Printed attack/block restrictions and landwalk evasion. */
   readonly combatRules: CombatRules;
@@ -929,6 +938,8 @@ interface RecognizedText {
   readonly activatedAbilities: ActivatedAbility[];
   readonly modalChoices: ModalChoice[];
   readonly targetKind: TargetKind;
+  kickerCost?: ManaCost | null;
+  kickedEffects?: SpellEffect[];
   /** Exact normalized clauses the closed engine intentionally does not execute. */
   readonly unimplementedText: readonly string[];
   readonly covered: boolean;
@@ -1253,6 +1264,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "discard-target-player", amount }, target: "player" };
   }
   if ((match = /^Target player discards X cards?$/i.exec(text))) return { effect: { kind: "discard-target-player", amount: "X" }, target: "player" };
+  if ((match = /^Draw (\w+) cards?, then discard (\w+) cards?$/i.exec(text))) {
+    const draw = toNumber(match[1]);
+    const discard = toNumber(match[2]);
+    if (draw !== null && draw > 0 && discard !== null && discard > 0) return { effect: { kind: "draw-then-discard", draw, discard }, target: "none" };
+  }
+  if (/^Exile ~$/i.test(text)) return { effect: { kind: "exile-self" }, target: "none" };
+  if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-self-into-library" }, target: "none" };
   if ((match = /^Target player mills (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "mill-target-player", amount }, target: "player" };
@@ -1402,17 +1420,18 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target artifact to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "artifact" };
   if (/^Return target enchantment to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "enchantment" };
   if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
+  if (/^Return target nonland permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "nonland" };
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
-  if (/^Return target creature card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "creature-card-in-your-graveyard" };
-  if (/^Return target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
-   if (/^Return target permanent card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-your-graveyard" };
-   if (/^Return target permanent card from a graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-a-graveyard" };
-  if (/^Return target artifact card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "artifact-card-in-your-graveyard" };
-  if (/^Return target enchantment card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "enchantment-card-in-your-graveyard" };
+ if (/^Return target creature card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "creature-card-in-your-graveyard" };
+ if (/^Return target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
+  if (/^Return (?:another )?target permanent card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-your-graveyard" };
+  if (/^Return (?:another )?target permanent card from a graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-a-graveyard" };
+  if (/^Return (?:another )?target artifact card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "artifact-card-in-your-graveyard" };
+  if (/^Return (?:another )?target enchantment card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "enchantment-card-in-your-graveyard" };
   if (/^Put target land card from a graveyard onto the battlefield under your control$/i.test(text)) return { effect: { kind: "return-target-land-card-from-graveyard-to-battlefield" }, target: "land-card-in-a-graveyard" };
-  if (/^Return target artifact card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-artifact-card-from-graveyard-to-battlefield" }, target: "artifact-card-in-your-graveyard" };
-  if (/^Return target enchantment card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-enchantment-card-from-graveyard-to-battlefield" }, target: "enchantment-card-in-your-graveyard" };
-  if (/^Return target card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
+  if (/^Return (?:another )?target artifact card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-artifact-card-from-graveyard-to-battlefield" }, target: "artifact-card-in-your-graveyard" };
+  if (/^Return (?:another )?target enchantment card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-enchantment-card-from-graveyard-to-battlefield" }, target: "enchantment-card-in-your-graveyard" };
+  if (/^Return (?:another )?target card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
   if (/^Return target card from a graveyard to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "card-in-a-graveyard" };
   if (/^Exile target card from your graveyard$/i.test(text)) return { effect: { kind: "exile-target-card-from-graveyard" }, target: "card-in-your-graveyard" };
   if (/^Exile target permanent card from your graveyard$/i.test(text)) return { effect: { kind: "exile-target-permanent-card-from-graveyard" }, target: "permanent-card-in-your-graveyard" };
@@ -1487,10 +1506,15 @@ function recognizeText(text: string): RecognizedText {
   const combatRuleLines = parseCombatRules(body.map((entry) => entry.text)).consumed;
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
+  let kickerCost: ManaCost | null = null;
+  const kickedEffects: SpellEffect[] = [];
 
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
+    const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
     if (/^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
@@ -1564,10 +1588,19 @@ function recognizeText(text: string): RecognizedText {
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      const effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? triggered.effectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? triggered.effectText)
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-      const optional = /^you\s+may\b/i.test(effectText);
-      const recognized = recognizeSentence(optional ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
+      // "if it was kicked" gate (CR 702.33e).
+      const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
+      const requiresKicked = Boolean(kickedGate);
+      if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      // "you may pay {cost}. If you do, X" — an optional mana cost gating X.
+      const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
+      const payCost = payGate ? parseManaCost(payGate[1]!) : null;
+      if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      const optional = payGate ? true : /^you\s+may\b/i.test(effectText);
+      const recognized = (payCost && payCost.hasVariable) ? null
+        : recognizeSentence(optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText);
       if (recognized) {
         triggers.push({
           event: triggered.event,
@@ -1578,7 +1611,9 @@ function recognizeText(text: string): RecognizedText {
           sourceText: line,
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
-          ...(triggered.spellType ? { spellType: triggered.spellType } : {})
+          ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
+          ...(requiresKicked ? { requiresKicked: true as const } : {}),
+          ...(payCost && payCost.symbols.length ? { payCost } : {})
         });
       } else {
         unimplementedText.push(line);
@@ -1598,6 +1633,14 @@ function recognizeText(text: string): RecognizedText {
 
     for (const sentence of line.split(SENTENCE_SPLIT)) {
       if (!sentence.trim()) continue;
+      // "If ~ was kicked, X" — X applies only on a kicked cast (CR 702.33e).
+      const ifKicked = /^If (?:~|this spell|this creature) was kicked(?:\s+\d+ times?)?,\s*(.+)$/i.exec(sentence.trim());
+      if (ifKicked) {
+        const rk = recognizeSentence(ifKicked[1]!);
+        if (rk) { kickedEffects.push(rk.effect); if (rk.target !== "none") targetKind = rk.target; }
+        else unimplementedText.push(sentence.trim());
+        continue;
+      }
       const recognized = recognizeSentence(sentence);
       if (!recognized) {
         if (!isIgnorableSentence(sentence)) unimplementedText.push(sentence.trim());
@@ -1607,7 +1650,7 @@ function recognizeText(text: string): RecognizedText {
       if (recognized.target !== "none") targetKind = recognized.target;
     }
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, kickedEffects, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -1685,6 +1728,8 @@ export function cardProfile(card: CardData): CardProfile {
     effects: recognized.effects,
     triggers: recognized.triggers,
     targetKind: recognized.targetKind,
+    kickerCost: recognized.kickerCost ?? null,
+    kickedEffects: recognized.kickedEffects ?? [],
     combatRules,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     entersWithCounters: isPermanent ? parseEntersWithCounters(text) : [],

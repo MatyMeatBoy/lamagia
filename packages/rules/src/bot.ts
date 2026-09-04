@@ -73,6 +73,8 @@ function chooseBlockers(state: GameState, seat: SeatId): BlockerDeclaration[] {
       const attackerProfile = cardProfile(attacker.card);
       const candidateProfile = cardProfile(candidate.card);
       if (attackerProfile.keywords.includes("flying") && !candidateProfile.keywords.includes("flying") && !candidateProfile.keywords.includes("reach")) return false;
+      // Fear / intimidate: only artifact or black creatures may block (CR 702.36b).
+      if (attackerProfile.keywords.includes("fear") && !candidateProfile.colors.includes("B") && !candidateProfile.types.includes("Artifact")) return false;
       const kills = power(candidate) >= toughness(attacker) || keyword(candidate, "deathtouch");
       const survives = toughness(candidate) > power(attacker) || keyword(candidate, "indestructible");
       return mustChump || kills || survives;
@@ -154,6 +156,16 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     if (chosen && card && chosen.action.type === "choose-library-card") {
       return { action: { ...chosen.action, query: card.name }, label: `busca ${card.name}` };
     }
+  }
+  if (state.pendingChoice?.type === "discard-cards" && state.pendingChoice.seat === seat) {
+    // Discard a surplus land when flooded, otherwise the highest-cost card.
+    const hand = state.players[seat]!.hand;
+    const lands = hand.filter((card) => isLand(cardProfile(card)));
+    const preferred = lands.length > 4 ? lands[lands.length - 1]
+      : [...hand].sort((left, right) => (cardProfile(right).cost?.symbols.length ?? 0) - (cardProfile(left).cost?.symbols.length ?? 0))[0];
+    const wanted = available.find((entry) => entry.action.type === "choose-discard" && entry.action.cardId === preferred?.instance_id)
+      ?? available.find((entry) => entry.action.type === "choose-discard");
+    if (wanted) return { action: wanted.action, label: wanted.label };
   }
   if (state.pendingChoice?.type === "scry" && state.pendingChoice.seat === seat) {
     // Deterministic policy: bottom the top card only when the bot is flooded on

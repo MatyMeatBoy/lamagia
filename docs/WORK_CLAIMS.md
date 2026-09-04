@@ -95,6 +95,11 @@ feature name.
 | `c13-generic-permanent-sacrifice-cost` | Activated costs that sacrifice any permanent, with server-side legal choice validation | `codex/c13-equipment-cluster` | merged (local `f821ede`) | 2026-09-04 |
 | `c13-graveyard-permanent-return` | Return a permanent card from your or any graveyard to the battlefield | `codex/c13-equipment-cluster` | merged (local `eaa7159`) | 2026-09-04 |
 | `c13-graveyard-permanent-exile` | Exile a permanent card from any graveyard with privacy-safe target filtering | `codex/c13-equipment-cluster` | merged (local `e38277a`) | 2026-09-04 |
+| `c14-kicker` | Kicker/Multikicker cost (CR 702.33): kicked cast action, kicked-only effects and enters triggers | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-optional-pay-trigger` | `you may pay {cost}. If you do, X` optional-cost trigger effects | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-draw-then-discard` | `Draw N, then discard M` effect (spell + activated) + bot discard-cards policy | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-self-zone` | `Exile ~` / `Shuffle ~ into its owner's library` spell self-destination; graveyard `another target` + nonland-permanent bounce | `c14-batch2-clean` | active | 2026-09-04 |
+| `bot-fear-block` | Bot chooseBlockers respects fear (CR 702.36b) | `c14-batch2-clean` | active | 2026-09-04 |
 
 ## Claim format
 
