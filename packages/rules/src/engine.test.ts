@@ -773,6 +773,8 @@ describe("casting", () => {
     const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "draw-cards" }>;
     expect(choice.seat).toBe(0);
     expect(legalActions(game, 0).map((entry) => entry.action.type === "choose-draw" ? entry.action.amount : -1)).toEqual([0, 1, 2]);
+    expect(legalActions(game, 1)).toHaveLength(0);
+    expect(projectGame(game, 1).legalActions).toHaveLength(0);
     const before = game.players[0]!.hand.length;
     game = applyAction(game, 0, { type: "choose-draw", sourceId: choice.sourceId, amount: 2 });
     expect(game.pendingChoice).toBeNull();
