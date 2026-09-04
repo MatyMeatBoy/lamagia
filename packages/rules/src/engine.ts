@@ -1934,6 +1934,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           ? { ...candidate, tapped: false } : candidate)
       }));
     }
+    case "untap-source": {
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!source) return state;
+      return withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === source.instance_id
+          ? { ...candidate, tapped: false } : candidate)
+      }));
+    }
     case "create-token": {
       const amount = effect.amount === "lands-you-control"
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
