@@ -25297,7 +25297,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Phantom Nantuko — `0951b529-646c-4dfd-88ad-84ee117ce722`
 - [ ] Phthisis — `530f088d-bfa1-4410-b1aa-ade8abdb2b7a`
 - [ ] Phyrexian Delver — `a13cbac0-4c76-4970-b61e-5f4e020ee95c`
-- [ ] Phyrexian Gargantua — `a3925dfd-62b0-44ef-8545-7bee92cad5a2`
+- [x] Phyrexian Gargantua — `a3925dfd-62b0-44ef-8545-7bee92cad5a2`
 - [ ] Phyrexian Reclamation — `647ca69e-cc01-4b2b-b376-bee2a98331e8`
 - [ ] Plague Boiler — `fef502af-6e79-4c55-a86a-b45adb3fc64a`
 - [ ] Presence of Gond — `ab42398c-f0a1-4b94-ac5f-b8768e1b4e05`
