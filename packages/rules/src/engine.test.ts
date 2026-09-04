@@ -61,6 +61,7 @@ const CREATURE_LIFE_SPELL = () => make({ name: "Creature Blessing", type_line: "
 const LAND_LIFE_SPELL = () => make({ name: "Land Blessing", type_line: "Instant", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 1 life for each land you control." });
 const PERMANENT_LIFE_SPELL = () => make({ name: "Permanent Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each permanent you control." });
 const PLANESWALKER_LIFE_SPELL = () => make({ name: "Walker Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 2 life for each planeswalker you control." });
+const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "You gain 1 life for each battle you control." });
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
@@ -938,6 +939,10 @@ describe("casting", () => {
 
   it("counts planeswalkers in the reusable controlled-type primitive", () => {
     expect(profileOf(PLANESWALKER_LIFE_SPELL()).effects).toEqual([{ kind: "gain-life-each-controlled-type", amount: 2, type: "Planeswalker" }]);
+  });
+
+  it("counts battles in scalable controlled-type effects", () => {
+    expect(profileOf(BATTLE_LIFE_SPELL()).effects).toEqual([{ kind: "gain-life-each-controlled-type", amount: 1, type: "Battle" }]);
   });
 
   it("draws for the active player when a draw-step trigger resolves", () => {

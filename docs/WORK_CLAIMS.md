@@ -79,6 +79,7 @@ feature name.
 | `c13-counted-effects-batch` | Reusable draw/life/damage/mill/discard/token primitives scaled by hand size, permanent type, creature count, lands, and power thresholds | `codex/c13-equipment-cluster` | merged (`77b235a`) | 2026-09-04 |
 | `c13-keyword-target-filters` | Target filters for fear, defender, deathtouch, lifelink, menace, haste, first/double strike, trample, vigilance, indestructible, hexproof, and shroud; continuous grants are respected | `codex/c13-equipment-cluster` | merged (`3b2f825`) | 2026-09-04 |
 | `rules-compound-sentence-order` | Parse multi-sentence destruction plus power/toughness life-loss effects before the generic destruction primitive | `feat/activated-abilities-and-triggers` | merged (`5e9f3cf`) | 2026-09-04 |
+| `c13-fork-followup-20260904` | Reach and flying-only filters; global keyword/P+T layers; counted planeswalkers and battles; optional-condition narrowing; GameCard test fixtures | `codex/c13-equipment-cluster` | merged (`3cd6156`) | 2026-09-04 |
 
 ## Claim format
 
