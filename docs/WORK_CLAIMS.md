@@ -383,6 +383,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
 | `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
+| `c13-oracle-gain-life-activated-2` | Disciple of Griselbrand: sacrifice a creature as an activation cost, then gain life equal to that creature's toughness; reusable sacrificed-characteristic amount handoff (CR 602.2b, 608.2h, 120.3) | `codex/c13-priority-f99` | active | 2026-09-04 |
 
 
 
