@@ -214,6 +214,7 @@ const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice Armillary Sphere: Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
+const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant", mana_cost: "{X}{U}{U}{U}", cmc: 3, oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library.", scryfall_id: "613a41b8-0b4f-4995-bf1e-ca41f96e6438" });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
 const RHYSTIC_STUDY = () => make({ name: "Rhystic Study", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}." });
@@ -2343,6 +2344,22 @@ describe("casting", () => {
     expect(game.players[0]!.library.some((card) => card.name === "Island")).toBe(true);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Island")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Cultivate")).toBe(true);
+  });
+
+  it("returns Blue Sun's Zenith to its owner's library after drawing", () => {
+    let game = readyToCast([C13_BLUE_SUN()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
+    const beforeHand = game.players[0]!.hand.length;
+    game = applyAction(game, 0, {
+      type: "cast",
+      cardId: "hand-0",
+      variableValue: 1,
+      targets: [{ kind: "player", seat: 0 }]
+    });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.hand).toHaveLength(beforeHand);
+    expect(game.players[0]!.hand.some((card) => card.name === "Blue Sun's Zenith")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Blue Sun's Zenith")).toBe(false);
+    expect(game.players[0]!.library.some((card) => card.name === "Blue Sun's Zenith")).toBe(true);
   });
 
   it("counters a spell whose target has left the battlefield", () => {
