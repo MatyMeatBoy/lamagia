@@ -1160,7 +1160,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === permanent.instance_id);
     }
     case "modify-source-creature": {
-      const source = object.sourcePermanentId ? findPermanent(state, object.sourcePermanentId) : undefined;
+      const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       if (!source || !isCreature(cardProfile(source.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === source.instance_id);
     }
