@@ -102,6 +102,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-draw-tapped-creatures` | Draw a card for each tapped creature controlled by a targeted opponent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-creature-keyword` | Temporary keyword grants to all creatures on the battlefield | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-gain-prevention` | Static prevention of all player life gain | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-no-maximum-hand-size` | Static removal of the cleanup maximum-hand-size discard | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 
 ## Claim format
 

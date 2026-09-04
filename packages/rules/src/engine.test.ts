@@ -56,6 +56,7 @@ const HAND_MINUS_DAMAGE = () => make({ name: "Hand Minus Damage", type_line: "Cr
 const TAPPED_DRAW = () => make({ name: "Tapped Draw", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls." });
 const GLOBAL_FEAR = () => make({ name: "Global Fear", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain menace until end of turn." });
 const LIFE_LOCK = () => make({ name: "Life Lock", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Players can't gain life." });
+const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment", mana_cost: "{3}", cmc: 3, oracle_text: "You have no maximum hand size." });
 const Ophiomancer_MEMORY = () => make({ name: "Ophiomancer Memory", type_line: "Creature — Human Shaman", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "At the beginning of each upkeep, if you control no Snakes, create a 1/1 black Snake creature token with deathtouch." });
 const SELF_LOSS_SPELL = () => make({ name: "Private Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "You lose 2 life." });
 const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever you lose life, put a +1/+1 counter on Pain Counter." });
@@ -839,6 +840,15 @@ describe("casting", () => {
     const before = game.players[0]!.life;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[0]!.life).toBe(before);
+  });
+
+  it("skips cleanup discards for a player with no maximum hand size", () => {
+    expect(profileOf(NO_MAX_HAND()).noMaximumHandSize).toBe(true);
+    let game = twoSeatGame(Array.from({ length: 10 }, () => BEAR()), []);
+    game = putOnBattlefield(game, 0, [NO_MAX_HAND()]);
+    game = stage(game, 0, (player) => ({ hand: [...player.hand, BEAR()] }));
+    game = passUntil(game, (state) => state.turn === 2 && state.activeSeat === 0 && state.step === "untap");
+    expect(game.players[0]!.hand.length).toBe(8);
   });
 
   it("scales token creation from the controller's current land count", () => {
