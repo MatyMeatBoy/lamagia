@@ -2122,7 +2122,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       if (!target || target.kind !== "graveyard-card") return state;
       const player = playerAt(state, target.seat);
       const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
-      if (!card || !isCreature(cardProfile(card))) return state;
+      if (!card || !cardProfile(card).isPermanent) return state;
       const next = withPlayer(state, target.seat, (current) => ({
         ...current,
         graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
@@ -3346,13 +3346,14 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 /** Targets a spell could legally choose right now. */
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
-  if (kind === "card-in-your-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "instant-or-sorcery-card-in-your-graveyard") {
+  if (kind === "card-in-your-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "instant-or-sorcery-card-in-your-graveyard" || kind === "permanent-card-in-your-graveyard-mv-3-or-less") {
     return playerAt(state, seat).graveyard
       .filter((card) => kind === "card-in-your-graveyard"
         || (kind === "creature-card-in-your-graveyard" && isCreature(cardProfile(card)))
         || (kind === "artifact-card-in-your-graveyard" && cardProfile(card).types.includes("Artifact"))
         || (kind === "enchantment-card-in-your-graveyard" && cardProfile(card).types.includes("Enchantment"))
-        || (kind === "instant-or-sorcery-card-in-your-graveyard" && cardProfile(card).types.some((type) => type === "Instant" || type === "Sorcery")))
+        || (kind === "instant-or-sorcery-card-in-your-graveyard" && cardProfile(card).types.some((type) => type === "Instant" || type === "Sorcery"))
+        || (kind === "permanent-card-in-your-graveyard-mv-3-or-less" && cardProfile(card).isPermanent && cardProfile(card).manaValue <= 3))
       .map((card) => ({ kind: "graveyard-card", seat, instanceId: card.instance_id }) as Target);
   }
   if (kind === "land-card-in-a-graveyard") {

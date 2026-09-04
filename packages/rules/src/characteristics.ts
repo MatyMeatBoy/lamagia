@@ -506,7 +506,7 @@ export type TargetKind =
   | "creature-with-indestructible"
   | "creature-with-hexproof"
   | "creature-with-shroud"
-  | "card-in-your-graveyard" | "creature-card-in-your-graveyard" | "artifact-card-in-your-graveyard" | "enchantment-card-in-your-graveyard" | "instant-or-sorcery-card-in-your-graveyard" | "land-card-in-a-graveyard" | `subtype:${string}` | "none";
+  | "card-in-your-graveyard" | "creature-card-in-your-graveyard" | "artifact-card-in-your-graveyard" | "enchantment-card-in-your-graveyard" | "instant-or-sorcery-card-in-your-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard-mv-3-or-less" | `subtype:${string}` | "none";
   
 
 export interface CardProfile {
@@ -1774,6 +1774,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return a creature you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature-you-control" };
   if (/^Return (?:another )?target creature card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "creature-card-in-your-graveyard" };
   if (/^Return (?:another )?target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
+  if (/^Return target permanent card with mana value 3 or less from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-your-graveyard-mv-3-or-less" };
   if (/^Return (?:another )?target artifact card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "artifact-card-in-your-graveyard" };
   if (/^Return (?:another )?target enchantment card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "enchantment-card-in-your-graveyard" };
   if (/^Return target instant or sorcery card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "instant-or-sorcery-card-in-your-graveyard" };
