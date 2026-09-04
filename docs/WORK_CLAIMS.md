@@ -70,6 +70,7 @@ feature name.
 | `c14-equipped-creature-triggers` | `Whenever equipped creature dies / attacks / deals combat damage to a player, X` (equipped-creature trigger subject) | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-karoo-lands` | `When ~ enters, sacrifice it unless you return an untapped <basic> you control` (Karoo land cycle) | `c14-batch2-clean` | active | 2026-09-04 |
 | `c14-anthem-grants` | Static `<Color> creatures get +N/+N` (global) and `Other <Subtype>s you control get +N/+N` anthems | `c14-batch2-clean` | active | 2026-09-04 |
+| `c14-scaled-mana-ability` | `{T}: Add {C} for each <Subtype> on the battlefield / you control` (Priest of Titania, Magus of the Coffers) | `c14-batch2-clean` | active | 2026-09-04 |
 | `c13-unblockable` | Printed `~ can't be blocked` combat restriction | `codex/c13-equipment-cluster` | merged (`4a883e1`) | 2026-09-03 |
 | `c13-activated-sacrifice-creature` | Activated costs that sacrifice a creature or another creature | `codex/c13-equipment-cluster` | merged (`7c54447`) | 2026-09-03 |
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | merged (`96142f7`) | 2026-09-03 |

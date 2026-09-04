@@ -490,12 +490,17 @@ export function manaSources(player: PlayerState): ManaSource[] {
       const bonus = landBonuses.find((entry) =>
         profile.subtypes.some((subtype) => subtype.toLowerCase() === entry.subtype.toLowerCase())
         && (ability.produces as readonly string[]).includes(entry.mana));
+      // "Add {C} for each <Subtype>" — counted from this player's board;
+      // "on the battlefield" is approximated as controlled permanents.
+      const scaledAmount = ability.scalesWith
+        ? player.battlefield.filter((candidate) => cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.scalesWith!.subtype.toLowerCase())).length
+        : ability.amount;
       sources.push({
         permanentId: permanent.instance_id,
         abilityIndex: ability.index,
         name: permanent.card.name,
         options: ability.produces,
-        amount: ability.amount + (bonus ? 1 : 0),
+        amount: scaledAmount + (bonus ? 1 : 0),
         ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
         ...(ability.removeCounters ? { removeCounters: ability.removeCounters } : {}),
         lifeCost: ability.lifeCost,
@@ -2876,12 +2881,15 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     const grant = cardProfile(permanent.card).staticLandManaBonus;
     return grant && grant.mana === action.mana && sourceProfile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype.toLowerCase());
   }) ? 1 : 0;
+  const scaledAmount = ability.scalesWith
+    ? player.battlefield.filter((permanent) => cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.scalesWith!.subtype.toLowerCase())).length
+    : ability.amount;
   const next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost + (ability.gainLife ?? 0),
     manaPool: ability.fixedProduces
       ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
-      : addMana(current.manaPool, action.mana, ability.amount + landBonus),
+      : addMana(current.manaPool, action.mana, scaledAmount + landBonus),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
       const counters = { ...permanent.counters };
