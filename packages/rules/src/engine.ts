@@ -2892,9 +2892,9 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   const cost = flashback ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
-  const flashbackLifeCost = flashback ? profile.flashbackLifeCost : 0;
+  const lifeCost = flashback ? profile.flashbackLifeCost : profile.additionalLifeCost;
   if (flashback && (profile.isPermanent || !profile.flashbackCost)) return { legal: false };
-  if (flashback && flashbackLifeCost > player.life) return { legal: false };
+  if (lifeCost >= player.life) return { legal: false };
   if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
   if (!flashback && kicked && !profile.kickerCost) return { legal: false };
   if (!flashback && evoked && !profile.evokeCost) return { legal: false };
@@ -2904,7 +2904,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost: flashbackLifeCost });
+  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
   if (!plan) return { legal: false };
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -3774,11 +3774,11 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
 
   const profile = cardProfile(card);
   const spellCost = fromGraveyard ? profile.flashbackCost : spellCostOf(profile, kicked, evoked);
-  const flashbackLifeCost = fromGraveyard ? profile.flashbackLifeCost : 0;
+  const lifeCost = fromGraveyard ? profile.flashbackLifeCost : profile.additionalLifeCost;
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost: flashbackLifeCost });
+  const plan = planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost });
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
