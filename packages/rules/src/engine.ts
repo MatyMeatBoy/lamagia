@@ -2499,6 +2499,17 @@ function resolveTop(state: GameState): GameState {
       if (!object.activated) next = retire(next);
       return logged(next, object.controller, `${object.card.name} se resuelve: no hay una carta válida en la biblioteca.`);
     }
+    // "up to N": fetch deterministically and skip the interactive choice.
+    if (search.count && search.count > 1 && search.destination === "battlefield") {
+      const picked = options.slice(0, search.count);
+      const pickedSet = new Set(picked);
+      const fetched = playerAt(next, object.controller).library.filter((card) => pickedSet.has(card.instance_id));
+      const shuffled = shuffle(playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)), next.rngState);
+      next = withPlayer({ ...next, rngState: shuffled.state }, object.controller, (player) => ({ ...player, library: shuffled.items }));
+      for (const card of fetched) next = putOntoBattlefield(next, object.controller, card, false, search.tapped === true);
+      if (!object.activated) next = retire(next);
+      return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en el campo${search.tapped ? " giradas" : ""}.`);
+    }
     return {
       ...next,
       pendingChoice: {
