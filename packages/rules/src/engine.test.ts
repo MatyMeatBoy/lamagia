@@ -85,6 +85,10 @@ const DROMARS_CHARM = () => make({
   name: "Dromar's Charm", type_line: "Instant", mana_cost: "{W}{U}{B}", cmc: 3,
   oracle_text: "Choose one —\n• You gain 5 life.\n• Counter target spell.\n• Target creature gets -2/-2 until end of turn."
 });
+const GLOBAL_INDESTRUCTIBLE = () => make({
+  name: "Global Indestructible", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2,
+  oracle_text: "Permanents you control gain indestructible until end of turn."
+});
 const CROSIS_CHARM = () => make({
   name: "Crosis's Charm", type_line: "Instant", mana_cost: "{U}{B}{R}", cmc: 3,
   oracle_text: "Choose one —\n• Return target permanent to its owner's hand.\n• Destroy target nonblack creature. It can't be regenerated.\n• Destroy target artifact."
@@ -729,6 +733,15 @@ describe("casting", () => {
     const blocker = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
     game = { ...game, step: "declare-blockers", combat: { ...game.combat, attackers: [{ instanceId: attacker.instance_id, defender: 1 }] } };
     expect(legalBlockers(game, 1)).not.toContainEqual(blocker);
+  });
+
+  it("grants a temporary keyword to every permanent controlled by the caster", () => {
+    const profile = profileOf(GLOBAL_INDESTRUCTIBLE());
+    expect(profile.effects[0]).toMatchObject({ kind: "grant-permanents-you-control-keyword", keyword: "indestructible" });
+    let game = readyToCast([GLOBAL_INDESTRUCTIBLE()], [MOUNTAIN(), PLAINS(), BEAR()], [], [BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 0 });
+    expect(game.players[0]!.battlefield.every((permanent) => permanent.temporaryKeywords?.includes("indestructible"))).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.temporaryKeywords?.includes("indestructible"))).toBe(false);
   });
 
   it("scales token creation from the controller's current land count", () => {

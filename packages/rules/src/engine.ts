@@ -1176,6 +1176,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           : candidate)
       }));
     }
+    case "grant-permanents-you-control-keyword": {
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => ({
+          ...permanent,
+          temporaryKeywords: [...new Set([...(permanent.temporaryKeywords ?? []), effect.keyword])]
+        }))
+      }));
+    }
     case "modify-and-grant-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
