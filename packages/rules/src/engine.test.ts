@@ -984,6 +984,13 @@ describe("casting", () => {
       oracle_text: "Tap another untapped creature you control: Draw a card."
     }));
     expect(anotherProfile.activatedAbilities[0]).toMatchObject({ tapsCreature: { mode: "another" } });
+
+    const genericProfile = profileOf(make({
+      name: "Creature Chorus", type_line: "Creature — Human", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2",
+      oracle_text: "Tap an untapped creature you control: Draw a card."
+    }));
+    expect(genericProfile.activatedAbilities[0]).toMatchObject({ tapsCreature: { mode: "any" } });
+    expect(genericProfile.activatedAbilities[0]!.tapsCreature?.subtype).toBeUndefined();
   });
 
   it("offers and pays a chosen untapped Wizard for Azami", () => {
