@@ -480,7 +480,7 @@ export interface TriggerDefinition {
 }
 
 export type TargetKind =
-  | "any" | "player" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
+  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
  | "nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
@@ -1389,7 +1389,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "draw-active-player" }, target: "none" };
   }
   if (/^Draw a card for each tapped creature target opponent controls$/i.test(text)) {
-    return { effect: { kind: "draw-equal-tapped-creatures" }, target: "player" };
+    return { effect: { kind: "draw-equal-tapped-creatures" }, target: "opponent" };
   }
   if ((match = /^Draw a card for each (creature|artifact|enchantment|land|planeswalker|battle) you control$/i.exec(text))) {
     const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1) as CardType;
