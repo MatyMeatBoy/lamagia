@@ -1428,3 +1428,13 @@ stale full tree. The clean branch currently exports **186/356 C13 printings**,
 **171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
 `5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
 queued for the next integration batch.
+
+### Worker checkpoint: Conjurer's Closet reusable blink (2026-09-04)
+
+Added the reusable `blink-target-creature` primitive for Conjurer's Closet:
+the optional end-step trigger targets a creature you control, exiles it, then
+returns it under your control through the normal battlefield-entry path (CR
+603.2, 603.5, 400.7). The implementation preserves ETB event generation and
+does not return tokens from exile. Commit `2451f5c` is queued for
+integration; this branch is based on `b008385` and excludes sibling worker
+commits.

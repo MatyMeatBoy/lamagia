@@ -1806,6 +1806,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           : permanent)
       }));
     }
+    case "blink-target-creature": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const creature = findPermanent(state, target.instanceId);
+      if (!creature || creature.controller !== controller || creature.card.token || !isCreature(cardProfile(creature.card))) return state;
+      // The card changes zones, so it is a new object on the battlefield (CR
+      // 400.7), while retaining its stable instance identity for this engine.
+      const exiled = movePermanentToZone(state, creature, "exile");
+      return putOntoBattlefield(exiled, controller, creature.card, false);
+    }
     case "exile-target-graveyard": {
       const target = object.targets[0];
       if (!target || target.kind !== "player") return state;

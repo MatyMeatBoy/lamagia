@@ -339,7 +339,9 @@ export type SpellEffect =
   /** Destroy artifact/enchantment permanents, then count the ones destroyed. */
   | { readonly kind: "destroy-all-artifacts-enchantments-add-counters"; readonly counter: string }
  | { readonly kind: "exile-target-permanent" }
-  | { readonly kind: "exile-target-nontoken-creature" }
+ | { readonly kind: "exile-target-nontoken-creature" }
+  /** Exile a controlled creature, then return it under its controller's control (CR 400.7). */
+  | { readonly kind: "blink-target-creature" }
   | { readonly kind: "exile-target-graveyard" }
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "return-target-permanent" }
@@ -1626,6 +1628,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
   }
   if (/^(?:You may )?exile target nontoken creature$/i.test(text)) return { effect: { kind: "exile-target-nontoken-creature" }, target: "nontoken-creature" };
+  if (/^Exile target creature you control, then return that card to the battlefield under your control$/i.test(text)) {
+    return { effect: { kind: "blink-target-creature" }, target: "creature-you-control" };
+  }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
