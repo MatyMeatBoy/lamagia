@@ -1182,6 +1182,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }).length;
       return drawCards(state, controller, amount);
     }
+    case "draw-equal-graveyard-creatures": {
+      const amount = playerAt(state, controller).graveyard.filter((card) => isCreature(cardProfile(card))).length;
+      return drawCards(state, controller, amount);
+    }
     case "each-player-draw": {
       let next = state;
       for (const player of state.players) if (!player.lost) next = drawCards(next, player.seat, effectAmount(effect.amount, object));
@@ -2735,12 +2739,13 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 /** Targets a spell could legally choose right now. */
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
-  if (kind === "card-in-your-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "enchantment-card-in-your-graveyard") {
+  if (kind === "card-in-your-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "instant-or-sorcery-card-in-your-graveyard") {
     return playerAt(state, seat).graveyard
       .filter((card) => kind === "card-in-your-graveyard"
         || (kind === "creature-card-in-your-graveyard" && isCreature(cardProfile(card)))
         || (kind === "artifact-card-in-your-graveyard" && cardProfile(card).types.includes("Artifact"))
-        || (kind === "enchantment-card-in-your-graveyard" && cardProfile(card).types.includes("Enchantment")))
+        || (kind === "enchantment-card-in-your-graveyard" && cardProfile(card).types.includes("Enchantment"))
+        || (kind === "instant-or-sorcery-card-in-your-graveyard" && cardProfile(card).types.some((type) => type === "Instant" || type === "Sorcery")))
       .map((card) => ({ kind: "graveyard-card", seat, instanceId: card.instance_id }) as Target);
   }
   if (kind === "land-card-in-a-graveyard") {
