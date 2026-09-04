@@ -623,7 +623,7 @@ export interface CardProfile {
   /** "<Basic type>s you control produce an additional {C}" (Crypt Ghast, CR 605). */
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   /** Characteristic-defining P/T "equal to the number of X you control" (CR 604.3). */
-  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | null;
+  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | "your-life-total" | null;
   /** Lieutenant (Commander 2014): commander-conditional static bonuses. */
   readonly lieutenant: {
     readonly selfPower: number;
@@ -1379,6 +1379,10 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "enters-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+is\s+put\s+into\s+a\s+graveyard\s+from\s+the\s+battlefield,?\s*(.+)$/i },
+  // CR 603.6e fires this from every zone; the engine only models the
+  // battlefield->graveyard case (by far the common one), so this is an
+  // approximation rather than the full anywhere-trigger.
+  { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+is\s+put\s+into\s+a\s+graveyard\s+from\s+anywhere,?\s*(.+)$/i },
   { event: "attacks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+attacks(?:\s+for\s+the\s+first\s+time)?,?\s*(.+)$/i },
   { event: "blocks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+blocks(?:\s+a\s+creature)?,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
@@ -1726,6 +1730,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
+  }
+  if (/^shuffle it into its owner'?s library$/i.test(text)) {
+    return { effect: { kind: "shuffle-source-into-library" }, target: "none" };
   }
   if ((match = /^each opponent loses X life, where X is your devotion to (white|blue|black|red|green)\.?\s*You gain life equal to the life lost this way\.?$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
@@ -2255,6 +2262,7 @@ function recognizeText(text: string): RecognizedText {
       }
     }
     if (/^~'?s power and toughness are each equal to the number of (?:creature|land|artifact|green permanent)s? you control\.?$/i.test(line)) continue;
+    if (/^~'?s power and toughness are each equal to your life total\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
@@ -2460,9 +2468,12 @@ export function cardProfile(card: CardData): CardProfile {
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
   const cdaMatch = /~'?s power and toughness are each equal to the number of (creature|land|artifact|green permanent)s? you control/i.exec(text);
-  const cdaPowerToughness = cdaMatch
-    ? (/green permanent/i.test(cdaMatch[1]!) ? "green-permanents-you-control" : `${cdaMatch[1]!.toLowerCase()}s-you-control`) as CardProfile["cdaPowerToughness"]
-    : null;
+  const lifeCdaMatch = /~'?s power and toughness are each equal to your life total/i.test(text);
+  const cdaPowerToughness = lifeCdaMatch
+    ? "your-life-total"
+    : cdaMatch
+      ? (/green permanent/i.test(cdaMatch[1]!) ? "green-permanents-you-control" : `${cdaMatch[1]!.toLowerCase()}s-you-control`) as CardProfile["cdaPowerToughness"]
+      : null;
   // Lieutenant (Commander 2014): "As long as you control your commander, ~ gets
   // +N/+N and <bonus>." The quoted-ability variants are not covered.
   const lieutenantMatch = /Lieutenant\s+[—–-]\s+As long as you control your commander, ~ gets \+(\d+)\/\+(\d+)(?:\s+and\s+(.+?))?\.?(?:\n|$)/i.exec(text);
