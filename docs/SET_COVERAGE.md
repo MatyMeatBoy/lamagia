@@ -300,7 +300,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 12 | 56 | 17.6% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 33 | 201 | 14.1% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 103 | 238 | 30.2% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 105 | 236 | 30.8% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 2 | 10 | 16.7% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 5 | 9 | 35.7% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 0 | 9 | 0.0% |
@@ -25158,7 +25158,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Ajani's Pridemate — `95e94dea-5ac0-4d6f-adec-ca147aee861f`
 - [ ] Arcane Denial — `ab1cc360-b9de-48d9-9983-4dfe4a7d2a37`
 - [ ] Arcane Melee — `9967b292-1239-4aed-b871-72e40d1f3e26`
-- [ ] Armillary Sphere — `3963140c-da67-43e6-9514-fe9dc0a43c4d`
+- [x] Armillary Sphere — `3963140c-da67-43e6-9514-fe9dc0a43c4d`
 - [x] Army of the Damned — `75d667ec-86f4-4850-a3b6-e7a9fc7053b0`
 - [ ] Augur of Bolas — `be5d6779-ecc9-44b9-8c4d-97a243059d55`
 - [ ] Augury Adept — `be5a65fd-0d06-4771-bee7-0e42cc9871da`
@@ -25188,7 +25188,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Crater Hellion — `2d37c437-0d5c-400d-88ce-10d173b28eda`
 - [ ] Crawlspace — `2296370c-fe34-4df6-92a5-260f1634bede`
 - [ ] Cruel Ultimatum — `01294ac9-1a06-4ee8-b3b1-db1f07c9d94e`
-- [ ] Cultivate — `8b755881-a72d-4e21-a369-d2924eb4585a`
+- [x] Cultivate — `8b755881-a72d-4e21-a369-d2924eb4585a`
 - [ ] Curse of Chaos — `a242af4b-5de6-4961-b684-f4bd809977c6`
 - [ ] Curse of Inertia — `0bbeb0ee-647b-43d3-91b3-6869d5ccb8b8`
 - [ ] Curse of Predation — `69ea4ce2-f749-4d5b-a392-efcfdce14a30`
