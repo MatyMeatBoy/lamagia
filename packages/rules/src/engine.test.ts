@@ -1463,7 +1463,7 @@ describe("casting", () => {
 
   it("draws once per tapped creature controlled by the targeted opponent", () => {
     const profile = profileOf(TAPPED_DRAW());
-    expect(profile).toMatchObject({ targetKind: "player", effects: [{ kind: "draw-equal-tapped-creatures" }] });
+    expect(profile).toMatchObject({ targetKind: "opponent", effects: [{ kind: "draw-equal-tapped-creatures" }] });
     let game = readyToCast([TAPPED_DRAW()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()], [], [BEAR(), BEAR()]);
     game = {
       ...game,

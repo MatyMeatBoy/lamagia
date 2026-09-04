@@ -329,7 +329,7 @@ describe("untap restrictions", () => {
 describe("C13 primitive reuse", () => {
   it("recognises each card through shared effect templates", () => {
     const arrows = card({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", oracle_text: "Draw a card for each tapped creature target opponent controls." });
-    expect(cardProfile(arrows)).toMatchObject({ targetKind: "player", effects: [{ kind: "draw-equal-tapped-creatures" }], fullyImplemented: true });
+    expect(cardProfile(arrows)).toMatchObject({ targetKind: "opponent", effects: [{ kind: "draw-equal-tapped-creatures" }], fullyImplemented: true });
 
     const rites = card({ name: "Blood Rites", type_line: "Enchantment", oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target." });
     expect(cardProfile(rites).activatedAbilities).toContainEqual(expect.objectContaining({ sacrificesCreature: "any", targetKind: "any", effect: { kind: "damage-any-target", amount: 2 } }));
