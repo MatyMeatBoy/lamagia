@@ -216,8 +216,9 @@ export interface EquipmentModification {
 }
 
 export interface StaticKeywordGrant {
-  readonly scope: "creatures-you-control" | "other-creatures-you-control";
+  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "subtype-creatures-you-control";
   readonly keyword: EnforcedKeyword;
+  readonly subtype?: string;
 }
 
 export interface StaticPowerToughnessGrant {
@@ -841,13 +842,22 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
   return null;
 }
 
-function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {
-  const match = /^(other )?creatures you control have (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear)$/i.exec(line.trim().replace(/\.$/, ""));
-  return match ? { scope: match[1] ? "other-creatures-you-control" : "creatures-you-control", keyword: match[2]!.toLowerCase() as EnforcedKeyword } : null;
+const GRANTABLE_KEYWORDS = "flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear";
+function parseKeywordList(text: string): EnforcedKeyword[] {
+  return text.split(/\s*(?:,|\band\b)\s*/i).map((word) => word.trim().toLowerCase())
+    .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
+}
+function parseStaticKeywordGrant(line: string): StaticKeywordGrant[] {
+  const clean = line.trim().replace(/\.$/, "");
+  const own = new RegExp(`^(other )?creatures you control (?:have|gain) ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
+  if (own) return parseKeywordList(own[2]!).map((keyword) => ({ scope: own[1] ? "other-creatures-you-control" as const : "creatures-you-control" as const, keyword }));
+  const subtype = new RegExp(`^([A-Za-z][A-Za-z'’-]*) creatures (?:you control )?have ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
+  if (subtype && !/^creature$/i.test(subtype[1]!)) return parseKeywordList(subtype[2]!).map((keyword) => ({ scope: "subtype-creatures-you-control" as const, keyword, subtype: subtype[1]! }));
+  return [];
 }
 
 function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
-  return text.split("\n").map(parseStaticKeywordGrant).filter((grant): grant is StaticKeywordGrant => grant !== null);
+  return text.split("\n").flatMap(parseStaticKeywordGrant);
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
@@ -862,8 +872,9 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   const color = /^(white|blue|black|red|green)\s+creatures\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
   if (color) return { scope: "all-color-creatures", color: COLOR[color[1]!.toLowerCase()], power: Number(color[2]), toughness: Number(color[3]) };
-  // "Other Elves you control get +1/+1" (Imperious Perfect).
-  const subtype = /^other\s+([A-Za-z][A-Za-z'’-]*?)s?\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  // "Other Elves you control get +1/+1" (Imperious Perfect); "Other Elf creatures
+  // you control get +1/+1" (Elvish Archdruid).
+  const subtype = /^other\s+([A-Za-z][A-Za-z'’-]*?)s?(?:\s+creatures)?\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   if (subtype && !/^creature$/i.test(subtype[1]!)) return { scope: "subtype-creatures-you-control", subtype: subtype[1]!, power: Number(subtype[2]), toughness: Number(subtype[3]) };
   return null;
 }
@@ -1114,6 +1125,8 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },
@@ -1650,7 +1663,7 @@ function recognizeText(text: string): RecognizedText {
     // Combat restrictions and landwalk are static: they change which
     // declarations are legal rather than resolving anything (CR 508.1d, 509.1a).
     if (combatRuleLines.has(line)) continue;
-    if (parseStaticKeywordGrant(line)) continue;
+    if (parseStaticKeywordGrant(line).length) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
