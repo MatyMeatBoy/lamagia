@@ -93,6 +93,7 @@ integrator owns merge order and reruns coverage after each accepted commit.
 | `c13-activated-remove-counters` | Activated costs that remove counters from the source permanent | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-global-temporary-keyword` | Temporary keyword grants to all permanents controlled by the caster | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 | `c13-life-equals-power` | Gain life equal to the current power of a targeted creature you control | `codex/c13-equipment-cluster` | active | 2026-09-03 |
+| `c13-compound-draw-life-loss` | Compound draw-and-life-loss effects used by upkeep triggers | `codex/c13-equipment-cluster` | active | 2026-09-03 |
 
 ## Claim format
 
