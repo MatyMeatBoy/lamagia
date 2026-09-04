@@ -1204,6 +1204,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }
       return next;
     }
+    case "mill-each-player": {
+      let next = state;
+      const amount = effectAmount(effect.amount, object);
+      for (const player of state.players) next = millCards(next, player.seat, amount);
+      return next;
+    }
     case "each-player-discard-and-draw": {
       let next = state;
       for (const player of state.players) {

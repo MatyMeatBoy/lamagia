@@ -253,6 +253,7 @@ export type SpellEffect =
   | { readonly kind: "discard-target-player-hand" }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
+  | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-each-controlled-type"; readonly amount: number; readonly type: CardType }
   | { readonly kind: "gain-life-equal-target-power" }
@@ -1059,6 +1060,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
+  }
+  if ((match = /^Each player mills (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "mill-each-player", amount }, target: "none" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "mill-each-player", amount: "X" }, target: "none" };
   }
   if ((match = /^Target player loses life equal to the number of (creatures|artifacts|enchantments) you control$/i.exec(text))) {
     const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1, -1) as CardType;
