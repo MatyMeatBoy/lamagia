@@ -31,6 +31,7 @@
 | `rules-creature-spell-trigger` | `codex/c13-equipment-cluster` | Creature-spell filter for cast triggers | Ready for integrator review |
 | `rules-x-discard` | `codex/c13-equipment-cluster` | X-scaled private discard choices | Ready for integrator review |
 | `rules-graveyard-battlefield` | `codex/c13-equipment-cluster` | Return a creature card from own graveyard to battlefield | Ready for integrator review |
+| `rules-artifact-graveyard-target` | `codex/c13-equipment-cluster` | Restrict artifact-card recovery to artifact cards | Ready for integrator review |
 
 Workers must claim a disjoint primitive or card batch before editing. The
 integrator owns merge order and reruns coverage after each accepted commit.

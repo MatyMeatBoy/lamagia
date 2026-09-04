@@ -625,6 +625,18 @@ non-creature cards.
 Validation: targeted engine tests PASS (176 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Cooperative C13 cluster: typed artifact graveyard target
+
+The branch recognises `Return target artifact card from your graveyard to your
+hand` as a reusable typed graveyard target. Legal target projection exposes only
+artifact cards, while the existing hand-return resolution remains shared with
+the broader recovery family. This follows CR 109.2 and 400.1. Scenario
+coverage verifies an artifact is selectable and a creature in the same graveyard
+is not. The scope excludes battlefield return and recursion costs.
+
+Validation: targeted engine tests PASS (177 passed, 6 skipped). Full `npm run
+check` and `npm test` are required before integration.
+
 ### Cooperative C13 cluster: land-scaled token creation
 
 The branch adds the reusable `Create a token for each land you control`

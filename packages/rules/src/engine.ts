@@ -2147,9 +2147,11 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 /** Targets a spell could legally choose right now. */
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
-  if (kind === "card-in-your-graveyard" || kind === "creature-card-in-your-graveyard") {
+  if (kind === "card-in-your-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "artifact-card-in-your-graveyard") {
     return playerAt(state, seat).graveyard
-      .filter((card) => kind === "card-in-your-graveyard" || isCreature(cardProfile(card)))
+      .filter((card) => kind === "card-in-your-graveyard"
+        || (kind === "creature-card-in-your-graveyard" && isCreature(cardProfile(card)))
+        || (kind === "artifact-card-in-your-graveyard" && cardProfile(card).types.includes("Artifact")))
       .map((card) => ({ kind: "graveyard-card", seat, instanceId: card.instance_id }) as Target);
   }
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
