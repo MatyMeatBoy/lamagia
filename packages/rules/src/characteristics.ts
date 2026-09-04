@@ -394,7 +394,7 @@ export type TargetKind =
   | "any" | "player" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
-  | "nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
+  | "nonblack-creature" | "creature-with-flying" | "creature-power-at-least-5" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control"
   | "card-in-your-graveyard" | "creature-card-in-your-graveyard" | "artifact-card-in-your-graveyard" | "enchantment-card-in-your-graveyard" | "land-card-in-a-graveyard" | `subtype:${string}` | "none";
   
 
@@ -1214,6 +1214,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target nonartifact creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-creature" };
   if (/^Destroy target nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonblack-creature" };
   if (/^Destroy target creature with flying$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-flying" };
+  if (/^Destroy target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };
   if (/^Destroy target noncreature permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "noncreature-permanent" };
   if (/^Exile target (?:artifact or enchantment|nonland permanent|permanent|creature)$/i.test(text)) {

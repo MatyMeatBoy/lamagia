@@ -100,6 +100,7 @@ const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_c
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
+const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
@@ -1106,6 +1107,16 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.life).toBe(38);
     expect(game.players[0]!.life).toBe(42);
+  });
+
+  it("filters power-threshold creature targets before resolution", () => {
+    const profile = profileOf(BIG_CREATURE_REMOVAL());
+    expect(profile.targetKind).toBe("creature-power-at-least-5");
+    let game = readyToCast([BIG_CREATURE_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [TRAMPLER(), BEAR()]);
+    expect(legalTargets(game, 0, "creature-power-at-least-5")).toHaveLength(1);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(false);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
