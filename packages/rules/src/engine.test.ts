@@ -1043,6 +1043,7 @@ describe("casting", () => {
       && entry.action.fromGraveyard
       && entry.action.cardId === "analysis-flashback-0");
     expect(flashback).toBeDefined();
+    expect(flashback!.label).toContain("Pay 3 life");
     game = applyAction(game, 0, flashback!.action);
     expect(game.players[0]!.life).toBe(7);
     expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Forest", "Plains"]);

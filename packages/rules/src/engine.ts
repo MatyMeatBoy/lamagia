@@ -2816,7 +2816,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const modal = mode === undefined ? undefined : profile.modalChoices[mode];
       actions.push({
         action: { type: "cast", cardId: card.instance_id, fromGraveyard: true, ...(cost.hasVariable ? { variableValue } : {}), ...(mode === undefined ? {} : { mode }) },
-        label: `Lanzar ${card.name} con Flashback${modal ? ` — ${modal.text}` : ""}`,
+        label: `Lanzar ${card.name} con Flashback${profile.flashbackLifeCost ? ` — Pay ${profile.flashbackLifeCost} life` : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
         manaValue: cost.manaValue + (cost.hasVariable ? variableValue : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
