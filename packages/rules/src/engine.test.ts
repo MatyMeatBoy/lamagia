@@ -357,6 +357,10 @@ const GRAFT_LAND = () => make({
   name: "Llanowar Reborn", type_line: "Land — Forest", oracle_text: "Llanowar Reborn enters the battlefield tapped.\n{T}: Add {G}.\nGraft 1",
   produced_mana: ["G"]
 });
+const GOBLIN_SHARPSHOOTER = () => make({
+  name: "Goblin Sharpshooter", type_line: "Creature — Goblin", mana_cost: "{2}{R}", power: "1", toughness: "1",
+  oracle_text: "Whenever a creature dies, untap ~", scryfall_id: "d81285b7-a718-411a-8be3-ecc0cfe0bcb0"
+});
 const CYCLING_LAND = () => make({
   name: "Barren Moor", type_line: "Land", oracle_text: "This land enters tapped.\n{T}: Add {B}.\nCycling {B} ({B}, Discard this card: Draw a card.)"
 });
@@ -752,6 +756,17 @@ describe("casting", () => {
     const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
     expect(movedLand.counters["+1/+1"]).toBe(0);
     expect(bear.counters["+1/+1"]).toBe(1);
+  });
+
+  it("untaps Goblin Sharpshooter whenever a creature dies", () => {
+    let game = readyToCast([DESTROY_TARGET_CREATURE()], [MOUNTAIN(), SWAMP(), MOUNTAIN()], [], [BEAR()]);
+    game = putOnBattlefield(game, 0, [GOBLIN_SHARPSHOOTER()]);
+    const shooter = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Sharpshooter")!;
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === shooter.instance_id ? { ...permanent, tapped: true } : permanent) }));
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === shooter.instance_id)?.tapped).toBe(false);
   });
 
   it("checks the life comparison after Survival Cache gains life", () => {

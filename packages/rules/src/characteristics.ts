@@ -1680,6 +1680,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
   let match: RegExpExecArray | null;
 
+  if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
+
   if (/^The owner of target permanent shuffles it into their library, then reveals the top card of their library\. If it's a permanent card, they put it onto the battlefield$/i.test(text)) {
     return { effect: { kind: "chaos-warp" }, target: "permanent" };
   }
