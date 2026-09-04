@@ -492,6 +492,8 @@ export interface CardProfile {
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
   readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
+  /** Static replacement effect that adds one mana when a controlled land produces mana. */
+  readonly doublesLandMana: boolean;
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
   readonly levelDefinitions: readonly LevelDefinition[];
@@ -1651,6 +1653,7 @@ function recognizeText(text: string): RecognizedText {
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
+    if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -1817,6 +1820,7 @@ export function cardProfile(card: CardData): CardProfile {
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
+  const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
   const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
@@ -1844,6 +1848,7 @@ export function cardProfile(card: CardData): CardProfile {
     preventsLifeGain,
     noMaximumHandSize,
     staticPowerToughnessGrants,
+    doublesLandMana,
     levelUpCost,
     levelDefinitions,
     activatedAbilities: isPermanent

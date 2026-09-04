@@ -294,7 +294,7 @@ export type GameAction =
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
-  | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType }
+  | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly discardCardId?: string; readonly exileCardId?: string }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
@@ -454,6 +454,8 @@ export interface ManaSource {
   readonly options: readonly ManaType[];
   readonly amount: number;
   readonly fixedProduces?: readonly ManaType[];
+  /** Extra type choice from a controlled static mana replacement effect. */
+  readonly bonusOptions?: readonly ManaType[];
   readonly lifeCost: number;
   readonly requiresTap: boolean;
   readonly removeCounters?: readonly CounterCost[];
@@ -469,11 +471,13 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
 }
 
 /** Untapped permanents this player can currently tap for mana. */
-export function manaSources(player: PlayerState): ManaSource[] {
+export function manaSources(player: PlayerState, state?: GameState): ManaSource[] {
   const sources: ManaSource[] = [];
   const landBonuses = player.battlefield
     .map((permanent) => cardProfile(permanent.card).staticLandManaBonus)
     .filter((bonus): bonus is { subtype: string; mana: string } => Boolean(bonus));
+  const doublesLandMana = state ? allPermanents(state).some((permanent) => permanent.controller === player.seat
+    && cardProfile(permanent.card).doublesLandMana) : false;
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
@@ -490,6 +494,7 @@ export function manaSources(player: PlayerState): ManaSource[] {
         options: ability.produces,
         amount: ability.amount + (bonus ? 1 : 0),
         ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
+        ...(doublesLandMana && isLand(profile) ? { bonusOptions: ability.produces } : {}),
         ...(ability.removeCounters ? { removeCounters: ability.removeCounters } : {}),
         lifeCost: ability.lifeCost,
         requiresTap: ability.requiresTap
@@ -503,7 +508,7 @@ export function manaSources(player: PlayerState): ManaSource[] {
 function manaSourceCapacity(sources: readonly ManaSource[]): number {
   const byPermanent = new Map<string, number>();
   for (const source of sources) {
-    byPermanent.set(source.permanentId, Math.max(byPermanent.get(source.permanentId) ?? 0, source.amount));
+    byPermanent.set(source.permanentId, Math.max(byPermanent.get(source.permanentId) ?? 0, source.amount + (source.bonusOptions?.length ? 1 : 0)));
   }
   return [...byPermanent.values()].reduce((total, amount) => total + amount, 0);
 }
@@ -514,7 +519,7 @@ export function manaSourcePotential(player: PlayerState): number {
 }
 
 export interface ManaPlan {
-  readonly taps: readonly { readonly permanentId: string; readonly abilityIndex: number; readonly type: ManaType; readonly amount: number; readonly lifeCost: number; readonly requiresTap: boolean; readonly removeCounters?: readonly CounterCost[] }[];
+  readonly taps: readonly { readonly permanentId: string; readonly abilityIndex: number; readonly type: ManaType; readonly amount: number; readonly lifeCost: number; readonly requiresTap: boolean; readonly bonusType?: ManaType; readonly removeCounters?: readonly CounterCost[] }[];
   readonly pool: ManaPool;
   readonly lifeCost: number;
 }
@@ -541,10 +546,10 @@ function coloredRequirements(cost: ManaCost): ManaType[][] {
 
 function sourceSignature(source: ManaSource): string {
   const counters = (source.removeCounters ?? []).map((cost) => `${cost.amount}:${cost.kind}`).join(",");
-  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${source.lifeCost}|${counters}`;
+  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${[...(source.bonusOptions ?? [])].join("")}|${source.lifeCost}|${counters}`;
 }
 
-function sourceTap(source: ManaSource, type: ManaType): Tap {
+function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Tap {
   return {
     permanentId: source.permanentId,
     abilityIndex: source.abilityIndex,
@@ -552,13 +557,16 @@ function sourceTap(source: ManaSource, type: ManaType): Tap {
     amount: source.amount,
     lifeCost: source.lifeCost,
     requiresTap: source.requiresTap,
-    ...(source.removeCounters ? { removeCounters: source.removeCounters } : {})
+    ...(source.removeCounters ? { removeCounters: source.removeCounters } : {}),
+    ...(bonusType ? { bonusType } : {})
   };
 }
 
-function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType): ManaPool {
-  if (!source.fixedProduces) return addMana(pool, chosen, source.amount);
-  return source.fixedProduces.reduce((current, mana) => addMana(current, mana, 1), pool);
+function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType, bonusType?: ManaType): ManaPool {
+  const base = !source.fixedProduces
+    ? addMana(pool, chosen, source.amount)
+    : source.fixedProduces.reduce((current, mana) => addMana(current, mana, 1), pool);
+  return bonusType ? addMana(base, bonusType, 1) : base;
 }
 
 /**
@@ -574,10 +582,10 @@ function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType): 
 export function planManaPayment(
   cost: ManaCost,
   player: PlayerState,
-  options: { readonly variableValue?: number; readonly additionalGeneric?: number } = {}
+  options: { readonly variableValue?: number; readonly additionalGeneric?: number; readonly state?: GameState } = {}
 ): ManaPlan | null {
   const startingPool = player.manaPool;
-  const sources = manaSources(player);
+  const sources = manaSources(player, options.state);
   const variableValue = options.variableValue ?? 0;
   const additionalGeneric = options.additionalGeneric ?? 0;
   const variableCount = cost.symbols.filter((symbol) => symbol.kind === "variable").length;
@@ -588,7 +596,7 @@ export function planManaPayment(
   const ordered = [...sources].sort((left, right) =>
     left.options.length - right.options.length ||
     left.lifeCost - right.lifeCost ||
-    right.amount - left.amount ||
+    (right.amount + (right.bonusOptions?.length ? 1 : 0)) - (left.amount + (left.bonusOptions?.length ? 1 : 0)) ||
     left.permanentId.localeCompare(right.permanentId));
   const wanted = new Set(coloredRequirements(cost).flat());
   let budget = 40_000;
@@ -600,7 +608,7 @@ export function planManaPayment(
     let currentLife = lifeSpent;
     const spare = ordered
       .filter((source) => !used.has(source.permanentId))
-      .sort((left, right) => right.amount - left.amount || left.lifeCost - right.lifeCost || left.permanentId.localeCompare(right.permanentId));
+      .sort((left, right) => (right.amount + (right.bonusOptions?.length ? 1 : 0)) - (left.amount + (left.bonusOptions?.length ? 1 : 0)) || left.lifeCost - right.lifeCost || left.permanentId.localeCompare(right.permanentId));
     let index = 0;
     for (;;) {
       const payment = payCost(cost, currentPool, payOptions(currentLife));
@@ -611,8 +619,9 @@ export function planManaPayment(
       if (player.life - currentLife - source.lifeCost <= 0) continue;
       // Prefer a colour the cost still asks for; otherwise any option works for generic.
       const type = source.options.find((candidate) => wanted.has(candidate)) ?? source.options[0]!;
-      currentPool = addSourceOutput(currentPool, source, type);
-      currentTaps = [...currentTaps, sourceTap(source, type)];
+      const bonusType = source.bonusOptions?.find((candidate) => wanted.has(candidate)) ?? source.bonusOptions?.[0];
+      currentPool = addSourceOutput(currentPool, source, type, bonusType);
+      currentTaps = [...currentTaps, sourceTap(source, type, bonusType)];
       currentLife += source.lifeCost;
     }
   };
@@ -645,15 +654,17 @@ export function planManaPayment(
       if (player.life - lifeSpent - source.lifeCost <= 0) continue;
       for (const type of requirement) {
         if (!source.options.includes(type)) continue;
-        const result = solve(
-          index + 1,
-          addSourceOutput(produced, source, type),
-          { ...reserved, [type]: reserved[type] + 1 },
-          new Set([...used, source.permanentId]),
-          [...taps, sourceTap(source, type)],
-          lifeSpent + source.lifeCost
-        );
-        if (result) return result;
+        for (const bonusType of source.bonusOptions ?? [undefined]) {
+          const result = solve(
+            index + 1,
+            addSourceOutput(produced, source, type, bonusType),
+            { ...reserved, [type]: reserved[type] + 1 },
+            new Set([...used, source.permanentId]),
+            [...taps, sourceTap(source, type, bonusType)],
+            lifeSpent + source.lifeCost
+          );
+          if (result) return result;
+        }
       }
     }
     return null;
@@ -2528,7 +2539,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0) - boardCostReduction(state, seat, card, profile);
-  const plan = planManaPayment(spellCostOf(profile, kicked, evoked), player, { additionalGeneric, variableValue });
+  const plan = planManaPayment(spellCostOf(profile, kicked, evoked), player, { additionalGeneric, variableValue, state });
   if (!plan) return { legal: false };
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -2717,7 +2728,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       ? [{ cost: profile.cyclingCost, index: undefined, label: `Cycle ${card.name}`, note: `Cycling ${profile.cyclingCost.raw}` }]
       : profile.cyclingSearches.map((ability) => ({ cost: ability.cost, index: ability.index, label: `${ability.text} ${card.name}`, note: ability.text }));
     for (const option of cyclingOptions) {
-      if (!planManaPayment(option.cost, player)) continue;
+      if (!planManaPayment(option.cost, player, { state })) continue;
       actions.push({
         action: { type: "cycle", cardId: card.instance_id, ...(option.index === undefined ? {} : { cyclingIndex: option.index }) },
         label: option.label,
@@ -2733,17 +2744,23 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   // announced like a spell and waits for priority to pass.
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
+    const manaBonusOptions = isLand(profile) && allPermanents(state).some((candidate) => candidate.controller === seat
+      && cardProfile(candidate.card).doublesLandMana) ? profile.manaAbilities.flatMap((ability) => ability.produces) : [];
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability)) continue;
       const activations = ability.fixedProduces ? [ability.fixedProduces[0]!] : ability.produces;
       for (const mana of activations) {
-        const produced = ability.fixedProduces ? ability.fixedProduces.map((type) => `{${type}}`).join("") : `${ability.amount > 1 ? ability.amount : ""}{${mana}}`;
-        actions.push({
-          action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana },
-          label: `${permanent.card.name}: Add ${produced}`,
-          cardId: permanent.instance_id,
-          ...(ability.lifeCost ? { note: `Cuesta ${ability.lifeCost} de vida.` } : {})
-        });
+        const bonusOptions = isLand(profile) && manaBonusOptions.length ? [...new Set(manaBonusOptions)] : [undefined];
+        for (const manaBonus of bonusOptions) {
+          const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: ability.amount }, () => mana);
+          const produced = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((type) => `{${type}}`).join("");
+          actions.push({
+            action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana, ...(manaBonus ? { manaBonus } : {}) },
+            label: `${permanent.card.name}: Add ${produced}`,
+            cardId: permanent.instance_id,
+            ...(ability.lifeCost ? { note: `Cuesta ${ability.lifeCost} de vida.` } : {})
+          });
+        }
       }
     }
     for (const ability of profile.activatedAbilities) {
@@ -2767,7 +2784,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
     }
     if (profile.equipCost && profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
-      && planManaPayment(profile.equipCost, player)
+      && planManaPayment(profile.equipCost, player, { state })
       && legalTargets(state, seat, "creature-you-control").length) {
       actions.push({
         action: { type: "equip", sourceId: permanent.instance_id },
@@ -2943,12 +2960,17 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     const grant = cardProfile(permanent.card).staticLandManaBonus;
     return grant && grant.mana === action.mana && sourceProfile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype.toLowerCase());
   }) ? 1 : 0;
+  const manaBonusOptions = isLand(cardProfile(source.card)) && allPermanents(state).some((candidate) => candidate.controller === seat
+    && cardProfile(candidate.card).doublesLandMana) ? ability.produces : [];
+  const manaBonus = action.manaBonus ?? (manaBonusOptions[0]);
+  if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
+>>>>>>> 04e9026 (feat(arsenal): double controlled land mana)
   const next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost + (ability.gainLife ?? 0),
-    manaPool: ability.fixedProduces
+    manaPool: (ability.fixedProduces
       ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
-      : addMana(current.manaPool, action.mana, ability.amount + landBonus),
+      : addMana(current.manaPool, action.mana, ability.amount + landBonus)),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
       const counters = { ...permanent.counters };
@@ -2956,8 +2978,10 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
       return { ...permanent, ...(ability.requiresTap ? { tapped: true } : {}), counters };
     })
   }));
-  const tapped = ability.requiresTap ? raiseTapEvents(next, state, [source.instance_id]) : next;
-  const output = ability.fixedProduces ? ability.fixedProduces.map((mana) => `{${mana}}`).join("") : `${ability.amount > 1 ? ability.amount : ""}{${action.mana}}`;
+  const withBonus = manaBonus ? withPlayer(next, seat, (current) => ({ ...current, manaPool: addMana(current.manaPool, manaBonus, 1) })) : next;
+  const tapped = ability.requiresTap ? raiseTapEvents(withBonus, state, [source.instance_id]) : withBonus;
+  const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: ability.amount }, () => action.mana);
+  const output = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((mana) => `{${mana}}`).join("");
   return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
 }
 
@@ -2972,7 +2996,7 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
   }
   const cost = searchAbility?.cost ?? profile?.cyclingCost ?? null;
   if (!card || !cost) throw new Error("Esa carta no tiene un coste de cycling válido.");
-  const plan = planManaPayment(cost, player);
+  const plan = planManaPayment(cost, player, { state });
   if (!plan) throw new Error(`No tienes maná suficiente para ciclar ${card.name}.`);
   let next = applyManaPlan(state, seat, plan);
   const payment = payCost(cost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
@@ -3024,7 +3048,7 @@ function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, 
   if (!allowed.some((target) => target.kind === "permanent" && target.instanceId === targetId)) {
     throw new Error("Equip necesita una criatura que controles.");
   }
-  const plan = planManaPayment(profile.equipCost, player);
+  const plan = planManaPayment(profile.equipCost, player, { state });
   if (!plan) throw new Error(`No tienes maná suficiente para equipar ${source.card.name}.`);
   let next = applyManaPlan(state, seat, plan);
   const payment = payCost(profile.equipCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
@@ -3094,7 +3118,7 @@ function activatableAbility(
             candidate.instance_id === permanent.instance_id ? { ...candidate, tapped: true } : candidate)
         : player.battlefield
     };
-    if (!planManaPayment(ability.manaCost, budget)) return { legal: false };
+    if (!planManaPayment(ability.manaCost, budget, { state })) return { legal: false };
   }
   const targetKind = ability.targetKind;
   if (targetKind === "none") return { legal: true };
@@ -3170,7 +3194,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (ability.lifeCost) next = logged(next, seat, `${player.name} paga ${ability.lifeCost} de vida por ${source.card.name}.`);
 
   if (ability.manaCost && ability.manaCost.symbols.length) {
-    const plan = planManaPayment(ability.manaCost, playerAt(next, seat));
+    const plan = planManaPayment(ability.manaCost, playerAt(next, seat), { state: next });
     if (!plan) throw new Error(`No tienes maná suficiente para la habilidad de ${source.card.name}.`);
     next = applyManaPlan(next, seat, plan);
     const payment = payCost(ability.manaCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
@@ -3241,7 +3265,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const profile = cardProfile(card);
   const spellCost = spellCostOf(profile, kicked, evoked);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0) - boardCostReduction(state, seat, card, profile);
-  const plan = planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0 });
+  const plan = planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state });
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
