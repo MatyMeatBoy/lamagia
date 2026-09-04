@@ -1051,8 +1051,8 @@ Wake mana/P+T grants, Loyal Retainers restrictions, and Maelstrom Wanderer
 haste reuse. Duplicate or already-equivalent patches were retained once.
 
 Validation: `npm run check` PASS; `npm test` PASS (**315 rules tests**, simulator
-and **36 Oracle Python tests**). The current export is **7,991/38,711** fully
-implemented cards; C13 is **161/356**, C14 is **127/337**, and the filtered map
+and **37 Oracle Python tests**). The current export is **7,991/38,711** fully
+implemented cards; C13 is **161/356**, C14 is **162/337**, and the filtered map
 is **21.4% (18,174/84,990 memberships) across 685 editions**.
 
 The global queue remains incremental and reusable: five disjoint workers, a
