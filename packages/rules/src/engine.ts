@@ -1807,6 +1807,31 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
     }
+    case "return-n-nonland-permanents": {
+      const count = effect.count === "X" ? object.variableValue : effect.count;
+      if (count <= 0) return state;
+      // No individual targets are tracked; auto-pick opponents' most valuable nonland permanents first (CR 608.2c).
+      const candidates = allPermanents(state)
+        .filter((permanent) => !isLand(cardProfile(permanent.card)) && !permanent.card.token)
+        .sort((left, right) => {
+          const oppL = left.controller !== controller ? 0 : 1;
+          const oppR = right.controller !== controller ? 0 : 1;
+          if (oppL !== oppR) return oppL - oppR;
+          return cardProfile(right.card).manaValue - cardProfile(left.card).manaValue;
+        })
+        .slice(0, count);
+      let next = state;
+      for (const permanent of candidates) {
+        const live = findPermanent(next, permanent.instance_id);
+        if (!live) continue;
+        next = withPlayer(next, live.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== live.instance_id)
+        }));
+        next = withPlayer(next, live.card.owner, (player) => ({ ...player, hand: [...player.hand, live.card] }));
+      }
+      return logged(next, controller, `${sourceName} devuelve ${candidates.length} permanente(s) que no son tierra a la mano.`);
+    }
     case "karoo-bounce": {
       // "sacrifice it unless you return an untapped <basic> you control" (Karoo,
       // Coral Atoll, ... CR 603.2). Auto-picks a candidate; otherwise sacrifices.
