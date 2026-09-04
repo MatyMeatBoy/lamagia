@@ -460,6 +460,11 @@ const STALKING_VENGEANCE = () => make({
   oracle_text: "Haste\nWhenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.",
   scryfall_id: "5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb"
 });
+const DEEPFIRE_ELEMENTAL = () => make({
+  name: "Deepfire Elemental", type_line: "Creature — Elemental", mana_cost: "{4}{R}{R}", cmc: 6, power: "4", toughness: "4",
+  oracle_text: "{X}{X}{1}: Destroy target artifact or creature with mana value X.",
+  scryfall_id: "c8119ebe-aedd-4bdb-8f7f-368674a049fd"
+});
 const WATCHER = () => make({
   name: "Mortuary Watcher", type_line: "Creature — Spirit", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
   oracle_text: "Whenever another creature you control dies, you gain 1 life."
@@ -4651,6 +4656,26 @@ describe("activated abilities", () => {
     expect(profile.manaAbilities).toHaveLength(1);
     expect(profile.manaAbilities[0]!.produces).toEqual(["G"]);
     expect(profile.activatedAbilities).toHaveLength(0);
+  });
+
+  it("offers Deepfire Elemental targets and payment values for X", () => {
+    let game = readyOnBoard([DEEPFIRE_ELEMENTAL(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR(), ARTIFACT_BLOCKER()]);
+    const source = permanentNamed(game, 0, "Deepfire Elemental")!;
+    const profile = profileOf(DEEPFIRE_ELEMENTAL());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      effect: { kind: "destroy-target-artifact-or-creature-mana-value" },
+      targetKind: "artifact-or-creature"
+    });
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.variableValue === 2);
+    expect(activation).toMatchObject({ requiresTarget: "artifact-or-creature-mana-value-2" });
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { ...activation!.action, targets: [{ kind: "permanent", instanceId: bear.instance_id }] } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears"));
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Iron Construct")).toBe(true);
   });
 
   it("grants Aerie Mystics' activated shroud to creatures only", () => {

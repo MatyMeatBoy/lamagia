@@ -2562,6 +2562,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
     }
+    case "destroy-target-artifact-or-creature-mana-value": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const profile = cardProfile(permanent.card);
+      if (!(profile.types.includes("Artifact") || isCreature(profile)) || profile.manaValue !== object.variableValue) return state;
+      return destroyPermanent(state, permanent);
+    }
     case "return-owned-nontoken-permanents-to-control": {
       const moved = allPermanents(state).filter((permanent) => !permanent.card.token && permanent.card.owner !== permanent.controller);
       if (!moved.length) return state;
@@ -4785,8 +4794,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
     for (const ability of profile.activatedAbilities) {
       if (opponentsLocked && ["Artifact", "Creature", "Enchantment"].some((type) => profile.types.includes(type as CardType))) continue;
-      const check = activatableAbility(state, seat, permanent, ability);
-      if (!check.legal) continue;
+      const variableValues = ability.manaCost?.hasVariable
+        ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()]
+        : [0];
+      for (const variableValue of variableValues) {
+        const check = activatableAbility(state, seat, permanent, ability, variableValue);
+        if (!check.legal) continue;
       const sacrificeCandidates = ability.sacrificesCreatures
         ? player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
           && (!ability.sacrificesCreatures!.subtype
@@ -4806,14 +4819,16 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const tapCreatures = ability.tapsCreature ? tapCostCandidates(state, seat, permanent, ability) : [undefined];
       for (const sacrificeSet of sacrificeSets) for (const tapCreature of tapCreatures) for (const discard of discards) for (const exile of exiles) actions.push({
         action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index,
+          ...(ability.manaCost?.hasVariable ? { variableValue } : {}),
           ...(sacrificeSet.length === 1 ? { sacrificeId: sacrificeSet[0]!.instance_id } : {}),
           ...(sacrificeSet.length > 1 ? { sacrificeIds: sacrificeSet.map((candidate) => candidate.instance_id) } : {}),
           ...(tapCreature ? { tapId: tapCreature.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}), ...(exile ? { exileCardId: exile.instance_id } : {}) },
-        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exile ? ` — Exile ${exile.name}` : ""}`,
+        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exile ? ` — Exile ${exile.name}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         note: ability.text
       });
+      }
     }
     if (!splitSecondActive(state) && profile.equipCost && profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
       && planManaPayment(profile.equipCost, player, { state })
@@ -4889,6 +4904,9 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card)));
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
+    const manaValueTarget = /^artifact-or-creature-mana-value-(\d+)$/.exec(kind);
+    if (manaValueTarget) return (profile.types.includes("Artifact") || isCreature(profile)) && profile.manaValue === Number(manaValueTarget[1]);
+    if (kind === "artifact-or-creature") return profile.types.includes("Artifact") || isCreature(profile);
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
     if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
       if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
@@ -4987,7 +5005,7 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
     targets,
     fromCommandZone: false,
     flashback: false,
-    variableValue: 0,
+    variableValue,
     countered: false,
     activated: ability,
     sourcePermanentId: source.instance_id
@@ -5192,7 +5210,8 @@ function activatableAbility(
   state: GameState,
   seat: SeatId,
   permanent: Permanent,
-  ability: ActivatedAbility
+  ability: ActivatedAbility,
+  variableValue = 0
 ): { legal: boolean; targetKind?: Exclude<TargetKind, "none">; note?: string } {
   const player = playerAt(state, seat);
   if (splitSecondActive(state)) return { legal: false };
@@ -5247,9 +5266,11 @@ function activatableAbility(
             candidate.instance_id === permanent.instance_id ? { ...candidate, tapped: true } : candidate)
         : player.battlefield
     };
-    if (!planManaPayment(ability.manaCost, budget, { state })) return { legal: false };
+    if (!planManaPayment(ability.manaCost, budget, { state, variableValue })) return { legal: false };
   }
-  const targetKind = ability.targetKind;
+  const targetKind = ability.targetKind === "artifact-or-creature" && ability.effect.kind === "destroy-target-artifact-or-creature-mana-value"
+    ? `artifact-or-creature-mana-value-${variableValue}` as const
+    : ability.targetKind;
   if (targetKind === "none") return { legal: true };
   const sourceProfile = cardProfile(permanent.card);
   if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
@@ -5294,7 +5315,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
   const ability = cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
   if (!ability) throw new Error("Esa habilidad activada no existe.");
-  const check = activatableAbility(state, seat, source, ability);
+  const check = activatableAbility(state, seat, source, ability, action.variableValue ?? 0);
   if (!check.legal) throw new Error(`No puedes activar la habilidad de ${source.card.name} ahora.`);
 
   // Targets are chosen while the ability is announced, before any cost is paid
@@ -5378,10 +5399,10 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
 
   const abilityX = ability.manaCost?.hasVariable ? Math.max(0, action.variableValue ?? 0) : 0;
   if (ability.manaCost && ability.manaCost.symbols.length) {
-    const plan = planManaPayment(ability.manaCost, playerAt(next, seat), { state: next });
+    const plan = planManaPayment(ability.manaCost, playerAt(next, seat), { state: next, variableValue: abilityX });
     if (!plan) throw new Error(`No tienes maná suficiente para la habilidad de ${source.card.name}.`);
     next = applyManaPlan(next, seat, plan);
-    const payment = payCost(ability.manaCost, playerAt(next, seat).manaPool, { additionalGeneric: abilityX, availableLife: playerAt(next, seat).life });
+    const payment = payCost(ability.manaCost, playerAt(next, seat).manaPool, { variableValue: abilityX, availableLife: playerAt(next, seat).life });
     if (!payment) throw new Error(`No se pudo pagar el coste de la habilidad de ${source.card.name}.`);
     next = withPlayer(next, seat, (current) => ({
       ...consumeManaPayment(current, payment),
@@ -5471,7 +5492,8 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} exilia ${exile.name} de su cementerio.`);
   }
 
-  next = pushActivatedOnStack(next, seat, source, ability, targets, abilityX || sacrificedPower || sacrificedArtifactMv);
+  const effectVariable = ability.manaCost?.hasVariable ? abilityX : sacrificedPower || sacrificedArtifactMv;
+  next = pushActivatedOnStack(next, seat, source, ability, targets, effectVariable);
   return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
 }
 

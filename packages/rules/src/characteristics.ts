@@ -447,6 +447,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-creature-then-controller-token"; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent" }
+  /** Destroy a target artifact or creature whose mana value equals X. */
+  | { readonly kind: "destroy-target-artifact-or-creature-mana-value" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Return each non-token creature to its owner's control without changing zones. */
@@ -656,7 +658,8 @@ export interface TriggerDefinition {
 
 export type TargetKind =
   | `spell-mana-value-${number}`
-  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
+  | `artifact-or-creature-mana-value-${number}`
+  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
@@ -1228,6 +1231,7 @@ function effectUsesVariable(effect: SpellEffect): boolean {
   const anyEffect = effect as Record<string, unknown>;
   if (anyEffect.amount === "X" || anyEffect.count === "X") return true;
   if (effect.kind === "drain-target-toughness-pump-source-power") return true;
+  if (effect.kind === "destroy-target-artifact-or-creature-mana-value") return true;
   if (effect.kind === "compound") return effect.effects.some(effectUsesVariable);
   return false;
 }
@@ -2236,6 +2240,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "return-owned-creatures-to-control" }, target: "none" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
+  if (/^Destroy target artifact or creature with mana value X\.?$/i.test(text)) {
+    return { effect: { kind: "destroy-target-artifact-or-creature-mana-value" }, target: "artifact-or-creature" };
+  }
   if ((match = /^That creature gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-triggered-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
   }

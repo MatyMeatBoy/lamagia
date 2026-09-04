@@ -342,6 +342,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-oracle-damage-activated-cost` | Leonin Bladetrap sacrifices itself to deal damage to attacking creatures without flying (CR 602.2b, 608.2c, 120.4) | `codex/c13-leonin-bladetrap-f99` | active | 2026-09-04 |
 | `c13-oracle-damage-triggered-shape-7` | Fell Shepherd returns all creature cards put into your graveyard from the battlefield this turn after combat damage to a player (CR 603.2, 603.3d, 400.7) | `codex/c13-fell-shepherd-f99` | active | 2026-09-04 |
 | `c13-oracle-damage-triggered-target` | Stalking Vengeance uses a dead creature's last-known power to damage a target player or planeswalker (CR 603.2, 603.3d, 109.5) | `codex/c13-stalking-vengeance-f99` | active | 2026-09-04 |
+| `c13-oracle-destroy-activated-target` | Deepfire Elemental pays {X}{X}{1} and destroys a target artifact or creature with mana value X (CR 602.2b, 107.3, 608.2b) | `codex/c13-deepfire-elemental-f99` | active | 2026-09-04 |
 
 ## Claim format
 
