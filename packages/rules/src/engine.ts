@@ -1534,6 +1534,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         ...state,
         pendingChoice: { type: "scry", seat: controller, sourceId: object.id, sourceCard: object.card, pending, kept: [], bottomed: [], thenDraw: effect.thenDraw ?? 0 }
       };
+    }
     case "modify-triggered-creature": {
       const targetId = object.trigger?.eventPermanentId;
       if (!targetId) return state;
