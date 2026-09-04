@@ -1035,6 +1035,23 @@ describe("casting", () => {
     })).toThrow();
   });
 
+  it("honors another when excluding the activation source from a tap cost", () => {
+    const sourceCard = make({
+      name: "Wizard Chorus", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2",
+      oracle_text: "Tap another untapped creature you control: Draw a card."
+    });
+    let game = readyToCast([], [sourceCard, BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wizard Chorus")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const actions = legalActions(game, 0).filter((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(actions).toHaveLength(1);
+    expect(actions[0]!.action).toMatchObject({ tapId: bear.instance_id });
+    game = applyAction(game, 0, actions[0]!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand).toHaveLength(1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!.tapped).toBe(true);
+  });
+
   it("offers and pays a chosen creature sacrifice activation cost", () => {
     const profile = profileOf(CARNAGE_ALTAR());
     expect(profile.activatedAbilities[0]).toMatchObject({ sacrificesCreature: "any", effect: { kind: "draw", amount: 1 } });
