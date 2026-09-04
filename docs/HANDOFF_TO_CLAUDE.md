@@ -826,7 +826,7 @@ in 17.00 s with one process versus 7.92 s with eight processes (2.15x); five
 threads took 22.97 s, so processes remain the default.
 
 The Pages workflow and refreshed `site/coverage.json` are committed on
-`feat/activated-abilities-and-triggers`. The expected URL is
-`https://matymeatboy.github.io/lamagia/`; GitHub still requires the owner's
-email reauthentication before the private repository can be made public and
-Pages can deploy.
+`feat/activated-abilities-and-triggers`. The repository is now public and
+Pages is configured to use GitHub Actions. The expected URL is
+`https://matymeatboy.github.io/lamagia/`; the next push should deploy the
+workflow artifact there.
