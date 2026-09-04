@@ -186,6 +186,25 @@ describe("shared charm parsing", () => {
   });
 });
 
+describe("C13 sacrifice-card parsing", () => {
+  it("keeps Fires and Bombardment costs separate from their effects", () => {
+    const fires = cardProfile(card({
+      name: "Fires of Yavimaya",
+      type_line: "Enchantment",
+      oracle_text: "Creatures you control have haste.\n{R}{G}, Sacrifice Fires of Yavimaya: Creatures you control get +2/+2 until end of turn."
+    }));
+    const bombardment = cardProfile(card({
+      name: "Goblin Bombardment",
+      type_line: "Enchantment",
+      oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target."
+    }));
+    expect(fires.activatedAbilities[0]).toMatchObject({ sacrificesSelf: true, effect: { kind: "modify-creatures-you-control" } });
+    expect(bombardment.activatedAbilities[0]).toMatchObject({ sacrificesCreature: "any", effect: { kind: "damage-any-target", amount: 1 } });
+    expect(fires.fullyImplemented).toBe(true);
+    expect(bombardment.fullyImplemented).toBe(true);
+  });
+});
+
 describe("effect recognition", () => {
   it("recognizes a draw spell", () => {
     const profile = cardProfile(card({ name: "Test Draw", type_line: "Sorcery", mana_cost: "{2}{U}", oracle_text: "Draw three cards." }));
