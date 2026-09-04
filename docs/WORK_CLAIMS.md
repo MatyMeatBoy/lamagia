@@ -357,6 +357,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-oracle-other-activated-shape-4` | Activated target power threshold grant: target creature with power 5 or greater gains first strike until end of turn (CR 601.2c, 702.7) | `codex/c13-rakeclaw-f99` | active | 2026-09-04 |
 | `c13-oracle-other-activated-shape-3` | Activated creature-only control reset: each player gains control of all creatures they own (CR 110.2,  control-change effects) | `codex/c13-homeward-path-f99` | active | 2026-09-04 |
 | `c13-oracle-other-activated-shape-6` | Activated temporary animation: source becomes a 2/2 white and blue Bird artifact creature with flying until end of turn (CR 613.6, 707.2) | `codex/c13-azorius-keyrune-f99` | active | 2026-09-04 |
+| `c13-was-kicked-has-split` | Conditional Split second static keyword while a spell is kicked, reusable for Molten Disaster (CR 702.33e, 702.61) | `codex/c13-kicked-split-ebc` | active | 2026-09-04 |
 
 | `c13-oracle-counter-activated-cost` | Opal Palace commander-identity mana ability marks mana used for a commander cast and applies its cast-count +1/+1 counters (CR 605.1a, 614.1c, 903.8) | `codex/c13-mana-priority-f99` | active | 2026-09-04 |
 | `c13-oracle-damage-activated-cost` | Leonin Bladetrap sacrifices itself to deal damage to attacking creatures without flying (CR 602.2b, 608.2c, 120.4) | `codex/c13-leonin-bladetrap-f99` | active | 2026-09-04 |
