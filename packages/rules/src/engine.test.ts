@@ -336,6 +336,13 @@ const ANY_DEATH_WATCHER = () => make({
   name: "Blood Chronicler", type_line: "Creature — Vampire", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "3",
   oracle_text: "Whenever a creature dies, you gain 1 life."
 });
+// Blood Artist / Falkenrath Noble: "~ or another creature" restores the
+// source itself to the death watch (unlike WATCHER above), and the drain
+// targets a chosen player rather than always the controller.
+const DRAIN_ARTIST = () => make({
+  name: "Vein Reaper", type_line: "Creature — Vampire", mana_cost: "{B}{B}", cmc: 2, power: "0", toughness: "2",
+  oracle_text: "Whenever ~ or another creature dies, target player loses 1 life and you gain 1 life."
+});
 // Modern errata dropped "under your control" from Essence Warden and Soul
 // Warden: the trigger now watches every creature entering, not only the
 // controller's own (still excluding the source itself, CR 109.5).
@@ -3499,6 +3506,11 @@ describe("triggered abilities", () => {
     expect(profileOf(ANY_ENTER_WARDEN()).fullyImplemented).toBe(true);
     expect(profileOf(ANY_ENTER_DRAINER()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "another-creature", effect: { kind: "lose-life", amount: 1 } });
     expect(profileOf(ANY_ENTER_DRAINER()).fullyImplemented).toBe(true);
+    expect(profileOf(DRAIN_ARTIST()).triggers[0]).toMatchObject({
+      event: "dies", subject: "any-creature", targetKind: "player",
+      effect: { kind: "compound", effects: [{ kind: "lose-life-target-player", amount: 1 }, { kind: "gain-life", amount: 1 }] }
+    });
+    expect(profileOf(DRAIN_ARTIST()).fullyImplemented).toBe(true);
     expect(profileOf(RAIDER()).triggers[0]).toMatchObject({ event: "attacks", subject: "self", targetKind: "any" });
     expect(profileOf(UPKEEP_SAGE()).triggers[0]).toMatchObject({ event: "upkeep", subject: "you" });
     expect(profileOf(CREATURE_COMBAT_DRAWER()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", effect: { kind: "draw", amount: 1 } });
@@ -3846,6 +3858,36 @@ describe("triggered abilities", () => {
     solo = applyAction(solo, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: watcher.instance_id }] });
     solo = passUntil(solo, (state) => state.stack.length === 0 && !state.triggerQueue.length);
     expect(solo.players[1]!.life).toBe(before);
+  });
+
+  it("drains a chosen player for any creature's death, including its own", () => {
+    // An opponent's creature dying fires it, and only the chosen player pays.
+    let game = readyToCast([BOLT()], [DRAIN_ARTIST(), MOUNTAIN()], [BEAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const life0 = game.players[0]!.life;
+    const life1 = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", seat: 0 });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.options).toContainEqual({ kind: "player", seat: 1 });
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
+    expect(game.players[0]!.life).toBe(life0 + 1);
+    expect(game.players[1]!.life).toBe(life1 - 1);
+
+    // "~ or another creature" restores the source to its own death watch
+    // (unlike WATCHER above); the trigger still belongs to its last
+    // controller, seat 1, even though seat 0's spell killed it.
+    let solo = readyToCast([BOLT()], [MOUNTAIN()]);
+    solo = putOnBattlefield(solo, 1, [DRAIN_ARTIST()]);
+    const artist = solo.players[1]!.battlefield.find((permanent) => permanent.card.name === "Vein Reaper")!;
+    const soloLife0 = solo.players[0]!.life;
+    const soloLife1 = solo.players[1]!.life;
+    solo = applyAction(solo, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: artist.instance_id }] });
+    expect(solo.pendingChoice).toMatchObject({ type: "trigger-target", seat: 1 });
+    const soloChoice = solo.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    solo = applyAction(solo, 1, { type: "choose-trigger-target", sourceId: soloChoice.sourceId, target: { kind: "player", seat: 0 } });
+    expect(solo.players[0]!.life).toBe(soloLife0 - 1);
+    expect(solo.players[1]!.life).toBe(soloLife1 + 1);
   });
 
   it("fires another creature's enter trigger under any player's control, but not for itself", () => {

@@ -1469,3 +1469,32 @@ up from 433 once `data/decks/cedh-pod.json` was generated locally via
 `npm run decks:pod:sync` — it is required by the simulator suite and was
 missing from this fresh worktree). `npm run simulate:engine` reproduces the
 same pre-existing, unrelated seed-92 invariant failure noted above.
+
+### Worker-05: reusable Blood Artist drain, moving to Commander 2017 (2026-09-04)
+
+Claim `rules-blood-artist-drain`. "Whenever ~ or another creature dies,
+target player loses N life and you gain N life" (Blood Artist, Falkenrath
+Noble) needed two independent additions: a `dies` trigger template for the
+"~ or another creature" wording — CR 109.5's usual "another" exclusion is
+explicitly overridden here, so the source watches its own death too, unlike
+the existing `another-creature`/`another-creature-you-control` subjects — and
+a `recognizeSentence` pattern combining the already-existing
+`lose-life-target-player` and `gain-life` effect kinds into a `compound`
+resolved against the chosen target. Deliberately numeric-only: several other
+printings tie the same sentence's "X" to a sacrifice's power or to Domain,
+which this primitive does not attempt to resolve, so those stay honestly
+pending. Scenario coverage added the cross-controller case (an opponent's
+creature dies while the drainer is controlled by someone else) and the
+source's own death, confirming the triggered ability still belongs to its
+last controller (not whoever caused the death).
+
+This is also the first worker-05 claim outside Commander 2014: per the user's
+steer, subsequent claims target whichever set has real, honestly-pending
+coverage rather than sticking to one edition — clusters are shared by
+`oracle_id` across sets regardless, so this does not change the delivery
+contract. Regenerated coverage: **119/322 C14 (37.0%, unchanged — this
+cluster's cards are C17, not C14)**, **104/299 C17 (34.8%, up from 102)**,
+global export **8,250/38,711**. `npm run check` and `npm test` PASS (**434
+rules tests**, simulator smoke tests and 40 Oracle Python tests PASS).
+`npm run simulate:engine` reproduces the same pre-existing, unrelated seed-92
+invariant failure.

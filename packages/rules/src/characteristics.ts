@@ -1254,6 +1254,10 @@ const TRIGGER_TEMPLATES: readonly {
   { event: "enters-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+is\s+put\s+into\s+a\s+graveyard\s+from\s+the\s+battlefield,?\s*(.+)$/i },
+  // "~ or another creature dies" (Blood Artist, Falkenrath Noble) is CR
+  // 109.5's "another" restored to include the source: any creature dying,
+  // any controller. Equivalent to the plain "any-creature" subject below.
+  { event: "dies", subject: "any-creature", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+dies,?\s*(.+)$/i },
   { event: "attacks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+attacks(?:\s+for\s+the\s+first\s+time)?,?\s*(.+)$/i },
   { event: "blocks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+blocks(?:\s+a\s+creature)?,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
@@ -1495,6 +1499,19 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "lose-life-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "lose-life-target-player", amount: "X" }, target: "player" };
+  }
+  // Blood Artist pattern: the chosen player pays the life, the controller
+  // heals for the same source event. Deliberately numeric-only — an "X" here
+  // is always defined by a card-specific source (sacrificed creature's power,
+  // Domain, etc.), not a spell's own {X} cost, so it is left pending instead
+  // of silently resolving to zero.
+  if ((match = /^Target player loses (\w+) life and you gain (\w+) life$/i.exec(text))) {
+    const lifeLost = toNumber(match[1]);
+    const lifeGained = toNumber(match[2]);
+    if (lifeLost !== null && lifeGained !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "lose-life-target-player", amount: lifeLost }, { kind: "gain-life", amount: lifeGained }] },
+      target: "player"
+    };
   }
   if ((match = /^Each player loses (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
