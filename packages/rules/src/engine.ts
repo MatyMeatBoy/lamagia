@@ -252,7 +252,7 @@ export type GameAction =
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[] }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -2221,9 +2221,13 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     for (const ability of profile.activatedAbilities) {
       const check = activatableAbility(state, seat, permanent, ability);
       if (!check.legal) continue;
-      actions.push({
-        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index },
-        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}`,
+      const sacrifices = ability.sacrificesCreature
+        ? player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
+          && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id))
+        : [undefined];
+      for (const sacrifice of sacrifices) actions.push({
+        action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}) },
+        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         note: ability.text
@@ -2479,6 +2483,11 @@ function activatableAbility(
   // the turn began. Non-creature permanents are unaffected by summoning sickness.
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return { legal: false };
   if (ability.lifeCost >= player.life) return { legal: false };
+  if (ability.sacrificesCreature) {
+    const candidates = player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
+      && (ability.sacrificesCreature !== "another" || candidate.instance_id !== permanent.instance_id));
+    if (!candidates.length) return { legal: false };
+  }
   if (ability.manaCost && ability.manaCost.symbols.length) {
     // The cost is paid as one lump, so the check has to look at the board the
     // payment will actually see: life already spent on the ability, and the
@@ -2514,6 +2523,13 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   // Targets are chosen while the ability is announced, before any cost is paid
   // (rule 601.2c applied to activations through 602.2b).
   let targets: readonly Target[] = action.targets ?? [];
+  let sacrifice: Permanent | undefined;
+  if (ability.sacrificesCreature) {
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
+      && (ability.sacrificesCreature !== "another" || candidate.instance_id !== source.instance_id));
+    sacrifice = candidates.find((candidate) => candidate.instance_id === action.sacrificeId) ?? candidates[0];
+    if (!sacrifice) throw new Error("Debes elegir una criatura para sacrificar.");
+  }
   if (check.targetKind) {
     const allowed = legalTargets(state, seat, check.targetKind);
     const chosen = targets.length ? targets : allowed.slice(0, 1);
@@ -2551,6 +2567,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     if (!paid) throw new Error(`${source.card.name} ya no está en el campo para sacrificarse.`);
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${source.card.name}.`);
+  }
+  if (sacrifice) {
+    const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);
+    if (!paid) throw new Error("La criatura elegida para sacrificar ya no está en el campo.");
+    next = movePermanentToZone(next, paid, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
 
   next = pushActivatedOnStack(next, seat, source, ability, targets);
