@@ -317,7 +317,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-card-to-library-top" }
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
-  | { readonly kind: "destroy-all-creatures" }
+  | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean }
   | { readonly kind: "counter-target-spell" }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
@@ -595,6 +595,13 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   const anyColor = /^add\s+(\w+)\s+mana\s+of\s+any\s+(?:one\s+)?colors?$/i.exec(clause);
   if (anyColor) {
     const amount = toNumber(anyColor[1]);
+    return amount ? { produces: [...MANA_COLORS], amount } : null;
+  }
+  // "of any color in your commander's color identity" — modelled as any color;
+  // the commander's identity is enforced at deck build, not at mana production.
+  const commanderIdentity = /^add\s+(\w+)\s+mana\s+of\s+any\s+color\s+in\s+your\s+commander['’]s\s+color\s+identity$/i.exec(clause);
+  if (commanderIdentity) {
+    const amount = toNumber(commanderIdentity[1]);
     return amount ? { produces: [...MANA_COLORS], amount } : null;
   }
   const anyCombination = /^add\s+(\w+)\s+mana\s+in\s+any\s+combination\s+of\s+colors$/i.exec(clause);
@@ -1420,6 +1427,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
+  if (/^Destroy all tapped creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures", tappedOnly: true }, target: "none" };
   if (/^Destroy all artifacts, creatures, and enchantments$/i.test(text)) {
     return { effect: { kind: "destroy-all-artifacts-creatures-enchantments" }, target: "none" };
   }

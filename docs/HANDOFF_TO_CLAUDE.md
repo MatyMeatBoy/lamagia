@@ -876,3 +876,13 @@ finished 0 failures. Catalog 7,672 -> 7,689; Commander 2014 108 -> 113/337
 
 Validation: check PASS; 274 tests; oracle 25 OK; simulate 200 games 162
 finished 0 failures. Catalog 7,689 -> 7,728; Commander 2014 113 -> 115/337.
+
+### C14 batch7: tapped-creature wipe + commander-identity mana
+
+- `Destroy all tapped creatures` (Sunblast Angel): `destroy-all-creatures` gains
+  a `tappedOnly` flag.
+- `Add N mana of any color in your commander's color identity`
+  (Commander's Sphere): modelled as any color (identity is a deckbuilding rule).
+
+Validation: check PASS; 274 tests; oracle 25 OK; simulate 200 games 0 failures.
+Catalog 7,728 -> 7,734; Commander 2014 115 -> 117/337.
