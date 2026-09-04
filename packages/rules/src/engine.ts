@@ -1937,6 +1937,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return { ...next, rngState: shuffled.state };
     }
+    case "shuffle-source-into-library": {
+      const owner = playerAt(state, object.card.owner);
+      const shuffled = shuffle([...owner.library, object.card], state.rngState);
+      return {
+        ...withPlayer(state, object.card.owner, (current) => ({ ...current, library: shuffled.items })),
+        rngState: shuffled.state
+      };
+    }
     case "untap-equipped-creature": {
       const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       const attachedId = equipment?.attachedTo;
@@ -2145,6 +2153,11 @@ function sendSpellToOwnerZone(state: GameState, object: StackObject): GameState 
   return withPlayer(state, object.card.owner, (player) => object.flashback
     ? { ...player, exile: [...player.exile, object.card] }
     : { ...player, graveyard: [...player.graveyard, object.card] });
+}
+
+function hasSelfShuffle(effect: SpellEffect): boolean {
+  return effect.kind === "shuffle-source-into-library"
+    || (effect.kind === "compound" && effect.effects.some(hasSelfShuffle));
 }
 
 function resolveTop(state: GameState): GameState {
