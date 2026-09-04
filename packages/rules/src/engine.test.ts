@@ -113,6 +113,7 @@ const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcer
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
+const TOUGH_CREATURE_REMOVAL = () => make({ name: "Tough Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with toughness 4 or greater." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
@@ -1246,6 +1247,13 @@ describe("casting", () => {
     let game = readyToCast([FLYING_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [FLYING_LORD(), BEAR()]);
     expect(legalTargets(game, 0, "creature-with-flying")).toHaveLength(2);
     expect(legalTargets(game, 0, "creature-with-flying").every((target) => target.kind === "permanent")).toBe(true);
+  });
+
+  it("filters creatures by current toughness threshold", () => {
+    const profile = profileOf(TOUGH_CREATURE_REMOVAL());
+    expect(profile.targetKind).toBe("creature-toughness-at-least-4");
+    let game = readyToCast([TOUGH_CREATURE_REMOVAL()], [FOREST(), FOREST(), FOREST()], [], [WALL(), BEAR()]);
+    expect(legalTargets(game, 0, "creature-toughness-at-least-4")).toHaveLength(1);
   });
 
   it("applies all-creature P/T changes as cleanup-expiring modifiers", () => {
