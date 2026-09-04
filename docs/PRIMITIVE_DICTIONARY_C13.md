@@ -2,7 +2,7 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-04T20:36:23.734686+00:00`
+- Generated: `2026-09-04T20:48:38.487656+00:00`
 - Scope: **C13**
 - Exported profiles in scope: **341**; fully implemented: **206**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
@@ -264,15 +264,46 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 
 | Suggested claim | Cards | Remaining line template |
 | --- | ---: | --- |
-| `c13-cost-exile-creature-cards` | 1 | {cost}, exile <n> creature cards from <n> single graveyard: create <n> <n>/<n> green saproling creature token — Night Soil |
-| `c13-cost-sacrifice-creature-you` | 1 | {cost}, sacrifice <n> creature: you gain life equal to the sacrificed creature's toughness — Disciple of Griselbrand |
-| `c13-creatures-can-attack-you` | 1 | creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you — Propaganda |
-| `c13-forecast-cost-reveal-from` | 1 | forecast - {cost}, reveal ~ from your hand: each player draws <n> card — Skyscribing |
-| `c13-graft` | 1 | graft <n> — Llanowar Reborn |
-| `c13-horsemanship` | 1 | horsemanship — Lu Xun, Scholar General |
-| `c13-landfall-whenever-land-you` | 1 | landfall - whenever <n> land you control enters, you may gain <n> life — Grazing Gladehart |
-| `c13-return-all-permanents-the` | 1 | return all permanents of the color of your choice to their owners' hands — Wash Out |
-| `c13-the-beginning-your-end` | 1 | at the beginning of your end step, you may gain life equal to the power of target creature you control — Wall of Reverence |
+| `unclaimed` | 1 | at the beginning of your end step, you may gain life equal to the power of target creature you control — Wall of Reverence |
+| `unclaimed` | 1 | creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you — Propaganda |
+| `unclaimed` | 1 | forecast - {cost}, reveal ~ from your hand: each player draws <n> card — Skyscribing |
+| `unclaimed` | 1 | graft <n> — Llanowar Reborn |
+| `unclaimed` | 1 | horsemanship — Lu Xun, Scholar General |
+| `unclaimed` | 1 | landfall - whenever <n> land you control enters, you may gain <n> life — Grazing Gladehart |
+| `unclaimed` | 1 | return all permanents of the color of your choice to their owners' hands — Wash Out |
+| `unclaimed` | 1 | untap all green and/or blue creatures you control during each other player's untap step — Murkfiend Liege |
+| `unclaimed` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
+| `unclaimed` | 1 | when sharuum enters, you may return target artifact card from your graveyard to the battlefield — Sharuum the Hegemon |
+| `unclaimed` | 1 | when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it — Prossh, Skyraider of Kher |
+| `unclaimed` | 1 | when you cycle ~, you may have it deal <n> damage to each creature — Slice and Dice |
+| `unclaimed` | 1 | when you cycle ~, you may have target creature gain fear until end of turn — Dirge of Dread |
+| `unclaimed` | 1 | when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way — Bane of Progress |
+| `unclaimed` | 1 | when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step — Flickerwisp |
+| `unclaimed` | 1 | when ~ enters, return target artifact card from your graveyard to your hand. you gain life equal to that card's mana value — Razor Hippogriff |
+| `unclaimed` | 1 | when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value — Phyrexian Delver |
+| `unclaimed` | 1 | when ~ enters, sacrifice it unless {cost} was spent to cast it — Azorius Herald |
+| `unclaimed` | 1 | when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~ — Dungeon Geists |
+| `unclaimed` | 1 | when ~ enters, target opponent creates <n> <n>/<n> blue faerie creature tokens with flying — Hunted Troll |
+| `unclaimed` | 1 | when ~ enters, you may return target instant or sorcery card from your graveyard to your hand — Mnemonic Wall |
+| `unclaimed` | 1 | whenever <n> creature dies, untap ~ — Goblin Sharpshooter |
+| `unclaimed` | 1 | whenever <n> creature you control enters, it deals damage equal to its power to any target — Warstorm Surge |
+| `unclaimed` | 1 | whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target — Where Ancients Tread |
+| `unclaimed` | 1 | whenever <n> player draws <n> card, ~ deals <n> damage to that player — Spiteful Visions |
+| `unclaimed` | 1 | whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library — Widespread Panic |
+| `unclaimed` | 1 | whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker — Stalking Vengeance |
+| `unclaimed` | 1 | whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste — Sek'Kuar, Deathkeeper |
+| `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy — Mirari |
+| `unclaimed` | 1 | whenever you gain life, target opponent loses that much life — Sanguine Bond |
+| `unclaimed` | 1 | whenever you gain life, you may pay {cost}, where <n> is less than or equal to the amount of life you gained. if you do, draw <n> cards — Well of Lost Dreams |
+| `unclaimed` | 1 | whenever you gain life, you may pay {cost}. if you do, put <n> +<n>/+<n> counter on target creature for each <n> life you gained — Cradle of Vitality |
+| `unclaimed` | 1 | whenever ~ attacks, it gets +<n>/+<n> until end of turn, where <n> is the number of lands defending player controls — Terra Ravager |
+| `unclaimed` | 1 | whenever ~ attacks, you may tap <n> untapped myr you control. if you do, ~ gets +<n>/+<n> until end of turn and deals <n> damage to the player or planeswalker it's attacking — Myr Battlesphere |
+| `unclaimed` | 1 | whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat — Serene Master |
+| `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you and that player each draw that many cards — Diviner Spirit |
+| `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn — Fell Shepherd |
+| `unclaimed` | 1 | whenever ~ enters or attacks, it deals <n> damage divided as you choose among <n>, <n>, or <n> targets — Inferno Titan |
+| `unclaimed` | 1 | {cost}, exile <n> creature cards from <n> single graveyard: create <n> <n>/<n> green saproling creature token — Night Soil |
+| `unclaimed` | 1 | {cost}, sacrifice <n> creature: you gain life equal to the sacrificed creature's toughness — Disciple of Griselbrand |
 | `unclaimed` | 1 | {cost}, sacrifice <n> goats: add <n> mana of any <n> color. you gain <n> life — Springjack Pasture |
 | `unclaimed` | 1 | {cost}, sacrifice <n> nontoken artifact: create <n> <n>/<n> blue thopter artifact creature token with flying — Thopter Foundry |
 | `unclaimed` | 1 | {cost}, sacrifice ~: destroy up to <n> target nonblack creatures, where <n> is the number of verse counters on ~ — Vile Requiem |
@@ -291,37 +322,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | ~ can't be blocked as long as defending player controls the most creatures or is tied for the most — Hooded Horror |
 | `unclaimed` | 1 | ~ gets +<n>/+<n> as long as you have <n> or more life — Divinity of Pride |
 | `unclaimed` | 1 | ~ gets +<n>/+<n> for each creature card in your opponents' graveyards — Wight of Precinct Six |
-| `c13-untap-all-green-and` | 1 | untap all green and/or blue creatures you control during each other player's untap step — Murkfiend Liege |
-| `c13-until-end-turn-creatures` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
-| `c13-when-enters-destroy-all` | 1 | when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way — Bane of Progress |
-| `c13-when-enters-exile-another` | 1 | when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step — Flickerwisp |
-| `c13-when-enters-return-target` | 1 | when ~ enters, return target artifact card from your graveyard to your hand. you gain life equal to that card's mana value — Razor Hippogriff |
-| `c13-when-enters-return-target-2` | 1 | when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value — Phyrexian Delver |
-| `c13-when-enters-sacrifice-unless` | 1 | when ~ enters, sacrifice it unless {cost} was spent to cast it — Azorius Herald |
-| `c13-when-enters-tap-target` | 1 | when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~ — Dungeon Geists |
-| `c13-when-enters-target-opponent` | 1 | when ~ enters, target opponent creates <n> <n>/<n> blue faerie creature tokens with flying — Hunted Troll |
-| `c13-when-enters-you-may` | 1 | when ~ enters, you may return target instant or sorcery card from your graveyard to your hand — Mnemonic Wall |
-| `c13-when-sharuum-enters-you` | 1 | when sharuum enters, you may return target artifact card from your graveyard to the battlefield — Sharuum the Hegemon |
-| `c13-when-you-cast-create` | 1 | when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it — Prossh, Skyraider of Kher |
-| `c13-when-you-cycle-you` | 1 | when you cycle ~, you may have it deal <n> damage to each creature — Slice and Dice |
-| `c13-when-you-cycle-you-2` | 1 | when you cycle ~, you may have target creature gain fear until end of turn — Dirge of Dread |
-| `c13-whenever-another-creature-you` | 1 | whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker — Stalking Vengeance |
-| `c13-whenever-another-nontoken-creature` | 1 | whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste — Sek'Kuar, Deathkeeper |
-| `c13-whenever-attacks-gets-until` | 1 | whenever ~ attacks, it gets +<n>/+<n> until end of turn, where <n> is the number of lands defending player controls — Terra Ravager |
-| `c13-whenever-attacks-you-may` | 1 | whenever ~ attacks, you may tap <n> untapped myr you control. if you do, ~ gets +<n>/+<n> until end of turn and deals <n> damage to the player or planeswalker it's attacking — Myr Battlesphere |
-| `c13-whenever-blocks-exchange-its` | 1 | whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat — Serene Master |
-| `c13-whenever-creature-dies-untap` | 1 | whenever <n> creature dies, untap ~ — Goblin Sharpshooter |
-| `c13-whenever-creature-you-control` | 1 | whenever <n> creature you control enters, it deals damage equal to its power to any target — Warstorm Surge |
-| `c13-whenever-creature-you-control-2` | 1 | whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target — Where Ancients Tread |
-| `c13-whenever-deals-combat-damage` | 1 | whenever ~ deals combat damage to <n> player, you and that player each draw that many cards — Diviner Spirit |
-| `c13-whenever-deals-combat-damage-2` | 1 | whenever ~ deals combat damage to <n> player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn — Fell Shepherd |
-| `c13-whenever-enters-attacks-deals` | 1 | whenever ~ enters or attacks, it deals <n> damage divided as you choose among <n>, <n>, or <n> targets — Inferno Titan |
-| `c13-whenever-player-draws-card` | 1 | whenever <n> player draws <n> card, ~ deals <n> damage to that player — Spiteful Visions |
-| `c13-whenever-spell-ability-causes` | 1 | whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library — Widespread Panic |
-| `c13-whenever-you-cast-instant` | 1 | whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy — Mirari |
-| `c13-whenever-you-gain-life` | 1 | whenever you gain life, target opponent loses that much life — Sanguine Bond |
-| `c13-whenever-you-gain-life-2` | 1 | whenever you gain life, you may pay {cost}, where <n> is less than or equal to the amount of life you gained. if you do, draw <n> cards — Well of Lost Dreams |
-| `c13-whenever-you-gain-life-3` | 1 | whenever you gain life, you may pay {cost}. if you do, put <n> +<n>/+<n> counter on target creature for each <n> life you gained — Cradle of Vitality |
 
 The highest-value fix is the shared template, not the first card name. A new primitive should parameterize type, zone, target, quantity and optionality so reprints and other sets inherit it.
 

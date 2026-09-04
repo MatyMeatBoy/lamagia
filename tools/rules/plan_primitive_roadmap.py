@@ -38,6 +38,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable
 
+from compile_oracle_effects import classify, cluster_text
+
 ROADMAP_FORMAT = "prossh-primitive-roadmap/v1"
 
 
@@ -96,6 +98,19 @@ def template_of(line: str) -> str:
 
 
 def family_of(template: str) -> str:
+    if template.startswith("oracle:"):
+        template = template.removeprefix("oracle:")
+        oracle_family = template.split("|", 1)[0]
+        mapped_family = {
+            "search-library": "library-look",
+            "create-token": "token",
+            "modify-stats": "pump",
+            "counter": "counters",
+        }.get(oracle_family)
+        if mapped_family:
+            return mapped_family
+        if oracle_family in {"damage", "draw", "discard", "mill", "gain-life", "lose-life", "destroy", "exile", "return", "sacrifice"}:
+            return oracle_family
     for name, pattern in FAMILY_PATTERNS:
         if pattern.search(template):
             return name
@@ -114,8 +129,35 @@ def claim_key(prefix: str, template: str, taken: set[str]) -> str:
     return key
 
 
-def load_blocked_cards(profiles: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Cards the real engine could not finish, with their exact blocking lines."""
+def semantic_template_of(line: str) -> str:
+    """Return the reusable Oracle signature for one unresolved engine line.
+
+    The engine profile remains the source of truth for what is missing.  The
+    Oracle classifier only supplies a stable grouping key, so cards that say
+    the same operation with different amounts or card names can share one work
+    order without making the classifier executable or weakening the profile
+    gate.
+    """
+    cluster = str(classify(line).get("primitive_cluster", template_of(line)))
+    # Keep the classifier's reusable operands, but retain a normalized action
+    # shape as a safety boundary. This merges parameterized copies (amounts and
+    # mana costs) without merging different target/event wording into one job.
+    if "|shape:" not in cluster:
+        shape = re.sub(r"\bcards?\b", "card", cluster_text(line), flags=re.IGNORECASE)
+        cluster += "|shape:" + shape
+    return "oracle:" + cluster
+
+
+def load_blocked_cards(
+    profiles: Iterable[dict[str, Any]],
+    *,
+    semantic_clusters: bool = False,
+) -> list[dict[str, Any]]:
+    """Cards the real engine could not finish, with their exact blocking lines.
+
+    ``semantic_clusters`` is opt-in so the original literal roadmap remains a
+    safe fallback when the Oracle classifier is unavailable or being changed.
+    """
     blocked: list[dict[str, Any]] = []
     for profile in profiles:
         if profile.get("fullyImplemented"):
@@ -125,11 +167,15 @@ def load_blocked_cards(profiles: Iterable[dict[str, Any]]) -> list[dict[str, Any
             # A card with no unmatched line but not implemented is a parser bug,
             # not a missing primitive; surface it rather than hiding it.
             continue
+        line_templates = {
+            (semantic_template_of(line) if semantic_clusters else template_of(line))
+            for line in lines
+        }
         blocked.append(
             {
                 "oracle_id": profile.get("oracle_id"),
                 "name": profile.get("name"),
-                "templates": {template_of(line) for line in lines},
+                "templates": line_templates,
                 "lines": list(lines),
             }
         )
@@ -246,7 +292,13 @@ def build_roadmap(blocked: list[dict[str, Any]], top: int, examples: int = 4) ->
     return roadmap
 
 
-def render_document(roadmap: list[dict[str, Any]], stats: dict[str, Any], claim_prefix: str, scope: str | None = None) -> str:
+def render_document(
+    roadmap: list[dict[str, Any]],
+    stats: dict[str, Any],
+    claim_prefix: str,
+    scope: str | None = None,
+    semantic_clusters: bool = False,
+) -> str:
     """Render the queue as a work order a contributor can pick up cold."""
     lines = [
         "# Primitive roadmap",
@@ -258,6 +310,7 @@ def render_document(roadmap: list[dict[str, Any]], stats: dict[str, Any], claim_
         "execute, so it answers the only question that matters for scheduling: *which",
         "primitive finishes the most cards next?* A clause that appears in thousands of",
         "cards but never completes one is correctly ranked low.",
+        *( ["When enabled, `oracle:` signatures merge parameterized actions by operation, target, zone, and type; the engine profile still decides whether a card is complete."] if semantic_clusters else [] ),
         "",
         f"- Catalog cards: **{stats['card_count']:,}**",
         f"- Fully implemented: **{stats['implemented']:,}**",
@@ -318,13 +371,22 @@ def main() -> None:
     parser.add_argument("--claim-prefix", default=None, help="Prefix for generated claim keys; defaults to --set-code.")
     parser.add_argument("--decks", type=Path, default=Path("data/decks/commander-precons.json"), help="Deck JSON used by --set-code.")
     parser.add_argument("--set-code", default=None, help="Limit the roadmap to cards in this product/set code.")
+    parser.add_argument(
+        "--oracle-effects",
+        type=Path,
+        default=None,
+        help="Use the Oracle classifier's semantic signatures to merge reusable effect shapes.",
+    )
     args = parser.parse_args()
 
     payload = json.loads(args.profiles.read_text(encoding="utf-8"))
     claim_prefix = resolve_claim_prefix(args.claim_prefix, args.set_code)
     scope_ids = deck_oracle_ids(args.decks, args.set_code) if args.set_code else None
     profiles = select_profiles(payload["profiles"], scope_ids)
-    blocked = load_blocked_cards(profiles)
+    semantic_clusters = args.oracle_effects is not None
+    if args.oracle_effects is not None and not args.oracle_effects.exists():
+        raise SystemExit("No existe el IR Oracle indicado; ejecuta npm run rules:oracle:c13 primero.")
+    blocked = load_blocked_cards(profiles, semantic_clusters=semantic_clusters)
     roadmap = build_roadmap(blocked, args.top)
 
     stats = {
@@ -346,6 +408,7 @@ def main() -> None:
                 "generated_at": datetime.now(UTC).isoformat(),
                 "claim_prefix": claim_prefix,
                 "scope": args.set_code,
+                "semantic_clusters": semantic_clusters,
                 "stats": stats,
                 "roadmap": roadmap,
             },
@@ -357,7 +420,7 @@ def main() -> None:
     )
     if args.prompt_output:
         args.prompt_output.parent.mkdir(parents=True, exist_ok=True)
-        args.prompt_output.write_text(render_document(roadmap, stats, claim_prefix, args.set_code), encoding="utf-8")
+        args.prompt_output.write_text(render_document(roadmap, stats, claim_prefix, args.set_code, semantic_clusters), encoding="utf-8")
 
     print(
         f"Roadmap written: {len(roadmap)} primitives finishing {stats['queue_unlocks']} cards "

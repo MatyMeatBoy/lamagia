@@ -5,6 +5,7 @@ The claim key is a reusable primitive or a disjoint card batch, never a vague
 feature name.
 | Cluster | Worker branch | Scope | Status |
 | --- | --- | --- | --- |
+| `c13-until-end-turn-creatures` | `codex/local-c13` | Sudden Spoiling: remove abilities and set target player's creatures to base 0/2 until end of turn | active |
 | `c13-whenever-deals-damage-opponent` | `codex/local-c13` | Reusable any-damage-to-opponent event for Charnelhoard Wurm's graveyard-return trigger | active |
 | `c13-remove-counter-from-deals` | `codex/local-c13` | Reusable activated cost for removing a counter, then dealing parameterized damage to any legal target; Deathbringer Thoctar | active |
 | `rules-equipment` | `codex/c13-equipment-cluster` | Equip, attachment, Equipment static bonuses, and Sword of the Paruns untap abilities | Ready for integrator review |

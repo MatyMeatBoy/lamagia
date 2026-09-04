@@ -149,6 +149,7 @@ def build_worker_plan(
             batches = [[]]
         cluster = str(entry.get("cluster") or entry.get("template") or "")
         family = str(entry.get("family") or cluster.split("|", 1)[0] or "other")
+        family = family.removeprefix("oracle:")
         jobs.append(
             {
                 "claim_key": key,

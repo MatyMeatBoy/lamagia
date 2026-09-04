@@ -16,29 +16,29 @@ Jobs containing Oracle `needs-review` cards are scheduled first; within that tie
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-creatures-can-attack-you` | combat-restriction | 1 | 1 | 1 | 1 | 1 |
-Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
+| needs-review | `c13-oracle-counter-activated-target` | counters | 1 | 1 | 1 | 1 | 1 |
+Cards: Vile Requiem [a72213e7-16f0-4fbe-91d3-750ca51a4336]
 
-| needs-review | `c13-when-enters-tap-target` | static-continuous | 1 | 1 | 1 | 1 | 1 |
-Cards: Dungeon Geists [ab5ebae2-cd77-4a7d-a93b-8042cd486429]
+| quick-win | `c13-oracle-create-token-activated` | token | 1 | 0 | 1 | 1 | 1 |
+Cards: Night Soil [3165fe8f-52d7-40f7-bb14-8f4300a564e6]
 
-| quick-win | `c13-cost-sacrifice-creature-you` | activated | 1 | 0 | 1 | 1 | 1 |
-Cards: Disciple of Griselbrand [2d92a035-dd7a-4426-a8c0-f04e0b836dad]
+| quick-win | `c13-oracle-damage-triggered-shape-2` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
 
-| quick-win | `c13-when-enters-exile-another` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
+| quick-win | `c13-oracle-damage-triggered-shape-7` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Fell Shepherd [5fd78088-53db-453b-90a3-b8426b0a8269]
 
-| quick-win | `c13-when-enters-you-may` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Mnemonic Wall [f2933616-211b-4d3f-8064-2be61c26079a]
+| quick-win | `c13-oracle-draw-activated-cost-2` | draw | 1 | 0 | 1 | 1 | 1 |
+Cards: Jace's Archivist [b6c8ac69-daa7-4e2e-a1d9-439731a81870]
 
-| quick-win | `c13-whenever-another-nontoken-creature` | token | 1 | 0 | 1 | 1 | 1 |
-Cards: Sek'Kuar, Deathkeeper [94426127-65c2-435e-ba92-423a3c102061]
+| quick-win | `c13-oracle-gain-life-triggered` | gain-life | 1 | 0 | 1 | 1 | 1 |
+Cards: Vizkopa Guildmage [f19e7c5c-67fa-4ae4-89b8-afa0e08a6c48]
 
-| quick-win | `c13-whenever-creature-you-control-2` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
+| quick-win | `c13-oracle-lose-life-triggered` | lose-life | 1 | 0 | 1 | 1 | 1 |
+Cards: Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
 
-| quick-win | `c13-whenever-spell-ability-causes` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Widespread Panic [853a3c2b-3d37-453a-8a77-4d90bd3a1cb7]
+| quick-win | `c13-oracle-other-activated-shape-2` | activated | 1 | 0 | 1 | 1 | 1 |
+Cards: Aerie Mystics [12134f7d-433a-416a-b668-c1a21984c94b]
 
 
 ## Worker 2
@@ -47,29 +47,29 @@ Cards: Widespread Panic [853a3c2b-3d37-453a-8a77-4d90bd3a1cb7]
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-graft` | keyword-ability | 1 | 1 | 1 | 1 | 1 |
-Cards: Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
+| needs-review | `c13-oracle-other-static-spell` | combat-restriction | 1 | 1 | 1 | 1 | 1 |
+Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 
-| needs-review | `c13-when-you-cycle-you-2` | triggered | 1 | 1 | 1 | 1 | 1 |
-Cards: Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
+| quick-win | `c13-oracle-create-token-activated-2` | token | 1 | 0 | 1 | 1 | 1 |
+Cards: Thopter Foundry [88bef744-550e-4f33-b1ff-a8ee990ec754]
 
-| quick-win | `c13-forecast-cost-reveal-from` | keyword-ability | 1 | 0 | 1 | 1 | 1 |
-Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
+| quick-win | `c13-oracle-damage-triggered-shape-3` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
 
-| quick-win | `c13-when-enters-return-target` | triggered | 1 | 0 | 1 | 1 | 1 |
+| quick-win | `c13-oracle-damage-triggered-shape-8` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Inferno Titan [0ce47c8b-1e1f-463f-94f0-35ca00be89e6]
+
+| quick-win | `c13-oracle-draw-triggered-shape` | draw | 1 | 0 | 1 | 1 | 1 |
+Cards: Well of Lost Dreams [b0394cf2-12a0-4d4f-87e0-fe8937e6faff]
+
+| quick-win | `c13-oracle-gain-life-triggered-2` | gain-life | 1 | 0 | 1 | 1 | 1 |
 Cards: Razor Hippogriff [d121108e-f0bc-469b-bf94-e5e5308014a2]
 
-| quick-win | `c13-when-sharuum-enters-you` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
+| quick-win | `c13-oracle-modify-stats-static` | pump | 1 | 0 | 1 | 1 | 1 |
+Cards: Divinity of Pride [2c91c236-34d7-4454-a55a-784db7f68bde]
 
-| quick-win | `c13-whenever-attacks-gets-until` | pump | 1 | 0 | 1 | 1 | 1 |
-Cards: Terra Ravager [c7686204-0433-48cf-bbfb-5d32b6a25cc3]
-
-| quick-win | `c13-whenever-deals-combat-damage` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Diviner Spirit [911b8849-dd0a-4383-8403-ea80227c5d7d]
-
-| quick-win | `c13-whenever-you-gain-life` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Sanguine Bond [73089a39-a2f6-4aa2-a058-e6551475153d]
+| quick-win | `c13-oracle-other-activated-shape-3` | activated | 1 | 0 | 1 | 1 | 1 |
+Cards: Homeward Path [cb8ec2e4-8223-4172-8f2c-37c918a573fa]
 
 
 ## Worker 3
@@ -78,29 +78,29 @@ Cards: Sanguine Bond [73089a39-a2f6-4aa2-a058-e6551475153d]
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-horsemanship` | keyword-ability | 1 | 1 | 1 | 1 | 1 |
-Cards: Lu Xun, Scholar General [ea658352-abef-4201-b20c-f5c5809d1d3e]
+| quick-win | `c13-oracle-counter-activated-cost` | counters | 1 | 0 | 1 | 1 | 1 |
+Cards: Opal Palace [aa6723a2-75da-49f5-a1ba-cbfa82c55301]
 
-| needs-review | `c13-whenever-creature-dies-untap` | triggered | 1 | 1 | 1 | 1 | 1 |
-Cards: Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
+| quick-win | `c13-oracle-create-token-triggered` | token | 1 | 0 | 1 | 1 | 1 |
+Cards: Sek'Kuar, Deathkeeper [94426127-65c2-435e-ba92-423a3c102061]
 
-| quick-win | `c13-landfall-whenever-land-you` | other | 1 | 0 | 1 | 1 | 1 |
-Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
+| quick-win | `c13-oracle-damage-triggered-shape-4` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Spiteful Visions [922cf963-2b1b-43ad-819e-6e49133e6aae]
 
-| quick-win | `c13-when-enters-return-target-2` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
+| quick-win | `c13-oracle-damage-triggered-target` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Stalking Vengeance [5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb]
 
-| quick-win | `c13-when-you-cast-create` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
+| quick-win | `c13-oracle-exile-triggered-target` | exile | 1 | 0 | 1 | 1 | 1 |
+Cards: Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
 
-| quick-win | `c13-whenever-attacks-you-may` | pump | 1 | 0 | 1 | 1 | 1 |
-Cards: Myr Battlesphere [c53ba31a-ba27-4e17-9a92-311acb1cab29]
+| quick-win | `c13-oracle-gain-life-triggered-3` | gain-life | 1 | 0 | 1 | 1 | 1 |
+Cards: Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
 
-| quick-win | `c13-whenever-deals-combat-damage-2` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Fell Shepherd [5fd78088-53db-453b-90a3-b8426b0a8269]
+| quick-win | `c13-oracle-modify-stats-static-2` | pump | 1 | 0 | 1 | 1 | 1 |
+Cards: Wight of Precinct Six [6397c046-4c59-4f0b-9b44-2a804eb95edf]
 
-| quick-win | `c13-whenever-you-gain-life-2` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Well of Lost Dreams [b0394cf2-12a0-4d4f-87e0-fe8937e6faff]
+| quick-win | `c13-oracle-other-activated-shape-4` | activated | 1 | 0 | 1 | 1 | 1 |
+Cards: Rakeclaw Gargantuan [8dbb4a8f-78e9-4ceb-824d-bb67bdf939db]
 
 
 ## Worker 4
@@ -109,59 +109,58 @@ Cards: Well of Lost Dreams [b0394cf2-12a0-4d4f-87e0-fe8937e6faff]
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-untap-all-green-and` | other | 1 | 1 | 1 | 1 | 1 |
-Cards: Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
+| quick-win | `c13-oracle-counter-triggered-shape` | counters | 1 | 0 | 1 | 1 | 1 |
+Cards: Bane of Progress [51f9a6cc-8eb2-44ed-a2d9-913ac514ad67]
 
-| needs-review | `c13-whenever-you-cast-instant` | triggered | 1 | 1 | 1 | 1 | 1 |
-Cards: Mirari [8f6a2fce-719e-4745-80d3-aabce5c9bafa]
+| quick-win | `c13-oracle-damage-activated-cost` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Leonin Bladetrap [ca21d597-40a5-4724-9d53-1ab6e6c6e767]
 
-| quick-win | `c13-return-all-permanents-the` | other | 1 | 0 | 1 | 1 | 1 |
-Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
+| quick-win | `c13-oracle-damage-triggered-shape-5` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Myr Battlesphere [c53ba31a-ba27-4e17-9a92-311acb1cab29]
 
-| quick-win | `c13-when-enters-sacrifice-unless` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
+| quick-win | `c13-oracle-destroy-activated-target` | destroy | 1 | 0 | 1 | 1 | 1 |
+Cards: Deepfire Elemental [c8119ebe-aedd-4bdb-8f7f-368674a049fd]
 
-| quick-win | `c13-when-you-cycle-you` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
+| quick-win | `c13-oracle-gain-life-activated` | gain-life | 1 | 0 | 1 | 1 | 1 |
+Cards: Springjack Pasture [9eaadbbc-818b-4c21-9d4b-1bba48504d38]
 
-| quick-win | `c13-whenever-blocks-exchange-its` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Serene Master [2ce0d583-81ca-4dca-bde0-52f86b683afd]
+| quick-win | `c13-oracle-gain-life-triggered-4` | gain-life | 1 | 0 | 1 | 1 | 1 |
+Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
 
-| quick-win | `c13-whenever-enters-attacks-deals` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Inferno Titan [0ce47c8b-1e1f-463f-94f0-35ca00be89e6]
+| quick-win | `c13-oracle-modify-stats-triggered` | pump | 1 | 0 | 1 | 1 | 1 |
+Cards: Terra Ravager [c7686204-0433-48cf-bbfb-5d32b6a25cc3]
 
-| quick-win | `c13-whenever-you-gain-life-3` | counters | 1 | 0 | 1 | 1 | 1 |
-Cards: Cradle of Vitality [956250da-532a-4457-8696-73915be56943]
+| quick-win | `c13-oracle-other-activated-shape-5` | combat-restriction | 1 | 0 | 1 | 1 | 1 |
+Cards: War Cadence [49d0fdd6-cc8f-4fe1-a6bd-4321dac18404]
 
 
 ## Worker 5
 
-7 primitives / 7 unique cards
+8 primitives / 8 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-until-end-turn-creatures` | other | 1 | 1 | 1 | 1 | 1 |
-Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
+| quick-win | `c13-oracle-counter-triggered-target` | counters | 1 | 0 | 1 | 1 | 1 |
+Cards: Cradle of Vitality [956250da-532a-4457-8696-73915be56943]
 
-| quick-win | `c13-cost-exile-creature-cards` | token | 1 | 0 | 1 | 1 | 1 |
-Cards: Night Soil [3165fe8f-52d7-40f7-bb14-8f4300a564e6]
+| quick-win | `c13-oracle-damage-triggered-shape` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
 
-| quick-win | `c13-when-enters-destroy-all` | counters | 1 | 0 | 1 | 1 | 1 |
-Cards: Bane of Progress [51f9a6cc-8eb2-44ed-a2d9-913ac514ad67]
+| quick-win | `c13-oracle-damage-triggered-shape-6` | damage | 1 | 0 | 1 | 1 | 1 |
+Cards: Diviner Spirit [911b8849-dd0a-4383-8403-ea80227c5d7d]
 
-| quick-win | `c13-when-enters-target-opponent` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
+| quick-win | `c13-oracle-draw-activated-cost` | draw | 1 | 0 | 1 | 1 | 1 |
+Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
 
-| quick-win | `c13-whenever-another-creature-you` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Stalking Vengeance [5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb]
+| quick-win | `c13-oracle-gain-life-activated-2` | gain-life | 1 | 0 | 1 | 1 | 1 |
+Cards: Disciple of Griselbrand [2d92a035-dd7a-4426-a8c0-f04e0b836dad]
 
-| quick-win | `c13-whenever-creature-you-control` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
+| quick-win | `c13-oracle-gain-life-triggered-5` | gain-life | 1 | 0 | 1 | 1 | 1 |
+Cards: Sanguine Bond [73089a39-a2f6-4aa2-a058-e6551475153d]
 
-| quick-win | `c13-whenever-player-draws-card` | triggered | 1 | 0 | 1 | 1 | 1 |
-Cards: Spiteful Visions [922cf963-2b1b-43ad-819e-6e49133e6aae]
+| quick-win | `c13-oracle-other-activated-shape` | activated | 1 | 0 | 1 | 1 | 1 |
+Cards: Contested Cliffs [b891a683-2ebc-4e9c-b402-5dd9c1b42b69]
 
+| quick-win | `c13-oracle-other-activated-shape-6` | activated | 1 | 0 | 1 | 1 | 1 |
+Cards: Azorius Keyrune [7266b491-54e6-4393-a448-d5ae99d965c6]
 
-## Already claimed
-
-`c13-the-beginning-your-end`

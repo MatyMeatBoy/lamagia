@@ -7,6 +7,7 @@ The ranking is a greedy set cover over the lines the real engine could not
 execute, so it answers the only question that matters for scheduling: *which
 primitive finishes the most cards next?* A clause that appears in thousands of
 cards but never completes one is correctly ranked low.
+When enabled, `oracle:` signatures merge parameterized actions by operation, target, zone, and type; the engine profile still decides whether a card is complete.
 
 - Catalog cards: **341**
 - Fully implemented: **206**
@@ -18,646 +19,606 @@ cards but never completes one is correctly ranked low.
 
 | # | Unlocks | Cumulative | Blocks | One-line review | Family | Claim key | Template |
 | --- | --- | --- | --- | ---: | --- | --- | --- |
-| 1 | 1 | 1 | 1 | 1 | triggered | `c13-the-beginning-your-end` | `at the beginning of your end step, you may gain life equal to the power of target creature you control` |
-| 2 | 1 | 2 | 1 | 1 | combat-restriction | `c13-creatures-can-attack-you` | `creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` |
-| 3 | 1 | 3 | 1 | 1 | keyword-ability | `c13-forecast-cost-reveal-from` | `forecast - {cost}, reveal ~ from your hand: each player draws <n> card` |
-| 4 | 1 | 4 | 1 | 1 | keyword-ability | `c13-graft` | `graft <n>` |
-| 5 | 1 | 5 | 1 | 1 | keyword-ability | `c13-horsemanship` | `horsemanship` |
-| 6 | 1 | 6 | 1 | 1 | other | `c13-landfall-whenever-land-you` | `landfall - whenever <n> land you control enters, you may gain <n> life` |
-| 7 | 1 | 7 | 1 | 1 | other | `c13-return-all-permanents-the` | `return all permanents of the color of your choice to their owners' hands` |
-| 8 | 1 | 8 | 1 | 1 | other | `c13-untap-all-green-and` | `untap all green and/or blue creatures you control during each other player's untap step` |
-| 9 | 1 | 9 | 1 | 1 | other | `c13-until-end-turn-creatures` | `until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n>` |
-| 10 | 1 | 10 | 1 | 1 | triggered | `c13-when-sharuum-enters-you` | `when sharuum enters, you may return target artifact card from your graveyard to the battlefield` |
-| 11 | 1 | 11 | 1 | 1 | triggered | `c13-when-you-cast-create` | `when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it` |
-| 12 | 1 | 12 | 1 | 1 | triggered | `c13-when-you-cycle-you` | `when you cycle ~, you may have it deal <n> damage to each creature` |
-| 13 | 1 | 13 | 1 | 1 | triggered | `c13-when-you-cycle-you-2` | `when you cycle ~, you may have target creature gain fear until end of turn` |
-| 14 | 1 | 14 | 1 | 1 | counters | `c13-when-enters-destroy-all` | `when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way` |
-| 15 | 1 | 15 | 1 | 1 | triggered | `c13-when-enters-exile-another` | `when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step` |
-| 16 | 1 | 16 | 1 | 1 | triggered | `c13-when-enters-return-target` | `when ~ enters, return target artifact card from your graveyard to your hand. you gain life equal to that card's mana value` |
-| 17 | 1 | 17 | 1 | 1 | triggered | `c13-when-enters-return-target-2` | `when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value` |
-| 18 | 1 | 18 | 1 | 1 | triggered | `c13-when-enters-sacrifice-unless` | `when ~ enters, sacrifice it unless {cost} was spent to cast it` |
-| 19 | 1 | 19 | 1 | 1 | static-continuous | `c13-when-enters-tap-target` | `when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~` |
-| 20 | 1 | 20 | 1 | 1 | triggered | `c13-when-enters-target-opponent` | `when ~ enters, target opponent creates <n> <n>/<n> blue faerie creature tokens with flying` |
-| 21 | 1 | 21 | 1 | 1 | triggered | `c13-when-enters-you-may` | `when ~ enters, you may return target instant or sorcery card from your graveyard to your hand` |
-| 22 | 1 | 22 | 1 | 1 | triggered | `c13-whenever-creature-dies-untap` | `whenever <n> creature dies, untap ~` |
-| 23 | 1 | 23 | 1 | 1 | triggered | `c13-whenever-creature-you-control` | `whenever <n> creature you control enters, it deals damage equal to its power to any target` |
-| 24 | 1 | 24 | 1 | 1 | triggered | `c13-whenever-creature-you-control-2` | `whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target` |
-| 25 | 1 | 25 | 1 | 1 | triggered | `c13-whenever-player-draws-card` | `whenever <n> player draws <n> card, ~ deals <n> damage to that player` |
-| 26 | 1 | 26 | 1 | 1 | triggered | `c13-whenever-spell-ability-causes` | `whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library` |
-| 27 | 1 | 27 | 1 | 1 | triggered | `c13-whenever-another-creature-you` | `whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker` |
-| 28 | 1 | 28 | 1 | 1 | token | `c13-whenever-another-nontoken-creature` | `whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste` |
-| 29 | 1 | 29 | 1 | 1 | triggered | `c13-whenever-you-cast-instant` | `whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy` |
-| 30 | 1 | 30 | 1 | 1 | triggered | `c13-whenever-you-gain-life` | `whenever you gain life, target opponent loses that much life` |
-| 31 | 1 | 31 | 1 | 1 | triggered | `c13-whenever-you-gain-life-2` | `whenever you gain life, you may pay {cost}, where <n> is less than or equal to the amount of life you gained. if you do, draw <n> cards` |
-| 32 | 1 | 32 | 1 | 1 | counters | `c13-whenever-you-gain-life-3` | `whenever you gain life, you may pay {cost}. if you do, put <n> +<n>/+<n> counter on target creature for each <n> life you gained` |
-| 33 | 1 | 33 | 1 | 1 | pump | `c13-whenever-attacks-gets-until` | `whenever ~ attacks, it gets +<n>/+<n> until end of turn, where <n> is the number of lands defending player controls` |
-| 34 | 1 | 34 | 1 | 1 | pump | `c13-whenever-attacks-you-may` | `whenever ~ attacks, you may tap <n> untapped myr you control. if you do, ~ gets +<n>/+<n> until end of turn and deals <n> damage to the player or planeswalker it's attacking` |
-| 35 | 1 | 35 | 1 | 1 | triggered | `c13-whenever-blocks-exchange-its` | `whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat` |
-| 36 | 1 | 36 | 1 | 1 | triggered | `c13-whenever-deals-combat-damage` | `whenever ~ deals combat damage to <n> player, you and that player each draw that many cards` |
-| 37 | 1 | 37 | 1 | 1 | triggered | `c13-whenever-deals-combat-damage-2` | `whenever ~ deals combat damage to <n> player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn` |
-| 38 | 1 | 38 | 1 | 1 | triggered | `c13-whenever-enters-attacks-deals` | `whenever ~ enters or attacks, it deals <n> damage divided as you choose among <n>, <n>, or <n> targets` |
-| 39 | 1 | 39 | 1 | 1 | token | `c13-cost-exile-creature-cards` | `{cost}, exile <n> creature cards from <n> single graveyard: create <n> <n>/<n> green saproling creature token` |
-| 40 | 1 | 40 | 1 | 1 | activated | `c13-cost-sacrifice-creature-you` | `{cost}, sacrifice <n> creature: you gain life equal to the sacrificed creature's toughness` |
+| 1 | 1 | 1 | 1 | 1 | counters | `c13-oracle-counter-activated-cost` | `oracle:counter\|activated\|cost-context:activated-cost\|shape:{cost}, {cost}: add <n> mana of any color in your commander's color identity. if you spend this mana to cast your commander, it enters with <n> number of additi` |
+| 2 | 1 | 2 | 1 | 1 | counters | `c13-oracle-counter-activated-target` | `oracle:counter\|activated\|target-types:Creature\|zone:battlefield\|cost-context:activated-cost\|cost-actions:sacrifice\|shape:{cost}, sacrifice ~: destroy up to <n> target nonblack creatures, where <n> is the number of verse counters on ~` |
+| 3 | 1 | 3 | 1 | 1 | counters | `c13-oracle-counter-triggered-shape` | `oracle:counter\|triggered\|shape:when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way` |
+| 4 | 1 | 4 | 1 | 1 | counters | `c13-oracle-counter-triggered-target` | `oracle:counter\|triggered\|target-types:Creature\|zone:battlefield\|shape:whenever you gain life, you may pay {cost}. if you do, put <n> +<n>/+<n> counter on target creature for each <n> life you gained` |
+| 5 | 1 | 5 | 1 | 1 | token | `c13-oracle-create-token-activated` | `oracle:create-token\|activated\|cost-context:activated-cost\|cost-actions:exile\|shape:{cost}, exile <n> creature card from <n> single graveyard: create <n> <n>/<n> green saproling creature token` |
+| 6 | 1 | 6 | 1 | 1 | token | `c13-oracle-create-token-activated-2` | `oracle:create-token\|activated\|cost-context:activated-cost\|cost-actions:sacrifice\|shape:{cost}, sacrifice <n> nontoken artifact: create <n> <n>/<n> blue thopter artifact creature token with flying` |
+| 7 | 1 | 7 | 1 | 1 | token | `c13-oracle-create-token-triggered` | `oracle:create-token\|triggered\|shape:whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste` |
+| 8 | 1 | 8 | 1 | 1 | damage | `c13-oracle-damage-activated-cost` | `oracle:damage\|activated\|cost-context:activated-cost\|cost-actions:sacrifice\|shape:{cost}, sacrifice ~: it deals <n> damage to each attacking creature without flying` |
+| 9 | 1 | 9 | 1 | 1 | damage | `c13-oracle-damage-triggered-shape` | `oracle:damage\|triggered\|shape:when you cycle ~, you may have it deal <n> damage to each creature` |
+| 10 | 1 | 10 | 1 | 1 | damage | `c13-oracle-damage-triggered-shape-2` | `oracle:damage\|triggered\|shape:whenever <n> creature you control enters, it deals damage equal to its power to any target` |
+| 11 | 1 | 11 | 1 | 1 | damage | `c13-oracle-damage-triggered-shape-3` | `oracle:damage\|triggered\|shape:whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target` |
+| 12 | 1 | 12 | 1 | 1 | damage | `c13-oracle-damage-triggered-shape-4` | `oracle:damage\|triggered\|shape:whenever <n> player draws <n> card, ~ deals <n> damage to that player` |
+| 13 | 1 | 13 | 1 | 1 | damage | `c13-oracle-damage-triggered-shape-5` | `oracle:damage\|triggered\|shape:whenever ~ attacks, you may tap <n> untapped myr you control. if you do, ~ gets +<n>/+<n> until end of turn and deals <n> damage to the player or planeswalker i` |
+| 14 | 1 | 14 | 1 | 1 | damage | `c13-oracle-damage-triggered-shape-6` | `oracle:damage\|triggered\|shape:whenever ~ deals combat damage to <n> player, you and that player each draw that many card` |
+| 15 | 1 | 15 | 1 | 1 | damage | `c13-oracle-damage-triggered-shape-7` | `oracle:damage\|triggered\|shape:whenever ~ deals combat damage to <n> player, you may return to your hand all creature card that were put into your graveyard from the battlefield this turn` |
+| 16 | 1 | 16 | 1 | 1 | damage | `c13-oracle-damage-triggered-shape-8` | `oracle:damage\|triggered\|shape:whenever ~ enters or attacks, it deals <n> damage divided as you choose among <n>, <n>, or <n> targets` |
+| 17 | 1 | 17 | 1 | 1 | damage | `c13-oracle-damage-triggered-target` | `oracle:damage\|triggered\|target-types:Planeswalker\|zone:battlefield\|shape:whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker` |
+| 18 | 1 | 18 | 1 | 1 | destroy | `c13-oracle-destroy-activated-target` | `oracle:destroy\|activated\|target-types:Artifact,Creature\|zone:battlefield\|cost-context:activated-cost\|amount:mana-value\|shape:{cost}: destroy target artifact or creature with mana value <n>` |
+| 19 | 1 | 19 | 1 | 1 | draw | `c13-oracle-draw-activated-cost` | `oracle:draw\|activated\|cost-context:activated-cost\|shape:forecast - {cost}, reveal ~ from your hand: each player draws <n> card` |
+| 20 | 1 | 20 | 1 | 1 | draw | `c13-oracle-draw-activated-cost-2` | `oracle:draw\|activated\|cost-context:activated-cost\|shape:{cost}, {cost}: each player discards their hand, then draws card equal to the greatest number of card <n> player discarded this way` |
+| 21 | 1 | 21 | 1 | 1 | draw | `c13-oracle-draw-triggered-shape` | `oracle:draw\|triggered\|shape:whenever you gain life, you may pay {cost}, where <n> is less than or equal to the amount of life you gained. if you do, draw <n> card` |
+| 22 | 1 | 22 | 1 | 1 | exile | `c13-oracle-exile-triggered-target` | `oracle:exile\|triggered\|target-subtype:permanent\|zone:battlefield\|shape:when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step` |
+| 23 | 1 | 23 | 1 | 1 | gain-life | `c13-oracle-gain-life-activated` | `oracle:gain-life\|activated\|cost-context:activated-cost\|cost-actions:sacrifice\|shape:{cost}, sacrifice <n> goats: add <n> mana of any <n> color. you gain <n> life` |
+| 24 | 1 | 24 | 1 | 1 | gain-life | `c13-oracle-gain-life-activated-2` | `oracle:gain-life\|activated\|sacrifice-types:Creature\|cost-context:activated-cost\|cost-actions:sacrifice\|shape:{cost}, sacrifice <n> creature: you gain life equal to the sacrificed creature's toughness` |
+| 25 | 1 | 25 | 1 | 1 | gain-life | `c13-oracle-gain-life-triggered` | `oracle:gain-life\|triggered\|cost-context:activated-cost\|shape:{cost}: whenever you gain life this turn, each opponent loses that much life` |
+| 26 | 1 | 26 | 1 | 1 | gain-life | `c13-oracle-gain-life-triggered-2` | `oracle:gain-life\|triggered\|target-types:Artifact\|zone:graveyard\|amount:mana-value\|shape:when ~ enters, return target artifact card from your graveyard to your hand. you gain life equal to that card's mana value` |
+| 27 | 1 | 27 | 1 | 1 | gain-life | `c13-oracle-gain-life-triggered-3` | `oracle:gain-life\|triggered\|target-types:Creature\|zone:battlefield\|shape:at the beginning of your end step, you may gain life equal to the power of target creature you control` |
+| 28 | 1 | 28 | 1 | 1 | gain-life | `c13-oracle-gain-life-triggered-4` | `oracle:gain-life\|triggered\|trigger-subject:land-you-control\|shape:landfall - whenever <n> land you control enters, you may gain <n> life` |
+| 29 | 1 | 29 | 1 | 1 | gain-life | `c13-oracle-gain-life-triggered-5` | `oracle:gain-life\|triggered\|zone:battlefield\|shape:whenever you gain life, target opponent loses that much life` |
+| 30 | 1 | 30 | 1 | 1 | lose-life | `c13-oracle-lose-life-triggered` | `oracle:lose-life\|triggered\|target-types:Creature\|zone:graveyard\|amount:mana-value\|shape:when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value` |
+| 31 | 1 | 31 | 1 | 1 | pump | `c13-oracle-modify-stats-static` | `oracle:modify-stats\|static-or-spell\|shape:~ gets +<n>/+<n> as long as you have <n> or more life` |
+| 32 | 1 | 32 | 1 | 1 | pump | `c13-oracle-modify-stats-static-2` | `oracle:modify-stats\|static-or-spell\|shape:~ gets +<n>/+<n> for each creature card in your opponents' graveyards` |
+| 33 | 1 | 33 | 1 | 1 | pump | `c13-oracle-modify-stats-triggered` | `oracle:modify-stats\|triggered\|shape:whenever ~ attacks, it gets +<n>/+<n> until end of turn, where <n> is the number of lands defending player controls` |
+| 34 | 1 | 34 | 1 | 1 | activated | `c13-oracle-other-activated-shape` | `oracle:other\|activated\|shape:{cost}, {cost}: target beast creature you control fights target creature <n> opponent controls\|target-types:Creature\|zone:battlefield\|cost-context:activated-cost` |
+| 35 | 1 | 35 | 1 | 1 | activated | `c13-oracle-other-activated-shape-2` | `oracle:other\|activated\|shape:{cost}: creatures you control gain shroud until end of turn\|cost-context:activated-cost` |
+| 36 | 1 | 36 | 1 | 1 | activated | `c13-oracle-other-activated-shape-3` | `oracle:other\|activated\|shape:{cost}: each player gains control of all creatures they own\|cost-context:activated-cost` |
+| 37 | 1 | 37 | 1 | 1 | activated | `c13-oracle-other-activated-shape-4` | `oracle:other\|activated\|shape:{cost}: target creature with power <n> or greater gains first strike until end of turn\|target-types:Creature\|zone:battlefield\|cost-context:activated-cost` |
+| 38 | 1 | 38 | 1 | 1 | combat-restriction | `c13-oracle-other-activated-shape-5` | `oracle:other\|activated\|shape:{cost}: this turn, creatures can't block unless their controller pays {cost} for each blocking creature they control\|cost-context:activated-cost` |
+| 39 | 1 | 39 | 1 | 1 | activated | `c13-oracle-other-activated-shape-6` | `oracle:other\|activated\|shape:{cost}: ~ becomes <n> <n>/<n> white and blue bird artifact creature with flying until end of turn\|cost-context:activated-cost` |
+| 40 | 1 | 40 | 1 | 1 | combat-restriction | `c13-oracle-other-static-spell` | `oracle:other\|static-or-spell\|shape:creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` |
 
 ## Work orders
 
-### 1. `c13-the-beginning-your-end` — finishes 1 cards
+### 1. `c13-oracle-counter-activated-cost` — finishes 1 cards
 
-- Template: `at the beginning of your end step, you may gain life equal to the power of target creature you control`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Wall of Reverence** — At the beginning of your end step, you may gain life equal to the power of target creature you control.
-
-Cards finished (first 1): Wall of Reverence.
-
-All affected cards (1): Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
-
-### 2. `c13-creatures-can-attack-you` — finishes 1 cards
-
-- Template: `creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you`
-- Family: combat-restriction
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Propaganda** — Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.
-
-Cards finished (first 1): Propaganda.
-
-All affected cards (1): Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
-
-### 3. `c13-forecast-cost-reveal-from` — finishes 1 cards
-
-- Template: `forecast - {cost}, reveal ~ from your hand: each player draws <n> card`
-- Family: keyword-ability
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Skyscribing** — Forecast — {2}{U}, Reveal ~ from your hand: Each player draws a card.
-
-Cards finished (first 1): Skyscribing.
-
-All affected cards (1): Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
-
-### 4. `c13-graft` — finishes 1 cards
-
-- Template: `graft <n>`
-- Family: keyword-ability
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Llanowar Reborn** — Graft 1
-
-Cards finished (first 1): Llanowar Reborn.
-
-All affected cards (1): Llanowar Reborn [92acb789-0e42-465c-ac16-40fefec48805]
-
-### 5. `c13-horsemanship` — finishes 1 cards
-
-- Template: `horsemanship`
-- Family: keyword-ability
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Lu Xun, Scholar General** — Horsemanship
-
-Cards finished (first 1): Lu Xun, Scholar General.
-
-All affected cards (1): Lu Xun, Scholar General [ea658352-abef-4201-b20c-f5c5809d1d3e]
-
-### 6. `c13-landfall-whenever-land-you` — finishes 1 cards
-
-- Template: `landfall - whenever <n> land you control enters, you may gain <n> life`
-- Family: other
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Grazing Gladehart** — Landfall — Whenever a land you control enters, you may gain 2 life.
-
-Cards finished (first 1): Grazing Gladehart.
-
-All affected cards (1): Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
-
-### 7. `c13-return-all-permanents-the` — finishes 1 cards
-
-- Template: `return all permanents of the color of your choice to their owners' hands`
-- Family: other
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Wash Out** — Return all permanents of the color of your choice to their owners' hands.
-
-Cards finished (first 1): Wash Out.
-
-All affected cards (1): Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
-
-### 8. `c13-untap-all-green-and` — finishes 1 cards
-
-- Template: `untap all green and/or blue creatures you control during each other player's untap step`
-- Family: other
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Murkfiend Liege** — Untap all green and/or blue creatures you control during each other player's untap step.
-
-Cards finished (first 1): Murkfiend Liege.
-
-All affected cards (1): Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
-
-### 9. `c13-until-end-turn-creatures` — finishes 1 cards
-
-- Template: `until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n>`
-- Family: other
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Sudden Spoiling** — Until end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2.
-
-Cards finished (first 1): Sudden Spoiling.
-
-All affected cards (1): Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
-
-### 10. `c13-when-sharuum-enters-you` — finishes 1 cards
-
-- Template: `when sharuum enters, you may return target artifact card from your graveyard to the battlefield`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Sharuum the Hegemon** — When Sharuum enters, you may return target artifact card from your graveyard to the battlefield.
-
-Cards finished (first 1): Sharuum the Hegemon.
-
-All affected cards (1): Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
-
-### 11. `c13-when-you-cast-create` — finishes 1 cards
-
-- Template: `when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Prossh, Skyraider of Kher** — When you cast ~, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.
-
-Cards finished (first 1): Prossh, Skyraider of Kher.
-
-All affected cards (1): Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
-
-### 12. `c13-when-you-cycle-you` — finishes 1 cards
-
-- Template: `when you cycle ~, you may have it deal <n> damage to each creature`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Slice and Dice** — When you cycle ~, you may have it deal 1 damage to each creature.
-
-Cards finished (first 1): Slice and Dice.
-
-All affected cards (1): Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
-
-### 13. `c13-when-you-cycle-you-2` — finishes 1 cards
-
-- Template: `when you cycle ~, you may have target creature gain fear until end of turn`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Dirge of Dread** — When you cycle ~, you may have target creature gain fear until end of turn.
-
-Cards finished (first 1): Dirge of Dread.
-
-All affected cards (1): Dirge of Dread [be7b16ef-32aa-40d5-b287-c5e79d52d6b9]
-
-### 14. `c13-when-enters-destroy-all` — finishes 1 cards
-
-- Template: `when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way`
+- Template: `oracle:counter|activated|cost-context:activated-cost|shape:{cost}, {cost}: add <n> mana of any color in your commander's color identity. if you spend this mana to cast your commander, it enters with <n> number of additi`
 - Family: counters
 - Appears in 1 unfinished cards; it is the last blocker for 1.
 - One-line review candidates: **1**.
 
 Printed examples:
 
-- **Bane of Progress** — When ~ enters, destroy all artifacts and enchantments. Put a +1/+1 counter on ~ for each permanent destroyed this way.
+
+Cards finished (first 1): Opal Palace.
+
+All affected cards (1): Opal Palace [aa6723a2-75da-49f5-a1ba-cbfa82c55301]
+
+### 2. `c13-oracle-counter-activated-target` — finishes 1 cards
+
+- Template: `oracle:counter|activated|target-types:Creature|zone:battlefield|cost-context:activated-cost|cost-actions:sacrifice|shape:{cost}, sacrifice ~: destroy up to <n> target nonblack creatures, where <n> is the number of verse counters on ~`
+- Family: counters
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Vile Requiem.
+
+All affected cards (1): Vile Requiem [a72213e7-16f0-4fbe-91d3-750ca51a4336]
+
+### 3. `c13-oracle-counter-triggered-shape` — finishes 1 cards
+
+- Template: `oracle:counter|triggered|shape:when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way`
+- Family: counters
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
 
 Cards finished (first 1): Bane of Progress.
 
 All affected cards (1): Bane of Progress [51f9a6cc-8eb2-44ed-a2d9-913ac514ad67]
 
-### 15. `c13-when-enters-exile-another` — finishes 1 cards
+### 4. `c13-oracle-counter-triggered-target` — finishes 1 cards
 
-- Template: `when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Flickerwisp** — When ~ enters, exile another target permanent. Return that card to the battlefield under its owner's control at the beginning of the next end step.
-
-Cards finished (first 1): Flickerwisp.
-
-All affected cards (1): Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
-
-### 16. `c13-when-enters-return-target` — finishes 1 cards
-
-- Template: `when ~ enters, return target artifact card from your graveyard to your hand. you gain life equal to that card's mana value`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Razor Hippogriff** — When ~ enters, return target artifact card from your graveyard to your hand. You gain life equal to that card's mana value.
-
-Cards finished (first 1): Razor Hippogriff.
-
-All affected cards (1): Razor Hippogriff [d121108e-f0bc-469b-bf94-e5e5308014a2]
-
-### 17. `c13-when-enters-return-target-2` — finishes 1 cards
-
-- Template: `when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Phyrexian Delver** — When ~ enters, return target creature card from your graveyard to the battlefield. You lose life equal to that card's mana value.
-
-Cards finished (first 1): Phyrexian Delver.
-
-All affected cards (1): Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
-
-### 18. `c13-when-enters-sacrifice-unless` — finishes 1 cards
-
-- Template: `when ~ enters, sacrifice it unless {cost} was spent to cast it`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Azorius Herald** — When ~ enters, sacrifice it unless {U} was spent to cast it.
-
-Cards finished (first 1): Azorius Herald.
-
-All affected cards (1): Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
-
-### 19. `c13-when-enters-tap-target` — finishes 1 cards
-
-- Template: `when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~`
-- Family: static-continuous
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Dungeon Geists** — When ~ enters, tap target creature an opponent controls. That creature doesn't untap during its controller's untap step for as long as you control ~.
-
-Cards finished (first 1): Dungeon Geists.
-
-All affected cards (1): Dungeon Geists [ab5ebae2-cd77-4a7d-a93b-8042cd486429]
-
-### 20. `c13-when-enters-target-opponent` — finishes 1 cards
-
-- Template: `when ~ enters, target opponent creates <n> <n>/<n> blue faerie creature tokens with flying`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Hunted Troll** — When ~ enters, target opponent creates four 1/1 blue Faerie creature tokens with flying.
-
-Cards finished (first 1): Hunted Troll.
-
-All affected cards (1): Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
-
-### 21. `c13-when-enters-you-may` — finishes 1 cards
-
-- Template: `when ~ enters, you may return target instant or sorcery card from your graveyard to your hand`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Mnemonic Wall** — When ~ enters, you may return target instant or sorcery card from your graveyard to your hand.
-
-Cards finished (first 1): Mnemonic Wall.
-
-All affected cards (1): Mnemonic Wall [f2933616-211b-4d3f-8064-2be61c26079a]
-
-### 22. `c13-whenever-creature-dies-untap` — finishes 1 cards
-
-- Template: `whenever <n> creature dies, untap ~`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Goblin Sharpshooter** — Whenever a creature dies, untap ~.
-
-Cards finished (first 1): Goblin Sharpshooter.
-
-All affected cards (1): Goblin Sharpshooter [d81285b7-a718-411a-8be3-ecc0cfe0bcb0]
-
-### 23. `c13-whenever-creature-you-control` — finishes 1 cards
-
-- Template: `whenever <n> creature you control enters, it deals damage equal to its power to any target`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Warstorm Surge** — Whenever a creature you control enters, it deals damage equal to its power to any target.
-
-Cards finished (first 1): Warstorm Surge.
-
-All affected cards (1): Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
-
-### 24. `c13-whenever-creature-you-control-2` — finishes 1 cards
-
-- Template: `whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Where Ancients Tread** — Whenever a creature you control with power 5 or greater enters, you may have ~ deal 5 damage to any target.
-
-Cards finished (first 1): Where Ancients Tread.
-
-All affected cards (1): Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
-
-### 25. `c13-whenever-player-draws-card` — finishes 1 cards
-
-- Template: `whenever <n> player draws <n> card, ~ deals <n> damage to that player`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Spiteful Visions** — Whenever a player draws a card, ~ deals 1 damage to that player.
-
-Cards finished (first 1): Spiteful Visions.
-
-All affected cards (1): Spiteful Visions [922cf963-2b1b-43ad-819e-6e49133e6aae]
-
-### 26. `c13-whenever-spell-ability-causes` — finishes 1 cards
-
-- Template: `whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Widespread Panic** — Whenever a spell or ability causes its controller to shuffle their library, that player puts a card from their hand on top of their library.
-
-Cards finished (first 1): Widespread Panic.
-
-All affected cards (1): Widespread Panic [853a3c2b-3d37-453a-8a77-4d90bd3a1cb7]
-
-### 27. `c13-whenever-another-creature-you` — finishes 1 cards
-
-- Template: `whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Stalking Vengeance** — Whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.
-
-Cards finished (first 1): Stalking Vengeance.
-
-All affected cards (1): Stalking Vengeance [5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb]
-
-### 28. `c13-whenever-another-nontoken-creature` — finishes 1 cards
-
-- Template: `whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste`
-- Family: token
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Sek'Kuar, Deathkeeper** — Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.
-
-Cards finished (first 1): Sek'Kuar, Deathkeeper.
-
-All affected cards (1): Sek'Kuar, Deathkeeper [94426127-65c2-435e-ba92-423a3c102061]
-
-### 29. `c13-whenever-you-cast-instant` — finishes 1 cards
-
-- Template: `whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Mirari** — Whenever you cast an instant or sorcery spell, you may pay {3}. If you do, copy that spell. You may choose new targets for the copy.
-
-Cards finished (first 1): Mirari.
-
-All affected cards (1): Mirari [8f6a2fce-719e-4745-80d3-aabce5c9bafa]
-
-### 30. `c13-whenever-you-gain-life` — finishes 1 cards
-
-- Template: `whenever you gain life, target opponent loses that much life`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Sanguine Bond** — Whenever you gain life, target opponent loses that much life.
-
-Cards finished (first 1): Sanguine Bond.
-
-All affected cards (1): Sanguine Bond [73089a39-a2f6-4aa2-a058-e6551475153d]
-
-### 31. `c13-whenever-you-gain-life-2` — finishes 1 cards
-
-- Template: `whenever you gain life, you may pay {cost}, where <n> is less than or equal to the amount of life you gained. if you do, draw <n> cards`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Well of Lost Dreams** — Whenever you gain life, you may pay {X}, where X is less than or equal to the amount of life you gained. If you do, draw X cards.
-
-Cards finished (first 1): Well of Lost Dreams.
-
-All affected cards (1): Well of Lost Dreams [b0394cf2-12a0-4d4f-87e0-fe8937e6faff]
-
-### 32. `c13-whenever-you-gain-life-3` — finishes 1 cards
-
-- Template: `whenever you gain life, you may pay {cost}. if you do, put <n> +<n>/+<n> counter on target creature for each <n> life you gained`
+- Template: `oracle:counter|triggered|target-types:Creature|zone:battlefield|shape:whenever you gain life, you may pay {cost}. if you do, put <n> +<n>/+<n> counter on target creature for each <n> life you gained`
 - Family: counters
 - Appears in 1 unfinished cards; it is the last blocker for 1.
 - One-line review candidates: **1**.
 
 Printed examples:
 
-- **Cradle of Vitality** — Whenever you gain life, you may pay {1}{W}. If you do, put a +1/+1 counter on target creature for each 1 life you gained.
 
 Cards finished (first 1): Cradle of Vitality.
 
 All affected cards (1): Cradle of Vitality [956250da-532a-4457-8696-73915be56943]
 
-### 33. `c13-whenever-attacks-gets-until` — finishes 1 cards
+### 5. `c13-oracle-create-token-activated` — finishes 1 cards
 
-- Template: `whenever ~ attacks, it gets +<n>/+<n> until end of turn, where <n> is the number of lands defending player controls`
-- Family: pump
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Terra Ravager** — Whenever ~ attacks, it gets +X/+0 until end of turn, where X is the number of lands defending player controls.
-
-Cards finished (first 1): Terra Ravager.
-
-All affected cards (1): Terra Ravager [c7686204-0433-48cf-bbfb-5d32b6a25cc3]
-
-### 34. `c13-whenever-attacks-you-may` — finishes 1 cards
-
-- Template: `whenever ~ attacks, you may tap <n> untapped myr you control. if you do, ~ gets +<n>/+<n> until end of turn and deals <n> damage to the player or planeswalker it's attacking`
-- Family: pump
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Myr Battlesphere** — Whenever ~ attacks, you may tap X untapped Myr you control. If you do, ~ gets +X/+0 until end of turn and deals X damage to the player or planeswalker it's attacking.
-
-Cards finished (first 1): Myr Battlesphere.
-
-All affected cards (1): Myr Battlesphere [c53ba31a-ba27-4e17-9a92-311acb1cab29]
-
-### 35. `c13-whenever-blocks-exchange-its` — finishes 1 cards
-
-- Template: `whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Serene Master** — Whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat.
-
-Cards finished (first 1): Serene Master.
-
-All affected cards (1): Serene Master [2ce0d583-81ca-4dca-bde0-52f86b683afd]
-
-### 36. `c13-whenever-deals-combat-damage` — finishes 1 cards
-
-- Template: `whenever ~ deals combat damage to <n> player, you and that player each draw that many cards`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Diviner Spirit** — Whenever ~ deals combat damage to a player, you and that player each draw that many cards.
-
-Cards finished (first 1): Diviner Spirit.
-
-All affected cards (1): Diviner Spirit [911b8849-dd0a-4383-8403-ea80227c5d7d]
-
-### 37. `c13-whenever-deals-combat-damage-2` — finishes 1 cards
-
-- Template: `whenever ~ deals combat damage to <n> player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Fell Shepherd** — Whenever ~ deals combat damage to a player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn.
-
-Cards finished (first 1): Fell Shepherd.
-
-All affected cards (1): Fell Shepherd [5fd78088-53db-453b-90a3-b8426b0a8269]
-
-### 38. `c13-whenever-enters-attacks-deals` — finishes 1 cards
-
-- Template: `whenever ~ enters or attacks, it deals <n> damage divided as you choose among <n>, <n>, or <n> targets`
-- Family: triggered
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-- **Inferno Titan** — Whenever ~ enters or attacks, it deals 3 damage divided as you choose among one, two, or three targets.
-
-Cards finished (first 1): Inferno Titan.
-
-All affected cards (1): Inferno Titan [0ce47c8b-1e1f-463f-94f0-35ca00be89e6]
-
-### 39. `c13-cost-exile-creature-cards` — finishes 1 cards
-
-- Template: `{cost}, exile <n> creature cards from <n> single graveyard: create <n> <n>/<n> green saproling creature token`
+- Template: `oracle:create-token|activated|cost-context:activated-cost|cost-actions:exile|shape:{cost}, exile <n> creature card from <n> single graveyard: create <n> <n>/<n> green saproling creature token`
 - Family: token
 - Appears in 1 unfinished cards; it is the last blocker for 1.
 - One-line review candidates: **1**.
 
 Printed examples:
 
-- **Night Soil** — {1}, Exile two creature cards from a single graveyard: Create a 1/1 green Saproling creature token.
 
 Cards finished (first 1): Night Soil.
 
 All affected cards (1): Night Soil [3165fe8f-52d7-40f7-bb14-8f4300a564e6]
 
-### 40. `c13-cost-sacrifice-creature-you` — finishes 1 cards
+### 6. `c13-oracle-create-token-activated-2` — finishes 1 cards
 
-- Template: `{cost}, sacrifice <n> creature: you gain life equal to the sacrificed creature's toughness`
+- Template: `oracle:create-token|activated|cost-context:activated-cost|cost-actions:sacrifice|shape:{cost}, sacrifice <n> nontoken artifact: create <n> <n>/<n> blue thopter artifact creature token with flying`
+- Family: token
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Thopter Foundry.
+
+All affected cards (1): Thopter Foundry [88bef744-550e-4f33-b1ff-a8ee990ec754]
+
+### 7. `c13-oracle-create-token-triggered` — finishes 1 cards
+
+- Template: `oracle:create-token|triggered|shape:whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste`
+- Family: token
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Sek'Kuar, Deathkeeper.
+
+All affected cards (1): Sek'Kuar, Deathkeeper [94426127-65c2-435e-ba92-423a3c102061]
+
+### 8. `c13-oracle-damage-activated-cost` — finishes 1 cards
+
+- Template: `oracle:damage|activated|cost-context:activated-cost|cost-actions:sacrifice|shape:{cost}, sacrifice ~: it deals <n> damage to each attacking creature without flying`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Leonin Bladetrap.
+
+All affected cards (1): Leonin Bladetrap [ca21d597-40a5-4724-9d53-1ab6e6c6e767]
+
+### 9. `c13-oracle-damage-triggered-shape` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|shape:when you cycle ~, you may have it deal <n> damage to each creature`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Slice and Dice.
+
+All affected cards (1): Slice and Dice [463fc961-d34e-4f40-b383-5b78a0fcb5c8]
+
+### 10. `c13-oracle-damage-triggered-shape-2` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|shape:whenever <n> creature you control enters, it deals damage equal to its power to any target`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Warstorm Surge.
+
+All affected cards (1): Warstorm Surge [42fb1a1c-ab3d-4cdc-a6ff-a591f7481583]
+
+### 11. `c13-oracle-damage-triggered-shape-3` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|shape:whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Where Ancients Tread.
+
+All affected cards (1): Where Ancients Tread [fca2fcab-4f17-448d-bf6d-f6c913159df8]
+
+### 12. `c13-oracle-damage-triggered-shape-4` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|shape:whenever <n> player draws <n> card, ~ deals <n> damage to that player`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Spiteful Visions.
+
+All affected cards (1): Spiteful Visions [922cf963-2b1b-43ad-819e-6e49133e6aae]
+
+### 13. `c13-oracle-damage-triggered-shape-5` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|shape:whenever ~ attacks, you may tap <n> untapped myr you control. if you do, ~ gets +<n>/+<n> until end of turn and deals <n> damage to the player or planeswalker i`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Myr Battlesphere.
+
+All affected cards (1): Myr Battlesphere [c53ba31a-ba27-4e17-9a92-311acb1cab29]
+
+### 14. `c13-oracle-damage-triggered-shape-6` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|shape:whenever ~ deals combat damage to <n> player, you and that player each draw that many card`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Diviner Spirit.
+
+All affected cards (1): Diviner Spirit [911b8849-dd0a-4383-8403-ea80227c5d7d]
+
+### 15. `c13-oracle-damage-triggered-shape-7` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|shape:whenever ~ deals combat damage to <n> player, you may return to your hand all creature card that were put into your graveyard from the battlefield this turn`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Fell Shepherd.
+
+All affected cards (1): Fell Shepherd [5fd78088-53db-453b-90a3-b8426b0a8269]
+
+### 16. `c13-oracle-damage-triggered-shape-8` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|shape:whenever ~ enters or attacks, it deals <n> damage divided as you choose among <n>, <n>, or <n> targets`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Inferno Titan.
+
+All affected cards (1): Inferno Titan [0ce47c8b-1e1f-463f-94f0-35ca00be89e6]
+
+### 17. `c13-oracle-damage-triggered-target` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|target-types:Planeswalker|zone:battlefield|shape:whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Stalking Vengeance.
+
+All affected cards (1): Stalking Vengeance [5f4ff27f-ebc1-4a86-8b0b-eeea470a25fb]
+
+### 18. `c13-oracle-destroy-activated-target` — finishes 1 cards
+
+- Template: `oracle:destroy|activated|target-types:Artifact,Creature|zone:battlefield|cost-context:activated-cost|amount:mana-value|shape:{cost}: destroy target artifact or creature with mana value <n>`
+- Family: destroy
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Deepfire Elemental.
+
+All affected cards (1): Deepfire Elemental [c8119ebe-aedd-4bdb-8f7f-368674a049fd]
+
+### 19. `c13-oracle-draw-activated-cost` — finishes 1 cards
+
+- Template: `oracle:draw|activated|cost-context:activated-cost|shape:forecast - {cost}, reveal ~ from your hand: each player draws <n> card`
+- Family: draw
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Skyscribing.
+
+All affected cards (1): Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
+
+### 20. `c13-oracle-draw-activated-cost-2` — finishes 1 cards
+
+- Template: `oracle:draw|activated|cost-context:activated-cost|shape:{cost}, {cost}: each player discards their hand, then draws card equal to the greatest number of card <n> player discarded this way`
+- Family: draw
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Jace's Archivist.
+
+All affected cards (1): Jace's Archivist [b6c8ac69-daa7-4e2e-a1d9-439731a81870]
+
+### 21. `c13-oracle-draw-triggered-shape` — finishes 1 cards
+
+- Template: `oracle:draw|triggered|shape:whenever you gain life, you may pay {cost}, where <n> is less than or equal to the amount of life you gained. if you do, draw <n> card`
+- Family: draw
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Well of Lost Dreams.
+
+All affected cards (1): Well of Lost Dreams [b0394cf2-12a0-4d4f-87e0-fe8937e6faff]
+
+### 22. `c13-oracle-exile-triggered-target` — finishes 1 cards
+
+- Template: `oracle:exile|triggered|target-subtype:permanent|zone:battlefield|shape:when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step`
+- Family: exile
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Flickerwisp.
+
+All affected cards (1): Flickerwisp [b23a3d30-6b8e-4aad-890f-db0c3af43ace]
+
+### 23. `c13-oracle-gain-life-activated` — finishes 1 cards
+
+- Template: `oracle:gain-life|activated|cost-context:activated-cost|cost-actions:sacrifice|shape:{cost}, sacrifice <n> goats: add <n> mana of any <n> color. you gain <n> life`
+- Family: gain-life
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Springjack Pasture.
+
+All affected cards (1): Springjack Pasture [9eaadbbc-818b-4c21-9d4b-1bba48504d38]
+
+### 24. `c13-oracle-gain-life-activated-2` — finishes 1 cards
+
+- Template: `oracle:gain-life|activated|sacrifice-types:Creature|cost-context:activated-cost|cost-actions:sacrifice|shape:{cost}, sacrifice <n> creature: you gain life equal to the sacrificed creature's toughness`
+- Family: gain-life
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Disciple of Griselbrand.
+
+All affected cards (1): Disciple of Griselbrand [2d92a035-dd7a-4426-a8c0-f04e0b836dad]
+
+### 25. `c13-oracle-gain-life-triggered` — finishes 1 cards
+
+- Template: `oracle:gain-life|triggered|cost-context:activated-cost|shape:{cost}: whenever you gain life this turn, each opponent loses that much life`
+- Family: gain-life
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Vizkopa Guildmage.
+
+All affected cards (1): Vizkopa Guildmage [f19e7c5c-67fa-4ae4-89b8-afa0e08a6c48]
+
+### 26. `c13-oracle-gain-life-triggered-2` — finishes 1 cards
+
+- Template: `oracle:gain-life|triggered|target-types:Artifact|zone:graveyard|amount:mana-value|shape:when ~ enters, return target artifact card from your graveyard to your hand. you gain life equal to that card's mana value`
+- Family: gain-life
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Razor Hippogriff.
+
+All affected cards (1): Razor Hippogriff [d121108e-f0bc-469b-bf94-e5e5308014a2]
+
+### 27. `c13-oracle-gain-life-triggered-3` — finishes 1 cards
+
+- Template: `oracle:gain-life|triggered|target-types:Creature|zone:battlefield|shape:at the beginning of your end step, you may gain life equal to the power of target creature you control`
+- Family: gain-life
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Wall of Reverence.
+
+All affected cards (1): Wall of Reverence [0810983f-818a-43e6-a7b5-ebe0bc8b9f6a]
+
+### 28. `c13-oracle-gain-life-triggered-4` — finishes 1 cards
+
+- Template: `oracle:gain-life|triggered|trigger-subject:land-you-control|shape:landfall - whenever <n> land you control enters, you may gain <n> life`
+- Family: gain-life
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Grazing Gladehart.
+
+All affected cards (1): Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
+
+### 29. `c13-oracle-gain-life-triggered-5` — finishes 1 cards
+
+- Template: `oracle:gain-life|triggered|zone:battlefield|shape:whenever you gain life, target opponent loses that much life`
+- Family: gain-life
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Sanguine Bond.
+
+All affected cards (1): Sanguine Bond [73089a39-a2f6-4aa2-a058-e6551475153d]
+
+### 30. `c13-oracle-lose-life-triggered` — finishes 1 cards
+
+- Template: `oracle:lose-life|triggered|target-types:Creature|zone:graveyard|amount:mana-value|shape:when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value`
+- Family: lose-life
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Phyrexian Delver.
+
+All affected cards (1): Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
+
+### 31. `c13-oracle-modify-stats-static` — finishes 1 cards
+
+- Template: `oracle:modify-stats|static-or-spell|shape:~ gets +<n>/+<n> as long as you have <n> or more life`
+- Family: pump
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Divinity of Pride.
+
+All affected cards (1): Divinity of Pride [2c91c236-34d7-4454-a55a-784db7f68bde]
+
+### 32. `c13-oracle-modify-stats-static-2` — finishes 1 cards
+
+- Template: `oracle:modify-stats|static-or-spell|shape:~ gets +<n>/+<n> for each creature card in your opponents' graveyards`
+- Family: pump
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Wight of Precinct Six.
+
+All affected cards (1): Wight of Precinct Six [6397c046-4c59-4f0b-9b44-2a804eb95edf]
+
+### 33. `c13-oracle-modify-stats-triggered` — finishes 1 cards
+
+- Template: `oracle:modify-stats|triggered|shape:whenever ~ attacks, it gets +<n>/+<n> until end of turn, where <n> is the number of lands defending player controls`
+- Family: pump
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Terra Ravager.
+
+All affected cards (1): Terra Ravager [c7686204-0433-48cf-bbfb-5d32b6a25cc3]
+
+### 34. `c13-oracle-other-activated-shape` — finishes 1 cards
+
+- Template: `oracle:other|activated|shape:{cost}, {cost}: target beast creature you control fights target creature <n> opponent controls|target-types:Creature|zone:battlefield|cost-context:activated-cost`
 - Family: activated
 - Appears in 1 unfinished cards; it is the last blocker for 1.
 - One-line review candidates: **1**.
 
 Printed examples:
 
-- **Disciple of Griselbrand** — {1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.
 
-Cards finished (first 1): Disciple of Griselbrand.
+Cards finished (first 1): Contested Cliffs.
 
-All affected cards (1): Disciple of Griselbrand [2d92a035-dd7a-4426-a8c0-f04e0b836dad]
+All affected cards (1): Contested Cliffs [b891a683-2ebc-4e9c-b402-5dd9c1b42b69]
+
+### 35. `c13-oracle-other-activated-shape-2` — finishes 1 cards
+
+- Template: `oracle:other|activated|shape:{cost}: creatures you control gain shroud until end of turn|cost-context:activated-cost`
+- Family: activated
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Aerie Mystics.
+
+All affected cards (1): Aerie Mystics [12134f7d-433a-416a-b668-c1a21984c94b]
+
+### 36. `c13-oracle-other-activated-shape-3` — finishes 1 cards
+
+- Template: `oracle:other|activated|shape:{cost}: each player gains control of all creatures they own|cost-context:activated-cost`
+- Family: activated
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Homeward Path.
+
+All affected cards (1): Homeward Path [cb8ec2e4-8223-4172-8f2c-37c918a573fa]
+
+### 37. `c13-oracle-other-activated-shape-4` — finishes 1 cards
+
+- Template: `oracle:other|activated|shape:{cost}: target creature with power <n> or greater gains first strike until end of turn|target-types:Creature|zone:battlefield|cost-context:activated-cost`
+- Family: activated
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Rakeclaw Gargantuan.
+
+All affected cards (1): Rakeclaw Gargantuan [8dbb4a8f-78e9-4ceb-824d-bb67bdf939db]
+
+### 38. `c13-oracle-other-activated-shape-5` — finishes 1 cards
+
+- Template: `oracle:other|activated|shape:{cost}: this turn, creatures can't block unless their controller pays {cost} for each blocking creature they control|cost-context:activated-cost`
+- Family: combat-restriction
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): War Cadence.
+
+All affected cards (1): War Cadence [49d0fdd6-cc8f-4fe1-a6bd-4321dac18404]
+
+### 39. `c13-oracle-other-activated-shape-6` — finishes 1 cards
+
+- Template: `oracle:other|activated|shape:{cost}: ~ becomes <n> <n>/<n> white and blue bird artifact creature with flying until end of turn|cost-context:activated-cost`
+- Family: activated
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Azorius Keyrune.
+
+All affected cards (1): Azorius Keyrune [7266b491-54e6-4393-a448-d5ae99d965c6]
+
+### 40. `c13-oracle-other-static-spell` — finishes 1 cards
+
+- Template: `oracle:other|static-or-spell|shape:creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you`
+- Family: combat-restriction
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **1**.
+
+Printed examples:
+
+
+Cards finished (first 1): Propaganda.
+
+All affected cards (1): Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 

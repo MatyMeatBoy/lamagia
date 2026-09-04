@@ -8,7 +8,7 @@ from pathlib import Path
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, delayed_draw_hint, effective_worker_count, graveyard_static_hint, load_card_cache, look_top_hint, mana_ability_hint, operand_hints, primitive_cluster_inventory, reveal_until_type_hint, save_card_cache, search_criterion_hint, top_card_reveal_hint, trigger_subject_hint
 from export_set_coverage import is_ignored_edition, product_group
 from check_precon_coverage import identity_of
-from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, resolve_claim_prefix, select_profiles, template_of
+from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, resolve_claim_prefix, select_profiles, semantic_template_of, template_of
 from plan_primitive_workers import DEFAULT_INTEGRATION_COMMIT_THRESHOLD, build_worker_plan, load_claimed_keys, plan_workers
 from compile_oracle_effects import return_target_hint
 
@@ -158,6 +158,20 @@ class OracleCompilerTests(unittest.TestCase):
     def test_bounds_open_cluster_shape(self) -> None:
         self.assertEqual(cluster_text("Pay {2}{G}, then do something unusual."), "pay {cost}, then do something unusual")
         self.assertEqual(cluster_text("Choose one �"), "choose <n> <mode>")
+
+    def test_semantic_template_reuses_parameterized_draw_wording(self) -> None:
+        first = semantic_template_of("Draw a card.")
+        second = semantic_template_of("Draw three cards.")
+        self.assertEqual(first, second)
+        self.assertTrue(first.startswith("oracle:draw|"))
+
+    def test_blocked_loader_can_opt_into_semantic_clusters(self) -> None:
+        profiles = [
+            {"oracle_id": "a", "name": "A", "fullyImplemented": False, "unimplementedText": ["Draw a card."]},
+            {"oracle_id": "b", "name": "B", "fullyImplemented": False, "unimplementedText": ["Draw two cards."]},
+        ]
+        blocked = load_blocked_cards(profiles, semantic_clusters=True)
+        self.assertEqual(blocked[0]["templates"], blocked[1]["templates"])
 
     def test_treats_supported_keyword_lines_as_known_primitives(self) -> None:
         result = classify("Flying, vigilance")
