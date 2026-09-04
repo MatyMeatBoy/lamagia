@@ -10,6 +10,7 @@ When a compact IR is supplied, `Reusable atoms` are navigational hints only; exa
 - Memory budget: **2 GB** (256 MB reserved per worker)
 - Maximum cards per commit batch: **20**
 - Integrate fork commits only after **11** are available (unless explicitly overridden)
+- Review payload mode: **legacy-payload-with-compositional-hints**
 
 ## Worker 1
 
