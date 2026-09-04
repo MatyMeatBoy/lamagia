@@ -25173,7 +25173,7 @@ Ediciones: **708** · pertenencias únicas: **86,819** · implementadas: **12,37
 - [ ] Behemoth Sledge — `00573e77-8ff6-4acb-8683-8827d965288f`
 - [ ] Blood Rites — `69757aaf-182e-41a0-a5b4-4404e4c81c45`
 - [ ] Blue Sun's Zenith — `613a41b8-0b4f-4995-bf1e-ca41f96e6438`
-- [ ] Boros Charm — `2679d0dd-ba30-4a1c-b6a0-b3ac6c790496`
+- [x] Boros Charm — `2679d0dd-ba30-4a1c-b6a0-b3ac6c790496`
 - [ ] Borrowing 100,000 Arrows — `a3f10772-d055-419d-a535-4f094eaf437c`
 - [ ] Brooding Saurian — `2fb7f844-edaf-43ef-9121-318baf9ec9ce`
 - [ ] Capricious Efreet — `9abd2286-23e9-49cd-be53-39423890f35c`
