@@ -2621,14 +2621,16 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   const cost = flashback ? profile.flashbackCost : profile.cost;
+  const flashbackLifeCost = flashback ? profile.flashbackLifeCost : 0;
   if (flashback && (profile.isPermanent || !profile.flashbackCost)) return { legal: false };
+  if (flashback && flashbackLifeCost > player.life) return { legal: false };
   if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
   if (!cost) return { legal: false };
   if (!Number.isInteger(variableValue) || variableValue < 0) return { legal: false, note: "El valor de X debe ser un entero no negativo." };
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = fromCommandZone ? commanderTax(player, card.instance_id) : 0;
-  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state });
+  const plan = planManaPayment(cost, flashbackLifeCost ? { ...player, life: player.life - flashbackLifeCost } : player, { additionalGeneric, variableValue, state });
   if (!plan) return { legal: false };
   const modal = profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -3371,9 +3373,11 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
 
   const profile = cardProfile(card);
   const cost = fromGraveyard ? profile.flashbackCost : profile.cost;
+  const flashbackLifeCost = fromGraveyard ? profile.flashbackLifeCost : 0;
   if (!cost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
+  if (fromGraveyard && flashbackLifeCost > player.life) throw new Error(`No tienes suficientes vidas para lanzar ${card.name} con Flashback.`);
   const additionalGeneric = fromCommand ? commanderTax(player, card.instance_id) : 0;
-  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state });
+  const plan = planManaPayment(cost, flashbackLifeCost ? { ...player, life: player.life - flashbackLifeCost } : player, { additionalGeneric, variableValue: action.variableValue ?? 0, state });
   if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
@@ -3387,12 +3391,12 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   }
 
   let next = applyManaPlan(state, seat, plan);
-  const payment = payCost(cost, playerAt(next, seat).manaPool, { additionalGeneric, availableLife: playerAt(next, seat).life });
+  const payment = payCost(cost, playerAt(next, seat).manaPool, { additionalGeneric, availableLife: playerAt(next, seat).life - flashbackLifeCost });
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
   next = withPlayer(next, seat, (current) => ({
     ...current,
     manaPool: payment.remaining,
-    life: current.life - payment.lifePaid,
+    life: current.life - payment.lifePaid - flashbackLifeCost,
     hand: fromHand ? current.hand.filter((candidate) => candidate.instance_id !== card.instance_id) : current.hand,
     graveyard: fromYard ? current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id) : current.graveyard,
     commandZone: fromCommand ? current.commandZone.filter((candidate) => candidate.instance_id !== card.instance_id) : current.commandZone,

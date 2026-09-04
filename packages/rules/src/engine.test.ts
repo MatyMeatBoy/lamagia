@@ -224,6 +224,7 @@ const AZAMI_WIZARD = () => make({ name: "Library Wizard", type_line: "Creature â
 const C13_BRILLIANT_PLAN = () => make({ name: "Brilliant Plan", type_line: "Sorcery", mana_cost: "{4}{U}", cmc: 5, oracle_text: "Draw three cards.", scryfall_id: "4fc6b5a0-9a0f-4934-8a43-a0e5364832ec" });
 const C13_HARMONIZE = () => make({ name: "Harmonize", type_line: "Sorcery", mana_cost: "{2}{G}{G}", cmc: 4, oracle_text: "Draw three cards.", scryfall_id: "83da2456-0c5c-4b2b-8183-20c332566127" });
 const C13_VISION_SKEINS = () => make({ name: "Vision Skeins", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Each player draws two cards.", scryfall_id: "b4b032de-808e-4c47-ba86-ac59609378e0" });
+const C13_DEEP_ANALYSIS = () => make({ name: "Deep Analysis", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Target player draws two cards.\nFlashbackâ€”{1}{U}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)", scryfall_id: "952800af-f52c-44bf-a98b-51c5f8142dc9" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
 const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantment", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target.", scryfall_id: "89d77b63-eeee-4d8a-9622-b1ea36dc70de" });
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
@@ -357,7 +358,7 @@ function stage(state: GameState, seat: SeatId, update: (player: GameState["playe
   return { ...state, players: state.players.map((player, index) => (index === seat ? { ...player, ...update(player) } : player)) };
 }
 
-function putOnBattlefield(state: GameState, seat: SeatId, cards: CardData[], options: { sick?: boolean; tapped?: boolean } = {}): GameState {
+function putOnBattlefield(state: GameState, seat: SeatId, cards: readonly CardData[], options: { sick?: boolean; tapped?: boolean } = {}): GameState {
   const permanents = cards.map((card, index) => ({
     instance_id: `staged-${seat}-${index}-${card.name}-${Math.random().toString(36).slice(2, 8)}`,
     card: { ...card, instance_id: `staged-${seat}-${index}-${card.name}`, owner: seat },
@@ -639,7 +640,7 @@ describe("mana payment", () => {
 });
 
 describe("casting", () => {
-  function readyToCast(cards: CardData[], battlefield: CardData[], opponentHand: CardData[] = [], opponentBoard: CardData[] = []) {
+  function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[], opponentHand: readonly CardData[] = [], opponentBoard: readonly CardData[] = []) {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ hand: toHand(0, cards) }));
     game = stage(game, 1, () => ({ hand: toHand(1, opponentHand, "foe") }));
@@ -1000,6 +1001,7 @@ describe("casting", () => {
     expect(profileOf(C13_BRILLIANT_PLAN())).toMatchObject({ effects: [{ kind: "draw", amount: 3 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_HARMONIZE())).toMatchObject({ effects: [{ kind: "draw", amount: 3 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_VISION_SKEINS())).toMatchObject({ effects: [{ kind: "each-player-draw", amount: 2 }], targetKind: "none", fullyImplemented: true });
+    expect(profileOf(C13_DEEP_ANALYSIS())).toMatchObject({ effects: [{ kind: "draw-target-player", amount: 2 }], targetKind: "player", flashbackCost: { raw: "{1}{U}" }, fullyImplemented: true });
   });
 
   it("resolves C13 draw-only spells through the shared draw engine", () => {

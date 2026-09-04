@@ -482,6 +482,8 @@ export interface CardProfile {
   readonly cyclingCost: ManaCost | null;
   /** Alternative cost for casting this instant or sorcery from a graveyard. */
   readonly flashbackCost: ManaCost | null;
+  /** Additional life payment printed alongside a Flashback mana cost. */
+  readonly flashbackLifeCost: number;
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
@@ -806,14 +808,24 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
   return null;
 }
 
-function parseFlashbackCost(text: string): ManaCost | null {
+function parseFlashbackDetails(text: string): { cost: ManaCost; lifeCost: number } | null {
   for (const line of text.split("\n")) {
-    const match = /^flashback\s+(.+)$/i.exec(line.trim().replace(/\.$/, ""));
+    const match = /^flashback(?:\s+|[—–-]\s*)(.+)$/i.exec(line.trim().replace(/\.$/, ""));
     if (!match) continue;
-    const cost = parseManaCost(match[1]!.trim());
-    if (cost && !cost.hasVariable) return cost;
+    const costMatch = /^((?:\{[^}]+\})+)(?:,\s*pay\s+(\d+)\s+life)?/i.exec(match[1]!.trim());
+    if (!costMatch) continue;
+    const cost = parseManaCost(costMatch[1]!.trim());
+    if (cost && !cost.hasVariable) return { cost, lifeCost: Number(costMatch[2] ?? 0) };
   }
   return null;
+}
+
+function parseFlashbackCost(text: string): ManaCost | null {
+  return parseFlashbackDetails(text)?.cost ?? null;
+}
+
+function parseFlashbackLifeCost(text: string): number {
+  return parseFlashbackDetails(text)?.lifeCost ?? 0;
 }
 
 function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {
@@ -1597,7 +1609,7 @@ function recognizeText(text: string): RecognizedText {
     // before priority opens; it is not an unresolved spell effect.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
-    if (/^flashback\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^flashback(?:\s+|[—–-]\s*)\{[^}]+\}/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
    if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/i.test(line)) continue;
@@ -1712,6 +1724,7 @@ export function cardProfile(card: CardData): CardProfile {
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
   const flashbackCost = parseFlashbackCost(text);
+  const flashbackLifeCost = parseFlashbackLifeCost(text);
   const equipCost = parseEquipCost(text);
   const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
     ? parseEquipmentModification(text) : null;
@@ -1743,6 +1756,7 @@ export function cardProfile(card: CardData): CardProfile {
     manaAbilities,
     cyclingCost,
     flashbackCost,
+    flashbackLifeCost,
     equipCost,
     equipmentModification,
     staticKeywordGrants,
