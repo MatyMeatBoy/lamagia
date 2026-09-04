@@ -170,6 +170,7 @@ export interface TriggerInstance {
  */
 export type GameEvent =
   | { readonly kind: "enters-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "leaves-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
@@ -827,6 +828,14 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
     ...player,
     battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
   }));
+  // Rule 603.6c-d: leaves-the-battlefield triggers use the object's last
+  // known information, before commander/token replacements are applied.
+  next = raiseEvent(next, {
+    kind: "leaves-battlefield",
+    permanentId: permanent.instance_id,
+    controller: permanent.controller,
+    card: permanent.card
+  }, [permanent]);
   if (permanent.isCommander) {
     // Rule 903.9: the owner may put the commander into the command zone instead.
     next = withPlayer(next, ownerSeat, (player) => ({ ...player, commandZone: [...player.commandZone, permanent.card] }));
@@ -994,6 +1003,7 @@ function triggerMatches(
   const objectIsCreature = isCreature(cardProfile(object.card));
   switch (subject) {
     case "self": return isSelf;
+    case "self-or-another-creature-you-control": return objectIsCreature && object.controller === watcher.controller;
     // Rule 109.5: "another" excludes the object the ability is printed on.
     case "another-creature-you-control": return !isSelf && objectIsCreature && object.controller === watcher.controller;
     case "another-permanent-you-control": return !isSelf && cardProfile(object.card).isPermanent && object.controller === watcher.controller;
@@ -1016,6 +1026,7 @@ function causeOf(state: GameState, event: GameEvent): string {
   const object = eventObject(event);
   switch (event.kind) {
     case "enters-battlefield": return `${object!.card.name} entra al campo de batalla`;
+    case "leaves-battlefield": return `${object!.card.name} deja el campo de batalla`;
     case "dies": return `${object!.card.name} muere`;
     case "attacks": return `${object!.card.name} ataca`;
     case "blocks": return `${object!.card.name} bloquea`;
