@@ -1112,6 +1112,16 @@ scenario tests cover accept/decline imprint, payer identity, and hiding an
 unaffordable payment action. Integrate the complete batch only after validation;
 do not import stale handoff snapshots or untracked user folders.
 
+### Integrator checkpoint: C13 trigger batch accepted (2026-09-04)
+
+Integrated the 12-commit Gahiji, Guttersnipe, and Fecundity batch. It adds
+opponent-specific attack subjects, instant/sorcery spell triggers, and routes
+Fecundity's optional draw to the controller of the creature that died. Coverage
+was regenerated locally. Validation: `npm run check` PASS; `npm test` PASS
+(**337 rules tests**, simulator, **38 Oracle Python tests**). C13 is now
+**168/356 (47.2%)**, 188 pending; global export **8,047/38,711** and filtered
+map **21.7%**.
+
 ### Integrator checkpoint: C13 Charm batch accepted (2026-09-04)
 
 Integrated the 13-commit batch for Boros, Selesnya, Azorius, and Naya Charm
