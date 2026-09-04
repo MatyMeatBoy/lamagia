@@ -214,8 +214,8 @@ describe("flashback parsing", () => {
       oracle_text: "Create thirteen tapped 2/2 black Zombie creature tokens.\nFlashback {7}{B}{B}"
     }));
     expect(profile.flashbackCost?.raw).toBe("{7}{B}{B}");
-    expect(profile.unimplementedText).toContain("Flashback {7}{B}{B}");
-    expect(profile.fullyImplemented).toBe(false);
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile.fullyImplemented).toBe(true);
   });
 });
 
