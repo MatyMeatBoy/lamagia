@@ -149,6 +149,8 @@ export interface StackObject {
   /** The spell was cast for its kicker cost (CR 702.33). */
   readonly kicked?: boolean;
   readonly evoked?: boolean;
+  /** Cast from the graveyard via Flashback — exiles on leaving the stack (CR 702.34). */
+  readonly fromFlashback?: boolean;
   /** Selected `Choose one` mode, when the spell has supported modal text. */
   readonly selectedEffect?: SpellEffect;
   /** Present when this is a triggered ability rather than a spell. */
@@ -2495,6 +2497,9 @@ function resolveTop(state: GameState): GameState {
   if (!object) return state;
   let next: GameState = { ...state, stack: state.stack.slice(0, -1) };
   const profile = cardProfile(object.card);
+  // Flashback (CR 702.34) sends the card to exile instead of the graveyard when it leaves the stack.
+  const retireZone: "graveyard" | "exile" = object.fromFlashback ? "exile" : "graveyard";
+  const retire = (s: GameState): GameState => withPlayer(s, object.card.owner, (player) => ({ ...player, [retireZone]: [...player[retireZone], object.card] }));
 
   if (object.countered) {
     if (object.trigger) return logged(next, object.controller, `Se contrarresta la habilidad disparada de ${object.card.name}.`);
@@ -2678,7 +2683,7 @@ function resolveTop(state: GameState): GameState {
   if (retire?.kind === "exile-self") {
     return withPlayer(next, object.card.owner, (player) => ({ ...player, exile: [...player.exile, object.card] }));
   }
-  if (retire?.kind === "shuffle-self-into-library") {
+  if (selfRetire?.kind === "shuffle-self-into-library") {
     const shuffled = shuffle([...playerAt(next, object.card.owner).library, object.card], next.rngState);
     return withPlayer({ ...next, rngState: shuffled.state }, object.card.owner, (player) => ({ ...player, library: shuffled.items }));
   }
@@ -3669,7 +3674,8 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     countered: false,
     ...(selectedEffect ? { selectedEffect } : {}),
     ...(kicked ? { kicked: true } : {}),
-    ...(evoked ? { evoked: true } : {})
+    ...(evoked ? { evoked: true } : {}),
+    ...(fromFlashback ? { fromFlashback: true } : {})
   };
   // After putting an object on the stack its controller receives priority again (rule 117.3c).
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
