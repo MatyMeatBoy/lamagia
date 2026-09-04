@@ -131,6 +131,32 @@ def load_blocked_cards(profiles: Iterable[dict[str, Any]]) -> list[dict[str, Any
     return blocked
 
 
+def deck_oracle_ids(decks_path: Path, set_code: str) -> set[str]:
+    """Return stable identities in one product scope, including printings without oracle IDs."""
+    payload = json.loads(decks_path.read_text(encoding="utf-8"))
+    wanted = set_code.casefold()
+    identities: set[str] = set()
+    for deck in payload.get("decks", []):
+        if str(deck.get("set_code", "")).casefold() != wanted:
+            continue
+        for card in deck.get("cards", []):
+            identity = card.get("oracle_id") or card.get("scryfall_id")
+            if identity:
+                identities.add(str(identity))
+    return identities
+
+
+def select_profiles(profiles: Iterable[dict[str, Any]], identities: set[str] | None) -> list[dict[str, Any]]:
+    """Filter exported profiles by oracle ID, accepting a printing ID as a fallback."""
+    selected = list(profiles)
+    if identities is None:
+        return selected
+    return [
+        profile for profile in selected
+        if {str(profile.get("oracle_id") or ""), str(profile.get("scryfall_id") or "")} & identities
+    ]
+
+
 def build_roadmap(blocked: list[dict[str, Any]], top: int, examples: int = 4) -> list[dict[str, Any]]:
     """Greedy set cover over template -> cards, ranked by cards actually finished.
 
@@ -159,14 +185,15 @@ def build_roadmap(blocked: list[dict[str, Any]], top: int, examples: int = 4) ->
         best_template: str | None = None
         best_unlocked: tuple[int, ...] = ()
         best_score = (-1, -1)
-        for template, indices in by_template.items():
+        for template in sorted(by_template):
+            indices = by_template[template]
             unlocked = tuple(index for index in indices if len(remaining[index]) == 1)
             # Cards finished decides the order. When nothing is finished yet, the
             # tie-break is how many cards the template blocks: retiring the widest
             # blocker is what turns other templates into last blockers, which is
             # the whole reason this is a set cover and not a frequency table.
             score = (len(unlocked), len(indices))
-            if score > best_score:
+            if score > best_score or (score == best_score and (best_template is None or template < best_template)):
                 best_template, best_unlocked, best_score = template, unlocked, score
         if best_template is None:
             break
@@ -198,7 +225,7 @@ def build_roadmap(blocked: list[dict[str, Any]], top: int, examples: int = 4) ->
     return roadmap
 
 
-def render_document(roadmap: list[dict[str, Any]], stats: dict[str, Any], claim_prefix: str) -> str:
+def render_document(roadmap: list[dict[str, Any]], stats: dict[str, Any], claim_prefix: str, scope: str | None = None) -> str:
     """Render the queue as a work order a contributor can pick up cold."""
     lines = [
         "# Primitive roadmap",
@@ -216,6 +243,7 @@ def render_document(roadmap: list[dict[str, Any]], stats: dict[str, Any], claim_
         f"- Unfinished: **{stats['blocked']:,}**, of which **{stats['one_line_away']:,}**"
         " are a single line away",
         f"- This queue's {len(roadmap)} entries would finish **{stats['queue_unlocks']:,}** more cards",
+        *( [f"- Scope: **{scope}**"] if scope else [] ),
         "",
         "## Queue",
         "",
@@ -259,10 +287,13 @@ def main() -> None:
     parser.add_argument("--prompt-output", type=Path, default=None, help="Markdown work order to write.")
     parser.add_argument("--top", type=int, default=40, help="How many primitives to schedule.")
     parser.add_argument("--claim-prefix", default="c14", help="Prefix for generated claim keys.")
+    parser.add_argument("--decks", type=Path, default=Path("data/decks/commander-precons.json"), help="Deck JSON used by --set-code.")
+    parser.add_argument("--set-code", default=None, help="Limit the roadmap to cards in this product/set code.")
     args = parser.parse_args()
 
     payload = json.loads(args.profiles.read_text(encoding="utf-8"))
-    profiles = payload["profiles"]
+    scope_ids = deck_oracle_ids(args.decks, args.set_code) if args.set_code else None
+    profiles = select_profiles(payload["profiles"], scope_ids)
     blocked = load_blocked_cards(profiles)
     roadmap = build_roadmap(blocked, args.top)
 
@@ -284,6 +315,7 @@ def main() -> None:
                 "source": str(args.profiles),
                 "generated_at": datetime.now(UTC).isoformat(),
                 "claim_prefix": args.claim_prefix,
+                "scope": args.set_code,
                 "stats": stats,
                 "roadmap": roadmap,
             },
@@ -295,7 +327,7 @@ def main() -> None:
     )
     if args.prompt_output:
         args.prompt_output.parent.mkdir(parents=True, exist_ok=True)
-        args.prompt_output.write_text(render_document(roadmap, stats, args.claim_prefix), encoding="utf-8")
+        args.prompt_output.write_text(render_document(roadmap, stats, args.claim_prefix, args.set_code), encoding="utf-8")
 
     print(
         f"Roadmap written: {len(roadmap)} primitives finishing {stats['queue_unlocks']} cards "

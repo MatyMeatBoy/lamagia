@@ -391,13 +391,25 @@ npm install
 npm run dev:server        # Fastify + Socket.IO on http://localhost:8787
 npm run dev               # Vite client on http://localhost:5173
 npm run check             # build rules, then typecheck rules/client/server
-npm test                  # 121 Vitest specs + Python smoke tests
+npm test                  # rules Vitest specs + Python smoke tests
 npm run simulate:engine   # 200 seeded games through the real engine
 npm run rules:pool:sync   # 1,500-card EDHREC popularity pool in data/rules
 npm run rules:compile     # 38k-card rules-family inventory in data/rules
 npm run rules:engine:export # actual engine profile for each unique card
 npm run rules:roadmap     # rank the primitives that finish the most cards next
+npm run rules:roadmap:c13  # same ROI queue limited to Commander 2013
 npm run build             # production builds
+```
+
+`docs/PRIMITIVE_ROADMAP_C13.md` is the current C13 work queue. Regenerate it
+after each integrated batch; contributors claim only disjoint entries and use
+the listed `oracle_id`s. The public progress map is generated from the slim
+`site/coverage.json` snapshot and deployed by `.github/workflows/pages.yml` on
+push to `main` or `master`; refresh the snapshot after a coverage change with:
+
+```powershell
+python tools/rules/export_set_coverage.py --catalog data/catalog/prossh.sqlite --profiles data/rules/engine-card-profiles.json --output data/rules/set-coverage.json --markdown data/rules/set-coverage-current.md
+python tools/rules/build_progress_site.py --input data/rules/set-coverage.json --output site/coverage.json
 ```
 
 Generate data in this order (a fresh clone has none):

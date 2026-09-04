@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>lamagia · implementation map</title>
+  <style>
+    :root { color-scheme: dark; --bg:#06100b; --panel:#10261b; --line:#28553b; --text:#e6eee8; --muted:#91a69a; --gold:#e6bf62; --ok:#66d39b; }
+    * { box-sizing:border-box } body { margin:0; background:radial-gradient(circle at 20% 0%,#173a27 0,#06100b 45%); color:var(--text); font:15px system-ui,sans-serif; }
+    main { max-width:1100px; margin:auto; padding:42px 20px 64px } h1 { margin:0 0 6px; color:var(--gold); letter-spacing:.02em } p { color:var(--muted) }
+    .summary,.toolbar,.row { border:1px solid var(--line); background:#0d2118cc; border-radius:12px } .summary { padding:18px; margin:24px 0 16px; display:flex; gap:24px; flex-wrap:wrap } .metric b { display:block; font-size:25px; color:var(--gold) } .metric small { color:var(--muted) }
+    .toolbar { padding:12px; display:flex; gap:10px; flex-wrap:wrap; position:sticky; top:10px; z-index:1; backdrop-filter:blur(8px) } input,select { background:#07130d; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px; min-width:180px } input { flex:1 }
+    #list { display:grid; gap:8px; margin-top:16px } .row { padding:12px 14px; display:grid; grid-template-columns:minmax(220px,2fr) 1fr 110px; gap:12px; align-items:center } .name b { display:block } .name small,.count { color:var(--muted) } .track { height:9px; border-radius:9px; background:#07130d; overflow:hidden; border:1px solid #1e422e } .track i { display:block; height:100%; background:linear-gradient(90deg,#3c9d6b,var(--ok)); border-radius:inherit } .pct { text-align:right; color:var(--gold); font-weight:700 } #status { margin:14px 0; color:var(--muted) }
+    @media (max-width:700px) { .row { grid-template-columns:1fr 72px } .row .track { grid-column:1 / 2 } .pct { grid-column:2; grid-row:2 } }
+  </style>
+</head>
+<body><main>
+  <h1>lamagia</h1><p>Public implementation map · engine coverage by edition</p>
+  <section class="summary" id="summary">Loading…</section>
+  <section class="toolbar"><input id="query" placeholder="Filter editions or codes"><select id="group"><option value="">All groups</option></select><select id="subgroup"><option value="">All subgroups</option></select></section>
+  <div id="status"></div><section id="list"></section>
+</main><script>
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  let data = {sets:[]};
+  const query = document.querySelector('#query'), group = document.querySelector('#group'), subgroup = document.querySelector('#subgroup');
+  function options(select, values, all) { select.innerHTML = `<option value="">${all}</option>` + values.sort((a,b)=>a.localeCompare(b)).map(v=>`<option>${esc(v)}</option>`).join(''); }
+  function render() {
+    const needle = query.value.trim().toLocaleLowerCase(), g = group.value, sg = subgroup.value;
+    const rows = data.sets.filter(s => (!needle || `${s.name} ${s.code}`.toLocaleLowerCase().includes(needle)) && (!g || s.group === g) && (!sg || s.subgroup === sg));
+    document.querySelector('#status').textContent = `${rows.length.toLocaleString()} editions · ordered Alpha → newest`;
+    document.querySelector('#list').innerHTML = rows.map(s => `<article class="row"><div class="name"><b>${esc(s.name)}</b><small>${esc(String(s.code).toUpperCase())} · ${esc(s.group)} / ${esc(s.subgroup)} · ${esc(s.releasedAt)}</small></div><div><div class="track"><i style="width:${Math.max(0,Math.min(100,Number(s.percentage)||0))}%"></i></div><div class="count">${s.implemented.toLocaleString()} / ${s.uniqueCards.toLocaleString()} cards</div></div><div class="pct">${Number(s.percentage).toFixed(1)}%</div></article>`).join('');
+  }
+  [query,group,subgroup].forEach(el => el.addEventListener('input', render));
+  fetch('./coverage.json').then(r=>r.json()).then(json=>{ data=json; document.querySelector('#summary').innerHTML=`<div class="metric"><b>${Number(json.percentage).toFixed(1)}%</b><small>global</small></div><div class="metric"><b>${json.implementedMembershipCount.toLocaleString()}</b><small>implemented memberships</small></div><div class="metric"><b>${json.setCount.toLocaleString()}</b><small>editions tracked</small></div>`; options(group,[...new Set(data.sets.map(s=>s.group).filter(Boolean))],'All groups'); options(subgroup,[...new Set(data.sets.map(s=>s.subgroup).filter(Boolean))],'All subgroups'); render(); }).catch(()=>{document.querySelector('#summary').textContent='Coverage data unavailable.';});
+</script></body></html>

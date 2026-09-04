@@ -7,7 +7,7 @@ from pathlib import Path
 
 from compile_oracle_effects import DEFAULT_COMMIT_CARD_LIMIT, ORACLE_IR_PARSER_VERSION, card_fingerprint, classify, cluster_text, effective_worker_count, load_card_cache, mana_ability_hint, operand_hints, primitive_cluster_inventory, save_card_cache, search_criterion_hint
 from export_set_coverage import product_group
-from plan_primitive_roadmap import build_roadmap, claim_key, load_blocked_cards, template_of
+from plan_primitive_roadmap import build_roadmap, claim_key, deck_oracle_ids, load_blocked_cards, select_profiles, template_of
 from plan_primitive_workers import plan_workers
 
 
@@ -217,6 +217,25 @@ class PrimitiveRoadmapTests(unittest.TestCase):
         first = claim_key("c14", "{cost}: ~ gets +<n>/+<n> until end of turn", taken)
         second = claim_key("c14", "{cost}: ~ gets +<n>/-<n> until end of turn", taken)
         self.assertNotEqual(first, second)
+
+    def test_roadmap_order_is_deterministic_when_scores_tie(self) -> None:
+        blocked = [
+            {"oracle_id": "a", "name": "A", "templates": {"zeta", "shared"}, "lines": ["zeta", "shared"]},
+            {"oracle_id": "b", "name": "B", "templates": {"alpha", "shared"}, "lines": ["alpha", "shared"]},
+        ]
+        first = [entry["template"] for entry in build_roadmap(blocked, top=3)]
+        second = [entry["template"] for entry in build_roadmap(blocked, top=3)]
+        self.assertEqual(first, second)
+
+    def test_selects_profiles_for_a_set_scope_by_oracle_or_printing_id(self) -> None:
+        profiles = [
+            {"oracle_id": "oracle-a", "scryfall_id": "printing-a"},
+            {"oracle_id": "oracle-b", "scryfall_id": "printing-b"},
+        ]
+        self.assertEqual(
+            [profile["oracle_id"] for profile in select_profiles(profiles, {"oracle-a", "printing-b"})],
+            ["oracle-a", "oracle-b"],
+        )
 
 if __name__ == "__main__":
     unittest.main()
