@@ -1571,6 +1571,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
         library: [card, ...current.library]
       }));
     }
+    case "exile-target-permanent-card-from-graveyard": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card || !cardProfile(card).isPermanent) return state;
+      return withPlayer(state, target.seat, (current) => ({
+        ...current,
+        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id),
+        exile: [...current.exile, card]
+      }));
+    }
     case "return-target-card-to-library-bottom": {
       const target = object.targets[0];
       if (!target || target.kind !== "graveyard-card") return state;
