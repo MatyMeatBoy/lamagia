@@ -2894,7 +2894,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const values = cost.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
     for (const variableValue of values) for (const mode of modes) {
-      const check = castableCard(state, seat, card, false, variableValue, mode, true);
+      const check = castableCard(state, seat, card, false, variableValue, mode, false, false, true);
       if (!check.legal) continue;
       const modal = mode === undefined ? undefined : profile.modalChoices[mode];
       actions.push({
@@ -3254,7 +3254,7 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     ...next,
     pendingChoice: {
       type: "search-library", seat, sourceId: `cycle:${next.version}:${card.instance_id}`,
-      optionIds, sourceCard: card, search, returnSourceToGraveyard: false
+      optionIds, sourceCard: card, search, returnSourceToGraveyard: false, exileSourceAfterResolution: false
     }
   }, seat, `${player.name} usa ${searchAbility.text} de ${card.name}.`);
 }

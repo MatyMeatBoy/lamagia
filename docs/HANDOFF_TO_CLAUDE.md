@@ -1167,3 +1167,16 @@ these cards are outside that precon's unique-card list; the global export is
 This batch's implementation is validated below after the complete commit set is
 processed; Rhystic Study uses the exact opponent who drew the card as payer,
 and its accept action is omitted when that player cannot pay.
+
+### Integrator checkpoint: C13 Flashback batch accepted (2026-09-04)
+
+Integrated the 11-commit Flashback batch from `codex/c13-equipment-cluster`.
+Flashback now parses as reusable card metadata, exposes legal graveyard casts,
+uses the alternative mana cost, and exiles the spell after resolution or when
+countered. Army of the Damned is now counted as implemented; this closes the
+previous reprint-equivalence gap without a card-name-specific rule.
+
+Validation: `npm run check` PASS; `npm test` PASS (**355 rules tests**,
+simulator, **38 Oracle Python tests**). C13 is **169/356 implemented (47.5%)**;
+global export is **8,111/38,711**. The fork remains on disjoint claims and must
+accumulate more than 10 commits before the next integration notice.
