@@ -63,6 +63,8 @@ export interface Permanent {
   /** Layer 7c modifications that expire in the cleanup step. */
   readonly powerModifier: number;
   readonly toughnessModifier: number;
+  /** Keyword effects from spells/abilities that expire during cleanup. */
+  readonly temporaryKeywords?: readonly EnforcedKeyword[];
   /** The creature this Equipment is attached to, when it is equipped. */
   readonly attachedTo?: string;
   readonly isCommander: boolean;
@@ -374,6 +376,7 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
   }).at(-1);
   if (level?.keywords.includes(keyword)) return true;
+  if (permanent.temporaryKeywords?.includes(keyword)) return true;
   return attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword));
 }
 
@@ -804,6 +807,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     counters: Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
     powerModifier: 0,
     toughnessModifier: 0,
+    temporaryKeywords: [],
     isCommander
   };
   let next = withPlayer(state, seat, (player) => ({
@@ -1154,6 +1158,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === permanent.instance_id);
+    }
+    case "grant-target-creature-keyword": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, temporaryKeywords: [...new Set([...(candidate.temporaryKeywords ?? []), effect.keyword])] }
+          : candidate)
+      }));
     }
     case "add-counter-target-creature": {
       const target = object.targets[0];
@@ -1895,7 +1911,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         ...next,
         players: next.players.map((current) => ({
           ...current,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0 }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [] }))
         }))
       };
       break;
