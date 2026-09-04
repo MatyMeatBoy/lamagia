@@ -208,7 +208,7 @@ export interface EquipmentModification {
 }
 
 export interface StaticKeywordGrant {
-  readonly scope: "creatures-you-control" | "other-creatures-you-control";
+  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
   readonly keyword: EnforcedKeyword;
 }
 
@@ -786,8 +786,8 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
 }
 
 function parseStaticKeywordGrant(line: string): StaticKeywordGrant | null {
-  const match = /^(other )?creatures you control (?:have|gain) (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear)$/i.exec(line.trim().replace(/\.$/, ""));
-  return match ? { scope: match[1] ? "other-creatures-you-control" : "creatures-you-control", keyword: match[2]!.toLowerCase() as EnforcedKeyword } : null;
+  const match = /^(?:(other )?creatures you control|all creatures) (?:have|gain) (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear)$/i.exec(line.trim().replace(/\.$/, ""));
+  return match ? { scope: match[1] ? "other-creatures-you-control" : /^all creatures/i.test(match[0]!) ? "all-creatures" : "creatures-you-control", keyword: match[2]!.toLowerCase() as EnforcedKeyword } : null;
 }
 
 function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {

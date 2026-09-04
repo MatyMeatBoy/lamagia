@@ -409,9 +409,9 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
   }).at(-1);
   if (level?.keywords.includes(keyword)) return true;
   if (permanent.temporaryKeywords?.includes(keyword)) return true;
-  if (isCreature(profile) && allPermanents(state).some((source) => source.controller === permanent.controller
-    && cardProfile(source.card).staticKeywordGrants.some((grant) => grant.keyword === keyword
-      && (grant.scope === "creatures-you-control" || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))))) return true;
+  if (isCreature(profile) && allPermanents(state).some((source) => cardProfile(source.card).staticKeywordGrants.some((grant) => grant.keyword === keyword
+      && (grant.scope === "all-creatures" || (source.controller === permanent.controller
+        && (grant.scope === "creatures-you-control" || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))))))) return true;
   return attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword));
 }
 
