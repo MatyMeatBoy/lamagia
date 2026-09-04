@@ -471,6 +471,8 @@ export interface CardProfile {
   readonly targetKind: TargetKind;
   readonly kickerCost: ManaCost | null;
   readonly kickedEffects: readonly SpellEffect[];
+  /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
+  readonly costReducesPerBoardCreature: number;
   readonly entersTapped: EntersTappedRule;
   /** Printed attack/block restrictions and landwalk evasion. */
   readonly combatRules: CombatRules;
@@ -1465,6 +1467,8 @@ function recognizeText(text: string): RecognizedText {
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
+    // Board-scaled self cost reduction is consumed by cardProfile, not resolved here.
+    if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
     if (/^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
@@ -1623,6 +1627,9 @@ export function cardProfile(card: CardData): CardProfile {
   const cyclingCost = parseCyclingCost(text);
   const cyclingSearches = parseCyclingSearches(text);
   const equipCost = parseEquipCost(text);
+  // "~ costs {N} less to cast for each creature on the battlefield" (Blasphemous Act, CR 118.9).
+  const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
+  const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
   const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
     ? parseEquipmentModification(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
@@ -1680,6 +1687,7 @@ export function cardProfile(card: CardData): CardProfile {
     targetKind: recognized.targetKind,
     kickerCost: recognized.kickerCost ?? null,
     kickedEffects: recognized.kickedEffects ?? [],
+    costReducesPerBoardCreature,
     combatRules,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     entersWithCounters: isPermanent ? parseEntersWithCounters(text) : [],

@@ -844,3 +844,13 @@ failures). Engine catalog fully-implemented 7,529 -> 7,655; Commander 2014
 Validation: check PASS; 271 rules tests; oracle 25 OK; simulate:engine 200
 games 162 finished 0 failures. Catalog 7,655 -> 7,670; Commander 2014 104 ->
 107/337.
+
+### C14 batch4: board-scaled self cost reduction
+
+`~ costs {N} less to cast for each creature on the battlefield` (Blasphemous
+Act, CR 118.9). `planManaPayment` / `payCost` now accept a negative
+`additionalGeneric` (clamped to 0 owed generic), and cast paths subtract
+`costReducesPerBoardCreature * creatures`.
+
+Validation: check PASS; 272 tests; oracle 25 OK; simulate 200 games 162 finished
+0 failures. Catalog 7,670 -> 7,672; Commander 2014 107 -> 108/337.

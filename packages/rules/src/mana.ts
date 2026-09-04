@@ -177,7 +177,7 @@ export function payCost(cost: ManaCost, pool: ManaPool, options: PaymentOptions 
   const variableValue = Math.max(0, Math.floor(options.variableValue ?? 0));
   const availableLife = options.availableLife ?? 0;
   const { choices, generic } = requirementsOf(cost, variableValue);
-  const owedGeneric = generic + Math.max(0, options.additionalGeneric ?? 0);
+  const owedGeneric = Math.max(0, generic + (options.additionalGeneric ?? 0));
 
   // Fewest options first keeps the search shallow and the result stable.
   const order = choices

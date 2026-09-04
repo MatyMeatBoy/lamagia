@@ -1800,6 +1800,19 @@ describe("kicker and optional-cost triggers", () => {
     expect(game.players[0]!.graveyard.some((c) => c.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("reduces a spell's generic cost by {N} per creature on the battlefield", () => {
+    const act = () => make({ name: "Blasphemous Act", type_line: "Sorcery", mana_cost: "{8}{R}", cmc: 9, oracle_text: "This spell costs {1} less to cast for each creature on the battlefield.\nBlasphemous Act deals 13 damage to each creature." });
+    expect(profileOf(act()).costReducesPerBoardCreature).toBe(1);
+    expect(profileOf(act()).fullyImplemented).toBe(true);
+    // Six creatures out: {8}{R} becomes {2}{R}, payable with three Mountains.
+    let game = ready([act()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), BEAR(), BEAR(), BEAR()], [BEAR(), BEAR(), BEAR()]);
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[0]!.graveyard.some((c) => c.name === "Blasphemous Act")).toBe(true);
+  });
+
   it("recognises plain 'Destroy target permanent' and self-bounce ETB triggers", () => {
     const obelisk = () => make({ name: "Unstable Obelisk", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "{T}: Add {C}.\n{7}, {T}, Sacrifice Unstable Obelisk: Destroy target permanent." });
     const lion = () => make({ name: "Whitemane Lion", type_line: "Creature — Cat", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Flash\nWhen Whitemane Lion enters the battlefield, return a creature you control to its owner's hand." });
