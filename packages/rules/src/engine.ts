@@ -1415,6 +1415,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "xathrid-upkeep": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const fodder = playerAt(state, controller).battlefield.filter((permanent) =>
+        isCreature(cardProfile(permanent.card)) && permanent.instance_id !== sourceId);
+      if (fodder.length) {
+        const victim = [...fodder].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
+        const power = Math.max(0, powerOf(victim, state));
+        let next = movePermanentToZone(state, victim, "graveyard");
+        for (const player of next.players) {
+          if (player.seat === controller || player.lost) continue;
+          next = loseLife(next, player.seat, power);
+        }
+        return logged(next, controller, `${sourceName}: sacrifica ${victim.card.name}; cada oponente pierde ${power} vidas.`);
+      }
+      let next = loseLife(state, controller, effect.fallbackLife);
+      const src = findPermanent(next, sourceId);
+      if (src) next = withPlayer(next, src.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === sourceId ? { ...permanent, tapped: true } : permanent)
+      }));
+      return logged(next, controller, `${sourceName}: no hay criatura que sacrificar; se gira y pierdes ${effect.fallbackLife} vidas.`);
+    }
     case "return-all-your-graveyard-to-hand": {
       const player = playerAt(state, controller);
       if (!player.graveyard.length) return state;

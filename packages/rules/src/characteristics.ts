@@ -350,6 +350,7 @@ export type SpellEffect =
   | { readonly kind: "each-opponent-sacrifice-creature" }
   | { readonly kind: "syphon-mind" }
   | { readonly kind: "return-all-your-graveyard-to-hand" }
+  | { readonly kind: "xathrid-upkeep"; readonly fallbackLife: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
   | { readonly kind: "bottom-attacker-controller-gains-toughness" }
   | { readonly kind: "target-player-discard-unless-land"; readonly discard: number }
@@ -1572,6 +1573,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^each opponent loses X life, where X is your devotion to (white|blue|black|red|green)\.?\s*You gain life equal to the life lost this way\.?$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
     return { effect: { kind: "devotion-drain", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };
+  }
+  if ((match = /^sacrifice a creature other than ~, then each opponent loses life equal to the sacrificed creature's power\.\s*if you can't sacrifice a creature, tap ~ and you lose (\d+) life$/i.exec(text))) {
+    return { effect: { kind: "xathrid-upkeep", fallbackLife: Number(match[1]) }, target: "none" };
   }
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
