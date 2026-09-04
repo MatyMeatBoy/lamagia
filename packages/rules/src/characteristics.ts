@@ -357,7 +357,7 @@ export type SpellEffect =
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "attach-equipment" }
-  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield"; readonly token: TokenDefinition }
+  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source"; readonly token: TokenDefinition }
   | {
       readonly kind: "search-library";
       readonly types: readonly CardType[];
@@ -438,7 +438,8 @@ export interface TriggerDefinition {
   readonly sourceText: string;
   readonly condition?:
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
-    | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number };
+    | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number }
+    | { readonly kind: "controlled-subtype-at-least"; readonly subtype: string; readonly amount: number };
   readonly spellType?: "creature";
   /** Colour filter on a spell-cast trigger (Titania's Chosen). */
   readonly spellColor?: string;
@@ -1131,6 +1132,13 @@ function parseLandScaledToken(text: string): SpellEffect | null {
   return base?.kind === "create-token" ? { ...base, amount: "lands-you-control" } : null;
 }
 
+function parseEquipmentScaledToken(text: string): SpellEffect | null {
+  const suffix = /\s+for each equipment attached to ~$/i;
+  if (!suffix.test(text.trim())) return null;
+  const base = parseCreateToken(text.trim().replace(suffix, "").replace(/^Create a\b/i, "Create a"));
+  return base?.kind === "create-token" ? { ...base, amount: "equipment-attached-to-source" } : null;
+}
+
 function parseCreatureScaledToken(text: string): SpellEffect | null {
   const boardMatch = /\s*,?\s*where x is the number of creatures on the battlefield$/i;
   if (boardMatch.test(text.trim())) {
@@ -1656,7 +1664,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
-  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
+  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseEquipmentScaledToken(text) ?? parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
   const genericSearch = parseLibrarySearch(text);
   if (genericSearch) return { effect: genericSearch, target: "none" };
@@ -1867,9 +1875,12 @@ function recognizeText(text: string): RecognizedText {
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
+      const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? triggered.effectText)
+      const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim()
+        ?? (countCondition && countConditionAmount !== null ? countCondition[3]!.trim() : undefined) ?? triggered.effectText)
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "if it was kicked" gate (CR 702.33e).
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
@@ -1892,6 +1903,7 @@ function recognizeText(text: string): RecognizedText {
           sourceText: line,
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
+          ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
           ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),

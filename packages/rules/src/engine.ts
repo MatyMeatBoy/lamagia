@@ -1005,6 +1005,12 @@ function triggerMatches(
     if (!playerAt(state, watcher.controller).battlefield.some((permanent) => isCreature(cardProfile(permanent.card))
       && powerOf(permanent, state) >= condition.amount)) return false;
   }
+  if (condition?.kind === "controlled-subtype-at-least") {
+    const subtype = condition.subtype.toLowerCase();
+    const count = playerAt(state, watcher.controller).battlefield.filter((permanent) =>
+      cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype)).length;
+    if (count < condition.amount) return false;
+  }
   const subject = definition.subject;
 
   // Turn-structure triggers are about a player, not an object.
@@ -2001,6 +2007,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
           ? playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
         : effect.amount === "creatures-on-battlefield"
           ? allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length
+        : effect.amount === "equipment-attached-to-source"
+          ? (() => { const src = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id); return src ? attachedEquipment(state, src).length : 0; })()
         : effectAmount(effect.amount, object);
       let next = state;
       for (let index = 0; index < amount; index += 1) {
