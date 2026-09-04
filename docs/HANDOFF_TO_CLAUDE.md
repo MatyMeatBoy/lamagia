@@ -721,6 +721,17 @@ replacement effects.
 Validation: targeted engine tests PASS (164 passed, 6 skipped). Full `npm run
 check` and `npm test` are required before integration.
 
+### Commander's Arsenal progress
+
+The Arsenal work now covers Loyal Retainers' precombat legendary-creature
+activation, Mirari's Wake's creature bonus and controlled-land mana replacement,
+Command Tower's commander-color-identity restriction, Chaos Warp's owner-library
+replacement, Decree of Pain's creature sweep plus draw count, and Desertion's
+artifact/creature spell replacement to the battlefield. These use stable card
+profiles, deterministic state transitions, and scenario tests; Decree's cycling
+trigger remains explicitly unimplemented. See `docs/WORK_CLAIMS.md` for active
+claims and `docs/SET_COVERAGE.md` for the remaining Arsenal cards.
+
 ### Cooperative C13 cluster: graveyard creature return
 
 The branch recognises `Return target creature card from your graveyard to the
