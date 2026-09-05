@@ -2739,6 +2739,17 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "lose-life-event-player", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "lose-life-event-player", amount: "X" }, target: "none" };
   }
+  const damageAndLife = /^~ deals (\w+) damage to any target and you gain (\w+) life$/i.exec(text);
+  if (damageAndLife) {
+    const damage = damageAndLife[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[1]!);
+    const life = damageAndLife[2]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[2]!);
+    if (damage !== null && life !== null) {
+      return {
+        effect: { kind: "compound", effects: [{ kind: "damage-any-target", amount: damage }, { kind: "gain-life", amount: life }] },
+        target: "any"
+      };
+    }
+  }
   if ((match = /^~ deals (\w+) damage to any target$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
