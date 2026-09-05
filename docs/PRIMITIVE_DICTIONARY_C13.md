@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-04T20:48:38.487656+00:00`
+- Generated: `2026-09-05T00:29:56.017385+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **206**
+- Exported profiles in scope: **341**; fully implemented: **220**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -259,16 +259,16 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **206/341** profiles complete; **58** unfinished cards have exactly one unmatched line.
+The engine export currently marks **220/341** profiles complete; **47** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
 | --- | ---: | --- |
+| `unclaimed` | 1 | at the beginning of your end step, target opponent chosen at random gains control of ~ — Witch Hunt |
 | `unclaimed` | 1 | at the beginning of your end step, you may gain life equal to the power of target creature you control — Wall of Reverence |
+| `unclaimed` | 1 | creature spells you control with power <n> or greater can't be countered — Spellbreaker Behemoth |
 | `unclaimed` | 1 | creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you — Propaganda |
 | `unclaimed` | 1 | forecast - {cost}, reveal ~ from your hand: each player draws <n> card — Skyscribing |
-| `unclaimed` | 1 | graft <n> — Llanowar Reborn |
-| `unclaimed` | 1 | horsemanship — Lu Xun, Scholar General |
 | `unclaimed` | 1 | landfall - whenever <n> land you control enters, you may gain <n> life — Grazing Gladehart |
 | `unclaimed` | 1 | return all permanents of the color of your choice to their owners' hands — Wash Out |
 | `unclaimed` | 1 | untap all green and/or blue creatures you control during each other player's untap step — Murkfiend Liege |
@@ -279,25 +279,17 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when you cycle ~, you may have target creature gain fear until end of turn — Dirge of Dread |
 | `unclaimed` | 1 | when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way — Bane of Progress |
 | `unclaimed` | 1 | when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step — Flickerwisp |
-| `unclaimed` | 1 | when ~ enters, return target artifact card from your graveyard to your hand. you gain life equal to that card's mana value — Razor Hippogriff |
 | `unclaimed` | 1 | when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value — Phyrexian Delver |
 | `unclaimed` | 1 | when ~ enters, sacrifice it unless {cost} was spent to cast it — Azorius Herald |
 | `unclaimed` | 1 | when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~ — Dungeon Geists |
 | `unclaimed` | 1 | when ~ enters, target opponent creates <n> <n>/<n> blue faerie creature tokens with flying — Hunted Troll |
-| `unclaimed` | 1 | when ~ enters, you may return target instant or sorcery card from your graveyard to your hand — Mnemonic Wall |
-| `unclaimed` | 1 | whenever <n> creature dies, untap ~ — Goblin Sharpshooter |
-| `unclaimed` | 1 | whenever <n> creature you control enters, it deals damage equal to its power to any target — Warstorm Surge |
-| `unclaimed` | 1 | whenever <n> creature you control with power <n> or greater enters, you may have ~ deal <n> damage to any target — Where Ancients Tread |
-| `unclaimed` | 1 | whenever <n> player draws <n> card, ~ deals <n> damage to that player — Spiteful Visions |
 | `unclaimed` | 1 | whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library — Widespread Panic |
 | `unclaimed` | 1 | whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker — Stalking Vengeance |
 | `unclaimed` | 1 | whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste — Sek'Kuar, Deathkeeper |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy — Mirari |
-| `unclaimed` | 1 | whenever you gain life, target opponent loses that much life — Sanguine Bond |
 | `unclaimed` | 1 | whenever you gain life, you may pay {cost}, where <n> is less than or equal to the amount of life you gained. if you do, draw <n> cards — Well of Lost Dreams |
 | `unclaimed` | 1 | whenever you gain life, you may pay {cost}. if you do, put <n> +<n>/+<n> counter on target creature for each <n> life you gained — Cradle of Vitality |
 | `unclaimed` | 1 | whenever ~ attacks, it gets +<n>/+<n> until end of turn, where <n> is the number of lands defending player controls — Terra Ravager |
-| `unclaimed` | 1 | whenever ~ attacks, you may tap <n> untapped myr you control. if you do, ~ gets +<n>/+<n> until end of turn and deals <n> damage to the player or planeswalker it's attacking — Myr Battlesphere |
 | `unclaimed` | 1 | whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat — Serene Master |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you and that player each draw that many cards — Diviner Spirit |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you may return to your hand all creature cards that were put into your graveyard from the battlefield this turn — Fell Shepherd |
@@ -312,13 +304,10 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | {cost}, {cost}: add <n> mana of any color in your commander's color identity. if you spend this mana to cast your commander, it enters with <n> number of additional +<n>/+<n> counters on it equal to the number of times it's been cast from the command zone this game — Opal Palace |
 | `unclaimed` | 1 | {cost}, {cost}: each player discards their hand, then draws cards equal to the greatest number of cards <n> player discarded this way — Jace's Archivist |
 | `unclaimed` | 1 | {cost}, {cost}: target beast creature you control fights target creature <n> opponent controls — Contested Cliffs |
-| `unclaimed` | 1 | {cost}: creatures you control gain shroud until end of turn — Aerie Mystics |
 | `unclaimed` | 1 | {cost}: destroy target artifact or creature with mana value <n> — Deepfire Elemental |
-| `unclaimed` | 1 | {cost}: each player gains control of all creatures they own — Homeward Path |
-| `unclaimed` | 1 | {cost}: target creature with power <n> or greater gains first strike until end of turn — Rakeclaw Gargantuan |
 | `unclaimed` | 1 | {cost}: this turn, creatures can't block unless their controller pays {cost} for each blocking creature they control — War Cadence |
+| `unclaimed` | 1 | {cost}: until end of turn, creatures you control have base power and toughness <n>/<n> and gain all creature types — Mirror Entity |
 | `unclaimed` | 1 | {cost}: whenever you gain life this turn, each opponent loses that much life — Vizkopa Guildmage |
-| `unclaimed` | 1 | {cost}: ~ becomes <n> <n>/<n> white and blue bird artifact creature with flying until end of turn — Azorius Keyrune |
 | `unclaimed` | 1 | ~ can't be blocked as long as defending player controls the most creatures or is tied for the most — Hooded Horror |
 | `unclaimed` | 1 | ~ gets +<n>/+<n> as long as you have <n> or more life — Divinity of Pride |
 | `unclaimed` | 1 | ~ gets +<n>/+<n> for each creature card in your opponents' graveyards — Wight of Precinct Six |

@@ -1,24 +1,24 @@
 # lamagia — implementation handoff
 
-**Read this before changing the project.** It is an honest snapshot of the working tree as of 2026-09-04, separating what is implemented and verified from what is still product intent. Do not present anything below the "Truth boundaries" line as working.
+**Read this before changing the project.** It is an honest snapshot of the working tree as of 2026-09-05, separating what is implemented and verified from what is still product intent. Do not present anything below the "Truth boundaries" line as working.
 
 Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
-## Current published checkpoint — 2026-09-04
+## Current published checkpoint — 2026-09-05
 
 The latest source checkpoint includes verified Prowess, Changeling, Shadow,
 and Exalted primitives plus benchmark-selected compositional worker payloads;
 verify the Pages run before reporting a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 8,994 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,076 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 21,853 / 84,990 implemented (25.7%) across 685
+- **Edition memberships:** 22,538 / 84,990 implemented (26.5%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
 - **Commander 2013:** 220 / 341 unique cards (64.5%), 121 pending.
-- **Commander 2014:** 195 / 322 unique cards (60.6%), 127 pending.
+- **Commander 2014:** 196 / 322 unique cards (60.9%), 126 pending.
 - **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
   component references; 99.9% are reused across clauses. The full-catalog
   hybrid benchmark reduces worker context by 22.8% while preserving exact
@@ -29,6 +29,20 @@ Coverage numbers have two deliberate units:
 - **Batch policy:** the benchmark chooses hybrid/compact/legacy per batch;
   current full-catalog and C13 runs both choose `hybrid-payload`. Compression
   never changes implementation status.
+
+### Worker-05 rescue — 2026-09-05
+
+Integrated and pushed as `2eba2b7` from `origin/worker-05`. The batch added
+tested reusable primitives for ETB triggers, player draw/life-loss, Blood Artist
+drain, Partner/Partner with, exile-and-life-gain, shock/pain land costs, damage
+amplification, and related executor coverage. The only merge conflict was the
+generated coverage markdown; it was regenerated from the post-merge profiles.
+
+The engine matrix now passes **200/200** games. Seed 34 exposed a simulator
+accounting bug, not a lost card: `Eladamri's Call` was held in `pendingChoice`
+while its controller was eliminated. The invariant now counts that temporary
+physical card exactly once. Debug-only environment logging was removed from the
+pure rules package.
 
 Do not report the 38,711 profile catalog as implemented cards. Recompute both
 views after accepted rules commits and publish the generated `site/coverage.json`.
