@@ -71,6 +71,8 @@ export interface ManaAbility {
   readonly gainLife?: number;
   /** Static activation restriction such as Temple of the False God. */
   readonly requiresLands?: number;
+  /** "Activate only if ~ entered the battlefield this turn (or if you control a basic land)" (Hidden Lair, Mirrex). */
+  readonly activationRestriction?: { readonly enteredThisTurn: boolean; readonly orControlsBasicLand?: boolean };
   readonly text: string;
 }
 
@@ -1011,11 +1013,12 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
-function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number } | null {
+function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; activationRestriction?: { enteredThisTurn: boolean; orControlsBasicLand?: boolean } } | null {
   let remainder = effect.trim().replace(/\.$/, "");
   let gainLife: number | undefined;
   let requiresLands: number | undefined;
   let painDamage: number | undefined;
+  let activationRestriction: { enteredThisTurn: boolean; orControlsBasicLand?: boolean } | undefined;
   const gain = /\.\s*You gain (\w+) life$/i.exec(remainder);
   if (gain) {
     const amount = toNumber(gain[1]);
@@ -1041,9 +1044,23 @@ function parseManaInstruction(effect: string): { produced: ReturnType<typeof par
     requiresLands = amount;
     remainder = remainder.slice(0, restriction.index).trim();
   }
+  // "Activate only if ~ entered the battlefield this turn (or if you control
+  // a basic land)" (Hidden Lair, Mirrex): a fast-mana check gating the
+  // colored half of a two-ability land, not present on the {C} half.
+  const enteredRestriction = /\.\s*Activate only if ~ entered(?: the battlefield)? this turn(\s*or\s*if\s+you\s+control\s+a\s+basic\s+land)?$/i.exec(remainder);
+  if (enteredRestriction) {
+    activationRestriction = { enteredThisTurn: true, ...(enteredRestriction[1] ? { orControlsBasicLand: true } : {}) };
+    remainder = remainder.slice(0, enteredRestriction.index).trim();
+  }
   const produced = parseAddClause(remainder);
   return produced
-    ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }), ...(painDamage === undefined ? {} : { painDamage }) }
+    ? {
+      produced,
+      ...(gainLife === undefined ? {} : { gainLife }),
+      ...(requiresLands === undefined ? {} : { requiresLands }),
+      ...(painDamage === undefined ? {} : { painDamage }),
+      ...(activationRestriction === undefined ? {} : { activationRestriction })
+    }
     : null;
 }
 
@@ -1094,7 +1111,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // does not claim that trailing restriction is enforced.
     const instruction = parseManaInstruction(effectText) ?? (() => {
       const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
-      return produced ? { produced, gainLife: undefined, requiresLands: undefined, painDamage: undefined } : null;
+      return produced ? { produced, gainLife: undefined, requiresLands: undefined, painDamage: undefined, activationRestriction: undefined } : null;
     })();
     // "Add {C} for each <Subtype> on the battlefield / you control".
     const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(effectText.trim().replace(/\.$/, ""));
@@ -1128,6 +1145,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
+      ...(instruction.activationRestriction === undefined ? {} : { activationRestriction: instruction.activationRestriction }),
       requiresTap, lifeCost: lifeCost + (instruction.painDamage ?? 0), text: line.trim()
     });
   }

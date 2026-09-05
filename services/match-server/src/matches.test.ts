@@ -10,7 +10,7 @@ function fixture() {
   const match = getMatch(created.matchId);
   match.seatTokens.set("other", 1);
   match.state = { ...match.state, step: "precombat-main", priorityOpen: true, prioritySeat: 0, activeSeat: 0,
-    players: match.state.players.map(p => ({ ...p, autoPass: false, battlefield: [0, 1].map(i => ({ instance_id: `land-${p.seat}-${i}`, card: { ...land, instance_id: `land-${p.seat}-${i}`, owner: p.seat }, controller: p.seat, tapped: false, summoningSick: false, damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0, isCommander: false })) })) };
+    players: match.state.players.map(p => ({ ...p, autoPass: false, battlefield: [0, 1].map(i => ({ instance_id: `land-${p.seat}-${i}`, card: { ...land, instance_id: `land-${p.seat}-${i}`, owner: p.seat }, controller: p.seat, tapped: false, summoningSick: false, enteredThisTurn: false, damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0, isCommander: false })) })) };
   return created;
 }
 function tap(id: string, token: string) {

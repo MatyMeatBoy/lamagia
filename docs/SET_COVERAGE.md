@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,987** · cobertura: **27.0%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,994** · cobertura: **27.1%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -559,9 +559,9 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 | 2023-01-01 | Wizards Play Network 2023 (`PW23`) | promos | wpn-2023 | other | 11 | 3 | 8 | 27.3% |
 | 2023-01-07 | Regional Championship Qualifiers 2023 (`PR23`) | promos | regional-2023 | other | 3 | 0 | 3 | 0.0% |
 | 2023-01-13 | Dominaria Remastered (`DMR`) | masters-remastered | dominaria-remastered | other | 266 | 91 | 175 | 34.2% |
-| 2023-02-03 | Phyrexia: All Will Be One (`ONE`) | expansion | phyrexia | main | 271 | 28 | 243 | 10.3% |
+| 2023-02-03 | Phyrexia: All Will Be One (`ONE`) | expansion | phyrexia | main | 271 | 29 | 242 | 10.7% |
 | 2023-02-10 | Phyrexia: All Will Be One Commander (`ONC`) | commander | 2023 | commander | 144 | 49 | 95 | 34.0% |
-| 2023-02-10 | Phyrexia: All Will Be One Promos (`PONE`) | promos | phyrexia-all-will-be-one | other | 80 | 7 | 73 | 8.8% |
+| 2023-02-10 | Phyrexia: All Will Be One Promos (`PONE`) | promos | phyrexia-all-will-be-one | other | 80 | 8 | 72 | 10.0% |
 | 2023-02-10 | Year of the Rabbit 2023 (`PL23`) | promos | year-of-the-rabbit-2023 | other | 5 | 1 | 4 | 20.0% |
 | 2023-02-17 | Unknown Event (`UNK`) | funny-special | unknown-event | other | 506 | 15 | 491 | 3.0% |
 | 2023-02-19 | Secret Lair Promo (`SLP`) | secret-lair | secret-lair-promo | secret-lair | 52 | 13 | 39 | 25.0% |
@@ -684,7 +684,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 | 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 110 | 265 | 29.3% |
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 16 | 49 | 24.6% |
 | 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 7 | 73 | 8.8% |
-| 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 37 | 244 | 13.2% |
+| 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 42 | 239 | 14.9% |
 | 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 138 | 478 | 22.4% |
 | 2026-08-14 | The Hobbit (`HOB`) | expansion | 2020s | main | 193 | 33 | 160 | 17.1% |
 | 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | 2020s | other | 117 | 21 | 96 | 17.9% |
@@ -795,7 +795,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 | expansion | 1990s | 11 | 1573 | 326 | 1247 | 20.7% |
 | expansion | 2000s | 19 | 3082 | 604 | 2478 | 19.6% |
 | expansion | 2010s | 14 | 2735 | 637 | 2098 | 23.3% |
-| expansion | 2020s | 17 | 3739 | 528 | 3211 | 14.1% |
+| expansion | 2020s | 17 | 3739 | 533 | 3206 | 14.3% |
 | expansion | alara | 2 | 379 | 137 | 242 | 36.1% |
 | expansion | amonkhet | 1 | 272 | 82 | 190 | 30.1% |
 | expansion | bloomburrow | 1 | 280 | 37 | 243 | 13.2% |
@@ -815,7 +815,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 | expansion | mirrodin | 3 | 675 | 225 | 450 | 33.3% |
 | expansion | odyssey | 1 | 335 | 93 | 242 | 27.8% |
 | expansion | onslaught | 1 | 335 | 68 | 267 | 20.3% |
-| expansion | phyrexia | 4 | 787 | 105 | 682 | 13.3% |
+| expansion | phyrexia | 4 | 787 | 106 | 681 | 13.5% |
 | expansion | ravnica | 4 | 1081 | 321 | 760 | 29.7% |
 | expansion | strixhaven | 2 | 561 | 82 | 479 | 14.6% |
 | expansion | tarkir | 3 | 785 | 170 | 615 | 21.7% |
@@ -1108,7 +1108,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 | promos | odyssey | 1 | 1 | 0 | 1 | 0.0% |
 | promos | onslaught | 1 | 1 | 0 | 1 | 0.0% |
 | promos | outlaws-of-thunder-junction | 1 | 80 | 5 | 75 | 6.2% |
-| promos | phyrexia-all-will-be-one | 1 | 80 | 7 | 73 | 8.8% |
+| promos | phyrexia-all-will-be-one | 1 | 80 | 8 | 72 | 10.0% |
 | promos | planar-chaos | 1 | 2 | 0 | 2 | 0.0% |
 | promos | planeshift | 1 | 1 | 0 | 1 | 0.0% |
 | promos | planeswalker-championship | 1 | 46 | 3 | 43 | 6.5% |
@@ -49231,7 +49231,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 - [ ] Minor Misstep — `d91b3c6f-f8a1-4859-90ca-22cd79517552`
 - [ ] Mirran Bardiche — `1fd04d9e-cf89-49ba-a932-5d278f65bf77`
 - [ ] Mirran Safehouse — `08826de5-a2d7-4732-a5f7-f580507a7844`
-- [ ] Mirrex — `5502741a-e3b9-454e-8121-4360a6db6750`
 - [ ] Mite Overseer — `d92411b3-cb25-4123-a78e-4f785dfdae0c`
 - [ ] Molten Rebuke — `af05cc39-725b-4535-919a-ddbcb89c2210`
 - [ ] Mondrak, Glory Dominus — `fe83087d-c6c1-40be-9295-baaa1c6b2db1`
@@ -49480,7 +49479,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 - [ ] Migloz, Maze Crusher — `85eb890e-a5e1-48f8-b813-e8424d18b28a`
 - [ ] Mindsplice Apparatus — `4d0760fb-4e04-4f29-a268-14c13c30232d`
 - [ ] Mirran Safehouse — `08826de5-a2d7-4732-a5f7-f580507a7844`
-- [ ] Mirrex — `5502741a-e3b9-454e-8121-4360a6db6750`
 - [ ] Mondrak, Glory Dominus — `fe83087d-c6c1-40be-9295-baaa1c6b2db1`
 - [ ] Monument to Perfection — `df4bb104-d939-434f-8a1c-e89beda27c90`
 - [ ] Nahiri, the Unforgiving — `d71d42e0-cd56-4f53-95ff-ecab7f8c6552`
@@ -63961,7 +63959,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 - [ ] Crowd of True Believers — `06296d4d-a1b3-4e9a-a2fd-a0183bb892a1`
 - [ ] Cruel Alliance — `6897f9e0-f654-4c0a-9fda-2ad4e264bf9a`
 - [ ] Daredevil, Man Without Fear — `88aadf60-91f9-4932-a2bc-63365a139d36`
-- [ ] Dark Fortress — `40760bfa-a423-487c-ba29-043b2d00c736`
 - [ ] Death to Our Enemies — `c2b2b743-dfc7-439e-8563-1ccce54422bd`
 - [ ] Decoy Ploy — `035cddbc-39c9-42af-9e26-c88419b43b49`
 - [ ] Dependable Quinjet — `60105eb8-bdca-44b9-a970-68a7615526e8`
@@ -63978,10 +63975,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 - [ ] Falcon, Winged Wonder — `92e222c2-28e6-4d43-8b48-480ebcd88495`
 - [ ] Fin Fang Foom — `52ec472e-a745-4e25-b9a7-8e1eb8873594`
 - [ ] Frozen in Ice — `82fa14d8-5019-4e1b-a86c-923d9292b87a`
-- [ ] Gathering Place — `36b58705-c5a5-4547-8d8b-a7c35e1f69ae`
 - [ ] Ghost, Spectral Saboteur — `88f34d15-c338-40a7-b56c-c5b650847430`
 - [ ] Giant-Sized Flying Ant — `233e3b4b-faaf-451d-8a2e-e9f5a6ced671`
-- [ ] Gleaming Bastion — `7785ffd4-f169-475d-9558-ce4877b3378a`
 - [ ] Go Nuts! — `0efe1357-bfbb-42c0-9cc9-6a919d686c66`
 - [ ] Grim Reaper, Lethal Legionnaire — `edf429a8-6a4d-4d2a-b0ca-c0c72a0698a3`
 - [ ] Guerrilla Gorilla — `6cb65b68-91b2-45ba-867b-3b31d6dd5643`
@@ -63995,7 +63990,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 - [ ] Hero in Training — `87f1a840-021c-4699-a2c4-f2926daf98eb`
 - [ ] Heroic Feast — `31cae00a-3a74-4a59-80b0-a656f524e878`
 - [ ] Hex Magic — `2283729c-11db-471c-9f63-46092c97bd00`
-- [ ] Hidden Lair — `7069d241-4e66-40bf-afd1-551a4a5457f0`
 - [ ] Hour of Defeat — `2774fcb7-8988-4a18-b5ec-7534dd8b2e05`
 - [ ] HULK SMASH! — `5f97d49c-d0fa-4776-9455-93c1a172cd83`
 - [ ] Hulk, Gamma Goliath — `3508fd7d-ca02-47f9-8b0a-525f7bde4f57`
@@ -64125,7 +64119,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 - [ ] Titania, Rugged Rumbler — `e380e37d-926b-4a4b-a275-7844bf4956d5`
 - [ ] Tony Stark // The Invincible Iron Man — `4a46ea59-6c5d-4bed-9951-b5590f9a1bdb`
 - [ ] Too Evil to Stay Dead — `e50fecff-8872-42f5-8882-41ad13d9d1ae`
-- [ ] Training Compound — `99c70f4e-de8a-426d-99aa-17b2f87625ba`
 - [ ] Training Regimen — `f44bde8b-43e9-4719-ac60-b8f0cee8df9b`
 - [ ] Trickster's Stratagem — `170ee399-d3cd-40ef-a340-193c0f0f6002`
 - [ ] Truck Toss — `7d765055-da62-43f7-9580-98e9d164753b`
