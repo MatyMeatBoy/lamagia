@@ -159,6 +159,8 @@ export interface GameView {
   readonly activeSeat: SeatId;
   readonly prioritySeat: SeatId;
   readonly priorityOpen: boolean;
+  /** Public priority history for the current pass cycle (CR 117.3). */
+  readonly passedSeats: readonly SeatId[];
   readonly finished: boolean;
   readonly winnerSeat: SeatId | null;
   readonly players: readonly PlayerView[];
@@ -400,6 +402,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     activeSeat: state.activeSeat,
     prioritySeat: state.prioritySeat,
     priorityOpen: state.priorityOpen,
+    passedSeats: state.passedSeats,
     finished: state.finished,
     winnerSeat: state.winnerSeat,
     players,

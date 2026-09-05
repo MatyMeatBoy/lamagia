@@ -39,6 +39,18 @@ describe("smart counter response and safe mana undo", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "stack-card-0", targets: [{ kind: "player", seat: 1 }] });
     expect(projectGame(game, 1).stack[0]).toMatchObject({ kind: "spell", name: "Lightning Bolt", label: "Lightning Bolt", text: "Lightning Bolt deals 3 damage to any target." });
   });
+  it("projects the public priority pass cycle for the graphical stack", () => {
+    let game = twoSeatGame([], []);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const first = projectGame(game, 0);
+    expect(first.prioritySeat).toBe(0);
+    expect(first.passedSeats).toEqual([]);
+    game = applyAction(game, 0, { type: "pass" });
+    const second = projectGame(game, 1);
+    expect(second.prioritySeat).toBe(1);
+    expect(second.passedSeats).toEqual([0]);
+    expect(projectGame(game, 0).passedSeats).toEqual([0]);
+  });
   it("projects every target kind for a multi-target modal action", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [FISSURE_VENT()], "multi-target") }));
