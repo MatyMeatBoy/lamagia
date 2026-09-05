@@ -350,3 +350,7 @@ published as `eaa2296`, and integrated here as `366850c`:
 This recovery increased the export to **9,396/38,711** unique profiles and
 edition memberships to **23,860/84,990 (28.1%)**. C13 remains **269/341**;
 the recovered cards are not in C13, but the primitives are shared globally.
+
+The follow-up worker commit `faf3ad5` contained only the worker's refreshed
+handoff/coverage files for this same batch; it was pushed and recorded by
+audited merge `f8601bd` while retaining the newer main-branch documentation.
