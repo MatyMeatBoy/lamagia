@@ -133,6 +133,8 @@ export interface ActivatedAbility {
   readonly loyaltyCost?: number;
   /** Energy paid from the controller's player counters (CR 107.4, 118.3). */
   readonly energyCost?: number;
+  /** Untap symbol cost `{Q}` (CR 118.1, 602.1). */
+  readonly requiresUntap?: boolean;
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
@@ -1740,7 +1742,7 @@ function parseDamageAmplify(line: string): DamageAmplify | null {
  * sacrificing its own source, removing counters, plus an effect the engine can
  * resolve.
  *
- * Everything else — untapping ({Q}), exiling or sacrificing
+ * Everything else — exiling or sacrificing
  * other permanents or discarding — leaves the ability out of
  * the profile rather than letting the table activate a cost it cannot pay.
  */
@@ -1828,8 +1830,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
 
   const symbols = costText.match(/\{[^}]+\}/g) ?? [];
   const requiresTap = symbols.some((symbol) => symbol.toUpperCase() === "{T}");
-  // `{Q}` (untap) and every other non-mana symbol are outside the payable set.
-  if (symbols.some((symbol) => /^\{Q\}$/i.test(symbol))) return null;
+  const requiresUntap = symbols.some((symbol) => /^\{Q\}$/i.test(symbol));
   const energyCost = (costText.match(/pay\s+(?:\{E\})+/i)?.[0].match(/\{E\}/gi) ?? []).length;
   const manaSymbols = symbols.filter((symbol) => !/^\{[TQE]\}$/i.test(symbol));
   const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
@@ -1900,6 +1901,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     ...(energyCost ? { energyCost } : {}),
+    ...(requiresUntap ? { requiresUntap: true } : {}),
     ...(requiresOpponentLands !== null ? { requiresOpponentLands } : {}),
     lifeCost,
     manaCost,

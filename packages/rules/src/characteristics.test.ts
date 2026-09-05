@@ -124,6 +124,15 @@ describe("mana abilities", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises the untap symbol as an activation cost", () => {
+    const profile = cardProfile(card({
+      name: "Untap Device", type_line: "Artifact", mana_cost: "{2}",
+      oracle_text: "{Q}: Draw a card."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({ requiresUntap: true, effect: { kind: "draw", amount: 1 } });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("normalizes replacement-character keyword separators from legacy imports", () => {
     const profile = cardProfile(card({
       name: "Legacy Landfall", type_line: "Creature — Elf",

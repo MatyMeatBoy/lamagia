@@ -6858,6 +6858,11 @@ function activatableAbility(
   if (ability.energyCost !== undefined && (player.counters.energy ?? 0) < ability.energyCost) return { legal: false };
   if (ability.requiresClassLevel !== undefined && (permanent.classLevel ?? 1) !== ability.requiresClassLevel) return { legal: false };
   if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
+  if (ability.requiresUntap) {
+    if (!permanent.tapped) return { legal: false };
+    const hasHaste = cardProfile(permanent.card).keywords.includes("haste");
+    if (permanent.summoningSick && !hasHaste) return { legal: false };
+  }
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
   // the turn began. Non-creature permanents are unaffected by summoning sickness.
@@ -7059,6 +7064,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       if (permanent.instance_id !== source.instance_id) return permanent;
       let updated = permanent;
       if (ability.requiresTap) updated = { ...updated, tapped: true };
+      if (ability.requiresUntap) updated = { ...updated, tapped: false };
       if (ability.loyaltyCost !== undefined) {
         updated = {
           ...updated,
