@@ -2297,6 +2297,54 @@ objects, expected 100" and "lost track of its commander") are the
 pre-existing upstream invariant bugs already documented above and being
 tracked separately, not something this claim introduces.
 
+### Worker-05: discards become a watchable event (2026-09-04)
+
+Claim `rules-discard-event-trigger`, continuing the Nekusar decklist
+(Liliana's Caress). "Whenever a player discards a card" is an extremely
+common Wheel/discard-punisher trigger shape, but nothing in the engine could
+answer it: every discard was an inline `hand`/`graveyard` mutation baked
+into whichever effect caused it — the pending-choice resolver
+(`applyChooseDiscard`, backing `Target player discards a card` and
+`draw-then-discard`), the end-of-turn hand-size cleanup, two separate
+activated-ability discard-as-a-cost sites, `Windfall`'s discard-your-whole-hand
+effect, and Syphon Mind's "each opponent discards their priciest card." None
+of the seven raised anything a triggered ability could watch for.
+
+Added `card-discarded` to both `GameEvent` and `TriggerEvent` (mirroring the
+already-existing `card-drawn`), and a `discardCard`/`discardCards` pair of
+helpers next to `loseLife`/`drawCards` that perform the exact same mutation
+each site already did, then `raiseEvent` it. All 7 sites now call the
+helper instead of hand-rolling the mutation — the selection logic (which
+card gets discarded, how many, in what order) is untouched, only the missing
+event is added. `eventController` capture was already generalized last
+claim to any `seat`-keyed event, so `"that player" ...` effect language
+resolves automatically off `object.trigger?.eventController` with zero
+further wiring; two `TRIGGER_TEMPLATES` patterns (`whenever a player
+discards a card` / `whenever an opponent discards a card`) complete the
+parser side.
+
+Fully implements Liliana's Caress (`lose-life-event-player`), Megrim
+(`damage-event-player`), Spirit Cairn (optional pay-to-create-token),
+Geth's Grimoire (optional draw), Abyssal Nocturnus (`+2/+2` and fear until
+end of turn) — five cards across four *different* pre-existing effect kinds,
+none of which needed a single line of new executor code; the new event was
+the entire gap. Scenario coverage casts `Target player discards a card`,
+verifies the pending-choice resolves normally, and confirms the watcher's
+life-loss effect fires keyed to the discarding player, not the caster.
+
+Global export: **9,099/38,712** (+5 from 9,094 post-merge). `npm run check`
+and `npm test` PASS (**517 rules tests**, up from 516, plus the full
+Python suite). `npm run simulate:engine` reports 10/200 — identical seed set
+to the post-merge baseline immediately before this claim, so no new failure
+introduced (this is a purely additive change: existing discard mutations are
+unchanged, only a new event is raised alongside them).
+
+**Known limit:** Waste Not's three per-discarded-card-type triggers
+("...discards a creature card" / "a land card" / "a noncreature, nonland
+card") need a card-type filter on the trigger itself, which `TriggerSubject`
+doesn't carry yet for discard events — left for a follow-up claim rather
+than bolted on here.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed

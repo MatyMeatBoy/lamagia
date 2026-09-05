@@ -198,6 +198,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     enforced: "Se registra por cada carta robada, incluida la del paso de robo.",
     path: "M6 3h8l4 4v14H6V3zm2 9h8m-8 4h5"
   },
+  "card-discarded": {
+    label: "Al descartar una carta",
+    rule: "Se dispara cuando el jugador indicado descarta una carta.",
+    enforced: "Se registra por cada descarte, sea por costo, límite de mano o efecto.",
+    path: "M6 3h8l4 4v14H6V3zm2 9 8 8m0-8-8 8"
+  },
   "leaves-battlefield": {
     label: "Al dejar el campo",
     rule: "Se dispara cuando el permanente indicado deja el campo de batalla.",
