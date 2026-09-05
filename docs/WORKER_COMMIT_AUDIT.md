@@ -298,10 +298,10 @@ integrated as `8aa9490`:
 The local C13 trigger-review head had one patch-equivalent difference,
 `eeac0f3` (entering-creature power damage); the current engine already carries
 the same primitive through `081b81a`/`61e867d` with the broader target handling,
-so it was not duplicated. The C13 Serene Master, Nemotron audit, C14 batch,
-and other worker heads have no remaining non-equivalent patch according to
-`git cherry` against the current HEAD. Backup refs that would delete newer
-rules code were quarantined.
+so it was not duplicated. Its audited history is recorded in merge `a80dfeb`.
+The C13 Serene Master, Nemotron audit, C14 batch, and other worker heads have
+no remaining non-equivalent patch according to `git cherry` against the
+current HEAD. Backup refs that would delete newer rules code were quarantined.
 
 `git fsck --full --no-reflogs --unreachable` found 130 unreachable commits,
 69 touching executable source. They were inspected as recovery candidates;
@@ -323,8 +323,9 @@ The audited `origin/worker-05`/MtgFork history was recorded as merge
 the current source tree was deliberately preserved because the worker tree
 would remove newer Mirror Entity and Faerie Conclave behavior. `git cherry`
 now reports no remaining worker-05 commits. The one local trigger-review patch
-that still differs by patch-id (`eeac0f3`) is semantically covered by the
-current entering-creature-power implementation and its scenarios.
+that differed by patch-id (`eeac0f3`) is recorded by `a80dfeb` and is
+semantically covered by the current entering-creature-power implementation
+and its scenarios.
 
 The C13 pending-card audit was also completed from the catalog: all **72
 unique pending oracle IDs** were read and cross-checked against the generated
