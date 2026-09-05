@@ -9023,6 +9023,55 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   });
 });
 
+describe("untapped enters-with-counters templates", () => {
+  const PENTAVUS = () => make({ name: "Pentavus", type_line: "Artifact Creature — Construct", mana_cost: "{7}", cmc: 7, power: "0", toughness: "0", oracle_text: "This creature enters with five +1/+1 counters on it.\n{1}, Remove a +1/+1 counter from this creature: Create a 1/1 colorless Pentavite artifact creature token with flying.\n{1}, Sacrifice a Pentavite: Put a +1/+1 counter on this creature." });
+  const WALKING_BALLISTA = () => make({ name: "Walking Ballista", type_line: "Artifact Creature — Construct", mana_cost: "{X}{X}", cmc: 0, power: "0", toughness: "0", oracle_text: "This creature enters with X +1/+1 counters on it.\n{4}: Put a +1/+1 counter on this creature.\nRemove a +1/+1 counter from this creature: It deals 1 damage to any target." });
+
+  function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[]) {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, cards) }));
+    game = putOnBattlefield(game, 0, battlefield);
+    return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+  }
+
+  it("recognizes a fixed 'enters with N counters' line without requiring 'tapped'", () => {
+    const profile = profileOf(PENTAVUS());
+    expect(profile.entersWithCounters).toEqual([{ kind: "+1/+1", amount: 5 }]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognizes 'enters with X counters' as a distinct variable-count template", () => {
+    const profile = profileOf(WALKING_BALLISTA());
+    expect(profile.entersWithVariableCounters).toEqual({ kind: "+1/+1" });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("puts five +1/+1 counters on Pentavus as it resolves", () => {
+    let game = readyToCast([PENTAVUS()], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const pentavus = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Pentavus")!;
+    expect(pentavus.counters["+1/+1"]).toBe(5);
+    expect(powerOf(pentavus, game)).toBe(5);
+    expect(toughnessOf(pentavus, game)).toBe(5);
+  });
+
+  it("enters Walking Ballista with a number of +1/+1 counters equal to the announced X", () => {
+    let game = readyToCast([WALKING_BALLISTA()], [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
+    const ballista = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Walking Ballista")!;
+    expect(ballista.counters["+1/+1"]).toBe(2);
+    expect(powerOf(ballista, game)).toBe(2);
+    expect(toughnessOf(ballista, game)).toBe(2);
+  });
+
+  it("enters with no counters (and immediately dies to state-based actions as a 0/0) when cast for X = 0", () => {
+    let game = readyToCast([WALKING_BALLISTA()], []);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 0 });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Walking Ballista")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Walking Ballista")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

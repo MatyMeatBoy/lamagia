@@ -3512,6 +3512,36 @@ land) attaches to a Forest, proving the attach path isn't creature-
 only. Validation: **654 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,727 global profiles.
 
+`rules-untapped-enters-with-counters` | Found while triaging Commander
+2014 by request for cards one line from complete.
+`parseEntersWithCounters` (the "~ enters with N counters on it"
+parser) already existed and was already wired into
+`putOntoBattlefield` — but the only skip-list line consuming it out of
+`unimplementedText` required the word "tapped" between "enters" and
+"with", so the untapped form (Pentavus, Spike Feeder, Kalonian Hydra,
+Swarm of Bloodflies, Wickerbough Elder, ...) sat permanently
+unimplemented even though the value was already computed and applied
+correctly. Added the missing untapped skip line, anchored at "on it"
+so a trailing dynamic clause (Avatar of the Resolute: "...for each
+other creature you control with a +1/+1 counter on it") stays
+unconsumed rather than getting silently mis-parsed as a fixed amount.
+Also added a sibling template, new `CardProfile.entersWithVariableCounters:
+{kind} | null`, for the literal-"X" phrasing ("~ enters with X +1/+1
+counters on it" — Walking Ballista, Hangarback Walker, Shivan
+Devastator, Mistcutter Hydra), wired at cast resolution to read the
+spell's own paid `{X}` (`object.variableValue`) into the same
+`additionalCounters` plumbing Auras and kicker already share. Verified
+**+41** in the export count (9,730 → 9,771); 46 cards had this as
+their sole remaining blocker going in, a few of which pulled in other
+still-open lines by the time this pass's count was taken. Scenario-
+tested: Pentavus enters with exactly 5 counters with no "tapped" in
+its text at all; Walking Ballista cast for X=2 enters with 2 counters
+and correctly reads 2/2 through `powerOf`/`toughnessOf`; cast for X=0
+it enters 0/0 with no counters and is confirmed — not assumed — to die
+immediately to ordinary lethal-toughness state-based actions.
+Validation: **661 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,771 global profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

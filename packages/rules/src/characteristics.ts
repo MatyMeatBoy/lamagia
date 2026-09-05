@@ -1034,6 +1034,8 @@ export interface CardProfile {
   readonly combatRules: CombatRules;
   /** Counters with which this permanent enters the battlefield. */
   readonly entersWithCounters: readonly CounterCost[];
+  /** "~ enters with X <kind> counters on it" (Walking Ballista, Hangarback Walker): X is the value paid for the spell's own {X} in its cost. */
+  readonly entersWithVariableCounters: { readonly kind: string } | null;
   /** Graft number, when this permanent has the Graft keyword. */
   readonly graftAmount: number | null;
   readonly isPermanent: boolean;
@@ -2018,6 +2020,12 @@ function parseEntersWithCounters(text: string): CounterCost[] {
     if (amount && kind) counters.push({ kind, amount });
   }
   return counters;
+}
+
+/** "~ enters ... with X <kind> counters on it" (Walking Ballista): X is the spell's own paid {X}, not a fixed number. */
+function parseEntersWithVariableCounters(text: string): { kind: string } | null {
+  const match = /(?:~|this [^.]+)\s+enters(?:\s+the\s+battlefield)?\s+with\s+x\s+([+\-\w/ ]+?)\s+counters?\s+on\s+it/i.exec(text);
+  return match ? { kind: match[1]!.trim().replace(/\s+/g, " ").toLowerCase() } : null;
 }
 
 const SENTENCE_SPLIT = /(?<=\.)\s+(?=[A-Z~])/;
@@ -3862,6 +3870,13 @@ function recognizeText(text: string): RecognizedText {
     // Replacement text for entering tapped is executed by `parseEntersTapped`
     // before priority opens; it is not an unresolved spell effect.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
+    // Untapped counterpart of the same template (Pentavus, Spike Feeder):
+    // a fixed amount is consumed into `entersWithCounters`, a literal "X"
+    // into `entersWithVariableCounters`. Anchored at "on it" so a trailing
+    // dynamic clause ("...for each creature you control...") is left
+    // unconsumed and still reported as unimplemented.
+    if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
+    if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+x\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
     // Shock lands ("As ~ enters, you may pay 2 life. If you don't, it enters
     // tapped.") and reveal lands ("...you may reveal a <type> card from your
     // hand. If you don't, ~ enters tapped.") print the same replacement as
@@ -4694,6 +4709,7 @@ export function cardProfile(card: CardData): CardProfile {
             : [...counters, { kind: "+1/+1", amount: graftAmount }];
         })()
       : [],
+    entersWithVariableCounters: isPermanent ? parseEntersWithVariableCounters(text) : null,
     isPermanent,
     // Lands are played, not cast; everything else needs a payable printed cost.
     castableFromHand: !types.includes("Land") && cost !== null && cost.symbols.length > 0,
