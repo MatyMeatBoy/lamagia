@@ -10,6 +10,7 @@ feature name.
 | Cluster | Worker branch | Scope | Status |
 | --- | --- | --- | --- |
 | `c13-until-end-turn-creatures` | `codex/local-c13` | Sudden Spoiling: remove abilities and set target player's creatures to base 0/2 until end of turn | active |
+| `c13-linked-exile-return` | `codex/c13-aura-granted-activation-7bd` | Fiend Hunter-style ETB exile of another nontoken creature with a linked leaves-the-battlefield return under its owner's control (CR 603.6c, 400.7) | active |
 | `c13-aura-control-static` | `codex/c13-aura-granted-activation-7bd` | Reusable static Aura control primitive for `You control enchanted creature/land/permanent` (CR 303.4, 611.3, 613.7) | active |
 | `c13-damage-prevention-counter` | `codex/c13-aura-granted-activation-7bd` | Reusable replacement effect that prevents damage to a permanent and removes its matching counter when available (CR 614.1, 615.1) | active |
 | `c13-delayed-creature-blink` | `codex/c13-aura-granted-activation-7bd` | Reuse the delayed-return blink primitive when an activated creature exile and its return instruction are printed on separate Oracle lines (CR 603.7, 400.7) | active |

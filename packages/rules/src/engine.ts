@@ -274,6 +274,8 @@ export interface TriggerInstance {
   readonly eventManaSpent?: number;
   /** Delayed zone return data retained by a trigger created from an effect. */
   readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId; readonly destination?: "battlefield" | "hand" };
+  /** Card linked to a Fiend Hunter-style leaves-the-battlefield trigger (CR 607.1). */
+  readonly linkedExiledCard?: GameCard;
   /** Last-known power carried by a creature-dies event (CR 603.3d, 608.2h). */
   readonly eventPower?: number;
   /** Player damaged by a damage event, for effects referring to "that player". */
@@ -2097,8 +2099,9 @@ function raiseEvent(
           cause: causeOf(state, event),
           ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
           ...(event.kind === "spell-cast" ? { eventSpell: event.spell } : {}),
-          ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
-          ...("amount" in event ? { eventAmount: event.amount } : {}),
+         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
+          ...(event.kind === "leaves-battlefield" && watcher.exiledWith ? { linkedExiledCard: watcher.exiledWith } : {}),
+         ...("amount" in event ? { eventAmount: event.amount } : {}),
           ...(event.kind === "spell-cast" && event.spentMana !== undefined ? { eventManaSpent: event.spentMana } : {}),
           ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
           ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {})
@@ -3970,6 +3973,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           ? { ...permanent, exiledWith: creature.card }
           : permanent)
       }));
+    }
+    case "return-exiled-card": {
+      const linked = object.trigger?.linkedExiledCard;
+      if (!linked) return state;
+      const exiled = playerAt(state, linked.owner).exile.find((card) => card.instance_id === linked.instance_id);
+      if (!exiled) return state;
+      const removed = withPlayer(state, linked.owner, (player) => ({
+        ...player,
+        exile: player.exile.filter((card) => card.instance_id !== linked.instance_id)
+      }));
+      const returned = putOntoBattlefield(removed, linked.owner, exiled, false);
+      return logged(returned, linked.owner, `${linked.name} vuelve al campo de batalla bajo el control de su propietario.`);
     }
     case "blink-target-creature": {
       const target = object.targets[0];
