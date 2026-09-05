@@ -56,10 +56,10 @@ export interface ManaAbility {
   readonly fixedProduces?: readonly ManaType[];
   /** Restricts choices to the controller's commander color identity. */
   readonly commanderIdentity?: boolean;
-  /** The produced mana can add Opal Palace's commander-entry counters when spent to cast that commander. */
-  readonly commanderEntryCounters?: boolean;
   /** "Add one mana of any color that a land you/an opponent control(s) could produce" (Fellwar Stone, Harvester Druid): the color set is computed from the battlefield at activation time, not fixed on the card. */
   readonly anyColorFromLandsControlledBy?: "opponent" | "you";
+  /** The produced mana can add Opal Palace's commander-entry counters when spent to cast that commander. */
+  readonly commanderEntryCounters?: boolean;
   readonly requiresTap: boolean;
   /** Life the ability costs (pain and filter lands). */
   readonly lifeCost: number;
@@ -495,6 +495,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-creature-then-controller-token"; readonly token: TokenDefinition }
+  /** Counter target spell, then its (former) controller creates N tokens (An Offer You Can't Refuse). */
+  | { readonly kind: "counter-target-spell-then-controller-token"; readonly amount: number; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent" }
   /** Destroy a target artifact or creature whose mana value equals X. */
   | { readonly kind: "destroy-target-artifact-or-creature-mana-value" }
@@ -1091,13 +1093,13 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
-function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; commanderEntryCounters?: boolean; activationRestriction?: { enteredThisTurn: boolean; orControlsBasicLand?: boolean } } | null {
+function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; activationRestriction?: { enteredThisTurn: boolean; orControlsBasicLand?: boolean }; commanderEntryCounters?: boolean } | null {
   let remainder = effect.trim().replace(/\.$/, "");
   let gainLife: number | undefined;
   let requiresLands: number | undefined;
   let painDamage: number | undefined;
-  let commanderEntryCounters = false;
   let activationRestriction: { enteredThisTurn: boolean; orControlsBasicLand?: boolean } | undefined;
+  let commanderEntryCounters = false;
   const commanderEntry = /\.\s*If you spend this mana to cast your commander, it enters with a number of additional \+1\/\+1 counters on it equal to the number of times it's been cast from the command zone this game$/i.exec(remainder);
   if (commanderEntry) {
     commanderEntryCounters = true;
@@ -1128,6 +1130,9 @@ function parseManaInstruction(effect: string): { produced: ReturnType<typeof par
     requiresLands = amount;
     remainder = remainder.slice(0, restriction.index).trim();
   }
+  // "Activate only if ~ entered the battlefield this turn (or if you control
+  // a basic land)" (Hidden Lair, Mirrex): a fast-mana check gating the
+  // colored half of a two-ability land, not present on the {C} half.
   const enteredRestriction = /\.\s*Activate only if ~ entered(?: the battlefield)? this turn(\s*or\s*if\s+you\s+control\s+a\s+basic\s+land)?$/i.exec(remainder);
   if (enteredRestriction) {
     activationRestriction = { enteredThisTurn: true, ...(enteredRestriction[1] ? { orControlsBasicLand: true } : {}) };
@@ -1135,7 +1140,14 @@ function parseManaInstruction(effect: string): { produced: ReturnType<typeof par
   }
   const produced = parseAddClause(remainder);
   return produced
-    ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }), ...(painDamage === undefined ? {} : { painDamage }), ...(commanderEntryCounters ? { commanderEntryCounters: true } : {}), ...(activationRestriction === undefined ? {} : { activationRestriction }) }
+    ? {
+      produced,
+      ...(gainLife === undefined ? {} : { gainLife }),
+      ...(requiresLands === undefined ? {} : { requiresLands }),
+      ...(painDamage === undefined ? {} : { painDamage }),
+      ...(activationRestriction === undefined ? {} : { activationRestriction }),
+      ...(commanderEntryCounters ? { commanderEntryCounters: true } : {})
+    }
     : null;
 }
 
@@ -1204,8 +1216,8 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
         gainLife: undefined,
         requiresLands: undefined,
         painDamage: undefined,
-        commanderEntryCounters: false,
-        activationRestriction: undefined
+        activationRestriction: undefined,
+        commanderEntryCounters: false
       } : null;
     })();
     // "Add {C} for each <Subtype> on the battlefield / you control".
@@ -3008,6 +3020,19 @@ function recognizeText(text: string): RecognizedText {
       return {
         effects: [{ kind: "destroy-target-creature-then-controller-token", token: token.token }],
         triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
+      };
+    }
+  }
+  // "Counter target noncreature spell. Its controller creates two Treasure
+  // tokens." (An Offer You Can't Refuse) — the reminder-text parenthetical
+  // explaining Treasure is stripped before `joined` is built.
+  const counterThenToken = /^Counter target noncreature spell\.\s*Its controller creates (.+?)\.?$/i.exec(joined);
+  if (counterThenToken) {
+    const token = parseCreateToken(`Create ${counterThenToken[1]!}`);
+    if (token?.kind === "create-token" && typeof token.amount === "number") {
+      return {
+        effects: [{ kind: "counter-target-spell-then-controller-token", amount: token.amount, token: token.token }],
+        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "noncreature-spell", unimplementedText: [], covered: true
       };
     }
   }

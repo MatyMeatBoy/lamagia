@@ -760,11 +760,12 @@ function colorsFromLandsControlledBy(state: GameState, seats: readonly SeatId[])
 }
 
 function manaOptionsFor(player: PlayerState, ability: ManaAbility, state?: GameState): readonly ManaType[] {
-  const options = ability.anyColorFromLandsControlledBy
-    ? state
-      ? colorsFromLandsControlledBy(state, ability.anyColorFromLandsControlledBy === "you" ? [player.seat] : opponentsOf(state, player.seat))
-      : []
-    : ability.produces;
+  if (ability.anyColorFromLandsControlledBy) {
+    if (!state) return [];
+    const seats = ability.anyColorFromLandsControlledBy === "you" ? [player.seat] : opponentsOf(state, player.seat);
+    return colorsFromLandsControlledBy(state, seats);
+  }
+  const options = ability.produces;
   return ability.commanderIdentity
     ? options.filter((mana) => player.commanderColorIdentity.includes(mana))
     : options;
@@ -3409,6 +3410,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
+    }
+    case "counter-target-spell-then-controller-token": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      const targetSpell = state.stack.find((entry) => entry.id === target.stackId);
+      if (!targetSpell || !canCounterSpell(targetSpell, state)) return state;
+      let next: GameState = { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, countered: true } : entry)) };
+      const owner = targetSpell.controller;
+      const spec = effect.token;
+      for (let index = 0; index < effect.amount; index += 1) {
+        const token: GameCard = {
+          scryfall_id: `token:${object.id}:offer:${index}`, instance_id: `token:${object.id}:offer:${index}`, owner, token: true,
+          name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.keywords.join(", "),
+          power: spec.power === null ? null : String(spec.power), toughness: spec.toughness === null ? null : String(spec.toughness),
+          colors: spec.colors, keywords: spec.keywords
+        };
+        next = putOntoBattlefield(next, owner, token, false, spec.tapped);
+      }
+      return logged(next, controller, `${targetSpell.card.name} se contrarresta; su controlador crea ${effect.amount} ${spec.name}.`);
     }
     case "counter-target-spell-with-delayed-draw": {
       const target = object.targets[0];

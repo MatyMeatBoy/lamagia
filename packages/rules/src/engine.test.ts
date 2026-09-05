@@ -407,6 +407,7 @@ const VALLEY_RANNET = () => make({
 const UNSUMMON = () => make({ name: "Unsummon", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Return target creature to its owner's hand." });
 const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Fireball deals X damage to any target. It costs {1} more to cast for each target beyond the first." });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
+const OFFER_YOU_CANT_REFUSE = () => make({ name: "Test An Offer You Can't Refuse", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target noncreature spell. Its controller creates two Treasure tokens." });
 const TUTOR = () => make({ name: "Enlightened Tutor", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an artifact or enchantment card, reveal it, then shuffle. Put that card on top of your library." });
 const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Search your library for a creature card, reveal it, then shuffle and put the card on top." });
 const ELADAMRI = () => make({ name: "Eladamri's Call", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Search your library for a creature card, reveal that card, put it into your hand, then shuffle." });
@@ -4342,6 +4343,30 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-scry", sourceId, query: "Grizzly Bears", ordinal: 0, bottom: false });
     expect(game.players[0]!.library[0]!.instance_id).toBe("scry-duplicates-0");
     expect(game.players[0]!.library.at(-1)!.instance_id).toBe("scry-duplicates-1");
+  });
+
+  it("gives the countered spell's OWN controller Treasure tokens, not the caster", () => {
+    const profile = profileOf(OFFER_YOU_CANT_REFUSE());
+    expect(profile).toMatchObject({
+      targetKind: "noncreature-spell",
+      effects: [{ kind: "counter-target-spell-then-controller-token", amount: 2, token: { name: "Treasure" } }]
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([OFFER_YOU_CANT_REFUSE()], [ISLAND(), ISLAND()], [BOLT()], [MOUNTAIN()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const life0Before = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "player", seat: 0 }] });
+    const bolt = game.stack.at(-1)!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    // The spell's own controller (seat 1) gets the tokens, not seat 0, and
+    // the countered damage never lands.
+    expect(game.players[0]!.life).toBe(life0Before);
+    expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Treasure")).toHaveLength(2);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Treasure")).toBe(false);
   });
 
   it("does not start Scry when the spell is countered", () => {
