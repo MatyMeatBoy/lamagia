@@ -216,6 +216,8 @@ export interface TriggerInstance {
   readonly eventController?: SeatId;
   /** Permanent involved in the event, used by effects referring to "that creature". */
   readonly eventPermanentId?: string;
+  /** Defending player involved in an attack trigger (CR 508.1b). */
+  readonly eventDefender?: SeatId;
   /** Amount carried by life-gain/loss events for proportional triggers. */
   readonly eventAmount?: number;
   /** Delayed zone return data retained by a trigger created from an effect. */
@@ -1383,6 +1385,7 @@ function raiseEvent(
         cause: causeOf(state, event),
         ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
+        ...("defender" in event ? { eventDefender: event.defender } : {}),
         ...("amount" in event ? { eventAmount: event.amount } : {})
       });
     }
@@ -2334,6 +2337,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const targetId = object.trigger?.eventPermanentId;
       if (!targetId) return state;
       return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === targetId);
+    }
+    case "modify-triggered-creature-by-defending-lands": {
+      const targetId = object.trigger?.eventPermanentId;
+      const defender = object.trigger?.eventDefender;
+      if (!targetId || defender === undefined) return state;
+      const lands = playerAt(state, defender).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length;
+      return modifyCreatures(state, lands, 0, (candidate) => candidate.instance_id === targetId);
     }
     case "modify-triggered-creature-and-grant-keyword": {
       const targetId = object.trigger?.sourcePermanentId;

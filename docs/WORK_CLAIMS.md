@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-terra-ravager` | Terra Ravager's attack trigger carries the defending player and scales its power by that player's lands (CR 508.1b, 603.2, 613.4) | `codex/c13-terra-ravager-f99` | active | 2026-09-05 |
