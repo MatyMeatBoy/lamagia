@@ -2867,6 +2867,45 @@ Global export: **9,322/38,712** (+1 from 9,321). `npm run check` and `npm
 test` PASS (**574 rules tests**, up from 573). `npm run simulate:engine`:
 **200/200 passed**.
 
+### Worker-05: a characteristic-defining ability that was never actually wired (2026-09-05)
+
+Claim `rules-cda-power-toughness-fix`, continuing the Nekusar decklist
+(Psychosis Crawler). Went looking for how to model "~'s power and
+toughness are each equal to the number of cards in your hand" and found
+that `CardProfile.cdaPowerToughness` already existed as a field — parsed
+correctly from Oracle text (`creatures-you-control`, `lands-you-control`,
+`artifacts-you-control`, `green-permanents-you-control`, `your-life-total`)
+and even credited as "covered" by the per-line consumption check — but
+`grep`ping `engine.ts` for it turned up nothing. `powerOf`/`toughnessOf`
+never read it. Every card relying on this CDA had its power/toughness
+permanently stuck at whatever the printed `*` parses to (`0`, per the
+`numeric()` fallback), while `fullyImplemented` claimed it worked. No test
+had ever exercised the field, so nothing caught it.
+
+This is the direct blocker for Psychosis Crawler, not a tangential
+pre-existing issue elsewhere in the engine, so fixing it is squarely this
+claim's scope. Added `cdaPowerToughnessValue(state, permanent, profile)`
+and wired it into both `powerOf` and `toughnessOf`'s base-value fallback
+chain, in the same priority slot `level?.power` already occupies (below
+`temporaryAnimation`/`imprint`, above the printed `profile.power ?? 0`) —
+matching how every other dynamic override in that chain already works.
+Extended the union with a new `"cards-in-your-hand"` variant for Psychosis
+Crawler's own text.
+
+Fully implements Psychosis Crawler. As a side effect of actually fixing the
+mechanism instead of just extending it, three more catalog cards whose only
+gap was this same dead field flip too: Tishana, Voice of Thunder; Maro;
+Sturmgeist. Scenario coverage puts the creature on the battlefield with an
+empty hand (power/toughness 0/0), stages a 3-card hand (3/3), then removes
+one card (2/2) — proving the value tracks hand size live, not just at
+cardProfile-parse time.
+
+Global export: **9,330/38,712** (+4 from 9,326). `npm run check` and `npm
+test` PASS (**577 rules tests**, up from 576). `npm run simulate:engine`:
+**200/200 passed** — worth calling out since this claim touches
+`powerOf`/`toughnessOf`, functions every creature's combat math runs
+through.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed
