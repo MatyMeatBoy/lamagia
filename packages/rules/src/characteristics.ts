@@ -925,6 +925,8 @@ export interface CardProfile {
   readonly equipmentModification: EquipmentModification | null;
   /** Static bonuses an Aura grants the permanent it's attached to (CR 303.4.5), e.g. "Enchanted creature gets +2/+2." */
   readonly auraModification: EquipmentModification | null;
+  /** Activated ability granted by an attached Aura (CR 303.4, 605.1a). */
+  readonly auraActivatedAbility: ActivatedAbility | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
@@ -1633,6 +1635,17 @@ function parseAuraModification(text: string): EquipmentModification | null {
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
       if (keywords.length) return { power: 0, toughness: 0, keywords, text: line.trim() };
     }
+  }
+  return null;
+}
+
+/** Parses the closed Oracle template used by Auras that grant an activated ability. */
+function parseAuraGrantedActivatedAbility(text: string): ActivatedAbility | null {
+  for (const line of text.split("\n")) {
+    const match = /^enchanted (?:creature|land) has "(.+)"\.?$/i.exec(line.trim());
+    if (!match) continue;
+    const ability = parseActivatedAbility(match[1]!, 0);
+    if (ability) return ability;
   }
   return null;
 }
@@ -3385,6 +3398,10 @@ function isIgnorableSentence(sentence: string, hasChosenColorEffect = false): bo
   // the Abyss); the half-amount effect already rounds up, so this adds no
   // separate action (CR 107.1a).
   if (/^Round up each time\.?$/i.test(s)) return true;
+  // The quoted ability is parsed into CardProfile.auraActivatedAbility and
+  // granted to the enchanted permanent by the engine (CR 303.4, 605.1a).
+  const auraAbility = /^Enchanted (?:creature|land) has "(.+)"\.?$/i.exec(s);
+  if (auraAbility && parseActivatedAbility(auraAbility[1]!, 0)) return true;
   // "If the gift was promised, instead [wider target]" (CR 702.166) only
   // widens the legal target set for the already-printed effect; it is
   // consumed into CardProfile.giftPromisedTargetKind, not a second action.
@@ -4502,6 +4519,8 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const auraModification = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraModification(text) : null;
+  const auraActivatedAbility = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
+    ? parseAuraGrantedActivatedAbility(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
@@ -4605,6 +4624,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipWorthyCost,
     equipmentModification,
     auraModification,
+    auraActivatedAbility,
     staticKeywordGrants,
     keywordsDuringYourTurn,
     untapColorsDuringOtherPlayersUntap,
