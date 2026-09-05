@@ -33,6 +33,10 @@ reprints/imports cannot silently collapse the fast-mana action into “cast”.
 The menu deduplicates the server actions, then keeps **View information** as
 the final non-gameplay row.
 
+Selecting a menu action with one or multiple targets always opens the same
+centered target picker used by direct card clicks; the menu never submits an
+incomplete target list.
+
 ## Yield from this card
 
 `toggle-trigger-yield` is a player preference for a battlefield source. It
@@ -45,8 +49,9 @@ opponent's response window (CR 603.1, 603.3, 117.1b).
 
 The stack is shown in resolution order, with one card-like item per spell or
 ability, controller, targets, countered state, and a visible top-first marker.
-Priority still follows the engine's `pass` action; the strip is presentation,
-not a second rules state.
+Each public item can be opened to inspect its rules text and targets. Priority
+still follows the engine's `pass` action; the strip is presentation, not a
+second rules state.
 
 ## Regression rules
 

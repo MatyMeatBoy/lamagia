@@ -83,6 +83,8 @@ interface UiState {
   showFullLibrary: boolean;
   /** The keyword or ability glyph whose help card is open. */
   glyphHelp: AbilityGlyph | null;
+  /** Public stack object currently inspected in the graphical stack. */
+  stackDetail: string | null;
   /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
   layout: "auto" | "mobile";
 }
@@ -96,7 +98,7 @@ let coverageGroup = "all";
 let coverageSubgroup = "all";
 let coverageQuery = "";
 const ui: UiState = {
-  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, cardActionMenu: null, contextMenu: null, glyphHelp: null,
+  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, cardActionMenu: null, contextMenu: null, glyphHelp: null, stackDetail: null,
   notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", showFullLibrary: false,
   // Smart priority is the default; manual priority remains an explicit opt-out.
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
@@ -354,6 +356,7 @@ function applyView(next: GameView): void {
   ui.abilityMenu = null;
   ui.cardActionMenu = null;
   ui.contextMenu = null;
+  ui.stackDetail = next.stack.some((object) => object.id === ui.stackDetail) ? ui.stackDetail : null;
   ui.showFullLibrary = false;
   if (!next.combat.awaitingAttackers) ui.attackers.clear();
   if (!next.combat.awaitingBlockersFrom.includes(next.viewerSeat)) ui.blockers.clear();
@@ -392,6 +395,9 @@ function cardActionsForCard(cardId: string): LegalAction[] {
 }
 function actionForCard(cardId: string): LegalAction | undefined {
   return cardActionsForCard(cardId)[0];
+}
+function actionNeedsTargetSelection(entry: LegalAction): boolean {
+  return Boolean(entry.requiresTarget || entry.requiresTargets?.length);
 }
 function passAction(): LegalAction | undefined { return view?.legalActions.find((entry) => entry.action.type === "pass"); }
 
@@ -927,12 +933,28 @@ function logDrawerHtml(): string {
 /** The stack rides just above the hand so it is impossible to miss mid-combat. */
 function stackStripHtml(): string {
   if (!view?.stack.length) return "";
-  return `<div class="stack-strip"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero</small>${[...view.stack].reverse().map((object, index) =>
-    `<span class="stack-chip${object.countered ? " countered" : ""}" title="${escapeHtml(object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}">
+  return `<div class="stack-strip" aria-label="Pila de hechizos y habilidades"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · clic para inspeccionar</small>${[...view.stack].reverse().map((object, index) =>
+    `<button class="stack-chip${object.countered ? " countered" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}">
       <strong class="stack-order">${index + 1}</strong>
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
       <span><small class="stack-kind">${object.kind === "trigger" ? "Triggered" : object.kind === "activated" ? "Activated" : "Spell"}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
-    </span>`).join("")}</div>`;
+    </button>`).join("")}</div>`;
+}
+
+function stackDetailHtml(): string {
+  if (!ui.stackDetail) return "";
+  const object = view?.stack.find((entry) => entry.id === ui.stackDetail);
+  if (!object) return "";
+  const kind = object.kind === "trigger" ? "Habilidad disparada" : object.kind === "activated" ? "Habilidad activada" : "Hechizo";
+  return `<section class="decision-overlay stack-detail-overlay" role="dialog" aria-modal="false" aria-label="Detalle de ${escapeHtml(object.name)}">
+    <header class="decision-head"><div><b>${escapeHtml(object.name)}</b><span>${kind} · ${escapeHtml(seatOf(object.controller)?.name ?? "")}</span></div>
+      <button id="close-stack-detail" class="icon-button" type="button" aria-label="Cerrar detalle de la pila">×</button></header>
+    <div class="stack-detail-body">
+      ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
+      <div><b>${escapeHtml(object.label)}</b><p>${escapeHtml(object.text ?? "Sin texto adicional.")}</p>
+        <small>${object.targets.length ? `Objetivos: ${escapeHtml(object.targets.join(", "))}` : "Sin objetivos"}${object.countered ? " · Contrarrestado" : ""}</small></div>
+    </div>
+  </section>`;
 }
 
 /**
@@ -1163,6 +1185,7 @@ function render(): void {
     ${abilityMenuHtml()}
   ${cardActionMenuHtml()}
   ${decisionOverlayHtml()}
+  ${stackDetailHtml()}
   ${ui.contextMenu && view.undoAvailable ? `<div class="context-menu" style="left:${ui.contextMenu.x}px;top:${ui.contextMenu.y}px" role="menu">
     <button id="context-undo" type="button">Deshacer última acción de maná</button>
   </div>` : ""}
@@ -1228,6 +1251,7 @@ function wireBoard(): void {
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
   on("#close-decision-overlay", () => document.querySelector(".decision-overlay")?.remove());
   on("#close-card-action-menu", () => { ui.cardActionMenu = null; ui.notice = ""; render(); });
+  on("#close-stack-detail", () => { ui.stackDetail = null; render(); });
   on("#card-action-info", () => {
     const cardId = ui.cardActionMenu;
     ui.cardActionMenu = null;
@@ -1317,9 +1341,11 @@ function wireBoard(): void {
     button.addEventListener("click", () => {
       const entry = view?.legalActions[Number(button.dataset.actionIndex)];
       if (!entry) return;
-      if (entry.requiresTarget && entry.cardId) { onCardClick(entry.cardId, entry); return; }
+      if (actionNeedsTargetSelection(entry) && entry.cardId) { onCardClick(entry.cardId, entry); return; }
       void submit(entry.action);
     }));
+  document.querySelectorAll<HTMLButtonElement>("[data-stack-id]").forEach((button) =>
+    button.addEventListener("click", () => { ui.stackDetail = button.dataset.stackId ?? null; render(); }));
   document.querySelectorAll<HTMLButtonElement>("[data-zone]").forEach((button) =>
     button.addEventListener("click", () => showZone(Number(button.dataset.seat), button.dataset.zone as never)));
 
@@ -1787,8 +1813,8 @@ document.querySelector<HTMLInputElement>("#card-query")?.addEventListener("input
 window.addEventListener("keydown", (event) => {
   if (event.target instanceof HTMLInputElement) return;
   if (event.code === "Space") { event.preventDefault(); document.querySelector<HTMLButtonElement>("#pass")?.click(); }
-  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.glyphHelp)) {
-    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.glyphHelp = null; ui.notice = ""; render();
+  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.glyphHelp || ui.stackDetail)) {
+    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.glyphHelp = null; ui.stackDetail = null; ui.notice = ""; render();
   }
   if (event.code === "KeyL") { ui.logOpen = !ui.logOpen; render(); }
 });
