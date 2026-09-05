@@ -882,6 +882,36 @@ function actionMenuHtml(): string {
   </details>`;
 }
 
+/**
+ * Primary decision surface for actions that need an explicit player choice.
+ * The dock keeps the compact fallback menu, but the main interaction stays
+ * centered so priority responses and pending triggers are not lost below the
+ * playmat. Library searches have their own centered surface and are omitted
+ * here to avoid presenting the same decision twice.
+ */
+function decisionOverlayHtml(): string {
+  const actions = view?.legalActions ?? [];
+  const choices = actions.filter((entry) =>
+    entry.action.type !== "pass" && entry.action.type !== "concede" && entry.action.type !== "choose-library-card");
+  if (!choices.length) return "";
+  const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
+  const title = hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
+  const subtitle = hasPendingChoice
+    ? "Elige una opción para continuar la partida."
+    : view?.stack.length
+      ? "Puedes responder ahora o pasar prioridad."
+      : "Estas son las acciones disponibles en este momento.";
+  return `<section class="decision-overlay" role="dialog" aria-modal="false" aria-label="${escapeHtml(title)}">
+    <header class="decision-head"><div><b>${escapeHtml(title)}</b><span>${escapeHtml(subtitle)}</span></div>
+      <button id="close-decision-overlay" class="icon-button" type="button" aria-label="Cerrar acciones">×</button></header>
+    <div class="decision-list">${choices.map((entry) => {
+      const index = actions.indexOf(entry);
+      return `<button class="action-row${entry.action.type.startsWith("choose-") ? " choice-action" : ""}" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
+        <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
+    }).join("")}</div>
+  </section>`;
+}
+
 function librarySearchHtml(): string {
   const search = view?.librarySearch;
   if (!search) return "";
@@ -1025,6 +1055,7 @@ function render(): void {
     ${librarySearchHtml()}
     ${scryHtml()}
     ${abilityMenuHtml()}
+  ${decisionOverlayHtml()}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
   <div class="card-preview" id="card-preview"></div>
@@ -1083,6 +1114,7 @@ function wireBoard(): void {
   on("#coverage", () => openCoverage());
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
+  on("#close-decision-overlay", () => document.querySelector(".decision-overlay")?.remove());
   on("#undo", () => void undoLatestMana());
   document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
     button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
