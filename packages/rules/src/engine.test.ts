@@ -168,7 +168,6 @@ const EACH_MILL_SPELL = () => make({ name: "Shared Gravewind", type_line: "Sorce
 const ALL_MILL_SPELL = () => make({ name: "Universal Gravewind", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Each player mills two cards." });
 const EACH_DRAW_SPELL = () => make({ name: "Shared Insight", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Each opponent draws two cards." });
 const WHEEL_SPELL = () => make({ name: "Shared Wheel", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Each player discards their hand, then draws seven cards." });
-const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle Slice and Dice, you may have it deal 1 damage to each creature.", oracle_id: "463fc961-d34e-4f40-b383-5b78a0fcb5c8" });
 const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target creature spell." });
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
@@ -5083,7 +5082,7 @@ describe("casting", () => {
   });
 
   it("uses the defending player's lands for Terra Ravager", () => {
-    let game = readyToCast([], [C13_TERRA_RAVAGER()], [], [FOREST(), FOREST(), FOREST()]);
+    let game = readyToCast([], [TERRA_RAVAGER()], [], [FOREST(), FOREST(), FOREST()]);
     game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })), step: "declare-attackers", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], combat: { ...game.combat, attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
     const terra = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Terra Ravager")!;
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: terra.instance_id, defender: 1 }] });
@@ -7264,29 +7263,6 @@ describe("activated abilities", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: false });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Transguild Promenade")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Transguild Promenade")).toBe(true);
-  });
-
-  it("reuses sacrifice-unless-paid and life-gain ETBs for C13 Azorius Herald", () => {
-    const profile = profileOf(C13_AZORIUS_HERALD());
-    expect(profile.fullyImplemented).toBe(true);
-    expect(profile.triggers).toMatchObject([
-      { event: "enters-battlefield", effect: { kind: "sacrifice-source" }, unlessPayCost: { raw: "{W}" } },
-      { event: "enters-battlefield", effect: { kind: "gain-life", amount: 4 } }
-    ]);
-
-    let game = readyOnBoard([PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()], { hold: true });
-    game = stage(game, 0, () => ({ hand: toHand(0, [C13_AZORIUS_HERALD()], "azorius-herald-hand") }));
-    game = stage(game, 0, (player) => ({ autoPass: false }));
-    game = stage(game, 1, (player) => ({ autoPass: false }));
-    const lifeBefore = game.players[0]!.life;
-    game = applyAction(game, 0, { type: "cast", cardId: "azorius-herald-hand-0" });
-    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
-    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
-    expect(choice.unlessPayCost?.raw).toBe("{W}");
-    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
-    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
-    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Azorius Herald")).toBe(true);
-    expect(game.players[0]!.life).toBe(lifeBefore + 4);
   });
 
   it("fires an any-damage trigger from a permanent source", () => {

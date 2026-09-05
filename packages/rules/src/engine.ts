@@ -822,7 +822,7 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
   const base = allPermanents(state)
     .filter((source) => source.controller === permanent.controller)
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants
-      .filter((grant) => grant.scope === "self" ? source.instance_id === permanent.instance_id : grant.scope === "creatures-you-control"
+      .filter((grant) => grant.scope === "creatures-you-control"
         || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))
       .map((grant) => ({ source, grant })))
     .filter(({ grant }) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
@@ -2856,13 +2856,6 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const creature = findPermanent(state, target.instanceId);
       if (!creature || !isCreature(cardProfile(creature.card))) return state;
       const amount = powerOf(creature, state);
-      const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
-      return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
-    }
-    case "gain-life-equal-sacrificed-toughness": {
-      if (playersCantGainLife(state)) return state;
-      const amount = object.variableValue;
-      if (amount <= 0) return state;
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
