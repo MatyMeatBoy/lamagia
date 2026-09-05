@@ -88,7 +88,9 @@ Propuesta para la siguiente iteración:
 - Cada icono debe ser un control accesible enlazado a un panel de ayuda de keyword; el panel debe explicar regla e interacción actualmente implementada.
 - Ficha de permanente: arte, marco compacto de nombre, coste de maná, P/T grande, borde según color/tipo y badges de keyword. Los keywords ganados y P/T modificados sólo deben verse en azul cuando el motor exponga la procedencia; no fingir ese estado con datos impresos.
 - Básicas: glifo de maná local centrado en la franja inferior de la ficha de tierra.
-- Tokens: clase visual distinta tipo lápida solamente cuando exista un token real en el estado; hoy el motor todavía no crea tokens, por lo que primero se necesita un efecto de creación y una marca de token en la proyección.
+- Tokens: la proyección expone `isToken`; la UI aplica una ficha tipo lápida con
+  nombre, P/T e identidad independiente. Los efectos que aún no creen tokens
+  reales deben cerrarse en reglas antes de añadirles arte visual.
 - Añadir preferencia de «detalle de ficha» para alternar entre nombre compacto y la capa ampliada de coste/P/T/iconos.
 
 ## Restricciones que no deben romperse
