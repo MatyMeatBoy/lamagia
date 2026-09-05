@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,986** · cobertura: **27.0%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,987** · cobertura: **27.0%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -492,7 +492,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 | 2021-03-19 | Time Spiral Remastered (`TSR`) | masters-remastered | time-spiral-remastered | other | 410 | 99 | 311 | 24.1% |
 | 2021-04-23 | Commander 2021 (`C21`) | commander | 2021 | commander | 329 | 106 | 223 | 32.2% |
 | 2021-04-23 | Strixhaven Mystical Archive (`STA`) | masterpieces | strixhaven-mystical-archive | other | 63 | 26 | 37 | 41.3% |
-| 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | strixhaven | main | 290 | 48 | 242 | 16.6% |
+| 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | strixhaven | main | 290 | 49 | 241 | 16.9% |
 | 2021-04-23 | Strixhaven: School of Mages Promos (`PSTX`) | promos | strixhaven-school-of-mages | other | 90 | 8 | 82 | 8.9% |
 | 2021-05-06 | Modern Horizons 2 Promos (`PMH2`) | promos | modern-horizons-2 | other | 80 | 7 | 73 | 8.8% |
 | 2021-05-27 | Historic Anthology 5 (`HA5`) | anthologies | historic-anthology-5 | other | 25 | 7 | 18 | 28.0% |
@@ -817,7 +817,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 | expansion | onslaught | 1 | 335 | 68 | 267 | 20.3% |
 | expansion | phyrexia | 4 | 787 | 105 | 682 | 13.3% |
 | expansion | ravnica | 4 | 1081 | 321 | 760 | 29.7% |
-| expansion | strixhaven | 2 | 561 | 81 | 480 | 14.4% |
+| expansion | strixhaven | 2 | 561 | 82 | 479 | 14.6% |
 | expansion | tarkir | 3 | 785 | 170 | 615 | 21.7% |
 | expansion | tempest | 1 | 335 | 102 | 233 | 30.4% |
 | expansion | theros | 2 | 507 | 122 | 385 | 24.1% |
@@ -41560,7 +41560,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **22,98
 - [ ] Crackle with Power — `273f5483-b67e-4dd6-bba8-c0a047fa34d7`
 - [ ] Cram Session — `6e5b8bb2-9dd8-4986-9d0a-659114be5a2a`
 - [ ] Creative Outburst — `ffc79d71-5a1f-40a8-80af-84c85e12ba6e`
-- [ ] Crushing Disappointment — `77a1958e-ee24-4305-9dad-da8372803be8`
 - [ ] Culling Ritual — `15e5136e-ed15-49a8-b027-e09436673fb4`
 - [ ] Culmination of Studies — `d4e124af-d335-4c42-b60a-fe578f69f7ed`
 - [ ] Curate — `75e8907d-f726-4a63-ba8b-c0fd4936734e`
