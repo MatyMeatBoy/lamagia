@@ -3034,3 +3034,30 @@ added here asserted `legalActions` excludes the unaffordable declaration,
 not just that the direct `applyAction` call throws. Validation: **607
 rules tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,410
 global profiles.
+
+Orcish Bowmasters | `ea5103f5-27e0-4eb1-902c-7f34652d6bf3` was closed with
+four new pieces. First, `PlayerState.drawsThisDrawStep` — a SEPARATE
+counter from the earlier `drawsThisTurn` (Faerie Mastermind), reset only
+at the start of the "draw" step rather than at untap, feeding a new
+`GameEvent.drawStepCount` and a `not-first-draw-step-draw` trigger
+condition. The suppression only applies when `state.step === "draw"` AND
+`drawStepCount === 1` — a draw happening in any OTHER step always
+triggers regardless of the counter's value, which matters because "except
+the first ... in each of their draw steps" is scoped to draws that happen
+*during* a draw step, not to the player's first draw of the turn overall
+(those are different counts whenever an earlier effect, e.g. an upkeep
+trigger, draws before the mandatory turn-based draw). Second, the Amass
+mechanic (CR 701.44) as a new `amass` effect: grows an existing
+Army-subtyped creature the controller controls via `+1/+1` counters, or
+creates a 0/0 black `[tokenType]` Army token with them via
+`putOntoBattlefield`'s existing `additionalCounters` parameter. Third, a
+new "when ~ enters and whenever an opponent draws a card except the first
+one ..., X" compound-trigger template, mirroring the existing
+`entersOrAttacks` pattern: two `TriggerDefinition`s (one `enters-battlefield`,
+one `card-drawn`/`opponent` with the new condition) sharing one recognized
+effect. Fourth, a generic "`X`. Then amass `Type` `N`" sentence combinator
+in `recognizeSentence` (recursing on the leading effect via
+`recognizeSentence` itself, since it's always shorter) — reusable for any
+future "does something, then amasses" card. Validation: **609 rules
+tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,411 global
+profiles.

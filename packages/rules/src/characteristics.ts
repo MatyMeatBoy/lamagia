@@ -469,6 +469,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  /** Amass N (CR 701.44): put N +1/+1 counters on an Army you control, or create a 0/0 black [tokenType] Army token with them if you control none. */
+  | { readonly kind: "amass"; readonly amount: number; readonly tokenType: string }
   /** Target two creatures; they deal damage equal to their power to each other (CR 701.12). */
   | { readonly kind: "fight" }
   /** Reveals each player's top card and stores the total mana value for the source spell's entry counters. */
@@ -770,6 +772,8 @@ export interface TriggerDefinition {
     | { readonly kind: "second-draw-this-turn" }
     /** "if ~ is untapped" (Howling Mine): checks the source permanent's own tapped state. */
     | { readonly kind: "source-untapped" }
+    /** "except the first [card] they draw in each of their draw steps" (Orcish Bowmasters): suppressed only for the player's first draw during an actual draw step; any draw outside a draw step always counts. */
+    | { readonly kind: "not-first-draw-step-draw" }
     | { readonly kind: "entering-power-at-most"; readonly amount: number };
   readonly spellType?: "creature" | "noncreature" | "instant-or-sorcery";
   readonly spellColor?: string;
@@ -2225,6 +2229,19 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
 
+  // "X. Then amass [Type] N" (Orcish Bowmasters, CR 701.44): the amass always
+  // trails another effect, so recognize the lead effect and append amass.
+  const thenAmass = /^(.+?)\.\s*Then amass ([A-Za-z]+) (\d+)$/i.exec(text);
+  if (thenAmass) {
+    const inner = recognizeSentence(thenAmass[1]!);
+    if (inner) {
+      return {
+        effect: { kind: "compound", effects: [inner.effect, { kind: "amass", amount: Number(thenAmass[3]), tokenType: thenAmass[2]! }] },
+        target: inner.target
+      };
+    }
+  }
+
   // Ritual spells (Dark Ritual, Pyretic Ritual, Seething Song, Channel the
   // Suns): a one-shot mana burst as the spell's own effect, not a permanent's
   // activated ability. Only deterministic pools are modeled — a fixed color
@@ -3614,6 +3631,21 @@ function recognizeText(text: string): RecognizedText {
         for (const event of ["enters-battlefield", "attacks"] as const) {
           triggers.push({ event, subject: "self", effect: rec.effect, optional, targetKind: rec.target, sourceText: line });
         }
+        continue;
+      }
+    }
+    // "When ~ enters and whenever an opponent draws a card except the first
+    // one they draw in each of their draw steps, X" is an enters trigger
+    // plus a filtered card-drawn trigger (Orcish Bowmasters, CR 603.2).
+    const entersAndOpponentDrawStep = /^when\s+~\s+enters\s+and\s+whenever\s+an\s+opponent\s+draws\s+a\s+card\s+except\s+the\s+first\s+one\s+they\s+draw\s+in\s+each\s+of\s+their\s+draw\s+steps,?\s*(.+)$/i.exec(line);
+    if (entersAndOpponentDrawStep) {
+      const rec = recognizeSentence(entersAndOpponentDrawStep[1]!);
+      if (rec) {
+        triggers.push({ event: "enters-battlefield", subject: "self", effect: rec.effect, optional: false, targetKind: rec.target, sourceText: line });
+        triggers.push({
+          event: "card-drawn", subject: "opponent", condition: { kind: "not-first-draw-step-draw" },
+          effect: rec.effect, optional: false, targetKind: rec.target, sourceText: line
+        });
         continue;
       }
     }

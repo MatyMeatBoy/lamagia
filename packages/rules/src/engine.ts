@@ -169,6 +169,8 @@ export interface PlayerState {
   readonly landsPlayedThisTurn: number;
   /** Cards drawn this turn (Krang, Faerie Mastermind's "second card each turn"); reset each untap step. */
   readonly drawsThisTurn: number;
+  /** Cards drawn during the current draw step (Orcish Bowmasters' "except the first ... in each of their draw steps"); reset each draw step. */
+  readonly drawsThisDrawStep: number;
   readonly manaPool: ManaPool;
   /** Count of Opal Palace mana still floating; spent mana consumes this marker first. */
   readonly commanderMana: number;
@@ -310,7 +312,7 @@ export type GameEvent =
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard; readonly spell: StackObject; readonly spentMana?: number }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
   /** `count` is this player's Nth draw this turn, 1-indexed (Krang, Faerie Mastermind's "second card each turn"). */
-  | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard; readonly count: number }
+  | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard; readonly count: number; readonly drawStepCount: number }
   | { readonly kind: "card-discarded"; readonly seat: SeatId; readonly card: GameCard }
   | { readonly kind: "library-shuffled"; readonly controller: SeatId }
   | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
@@ -1174,6 +1176,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       commanderDamage: {},
       landsPlayedThisTurn: 0,
       drawsThisTurn: 0,
+      drawsThisDrawStep: 0,
       manaPool: emptyPool(),
       commanderMana: 0,
       lost: false,
@@ -1229,8 +1232,9 @@ function drawCards(state: GameState, seat: SeatId, amount: number): GameState {
       return next;
     }
     const count = playerAt(next, seat).drawsThisTurn + 1;
-    next = withPlayer(next, seat, (current) => ({ ...current, library: current.library.slice(1), hand: [...current.hand, card], drawsThisTurn: count }));
-    next = raiseEvent(next, { kind: "card-drawn", seat, card, count });
+    const drawStepCount = playerAt(next, seat).drawsThisDrawStep + 1;
+    next = withPlayer(next, seat, (current) => ({ ...current, library: current.library.slice(1), hand: [...current.hand, card], drawsThisTurn: count, drawsThisDrawStep: drawStepCount }));
+    next = raiseEvent(next, { kind: "card-drawn", seat, card, count, drawStepCount });
   }
   const player = playerAt(next, seat);
   if (amount > 0 && !player.drewFromEmptyLibrary) next = logged(next, seat, `${player.name} roba ${amount === 1 ? "una carta" : `${amount} cartas`}.`);
@@ -1448,6 +1452,10 @@ function triggerMatches(
   if (condition?.kind === "source-untapped") {
     const source = findPermanent(state, watcher.instanceId);
     if (!source || source.tapped) return false;
+  }
+  if (condition?.kind === "not-first-draw-step-draw") {
+    if (event.kind !== "card-drawn") return false;
+    if (state.step === "draw" && event.drawStepCount === 1) return false;
   }
   if (condition?.kind === "attacking-alone" && (event.kind !== "attacks" || state.combat.attackers.length !== 1)) return false;
   if (condition?.kind === "entering-power-at-most") {
@@ -2697,6 +2705,35 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       return state;
+    }
+    case "amass": {
+      const existingArmy = playerAt(state, controller).battlefield.find((permanent) => hasSubtype(cardProfile(permanent.card), "Army"));
+      if (existingArmy) {
+        const next = withPlayer(state, controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => permanent.instance_id === existingArmy.instance_id
+            ? { ...permanent, counters: { ...permanent.counters, "+1/+1": (permanent.counters["+1/+1"] ?? 0) + effect.amount } }
+            : permanent)
+        }));
+        return logged(next, controller, `${playerAt(next, controller).name} amasa ${effect.amount} en ${existingArmy.card.name}.`);
+      }
+      const token: GameCard = {
+        scryfall_id: `token:${object.id}:amass`,
+        instance_id: `token:${object.id}:amass`,
+        owner: controller,
+        token: true,
+        name: "Army",
+        type_line: `Creature — ${effect.tokenType} Army`,
+        mana_cost: "",
+        cmc: 0,
+        oracle_text: "",
+        power: "0",
+        toughness: "0",
+        colors: ["B"],
+        keywords: []
+      };
+      const next = putOntoBattlefield(state, controller, token, false, false, false, false, false, 0, [], [{ kind: "+1/+1", amount: effect.amount }]);
+      return logged(next, controller, `${playerAt(next, controller).name} amasa ${effect.amount} (crea un token de Army).`);
     }
     case "fight": {
       const left = object.targets[0];
@@ -5144,7 +5181,10 @@ function beginStep(state: GameState, step: TurnStep): GameState {
     next = queueEchoTriggers(next);
     next = raiseEvent(next, { kind: "upkeep", activeSeat: next.activeSeat });
   }
-  if (step === "draw") next = raiseEvent(next, { kind: "draw-step", activeSeat: next.activeSeat });
+  if (step === "draw") {
+    next = withPlayer(next, next.activeSeat, (player) => ({ ...player, drawsThisDrawStep: 0 }));
+    next = raiseEvent(next, { kind: "draw-step", activeSeat: next.activeSeat });
+  }
   if (step === "precombat-main") next = queueDelayedManaAdds(next);
   if (step === "end") {
     next = queueDelayedReturns(next);

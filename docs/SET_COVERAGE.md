@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,937** · cobertura: **28.2%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,940** · cobertura: **28.2%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -574,8 +574,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,93
 | 2023-04-21 | Multiverse Legends (`MUL`) | masterpieces | multiverse-legends | other | 66 | 1 | 65 | 1.5% |
 | 2023-05-12 | March of the Machine: The Aftermath (`MAT`) | expansion | phyrexia | main | 50 | 1 | 49 | 2.0% |
 | 2023-06-23 | Tales of Middle-earth Commander (`LTC`) | commander | 2023 | commander | 341 | 126 | 215 | 37.0% |
-| 2023-06-23 | Tales of Middle-earth Promos (`PLTR`) | promos | tales-of-middle-earth | other | 84 | 1 | 83 | 1.2% |
-| 2023-06-23 | The Lord of the Rings: Tales of Middle-earth (`LTR`) | supplemental | the-lord-of-the-rings-tales-of-middle-earth | other | 291 | 26 | 265 | 8.9% |
+| 2023-06-23 | Tales of Middle-earth Promos (`PLTR`) | promos | tales-of-middle-earth | other | 84 | 2 | 82 | 2.4% |
+| 2023-06-23 | The Lord of the Rings: Tales of Middle-earth (`LTR`) | supplemental | the-lord-of-the-rings-tales-of-middle-earth | other | 291 | 27 | 264 | 9.3% |
 | 2023-07-01 | MagicFest 2023 (`PF23`) | promos | magicfest-2023 | other | 4 | 2 | 2 | 50.0% |
 | 2023-07-18 | Explorer Anthology 3 (`EA3`) | anthologies | explorer-anthology-3 | other | 25 | 10 | 15 | 40.0% |
 | 2023-07-18 | Historic Anthology 7 (`HA7`) | anthologies | historic-anthology-7 | other | 25 | 11 | 14 | 44.0% |
@@ -687,7 +687,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,93
 | 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 47 | 234 | 16.7% |
 | 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 141 | 475 | 22.9% |
 | 2026-08-14 | The Hobbit (`HOB`) | expansion | 2020s | main | 193 | 35 | 158 | 18.1% |
-| 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | 2020s | other | 117 | 23 | 94 | 19.7% |
+| 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | 2020s | other | 117 | 24 | 93 | 20.5% |
 | 2026-09-02 | The Zeta Set (`SLZ`) | boxed-products | the-zeta-set | other | 121 | 42 | 79 | 34.7% |
 | 2026-10-02 | Reality Fracture (`FRA`) | expansion | 2020s | main | 24 | 1 | 23 | 4.2% |
 | 2026-10-02 | Reality Fracture Commander (`FRC`) | commander | 2026 | commander | 1 | 0 | 1 | 0.0% |
@@ -791,7 +791,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,93
 | duel-decks | duel-decks-speed-vs-cunning | 1 | 71 | 28 | 43 | 39.4% |
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 35 | 35 | 50.0% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
-| eternal | 2020s | 6 | 537 | 132 | 405 | 24.6% |
+| eternal | 2020s | 6 | 537 | 133 | 404 | 24.8% |
 | expansion | 1990s | 11 | 1573 | 335 | 1238 | 21.3% |
 | expansion | 2000s | 19 | 3082 | 640 | 2442 | 20.8% |
 | expansion | 2010s | 14 | 2735 | 652 | 2083 | 23.8% |
@@ -1151,7 +1151,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,93
 | promos | strixhaven-school-of-mages | 1 | 90 | 9 | 81 | 10.0% |
 | promos | stronghold | 1 | 1 | 0 | 1 | 0.0% |
 | promos | summer-vacation-2022 | 1 | 3 | 2 | 1 | 66.7% |
-| promos | tales-of-middle-earth | 1 | 84 | 1 | 83 | 1.2% |
+| promos | tales-of-middle-earth | 1 | 84 | 2 | 82 | 2.4% |
 | promos | tarkir-dragonfury | 1 | 4 | 3 | 1 | 75.0% |
 | promos | tarkir-dragonstorm | 1 | 80 | 1 | 79 | 1.2% |
 | promos | tempest | 1 | 1 | 0 | 1 | 0.0% |
@@ -1214,7 +1214,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,93
 | supplemental | modern-horizons-2-timeshifts | 1 | 16 | 3 | 13 | 18.8% |
 | supplemental | modern-horizons-3 | 1 | 313 | 44 | 269 | 14.1% |
 | supplemental | ravnica-clue-edition | 1 | 268 | 108 | 160 | 40.3% |
-| supplemental | the-lord-of-the-rings-tales-of-middle-earth | 1 | 291 | 26 | 265 | 8.9% |
+| supplemental | the-lord-of-the-rings-tales-of-middle-earth | 1 | 291 | 27 | 264 | 9.3% |
 | treasure-chest | 2010s | 2 | 419 | 100 | 319 | 23.9% |
 
 ## Pendientes por edición
@@ -50607,7 +50607,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,93
 - [ ] Moria Marauder — `9f0027e3-815b-4965-9ef4-3c4814c62cf3`
 - [ ] Mount Doom — `995c8dac-fd27-468a-abd4-02372cf0c850`
 - [ ] One Ring to Rule Them All — `c75add5e-4e9d-4c68-a8ad-b878b1dbc0a4`
-- [ ] Orcish Bowmasters — `ea5103f5-27e0-4eb1-902c-7f34652d6bf3`
 - [ ] Palantír of Orthanc — `7798a4d9-1c1d-48e6-b9a2-ecd6aec1efa7`
 - [ ] Phial of Galadriel — `08f17ebc-c0fd-493f-84b3-e9250694543e`
 - [ ] Pippin, Guard of the Citadel — `25afddd2-6e48-4742-b34e-e3b5def7c0fd`
@@ -50809,7 +50808,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,93
 - [ ] Oliphaunt — `186b2256-4af3-48cb-96b0-b0e80a7ee6dc`
 - [ ] Olog-hai Crusher — `fb6f04bc-3514-49b2-9d17-f80980d996a8`
 - [ ] One Ring to Rule Them All — `c75add5e-4e9d-4c68-a8ad-b878b1dbc0a4`
-- [ ] Orcish Bowmasters — `ea5103f5-27e0-4eb1-902c-7f34652d6bf3`
 - [ ] Orcish Medicine — `2f9a5e7c-f463-4773-bf67-a07339ce9b5d`
 - [ ] Palantír of Orthanc — `7798a4d9-1c1d-48e6-b9a2-ecd6aec1efa7`
 - [ ] Pelargir Survivor — `ce0b3c22-3f77-4a6c-a126-9ed3c06b4482`
@@ -63924,7 +63922,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,93
 - [ ] Nimrodel Watcher — `1b8de1c5-1e23-4c84-bc5a-a14853ad8c7a`
 - [ ] Oliphaunt — `186b2256-4af3-48cb-96b0-b0e80a7ee6dc`
 - [ ] Olog-hai Crusher — `fb6f04bc-3514-49b2-9d17-f80980d996a8`
-- [ ] Orcish Bowmasters — `ea5103f5-27e0-4eb1-902c-7f34652d6bf3`
 - [ ] Orcish Siegemaster — `d852099f-46c6-4676-860c-20a582f733d1`
 - [ ] Ori, Plate Stacker — `7fc9f7e3-5347-4ea1-9bec-9e04ed78d16a`
 - [ ] Palantír of Orthanc — `7798a4d9-1c1d-48e6-b9a2-ecd6aec1efa7`
