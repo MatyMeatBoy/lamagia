@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-grazing-gladehart` | Grazing Gladehart reuses the landfall life-gain trigger with an optional 2-life gain (CR 603.1, 603.2, 118.3) | `codex/c13-grazing-gladehart-f99b` | active | 2026-09-05 |

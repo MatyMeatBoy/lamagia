@@ -306,6 +306,11 @@ const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "En
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
+const C13_GRAZING_GLADEHART = () => make({
+  name: "Grazing Gladehart", type_line: "Creature — Antelope", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2",
+  oracle_text: "Landfall — Whenever a land you control enters, you may gain 2 life.",
+  scryfall_id: "06dda49d-25a2-4fa3-80f2-0d784e1ad30f", oracle_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4"
+});
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -3727,6 +3732,26 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Beast")).toHaveLength(1);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Beast")?.card).toMatchObject({ power: "4", toughness: "4", type_line: "Creature — Beast" });
+  });
+
+  it("reuses the landfall life-gain primitive for C13 Grazing Gladehart", () => {
+    const profile = profileOf(C13_GRAZING_GLADEHART());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers).toMatchObject([{
+      event: "enters-battlefield", subject: "land-you-control", optional: true,
+      effect: { kind: "gain-life", amount: 2 }, targetKind: "none"
+    }]);
+
+    let game = readyToCast([C13_GRAZING_GLADEHART(), FOREST()], [FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", sourceCard: { name: "Grazing Gladehart" } });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    const life = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.life).toBe(life + 2);
   });
 
   it("offers each landcycling variant and searches the matching subtype", () => {
