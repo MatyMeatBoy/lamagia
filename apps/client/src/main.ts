@@ -505,6 +505,9 @@ function onCardClick(cardId: string, forcedAction?: LegalAction): void {
   const choices = cardActionsForCard(cardId);
   const card = seatOf(view?.viewerSeat ?? -1)?.hand?.find((candidate) => candidate.instance_id === cardId);
   const hasCycleOnly = choices.some((entry) => entry.action.type === "cycle") && !choices.some((entry) => entry.action.type === "cast");
+  // Never guess between printed modes. This is especially important for
+  // hand-based mana abilities (e.g. Simian Spirit Guide): a normal click must
+  // open the general menu, where casting and exiling for mana are separate.
   if (!forcedAction && (choices.length > 1 || (hasCycleOnly && Boolean(card)))) {
     ui.cardActionMenu = ui.cardActionMenu === cardId ? null : cardId;
     ui.notice = "Elige qué hacer con esta carta.";
@@ -1025,9 +1028,10 @@ function decisionOverlayHtml(): string {
       && !["cast", "cycle", "play-land", "activate", "activate-mana", "equip", "toggle-trigger-yield", "declare-attackers", "declare-blockers"].includes(entry.action.type));
   if (!choices.length) return "";
   const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
-  const title = hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
+  const manaPayment = choices.some((entry) => entry.action.type === "choose-mana-source" || entry.action.type === "cancel-mana-payment");
+  const title = manaPayment ? "Elegir fuentes de maná" : hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
   const subtitle = hasPendingChoice
-    ? "Elige una opción para continuar la partida."
+    ? (manaPayment ? "Elige qué fuentes girar para pagar; puedes cancelar el lanzamiento." : "Elige una opción para continuar la partida.")
     : view?.stack.length
       ? "Puedes responder ahora o pasar prioridad."
       : "Estas son las acciones disponibles en este momento.";
