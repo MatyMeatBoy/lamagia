@@ -306,6 +306,11 @@ const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "En
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
+const C13_PHYREXIAN_DELVER = () => make({
+  name: "Phyrexian Delver", type_line: "Creature — Phyrexian Zombie", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "2",
+  oracle_text: "When Phyrexian Delver enters the battlefield, you may return target creature card from your graveyard to the battlefield. You lose life equal to that card's converted mana cost.",
+  scryfall_id: "a13cbac0-4c76-4970-b61e-5f4e020ee95c", oracle_id: "a13cbac0-4c76-4970-b61e-5f4e020ee95c"
+});
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -1278,6 +1283,28 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it("reuses mana-value life loss for C13 Phyrexian Delver's reanimation ETB", () => {
+    const profile = profileOf(C13_PHYREXIAN_DELVER());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers).toMatchObject([{
+      event: "enters-battlefield", optional: true,
+      targetKind: "creature-card-in-your-graveyard",
+      effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield-and-lose-mana-value" }
+    }]);
+
+    let game = readyToCast([C13_PHYREXIAN_DELVER()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, graveyard: toHand(0, [BEAR()], "delver-yard") }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.targets).toEqual([{ kind: "graveyard-card", seat: 0, instanceId: "delver-yard-0" }]);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.life).toBe(38);
   });
 
   it("uses Stitch Together's threshold at resolution", () => {
