@@ -304,6 +304,12 @@ export interface StaticKeywordGrant {
   readonly requiresControlledLandSubtype?: string;
 }
 
+/** "If a triggered ability of X triggers, that ability triggers an additional time" (CR 603.3f). */
+export interface TriggerDoubler {
+  readonly scope: "subtype-you-control" | "equipped-creature";
+  readonly subtypes?: readonly string[];
+}
+
 export interface StaticPowerToughnessGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
     | "source-opponents-graveyard-creatures" | "source-controller-life-threshold";
@@ -805,6 +811,7 @@ export interface CardProfile {
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
   /** Colors of creatures this permanent untaps during each other player's untap step (CR 502.2). */
   readonly untapColorsDuringOtherPlayersUntap: readonly string[];
+  readonly triggerDoublers: readonly TriggerDoubler[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
   readonly noMaximumHandSizeForAllPlayers: boolean;
@@ -1431,6 +1438,24 @@ function parseKeywordDuringYourTurn(line: string): EnforcedKeyword[] {
 
 function parseKeywordsDuringYourTurn(text: string): EnforcedKeyword[] {
   return text.split("\n").flatMap(parseKeywordDuringYourTurn);
+}
+
+/** Harmonic Prodigy / Wizard's Staff style trigger-doubling clauses. */
+function parseTriggerDoubler(line: string): TriggerDoubler | null {
+  const clean = line.trim().replace(/\.$/, "");
+  if (/^If a triggered ability of equipped creature triggers,\s*that ability triggers an additional time$/i.test(clean)) {
+    return { scope: "equipped-creature" };
+  }
+  const subtypeMatch = /^If a triggered ability of (?:an?|another)\s+([A-Za-z][A-Za-z'’-]*)(?:\s+or\s+(?:an?|another)\s+([A-Za-z][A-Za-z'’-]*))?\s+you control triggers,\s*that ability triggers an additional time$/i.exec(clean);
+  if (!subtypeMatch) return null;
+  return {
+    scope: "subtype-you-control",
+    subtypes: [subtypeMatch[1], subtypeMatch[2]].filter((value): value is string => Boolean(value))
+  };
+}
+
+function parseTriggerDoublers(text: string): TriggerDoubler[] {
+  return text.split("\n").flatMap((line) => parseTriggerDoubler(line) ?? []);
 }
 
 function parseUntapColorsDuringOtherPlayersUntap(text: string): string[] {
@@ -3225,6 +3250,7 @@ function recognizeText(text: string): RecognizedText {
     if (parseProtectionFromLine(line)) continue;
     if (parseStaticKeywordGrant(line).length) continue;
     if (parseKeywordDuringYourTurn(line).length) continue;
+    if (parseTriggerDoubler(line)) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
     if (/^creature spells you control with power \d+ or greater can't be countered\.?$/i.test(line)) continue;
@@ -3696,6 +3722,7 @@ export function cardProfile(card: CardData): CardProfile {
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
+  const triggerDoublers = parseTriggerDoublers(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const noMaximumHandSizeForAllPlayers = text.split("\n").some((line) => /^players have no maximum hand size\.?$/i.test(line.trim()));
@@ -3746,6 +3773,7 @@ export function cardProfile(card: CardData): CardProfile {
     staticKeywordGrants,
     keywordsDuringYourTurn,
     untapColorsDuringOtherPlayersUntap,
+    triggerDoublers,
     preventsLifeGain,
     noMaximumHandSize,
     noMaximumHandSizeForAllPlayers,

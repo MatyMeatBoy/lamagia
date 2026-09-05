@@ -1491,22 +1491,38 @@ function raiseEvent(
       if (definition.condition?.kind === "cast-from-hand" && !watcher.castFromHand) continue;
       // Undying / Persist only fire when the creature died without the relevant counter (CR 702.92c/702.93c).
       if (definition.effect.kind === "undying-return" && (watcher.counters[definition.effect.counter] ?? 0) > 0) continue;
-      queued.push({
-        id: `trigger:${state.version}:${state.triggerQueue.length + queued.length}:${watcher.instance_id}:${index}`,
-        controller: watcher.controller,
-        sourcePermanentId: watcher.instance_id,
-        sourceCard: watcher.card,
-        definition,
-        cause: causeOf(state, event),
-        ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
-        ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
-        ...("amount" in event ? { eventAmount: event.amount } : {}),
-        ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
-        ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {})
-      });
+      const copies = 1 + triggerDoublerCount(state, watcher);
+      for (let copy = 0; copy < copies; copy += 1) {
+        queued.push({
+          id: `trigger:${state.version}:${state.triggerQueue.length + queued.length}:${watcher.instance_id}:${index}:${copy}`,
+          controller: watcher.controller,
+          sourcePermanentId: watcher.instance_id,
+          sourceCard: watcher.card,
+          definition,
+          cause: causeOf(state, event),
+          ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
+          ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
+          ...("amount" in event ? { eventAmount: event.amount } : {}),
+          ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
+          ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {})
+        });
+      }
     }
   }
   return queued.length ? { ...state, triggerQueue: [...state.triggerQueue, ...queued] } : state;
+}
+
+/** Counts permanents controlled by the watcher controller that double this trigger source. */
+function triggerDoublerCount(state: GameState, watcher: Permanent): number {
+  let extra = 0;
+  for (const source of allPermanents(state)) {
+    if (source.controller !== watcher.controller) continue;
+    for (const doubler of cardProfile(source.card).triggerDoublers) {
+      if (doubler.scope === "equipped-creature" && source.attachedTo === watcher.instance_id) extra += 1;
+      if (doubler.scope === "subtype-you-control" && doubler.subtypes?.some((subtype) => hasSubtype(cardProfile(watcher.card), subtype))) extra += 1;
+    }
+  }
+  return extra;
 }
 
 /** Raises `becomes-tapped` for each permanent that went from untapped to tapped. */

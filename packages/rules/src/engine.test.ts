@@ -81,6 +81,8 @@ const FROSTBOIL = () => make({
 const TAPLAND = () => make({ name: "Slow Gate", type_line: "Land", oracle_text: "Slow Gate enters tapped.\n{T}: Add {G}.", produced_mana: ["G"] });
 const BEAR = () => make({ name: "Grizzly Bears", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
 const ETB_DRAWER = () => make({ name: "Archivist Bear", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Archivist Bear enters the battlefield, draw a card." });
+const TRIGGER_DOUBLER_SUBTYPE = () => make({ name: "Test Harmonic Prodigy", type_line: "Creature — Fox Shaman", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "If a triggered ability of a Shaman or another Wizard you control triggers, that ability triggers an additional time." });
+const WIZARD_ETB_DRAWER = () => make({ name: "Test Wizard Apprentice", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "1", oracle_text: "When this creature enters, draw a card." });
 const ARTIFACT_ETB_DRAWER = () => make({ name: "Relic Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever an artifact enters the battlefield under your control, draw a card." });
 const ENCHANTMENT_ETB_DRAWER = () => make({ name: "Oath Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever an enchantment enters the battlefield under your control, draw a card." });
 const PERMANENT_ETB_DRAWER = () => make({ name: "Permanent Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever a permanent enters the battlefield under your control, draw a card." });
@@ -3332,6 +3334,23 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.stack).toHaveLength(0);
     expect(game.players[0]!.hand).toHaveLength(1);
+  });
+
+  it("doubles a Wizard's triggered ability when a Harmonic-Prodigy-style doubler is out", () => {
+    const profile = profileOf(TRIGGER_DOUBLER_SUBTYPE());
+    expect(profile.triggerDoublers).toEqual([{ scope: "subtype-you-control", subtypes: ["Shaman", "Wizard"] }]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([WIZARD_ETB_DRAWER()], [ISLAND(), ISLAND(), TRIGGER_DOUBLER_SUBTYPE()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand).toHaveLength(2);
+
+    // Without the doubler on the battlefield, the ability fires only once.
+    let baseline = readyToCast([WIZARD_ETB_DRAWER()], [ISLAND(), ISLAND()]);
+    baseline = applyAction(baseline, 0, { type: "cast", cardId: "hand-0" });
+    baseline = passUntil(baseline, (state) => state.stack.length === 0);
+    expect(baseline.players[0]!.hand).toHaveLength(1);
   });
 
   it("does not let a spell counter target an ETB ability", () => {
