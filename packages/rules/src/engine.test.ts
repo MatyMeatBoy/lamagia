@@ -321,6 +321,7 @@ const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", ora
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
 const C13_GRAZING_GLADEHART = () => make({ name: "Grazing Gladehart", type_line: "Creature — Antelope", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Landfall — Whenever a land you control enters, you may gain 2 life.", scryfall_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4", oracle_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4" });
+const C13_HUNTED_TROLL = () => make({ name: "Hunted Troll", type_line: "Creature — Troll", mana_cost: "{2}{G}{G}", cmc: 4, power: "8", toughness: "4", oracle_text: "When this creature enters, target opponent creates four 1/1 blue Faerie creature tokens with flying.\n{G}: Regenerate this creature.", scryfall_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6", oracle_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6" });
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
 const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
 const C13_SALTCRUSTED_STEPPE = () => make({ name: "Saltcrusted Steppe", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {G} and/or {W}.", produced_mana: ["C", "G", "W"], scryfall_id: "c13-saltcrusted-steppe" });
@@ -3740,6 +3741,20 @@ describe("casting", () => {
     expect(choice.triggerEffect).toEqual({ kind: "gain-life", amount: 2 });
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     expect(game.players[0]!.life).toBe(42);
+  });
+
+  it("creates Hunted Troll's Faeries under the targeted opponent", () => {
+    let game = readyToCast([C13_HUNTED_TROLL()], [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    if (game.pendingChoice?.type === "trigger-target") {
+      expect(game.pendingChoice.targetKind).toBe("opponent");
+      const choice = game.pendingChoice;
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
+      game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    }
+    expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Faerie")).toHaveLength(4);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Faerie")).toHaveLength(0);
+    expect(cardProfile(C13_HUNTED_TROLL()).fullyImplemented).toBe(true);
   });
 
   it("offers each landcycling variant and searches the matching subtype", () => {

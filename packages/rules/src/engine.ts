@@ -3448,6 +3448,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return logged(next, controller, `${playerAt(next, controller).name} crea ${amount} ${effect.token.name}${amount === 1 ? "" : "s"}.`);
     }
+    case "create-token-for-target-player": {
+      const target = object.targets.find((entry): entry is Extract<Target, { kind: "player" }> => entry.kind === "player");
+      if (!target) return state;
+      return applyEffect(state, { ...object, controller: target.seat }, { kind: "create-token", amount: effect.amount, token: effect.token });
+    }
     case "search-library":
       // Search is resolved through the explicit library-choice action below.
       return state;
