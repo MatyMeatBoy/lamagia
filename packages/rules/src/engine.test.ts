@@ -536,6 +536,7 @@ const BLACK_SOURCE = () => make({ name: "Onyx Mana Rock", type_line: "Land", pro
 const COUNTER_UNLESS_PAY = () => make({ name: "Test Mana Leak", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target spell unless its controller pays {1}." });
 const DAZE = () => make({ name: "Daze", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "You may return an Island you control to its owner's hand rather than pay this spell's mana cost.\nCounter target spell unless its controller pays {1}.", oracle_id: "70486bee-6ee7-41ea-b834-8caf4699302b", scryfall_id: "61968d99-6571-49ce-bcf1-2aaac3a10f45" });
 const GUSH = () => make({ name: "Gush", type_line: "Instant", mana_cost: "{4}{U}", cmc: 5, oracle_text: "You may return two Islands you control to their owner's hand rather than pay this spell's mana cost.\nDraw two cards.", oracle_id: "16d8ee99-8ec8-429f-9ba7-818a74b6f910", scryfall_id: "b5f4475e-d97c-412d-8c8e-ec73f69dbb81" });
+const LAY_DOWN_ARMS = () => make({ name: "Lay Down Arms", type_line: "Sorcery", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature with mana value less than or equal to the number of Plains you control. Its controller gains 3 life.", oracle_id: "aa91d092-7f4a-4e4d-85db-e200692f3d9d", scryfall_id: "e6ae75e3-51c4-4422-af9e-1c60ef731b0a" });
 const FLUSTERSTORM = () => make({ name: "Flusterstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, keywords: ["storm"], oracle_text: "Counter target instant or sorcery spell unless its controller pays {1}.\nStorm (When you cast this spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)", oracle_id: "86bf58f2-7f25-4e10-b797-25e0e8e67769", scryfall_id: "0bc0f90d-1aef-4c70-9529-0482023d084f" });
 const MANA_DRAIN = () => make({ name: "Mana Drain", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell. At the beginning of your next main phase, add an amount of {C} equal to that spell's mana value.", oracle_id: "74d3277a-38e5-4732-afed-084a56148f20", scryfall_id: "f4e72225-0008-46cf-b403-3402ae8bfe47" });
 const LONG_RIVERS_PULL = () => make({ name: "Long River's Pull", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Gift a card (You may promise an opponent a gift as you cast this spell. If you do, they draw a card before its other effects.)\nCounter target creature spell. If the gift was promised, instead counter target spell.", oracle_id: "f1993767-1d07-49c8-b8dc-04ec9840a999", scryfall_id: "1c81d0fa-81a1-4f9b-a5fd-5a648fd01dea" });
@@ -5950,6 +5951,20 @@ describe("casting", () => {
     game = applyAction(game, 0, chosen);
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Island")).toHaveLength(1);
     expect(game.players[0]!.hand.filter((card) => card.name === "Island")).toHaveLength(2);
+  });
+
+  it("limits Lay Down Arms to creatures within the controller's Plains count", () => {
+    const profile = profileOf(LAY_DOWN_ARMS());
+    expect(profile).toMatchObject({ fullyImplemented: true, targetKind: "creature-mana-value-up-to-plains", effects: [{ kind: "exile-target-permanent" }, { kind: "gain-life-event-controller", amount: 3 }] });
+    let game = readyToCast([LAY_DOWN_ARMS()], [PLAINS(), PLAINS()], [], [BEAR(), FIREBREATHER()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const drake = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Firecoil Drake")!;
+    const targets = legalTargets(game, 0, "creature-mana-value-up-to-plains");
+    expect(targets).toContainEqual({ kind: "permanent", instanceId: bear.instance_id });
+    expect(targets).not.toContainEqual({ kind: "permanent", instanceId: drake.instance_id });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[1]!.exile.some((card) => card.instance_id === bear.card.instance_id)).toBe(true);
+    expect(game.players[1]!.life).toBe(43);
   });
 
   it("restricts Flusterstorm to instant-or-sorcery spells, unlike the generic 'target spell' template", () => {

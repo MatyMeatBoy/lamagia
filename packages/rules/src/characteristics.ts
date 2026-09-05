@@ -905,6 +905,7 @@ export type MagicColor = "W" | "U" | "B" | "R" | "G";
 export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
+  | "creature-mana-value-up-to-plains"
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
   | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
@@ -3457,6 +3458,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature with reach$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-reach" };
   if (/^Destroy target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Exile target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-power-at-least-5" };
+  if (/^Exile target creature with mana value less than or equal to the number of Plains you control\.?$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-mana-value-up-to-plains" };
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };
   if (/^Destroy target creature with toughness 4 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-least-4" };
   if (/^Destroy target creature with toughness 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-most-4" };

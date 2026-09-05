@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,088** · cobertura: **30.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,090** · cobertura: **30.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -546,7 +546,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,08
 | 2022-10-07 | Warhammer 40,000 Commander (`40K`) | commander | 2022 | commander | 286 | 83 | 203 | 29.0% |
 | 2022-10-14 | Game Night: Free-for-All (`GN3`) | boxed-products | game-night-free-for-all | other | 125 | 54 | 71 | 43.2% |
 | 2022-11-01 | Secret Lair Countdown (`SLC`) | secret-lair | secret-lair-countdown | secret-lair | 58 | 14 | 44 | 24.1% |
-| 2022-11-18 | The Brothers' War (`BRO`) | expansion | 2020s | main | 292 | 50 | 242 | 17.1% |
+| 2022-11-18 | The Brothers' War (`BRO`) | expansion | 2020s | main | 292 | 51 | 241 | 17.5% |
 | 2022-11-18 | The Brothers' War Commander (`BRC`) | commander | 2022 | commander | 176 | 86 | 90 | 48.9% |
 | 2022-11-18 | The Brothers' War Promos (`PBRO`) | promos | the-brothers-war | other | 89 | 8 | 81 | 9.0% |
 | 2022-11-18 | The Brothers' War Retro Artifacts (`BRR`) | masterpieces | the-brothers-war-retro-artifacts | other | 63 | 22 | 41 | 34.9% |
@@ -607,7 +607,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,08
 | 2024-02-23 | Ravnica: Clue Edition (`CLU`) | supplemental | ravnica-clue-edition | other | 268 | 111 | 157 | 41.4% |
 | 2024-03-08 | Fallout (`PIP`) | commander | 2024 | commander | 336 | 112 | 224 | 33.3% |
 | 2024-04-19 | Breaking News (`OTP`) | masterpieces | breaking-news | other | 65 | 12 | 53 | 18.5% |
-| 2024-04-19 | Love Your LGS 2024 (`PLG24`) | promos | lgs-2024 | other | 5 | 2 | 3 | 40.0% |
+| 2024-04-19 | Love Your LGS 2024 (`PLG24`) | promos | lgs-2024 | other | 5 | 3 | 2 | 60.0% |
 | 2024-04-19 | Outlaws of Thunder Junction (`OTJ`) | expansion | thunder-junction | main | 276 | 33 | 243 | 12.0% |
 | 2024-04-19 | Outlaws of Thunder Junction Commander (`OTC`) | commander | 2024 | commander | 306 | 111 | 195 | 36.3% |
 | 2024-04-19 | Outlaws of Thunder Junction Promos (`POTJ`) | promos | outlaws-of-thunder-junction | other | 80 | 5 | 75 | 6.2% |
@@ -795,7 +795,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,08
 | expansion | 1990s | 11 | 1573 | 373 | 1200 | 23.7% |
 | expansion | 2000s | 19 | 3082 | 698 | 2384 | 22.6% |
 | expansion | 2010s | 14 | 2735 | 733 | 2002 | 26.8% |
-| expansion | 2020s | 17 | 3738 | 639 | 3099 | 17.1% |
+| expansion | 2020s | 17 | 3738 | 640 | 3098 | 17.1% |
 | expansion | alara | 2 | 379 | 154 | 225 | 40.6% |
 | expansion | amonkhet | 1 | 272 | 100 | 172 | 36.8% |
 | expansion | bloomburrow | 1 | 280 | 43 | 237 | 15.4% |
@@ -1061,7 +1061,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,08
 | promos | lgs-2020 | 1 | 2 | 2 | 0 | 100.0% |
 | promos | lgs-2021 | 1 | 9 | 0 | 9 | 0.0% |
 | promos | lgs-2022 | 1 | 2 | 2 | 0 | 100.0% |
-| promos | lgs-2024 | 1 | 5 | 2 | 3 | 40.0% |
+| promos | lgs-2024 | 1 | 5 | 3 | 2 | 60.0% |
 | promos | lgs-2025 | 1 | 2 | 1 | 1 | 50.0% |
 | promos | lorwyn | 1 | 3 | 1 | 2 | 33.3% |
 | promos | lorwyn-eclipsed | 1 | 80 | 6 | 74 | 7.5% |
@@ -45247,7 +45247,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,08
 - [ ] Keeper of the Cadence — `3b3c5fc6-6c4a-4e23-9625-5954d1986160`
 - [ ] Kill-Zone Acrobat — `7c3982c5-6af3-4937-8d1f-e006f4e89342`
 - [ ] Lat-Nam Adept — `0d5a1870-6d26-47e7-a86c-f3ff15cb0707`
-- [ ] Lay Down Arms — `aa91d092-7f4a-4e4d-85db-e200692f3d9d`
 - [ ] Legions to Ashes — `dc29cb25-57f5-4cac-9764-efa644b41296`
 - [ ] Levitating Statue — `259ca16d-7753-402b-bcd0-2425500dee99`
 - [ ] Liberator, Urza's Battlethopter — `798a4a6f-7443-4e8e-afcb-0a694fdfcbb3`
@@ -52268,7 +52267,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,08
 ### promos / lgs-2024 · Love Your LGS 2024 (`PLG24`)
 
 - [ ] Cut Down — `1b30210d-10e9-4703-8967-032063bb4f26`
-- [ ] Lay Down Arms — `aa91d092-7f4a-4e4d-85db-e200692f3d9d`
 - [ ] Sheoldred's Edict — `217062f5-96f1-454c-9507-17f34ef37070`
 
 ### expansion / thunder-junction · Outlaws of Thunder Junction (`OTJ`)

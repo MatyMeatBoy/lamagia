@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,152**
-- Cards with a reusable existing primitive hint: **11,443**
+- One-line cards: **15,151**
+- Cards with a reusable existing primitive hint: **11,442**
 - Cards needing new primitive review: **3,709**
-- Templates: **11,991**
+- Templates: **11,990**
 
 ## Worker rule
 
@@ -45,7 +45,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Ancestral Mask | `db5380ed-ba28-4ea2-abc3-4998e2022903` | static-continuous | static / continuous | Enchanted creature gets +2/+2 for each other enchantment on the battlefield. |
 | needs-new-primitive | Cut Down | `1b30210d-10e9-4703-8967-032063bb4f26` | destroy | new primitive review | Destroy target creature with total power and toughness 5 or less. |
 | reuse-existing | Ruby, Daring Tracker | `5d1b0eee-3a7a-4f22-a40d-7658a368962a` | pump | trigger / ETB | Whenever ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn. |
-| reuse-existing | Lay Down Arms | `aa91d092-7f4a-4e4d-85db-e200692f3d9d` | exile | activated ability / mana | Exile target creature with mana value less than or equal to the number of Plains you control. |
 | reuse-existing | Braids, Arisen Nightmare | `e0445c80-fa53-4c3e-881e-940e9fce7f57` | draw | sacrifice | At the beginning of your end step, you may sacrifice an artifact, creature, enchantment, land, or planeswalker. If you do, each opponent may sacrifice a permanent of their choice that shares a card type with it. For each opponent who doesn't, that player loses 2 life and you draw a card. |
 | needs-new-primitive | Gingerbrute | `10b8d4c7-7553-4d76-b643-d98b80701e13` | activated | new primitive review | {1}: ~ can't be blocked this turn except by creatures with haste. |
 | needs-new-primitive | Frantic Search | `16e015b2-f8a3-4b1a-80be-58a8f5fb5e8c` | activated | new primitive review | Untap up to three lands. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Lord of the Forsaken | `3a25d1e2-63d8-4a93-b0ce-f9307736b3f9` | activated | activated ability / mana | Pay 1 life: Add {C}. Spend this mana only to cast a spell from your graveyard. |
 | reuse-existing | Undead Augur | `c26887e1-27f4-4550-921b-53460e43c079` | draw | damage / life | Whenever ~ or another Zombie you control dies, you draw a card and you lose 1 life. |
 | needs-new-primitive | Timeless Dragon | `a5ae93e9-0385-47fd-9d8f-306e9a6b7fe6` | activated | new primitive review | Eternalize {2}{W}{W} |
+| reuse-existing | Champion of the Perished | `f3654fbd-16a5-4953-84ac-534e8421032f` | counters | trigger / ETB | Whenever another Zombie you control enters, put a +1/+1 counter on ~. |
 
-The JSON contains the remaining 14,652 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,651 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

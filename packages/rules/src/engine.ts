@@ -262,6 +262,8 @@ export interface StackObject {
   readonly chosenColor?: MagicColor;
   /** Last-known power of a creature sacrificed as this spell's additional cost (CR 608.2h). */
   readonly sacrificedPower?: number;
+  /** Controller of the first targeted permanent before resolution, for "its controller" riders. */
+  readonly targetController?: SeatId;
 }
 
 export interface TriggerInstance {
@@ -2842,6 +2844,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "gain-life-event-controller": {
+      if (playersCantGainLife(state)) return state;
+      const targetController = object.targetController ?? object.trigger?.eventController ?? controller;
+      const amount = effect.amount;
+      const next = withPlayer(state, targetController, (player) => ({ ...player, life: player.life + amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: targetController, amount }), targetController, `${playerAt(next, targetController).name} gana ${amount} vidas.`);
+    }
     case "gain-life-equal-sacrificed-toughness": {
       if (playersCantGainLife(state)) return state;
       const amount = Math.max(0, object.variableValue);
@@ -5399,13 +5408,18 @@ function resolveTop(state: GameState): GameState {
     return next;
   }
 
+  // Preserve the targeted permanent's controller for riders such as "Its
+  // controller gains life" even when an earlier effect moves that permanent.
+  const targetedPermanent = object.targets.find((target) => target.kind === "permanent");
+  const targetController = targetedPermanent ? findPermanent(next, targetedPermanent.instanceId)?.controller : undefined;
+  const effectObject = targetController === undefined ? object : { ...object, targetController };
   // A kicked "instead" clause replaces its base effect rather than adding to it (Rite of Replication).
   const kickedReplaces = object.kicked && profile.kickedEffects.some((effect) => effect.kind === "create-copy-token");
   for (const effect of profile.effects) {
     if (kickedReplaces && effect.kind === "create-copy-token") continue;
-    next = applyEffect(next, object, effect);
+    next = applyEffect(next, effectObject, effect);
   }
-  if (object.kicked) for (const effect of profile.kickedEffects) next = applyEffect(next, object, effect);
+  if (object.kicked) for (const effect of profile.kickedEffects) next = applyEffect(next, effectObject, effect);
   if (!profile.effects.length && !(object.kicked && profile.kickedEffects.length)) {
     next = logged(next, object.controller, `${object.card.name} se resuelve sin efecto: su texto todavía no está implementado.`);
   }
@@ -7065,10 +7079,13 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     .filter((permanent) => !keywordOf(state, permanent, "hexproof") || permanent.controller === seat)
     .filter((permanent) => !keywordOf(state, permanent, "shroud"))
     .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card)));
+  const controlledPlains = state.players.find((player) => player.seat === seat)?.battlefield.filter((permanent) =>
+    isLand(cardProfile(permanent.card)) && hasSubtype(cardProfile(permanent.card), "Plains")).length ?? 0;
   const filtered = permanents.filter((permanent) => {
     const profile = cardProfile(permanent.card);
     const manaValueTarget = /^artifact-or-creature-mana-value-(\d+)$/.exec(kind);
     if (manaValueTarget) return (profile.types.includes("Artifact") || isCreature(profile)) && profile.manaValue === Number(manaValueTarget[1]);
+    if (kind === "creature-mana-value-up-to-plains") return isCreature(profile) && profile.manaValue <= controlledPlains;
     if (kind === "artifact-or-creature") return profile.types.includes("Artifact") || isCreature(profile);
     if (kind === "permanent-you-control") return profile.isPermanent && permanent.controller === seat;
     if (kind === "permanent-opponent") return profile.isPermanent && permanent.controller !== seat;
