@@ -2580,7 +2580,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "draw-if-life-more-than-opponent", amount }, target: "none" };
   }
-  if ((match = /^You gain (\w+) life$/i.exec(text))) {
+  // Trigger parsing removes the optional prefix before handing the effect to
+  // this shared grammar (e.g. Grazing Gladehart: "you may gain 2 life").
+  // Accept both spell-style and executable trigger wording so optional life
+  // gain reuses the same primitive (CR 603.5, 609.3).
+  if ((match = /^(?:You )?gain (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "gain-life", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "gain-life", amount: "X" }, target: "none" };
