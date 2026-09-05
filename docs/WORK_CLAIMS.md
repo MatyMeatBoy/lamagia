@@ -383,6 +383,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
 | `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
+| `c13-oracle-create-token-activated` | Night Soil activated cost exiles two creature cards from one graveyard before creating a Saproling token (CR 602.2b, 701.11, 701.15) | `codex/c13-next-card` | active | 2026-09-04 |
 
 
 
