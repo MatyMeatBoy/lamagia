@@ -7,18 +7,20 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 ## Current published checkpoint — 2026-09-05
 
 The latest source checkpoint includes the verified C13 Prossh cast-trigger,
-Hooded Horror combat evasion and mana-payment gate for Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
+Hooded Horror combat evasion, Dungeon Geists untap lock, Standstill event-player
+draw scope, Contested Cliffs multi-target fight, and mana-payment gate for
+Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
 and token-scaling paths; verify the Pages run before reporting a new client asset
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,324 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,328 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
 - **Edition memberships:** 23,535 / 84,990 implemented (27.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 260 / 341 unique cards (76.2%), 81 pending.
+- **Commander 2013:** 263 / 341 unique cards (77.1%), 78 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
@@ -2953,3 +2955,22 @@ The stack carries total spent mana into the trigger; a temporary watcher is
 used only for the explicit “when you cast this spell” wording, so keyword
 triggers such as Extort remain battlefield-only. Validation: 575 rules tests,
 `npm run check`, 9,324 global profiles, C13 260/341.
+
+The next origin audit selectively rescued two executable worker batches into
+`0fc5e12`: Dungeon Geists | `ab5ebae2-cd77-4a7d-a93b-8042cd486429` adds the
+opponent-creature target and source-controlled untap lock; Standstill adds the
+event-caster opponent draw scope. Validation: **577 rules tests**, `npm run
+check`, 9,326 global profiles, C13 **261/341**. `fa5b133` (Phyrexian Delver)
+was skipped as a duplicate: the generic reanimate-plus-mana-value-loss
+primitive and scenario were already present in the published tree.
+
+`60cba3b` then closed Contested Cliffs | `b891a683-2ebc-4e9c-b402-5dd9c1b42b69`
+with a reusable multi-target activation and CR 701.12 fight executor. The
+authoritative action path validates each target slot independently. Validation:
+**578 rules tests**, `npm run check`, 9,327 global profiles, C13 **262/341**
+with 79 pending.
+
+`f3cd692` closed Witch Hunt | `e86bd38f-7804-449d-af29-21e96a56ab30` with a
+reusable deterministic random-opponent control effect (CR 603.2, 110.2).
+Validation: **579 rules tests**, `npm run check`, 9,328 global profiles, C13
+**263/341** with 78 pending.

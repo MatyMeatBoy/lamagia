@@ -452,6 +452,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  /** Target two creatures; they deal damage equal to their power to each other (CR 701.12). */
+  | { readonly kind: "fight" }
   /** Damage equal to the power of the creature that caused this trigger. */
   | { readonly kind: "damage-triggered-creature-power" }
   /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
@@ -520,6 +522,8 @@ export type SpellEffect =
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Return each non-token creature to its owner's control without changing zones. */
   | { readonly kind: "return-owned-creatures-to-control" }
+  /** Gives the source to a deterministic random opponent at the start of its controller's end step. */
+  | { readonly kind: "gain-control-of-source-random-opponent" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Destroy one random permanent from an already-selected target group. */
@@ -582,6 +586,8 @@ export type SpellEffect =
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
+  /** Taps a creature and suppresses its controller's untap while the source is controlled. */
+  | { readonly kind: "tap-target-creature-and-lock" }
   /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
   | { readonly kind: "tap-or-untap-target-permanent" }
   | { readonly kind: "target-cant-block" }
@@ -759,7 +765,7 @@ export type TargetKind =
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
-  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
+  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
@@ -1603,6 +1609,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
   const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
   const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
+  const fight = /^Target Beast creature you control fights target creature an opponent controls\.?$/i.test(parsedEffectText);
   const tokenAndLife = /^(Create\s+.+?\s+token(?:s)?(?:\s+named\s+[^,]+)?(?:\s+with\s+.+)?)\.\s*You gain (\w+) life\.?$/i.exec(parsedEffectText);
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
@@ -1615,6 +1622,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: revealTopConditional, target: "none" as TargetKind }
     : revealTopToHand
     ? { effect: revealTopToHand, target: "none" as TargetKind }
+    : fight
+    ? { effect: { kind: "fight" } as SpellEffect, target: "creature-you-control" as TargetKind, targetKinds: ["creature-you-control", "creature-opponent"] as const }
     : tokenEffect && tokenEffect.kind === "create-token" && tokenLifeAmount !== null
     ? { effect: { kind: "compound", effects: [tokenEffect, { kind: "gain-life", amount: tokenLifeAmount }] } as SpellEffect, target: "none" as TargetKind }
     : sacrificedToughnessLife
@@ -1693,6 +1702,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     manaCost,
     effect: recognized.effect,
     targetKind: recognized.target,
+    ...("targetKinds" in recognized && recognized.targetKinds ? { targetKinds: recognized.targetKinds } : {}),
     text: line.trim()
   };
 }
@@ -2172,6 +2182,17 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // leaves the battlefield (CR 613.7a last known information).
   if (/^Exile target creature\. Its controller gains life equal to its power$/i.test(text)) {
     return { effect: { kind: "exile-target-creature-then-life-gain-power" }, target: "creature" };
+  }
+
+  // Standstill: "that player" refers to the player who cast the triggering
+  // spell, so the executor must use TriggerInstance.eventController rather
+  // than the enchantment controller.
+  if ((match = /^Sacrifice ~\.\s*If you do,\s*each of that player['’]s opponents draws (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "sacrifice-source" }, { kind: "each-opponent-of-event-player-draws", amount }] },
+      target: "none"
+    };
   }
 
   const drawLose = /^(?:you\s+)?draw\s+(a|an|\w+)\s+cards?\s+and\s+(?:you\s+)?lose\s+(\w+)\s+life$/i.exec(text);
@@ -2749,6 +2770,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Each player gains control of all creatures they own$/i.test(text)) {
     return { effect: { kind: "return-owned-creatures-to-control" }, target: "none" };
   }
+  if (/^Target opponent chosen at random gains control of ~$/i.test(text)) {
+    return { effect: { kind: "gain-control-of-source-random-opponent" }, target: "none" };
+  }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or creature with mana value X\.?$/i.test(text)) {
     return { effect: { kind: "destroy-target-artifact-or-creature-mana-value" }, target: "artifact-or-creature" };
@@ -2922,6 +2946,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
   }
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
+  if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
+    return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
+  }
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Destroy all tapped creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures", tappedOnly: true }, target: "none" };
   if (/^Destroy all artifacts, creatures, and enchantments$/i.test(text)) {

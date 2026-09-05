@@ -103,6 +103,9 @@ export interface Permanent {
   readonly echoDueTurn?: number;
   /** Doesn't untap during its controller's next untap step (Breaching Leviathan, CR 502.1). */
   readonly skipNextUntap?: boolean;
+  /** Source permanent whose controller continuously prevents this permanent's untap. */
+  readonly skipUntapWhileSourceId?: string;
+  readonly skipUntapWhileSourceController?: SeatId;
   /** A loyalty ability was activated on this planeswalker this turn (CR 606.3). */
   readonly loyaltyUsedThisTurn?: boolean;
   /** "Target creature can't block this turn"; cleared during cleanup. */
@@ -2473,6 +2476,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       return state;
     }
+    case "fight": {
+      const left = object.targets[0];
+      const right = object.targets[1];
+      if (!left || !right || left.kind !== "permanent" || right.kind !== "permanent") return state;
+      const first = findPermanent(state, left.instanceId);
+      const second = findPermanent(state, right.instanceId);
+      if (!first || !second || !isCreature(cardProfile(first.card)) || !isCreature(cardProfile(second.card))) return state;
+      const firstPower = Math.max(0, powerOf(first, state));
+      const secondPower = Math.max(0, powerOf(second, state));
+      let next = dealDamageToPermanent(state, second.instance_id, firstPower, false, first.card.name, cardProfile(first.card), { controller: first.controller, permanentId: first.instance_id });
+      return dealDamageToPermanent(next, first.instance_id, secondPower, false, second.card.name, cardProfile(second.card), { controller: second.controller, permanentId: second.instance_id });
+    }
     case "damage-triggered-creature-power": {
       const target = object.targets[0];
       const eventId = object.trigger?.eventPermanentId ?? object.triggeredPermanentId;
@@ -3009,6 +3024,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         exile: player.exile.filter((card) => card.instance_id !== delayed.card.instance_id)
       }));
       return putOntoBattlefield(removed, delayed.owner, exiled, false);
+    }
+    case "gain-control-of-source-random-opponent": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!source) return state;
+      const opponents = state.players.filter((player) => player.seat !== source.controller && !player.lost).map((player) => player.seat);
+      if (!opponents.length) return state;
+      const rolled = nextRandom(state.rngState);
+      const target = opponents[Math.floor(rolled.value * opponents.length)]!;
+      const moved = changePermanentController({ ...state, rngState: rolled.state }, source, target);
+      return logged(moved, target, `${source.card.name} cambia de control al azar.`);
     }
     case "exile-target-permanent": {
       const target = object.targets[0];
@@ -3649,6 +3675,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         ...player,
         battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
           ? { ...candidate, tapped: true } : candidate)
+      }));
+      return raiseTapEvents(next, state, [permanent.instance_id]);
+    }
+    case "tap-target-creature-and-lock": {
+      const target = object.targets[0];
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!target || target.kind !== "permanent" || !source) return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      const next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, tapped: true, skipUntapWhileSourceId: source.instance_id, skipUntapWhileSourceController: source.controller }
+          : candidate)
       }));
       return raiseTapEvents(next, state, [permanent.instance_id]);
     }
@@ -4736,13 +4777,17 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         oncePerTurnActivations: [],
         battlefield: player.battlefield.map((permanent) => ({
            ...permanent,
-          tapped: cardProfile(permanent.card).doesNotUntapDuringUntap || allPermanents(next).some((source) => {
-            const sourceProfile = cardProfile(source.card);
-            const targetProfile = cardProfile(permanent.card);
-            return source.controller === permanent.controller && source.controller !== next.activeSeat
-              && sourceProfile.untapColorsDuringOtherPlayersUntap.some((color) => targetProfile.colors.includes(color))
-              && isCreature(targetProfile);
-          }) ? permanent.tapped : false,
+          tapped: permanent.skipUntapWhileSourceId
+            && permanent.skipUntapWhileSourceController !== undefined
+            && findPermanent(next, permanent.skipUntapWhileSourceId)?.controller === permanent.skipUntapWhileSourceController
+            ? permanent.tapped
+            : cardProfile(permanent.card).doesNotUntapDuringUntap || allPermanents(next).some((source) => {
+              const sourceProfile = cardProfile(source.card);
+              const targetProfile = cardProfile(permanent.card);
+              return source.controller === permanent.controller && source.controller !== next.activeSeat
+                && sourceProfile.untapColorsDuringOtherPlayersUntap.some((color) => targetProfile.colors.includes(color))
+                && isCreature(targetProfile);
+            }) ? permanent.tapped : false,
            summoningSick: false,
            enteredThisTurn: false,
            loyaltyUsedThisTurn: false
@@ -5297,6 +5342,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           label: `${card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}`,
           cardId: card.instance_id,
           ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+          ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
           note: ability.text
         });
       }
@@ -5395,6 +5441,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exileSet.length ? ` — Exile ${exileSet.map((card) => card.name).join(", ")}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         note: ability.text
       });
       }
@@ -5478,9 +5525,10 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (manaValueTarget) return (profile.types.includes("Artifact") || isCreature(profile)) && profile.manaValue === Number(manaValueTarget[1]);
     if (kind === "artifact-or-creature") return profile.types.includes("Artifact") || isCreature(profile);
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
-    if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
       if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
+      if (kind === "creature-opponent" && permanent.controller === seat) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
       if (kind === "nonartifact-nonblack-creature" && (profile.types.includes("Artifact") || profile.colors.some((color) => color.toUpperCase() === "B"))) return false;
@@ -5811,7 +5859,7 @@ function activatableAbility(
   permanent: Permanent,
   ability: ActivatedAbility,
   variableValue = 0
-): { legal: boolean; targetKind?: Exclude<TargetKind, "none">; note?: string } {
+): { legal: boolean; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[]; note?: string } {
   const player = playerAt(state, seat);
   if (splitSecondActive(state)) return { legal: false };
   if (permanent.controller !== seat) return { legal: false };
@@ -5880,6 +5928,10 @@ function activatableAbility(
     : ability.targetKind;
   if (targetKind === "none") return { legal: true };
   const sourceProfile = cardProfile(permanent.card);
+  if (ability.targetKinds?.length) {
+    if (ability.targetKinds.some((kind) => !legalTargets(state, seat, kind, sourceProfile).length)) return { legal: false };
+    return { legal: true, targetKind, targetKinds: ability.targetKinds };
+  }
   if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
   if (!legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
   return { legal: true, targetKind };
@@ -5990,7 +6042,15 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     exiles = [exile];
   }
 
-  if (check.targetKind) {
+  if (ability.targetKinds?.length) {
+    const allowedBySlot = ability.targetKinds.map((kind) => legalTargets(state, seat, kind, cardProfile(source.card)));
+    const chosen = targets.length ? targets : allowedBySlot.map((allowed) => allowed[0]).filter((target): target is Target => Boolean(target));
+    if (chosen.length !== ability.targetKinds.length) throw new Error(`${source.card.name} necesita ${ability.targetKinds.length} objetivos legales.`);
+    if (!chosen.every((target, index) => allowedBySlot[index]!.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
+      throw new Error(`Objetivo ilegal para ${source.card.name}.`);
+    }
+    targets = chosen;
+  } else if (check.targetKind) {
     const allowed = legalTargets(state, seat, check.targetKind, cardProfile(source.card));
     const chosen = targets.length ? targets : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${source.card.name} necesita un objetivo legal.`);

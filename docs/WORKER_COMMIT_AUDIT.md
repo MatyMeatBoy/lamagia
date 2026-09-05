@@ -131,3 +131,29 @@ with a reusable combat restriction rather than a card-name branch. Validation:
 Prossh, Skyraider of Kher | `868882d2-ed4e-4171-a17c-478a341080fb` was closed
 locally with the reusable mana-spent cast-trigger token primitive. Validation:
 575 rules tests, `npm run check`, 9,324 global profiles, C13 260/341.
+
+The latest origin audit processed the remaining executable C13 candidates:
+
+- `e8d97ae` Dungeon Geists was selectively rescued into `0fc5e12` with a
+  reusable opponent-creature target and source-controlled untap lock.
+- `ffc4d51` Standstill was selectively rescued into the same integration with
+  the `When` spell-cast grammar and event-caster opponent draw scope.
+- `fa5b133` Phyrexian Delver was skipped as a duplicate: its generic
+  reanimation-plus-mana-value-loss effect and scenario already exist locally.
+
+Validation after the integration: 577 rules tests, `npm run check`, 9,326
+global profiles, C13 261/341. No worker docs or claims were imported when they
+were stale; only executable source and scenario evidence was retained.
+
+`60cba3b` closes Contested Cliffs | `b891a683-2ebc-4e9c-b402-5dd9c1b42b69`
+with a reusable multi-target activation and CR 701.12 fight executor. The
+activation path validates each ordered target slot; no card-name branch was
+added. Validation: 578 rules tests, `npm run check`, 9,327 global profiles,
+C13 262/341. The remaining fetched branches were rechecked against the export;
+their claimed cards are either already complete or stale duplicates, so no
+additional source was imported.
+
+`f3cd692` closes Witch Hunt | `e86bd38f-7804-449d-af29-21e96a56ab30` with a
+reusable deterministic random-opponent control effect (CR 603.2, 110.2).
+Validation: 579 rules tests, `npm run check`, 9,328 global profiles, C13
+263/341.
