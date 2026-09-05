@@ -7820,6 +7820,18 @@ describe("activated abilities", () => {
     expect(game.players[0]!.hand).toHaveLength(hand + 1);
   });
 
+  it("returns priority to the activating player with a graphical stack object", () => {
+    let game = readyOnBoard([FIREBREATHER(), MOUNTAIN()], { hold: true });
+    const drake = permanentNamed(game, 0, "Firecoil Drake")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: drake.instance_id, abilityIndex: 0 });
+    expect(game.stack).toHaveLength(1);
+    expect(game.stack[0]).toMatchObject({ activated: expect.any(Object), sourcePermanentId: drake.instance_id });
+    expect(game.priorityOpen).toBe(true);
+    expect(game.prioritySeat).toBe(0);
+    expect(game.passedSeats).toEqual([]);
+    expect(game.players[0]!.manaPool.R).toBe(0);
+  });
+
   it("resolves a self-pump activated ability through the stack and expires it in cleanup", () => {
     const profile = profileOf(FIREBREATHER());
     expect(profile.activatedAbilities).toHaveLength(1);
