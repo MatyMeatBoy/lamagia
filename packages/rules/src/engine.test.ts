@@ -313,6 +313,7 @@ const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "
 const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Creature — Vampire", mana_cost: "{3}{U}{B}", cmc: 5, power: "4", toughness: "4", colors: ["U", "B"], keywords: ["Intimidate"], oracle_text: "Intimidate\nOther creatures you control have intimidate.\nWhenever Vela the Night-Clad or another creature you control leaves the battlefield, each opponent loses 1 life." });
 const GAHIJI = () => make({ name: "Gahiji, Honored One", type_line: "Legendary Creature — Beast", mana_cost: "{3}{R}{G}{W}", cmc: 6, power: "4", toughness: "4", oracle_text: "Whenever a creature attacks one of your opponents or a planeswalker an opponent controls, that creature gets +2/+0 until end of turn." });
 const TERRA_RAVAGER = () => make({ name: "Terra Ravager", type_line: "Creature — Elemental", mana_cost: "{3}{R}", cmc: 4, power: "0", toughness: "4", oracle_text: "Whenever Terra Ravager attacks, it gets +X/+0 until end of turn, where X is the number of lands defending player controls.", oracle_id: "c7686204-0433-48cf-bbfb-5d32b6a25cc3" });
+const INFERNO_TITAN = () => make({ name: "Inferno Titan", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "Whenever Inferno Titan enters the battlefield or attacks, it deals 3 damage divided as you choose among one, two, or three targets.", oracle_id: "0ce47c8b-1e1f-463f-94f0-35ca00be89e6" });
 const GUTTERSNIPE = () => make({ name: "Guttersnipe", type_line: "Creature — Goblin Shaman", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever you cast an instant or sorcery spell, Guttersnipe deals 2 damage to each opponent." });
 const FECUNDITY = () => make({ name: "Fecundity", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature dies, that creature's controller may draw a card." });
 const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "Enchantment", mana_cost: "{1}{R}{G}", cmc: 3, oracle_text: "Creatures you control have haste.\n{R}{G}, Sacrifice Fires of Yavimaya: Creatures you control get +2/+2 until end of turn." });
@@ -324,7 +325,8 @@ const C13_ARMY_OF_THE_DAMNED = () => {
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
 };
 const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for up to two basic land cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", scryfall_id: "8b755881-a72d-4e21-a369-d2924eb4585a" });
-const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice Armillary Sphere: Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
+const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice this artifact: Search your library for up to two basic land cards, reveal them, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d", oracle_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
+const C13_SPOILS_OF_VICTORY = () => make({ name: "Spoils of Victory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for a Plains, Island, Swamp, Mountain, or Forest card and put that card onto the battlefield. Then shuffle.", scryfall_id: "8a7ee186-b25f-4185-830d-e8e7cf23d4e5", oracle_id: "852bd598-6e48-43c8-9211-740ae9e0c42e" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
 const C13_CRADLE_OF_VITALITY = () => make({ name: "Cradle of Vitality", type_line: "Enchantment", mana_cost: "{2}{W}", cmc: 3, oracle_text: "Whenever you gain life, you may pay {1}{W}. If you do, put a +1/+1 counter on target creature for each 1 life you gained.", scryfall_id: "956250da-532a-4457-8696-73915be56943" });
@@ -5123,6 +5125,28 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === ravager.instance_id)?.powerModifier).toBe(2);
   });
 
+  it("divides Inferno Titan's trigger damage across one to three targets", () => {
+    expect(profileOf(INFERNO_TITAN())).toMatchObject({
+      triggers: [
+        { event: "enters-battlefield", targetKinds: ["any", "any", "any"], minimumTargets: 1, effect: { kind: "damage-divided-targets", amount: 3 } },
+        { event: "attacks", targetKinds: ["any", "any", "any"], minimumTargets: 1, effect: { kind: "damage-divided-targets", amount: 3 } }
+      ],
+      fullyImplemented: true
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [INFERNO_TITAN()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const titan = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Inferno Titan")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: titan.instance_id, defender: 1 }] });
+    expect(game.pendingChoice?.type).toBe("trigger-target");
+    const sourceId = game.pendingChoice?.type === "trigger-target" ? game.pendingChoice.sourceId : "";
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId, target: { kind: "player", seat: 1 } });
+    game = applyAction(game, 0, { type: "finish-trigger-targets", sourceId });
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    expect(game.players[1]!.life).toBe(37);
+  });
+
   it("triggers Guttersnipe only from instant and sorcery casts", () => {
     const profile = profileOf(GUTTERSNIPE());
     expect(profile.triggers[0]).toMatchObject({
@@ -5942,6 +5966,24 @@ describe("activated abilities", () => {
     expect(game.players[0]!.hand.filter((card) => card.name === "Swamp")).toHaveLength(1);
     expect(game.players[0]!.library.some((card) => card.name === "Island" || card.name === "Swamp")).toBe(false);
     expect(game.players[0]!.library.some((card) => card.name === "Mountain")).toBe(true);
+  });
+
+  it("reuses typed basic-land subtypes for Spoils of Victory", () => {
+    const profile = profileOf(C13_SPOILS_OF_VICTORY());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "search-library", types: ["Land"], subtypes: ["Plains", "Island", "Swamp", "Mountain", "Forest"], destination: "battlefield" }]
+    });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [C13_SPOILS_OF_VICTORY()]), library: [...toHand(0, [ISLAND(), MOUNTAIN(), BEAR()], "spoils-library")] }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    expect(choice.optionIds).toHaveLength(2);
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Island" });
+    expect(permanentNamed(game, 0, "Island")).toBeDefined();
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Spoils of Victory")).toBe(true);
   });
 
   it("sacrifices Burnished Hart and puts both selected basics tapped onto the battlefield", () => {

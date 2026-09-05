@@ -445,6 +445,8 @@ export type SpellEffect =
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   /** Damage equal to the power of the creature that caused this trigger. */
   | { readonly kind: "damage-triggered-creature-power" }
+  /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
+  | { readonly kind: "damage-divided-targets"; readonly amount: number }
   /** Damage from the ability source equal to that source's current power. */
   | { readonly kind: "damage-source-power" }
   /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
@@ -1767,6 +1769,14 @@ function searchCriterion(text: string): { types: CardType[]; subtypes: string[] 
 
 function parseLibrarySearch(text: string): SpellEffect | null {
   const single = /^Search your library for (?:a |an |up to (?:one|two|three|five) )?(.+?) card, (.+)$/i.exec(text);
+  const namedBasic = /^Search your library for a ((?:Plains|Island|Swamp|Mountain|Forest)(?:,\s*(?:Plains|Island|Swamp|Mountain|Forest))*?(?:,?\s+or\s+(?:Plains|Island|Swamp|Mountain|Forest))?) card and put that card onto the battlefield\.?$/i.exec(text.trim());
+  if (namedBasic) {
+    return {
+      kind: "search-library", types: ["Land"],
+      subtypes: namedBasic[1]!.match(/Plains|Island|Swamp|Mountain|Forest/gi) ?? [],
+      destination: "battlefield", reveal: false
+    };
+  }
   // Some historical imports use plural pronouns after selecting several
   // cards. Keep the amount as a structured operand instead of forcing this
   // through the single-card `it/that card` grammar.
@@ -1886,7 +1896,9 @@ function parseMultiBasicSearch(text: string): SpellEffect | null {
   if (/^Search your library for up to two basic land cards, (?:reveal those cards, )?put them onto the battlefield tapped, then shuffle\.?$/i.test(normalized)) {
     return { kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"], destinations: ["battlefield-tapped", "battlefield-tapped"], reveal: /reveal those cards/i.test(normalized) };
   }
-  if (/^Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle\.?$/i.test(normalized)) {
+  // Armillary Sphere's current Oracle uses "reveal them" while older
+  // printings use "reveal those cards"; both share this search primitive (CR 701.19).
+  if (/^Search your library for up to two basic land cards, reveal (?:those cards|them), put them into your hand, then shuffle\.?$/i.test(normalized)) {
     return { kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"], destinations: ["hand", "hand"], reveal: true };
   }
   return null;
@@ -2896,6 +2908,7 @@ function isIgnorableSentence(sentence: string): boolean {
   // cleanup discard only bites at 8+ cards and the sim rarely floods that far,
   // so treating this as a no-op keeps the card playable without new state.
   if (/^you have no maximum hand size for the rest of the game\.?$/i.test(s)) return true;
+  if (/^then shuffle\.?$/i.test(s)) return true;
   return false;
 }
 
@@ -3400,6 +3413,20 @@ function recognizeText(text: string): RecognizedText {
         });
         continue;
       }
+    }
+    const dividedDamageTrigger = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?\s+or\s+attacks,?\s+it deals (\d+) damage divided as you choose among one, two, or three targets\.?$/i.exec(line);
+    if (dividedDamageTrigger) {
+      triggers.push({
+        event: "enters-battlefield", subject: "self", effect: { kind: "damage-divided-targets", amount: Number(dividedDamageTrigger[1]) },
+        optional: false, targetKind: "any", targetKinds: ["any", "any", "any"], minimumTargets: 1, sourceText: line
+      });
+      // The same printed ability also fires from attacks; the shared effect is
+      // represented by a second trigger so both event paths remain explicit.
+      triggers.push({
+        event: "attacks", subject: "self", effect: { kind: "damage-divided-targets", amount: Number(dividedDamageTrigger[1]) },
+        optional: false, targetKind: "any", targetKinds: ["any", "any", "any"], minimumTargets: 1, sourceText: line
+      });
+      continue;
     }
     // Myr Battlesphere: tapping any number of untapped Myr is an optional
     // resolution choice, not a mana cost. Keep the selected group explicit so

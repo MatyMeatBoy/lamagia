@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T05:18:56.218434+00:00`
+- Generated: `2026-09-05T05:27:50.531653+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **249**
+- Exported profiles in scope: **341**; fully implemented: **252**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -259,14 +259,13 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **249/341** profiles complete; **18** unfinished cards have exactly one unmatched line.
+The engine export currently marks **252/341** profiles complete; **15** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
 | --- | ---: | --- |
 | `unclaimed` | 1 | at the beginning of your end step, target opponent chosen at random gains control of ~ — Witch Hunt |
 | `unclaimed` | 1 | creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you — Propaganda |
-| `unclaimed` | 1 | forecast - {cost}, reveal ~ from your hand: each player draws <n> card — Skyscribing |
 | `unclaimed` | 1 | return all permanents of the color of your choice to their owners' hands — Wash Out |
 | `unclaimed` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
 | `unclaimed` | 1 | when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it — Prossh, Skyraider of Kher |
@@ -274,13 +273,11 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~ — Dungeon Geists |
 | `unclaimed` | 1 | whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library — Widespread Panic |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy — Mirari |
-| `unclaimed` | 1 | whenever ~ attacks, it gets +<n>/+<n> until end of turn, where <n> is the number of lands defending player controls — Terra Ravager |
 | `unclaimed` | 1 | whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat — Serene Master |
 | `unclaimed` | 1 | whenever ~ enters or attacks, it deals <n> damage divided as you choose among <n>, <n>, or <n> targets — Inferno Titan |
 | `unclaimed` | 1 | {cost}, {cost}: target beast creature you control fights target creature <n> opponent controls — Contested Cliffs |
 | `unclaimed` | 1 | {cost}: this turn, creatures can't block unless their controller pays {cost} for each blocking creature they control — War Cadence |
 | `unclaimed` | 1 | {cost}: until end of turn, creatures you control have base power and toughness <n>/<n> and gain all creature types — Mirror Entity |
-| `unclaimed` | 1 | {cost}: whenever you gain life this turn, each opponent loses that much life — Vizkopa Guildmage |
 | `unclaimed` | 1 | ~ can't be blocked as long as defending player controls the most creatures or is tied for the most — Hooded Horror |
 
 The highest-value fix is the shared template, not the first card name. A new primitive should parameterize type, zone, target, quantity and optionality so reprints and other sets inherit it.
