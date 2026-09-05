@@ -159,6 +159,7 @@ export type SpellEffect =
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "return-target-permanent" }
   | { readonly kind: "return-target-land" }
+  | { readonly kind: "return-target-graveyard-card"; readonly types: readonly CardType[] }
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures" }
@@ -241,6 +242,13 @@ export interface TriggerDefinition {
    * apart from the card-level `targetKind` used by spells.
    */
   readonly targetKind: TargetKind;
+  /**
+   * True for "another target X" inside the ability's own effect text (CR 109.5
+   * applied to a target rather than an event subject): the source's own card,
+   * which by the time a `dies` trigger resolves is sitting in the graveyard
+   * like any other target candidate, is excluded from its legal targets.
+   */
+  readonly excludesSelf: boolean;
   readonly sourceText: string;
 }
 
@@ -248,7 +256,9 @@ export type TargetKind =
   | "any" | "player" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
-  | "nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | `subtype:${string}` | "none";
+  | "nonblack-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | `subtype:${string}`
+  /** A card of the named type(s) sitting in its owner's graveyard, `|`-joined (CR 402). */
+  | `graveyard-card:${string}` | "none";
 
 export interface CardProfile {
   readonly name: string;
@@ -824,7 +834,7 @@ function matchTriggerLine(line: string): { event: TriggerEvent; subject: Trigger
 }
 
 /** Matches one sentence against the closed effect templates. */
-function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind } | null {
+function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind; excludesSelf?: boolean } | null {
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
   let match: RegExpExecArray | null;
 
@@ -932,6 +942,24 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
   if (/^Return target permanent to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-permanent" }, target: "permanent" };
   if (/^Return a land you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-land" }, target: "land-you-control" };
+  // "Return (another) target [type[, or type]*] card from your graveyard to your
+  // hand" (CR 402): the target is one card sitting in the controller's own
+  // graveyard, restricted to the named type(s). "Another" excludes the source's
+  // own card, which matters for a `dies` trigger whose source is now itself
+  // sitting in that same graveyard (CR 109.5).
+  const graveyardReturn = /^Return\s+(another\s+)?target\s+([a-z]+(?:\s+or\s+[a-z]+)?)\s+card\s+from\s+your\s+graveyard\s+to\s+your\s+hand$/i.exec(text);
+  if (graveyardReturn) {
+    const types = graveyardReturn[2]!.split(/\s+or\s+/i)
+      .map((word) => CARD_TYPES.find((type) => type.toLowerCase() === word.toLowerCase()))
+      .filter((type): type is CardType => Boolean(type));
+    if (types.length) {
+      return {
+        effect: { kind: "return-target-graveyard-card", types },
+        target: `graveyard-card:${types.join("|")}`,
+        excludesSelf: Boolean(graveyardReturn[1])
+      };
+    }
+  }
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
@@ -1055,6 +1083,7 @@ function recognizeText(text: string): RecognizedText {
           subject: triggered.subject,
           effect: recognized.effect,
           optional,
+          excludesSelf: recognized.excludesSelf ?? false,
           targetKind: recognized.target,
           sourceText: line
         });

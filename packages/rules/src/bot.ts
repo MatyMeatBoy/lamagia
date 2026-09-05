@@ -96,13 +96,23 @@ function pickTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "
   const hostile = all.filter((target) => {
     if (target.kind === "player") return target.seat !== seat;
     if (target.kind === "permanent") return board.find((permanent) => permanent.instance_id === target.instanceId)?.controller !== seat;
+    // Every printed "return from your graveyard" targets the controller's own
+    // graveyard, so there is no opposing card to avoid here — anything legal is wanted.
+    if (target.kind === "graveyard-card") return true;
     return state.stack.find((entry) => entry.id === target.stackId)?.controller !== seat;
   });
   if (!hostile.length) return [];
   // Biggest enemy creature first; otherwise the opponent closest to dying.
   const ranked = [...hostile].sort((left, right) => {
-    const leftScore = left.kind === "permanent" ? 100 + (cardProfile(board.find((permanent) => permanent.instance_id === left.instanceId)!.card).power ?? 0) : left.kind === "player" ? 50 - state.players[left.seat]!.life : 200;
-    const rightScore = right.kind === "permanent" ? 100 + (cardProfile(board.find((permanent) => permanent.instance_id === right.instanceId)!.card).power ?? 0) : right.kind === "player" ? 50 - state.players[right.seat]!.life : 200;
+    const graveyard = state.players.flatMap((player) => player.graveyard);
+    const leftScore = left.kind === "permanent" ? 100 + (cardProfile(board.find((permanent) => permanent.instance_id === left.instanceId)!.card).power ?? 0)
+      : left.kind === "player" ? 50 - state.players[left.seat]!.life
+      : left.kind === "graveyard-card" ? cardProfile(graveyard.find((card) => card.instance_id === left.instanceId)!).manaValue
+      : 200;
+    const rightScore = right.kind === "permanent" ? 100 + (cardProfile(board.find((permanent) => permanent.instance_id === right.instanceId)!.card).power ?? 0)
+      : right.kind === "player" ? 50 - state.players[right.seat]!.life
+      : right.kind === "graveyard-card" ? cardProfile(graveyard.find((card) => card.instance_id === right.instanceId)!).manaValue
+      : 200;
     return rightScore - leftScore;
   });
   return ranked.slice(0, 1);

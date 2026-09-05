@@ -144,6 +144,19 @@ const SIGNAL_PEST = () => make({
   oracle_text: "{1}{U}, {T}: Draw a card."
 });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
+const MYR_RETRIEVER = () => make({
+  name: "Myr Retriever", type_line: "Artifact Creature — Myr", mana_cost: "{2}", cmc: 2, power: "1", toughness: "1",
+  oracle_text: "When this creature dies, return another target artifact card from your graveyard to your hand."
+});
+const BURIED_RUIN = () => make({
+  name: "Buried Ruin", type_line: "Land", produced_mana: ["C"],
+  oracle_text: "{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Return target artifact card from your graveyard to your hand."
+});
+const CALL_TO_MIND = () => make({
+  name: "Call to Mind", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3,
+  oracle_text: "Return target instant or sorcery card from your graveyard to your hand."
+});
+const SCRAP_ARTIFACT = () => make({ name: "Scrap Widget", type_line: "Artifact", mana_cost: "{1}", cmc: 1 });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
   const cards = [commander, ...contents];
@@ -848,6 +861,105 @@ describe("casting", () => {
     expect(game.players[1]!.exile.some((card) => card.name === "Test Equipment")).toBe(true);
   });
 });
+
+describe("graveyard card return", () => {
+  function permanentNamed(game: GameState, seat: SeatId, name: string) {
+    return game.players[seat]!.battlefield.find((permanent) => permanent.card.name === name);
+  }
+
+  it("reads the type filter and the 'another' exclusion off the printed line", () => {
+    const call = profileOf(CALL_TO_MIND());
+    expect(call.effects[0]).toMatchObject({ kind: "return-target-graveyard-card", types: ["Instant", "Sorcery"] });
+    expect(call.targetKind).toBe("graveyard-card:Instant|Sorcery");
+
+    const retriever = profileOf(MYR_RETRIEVER());
+    expect(retriever.triggers[0]).toMatchObject({
+      event: "dies", excludesSelf: true,
+      effect: { kind: "return-target-graveyard-card", types: ["Artifact"] }
+    });
+
+    const ruin = profileOf(BURIED_RUIN());
+    expect(ruin.activatedAbilities[0]).toMatchObject({
+      requiresTap: true, sacrificesSelf: true,
+      targetKind: "graveyard-card:Artifact",
+      effect: { kind: "return-target-graveyard-card", types: ["Artifact"] }
+    });
+  });
+
+  it("casts Call to Mind targeting only instants and sorceries in its own graveyard", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({
+      hand: toHand(0, [CALL_TO_MIND()]),
+      graveyard: toHand(0, [BOLT(), SCRAP_ARTIFACT()], "gy")
+    }));
+    game = stage(game, 1, () => ({ hand: [] }));
+    game = putOnBattlefield(game, 0, [ISLAND(), ISLAND(), ISLAND()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const options = legalTargets(game, 0, "graveyard-card:Instant|Sorcery");
+    expect(options).toHaveLength(1);
+    const bolt = game.players[0]!.graveyard.find((card) => card.name === "Lightning Bolt")!;
+    expect(options[0]).toEqual({ kind: "graveyard-card", instanceId: bolt.instance_id });
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "graveyard-card", instanceId: bolt.instance_id }] });
+    expect(game.players[0]!.hand.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(false);
+    // The sorcery itself goes to the graveyard after resolving; the artifact never moved.
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Call to Mind")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Scrap Widget")).toBe(true);
+  });
+
+  it("pays Buried Ruin's sacrifice cost and returns the targeted artifact", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: [], graveyard: toHand(0, [SCRAP_ARTIFACT()], "gy") }));
+    // The activation cost is {2}, {T}, Sacrifice ~: Buried Ruin taps for itself,
+    // so the {2} generic has to come from elsewhere.
+    game = putOnBattlefield(game, 0, [BURIED_RUIN(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const ruin = permanentNamed(game, 0, "Buried Ruin")!;
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === ruin.instance_id);
+    expect(offered).toBeDefined();
+
+    // A single legal graveyard target is picked automatically, same as any
+    // other one-target ability offered with no explicit choice.
+    game = applyAction(game, 0, offered!.action);
+    expect(permanentNamed(game, 0, "Buried Ruin")).toBeUndefined();
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Buried Ruin")).toBe(true);
+    expect(game.players[0]!.hand.some((card) => card.name === "Scrap Widget")).toBe(true);
+  });
+
+  it("excludes Myr Retriever's own card from its own death trigger's targets", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BOLT()]), graveyard: toHand(0, [SCRAP_ARTIFACT()], "gy") }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN()]);
+    game = putOnBattlefield(game, 0, [MYR_RETRIEVER()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const retriever = permanentNamed(game, 0, "Myr Retriever")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: retriever.instance_id }] });
+    // Bolt kills it (1 toughness); its dies trigger goes on the stack targeting
+    // the only *other* artifact card, never itself.
+    game = passUntil(game, (state) => !state.triggerQueue.length && state.stack.length === 0);
+    expect(game.players[0]!.hand.some((card) => card.name === "Scrap Widget")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Myr Retriever")).toBe(true);
+  });
+
+  it("removes the trigger from the stack instead of letting it target itself", () => {
+    // With no other artifact in the graveyard, "another" has nothing legal.
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BOLT()]), graveyard: [] }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN()]);
+    game = putOnBattlefield(game, 0, [MYR_RETRIEVER()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const retriever = permanentNamed(game, 0, "Myr Retriever")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: retriever.instance_id }] });
+    game = passUntil(game, (state) => !state.triggerQueue.length && state.stack.length === 0);
+    expect(game.players[0]!.hand).toHaveLength(0);
+    expect(game.log.some((entry) => entry.text.includes("no hay objetivo legal"))).toBe(true);
+  });
+});
+
 
 describe("triggered abilities", () => {
   function readyToCast(cards: CardData[], battlefield: CardData[], opponentBoard: CardData[] = []) {

@@ -27,6 +27,7 @@ feature name.
 | `rules-plus-counters` | Put +1/+1 or -1/-1 counters on a target creature | `codex/c13-equipment-cluster` | merged (`f026bdd`) | 2026-09-03 |
 | `rules-target-discard` | Target player chooses bounded cards from their hand to discard | `codex/c13-equipment-cluster` | merged (`90e0098`) | 2026-09-03 |
 | `rules-python-ir` | Reusable raw-text operands: actions, zones, card types, and subtypes for the Oracle compiler | `feat/activated-abilities-and-triggers` | merged (`7326cbe`) | 2026-09-03 |
+| `graveyard-card-return` | Target-a-graveyard-card-by-type family: TargetKind `graveyard-card:<types>`, SpellEffect `return-target-graveyard-card`, TriggerDefinition `excludesSelf` for "another target X" (CR 109.5/402) | `claude/c14-precon-clusters` | ready to integrate (`return-target-graveyard-card`) | 2026-09-04 |
 
 ## Claim format
 

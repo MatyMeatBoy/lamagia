@@ -105,7 +105,9 @@ export interface PlayerState {
 export type Target =
   | { readonly kind: "player"; readonly seat: SeatId }
   | { readonly kind: "permanent"; readonly instanceId: string }
-  | { readonly kind: "spell"; readonly stackId: string };
+  | { readonly kind: "spell"; readonly stackId: string }
+  /** A card sitting in a graveyard, addressed by its own stable instance id. */
+  | { readonly kind: "graveyard-card"; readonly instanceId: string };
 
 export interface StackObject {
   readonly id: string;
@@ -959,6 +961,15 @@ function dealDamageToPlayer(state: GameState, seat: SeatId, amount: number, sour
   return logged(next, seat, `${sourceName} hace ${amount} de daño a ${playerAt(next, seat).name}.`);
 }
 
+/** The player whose graveyard currently holds this card instance, if any. */
+function findGraveyardCard(state: GameState, instanceId: string): { readonly owner: PlayerState; readonly card: GameCard } | null {
+  for (const player of state.players) {
+    const card = player.graveyard.find((candidate) => candidate.instance_id === instanceId);
+    if (card) return { owner: player, card };
+  }
+  return null;
+}
+
 function dealDamageToPermanent(state: GameState, instanceId: string, amount: number, deathtouch: boolean, sourceName: string): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
@@ -1164,6 +1175,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect)
       }));
       return withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
     }
+    case "return-target-graveyard-card": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const found = findGraveyardCard(state, target.instanceId);
+      if (!found) return state;
+      const { owner, card } = found;
+      const next = withPlayer(state, owner.seat, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id),
+        hand: [...player.hand, card]
+      }));
+      return logged(next, controller, `${sourceName} devuelve ${card.name} del cementerio de ${owner.name} a su mano.`);
+    }
     case "untap-equipped-creature": {
       const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       const attachedId = equipment?.attachedTo;
@@ -1308,6 +1332,7 @@ function resolveTop(state: GameState): GameState {
   const targetsGone = object.targets.some((target) =>
     (target.kind === "permanent" && !findPermanent(next, target.instanceId)) ||
     (target.kind === "spell" && !next.stack.some((entry) => entry.id === target.stackId)) ||
+    (target.kind === "graveyard-card" && !findGraveyardCard(next, target.instanceId)) ||
     (target.kind === "player" && playerAt(next, target.seat).lost));
   if (object.targets.length && targetsGone) {
     if (object.trigger) return logged(next, object.controller, `La habilidad de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
@@ -2002,6 +2027,15 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "spell") return state.stack.map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
+  if (kind.startsWith("graveyard-card:")) {
+    // Every printed instance of this template reads "your graveyard": the
+    // controller's own, never an opponent's (CR 402).
+    const wanted = kind.slice("graveyard-card:".length).split("|");
+    const player = playerAt(state, seat);
+    return player.graveyard
+      .filter((card) => wanted.some((type) => cardProfile(card).types.includes(type as CardType)))
+      .map((card) => ({ kind: "graveyard-card", instanceId: card.instance_id }) as Target);
+  }
   if (kind === "creature-spell" || kind === "noncreature-spell") {
     return state.stack
       .filter((entry) => !entry.activated && !entry.trigger)
@@ -2544,6 +2578,7 @@ function applyPass(state: GameState, seat: SeatId): GameState {
 function targetLabel(state: GameState, target: Target): string {
   if (target.kind === "player") return playerAt(state, target.seat).name;
   if (target.kind === "permanent") return findPermanent(state, target.instanceId)?.card.name ?? "permanente";
+  if (target.kind === "graveyard-card") return findGraveyardCard(state, target.instanceId)?.card.name ?? "carta";
   return state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo";
 }
 
@@ -2603,7 +2638,14 @@ function putNextTriggerOnStack(state: GameState): GameState {
     return { ...state, triggerQueue: remaining, stack: [...state.stack, triggerStackObject(trigger, [])], ...opened };
   }
 
-  const options = legalTargets(state, trigger.controller, targetKind);
+  const rawOptions = legalTargets(state, trigger.controller, targetKind);
+  // "Another target X": the source's own card is a candidate like any other by
+  // the time this trigger goes on the stack (CR 109.5), so it has to be
+  // filtered out explicitly rather than by `legalTargets` itself, which has no
+  // notion of "the ability's own source".
+  const options = trigger.definition.excludesSelf
+    ? rawOptions.filter((option) => !("instanceId" in option) || option.instanceId !== trigger.sourceCard.instance_id)
+    : rawOptions;
   if (!options.length) {
     const dropped = logged({ ...state, triggerQueue: remaining }, trigger.controller,
       `La habilidad disparada de ${trigger.sourceCard.name} se retira de la pila: no hay objetivo legal.`);

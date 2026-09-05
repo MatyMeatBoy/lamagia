@@ -291,7 +291,9 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
       targets: object.targets.map((target) =>
         target.kind === "player" ? state.players[target.seat]!.name
           : target.kind === "permanent" ? nameOf(state, target.instanceId)
-            : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo"),
+            : target.kind === "graveyard-card"
+              ? (state.players.flatMap((player) => player.graveyard).find((card) => card.instance_id === target.instanceId)?.name ?? "carta")
+              : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo"),
       countered: object.countered
     })),
     librarySearch,
