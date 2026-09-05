@@ -845,6 +845,62 @@ function toNumber(token: string | undefined): number | null {
   return /^\d+$/.test(token) ? Number(token) : null;
 }
 
+/**
+ * Small executable IR for exact, compositional Oracle templates.
+ *
+ * This is intentionally narrower than the legacy recognizer: repeated
+ * operation/subject/amount shapes (draw, mill, life) use one grammar while
+ * dependent, modal, and multi-zone text still falls through to the explicit
+ * recognizers below.  The IR is only a parser front-end; the existing
+ * SpellEffect executor remains authoritative (CR 609.3, 701.5, 701.13).
+ */
+type SimpleEffectIROperation = "draw" | "mill" | "gain-life" | "lose-life";
+type SimpleEffectIRSubject = "you" | "target-player" | "each-player" | "each-opponent";
+interface SimpleEffectIR {
+  readonly operation: SimpleEffectIROperation;
+  readonly subject: SimpleEffectIRSubject;
+  readonly amount: number | "X";
+}
+
+function simpleEffectIR(text: string): SimpleEffectIR | null {
+  const match = /^(?:(you|target player|each player|each opponent)\s+)?(draw|mill)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|twenty|\d+|X)\s+cards?$/i.exec(text)
+    ?? /^(you|target player|each player|each opponent)\s+(gain|gains|lose|loses)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|twenty|\d+|X)\s+life$/i.exec(text);
+  if (!match) return null;
+
+  const subjectText = (match[1] ?? "you").toLowerCase();
+  const subject: SimpleEffectIRSubject = subjectText === "target player" ? "target-player"
+    : subjectText === "each player" ? "each-player"
+      : subjectText === "each opponent" ? "each-opponent" : "you";
+  const operationText = match[2]!.toLowerCase();
+  const operation: SimpleEffectIROperation = operationText === "draw" || operationText === "mill"
+    ? operationText
+    : operationText.startsWith("gain") ? "gain-life" : "lose-life";
+  const amount = toNumber(match[3]) ?? (match[3]!.toUpperCase() === "X" ? "X" : null);
+  return amount === null ? null : { operation, subject, amount };
+}
+
+function simpleEffectFromIR(ir: SimpleEffectIR): { effect: SpellEffect; target: TargetKind } | null {
+  const target = ir.subject === "target-player" ? "player" as TargetKind : "none" as TargetKind;
+  if (ir.operation === "draw") {
+    const kind = ir.subject === "target-player" ? "draw-target-player"
+      : ir.subject === "each-player" ? "each-player-draw"
+        : ir.subject === "each-opponent" ? "each-opponent-draw" : "draw";
+    return { effect: { kind, amount: ir.amount } as SpellEffect, target };
+  }
+  if (ir.operation === "mill") {
+    if (ir.subject === "you") return null;
+    const kind = ir.subject === "target-player" ? "mill-target-player"
+      : ir.subject === "each-player" ? "mill-each-player"
+        : ir.subject === "each-opponent" ? "mill-each-opponent" : "mill-target-player";
+    return { effect: { kind, amount: ir.amount } as SpellEffect, target };
+  }
+  if (ir.operation === "gain-life" && ir.subject === "each-opponent") return null;
+  const kind = ir.operation === "gain-life"
+    ? ir.subject === "target-player" ? "gain-life-target-player" : ir.subject === "each-player" ? "each-player-gains-life" : "gain-life"
+    : ir.subject === "target-player" ? "lose-life-target-player" : ir.subject === "each-player" ? "each-player-loses-life" : ir.subject === "each-opponent" ? "each-opponent-loses-life" : "lose-life";
+  return { effect: { kind, amount: ir.amount } as SpellEffect, target };
+}
+
 /** Front face of a modal/transforming card; that face is what gets cast from hand. */
 function frontFace(card: CardData): CardData {
   const faces = card.card_faces;
@@ -1800,6 +1856,10 @@ function singularSubtype(word: string): string {
 function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind } | null {
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
   let match: RegExpExecArray | null;
+
+  const simple = simpleEffectIR(text);
+  const simpleResult = simple ? simpleEffectFromIR(simple) : null;
+  if (simpleResult) return simpleResult;
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
 

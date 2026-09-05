@@ -42,8 +42,10 @@ Use `docs/PRIMITIVE_DICTIONARY_C13.md` to link common wording to existing
 parser fields and engine handlers before creating a new primitive; its
 one-line queue is the mass-review starting point, not a substitute for tests.
 Use [the compact Oracle IR](ORACLE_COMPACT_IR.md) to reuse operation symbols
-and operands across cards. It is a context/scheduling aid only: the raw Oracle
-clause and the real engine profile remain authoritative.
+and operands across cards. The Python artifact is a context/scheduling aid;
+the TypeScript parser also lowers exact simple `draw`/`mill`/life clauses to
+the existing structured effects. The raw Oracle clause and the real engine
+profile remain authoritative.
 The IR also exposes compositional atoms such as `op:draw`, `target:player`,
 `zone:hand`, and `amount:parameter`; use shared atoms to find a reusable
 executor, but keep exact target/zone/type/cost operands distinct.

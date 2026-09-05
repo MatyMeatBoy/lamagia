@@ -25,13 +25,17 @@ Draw three cards.
 The same symbol can therefore be reused by another amount, while operands keep
 the amount, target, zone, card type/subtype, cost, choice, and optionality.
 Target/zone/type differences remain different keys. Original Oracle text is
-never discarded from the normal IR, and compact IR is never imported by the
-rules runtime. It is a context and scheduling artifact only.
+never discarded from the review artifact. The Python compact artifact remains
+context/scheduling-only, but the rules parser now has a deliberately smaller
+executable front-end for exact simple shapes: `draw`, `mill`, `gain-life`, and
+`lose-life` with a fixed subject and amount. That front-end lowers directly to
+the existing `SpellEffect` union; it does not create a second executor.
 
 Use it as a partial compiler front-end: simple, repeated shapes such as
 `draw <amount>` can resolve through the known primitive and its operands;
-unique or compound clauses stay on the legacy Oracle path. Never force a
-complex clause through IR just to reduce bytes. The worker must still prove
+unique or compound clauses stay on the legacy Oracle path. The TypeScript
+front-end follows the same boundary at runtime. Never force a complex clause
+through IR just to reduce bytes. The worker must still prove
 the same parser, executor, scenario, and `oracle_id` mapping before the card is
 counted.
 
