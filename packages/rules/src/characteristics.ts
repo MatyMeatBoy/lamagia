@@ -1034,6 +1034,8 @@ export interface CardProfile {
   readonly redirectsOpponentDrawsExceptFirst: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
+  /** Affinity quality: reduce this spell's generic cost by one per matching permanent you control (CR 702.41, 118.9). */
+  readonly affinityFor: string | null;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
   readonly spellCostReductionGrant: {
     readonly amount: number;
@@ -4547,7 +4549,11 @@ export function cardProfile(card: CardData): CardProfile {
   const cost = parseManaCost(face.mana_cost);
   const cantBeCountered = /(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/i.test(text);
   const uncounterableCreaturePowerMatch = /creature spells you control with power (\d+) or greater can't be countered\.?/i.exec(text);
-  const recognized = recognizeText(text.replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n"));
+  const affinityMatch = /^Affinity for (.+)$/im.exec(text);
+  const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
+  const recognized = recognizeText(text
+    .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
+    .replace(/^Affinity for .+$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
   const hasExtort = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "extort");
@@ -4841,6 +4847,7 @@ export function cardProfile(card: CardData): CardProfile {
     doublesEquippedCreatureDamage,
     redirectsOpponentDrawsExceptFirst,
     costReducesPerBoardCreature,
+    affinityFor,
     spellCostReductionGrant,
     staticLandManaBonus,
     cdaPowerToughness,

@@ -282,6 +282,15 @@ async function startMatch(mode: "cedh" | "precon" | "tested", deckId?: string): 
   }
 }
 
+function returnToMain(): void {
+  session = null;
+  view = null;
+  window.sessionStorage.removeItem("prossh.match");
+  ui.pendingTarget = null;
+  ui.notice = "";
+  render();
+}
+
 async function refresh(): Promise<void> {
   if (!session) return;
   try { applyView(await api<GameView>(`/api/matches/${session.matchId}?token=${encodeURIComponent(session.token)}`)); }
@@ -780,10 +789,10 @@ function seatPanelHtml(player: PlayerView): string {
   const cmdDamage = Object.values(player.commanderDamage).filter((amount) => amount > 0);
   const counters = Object.entries(player.counters).filter(([, amount]) => amount > 0);
   return `<article class="${classes.join(" ")}" style="--accent: var(--seat-${player.seat})" aria-label="Campo de ${escapeHtml(player.name)}">
-    <header class="seat-head">
+    <header class="seat-head" data-target-player="${player.seat}">
       <span class="seat-avatar"${commander?.image_art_crop ? ` style="background-image:url('${escapeHtml(commander.image_art_crop)}')"` : ""}>${escapeHtml(player.name.slice(0, 1))}</span>
       <span class="seat-name"><b>${escapeHtml(player.name)}${view?.activeSeat === player.seat ? `<i class="active-dot" title="Jugador activo"></i>` : ""}</b><span>${escapeHtml(player.deckName)}</span></span>
-      <button class="life-chip${player.life <= 10 ? " low" : ""}" type="button" data-target-player="${player.seat}"
+      <button class="life-chip${player.life <= 10 ? " low" : ""}" type="button"
         title="${player.lost ? escapeHtml(player.lossReason ?? "Eliminado") : "Vidas"}"><b>${player.lost ? "✕" : player.life}</b><small>vidas</small></button>
       ${counters.map(([kind, amount]) => `<span class="counter-chip" title="Contador ${escapeHtml(kind)}"><b>${amount}</b><small>${escapeHtml(kind)}</small></span>`).join("")}
     </header>
@@ -1061,6 +1070,8 @@ function render(): void {
         <span class="badge-pill accent">${escapeHtml(view.stepLabel)}</span>
         <span>Activo: <b style="color: var(--seat-${view.activeSeat})">${escapeHtml(seatOf(view.activeSeat)?.name ?? "")}</b></span></span>
       <span class="topbar-right">
+        <button id="main-menu" class="text-button">Inicio</button>
+        <button id="play-tested" class="text-button">Pod jugable</button>
         <button id="new-cedh" class="text-button">Nueva cEDH</button>
         <button id="new-precon" class="text-button">Precons</button>
         <button id="search" class="text-button">Catálogo</button>
@@ -1085,9 +1096,9 @@ function render(): void {
         <div class="self-board">${boardHtml(me, true)}</div>
         <div class="self-dock">
           <div class="dock-left">
-            <div class="self-identity">
+            <div class="self-identity" data-target-player="${me.seat}">
               <span class="seat-avatar" style="border-color: var(--seat-${me.seat})${selectedAvatar ? `;background-image:url('${escapeHtml(selectedAvatar)}')` : ""}">${escapeHtml(me.name.slice(0, 1))}</span>
-              <button class="self-life" type="button" data-target-player="${me.seat}"><b>${me.lost ? "✕" : me.life}</b><small>vidas</small></button>
+              <button class="self-life" type="button"><b>${me.lost ? "✕" : me.life}</b><small>vidas</small></button>
               ${Object.entries(me.counters).filter(([, amount]) => amount > 0).map(([kind, amount]) => `<span class="counter-chip" title="Contador ${escapeHtml(kind)}"><b>${amount}</b><small>${escapeHtml(kind)}</small></span>`).join("")}
               <span class="mana-chip" title="Maná que aún puedes producir">◇ <b>${me.availableMana}</b></span>
               <span class="mana-reserve" title="Reserva de maná"><small>Reserva</small>${manaReserveHtml(me.manaPool, me.restrictedMana)}</span>
@@ -1175,6 +1186,8 @@ function wireLanding(): void {
 function wireBoard(): void {
   const on = (selector: string, handler: () => void) => document.querySelector(selector)?.addEventListener("click", handler);
   on("#pass", () => { const action = passAction(); if (action) void submit(action.action); });
+  on("#main-menu", returnToMain);
+  on("#play-tested", () => void startMatch("tested"));
   on("#new-cedh", () => void startMatch("cedh"));
   on("#rematch", () => void startMatch("cedh"));
   on("#new-precon", () => openPrecons());
@@ -1257,9 +1270,9 @@ function wireBoard(): void {
     });
     wirePermanentPress(button);
   });
-  document.querySelectorAll<HTMLButtonElement>("[data-target-player]").forEach((button) =>
-    button.addEventListener("click", () => {
-      const seat = Number(button.dataset.targetPlayer);
+  document.querySelectorAll<HTMLElement>("[data-target-player]").forEach((target) =>
+    target.addEventListener("click", () => {
+      const seat = Number(target.dataset.targetPlayer);
       if (isPlayerTargetable(seat)) chooseTarget({ kind: "player", seat });
     }));
   document.querySelectorAll<HTMLButtonElement>("[data-cycle-defender]").forEach((button) =>

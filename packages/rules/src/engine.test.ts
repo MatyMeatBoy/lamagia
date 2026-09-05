@@ -997,7 +997,7 @@ describe("turn structure", () => {
     expect(game.prioritySeat).toBe(0);
   });
 
-  it("lets a shock land enter untapped for 2 life when it can be afforded, tapped otherwise", () => {
+  it("asks before a shock land pays 2 life or enters tapped", () => {
     const profile = profileOf(SHOCK_LAND());
     expect(profile.entersTapped).toEqual({ kind: "unless-pay-life", life: 2 });
     expect(profile.fullyImplemented).toBe(true);
@@ -1008,7 +1008,15 @@ describe("turn structure", () => {
     const before = flush.players[0]!.life;
     flush = applyAction(flush, 0, { type: "play-land", cardId: "shock-flush-0" });
     const flushLand = flush.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
-    expect(flushLand.tapped).toBe(false);
+    expect(flush.pendingChoice).toMatchObject({ type: "land-entry", life: 2, sourceId: flushLand.instance_id });
+    expect(flushLand.tapped).toBe(true);
+    expect(flush.players[0]!.life).toBe(before);
+    expect(legalActions(flush, 0).map((entry) => entry.action)).toEqual([
+      { type: "choose-land-entry", sourceId: flushLand.instance_id, payLife: true },
+      { type: "choose-land-entry", sourceId: flushLand.instance_id, payLife: false }
+    ]);
+    flush = applyAction(flush, 0, { type: "choose-land-entry", sourceId: flushLand.instance_id, payLife: true });
+    expect(flush.players[0]!.battlefield.find((permanent) => permanent.instance_id === flushLand.instance_id)!.tapped).toBe(false);
     expect(flush.players[0]!.life).toBe(before - 2);
 
     // At low life, the same choice protects it and the land enters tapped instead.
@@ -1017,6 +1025,11 @@ describe("turn structure", () => {
     poor = passUntil(poor, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
     poor = applyAction(poor, 0, { type: "play-land", cardId: "shock-poor-0" });
     const poorLand = poor.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
+    expect(legalActions(poor, 0).map((entry) => entry.action)).toEqual([
+      { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: true },
+      { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: false }
+    ]);
+    poor = applyAction(poor, 0, { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: false });
     expect(poorLand.tapped).toBe(true);
     expect(poor.players[0]!.life).toBe(2);
   });

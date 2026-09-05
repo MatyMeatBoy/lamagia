@@ -9,7 +9,7 @@
 
 import { randomUUID } from "node:crypto";
 import {
-  applyAction, createGame, pendingSeat, projectGame, runBots, settle,
+  applyAction, createGame, pendingSeat, projectGame, runBots, settle, stabilizationDiagnostic,
   type CardData, type DeckInput, type GameAction, type GameState, type GameView, type SeatId
 } from "@prossh/rules";
 import { isSafeManaUndo } from "@prossh/rules";
@@ -73,6 +73,13 @@ export function toDeckInputs(decks: readonly ImportedDeck[], humanSeats: Readonl
 /** Advances every bot seat until a human owes the next decision. */
 function driveBots(match: MatchRecord): void {
   const result = runBots(match.state, (seat) => !match.humanSeats.has(seat));
+  const waiting = pendingSeat(result.state);
+  if (waiting !== null && !match.humanSeats.has(waiting)) {
+    // Never leave the UI silently waiting on a bot. This turns an unsupported
+    // bot choice or a budget exhaustion into an actionable server log with a
+    // bounded public-state snapshot (and the route already records it).
+    throw new Error(`El bot no pudo estabilizar la partida. ${stabilizationDiagnostic(result.state)}`);
+  }
   match.state = result.state;
   match.lastActivityAt = Date.now();
 }

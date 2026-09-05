@@ -11,6 +11,7 @@ feature name.
 | --- | --- | --- | --- |
 | `c13-until-end-turn-creatures` | `codex/local-c13` | Sudden Spoiling: remove abilities and set target player's creatures to base 0/2 until end of turn | active |
 | `c13-linked-exile-return` | `codex/c13-aura-granted-activation-7bd` | Fiend Hunter-style ETB exile of another nontoken creature with a linked leaves-the-battlefield return under its owner's control (CR 603.6c, 400.7) | active |
+| `global-affinity-artifacts` | `feat/activated-abilities-and-triggers` | Reusable Affinity for artifacts cost reduction for artifact spells and affected cards (CR 702.41, 118.9) | active |
 | `c13-aura-control-static` | `codex/c13-aura-granted-activation-7bd` | Reusable static Aura control primitive for `You control enchanted creature/land/permanent` (CR 303.4, 611.3, 613.7) | active |
 | `c13-oracle-damage-activated-cost` | `feat/activated-abilities-and-triggers` | Reusable self-sacrifice activation that damages attacking creatures without flying; Leonin Bladetrap | merged (`5ceb67a`) |
 | `c13-modern-self-reference-etb-sweep` | `feat/activated-abilities-and-triggers` | Normalize modern `this creature enters` Bane of Progress wording into the existing artifact/enchantment sweep-and-counters primitive | merged (`93ce7d4`) |

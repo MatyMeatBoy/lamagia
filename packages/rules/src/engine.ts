@@ -404,6 +404,14 @@ export interface GameState {
 
 export type PendingChoice =
   | {
+      /** Shock-land replacement choice (CR 614.1c, 614.12). */
+      readonly type: "land-entry";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly life: number;
+    }
+  | {
       /** A spell resolves only after its controller chooses one of Magic's five colors. */
       readonly type: "choose-color";
       readonly seat: SeatId;
@@ -646,6 +654,7 @@ export type GameAction =
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
+  | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -1716,8 +1725,9 @@ function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { t
       return { tapped: otherLands < rule.min, lifeCost: 0 };
     }
     case "unless-pay-life":
-      // Paying is the standard line whenever the life total can afford it comfortably.
-      return player.life > rule.life + 1 ? { tapped: false, lifeCost: rule.life } : { tapped: true, lifeCost: 0 };
+      // The controller chooses; never silently pay a replacement cost. The
+      // provisional tapped state is corrected by the pending choice below.
+      return { tapped: true, lifeCost: 0 };
     case "unless-reveal-card":
       // The land is provisionally tapped until the controller completes the
       // replacement-effect choice (CR 614.1c).
@@ -1768,6 +1778,19 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
   if (enters.lifeCost) next = logged(next, seat, `${playerAt(next, seat).name} paga ${enters.lifeCost} vidas para que ${enteringCard.name} entre enderezada.`);
   const entered = playerAt(next, seat).battlefield.find((candidate) => candidate.instance_id === enteringCard.instance_id);
   if (entered) next = raiseEvent(next, { kind: "enters-battlefield", permanentId: entered.instance_id, controller: seat, card: entered.card });
+  if (!forceTapped && profile.entersTapped.kind === "unless-pay-life") {
+    next = {
+      ...next,
+      priorityOpen: false,
+      pendingChoice: {
+        type: "land-entry",
+        seat,
+        sourceId: enteringCard.instance_id,
+        sourceCard: enteringCard,
+        life: profile.entersTapped.life
+      }
+    };
+  }
   return next;
 }
 
@@ -6001,11 +6024,25 @@ function maxLandDrops(state: GameState, seat: SeatId): number {
 }
 
 /** Generic cost reduction from board-scaled self text and Medallion-style grants (CR 118.9). */
+function affinityCount(state: GameState, seat: SeatId, quality: string): number {
+  const normalized = quality.trim().toLowerCase();
+  return playerAt(state, seat).battlefield.filter((permanent) => {
+    const profile = cardProfile(permanent.card);
+    if (normalized === "artifacts" || normalized === "artifact") return isArtifact(profile);
+    if (normalized === "creatures" || normalized === "creature") return isCreature(profile);
+    if (normalized === "lands" || normalized === "land") return isLand(profile);
+    if (normalized === "enchantments" || normalized === "enchantment") return isEnchantment(profile);
+    if (normalized === "tokens" || normalized === "token") return Boolean(permanent.card.token);
+    return hasSubtype(profile, quality.trim());
+  }).length;
+}
+
 function boardCostReduction(state: GameState, seat: SeatId, card: GameCard, profile: CardProfile): number {
   let reduction = 0;
   if (profile.costReducesPerBoardCreature) {
     reduction += profile.costReducesPerBoardCreature * allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length;
   }
+  if (profile.affinityFor) reduction += affinityCount(state, seat, profile.affinityFor);
   const spellColors = profile.colors;
   const battlefield = allPermanents(state).filter((permanent) =>
     permanent.controller === seat || cardProfile(permanent.card).spellCostReductionGrant?.appliesToAllPlayers
@@ -6138,6 +6175,21 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   if (state.pendingChoice) {
     if (state.pendingChoice.seat !== seat) return actions;
     const choice = state.pendingChoice;
+    if (choice.type === "land-entry") {
+      if (player.life >= choice.life) {
+        actions.push({
+          action: { type: "choose-land-entry", sourceId: choice.sourceId, payLife: true },
+          label: `Pay ${choice.life} life — enter untapped`,
+          note: `${choice.sourceCard.name}: pay ${choice.life} life to have it enter untapped.`
+        });
+      }
+      actions.push({
+        action: { type: "choose-land-entry", sourceId: choice.sourceId, payLife: false },
+        label: "Do not pay — enter tapped",
+        note: `${choice.sourceCard.name}: let it enter tapped.`
+      });
+      return actions;
+    }
     if (choice.type === "choose-color") {
       const names: Readonly<Record<MagicColor, string>> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
       for (const color of Object.keys(names) as MagicColor[]) {
@@ -7802,6 +7854,25 @@ function applyChooseReveal(state: GameState, seat: SeatId, action: Extract<GameA
   return logged(next, seat, `${playerAt(next, seat).name} revela ${revealed.name}; ${source.card.name} entra enderezada.`);
 }
 
+function applyChooseLandEntry(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-land-entry" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "land-entry" || choice.seat !== seat) throw new Error("No shock-land choice is pending.");
+  if (choice.sourceId !== action.sourceId) throw new Error("That land-entry choice is no longer pending.");
+  const source = playerAt(state, seat).battlefield.find((permanent) => permanent.instance_id === choice.sourceId);
+  if (!source) throw new Error("The land waiting for this choice is no longer on the battlefield.");
+  if (!action.payLife) {
+    return logged({ ...state, pendingChoice: null }, seat, `${choice.sourceCard.name} enters tapped.`);
+  }
+  if (playerAt(state, seat).life < choice.life) throw new Error("You cannot pay that much life.");
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (player) => ({
+    ...player,
+    life: player.life - choice.life,
+    battlefield: player.battlefield.map((permanent) =>
+      permanent.instance_id === source.instance_id ? { ...permanent, tapped: false } : permanent)
+  }));
+  return logged(next, seat, `${choice.sourceCard.name} enters untapped; you pay ${choice.life} life.`);
+}
+
 function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-color" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "choose-color" || choice.seat !== seat) throw new Error("You do not have a color choice pending.");
@@ -8810,6 +8881,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "activate-mana": next = applyActivateMana(state, seat, action); break;
     case "activate": next = applyActivate(state, seat, action); break;
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
+    case "choose-land-entry": next = applyChooseLandEntry(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-color": next = applyChooseColor(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
