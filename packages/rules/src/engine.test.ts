@@ -58,6 +58,20 @@ describe("smart counter response and safe mana undo", () => {
     const battlefieldGuide = putOnBattlefield(twoSeatGame([], []), 0, [guide]);
     expect(projectGame(battlefieldGuide, 0).players[0]!.battlefield[0]!.producesMana).toBe(false);
   });
+  it("keeps `this card` fast mana and casting as separate legal hand actions", () => {
+    let game = twoSeatGame([], []);
+    const guide = make({
+      name: "Simian Spirit Guide", type_line: "Creature — Ape Spirit", mana_cost: "{2}{R}", cmc: 3,
+      power: "2", toughness: "2", oracle_text: "Exile this card from your hand: Add {R}."
+    });
+    game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [guide], "modern-guide") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const actions = legalActions(game, 0).filter((entry) => entry.cardId === "modern-guide-0");
+    expect(actions.some((entry) => entry.action.type === "cast")).toBe(true);
+    expect(actions.some((entry) => entry.action.type === "activate-mana")).toBe(true);
+  });
   it("projects player-attached Auras without leaking or losing the attachment", () => {
     const curse = make({ name: "Test Curse", type_line: "Enchantment — Aura", oracle_text: "Enchant player" });
     let game = putOnBattlefield(twoSeatGame([], []), 0, [curse]);

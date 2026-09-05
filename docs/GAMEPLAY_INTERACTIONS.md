@@ -28,6 +28,11 @@ same menu. They are never folded into casting or automatic payment: choosing
 the mana action exiles the card as its cost and adds the selected mana directly
 (CR 605.1a, 605.3a).
 
+The parser accepts the printed card name, `~`, and `this card` in that cost, so
+reprints/imports cannot silently collapse the fast-mana action into “cast”.
+The menu deduplicates the server actions, then keeps **View information** as
+the final non-gameplay row.
+
 ## Yield from this card
 
 `toggle-trigger-yield` is a player preference for a battlefield source. It

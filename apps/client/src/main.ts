@@ -365,10 +365,30 @@ function applyView(next: GameView): void {
 // ---------------------------------------------------------------------------
 
 function seatOf(seat: number): PlayerView | undefined { return view?.players.find((player) => player.seat === seat); }
+const CARD_ACTION_TYPES = new Set<LegalAction["action"]["type"]>([
+  "cast", "cycle", "play-land", "activate", "activate-mana", "equip", "choose-reveal", "toggle-trigger-yield"
+]);
+
+/**
+ * One general card menu for hand, battlefield and visible zone cards.
+ * Keep the server's action objects intact so menu clicks still use the same
+ * authoritative legal-action index as the compact action dock.
+ */
+function cardActionEntriesForCard(cardId: string): LegalAction[] {
+  const seen = new Set<string>();
+  return (view?.legalActions ?? [])
+    .filter((entry) => entry.cardId === cardId && CARD_ACTION_TYPES.has(entry.action.type))
+    .filter((entry) => {
+      const key = JSON.stringify(entry.action);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0));
+}
+
 function cardActionsForCard(cardId: string): LegalAction[] {
-  const choices = view?.legalActions.filter((entry) => entry.cardId === cardId &&
-    (entry.action.type === "cast" || entry.action.type === "cycle" || entry.action.type === "play-land" || entry.action.type === "activate" || entry.action.type === "activate-mana" || entry.action.type === "choose-reveal"));
-  return [...(choices ?? [])].sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0));
+  return cardActionEntriesForCard(cardId);
 }
 function actionForCard(cardId: string): LegalAction | undefined {
   return cardActionsForCard(cardId)[0];
@@ -945,7 +965,7 @@ function actionMenuHtml(): string {
 function cardActionMenuHtml(): string {
   if (!ui.cardActionMenu) return "";
   const card = visibleCards().get(ui.cardActionMenu);
-  const entries = [...cardActionsForCard(ui.cardActionMenu), ...activationsFor(ui.cardActionMenu), ...triggerYieldActionsFor(ui.cardActionMenu)];
+  const entries = cardActionEntriesForCard(ui.cardActionMenu);
   if (!card) return "";
   const hasCast = entries.some((entry) => entry.action.type === "cast");
   const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")

@@ -1392,7 +1392,16 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
     const requiresTap = /\{T\}/.test(costText);
-    const exilesSelfFromHand = /^exile\s+~\s+from\s+your\s+hand$/i.test(costText.trim());
+    // Modern Oracle uses either the printed name, `~`, or `this card` here.
+    // All three mean the same hand-based mana ability (CR 605.1a); do not let
+    // a wording variant make a fast-mana card look like a normal cast only.
+    const escapedSelfNames = [card.name, card.name.split(",")[0] ?? ""]
+      .filter(Boolean)
+      .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const exilesSelfFromHand = new RegExp(
+      `^exile\\s+(?:~|this\\s+card|${escapedSelfNames.join("|")})\\s+from\\s+your\\s+hand$`,
+      "i"
+    ).test(costText.trim());
     const variableSacrifice = /^(?:\{T\},\s*)?sacrifice\s+X\s+([A-Za-z][A-Za-z'’-]*)s?$/i.exec(costText.trim().replace(/,\s*$/, ""));
     if (variableSacrifice && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(effectText.trim())) {
       abilities.push({
@@ -1429,7 +1438,8 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
     if (manaSymbols.length && !manaCost) continue;
     const leftovers = costText
-      .replace(/exile\s+~\s+from\s+your\s+hand/gi, "")
+      .replace(/exile\s+(?:~|this\s+card)\s+from\s+your\s+hand/gi, "")
+      .replace(new RegExp(`exile\\s+(?:${escapedSelfNames.join("|")})\\s+from\\s+your\\s+hand`, "gi"), "")
       .replace(/\{T\}/g, "")
       .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
