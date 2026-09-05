@@ -254,6 +254,8 @@ export interface StackObject {
   readonly castViaAlternativeCost?: boolean;
   /** Color chosen while resolving a modal color effect. */
   readonly chosenColor?: MagicColor;
+  /** Last-known power of a creature sacrificed as this spell's additional cost (CR 608.2h). */
+  readonly sacrificedPower?: number;
 }
 
 export interface TriggerInstance {
@@ -648,7 +650,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean; readonly giftPromised?: boolean }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
@@ -3351,6 +3353,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       if (!target) return state;
       const amount = effectAmount(effect.amount, object);
+      if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
+      if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+      return state;
+    }
+    case "damage-any-target-equal-sacrificed-creature-power": {
+      const target = object.targets[0];
+      if (!target) return state;
+      const amount = Math.max(0, object.sacrificedPower ?? 0);
       if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       return state;
@@ -6588,21 +6598,27 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 
   if (!splitSecondActive(state)) for (const card of player.hand) {
     const profile = cardProfile(card);
+    // An additional creature cost is a choice made during casting (CR 601.2b),
+    // not an implicit "first creature" selection. Keep one legal action per
+    // candidate so the client and bots can choose the intended sacrifice.
+    const sacrificeOptions = profile.additionalCostSacrificeCreature
+      ? player.battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)))
+      : [undefined];
     const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
     const variants: { kicked: boolean; evoked: boolean; entwined: boolean }[] = [{ kicked: false, evoked: false, entwined: false }];
     if (profile.kickerCost) variants.push({ kicked: true, evoked: false, entwined: false });
     if (profile.evokeCost) variants.push({ kicked: false, evoked: true, entwined: false });
     if (profile.entwineCost && profile.modalChoices.length) variants.push({ kicked: false, evoked: false, entwined: true });
-    for (const variableValue of values) for (const mode of modes) for (const { kicked, evoked, entwined } of variants) {
+    for (const variableValue of values) for (const mode of modes) for (const { kicked, evoked, entwined } of variants) for (const sacrifice of sacrificeOptions) {
       if (entwined && mode !== modes[0]) continue;
       const selectedMode = entwined ? undefined : mode;
       const check = castableCard(state, seat, card, false, variableValue, selectedMode, kicked, evoked, false, entwined);
       if (!check.legal) continue;
       const modal = entwined ? combinedModalChoice(profile) : selectedMode === undefined ? undefined : profile.modalChoices[selectedMode];
       actions.push({
-        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(kicked ? { kicked: true } : {}), ...(evoked ? { evoked: true } : {}), ...(entwined ? { entwined: true } : {}) },
-        label: `${profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`}${kicked ? " (kicker)" : ""}${evoked ? " (evocar)" : ""}${entwined ? " (entwine)" : ""}${modal ? ` — ${modal.text}` : ""}`,
+        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(kicked ? { kicked: true } : {}), ...(evoked ? { evoked: true } : {}), ...(entwined ? { entwined: true } : {}), ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}) },
+        label: `${profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`}${kicked ? " (kicker)" : ""}${evoked ? " (evocar)" : ""}${entwined ? " (entwine)" : ""}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
         manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0) + (entwined ? (profile.entwineCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
@@ -6614,9 +6630,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (profile.freeCastIfCommander) {
       const freeCheck = castableCard(state, seat, card, false, 0, undefined, false, false, false, false, true);
       if (freeCheck.legal) {
-        actions.push({
-          action: { type: "cast", cardId: card.instance_id, freeCast: true },
-          label: `Lanzar ${card.name} sin pagar su coste de maná`,
+        for (const sacrifice of sacrificeOptions) actions.push({
+          action: { type: "cast", cardId: card.instance_id, freeCast: true, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}) },
+          label: `Lanzar ${card.name} sin pagar su coste de maná${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}`,
           cardId: card.instance_id,
           manaValue: 0,
           ...(freeCheck.targetKind ? { requiresTarget: freeCheck.targetKind } : {}),
@@ -6629,9 +6645,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (profile.payLifeInsteadOfManaCost) {
       const lifeCheck = castableCard(state, seat, card, false, 0, undefined, false, false, false, false, false, true);
       if (lifeCheck.legal) {
-        actions.push({
-          action: { type: "cast", cardId: card.instance_id, payLifeCost: true },
-          label: `Lanzar ${card.name} pagando ${profile.payLifeInsteadOfManaCost.life} de vida en vez de su coste de maná`,
+        for (const sacrifice of sacrificeOptions) actions.push({
+          action: { type: "cast", cardId: card.instance_id, payLifeCost: true, ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}) },
+          label: `Lanzar ${card.name} pagando ${profile.payLifeInsteadOfManaCost.life} de vida en vez de su coste de maná${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}`,
           cardId: card.instance_id,
           manaValue: 0,
           ...(lifeCheck.targetKind ? { requiresTarget: lifeCheck.targetKind } : {}),
@@ -7069,7 +7085,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false, sacrificedPower?: number): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -7088,7 +7104,8 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     ...(kicked ? { kicked: true } : {}),
     ...(evoked ? { evoked: true } : {}),
     ...(flashback ? { fromFlashback: true } : {}),
-    ...(castViaAlternativeCost ? { castViaAlternativeCost: true } : {})
+    ...(castViaAlternativeCost ? { castViaAlternativeCost: true } : {}),
+    ...(sacrificedPower === undefined ? {} : { sacrificedPower })
   };
   // After putting an object on the stack its controller receives priority again (rule 117.3c).
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
@@ -7835,11 +7852,19 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     next = movePermanentToZone(next, lands[0]!, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${lands[0]!.card.name} por ${card.name}.`);
   }
+  let sacrificedPower: number | undefined;
   if (profile.additionalCostSacrificeCreature) {
     const creatures = playerAt(next, seat).battlefield.filter((p) => isCreature(cardProfile(p.card)));
     if (!creatures.length) throw new Error(`No tienes una criatura para sacrificar por ${card.name}.`);
-    next = movePermanentToZone(next, creatures[0]!, "graveyard");
-    next = logged(next, seat, `${player.name} sacrifica ${creatures[0]!.card.name} por ${card.name}.`);
+    const sacrificed = action.sacrificeId
+      ? creatures.find((permanent) => permanent.instance_id === action.sacrificeId)
+      : creatures[0];
+    if (!sacrificed) throw new Error(`Debes elegir una criatura que controles para sacrificar por ${card.name}.`);
+    // Snapshot power before moving the permanent: the spell needs its last-known
+    // information when it resolves (CR 608.2h).
+    sacrificedPower = Math.max(0, powerOf(sacrificed, next));
+    next = movePermanentToZone(next, sacrificed, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${sacrificed.card.name} por ${card.name}.`);
   }
   if (giftPromised && profile.giftDrawsCard) {
     const gifted = opponentsOf(next, seat)[0];
@@ -7861,7 +7886,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
-    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)));
+    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)), sacrificedPower);
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: paymentSpentTotal },

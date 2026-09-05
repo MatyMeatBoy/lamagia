@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,176**
-- Cards with a reusable existing primitive hint: **11,471**
+- One-line cards: **15,171**
+- Cards with a reusable existing primitive hint: **11,466**
 - Cards needing new primitive review: **3,705**
-- Templates: **11,994**
+- Templates: **11,992**
 
 ## Worker rule
 
@@ -25,7 +25,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Lydari Druid | `e4afa53e-435e-4d0f-918b-e7b603c52f9c` | activated | trigger / ETB | When ~ enters, for each land on the battlefield, choose a basic land type at random. Those lands become the land types chosen this way. |
 | reuse-existing | Arden Angel | `82d51c8a-d42b-48b3-a726-3a8d28d057e5` | return | trigger / ETB | At the beginning of your upkeep, if ~ is in your graveyard, roll a four-sided die. If the result is 1, return ~ from your graveyard to the battlefield. |
 | needs-new-primitive | Hapato's Might | `b819990c-802c-4847-9857-756dd66ec74a` | pump | new primitive review | Target creature gets +X/+0 until end of turn, where X is a number from 0 to 6 chosen at random. |
-| reuse-existing | Fling | `24227761-b50e-4b9e-93a2-e82d053b3e3d` | damage | sacrifice | ~ deals damage equal to the sacrificed creature's power to any target. |
 | reuse-existing | Laquatus's Champion | `693ddb18-00d2-4784-90a0-701a64195034` | gain-life | damage / life | When ~ leaves the battlefield, that player gains 6 life. |
 | reuse-existing | Cloud, Midgar Mercenary | `33d2584b-bf29-4c22-bd45-14ba2fb98c0e` | static-continuous | activated ability / mana | As long as ~ is equipped, if a triggered ability of ~ or an Equipment attached to it triggers, that ability triggers an additional time. |
 | reuse-existing | Yidaro, Wandering Monster | `6c0e22f2-f0f3-43e6-87c5-c543032112d8` | activated | search / library | When you cycle ~, shuffle it into your library from your graveyard. If you've cycled a card named ~ four or more times this game, put it onto the battlefield from your graveyard instead. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Talruum Champion | `9352e742-9a22-4463-b41f-3117ff1540ed` | activated | trigger / ETB | Whenever ~ blocks or becomes blocked by a creature, that creature loses first strike until end of turn. |
 | needs-new-primitive | Sandbar Crocodile | `e11926bf-ca14-4e1e-aca5-9ffedb91868c` | activated | new primitive review | Phasing |
 | needs-new-primitive | Phyrexian Mite | `2667d723-01c8-4ea3-ac17-cedb3b842c3b` | activated | new primitive review | Toxic 1 |
+| reuse-existing | Guardian of Faith | `8e04a5e0-e22c-430b-a39a-c9f38e16ea86` | static-continuous | trigger / ETB | When ~ enters, any number of other target creatures you control phase out. |
 
-The JSON contains the remaining 14,676 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,671 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
