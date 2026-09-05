@@ -446,6 +446,8 @@ export type SpellEffect =
   | { readonly kind: "each-opponent-loses-life-event-amount" }
   /** "that player" in a triggered ability referring back to the event's own player (e.g. the opponent who drew) — CR 603.3d, not a chosen target. */
   | { readonly kind: "lose-life-event-player"; readonly amount: number | "X" }
+  /** That player's choice to put a card from hand on top after a library shuffle (CR 401.5, 701.20). */
+  | { readonly kind: "put-event-player-hand-card-on-library-top" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
   /** Noncombat damage to the controller of the permanent source. */
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
@@ -646,6 +648,7 @@ export type TriggerEvent =
   | "card-cycled"
   | "card-drawn"
   | "card-discarded"
+  | "library-shuffled"
   | "upkeep"
   | "draw-step"
   | "end-step"
@@ -676,7 +679,9 @@ export type TriggerSubject =
   | "creature-attacks-opponent"
   | "you"
   | "each-player"
-  | "opponent";
+  | "opponent"
+  /** The player whose spell or ability caused a library shuffle. */
+  | "shuffle-controller";
 
 export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "enters-battlefield": "habilidad de entrada",
@@ -687,9 +692,10 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "deals-damage-to-player": "habilidad de daño a un jugador",
   "becomes-tapped": "habilidad de giro",
   "spell-cast": "habilidad de lanzamiento",
- "card-cycled": "habilidad de cycling",
+  "card-cycled": "habilidad de cycling",
   "card-drawn": "habilidad de robo",
   "card-discarded": "habilidad de descarte",
+  "library-shuffled": "library-shuffle trigger",
   upkeep: "habilidad de mantenimiento",
   "draw-step": "habilidad del paso de robo",
   "end-step": "habilidad del paso final",
@@ -2034,6 +2040,7 @@ type TriggerTemplate = {
 };
 
 const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
+  { event: "library-shuffled", subject: "shuffle-controller", pattern: /^whenever a spell or ability causes its controller to shuffle their library,?\s*(that player puts a card from their hand on top of their library)\.?$/i },
   { event: "life-gained", subject: "you", pattern: /^whenever\s+you\s+gain\s+life,?\s*(.+)$/i },
   { event: "life-lost", subject: "you", pattern: /^whenever\s+you\s+lose\s+life,?\s*(.+)$/i },
   // The permanent that carries the ability is the object the event is about.
@@ -2387,6 +2394,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^That player draws an additional card$/i.test(text)) {
     return { effect: { kind: "draw-active-player" }, target: "none" };
+  }
+  if (/^That player puts a card from their hand on top of their library$/i.test(text)) {
+    return { effect: { kind: "put-event-player-hand-card-on-library-top" }, target: "none" };
   }
   if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
     return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };

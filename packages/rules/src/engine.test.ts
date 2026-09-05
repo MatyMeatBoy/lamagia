@@ -428,6 +428,7 @@ const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost:
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const OFFER_YOU_CANT_REFUSE = () => make({ name: "Test An Offer You Can't Refuse", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target noncreature spell. Its controller creates two Treasure tokens." });
 const TUTOR = () => make({ name: "Enlightened Tutor", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an artifact or enchantment card, reveal it, then shuffle. Put that card on top of your library." });
+const WIDESPREAD_PANIC = () => make({ name: "Widespread Panic", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Whenever a spell or ability causes its controller to shuffle their library, that player puts a card from their hand on top of their library.", oracle_id: "853a3c2b-3d37-453a-8a77-4d90bd3a1cb7", scryfall_id: "d9e1b37f-8168-4dc0-858f-434ee96ff748" });
 const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Search your library for a creature card, reveal it, then shuffle and put the card on top." });
 const ELADAMRI = () => make({ name: "Eladamri's Call", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Search your library for a creature card, reveal that card, put it into your hand, then shuffle." });
 const ENTOMB = () => make({ name: "Entomb", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Search your library for a card, put that card into your graveyard, then shuffle." });
@@ -4412,6 +4413,23 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Sol Ring" });
     expect(game.players[0]!.library[0]!.name).toBe("Sol Ring");
     expect(game.players[0]!.graveyard.some((card) => card.name === "Enlightened Tutor")).toBe(true);
+  });
+
+  it("lets Widespread Panic put a chosen hand card on top after a library shuffle", () => {
+    const panic = WIDESPREAD_PANIC();
+    let game = readyToCast([TUTOR(), SOL_RING()], [PLAINS(), panic]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [TEST_ARTIFACT()], "panic-library"), ...player.library] }));
+    expect(profileOf(panic).fullyImplemented).toBe(true);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Relic" });
+    expect(game.pendingChoice).toMatchObject({ type: "hand-card-to-library-top", seat: 0 });
+    const choice = game.pendingChoice!;
+    expect(legalActions(game, 1)).toHaveLength(0);
+    const put = legalActions(game, 0).find((entry) => entry.action.type === "choose-hand-card-to-library-top" && entry.cardId === "hand-1");
+    expect(put?.label).toBe("Put Sol Ring on top of your library");
+    game = applyAction(game, 0, { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId: "hand-1" });
+    expect(game.players[0]!.library[0]!.name).toBe("Sol Ring");
+    expect(game.players[0]!.hand.some((card) => card.instance_id === "hand-1")).toBe(false);
   });
 
   it("reuses the library search family for top, hand and graveyard destinations", () => {
