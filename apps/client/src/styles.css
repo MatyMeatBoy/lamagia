@@ -607,6 +607,22 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 .action-row i { color: var(--text-faint); font-style: normal; }
 .action-row.choice-action { color: #b9eaff; border-left: 2px solid #54b8e5; }
 
+/* Main decision surface: fixed so it never reflows the hand or HUD. */
+.decision-overlay {
+  position: fixed; z-index: 30; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(460px, calc(100vw - 28px)); max-height: min(58vh, 520px); overflow: hidden;
+  border: 1px solid var(--gold-dim); border-radius: 12px; background: #07120cf5;
+  box-shadow: 0 22px 70px #000c, 0 0 0 9999px #02080435; backdrop-filter: blur(7px);
+}
+.decision-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line-soft); }
+.decision-head > div { min-width: 0; display: grid; gap: 3px; }
+.decision-head b { color: var(--gold); font-size: .82rem; }
+.decision-head span { color: var(--text-dim); font-size: .64rem; }
+.decision-head .icon-button { margin-left: auto; flex: 0 0 auto; }
+.decision-list { max-height: calc(min(58vh, 520px) - 65px); overflow: auto; padding: 5px; }
+.decision-list .action-row { padding: 10px 11px; font-size: .72rem; border-radius: 7px; border-bottom: 1px solid #14261b; }
+.decision-list .action-row:hover, .decision-list .action-row:focus-visible { background: #17291c; color: var(--gold); outline: 1px solid var(--gold-dim); }
+
 .winner-banner {
   position: fixed; z-index: 50; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px;
   background: #04080699; backdrop-filter: blur(3px);
@@ -873,6 +889,12 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
   .hand-card:first-child { margin-left: 0; }
   .log-drawer { top: 0; bottom: 0; border-radius: 0; }
   .rotate-hint { display: flex; }
+}
+
+@media (max-width: 600px) {
+  .decision-overlay { top: 46%; width: min(440px, calc(100vw - 18px)); }
+  .decision-head { padding: 10px 11px; }
+  .decision-list .action-row { padding: 9px 10px; }
 }
 .rotate-hint {
   display: none; align-items: center; gap: 8px;
