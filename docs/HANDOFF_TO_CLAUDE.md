@@ -2861,3 +2861,15 @@ a card) reuse pre-existing effect kinds (`create-token`, `add-mana`,
 `draw`) unchanged — only the trigger-matching side needed new plumbing.
 Validation: **592 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,348 global profiles.
+
+Geier Reach Sanitarium | `7b9fafe7-d26a-4ed5-b4c4-ce13763770b5` was closed
+with a new `each-player-draws-then-discards` effect (CR 101.4, 701.8a).
+The draw is unconditional and simultaneous for every player; the discard
+is each player's own choice, so a new `nextSeats` field on the existing
+`discard-cards` `PendingChoice` re-issues the same choice for the next
+seat in APNAP order (controller first, then opponents in turn order) once
+the current seat's discard(s) resolve, instead of clearing to `null`.
+Currently hardcodes one discard per queued seat — the only caller so far
+— rather than threading a per-seat variable amount through the chain.
+Validation: **593 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,350 global profiles.

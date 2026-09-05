@@ -390,6 +390,8 @@ export type SpellEffect =
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   /** Each player discards their hand, then all draw the greatest discarded hand size. */
   | { readonly kind: "each-player-discard-and-draw-greatest" }
+  /** Geier Reach Sanitarium: draw happens for everyone at once; the discard is each player's own choice, queued one seat at a time (CR 701.8a, APNAP order). */
+  | { readonly kind: "each-player-draws-then-discards" }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
@@ -2867,6 +2869,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Each player discards their hand, then draws cards equal to the greatest number of cards a player discarded this way$/i.test(text)) {
     return { effect: { kind: "each-player-discard-and-draw-greatest" }, target: "none" };
+  }
+  if (/^Each player draws a card, then discards a card$/i.test(text)) {
+    return { effect: { kind: "each-player-draws-then-discards" }, target: "none" };
   }
   if (/^Target player discards their hand$/i.test(text)) return { effect: { kind: "discard-target-player-hand" }, target: "player" };
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on (?:~|this (?:artifact|enchantment|creature|permanent|land))$/i.exec(text))) {

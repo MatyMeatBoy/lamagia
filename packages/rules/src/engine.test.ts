@@ -157,6 +157,7 @@ const HOWLING_MINE = () => make({ name: "Howling Mine", type_line: "Artifact", m
 const FEVERED_VISIONS = () => make({ name: "Fevered Visions", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "At the beginning of each player's end step, that player draws a card. If the player is your opponent and has four or more cards in hand, this enchantment deals 2 damage to that player.", oracle_id: "70763549-4b4e-4cb8-8c02-0639ba18bb1a", scryfall_id: "8badb2d3-530b-40ca-bcca-4137487f9f01" });
 const HAND_MINUS_DAMAGE = () => make({ name: "Hand Minus Damage", type_line: "Creature — Artifact", mana_cost: "{5}", cmc: 5, power: "2", toughness: "2", oracle_text: "At the beginning of each opponent's upkeep, this creature deals X damage to that player, where X is the number of cards in their hand minus 4." });
 const WASTE_NOT = () => make({ name: "Waste Not", type_line: "Enchantment", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Whenever an opponent discards a creature card, create a 2/2 black Zombie creature token.\nWhenever an opponent discards a land card, add {B}{B}.\nWhenever an opponent discards a noncreature, nonland card, draw a card.", oracle_id: "00fdcc19-88ed-46c3-91f0-095806228105", scryfall_id: "5737b4ac-1a0c-475c-bc0c-489bce302ff0" });
+const GEIER_REACH_SANITARIUM = () => make({ name: "Geier Reach Sanitarium", type_line: "Legendary Land", oracle_text: "{T}: Add {C}.\n{2}, {T}: Each player draws a card, then discards a card.", oracle_id: "7b9fafe7-d26a-4ed5-b4c4-ce13763770b5", scryfall_id: "6a046c90-5161-43d9-a4d9-01d93c12c097" });
 const HAND_EQUAL_DAMAGE = () => make({ name: "Hand Equal Damage", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of each opponent's upkeep, this creature deals damage to that player equal to the number of cards in that player's hand." });
 const EACH_HAND_DAMAGE = () => make({ name: "Shared Hand Damage", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Each player loses life equal to the number of cards in their hand." });
 const TAPPED_DRAW = () => make({ name: "Tapped Draw", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls." });
@@ -6858,6 +6859,39 @@ describe("activated abilities", () => {
     expect(game.players[0]!.library).toHaveLength(libraryBefore - 1);
     expect(game.players[0]!.graveyard.some((card) => card.instance_id === cycling.instance_id)).toBe(true);
     expect(game.log.at(-1)?.text).toMatch(/cicla Barren Moor/i);
+  });
+
+  it("lets each player draw then choose their own discard for Geier Reach Sanitarium", () => {
+    const profile = profileOf(GEIER_REACH_SANITARIUM());
+    expect(profile.activatedAbilities[0]).toMatchObject({ effect: { kind: "each-player-draws-then-discards" } });
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GEIER_REACH_SANITARIUM(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, () => ({ autoPass: false, hand: toHand(0, [SOL_RING()], "sanitarium-hand-0"), library: toHand(0, [BEAR()], "sanitarium-lib-0") }));
+    game = stage(game, 1, () => ({ autoPass: false, hand: toHand(1, [FLIER()], "sanitarium-hand-1"), library: toHand(1, [MOUNTAIN()], "sanitarium-lib-1") }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const sanitarium = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Geier Reach Sanitarium")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === sanitarium.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(expect.arrayContaining(["Sol Ring", "Grizzly Bears"]));
+    expect(game.players[1]!.hand.map((card) => card.name)).toEqual(expect.arrayContaining(["Storm Crow", "Mountain"]));
+
+    // Controller discards first (APNAP order), then the opponent.
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 0, remaining: 1 });
+    game = applyAction(game, 0, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "sanitarium-hand-0-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 1, remaining: 1 });
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "sanitarium-hand-1-0" });
+    expect(game.pendingChoice).toBeNull();
+
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears"]);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
+    expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Mountain"]);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Storm Crow")).toBe(true);
   });
 });
 
