@@ -2120,6 +2120,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "damage-attacking-creatures": {
+      const amount = effectAmount(effect.amount, object);
+      const attacking = new Set(state.combat.attackers.map((entry) => entry.instanceId));
+      let next = state;
+      for (const permanent of allPermanents(state)) {
+        if (!attacking.has(permanent.instance_id) || !isCreature(cardProfile(permanent.card))) continue;
+        if (effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
+        if (effect.filter === "with-flying" && !keywordOf(next, permanent, "flying")) continue;
+        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+      }
+      return next;
+    }
     case "damage-each-creature-and-player": {
       const amount = effectAmount(effect.amount, object);
       let next = state;

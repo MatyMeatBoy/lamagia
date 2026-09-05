@@ -559,6 +559,7 @@ const COMBAT_SEAR = () => make({ name: "Combat Sear", type_line: "Instant", mana
 const THUNDERSTAFF = () => make({ name: "Thunderstaff", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "As long as Thunderstaff is untapped, if a creature would deal combat damage to you, prevent 1 of that damage.\n{2}, {T}: Attacking creatures get +1/+0 until end of turn." });
 const FLAMETONGUE = () => make({ name: "Flametongue Kavu", type_line: "Creature — Kavu", mana_cost: "{3}{R}", cmc: 4, power: "4", toughness: "2", oracle_text: "When Flametongue Kavu enters the battlefield, it deals 4 damage to target creature." });
 const WHIPFLARE = () => make({ name: "Whipflare", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Whipflare deals 2 damage to each nonartifact creature." });
+const LEONIN_BLADETRAP = () => make({ name: "Leonin Bladetrap", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "Flash\n{2}, Sacrifice this artifact: It deals 2 damage to each attacking creature without flying." });
 const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature — Bear", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2" });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 const GREEN_COMMANDER = () => make({ name: "Green Commander", type_line: "Legendary Creature — Human", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"], color_identity: ["G"] });
@@ -4913,6 +4914,36 @@ describe("activated abilities", () => {
     expect(profile.manaAbilities).toHaveLength(1);
     expect(profile.manaAbilities[0]!.produces).toEqual(["G"]);
     expect(profile.activatedAbilities).toHaveLength(0);
+  });
+
+  it("resolves Leonin Bladetrap against only attacking nonfliers", () => {
+    let game = readyOnBoard([LEONIN_BLADETRAP(), MOUNTAIN(), MOUNTAIN()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR(), FLIER()], { sick: false });
+    const attacker = permanentNamed(game, 1, "Grizzly Bears")!;
+    const flier = permanentNamed(game, 1, "Storm Crow")!;
+    game = {
+      ...game,
+      step: "declare-blockers",
+      activeSeat: 1,
+      prioritySeat: 0,
+      priorityOpen: true,
+      passedSeats: [],
+      combat: { ...game.combat, attackers: [{ instanceId: attacker.instance_id, defender: 0 }], attackersDeclared: true, blockersDeclared: true }
+    };
+    const source = permanentNamed(game, 0, "Leonin Bladetrap")!;
+    expect(profileOf(LEONIN_BLADETRAP()).activatedAbilities[0]).toMatchObject({
+      sacrificesSelf: true,
+      manaCost: { raw: "{2}" },
+      targetKind: "none",
+      effect: { kind: "damage-attacking-creatures", amount: 2, filter: "without-flying" }
+    });
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.graveyard.some((card) => card.instance_id === attacker.card.instance_id)).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === flier.instance_id)).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Leonin Bladetrap")).toBe(true);
   });
 
   it("grants Aerie Mystics' activated shroud to creatures only", () => {

@@ -413,6 +413,7 @@ export type SpellEffect =
   | { readonly kind: "damage-active-player-hand-minus"; readonly offset: number }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" | "with-flying"; readonly alsoPlaneswalkers?: boolean }
+  | { readonly kind: "damage-attacking-creatures"; readonly amount: number | "X"; readonly filter?: "without-flying" | "with-flying" }
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-nonflying-creatures-and-players"; readonly amount: number | "X" }
@@ -1332,8 +1333,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // An {X} cost is payable only when the effect actually consumes X (CR 107.3).
   if (manaCost?.hasVariable && !effectUsesVariable(recognized.effect)) return null;
 
-  const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
-  const sacrificesSelf = /sacrifice\s+~/i.test(costText) || namedSelfSacrifice;
+  const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b|this\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
+  const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText) || namedSelfSacrifice;
   const tapCreatureMatch = /tap\s+(an|another)\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control/i.exec(costText);
   const tapsCreature = tapCreatureMatch ? {
     mode: tapCreatureMatch[1]!.toLowerCase() === "another" ? "another" as const : "any" as const,
@@ -1359,7 +1360,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const leftovers = costText
     .replace(/\{[^}]*\}/g, "")
     .replace(/pay\s+\d+\s+life/gi, "")
-    .replace(/sacrifice\s+~/gi, "")
+    .replace(/sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
     .replace(/\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/g, "")
     .replace(/sacrifice\s+(?:two|three|four|five|\d+)\s+(?:(?:a|an)\s+)?(?:[A-Za-z][A-Za-z'’-]*\s+)?creatures\b/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
@@ -2282,6 +2283,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "attacking-or-blocking-creature" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "attacking-or-blocking-creature" };
+  }
+  if ((match = /^~ deals (\w+) damage to each attacking creature( without flying)?$/i.exec(text))) {
+    const amount = match[1]!.toUpperCase() === "X" ? "X" as const : toNumber(match[1]!);
+    if (amount !== null) return { effect: { kind: "damage-attacking-creatures", amount, ...(match[2] ? { filter: "without-flying" as const } : {}) }, target: "none" };
   }
   if ((match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the other(?:s)? on the bottom of your library in any order$/i.exec(text))
       || (match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the rest on the bottom of your library in any order$/i.exec(text))

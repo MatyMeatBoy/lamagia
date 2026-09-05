@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T00:29:56.017385+00:00`
+- Generated: `2026-09-05T00:35:26.404130+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **220**
+- Exported profiles in scope: **341**; fully implemented: **221**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -259,7 +259,7 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **220/341** profiles complete; **47** unfinished cards have exactly one unmatched line.
+The engine export currently marks **221/341** profiles complete; **46** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
@@ -299,7 +299,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | {cost}, sacrifice <n> goats: add <n> mana of any <n> color. you gain <n> life — Springjack Pasture |
 | `unclaimed` | 1 | {cost}, sacrifice <n> nontoken artifact: create <n> <n>/<n> blue thopter artifact creature token with flying — Thopter Foundry |
 | `unclaimed` | 1 | {cost}, sacrifice ~: destroy up to <n> target nonblack creatures, where <n> is the number of verse counters on ~ — Vile Requiem |
-| `unclaimed` | 1 | {cost}, sacrifice ~: it deals <n> damage to each attacking creature without flying — Leonin Bladetrap |
 | `unclaimed` | 1 | {cost}, {cost}, sacrifice ~: search your library for up to <n> basic land cards, reveal them, put them into your hand, then shuffle — Armillary Sphere |
 | `unclaimed` | 1 | {cost}, {cost}: add <n> mana of any color in your commander's color identity. if you spend this mana to cast your commander, it enters with <n> number of additional +<n>/+<n> counters on it equal to the number of times it's been cast from the command zone this game — Opal Palace |
 | `unclaimed` | 1 | {cost}, {cost}: each player discards their hand, then draws cards equal to the greatest number of cards <n> player discarded this way — Jace's Archivist |
