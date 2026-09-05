@@ -6058,6 +6058,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   // Silence (CR 116.3): this function only ever validates casting a spell
   // (playing a land is a separate path), so no type carve-out is needed.
   if (player.cantCastSpellsUntilEndOfTurn) return { legal: false };
+  // Diabolic Intent (CR 601.2b): the additional cost must be payable to cast at all.
+  if (profile.additionalCostSacrificeCreature && !player.battlefield.some((permanent) => isCreature(cardProfile(permanent.card)))) return { legal: false };
   if (freeCast && payLifeCost) return { legal: false };
   if (freeCast && !profile.freeCastIfCommander) return { legal: false };
   if (freeCast && !controlsCommander(state, seat)) return { legal: false };
@@ -7703,6 +7705,12 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     if (!lands.length) throw new Error(`No tienes una tierra para sacrificar por ${card.name}.`);
     next = movePermanentToZone(next, lands[0]!, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${lands[0]!.card.name} por ${card.name}.`);
+  }
+  if (profile.additionalCostSacrificeCreature) {
+    const creatures = playerAt(next, seat).battlefield.filter((p) => isCreature(cardProfile(p.card)));
+    if (!creatures.length) throw new Error(`No tienes una criatura para sacrificar por ${card.name}.`);
+    next = movePermanentToZone(next, creatures[0]!, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${creatures[0]!.card.name} por ${card.name}.`);
   }
   if (giftPromised && profile.giftDrawsCard) {
     const gifted = opponentsOf(next, seat)[0];

@@ -508,6 +508,7 @@ const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost:
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const OFFER_YOU_CANT_REFUSE = () => make({ name: "Test An Offer You Can't Refuse", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target noncreature spell. Its controller creates two Treasure tokens." });
 const TUTOR = () => make({ name: "Enlightened Tutor", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an artifact or enchantment card, reveal it, then shuffle. Put that card on top of your library." });
+const DIABOLIC_INTENT = () => make({ name: "Diabolic Intent", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nSearch your library for a card, put that card into your hand, then shuffle." });
 const DEADLY_ROLLICK = () => make({ name: "Deadly Rollick", type_line: "Instant", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "If you control a commander, you may cast this spell without paying its mana cost.\nExile target creature.", oracle_id: "0456ec64-2c81-4763-a352-8ff64a4c3d6b", scryfall_id: "a30c266d-579e-4757-a4d6-6722fa343a6c" });
 const SNUFF_OUT = () => make({ name: "Snuff Out", type_line: "Instant", mana_cost: "{3}{B}", cmc: 4, oracle_text: "If you control a Swamp, you may pay 4 life rather than pay this spell's mana cost.\nDestroy target nonblack creature. It can't be regenerated.", oracle_id: "324824cb-f938-401c-b9b5-d8908b431ef0", scryfall_id: "cdb4bdc5-2533-4e6d-ab69-ccbf3d497748" });
 const BALEFUL_MASTERY = () => make({ name: "Baleful Mastery", type_line: "Instant", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "You may pay {1}{B} rather than pay this spell's mana cost.\nIf the {1}{B} cost was paid, an opponent draws a card.\nExile target creature or planeswalker.", oracle_id: "adfcdadd-ddda-477b-8e72-0cae2430fb63", scryfall_id: "09f8d1e2-7f12-4828-8391-eb50f67e66a5" });
@@ -5185,6 +5186,27 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Sol Ring" });
     expect(game.players[0]!.library[0]!.name).toBe("Sol Ring");
     expect(game.players[0]!.graveyard.some((card) => card.name === "Enlightened Tutor")).toBe(true);
+  });
+
+  it("pays Diabolic Intent's sacrifice-a-creature additional cost, then tutors a chosen card to hand", () => {
+    const intent = DIABOLIC_INTENT();
+    expect(profileOf(intent).fullyImplemented).toBe(true);
+    let game = readyToCast([intent], [SWAMP(), SWAMP(), BEAR()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [SOL_RING()], "library"), ...player.library] }));
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.pendingChoice).toMatchObject({ type: "search-library", seat: 0 });
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Sol Ring" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Diabolic Intent")).toBe(true);
+  });
+
+  it("can't cast Diabolic Intent with no creature to sacrifice", () => {
+    let game = readyToCast([DIABOLIC_INTENT()], [SWAMP(), SWAMP()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast")).toBe(false);
+    expect(() => applyAction(game, 0, { type: "cast", cardId: "hand-0" })).toThrow();
   });
 
   it("lets Widespread Panic put a chosen hand card on top after a library shuffle", () => {
