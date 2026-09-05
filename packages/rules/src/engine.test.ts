@@ -311,6 +311,7 @@ const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "
 const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Creature — Vampire", mana_cost: "{3}{U}{B}", cmc: 5, power: "4", toughness: "4", colors: ["U", "B"], keywords: ["Intimidate"], oracle_text: "Intimidate\nOther creatures you control have intimidate.\nWhenever Vela the Night-Clad or another creature you control leaves the battlefield, each opponent loses 1 life." });
 const GAHIJI = () => make({ name: "Gahiji, Honored One", type_line: "Legendary Creature — Beast", mana_cost: "{3}{R}{G}{W}", cmc: 6, power: "4", toughness: "4", oracle_text: "Whenever a creature attacks one of your opponents or a planeswalker an opponent controls, that creature gets +2/+0 until end of turn." });
 const TERRA_RAVAGER = () => make({ name: "Terra Ravager", type_line: "Creature — Elemental", mana_cost: "{3}{R}", cmc: 4, power: "0", toughness: "4", oracle_text: "Whenever Terra Ravager attacks, it gets +X/+0 until end of turn, where X is the number of lands defending player controls.", oracle_id: "c7686204-0433-48cf-bbfb-5d32b6a25cc3" });
+const INFERNO_TITAN = () => make({ name: "Inferno Titan", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "Whenever Inferno Titan enters the battlefield or attacks, it deals 3 damage divided as you choose among one, two, or three targets.", oracle_id: "0ce47c8b-1e1f-463f-94f0-35ca00be89e6" });
 const GUTTERSNIPE = () => make({ name: "Guttersnipe", type_line: "Creature — Goblin Shaman", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever you cast an instant or sorcery spell, Guttersnipe deals 2 damage to each opponent." });
 const FECUNDITY = () => make({ name: "Fecundity", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature dies, that creature's controller may draw a card." });
 const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "Enchantment", mana_cost: "{1}{R}{G}", cmc: 3, oracle_text: "Creatures you control have haste.\n{R}{G}, Sacrifice Fires of Yavimaya: Creatures you control get +2/+2 until end of turn." });
@@ -5075,6 +5076,28 @@ describe("triggered abilities", () => {
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: ravager.instance_id, defender: 1 }] });
     game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === ravager.instance_id)?.powerModifier).toBe(2);
+  });
+
+  it("divides Inferno Titan's trigger damage across one to three targets", () => {
+    expect(profileOf(INFERNO_TITAN())).toMatchObject({
+      triggers: [
+        { event: "enters-battlefield", targetKinds: ["any", "any", "any"], minimumTargets: 1, effect: { kind: "damage-divided-targets", amount: 3 } },
+        { event: "attacks", targetKinds: ["any", "any", "any"], minimumTargets: 1, effect: { kind: "damage-divided-targets", amount: 3 } }
+      ],
+      fullyImplemented: true
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [INFERNO_TITAN()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const titan = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Inferno Titan")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: titan.instance_id, defender: 1 }] });
+    expect(game.pendingChoice?.type).toBe("trigger-target");
+    const sourceId = game.pendingChoice?.type === "trigger-target" ? game.pendingChoice.sourceId : "";
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId, target: { kind: "player", seat: 1 } });
+    game = applyAction(game, 0, { type: "finish-trigger-targets", sourceId });
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    expect(game.players[1]!.life).toBe(37);
   });
 
   it("triggers Guttersnipe only from instant and sorcery casts", () => {

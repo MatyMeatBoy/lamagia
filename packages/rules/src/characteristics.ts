@@ -438,6 +438,8 @@ export type SpellEffect =
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   /** Damage equal to the power of the creature that caused this trigger. */
   | { readonly kind: "damage-triggered-creature-power" }
+  /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
+  | { readonly kind: "damage-divided-targets"; readonly amount: number }
   /** Damage from the ability source equal to that source's current power. */
   | { readonly kind: "damage-source-power" }
   /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
@@ -3334,6 +3336,20 @@ function recognizeText(text: string): RecognizedText {
         });
         continue;
       }
+    }
+    const dividedDamageTrigger = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?\s+or\s+attacks,?\s+it deals (\d+) damage divided as you choose among one, two, or three targets\.?$/i.exec(line);
+    if (dividedDamageTrigger) {
+      triggers.push({
+        event: "enters-battlefield", subject: "self", effect: { kind: "damage-divided-targets", amount: Number(dividedDamageTrigger[1]) },
+        optional: false, targetKind: "any", targetKinds: ["any", "any", "any"], minimumTargets: 1, sourceText: line
+      });
+      // The same printed ability also fires from attacks; the shared effect is
+      // represented by a second trigger so both event paths remain explicit.
+      triggers.push({
+        event: "attacks", subject: "self", effect: { kind: "damage-divided-targets", amount: Number(dividedDamageTrigger[1]) },
+        optional: false, targetKind: "any", targetKinds: ["any", "any", "any"], minimumTargets: 1, sourceText: line
+      });
+      continue;
     }
     // Myr Battlesphere: tapping any number of untapped Myr is an optional
     // resolution choice, not a mana cost. Keep the selected group explicit so

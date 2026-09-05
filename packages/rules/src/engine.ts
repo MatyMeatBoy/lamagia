@@ -2401,6 +2401,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, source ? cardProfile(creature!.card) : cardProfile(object.card));
       return state;
     }
+    case "damage-divided-targets": {
+      const targets = object.targets;
+      if (!targets.length) return state;
+      let next = state;
+      let remaining = effect.amount;
+      for (let index = 0; index < targets.length && remaining > 0; index += 1) {
+        const target = targets[index]!;
+        const share = index === 0 ? remaining - (targets.length - 1) + 0 : 1;
+        if (share <= 0) continue;
+        if (target.kind === "player") next = dealDamageFromObject(next, target.seat, share, sourceName, object);
+        else if (target.kind === "permanent") next = dealDamageToPermanent(next, target.instanceId, share, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+        remaining -= share;
+      }
+      return next;
+    }
     case "damage-source-power": {
       const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;
