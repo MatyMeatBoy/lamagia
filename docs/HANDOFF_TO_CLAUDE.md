@@ -33,6 +33,25 @@ Coverage numbers have two deliberate units:
 Do not report the 38,711 profile catalog as implemented cards. Recompute both
 views after accepted rules commits and publish the generated `site/coverage.json`.
 
+### Claude/fork IR audit — 2026-09-04
+
+The old `origin/worker-05` IR benchmark was not safe enough for integration:
+it checked only card IDs and clause counts, so a changed target, zone, cost, or
+primitive key could still report `PASS`. It also consumed generator inputs
+before building the compact payload. Commit `2bb7612` adds exact per-card
+primitive/operand equivalence checks and fixes single-pass inputs. Commit
+`e1c03e1` adds the measured hybrid payload: repeated exact shapes use symbols,
+while unique or complex clauses retain Oracle text. Full catalog and C13 both
+currently select `hybrid-payload` (22.8% and 7.9% context reduction).
+
+Claude's `94aa4ca` repaired malformed `characteristics.ts` syntax and removed
+unreachable, unwired `SpellEffect` union members on a stale branch. It is useful
+as an audit finding, but must not be cherry-picked wholesale: the canonical
+branch already compiles and has moved on. The current 9/200 engine simulator
+invariant failures (duplicate card ownership and lost commander tracking) are
+runtime issues independent of the review IR; keep them as separate gameplay
+claims rather than attributing them to compression.
+
 ## Product objective
 
 ProsshTCG is a Commander simulator built for a four-player pod but architected for 2–8 seats. It targets the browser first, with Android (Capacitor) and desktop (Tauri) planned from the same client. The visual reference is a modernised MTGO: three opponents share the upper band, the local player owns the lower band, phases and priority are explicit, and public zones can be inspected without leaking hidden information.
