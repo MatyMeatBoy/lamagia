@@ -2383,6 +2383,62 @@ set both times — the two extra failures are newly-legalized bot actions
 invariant bugs via new game paths, the same pattern documented on every
 prior claim this session, not a new bug.
 
+### Worker-05: opponent-lands mana rocks, plus a latent state-passing bug they exposed (2026-09-04)
+
+Claim `rules-opponent-lands-any-color-mana`, continuing the Nekusar decklist
+(Fellwar Stone). "{T}: Add one mana of any color that a land an opponent
+controls could produce" was deliberately unmodeled: `parseAddClause` in
+`characteristics.ts` carries a comment explicitly refusing to read this
+clause, because doing so naively would hand the table five free colors
+regardless of the actual board. What nobody had fixed is that refusal fell
+through to the *next* layer down — the `produced_mana` Scryfall fallback —
+which had no such scruples and quietly built the bogus five-color ability
+anyway. A characteristics test (`refuses to read a restricted mana clause as
+five free colours`) asserted exactly this: the fallback ran, but
+`fullyImplemented` stayed `false` so the bogus ability was at least never
+credited as correct.
+
+Implemented it properly instead of leaving it refused: `ManaAbility` gained
+`anyColorFromLandsControlledBy: "opponent" | "you"`, computed not from the
+card but from the battlefield at activation time via a new
+`colorsFromLandsControlledBy(state, seats)` helper (unions every mana color
+each of the given seats' lands could produce, from their own
+`manaAbilities`, basic lands included since those already synthesize an
+ability from `produced_mana`). `manaOptionsFor` — the one function every
+mana-source call site funnels through — gained a `state` parameter to
+support this, threaded through its 3 callers (`manaSources`,
+`legalActions`'s mana-ability enumeration, `applyActivateMana`).
+
+That state-threading surfaced a real, previously-invisible bug:
+`applyChooseTrigger`'s "may pay {N} to keep this permanent"/"may pay {N}
+onto the stack" branch called `planManaPayment(optionalCost, player)` with
+no `{ state }`, while its two sibling branches a few lines above already
+correctly pass `{ state: next }`. This was harmless for every ability that
+existed before today, because no mana source's *options* depended on board
+state — but the moment one did, `legalActions` (which does pass state)
+could offer "pay" as legal while the actual `applyChooseTrigger` application
+(which didn't) recomputed a poorer, state-blind source list and threw
+`No puedes pagar {4} por Mana Vault.` Root-caused via `git stash` isolating
+the diff (baseline: clean 200/200; with diff: 4/200, all the same error) and
+a small throwaway script looping seeds 1–200 to catch it directly rather
+than guessing from the aggregate count. Fixed by adding the missing
+`{ state: next }`, matching the two sibling branches exactly.
+
+Fully implements Fellwar Stone, Exotic Orchard, Sylvok Explorer, Quirion
+Explorer, Harvester Druid. Updated the now-outdated characteristics test to
+assert the new, correct behavior (`anyColorFromLandsControlledBy: "opponent"`,
+`produces: []`, `fullyImplemented: true`) instead of the old bogus-fallback
+one. Scenario coverage puts the mana rock on one seat with no lands of its
+own and a Mountain/Forest on the opponent's side, confirming its options are
+exactly `{R, G}` — never anything from the caster's own board.
+
+Global export: **9,119/38,712** (+5 from 9,114). `npm run check` and `npm
+test` PASS (**520 rules tests**, up from 518 — one new scenario plus the
+updated guard test). `npm run simulate:engine`: **200/200 passed**, both
+before this claim (post the upstream commander-fix merge) and after fixing
+the state-passing bug above; the 4/200 Mana Vault failure was transient,
+introduced and then fixed within this same claim, never landed on `worker-05`.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed

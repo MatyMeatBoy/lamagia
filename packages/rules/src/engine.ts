@@ -680,8 +680,27 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
   return true;
 }
 
+/** Every color a land the given seats control could produce (CR "could produce" is characteristic-based, not activation-gated). */
+function colorsFromLandsControlledBy(state: GameState, seats: readonly SeatId[]): ManaType[] {
+  const colors = new Set<ManaType>();
+  for (const permanent of allPermanents(state)) {
+    if (!seats.includes(permanent.controller)) continue;
+    const profile = cardProfile(permanent.card);
+    if (!isLand(profile)) continue;
+    for (const manaAbility of profile.manaAbilities) {
+      for (const color of manaAbility.produces) colors.add(color);
+      for (const color of manaAbility.fixedProduces ?? []) colors.add(color);
+    }
+  }
+  return [...colors];
+}
+
 function manaOptionsFor(player: PlayerState, ability: ManaAbility, state?: GameState): readonly ManaType[] {
-  const options = ability.produces;
+  const options = ability.anyColorFromLandsControlledBy
+    ? state
+      ? colorsFromLandsControlledBy(state, ability.anyColorFromLandsControlledBy === "you" ? [player.seat] : opponentsOf(state, player.seat))
+      : []
+    : ability.produces;
   return ability.commanderIdentity
     ? options.filter((mana) => player.commanderColorIdentity.includes(mana))
     : options;

@@ -869,15 +869,18 @@ describe("faces and oracle normalisation", () => {
     expect(profile.triggers[0]!.effect).toMatchObject({ kind: "search-library", destination: "battlefield", tapped: true });
   });
 
-  it("refuses to read a restricted mana clause as five free colours", () => {
+  it("resolves a board-dependent mana clause dynamically instead of five free colours", () => {
     const profile = cardProfile(card({
       name: "Exotic Orchard", type_line: "Land", produced_mana: ["W", "U", "B", "R", "G"],
       oracle_text: "{T}: Add one mana of any color that a land an opponent controls could produce."
     }));
-    // It still plays through the structured fallback, but it must not claim the
-    // text is executed, because the colours it can really make are conditional.
+    // The parser must not read Scryfall's structured produced_mana as a fixed
+    // five-color list — the colours it can really make depend on the board at
+    // activation time (`manaOptionsFor`/`colorsFromLandsControlledBy` in
+    // engine.ts), so the profile carries a marker, not a produces list.
     expect(profile.manaAbilities).toHaveLength(1);
-    expect(profile.fullyImplemented).toBe(false);
+    expect(profile.manaAbilities[0]).toMatchObject({ anyColorFromLandsControlledBy: "opponent", produces: [] });
+    expect(profile.fullyImplemented).toBe(true);
   });
 
   it("consumes variable storage-counter mana already modeled by the mana engine", () => {
