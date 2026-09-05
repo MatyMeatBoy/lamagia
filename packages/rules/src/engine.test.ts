@@ -7288,6 +7288,21 @@ describe("triggered abilities", () => {
     expect(triggers[0]!.controller).toBe(0);
     expect(triggers[1]!.controller).toBe(1);
   });
+
+  it("keeps a mandatory trigger on the graphical stack even when its source left", () => {
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [BEAR()]);
+    game = putOnBattlefield(game, 0, [ANY_DEATH_WATCHER()]);
+    const watcher = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Blood Chronicler")!;
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== watcher.instance_id) }));
+    game = { ...game, triggerQueue: [], priorityOpen: true, prioritySeat: 0, passedSeats: [], players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const trigger = {
+      id: "mandatory-left-source", controller: 0 as SeatId, sourcePermanentId: watcher.instance_id,
+      sourceCard: watcher.card, definition: profileOf(watcher.card).triggers[0]!, cause: "criatura murió"
+    } satisfies TriggerInstance;
+    game = settle({ ...game, triggerQueue: [trigger] });
+    expect(game.stack.some((object) => object.trigger?.id === trigger.id)).toBe(true);
+    expect(game.priorityOpen).toBe(true);
+  });
 });
 
 
