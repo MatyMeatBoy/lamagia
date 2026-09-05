@@ -466,6 +466,10 @@ export type SpellEffect =
   /** Destroy artifact/enchantment permanents, then count the ones destroyed. */
   | { readonly kind: "destroy-all-artifacts-enchantments-add-counters"; readonly counter: string }
   | { readonly kind: "exile-target-permanent"; readonly gainSourceControl?: "target-controller" }
+  /** Exile a permanent now and return it under its owner's control next end step. */
+  | { readonly kind: "exile-target-permanent-delayed-return" }
+  /** Resolves a delayed return created by the previous effect. */
+  | { readonly kind: "return-delayed-permanent" }
   | { readonly kind: "exile-target-nontoken-creature" }
   /** Exile a controlled creature, then return it under its controller's control (CR 400.7). */
   | { readonly kind: "blink-target-creature" }
@@ -668,6 +672,8 @@ export interface TriggerDefinition {
   readonly tapCost?: { readonly amount: number | "any"; readonly subtype?: string; readonly mode: "any" | "another" };
   /** For "sacrifice ~ unless you pay {cost}", declining the payment applies the effect. */
   readonly unlessPayCost?: ManaCost;
+  /** Trigger target selection excludes the source permanent ("another"). */
+  readonly excludesSourceFromTargets?: boolean;
 }
 
 export type TargetKind =
@@ -1772,6 +1778,10 @@ function singularSubtype(word: string): string {
 function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind } | null {
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
   let match: RegExpExecArray | null;
+
+  if (/^Exile another target permanent\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
+    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "permanent" };
+  }
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
 
@@ -3039,6 +3049,7 @@ function recognizeText(text: string): RecognizedText {
           optional,
           targetKind: recognized.target,
           ...(capriciousMultiTarget ? { targetKinds: ["nonland-you-control", "nonland-opponent", "nonland-opponent"] as const, minimumTargets: 1 } : {}),
+          ...(recognized.effect.kind === "exile-target-permanent-delayed-return" ? { excludesSourceFromTargets: true } : {}),
           sourceText: line,
           ...(unlessPayment && payCost ? { paymentBy: "opponent" as const } : {}),
           ...(eventControllerChoice ? { choiceBy: "event-controller" as const } : {}),
