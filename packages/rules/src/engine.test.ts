@@ -151,6 +151,7 @@ const RED_PERMANENT = () => make({ name: "Red Permanent", type_line: "Enchantmen
 const COLORLESS_PERMANENT = () => make({ name: "Colorless Permanent", type_line: "Artifact" });
 const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
+const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
 const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle Slice and Dice, you may have it deal 1 damage to each creature.", oracle_id: "463fc961-d34e-4f40-b383-5b78a0fcb5c8" });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
@@ -1351,6 +1352,24 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Red Permanent")).toBe(true);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Colorless Permanent")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Wash Out")).toBe(true);
+  });
+
+  it("chooses a color before Sudden Demise damages only matching creatures", () => {
+    const profile = profileOf(C13_SUDDEN_DEMISE());
+    expect(profile).toMatchObject({
+      effects: [{ kind: "damage-all-creatures-of-color", amount: "X", color: "chosen" }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([C13_SUDDEN_DEMISE()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [RED_RAIDER(), BLACK_BLOCKER()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 3 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "choose-color");
+    expect(game.pendingChoice).toMatchObject({ type: "choose-color", sourceCard: { name: "Sudden Demise" } });
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-color", sourceId: choice.sourceId, color: "R" });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Red Raider")).toBe(false);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Dusk Bat")).toBe(true);
   });
 
   it("moves a Graft counter to the next creature that enters", () => {

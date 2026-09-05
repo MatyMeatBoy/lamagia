@@ -395,7 +395,9 @@ export type PendingChoice =
       readonly seat: SeatId;
       readonly sourceId: string;
       readonly sourceCard: GameCard;
-      readonly effect: Extract<SpellEffect, { kind: "return-all-permanents-of-color" }>;
+      readonly effect: Extract<SpellEffect, { kind: "return-all-permanents-of-color" | "damage-all-creatures-of-color" }>;
+      /** Preserve X for color-choice spells until the choice resolves. */
+      readonly variableValue: number;
       readonly exileSourceAfterResolution: boolean;
     }
   | {
@@ -3032,6 +3034,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "damage-all-creatures-of-color": {
+      const color = effect.color === "chosen" ? object.chosenColor : effect.color;
+      if (!color) return state;
+      const amount = effectAmount(effect.amount, object);
+      let next = state;
+      const targets = allPermanents(state).filter((permanent) =>
+        isCreature(cardProfile(permanent.card)) && cardProfile(permanent.card).colors.includes(color));
+      for (const permanent of targets) {
+        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card), {
+          controller,
+          permanentId: object.sourcePermanentId
+        });
+      }
+      return logged(next, controller, `${sourceName} hace ${amount} de daño a cada criatura ${color}.`);
+    }
     case "damage-attacking-creatures": {
       const amount = effectAmount(effect.amount, object);
       const attacking = new Set(state.combat.attackers.map((entry) => entry.instanceId));
@@ -4884,8 +4901,8 @@ function resolveTop(state: GameState): GameState {
       `Se resuelve la ${TRIGGER_EVENT_LABELS[object.trigger.definition.event]} de ${object.card.name}.`);
   }
 
-  const colorEffect = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "return-all-permanents-of-color" }> =>
-    effect.kind === "return-all-permanents-of-color" && effect.color === "chosen");
+  const colorEffect = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "return-all-permanents-of-color" | "damage-all-creatures-of-color" }> =>
+    (effect.kind === "return-all-permanents-of-color" || effect.kind === "damage-all-creatures-of-color") && effect.color === "chosen");
   if (colorEffect) {
     return {
       ...next,
@@ -4895,6 +4912,7 @@ function resolveTop(state: GameState): GameState {
         sourceId: object.id,
         sourceCard: object.card,
         effect: colorEffect,
+        variableValue: object.variableValue,
         exileSourceAfterResolution: retireZone === "exile"
       }
     };
@@ -7586,7 +7604,7 @@ function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAc
     targets: [],
     fromCommandZone: false,
     flashback: false,
-    variableValue: 0,
+    variableValue: choice.variableValue,
     countered: false,
     chosenColor: action.color
   };

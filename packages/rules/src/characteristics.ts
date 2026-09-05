@@ -511,6 +511,8 @@ export type SpellEffect =
   | { readonly kind: "damage-active-player-hand-minus"; readonly offset: number }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" | "with-flying"; readonly alsoPlaneswalkers?: boolean }
+  /** Sudden Demise: damage each creature of a chosen color (CR 105.2, 609.3). */
+  | { readonly kind: "damage-all-creatures-of-color"; readonly amount: number | "X"; readonly color: MagicColor | "chosen" }
   | { readonly kind: "damage-attacking-creatures"; readonly amount: number | "X"; readonly filter?: "without-flying" | "with-flying" }
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-player"; readonly amount: number | "X" }
@@ -3118,6 +3120,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return all permanents of the color of your choice to their owners' hands\.?$/i.test(text)) {
     return { effect: { kind: "return-all-permanents-of-color", color: "chosen" }, target: "none" };
   }
+  if (/^~ deals X damage to each creature of the chosen color\.?$/i.test(text)) {
+    return { effect: { kind: "damage-all-creatures-of-color", amount: "X", color: "chosen" }, target: "none" };
+  }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or creature with mana value X\.?$/i.test(text)) {
     return { effect: { kind: "destroy-target-artifact-or-creature-mana-value" }, target: "artifact-or-creature" };
@@ -3334,9 +3339,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   return null;
 }
 
-function isIgnorableSentence(sentence: string): boolean {
+function isIgnorableSentence(sentence: string, hasChosenColorEffect = false): boolean {
   const s = sentence.trim();
   if (/^(?:It|They|That creature) can't be regenerated\.?$/i.test(s)) return true;
+  // The following sentence carries the actual chosen-color effect; the
+  // standalone instruction only opens that resolution choice.
+  if (hasChosenColorEffect && /^choose a color\.?$/i.test(s)) return true;
   // No-maximum-hand-size from a one-shot spell: the engine's deterministic
   // cleanup discard only bites at 8+ cards and the sim rarely floods that far,
   // so treating this as a no-op keeps the card playable without new state.
@@ -4275,7 +4283,7 @@ function recognizeText(text: string): RecognizedText {
       }
       const recognized = recognizeSentence(sentence);
       if (!recognized) {
-        if (!isIgnorableSentence(sentence)) unimplementedText.push(sentence.trim());
+        if (!isIgnorableSentence(sentence, /chosen color/i.test(joined))) unimplementedText.push(sentence.trim());
         continue;
       }
       effects.push(recognized.effect);
