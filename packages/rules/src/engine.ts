@@ -1239,9 +1239,25 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
 
 function drawCards(state: GameState, seat: SeatId, amount: number): GameState {
   let next = state;
+  let actuallyDrawn = 0;
   for (let index = 0; index < amount; index += 1) {
     const player = playerAt(next, seat);
     if (player.lost) return next;
+    // Notion Thief (CR 614/616): a replacement effect swaps who draws, not what
+    // is seen, so it never crosses the hidden-information boundary. It only
+    // applies outside a player's own first draw-step draw, the exact same
+    // condition Orcish Bowmasters' trigger already tracks via `drawsThisDrawStep`.
+    const isFirstDrawStepDraw = next.step === "draw" && player.drawsThisDrawStep === 0;
+    const redirector = !isFirstDrawStepDraw
+      ? opponentsOf(next, seat)
+          .flatMap((opponentSeat) => playerAt(next, opponentSeat).battlefield)
+          .find((permanent) => cardProfile(permanent.card).redirectsOpponentDrawsExceptFirst)
+      : undefined;
+    if (redirector) {
+      next = logged(next, seat, `${player.name} se salta ese robo por ${redirector.card.name}.`);
+      next = drawCards(next, redirector.controller, 1);
+      continue;
+    }
     const card = player.library[0];
     if (!card) {
       next = withPlayer(next, seat, (current) => ({ ...current, drewFromEmptyLibrary: true }));
@@ -1252,9 +1268,12 @@ function drawCards(state: GameState, seat: SeatId, amount: number): GameState {
     const drawStepCount = playerAt(next, seat).drawsThisDrawStep + 1;
     next = withPlayer(next, seat, (current) => ({ ...current, library: current.library.slice(1), hand: [...current.hand, card], drawsThisTurn: count, drawsThisDrawStep: drawStepCount }));
     next = raiseEvent(next, { kind: "card-drawn", seat, card, count, drawStepCount });
+    actuallyDrawn += 1;
   }
   const player = playerAt(next, seat);
-  if (amount > 0 && !player.drewFromEmptyLibrary) next = logged(next, seat, `${player.name} roba ${amount === 1 ? "una carta" : `${amount} cartas`}.`);
+  if (actuallyDrawn > 0 && !player.drewFromEmptyLibrary) {
+    next = logged(next, seat, `${player.name} roba ${actuallyDrawn === 1 ? "una carta" : `${actuallyDrawn} cartas`}.`);
+  }
   return next;
 }
 
@@ -5177,6 +5196,13 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       break;
     }
     case "draw": {
+      // Reset before the mandatory draw itself, not after: this counter has to
+      // read 0 for that very draw (Orcish Bowmasters' and Notion Thief's "except
+      // the first ... in each of their draw steps" both key off it), and it
+      // would otherwise still carry a stale nonzero value on a player's first
+      // real draw step of the game (from their 7-card opening hand, dealt
+      // before this step ever ran).
+      next = withPlayer(next, next.activeSeat, (player) => ({ ...player, drawsThisDrawStep: 0 }));
       // The starting player skips only the very first draw step of the game.
       const isOpeningDraw = next.turn === 1 && next.activeSeat === next.startingSeat;
       if (!isOpeningDraw) next = drawCards(next, next.activeSeat, 1);
@@ -5227,7 +5253,6 @@ function beginStep(state: GameState, step: TurnStep): GameState {
     next = raiseEvent(next, { kind: "upkeep", activeSeat: next.activeSeat });
   }
   if (step === "draw") {
-    next = withPlayer(next, next.activeSeat, (player) => ({ ...player, drawsThisDrawStep: 0 }));
     next = raiseEvent(next, { kind: "draw-step", activeSeat: next.activeSeat });
   }
   if (step === "precombat-main") {

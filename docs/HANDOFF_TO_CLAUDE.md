@@ -3201,14 +3201,48 @@ a compound) — `recognizeSentence` itself is untouched. Validation: **616
 rules tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,434
 global profiles.
 
-With Black Market Connections and Wizard Class closed, 90 of 94 cards in
-the Nekusar, the Mindrazer decklist are implemented. Four remain, each
-needing its own new subsystem, none attempted yet: Notion Thief (a
-draw-replacement-effect framework, touching the hidden-information
-boundary CLAUDE.md mandates — deliberately deferred pending a careful
-design), Gitaxian Probe ("look at target player's hand," which also
-touches that same hidden-information boundary — no safe design found
-yet), Reforge the Soul (the Miracle keyword, which requires
-intercepting/pausing the `drawCards` loop — architecturally risky), and
-Naktamun Lorespinner // Wheel of Fortune (needs a transform/DFC state
-framework that does not exist in this engine at all).
+Notion Thief | `f8dab16e-1d50-443e-9431-8b6f1cf61c9c` turned out to be
+much more tractable than the earlier assessment in this document
+suggested: "if an opponent would draw a card except the first one they
+draw in each of their draw steps, instead that player skips that draw
+and you draw a card" is a CR 614/616 REPLACEMENT effect, not a triggered
+one, and it swaps WHO draws without ever revealing what either player's
+hand or library contains — so despite its wording resembling a
+hidden-information risk, it never actually crosses the boundary
+CLAUDE.md mandates. New `CardProfile.redirectsOpponentDrawsExceptFirst:
+boolean`, checked directly inside `drawCards`'s existing per-card loop
+using the identical "except the first ... draw step" condition Orcish
+Bowmasters' trigger already tracks via `PlayerState.drawsThisDrawStep`:
+when it applies and an opponent controls this static, the affected
+player's draw is skipped outright (their library never moves) and a
+plain recursive `drawCards(next, redirectorController, 1)` draws for
+Notion Thief's controller instead — no new zone-transfer primitive
+needed, since "you draw a card" here just means an ordinary draw for a
+different player. Caught while writing the scenario test for "the
+opponent's own draw-step draw is NOT redirected": it failed even after
+the redirect logic looked correct, exposing a genuine latent bug in
+`beginStep` that had gone uncaught until now — the mandatory per-turn
+draw (`case "draw": ... drawCards(...)`) ran BEFORE `drawsThisDrawStep`
+was reset to 0 for that same step (the reset lived in a separate
+`if (step === "draw")` block AFTER the switch), so every player's first
+real draw step of the whole game — right after their 7-card opening
+hand, itself dealt through `drawCards` and so incrementing the same
+counter — read a stale nonzero value and was wrongly treated as "not the
+first draw of the draw step." Fixed by moving the reset to immediately
+before the mandatory draw call inside the switch case itself; this also
+retroactively fixes an equivalent (until now untested) edge case for
+Orcish Bowmasters' own suppression condition on a fresh player's first
+turn. Validation: **618 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,435 global profiles.
+
+With Notion Thief, Black Market Connections, and Wizard Class closed, 91
+of 94 cards in the Nekusar, the Mindrazer decklist are implemented.
+Three remain, each needing its own new subsystem, none attempted yet:
+Gitaxian Probe ("look at target player's hand" — genuinely touches the
+hidden-information boundary, unlike Notion Thief; no safe design found
+yet for surfacing that to a caster without leaking it elsewhere),
+Reforge the Soul (the Miracle keyword, which requires
+intercepting/pausing the `drawCards` loop to offer a cast option before
+the drawn card settles into hand — architecturally risky), and Naktamun
+Lorespinner // Wheel of Fortune (needs a transform/DFC state framework
+that does not exist in this engine at all).

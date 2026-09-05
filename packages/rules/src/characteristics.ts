@@ -955,6 +955,8 @@ export interface CardProfile {
   readonly attackTaxPerCreature: number | null;
   /** "Double all damage equipped creature would deal" (Mjölnir, Equipment CR 301.5c). */
   readonly doublesEquippedCreatureDamage: boolean;
+  /** "If an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card" (Notion Thief, CR 614/616 replacement effect). */
+  readonly redirectsOpponentDrawsExceptFirst: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
@@ -3680,6 +3682,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^gift a card\.?$/i.test(line)) continue;
     if (/^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you\.?$/i.test(line)) continue;
     if (/^double all damage equipped creature would deal\.?$/i.test(line)) continue;
+    if (/^if an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     if (parseDamageAmplify(line)) continue;
@@ -4218,6 +4221,8 @@ export function cardProfile(card: CardData): CardProfile {
   const attackTaxMatch = text.split("\n").map((line) => /^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you$/i.exec(line.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const attackTaxPerCreature = attackTaxMatch ? Number(attackTaxMatch[1]) : null;
   const doublesEquippedCreatureDamage = text.split("\n").some((line) => /^double all damage equipped creature would deal$/i.test(line.trim().replace(/\.$/, "")));
+  const redirectsOpponentDrawsExceptFirst = text.split("\n").some((line) =>
+    /^if an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card$/i.test(line.trim().replace(/\.$/, "")));
   const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
   const giftPromisedTargetKind = giftPromisedRecognized && giftPromisedRecognized.target !== "none" ? giftPromisedRecognized.target : null;
@@ -4342,6 +4347,7 @@ export function cardProfile(card: CardData): CardProfile {
     giftPromisedTargetKind,
     attackTaxPerCreature,
     doublesEquippedCreatureDamage,
+    redirectsOpponentDrawsExceptFirst,
     costReducesPerBoardCreature,
     spellCostReductionGrant,
     staticLandManaBonus,

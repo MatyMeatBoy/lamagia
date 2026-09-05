@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,984** · cobertura: **28.2%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,991** · cobertura: **28.2%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -290,7 +290,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | 2013-03-15 | Duel Decks: Sorin vs. Tibalt (`DDK`) | duel-decks | duel-decks-sorin-vs-tibalt | other | 71 | 29 | 42 | 40.8% |
 | 2013-04-06 | World Magic Cup Qualifiers (`WMC`) | promos | world-magic-cup-qualifiers | other | 5 | 1 | 4 | 20.0% |
 | 2013-04-27 | Dragon's Maze Promos (`PDGM`) | promos | dragon-s-maze | other | 6 | 2 | 4 | 33.3% |
-| 2013-05-03 | Dragon's Maze (`DGM`) | expansion | 2010s | main | 156 | 52 | 104 | 33.3% |
+| 2013-05-03 | Dragon's Maze (`DGM`) | expansion | 2010s | main | 156 | 53 | 103 | 34.0% |
 | 2013-06-07 | Modern Masters (`MMA`) | masters-remastered | modern-masters | other | 229 | 57 | 172 | 24.9% |
 | 2013-07-18 | Magic 2014 Promos (`PM14`) | promos | magic-2014 | other | 6 | 1 | 5 | 16.7% |
 | 2013-07-18 | San Diego Comic-Con 2013 (`PSDC`) | promos | comic-con-2013 | other | 5 | 0 | 5 | 0.0% |
@@ -402,7 +402,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | 2018-01-19 | Rivals of Ixalan (`RIX`) | expansion | ixalan | main | 205 | 63 | 142 | 30.7% |
 | 2018-01-19 | Rivals of Ixalan Promos (`PRIX`) | promos | rivals-of-ixalan | other | 63 | 4 | 59 | 6.3% |
 | 2018-01-25 | Nationals Promos (`PNAT`) | promos | nationals | other | 1 | 1 | 0 | 100.0% |
-| 2018-03-16 | Masters 25 (`A25`) | masters-remastered | masters-25 | other | 249 | 95 | 154 | 38.2% |
+| 2018-03-16 | Masters 25 (`A25`) | masters-remastered | masters-25 | other | 249 | 96 | 153 | 38.6% |
 | 2018-04-06 | Duel Decks: Elves vs. Inventors (`DDU`) | duel-decks | duel-decks-elves-vs-inventors | other | 71 | 36 | 35 | 50.7% |
 | 2018-04-27 | Dominaria (`DOM`) | expansion | dominaria | main | 265 | 78 | 187 | 29.4% |
 | 2018-04-27 | Dominaria Promos (`PDOM`) | promos | dominaria | other | 93 | 18 | 75 | 19.4% |
@@ -454,7 +454,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1420 | 3801 | 27.2% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 20 | 39 | 33.9% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 11 | 9 | 55.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 387 | 1309 | 22.8% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 388 | 1308 | 22.9% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 54 | 219 | 19.8% |
@@ -476,7 +476,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | 2020-08-13 | Amonkhet Remastered (`AKR`) | masters-remastered | amonkhet-remastered | other | 309 | 87 | 222 | 28.2% |
 | 2020-08-13 | Arena Beginner Set (`ANB`) | starter | 2020s | other | 120 | 64 | 56 | 53.3% |
 | 2020-09-25 | Zendikar Rising (`ZNR`) | expansion | zendikar | main | 285 | 58 | 227 | 20.4% |
-| 2020-09-25 | Zendikar Rising Commander (`ZNC`) | commander | 2020 | commander | 140 | 47 | 93 | 33.6% |
+| 2020-09-25 | Zendikar Rising Commander (`ZNC`) | commander | 2020 | commander | 140 | 48 | 92 | 34.3% |
 | 2020-09-25 | Zendikar Rising Expeditions (`ZNE`) | masterpieces | zendikar-rising-expeditions | other | 30 | 25 | 5 | 83.3% |
 | 2020-09-25 | Zendikar Rising Promos (`PZNR`) | promos | zendikar-rising | other | 84 | 10 | 74 | 11.9% |
 | 2020-11-12 | Kaladesh Remastered (`KLR`) | masters-remastered | kaladesh-remastered | other | 292 | 58 | 234 | 19.9% |
@@ -573,7 +573,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | 2023-04-21 | March of the Machine Promos (`PMOM`) | promos | march-of-the-machine | other | 80 | 2 | 78 | 2.5% |
 | 2023-04-21 | Multiverse Legends (`MUL`) | masterpieces | multiverse-legends | other | 66 | 1 | 65 | 1.5% |
 | 2023-05-12 | March of the Machine: The Aftermath (`MAT`) | expansion | phyrexia | main | 50 | 1 | 49 | 2.0% |
-| 2023-06-23 | Tales of Middle-earth Commander (`LTC`) | commander | 2023 | commander | 341 | 126 | 215 | 37.0% |
+| 2023-06-23 | Tales of Middle-earth Commander (`LTC`) | commander | 2023 | commander | 341 | 127 | 214 | 37.2% |
 | 2023-06-23 | Tales of Middle-earth Promos (`PLTR`) | promos | tales-of-middle-earth | other | 84 | 2 | 82 | 2.4% |
 | 2023-06-23 | The Lord of the Rings: Tales of Middle-earth (`LTR`) | supplemental | the-lord-of-the-rings-tales-of-middle-earth | other | 291 | 27 | 264 | 9.3% |
 | 2023-07-01 | MagicFest 2023 (`PF23`) | promos | magicfest-2023 | other | 4 | 2 | 2 | 50.0% |
@@ -592,7 +592,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | 2023-10-13 | Doctor Who (`WHO`) | commander | 2023 | commander | 318 | 92 | 226 | 28.9% |
 | 2023-11-17 | Jurassic World Collection (`REX`) | eternal | 2020s | other | 20 | 0 | 20 | 0.0% |
 | 2023-11-17 | March of the Machine: The Aftermath Promos (`PMAT`) | promos | march-of-the-machine-the-aftermath | other | 8 | 0 | 8 | 0.0% |
-| 2023-11-17 | Special Guests (`SPG`) | masterpieces | special-guests | other | 139 | 30 | 109 | 21.6% |
+| 2023-11-17 | Special Guests (`SPG`) | masterpieces | special-guests | other | 139 | 31 | 108 | 22.3% |
 | 2023-11-17 | The Lost Caverns of Ixalan (`LCI`) | expansion | ixalan | main | 292 | 41 | 251 | 14.0% |
 | 2023-11-17 | The Lost Caverns of Ixalan Commander (`LCC`) | commander | 2023 | commander | 313 | 81 | 232 | 25.9% |
 | 2023-11-17 | The Lost Caverns of Ixalan Promos (`PLCI`) | promos | the-lost-caverns-of-ixalan | other | 68 | 1 | 67 | 1.5% |
@@ -630,7 +630,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | 2024-11-15 | Foundations Commander (`FDC`) | commander | 2024 | commander | 3 | 3 | 0 | 100.0% |
 | 2024-11-15 | Foundations Jumpstart (`J25`) | jumpstart | foundations-jumpstart | other | 768 | 237 | 531 | 30.9% |
 | 2024-11-15 | Foundations Promos (`PFDN`) | promos | foundations | other | 81 | 11 | 70 | 13.6% |
-| 2024-12-10 | Pioneer Masters (`PIO`) | masters-remastered | pioneer-masters | other | 398 | 69 | 329 | 17.3% |
+| 2024-12-10 | Pioneer Masters (`PIO`) | masters-remastered | pioneer-masters | other | 398 | 70 | 328 | 17.6% |
 | 2025-01-01 | MagicFest 2025 (`PF25`) | promos | magicfest-2025 | other | 19 | 5 | 14 | 26.3% |
 | 2025-01-01 | Wizards Play Network 2025 (`PW25`) | promos | wpn-2025 | other | 16 | 4 | 12 | 25.0% |
 | 2025-01-03 | Spotlight Series (`PSPL`) | promos | spotlight-series | other | 13 | 1 | 12 | 7.7% |
@@ -747,10 +747,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | commander | 2017 | 1 | 299 | 131 | 168 | 43.8% |
 | commander | 2018 | 1 | 297 | 128 | 169 | 43.1% |
 | commander | 2019 | 1 | 292 | 108 | 184 | 37.0% |
-| commander | 2020 | 4 | 1001 | 346 | 655 | 34.6% |
+| commander | 2020 | 4 | 1001 | 347 | 654 | 34.7% |
 | commander | 2021 | 5 | 1022 | 347 | 675 | 34.0% |
 | commander | 2022 | 7 | 1802 | 508 | 1294 | 28.2% |
-| commander | 2023 | 6 | 1597 | 495 | 1102 | 31.0% |
+| commander | 2023 | 6 | 1597 | 496 | 1101 | 31.1% |
 | commander | 2024 | 7 | 1887 | 640 | 1247 | 33.9% |
 | commander | 2025 | 4 | 1046 | 391 | 655 | 37.4% |
 | commander | 2026 | 6 | 1265 | 335 | 930 | 26.5% |
@@ -794,7 +794,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | eternal | 2020s | 6 | 537 | 133 | 404 | 24.8% |
 | expansion | 1990s | 11 | 1573 | 335 | 1238 | 21.3% |
 | expansion | 2000s | 19 | 3082 | 640 | 2442 | 20.8% |
-| expansion | 2010s | 14 | 2735 | 654 | 2081 | 23.9% |
+| expansion | 2010s | 14 | 2735 | 655 | 2080 | 23.9% |
 | expansion | 2020s | 17 | 3739 | 591 | 3148 | 15.8% |
 | expansion | alara | 2 | 379 | 143 | 236 | 37.7% |
 | expansion | amonkhet | 1 | 272 | 91 | 181 | 33.5% |
@@ -857,7 +857,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | masterpieces | multiverse-legends | 1 | 66 | 1 | 65 | 1.5% |
 | masterpieces | mythic-edition | 1 | 24 | 0 | 24 | 0.0% |
 | masterpieces | secrets-of-strixhaven-mystical-archive | 1 | 65 | 17 | 48 | 26.2% |
-| masterpieces | special-guests | 1 | 139 | 30 | 109 | 21.6% |
+| masterpieces | special-guests | 1 | 139 | 31 | 108 | 22.3% |
 | masterpieces | stardates | 1 | 1 | 1 | 0 | 100.0% |
 | masterpieces | strixhaven-mystical-archive | 1 | 63 | 29 | 34 | 46.0% |
 | masterpieces | teenage-mutant-ninja-turtles-source-material | 1 | 20 | 2 | 18 | 10.0% |
@@ -880,7 +880,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | masters-remastered | innistrad-remastered | 1 | 300 | 61 | 239 | 20.3% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 58 | 234 | 19.9% |
 | masters-remastered | magic-duel-masters | 1 | 4 | 3 | 1 | 75.0% |
-| masters-remastered | masters-25 | 1 | 249 | 95 | 154 | 38.2% |
+| masters-remastered | masters-25 | 1 | 249 | 96 | 153 | 38.6% |
 | masters-remastered | masters-edition | 1 | 185 | 47 | 138 | 25.4% |
 | masters-remastered | masters-edition-ii | 1 | 245 | 60 | 185 | 24.5% |
 | masters-remastered | masters-edition-iii | 1 | 220 | 92 | 128 | 41.8% |
@@ -889,7 +889,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | masters-remastered | modern-masters-2015 | 1 | 249 | 79 | 170 | 31.7% |
 | masters-remastered | modern-masters-2017 | 1 | 249 | 107 | 142 | 43.0% |
 | masters-remastered | mystery-booster-2 | 1 | 384 | 67 | 317 | 17.4% |
-| masters-remastered | pioneer-masters | 1 | 398 | 69 | 329 | 17.3% |
+| masters-remastered | pioneer-masters | 1 | 398 | 70 | 328 | 17.6% |
 | masters-remastered | ravnica-remastered | 1 | 313 | 84 | 229 | 26.8% |
 | masters-remastered | renaissance | 1 | 122 | 29 | 93 | 23.8% |
 | masters-remastered | rinascimento | 1 | 60 | 11 | 49 | 18.3% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 10 | 74 | 11.9% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 12 | 46 | 20.7% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 387 | 1309 | 22.8% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 388 | 1308 | 22.9% |
 | secret-lair | secret-lair-promo | 1 | 52 | 15 | 37 | 28.8% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -20056,7 +20056,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 - [ ] Morgue Burst — `ee3b72ac-35b6-45d0-bb50-5a5899b291b1`
 - [ ] Mutant's Prey — `3836cf33-bd1d-485d-94a2-85ea210ddf7a`
 - [ ] Nivix Cyclops — `68b8bfac-63f7-4dbd-bb2e-4ad394c77335`
-- [ ] Notion Thief — `f8dab16e-1d50-443e-9431-8b6f1cf61c9c`
 - [ ] Opal Lake Gatekeepers — `a5375366-7ddc-4bd5-91c9-dc08f8beb3f6`
 - [ ] Plasm Capture — `3673219d-d2b5-43ad-b0c8-58b583491158`
 - [ ] Possibility Storm — `8586169f-cb8c-4424-ba64-a7c1cc00680e`
@@ -28140,7 +28139,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 - [ ] Mystic of the Hidden Way — `530853b4-68a0-4814-b0aa-ffeb5585cd43`
 - [ ] Nettle Sentinel — `5c367b7d-3cb4-45db-b836-dad953efce15`
 - [ ] Nicol Bolas — `e26bf6a9-b31c-4bc0-b55b-c01f2f69be6b`
-- [ ] Notion Thief — `f8dab16e-1d50-443e-9431-8b6f1cf61c9c`
 - [ ] Ordeal of Heliod — `a6861402-4819-4d85-8b60-677471f40d7d`
 - [ ] Pacifism — `5f5e0b10-c8cf-450c-bfd3-bcb0528ec330`
 - [ ] Pact of Negation — `f3e213a4-ba5a-468a-93b3-c0a34e1bd725`
@@ -36304,7 +36302,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 - [ ] Nissa, Resurgent Animist — `c1fc5923-c3cd-448a-98d1-c154661c2812`
 - [ ] Nissa, Who Shakes the World — `5aa3abf1-d56b-4f42-8c84-7e5a2c15ee0f`
 - [ ] Northern Paladin — `f5975294-508a-453e-893a-2fbea2487d17`
-- [ ] Notion Thief — `f8dab16e-1d50-443e-9431-8b6f1cf61c9c`
 - [ ] Noxious Revival — `97cabeda-9fe3-490d-99b4-4c8d87c17157`
 - [ ] Nuka-Cola Vending Machine — `6cfb03e5-aca6-4fe2-a3f1-93e1f0cbf9e1`
 - [ ] Nullmage Shepherd — `4dcfd397-9d29-420c-8fd8-c7c2a99de122`
@@ -39056,7 +39053,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 - [ ] Multani, Yavimaya's Avatar — `4b8bf64b-4800-45ff-81c6-2857f34999b5`
 - [ ] Needle Spires — `e7bb8160-0a4b-4e46-b196-7a19fb388d8e`
 - [ ] Nighthowler — `57b3f7fc-1812-4134-a645-6cef48a8aa71`
-- [ ] Notion Thief — `f8dab16e-1d50-443e-9431-8b6f1cf61c9c`
 - [ ] Notorious Throng — `b1461f2a-2f12-49ae-8821-d934dddcb567`
 - [ ] Obelisk of Urd — `e2ef3a24-9e78-47fc-9192-049aa0ddb7a0`
 - [ ] Obuun, Mul Daya Ancestor — `28fcf855-6372-4d6b-b3fd-76f85247f309`
@@ -50438,7 +50434,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 - [ ] Mortify — `faa01ed1-ccfa-4e58-951f-cd81f9068027`
 - [ ] Motivated Pony — `44906d21-83cc-49ec-8505-4f7b020ac05f`
 - [ ] Mystic Confluence — `cd11c27b-9368-4622-bc5a-2e0b993cc42b`
-- [ ] Notion Thief — `f8dab16e-1d50-443e-9431-8b6f1cf61c9c`
 - [ ] Oath of Eorl — `3f8f72d8-5c3a-4f31-8741-3c1a55d9b739`
 - [ ] Of Herbs and Stewed Rabbit — `2efb908f-d069-4041-930b-5c1ccec00db2`
 - [ ] Olórin's Searing Light — `e6f2ba06-2c92-48b7-a95f-ea6bf35aa0fe`
@@ -52294,7 +52289,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 - [ ] Mistbind Clique — `d1946f91-0653-4647-b3de-95d78b9597c4`
 - [ ] Morbid Opportunist — `322f44f0-e6da-4ee0-b474-e7d5e9a461c5`
 - [ ] Nexus of Fate — `6c1d22d4-f28e-4041-a9b6-1575e8929b61`
-- [ ] Notion Thief — `f8dab16e-1d50-443e-9431-8b6f1cf61c9c`
 - [ ] Noxious Revival — `97cabeda-9fe3-490d-99b4-4c8d87c17157`
 - [ ] Painter's Servant — `baf93873-35e6-4bf2-bdcc-78a5206422fb`
 - [ ] Paradise Druid — `e119869d-1f66-402b-8251-d351965cf0d3`
@@ -57931,7 +57925,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,98
 - [ ] Nissa, Vastwood Seer // Nissa, Sage Animist — `35754a21-9fba-4370-a254-292918a777ba`
 - [ ] Nissa, Voice of Zendikar — `b0f36bf7-bdde-4576-9eca-ec02d41326ab`
 - [ ] Nivix Cyclops — `68b8bfac-63f7-4dbd-bb2e-4ad394c77335`
-- [ ] Notion Thief — `f8dab16e-1d50-443e-9431-8b6f1cf61c9c`
 - [ ] Nylea's Disciple — `aaefdb6f-306e-4fdc-9e49-af7a63e70f06`
 - [ ] Nylea, God of the Hunt — `43674fdf-496f-42dc-8a0a-5c42a7c7d910`
 - [ ] Nyx Weaver — `6f8bf968-0571-4582-8c04-9791e44d5df0`

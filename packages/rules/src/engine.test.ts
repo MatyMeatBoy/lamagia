@@ -459,6 +459,11 @@ const MJOLNIR = () => make({
   oracle_id: "7f9a8845-d760-44a7-a4c9-8a20dba4e14a", scryfall_id: "e0c7f566-5351-44e3-a346-b84b0eb10209"
 });
 const WORTHY_CREATURE = () => make({ name: "Test Worthy Avenger", type_line: "Legendary Creature — Human Hero", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", colors: ["R"] });
+const NOTION_THIEF = () => make({
+  name: "Notion Thief", type_line: "Creature — Human Rogue", mana_cost: "{2}{U}{B}", cmc: 4, power: "3", toughness: "1", keywords: ["Flash"],
+  oracle_text: "Flash\nIf an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card.",
+  oracle_id: "f8dab16e-1d50-443e-9431-8b6f1cf61c9c", scryfall_id: "f675f509-4343-4568-96dd-265626cb6c2b"
+});
 const BLACK_MARKET_CONNECTIONS = () => make({
   name: "Black Market Connections", type_line: "Enchantment", mana_cost: "{2}{B}", cmc: 3,
   oracle_text: "At the beginning of your first main phase, choose one or more —\n• Sell Contraband — Create a Treasure token. You lose 1 life.\n• Buy Information — Draw a card. You lose 2 life.\n• Hire a Mercenary — Create a 3/2 colorless Shapeshifter creature token with changeling. You lose 3 life.",
@@ -8055,6 +8060,51 @@ describe("Black Market Connections", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Treasure")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(handBefore + 1);
     expect(game.players[0]!.life).toBe(lifeBefore - 3); // 1 (Sell Contraband) + 2 (Buy Information)
+  });
+});
+
+describe("Notion Thief", () => {
+  it("redirects an opponent's non-draw-step draw to itself without touching either library's cards", () => {
+    const profile = profileOf(NOTION_THIEF());
+    expect(profile.redirectsOpponentDrawsExceptFirst).toBe(true);
+    expect(profile.keywords).toContain("flash");
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [NOTION_THIEF()]);
+    game = putOnBattlefield(game, 1, [LAND_SAC_ALTAR()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 1 && state.prioritySeat === 1);
+
+    const altar = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Land Memory")!;
+    const activation = legalActions(game, 1).find((entry) => entry.action.type === "activate" && entry.cardId === altar.instance_id)!;
+    const libraryBefore1 = game.players[1]!.library.length;
+    const handBefore1 = game.players[1]!.hand.length;
+    const libraryBefore0 = game.players[0]!.library.length;
+    const handBefore0 = game.players[0]!.hand.length;
+    game = applyAction(game, 1, activation.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    // The opponent's draw is skipped entirely: no change beyond the sacrifice cost.
+    expect(game.players[1]!.library.length).toBe(libraryBefore1);
+    expect(game.players[1]!.hand.length).toBe(handBefore1);
+    // Notion Thief's controller draws instead, from their OWN library.
+    expect(game.players[0]!.library.length).toBe(libraryBefore0 - 1);
+    expect(game.players[0]!.hand.length).toBe(handBefore0 + 1);
+  });
+
+  it("does not redirect the opponent's own mandatory draw-step draw", () => {
+    // A trivial board auto-passes straight through "upkeep"/"draw" without
+    // ever pausing there, so anchor on precombat-main (always a real
+    // decision point) instead, one turn apart to bracket exactly one draw.
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [NOTION_THIEF()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const handBefore1 = game.players[1]!.hand.length;
+    const handBefore0 = game.players[0]!.hand.length;
+    const turnBefore = game.turn;
+    game = passUntil(game, (state) => state.turn > turnBefore && state.activeSeat === 1 && state.step === "precombat-main");
+    expect(game.players[1]!.hand.length).toBe(handBefore1 + 1);
+    expect(game.players[0]!.hand.length).toBe(handBefore0);
   });
 });
 
