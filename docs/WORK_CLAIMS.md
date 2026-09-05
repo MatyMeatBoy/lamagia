@@ -436,3 +436,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | merged (`ebc7243`) | 2026-09-04 |
+| `rules-second-draw-this-turn` | Faerie Mastermind's "draws their second card each turn" trigger condition, gated on a new per-turn draw counter rather than any draw (CR 603.2, 603.3, 121.1) | `worker-05` | active | 2026-09-05 |

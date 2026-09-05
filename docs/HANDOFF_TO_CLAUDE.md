@@ -3013,3 +3013,19 @@ Validation: **579 rules tests**, `npm run check`, 9,328 global profiles, C13
 with a reusable cast-trigger reveal that stores total revealed mana value as
 entry counters. Validation: **580 rules tests**, `npm run check`, 9,329 global
 profiles, C13 **264/341** with 77 pending.
+
+Faerie Mastermind | `a984db23-40ea-428d-829f-e944267280f8` was closed with a
+new `second-draw-this-turn` trigger condition (CR 603.2, 603.3, 121.1). A
+`PlayerState.drawsThisTurn` counter (reset each untap step alongside
+`landsPlayedThisTurn`) is threaded onto the `card-drawn` `GameEvent` as
+`count`, and `triggerMatches` requires `count === 2` for this condition. The
+condition is attached statically via a new `TriggerTemplate.condition` field
+(distinct from the existing ad-hoc "if X, Y" post-condition regex extraction),
+covering both "a player" and "an opponent" phrasings. Known limit: Krang, the
+All-Powerful | `ffab80ef-fe51-4d6d-aa6f-bd538f40844f` stays
+`fullyImplemented: false` — its other clause ("If a player drawing a card
+causes a triggered ability of a permanent you control to trigger, that
+ability triggers an additional time") needs a distinct trigger-doubler
+variant scoped to triggers *caused by* a draw event, which this claim
+deliberately does not build. Validation: **584 rules tests**, `npm run
+check`, `npm run simulate:engine` 200/200, 9,336 global profiles.

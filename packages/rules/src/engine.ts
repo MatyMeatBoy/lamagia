@@ -163,6 +163,8 @@ export interface PlayerState {
   /** Combat damage received from each opposing commander, keyed by commander instance id. */
   readonly commanderDamage: Readonly<Record<string, number>>;
   readonly landsPlayedThisTurn: number;
+  /** Cards drawn this turn (Krang, Faerie Mastermind's "second card each turn"); reset each untap step. */
+  readonly drawsThisTurn: number;
   readonly manaPool: ManaPool;
   /** Count of Opal Palace mana still floating; spent mana consumes this marker first. */
   readonly commanderMana: number;
@@ -287,7 +289,8 @@ export type GameEvent =
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard; readonly spentMana?: number }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard }
+  /** `count` is this player's Nth draw this turn, 1-indexed (Krang, Faerie Mastermind's "second card each turn"). */
+  | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard; readonly count: number }
   | { readonly kind: "card-discarded"; readonly seat: SeatId; readonly card: GameCard }
   | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
@@ -1126,6 +1129,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       commanderCasts: Object.fromEntries(commanders.map((card) => [card.instance_id, 0])),
       commanderDamage: {},
       landsPlayedThisTurn: 0,
+      drawsThisTurn: 0,
       manaPool: emptyPool(),
       commanderMana: 0,
       lost: false,
@@ -1179,8 +1183,9 @@ function drawCards(state: GameState, seat: SeatId, amount: number): GameState {
       next = logged(next, seat, `${player.name} intenta robar de una biblioteca vacía.`);
       return next;
     }
-    next = withPlayer(next, seat, (current) => ({ ...current, library: current.library.slice(1), hand: [...current.hand, card] }));
-    next = raiseEvent(next, { kind: "card-drawn", seat, card });
+    const count = playerAt(next, seat).drawsThisTurn + 1;
+    next = withPlayer(next, seat, (current) => ({ ...current, library: current.library.slice(1), hand: [...current.hand, card], drawsThisTurn: count }));
+    next = raiseEvent(next, { kind: "card-drawn", seat, card, count });
   }
   const player = playerAt(next, seat);
   if (amount > 0 && !player.drewFromEmptyLibrary) next = logged(next, seat, `${player.name} roba ${amount === 1 ? "una carta" : `${amount} cartas`}.`);
@@ -1394,6 +1399,7 @@ function triggerMatches(
     if (count < condition.amount) return false;
   }
   if (condition?.kind === "creature-died-this-turn" && state.creaturesDiedThisTurn < 1) return false;
+  if (condition?.kind === "second-draw-this-turn" && (event.kind !== "card-drawn" || event.count !== 2)) return false;
   if (condition?.kind === "attacking-alone" && (event.kind !== "attacks" || state.combat.attackers.length !== 1)) return false;
   if (condition?.kind === "entering-power-at-most") {
     const entering = eventObject(event);
@@ -4794,6 +4800,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,
+        drawsThisTurn: 0,
         oncePerTurnActivations: [],
         battlefield: player.battlefield.map((permanent) => ({
            ...permanent,

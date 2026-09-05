@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,582** · cobertura: **27.7%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,585** · cobertura: **27.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -568,9 +568,9 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 | 2023-03-21 | 30th Anniversary History Promos (`P30H`) | promos | 30th-anniversary-history | other | 5 | 3 | 2 | 60.0% |
 | 2023-03-21 | Shadows of the Past (`SIS`) | masters-remastered | shadows-of-the-past | other | 76 | 26 | 50 | 34.2% |
 | 2023-03-21 | Shadows over Innistrad Remastered (`SIR`) | masters-remastered | shadows-over-innistrad-remastered | other | 284 | 51 | 233 | 18.0% |
-| 2023-04-21 | March of the Machine (`MOM`) | expansion | phyrexia | main | 296 | 35 | 261 | 11.8% |
+| 2023-04-21 | March of the Machine (`MOM`) | expansion | phyrexia | main | 296 | 36 | 260 | 12.2% |
 | 2023-04-21 | March of the Machine Commander (`MOC`) | commander | 2023 | commander | 338 | 101 | 237 | 29.9% |
-| 2023-04-21 | March of the Machine Promos (`PMOM`) | promos | march-of-the-machine | other | 80 | 1 | 79 | 1.2% |
+| 2023-04-21 | March of the Machine Promos (`PMOM`) | promos | march-of-the-machine | other | 80 | 2 | 78 | 2.5% |
 | 2023-04-21 | Multiverse Legends (`MUL`) | masterpieces | multiverse-legends | other | 66 | 1 | 65 | 1.5% |
 | 2023-05-12 | March of the Machine: The Aftermath (`MAT`) | expansion | phyrexia | main | 50 | 1 | 49 | 2.0% |
 | 2023-06-23 | Tales of Middle-earth Commander (`LTC`) | commander | 2023 | commander | 341 | 126 | 215 | 37.0% |
@@ -681,7 +681,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 | 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | teenage-mutant-ninja-turtles-source-material | other | 20 | 1 | 19 | 5.0% |
 | 2026-04-13 | MagicFest 2026 (`PF26`) | promos | magicfest-2026 | other | 13 | 7 | 6 | 53.8% |
 | 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 42 | 229 | 15.5% |
-| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 112 | 263 | 29.9% |
+| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 113 | 262 | 30.1% |
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 16 | 49 | 24.6% |
 | 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 7 | 73 | 8.8% |
 | 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 47 | 234 | 16.7% |
@@ -753,7 +753,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 | commander | 2023 | 6 | 1597 | 487 | 1110 | 30.5% |
 | commander | 2024 | 7 | 1887 | 629 | 1258 | 33.3% |
 | commander | 2025 | 4 | 1046 | 388 | 658 | 37.1% |
-| commander | 2026 | 6 | 1265 | 328 | 937 | 25.9% |
+| commander | 2026 | 6 | 1265 | 329 | 936 | 26.0% |
 | conspiracy | conspiracy | 2 | 211 | 44 | 167 | 20.9% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 60 | 161 | 27.1% |
 | core | 1990s | 10 | 3267 | 1129 | 2138 | 34.6% |
@@ -815,7 +815,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 | expansion | mirrodin | 3 | 675 | 228 | 447 | 33.8% |
 | expansion | odyssey | 1 | 335 | 96 | 239 | 28.7% |
 | expansion | onslaught | 1 | 335 | 74 | 261 | 22.1% |
-| expansion | phyrexia | 4 | 787 | 107 | 680 | 13.6% |
+| expansion | phyrexia | 4 | 787 | 108 | 679 | 13.7% |
 | expansion | ravnica | 4 | 1081 | 342 | 739 | 31.6% |
 | expansion | strixhaven | 2 | 561 | 92 | 469 | 16.4% |
 | expansion | tarkir | 3 | 785 | 176 | 609 | 22.4% |
@@ -1087,7 +1087,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 | promos | magicfest-2024 | 1 | 2 | 1 | 1 | 50.0% |
 | promos | magicfest-2025 | 1 | 19 | 5 | 14 | 26.3% |
 | promos | magicfest-2026 | 1 | 13 | 7 | 6 | 53.8% |
-| promos | march-of-the-machine | 1 | 80 | 1 | 79 | 1.2% |
+| promos | march-of-the-machine | 1 | 80 | 2 | 78 | 2.5% |
 | promos | march-of-the-machine-the-aftermath | 1 | 8 | 0 | 8 | 0.0% |
 | promos | marvel-legends-series-inserts | 1 | 4 | 0 | 4 | 0.0% |
 | promos | marvel-s-spider-man | 1 | 68 | 1 | 67 | 1.5% |
@@ -49999,7 +49999,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 - [ ] Etched Host Doombringer — `85c799e9-74d5-459e-b168-b95ed78cd4e9`
 - [ ] Expedition Lookout — `f8ad2f88-72ae-4e47-beb5-25a6dacc709b`
 - [ ] Eyes of Gitaxias — `7ef6ca6e-a8b8-4ea6-b13d-a08eb847c12d`
-- [ ] Faerie Mastermind — `a984db23-40ea-428d-829f-e944267280f8`
 - [ ] Failed Conversion — `e0930791-72b0-4d8b-b242-7b4094fed14e`
 - [ ] Fairgrounds Trumpeter — `3dfc6a52-d58c-4455-96fe-ec193743d67a`
 - [ ] Fearless Skald — `f055a941-8b83-464e-a57f-8f188dc69aaa`
@@ -50458,7 +50457,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 - [ ] Elesh Norn // The Argent Etchings — `650ed75c-20b0-45b8-a4d4-813e0369aaf1`
 - [ ] Errant and Giada — `24697554-02fa-48ba-b51d-6bba3f85c293`
 - [ ] Etali, Primal Conqueror // Etali, Primal Sickness — `7514e401-7aa1-405d-9f7a-312b4e630cc2`
-- [ ] Faerie Mastermind — `a984db23-40ea-428d-829f-e944267280f8`
 - [ ] Ghalta and Mavren — `756042c5-e444-45d7-8dc6-ae7c83c98438`
 - [ ] Glissa, Herald of Predation — `9b10e0f7-9414-4769-85d7-c1cd1c74a9a6`
 - [ ] Glistening Dawn — `13ee85c3-a16a-41ac-bbaa-c7549c700a03`
@@ -63017,7 +63015,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 - [ ] Excava, the Risen Past — `77216636-f76d-4c5e-b1ac-ab1844753f05`
 - [ ] Expansion Algorithm — `afbc348a-7b27-4577-8c24-cd6d5b894dc1`
 - [ ] Expressive Iteration — `c7aecca5-2f67-4245-ab2d-e723d8b23a67`
-- [ ] Faerie Mastermind — `a984db23-40ea-428d-829f-e944267280f8`
 - [ ] Fallen Ideal — `4b8183e6-4ff2-4254-9ee0-0ebbf8cef4a3`
 - [ ] Fateful Tempest — `9d2f02f7-adcd-4d23-a051-ebca70f22ba5`
 - [ ] Feral Appetite — `adf731a1-fc4d-4260-bb85-535edb1d82e9`

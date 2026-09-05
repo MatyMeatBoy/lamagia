@@ -742,6 +742,8 @@ export interface TriggerDefinition {
     | { readonly kind: "creature-died-this-turn" }
     | { readonly kind: "cast-from-hand" }
     | { readonly kind: "attacking-alone" }
+    /** "draws their second card each turn" (Krang, Faerie Mastermind): gated on the per-turn draw count, not just any draw. */
+    | { readonly kind: "second-draw-this-turn" }
     | { readonly kind: "entering-power-at-most"; readonly amount: number };
   readonly spellType?: "creature" | "noncreature" | "instant-or-sorcery";
   readonly spellColor?: string;
@@ -2051,6 +2053,8 @@ type TriggerTemplate = {
   readonly spellColor?: string;
   readonly spellSubtype?: string;
   readonly nontoken?: boolean;
+  /** A condition baked into the trigger phrase itself (e.g. "their second card each turn"), not the "if X, Y" style attached to effectText below. */
+  readonly condition?: TriggerDefinition["condition"];
 };
 
 const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
@@ -2123,6 +2127,8 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "card-drawn", subject: "each-player", pattern: /^whenever\s+a\s+player\s+draws\s+a\s+card,?\s*(.+)$/i },
   { event: "card-drawn", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+draws\s+a\s+card,?\s*(.+)$/i },
   { event: "card-drawn", subject: "you", pattern: /^whenever\s+you\s+draw\s+a\s+card,?\s*(.+)$/i },
+  { event: "card-drawn", subject: "each-player", condition: { kind: "second-draw-this-turn" }, pattern: /^whenever\s+a\s+player\s+draws\s+their\s+second\s+card\s+each\s+turn,?\s*(.+)$/i },
+  { event: "card-drawn", subject: "opponent", condition: { kind: "second-draw-this-turn" }, pattern: /^whenever\s+an\s+opponent\s+draws\s+their\s+second\s+card\s+each\s+turn,?\s*(.+)$/i },
   { event: "card-discarded", subject: "each-player", pattern: /^whenever\s+a\s+player\s+discards\s+a\s+card,?\s*(.+)$/i },
   { event: "card-discarded", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+discards\s+a\s+card,?\s*(.+)$/i },
   { event: "card-discarded", subject: "you", pattern: /^whenever\s+you\s+discard\s+a\s+card,?\s*(.+)$/i },
@@ -2144,7 +2150,7 @@ function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { e
   const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "").replace(/^morbid\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
-    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}), ...(template.spellSubtype ? { spellSubtype: template.spellSubtype } : {}), ...(template.nontoken ? { nontoken: true } : {}) };
+    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}), ...(template.spellSubtype ? { spellSubtype: template.spellSubtype } : {}), ...(template.nontoken ? { nontoken: true } : {}), ...(template.condition ? { condition: template.condition } : {}) };
   }
   return null;
 }
@@ -3675,6 +3681,7 @@ function recognizeText(text: string): RecognizedText {
           sourceText: line,
           ...(unlessPayment && payCost ? { paymentBy: "opponent" as const } : {}),
           ...(eventControllerChoice ? { choiceBy: "event-controller" as const } : {}),
+          ...(triggered.condition ? { condition: triggered.condition } : {}),
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),
