@@ -3586,6 +3586,31 @@ under either seat but never itself. Validation: **668 rules tests**,
 `npm run check`, `npm run simulate:engine` 200/200, 9,826 global
 profiles.
 
+`rules-tribal-lord-explicit-creatures-phrasing` | A sibling tribal-lord
+phrasing turned up right after the one above landed: "Other Goblin
+creatures you control get +1/+1." (Mad Auntie, Diregraf Captain,
+Merrow Reejerey, Dwynen, Gilt-Leaf Daen, ...) spells out the literal
+word "creatures" between the subtype and "you control" — a different
+shape from "Other Elves you control get +1/+1." that the earlier
+branch didn't cover, so these still fell into `unimplementedText`.
+Added a second regex branch producing the same
+`other-subtype-creatures-you-control` scope; the qualifier here is
+already singular in the printed Oracle text ("Goblin", not "Goblins"),
+so no `singularSubtype` call is needed for this phrasing. A few of
+these use a card TYPE rather than a creature subtype — Master of
+Etherium and Chief of the Foundry both read "Other artifact creatures
+you control get +1/+1." — so the engine-side check in
+`staticPowerToughnessBonus` now tests `hasSubtype(...) OR
+profile.types.includes(...)` against the same stored string, rather
+than adding a second field to distinguish the two cases. Verified
+**+13** in the export count (9,876 → 9,889). Scenario-tested with two
+synthetic fixtures: a Goblin lord boosts another Goblin but leaves
+itself and a Bear alone; an artifact-creature lord boosts another
+artifact creature through the card-type path (not the subtype path)
+but leaves itself and a Bear alone. Validation: **675 rules tests**,
+`npm run check`, `npm run simulate:engine` 200/200, 9,889 global
+profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
