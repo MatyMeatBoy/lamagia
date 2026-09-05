@@ -460,6 +460,8 @@ export type PendingChoice =
       readonly remaining: number;
       /** Forget: after all discards resolve, the same player draws this many cards. */
       readonly thenDrawSame?: boolean;
+      /** Geier Reach Sanitarium: seats still owed their own discard choice, in APNAP order. */
+      readonly nextSeats?: readonly SeatId[];
     }
   | {
       /** Scry (CR 701.17) and Surveil (CR 701.42) share this shape: inspect the
@@ -2583,6 +2585,31 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         next = drawCards(next, player.seat, amount);
       }
       return next;
+    }
+    case "each-player-draws-then-discards": {
+      let next = state;
+      for (const player of state.players) {
+        if (player.lost) continue;
+        next = drawCards(next, player.seat, 1);
+      }
+      // APNAP order: the ability's controller chooses first, then each opponent in turn order (CR 101.4, 701.8a).
+      const order = [controller, ...opponentsOf(next, controller)];
+      const queue = order.filter((seat) => !playerAt(next, seat).lost && playerAt(next, seat).hand.length > 0);
+      if (!queue.length) return next;
+      const [firstSeat, ...restSeats] = queue as [SeatId, ...SeatId[]];
+      return {
+        ...next,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "discard-cards",
+          seat: firstSeat,
+          sourceId: object.id,
+          sourceCard: object.card,
+          amount: 1,
+          remaining: 1,
+          ...(restSeats.length ? { nextSeats: restSeats } : {})
+        }
+      };
     }
     case "damage-nonflying-creatures-and-players": {
       const amount = effectAmount(effect.amount, object);
@@ -7166,9 +7193,25 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
   const card = playerAt(state, seat).hand.find((candidate) => candidate.instance_id === action.cardId);
   if (!card) throw new Error("Debes elegir una carta de tu mano.");
   const remaining = choice.remaining - 1;
+  const nextSeat = remaining <= 0 ? choice.nextSeats?.[0] : undefined;
+  const followingSeats = choice.nextSeats?.slice(1);
   const stateWithChoice: GameState = {
     ...state,
-    pendingChoice: remaining > 0 ? { ...choice, remaining } : null
+    pendingChoice: remaining > 0
+      ? { ...choice, remaining }
+      : nextSeat !== undefined
+      // Each queued seat discards exactly one card (Geier Reach Sanitarium);
+      // this chain has no caller yet that needs a per-seat variable amount.
+      ? {
+          type: "discard-cards",
+          seat: nextSeat,
+          sourceId: choice.sourceId,
+          sourceCard: choice.sourceCard,
+          amount: 1,
+          remaining: 1,
+          ...(followingSeats?.length ? { nextSeats: followingSeats } : {})
+        }
+      : null
   };
   let next = discardCard(stateWithChoice, seat, card);
   if (remaining <= 0 && choice.thenDrawSame) {
