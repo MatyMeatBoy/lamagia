@@ -67,6 +67,8 @@ export interface ManaAbility {
   readonly removeCounters?: readonly CounterCost[];
   /** Fixed mana cost paid before a variable counter-to-mana ability resolves. */
   readonly manaCost?: ManaCost;
+  /** Fast-mana restriction: the source entered this turn, or a basic land is controlled. */
+  readonly activationRestriction?: { readonly enteredThisTurn: boolean; readonly orControlsBasicLand?: boolean };
   /** Storage-counter abilities produce one mana per removed counter. */
   readonly variableAmountCounter?: string;
   /** Some mana abilities have a small immediate side effect (CR 605). */
@@ -1058,12 +1060,13 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
-function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; commanderEntryCounters?: boolean } | null {
+function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; commanderEntryCounters?: boolean; activationRestriction?: { enteredThisTurn: boolean; orControlsBasicLand?: boolean } } | null {
   let remainder = effect.trim().replace(/\.$/, "");
   let gainLife: number | undefined;
   let requiresLands: number | undefined;
   let painDamage: number | undefined;
   let commanderEntryCounters = false;
+  let activationRestriction: { enteredThisTurn: boolean; orControlsBasicLand?: boolean } | undefined;
   const commanderEntry = /\.\s*If you spend this mana to cast your commander, it enters with a number of additional \+1\/\+1 counters on it equal to the number of times it's been cast from the command zone this game$/i.exec(remainder);
   if (commanderEntry) {
     commanderEntryCounters = true;
@@ -1094,9 +1097,14 @@ function parseManaInstruction(effect: string): { produced: ReturnType<typeof par
     requiresLands = amount;
     remainder = remainder.slice(0, restriction.index).trim();
   }
+  const enteredRestriction = /\.\s*Activate only if ~ entered(?: the battlefield)? this turn(\s*or\s*if\s+you\s+control\s+a\s+basic\s+land)?$/i.exec(remainder);
+  if (enteredRestriction) {
+    activationRestriction = { enteredThisTurn: true, ...(enteredRestriction[1] ? { orControlsBasicLand: true } : {}) };
+    remainder = remainder.slice(0, enteredRestriction.index).trim();
+  }
   const produced = parseAddClause(remainder);
   return produced
-    ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }), ...(painDamage === undefined ? {} : { painDamage }), ...(commanderEntryCounters ? { commanderEntryCounters: true } : {}) }
+    ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }), ...(painDamage === undefined ? {} : { painDamage }), ...(commanderEntryCounters ? { commanderEntryCounters: true } : {}), ...(activationRestriction === undefined ? {} : { activationRestriction }) }
     : null;
 }
 
@@ -1156,7 +1164,8 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
         gainLife: undefined,
         requiresLands: undefined,
         painDamage: undefined,
-        commanderEntryCounters: false
+        commanderEntryCounters: false,
+        activationRestriction: undefined
       } : null;
     })();
     // "Add {C} for each <Subtype> on the battlefield / you control".
@@ -1192,6 +1201,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
+      ...(instruction.activationRestriction === undefined ? {} : { activationRestriction: instruction.activationRestriction }),
       ...(manaCost ? { manaCost } : {}),
       requiresTap, lifeCost: lifeCost + (instruction.painDamage ?? 0), text: line.trim()
     });

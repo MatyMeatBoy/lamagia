@@ -2474,6 +2474,63 @@ test` PASS (**525 rules tests**, up from 524). `npm run simulate:engine`:
 **200/200 passed**, unchanged — expected, since this is a pure coverage
 credit with zero behavioral change.
 
+### Worker-05: "entered this turn" mana lands needed a permanent-level clock the engine never kept (2026-09-04)
+
+Claim `rules-mana-entered-this-turn-restriction`, continuing the Nekusar
+decklist (Hidden Lair). "{T}: Add {U} or {B}. Activate only if ~ entered
+the battlefield this turn or if you control a basic land." is a fast-mana
+gate on a two-ability land (the `{C}` half is unconditional): the ability
+is free the turn the land is played, then locked behind having a basic
+land out afterward. Nothing like it existed: `summoningSick` tracks
+creature-specific "just arrived" state, but no field on `Permanent` recorded
+"this entered the battlefield this turn" for any permanent type, mana
+abilities included.
+
+Added `Permanent.enteredThisTurn: boolean`, following the exact lifecycle
+`summoningSick` already uses — stamped `true` in `putOntoBattlefield` (the
+one real creation path) and reset to `false` for the active player's whole
+battlefield in the `untap` step (CR 302.6's "since the beginning of that
+player's most recent turn" window, just generalized past creatures). Making
+the field required rather than optional was deliberate: it forced the
+compiler to point at every `Permanent` object literal in the codebase
+(3 in `engine.ts`, 4 across `engine.test.ts` and
+`services/match-server/src/matches.test.ts`) instead of trusting me to find
+them all by hand.
+
+New `ManaAbility.activationRestriction: { enteredThisTurn: boolean;
+orControlsBasicLand?: boolean }`, parsed in `parseManaInstruction` right
+alongside the existing `requiresLands` restriction (same "strip a trailing
+clause, recurse into `parseAddClause` on what's left" shape), enforced in
+`canUseManaAbility` — the single choke point already shared by
+`manaSources`, `legalActions`, and `applyActivateMana`, so no call site
+needed its own copy of the check. The basic-land branch reads
+`cardProfile(land).supertypes.includes("Basic")`; caught one mistake before
+committing — this codebase's own `splitTypeLine` puts "Basic" in
+`supertypes` (matching how Scryfall type lines actually work), not
+`subtypes`, despite an unrelated same-named local variable elsewhere in the
+file for a different job (parsing "search for a basic land card" text) that
+made it look otherwise at a glance. A scenario test with a Forest on the
+battlefield caught the mismatch immediately.
+
+Fully implements Hidden Lair, Dark Fortress, Training Compound, Gleaming
+Bastion, Gathering Place, Mirrex (Mirrex's own third ability — a Phyrexian
+Mite token-creator — was already modeled independently, so only this
+restriction stood between it and full coverage). Scenario coverage plays
+the land fresh (colored half available immediately), advances a full round
+with no basic land out (colored half shuts off, `{C}` half still works),
+then adds a Forest and confirms the colored half reopens.
+
+**Known limit:** the identical restriction phrase also gates a non-mana
+activated ability (Fungus Elemental's "Activate only if ~ entered this
+turn", no basic-land escape clause) — this claim only wires
+`enteredThisTurn` into `ManaAbility`/`canUseManaAbility`, not
+`ActivatedAbility`'s own legality check, so Fungus Elemental stays
+unimplemented pending a follow-up claim.
+
+Global export: **9,150/38,712** (+6 from 9,144). `npm run check` and `npm
+test` PASS (**527 rules tests**, up from 525). `npm run simulate:engine`:
+**200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed

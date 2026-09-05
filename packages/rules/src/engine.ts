@@ -86,6 +86,8 @@ export interface Permanent {
   readonly tapped: boolean;
   /** A creature cannot attack or use `{T}` abilities the turn it arrives (rule 302.6). */
   readonly summoningSick: boolean;
+  /** True from the moment this permanent enters until its controller's next untap step (Hidden Lair's "activate only if ~ entered this turn" restriction). */
+  readonly enteredThisTurn: boolean;
   readonly damage: number;
   readonly deathtouched: boolean;
   /** Public counters on this permanent, by normalized counter name. */
@@ -696,6 +698,12 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return false;
   if (ability.lifeCost >= player.life) return false;
   if (ability.requiresLands !== undefined && player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))).length < ability.requiresLands) return false;
+  if (ability.activationRestriction) {
+    const enteredOk = ability.activationRestriction.enteredThisTurn && permanent.enteredThisTurn;
+    const basicOk = ability.activationRestriction.orControlsBasicLand
+      && player.battlefield.some((candidate) => isLand(cardProfile(candidate.card)) && cardProfile(candidate.card).supertypes.includes("Basic"));
+    if (!enteredOk && !basicOk) return false;
+  }
   if (!(ability.removeCounters ?? []).every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) return false;
   if (ability.variableAmountCounter && (permanent.counters[ability.variableAmountCounter] ?? 0) < 1) return false;
   if (ability.manaCost && !planManaPayment(ability.manaCost, player, { state })) return false;
@@ -1243,6 +1251,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     controller: seat,
     tapped: enters.tapped,
     summoningSick: true,
+    enteredThisTurn: true,
     damage: 0,
     deathtouched: false,
     ...(kicked ? { kicked: true } : {}),
@@ -4457,6 +4466,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
            ...permanent,
            tapped: cardProfile(permanent.card).doesNotUntapDuringUntap ? permanent.tapped : false,
            summoningSick: false,
+           enteredThisTurn: false,
            loyaltyUsedThisTurn: false
          }))
       }));
@@ -5377,6 +5387,7 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     controller: seat,
     tapped: false,
     summoningSick: false,
+    enteredThisTurn: false,
     damage: 0,
     deathtouched: false,
     counters: {},

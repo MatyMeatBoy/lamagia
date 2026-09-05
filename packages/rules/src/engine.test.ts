@@ -435,6 +435,10 @@ const MIXED_RITUAL = () => make({ name: "Test Channel the Suns", type_line: "Sor
 // fixed list on the card, and never influenced by the caster's own lands.
 const OPPONENT_LANDS_MANA_ROCK = () => make({ name: "Test Fellwar Stone", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{T}: Add one mana of any color that a land an opponent controls could produce." });
 const OWN_LANDS_MANA_DORK = () => make({ name: "Test Harvester Druid", type_line: "Creature — Human Druid", mana_cost: "{1}{G}", cmc: 2, power: "1", toughness: "1", oracle_text: "{T}: Add one mana of any color that a land you control could produce." });
+// Fast-mana land (Hidden Lair): the colored half only works fresh off the
+// draw or once a basic land is out — a real activation gate, not reminder
+// text, distinct from the unconditional {C} half on the same card.
+const ENTERED_THIS_TURN_LAND = () => make({ name: "Test Hidden Lair", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Add {U} or {B}. Activate only if this land entered this turn or if you control a basic land." });
 const TEMPLE_OF_FALSE_GOD = () => make({ name: "Temple of the False God", type_line: "Land", oracle_text: "{T}: Add {C}{C}. Activate only if you control five or more lands.", produced_mana: ["C"] });
 const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
 const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
@@ -633,13 +637,14 @@ function stage(state: GameState, seat: SeatId, update: (player: GameState["playe
   return { ...state, players: state.players.map((player, index) => (index === seat ? { ...player, ...update(player) } : player)) };
 }
 
-function putOnBattlefield(state: GameState, seat: SeatId, cards: readonly CardData[], options: { sick?: boolean; tapped?: boolean } = {}): GameState {
+function putOnBattlefield(state: GameState, seat: SeatId, cards: readonly CardData[], options: { sick?: boolean; tapped?: boolean; entered?: boolean } = {}): GameState {
   const permanents = cards.map((card, index) => ({
     instance_id: `staged-${seat}-${index}-${card.name}-${Math.random().toString(36).slice(2, 8)}`,
     card: { ...card, instance_id: `staged-${seat}-${index}-${card.name}`, owner: seat },
     controller: seat,
     tapped: options.tapped ?? false,
     summoningSick: options.sick ?? false,
+    enteredThisTurn: options.entered ?? false,
     damage: 0,
     deathtouched: false,
     counters: Object.fromEntries(profileOf(card).entersWithCounters.map((counter) => [counter.kind, counter.amount])),
@@ -968,6 +973,34 @@ describe("mana payment", () => {
     expect([...options].sort()).toEqual(["G", "R"]);
     game = applyAction(game, 0, { type: "activate-mana", sourceId: rock.instance_id, abilityIndex: 0, mana: "R" });
     expect(game.players[0]!.manaPool.R).toBe(1);
+  });
+
+  it("gates a land's colored mana to the turn it entered, or once a basic land is out", () => {
+    const profile = profileOf(ENTERED_THIS_TURN_LAND());
+    expect(profile.manaAbilities[0]).toMatchObject({ produces: ["C"] });
+    expect(profile.manaAbilities[1]).toMatchObject({
+      produces: ["U", "B"],
+      activationRestriction: { enteredThisTurn: true, orControlsBasicLand: true }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Fresh off the draw: the colored ability is available the same turn.
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [ENTERED_THIS_TURN_LAND()], "hand-lair") }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-lair-0" });
+    const land = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Hidden Lair")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === land.instance_id && entry.action.mana !== "C")).toBe(true);
+
+    // One full round later, with no basic land out, the colored half shuts off.
+    const enteredTurn = game.turn;
+    game = passUntil(game, (state) => state.turn > enteredTurn && state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === land.instance_id && entry.action.mana !== "C")).toBe(false);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === land.instance_id && entry.action.mana === "C")).toBe(true);
+
+    // Controlling a basic land reopens it even on a later turn.
+    game = putOnBattlefield(game, 0, [FOREST()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === land.instance_id && entry.action.mana !== "C")).toBe(true);
   });
 
   it("finds the lands that pay a colored cost", () => {
@@ -5966,7 +5999,7 @@ describe("commander rules", () => {
       commandZone: [],
       battlefield: [{
         instance_id: commanderCard.instance_id, card: commanderCard, controller: 0,
-        tapped: false, summoningSick: false, damage: 99, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0, isCommander: true
+        tapped: false, summoningSick: false, enteredThisTurn: false, damage: 99, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0, isCommander: true
       }]
     }));
     game = applyAction(game, pendingSeat(game)!, { type: "pass" });
@@ -6445,7 +6478,7 @@ describe("combat", () => {
       commandZone: [],
       battlefield: [{
         instance_id: commanderCard.instance_id, card: commanderCard, controller: 0,
-        tapped: false, summoningSick: false, damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0, isCommander: true
+        tapped: false, summoningSick: false, enteredThisTurn: false, damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0, isCommander: true
       }]
     }));
     game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
