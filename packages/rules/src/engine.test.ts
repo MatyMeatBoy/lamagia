@@ -2051,6 +2051,7 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[0]!.life).toBe(44);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Stone Wall")).toBe(true);
+  });
   it("sacrifices X Goats to add X mana and gain life with Springjack Pasture", () => {
     const profile = profileOf(C13_SPRINGJACK_PASTURE());
     expect(profile.manaAbilities).toMatchObject([
