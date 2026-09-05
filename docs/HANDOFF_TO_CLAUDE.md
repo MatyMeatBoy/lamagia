@@ -14,14 +14,14 @@ and token-scaling paths; verify the Pages run before reporting a new client asse
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,396 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,889 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 23,860 / 84,990 implemented (28.1%) across 685
+- **Edition memberships:** 25,273 / 84,990 implemented (29.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 269 / 341 unique cards (78.9%), 72 pending.
-- **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
+- **Commander 2013:** 294 / 341 unique cards (86.2%), 47 pending.
+- **Commander 2014:** 200 / 322 unique cards (62.1%), 122 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
 life thresholds and opponent graveyard creature counts. These are parameterized
@@ -34,9 +34,10 @@ Audited worker intake added executable batches for mana-entry restrictions,
 noncreature-spell drain, surveil, reanimation, Hunted Troll, Grazing
 Gladehart, Disciple of Griselbrand, and Springjack Pasture. The optional
 cycling-target keyword grammar was generalized and tested with Dirge of Dread.
-Rules suite: **603 passing tests**. The latest local source checkpoint also
-adds reusable Mirror Entity and Faerie Conclave characteristic effects;
-generated export: **9,396/38,711** profiles and C13 **269/341**.
+Rules suite: **671 passing tests** (6 skipped). The latest local source
+checkpoint also adds the reusable Kirtar's Wrath threshold primitive and the
+regenerated C13 implementation bases; generated export: **9,889/38,711**
+profiles and C13 **294/341**.
 
 The latest origin audit also salvaged the executable portion of
 `origin/c14-batch2-clean` as `dd6c117`: draw triggers remain on the engine's
