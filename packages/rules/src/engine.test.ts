@@ -320,6 +320,7 @@ const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
+const C13_WIGHT_OF_PRECINCT_SIX = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "{2}{B}", cmc: 3, power: "1", toughness: "1", oracle_text: "Wight of Precinct Six gets +1/+1 for each creature card in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf", oracle_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
 const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
 const C13_SALTCRUSTED_STEPPE = () => make({ name: "Saltcrusted Steppe", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {G} and/or {W}.", produced_mana: ["C", "G", "W"], scryfall_id: "c13-saltcrusted-steppe" });
@@ -3767,6 +3768,16 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0
       && (state.players[0]!.battlefield.find((permanent) => permanent.instance_id === sourceId)?.powerModifier ?? 0) === 2);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === sourceId)).toMatchObject({ powerModifier: 2, toughnessModifier: 2 });
+  });
+
+  it("scales Wight of Precinct Six with opposing graveyard creatures", () => {
+    let game = readyToCast([], [C13_WIGHT_OF_PRECINCT_SIX()]);
+    const wight = game.players[0]!.battlefield[0]!;
+    expect(cardProfile(C13_WIGHT_OF_PRECINCT_SIX()).fullyImplemented).toBe(true);
+    expect(powerOf(wight, game)).toBe(1);
+    game = stage(game, 1, (player) => ({ graveyard: toHand(1, [BEAR(), AZAMI_WIZARD()], "opponent-yard") }));
+    expect(powerOf(wight, game)).toBe(3);
+    expect(toughnessOf(wight, game)).toBe(3);
   });
 
   it("keeps C13 Basalt Monolith tapped through untap and resolves its untap activation", () => {

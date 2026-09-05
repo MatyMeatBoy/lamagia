@@ -293,6 +293,8 @@ export interface StaticPowerToughnessGrant {
   readonly subtype?: string;
   readonly counterName?: string;
   readonly threshold?: number;
+  readonly multiplier?: "opponent-graveyard-creatures";
+  readonly selfOnly?: boolean;
 }
 
 /** Torbran-style static damage amplifier (CR 614.1c). */
@@ -1297,6 +1299,9 @@ function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
+  if (/^~ gets \+1\/\+1 for each creature card in your opponents[’'] graveyards$/i.test(line.trim().replace(/\.$/, ""))) {
+    return { scope: "creatures-you-control", power: 1, toughness: 1, multiplier: "opponent-graveyard-creatures", selfOnly: true };
+  }
   const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(line.trim().replace(/\.$/, ""));
   return match ? {
     scope: match[4] ? "all-creatures" : match[3] ? "creatures-you-control" : "other-creatures-you-control",
