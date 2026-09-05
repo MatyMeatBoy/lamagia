@@ -312,6 +312,7 @@ const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — G
 const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "Legendary Creature — Elemental", mana_cost: "{5}{G}{U}{R}", cmc: 8, power: "7", toughness: "5", oracle_text: "Creatures you control have haste.\nCascade\nCascade" });
 const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Creature — Vampire", mana_cost: "{3}{U}{B}", cmc: 5, power: "4", toughness: "4", colors: ["U", "B"], keywords: ["Intimidate"], oracle_text: "Intimidate\nOther creatures you control have intimidate.\nWhenever Vela the Night-Clad or another creature you control leaves the battlefield, each opponent loses 1 life." });
 const GAHIJI = () => make({ name: "Gahiji, Honored One", type_line: "Legendary Creature — Beast", mana_cost: "{3}{R}{G}{W}", cmc: 6, power: "4", toughness: "4", oracle_text: "Whenever a creature attacks one of your opponents or a planeswalker an opponent controls, that creature gets +2/+0 until end of turn." });
+const TERRA_RAVAGER = () => make({ name: "Terra Ravager", type_line: "Creature — Elemental", mana_cost: "{3}{R}", cmc: 4, power: "0", toughness: "4", oracle_text: "Whenever Terra Ravager attacks, it gets +X/+0 until end of turn, where X is the number of lands defending player controls.", oracle_id: "c7686204-0433-48cf-bbfb-5d32b6a25cc3" });
 const GUTTERSNIPE = () => make({ name: "Guttersnipe", type_line: "Creature — Goblin Shaman", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever you cast an instant or sorcery spell, Guttersnipe deals 2 damage to each opponent." });
 const FECUNDITY = () => make({ name: "Fecundity", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature dies, that creature's controller may draw a card." });
 const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "Enchantment", mana_cost: "{1}{R}{G}", cmc: 3, oracle_text: "Creatures you control have haste.\n{R}{G}, Sacrifice Fires of Yavimaya: Creatures you control get +2/+2 until end of turn." });
@@ -331,6 +332,7 @@ const C13_THOPTER_FOUNDRY = () => make({ name: "Thopter Foundry", type_line: "Ar
 const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant", mana_cost: "{X}{U}{U}{U}", cmc: 3, oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library.", scryfall_id: "613a41b8-0b4f-4995-bf1e-ca41f96e6438" });
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
+const MURKFIEND_LIEGE = () => make({ name: "Murkfiend Liege", type_line: "Creature — Horror", mana_cost: "{2}{G}{U}", cmc: 4, power: "4", toughness: "4", oracle_text: "Other green creatures you control get +1/+1. Other blue creatures you control get +1/+1. Untap all green and/or blue creatures you control during each other player's untap step.", oracle_id: "61d28182-498f-4bbc-bb7a-c5e1ef872dda" });
 const C13_GRAZING_GLADEHART = () => make({ name: "Grazing Gladehart", type_line: "Creature — Antelope", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Landfall — Whenever a land enters the battlefield under your control, you may gain 2 life.", scryfall_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4", oracle_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4" });
 const C13_HUNTED_TROLL = () => make({ name: "Hunted Troll", type_line: "Creature — Troll Warrior", mana_cost: "{2}{G}{G}", cmc: 4, power: "8", toughness: "4", oracle_text: "When Hunted Troll enters the battlefield, create four 1/1 blue Faerie creature tokens with flying under target opponent's control.", scryfall_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6", oracle_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
@@ -344,6 +346,11 @@ const AZAMI_WIZARD = () => make({ name: "Library Wizard", type_line: "Creature �
 const C13_BRILLIANT_PLAN = () => make({ name: "Brilliant Plan", type_line: "Sorcery", mana_cost: "{4}{U}", cmc: 5, oracle_text: "Draw three cards.", scryfall_id: "4fc6b5a0-9a0f-4934-8a43-a0e5364832ec" });
 const C13_HARMONIZE = () => make({ name: "Harmonize", type_line: "Sorcery", mana_cost: "{2}{G}{G}", cmc: 4, oracle_text: "Draw three cards.", scryfall_id: "83da2456-0c5c-4b2b-8183-20c332566127" });
 const C13_VISION_SKEINS = () => make({ name: "Vision Skeins", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Each player draws two cards.", scryfall_id: "b4b032de-808e-4c47-ba86-ac59609378e0" });
+const C13_SKYSCRIBING = () => make({
+  name: "Skyscribing", type_line: "Sorcery", mana_cost: "{X}{U}{U}", cmc: 2,
+  oracle_text: "Each player draws X cards.\nForecast — {2}{U}, Reveal this card from your hand: Each player draws a card. (Activate only during your upkeep and only once each turn.)",
+  scryfall_id: "c3416e6c-ec46-410c-ab80-6e8fdb89f42d", oracle_id: "c3416e6c-ec46-410c-ab80-6e8fdb89f42d"
+});
 const C13_DEEP_ANALYSIS = () => make({ name: "Deep Analysis", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Target player draws two cards.\nFlashback—{1}{U}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)", scryfall_id: "952800af-f52c-44bf-a98b-51c5f8142dc9" });
 const C13_BALEFUL_STRIX = () => make({ name: "Baleful Strix", type_line: "Artifact Creature — Bird", mana_cost: "{U}{B}", cmc: 2, power: "1", toughness: "1", keywords: ["Flying", "Deathtouch"], oracle_text: "Flying\nDeathtouch\nWhen this creature enters, draw a card.", scryfall_id: "47ac0f77-1294-4de9-93d1-141a9f314f98" });
 const C13_PHYREXIAN_GARGANTUA = () => make({ name: "Phyrexian Gargantua", type_line: "Creature — Phyrexian Horror", mana_cost: "{4}{B}{B}", cmc: 6, power: "4", toughness: "4", oracle_text: "When this creature enters, you draw two cards and you lose 2 life.", scryfall_id: "56ae94c2-8bbb-4807-b1e0-8ef178dd1697" });
@@ -1797,6 +1804,32 @@ describe("casting", () => {
     expect(profileOf(C13_HARMONIZE())).toMatchObject({ effects: [{ kind: "draw", amount: 3 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_VISION_SKEINS())).toMatchObject({ effects: [{ kind: "each-player-draw", amount: 2 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_DEEP_ANALYSIS())).toMatchObject({ effects: [{ kind: "draw-target-player", amount: 2 }], targetKind: "player", flashbackCost: { raw: "{1}{U}" }, fullyImplemented: true });
+    expect(profileOf(C13_SKYSCRIBING())).toMatchObject({
+      effects: [{ kind: "each-player-draw", amount: "X" }], fullyImplemented: true,
+      activatedAbilities: [{ sourceZone: "hand", upkeepOnly: true, oncePerTurn: true, manaCost: { raw: "{2}{U}" }, effect: { kind: "each-player-draw", amount: 1 } }]
+    });
+  });
+
+  it("activates Forecast from hand only during upkeep and once per turn", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [C13_SKYSCRIBING()]), library: toHand(0, [FOREST(), FOREST()], "library-a"), autoPass: false }));
+    game = stage(game, 1, (player) => ({ hand: [], library: toHand(1, [FOREST(), FOREST()], "library-b"), autoPass: false }));
+    game = putOnBattlefield(game, 0, [ISLAND(), ISLAND(), ISLAND()]);
+    game = { ...game, step: "upkeep", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null };
+
+    const forecast = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === "hand-0");
+    expect(forecast).toBeDefined();
+    game = applyAction(game, 0, forecast!.action);
+    expect(game.players[0]!.hand.some((card) => card.name === "Skyscribing")).toBe(true);
+    expect(game.players[0]!.oncePerTurnActivations).toContain("hand-0:0");
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.hand).toHaveLength(2);
+    expect(game.players[1]!.hand).toHaveLength(1);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.cardId === "hand-0")).toBe(false);
+
+    const mainPhase: GameState = { ...game, step: "precombat-main", priorityOpen: true, prioritySeat: 0, stack: [], passedSeats: [] };
+    expect(legalActions(mainPhase, 0).some((entry) => entry.action.type === "activate" && entry.cardId === "hand-0")).toBe(false);
   });
 
   it("offers storage-counter mana as variable colour choices", () => {
@@ -2103,6 +2136,17 @@ describe("casting", () => {
     expect(game.players[0]!.life).toBe(42);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Springjack Pasture")?.tapped).toBe(true);
     expect(game.players[0]!.graveyard.filter((card) => card.name === "Goat")).toHaveLength(2);
+  });
+
+  it("untaps green and blue creatures during another player's untap step", () => {
+    const profile = profileOf(MURKFIEND_LIEGE());
+    expect(profile.untapColorsDuringOtherPlayersUntap).toEqual(["G", "U"]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([], [MURKFIEND_LIEGE(), FOREST()]);
+    game = putOnBattlefield(game, 0, [MURKFIEND_LIEGE(), FOREST()]);
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => ({ ...permanent, tapped: true })) }));
+    game = passUntil(game, (state) => state.step === "untap" && state.activeSeat === 1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")?.tapped).toBe(false);
   });
 
   it("returns Razor Hippogriff's artifact and gains its mana value", () => {
@@ -5060,6 +5104,21 @@ describe("triggered abilities", () => {
       && state.stack.length === 0
       && state.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.powerModifier === 2);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.powerModifier).toBe(2);
+  });
+
+  it("scales Terra Ravager's attack trigger from the defending player's lands", () => {
+    expect(profileOf(TERRA_RAVAGER())).toMatchObject({
+      triggers: [{ event: "attacks", subject: "self", effect: { kind: "pump-source-by-defending-lands" } }],
+      fullyImplemented: true
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [TERRA_RAVAGER()]);
+    game = putOnBattlefield(game, 1, [BEAR(), FOREST(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const ravager = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Terra Ravager")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: ravager.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === ravager.instance_id)?.powerModifier).toBe(2);
   });
 
   it("triggers Guttersnipe only from instant and sorcery casts", () => {

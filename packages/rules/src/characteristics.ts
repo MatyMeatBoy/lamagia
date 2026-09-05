@@ -130,6 +130,14 @@ export interface ActivatedAbility {
   readonly loyaltyCost?: number;
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
+  /** The ability is activated from the named zone instead of the battlefield. */
+  readonly sourceZone?: "hand";
+  /** Printed upkeep restriction (Forecast, CR 702.57). */
+  readonly upkeepOnly?: boolean;
+  /** The same source ability can be activated only once during its controller's turn. */
+  readonly oncePerTurn?: boolean;
+  /** Reveal a hand source while announcing the ability (Forecast, CR 702.57). */
+  readonly revealSourceFromHand?: boolean;
   readonly requiresOpponentLands?: number;
   readonly text: string;
 }
@@ -387,6 +395,8 @@ export type SpellEffect =
   | { readonly kind: "gain-life-each-permanent"; readonly amount: number }
   | { readonly kind: "gain-life-each-creature-you-control"; readonly amount: number }
   | { readonly kind: "gain-life-equal-target-power" }
+  /** Installs Vizkopa's life-gain trigger until cleanup. */
+  | { readonly kind: "grant-life-gain-opponent-loss" }
   | { readonly kind: "gain-life-equal-sacrificed-toughness" }
   | { readonly kind: "lose-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
@@ -424,6 +434,8 @@ export type SpellEffect =
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number | "X" }
+  /** Dynamic life-loss amount from a life-gained trigger event. */
+  | { readonly kind: "each-opponent-loses-life-event-amount" }
   /** "that player" in a triggered ability referring back to the event's own player (e.g. the opponent who drew) — CR 603.3d, not a chosen target. */
   | { readonly kind: "lose-life-event-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
@@ -437,6 +449,8 @@ export type SpellEffect =
   | { readonly kind: "damage-source-power" }
   /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
   | { readonly kind: "tap-creatures-pump-source-damage-attacker"; readonly subtype: string }
+  /** Terra Ravager: +X/+0 where X is the defending player's land count. */
+  | { readonly kind: "pump-source-by-defending-lands" }
   | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
   | { readonly kind: "damage-any-target-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "damage-controller-equal-hand" }
@@ -566,7 +580,7 @@ export type SpellEffect =
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
-  | { readonly kind: "create-token-for-target-player"; readonly amount: number | "X"; readonly token: TokenDefinition }
+  | { readonly kind: "create-token-for-target-player"; readonly amount: number | "X"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
   /** Reveals one library card, moves it to hand, then gains its mana value. */
   | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
   /** Reveals until a card type is found, then sends the rest to a zone. */
@@ -795,6 +809,8 @@ export interface CardProfile {
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
   readonly triggerDoublers: readonly TriggerDoubler[];
+  /** Colors of creatures this permanent untaps during each other player's untap step (CR 502.2). */
+  readonly untapColorsDuringOtherPlayersUntap: readonly string[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
   readonly noMaximumHandSizeForAllPlayers: boolean;
@@ -1441,6 +1457,14 @@ function parseTriggerDoublers(text: string): TriggerDoubler[] {
   return text.split("\n").flatMap((line) => parseTriggerDoubler(line) ?? []);
 }
 
+function parseUntapColorsDuringOtherPlayersUntap(text: string): string[] {
+  if (/untap all green and\/?or blue creatures you control during each other/i.test(text)) return ["G", "U"];
+  const match = /^untap all (.+?) creatures you control during each other .*?untap step\.?$/im.exec(text);
+  if (!match) return [];
+  const colors = match[1]!.toLowerCase().match(/green|blue/g) ?? [];
+  return [...new Set(colors.map((color) => color === "green" ? "G" : "U"))];
+}
+
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
   const clean = line.trim().replace(/\.$/, "");
   const graveyard = /^~ gets ([+-]\d+)\/([+-]\d+) for each creature card in your opponents' graveyards$/i.exec(clean);
@@ -1506,6 +1530,20 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const activated = /^([^:]{1,120}):\s*(.+)$/.exec(line.trim());
   if (!activated) return null;
   const [, costText, effectText] = activated as unknown as [string, string, string];
+  // Forecast is an activated ability whose source remains in hand (CR 702.57).
+  // Parse it through the shared sentence grammar so every supported effect is
+  // reusable by both the printed spell and its Forecast ability.
+  const forecast = /^Forecast\s+[—–-]\s*((?:\{[^}]+\})+),\s*Reveal\s+(?:~|this card)\s+from\s+your hand:\s*(.+)$/i.exec(line.trim());
+  if (forecast) {
+    const manaCost = parseManaCost(forecast[1]!);
+    const recognized = recognizeSentence(forecast[2]!.trim());
+    if (!manaCost || !recognized) return null;
+    return {
+      index, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost,
+      sourceZone: "hand", upkeepOnly: true, oncePerTurn: true, revealSourceFromHand: true,
+      effect: recognized.effect, targetKind: recognized.target, text: line.trim()
+    };
+  }
   // Mana abilities have their own immediate-resolution path (CR 605.1a).
   if (/^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
@@ -2114,6 +2152,20 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: "none"
     };
   }
+  if ((match = /^You draw (\w+) cards? and you lose (\w+) life$/i.exec(text))) {
+    const draw = toNumber(match[1]);
+    const life = toNumber(match[2]);
+    if (draw !== null && life !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: draw }, { kind: "lose-life", amount: life }] },
+      target: "none"
+    };
+    const dX = draw ?? (match[1]!.toUpperCase() === "X" ? "X" as const : null);
+    const lX = life ?? (match[2]!.toUpperCase() === "X" ? "X" as const : null);
+    if (dX !== null && lX !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: dX }, { kind: "lose-life", amount: lX }] },
+      target: "none"
+    };
+  }
   if ((match = /^Draw (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "draw", amount }, target: "none" };
@@ -2143,6 +2195,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^You gain life equal to the power of target creature you control$/i.test(text)) {
     return { effect: { kind: "gain-life-equal-target-power" }, target: "creature-you-control" };
+  }
+  if (/^Whenever you gain life this turn, each opponent loses that much life$/i.test(text)) {
+    return { effect: { kind: "grant-life-gain-opponent-loss" }, target: "none" };
   }
   if ((match = /^Each opponent loses (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
@@ -3190,6 +3245,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     if (/^players have no maximum hand size\.?$/i.test(line)) continue;
     if (/^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line)) continue;
+    if (/untap all (?:green|blue|green and\/?or blue|blue and\/?or green) creatures you control during each other/i.test(line)) continue;
     if (/^other creatures you control have extort\.?$/i.test(line)) continue;
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
@@ -3347,6 +3403,14 @@ function recognizeText(text: string): RecognizedText {
         });
         continue;
       }
+    }
+    const defendingLandsPump = /^(?:when|whenever)\s+~\s+attacks,?\s+it gets \+X\/\+0 until end of turn,?\s+where X is the number of lands defending player controls\.?$/i.test(line);
+    if (defendingLandsPump) {
+      triggers.push({
+        event: "attacks", subject: "self", effect: { kind: "pump-source-by-defending-lands" },
+        optional: false, targetKind: "none", sourceText: line
+      });
+      continue;
     }
     // Stalking Vengeance: "it" refers to the source permanent, not the
     // creature whose death caused the trigger (CR 109.5).
@@ -3632,6 +3696,7 @@ export function cardProfile(card: CardData): CardProfile {
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const triggerDoublers = parseTriggerDoublers(text);
+  const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const noMaximumHandSizeForAllPlayers = text.split("\n").some((line) => /^players have no maximum hand size\.?$/i.test(line.trim()));
@@ -3682,6 +3747,7 @@ export function cardProfile(card: CardData): CardProfile {
     staticKeywordGrants,
     keywordsDuringYourTurn,
     triggerDoublers,
+    untapColorsDuringOtherPlayersUntap,
     preventsLifeGain,
     noMaximumHandSize,
     noMaximumHandSizeForAllPlayers,
@@ -3697,7 +3763,7 @@ export function cardProfile(card: CardData): CardProfile {
     levelUpCost,
     levelDefinitions,
     protectionFrom,
-    activatedAbilities: isPermanent
+    activatedAbilities: isPermanent || recognized.activatedAbilities.some((ability) => ability.sourceZone === "hand")
       ? [
           ...recognized.activatedAbilities,
           ...(levelUpCost ? [{

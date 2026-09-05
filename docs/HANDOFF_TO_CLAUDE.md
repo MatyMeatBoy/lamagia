@@ -6,19 +6,19 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ## Current published checkpoint — 2026-09-05
 
-The latest source checkpoint includes the verified C13 rescue primitives for
-creature-death history, Stalking Vengeance, and Opal Palace, plus benchmark-
-selected compositional worker payloads; verify the Pages run before reporting
+The latest source checkpoint includes the verified C13 untap-during-opponent-
+untap primitive for Murkfiend Liege, plus rescued C14 draw/compound-effect and
+token-scaling paths; verify the Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,289 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,290 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
 - **Edition memberships:** 23,401 / 84,990 implemented (27.5%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 248 / 341 unique cards (72.7%), 93 pending.
+- **Commander 2013:** 249 / 341 unique cards (73.0%), 92 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
@@ -32,8 +32,15 @@ Audited worker intake added executable batches for mana-entry restrictions,
 noncreature-spell drain, surveil, reanimation, Hunted Troll, Grazing
 Gladehart, Disciple of Griselbrand, and Springjack Pasture. The optional
 cycling-target keyword grammar was generalized and tested with Dirge of Dread.
-Rules suite: **559 passing tests**. Latest pushed source: `3bceac3`; generated
-export: **9,289/38,711** profiles and C13 **248/341**.
+Rules suite: **562 passing tests**. Latest pushed source: `dd6c117`; generated
+export: **9,290/38,711** profiles and C13 **249/341**.
+
+The latest origin audit also salvaged the executable portion of
+`origin/c14-batch2-clean` as `dd6c117`: draw triggers remain on the engine's
+authoritative `card-drawn` event, and duplicate Siege/choice cases were
+removed after validation. Its stale or conflicting history was not imported
+wholesale; `docs/C14_STATUS_AND_COMMITS.md` remains the source map for its
+reported cards.
 
 Sek'Kuar, Slice and Dice, graveyard exile, Well of Lost Dreams, Vile Requiem,
 and Flickerwisp arrivals were audited and skipped as duplicates of existing

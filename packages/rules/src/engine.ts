@@ -110,6 +110,8 @@ export interface Permanent {
   readonly toughnessModifier: number;
   /** Keyword effects from spells/abilities that expire during cleanup. */
   readonly temporaryKeywords?: readonly EnforcedKeyword[];
+  /** Trigger definitions granted by a resolving ability until cleanup. */
+  readonly temporaryTriggers?: readonly TriggerDefinition[];
   /** Temporary characteristic-setting animation, cleared during cleanup (CR 613.6). */
   readonly temporaryAnimation?: {
     readonly power: number;
@@ -164,6 +166,8 @@ export interface PlayerState {
   readonly drewFromEmptyLibrary: boolean;
   /** Skip priority automatically in windows where this seat has nothing to do. */
   readonly autoPass: boolean;
+  /** Source/ability keys already activated during this turn (CR 702.57). */
+  readonly oncePerTurnActivations?: readonly string[];
   /** Rebound (CR 702.88): instance ids exiled this way, castable free at the next upkeep. */
   readonly reboundPending: readonly string[];
   /** Extra land plays granted this turn ("you may play an additional land"), reset each turn (CR 305.2). */
@@ -568,6 +572,19 @@ function nextLivingSeat(state: GameState, seat: SeatId): SeatId {
 
 function allPermanents(state: GameState): Permanent[] {
   return state.players.flatMap((player) => player.battlefield);
+}
+
+/** Gives zone-bound abilities the same deterministic source shape as permanents. */
+function handActivationSource(card: GameCard, controller: SeatId): Permanent {
+  return {
+    instance_id: card.instance_id, card, controller, tapped: false, summoningSick: false,
+    enteredThisTurn: false, damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0,
+    isCommander: false
+  };
+}
+
+function activationKey(sourceId: string, abilityIndex: number): string {
+  return `${sourceId}:${abilityIndex}`;
 }
 
 function findPermanent(state: GameState, instanceId: string): Permanent | null {
@@ -1458,10 +1475,10 @@ function raiseEvent(
     .filter((permanent) => cardProfile(permanent.card).grantsExtortToOthers)
     .map((permanent) => permanent.controller));
   for (const watcher of watchers) {
-    const base = cardProfile(watcher.card).triggers;
+    const base = [...cardProfile(watcher.card).triggers, ...(watcher.temporaryTriggers ?? [])];
     const grantedExtort: TriggerDefinition[] = extortGrantors.has(watcher.controller)
       && isCreature(cardProfile(watcher.card))
-      && !cardProfile(watcher.card).triggers.some((definition) => definition.effect.kind === "extort")
+      && !base.some((definition) => definition.effect.kind === "extort")
       ? [{ event: "spell-cast", subject: "you", effect: { kind: "extort" }, optional: true, targetKind: "none", sourceText: "Extort", payCost: EXTORT_COST }]
       : [];
     const definitions = grantedExtort.length ? [...base, ...grantedExtort] : base;
@@ -1488,7 +1505,7 @@ function raiseEvent(
           ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
           ...("amount" in event ? { eventAmount: event.amount } : {}),
           ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
-          ...("victim" in event ? { eventPlayer: event.victim } : {})
+          ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {})
         });
       }
     }
@@ -2264,6 +2281,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "each-opponent-loses-life-event-amount": {
+      let next = state;
+      const amount = object.trigger?.eventAmount ?? 0;
+      if (amount <= 0) return state;
+      for (const opponent of opponentsOf(state, controller)) next = loseLife(next, opponent, amount);
+      return next;
+    }
     case "extort": {
       // Each opponent loses 1 life; the controller gains that much (CR 702.39a).
       let next = state;
@@ -2417,6 +2441,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!source || !attack || !isCreature(cardProfile(source.card))) return state;
       const pumped = modifyCreatures(state, amount, 0, (candidate) => candidate.instance_id === sourceId);
       return dealDamageFromObject(pumped, attack.defender, amount, sourceName, object);
+    }
+    case "pump-source-by-defending-lands": {
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const defender = object.trigger?.eventPlayer;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!source || defender === undefined || !isCreature(cardProfile(source.card))) return state;
+      const amount = playerAt(state, defender).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length;
+      return modifyCreatures(state, amount, 0, (candidate) => candidate.instance_id === source.instance_id);
     }
     case "incite-rebellion": {
       let next = state;
@@ -3672,8 +3704,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target?.kind !== "player") return state;
       const recipient = target.seat;
       const amount = effectAmount(effect.amount, object);
+      const stat = effect.statsFromAmount ? amount : null;
       let next = state;
-      for (let index = 0; index < amount; index += 1) {
+      for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
         const token: GameCard = {
           scryfall_id: `token:${object.id}:${index}`,
           instance_id: `token:${object.id}:${index}`,
@@ -3684,8 +3717,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           mana_cost: "",
           cmc: 0,
           oracle_text: effect.token.keywords.join(", "),
-          power: effect.token.power === null ? null : String(effect.token.power),
-          toughness: effect.token.toughness === null ? null : String(effect.token.toughness),
+          power: stat !== null ? String(stat) : effect.token.power === null ? null : String(effect.token.power),
+          toughness: stat !== null ? String(stat) : effect.token.toughness === null ? null : String(effect.token.toughness),
           colors: effect.token.colors,
           keywords: effect.token.keywords
         };
@@ -4579,9 +4612,16 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,
+        oncePerTurnActivations: [],
         battlefield: player.battlefield.map((permanent) => ({
            ...permanent,
-           tapped: cardProfile(permanent.card).doesNotUntapDuringUntap ? permanent.tapped : false,
+          tapped: cardProfile(permanent.card).doesNotUntapDuringUntap || allPermanents(next).some((source) => {
+            const sourceProfile = cardProfile(source.card);
+            const targetProfile = cardProfile(permanent.card);
+            return source.controller === permanent.controller && source.controller !== next.activeSeat
+              && sourceProfile.untapColorsDuringOtherPlayersUntap.some((color) => targetProfile.colors.includes(color))
+              && isCreature(targetProfile);
+          }) ? permanent.tapped : false,
            summoningSick: false,
            enteredThisTurn: false,
            loyaltyUsedThisTurn: false
@@ -4626,7 +4666,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         ...next,
         players: next.players.map((current) => ({
           ...current,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryAnimation: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
         }))
       };
       break;
@@ -5115,6 +5155,30 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         manaValue: option.cost.manaValue,
         note: option.note
       });
+    }
+  }
+
+  // Zone-bound activated abilities (Forecast and future hand primitives) are
+  // offered beside cycling, but remain subject to the same authoritative
+  // activation validator and mana planner as battlefield abilities.
+  if (!splitSecondActive(state)) for (const card of player.hand) {
+    const source = handActivationSource(card, seat);
+    for (const ability of cardProfile(card).activatedAbilities.filter((candidate) => candidate.sourceZone === "hand")) {
+      const variableValues = ability.manaCost?.hasVariable
+        ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()]
+        : [0];
+      for (const variableValue of variableValues) {
+        const check = activatableAbility(state, seat, source, ability, variableValue);
+        if (!check.legal) continue;
+        actions.push({
+          action: { type: "activate", sourceId: card.instance_id, abilityIndex: ability.index,
+            ...(ability.manaCost?.hasVariable ? { variableValue } : {}) },
+          label: `${card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}`,
+          cardId: card.instance_id,
+          ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+          note: ability.text
+        });
+      }
     }
   }
 
@@ -5622,6 +5686,10 @@ function activatableAbility(
   const player = playerAt(state, seat);
   if (splitSecondActive(state)) return { legal: false };
   if (permanent.controller !== seat) return { legal: false };
+  if (ability.sourceZone === "hand" && !player.hand.some((card) => card.instance_id === permanent.instance_id)) return { legal: false };
+  if (ability.sourceZone !== "hand" && !player.battlefield.some((candidate) => candidate.instance_id === permanent.instance_id)) return { legal: false };
+  if (ability.upkeepOnly && (state.activeSeat !== seat || state.step !== "upkeep")) return { legal: false };
+  if (ability.oncePerTurn && (player.oncePerTurnActivations ?? []).includes(activationKey(permanent.instance_id, ability.index))) return { legal: false };
   if (ability.sorcerySpeed && !sorcerySpeed(state, seat)) return { legal: false };
   if (ability.loyaltyCost !== undefined) {
     // One loyalty ability per planeswalker per turn (CR 606.3); a minus ability
@@ -5721,10 +5789,13 @@ function triggerTapCostCandidates(
 function applyActivate(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate" }>): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para activar esa habilidad.");
   const player = playerAt(state, seat);
-  const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
-  if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
+  const battlefieldSource = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+  const handSource = player.hand.find((card) => card.instance_id === action.sourceId);
+  const source = battlefieldSource ?? (handSource ? handActivationSource(handSource, seat) : undefined);
+  if (!source) throw new Error("Ese permanente o carta ya no está bajo tu control.");
   const ability = cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
   if (!ability) throw new Error("Esa habilidad activada no existe.");
+  if (ability.sourceZone === "hand" ? !handSource : !battlefieldSource) throw new Error("La zona de esa habilidad ya no es válida.");
   const check = activatableAbility(state, seat, source, ability, action.variableValue ?? 0);
   if (!check.legal) throw new Error(`No puedes activar la habilidad de ${source.card.name} ahora.`);
 
@@ -5803,6 +5874,9 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   let next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost,
+    ...(ability.oncePerTurn ? {
+      oncePerTurnActivations: [...new Set([...(current.oncePerTurnActivations ?? []), activationKey(source.instance_id, ability.index)])]
+    } : {}),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
       let updated = permanent;
