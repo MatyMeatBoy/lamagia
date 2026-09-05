@@ -104,6 +104,8 @@ export interface ActivatedAbility {
   readonly discardsCard?: boolean;
   /** One card chosen from the controller's graveyard and exiled as a cost. */
   readonly exilesGraveyardCard?: boolean;
+  /** Multiple creature cards chosen from one graveyard and exiled as a cost. */
+  readonly exilesGraveyardCards?: { readonly amount: number; readonly scope: "single-graveyard" };
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
   readonly lifeCost: number;
@@ -1413,6 +1415,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const nontokenArtifact = Boolean(sacrificePermanent && /^nontoken\s+artifact$/i.test(sacrificePermanent[2]!));
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
   const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
+  const exilesGraveyardCardsMatch = /exile\s+(two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/i.exec(costText);
   const removedCounters: CounterCost[] = [];
   for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+~/gi)) {
     const amount = toNumber(match[1]);
@@ -1432,6 +1435,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
+    .replace(/exile\s+(?:two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
     .replace(/[,\s]/g, "");
@@ -1447,6 +1451,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: nontokenArtifact ? "Artifact" as const : /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]![1]! ? sacrificePermanent[2]!.slice(1).toLowerCase() : ""}` as "Artifact" | "Enchantment" | "Land", ...(nontokenArtifact ? { nontoken: true } : {}) } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
+    ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     ...(requiresOpponentLands !== null ? { requiresOpponentLands } : {}),
