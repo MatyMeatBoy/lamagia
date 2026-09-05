@@ -893,7 +893,7 @@ export type MagicColor = "W" | "U" | "B" | "R" | "G";
 export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
-  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
+  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment"
   | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
@@ -3358,6 +3358,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "blink-target-creature" }, target: "creature-you-control" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
+  if (/^Destroy target creature or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-or-enchantment" };
+  if (/^Destroy target artifact or creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-creature" };
   if (/^Destroy up to X target nonblack creatures, where X is the number of verse counters on (?:~|this enchantment)\.?\s*(?:They can'?t be regenerated\.?)?$/i.test(text)) {
     return { effect: { kind: "destroy-n-creatures", count: "X", nonblack: true, counter: "verse" }, target: "nonblack-creature" };
   }

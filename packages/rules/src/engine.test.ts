@@ -349,6 +349,7 @@ const SHROUD_REMOVAL = () => make({ name: "Shroud Bane", type_line: "Instant", m
 const REACH_REMOVAL = () => make({ name: "Reach Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with reach." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
+const MORTIFY = () => make({ name: "Mortify", type_line: "Instant", mana_cost: "{1}{W}{B}", cmc: 3, oracle_text: "Destroy target creature or enchantment.", oracle_id: "faa01ed1-ccfa-4e58-951f-cd81f9068027", scryfall_id: "faa01ed1-ccfa-4e58-951f-cd81f9068027" });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
 const ENCHANTMENT_REMOVAL = () => make({ name: "Demolish Enchantment", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Destroy target enchantment." });
 const LAND_REMOVAL = () => make({ name: "Stone Rain", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target land." });
@@ -4491,6 +4492,16 @@ describe("casting", () => {
     const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(false);
+  });
+
+  it("reuses typed artifact-or-creature targeting for Mortify", () => {
+    expect(profileOf(MORTIFY())).toMatchObject({ targetKind: "creature-or-enchantment", fullyImplemented: true });
+    const enchantment = make({ name: "Test Enchantment", type_line: "Enchantment" });
+    let game = readyToCast([MORTIFY()], [PLAINS(), SWAMP(), SWAMP()], [], [enchantment, BEAR()]);
+    expect(legalTargets(game, 0, "creature-or-enchantment")).toHaveLength(2);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Test Enchantment")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
   });
 
   it("uses continuous flying grants when filtering flying targets", () => {
