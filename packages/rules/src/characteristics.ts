@@ -451,6 +451,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  /** Target two creatures; they deal damage equal to their power to each other (CR 701.12). */
+  | { readonly kind: "fight" }
   /** Damage equal to the power of the creature that caused this trigger. */
   | { readonly kind: "damage-triggered-creature-power" }
   /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
@@ -1604,6 +1606,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
   const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
   const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
+  const fight = /^Target Beast creature you control fights target creature an opponent controls\.?$/i.test(parsedEffectText);
   const tokenAndLife = /^(Create\s+.+?\s+token(?:s)?(?:\s+named\s+[^,]+)?(?:\s+with\s+.+)?)\.\s*You gain (\w+) life\.?$/i.exec(parsedEffectText);
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
@@ -1616,6 +1619,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: revealTopConditional, target: "none" as TargetKind }
     : revealTopToHand
     ? { effect: revealTopToHand, target: "none" as TargetKind }
+    : fight
+    ? { effect: { kind: "fight" } as SpellEffect, target: "creature-you-control" as TargetKind, targetKinds: ["creature-you-control", "creature-opponent"] as const }
     : tokenEffect && tokenEffect.kind === "create-token" && tokenLifeAmount !== null
     ? { effect: { kind: "compound", effects: [tokenEffect, { kind: "gain-life", amount: tokenLifeAmount }] } as SpellEffect, target: "none" as TargetKind }
     : sacrificedToughnessLife
@@ -1694,6 +1699,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     manaCost,
     effect: recognized.effect,
     targetKind: recognized.target,
+    ...("targetKinds" in recognized && recognized.targetKinds ? { targetKinds: recognized.targetKinds } : {}),
     text: line.trim()
   };
 }

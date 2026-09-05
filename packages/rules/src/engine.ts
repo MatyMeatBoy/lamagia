@@ -2455,6 +2455,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       return state;
     }
+    case "fight": {
+      const left = object.targets[0];
+      const right = object.targets[1];
+      if (!left || !right || left.kind !== "permanent" || right.kind !== "permanent") return state;
+      const first = findPermanent(state, left.instanceId);
+      const second = findPermanent(state, right.instanceId);
+      if (!first || !second || !isCreature(cardProfile(first.card)) || !isCreature(cardProfile(second.card))) return state;
+      const firstPower = Math.max(0, powerOf(first, state));
+      const secondPower = Math.max(0, powerOf(second, state));
+      let next = dealDamageToPermanent(state, second.instance_id, firstPower, false, first.card.name, cardProfile(first.card), { controller: first.controller, permanentId: first.instance_id });
+      return dealDamageToPermanent(next, first.instance_id, secondPower, false, second.card.name, cardProfile(second.card), { controller: second.controller, permanentId: second.instance_id });
+    }
     case "damage-triggered-creature-power": {
       const target = object.targets[0];
       const eventId = object.trigger?.eventPermanentId ?? object.triggeredPermanentId;
@@ -5298,6 +5310,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           label: `${card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}`,
           cardId: card.instance_id,
           ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+          ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
           note: ability.text
         });
       }
@@ -5396,6 +5409,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exileSet.length ? ` — Exile ${exileSet.map((card) => card.name).join(", ")}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         note: ability.text
       });
       }
@@ -5813,7 +5827,7 @@ function activatableAbility(
   permanent: Permanent,
   ability: ActivatedAbility,
   variableValue = 0
-): { legal: boolean; targetKind?: Exclude<TargetKind, "none">; note?: string } {
+): { legal: boolean; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[]; note?: string } {
   const player = playerAt(state, seat);
   if (splitSecondActive(state)) return { legal: false };
   if (permanent.controller !== seat) return { legal: false };
@@ -5882,6 +5896,10 @@ function activatableAbility(
     : ability.targetKind;
   if (targetKind === "none") return { legal: true };
   const sourceProfile = cardProfile(permanent.card);
+  if (ability.targetKinds?.length) {
+    if (ability.targetKinds.some((kind) => !legalTargets(state, seat, kind, sourceProfile).length)) return { legal: false };
+    return { legal: true, targetKind, targetKinds: ability.targetKinds };
+  }
   if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
   if (!legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
   return { legal: true, targetKind };
@@ -5992,7 +6010,15 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     exiles = [exile];
   }
 
-  if (check.targetKind) {
+  if (ability.targetKinds?.length) {
+    const allowedBySlot = ability.targetKinds.map((kind) => legalTargets(state, seat, kind, cardProfile(source.card)));
+    const chosen = targets.length ? targets : allowedBySlot.map((allowed) => allowed[0]).filter((target): target is Target => Boolean(target));
+    if (chosen.length !== ability.targetKinds.length) throw new Error(`${source.card.name} necesita ${ability.targetKinds.length} objetivos legales.`);
+    if (!chosen.every((target, index) => allowedBySlot[index]!.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
+      throw new Error(`Objetivo ilegal para ${source.card.name}.`);
+    }
+    targets = chosen;
+  } else if (check.targetKind) {
     const allowed = legalTargets(state, seat, check.targetKind, cardProfile(source.card));
     const chosen = targets.length ? targets : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${source.card.name} necesita un objetivo legal.`);

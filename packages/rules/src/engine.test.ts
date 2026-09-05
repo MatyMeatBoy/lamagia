@@ -322,6 +322,8 @@ const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "En
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
+const C13_CONTESTED_CLIFFS = () => make({ name: "Contested Cliffs", type_line: "Land", oracle_text: "{T}: Add {C}.\n{R}{G}, {T}: Target Beast creature you control fights target creature an opponent controls.", produced_mana: ["C"], oracle_id: "b891a683-2ebc-4e9c-b402-5dd9c1b42b69" });
+const TEST_BEAST = () => make({ name: "Test Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "4", toughness: "4" });
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -5807,6 +5809,28 @@ describe("activated abilities", () => {
     expect(profile.manaAbilities).toHaveLength(1);
     expect(profile.manaAbilities[0]!.produces).toEqual(["G"]);
     expect(profile.activatedAbilities).toHaveLength(0);
+  });
+
+  it("supports Contested Cliffs multi-target Beast fights", () => {
+    let game = readyOnBoard([C13_CONTESTED_CLIFFS(), MOUNTAIN(), FOREST(), TEST_BEAST()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    const source = permanentNamed(game, 0, "Contested Cliffs")!;
+    const beast = permanentNamed(game, 0, "Test Beast")!;
+    const bear = permanentNamed(game, 1, "Grizzly Bears")!;
+    const profile = profileOf(C13_CONTESTED_CLIFFS());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      effect: { kind: "fight" }, targetKinds: ["creature-you-control", "creature-opponent"]
+    });
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id && entry.action.abilityIndex === 0);
+    expect(activation).toMatchObject({ requiresTargets: ["creature-you-control", "creature-opponent"] });
+    game = applyAction(game, 0, {
+      ...activation!.action,
+      targets: [{ kind: "permanent", instanceId: beast.instance_id }, { kind: "permanent", instanceId: bear.instance_id }]
+    } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Beast")).toBe(true);
   });
 
   it("resolves Leonin Bladetrap against only attacking nonfliers", () => {
