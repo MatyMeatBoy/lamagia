@@ -174,6 +174,19 @@ or sorcery spells, with scenario coverage. It has no card-name branch and is
 available to every matching reprint. Validation: 582 rules tests,
 `npm run check`, 9,330 global profiles, C13 264/341.
 
+`b9ba689` from `origin/codex/c13-widespread-panic-f99` was selectively
+integrated as `dca66ff`. It adds the reusable `library-shuffled` event and a
+player-private hand-card choice after a spell or ability shuffles that
+player's library, including existing search/cycle/self-shuffle paths. Accepted
+card mapping:
+
+- Widespread Panic | `853a3c2b-3d37-453a-8a77-4d90bd3a1cb7`
+
+The stale claim line was not imported. The client trigger glyph was added as a
+type-safety follow-up. Validation: 583 rules tests, `npm run check`, 9,331
+global profiles, C13 265/341. The current C13 queue is 76 unfinished cards,
+with 7 one-line candidates.
+
 The divergent `origin/master` cEDH sequence was not merged wholesale: it is an
 older branch with a large unrelated tree replacement and 60 incremental
 activate-only-as-sorcery variants. It remains an explicitly audited follow-up
