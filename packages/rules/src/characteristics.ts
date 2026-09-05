@@ -873,7 +873,7 @@ function toNumber(token: string | undefined): number | null {
  * recognizers below.  The IR is only a parser front-end; the existing
  * SpellEffect executor remains authoritative (CR 609.3, 701.5, 701.13).
  */
-type SimpleEffectIROperation = "draw" | "mill" | "gain-life" | "lose-life";
+type SimpleEffectIROperation = "draw" | "mill" | "discard" | "gain-life" | "lose-life";
 type SimpleEffectIRSubject = "you" | "target-player" | "each-player" | "each-opponent";
 interface SimpleEffectIR {
   readonly operation: SimpleEffectIROperation;
@@ -882,7 +882,7 @@ interface SimpleEffectIR {
 }
 
 function simpleEffectIR(text: string): SimpleEffectIR | null {
-  const match = /^(?:(you|target player|each player|each opponent)\s+)?(draw|mill)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|twenty|\d+|X)\s+cards?$/i.exec(text)
+  const match = /^(?:(you|target player|each player|each opponent)\s+)?(draw|mill|discard)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|twenty|\d+|X)\s+cards?$/i.exec(text)
     ?? /^(you|target player|each player|each opponent)\s+(gain|gains|lose|loses)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|twenty|\d+|X)\s+life$/i.exec(text);
   if (!match) return null;
 
@@ -891,7 +891,7 @@ function simpleEffectIR(text: string): SimpleEffectIR | null {
     : subjectText === "each player" ? "each-player"
       : subjectText === "each opponent" ? "each-opponent" : "you";
   const operationText = match[2]!.toLowerCase();
-  const operation: SimpleEffectIROperation = operationText === "draw" || operationText === "mill"
+  const operation: SimpleEffectIROperation = operationText === "draw" || operationText === "mill" || operationText === "discard"
     ? operationText
     : operationText.startsWith("gain") ? "gain-life" : "lose-life";
   const amount = toNumber(match[3]) ?? (match[3]!.toUpperCase() === "X" ? "X" : null);
@@ -912,6 +912,10 @@ function simpleEffectFromIR(ir: SimpleEffectIR): { effect: SpellEffect; target: 
       : ir.subject === "each-player" ? "mill-each-player"
         : ir.subject === "each-opponent" ? "mill-each-opponent" : "mill-target-player";
     return { effect: { kind, amount: ir.amount } as SpellEffect, target };
+  }
+  if (ir.operation === "discard") {
+    if (ir.subject !== "target-player") return null;
+    return { effect: { kind: "discard-target-player", amount: ir.amount }, target: "player" };
   }
   if (ir.operation === "gain-life" && ir.subject === "each-opponent") return null;
   const kind = ir.operation === "gain-life"

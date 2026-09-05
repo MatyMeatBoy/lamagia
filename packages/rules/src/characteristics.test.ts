@@ -594,6 +594,8 @@ describe("effect recognition", () => {
       .toEqual([{ kind: "each-opponent-loses-life", amount: 2 }]);
     expect(cardProfile(card({ name: "IR Mill", type_line: "Sorcery", oracle_text: "Each player mills three cards." })).effects)
       .toEqual([{ kind: "mill-each-player", amount: 3 }]);
+    expect(cardProfile(card({ name: "IR Discard", type_line: "Sorcery", oracle_text: "Target player discards two cards." })).effects)
+      .toEqual([{ kind: "discard-target-player", amount: 2 }]);
     expect(cardProfile(card({ name: "IR Fallback", type_line: "Sorcery", oracle_text: "Draw a card for each creature you control." })).effects)
       .toEqual([{ kind: "draw-equal-controlled-type", type: "Creature" }]);
   });

@@ -27,8 +27,9 @@ the amount, target, zone, card type/subtype, cost, choice, and optionality.
 Target/zone/type differences remain different keys. Original Oracle text is
 never discarded from the review artifact. The Python compact artifact remains
 context/scheduling-only, but the rules parser now has a deliberately smaller
-executable front-end for exact simple shapes: `draw`, `mill`, `gain-life`, and
-`lose-life` with a fixed subject and amount. That front-end lowers directly to
+executable front-end for exact simple shapes: `draw`, `mill`, `discard` (target
+player only), `gain-life`, and `lose-life` with a fixed subject and amount. That
+front-end lowers directly to
 the existing `SpellEffect` union; it does not create a second executor.
 
 Use it as a partial compiler front-end: simple, repeated shapes such as
