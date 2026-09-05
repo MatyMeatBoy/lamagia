@@ -308,6 +308,7 @@ h1, h2, h3 { margin: 0; }
 .tile-badge.blk { background: #1c4a70; color: #c9e6ff; }
 .tile-badge.sick { background: #38384f; color: #c9c6ff; }
 .tile-badge.mana { background: #14402a; color: #a5e8c1; }
+.tile-badge.aura { background: #54316d; color: #f0d5ff; }
 
 @keyframes targetPulse {
   0%, 100% { box-shadow: 0 0 0 2px #ff8f6b; }

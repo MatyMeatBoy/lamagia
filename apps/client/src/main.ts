@@ -738,6 +738,7 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
     permanent.summoningSick ? `<i class="tile-badge sick" title="Mareo de invocación">z</i>` : "",
     permanent.attacking !== null ? `<i class="tile-badge atk" title="Ataca a ${escapeHtml(seatOf(permanent.attacking)?.name ?? "")}">⚔</i>` : "",
     permanent.blocking ? `<i class="tile-badge blk" title="Bloqueando">◈</i>` : "",
+    permanent.attachedToPlayer !== undefined ? `<i class="tile-badge aura" title="Encanta a ${escapeHtml(seatOf(permanent.attachedToPlayer)?.name ?? "jugador")}">A</i>` : "",
     permanent.producesMana && !permanent.tapped ? `<i class="tile-badge mana" title="Puede producir maná">◇</i>` : ""
   ].join("");
   const icons = abilityIconsHtml(permanent);

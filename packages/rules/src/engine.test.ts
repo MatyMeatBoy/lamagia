@@ -29,6 +29,18 @@ describe("smart counter response and safe mana undo", () => {
     expect(permanents.at(-2)).toMatchObject({ isCreature: false, power: null, toughness: null });
     expect(permanents.at(-1)).toMatchObject({ isCreature: true, power: 0, toughness: 0 });
   });
+  it("projects player-attached Auras without leaking or losing the attachment", () => {
+    const curse = make({ name: "Test Curse", type_line: "Enchantment — Aura", oracle_text: "Enchant player" });
+    let game = putOnBattlefield(twoSeatGame([], []), 0, [curse]);
+    const aura = game.players[0]!.battlefield[0]!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === aura.instance_id
+        ? { ...permanent, attachedToPlayer: 1 }
+        : permanent)
+    }));
+    expect(projectGame(game, 0).players[0]!.battlefield[0]).toMatchObject({ attachedToPlayer: 1 });
+    expect(projectGame(game, 1).players[0]!.battlefield[0]).toMatchObject({ attachedToPlayer: 1 });
+  });
   it("annihilates opposing +1/+1 and -1/-1 counters as a state-based action", () => {
     let game = putOnBattlefield(twoSeatGame([], []), 0, [BEAR()]);
     const bear = game.players[0]!.battlefield.at(-1)!;
