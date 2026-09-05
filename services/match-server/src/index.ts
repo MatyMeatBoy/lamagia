@@ -20,7 +20,7 @@ const catalogDbPath = process.env.CATALOG_DB_PATH ?? fileURLToPath(new URL("../.
 const activePodPath = process.env.ACTIVE_POD_PATH ?? fileURLToPath(new URL("../../../data/decks/cedh-pod.json", import.meta.url));
 const preconsPath = process.env.PRECONS_PATH ?? fileURLToPath(new URL("../../../data/decks/commander-precons.json", import.meta.url));
 const engineReportPath = process.env.ENGINE_REPORT_PATH ?? fileURLToPath(new URL("../../../data/simulations/engine-matrix-last.json", import.meta.url));
-const engineProfilesPath = process.env.ENGINE_PROFILES_PATH ?? fileURLToPath(new URL("../../../data/rules/engine-card-profiles.json", import.meta.url));
+const defaultEngineProfilesPath = fileURLToPath(new URL("../../../data/rules/engine-card-profiles.json", import.meta.url));
 const setCoveragePath = process.env.SET_COVERAGE_PATH ?? fileURLToPath(new URL("../../../data/rules/set-coverage.json", import.meta.url));
 const gameplayDebugLogPath = process.env.GAMEPLAY_DEBUG_LOG ?? fileURLToPath(new URL("../../../data/runtime/gameplay-debug.ndjson", import.meta.url));
 const GAMEPLAY_DEBUG_MAX_BYTES = 4 * 1024 * 1024;
@@ -50,8 +50,8 @@ interface CoverageSet {
 }
 interface SetCoverageReport { readonly format: string; readonly generatedAt: string; readonly setCount: number; readonly membershipCount: number; readonly implementedMembershipCount: number; readonly percentage: number; readonly sets: readonly CoverageSet[] }
 
-let podCache: ImportedPod | null = null;
-let preconCache: ImportedPrecons | null = null;
+let podCache: { readonly path: string; readonly value: ImportedPod } | null = null;
+let preconCache: { readonly path: string; readonly value: ImportedPrecons } | null = null;
 let setCoverageCache: SetCoverageReport | null = null;
 let setCoverageMtime = 0;
 
@@ -74,20 +74,24 @@ function isCollectorEdition(deck: ImportedPrecon): boolean {
 }
 
 async function readActivePod(): Promise<ImportedPod> {
-  if (podCache) return podCache;
-  if (!existsSync(activePodPath)) throw new Error("Ejecuta npm run decks:pod:sync para cargar el pod cEDH.");
-  podCache = JSON.parse(await readFile(activePodPath, "utf8")) as ImportedPod;
-  return podCache;
+  const path = process.env.ACTIVE_POD_PATH ?? activePodPath;
+  if (podCache?.path === path) return podCache.value;
+  if (!existsSync(path)) throw new Error("Ejecuta npm run decks:pod:sync para cargar el pod cEDH.");
+  const value = JSON.parse(await readFile(path, "utf8")) as ImportedPod;
+  podCache = { path, value };
+  return value;
 }
 
 async function readPrecons(): Promise<ImportedPrecons> {
-  if (preconCache) return preconCache;
-  if (!existsSync(preconsPath)) throw new Error("Ejecuta npm run precons:sync para importar los mazos precon.");
-  const imported = JSON.parse(await readFile(preconsPath, "utf8")) as ImportedPrecons;
+  const path = process.env.PRECONS_PATH ?? preconsPath;
+  if (preconCache?.path === path) return preconCache.value;
+  if (!existsSync(path)) throw new Error("Ejecuta npm run precons:sync para importar los mazos precon.");
+  const imported = JSON.parse(await readFile(path, "utf8")) as ImportedPrecons;
   // Keep collector variants documented in the source file, but do not expose
   // them as selectable Commander products in the normal deck browser.
-  preconCache = { ...imported, decks: imported.decks.filter((deck) => !isCollectorEdition(deck)) };
-  return preconCache;
+  const value = { ...imported, decks: imported.decks.filter((deck) => !isCollectorEdition(deck)) };
+  preconCache = { path, value };
+  return value;
 }
 
 // ---------------------------------------------------------------------------
@@ -496,7 +500,7 @@ app.post<{ Body: CreateBody }>("/api/matches", async (request, reply) => {
       decks = [chosen, ...sameProduct, ...filler].slice(0, 4);
       source = precons.source;
     } else if (mode === "tested") {
-      const completeOracleIds = await readCompletedOracleIds(engineProfilesPath);
+      const completeOracleIds = await readCompletedOracleIds(process.env.ENGINE_PROFILES_PATH ?? defaultEngineProfilesPath);
       const precons = await readPrecons();
       const pod = await readActivePod();
       const tested = selectTestedPod(
