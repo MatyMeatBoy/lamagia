@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,177**
-- Cards with a reusable existing primitive hint: **11,472**
+- One-line cards: **15,176**
+- Cards with a reusable existing primitive hint: **11,471**
 - Cards needing new primitive review: **3,705**
-- Templates: **11,995**
+- Templates: **11,994**
 
 ## Worker rule
 
@@ -41,7 +41,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Nameless Inversion | `d6911456-42cb-4b23-a560-dc98784530f5` | pump | new primitive review | Target creature gets +3/-3 and loses all creature types until end of turn. |
 | needs-new-primitive | Bituminous Blast | `d291d8f7-bb67-470c-8794-cd553c91e5cc` | activated | new primitive review | Cascade |
 | reuse-existing | Hinder | `c9db6b94-a7b1-4b93-b454-4dead8f85e34` | counters | counter | If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard. |
-| reuse-existing | Blightning | `a6496440-dc0c-4d9b-bf37-f537b6f0187b` | discard | draw / discard | That player or that planeswalker's controller discards two cards. |
 | reuse-existing | Incinerate | `d8fd7a34-8418-4e98-b79b-119c4348c667` | damage | damage / life | A creature dealt damage this way can't be regenerated this turn. |
 | needs-new-primitive | Brave the Elements | `9d73a51a-1c8e-40cd-8124-aeff406a0884` | activated | new primitive review | White creatures you control gain protection from the chosen color until end of turn. |
 | reuse-existing | Strategic Betrayal | `0127c13f-7b0f-44c3-8b35-97f306c5f239` | exile | exile | Target opponent exiles a creature they control and their graveyard. |
@@ -218,5 +217,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Hanna, Ship's Navigator | `3b008c71-e2a0-4f56-83d3-655c5dd58e0e` | return | activated ability / mana | {1}{W}{U}, {T}: Return target artifact or enchantment card from your graveyard to your hand. |
 | reuse-existing | Rise from the Tides | `390b862a-2a85-44bd-832c-f5bbd3eb4ea0` | token | create / token | Create a tapped 2/2 black Zombie creature token for each instant and sorcery card in your graveyard. |
 | reuse-existing | Rishadan Port | `f3e8dc56-2810-474e-a6a7-9c3555f94ae9` | activated | activated ability / mana | {1}, {T}: Tap target land. |
+| reuse-existing | Identity Thief | `a200daec-983c-4ea6-ae98-1c963b50fbb1` | exile | trigger / ETB | Whenever ~ attacks, you may exile another target nontoken creature. If you do, ~ becomes a copy of that creature until end of turn. Return the exiled card to the battlefield under its owner's control at the beginning of the next end step. |
 
-The JSON contains the remaining 14,977 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,976 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
