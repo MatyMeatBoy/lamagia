@@ -2439,6 +2439,36 @@ before this claim (post the upstream commander-fix merge) and after fixing
 the state-passing bug above; the 4/200 Mana Vault failure was transient,
 introduced and then fixed within this same claim, never landed on `worker-05`.
 
+### Worker-05: check lands were already correct too, same uncredited bug as shock lands (2026-09-04)
+
+Claim `rules-check-land-credit`, continuing the Nekusar decklist (Choked
+Estuary). Same shape as the earlier shock-land fix: the `entersTapped`
+`unless-reveal-card` rule was already fully enforced in `engine.ts`
+(`applyPlayLand` raises a `reveal-card` pending choice; upstream had already
+landed full scenario tests for it against Frostboil Snarl), but the printed
+"As ~ enters, you may reveal a(n) <type> card from your hand. If you don't,
+~ enters tapped." line was never consumed by the per-line coverage check in
+`characteristics.ts`, so it fell through to the generic sentence-splitter
+and got reported as two separate unimplemented fragments — keeping every
+check land `fullyImplemented: false` despite playing correctly. Added one
+consumption regex next to the existing shock-land one, matching the same
+style. No engine change; added a profile-level test crediting Frostboil
+Snarl alongside its existing (already-passing) behavioral tests.
+
+Fully implements 17 of the 19 catalog cards using this rule: Frostboil
+Snarl, Vineglimmer Snarl, Shineshadow Snarl, Furycalm Snarl, Necroblossom
+Snarl, Port Town, Foreboding Ruins, Game Trail, Fortified Village, Choked
+Estuary, Ancient Amphitheater, Gilt-Leaf Palace, Secluded Glen, Wanderwine
+Hub, Auntie's Hovel, Murmuring Bosk, Flamekin Village. Primal Beyond and
+Rustic Clachan stay `false` — each carries one more unrelated unimplemented
+line (a restricted-mana ability and Reinforce, respectively) untouched by
+this claim.
+
+Global export: **9,143/38,712** (+17 from 9,126). `npm run check` and `npm
+test` PASS (**525 rules tests**, up from 524). `npm run simulate:engine`:
+**200/200 passed**, unchanged — expected, since this is a pure coverage
+credit with zero behavioral change.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed

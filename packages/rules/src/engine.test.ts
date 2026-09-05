@@ -870,6 +870,16 @@ describe("playing lands", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === "hand-frostboil-0")!.tapped).toBe(false);
   });
 
+  it("credits Frostboil Snarl's printed text as covered, not just its enforced behavior", () => {
+    // `unless-reveal-card` was already fully enforced (see the two tests
+    // above); the printed line simply wasn't consumed by the per-line
+    // coverage check, so the whole check-land cycle stayed
+    // `fullyImplemented: false` despite playing correctly.
+    const profile = profileOf(FROSTBOIL());
+    expect(profile.entersTapped).toEqual({ kind: "unless-reveal-card", subtypes: ["Island", "Mountain"] });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("keeps Frostboil Snarl tapped when the controller declines", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ hand: toHand(0, [FROSTBOIL(), ISLAND()], "hand-frostboil-no") }));

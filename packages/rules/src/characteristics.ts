@@ -3028,6 +3028,8 @@ function recognizeText(text: string): RecognizedText {
     // two sentences on one line. `parseEntersTapped` already executes it as
     // the permanent enters (CR 614.12); this is not a separate instruction.
     if (/^as\s+~\s+enters,\s*you\s+may\s+(?:pay\s+\d+\s+life|reveal\s+.+?\s+card\s+from\s+your\s+hand)\.\s*if\s+you\s+don[’']t,\s*(?:it|~)\s+enters\s+tapped\.?$/i.test(line)) continue;
+    // Check lands use the same enters-tapped replacement with a reveal choice.
+    if (/^As ~ enters, you may reveal an?\s+[A-Za-z][A-Za-z'’ -]*\s+card from your hand\.\s*If you don['’]t, (?:~|it) enters tapped\.?$/i.test(line)) continue;
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
