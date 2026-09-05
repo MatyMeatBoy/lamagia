@@ -1886,7 +1886,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "enters-battlefield", subject: "another-permanent-you-control", pattern: /^whenever\s+another\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "permanent-you-control", pattern: /^whenever\s+a\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
-  { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "artifact-you-control", pattern: /^whenever\s+an\s+artifact\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "enchantment-you-control", pattern: /^whenever\s+an\s+enchantment\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   // Errata dropped "under your control" from some printings (e.g. Essence
