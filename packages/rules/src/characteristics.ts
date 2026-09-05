@@ -124,6 +124,7 @@ export interface ActivatedAbility {
   readonly manaCost: ManaCost | null;
   readonly effect: SpellEffect;
   readonly targetKind: TargetKind;
+  readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   /** Level up is an activated ability with a sorcery-speed restriction. */
   readonly sorcerySpeed?: boolean;
   /** Planeswalker loyalty ability: signed loyalty change paid as the cost (CR 606). */
@@ -729,6 +730,8 @@ export interface TriggerDefinition {
   readonly excludeSubtype?: string;
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
+  /** "sacrifice it unless {U} was spent to cast it" gate (CR 603.4). */
+  readonly requiresManaTypeNotSpent?: ManaType;
   /** "if its evoke cost was paid" gate on the sacrifice trigger (CR 702.34c). */
   readonly requiresEvoked?: boolean;
   /** Optional mana cost to get the effect ("you may pay {cost}. If you do, ..."). */
@@ -3518,7 +3521,8 @@ function recognizeText(text: string): RecognizedText {
       const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggered.effectText);
       const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
-      const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
+       const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
+       const sacrificeUnlessSpent = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+\{([WUBRGC])\}\s+was\s+spent\s+to\s+cast\s+it\.?$/i.exec(triggered.effectText);
       const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
@@ -3539,9 +3543,9 @@ function recognizeText(text: string): RecognizedText {
       const payGate = variableLifePay ? null : /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-      const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice || mayHave ? true : /^you\s+may\b/i.test(effectText);
+       const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice || mayHave ? true : /^you\s+may\b/i.test(effectText);
       const recognized = (payCost && payCost.hasVariable && !variableLifePay) ? null
-        : sacrificeUnlessPayment
+         : sacrificeUnlessPayment || sacrificeUnlessSpent
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
           // Normalize cycling's optional targeted keyword wording to the
@@ -3583,7 +3587,8 @@ function recognizeText(text: string): RecognizedText {
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
           ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment && !variableLifePay ? { payCost, manaCost: payCost } : {}),
           ...(variableLifePay ? { payCost: parseManaCost("{X}")!, variablePayCost: "event-amount" as const } : {}),
-          ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {})
+           ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {}),
+           ...(sacrificeUnlessSpent ? { requiresManaTypeNotSpent: sacrificeUnlessSpent[1]!.toUpperCase() as ManaType } : {})
         });
       } else {
         unimplementedText.push(line);

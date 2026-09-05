@@ -97,6 +97,8 @@ export interface Permanent {
   readonly evoked?: boolean;
   /** This permanent's spell was cast from hand, as opposed to put onto the battlefield another way (CR 601). */
   readonly castFromHand?: boolean;
+  /** Mana colors actually spent to cast this permanent (used by cast-payment gates such as Azorius Herald). */
+  readonly castSpentMana?: readonly ManaType[];
   /** Echo is due on the controller's next upkeep; cleared when its trigger is queued. */
   readonly echoDueTurn?: number;
   /** Doesn't untap during its controller's next untap step (Breaching Leviathan, CR 502.1). */
@@ -200,6 +202,8 @@ export interface StackObject {
   readonly fromFlashback?: boolean;
   /** This commander cast spent mana produced by Opal Palace (CR 614.1c). */
   readonly commanderEntryCounters?: boolean;
+  /** Mana colors actually spent to cast this spell, before it resolves. */
+  readonly spentMana?: readonly ManaType[];
   /** The free recast of a Rebound spell from exile (CR 702.88); it goes to the graveyard afterwards. */
   readonly fromRebound?: boolean;
   /** Selected `Choose one` mode, when the spell has supported modal text. */
@@ -1281,7 +1285,7 @@ function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { t
   }
 }
 
-function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0): GameState {
+function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = []): GameState {
   const profile = cardProfile(card);
   const printed = entersTapped(state, seat, profile);
   // An effect that says "onto the battlefield tapped" overrides the card's own
@@ -1299,6 +1303,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     ...(kicked ? { kicked: true } : {}),
     ...(evoked ? { evoked: true } : {}),
     ...(castFromHand ? { castFromHand: true } : {}),
+    ...(castSpentMana.length ? { castSpentMana } : {}),
     ...(profile.echoCost ? { echoDueTurn: state.turn + 1 } : {}),
     counters: {
       ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
@@ -1343,6 +1348,11 @@ function triggerMatches(
   event: GameEvent
 ): boolean {
   if (definition.event !== event.kind) return false;
+  if (definition.requiresManaTypeNotSpent) {
+    const entering = eventObject(event);
+    const permanent = entering && findPermanent(state, entering.permanentId);
+    if (permanent?.castSpentMana?.includes(definition.requiresManaTypeNotSpent)) return false;
+  }
   const condition = definition.condition;
   if (condition?.kind === "no-controlled-subtype") {
     const subtype = condition.subtype.toLowerCase();
@@ -4126,7 +4136,8 @@ function resolveTop(state: GameState): GameState {
     const castFromHand = !object.fromCommandZone && !object.fromFlashback && !object.fromRebound && !object.trigger && !object.activated;
     const isCommander = object.fromCommandZone || playerAt(next, object.card.owner).commanderIds.includes(object.card.instance_id);
     next = putOntoBattlefield(next, object.controller, object.card, isCommander, false, Boolean(object.kicked), Boolean(object.evoked), castFromHand,
-      isCommander && object.commanderEntryCounters ? (playerAt(next, object.controller).commanderCasts[object.card.instance_id] ?? 0) : 0);
+      isCommander && object.commanderEntryCounters ? (playerAt(next, object.controller).commanderCasts[object.card.instance_id] ?? 0) : 0,
+      object.spentMana ?? []);
     next = logged(next, object.controller, `${playerAt(next, object.controller).name} resuelve ${object.card.name} al campo de batalla.`);
     return next;
   }
@@ -5475,7 +5486,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = []): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -5487,6 +5498,7 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     variableValue,
     countered: false,
     ...(commanderEntryCounters ? { commanderEntryCounters: true } : {}),
+    ...(spentMana.length ? { spentMana } : {}),
     ...(selectedEffect ? { selectedEffect } : {}),
     ...(kicked ? { kicked: true } : {}),
     ...(evoked ? { evoked: true } : {}),
@@ -6153,7 +6165,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     ? combinedModalChoice(profile)?.effect
     : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
-  next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters);
+  next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
+    Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)));
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card });
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}.`);
 }

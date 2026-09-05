@@ -328,6 +328,7 @@ const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana
 const C13_AETHERMAGES_TOUCH = () => make({ name: "Aethermage's Touch", type_line: "Instant", mana_cost: "{2}{W}{U}", cmc: 4, oracle_text: "Reveal the top four cards of your library. You may put a creature card from among them onto the battlefield. It gains \"At the beginning of your end step, return this creature to its owner's hand.\" Then put the rest of the cards revealed this way on the bottom of your library in any order.", scryfall_id: "15692698-ef57-4672-bf76-5fe4a00c693a", oracle_id: "15692698-ef57-4672-bf76-5fe4a00c693a" });
 const C13_STRATEGIC_PLANNING = () => make({ name: "Strategic Planning", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Look at the top three cards of your library. Put one of them into your hand and the rest into your graveyard.", scryfall_id: "02b5acf3-47cb-4d39-9307-e02656f1879b", oracle_id: "02b5acf3-47cb-4d39-9307-e02656f1879b" });
 const C13_SKYWARD_EYE_PROPHETS = () => make({ name: "Skyward Eye Prophets", type_line: "Creature — Human Wizard", mana_cost: "{3}{G}{W}{U}", cmc: 6, power: "3", toughness: "3", oracle_text: "Vigilance\n{T}: Reveal the top card of your library. If it's a land card, put it onto the battlefield. Otherwise, put it into your hand.", scryfall_id: "056f9887-3ab0-486a-b859-5999d39f9ec2", oracle_id: "45bef776-121b-4489-9c46-f7b4fd4c3c0d" });
+const C13_AZORIUS_HERALD = () => make({ name: "Azorius Herald", type_line: "Creature — Spirit", mana_cost: "{1}{W}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "This creature can't be blocked.\nWhen this creature enters, you gain 4 life.\nWhen this creature enters, sacrifice it unless {U} was spent to cast it.", scryfall_id: "a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6", oracle_id: "a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6" });
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice this artifact: Search your library for up to two basic land cards, reveal them, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d", oracle_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
 const C13_SPOILS_OF_VICTORY = () => make({ name: "Spoils of Victory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for a Plains, Island, Swamp, Mountain, or Forest card and put that card onto the battlefield. Then shuffle.", scryfall_id: "8a7ee186-b25f-4185-830d-e8e7cf23d4e5", oracle_id: "852bd598-6e48-43c8-9211-740ae9e0c42e" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
@@ -1080,6 +1081,15 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(0);
+  });
+
+  it("preserves Azorius Herald when blue mana was spent to cast it", () => {
+    const herald = C13_AZORIUS_HERALD();
+    let game = readyToCast([herald], [PLAINS(), ISLAND(), ISLAND()]);
+    expect(profileOf(herald)).toMatchObject({ fullyImplemented: true });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Azorius Herald")).toBe(true);
+    expect(game.players[0]!.life).toBe(44);
   });
 
   it("moves a Graft counter to the next creature that enters", () => {
