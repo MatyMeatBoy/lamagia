@@ -618,7 +618,8 @@ function allPermanents(state: GameState): Permanent[] {
 function handActivationSource(card: GameCard, controller: SeatId): Permanent {
   return {
     instance_id: card.instance_id, card, controller, tapped: false, summoningSick: false,
-    enteredThisTurn: false, damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0,
+    damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0,
+    enteredThisTurn: false,
     isCommander: false
   };
 }
@@ -1584,7 +1585,6 @@ function raiseEvent(
       if (definition.condition?.kind === "cast-from-hand" && !watcher.castFromHand) continue;
       // Undying / Persist only fire when the creature died without the relevant counter (CR 702.92c/702.93c).
       if (definition.effect.kind === "undying-return" && (watcher.counters[definition.effect.counter] ?? 0) > 0) continue;
-      // CR 603.3f "Panharmonicon" effects: one extra copy per applicable doubler.
       const copies = 1 + triggerDoublerCount(state, watcher);
       for (let copy = 0; copy < copies; copy += 1) {
         queued.push({
@@ -1608,17 +1608,14 @@ function raiseEvent(
   return queued.length ? { ...state, triggerQueue: [...state.triggerQueue, ...queued] } : state;
 }
 
-/** Counts every permanent the watcher's controller has that doubles this specific watcher's triggered abilities. */
+/** Counts permanents controlled by the watcher controller that double this trigger source. */
 function triggerDoublerCount(state: GameState, watcher: Permanent): number {
   let extra = 0;
   for (const source of allPermanents(state)) {
     if (source.controller !== watcher.controller) continue;
     for (const doubler of cardProfile(source.card).triggerDoublers) {
-      if (doubler.scope === "equipped-creature") {
-        if (source.attachedTo === watcher.instance_id) extra += 1;
-      } else if (doubler.scope === "subtype-you-control") {
-        if (doubler.subtypes?.some((subtype) => hasSubtype(cardProfile(watcher.card), subtype))) extra += 1;
-      }
+      if (doubler.scope === "equipped-creature" && source.attachedTo === watcher.instance_id) extra += 1;
+      if (doubler.scope === "subtype-you-control" && doubler.subtypes?.some((subtype) => hasSubtype(cardProfile(watcher.card), subtype))) extra += 1;
     }
   }
   return extra;
@@ -5187,8 +5184,12 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
+  if (freeCast && payLifeCost) return { legal: false };
   if (freeCast && !profile.freeCastIfCommander) return { legal: false };
   if (freeCast && !controlsCommander(state, seat)) return { legal: false };
+  // Commander alternative costs apply only while casting from hand. Do not let
+  // a forged action bypass flashback or commander-zone costs.
+  if ((freeCast || payLifeCost) && (fromCommandZone || flashback)) return { legal: false };
   if (payLifeCost && !profile.payLifeInsteadOfManaCost) return { legal: false };
   if (payLifeCost && profile.payLifeInsteadOfManaCost
     && (!controlsLandType(state, seat, profile.payLifeInsteadOfManaCost.controlLandType) || profile.payLifeInsteadOfManaCost.life >= player.life)) return { legal: false };

@@ -311,10 +311,9 @@ export interface StaticKeywordGrant {
   readonly requiresControlledLandSubtype?: string;
 }
 
-/** "If a triggered ability of X triggers, that ability triggers an additional time" (CR 603.3f "Panharmonicon" effects). */
+/** "If a triggered ability of X triggers, that ability triggers an additional time" (CR 603.3f). */
 export interface TriggerDoubler {
   readonly scope: "subtype-you-control" | "equipped-creature";
-  /** For `subtype-you-control`: matches if the triggering permanent has any of these subtypes. */
   readonly subtypes?: readonly string[];
 }
 
@@ -403,7 +402,7 @@ export type SpellEffect =
   | { readonly kind: "shuffle-self-into-library" }
   | { readonly kind: "return-source-to-hand" }
   | { readonly kind: "sacrifice-source" }
-  /** "Each of that player's opponents draws N cards" (Standstill): scoped to the triggering event's own player, not the ability's controller. */
+  /** Each opponent of the spell caster draws, scoped to the triggering event player (Standstill). */
   | { readonly kind: "each-opponent-of-event-player-draws"; readonly amount: number }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
@@ -862,9 +861,9 @@ export interface CardProfile {
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
-  readonly triggerDoublers: readonly TriggerDoubler[];
   /** Colors of creatures this permanent untaps during each other player's untap step (CR 502.2). */
   readonly untapColorsDuringOtherPlayersUntap: readonly string[];
+  readonly triggerDoublers: readonly TriggerDoubler[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
   readonly noMaximumHandSizeForAllPlayers: boolean;
@@ -1510,18 +1509,18 @@ function parseKeywordsDuringYourTurn(text: string): EnforcedKeyword[] {
   return text.split("\n").flatMap(parseKeywordDuringYourTurn);
 }
 
-/** "If a triggered ability of X triggers, that ability triggers an additional time" (Harmonic Prodigy, Wizard's Staff). */
+/** Harmonic Prodigy / Wizard's Staff style trigger-doubling clauses. */
 function parseTriggerDoubler(line: string): TriggerDoubler | null {
   const clean = line.trim().replace(/\.$/, "");
   if (/^If a triggered ability of equipped creature triggers,\s*that ability triggers an additional time$/i.test(clean)) {
     return { scope: "equipped-creature" };
   }
   const subtypeMatch = /^If a triggered ability of (?:an?|another)\s+([A-Za-z][A-Za-z'’-]*)(?:\s+or\s+(?:an?|another)\s+([A-Za-z][A-Za-z'’-]*))?\s+you control triggers,\s*that ability triggers an additional time$/i.exec(clean);
-  if (subtypeMatch) {
-    const subtypes = [subtypeMatch[1], subtypeMatch[2]].filter((value): value is string => Boolean(value));
-    return { scope: "subtype-you-control", subtypes };
-  }
-  return null;
+  if (!subtypeMatch) return null;
+  return {
+    scope: "subtype-you-control",
+    subtypes: [subtypeMatch[1], subtypeMatch[2]].filter((value): value is string => Boolean(value))
+  };
 }
 
 function parseTriggerDoublers(text: string): TriggerDoubler[] {
@@ -2149,8 +2148,6 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "instant-or-sorcery", pattern: /^whenever\s+you\s+cast\s+an?\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
-  // Standstill's Oracle text uses "When", not "Whenever", even though the
-  // ability can only ever fire once (it sacrifices its own source).
   { event: "spell-cast", subject: "each-player", pattern: /^(?:when|whenever)\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellType: "noncreature", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+noncreature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellType: "instant-or-sorcery", pattern: /^whenever\s+a\s+player\s+casts\s+an?\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
@@ -2503,18 +2500,6 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-opponent-draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-opponent-draw", amount: "X" }, target: "none" };
-  }
-  // Standstill: the sacrifice always succeeds (it is the ability's own
-  // permanent), so "if you do" is unconditional here; "that player" is the
-  // spell-cast event's own caster, not the ability's controller.
-  if ((match = /^Sacrifice ~\.\s*If you do,\s*each of that player['’]s opponents draws (\w+) cards?$/i.exec(text))) {
-    const amount = toNumber(match[1]);
-    if (amount) {
-      return {
-        effect: { kind: "compound", effects: [{ kind: "sacrifice-source" }, { kind: "each-opponent-of-event-player-draws", amount }] },
-        target: "none"
-      };
-    }
   }
   if ((match = /^You lose (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
@@ -3977,8 +3962,8 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
-  const triggerDoublers = parseTriggerDoublers(text);
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
+  const triggerDoublers = parseTriggerDoublers(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const noMaximumHandSizeForAllPlayers = text.split("\n").some((line) => /^players have no maximum hand size\.?$/i.test(line.trim()));
@@ -4034,8 +4019,8 @@ export function cardProfile(card: CardData): CardProfile {
     equipmentModification,
     staticKeywordGrants,
     keywordsDuringYourTurn,
-    triggerDoublers,
     untapColorsDuringOtherPlayersUntap,
+    triggerDoublers,
     preventsLifeGain,
     noMaximumHandSize,
     noMaximumHandSizeForAllPlayers,

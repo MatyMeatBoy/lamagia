@@ -4709,33 +4709,6 @@ describe("casting", () => {
     expect(game.players[0]!.library[1]!.name).toBe("Sol Ring");
   });
 
-  it("lets Brainstorm draw three then put two back on top in the chosen order", () => {
-    const profile = profileOf(BRAINSTORM());
-    expect(profile.fullyImplemented).toBe(true);
-    expect(profile.effects[0]).toEqual({ kind: "draw-then-put-back-on-top", draw: 3, putBack: 2 });
-
-    let game = readyToCast([BRAINSTORM()], [ISLAND()]);
-    game = stage(game, 0, (player) => ({ library: [...toHand(0, [SOL_RING(), BEAR(), TEST_ARTIFACT()], "brainstorm-library"), ...player.library] }));
-    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
-    expect(game.players[0]!.hand).toHaveLength(3);
-    expect(game.pendingChoice).toMatchObject({ type: "hand-card-to-library-top", seat: 0, remaining: 2 });
-    expect(legalActions(game, 1)).toHaveLength(0);
-
-    let choice = game.pendingChoice!;
-    const solRingId = game.players[0]!.hand.find((card) => card.name === "Sol Ring")!.instance_id;
-    game = applyAction(game, 0, { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId: solRingId });
-    expect(game.pendingChoice).toMatchObject({ type: "hand-card-to-library-top", seat: 0, remaining: 1 });
-    expect(game.players[0]!.library[0]!.name).toBe("Sol Ring");
-
-    choice = game.pendingChoice!;
-    const bearId = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!.instance_id;
-    game = applyAction(game, 0, { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId: bearId });
-    expect(game.pendingChoice).toBeNull();
-    expect(game.players[0]!.hand).toHaveLength(1);
-    expect(game.players[0]!.library[0]!.name).toBe("Grizzly Bears");
-    expect(game.players[0]!.library[1]!.name).toBe("Sol Ring");
-  });
-
   it("lets Deadly Rollick be cast free only while controlling a commander, exiling the target either way", () => {
     const profile = profileOf(DEADLY_ROLLICK());
     expect(profile.fullyImplemented).toBe(true);

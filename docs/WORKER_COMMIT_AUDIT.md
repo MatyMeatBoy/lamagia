@@ -248,3 +248,105 @@ animation primitive with parameterized types, so its temporary characteristic
 is `Land Creature` rather than the old hard-coded `Artifact Creature`.
 Validation after both C13 additions: 597 rules tests, `npm run check`,
 **9,356/38,711** profiles, and C13 **269/341**.
+
+### Origin tail audit — 2026-09-05 (continued)
+
+The fetched `origin/worker-05` tail was checked commit-by-commit before any
+new work was started. The executable changes in `083ba46` and `15ae30c` were
+integrated as `822e601` and `2893b82` respectively:
+
+- Geier Reach Sanitarium | `7b9fafe7-d26a-4ed5-b4c4-ce13763770b5` —
+  each-player draw, then private APNAP discard choices.
+- Deadly Rollick | `0456ec64-2c81-4763-a352-8ff64a4c3d6b` — optional free
+  cast while controlling a commander, alongside the normal paid action.
+
+The remaining worker-05 commits (`18e5928`, `a816d01`, `ffc4d51`, `2e1de07`,
+`1cb1fec`, `be9c65d`, `80d85c5`, `e02c860`, `a7677d8`, `6fc73df`, `2b49fc8`,
+`955ac67`, `881a066`, and `e3609ed`) were compared against the current source
+and existing scenario tests. Their executable primitives are already present
+from earlier selective rescues; cherry-picking them would reintroduce an
+older tree and remove the newer Mirror Entity/Faerie Conclave effects. Their
+stale generated coverage and claim edits were not imported.
+
+`origin/c14-batch2-clean` has no executable patch remaining relative to this
+HEAD. `origin/c14-self-pump` and `origin/claude/c14-precon-clusters` contain
+older divergent histories; their source deltas are either already represented
+or would replace current rules code, so they remain audited—not merged
+blindly. `origin/master` remains quarantined for the same reason. No
+`mtgfork` remote, ref, or configured fetch URL exists in this checkout, so
+there is no additional mtgfork object set to recover.
+
+After export and full validation: **599 rules tests**, `npm run check`,
+**9,361/38,711** unique profiles, edition memberships **23,743/84,990
+(27.9%)**, C13 **269/341**, and C14 **199/322**. The next C13 queue remains
+72 cards, with 5 one-line candidates; this audit is complete for all currently
+reachable origin heads.
+
+### MtgFork and unreachable-object audit — 2026-09-05 (continued)
+
+The previously unconnected fork checkout was found and inspected at
+`C:/Users/MP/Documents/00 Claude/MtgFork/lamagia`. Its `worker-05` worktree
+tip is `1ad1325`, the same published worker history fetched as
+`origin/worker-05`; its `master` is the old 60-variant cEDH tree and is not a
+safe source branch. The only new executable worker tail was `f565d69`,
+integrated as `8aa9490`:
+
+- Snuff Out | `324824cb-f938-401c-b9b5-d8908b431ef0` — a reusable
+  `payLifeInsteadOfManaCost` alternative cost, offered beside the normal cast
+  and gated by controlling the required land subtype.
+
+The local C13 trigger-review head had one patch-equivalent difference,
+`eeac0f3` (entering-creature power damage); the current engine already carries
+the same primitive through `081b81a`/`61e867d` with the broader target handling,
+so it was not duplicated. Its audited history is recorded in merge `a80dfeb`.
+The C13 Serene Master, Nemotron audit, C14 batch, and other worker heads have
+no remaining non-equivalent patch according to `git cherry` against the
+current HEAD. Backup refs that would delete newer rules code were quarantined.
+
+`git fsck --full --no-reflogs --unreachable` found 130 unreachable commits,
+69 touching executable source. They were inspected as recovery candidates;
+the completed ones (Tidal Force, Mirari, static land-mana bonuses, Aerie
+Mystics, Hippogriff recovery, entering-power damage, Graft, Homeward Path,
+Myr Battlesphere, and related C13/C14 primitives) are already represented by
+current source commits or tests. Remaining objects are WIP/index states,
+stale duplicate patches, or destructive alternate trees; none was applied
+without a scenario test. No additional `mtgfork` object set remains outside
+the discovered checkout.
+
+Final validation after the recovery pass: **600 rules tests**, `npm run check`,
+**9,363/38,711** unique profiles, edition memberships **23,752/84,990
+(27.9%)**, C13 **269/341**, and C14 **199/322**. The C13 queue remains 72
+cards with 5 one-line candidates.
+
+The audited `origin/worker-05`/MtgFork history was recorded as merge
+`c8c5f51` after the executable content had already been selectively integrated;
+the current source tree was deliberately preserved because the worker tree
+would remove newer Mirror Entity and Faerie Conclave behavior. `git cherry`
+now reports no remaining worker-05 commits. The one local trigger-review patch
+that differed by patch-id (`eeac0f3`) is recorded by `a80dfeb` and is
+semantically covered by the current entering-creature-power implementation
+and its scenarios.
+
+The C13 pending-card audit was also completed from the catalog: all **72
+unique pending oracle IDs** were read and cross-checked against the generated
+roadmap and set coverage. The five one-line candidates are War Cadence,
+Propaganda, Sudden Spoiling, Serene Master, and Wash Out; the remaining 67
+are grouped by their exact Oracle text templates in
+`docs/PRIMITIVE_ROADMAP_C13.md` and are not being treated as generic keyword
+matches.
+
+### Newly recovered dirty worker state — 2026-09-05 (continued)
+
+The MtgFork `worker-05` worktree contained uncommitted executable changes that
+were not visible in any remote head. They were validated in that worktree
+(603 rules tests, all simulator/deck/oracle checks, and `npm run check`),
+published as `eaa2296`, and integrated here as `366850c`:
+
+- Daze | `70486bee-6ee7-41ea-b834-8caf4699302b` — return-an-Island
+  alternative cost, offered beside the normal cast.
+- Counter-unless-pay — controller-private payment choice at resolution,
+  reusing the existing optional-choice path and correct spell controller.
+
+This recovery increased the export to **9,396/38,711** unique profiles and
+edition memberships to **23,860/84,990 (28.1%)**. C13 remains **269/341**;
+the recovered cards are not in C13, but the primitives are shared globally.
