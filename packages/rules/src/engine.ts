@@ -518,7 +518,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
@@ -3748,6 +3748,27 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
     }
+    case "counter-target-spell-unless-pay": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      const targetSpell = state.stack.find((entry) => entry.id === target.stackId);
+      if (!targetSpell || !canCounterSpell(targetSpell, state)) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "optional-trigger",
+          seat: targetSpell.controller,
+          sourceId: object.id,
+          sourceCard: object.card,
+          triggerEffect: { kind: "counter-target-spell" },
+          payCost: effect.cost,
+          unlessPayCost: effect.cost,
+          targets: [target],
+          sourceController: controller
+        }
+      };
+    }
     case "counter-target-spell-then-controller-token": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
@@ -5162,7 +5183,7 @@ function controlsLandType(state: GameState, seat: SeatId, subtype: string): bool
   return playerAt(state, seat).battlefield.some((permanent) => isLand(cardProfile(permanent.card)) && hasSubtype(cardProfile(permanent.card), subtype));
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
@@ -5171,6 +5192,11 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (payLifeCost && !profile.payLifeInsteadOfManaCost) return { legal: false };
   if (payLifeCost && profile.payLifeInsteadOfManaCost
     && (!controlsLandType(state, seat, profile.payLifeInsteadOfManaCost.controlLandType) || profile.payLifeInsteadOfManaCost.life >= player.life)) return { legal: false };
+  if (returnPermanentId) {
+    if (!profile.returnLandInsteadOfManaCost) return { legal: false };
+    const returned = player.battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
+    if (!returned || !isLand(cardProfile(returned.card)) || !hasSubtype(cardProfile(returned.card), profile.returnLandInsteadOfManaCost.subtype)) return { legal: false };
+  }
   const cost = flashback
     ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
     : spellCostOf(profile, kicked, evoked, entwined);
@@ -5190,7 +5216,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = (freeCast || payLifeCost) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
+  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
   if (!plan) return { legal: false };
   const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -5523,6 +5549,23 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           ...(lifeCheck.targetKind ? { requiresTarget: lifeCheck.targetKind } : {}),
           ...(lifeCheck.targetKinds ? { requiresTargets: lifeCheck.targetKinds } : {}),
           ...(lifeCheck.note ? { note: lifeCheck.note } : {})
+        });
+      }
+    }
+    // Daze-style land return: one offer per eligible land, each alongside the normal paid cast (CR 601.2b).
+    if (profile.returnLandInsteadOfManaCost) {
+      for (const land of player.battlefield) {
+        if (!isLand(cardProfile(land.card)) || !hasSubtype(cardProfile(land.card), profile.returnLandInsteadOfManaCost.subtype)) continue;
+        const landCheck = castableCard(state, seat, card, false, 0, undefined, false, false, false, false, false, false, land.instance_id);
+        if (!landCheck.legal) continue;
+        actions.push({
+          action: { type: "cast", cardId: card.instance_id, returnPermanentId: land.instance_id },
+          label: `Lanzar ${card.name} devolviendo ${land.card.name} en vez de pagar su coste de maná`,
+          cardId: card.instance_id,
+          manaValue: 0,
+          ...(landCheck.targetKind ? { requiresTarget: landCheck.targetKind } : {}),
+          ...(landCheck.targetKinds ? { requiresTargets: landCheck.targetKinds } : {}),
+          ...(landCheck.note ? { note: landCheck.note } : {})
         });
       }
     }
@@ -6518,7 +6561,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const entwined = Boolean(action.entwined);
   const freeCast = Boolean(action.freeCast);
   const payLifeCost = Boolean(action.payLifeCost);
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost);
+  const returnPermanentId = action.returnPermanentId;
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
@@ -6531,8 +6575,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = (freeCast || payLifeCost) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost });
-  if (!freeCast && !payLifeCost && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
+  const plan = (freeCast || payLifeCost || returnPermanentId) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost });
+  if (!freeCast && !payLifeCost && !returnPermanentId && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
   if (check.targetKinds?.length) {
@@ -6552,13 +6596,25 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     action = { ...action, targets: chosen };
   }
 
-  let next = (freeCast || payLifeCost) ? state : applyManaPlan(state, seat, plan!);
+  let next = (freeCast || payLifeCost || returnPermanentId) ? state : applyManaPlan(state, seat, plan!);
   const payment = freeCast
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
     : payLifeCost
     ? { spent: emptyPool(), lifePaid: profile.payLifeInsteadOfManaCost!.life, remaining: playerAt(next, seat).manaPool }
+    : returnPermanentId
+    ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
     : payCost(spellCost, playerAt(next, seat).manaPool, { additionalGeneric, availableLife: playerAt(next, seat).life });
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
+  if (returnPermanentId) {
+    const returned = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
+    if (!returned) throw new Error(`No tienes esa tierra para devolver por ${card.name}.`);
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      battlefield: current.battlefield.filter((candidate) => candidate.instance_id !== returnPermanentId)
+    }));
+    next = withPlayer(next, returned.card.owner, (current) => ({ ...current, hand: [...current.hand, returned.card] }));
+    next = logged(next, seat, `${player.name} devuelve ${returned.card.name} a su mano por ${card.name}.`);
+  }
   const commanderEntryCounters = Boolean(fromCommand && playerAt(next, seat).commanderMana > 0 && poolTotal(payment.spent) > 0);
   next = withPlayer(next, seat, (current) => ({
     ...consumeManaPayment(current, payment),

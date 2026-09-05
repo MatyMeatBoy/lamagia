@@ -600,6 +600,8 @@ export type SpellEffect =
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
+  /** Daze: the targeted spell's own controller decides whether to pay (CR 601.2b, 603.3, 118.9). */
+  | { readonly kind: "counter-target-spell-unless-pay"; readonly cost: ManaCost }
   | { readonly kind: "counter-target-spell-to-battlefield" }
   /** Counter a spell and schedule the Arcane Denial-style upkeep draws (CR 603.7). */
   | { readonly kind: "counter-target-spell-with-delayed-draw"; readonly targetAmount: number; readonly casterAmount: number }
@@ -908,6 +910,8 @@ export interface CardProfile {
   readonly freeCastIfCommander: boolean;
   /** "If you control a [land type], you may pay N life rather than pay ~'s mana cost" (Snuff Out, CR 601.2b, 118.9). */
   readonly payLifeInsteadOfManaCost: { readonly life: number; readonly controlLandType: string } | null;
+  /** "You may return a [land type] you control to its owner's hand rather than pay ~'s mana cost" (Daze, CR 601.2b, 118.9). */
+  readonly returnLandInsteadOfManaCost: { readonly subtype: string } | null;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
@@ -3065,6 +3069,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const exileAndTransfer = parseExileAndTransferSource(text);
   if (exileAndTransfer) return { effect: exileAndTransfer, target: "artifact-or-enchantment" };
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
+  if ((match = /^Counter target spell unless its controller pays ((?:\{[^}]+\})+)\.?$/i.exec(text))) {
+    const cost = parseManaCost(match[1]!);
+    if (cost) return { effect: { kind: "counter-target-spell-unless-pay", cost }, target: "spell" };
+  }
   const exactSpellValue = /^Counter target spell with (?:mana value|converted mana cost) (\d+)$/i.exec(text);
   if (exactSpellValue) return { effect: { kind: "counter-target-spell" }, target: `spell-mana-value-${Number(exactSpellValue[1])}` };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
@@ -3496,6 +3504,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
     if (/^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line)) continue;
     if (/^if you control an? [A-Za-z][A-Za-z'’-]*, you may pay \d+ life rather than pay ~'s mana cost\.?$/i.test(line)) continue;
+    if (/^you may return an? [A-Za-z][A-Za-z'’-]* you control to its owner's hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     if (parseDamageAmplify(line)) continue;
@@ -3985,6 +3994,8 @@ export function cardProfile(card: CardData): CardProfile {
   const freeCastIfCommander = text.split("\n").some((line) => /^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line.trim()));
   const payLifeInsteadMatch = text.split("\n").map((line) => /^if you control an? ([A-Za-z][A-Za-z'’-]*), you may pay (\d+) life rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const payLifeInsteadOfManaCost = payLifeInsteadMatch ? { life: Number(payLifeInsteadMatch[2]), controlLandType: payLifeInsteadMatch[1]! } : null;
+  const returnLandInsteadMatch = text.split("\n").map((line) => /^you may return an? ([A-Za-z][A-Za-z'’-]*) you control to its owner's hand rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
+  const returnLandInsteadOfManaCost = returnLandInsteadMatch ? { subtype: returnLandInsteadMatch[1]! } : null;
   const doesNotUntapDuringUntap = text.split("\n").some((line) => /^~ doesn[’']t untap during your untap step\.?$/i.test(line.trim()));
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
@@ -4073,6 +4084,7 @@ export function cardProfile(card: CardData): CardProfile {
     additionalCostSacrificeLand,
     freeCastIfCommander,
     payLifeInsteadOfManaCost,
+    returnLandInsteadOfManaCost,
     costReducesPerBoardCreature,
     spellCostReductionGrant,
     staticLandManaBonus,
