@@ -2838,6 +2838,35 @@ effect shape, not raw card count). `npm run check` and `npm test` PASS
 (**569 rules tests**, up from 568). `npm run simulate:engine`:
 **200/200 passed**.
 
+### Worker-05: the last missing spell-type/each-player combination (2026-09-05)
+
+Claim `rules-instant-or-sorcery-cast-each-player-draw`, continuing the
+Nekusar decklist (Niv-Mizzet, Parun). This is the third time this session
+the same gap shape has shown up: `each-player` combined with a `spellType`
+filter existed for `"creature"` and `"noncreature"` but not
+`"instant-or-sorcery"` — purely a missing template, not a missing
+capability, since the matcher (`engine.ts`'s `triggerMatches`) already
+branches on `spellType === "instant-or-sorcery"` generically regardless of
+subject. One `TRIGGER_TEMPLATES` line closes it.
+
+No new effect needed either: "you draw a card" already resolves via the
+plain `draw` effect against the ability's own controller. Niv-Mizzet,
+Parun's other clause ("Whenever you draw a card, ~ deals 1 damage to any
+target") was already fully modeled from an earlier claim this session, so
+the two now chain together correctly with zero further wiring — casting an
+instant or sorcery anywhere at the table draws Niv-Mizzet's controller a
+card, which in turn fires the damage trigger, exactly as the real card's
+signature combo works.
+
+Fully implements Niv-Mizzet, Parun. Scenario coverage confirms an
+opponent's own instant draws a card for this permanent's controller, and
+that a creature spell — even cast by the controller themselves — never
+triggers it.
+
+Global export: **9,322/38,712** (+1 from 9,321). `npm run check` and `npm
+test` PASS (**574 rules tests**, up from 573). `npm run simulate:engine`:
+**200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed

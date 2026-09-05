@@ -470,6 +470,7 @@ const OWN_LANDS_MANA_DORK = () => make({ name: "Test Harvester Druid", type_line
 const ENTERED_THIS_TURN_LAND = () => make({ name: "Test Hidden Lair", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Add {U} or {B}. Activate only if this land entered this turn or if you control a basic land." });
 const NONCREATURE_CAST_DRAIN = () => make({ name: "Test Mai", type_line: "Creature — Human Warrior", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2", oracle_text: "First strike\nWhenever a player casts a noncreature spell, they lose 2 life." });
 const STANDSTILL = () => make({ name: "Test Standstill", type_line: "Enchantment", mana_cost: "{1}{U}", cmc: 2, oracle_text: "When a player casts a spell, sacrifice this enchantment. If you do, each of that player's opponents draws three cards." });
+const INSTANT_OR_SORCERY_CAST_DRAW = () => make({ name: "Test Niv-Mizzet Lite", type_line: "Creature — Dragon", mana_cost: "{4}{U}{R}", cmc: 6, power: "3", toughness: "3", oracle_text: "Whenever a player casts an instant or sorcery spell, you draw a card." });
 const TEMPLE_OF_FALSE_GOD = () => make({ name: "Temple of the False God", type_line: "Land", oracle_text: "{T}: Add {C}{C}. Activate only if you control five or more lands.", produced_mana: ["C"] });
 const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
 const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
@@ -3524,6 +3525,27 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Standstill")).toBe(false);
     expect(game.players[0]!.hand.length).toBe(hand0Before + 3);
     expect(game.players[1]!.hand).toHaveLength(0);
+  });
+
+  it("draws off any player's instant or sorcery, never their creature spells", () => {
+    const profile = profileOf(INSTANT_OR_SORCERY_CAST_DRAW());
+    expect(profile.triggers[0]).toMatchObject({ event: "spell-cast", subject: "each-player", spellType: "instant-or-sorcery", effect: { kind: "draw", amount: 1 } });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // An opponent's instant still draws a card for this permanent's controller.
+    let game = readyToCast([], [INSTANT_OR_SORCERY_CAST_DRAW(), ISLAND(), ISLAND()], [BOLT()], [MOUNTAIN()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "pass" });
+    const hand0Before = game.players[0]!.hand.length;
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "player", seat: 0 }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand.length).toBe(hand0Before + 1);
+
+    // A creature spell never triggers it, even cast by its own controller.
+    let creatureGame = readyToCast([BEAR()], [INSTANT_OR_SORCERY_CAST_DRAW(), FOREST(), FOREST()]);
+    const handBeforeCreature = creatureGame.players[0]!.hand.length;
+    creatureGame = applyAction(creatureGame, 0, { type: "cast", cardId: "hand-0" });
+    expect(creatureGame.players[0]!.hand.length).toBe(handBeforeCreature - 1);
   });
 
   it("fires Prowess only for noncreature spells and pumps its source", () => {

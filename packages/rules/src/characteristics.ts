@@ -2071,6 +2071,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // ability can only ever fire once (it sacrifices its own source).
   { event: "spell-cast", subject: "each-player", pattern: /^(?:when|whenever)\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellType: "noncreature", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+noncreature\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "each-player", spellType: "instant-or-sorcery", pattern: /^whenever\s+a\s+player\s+casts\s+an?\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", pattern: /^whenever\s+you\s+cast\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+spell,?\s*(.+)$/i },
   { event: "card-cycled", subject: "self", pattern: /^when\s+you\s+cycle\s+(?:this\s+card|~),?\s*(.+)$/i },
