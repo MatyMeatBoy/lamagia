@@ -108,6 +108,8 @@ export interface Permanent {
   readonly toughnessModifier: number;
   /** Keyword effects from spells/abilities that expire during cleanup. */
   readonly temporaryKeywords?: readonly EnforcedKeyword[];
+  /** Trigger definitions granted by a resolving ability until cleanup. */
+  readonly temporaryTriggers?: readonly TriggerDefinition[];
   /** Temporary characteristic-setting animation, cleared during cleanup (CR 613.6). */
   readonly temporaryAnimation?: {
     readonly power: number;
@@ -1358,10 +1360,10 @@ function raiseEvent(
     .filter((permanent) => cardProfile(permanent.card).grantsExtortToOthers)
     .map((permanent) => permanent.controller));
   for (const watcher of watchers) {
-    const base = cardProfile(watcher.card).triggers;
+    const base = [...cardProfile(watcher.card).triggers, ...(watcher.temporaryTriggers ?? [])];
     const grantedExtort: TriggerDefinition[] = extortGrantors.has(watcher.controller)
       && isCreature(cardProfile(watcher.card))
-      && !cardProfile(watcher.card).triggers.some((definition) => definition.effect.kind === "extort")
+      && !base.some((definition) => definition.effect.kind === "extort")
       ? [{ event: "spell-cast", subject: "you", effect: { kind: "extort" }, optional: true, targetKind: "none", sourceText: "Extort", payCost: EXTORT_COST }]
       : [];
     const definitions = grantedExtort.length ? [...base, ...grantedExtort] : base;
@@ -1973,6 +1975,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "grant-life-gain-opponent-loss": {
+      const sourceId = object.sourcePermanentId;
+      if (!sourceId) return state;
+      const source = findPermanent(state, sourceId);
+      if (!source) return state;
+      const definition: TriggerDefinition = {
+        event: "life-gained", subject: "you", effect: { kind: "each-opponent-loses-life-event-amount" },
+        optional: false, targetKind: "none", sourceText: "Whenever you gain life this turn, each opponent loses that much life"
+      };
+      return withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === sourceId
+          ? { ...permanent, temporaryTriggers: [...(permanent.temporaryTriggers ?? []), definition] }
+          : permanent)
+      }));
+    }
     case "lose-life": {
       const amount = effectAmount(effect.amount, object);
       const next = loseLife(state, controller, amount);
@@ -2100,6 +2118,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         next = loseLife(next, seat, amount);
         next = logged(next, controller, `${playerAt(next, seat).name} pierde ${amount} vidas.`);
       }
+      return next;
+    }
+    case "each-opponent-loses-life-event-amount": {
+      let next = state;
+      const amount = object.trigger?.eventAmount ?? 0;
+      if (amount <= 0) return state;
+      for (const opponent of opponentsOf(state, controller)) next = loseLife(next, opponent, amount);
       return next;
     }
     case "extort": {
@@ -4369,7 +4394,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         ...next,
         players: next.players.map((current) => ({
           ...current,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryAnimation: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
         }))
       };
       break;

@@ -362,6 +362,8 @@ export type SpellEffect =
   | { readonly kind: "gain-life-each-permanent"; readonly amount: number }
   | { readonly kind: "gain-life-each-creature-you-control"; readonly amount: number }
   | { readonly kind: "gain-life-equal-target-power" }
+  /** Installs Vizkopa's life-gain trigger until cleanup. */
+  | { readonly kind: "grant-life-gain-opponent-loss" }
   | { readonly kind: "lose-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
@@ -396,6 +398,8 @@ export type SpellEffect =
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "each-player-loses-life"; readonly amount: number | "X" }
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number | "X" }
+  /** Dynamic life-loss amount from a life-gained trigger event. */
+  | { readonly kind: "each-opponent-loses-life-event-amount" }
   /** "that player" in a triggered ability referring back to the event's own player (e.g. the opponent who drew) — CR 603.3d, not a chosen target. */
   | { readonly kind: "lose-life-event-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
@@ -1942,6 +1946,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^You gain life equal to the power of target creature you control$/i.test(text)) {
     return { effect: { kind: "gain-life-equal-target-power" }, target: "creature-you-control" };
+  }
+  if (/^Whenever you gain life this turn, each opponent loses that much life$/i.test(text)) {
+    return { effect: { kind: "grant-life-gain-opponent-loss" }, target: "none" };
   }
   if ((match = /^Each opponent loses (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
