@@ -8981,6 +8981,8 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   const PRESENCE_OF_GOND = () => make({ name: "Presence of Gond", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature has \"{T}: Create a 1/1 green Elf Warrior creature token.\"", oracle_id: "ab42398c-f0a1-4b94-ac5f-b8768e1b4e05" });
   const SPAWNING_GROUNDS = () => make({ name: "Spawning Grounds", type_line: "Enchantment — Aura", mana_cost: "{6}{G}", cmc: 7, oracle_text: "Enchant land\nEnchanted land has \"{T}: Create a 5/5 green Beast creature token with trample.\"", oracle_id: "1961dd92-db0b-4f02-b9c8-08f760f4051b" });
   const DARKSTEEL_MUTATION = () => make({ name: "Darksteel Mutation", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature is an Insect artifact creature with base power and toughness 0/1 and has indestructible, and it loses all other abilities, card types, and creature types.", oracle_id: "05a4f8ff-49da-42af-add5-6248c4b0644b" });
+  const CURSE_OF_PREDATION = () => make({ name: "Curse of Predation", type_line: "Enchantment — Aura Curse", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant player\nWhenever a creature attacks enchanted player, put a +1/+1 counter on it.", oracle_id: "69ea4ce2-f749-4d05-a392-efcfdce14a30" });
+  const CURSE_OF_THE_FORSAKEN = () => make({ name: "Curse of the Forsaken", type_line: "Enchantment — Aura Curse", mana_cost: "{2}{W}", cmc: 3, oracle_text: "Enchant player\nWhenever a creature attacks enchanted player, its controller gains 1 life.", oracle_id: "e00f8d6b-5bb1-4625-9fa4-114cdc381bd4" });
 
   function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[]) {
     let game = twoSeatGame([], []);
@@ -9054,6 +9056,29 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     expect(toughnessOf(enchanted, game)).toBe(1);
     expect(game.players[0]!.battlefield).toContainEqual(expect.objectContaining({ instance_id: bear.instance_id }));
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === bear.instance_id)).toBe(false);
+  });
+
+  it("attaches Curse Auras to a player and reuses the attack-event primitive", () => {
+    expect(profileOf(CURSE_OF_PREDATION())).toMatchObject({
+      fullyImplemented: true,
+      targetKind: "player",
+      triggers: [{ subject: "creature-attacks-enchanted-player", effect: { kind: "add-counter-triggered-creature" } }]
+    });
+    expect(profileOf(CURSE_OF_THE_FORSAKEN())).toMatchObject({
+      fullyImplemented: true,
+      targetKind: "player",
+      triggers: [{ effect: { kind: "gain-life-event-controller", amount: 1 } }]
+    });
+
+    let game = readyToCast([CURSE_OF_PREDATION()], [BEAR(), FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    const curse = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Curse of Predation")!;
+    expect(curse.attachedToPlayer).toBe(1);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => (state.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"] ?? 0) === 1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"]).toBe(1);
   });
 });
 

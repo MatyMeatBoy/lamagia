@@ -506,6 +506,10 @@ export type SpellEffect =
   | { readonly kind: "reveal-top-cards-and-add-source-counters" }
   /** Damage equal to the power of the creature that caused this trigger. */
   | { readonly kind: "damage-triggered-creature-power" }
+  /** Curse of Predation: put a counter on the creature that attacked the enchanted player. */
+  | { readonly kind: "add-counter-triggered-creature"; readonly counter: string; readonly amount: number }
+  /** Curse of the Forsaken: the attacking creature's controller gains life. */
+  | { readonly kind: "gain-life-event-controller"; readonly amount: number }
   /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
   | { readonly kind: "damage-divided-targets"; readonly amount: number }
   /** Damage from the ability source equal to that source's current power. */
@@ -743,6 +747,7 @@ export type TriggerSubject =
   | "any-creature"
   | "equipped-creature"
   | "creature-attacks-opponent"
+  | "creature-attacks-enchanted-player"
   | "you"
   | "each-player"
   | "opponent"
@@ -2394,6 +2399,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "leaves-battlefield", subject: "self-or-another-creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-attacks-opponent", pattern: /^whenever\s+a\s+creature\s+attacks\s+one\s+of\s+your\s+opponents(?:\s+or\s+a\s+planeswalker\s+an\s+opponent\s+controls)?,?\s*(.+)$/i },
+  { event: "attacks", subject: "creature-attacks-enchanted-player", pattern: /^whenever\s+a\s+creature\s+attacks\s+enchanted\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", pattern: /^whenever\s+an\s+artifact\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
@@ -2660,6 +2666,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^~ deals damage equal to its power to target player or planeswalker$/i.test(text)) {
     return { effect: { kind: "damage-triggered-creature-power" }, target: "player-or-planeswalker" };
+  }
+  if (/^put a \+1\/\+1 counter on it\.?$/i.test(text)) {
+    return { effect: { kind: "add-counter-triggered-creature", counter: "+1/+1", amount: 1 }, target: "none" };
+  }
+  if (/^its controller gains (\w+) life\.?$/i.test(text)) {
+    const amount = toNumber(/^its controller gains (\w+) life\.?$/i.exec(text)![1]!);
+    if (amount !== null) return { effect: { kind: "gain-life-event-controller", amount }, target: "none" };
   }
   if ((match = /^(?:~|This spell) deals damage equal to the number of (creatures|artifacts|enchantments|lands) you control to any target$/i.exec(text))) {
     const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1, -1) as CardType;
@@ -3944,7 +3957,7 @@ function recognizeText(text: string): RecognizedText {
     // an Aura's own targeting restriction, not a resolved effect — it becomes
     // the spell's targetKind so the whole existing targeting/fizzle pipeline
     // (legalTargets, the stack fizzle check, castableCard) applies for free.
-    const enchantTarget = /^enchant (creature|land|permanent|creature you control)\.?$/i.exec(line);
+    const enchantTarget = /^enchant (creature|land|permanent|player|creature you control)\.?$/i.exec(line);
     if (enchantTarget) {
       targetKind = enchantTarget[1]! === "creature you control" ? "creature-you-control" : enchantTarget[1]! as TargetKind;
       continue;
