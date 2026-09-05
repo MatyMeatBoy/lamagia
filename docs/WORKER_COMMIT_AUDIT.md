@@ -193,3 +193,42 @@ activate-only-as-sorcery variants. It remains an explicitly audited follow-up
 queue, not evidence to overwrite the current integration tree. The C14
 branches were left intact for their own next pass; no unreviewed C13 source
 was found in them.
+### Origin and lost-object audit — 2026-09-05
+
+`git fetch --all --prune` found one new executable tail on `origin/worker-05`.
+The following source commits were integrated selectively, preserving rules code
+and scenarios while rejecting stale generated coverage snapshots:
+
+- `1cb1fec` + `be9c65d`: dynamic noncombat source-power amplification and
+  hand-size characteristic-defining P/T.
+- `80d85c5`: second-draw-this-turn — Faerie Mastermind |
+  `a984db23-40ea-428d-829f-e944267280f8`.
+- `e02c860`: multi-card Brainstorm top-library choice — Brainstorm |
+  `36cd2364-d113-47d1-b2c4-b088d9eb88dd`.
+- `a7677d8`: discard-then-draw-same-count — Forget |
+  `619ef7e1-33cd-4470-a1d4-83c5f1f5c31e`.
+- `6fc73df`: active-player hand-bottom/draw — Teferi's Puzzle Box |
+  `37abcc92-9466-47ea-9e0b-5eda2eb62c8e`.
+- `2b49fc8`: source-untapped trigger — Howling Mine |
+  `d26b27db-a567-4631-b4b6-7294222fbdd1`.
+- `955ac67`: independently rounded half-library/half-life — Peer into the
+  Abyss | `21fa2442-6eac-4dce-a9cc-76f0053fdb8f`.
+- `881a066`: end-step draw plus opponent hand threshold damage — Fevered
+  Visions | `70763549-4b4e-4cb8-8c02-0639ba18bb1a`.
+- `e3609ed`: discarded-card-type filtering — Waste Not |
+  `00fdcc19-88ed-46c3-91f0-095806228105`.
+
+The earlier `18e5928`, `a816d01`, `ffc4d51`, and `2e1de07` worker commits
+were already represented by the published engine and were not duplicated.
+Mirari (`0b92688`) was integrated as `04027be`; Eternal Dragon's graveyard
+activation and real C13 `this card`/Plainscycling wording were completed as
+`d379d3c` plus the current follow-up fix. Validation after this pass is **595
+rules tests**, rules type-check green, **9,354/38,711** profiles, and C13
+**267/341**.
+
+No remote, ref, or fetch URL named `mtgfork` is configured in this checkout.
+`git fsck --unreachable` was inspected: WIP/index states and commits already
+represented by published C13/C14 work were classified as non-integrable; no
+unreferenced executable commit was applied without a scenario test. The
+divergent `origin/master` cEDH sequence remains quarantined because it is an
+older tree replacement plus unrelated variants, not a safe integration source.

@@ -14,13 +14,13 @@ and token-scaling paths; verify the Pages run before reporting a new client asse
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,331 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,354 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 23,557 / 84,990 implemented (27.7%) across 685
+- **Edition memberships:** 23,681 / 84,990 implemented (27.9%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 265 / 341 unique cards (77.7%), 76 pending.
+- **Commander 2013:** 267 / 341 unique cards (78.3%), 74 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
@@ -34,8 +34,9 @@ Audited worker intake added executable batches for mana-entry restrictions,
 noncreature-spell drain, surveil, reanimation, Hunted Troll, Grazing
 Gladehart, Disciple of Griselbrand, and Springjack Pasture. The optional
 cycling-target keyword grammar was generalized and tested with Dirge of Dread.
-Rules suite: **583 passing tests**. Latest pushed source: `dca66ff`; generated
-export: **9,331/38,711** profiles and C13 **265/341**.
+Rules suite: **595 passing tests**. Latest local source checkpoint: `5f8736f`
+plus the current Eternal Dragon parser fix; generated export: **9,354/38,711**
+profiles and C13 **267/341**.
 
 The latest origin audit also salvaged the executable portion of
 `origin/c14-batch2-clean` as `dd6c117`: draw triggers remain on the engine's

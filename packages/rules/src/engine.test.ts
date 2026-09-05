@@ -140,6 +140,7 @@ const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Inst
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
 const BROODING_SAURIAN = () => make({ name: "Brooding Saurian", type_line: "Creature — Lizard", mana_cost: "{2}{G}{G}", cmc: 4, power: "4", toughness: "4", oracle_text: "At the beginning of each end step, each player gains control of all nontoken permanents they own.", scryfall_id: "2fb7f844-edaf-43ef-9121-318baf9ec9ce" });
+const MIRARI = () => make({ name: "Mirari", type_line: "Legendary Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever you cast an instant or sorcery spell, you may pay {3}. If you do, copy that spell. You may choose new targets for the copy.", oracle_id: "8f6a2fce-719e-4745-80d3-aabce5c9bafa", scryfall_id: "7de1dfcf-f2e7-4c7c-8b00-c5d30a2d3f98" });
 const CAPRICIOUS_EFREET = () => make({ name: "Capricious Efreet", type_line: "Creature — Efreet", mana_cost: "{3}{R}{R}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of your upkeep, choose target nonland permanent you control and up to two target nonland permanents you don't control. Destroy one of them at random.", scryfall_id: "9abd2286-23e9-49cd-be53-39423890f35c" });
 const CHARMBREAKER_DEVILS = () => make({ name: "Charmbreaker Devils", type_line: "Creature — Devil", mana_cost: "{5}{R}", cmc: 6, power: "5", toughness: "4", oracle_text: "At the beginning of your upkeep, return an instant or sorcery card at random from your graveyard to your hand.", scryfall_id: "1b9df437-6988-4ddc-80c4-893e11076067" });
 const ARCHAEOMANCER = () => make({ name: "Archaeomancer", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "1", toughness: "2", oracle_text: "When Archaeomancer enters the battlefield, return target instant or sorcery card from your graveyard to your hand.", oracle_id: "a91a3266-cadd-47a0-9b20-160307f14c07", scryfall_id: "dd94eb97-d231-4880-9c6f-e25da02782b4" });
@@ -334,6 +335,7 @@ const C13_CONTESTED_CLIFFS = () => make({ name: "Contested Cliffs", type_line: "
 const TEST_BEAST = () => make({ name: "Test Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "4", toughness: "4" });
 const C13_WITCH_HUNT = () => make({ name: "Witch Hunt", type_line: "Enchantment", oracle_text: "Players can't gain life.\nAt the beginning of your upkeep, this enchantment deals 4 damage to you.\nAt the beginning of your end step, target opponent chosen at random gains control of this enchantment.", oracle_id: "e86bd38f-7804-449d-af29-21e96a56ab30" });
 const C13_NAYA_SOULBEAST = () => make({ name: "Naya Soulbeast", type_line: "Creature — Beast", mana_cost: "{6}{G}{G}", cmc: 8, power: "0", toughness: "0", oracle_text: "When you cast this spell, each player reveals the top card of their library. This creature enters with X +1/+1 counters on it, where X is the total mana value of all cards revealed this way.\nTrample", oracle_id: "5ea0c608-2c56-4889-a5d3-d435df515950" });
+const C13_ETERNAL_DRAGON = () => make({ name: "Eternal Dragon", type_line: "Creature — Dragon Spirit", mana_cost: "{5}{W}{W}", cmc: 7, power: "5", toughness: "5", oracle_text: "Flying\n{3}{W}{W}: Return this card from your graveyard to your hand. Activate only during your upkeep.\nPlainscycling {2} ({2}, Discard this card: Search your library for a Plains card, reveal it, put it into your hand, then shuffle.)", oracle_id: "04d8615c-3883-4251-9790-1d8a4a40e142" });
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -1904,6 +1906,28 @@ describe("casting", () => {
 
     const mainPhase: GameState = { ...game, step: "precombat-main", priorityOpen: true, prioritySeat: 0, stack: [], passedSeats: [] };
     expect(legalActions(mainPhase, 0).some((entry) => entry.action.type === "activate" && entry.cardId === "hand-0")).toBe(false);
+  });
+
+  it("activates Eternal Dragon from the graveyard only during upkeep", () => {
+    const dragon = C13_ETERNAL_DRAGON();
+    expect(profileOf(dragon).activatedAbilities[0]).toMatchObject({
+      sourceZone: "graveyard", upkeepOnly: true, manaCost: { raw: "{3}{W}{W}" },
+      effect: { kind: "return-source-to-hand" }
+    });
+    expect(profileOf(dragon).cyclingSearches).toMatchObject([{ subtypes: ["Plains"], cost: { raw: "{2}" } }]);
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ graveyard: toHand(0, [dragon], "graveyard"), autoPass: false }));
+    game = putOnBattlefield(game, 0, [PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()]);
+    game = { ...game, step: "upkeep", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null };
+    const activate = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === "graveyard-0");
+    expect(activate).toBeDefined();
+    game = applyAction(game, 0, activate!.action);
+    game = applyAction(game, pendingSeat(game)!, { type: "pass" });
+    game = applyAction(game, pendingSeat(game)!, { type: "pass" });
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Eternal Dragon")).toBe(false);
+    expect(game.players[0]!.hand.some((card) => card.name === "Eternal Dragon")).toBe(true);
+    const nonUpkeep = { ...game, step: "precombat-main" as const, priorityOpen: true, prioritySeat: 0, stack: [], passedSeats: [] };
+    expect(legalActions(nonUpkeep, 0).some((entry) => entry.action.type === "activate" && entry.cardId === "graveyard-0")).toBe(false);
   });
 
   it("offers storage-counter mana as variable colour choices", () => {
@@ -4594,6 +4618,46 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId: "hand-1" });
     expect(game.players[0]!.library[0]!.name).toBe("Sol Ring");
     expect(game.players[0]!.hand.some((card) => card.instance_id === "hand-1")).toBe(false);
+   });
+
+  it("lets Mirari pay {3} to copy an instant or sorcery spell", () => {
+    const mirari = MIRARI();
+    let game = readyToCast([AZORIUS_SPELL()], [PLAINS(), ISLAND(), FOREST(), FOREST(), FOREST(), mirari]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), TEST_ARTIFACT()], "mirari-library"), ...player.library] }));
+    expect(profileOf(mirari).fullyImplemented).toBe(true);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", sourceCard: { name: "Mirari" } });
+    const accept = legalActions(game, 0).find((entry) => entry.action.type === "choose-trigger" && entry.action.accept);
+    expect(accept).toBeDefined();
+    game = applyAction(game, 0, accept!.action);
+    expect(game.players[0]!.hand.filter((card) => card.name === "Grizzly Bears" || card.name === "Test Relic")).toHaveLength(2);
+  });
+
+  it("lets Brainstorm draw three then put two back on top in the chosen order", () => {
+    const profile = profileOf(BRAINSTORM());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.effects[0]).toEqual({ kind: "draw-then-put-back-on-top", draw: 3, putBack: 2 });
+
+    let game = readyToCast([BRAINSTORM()], [ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [SOL_RING(), BEAR(), TEST_ARTIFACT()], "brainstorm-library"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.hand).toHaveLength(3);
+    expect(game.pendingChoice).toMatchObject({ type: "hand-card-to-library-top", seat: 0, remaining: 2 });
+    expect(legalActions(game, 1)).toHaveLength(0);
+
+    let choice = game.pendingChoice!;
+    const solRingId = game.players[0]!.hand.find((card) => card.name === "Sol Ring")!.instance_id;
+    game = applyAction(game, 0, { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId: solRingId });
+    expect(game.pendingChoice).toMatchObject({ type: "hand-card-to-library-top", seat: 0, remaining: 1 });
+    expect(game.players[0]!.library[0]!.name).toBe("Sol Ring");
+
+    choice = game.pendingChoice!;
+    const bearId = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!.instance_id;
+    game = applyAction(game, 0, { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId: bearId });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.hand).toHaveLength(1);
+    expect(game.players[0]!.library[0]!.name).toBe("Grizzly Bears");
+    expect(game.players[0]!.library[1]!.name).toBe("Sol Ring");
   });
 
   it("lets Brainstorm draw three then put two back on top in the chosen order", () => {

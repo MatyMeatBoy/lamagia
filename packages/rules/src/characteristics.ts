@@ -132,7 +132,7 @@ export interface ActivatedAbility {
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
-  readonly sourceZone?: "hand";
+  readonly sourceZone?: "hand" | "graveyard";
   /** Printed upkeep restriction (Forecast, CR 702.57). */
   readonly upkeepOnly?: boolean;
   /** The same source ability can be activated only once during its controller's turn. */
@@ -461,6 +461,8 @@ export type SpellEffect =
   | { readonly kind: "lose-life-event-player"; readonly amount: number | "X" }
   /** That player's choice to put a card from hand on top after a library shuffle (CR 401.5, 701.20). */
   | { readonly kind: "put-event-player-hand-card-on-library-top" }
+  /** Copy the instant or sorcery spell that caused this trigger (CR 707.10). */
+  | { readonly kind: "copy-triggered-spell" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
   /** Noncombat damage to the controller of the permanent source. */
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
@@ -2459,6 +2461,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^That player puts a card from their hand on top of their library$/i.test(text)) {
     return { effect: { kind: "put-event-player-hand-card-on-library-top" }, target: "none" };
   }
+  if (/^Copy that spell\. You may choose new targets for the copy$/i.test(text)) {
+    return { effect: { kind: "copy-triggered-spell" }, target: "none" };
+  }
   if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
     return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };
   }
@@ -3286,6 +3291,23 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Eternal Dragon-style graveyard activation (CR 602.1, 602.5).
+    const graveyardReturn = /^((?:\{[^}]+\})+):\s*Return (?:~|this card) from your graveyard to your hand\.?/i.exec(line);
+    const upkeepRestrictionOnNextLine = /^Activate only during your upkeep\.?$/i.test(body[lineIndex + 1]?.text ?? "");
+    const upkeepRestrictionInline = /Activate only during your upkeep\.?$/i.test(line);
+    if (graveyardReturn && (upkeepRestrictionInline || upkeepRestrictionOnNextLine)) {
+      const manaCost = parseManaCost(graveyardReturn[1]!);
+      if (manaCost) {
+        activatedAbilities.push({
+          index: activatedAbilities.length, requiresTap: false, sacrificesSelf: false, lifeCost: 0,
+          manaCost, sourceZone: "graveyard", upkeepOnly: true,
+          effect: { kind: "return-source-to-hand" }, targetKind: "none",
+          text: upkeepRestrictionInline ? line : `${line} ${body[lineIndex + 1]!.text}`
+        });
+        if (upkeepRestrictionOnNextLine) lineIndex += 1;
+        continue;
+      }
+    }
     // Echo is a delayed upkeep payment for permanents that just entered under
     // a player's control (CR 702.30a-b). Reminder text is not executable.
     const echo = /^Echo\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
