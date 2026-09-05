@@ -392,6 +392,7 @@ export type SpellEffect =
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
   | { readonly kind: "draw-then-discard"; readonly draw: number; readonly discard: number }
+  | { readonly kind: "draw-then-put-back-on-top"; readonly draw: number; readonly putBack: number }
   | { readonly kind: "exile-self" }
   | { readonly kind: "shuffle-self-into-library" }
   | { readonly kind: "return-source-to-hand" }
@@ -2533,6 +2534,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const draw = toNumber(match[1]);
     const discard = toNumber(match[2]);
     if (draw !== null && draw > 0 && discard !== null && discard > 0) return { effect: { kind: "draw-then-discard", draw, discard }, target: "none" };
+  }
+  if ((match = /^Draw (\w+) cards?, then put (\w+) cards? from your hand on top of your library in any order$/i.exec(text))) {
+    const draw = toNumber(match[1]);
+    const putBack = toNumber(match[2]);
+    if (draw !== null && draw > 0 && putBack !== null && putBack > 0) return { effect: { kind: "draw-then-put-back-on-top", draw, putBack }, target: "none" };
   }
   if (/^Exile ~$/i.test(text)) return { effect: { kind: "exile-self" }, target: "none" };
   if (/^Return (?:it|~) to its owner's hand$/i.test(text)) return { effect: { kind: "return-source-to-hand" }, target: "none" };

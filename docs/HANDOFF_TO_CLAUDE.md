@@ -3029,3 +3029,13 @@ ability triggers an additional time") needs a distinct trigger-doubler
 variant scoped to triggers *caused by* a draw event, which this claim
 deliberately does not build. Validation: **584 rules tests**, `npm run
 check`, `npm run simulate:engine` 200/200, 9,336 global profiles.
+
+Brainstorm | `36cd2364-d113-47d1-b2c4-b088d9eb88dd` was closed with a new
+`draw-then-put-back-on-top` effect (CR 601.2h, 701.8). Rather than a bespoke
+mechanism, the existing single-card `hand-card-to-library-top` pendingChoice
+(built for Widespread Panic) gained a `remaining` counter, mirroring how
+`discard-cards` already iterates a multi-card choice: each pick becomes the
+new top, so the player's chosen sequence determines draw order (CR 701.8a —
+"in any order" is the caster's choice). Brainsurge (draw 4, put back 2) is
+covered for free by the same recognizer. Validation: **586 rules tests**,
+`npm run check`, `npm run simulate:engine` 200/200, 9,341 global profiles.
