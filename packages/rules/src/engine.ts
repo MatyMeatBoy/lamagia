@@ -939,6 +939,9 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
   if (auraSetting?.removeAbilities) return auraSetting.keywords.includes(keyword);
   const profile = cardProfile(permanent.card);
   if (profile.keywords.includes(keyword)) return true;
+  // Keyword counters are continuous effects from CR 122.1/613.1d. Their
+  // normalized counter key is the keyword itself (e.g. "trample").
+  if ((permanent.counters[keyword] ?? 0) > 0) return true;
   const level = profile.levelDefinitions.filter((definition) => {
     const count = permanent.counters.level ?? 0;
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);

@@ -171,6 +171,8 @@ const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_lin
 const KIRTARS_WRATH = () => make({ name: "Kirtar's Wrath", type_line: "Sorcery", mana_cost: "{4}{W}{W}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated.\nThreshold — If there are seven or more cards in your graveyard, instead destroy all creatures, then create two 1/1 white Spirit creature tokens with flying. Creatures destroyed this way can't be regenerated.", oracle_id: "4f66d82a-492f-4638-9f77-190d4a33ad7f" });
 const SICK_TAPPER = () => make({ name: "Sick Tapper", type_line: "Creature — Human", mana_cost: "{1}", cmc: 1, power: "1", toughness: "1", oracle_text: "{T}: Draw a card." });
 const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
+const TITANOTH_REX = () => make({ name: "Titanoth Rex", type_line: "Creature — Dinosaur Beast", mana_cost: "{5}{G}{G}{G}", cmc: 9, power: "7", toughness: "7", keywords: ["Trample"], oracle_text: "Trample\nCycling {1}{G} ({1}{G}, Discard this card: Draw a card.)\nWhen you cycle this card, put a trample counter on target creature you control.", oracle_id: "8656a32b-eb95-402b-9daf-0b6d876b4b13", scryfall_id: "ecde8642-23fc-447f-a89b-5399c3681f4b" });
+const VOID_BECKONER = () => make({ name: "Void Beckoner", type_line: "Creature — Nightmare Horror", mana_cost: "{6}{B}{B}", cmc: 8, power: "8", toughness: "8", keywords: ["Deathtouch"], oracle_text: "Deathtouch\nCycling {2}{B} ({2}{B}, Discard this card: Draw a card.)\nWhen you cycle this card, put a deathtouch counter on target creature you control.", oracle_id: "7185e345-d8a1-4dd3-a071-f90f265634b4", scryfall_id: "ed128bed-d452-4828-900c-d970a17e936e" });
 const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle Slice and Dice, you may have it deal 1 damage to each creature.", oracle_id: "463fc961-d34e-4f40-b383-5b78a0fcb5c8" });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
 const CREATURE_COUNT_BOLT = () => make({ name: "Creature Count Bolt", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals damage equal to the number of creatures you control to any target." });
@@ -1644,6 +1646,25 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
     expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.temporaryKeywords).toContain("fear");
     expect(game.players[0]!.graveyard.some((card) => card.name === "Dirge of Dread")).toBe(true);
+  });
+
+  it("reuses cycling counter riders for trample and deathtouch counters", () => {
+    for (const [card, counter] of [[TITANOTH_REX(), "trample"], [VOID_BECKONER(), "deathtouch"]] as const) {
+      const profile = profileOf(card);
+      expect(profile).toMatchObject({
+        fullyImplemented: true,
+        triggers: [{ event: "card-cycled", subject: "self", targetKind: "creature-you-control", effect: { kind: "add-counter-target-creature", counter, amount: 1 } }]
+      });
+    }
+    let game = readyToCast([TITANOTH_REX()], [FOREST(), FOREST(), BEAR()]);
+    const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const cycled = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === "hand-0");
+    expect(cycled).toBeDefined();
+    game = applyAction(game, 0, cycled!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    const updated = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
+    expect(updated.counters.trample).toBe(1);
+    expect(legalTargets(game, 0, "creature-with-trample")).toContainEqual({ kind: "permanent", instanceId: target.instance_id });
   });
 
   it("lets Mind's Eye pay for opponent draws", () => {

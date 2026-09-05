@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,160**
-- Cards with a reusable existing primitive hint: **11,452**
+- One-line cards: **15,153**
+- Cards with a reusable existing primitive hint: **11,445**
 - Cards needing new primitive review: **3,708**
-- Templates: **11,998**
+- Templates: **11,991**
 
 ## Worker rule
 
@@ -30,8 +30,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Yidaro, Wandering Monster | `6c0e22f2-f0f3-43e6-87c5-c543032112d8` | activated | search / library | When you cycle ~, shuffle it into your library from your graveyard. If you've cycled a card named ~ four or more times this game, put it onto the battlefield from your graveyard instead. |
 | reuse-existing | Luminous Broodmoth | `28c7c816-07e7-42fb-923c-bf149ba28b38` | counters | trigger / ETB | Whenever a creature you control without flying dies, return it to the battlefield under its owner's control with a flying counter on it. |
 | reuse-existing | Mysterious Egg | `d3b62851-6013-49e5-8808-fa61b1bdfe98` | counters | trigger / ETB | Whenever ~ mutates, put a +1/+1 counter on it. |
-| reuse-existing | Titanoth Rex | `8656a32b-eb95-402b-9daf-0b6d876b4b13` | counters | counter | When you cycle ~, put a trample counter on target creature you control. |
-| reuse-existing | Void Beckoner | `7185e345-d8a1-4dd3-a071-f90f265634b4` | counters | counter | When you cycle ~, put a deathtouch counter on target creature you control. |
 | needs-new-primitive | Boros Challenger | `bc6b40b1-0d17-4dd2-bec9-f1653611dba3` | activated | new primitive review | Mentor |
 | needs-new-primitive | Adorned Pouncer | `80b8ee3d-4174-4f47-a533-a3db1e703382` | activated | new primitive review | Eternalize {3}{W}{W} |
 | reuse-existing | Reciprocate | `ebdd29c0-2c33-4410-a05c-80ced58c7b81` | damage | damage / life | Exile target creature that dealt damage to you this turn. |
@@ -518,5 +516,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Splendid Reclamation | `13fe5e46-77a6-45d8-ac0b-c3d740eccf86` | return | return / graveyard | Return all land cards from your graveyard to the battlefield tapped. |
 | needs-new-primitive | Universal Surveillance | `c5a5c17d-d1e4-4d23-9d2b-1c2febdcb0e7` | activated | new primitive review | Improvise |
 | reuse-existing | Cleaver Skaab | `9fa66e03-7b20-43f6-8c53-1ce18169c382` | sacrifice | sacrifice | {3}, {T}, Sacrifice another Zombie: Create two tokens that are copies of the sacrificed creature. |
+| reuse-existing | Lord of the Forsaken | `3a25d1e2-63d8-4a93-b0ce-f9307736b3f9` | activated | activated ability / mana | Pay 1 life: Add {C}. Spend this mana only to cast a spell from your graveyard. |
+| reuse-existing | Undead Augur | `c26887e1-27f4-4550-921b-53460e43c079` | draw | damage / life | Whenever ~ or another Zombie you control dies, you draw a card and you lose 1 life. |
 
-The JSON contains the remaining 14,660 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,653 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

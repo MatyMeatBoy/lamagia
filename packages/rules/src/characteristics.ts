@@ -3267,11 +3267,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Proliferate\.?$/i.test(text)) return { effect: { kind: "proliferate" }, target: "none" };
 
-  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };
   }
-  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature you control$/i.exec(text))) {
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter(?:s)? on target creature you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature-you-control" };
   }
