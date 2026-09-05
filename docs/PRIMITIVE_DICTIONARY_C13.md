@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T06:39:16.075379+00:00`
+- Generated: `2026-09-05T06:43:45.556304+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **262**
+- Exported profiles in scope: **341**; fully implemented: **263**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -259,12 +259,11 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **262/341** profiles complete; **10** unfinished cards have exactly one unmatched line.
+The engine export currently marks **263/341** profiles complete; **9** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
 | --- | ---: | --- |
-| `unclaimed` | 1 | at the beginning of your end step, target opponent chosen at random gains control of ~ — Witch Hunt |
 | `unclaimed` | 1 | creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you — Propaganda |
 | `unclaimed` | 1 | return all permanents of the color of your choice to their owners' hands — Wash Out |
 | `unclaimed` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |

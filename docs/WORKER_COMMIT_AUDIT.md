@@ -152,3 +152,8 @@ added. Validation: 578 rules tests, `npm run check`, 9,327 global profiles,
 C13 262/341. The remaining fetched branches were rechecked against the export;
 their claimed cards are either already complete or stale duplicates, so no
 additional source was imported.
+
+`f3cd692` closes Witch Hunt | `e86bd38f-7804-449d-af29-21e96a56ab30` with a
+reusable deterministic random-opponent control effect (CR 603.2, 110.2).
+Validation: 579 rules tests, `npm run check`, 9,328 global profiles, C13
+263/341.
