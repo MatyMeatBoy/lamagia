@@ -392,6 +392,8 @@ export type SpellEffect =
   | { readonly kind: "shuffle-self-into-library" }
   | { readonly kind: "return-source-to-hand" }
   | { readonly kind: "sacrifice-source" }
+  /** Each opponent of the spell caster draws, scoped to the triggering event player (Standstill). */
+  | { readonly kind: "each-opponent-of-event-player-draws"; readonly amount: number }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
@@ -579,6 +581,8 @@ export type SpellEffect =
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
+  /** Taps a creature and suppresses its controller's untap while the source is controlled. */
+  | { readonly kind: "tap-target-creature-and-lock" }
   /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
   | { readonly kind: "tap-or-untap-target-permanent" }
   | { readonly kind: "target-cant-block" }
@@ -756,7 +760,7 @@ export type TargetKind =
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
-  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
+  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
@@ -2078,7 +2082,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "instant-or-sorcery", pattern: /^whenever\s+you\s+cast\s+an?\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
-  { event: "spell-cast", subject: "each-player", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "each-player", pattern: /^(?:when|whenever)\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellType: "noncreature", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+noncreature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", pattern: /^whenever\s+you\s+cast\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+spell,?\s*(.+)$/i },
@@ -2166,6 +2170,17 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // leaves the battlefield (CR 613.7a last known information).
   if (/^Exile target creature\. Its controller gains life equal to its power$/i.test(text)) {
     return { effect: { kind: "exile-target-creature-then-life-gain-power" }, target: "creature" };
+  }
+
+  // Standstill: "that player" refers to the player who cast the triggering
+  // spell, so the executor must use TriggerInstance.eventController rather
+  // than the enchantment controller.
+  if ((match = /^Sacrifice ~\.\s*If you do,\s*each of that player['’]s opponents draws (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "sacrifice-source" }, { kind: "each-opponent-of-event-player-draws", amount }] },
+      target: "none"
+    };
   }
 
   const drawLose = /^(?:you\s+)?draw\s+(a|an|\w+)\s+cards?\s+and\s+(?:you\s+)?lose\s+(\w+)\s+life$/i.exec(text);
@@ -2904,6 +2919,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
   }
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
+  if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
+    return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
+  }
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Destroy all tapped creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures", tappedOnly: true }, target: "none" };
   if (/^Destroy all artifacts, creatures, and enchantments$/i.test(text)) {

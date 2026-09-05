@@ -344,6 +344,12 @@ const MURKFIEND_LIEGE = () => make({ name: "Murkfiend Liege", type_line: "Creatu
 const C13_GRAZING_GLADEHART = () => make({ name: "Grazing Gladehart", type_line: "Creature — Antelope", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Landfall — Whenever a land enters the battlefield under your control, you may gain 2 life.", scryfall_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4", oracle_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4" });
 const C13_HUNTED_TROLL = () => make({ name: "Hunted Troll", type_line: "Creature — Troll Warrior", mana_cost: "{2}{G}{G}", cmc: 4, power: "8", toughness: "4", oracle_text: "When Hunted Troll enters the battlefield, create four 1/1 blue Faerie creature tokens with flying under target opponent's control.", scryfall_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6", oracle_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
+const C13_DUNGEON_GEISTS = () => make({
+  name: "Dungeon Geists", type_line: "Creature — Spirit", mana_cost: "{2}{U}{U}", cmc: 4, power: "3", toughness: "3",
+  keywords: ["Flying"],
+  oracle_text: "Flying\nWhen this creature enters, tap target creature an opponent controls. That creature doesn't untap during its controller's untap step for as long as you control this creature.",
+  scryfall_id: "d3c81fda-c23d-437c-85f0-62d7b492ea32", oracle_id: "ab5ebae2-cd77-4a7d-a93b-8042cd486429"
+});
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
 const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
 const C13_SALTCRUSTED_STEPPE = () => make({ name: "Saltcrusted Steppe", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {G} and/or {W}.", produced_mana: ["C", "G", "W"], scryfall_id: "c13-saltcrusted-steppe" });
@@ -471,6 +477,7 @@ const OWN_LANDS_MANA_DORK = () => make({ name: "Test Harvester Druid", type_line
 // text, distinct from the unconditional {C} half on the same card.
 const ENTERED_THIS_TURN_LAND = () => make({ name: "Test Hidden Lair", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Add {U} or {B}. Activate only if this land entered this turn or if you control a basic land." });
 const NONCREATURE_CAST_DRAIN = () => make({ name: "Test Mai", type_line: "Creature — Human Warrior", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2", oracle_text: "First strike\nWhenever a player casts a noncreature spell, they lose 2 life." });
+const STANDSTILL = () => make({ name: "Test Standstill", type_line: "Enchantment", mana_cost: "{1}{U}", cmc: 2, oracle_text: "When a player casts a spell, sacrifice this enchantment. If you do, each of that player's opponents draws three cards." });
 const TEMPLE_OF_FALSE_GOD = () => make({ name: "Temple of the False God", type_line: "Land", oracle_text: "{T}: Add {C}{C}. Activate only if you control five or more lands.", produced_mana: ["C"] });
 const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
 const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
@@ -3555,6 +3562,25 @@ describe("casting", () => {
     expect(creatureSpell.stack.some((entry) => entry.trigger?.definition.sourceText === "Prowess")).toBe(false);
   });
 
+  it("sacrifices Standstill and draws for the spell caster's opponents", () => {
+    const profile = profileOf(STANDSTILL());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "spell-cast", subject: "each-player",
+      effect: { kind: "compound", effects: [{ kind: "sacrifice-source" }, { kind: "each-opponent-of-event-player-draws", amount: 3 }] }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [STANDSTILL(), SWAMP()], [BOLT()], [MOUNTAIN()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "pass" });
+    const hand0Before = game.players[0]!.hand.length;
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "player", seat: 0 }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Standstill")).toBe(false);
+    expect(game.players[0]!.hand.length).toBe(hand0Before + 3);
+    expect(game.players[1]!.hand).toHaveLength(0);
+  });
+
   it("returns a targeted artifact permanent to its owner's hand", () => {
     expect(profileOf(ARTIFACT_BOUNCE()).targetKind).toBe("artifact");
     let game = readyToCast([ARTIFACT_BOUNCE()], [ISLAND(), ISLAND()], [], [TEST_ARTIFACT()]);
@@ -4262,6 +4288,25 @@ describe("casting", () => {
     game = applyAction(game, 0, activation!.action);
     game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.battlefield.find((permanent) => permanent.instance_id === basalt.instance_id)?.tapped === false);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === basalt.instance_id)?.tapped).toBe(false);
+  });
+
+  it("locks an opposing creature with C13 Dungeon Geists while the source is controlled", () => {
+    let game = readyToCast([C13_DUNGEON_GEISTS()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()], [], [BEAR(), BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.targetKind).toBe("creature-opponent");
+    expect(choice.options).toHaveLength(2);
+    const target = choice.options[0]!;
+    expect(target.kind).toBe("permanent");
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    const targetId = target.kind === "permanent" ? target.instanceId : "";
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === targetId)?.tapped).toBe(true);
+
+    game = { ...game, step: "untap", activeSeat: 1, priorityOpen: false, prioritySeat: 1, passedSeats: [] };
+    game = settle(game);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === targetId)?.tapped).toBe(true);
   });
 
   it("exiles a selected graveyard and returns any selected permanent to its owner", () => {
