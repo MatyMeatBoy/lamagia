@@ -55,6 +55,12 @@ Oracle text. Use `compact-payload` only when it wins the benchmark; otherwise
 keep legacy card text and use compositional atoms as navigation hints. In all
 modes the identity, clause-order, primitive-key, and exact-operand checks must
 report `PASS`.
+For a simple repeated operation (`draw`, `mill`, `gain-life`, or a fixed token
+shape), resolve the IR symbol to the existing structured primitive first. If
+the clause has dependent text, multiple zones, unusual timing, or unresolved
+choices, keep that clause on the legacy Oracle path and add only the missing
+structured operand. This partial-IR fallback is intentional and prevents
+compression from changing rules semantics.
 For work outside C13, use the same generated index with `npm run
 rules:dictionary`.
 The worker plan is review-first: jobs containing Oracle `needs-review` cards
