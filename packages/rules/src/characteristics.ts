@@ -377,6 +377,8 @@ export type SpellEffect =
   | { readonly kind: "compound"; readonly effects: readonly SpellEffect[]; readonly targetOffsets?: readonly (number | null)[] }
   | { readonly kind: "incite-rebellion" }
   | { readonly kind: "draw"; readonly amount: number | "X" }
+  /** Add public player counters such as energy (CR 121.1, 121.3). */
+  | { readonly kind: "add-player-counter"; readonly counter: string; readonly amount: number }
   /** Proliferate (CR 701.27): choose any number of players/permanents with counters. */
   | { readonly kind: "proliferate" }
   /** Both the source controller and combat-damaged player draw the event amount. */
@@ -2594,6 +2596,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "draw-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw-target-player", amount: "X" }, target: "player" };
+  }
+  // Energy is a player counter, not mana. Keep the parser exact so mana symbols
+  // in unrelated sentences are never reclassified (CR 121.1, 121.3).
+  if ((match = /^You get ((?:\{E\})+)$/i.exec(text))) {
+    return { effect: { kind: "add-player-counter", counter: "energy", amount: (match[1]!.match(/\{E\}/gi) ?? []).length }, target: "none" };
   }
   // Sign in Blood pattern: one target player both draws and pays the life,
   // reusing the existing single-player draw and life-loss effect kinds

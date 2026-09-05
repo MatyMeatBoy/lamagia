@@ -124,6 +124,15 @@ describe("mana abilities", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises energy production as a player-counter effect", () => {
+    const profile = cardProfile(card({
+      name: "Energy Burst", type_line: "Instant", mana_cost: "{1}{G}",
+      oracle_text: "You get {E}{E}."
+    }));
+    expect(profile.effects).toEqual([{ kind: "add-player-counter", counter: "energy", amount: 2 }]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("recognises the untap symbol as an activation cost", () => {
     const profile = cardProfile(card({
       name: "Untap Device", type_line: "Artifact", mana_cost: "{2}",

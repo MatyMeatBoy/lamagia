@@ -2712,6 +2712,18 @@ describe("casting", () => {
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === unavailable.instance_id)).toBe(false);
   });
 
+  it("resolves energy production into public player counters", () => {
+    const energyBurst = make({
+      name: "Energy Burst", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2,
+      oracle_text: "You get {E}{E}."
+    });
+    let game = readyToCast([energyBurst], [FOREST(), FOREST()]);
+    expect(profileOf(energyBurst).effects).toEqual([{ kind: "add-player-counter", counter: "energy", amount: 2 }]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.counters).toEqual({ energy: 2 });
+  });
+
   it("requires a tapped, continuously controlled permanent for an untap-symbol activation", () => {
     const untapDevice = make({
       name: "Untap Device", type_line: "Artifact", mana_cost: "{2}", cmc: 2,

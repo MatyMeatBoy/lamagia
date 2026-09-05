@@ -2187,6 +2187,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       };
     }
     case "draw": return drawCards(state, controller, effectAmount(effect.amount, object));
+    case "add-player-counter": {
+      const amount = Math.max(0, effect.amount);
+      if (amount === 0) return state;
+      const next = withPlayer(state, controller, (player) => ({
+        ...player,
+        counters: { ...player.counters, [effect.counter]: (player.counters[effect.counter] ?? 0) + amount }
+      }));
+      return logged(next, controller, `${playerAt(next, controller).name} obtiene ${amount} contador${amount === 1 ? "" : "es"} de ${effect.counter}.`);
+    }
     case "draw-combat-damage-participants": {
       const amount = object.trigger?.eventAmount ?? 0;
       const damagedPlayer = object.trigger?.eventPlayer;

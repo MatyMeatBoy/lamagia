@@ -3446,6 +3446,21 @@ because their order cannot change the result, and bot seats select the first
 deterministic option. The Cradle of Vitality scenario covers the meaningful
 ordering path before its optional trigger resolves.
 
+## Commit audit and energy baseline (2026-09-05)
+
+The remote `origin/master` audit found a sequence of duplicate placeholder union
+members (`activate-only-as-<n>-sorcery`, `landwalk-<type>`, and similar). They
+add no parser, engine, or scenario behavior and are intentionally rejected;
+workers must implement one reusable effect with a test, never append a nominal
+type to claim a variant. The real C13/C14 feature branches remain reviewable
+by their focused commits.
+
+Energy is now compositional in both directions: `{E}` activation costs consume
+the controller's public `energy` counter, and exact Oracle sentences such as
+`You get {E}{E}.` produce that same counter through the generic
+`add-player-counter` effect. This keeps future energy cards on the shared
+counter primitive instead of adding card-specific branches (CR 121.1, 121.3).
+
 ## Counter state-based action baseline (2026-09-05)
 
 The rules loop now applies CR 704.5r: matching `+1/+1` and `-1/-1` counters
