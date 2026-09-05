@@ -151,6 +151,7 @@ const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", 
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
 const TEFERIS_PUZZLE_BOX = () => make({ name: "Teferi's Puzzle Box", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "At the beginning of each player's draw step, that player puts the cards in their hand on the bottom of their library in any order, then draws that many cards.", oracle_id: "37abcc92-9466-47ea-9e0b-5eda2eb62c8e", scryfall_id: "b5fb88b2-5dc6-43de-8a38-1f8982ed395a" });
+const HOWLING_MINE = () => make({ name: "Howling Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, if this artifact is untapped, that player draws an additional card.", oracle_id: "d26b27db-a567-4631-b4b6-7294222fbdd1", scryfall_id: "3d911839-cb2c-4068-aba3-3441fc0c79ac" });
 const HAND_MINUS_DAMAGE = () => make({ name: "Hand Minus Damage", type_line: "Creature — Artifact", mana_cost: "{5}", cmc: 5, power: "2", toughness: "2", oracle_text: "At the beginning of each opponent's upkeep, this creature deals X damage to that player, where X is the number of cards in their hand minus 4." });
 const HAND_EQUAL_DAMAGE = () => make({ name: "Hand Equal Damage", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of each opponent's upkeep, this creature deals damage to that player equal to the number of cards in that player's hand." });
 const EACH_HAND_DAMAGE = () => make({ name: "Shared Hand Damage", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Each player loses life equal to the number of cards in their hand." });
@@ -3072,6 +3073,26 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 0 && state.step === "precombat-main");
     expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Island", "Sol Ring", "Storm Crow"]);
     expect(game.players[0]!.library.map((card) => card.name)).toEqual(["Mountain"]);
+  });
+
+  it("only grants Howling Mine's extra draw while it is untapped", () => {
+    const profile = profileOf(HOWLING_MINE());
+    expect(profile.triggers[0]).toMatchObject({ event: "draw-step", subject: "each-player", condition: { kind: "source-untapped" }, effect: { kind: "draw-active-player" } });
+
+    let game = twoSeatGame(Array.from({ length: 10 }, () => BEAR()), Array.from({ length: 10 }, () => BEAR()));
+    game = putOnBattlefield(game, 0, [HOWLING_MINE()]);
+    game = passUntil(game, (state) => state.turn === 2 && state.activeSeat === 0 && state.step === "precombat-main");
+    expect(game.log.some((entry) => entry.text.includes("Se resuelve la habilidad del paso de robo de Howling Mine"))).toBe(true);
+
+    // Tap it right after its own controller's turn resolves. The opponent's
+    // untap step only untaps their own permanents, so Howling Mine stays
+    // tapped through their very next draw step, which should grant nothing.
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Howling Mine" ? { ...permanent, tapped: true } : permanent)
+    }));
+    const logLengthBeforeOpponentTurn = game.log.length;
+    game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 1 && state.step === "precombat-main");
+    expect(game.log.slice(logLengthBeforeOpponentTurn).some((entry) => entry.text.includes("Se resuelve la habilidad del paso de robo de Howling Mine"))).toBe(false);
   });
 
   it("clamps opponent hand-count damage at zero", () => {

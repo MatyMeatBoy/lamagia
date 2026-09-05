@@ -1408,6 +1408,10 @@ function triggerMatches(
   }
   if (condition?.kind === "creature-died-this-turn" && state.creaturesDiedThisTurn < 1) return false;
   if (condition?.kind === "second-draw-this-turn" && (event.kind !== "card-drawn" || event.count !== 2)) return false;
+  if (condition?.kind === "source-untapped") {
+    const source = findPermanent(state, watcher.instanceId);
+    if (!source || source.tapped) return false;
+  }
   if (condition?.kind === "attacking-alone" && (event.kind !== "attacks" || state.combat.attackers.length !== 1)) return false;
   if (condition?.kind === "entering-power-at-most") {
     const entering = eventObject(event);
