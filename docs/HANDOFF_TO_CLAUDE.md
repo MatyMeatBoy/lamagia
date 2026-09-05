@@ -64,6 +64,23 @@ lobbies and the tier/EDHREC deck generator are still queued for UI/API wiring;
 the deterministic simulator and offline generator already support the related
 building blocks.
 
+### Centered gameplay decisions and Proliferate
+
+Required gameplay decisions are presented through the centered `decision-overlay`
+in `apps/client/src/main.ts`; the bottom action dock remains only as a compact
+fallback. This includes trigger targets/order/modes, optional triggers, reveal,
+graveyard/library choices, Scry/Surveil, cast-vs-cycle, mana choices, and the
+combat declarations. Do not move required choices back into the HUD dock.
+
+The rules engine now also recognizes and executes `Proliferate.` (CR 701.27):
+it offers only players/permanents that already have one or more counters, lets
+the controller choose any subset, and increments every counter type on each
+selected object. Player counters are public game information and are shown in
+each seat panel; the authoritative state remains `PlayerState.counters`. The
+scenario test covers permanent +1/+1/level counters and an opposing player
+energy counter. This is a reusable primitive for poison, loyalty, charge,
+experience, and future counter-based cards; do not add card-name branches.
+
 ### Historical worker intake audit — 2026-09-05
 
 `origin/claude/c14-precon-clusters` was audited commit-by-commit. Fourteen
@@ -440,7 +457,7 @@ from that current result.
 | Mana | Generic, colored, colorless, hybrid, monocolored hybrid, Phyrexian (life payment), snow-as-generic and `{X}` parsing. A backtracking solver decides which permanent and which mana ability to use; entry-counter costs are supported. | `packages/rules/src/mana.ts`, `planManaPayment`; `mana.test.ts` and `engine.test.ts` |
 | Casting | Any card whose printed cost the board can pay, at sorcery or instant speed, with targeting and fizzling when targets leave. Variable `{X}` costs expose legal values and retain the selected value; Fireball is covered as its first-target/X damage behavior, while its multi-target additional-cost clause remains outside the current model. Target restrictions include creatures, permanents, nonlands, artifact/enchantment, artifact/creature/planeswalker, nonartifact creatures and reusable `subtype:<Subtype>` constraints. | `applyCast`, `legalTargets`, `planManaPayment`; `engine.test.ts` → "casting" |
 | Triggered abilities | Ten event families raised where the rules say they happen (`enters-battlefield`, `dies`, `attacks`, `blocks`, `deals-combat-damage-to-player`, `becomes-tapped`, `spell-cast`, `upkeep`, `draw-step`, `end-step`), each with a subject so "another creature you control" excludes the source. Queued triggers are ordered APNAP, go on top of a non-empty stack, and choose their targets as they are put on it — auto when one is legal, as a real choice when several are, removed when none is. Optional effects still pause on a server-side yes/no choice. | `GameEvent`/`raiseEvent`/`apnapOrder`/`putNextTriggerOnStack` in `packages/rules/src/engine.ts`, `TRIGGER_TEMPLATES` in `characteristics.ts`; `engine.test.ts` → "triggered abilities" (9 cases) |
-| Activated abilities | Mana abilities resolve immediately and never use the stack; non-mana activations are announced, paid and put on the stack like a spell. Costs cover mana, `{T}`, paying life and sacrificing the source, and a source that taps for its own ability is removed from its mana sources first. | `activatableAbility`/`applyActivate`/`applyActivateMana` in `engine.ts`, `parseActivatedAbility` in `characteristics.ts`; `engine.test.ts` → "activated abilities" (6 cases) |
+| Activated abilities | Mana abilities resolve immediately and never use the stack; non-mana activations are announced, paid and put on the stack like a spell. Costs cover mana, `{T}`, paying life, removing source counters, discarding a chosen hand card, exiling chosen cards from a graveyard, sacrificing the source or typed/another permanents, and choosing tap/sacrifice costs. A source that taps for its own ability is removed from its mana sources first. | `activatableAbility`/`applyActivate`/`applyActivateMana` in `engine.ts`, `parseActivatedAbility` in `characteristics.ts`; `engine.test.ts` → activated-ability and discard/exile-cost scenarios |
 | Oracle reading | The printed name **and** the modern "this land" / "this creature" self reference both normalise to `~`, so current reprints parse. A mana clause must consume its whole sentence, so a restricted "any color that a land an opponent controls could produce" is not read as five free colours. | `normalizedOracle`, `parseAddClause`; `characteristics.test.ts` → "faces and oracle normalisation" |
 | Commander | Command-zone start, `{2}` tax per previous cast, return-to-command-zone on death, 21-damage elimination tracked per commander. | `commanderTax`, `movePermanentToZone`; `engine.test.ts` → "commander rules" |
 | Combat | Attack declaration with per-attacker defender choice, blocks, first/double strike sub-step, deathtouch, trample, lifelink, vigilance, menace, flying/reach restrictions, defender, haste, summoning sickness, printed attack/block restrictions, attack requirements, and basic/legendary landwalk. | `computeCombatDamage`, `CombatRules`; `engine.test.ts` → combat scenarios |
@@ -483,7 +500,7 @@ keyword help card, and the hand honestly marks partially implemented cards.
 ## Truth boundaries — do not overstate these
 
 1. **Card text is mostly not executed.** `characteristics.ts` recognises a closed set of templates: draw N, gain N life, each opponent loses N life, "~ deals N/X damage to any target", damage to each opponent, target destruction/exile/bounce restrictions, destroy all creatures, counter target spell, common library searches to top/hand/graveyard/battlefield, entry/cost counter templates and a small set of temporary P/T modifiers, plus the Frostboil-style replacement choice. The C13 report is the current queue and must be regenerated after changes. Fireball's first-target/X branch is tested, but its additional-target cost and damage distribution are not. Every other card plays as a real body with real types, power/toughness and combat keywords, and both the hand tooltip and the card page say so. Never claim "all cards work".
-2. **What triggers and activations still do not cover.** Activated abilities exist for costs made of mana, `{T}`, paying life, removing counters from the source and sacrificing the source. Everything else is left out of the profile rather than approximated: `{Q}`, loyalty, energy, discarding, exiling, and sacrificing *other* permanents. Triggers cover ten events and seven subjects with APNAP ordering and targets, but there are still **no intervening-if conditions**, no player-ordering choice between two of one player's own simultaneous triggers (they keep event order), no delayed or state triggers, and no trigger on zone changes other than entering and dying. Also still absent: general static/continuous effects, layer dependencies, counter addition/proliferation, tokens with copied characteristics, planeswalker loyalty and mulligans. Frostboil Snarl remains a separate entering replacement effect documented in `docs/RULES_RESEARCH.md`.
+2. **What triggers and activations still do not cover.** Activated abilities now cover costs made of mana, `{T}`, `{Q}`, paying life, energy, removing source counters, discarding a chosen hand card, exiling chosen graveyard cards, and sacrificing the source or supported other permanents. Still unsupported activation costs are deliberately left out rather than approximated: arbitrary multi-zone/permanent costs not represented by structured fields. Triggers cover the supported event families with APNAP ordering, intervening-if checks, meaningful same-controller ordering choices, and targets; delayed triggers are implemented for the current draw/mana/return families, while general delayed/state triggers and broader zone-change templates remain pending. Proliferation is implemented as a reusable player/permanent-counter primitive; general static/continuous effects, layer dependencies, tokens with copied characteristics, and mulligans remain pending. Frostboil Snarl remains a separate entering replacement effect documented in `docs/RULES_RESEARCH.md`.
 3. **The bot is a heuristic, not a strong opponent.** Its win rates are not balance data.
 4. **There is no authentication, persistence, matchmaking or reconnect.** Matches live in one process's memory and are lost on restart. Seat tokens stop a client from claiming another seat; they are not a security system.
 5. **Precon cover art is mixed by provenance.** Mind Seize and Power Hungry use the user-provided product-render URLs and are marked `product_box_render`; other products may still use the display commander's Scryfall art crop until an approved product image is added. Do not present the fallback as box art.
@@ -720,13 +737,15 @@ still outside `SpellEffect`.
    (counters and tokens); the rest do not.
 2. **Counters on permanents and tokens.** Needed by the families above, and by
    the state-based actions that check them.
-3. **Intervening-if conditions and trigger ordering choices.** `TriggerDefinition`
-   has the shape for a condition; the missing piece is checking it both on trigger
-   and on resolution (CR 603.4), plus letting a player order two of their own
-   simultaneous triggers instead of keeping event order.
-4. **More activation costs.** Discarding, exiling from a graveyard, removing a
-   counter and sacrificing another permanent are the four that unlock the most
-   cards; each needs a real cost-payment choice, not an approximation.
+3. **Trigger follow-up coverage.** Intervening-if checks and meaningful
+   same-controller ordering choices now exist, including projected legal
+   actions and bot behavior. The remaining trigger work is delayed/state
+   triggers and additional zone-change event families.
+4. **More activation costs.** The next high-value costs are `{Q}`, energy,
+   loyalty and any newly discovered structured cost family. Discard, graveyard
+   exile, counter removal and typed/another-permanent costs already have
+   authoritative selection and regression scenarios; extend those primitives
+   instead of creating card-specific branches.
 5. **Continuous effects and layers.** Needed before anything that pumps, grants
    keywords, or changes types can be trusted.
 6. **Persistence and identity.** Replace the in-memory registry with
@@ -3425,3 +3444,62 @@ The current client contract for card interactions is:
 
 Validation for this baseline: **625 rules tests**, `npm run check` (rules,
 client, match-server), and `git diff --check`.
+
+## Restricted mana baseline (2026-09-05)
+
+Delighted Halfling is now executable instead of merely exposing its colour
+choice. `ManaAbility.manaRestriction` tags each generated mana unit, the
+payment planner excludes tagged mana from ordinary spells, and legendary-spell
+payments may consume it. When the payment uses the tagged mana, the resulting
+stack object carries `cantBeCountered`, so counter effects and counter-only
+auto-pass correctly see no legal counter. The tag empties with the mana pool,
+survives ordinary payments untouched, is projected only to its controller, and
+is rendered in the reserve with the same mana symbol and a restricted tooltip.
+The representation is unit-based so later restrictions can be added without
+turning the normal pool into card-specific conditionals. Regression coverage
+also checks that a nonlegendary spell cannot use it and that a legendary spell
+cast with it is not counterable. Validation: **628 rules tests**, `npm run
+check`.
+
+## Intervening-if trigger baseline (2026-09-05)
+
+Triggered conditions that use the current game state now follow CR 603.4 at
+both checkpoints: the trigger is discarded before it reaches the stack when
+the condition has stopped being true, and it does nothing at resolution when
+the condition became false after stacking. The shared pure helper currently
+covers source-untapped, controlled-subtype/power thresholds, morbid-style
+"creature died this turn", and hand-size gates; event facts such as kicked,
+evoked, second-draw, and cast-from-hand remain fixed facts from the event.
+Howling Mine has regression scenarios for both checkpoints. Validation:
+**629 rules tests**, `npm run check`.
+
+Same-controller simultaneous triggers now expose a projected `trigger-order`
+choice using only public labels; the authoritative trigger objects stay on the
+server. Repeated copies with the same source/text/effect remain automatic
+because their order cannot change the result, and bot seats select the first
+deterministic option. The Cradle of Vitality scenario covers the meaningful
+ordering path before its optional trigger resolves.
+
+## Commit audit and energy baseline (2026-09-05)
+
+The remote `origin/master` audit found a sequence of duplicate placeholder union
+members (`activate-only-as-<n>-sorcery`, `landwalk-<type>`, and similar). They
+add no parser, engine, or scenario behavior and are intentionally rejected;
+workers must implement one reusable effect with a test, never append a nominal
+type to claim a variant. The real C13/C14 feature branches remain reviewable
+by their focused commits.
+
+Energy is now compositional in both directions: `{E}` activation costs consume
+the controller's public `energy` counter, and exact Oracle sentences such as
+`You get {E}{E}.` produce that same counter through the generic
+`add-player-counter` effect. This keeps future energy cards on the shared
+counter primitive instead of adding card-specific branches (CR 121.1, 121.3).
+
+## Counter state-based action baseline (2026-09-05)
+
+The rules loop now applies CR 704.5r: matching `+1/+1` and `-1/-1` counters
+annihilate before lethal-toughness checks. The remaining counter amount is
+preserved, zero-valued keys are removed, and the normal state-based-action
+loop reevaluates the creature after the change. This is shared by undying,
+persist, graft, level and ordinary counter effects rather than a card branch;
+the regression suite covers both the stored counters and live P/T result.

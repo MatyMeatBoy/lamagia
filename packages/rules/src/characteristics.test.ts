@@ -91,7 +91,11 @@ describe("mana abilities", () => {
     }));
     expect(profile.manaAbilities).toHaveLength(2);
     expect(profile.manaAbilities[0]!.produces).toEqual(["C"]);
-    expect(profile.manaAbilities[1]!.produces).toEqual(["W", "U", "B", "R", "G"]);
+    expect(profile.manaAbilities[1]).toMatchObject({
+      produces: ["W", "U", "B", "R", "G"],
+      manaRestriction: { kind: "legendary-spell", makesSpellUncounterable: true }
+    });
+    expect(profile.fullyImplemented).toBe(true);
   });
 
   it("recognises generic cycling from hand", () => {
@@ -108,6 +112,33 @@ describe("mana abilities", () => {
     expect(profile.cyclingSearches.map((ability) => ability.subtypes)).toEqual([["Mountain"], ["Forest"]]);
     expect(profile.cyclingSearches.map((ability) => ability.cost.raw)).toEqual(["{2}", "{2}"]);
     expect(profile.cyclingSearches.map((ability) => ability.text)).toEqual(["Mountaincycling {2}", "Forestcycling {2}"]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises energy as a player-counter activation cost", () => {
+    const profile = cardProfile(card({
+      name: "Energy Device", type_line: "Artifact", mana_cost: "{2}",
+      oracle_text: "{T}, Pay {E}: Draw a card."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({ requiresTap: true, energyCost: 1, effect: { kind: "draw", amount: 1 } });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises energy production as a player-counter effect", () => {
+    const profile = cardProfile(card({
+      name: "Energy Burst", type_line: "Instant", mana_cost: "{1}{G}",
+      oracle_text: "You get {E}{E}."
+    }));
+    expect(profile.effects).toEqual([{ kind: "add-player-counter", counter: "energy", amount: 2 }]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognises the untap symbol as an activation cost", () => {
+    const profile = cardProfile(card({
+      name: "Untap Device", type_line: "Artifact", mana_cost: "{2}",
+      oracle_text: "{Q}: Draw a card."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({ requiresUntap: true, effect: { kind: "draw", amount: 1 } });
     expect(profile.fullyImplemented).toBe(true);
   });
 

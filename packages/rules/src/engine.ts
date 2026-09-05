@@ -16,7 +16,7 @@ import {
   backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
-  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaType
+  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaType, type RestrictedMana
 } from "./mana.js";
 
 /** {W/B} — the extort payment (CR 702.39a), reused when the ability is granted. */
@@ -113,6 +113,8 @@ export interface Permanent {
   /** Layer 7c modifications that expire in the cleanup step. */
   readonly powerModifier: number;
   readonly toughnessModifier: number;
+  /** Combat-only power exchange, cleared as combat ends (CR 511.3). */
+  readonly combatPowerModifier?: number;
   /** Keyword effects from spells/abilities that expire during cleanup. */
   readonly temporaryKeywords?: readonly EnforcedKeyword[];
   /** Trigger definitions granted by a resolving ability until cleanup. */
@@ -170,12 +172,16 @@ export interface PlayerState {
   readonly commanderCasts: Readonly<Record<string, number>>;
   /** Combat damage received from each opposing commander, keyed by commander instance id. */
   readonly commanderDamage: Readonly<Record<string, number>>;
+  /** Player counters such as poison, energy, experience, and rad counters. */
+  readonly counters: Readonly<Record<string, number>>;
   readonly landsPlayedThisTurn: number;
   /** Cards drawn this turn (Krang, Faerie Mastermind's "second card each turn"); reset each untap step. */
   readonly drawsThisTurn: number;
   /** Cards drawn during the current draw step (Orcish Bowmasters' "except the first ... in each of their draw steps"); reset each draw step. */
   readonly drawsThisDrawStep: number;
   readonly manaPool: ManaPool;
+  /** Mana units carrying a restriction such as Delighted Halfling's legendary-spell rider. */
+  readonly restrictedMana?: readonly RestrictedMana[];
   /** Count of Opal Palace mana still floating; spent mana consumes this marker first. */
   readonly commanderMana: number;
   readonly lost: boolean;
@@ -210,6 +216,8 @@ export interface StackObject {
   readonly fromCopy?: boolean;
   readonly variableValue: number;
   readonly countered: boolean;
+  /** A replacement effect can make a spell uncounterable after it is cast. */
+  readonly cantBeCountered?: boolean;
   /** Seat that countered this spell with a replacement-to-battlefield effect. */
   readonly counteredToBattlefieldController?: SeatId;
   /** The spell was cast for its kicker cost (CR 702.33). */
@@ -438,6 +446,14 @@ export type PendingChoice =
       readonly options: readonly { readonly index: number; readonly text: string; readonly effect: SpellEffect }[];
     }
   | {
+      /** Same-controller triggers must be ordered before they are stacked (CR 603.3b). */
+      readonly type: "trigger-order";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      /** Private authoritative options; legalActions exposes only labels. */
+      readonly options: readonly TriggerInstance[];
+    }
+  | {
       /** Tidal Force-style choice after a target has been selected (CR 701.21). */
       readonly type: "tap-or-untap";
       readonly seat: SeatId;
@@ -577,6 +593,15 @@ export type PendingChoice =
       readonly sourceId: string;
       readonly sourceCard: GameCard;
       readonly maxAmount: number;
+    }
+  | {
+      /** Proliferate (CR 701.27): add one counter to any number of eligible objects. */
+      readonly type: "proliferate";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly options: readonly Target[];
+      readonly selectedTargets: readonly Target[];
     };
 
 export type GameAction =
@@ -592,6 +617,7 @@ export type GameAction =
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
+  | { readonly type: "choose-trigger-order"; readonly sourceId: string; readonly triggerId: string }
   | { readonly type: "acknowledge-view-hand"; readonly sourceId: string }
   | { readonly type: "cast-miracle"; readonly sourceId: string }
   | { readonly type: "decline-miracle"; readonly sourceId: string }
@@ -609,6 +635,8 @@ export type GameAction =
   | { readonly type: "choose-look-top-bottom"; readonly sourceId: string; readonly ordinal?: number }
   | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
+  | { readonly type: "choose-proliferate-target"; readonly sourceId: string; readonly target: Target }
+  | { readonly type: "finish-proliferate"; readonly sourceId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -787,7 +815,7 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
+  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -843,6 +871,7 @@ export interface ManaSource {
   readonly requiresTap: boolean;
   readonly commanderMana?: boolean;
   readonly removeCounters?: readonly CounterCost[];
+  readonly restriction?: ManaRestriction;
 }
 
 /** Rule 302.6 applies to a creature's own tap ability, including Llanowar Elves. */
@@ -927,7 +956,7 @@ function manaChoiceVectors(options: readonly ManaType[], amount: number): readon
 }
 
 /** Untapped permanents this player can currently tap for mana. */
-export function manaSources(player: PlayerState, state?: GameState): ManaSource[] {
+export function manaSources(player: PlayerState, state?: GameState, sourceOptions: { readonly allowLegendaryMana?: boolean } = {}): ManaSource[] {
   const sources: ManaSource[] = [];
   const landBonuses = player.battlefield
     .map((permanent) => cardProfile(permanent.card).staticLandManaBonus)
@@ -937,6 +966,7 @@ export function manaSources(player: PlayerState, state?: GameState): ManaSource[
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
+      if (ability.manaRestriction && !sourceOptions.allowLegendaryMana) continue;
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
       if (ability.variableAmountCounter || ability.manaCost || ability.sacrificesCreatures) continue;
@@ -958,6 +988,7 @@ export function manaSources(player: PlayerState, state?: GameState): ManaSource[
         ...(doublesLandMana && isLand(profile) ? { bonusOptions: options } : {}),
         ...(ability.removeCounters ? { removeCounters: ability.removeCounters } : {}),
         ...(ability.commanderEntryCounters ? { commanderMana: true } : {}),
+        ...(ability.manaRestriction ? { restriction: ability.manaRestriction } : {}),
         lifeCost: ability.lifeCost,
         requiresTap: ability.requiresTap
       });
@@ -981,8 +1012,21 @@ export function manaSourcePotential(player: PlayerState): number {
 }
 
 export interface ManaPlan {
-  readonly taps: readonly { readonly permanentId: string; readonly abilityIndex: number; readonly type: ManaType; readonly amount: number; readonly lifeCost: number; readonly requiresTap: boolean; readonly bonusType?: ManaType; readonly commanderMana?: boolean; readonly removeCounters?: readonly CounterCost[] }[];
+  readonly taps: readonly {
+    readonly permanentId: string;
+    readonly abilityIndex: number;
+    readonly type: ManaType;
+    readonly amount: number;
+    readonly lifeCost: number;
+    readonly requiresTap: boolean;
+    readonly bonusType?: ManaType;
+    readonly commanderMana?: boolean;
+    readonly removeCounters?: readonly CounterCost[];
+    readonly fixedProduces?: readonly ManaType[];
+    readonly restriction?: ManaRestriction;
+  }[];
   readonly pool: ManaPool;
+  readonly restrictedMana?: readonly RestrictedMana[];
   readonly lifeCost: number;
 }
 
@@ -1008,7 +1052,7 @@ function coloredRequirements(cost: ManaCost): ManaType[][] {
 
 function sourceSignature(source: ManaSource): string {
   const counters = (source.removeCounters ?? []).map((cost) => `${cost.amount}:${cost.kind}`).join(",");
-  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${[...(source.bonusOptions ?? [])].join("")}|${source.lifeCost}|${counters}`;
+  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${[...(source.bonusOptions ?? [])].join("")}|${source.lifeCost}|${counters}|${source.restriction?.kind ?? ""}`;
 }
 
 function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Tap {
@@ -1021,6 +1065,8 @@ function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Ta
     requiresTap: source.requiresTap,
     ...(source.removeCounters ? { removeCounters: source.removeCounters } : {}),
     ...(source.commanderMana ? { commanderMana: true } : {}),
+    ...(source.fixedProduces ? { fixedProduces: source.fixedProduces } : {}),
+    ...(source.restriction ? { restriction: source.restriction } : {}),
     ...(bonusType ? { bonusType } : {})
   };
 }
@@ -1030,6 +1076,35 @@ function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType, b
     ? addMana(pool, chosen, source.amount)
     : source.fixedProduces.reduce((current, mana) => addMana(current, mana, 1), pool);
   return bonusType ? addMana(base, bonusType, 1) : base;
+}
+
+function outputTypesForTap(tap: Tap): readonly ManaType[] {
+  const base = tap.fixedProduces
+    ? [...tap.fixedProduces]
+    : Array.from({ length: tap.amount }, () => tap.type);
+  return tap.bonusType ? [...base, tap.bonusType] : base;
+}
+
+/** The plan solver uses one aggregate pool, then restores restriction tags before state mutation. */
+function finalizeManaPlan(
+  pool: ManaPool,
+  taps: readonly Tap[],
+  existingRestricted: readonly RestrictedMana[],
+  preservedRestricted: readonly RestrictedMana[],
+  lifeCost: number
+): ManaPlan {
+  const createdRestricted = taps.flatMap((tap) => tap.restriction
+    ? outputTypesForTap(tap).map((type) => ({ type, restriction: tap.restriction! }))
+    : []);
+  const restrictedMana = [...preservedRestricted, ...createdRestricted];
+  const normalizedPool = [...existingRestricted, ...createdRestricted]
+    .reduce((current, mana) => addMana(current, mana.type, -1), pool);
+  return {
+    taps,
+    pool: normalizedPool,
+    ...(restrictedMana.length ? { restrictedMana } : {}),
+    lifeCost
+  };
 }
 
 /**
@@ -1045,10 +1120,20 @@ function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType, b
 export function planManaPayment(
   cost: ManaCost,
   player: PlayerState,
-  options: { readonly variableValue?: number; readonly additionalGeneric?: number; readonly state?: GameState; readonly lifeCost?: number } = {}
+  options: {
+    readonly variableValue?: number;
+    readonly additionalGeneric?: number;
+    readonly state?: GameState;
+    readonly lifeCost?: number;
+    /** Allows mana restricted to legendary spells during this payment plan. */
+    readonly allowLegendaryMana?: boolean;
+  } = {}
 ): ManaPlan | null {
-  const startingPool = player.manaPool;
-  const sources = manaSources(player, options.state);
+  const existingRestricted = options.allowLegendaryMana
+    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+    : [];
+  const startingPool = existingRestricted.reduce((pool, mana) => addMana(pool, mana.type, 1), player.manaPool);
+  const sources = manaSources(player, options.state, { allowLegendaryMana: options.allowLegendaryMana });
   const variableValue = options.variableValue ?? 0;
   const additionalGeneric = options.additionalGeneric ?? 0;
   const externalLifeCost = options.lifeCost ?? 0;
@@ -1076,7 +1161,7 @@ export function planManaPayment(
     let index = 0;
     for (;;) {
       const payment = payCost(cost, currentPool, payOptions(currentLife));
-      if (payment) return { taps: currentTaps, pool: currentPool, lifeCost: currentLife + externalLifeCost };
+      if (payment) return finalizeManaPlan(currentPool, currentTaps, existingRestricted, player.restrictedMana ?? [], currentLife + externalLifeCost);
       if (index >= spare.length) return null;
       const source = spare[index]!;
       index += 1;
@@ -1150,16 +1235,66 @@ function applyManaPlan(state: GameState, seat: SeatId, plan: ManaPlan): GameStat
       return { ...permanent, ...(tap.requiresTap ? { tapped: true } : {}), counters };
     }),
     manaPool: plan.pool,
+    ...(plan.restrictedMana ? { restrictedMana: plan.restrictedMana } : { restrictedMana: [] }),
     commanderMana: player.commanderMana + plan.taps.filter((tap) => tap.commanderMana).reduce((total, tap) => total + tap.amount, 0)
   }));
   return raiseTapEvents(next, state, tapped);
 }
 
-function consumeManaPayment(player: PlayerState, payment: { readonly remaining: ManaPool; readonly spent: ManaPool }): PlayerState {
+type PlayerPayment = NonNullable<ReturnType<typeof payCost>> & {
+  readonly spentRestricted?: readonly RestrictedMana[];
+  readonly remainingRestricted?: readonly RestrictedMana[];
+};
+
+/** Pays from normal mana first, then from tagged mana when the spell permits it. */
+function payPlayerCost(
+  cost: ManaCost,
+  player: PlayerState,
+  options: Parameters<typeof payCost>[2] = {},
+  allowLegendaryMana = false
+): PlayerPayment | null {
+  const restricted = allowLegendaryMana
+    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+    : [];
+  const normal = payCost(cost, player.manaPool, options);
+  if (normal) return { ...normal, spentRestricted: [], remainingRestricted: player.restrictedMana ?? [] };
+  if (!restricted.length) return null;
+
+  const aggregate = restricted.reduce((pool, mana) => addMana(pool, mana.type, 1), player.manaPool);
+  const combined = payCost(cost, aggregate, options);
+  if (!combined) return null;
+
+  const available = [...restricted];
+  const spentRestricted: RestrictedMana[] = [];
+  const spentNormal = { ...combined.spent };
+  for (const type of Object.keys(spentNormal) as ManaType[]) {
+    let needed = spentNormal[type];
+    while (needed > 0) {
+      const index = available.findIndex((mana) => mana.type === type);
+      if (index < 0) break;
+      spentRestricted.push(available[index]!);
+      available.splice(index, 1);
+      spentNormal[type] -= 1;
+      needed -= 1;
+    }
+  }
+  const remainingNormal = { ...player.manaPool };
+  for (const type of Object.keys(spentNormal) as ManaType[]) remainingNormal[type] -= spentNormal[type];
+  return {
+    ...combined,
+    spent: spentNormal,
+    remaining: remainingNormal,
+    spentRestricted,
+    remainingRestricted: [...(player.restrictedMana ?? []).filter((mana) => !restricted.includes(mana)), ...available]
+  };
+}
+
+function consumeManaPayment(player: PlayerState, payment: PlayerPayment): PlayerState {
   const spentFromCommanderSource = Math.min(player.commanderMana, poolTotal(payment.spent));
   return {
     ...player,
     manaPool: payment.remaining,
+    ...(payment.remainingRestricted ? { restrictedMana: payment.remainingRestricted } : {}),
     commanderMana: player.commanderMana - spentFromCommanderSource
   };
 }
@@ -1228,10 +1363,12 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       commanderColorIdentity: [...new Set(commanders.flatMap((card) => card.color_identity ?? []).map((color) => color.toUpperCase()))],
       commanderCasts: Object.fromEntries(commanders.map((card) => [card.instance_id, 0])),
       commanderDamage: {},
+      counters: {},
       landsPlayedThisTurn: 0,
       drawsThisTurn: 0,
       drawsThisDrawStep: 0,
       manaPool: emptyPool(),
+      restrictedMana: [],
       commanderMana: 0,
       lost: false,
       drewFromEmptyLibrary: false,
@@ -1663,6 +1800,42 @@ function triggerMatches(
   }
 }
 
+/**
+ * Conditions written as an intervening "if" are checked twice (CR 603.4):
+ * when the trigger would be put onto the stack and again as it resolves.  The
+ * event-time check lives in `triggerMatches`; this helper covers the second
+ * check without pretending that event facts such as "was kicked" can change.
+ */
+function interveningIfStillTrue(state: GameState, trigger: TriggerInstance): boolean {
+  const condition = trigger.definition.condition;
+  if (!condition) return true;
+  switch (condition.kind) {
+    case "no-controlled-subtype":
+      return !playerAt(state, trigger.controller).battlefield.some((permanent) =>
+        hasSubtype(cardProfile(permanent.card), condition.subtype));
+    case "controlled-creature-power-at-least":
+      return playerAt(state, trigger.controller).battlefield.some((permanent) =>
+        isCreature(cardProfile(permanent.card)) && powerOf(permanent, state) >= condition.amount);
+    case "controlled-subtype-at-least": {
+      const subtype = condition.subtype.toLowerCase();
+      return playerAt(state, trigger.controller).battlefield.filter((permanent) =>
+        cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype)).length >= condition.amount;
+    }
+    case "creature-died-this-turn":
+      return state.creaturesDiedThisTurn > 0;
+    case "source-untapped": {
+      const source = findPermanent(state, trigger.sourcePermanentId);
+      return Boolean(source && !source.tapped);
+    }
+    case "any-player-hand-at-most":
+      return state.players.some((player) => player.hand.length <= condition.amount);
+    default:
+      // These conditions describe the event that already happened (for
+      // example "draws their second card" or "was cast from hand").
+      return true;
+  }
+}
+
 function causeOf(state: GameState, event: GameEvent): string {
   const object = eventObject(event);
   switch (event.kind) {
@@ -1995,7 +2168,37 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "proliferate": {
+      const options: Target[] = [];
+      for (const player of state.players) {
+        if (Object.values(player.counters).some((amount) => amount > 0)) options.push({ kind: "player", seat: player.seat });
+        for (const permanent of player.battlefield) {
+          if (Object.values(permanent.counters).some((amount) => amount > 0)) options.push({ kind: "permanent", instanceId: permanent.instance_id });
+        }
+      }
+      if (!options.length) return logged(state, controller, `${sourceName}: no hay permanentes ni jugadores con contadores para proliferar.`);
+      return {
+        ...state,
+        pendingChoice: {
+          type: "proliferate",
+          seat: controller,
+          sourceId: object.id,
+          sourceCard: object.card,
+          options,
+          selectedTargets: []
+        }
+      };
+    }
     case "draw": return drawCards(state, controller, effectAmount(effect.amount, object));
+    case "add-player-counter": {
+      const amount = Math.max(0, effect.amount);
+      if (amount === 0) return state;
+      const next = withPlayer(state, controller, (player) => ({
+        ...player,
+        counters: { ...player.counters, [effect.counter]: (player.counters[effect.counter] ?? 0) + amount }
+      }));
+      return logged(next, controller, `${playerAt(next, controller).name} obtiene ${amount} contador${amount === 1 ? "" : "es"} de ${effect.counter}.`);
+    }
     case "draw-combat-damage-participants": {
       const amount = object.trigger?.eventAmount ?? 0;
       const damagedPlayer = object.trigger?.eventPlayer;
@@ -2081,6 +2284,32 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         triggeredPermanentId: undefined
       };
       return { ...state, stack: [...state.stack, copy] };
+    }
+    case "exchange-source-power-with-blocking-creature": {
+      const blockerId = object.trigger?.eventPermanentId;
+      if (!blockerId) return state;
+      const target = object.targets[targetIndex];
+      const targetAttackerId = target?.kind === "permanent" ? target.instanceId : undefined;
+      const block = state.combat.blockers.find((entry) => entry.instanceId === blockerId
+        && (!targetAttackerId || entry.attackerId === targetAttackerId));
+      const blocker = block ? findPermanent(state, block.instanceId) : undefined;
+      const attacker = block ? findPermanent(state, block.attackerId) : undefined;
+      if (!blocker || !attacker || !isCreature(cardProfile(blocker.card)) || !isCreature(cardProfile(attacker.card))) return state;
+      const blockerPower = powerOf(blocker, state);
+      const attackerPower = powerOf(attacker, state);
+      let next = withPlayer(state, blocker.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === blocker.instance_id
+          ? { ...permanent, combatPowerModifier: (permanent.combatPowerModifier ?? 0) + attackerPower - blockerPower }
+          : permanent)
+      }));
+      next = withPlayer(next, attacker.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === attacker.instance_id
+          ? { ...permanent, combatPowerModifier: (permanent.combatPowerModifier ?? 0) + blockerPower - attackerPower }
+          : permanent)
+      }));
+      return logged(next, blocker.controller, `${blocker.card.name} intercambia su fuerza con ${attacker.card.name} hasta el final del combate.`);
     }
     case "draw-equal-tapped-creatures": {
       const target = object.targets[0];
@@ -4498,6 +4727,13 @@ function resolveTop(state: GameState): GameState {
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
   }
 
+  // CR 603.4: an intervening-if trigger does nothing if its condition is no
+  // longer true when it resolves, even if its targets are still legal.
+  if (object.trigger && !interveningIfStillTrue(next, object.trigger)) {
+    return logged(next, object.controller,
+      `La habilidad disparada de ${object.card.name} no se resuelve: ya no se cumple su condición.`);
+  }
+
   // A target that left the battlefield makes the spell fizzle (rule 608.2b).
   const targetsGone = object.targets.some((target) =>
     (target.kind === "permanent" && !findPermanent(next, target.instanceId)) ||
@@ -4764,6 +5000,30 @@ function applyStateBasedActions(state: GameState): GameState {
           const { attachedTo: _attachedTo, ...unattached } = permanent;
           return unattached;
         })
+      }));
+      changed = true;
+    }
+
+    // Rule 704.5r: +1/+1 and -1/-1 counters annihilate as a state-based
+    // action. Do this before checking lethal toughness; removing counters can
+    // change both the creature's power and whether it survives this pass.
+    for (const permanent of allPermanents(next)) {
+      const positive = permanent.counters["+1/+1"] ?? 0;
+      const negative = permanent.counters["-1/-1"] ?? 0;
+      const removed = Math.min(positive, negative);
+      if (!removed) continue;
+      const counters = { ...permanent.counters };
+      const remainingPositive = positive - removed;
+      const remainingNegative = negative - removed;
+      if (remainingPositive) counters["+1/+1"] = remainingPositive;
+      else delete counters["+1/+1"];
+      if (remainingNegative) counters["-1/-1"] = remainingNegative;
+      else delete counters["-1/-1"];
+      next = withPlayer(next, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, counters }
+          : candidate)
       }));
       changed = true;
     }
@@ -5150,8 +5410,8 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
 // ---------------------------------------------------------------------------
 
 function emptyManaPools(state: GameState): GameState {
-  if (state.players.every((player) => poolTotal(player.manaPool) === 0 && player.commanderMana === 0)) return state;
-  return { ...state, players: state.players.map((player) => ({ ...player, manaPool: emptyPool(), commanderMana: 0 })) };
+  if (state.players.every((player) => poolTotal(player.manaPool) === 0 && !(player.restrictedMana?.length) && player.commanderMana === 0)) return state;
+  return { ...state, players: state.players.map((player) => ({ ...player, manaPool: emptyPool(), restrictedMana: [], commanderMana: 0 })) };
 }
 
 function queueDelayedDraws(state: GameState): GameState {
@@ -5326,7 +5586,14 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       break;
     }
     case "end-combat": {
-      next = { ...next, combat: { ...next.combat, attackers: [], blockers: [] } };
+      next = {
+        ...next,
+        combat: { ...next.combat, attackers: [], blockers: [] },
+        players: next.players.map((player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => ({ ...permanent, combatPowerModifier: undefined }))
+        }))
+      };
       break;
     }
     case "cleanup": {
@@ -5504,7 +5771,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
+  const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
+  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowLegendaryMana });
   if (!plan) return { legal: false };
   const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -5607,6 +5875,16 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           action: { type: "choose-trigger-mode", sourceId: choice.sourceId, optionIndex: option.index },
           label: option.text,
           note: `${choice.trigger.sourceCard.name}: ${option.text}`
+        });
+      }
+      return actions;
+    }
+    if (choice.type === "trigger-order") {
+      for (const option of choice.options) {
+        actions.push({
+          action: { type: "choose-trigger-order", sourceId: choice.sourceId, triggerId: option.id },
+          label: `Poner primero: ${option.sourceCard.name}`,
+          note: option.definition.sourceText
         });
       }
       return actions;
@@ -5741,6 +6019,22 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.sourceCard.name}: puedes robar hasta ${choice.maxAmount}.`
         });
       }
+      return actions;
+    }
+    if (choice.type === "proliferate") {
+      for (const option of choice.options) {
+        actions.push({
+          action: { type: "choose-proliferate-target", sourceId: choice.sourceId, target: option },
+          label: `Proliferar ${targetLabel(state, option)}`,
+          ...(option.kind === "permanent" ? { cardId: option.instanceId } : {}),
+          note: `${choice.sourceCard.name}: agrega un contador a cada tipo de contador que ya tenga ese objetivo.`
+        });
+      }
+      actions.push({
+        action: { type: "finish-proliferate", sourceId: choice.sourceId },
+        label: choice.selectedTargets.length ? "Terminar proliferación" : "No proliferar",
+        note: "Puedes elegir cualquier cantidad de jugadores y permanentes elegibles."
+      });
       return actions;
     }
     if (choice.type === "discard-cards") {
@@ -6299,7 +6593,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -6310,14 +6604,15 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     flashback,
     variableValue,
     countered: false,
+    ...(fromCopy ? { fromCopy: true } : {}),
+    ...(cantBeCountered ? { cantBeCountered: true } : {}),
     ...(commanderEntryCounters ? { commanderEntryCounters: true } : {}),
     ...(spentMana.length ? { spentMana } : {}),
     ...(selectedEffect ? { selectedEffect } : {}),
     ...(kicked ? { kicked: true } : {}),
     ...(evoked ? { evoked: true } : {}),
     ...(flashback ? { fromFlashback: true } : {}),
-    ...(castViaAlternativeCost ? { castViaAlternativeCost: true } : {}),
-    ...(fromCopy ? { fromCopy: true } : {})
+    ...(castViaAlternativeCost ? { castViaAlternativeCost: true } : {})
   };
   // After putting an object on the stack its controller receives priority again (rule 117.3c).
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
@@ -6433,13 +6728,20 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
   const amount = ability.amountFromSacrifice ? sacrificedCount : ability.amount;
   const lifeGain = ability.gainLifeFromAmount ? sacrificedCount : (ability.gainLife ?? 0);
+  const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: amount + landBonus }, () => action.mana);
+  const restrictedOutput = ability.manaRestriction
+    ? outputTypes.map((type) => ({ type, restriction: ability.manaRestriction! }))
+    : [];
   let next = withPlayer(activationState, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost + lifeGain,
     commanderMana: current.commanderMana + (ability.commanderEntryCounters ? ability.amount : 0),
-    manaPool: (ability.fixedProduces
-      ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
-      : addMana(current.manaPool, action.mana, amount + landBonus)),
+    manaPool: restrictedOutput.length
+      ? current.manaPool
+      : (ability.fixedProduces
+        ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
+        : addMana(current.manaPool, action.mana, amount + landBonus)),
+    ...(restrictedOutput.length ? { restrictedMana: [...(current.restrictedMana ?? []), ...restrictedOutput] } : {}),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
       const counters = { ...permanent.counters };
@@ -6449,7 +6751,6 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   }));
   const withBonus = manaBonus ? withPlayer(next, seat, (current) => ({ ...current, manaPool: addMana(current.manaPool, manaBonus, 1) })) : next;
   const tapped = ability.requiresTap ? raiseTapEvents(withBonus, activationState, [source.instance_id]) : withBonus;
-  const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: amount + landBonus }, () => action.mana);
   const output = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((mana) => `{${mana}}`).join("");
   return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
 }
@@ -6599,8 +6900,14 @@ function activatableAbility(
     if (permanent.loyaltyUsedThisTurn) return { legal: false };
     if (ability.loyaltyCost < 0 && (permanent.counters.loyalty ?? 0) < -ability.loyaltyCost) return { legal: false };
   }
+  if (ability.energyCost !== undefined && (player.counters.energy ?? 0) < ability.energyCost) return { legal: false };
   if (ability.requiresClassLevel !== undefined && (permanent.classLevel ?? 1) !== ability.requiresClassLevel) return { legal: false };
   if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
+  if (ability.requiresUntap) {
+    if (!permanent.tapped) return { legal: false };
+    const hasHaste = cardProfile(permanent.card).keywords.includes("haste");
+    if (permanent.summoningSick && !hasHaste) return { legal: false };
+  }
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
   // the turn began. Non-creature permanents are unaffected by summoning sickness.
@@ -6794,6 +7101,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   let next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost,
+    ...(ability.energyCost ? { counters: { ...current.counters, energy: (current.counters.energy ?? 0) - ability.energyCost } } : {}),
     ...(ability.oncePerTurn ? {
       oncePerTurnActivations: [...new Set([...(current.oncePerTurnActivations ?? []), activationKey(source.instance_id, ability.index)])]
     } : {}),
@@ -6801,6 +7109,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       if (permanent.instance_id !== source.instance_id) return permanent;
       let updated = permanent;
       if (ability.requiresTap) updated = { ...updated, tapped: true };
+      if (ability.requiresUntap) updated = { ...updated, tapped: false };
       if (ability.loyaltyCost !== undefined) {
         updated = {
           ...updated,
@@ -6980,7 +7289,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost });
+  const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
+  const plan = (freeCast || payLifeCost || returnPermanentId) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
   if (!freeCast && !payLifeCost && !returnPermanentId && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
@@ -7008,7 +7318,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     ? { spent: emptyPool(), lifePaid: profile.payLifeInsteadOfManaCost!.life, remaining: playerAt(next, seat).manaPool }
     : returnPermanentId
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
-    : payCost(spellCost, playerAt(next, seat).manaPool, { additionalGeneric, availableLife: playerAt(next, seat).life });
+    : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowLegendaryMana);
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
   if (returnPermanentId) {
     const returned = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
@@ -7020,7 +7330,12 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     next = withPlayer(next, returned.card.owner, (current) => ({ ...current, hand: [...current.hand, returned.card] }));
     next = logged(next, seat, `${player.name} devuelve ${returned.card.name} a su mano por ${card.name}.`);
   }
-  const commanderEntryCounters = Boolean(fromCommand && playerAt(next, seat).commanderMana > 0 && poolTotal(payment.spent) > 0);
+  const paymentSpentTypes = [
+    ...Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)),
+    ...(payment.spentRestricted ?? []).map((mana) => mana.type)
+  ];
+  const paymentSpentTotal = paymentSpentTypes.length;
+  const commanderEntryCounters = Boolean(fromCommand && playerAt(next, seat).commanderMana > 0 && paymentSpentTotal > 0);
   next = withPlayer(next, seat, (current) => ({
     ...consumeManaPayment(current, payment),
     life: current.life - payment.lifePaid,
@@ -7055,10 +7370,10 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
-    Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)), payReducedCost);
+    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)));
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
-  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: poolTotal(payment.spent) },
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: paymentSpentTotal },
     selfCastTriggers ? [castTriggerWatcher(card, seat)] : []);
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}.`);
 }
@@ -7741,9 +8056,11 @@ function apnapOrder(state: GameState): readonly TriggerInstance[] {
  * legal, through a real choice when several are, and by being removed from the
  * stack entirely when none is (CR 603.3d).
  */
-function putNextTriggerOnStack(state: GameState): GameState {
+function putNextTriggerOnStack(state: GameState, forcedTriggerId?: string): GameState {
   const ordered = apnapOrder(state);
-  const trigger = ordered[0];
+  const trigger = forcedTriggerId
+    ? ordered.find((candidate) => candidate.id === forcedTriggerId) ?? ordered[0]
+    : ordered[0];
   if (!trigger) return state;
   const remaining = state.triggerQueue.filter((candidate) => candidate.id !== trigger.id);
   const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
@@ -7751,6 +8068,41 @@ function putNextTriggerOnStack(state: GameState): GameState {
 
   // A trigger whose source's controller has already lost never reaches the stack.
   if (playerAt(state, trigger.controller).lost) return { ...state, triggerQueue: remaining };
+
+  // CR 603.4: an intervening-if trigger is removed before it reaches the
+  // stack if its condition stopped being true after the event was raised.
+  if (!interveningIfStillTrue(state, trigger)) {
+    return logged({ ...state, triggerQueue: remaining }, trigger.controller,
+      `La habilidad disparada de ${trigger.sourceCard.name} no se pone en la pila: ya no se cumple su condición.`);
+  }
+
+  // CR 603.3b: if the first APNAP group contains multiple triggers from the
+  // same player, that player orders them before the first one is stacked. We
+  // choose one at a time so target/mode choices remain independent decisions.
+  if (!forcedTriggerId) {
+    const sameController: TriggerInstance[] = [];
+    for (const candidate of ordered) {
+      if (candidate.controller !== trigger.controller) break;
+      sameController.push(candidate);
+    }
+    // Repeated copies of the exact same trigger have no meaningful ordering
+    // choice. Keeping them automatic avoids forcing a player through two
+    // indistinguishable clicks while preserving choices that can change the
+    // result (different source/effect definitions).
+    const distinctDefinitions = new Set(sameController.map((candidate) =>
+      `${candidate.sourcePermanentId}|${candidate.definition.sourceText}|${JSON.stringify(candidate.definition.effect)}`));
+    if (sameController.length > 1 && distinctDefinitions.size > 1) {
+      return {
+        ...state,
+        pendingChoice: {
+          type: "trigger-order",
+          seat: trigger.controller,
+          sourceId: `trigger-order:${state.version}:${trigger.id}`,
+          options: sameController
+        }
+      };
+    }
+  }
 
   if (trigger.definition.modalEffects?.length) {
     return {
@@ -7775,7 +8127,7 @@ function putNextTriggerOnStack(state: GameState): GameState {
     return openMultiTriggerTargetChoice({ ...state, triggerQueue: remaining }, trigger, [], opened);
   }
 
-  const options = legalTargets(state, trigger.controller, targetKind, cardProfile(trigger.sourceCard))
+  const options = legalTriggerTargets(state, trigger, targetKind)
     .filter((target) => !trigger.definition.excludesSourceFromTargets
       || target.kind !== "permanent"
       || target.instanceId !== trigger.sourcePermanentId);
@@ -7799,6 +8151,23 @@ function putNextTriggerOnStack(state: GameState): GameState {
       options
     }
   };
+}
+
+/** Resolves event-relative trigger targets without widening them to the board.
+ * "The creature it's blocking" is the attacker paired with this block event,
+ * not every attacking creature (CR 603.3d, 109.5).
+ */
+function legalTriggerTargets(
+  state: GameState,
+  trigger: TriggerInstance,
+  targetKind: Exclude<TargetKind, "none">
+): Target[] {
+  if (targetKind !== "blocked-creature") return legalTargets(state, trigger.controller, targetKind, cardProfile(trigger.sourceCard));
+  const blockerId = trigger.eventPermanentId;
+  const block = blockerId ? state.combat.blockers.find((entry) => entry.instanceId === blockerId) : undefined;
+  if (!block) return [];
+  return legalTargets(state, trigger.controller, "creature", cardProfile(trigger.sourceCard))
+    .filter((target) => target.kind === "permanent" && target.instanceId === block.attackerId);
 }
 
 function openMultiTriggerTargetChoice(
@@ -7858,6 +8227,17 @@ function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extrac
     passedSeats: []
   };
   return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
+}
+
+function applyChooseTriggerOrder(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger-order" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "trigger-order" || choice.seat !== seat) throw new Error("No tienes un orden de habilidades pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Ese orden de habilidades ya no corresponde a la partida.");
+  const selected = choice.options.find((trigger) => trigger.id === action.triggerId);
+  if (!selected) throw new Error("Esa habilidad no pertenece al orden pendiente.");
+  const reorderedQueue = [selected, ...state.triggerQueue.filter((trigger) => trigger.id !== selected.id)];
+  const next = putNextTriggerOnStack({ ...state, pendingChoice: null, triggerQueue: reorderedQueue }, selected.id);
+  return logged(next, seat, `${selected.sourceCard.name} se pone primero en la pila.`);
 }
 
 function applyFinishTriggerTargets(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-trigger-targets" }>): GameState {
@@ -7949,6 +8329,52 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
   return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
 }
 
+function applyChooseProliferateTarget(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-proliferate-target" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "proliferate" || choice.seat !== seat) throw new Error("No tienes una proliferación pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa proliferación ya no corresponde a la partida.");
+  const valid = choice.options.some((option) => JSON.stringify(option) === JSON.stringify(action.target));
+  if (!valid) throw new Error("Ese objetivo no es elegible para proliferar.");
+  if (choice.selectedTargets.some((target) => JSON.stringify(target) === JSON.stringify(action.target))) {
+    throw new Error("Ese objetivo ya fue elegido para proliferar.");
+  }
+  return logged({ ...state, pendingChoice: {
+    ...choice,
+    options: choice.options.filter((option) => JSON.stringify(option) !== JSON.stringify(action.target)),
+    selectedTargets: [...choice.selectedTargets, action.target]
+  } }, seat,
+    `${targetLabel(state, action.target)} queda seleccionado para proliferar.`);
+}
+
+function applyFinishProliferate(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-proliferate" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "proliferate" || choice.seat !== seat) throw new Error("No tienes una proliferación pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa proliferación ya no corresponde a la partida.");
+  let next: GameState = { ...state, pendingChoice: null };
+  for (const target of choice.selectedTargets) {
+    if (target.kind === "player") {
+      next = withPlayer(next, target.seat, (player) => ({
+        ...player,
+        counters: Object.fromEntries(Object.entries(player.counters).map(([kind, amount]) => [kind, amount > 0 ? amount + 1 : amount]))
+      }));
+      continue;
+    }
+    if (target.kind !== "permanent") continue;
+    const permanent = findPermanent(next, target.instanceId);
+    if (!permanent) continue;
+    next = withPlayer(next, permanent.controller, (player) => ({
+      ...player,
+      battlefield: player.battlefield.map((candidate) => candidate.instance_id !== permanent.instance_id ? candidate : {
+        ...candidate,
+        counters: Object.fromEntries(Object.entries(candidate.counters).map(([kind, amount]) => [kind, amount > 0 ? amount + 1 : amount]))
+      })
+    }));
+  }
+  return logged(next, seat, choice.selectedTargets.length
+    ? `${playerAt(next, seat).name} prolifera ${choice.selectedTargets.length} objetivo(s).`
+    : `${playerAt(next, seat).name} no prolifera ningún objetivo.`);
+}
+
 /** Applies one action for one seat, then settles the game to its next decision point. */
 export function applyAction(state: GameState, seat: SeatId, action: GameAction): GameState {
   if (state.finished) throw new Error("La partida ya terminó.");
@@ -7967,6 +8393,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
+    case "choose-trigger-order": next = applyChooseTriggerOrder(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
     case "choose-trigger-mode": next = applyChooseTriggerMode(state, seat, action); break;
     case "acknowledge-view-hand": next = applyAcknowledgeViewHand(state, seat, action); break;
@@ -7984,6 +8411,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-look-top-bottom": next = applyChooseLookTopBottom(state, seat, action); break;
     case "choose-draw": next = applyChooseDraw(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
+    case "choose-proliferate-target": next = applyChooseProliferateTarget(state, seat, action); break;
+    case "finish-proliferate": next = applyFinishProliferate(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {
@@ -8049,6 +8478,7 @@ export function stackSpellManaValue(spell: StackObject): number {
 
 export function canCounterSpell(spell: StackObject, state?: GameState): boolean {
   if (spell.trigger || spell.activated || spell.countered) return false;
+  if (spell.cantBeCountered) return false;
   const profile = cardProfile(spell.card);
   if (profile.cantBeCountered) return false;
   if (!state || !isCreature(profile)) return true;

@@ -182,10 +182,13 @@ function manaHtml(cost: string | undefined): string {
 
 const MANA_POOL_ORDER = ["W", "U", "B", "R", "G", "C"] as const;
 
-function manaReserveHtml(pool: Readonly<Record<string, number>>): string {
+function manaReserveHtml(pool: Readonly<Record<string, number>>, restricted: readonly string[] = []): string {
   const entries = MANA_POOL_ORDER.filter((symbol) => (pool[symbol] ?? 0) > 0);
-  if (!entries.length) return `<span class="mana-reserve-empty">—</span>`;
-  return entries.map((symbol) => `<span class="mana-reserve-item">${manaSymbolHtml(symbol)}<b>${pool[symbol] ?? 0}</b></span>`).join("");
+  const restrictedEntries = MANA_POOL_ORDER
+    .map((symbol) => ({ symbol, count: restricted.filter((candidate) => candidate === symbol).length }))
+    .filter((entry) => entry.count > 0);
+  if (!entries.length && !restrictedEntries.length) return `<span class="mana-reserve-empty">—</span>`;
+  return `${entries.map((symbol) => `<span class="mana-reserve-item">${manaSymbolHtml(symbol)}<b>${pool[symbol] ?? 0}</b></span>`).join("")}${restrictedEntries.map(({ symbol, count }) => `<span class="mana-reserve-item restricted" title="Solo para hechizos legendarios">${manaSymbolHtml(symbol)}<b>${count}</b></span>`).join("")}`;
 }
 
 /** Replaces Oracle mana tokens while keeping the rules text and line breaks. */
@@ -762,12 +765,14 @@ function seatPanelHtml(player: PlayerView): string {
   if (isPlayerTargetable(player.seat)) classes.push("targetable-player");
   const commander = player.commandZone[0];
   const cmdDamage = Object.values(player.commanderDamage).filter((amount) => amount > 0);
+  const counters = Object.entries(player.counters).filter(([, amount]) => amount > 0);
   return `<article class="${classes.join(" ")}" style="--accent: var(--seat-${player.seat})" aria-label="Campo de ${escapeHtml(player.name)}">
     <header class="seat-head">
       <span class="seat-avatar"${commander?.image_art_crop ? ` style="background-image:url('${escapeHtml(commander.image_art_crop)}')"` : ""}>${escapeHtml(player.name.slice(0, 1))}</span>
       <span class="seat-name"><b>${escapeHtml(player.name)}${view?.activeSeat === player.seat ? `<i class="active-dot" title="Jugador activo"></i>` : ""}</b><span>${escapeHtml(player.deckName)}</span></span>
       <button class="life-chip${player.life <= 10 ? " low" : ""}" type="button" data-target-player="${player.seat}"
         title="${player.lost ? escapeHtml(player.lossReason ?? "Eliminado") : "Vidas"}"><b>${player.lost ? "✕" : player.life}</b><small>vidas</small></button>
+      ${counters.map(([kind, amount]) => `<span class="counter-chip" title="Contador ${escapeHtml(kind)}"><b>${amount}</b><small>${escapeHtml(kind)}</small></span>`).join("")}
     </header>
     <section class="seat-board">${boardHtml(player, false)}</section>
     <footer class="commander-strip">
@@ -1070,8 +1075,9 @@ function render(): void {
             <div class="self-identity">
               <span class="seat-avatar" style="border-color: var(--seat-${me.seat})${selectedAvatar ? `;background-image:url('${escapeHtml(selectedAvatar)}')` : ""}">${escapeHtml(me.name.slice(0, 1))}</span>
               <button class="self-life" type="button" data-target-player="${me.seat}"><b>${me.lost ? "✕" : me.life}</b><small>vidas</small></button>
+              ${Object.entries(me.counters).filter(([, amount]) => amount > 0).map(([kind, amount]) => `<span class="counter-chip" title="Contador ${escapeHtml(kind)}"><b>${amount}</b><small>${escapeHtml(kind)}</small></span>`).join("")}
               <span class="mana-chip" title="Maná que aún puedes producir">◇ <b>${me.availableMana}</b></span>
-              <span class="mana-reserve" title="Reserva de maná"><small>Reserva</small>${manaReserveHtml(me.manaPool)}</span>
+              <span class="mana-reserve" title="Reserva de maná"><small>Reserva</small>${manaReserveHtml(me.manaPool, me.restrictedMana)}</span>
             </div>
             <div class="self-zones">
               <button class="zone-chip" type="button" data-zone="library" data-seat="${me.seat}"><i>Biblioteca</i><b>${me.libraryCount}</b></button>

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { cardProfile } from "./characteristics.js";
 import type { CardData } from "./characteristics.js";
 import {
-  applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
-  hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
+  applyAction, canCounterSpell, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
+  hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TriggerInstance, type TurnStep
 } from "./engine.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
 import { projectGame } from "./projection.js";
@@ -15,6 +15,20 @@ describe("smart counter response and safe mana undo", () => {
     const permanents = projectGame(game, 0).players[0]!.battlefield;
     expect(permanents.at(-2)).toMatchObject({ isCreature: false, power: null, toughness: null });
     expect(permanents.at(-1)).toMatchObject({ isCreature: true, power: 0, toughness: 0 });
+  });
+  it("annihilates opposing +1/+1 and -1/-1 counters as a state-based action", () => {
+    let game = putOnBattlefield(twoSeatGame([], []), 0, [BEAR()]);
+    const bear = game.players[0]!.battlefield.at(-1)!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === bear.instance_id
+        ? { ...permanent, counters: { "+1/+1": 2, "-1/-1": 1 } }
+        : permanent)
+    }));
+    game = settle(game);
+    const updated = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(updated.counters).toEqual({ "+1/+1": 1 });
+    expect(powerOf(updated, game)).toBe(3);
+    expect(toughnessOf(updated, game)).toBe(3);
   });
   function board(text = "Counter target spell with mana value 1.") {
     let game = twoSeatGame([], []);
@@ -97,6 +111,7 @@ const ANOTHER_PERMANENT_ETB_DRAWER = () => make({ name: "Another Archivist", typ
 const ANY_SPELL_TRIGGER = () => make({ name: "Spell Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever a player casts a spell, draw a card." });
 const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Optional Archivist enters the battlefield, you may draw a card." });
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
+const SERENE_MASTER = () => make({ name: "Serene Master", type_line: "Creature — Human Monk", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "2", oracle_text: "Whenever this creature blocks, exchange its power and the power of target creature it's blocking until end of combat.", oracle_id: "2ce0d583-81ca-4dca-bde0-52f86b683afd", scryfall_id: "06223a09-a32c-4c60-86a1-f8f7bf5a7cdd" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
 const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature — Jellyfish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", keywords: ["Defender", "Flying"], oracle_text: "Defender, flying\nPrevent all combat damage that would be dealt to this creature." });
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
@@ -811,6 +826,11 @@ function passUntil(state: GameState, predicate: (state: GameState) => boolean, l
     const seat = pendingSeat(current);
     if (seat === null) throw new Error("Nobody owes a decision but the predicate is unmet.");
     const available = legalActions(current, seat);
+    const triggerOrder = available.find((entry) => entry.action.type === "choose-trigger-order");
+    if (triggerOrder) {
+      current = applyAction(current, seat, triggerOrder.action);
+      continue;
+    }
     const pass = available.find((entry) => entry.action.type === "pass")
       ?? available.find((entry) => entry.action.type === "declare-attackers")
       ?? available.find((entry) => entry.action.type === "declare-blockers");
@@ -1072,6 +1092,41 @@ describe("mana payment", () => {
     expect(game.players[0]!.manaPool.R).toBe(1);
   });
 
+  it("keeps Delighted Halfling mana restricted and makes the eligible spell uncounterable", () => {
+    const halfling = make({
+      name: "Delighted Halfling", type_line: "Creature — Halfling", power: "1", toughness: "2",
+      oracle_text: "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a legendary spell, and that spell can't be countered.",
+      produced_mana: ["B", "C", "G", "R", "U", "W"]
+    });
+    const ordinary = make({ name: "Ordinary Spell", type_line: "Creature — Elf", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1" });
+    const legendary = make({ name: "Legendary Spell", type_line: "Legendary Creature — Elf", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1" });
+
+    let blocked = twoSeatGame([], []);
+    blocked = stage(blocked, 0, () => ({ hand: toHand(0, [ordinary]), autoPass: false }));
+    blocked = putOnBattlefield(blocked, 0, [halfling]);
+    blocked = passUntil(blocked, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const source = blocked.players[0]!.battlefield.find((permanent) => permanent.card.name === halfling.name)!;
+    const restrictedAction = legalActions(blocked, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === source.instance_id && entry.action.abilityIndex === 1 && entry.action.mana === "G")!;
+    blocked = applyAction(blocked, 0, restrictedAction.action);
+    expect(blocked.players[0]!.restrictedMana).toMatchObject([{ type: "G", restriction: { kind: "legendary-spell", makesSpellUncounterable: true } }]);
+    expect(legalActions(blocked, 0).some((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")).toBe(false);
+
+    let allowed = twoSeatGame([], []);
+    allowed = stage(allowed, 0, () => ({ hand: toHand(0, [legendary]), autoPass: false }));
+    allowed = stage(allowed, 1, () => ({ autoPass: false }));
+    allowed = putOnBattlefield(allowed, 0, [halfling]);
+    allowed = passUntil(allowed, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const allowedSource = allowed.players[0]!.battlefield.find((permanent) => permanent.card.name === halfling.name)!;
+    const cast = legalActions(allowed, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")!;
+    expect(cast).toBeDefined();
+    allowed = applyAction(allowed, 0, cast.action);
+    expect(allowed.players[0]!.battlefield.find((permanent) => permanent.instance_id === allowedSource.instance_id)?.tapped).toBe(true);
+    const spell = allowed.stack.find((entry) => entry.card.name === legendary.name)!;
+    expect(spell.cantBeCountered).toBe(true);
+    expect(canCounterSpell(spell, allowed)).toBe(false);
+  });
+
   it("auto-passes an Equipment activation when no creature can be equipped", () => {
     let game = twoSeatGame([], []);
     game = putOnBattlefield(game, 0, [BEHEMOTH_SLEDGE(), ISLAND()]);
@@ -1195,6 +1250,34 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(0);
+  });
+
+  it("recognizes and resolves Proliferate for selected permanents and players", () => {
+    const proliferate = make({ name: "Test Proliferate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Proliferate." });
+    expect(profileOf(proliferate)).toMatchObject({ effects: [{ kind: "proliferate" }], fullyImplemented: true });
+    let game = readyToCast([proliferate], [FOREST(), FOREST(), FOREST(), BEAR()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = stage(game, 0, (player) => ({
+      counters: { poison: 1 },
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === bear.instance_id
+        ? { ...permanent, counters: { "+1/+1": 2, "level": 1 } }
+        : permanent)
+    }));
+    game = stage(game, 1, (player) => ({ counters: { energy: 2 } }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "proliferate", seat: 0 });
+    const sourceId = game.pendingChoice!.sourceId;
+    const targetActions = legalActions(game, 0).filter((entry) => entry.action.type === "choose-proliferate-target");
+    expect(targetActions).toHaveLength(3);
+    const bearTarget = targetActions.find((entry) => entry.action.type === "choose-proliferate-target" && entry.action.target.kind === "permanent" && entry.action.target.instanceId === bear.instance_id)!;
+    game = applyAction(game, 0, bearTarget.action);
+    const playerTarget = legalActions(game, 0).find((entry) => entry.action.type === "choose-proliferate-target" && entry.action.target.kind === "player" && entry.action.target.seat === 1)!;
+    game = applyAction(game, 0, playerTarget.action);
+    game = applyAction(game, 0, { type: "finish-proliferate", sourceId });
+    const updatedBear = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(updatedBear.counters).toEqual({ "+1/+1": 3, level: 2 });
+    expect(game.players[0]!.counters).toEqual({ poison: 1 });
+    expect(game.players[1]!.counters).toEqual({ energy: 3 });
   });
 
   it("preserves Azorius Herald when blue mana was spent to cast it", () => {
@@ -2608,6 +2691,62 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.tapped).toBe(false);
   });
 
+  it("pays energy from player counters for an activated ability", () => {
+    const energyDevice = make({
+      name: "Energy Device", type_line: "Artifact", mana_cost: "{2}", cmc: 2,
+      oracle_text: "{T}, Pay {E}: Draw a card."
+    });
+    let game = readyToCast([], [energyDevice]);
+    game = stage(game, 0, (player) => ({ counters: { energy: 1 } }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Energy Device")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.counters).toEqual({ energy: 0 });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.tapped).toBe(true);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand.length).toBe(1);
+
+    game = readyToCast([], [energyDevice]);
+    game = stage(game, 0, (player) => ({ counters: {} }));
+    const unavailable = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Energy Device")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === unavailable.instance_id)).toBe(false);
+  });
+
+  it("resolves energy production into public player counters", () => {
+    const energyBurst = make({
+      name: "Energy Burst", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2,
+      oracle_text: "You get {E}{E}."
+    });
+    let game = readyToCast([energyBurst], [FOREST(), FOREST()]);
+    expect(profileOf(energyBurst).effects).toEqual([{ kind: "add-player-counter", counter: "energy", amount: 2 }]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.counters).toEqual({ energy: 2 });
+  });
+
+  it("requires a tapped, continuously controlled permanent for an untap-symbol activation", () => {
+    const untapDevice = make({
+      name: "Untap Device", type_line: "Artifact", mana_cost: "{2}", cmc: 2,
+      oracle_text: "{Q}: Draw a card."
+    });
+    let game = readyToCast([], [untapDevice]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Untap Device")!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: true } : permanent)
+    }));
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.tapped).toBe(false);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand.length).toBe(1);
+
+    game = readyToCast([], [untapDevice]);
+    const freshSource = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Untap Device")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === freshSource.instance_id)).toBe(false);
+  });
+
   it("does not offer a typed tap activation without an untapped matching creature", () => {
     let game = readyToCast([], [C13_AZAMI(), BEAR()]);
     const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;
@@ -3255,6 +3394,49 @@ describe("casting", () => {
     const logLengthBeforeOpponentTurn = game.log.length;
     game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 1 && state.step === "precombat-main");
     expect(game.log.slice(logLengthBeforeOpponentTurn).some((entry) => entry.text.includes("Se resuelve la habilidad del paso de robo de Howling Mine"))).toBe(false);
+  });
+
+  it("applies intervening-if conditions before stacking and again on resolution", () => {
+    const sourceGame = putOnBattlefield(twoSeatGame(Array.from({ length: 10 }, () => BEAR()), []), 0, [HOWLING_MINE()]);
+    const source = sourceGame.players[0]!.battlefield.find((permanent) => permanent.card.name === "Howling Mine")!;
+    const definition = profileOf(HOWLING_MINE()).triggers[0]!;
+    const trigger: TriggerInstance = {
+      id: "howling-mine-intervening-if",
+      controller: 0,
+      sourcePermanentId: source.instance_id,
+      sourceCard: source.card,
+      definition,
+      cause: "comienza el paso de robo"
+    };
+    const quiet = (state: GameState): GameState => ({
+      ...state,
+      priorityOpen: true,
+      prioritySeat: 0,
+      players: state.players.map((player) => ({ ...player, autoPass: false }))
+    });
+
+    // The condition is already false when the queued trigger would be put on
+    // the stack, so it is removed before any player can respond.
+    let beforeStack = quiet({ ...sourceGame, triggerQueue: [trigger] });
+    beforeStack = stage(beforeStack, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: true } : permanent)
+    }));
+    beforeStack = settle(beforeStack);
+    expect(beforeStack.triggerQueue).toHaveLength(0);
+    expect(beforeStack.stack).toHaveLength(0);
+    expect(beforeStack.log.at(-1)?.text).toContain("no se pone en la pila");
+
+    // It may be stacked while untapped, but tapping it before resolution makes
+    // the intervening-if fail and prevents the extra draw.
+    let beforeResolution = settle(quiet({ ...sourceGame, triggerQueue: [trigger] }));
+    expect(beforeResolution.stack.at(-1)?.trigger?.id).toBe(trigger.id);
+    beforeResolution = stage(beforeResolution, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: true } : permanent)
+    }));
+    beforeResolution = applyAction(beforeResolution, 0, { type: "pass" });
+    beforeResolution = applyAction(beforeResolution, 1, { type: "pass" });
+    expect(beforeResolution.stack).toHaveLength(0);
+    expect(beforeResolution.log.at(-1)?.text).toContain("no se resuelve");
   });
 
   it("damages only an opponent whose hand reaches four after Fevered Visions' end-step draw", () => {
@@ -6175,11 +6357,18 @@ describe("triggered abilities", () => {
     game = applyAction(game, 1, { type: "pass" });
     game = applyAction(game, 0, { type: "pass" });
     game = applyAction(game, 1, { type: "pass" });
+    if (game.pendingChoice?.type === "trigger-order") {
+      const order = legalActions(game, 0).find((entry) => entry.action.type === "choose-trigger-order" && entry.label.includes("Ajani"));
+      expect(order).toBeDefined();
+      game = applyAction(game, 0, order!.action);
+      game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    }
     const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ajani's Pridemate")!;
     expect(game.pendingChoice?.type).toBe("optional-trigger");
     const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
     expect(choice.targets).toEqual([{ kind: "permanent", instanceId: target.instance_id }]);
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => (state.players[0]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)?.counters["+1/+1"] ?? 0) > 0);
     const countered = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ajani's Pridemate")!;
     expect(countered.counters["+1/+1"]).toBe(1);
   });
@@ -7622,6 +7811,25 @@ describe("combat", () => {
     game = putOnBattlefield(game, 1, defender);
     return passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
   }
+
+  it("swaps Serene Master's power with the creature it blocks until combat ends", () => {
+    const serene = SERENE_MASTER();
+    expect(profileOf(serene).fullyImplemented).toBe(true);
+    let game = atAttackers([TRAMPLER()], [serene]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const attacker = game.players[0]!.battlefield[0]!;
+    const blocker = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    game = applyAction(game, 1, { type: "declare-blockers", blockers: [{ instanceId: blocker.instance_id, attackerId: attacker.instance_id }] });
+    expect(game.stack.at(-1)?.targets).toEqual([{ kind: "permanent", instanceId: attacker.instance_id }]);
+    game = passUntil(game, (state) => state.step === "declare-blockers" && state.combat.blockersDeclared && state.stack.length === 0);
+    const activeBlocker = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === blocker.instance_id)!;
+    expect(powerOf(activeBlocker, game)).toBe(6);
+    expect(powerOf(game.players[0]!.battlefield[0]!, game)).toBe(0);
+    game = passUntil(game, (state) => state.step === "end-combat" && state.combat.attackers.length === 0);
+    expect(powerOf(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === blocker.instance_id)!, game)).toBe(0);
+  });
 
   it("does not let a summoning-sick creature attack", () => {
     let game = twoSeatGame([], []);

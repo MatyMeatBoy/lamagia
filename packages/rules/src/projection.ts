@@ -11,7 +11,7 @@ import {
   STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSourcePotential, powerOf, toughnessOf,
   type GameCard, type GameState, type LegalAction, type LogEntry, type Permanent, type SeatId, type Target, type TurnStep
 } from "./engine.js";
-import { emptyPool, type ManaPool } from "./mana.js";
+import { emptyPool, type ManaPool, type ManaType } from "./mana.js";
 
 export interface CardView {
   readonly instance_id: string;
@@ -77,8 +77,12 @@ export interface PlayerView {
   readonly exile: readonly CardView[];
   readonly commandZone: readonly CardView[];
   readonly commanderDamage: Readonly<Record<string, number>>;
+  /** Player counters are public game information (poison, energy, experience, etc.). */
+  readonly counters: Readonly<Record<string, number>>;
   readonly landsPlayedThisTurn: number;
   readonly manaPool: ManaPool;
+  /** Restricted mana is exposed only to its controller, with its colour tags. */
+  readonly restrictedMana: readonly ManaType[];
   /** Untapped mana the viewer could still produce; opponents report zero. */
   readonly availableMana: number;
 }
@@ -295,8 +299,10 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     exile: player.exile.map(cardView),
     commandZone: player.commandZone.map(cardView),
     commanderDamage: player.commanderDamage,
+    counters: player.counters,
     landsPlayedThisTurn: player.landsPlayedThisTurn,
     manaPool: player.seat === viewerSeat ? player.manaPool : emptyPool(),
+    restrictedMana: player.seat === viewerSeat ? (player.restrictedMana ?? []).map((mana) => mana.type) : [],
     availableMana: player.seat === viewerSeat ? manaSourcePotential(player) : 0
   }));
 

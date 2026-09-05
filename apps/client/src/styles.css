@@ -333,7 +333,7 @@ h1, h2, h3 { margin: 0; }
 /* The ability menu and the help card are the only two floating panels that sit
    above the board; both close on Escape and on their own close button. */
 .ability-menu, .glyph-help {
-  position: fixed; left: 50%; bottom: 22vh; transform: translateX(-50%);
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
   z-index: 30; width: min(360px, 88vw); padding: 8px;
   border: 1px solid var(--line); border-radius: var(--radius);
   background: #0b1710f8; box-shadow: 0 16px 40px #000c;
@@ -420,6 +420,9 @@ button.chip:hover { border-color: var(--gold); }
 .self-life { display: flex; align-items: baseline; gap: 3px; padding: 3px 10px; border: 1px solid var(--gold-dim); border-radius: 9px; background: #0a120b; }
 .self-life b { color: var(--gold); font-size: 1.35rem; line-height: 1; }
 .self-life small { color: var(--text-faint); font-size: .55rem; }
+.counter-chip { display: inline-flex; align-items: baseline; gap: 3px; padding: 3px 7px; border: 1px solid #6b4c79; border-radius: 7px; background: #1b1020; color: #e5c8ee; }
+.counter-chip b { font-size: .85rem; line-height: 1; }
+.counter-chip small { color: #c9a9d3; font-size: .54rem; text-transform: capitalize; }
 .self-zones { display: flex; gap: 4px; }
 .self-zones .zone-chip { flex-direction: column; gap: 0; min-width: 52px; padding: 3px 6px; text-align: center; }
 .self-zones .zone-chip i { font-style: normal; font-size: .52rem; }
@@ -512,8 +515,8 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .library-search small { color: var(--text-faint); font-size: .56rem; line-height: 1.25; }
 
 .library-search-overlay {
-  position: fixed; z-index: 25; left: 50%; top: 9vh; transform: translateX(-50%);
-  width: min(760px, 92vw); max-height: 68vh; overflow: auto; padding: 12px;
+  position: fixed; z-index: 25; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(760px, 92vw); max-height: 78vh; overflow: auto; padding: 12px;
   border: 1px solid var(--gold-dim); border-radius: var(--radius); background: #09140ff7;
   box-shadow: 0 18px 50px #000d;
 }
@@ -698,6 +701,7 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 .pip.symbol-t { background: #c8b67a; color: #3d3012; }
 .pip.symbol-p { background: #b5a1bd; color: #30223a; }
 .pip.symbol-s { background: #c9e8f0; color: #1d5663; }
+.mana-reserve-item.restricted { padding: 1px 3px; border: 1px solid var(--gold-dim); border-radius: 5px; background: #302710; }
 
 /* --------------------------------------------------------------------- */
 /* Landing                                                                */

@@ -8,7 +8,7 @@
  * so the table never pretends a card did something it did not do.
  */
 
-import { MANA_COLORS, parseManaCost, type ManaCost, type ManaType } from "./mana.js";
+import { MANA_COLORS, parseManaCost, type ManaCost, type ManaRestriction, type ManaType } from "./mana.js";
 
 
 export interface CardData {
@@ -60,6 +60,8 @@ export interface ManaAbility {
   readonly anyColorFromLandsControlledBy?: "opponent" | "you";
   /** The produced mana can add Opal Palace's commander-entry counters when spent to cast that commander. */
   readonly commanderEntryCounters?: boolean;
+  /** Restriction retained on the floating mana, e.g. Delighted Halfling. */
+  readonly manaRestriction?: ManaRestriction;
   readonly requiresTap: boolean;
   /** Life the ability costs (pain and filter lands). */
   readonly lifeCost: number;
@@ -129,6 +131,10 @@ export interface ActivatedAbility {
   readonly sorcerySpeed?: boolean;
   /** Planeswalker loyalty ability: signed loyalty change paid as the cost (CR 606). */
   readonly loyaltyCost?: number;
+  /** Energy paid from the controller's player counters (CR 107.4, 118.3). */
+  readonly energyCost?: number;
+  /** Untap symbol cost `{Q}` (CR 118.1, 602.1). */
+  readonly requiresUntap?: boolean;
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
@@ -371,6 +377,10 @@ export type SpellEffect =
   | { readonly kind: "compound"; readonly effects: readonly SpellEffect[]; readonly targetOffsets?: readonly (number | null)[] }
   | { readonly kind: "incite-rebellion" }
   | { readonly kind: "draw"; readonly amount: number | "X" }
+  /** Add public player counters such as energy (CR 121.1, 121.3). */
+  | { readonly kind: "add-player-counter"; readonly counter: string; readonly amount: number }
+  /** Proliferate (CR 701.27): choose any number of players/permanents with counters. */
+  | { readonly kind: "proliferate" }
   /** Both the source controller and combat-damaged player draw the event amount. */
   | { readonly kind: "draw-combat-damage-participants" }
   /** Draw only if the controller currently has more life than an opponent. */
@@ -470,6 +480,8 @@ export type SpellEffect =
   | { readonly kind: "put-event-player-hand-card-on-library-top" }
   /** Copy the instant or sorcery spell that caused this trigger (CR 707.10). */
   | { readonly kind: "copy-triggered-spell" }
+  /** Swap a blocking source's power with the creature it blocked until combat ends (CR 701.10). */
+  | { readonly kind: "exchange-source-power-with-blocking-creature" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
   /** Noncombat damage to the controller of the permanent source. */
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
@@ -833,7 +845,7 @@ export type TargetKind =
   | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
-  | "attacking-or-blocking-creature" | "attacking-creature"
+  | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
   | "creature-power-at-most-4"
@@ -1395,11 +1407,18 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     }
     if (!instruction?.produced) continue;
     const produced = instruction.produced;
+    const manaRestriction: ManaRestriction | undefined = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(effectText)
+      ? {
+          kind: "legendary-spell",
+          ...( /that\s+spell\s+can't\s+be\s+countered/i.test(effectText) ? { makesSpellUncounterable: true } : {})
+        }
+      : undefined;
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
       ...(produced.commanderIdentity ? { commanderIdentity: true } : {}),
       ...(instruction.commanderEntryCounters ? { commanderEntryCounters: true } : {}),
+      ...(manaRestriction ? { manaRestriction } : {}),
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
@@ -1729,7 +1748,7 @@ function parseDamageAmplify(line: string): DamageAmplify | null {
  * sacrificing its own source, removing counters, plus an effect the engine can
  * resolve.
  *
- * Everything else — untapping ({Q}), loyalty, energy, exiling or sacrificing
+ * Everything else — exiling or sacrificing
  * other permanents or discarding — leaves the ability out of
  * the profile rather than letting the table activate a cost it cannot pay.
  */
@@ -1817,9 +1836,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
 
   const symbols = costText.match(/\{[^}]+\}/g) ?? [];
   const requiresTap = symbols.some((symbol) => symbol.toUpperCase() === "{T}");
-  // `{Q}` (untap) and every other non-mana symbol are outside the payable set.
-  if (symbols.some((symbol) => /^\{Q\}$/i.test(symbol))) return null;
-  const manaSymbols = symbols.filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
+  const requiresUntap = symbols.some((symbol) => /^\{Q\}$/i.test(symbol));
+  const energyCost = (costText.match(/pay\s+(?:\{E\})+/i)?.[0].match(/\{E\}/gi) ?? []).length;
+  const manaSymbols = symbols.filter((symbol) => !/^\{[TQE]\}$/i.test(symbol));
   const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
   if (manaSymbols.length && !manaCost) return null;
   // An {X} cost is payable only when the effect actually consumes X (CR 107.3).
@@ -1855,6 +1874,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const lifeMatch = /pay\s+(\d+)\s+life/i.exec(costText);
   const lifeCost = lifeMatch ? Number(lifeMatch[1]) : 0;
   const leftovers = costText
+    .replace(/pay\s+(?:\{E\})+/gi, "")
     .replace(/\{[^}]*\}/g, "")
     .replace(/pay\s+\d+\s+life/gi, "")
     .replace(/sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
@@ -1886,6 +1906,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
+    ...(energyCost ? { energyCost } : {}),
+    ...(requiresUntap ? { requiresUntap: true } : {}),
     ...(requiresOpponentLands !== null ? { requiresOpponentLands } : {}),
     lifeCost,
     manaCost,
@@ -2579,6 +2601,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "draw-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw-target-player", amount: "X" }, target: "player" };
   }
+  // Energy is a player counter, not mana. Keep the parser exact so mana symbols
+  // in unrelated sentences are never reclassified (CR 121.1, 121.3).
+  if ((match = /^You get ((?:\{E\})+)$/i.exec(text))) {
+    return { effect: { kind: "add-player-counter", counter: "energy", amount: (match[1]!.match(/\{E\}/gi) ?? []).length }, target: "none" };
+  }
   // Sign in Blood pattern: one target player both draws and pays the life,
   // reusing the existing single-player draw and life-loss effect kinds
   // resolved against the same stack-object target (Sign in Blood, Blood Pact,
@@ -2626,6 +2653,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Copy that spell\. You may choose new targets for the copy$/i.test(text)) {
     return { effect: { kind: "copy-triggered-spell" }, target: "none" };
+  }
+  if (/^Exchange its power and the power of target creature it's blocking until end of combat$/i.test(text)) {
+    return { effect: { kind: "exchange-source-power-with-blocking-creature" }, target: "blocked-creature" };
   }
   if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
     return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };
@@ -2945,6 +2975,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: "none"
     };
   }
+  if (/^Proliferate\.?$/i.test(text)) return { effect: { kind: "proliferate" }, target: "none" };
+
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };
@@ -3787,7 +3819,9 @@ function recognizeText(text: string): RecognizedText {
       const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
       const variableSacrificeMana = /(?:\{T\},\s*)?sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s?\s*$/i.test(manaLine[1]!.trim())
         && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana) unimplementedText.push(line);
+      const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(manaLine[2]!)
+        && Boolean(parseAddClause(manaLine[2]!.split(/[.!?]/, 1)[0] ?? ""));
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine) unimplementedText.push(line);
       continue;
     }
 

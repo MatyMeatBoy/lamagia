@@ -160,6 +160,12 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const richest = [...modeOptions].sort((a, b) => b.label.length - a.label.length)[0];
     if (richest) return { action: richest.action, label: richest.label };
   }
+  if (state.pendingChoice?.type === "trigger-order" && state.pendingChoice.seat === seat) {
+    // Keep bot matches deterministic while exposing every ordering option to
+    // human seats through the normal legal-action projection.
+    const first = available.find((entry) => entry.action.type === "choose-trigger-order");
+    if (first) return { action: first.action, label: first.label };
+  }
   if (state.pendingChoice?.type === "miracle" && state.pendingChoice.seat === seat) {
     // Greedy default: pay the Miracle cost whenever it is affordable.
     const cast = available.find((entry) => entry.action.type === "cast-miracle");
@@ -187,6 +193,12 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const chosen = available.find((entry) => entry.action.type === "choose-draw" && entry.action.amount === choice.maxAmount)
       ?? available.find((entry) => entry.action.type === "choose-draw");
     if (chosen) return { action: chosen.action, label: chosen.label };
+  }
+  if (state.pendingChoice?.type === "proliferate" && state.pendingChoice.seat === seat) {
+    const target = available.find((entry) => entry.action.type === "choose-proliferate-target");
+    if (target) return { action: target.action, label: target.label };
+    const finish = available.find((entry) => entry.action.type === "finish-proliferate");
+    if (finish) return { action: finish.action, label: finish.label };
   }
   if (state.pendingChoice?.type === "look-top-select" && state.pendingChoice.seat === seat) {
     // Prefer the first eligible card, then deterministically bottom-order the
