@@ -9639,6 +9639,48 @@ describe("Skullclamp's equipped-creature-dies draw", () => {
   });
 });
 
+describe("Natural Order's green-restricted sacrifice and tutor", () => {
+  const NATURAL_ORDER = () => make({ name: "Natural Order", type_line: "Sorcery", mana_cost: "{2}{G}{G}", cmc: 4, oracle_text: "As an additional cost to cast this spell, sacrifice a green creature.\nSearch your library for a green creature card, put it onto the battlefield, then shuffle." });
+  const GREEN_BEAST = () => make({ name: "Test Green Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"] });
+  const RED_GOBLIN = () => make({ name: "Test Red Goblin", type_line: "Creature — Goblin", mana_cost: "{R}", cmc: 1, power: "1", toughness: "1", colors: ["R"] });
+  const GREEN_HYDRA = () => make({ name: "Test Green Hydra", type_line: "Creature — Hydra", mana_cost: "{4}{G}{G}", cmc: 6, power: "6", toughness: "6", colors: ["G"] });
+
+  it("recognizes both the color-restricted sacrifice cost and the color-restricted tutor", () => {
+    const profile = profileOf(NATURAL_ORDER());
+    expect(profile.additionalCostSacrificeCreatureColor).toBe("G");
+    expect(profile.effects).toEqual([{ kind: "search-library", types: ["Creature"], colors: ["G"], destination: "battlefield", reveal: false }]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("sacrifices the green creature and only offers green creatures as the tutor target", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GREEN_BEAST(), RED_GOBLIN(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [NATURAL_ORDER()]),
+      library: [...toHand(0, [RED_GOBLIN(), GREEN_HYDRA()], "library"), ...player.library]
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Green Beast")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Green Beast")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Red Goblin")).toBe(true);
+    expect(game.pendingChoice).toMatchObject({ type: "search-library", seat: 0 });
+    expect(() => applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Red Goblin" })).toThrow();
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Green Hydra" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Green Hydra")).toBe(true);
+  });
+
+  it("can't be cast with only a non-green creature to sacrifice", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [RED_GOBLIN(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [NATURAL_ORDER()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(false);
+    expect(() => applyAction(game, 0, { type: "cast", cardId: "hand-0" })).toThrow();
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

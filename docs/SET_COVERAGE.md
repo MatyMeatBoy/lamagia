@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,788** · cobertura: **30.3%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,795** · cobertura: **30.3%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -40,10 +40,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | 1996-10-08 | Mirage (`MIR`) | expansion | mirage | main | 335 | 87 | 248 | 26.0% |
 | 1996-11-01 | Multiverse Gift Box (`MGB`) | boxed-products | multiverse-gift-box | other | 10 | 3 | 7 | 30.0% |
 | 1996-12-31 | Introductory Two-Player Set (`ITP`) | starter | 1990s | other | 57 | 30 | 27 | 52.6% |
-| 1997-02-03 | Visions (`VIS`) | expansion | 1990s | main | 167 | 42 | 125 | 25.1% |
+| 1997-02-03 | Visions (`VIS`) | expansion | 1990s | main | 167 | 43 | 124 | 25.7% |
 | 1997-03-24 | Fifth Edition (`5ED`) | core | 1990s | main | 434 | 154 | 280 | 35.5% |
 | 1997-04-01 | Astral Cards (`PAST`) | boxed-products | astral-cards | other | 12 | 0 | 12 | 0.0% |
-| 1997-05-01 | Portal (`POR`) | starter | 1990s | other | 200 | 128 | 72 | 64.0% |
+| 1997-05-01 | Portal (`POR`) | starter | 1990s | other | 200 | 129 | 71 | 64.5% |
 | 1997-06-09 | Weatherlight (`WTH`) | expansion | 1990s | main | 167 | 28 | 139 | 16.8% |
 | 1997-10-01 | Tempest Promos (`PTMP`) | promos | tempest | other | 1 | 0 | 1 | 0.0% |
 | 1997-10-14 | Tempest (`TMP`) | expansion | tempest | main | 335 | 114 | 221 | 34.0% |
@@ -122,7 +122,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 192 | 150 | 56.1% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 122 | 169 | 41.9% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 575 | 2114 | 21.4% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 576 | 2113 | 21.4% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
@@ -224,7 +224,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | 2009-11-20 | Premium Deck Series: Slivers (`H09`) | premium-decks | 2000s | other | 41 | 11 | 30 | 26.8% |
 | 2010-01-01 | Duels of the Planeswalkers 2010 Promos (`PDP10`) | promos | duels-of-the-planeswalkers-2010 | other | 2 | 0 | 2 | 0.0% |
 | 2010-01-01 | Friday Night Magic 2010 (`F10`) | promos | fnm-2010 | other | 12 | 4 | 8 | 33.3% |
-| 2010-01-01 | Judge Gift Cards 2010 (`G10`) | promos | judge-2010 | other | 8 | 4 | 4 | 50.0% |
+| 2010-01-01 | Judge Gift Cards 2010 (`G10`) | promos | judge-2010 | other | 8 | 5 | 3 | 62.5% |
 | 2010-01-01 | Magic 2011 Promos (`PM11`) | promos | magic-2011 | other | 6 | 1 | 5 | 16.7% |
 | 2010-01-01 | Magic Player Rewards 2010 (`P10`) | promos | player-rewards-2010 | other | 13 | 7 | 6 | 53.8% |
 | 2010-01-01 | Magic Premiere Shop 2010 (`PMPS10`) | promos | magic-premiere-shop-2010 | other | 5 | 5 | 0 | 100.0% |
@@ -357,7 +357,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | 2016-04-08 | Shadows over Innistrad (`SOI`) | expansion | innistrad | main | 287 | 61 | 226 | 21.3% |
 | 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | promos | shadows-over-innistrad | other | 79 | 10 | 69 | 12.7% |
 | 2016-04-08 | Welcome Deck 2016 (`W16`) | starter | 2010s | other | 16 | 9 | 7 | 56.2% |
-| 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 115 | 134 | 46.2% |
+| 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 116 | 133 | 46.6% |
 | 2016-07-22 | Eldritch Moon (`EMN`) | expansion | 2010s | main | 208 | 42 | 166 | 20.2% |
 | 2016-07-22 | Eldritch Moon Promos (`PEMN`) | promos | eldritch-moon | other | 64 | 3 | 61 | 4.7% |
 | 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | 2010s | other | 15 | 0 | 15 | 0.0% |
@@ -491,7 +491,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | 2021-03-11 | Historic Anthology 4 (`HA4`) | anthologies | historic-anthology-4 | other | 25 | 4 | 21 | 16.0% |
 | 2021-03-19 | Time Spiral Remastered (`TSR`) | masters-remastered | time-spiral-remastered | other | 410 | 110 | 300 | 26.8% |
 | 2021-04-23 | Commander 2021 (`C21`) | commander | 2021 | commander | 329 | 116 | 213 | 35.3% |
-| 2021-04-23 | Strixhaven Mystical Archive (`STA`) | masterpieces | strixhaven-mystical-archive | other | 63 | 30 | 33 | 47.6% |
+| 2021-04-23 | Strixhaven Mystical Archive (`STA`) | masterpieces | strixhaven-mystical-archive | other | 63 | 31 | 32 | 49.2% |
 | 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | strixhaven | main | 290 | 55 | 235 | 19.0% |
 | 2021-04-23 | Strixhaven: School of Mages Promos (`PSTX`) | promos | strixhaven-school-of-mages | other | 90 | 10 | 80 | 11.1% |
 | 2021-05-06 | Modern Horizons 2 Promos (`PMH2`) | promos | modern-horizons-2 | other | 80 | 9 | 71 | 11.2% |
@@ -621,7 +621,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | 2024-08-02 | Bloomburrow Commander (`BLC`) | commander | 2024 | commander | 312 | 125 | 187 | 40.1% |
 | 2024-08-02 | Bloomburrow Promos (`PBLB`) | promos | bloomburrow | other | 80 | 4 | 76 | 5.0% |
 | 2024-08-02 | Cowboy Bebop (`PCBB`) | promos | cowboy-bebop | other | 5 | 2 | 3 | 40.0% |
-| 2024-08-02 | Mystery Booster 2 (`MB2`) | masters-remastered | mystery-booster-2 | other | 384 | 75 | 309 | 19.5% |
+| 2024-08-02 | Mystery Booster 2 (`MB2`) | masters-remastered | mystery-booster-2 | other | 384 | 76 | 308 | 19.8% |
 | 2024-09-27 | Duskmourn: House of Horror (`DSK`) | expansion | 2020s | main | 278 | 43 | 235 | 15.5% |
 | 2024-09-27 | Duskmourn: House of Horror Commander (`DSC`) | commander | 2024 | commander | 306 | 115 | 191 | 37.6% |
 | 2024-09-27 | Duskmourn: House of Horror Promos (`PDSK`) | promos | duskmourn-house-of-horror | other | 80 | 2 | 78 | 2.5% |
@@ -792,7 +792,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 36 | 34 | 51.4% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 145 | 392 | 27.0% |
-| expansion | 1990s | 11 | 1573 | 370 | 1203 | 23.5% |
+| expansion | 1990s | 11 | 1573 | 371 | 1202 | 23.6% |
 | expansion | 2000s | 19 | 3082 | 703 | 2379 | 22.8% |
 | expansion | 2010s | 14 | 2735 | 734 | 2001 | 26.8% |
 | expansion | 2020s | 17 | 3739 | 622 | 3117 | 16.6% |
@@ -859,7 +859,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | masterpieces | secrets-of-strixhaven-mystical-archive | 1 | 65 | 20 | 45 | 30.8% |
 | masterpieces | special-guests | 1 | 139 | 35 | 104 | 25.2% |
 | masterpieces | stardates | 1 | 1 | 1 | 0 | 100.0% |
-| masterpieces | strixhaven-mystical-archive | 1 | 63 | 30 | 33 | 47.6% |
+| masterpieces | strixhaven-mystical-archive | 1 | 63 | 31 | 32 | 49.2% |
 | masterpieces | teenage-mutant-ninja-turtles-source-material | 1 | 20 | 2 | 18 | 10.0% |
 | masterpieces | the-brothers-war-retro-artifacts | 1 | 63 | 22 | 41 | 34.9% |
 | masterpieces | through-the-omenpaths-bonus-sheet | 1 | 40 | 8 | 32 | 20.0% |
@@ -875,7 +875,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | masters-remastered | dominaria-remastered | 1 | 266 | 103 | 163 | 38.7% |
 | masters-remastered | double-masters | 1 | 337 | 104 | 233 | 30.9% |
 | masters-remastered | double-masters-2022 | 1 | 332 | 93 | 239 | 28.0% |
-| masters-remastered | eternal-masters | 1 | 249 | 115 | 134 | 46.2% |
+| masters-remastered | eternal-masters | 1 | 249 | 116 | 133 | 46.6% |
 | masters-remastered | iconic-masters | 1 | 249 | 102 | 147 | 41.0% |
 | masters-remastered | innistrad-remastered | 1 | 300 | 70 | 230 | 23.3% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 61 | 231 | 20.9% |
@@ -888,7 +888,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | masters-remastered | modern-masters | 1 | 229 | 65 | 164 | 28.4% |
 | masters-remastered | modern-masters-2015 | 1 | 249 | 91 | 158 | 36.5% |
 | masters-remastered | modern-masters-2017 | 1 | 249 | 114 | 135 | 45.8% |
-| masters-remastered | mystery-booster-2 | 1 | 384 | 75 | 309 | 19.5% |
+| masters-remastered | mystery-booster-2 | 1 | 384 | 76 | 308 | 19.8% |
 | masters-remastered | pioneer-masters | 1 | 398 | 81 | 317 | 20.4% |
 | masters-remastered | ravnica-remastered | 1 | 313 | 88 | 225 | 28.1% |
 | masters-remastered | renaissance | 1 | 122 | 36 | 86 | 29.5% |
@@ -1034,7 +1034,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | promos | judge-2007 | 1 | 5 | 2 | 3 | 40.0% |
 | promos | judge-2008 | 1 | 5 | 1 | 4 | 20.0% |
 | promos | judge-2009 | 1 | 10 | 6 | 4 | 60.0% |
-| promos | judge-2010 | 1 | 8 | 4 | 4 | 50.0% |
+| promos | judge-2010 | 1 | 8 | 5 | 3 | 62.5% |
 | promos | judge-2011 | 1 | 8 | 1 | 7 | 12.5% |
 | promos | judge-2012 | 1 | 8 | 4 | 4 | 50.0% |
 | promos | judge-2013 | 1 | 8 | 2 | 6 | 25.0% |
@@ -1072,7 +1072,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | promos | magic-2013 | 1 | 6 | 3 | 3 | 50.0% |
 | promos | magic-2014 | 1 | 6 | 1 | 5 | 16.7% |
 | promos | magic-2015 | 1 | 13 | 2 | 11 | 15.4% |
-| promos | magic-online | 1 | 2689 | 575 | 2114 | 21.4% |
+| promos | magic-online | 1 | 2689 | 576 | 2113 | 21.4% |
 | promos | magic-origins | 1 | 43 | 7 | 36 | 16.3% |
 | promos | magic-premiere-shop-2005 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | magic-premiere-shop-2006 | 1 | 5 | 5 | 0 | 100.0% |
@@ -1200,7 +1200,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
 | spellbooks | 2020s | 1 | 8 | 1 | 7 | 12.5% |
-| starter | 1990s | 5 | 740 | 464 | 276 | 62.7% |
+| starter | 1990s | 5 | 740 | 465 | 275 | 62.8% |
 | starter | 2000s | 1 | 20 | 20 | 0 | 100.0% |
 | starter | 2010s | 7 | 89 | 55 | 34 | 61.8% |
 | starter | 2020s | 1 | 120 | 71 | 49 | 59.2% |
@@ -4617,7 +4617,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 - [ ] Mortal Wound — `f7b70077-5518-45f9-9833-01a4f8afac71`
 - [ ] Mundungu — `3fb4161d-a5b9-411d-942c-2fdb039e7bde`
 - [ ] Mystic Veil — `43c88fcd-aac9-4741-8fd6-31ac81c5bb6f`
-- [ ] Natural Order — `8c1fe337-375a-4add-93b6-0ac39ed72b4f`
 - [ ] Necromancy — `699b192c-f3f2-4ac5-9ca9-e35bcf08ad8a`
 - [ ] Necrosavant — `6732a587-e3cc-4c30-9267-f8949dd8724a`
 - [ ] Nekrataal — `d40adf5d-5edf-48a0-98f3-fcdbf1b5f25c`
@@ -5017,7 +5016,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 - [ ] Mind Knives — `f9be5566-c3df-44cc-9de4-29510c8c245f`
 - [ ] Mobilize — `7416c8db-ec33-4d92-866c-b7fdc69c8b41`
 - [ ] Mystic Denial — `d2bd23a6-4f77-4d6e-bf8f-339cb7a4184d`
-- [ ] Natural Order — `8c1fe337-375a-4add-93b6-0ac39ed72b4f`
 - [ ] Nature's Cloak — `bb493c95-5f6d-405b-aac6-c56fe6b6f42f`
 - [ ] Nature's Ruin — `d119ca9a-ee82-42c2-81e6-684205ca5183`
 - [ ] Noxious Toad — `2fdc484e-b3c3-4f4e-99a1-26a1134aa1cd`
@@ -10322,7 +10320,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 - [ ] Narset of the Ancient Way — `b7ac6e89-941f-4ad9-a437-38ec38ec5263`
 - [ ] Narset, Parter of Veils — `ab26fbe2-e808-48b9-8d0d-3fbb6c3d554f`
 - [ ] Nashi, Moon Sage's Scion — `d04b6c2c-50fc-464d-9991-230efec70d2b`
-- [ ] Natural Order — `8c1fe337-375a-4add-93b6-0ac39ed72b4f`
 - [ ] Naya Sojourners — `703215df-dee2-4b82-9f32-256e1410543c`
 - [ ] Necroduality — `d36acdfe-2b1b-4c19-8b81-0b3127e480fe`
 - [ ] Necrogoyf — `e034a02d-3482-44eb-90dc-c38be104197f`
@@ -16165,7 +16162,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 
 - [ ] Land Tax — `d2d9ecea-7925-420e-98b9-2f87f41f387c`
 - [ ] Morphling — `19f233b2-8be6-4172-abf9-b132fc3393d9`
-- [ ] Natural Order — `8c1fe337-375a-4add-93b6-0ac39ed72b4f`
 - [ ] Phyrexian Dreadnought — `a7950edb-5670-46fd-a30e-0fe888a5a32b`
 
 ### promos / magic-2011 · Magic 2011 Promos (`PM11`)
@@ -23727,7 +23723,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 - [ ] Mishra's Factory — `5963e0ef-e0bc-4611-ad4f-813a4c0eacfb`
 - [ ] Mogg War Marshal — `7b8f4879-578e-40e4-863a-41d0c32c6bdd`
 - [ ] Mother of Runes — `60433b48-d27f-413c-905c-43839b1943f1`
-- [ ] Natural Order — `8c1fe337-375a-4add-93b6-0ac39ed72b4f`
 - [ ] Necropotence — `94a844d2-0574-45a7-b347-e0e329767c42`
 - [ ] Nekrataal — `d40adf5d-5edf-48a0-98f3-fcdbf1b5f25c`
 - [ ] Nimble Mongoose — `1059f089-2693-4c89-92c5-39fe49beebb3`
@@ -39479,7 +39474,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 - [ ] Memory Lapse — `bbfb3e4a-b389-4391-8141-13b68c0ef2e0`
 - [ ] Mind's Desire — `b3739b5a-5731-4c64-a244-815a363b0d5c`
 - [ ] Mizzix's Mastery — `40362fe0-a1a9-4d76-8c35-eac474b91af5`
-- [ ] Natural Order — `8c1fe337-375a-4add-93b6-0ac39ed72b4f`
 - [ ] Primal Command — `350f5c0a-563f-41c5-8f7b-10f409bb4d3b`
 - [ ] Putrefy — `9b271430-f53d-42d6-a547-2f286dd9bcb6`
 - [ ] Snakeskin Veil — `1e6a24be-8281-41c1-a5ba-b68f0ef1d7b8`
@@ -54492,7 +54486,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,78
 - [ ] Nalathni Dragon — `0887dc95-3e75-4f72-bf05-4067d3785376`
 - [ ] Narod, the Beige Flower — `f1922d10-aa31-4767-ba57-438825d451c0`
 - [ ] Narset, Parter of Veils — `ab26fbe2-e808-48b9-8d0d-3fbb6c3d554f`
-- [ ] Natural Order — `8c1fe337-375a-4add-93b6-0ac39ed72b4f`
 - [ ] Naturalize 2 — `ba1b998b-228b-49fb-b77f-632a295ba440`
 - [ ] New Master of Arms — `d44b7b43-4674-47cd-b346-7db93a14b74c`
 - [ ] Night of the Flying Merfolk — `ddcd5366-0a7d-4878-95b2-b3e3d12f8571`

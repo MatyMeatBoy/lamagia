@@ -5219,7 +5219,8 @@ function resolveTop(state: GameState): GameState {
         const subtypeMatches = !search.subtypes?.length || search.subtypes.some((subtype) =>
           subtype.toLowerCase() === "basic" ? profile.supertypes.some((value) => value.toLowerCase() === "basic")
             : hasSubtype(profile, subtype));
-        return typeMatches && subtypeMatches;
+        const colorMatches = !search.colors?.length || search.colors.some((color) => profile.colors.some((candidate) => candidate.toUpperCase() === color));
+        return typeMatches && subtypeMatches && colorMatches;
       })
       .map((card) => card.instance_id);
     if (!options.length) {
@@ -6161,6 +6162,9 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (player.cantCastSpellsUntilEndOfTurn) return { legal: false };
   // Diabolic Intent (CR 601.2b): the additional cost must be payable to cast at all.
   if (profile.additionalCostSacrificeCreature && !player.battlefield.some((permanent) => isCreature(cardProfile(permanent.card)))) return { legal: false };
+  // Natural Order (CR 601.2b): same idea, restricted to a specific color.
+  if (profile.additionalCostSacrificeCreatureColor && !player.battlefield.some((permanent) =>
+    isCreature(cardProfile(permanent.card)) && cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === profile.additionalCostSacrificeCreatureColor))) return { legal: false };
   if (freeCast && payLifeCost) return { legal: false };
   if (freeCast && !profile.freeCastIfCommander) return { legal: false };
   if (freeCast && !controlsCommander(state, seat)) return { legal: false };
@@ -7838,6 +7842,13 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (profile.additionalCostSacrificeCreature) {
     const creatures = playerAt(next, seat).battlefield.filter((p) => isCreature(cardProfile(p.card)));
     if (!creatures.length) throw new Error(`No tienes una criatura para sacrificar por ${card.name}.`);
+    next = movePermanentToZone(next, creatures[0]!, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${creatures[0]!.card.name} por ${card.name}.`);
+  }
+  if (profile.additionalCostSacrificeCreatureColor) {
+    const color = profile.additionalCostSacrificeCreatureColor;
+    const creatures = playerAt(next, seat).battlefield.filter((p) => isCreature(cardProfile(p.card)) && cardProfile(p.card).colors.some((candidate) => candidate.toUpperCase() === color));
+    if (!creatures.length) throw new Error(`No tienes una criatura de ese color para sacrificar por ${card.name}.`);
     next = movePermanentToZone(next, creatures[0]!, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${creatures[0]!.card.name} por ${card.name}.`);
   }

@@ -3783,8 +3783,38 @@ cards (net +1 hand size once the burn spell itself leaving hand to be
 cast is accounted for). Validation: **698 rules tests**, `npm run
 check`, `npm run simulate:engine` 200/200.
 
-Prossh decklist status after this pass: **55 of 97 unique cards fully
-implemented (56.7%)**.
+**Natural Order** — a two-line color-restricted sibling of the
+sacrifice-a-creature primitives from earlier this session: "sacrifice
+a green creature" as the additional cost, "search your library for a
+green creature card" as the effect. New
+`CardProfile.additionalCostSacrificeCreatureColor: string | null`,
+wired exactly like `additionalCostSacrificeCreature` (a `castableCard`
+gate plus the `applyCast` sacrifice, both filtered by color). The
+tutor half surfaced a real, previously-unnoticed correctness gap: the
+shared `searchCriterion` parser — used by every "Search your library
+for a [criterion] card" template in the file — had no concept of color
+at all. A leading color adjective like "green" fell all the way
+through the type/subtype detection and was silently dropped, meaning
+any color-restricted library search built on this shared helper would
+have quietly become unrestricted the moment it needed one. Added color
+detection to `searchCriterion` (stripped out before type/subtype
+parsing runs, since "green" is not a valid subtype), a new optional
+`colors` field on the `search-library` effect, and a matching filter
+in the engine's own search-resolution code. Verified **+1** in the
+export count (10,050 → 10,051; Natural Order specifically — an
+isolated single-card primitive, unlike the broader pattern fixes
+earlier in the session). Scenario-tested: with only a red creature
+available, Natural Order isn't offered as castable and throws if
+forced anyway; with a green creature on the battlefield, casting it
+sacrifices the green creature specifically (an unrelated red creature
+is left alone), and the resulting tutor choice accepts a green
+creature from the library but throws on a red one — confirmed as a
+rejection, not just an absent option. Validation: **702 rules tests**,
+`npm run check`, `npm run simulate:engine` 200/200, 10,051 global
+profiles.
+
+Prossh decklist status after this pass: **56 of 97 unique cards fully
+implemented (57.7%)**.
 
 ## Gameplay interaction baseline (2026-09-05)
 
