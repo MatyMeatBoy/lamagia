@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,030** · cobertura: **28.3%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,050** · cobertura: **28.3%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -680,10 +680,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 | 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | eternal | 2020s | other | 117 | 37 | 80 | 31.6% |
 | 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | teenage-mutant-ninja-turtles-source-material | other | 20 | 2 | 18 | 10.0% |
 | 2026-04-13 | MagicFest 2026 (`PF26`) | promos | magicfest-2026 | other | 13 | 7 | 6 | 53.8% |
-| 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 42 | 229 | 15.5% |
+| 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 58 | 213 | 21.4% |
 | 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 115 | 260 | 30.7% |
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 17 | 48 | 26.2% |
-| 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 7 | 73 | 8.8% |
+| 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 11 | 69 | 13.8% |
 | 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 48 | 233 | 17.1% |
 | 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 144 | 472 | 23.4% |
 | 2026-08-14 | The Hobbit (`HOB`) | expansion | 2020s | main | 193 | 35 | 158 | 18.1% |
@@ -817,7 +817,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 | expansion | onslaught | 1 | 335 | 75 | 260 | 22.4% |
 | expansion | phyrexia | 4 | 787 | 109 | 678 | 13.9% |
 | expansion | ravnica | 4 | 1081 | 346 | 735 | 32.0% |
-| expansion | strixhaven | 2 | 561 | 94 | 467 | 16.8% |
+| expansion | strixhaven | 2 | 561 | 110 | 451 | 19.6% |
 | expansion | tarkir | 3 | 785 | 176 | 609 | 22.4% |
 | expansion | tempest | 1 | 335 | 104 | 231 | 31.0% |
 | expansion | theros | 2 | 507 | 124 | 383 | 24.5% |
@@ -1137,7 +1137,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 | promos | saviors-of-kamigawa | 1 | 2 | 0 | 2 | 0.0% |
 | promos | scars-of-mirrodin | 1 | 4 | 2 | 2 | 50.0% |
 | promos | scourge | 1 | 1 | 0 | 1 | 0.0% |
-| promos | secrets-of-strixhaven | 1 | 80 | 7 | 73 | 8.8% |
+| promos | secrets-of-strixhaven | 1 | 80 | 11 | 69 | 13.8% |
 | promos | shadowmoor | 1 | 2 | 0 | 2 | 0.0% |
 | promos | shadows-over-innistrad | 1 | 79 | 10 | 69 | 12.7% |
 | promos | shards-of-alara | 1 | 2 | 1 | 1 | 50.0% |
@@ -62277,7 +62277,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Abigale, Poet Laureate // Heroic Stanza — `2f5f46ed-b8aa-4864-bd20-17281d4632bf`
 - [ ] Abstract Paintmage — `bc899d5c-0a91-4f19-a3e4-3078ae966110`
 - [ ] Additive Evolution — `ce1a6c1f-6b4e-4d19-b256-48d073b359b7`
-- [ ] Adventurous Eater // Have a Bite — `02125db4-4507-467a-ac0c-406de2c7d533`
 - [ ] Ajani's Response — `bf7ec320-64bb-46ca-aac0-ca3d4224b69e`
 - [ ] Ambitious Augmenter — `d87f0e52-486e-49b4-9cf1-12e238857340`
 - [ ] Ancestral Anger — `e0828e8d-f01f-4088-9123-6d923ddb3242`
@@ -62292,7 +62291,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Aziza, Mage Tower Captain — `70e10cb9-ae27-4dba-9a0d-34a78f924774`
 - [ ] Berta, Wise Extrapolator — `715f0832-696c-4111-b418-d9b6da403159`
 - [ ] Biblioplex Tomekeeper — `08a0e845-9ef9-4de1-b9fe-4530357346ca`
-- [ ] Blazing Firesinger // Seething Song — `1bf505a7-292e-4642-83b6-8ff41ebe5d51`
 - [ ] Blech, Loafing Pest — `c1bdd361-c7f2-4aa2-8d07-b582775551ff`
 - [ ] Bogwater Lumaret — `0109432d-5a2a-456f-ad39-b75cb4c73420`
 - [ ] Borrowed Knowledge — `0d6507b0-c986-49d1-aea3-77b2cf2a7433`
@@ -62301,7 +62299,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Campus Composer // Aqueous Aria — `9b3155c1-c662-4ff1-80e2-4064e6233dc5`
 - [ ] Cauldron of Essence — `a2f8cde8-bf7b-4234-89f0-a95f9dc937e3`
 - [ ] Chase Inspiration — `9c055ef0-1164-4a9f-80de-23405423aed5`
-- [ ] Cheerful Osteomancer // Raise Dead — `fd01229f-1c4c-4ad1-bc6f-4023f24d8c71`
 - [ ] Chelonian Tackle — `8c1c519a-6edd-4204-b825-b0feca5afa42`
 - [ ] Choreographed Sparks — `61495793-b0c7-40a5-ad3e-9df8e2b8096b`
 - [ ] Colorstorm Stallion — `47ee6837-2e2f-4344-ab9f-6b8887874f77`
@@ -62321,7 +62318,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Echocasting Symposium — `d88c3554-18db-4e5e-a979-2402990a0311`
 - [ ] Efflorescence — `181da74b-53fb-4e46-afc0-e7c990fda128`
 - [ ] Elemental Mascot — `882f30e4-4ce1-4581-8d2d-d763aa13befe`
-- [ ] Elite Interceptor // Rejoinder — `d97de156-5a6d-4dc6-953e-d4bad63cbad2`
 - [ ] Embrace the Paradox — `b9110be0-3f0c-449b-8baf-689e92fdb8f0`
 - [ ] Emeritus of Abundance // Regrowth — `e5152e8d-9f55-493d-a0fc-753cc72ee299`
 - [ ] Emeritus of Conflict // Lightning Bolt — `5963eef1-1022-42b1-8a0c-fc9850bfc2a3`
@@ -62351,7 +62347,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Geometer's Arthropod — `7f577b46-c69d-4c75-9db5-7e10206b6b59`
 - [ ] Germination Practicum — `c8d22139-7b25-4bb1-b0d9-d4c622401edf`
 - [ ] Glorious Decay — `ac4277d7-d78a-4d6e-8d6d-11f9e56f8ae7`
-- [ ] Goblin Glasswright // Craft with Pride — `23c3de07-8aa2-48e9-848c-50b5a40bd133`
 - [ ] Graduation Day — `40e0665d-57b8-4c19-9fb8-b3155d7bbb94`
 - [ ] Grapple with Death — `dced5cab-1438-4264-b44c-54dc37ec73d3`
 - [ ] Grave Researcher // Reanimate — `6cb8b8c4-0674-4f14-9d89-010969fbb80e`
@@ -62362,20 +62357,16 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Harmonized Trio // Brainstorm — `f6036065-7196-44d4-8a27-2199f0e1a03c`
 - [ ] Heated Argument — `329f6434-8f1b-4a10-8feb-2a9dc5f2712b`
 - [ ] Homesickness — `ee57fba8-e68b-4c52-8de7-9b9873d84506`
-- [ ] Honorbound Page // Forum's Favor — `66ee56b9-aca8-4efa-b9b5-50717e0784a7`
 - [ ] Hungry Graffalon — `9494c499-6ead-491f-aeb0-6dbfac4d960c`
 - [ ] Hydro-Channeler — `95630a83-3699-4340-b3e5-17e81db1b82f`
 - [ ] Impractical Joke — `c8da73ed-2834-4094-8723-a4ad75660290`
 - [ ] Improvisation Capstone — `fd4f0315-567a-4cc5-bc7e-88a9d2cee910`
-- [ ] Infirmary Healer // Stream of Life — `4cbbdebc-b807-4d7b-92dd-312637d2a5de`
 - [ ] Informed Inkwright — `d2a372d8-3eb2-4ba4-a75f-7951654de383`
 - [ ] Inkling Mascot — `0f0959ff-4464-4738-9d79-5b06f368f144`
 - [ ] Inkshape Demonstrator — `4993651f-f161-4007-b485-a0c66a02f91b`
-- [ ] Jadzi, Steward of Fate // Oracle's Gift — `c63b3511-d597-4c6e-9094-eabdeaa8a394`
 - [ ] Joined Researchers // Secret Rendezvous — `ec744a2d-4a33-4807-bce0-d95cd5277b1f`
 - [ ] Killian's Confidence — `c17f0e65-e5a3-4113-b782-0b192ab52046`
 - [ ] Kirol, History Buff // Pack a Punch — `df1c0d06-2109-4297-9271-8a003fc892bc`
-- [ ] Landscape Painter // Vibrant Idea — `5ba7abbc-f6e8-40c2-800b-11efd10cca5b`
 - [ ] Lecturing Scornmage — `29c23fd7-0ac4-46af-8ecd-92b726575252`
 - [ ] Leech Collector // Bloodletting — `84bb960c-c34e-4979-8c0f-893c85cee27d`
 - [ ] Living History — `a76adc88-e7db-43e2-8fbf-bae95c0838ef`
@@ -62383,7 +62374,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Lorehold Charm — `a5729f11-6cde-4830-b882-ab4c5251c1a9`
 - [ ] Lorehold, the Historian — `61a41cf1-60cc-45ba-aa98-493c14e87d9d`
 - [ ] Lumaret's Favor — `d514704b-4055-48ed-9da3-e4397fca7576`
-- [ ] Maelstrom Artisan // Rocket Volley — `03931270-504a-4b0b-af3f-918bf124ea07`
 - [ ] Mage Tower Referee — `3f27988b-0863-4cc1-8eb9-83bd0cd8561c`
 - [ ] Magmablood Archaic — `c6a5adc8-ee57-421e-8235-0b3160f44568`
 - [ ] Mana Sculpt — `35e2f82e-7ca3-4a92-9134-b7999eef5337`
@@ -62409,7 +62399,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Paradox Surveyor — `247cc471-fed5-41e3-8b6a-a10bbc129b36`
 - [ ] Pensive Professor — `4b8736e2-fc41-4a25-bb6c-7351afc40981`
 - [ ] Petrified Hamlet — `78a2972c-14f4-41f3-99f9-167948bdd73a`
-- [ ] Pigment Wrangler // Striking Palette — `c008d60a-ee06-4411-b8e7-c2df13616105`
 - [ ] Planar Engineering — `dc48079a-b1c4-4c43-a989-418c78a264ec`
 - [ ] Poisoner's Apprentice — `4b0e5626-0282-42e5-abef-a079b26a8e5f`
 - [ ] Postmortem Professor — `0859d16e-2a1f-4b48-8687-99af8a8bdb38`
@@ -62428,7 +62417,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Pursue the Past — `4384996f-aeaa-41ac-aa0e-12d72c887731`
 - [ ] Quandrix Charm — `f43e36ea-6bf5-45bd-a4ad-cc507ae45641`
 - [ ] Quandrix, the Proof — `2cbccc46-bdef-4dfb-90a4-0278c5c8488a`
-- [ ] Quill-Blade Laureate // Twofold Intent — `bd9d3a70-faed-4bc6-97d8-1601b36cdb21`
 - [ ] Rabid Attack — `4db02b34-efec-437c-ab28-aa318b8879ad`
 - [ ] Ral Zarek, Guest Lecturer — `0dc76b7f-6405-44a1-8c55-31fa480ff70b`
 - [ ] Rancorous Archaic — `6a68fcaf-b1e8-451d-8e1c-b47db55c83cc`
@@ -62448,7 +62436,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Send in the Pest — `955bfcb8-6477-4ed0-b6e7-8940874ae5e4`
 - [ ] Silverquill Charm — `d985b12e-2731-4ccf-9f51-90218b20b42a`
 - [ ] Silverquill, the Disputant — `66deb3f3-0314-427e-9cb8-6befa365ae94`
-- [ ] Skycoach Conductor // All Aboard — `788d3cfa-7706-4728-9c48-cf7bc963d002`
 - [ ] Skycoach Waypoint — `2ac2b815-2d72-48e6-b43a-18884a74bf95`
 - [ ] Slumbering Trudge — `d04bce9a-822b-4a52-8826-b503ef5f5b2e`
 - [ ] Snarl Song — `3b6fb13b-f126-4697-90a1-64b14ffcecd6`
@@ -62457,7 +62444,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Soaring Stoneglider — `62d18d2b-fa68-49cd-b62d-803728ddfa8b`
 - [ ] Social Snub — `b284913e-3530-4a7e-8c75-efb18788dad0`
 - [ ] Spectacular Skywhale — `6a6b19db-cdeb-4922-8642-5d872f90e7a1`
-- [ ] Spellbook Seeker // Careful Study — `df5e4100-8c83-42d6-af96-1a1ec84a9210`
 - [ ] Spirit Mascot — `34c572b2-dccf-43d9-a9c4-846653ad22da`
 - [ ] Spiritcall Enthusiast // Scrollboost — `c77ddcac-ce54-4348-bde2-5d9caf3d5b04`
 - [ ] Splatter Technique — `2620dcfe-8738-4f81-b23d-0c1c60cf9047`
@@ -62470,7 +62456,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Stress Dream — `52124954-b0b6-492c-8d03-fe54c220facc`
 - [ ] Strife Scholar // Awaken the Ages — `e85c6bd2-db15-4052-88c0-3ae25414f0ca`
 - [ ] Strixhaven Skycoach — `e286a191-39d4-4073-b844-11d2aba911b4`
-- [ ] Studious First-Year // Rampant Growth — `58b0c737-0a84-4f9a-b3b7-300c5de43874`
 - [ ] Summoned Dromedary — `697b14c6-fe6a-4880-9cf2-b6602a52ca0b`
 - [ ] Sundering Archaic — `b095526e-94a4-416b-83de-d6271804ccf3`
 - [ ] Suspend Aggression — `883267f0-be7e-43c3-b7f8-82981f6d8c23`
@@ -62489,7 +62474,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Tragedy Feaster — `0c4277ec-aa12-41f5-8896-c83cfc754d6e`
 - [ ] Transcendent Archaic — `fdd4b3a9-83ce-41bf-82e2-7808657e2c09`
 - [ ] Ulna Alley Shopkeep — `9da7f9ec-872a-471d-8d60-5f4213f0204f`
-- [ ] Vastlands Scavenger // Bind to Life — `3a97bc8d-bd81-468e-9277-eba4fac11ee0`
 - [ ] Vibrant Outburst — `a0cbb1ba-73b1-4418-bbe3-5d1a02007c08`
 - [ ] Vicious Rivalry — `90898c76-21f9-4597-88fe-dc9179911cde`
 - [ ] Visionary's Dance — `c9f35490-462a-4c8f-9d8b-d8abca6596f7`
@@ -62850,10 +62834,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Harmonized Trio // Brainstorm — `f6036065-7196-44d4-8a27-2199f0e1a03c`
 - [ ] Improvisation Capstone — `fd4f0315-567a-4cc5-bc7e-88a9d2cee910`
 - [ ] Informed Inkwright — `d2a372d8-3eb2-4ba4-a75f-7951654de383`
-- [ ] Jadzi, Steward of Fate // Oracle's Gift — `c63b3511-d597-4c6e-9094-eabdeaa8a394`
 - [ ] Joined Researchers // Secret Rendezvous — `ec744a2d-4a33-4807-bce0-d95cd5277b1f`
 - [ ] Lorehold, the Historian — `61a41cf1-60cc-45ba-aa98-493c14e87d9d`
-- [ ] Maelstrom Artisan // Rocket Volley — `03931270-504a-4b0b-af3f-918bf124ea07`
 - [ ] Magmablood Archaic — `c6a5adc8-ee57-421e-8235-0b3160f44568`
 - [ ] Mana Sculpt — `35e2f82e-7ca3-4a92-9134-b7999eef5337`
 - [ ] Mathemagics — `5f56a303-b3da-41df-a959-7823a87ee60c`
@@ -62876,7 +62858,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] Restoration Seminar — `fd0a27a9-7d7e-4a16-9dd0-0715e6c97b36`
 - [ ] Scheming Silvertongue // Sign in Blood — `44443716-8356-40cd-a879-35264b29108c`
 - [ ] Silverquill, the Disputant — `66deb3f3-0314-427e-9cb8-6befa365ae94`
-- [ ] Skycoach Conductor // All Aboard — `788d3cfa-7706-4728-9c48-cf7bc963d002`
 - [ ] Slumbering Trudge — `d04bce9a-822b-4a52-8826-b503ef5f5b2e`
 - [ ] Splatter Technique — `2620dcfe-8738-4f81-b23d-0c1c60cf9047`
 - [ ] Steal the Show — `de403543-e61a-44fc-85e1-1e621d90ca8b`
@@ -62885,7 +62866,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,03
 - [ ] The Dawning Archaic — `a3e10b9b-9349-4b44-a46c-c825293dbd05`
 - [ ] Together as One — `234f1c4b-dd0c-4c4e-b3c1-3b9ccfc42226`
 - [ ] Tragedy Feaster — `0c4277ec-aa12-41f5-8896-c83cfc754d6e`
-- [ ] Vastlands Scavenger // Bind to Life — `3a97bc8d-bd81-468e-9277-eba4fac11ee0`
 - [ ] Vicious Rivalry — `90898c76-21f9-4597-88fe-dc9179911cde`
 - [ ] Wildgrowth Archaic — `4469ff35-54ec-4ff5-bc19-3808ae0f711b`
 - [ ] Wisdom of Ages — `d9722ec3-aa5e-4c69-8ff0-cef1b1839fa4`

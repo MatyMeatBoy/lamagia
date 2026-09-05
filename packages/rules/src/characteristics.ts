@@ -959,6 +959,8 @@ export interface CardProfile {
   readonly miracleCost: ManaCost | null;
   /** Prepared (new mechanic): the back face's spell, castable as a copy while this permanent is prepared. */
   readonly preparedCast: { readonly cost: ManaCost; readonly effect: SpellEffect; readonly targetKind: TargetKind; readonly spellName: string; readonly spellTypeLine: string } | null;
+  /** "~ enters prepared" (Prepared mechanic): already prepared the moment it enters the battlefield. */
+  readonly entersPrepared: boolean;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
   readonly additionalCostExileGraveyardX: boolean;
   /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
@@ -3772,6 +3774,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^gift a card\.?$/i.test(line)) continue;
     if (/^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you\.?$/i.test(line)) continue;
     if (/^double all damage equipped creature would deal\.?$/i.test(line)) continue;
+    if (/^~ enters prepared\.?$/i.test(line)) continue;
     if (/^if an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
@@ -4330,6 +4333,7 @@ export function cardProfile(card: CardData): CardProfile {
   const doublesEquippedCreatureDamage = text.split("\n").some((line) => /^double all damage equipped creature would deal$/i.test(line.trim().replace(/\.$/, "")));
   const redirectsOpponentDrawsExceptFirst = text.split("\n").some((line) =>
     /^if an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card$/i.test(line.trim().replace(/\.$/, "")));
+  const entersPrepared = text.split("\n").some((line) => /^~ enters prepared$/i.test(line.trim().replace(/\.$/, "")));
   const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
   const giftPromisedTargetKind = giftPromisedRecognized && giftPromisedRecognized.target !== "none" ? giftPromisedRecognized.target : null;
@@ -4358,7 +4362,7 @@ export function cardProfile(card: CardData): CardProfile {
   // recursive `cardProfile` call under its own synthetic `scryfall_id` — for
   // a card that actually has a "becomes prepared" trigger, so unrelated
   // multi-faced cards (Adventure, transform, split) never pay this cost.
-  const preparedBackCard = gatedTriggers.some((trigger) => trigger.effect.kind === "become-prepared") ? backFace(card) : null;
+  const preparedBackCard = (entersPrepared || gatedTriggers.some((trigger) => trigger.effect.kind === "become-prepared")) ? backFace(card) : null;
   const preparedBackProfile = preparedBackCard ? cardProfile(preparedBackCard) : null;
   const preparedCast = preparedBackProfile && preparedBackProfile.cost && preparedBackProfile.effects.length === 1
     ? {
@@ -4457,6 +4461,7 @@ export function cardProfile(card: CardData): CardProfile {
     evokeCost: recognized.evokeCost ?? null,
     miracleCost: recognized.miracleCost ?? null,
     preparedCast,
+    entersPrepared,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
     kickedKeywords: recognized.kickedKeywords ?? [],

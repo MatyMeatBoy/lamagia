@@ -1649,6 +1649,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     toughnessModifier: 0,
     temporaryKeywords: [],
     regenerationShields: 0,
+    ...(profile.entersPrepared ? { prepared: true } : {}),
     isCommander
   };
   let next = withPlayer(state, seat, (player) => ({
