@@ -2937,3 +2937,20 @@ that permanent to its owner's hand (mirroring the existing `karoo-bounce`
 executor's two-step move) instead of paying. Validation: **603 rules
 tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,396 global
 profiles.
+
+Mana Drain | `74d3277a-38e5-4732-afed-084a56148f20` was closed with a new
+`delayed-mana-equal-to-target-spell-mana-value` effect (CR 603.7). Its two
+sentences stay two independent effects (unlike Arcane Denial's combined
+delayed-draw shape) since both can read the same shared `object.targets[0]`
+at resolution — the first counters it, the second reads its mana value off
+the (still-present, now-countered) stack entry. A new `DelayedManaAdd`
+queue mirrors `DelayedDraw` exactly but is keyed by `seat` and resolved
+during `precombat-main` (via a new `queueDelayedManaAdds`, mirroring
+`queueDelayedDraws`) rather than by a computed turn number — sidestepping
+the per-player turn-numbering arithmetic that turned out to be fragile
+earlier this session (Teferi's Puzzle Box, Howling Mine): "next main
+phase" just means "the next time this seat's own precombat-main begins,"
+regardless of how many turns that takes. Both this and Draw Mine's family
+push directly onto `triggerQueue`, resolving through the normal stack
+rather than applying immediately. Validation: **603 rules tests**, `npm
+run check`, `npm run simulate:engine` 200/200, 9,397 global profiles.

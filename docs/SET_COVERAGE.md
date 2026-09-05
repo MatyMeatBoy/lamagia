@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,861** · cobertura: **28.1%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,870** · cobertura: **28.1%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -17,7 +17,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | 1994-03-04 | Antiquities (`ATQ`) | expansion | 1990s | main | 85 | 17 | 68 | 20.0% |
 | 1994-04-11 | Foreign Black Border (`FBB`) | core | 1990s | main | 296 | 106 | 190 | 35.8% |
 | 1994-04-11 | Revised Edition (`3ED`) | core | 1990s | main | 296 | 106 | 190 | 35.8% |
-| 1994-06-01 | Legends (`LEG`) | expansion | 1990s | main | 310 | 72 | 238 | 23.2% |
+| 1994-06-01 | Legends (`LEG`) | expansion | 1990s | main | 310 | 73 | 237 | 23.5% |
 | 1994-06-21 | Summer Magic / Edgar (`SUM`) | core | 1990s | main | 296 | 106 | 190 | 35.8% |
 | 1994-07-15 | Dragon Con (`PDRC`) | promos | dragon-con | other | 1 | 0 | 1 | 0.0% |
 | 1994-08-01 | The Dark (`DRK`) | expansion | 1990s | main | 119 | 29 | 90 | 24.4% |
@@ -122,7 +122,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 185 | 157 | 54.1% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 109 | 182 | 37.5% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 532 | 2157 | 19.8% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 533 | 2156 | 19.8% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
@@ -217,7 +217,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | 2009-07-17 | Magic 2010 (`M10`) | core | 2010s | main | 234 | 122 | 112 | 52.1% |
 | 2009-08-28 | From the Vault: Exiled (`V09`) | from-the-vault | 2000s | other | 15 | 4 | 11 | 26.7% |
 | 2009-09-04 | Planechase (`HOP`) | planechase | planechase | other | 146 | 66 | 80 | 45.2% |
-| 2009-09-07 | Masters Edition III (`ME3`) | masters-remastered | masters-edition-iii | other | 220 | 91 | 129 | 41.4% |
+| 2009-09-07 | Masters Edition III (`ME3`) | masters-remastered | masters-edition-iii | other | 220 | 92 | 128 | 41.8% |
 | 2009-10-02 | Zendikar (`ZEN`) | expansion | zendikar | main | 234 | 83 | 151 | 35.5% |
 | 2009-10-02 | Zendikar Promos (`PZEN`) | promos | zendikar | other | 5 | 3 | 2 | 60.0% |
 | 2009-10-30 | Duel Decks: Garruk vs. Liliana (`DDD`) | duel-decks | duel-decks-garruk-vs-liliana | other | 57 | 27 | 30 | 47.4% |
@@ -310,7 +310,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | 2014-05-30 | Modern Event Deck 2014 (`MD1`) | deck-products | modern-event-deck-2014 | other | 26 | 11 | 15 | 42.3% |
 | 2014-06-06 | Conspiracy (`CNS`) | conspiracy | conspiracy | other | 210 | 45 | 165 | 21.4% |
 | 2014-06-06 | Conspiracy Promos (`PCNS`) | conspiracy | conspiracy | other | 1 | 0 | 1 | 0.0% |
-| 2014-06-16 | Vintage Masters (`VMA`) | masters-remastered | vintage-masters | other | 325 | 130 | 195 | 40.0% |
+| 2014-06-16 | Vintage Masters (`VMA`) | masters-remastered | vintage-masters | other | 325 | 131 | 194 | 40.3% |
 | 2014-07-08 | San Diego Comic-Con 2014 (`PS14`) | promos | comic-con-2014 | other | 6 | 0 | 6 | 0.0% |
 | 2014-07-09 | Duels of the Planeswalkers 2015 Promos (`PDP15`) | promos | duels-of-the-planeswalkers-2015 | other | 2 | 0 | 2 | 0.0% |
 | 2014-07-17 | Magic 2015 Promos (`PM15`) | promos | magic-2015 | other | 13 | 2 | 11 | 15.4% |
@@ -350,7 +350,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | 2015-11-13 | Commander 2015 (`C15`) | commander | 2015 | commander | 327 | 139 | 188 | 42.5% |
 | 2015-11-18 | Legendary Cube Prize Pack (`PZ1`) | treasure-chest | 2010s | other | 149 | 54 | 95 | 36.2% |
 | 2016-01-01 | Friday Night Magic 2016 (`F16`) | promos | fnm-2016 | other | 12 | 4 | 8 | 33.3% |
-| 2016-01-01 | Judge Gift Cards 2016 (`J16`) | promos | judge-2016 | other | 8 | 1 | 7 | 12.5% |
+| 2016-01-01 | Judge Gift Cards 2016 (`J16`) | promos | judge-2016 | other | 8 | 2 | 6 | 25.0% |
 | 2016-01-22 | Oath of the Gatewatch (`OGW`) | expansion | 2010s | main | 183 | 36 | 147 | 19.7% |
 | 2016-01-22 | Oath of the Gatewatch Promos (`POGW`) | promos | oath-of-the-gatewatch | other | 55 | 2 | 53 | 3.6% |
 | 2016-02-26 | Duel Decks: Blessed vs. Cursed (`DDQ`) | duel-decks | duel-decks-blessed-vs-cursed | other | 67 | 19 | 48 | 28.4% |
@@ -393,7 +393,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | 2017-09-29 | XLN Standard Showdown (`PSS2`) | promos | standard-showdown-2017 | other | 5 | 5 | 0 | 100.0% |
 | 2017-10-20 | 2017 Gift Pack (`G17`) | boxed-products | 2017-gift-pack | other | 5 | 5 | 0 | 100.0% |
 | 2017-10-24 | Duel Decks: Merfolk vs. Goblins (`DDT`) | duel-decks | duel-decks-merfolk-vs-goblins | other | 57 | 21 | 36 | 36.8% |
-| 2017-11-17 | Iconic Masters (`IMA`) | masters-remastered | iconic-masters | other | 249 | 94 | 155 | 37.8% |
+| 2017-11-17 | Iconic Masters (`IMA`) | masters-remastered | iconic-masters | other | 249 | 95 | 154 | 38.2% |
 | 2017-11-24 | Explorers of Ixalan (`E02`) | boxed-products | explorers-of-ixalan | other | 47 | 19 | 28 | 40.4% |
 | 2017-11-24 | From the Vault: Transform (`V17`) | from-the-vault | 2010s | other | 16 | 0 | 16 | 0.0% |
 | 2017-11-24 | XLN Treasure Chest (`PXTC`) | promos | xln-treasure-chest | other | 10 | 0 | 10 | 0.0% |
@@ -480,7 +480,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | 2020-09-25 | Zendikar Rising Expeditions (`ZNE`) | masterpieces | zendikar-rising-expeditions | other | 30 | 25 | 5 | 83.3% |
 | 2020-09-25 | Zendikar Rising Promos (`PZNR`) | promos | zendikar-rising | other | 84 | 10 | 74 | 11.9% |
 | 2020-11-12 | Kaladesh Remastered (`KLR`) | masters-remastered | kaladesh-remastered | other | 292 | 57 | 235 | 19.5% |
-| 2020-11-20 | Commander Legends (`CMR`) | commander | 2020 | other | 531 | 170 | 361 | 32.0% |
+| 2020-11-20 | Commander Legends (`CMR`) | commander | 2020 | other | 531 | 171 | 360 | 32.2% |
 | 2020-12-04 | Commander Collection: Green (`CC1`) | commander | 2020 | other | 8 | 5 | 3 | 62.5% |
 | 2021-01-01 | Judge Gift Cards 2021 (`PJ21`) | promos | judge-2021 | other | 10 | 0 | 10 | 0.0% |
 | 2021-01-01 | Love Your LGS 2021 (`PLG21`) | promos | lgs-2021 | other | 9 | 0 | 9 | 0.0% |
@@ -530,7 +530,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | 2022-06-10 | Battle for Baldur's Gate Promos (`PCLB`) | promos | battle-for-baldur-s-gate | other | 99 | 6 | 93 | 6.1% |
 | 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | commander | 2022 | other | 651 | 128 | 523 | 19.7% |
 | 2022-07-01 | Love Your LGS 2022 (`PLG22`) | promos | lgs-2022 | other | 2 | 2 | 0 | 100.0% |
-| 2022-07-08 | Double Masters 2022 (`2X2`) | masters-remastered | double-masters-2022 | other | 332 | 85 | 247 | 25.6% |
+| 2022-07-08 | Double Masters 2022 (`2X2`) | masters-remastered | double-masters-2022 | other | 332 | 86 | 246 | 25.9% |
 | 2022-07-09 | Store Championships (`SCH`) | promos | store-championships | other | 50 | 9 | 41 | 18.0% |
 | 2022-07-28 | Explorer Anthology 1 (`EA1`) | anthologies | explorer-anthology-1 | other | 20 | 4 | 16 | 20.0% |
 | 2022-07-28 | Historic Anthology 6 (`HA6`) | anthologies | historic-anthology-6 | other | 20 | 14 | 6 | 70.0% |
@@ -606,7 +606,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | 2024-02-23 | MagicFest 2024 (`PF24`) | promos | magicfest-2024 | other | 2 | 1 | 1 | 50.0% |
 | 2024-02-23 | Ravnica: Clue Edition (`CLU`) | supplemental | ravnica-clue-edition | other | 268 | 108 | 160 | 40.3% |
 | 2024-03-08 | Fallout (`PIP`) | commander | 2024 | commander | 336 | 104 | 232 | 31.0% |
-| 2024-04-19 | Breaking News (`OTP`) | masterpieces | breaking-news | other | 65 | 9 | 56 | 13.8% |
+| 2024-04-19 | Breaking News (`OTP`) | masterpieces | breaking-news | other | 65 | 10 | 55 | 15.4% |
 | 2024-04-19 | Love Your LGS 2024 (`PLG24`) | promos | lgs-2024 | other | 5 | 2 | 3 | 40.0% |
 | 2024-04-19 | Outlaws of Thunder Junction (`OTJ`) | expansion | thunder-junction | main | 276 | 30 | 246 | 10.9% |
 | 2024-04-19 | Outlaws of Thunder Junction Commander (`OTC`) | commander | 2024 | commander | 306 | 106 | 200 | 34.6% |
@@ -747,7 +747,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | commander | 2017 | 1 | 299 | 131 | 168 | 43.8% |
 | commander | 2018 | 1 | 297 | 128 | 169 | 43.1% |
 | commander | 2019 | 1 | 292 | 107 | 185 | 36.6% |
-| commander | 2020 | 4 | 1001 | 344 | 657 | 34.4% |
+| commander | 2020 | 4 | 1001 | 345 | 656 | 34.5% |
 | commander | 2021 | 5 | 1022 | 341 | 681 | 33.4% |
 | commander | 2022 | 7 | 1802 | 506 | 1296 | 28.1% |
 | commander | 2023 | 6 | 1597 | 491 | 1106 | 30.7% |
@@ -792,7 +792,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 35 | 35 | 50.0% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 131 | 406 | 24.4% |
-| expansion | 1990s | 11 | 1573 | 334 | 1239 | 21.2% |
+| expansion | 1990s | 11 | 1573 | 335 | 1238 | 21.3% |
 | expansion | 2000s | 19 | 3082 | 636 | 2446 | 20.6% |
 | expansion | 2010s | 14 | 2735 | 652 | 2083 | 23.8% |
 | expansion | 2020s | 17 | 3739 | 585 | 3154 | 15.6% |
@@ -849,7 +849,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | jumpstart | jumpstart-arena-exclusives | 1 | 18 | 5 | 13 | 27.8% |
 | jumpstart | jumpstart-historic-horizons | 1 | 389 | 95 | 294 | 24.4% |
 | masterpieces | amonkhet-invocations | 1 | 54 | 10 | 44 | 18.5% |
-| masterpieces | breaking-news | 1 | 65 | 9 | 56 | 13.8% |
+| masterpieces | breaking-news | 1 | 65 | 10 | 55 | 15.4% |
 | masterpieces | edge-of-eternities-stellar-sights | 1 | 45 | 8 | 37 | 17.8% |
 | masterpieces | final-fantasy-through-the-ages | 1 | 65 | 10 | 55 | 15.4% |
 | masterpieces | kaladesh-inventions | 1 | 54 | 9 | 45 | 16.7% |
@@ -874,16 +874,16 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | masters-remastered | deckmasters | 1 | 44 | 18 | 26 | 40.9% |
 | masters-remastered | dominaria-remastered | 1 | 266 | 94 | 172 | 35.3% |
 | masters-remastered | double-masters | 1 | 337 | 97 | 240 | 28.8% |
-| masters-remastered | double-masters-2022 | 1 | 332 | 85 | 247 | 25.6% |
+| masters-remastered | double-masters-2022 | 1 | 332 | 86 | 246 | 25.9% |
 | masters-remastered | eternal-masters | 1 | 249 | 110 | 139 | 44.2% |
-| masters-remastered | iconic-masters | 1 | 249 | 94 | 155 | 37.8% |
+| masters-remastered | iconic-masters | 1 | 249 | 95 | 154 | 38.2% |
 | masters-remastered | innistrad-remastered | 1 | 300 | 61 | 239 | 20.3% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 57 | 235 | 19.5% |
 | masters-remastered | magic-duel-masters | 1 | 4 | 3 | 1 | 75.0% |
 | masters-remastered | masters-25 | 1 | 249 | 95 | 154 | 38.2% |
 | masters-remastered | masters-edition | 1 | 185 | 47 | 138 | 25.4% |
 | masters-remastered | masters-edition-ii | 1 | 245 | 60 | 185 | 24.5% |
-| masters-remastered | masters-edition-iii | 1 | 220 | 91 | 129 | 41.4% |
+| masters-remastered | masters-edition-iii | 1 | 220 | 92 | 128 | 41.8% |
 | masters-remastered | masters-edition-iv | 1 | 260 | 93 | 167 | 35.8% |
 | masters-remastered | modern-masters | 1 | 229 | 57 | 172 | 24.9% |
 | masters-remastered | modern-masters-2015 | 1 | 249 | 79 | 170 | 31.7% |
@@ -900,7 +900,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | masters-remastered | time-spiral-remastered | 2 | 413 | 103 | 310 | 24.9% |
 | masters-remastered | ultimate-masters | 1 | 254 | 75 | 179 | 29.5% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
-| masters-remastered | vintage-masters | 1 | 325 | 130 | 195 | 40.0% |
+| masters-remastered | vintage-masters | 1 | 325 | 131 | 194 | 40.3% |
 | planechase | planechase | 1 | 146 | 66 | 80 | 45.2% |
 | planechase | planechase-2012 | 1 | 136 | 46 | 90 | 33.8% |
 | planechase | planechase-anthology | 1 | 136 | 46 | 90 | 33.8% |
@@ -1040,7 +1040,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | promos | judge-2013 | 1 | 8 | 2 | 6 | 25.0% |
 | promos | judge-2014 | 1 | 14 | 6 | 8 | 42.9% |
 | promos | judge-2015 | 1 | 8 | 2 | 6 | 25.0% |
-| promos | judge-2016 | 1 | 8 | 1 | 7 | 12.5% |
+| promos | judge-2016 | 1 | 8 | 2 | 6 | 25.0% |
 | promos | judge-2017 | 1 | 9 | 1 | 8 | 11.1% |
 | promos | judge-2018 | 1 | 8 | 4 | 4 | 50.0% |
 | promos | judge-2019 | 1 | 8 | 0 | 8 | 0.0% |
@@ -1072,7 +1072,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 | promos | magic-2013 | 1 | 6 | 3 | 3 | 50.0% |
 | promos | magic-2014 | 1 | 6 | 1 | 5 | 16.7% |
 | promos | magic-2015 | 1 | 13 | 2 | 11 | 15.4% |
-| promos | magic-online | 1 | 2689 | 532 | 2157 | 19.8% |
+| promos | magic-online | 1 | 2689 | 533 | 2156 | 19.8% |
 | promos | magic-origins | 1 | 43 | 6 | 37 | 14.0% |
 | promos | magic-premiere-shop-2005 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | magic-premiere-shop-2006 | 1 | 5 | 5 | 0 | 100.0% |
@@ -2443,7 +2443,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 - [ ] Living Plane — `30e99293-3212-4e3f-b543-b1c7c416575d`
 - [ ] Livonya Silone — `57f2aa02-f5f3-42a5-939d-5cc94200951e`
 - [ ] Lord Magnus — `59258149-1c18-421b-b940-d0aa29da572a`
-- [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Mana Matrix — `256cea34-4691-4367-a789-17d15460f664`
 - [ ] Marble Priest — `96bcabee-e84e-409f-8439-80f5308d73e9`
 - [ ] Marhault Elsdragon — `c202f124-4283-48f6-aef1-470ad9ded22b`
@@ -10572,7 +10571,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 - [ ] Malevolent Hermit // Benevolent Geist — `51233ade-70cd-4539-9f41-5ffab761da54`
 - [ ] Malfegor — `52e1546a-63eb-48d7-acc4-81b912aabc90`
 - [ ] Mana Crypt — `2c63e4e1-89d2-4bc6-a232-94e75c4b1c8a`
-- [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Mana Flare — `97159138-c34b-416e-b079-5c952383a243`
 - [ ] Mana Vault — `736892cb-a34b-4bb9-b56c-e26e3db207a2`
 - [ ] Manaform Hellkite — `f426aa1a-e1dc-4563-b450-2e23d6bd980b`
@@ -16427,7 +16425,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 - [ ] Living Plane — `30e99293-3212-4e3f-b543-b1c7c416575d`
 - [ ] Livonya Silone — `57f2aa02-f5f3-42a5-939d-5cc94200951e`
 - [ ] Lu Bu, Master-at-Arms — `ff959f1f-0982-4761-a6b0-3044dff1d617`
-- [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Mana Vortex — `98b88734-09e2-4209-a787-9b5b345391f9`
 - [ ] Marhault Elsdragon — `c202f124-4283-48f6-aef1-470ad9ded22b`
 - [ ] Mind Twist — `78f9c223-9982-4282-a496-a6f892f0a5bf`
@@ -21428,7 +21425,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 - [ ] Lurking Evil — `81d6b42e-9c41-4d1e-bd28-4662e1fde572`
 - [ ] Magister of Worth — `0429d146-332f-4fb0-8273-c73679ca6d47`
 - [ ] Mana Crypt — `2c63e4e1-89d2-4bc6-a232-94e75c4b1c8a`
-- [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Mana Vault — `736892cb-a34b-4bb9-b56c-e26e3db207a2`
 - [ ] Marchesa, the Black Rose — `17a59d3d-9e01-48cd-bb4a-3eaaa077751c`
 - [ ] Masticore — `621476a4-44bf-4f55-adb1-880cdd213f38`
@@ -23972,7 +23968,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 - [ ] Azusa, Lost but Seeking — `6c2c8bf3-9bf8-4a86-89d3-3bb36260dc51`
 - [ ] Command Beacon — `7e8c2a18-e404-40ff-a9e0-ec3eeb6d576e`
 - [ ] Defense of the Heart — `e7e1b166-9267-426d-897d-24903327b48d`
-- [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Mystic Confluence — `cd11c27b-9368-4622-bc5a-2e0b993cc42b`
 - [ ] Stoneforge Mystic — `358789f9-7d87-411d-919e-d597da665cbd`
 - [ ] Zur the Enchanter — `d7950018-d744-48a8-81aa-0d8384703f48`
@@ -27737,7 +27732,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 - [ ] Lure — `7a7425ba-4478-4bc4-855f-abf947ea4fa2`
 - [ ] Magus of the Moon — `6800d01c-345d-4932-a2a4-8df0fb1902f2`
 - [ ] Malfegor — `52e1546a-63eb-48d7-acc4-81b912aabc90`
-- [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Mark of Mutiny — `5599ddb6-1404-4884-b6ca-c1852a521079`
 - [ ] Mer-Ek Nightblade — `56a8554c-d427-44ca-a01d-9e12c89acd1e`
 - [ ] Mindcrank — `c73c1d91-0163-49c6-832a-b9327e7a2c9b`
@@ -39680,7 +39674,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 - [ ] Magus of the Order — `ff922641-142a-4774-be3e-36a5183fce2b`
 - [ ] Makeshift Munitions — `2421bec6-7647-4684-be61-d1aa951c6b4f`
 - [ ] Malcolm, Keen-Eyed Navigator — `a66f8b44-0163-4456-b152-4acefab896a4`
-- [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Marath, Will of the Wild — `fae87115-8749-4d25-a594-7139dd01a034`
 - [ ] Mask of Memory — `d6b2c998-a226-426c-a40d-6e6007041bfe`
 - [ ] Master Warcraft — `f9bca7af-29b6-46ba-b847-56715d09d1da`
@@ -45872,7 +45865,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 - [ ] Lyev Skyknight — `191ec087-7817-4c56-b2d5-66de5c663536`
 - [ ] Magister Sphinx — `1d86ae29-4705-4bbc-8922-9b4e031df5b1`
 - [ ] Makeshift Mauler — `03025ec0-75fe-439d-b0c1-9bdb0f0ff336`
-- [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Mana Vault — `736892cb-a34b-4bb9-b56c-e26e3db207a2`
 - [ ] Marchesa, the Black Rose — `17a59d3d-9e01-48cd-bb4a-3eaaa077751c`
 - [ ] Master Biomancer — `afeba4d7-b659-4fb1-84dd-27704fbb2621`
@@ -54222,7 +54214,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,86
 - [ ] Ionize — `01da67a5-e3dc-44f4-8a93-513bfa4d8fbc`
 - [ ] Journey to Nowhere — `2bfec482-be0d-4768-84e7-1c2c74ea1373`
 - [ ] Leyline Binding — `b49642f6-20bd-468d-9dac-e578f9ac3091`
-- [ ] Mana Drain — `74d3277a-38e5-4732-afed-084a56148f20`
 - [ ] Mindbreak Trap — `48712d36-5c13-4ded-87a4-68106da4a5cd`
 - [ ] Mindslaver — `a806f4ee-f48a-46c3-8772-5aaabebe4c7e`
 - [ ] Oko, Thief of Crowns — `60c60923-ff1b-43f7-8768-731499fcffc9`

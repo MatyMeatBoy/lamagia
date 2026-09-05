@@ -268,6 +268,16 @@ export interface DelayedDraw {
   readonly sourceText: string;
 }
 
+/** A delayed mana trigger waiting for its owner's next main phase (Mana Drain, CR 603.7). */
+export interface DelayedManaAdd {
+  readonly id: string;
+  readonly seat: SeatId;
+  readonly amount: number;
+  readonly manaType: ManaType;
+  readonly sourceCard: GameCard;
+  readonly sourceText: string;
+}
+
 /** A permanent exiled until the next end step (CR 603.7, 400.7). */
 export interface DelayedReturn {
   readonly id: string;
@@ -338,6 +348,8 @@ export interface GameState {
   readonly delayedDraws: readonly DelayedDraw[];
   /** Permanents waiting for a delayed return at the next end step. */
   readonly delayedReturns: readonly DelayedReturn[];
+  /** Delayed mana triggers waiting for their owner's next main phase. */
+  readonly delayedManaAdds: readonly DelayedManaAdd[];
   readonly combat: CombatState;
   readonly log: readonly LogEntry[];
   readonly winnerSeat: SeatId | null;
@@ -1182,6 +1194,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     triggerQueue: [],
     delayedDraws: [],
     delayedReturns: [],
+    delayedManaAdds: [],
     combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false },
     log: [],
     winnerSeat: null,
@@ -3745,6 +3758,24 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
     }
+    case "delayed-mana-equal-to-target-spell-mana-value": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      const targetSpell = state.stack.find((entry) => entry.id === target.stackId);
+      if (!targetSpell) return state;
+      const amount = cardProfile(targetSpell.card).manaValue;
+      return {
+        ...state,
+        delayedManaAdds: [...state.delayedManaAdds, {
+          id: `${object.id}:mana`,
+          seat: controller,
+          amount,
+          manaType: effect.manaType,
+          sourceCard: object.card,
+          sourceText: `At the beginning of your next main phase, add {${effect.manaType}}${amount === 1 ? "" : ` x${amount}`}.`
+        }]
+      };
+    }
     case "counter-target-spell-unless-pay": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
@@ -4932,6 +4963,30 @@ function queueDelayedDraws(state: GameState): GameState {
   return { ...state, delayedDraws: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
 }
 
+/** Queues mana due at its owner's next main phase (Mana Drain, CR 603.7). */
+function queueDelayedManaAdds(state: GameState): GameState {
+  const due = state.delayedManaAdds.filter((delayed) => delayed.seat === state.activeSeat);
+  if (!due.length) return state;
+  const remaining = state.delayedManaAdds.filter((delayed) => delayed.seat !== state.activeSeat);
+  const triggers: TriggerInstance[] = due.map((delayed) => ({
+    id: delayed.id,
+    controller: delayed.seat,
+    sourcePermanentId: `delayed:${delayed.id}`,
+    sourceCard: delayed.sourceCard,
+    definition: {
+      event: "upkeep",
+      subject: "you",
+      effect: { kind: "add-mana", pool: { [delayed.manaType]: delayed.amount } },
+      optional: false,
+      targetKind: "none",
+      sourceText: delayed.sourceText
+    },
+    cause: `${delayed.sourceCard.name}: delayed main phase mana`,
+    eventController: delayed.seat
+  }));
+  return { ...state, delayedManaAdds: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
+}
+
 /** Queues permanents due to return at this end step (CR 603.7). */
 function queueDelayedReturns(state: GameState): GameState {
   const due = state.delayedReturns.filter((delayed) => delayed.triggerAtTurn === state.turn);
@@ -5082,6 +5137,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
     next = raiseEvent(next, { kind: "upkeep", activeSeat: next.activeSeat });
   }
   if (step === "draw") next = raiseEvent(next, { kind: "draw-step", activeSeat: next.activeSeat });
+  if (step === "precombat-main") next = queueDelayedManaAdds(next);
   if (step === "end") {
     next = queueDelayedReturns(next);
     next = raiseEvent(next, { kind: "end-step", activeSeat: next.activeSeat });

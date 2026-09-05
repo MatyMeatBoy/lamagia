@@ -604,6 +604,8 @@ export type SpellEffect =
   | { readonly kind: "counter-target-spell-to-battlefield" }
   /** Counter a spell and schedule the Arcane Denial-style upkeep draws (CR 603.7). */
   | { readonly kind: "counter-target-spell-with-delayed-draw"; readonly targetAmount: number; readonly casterAmount: number }
+  /** Mana Drain: paired with the separate "Counter target spell" sentence, reads the same shared target at resolution (CR 603.7, 605.3a). */
+  | { readonly kind: "delayed-mana-equal-to-target-spell-mana-value"; readonly manaType: ManaType }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
@@ -3062,6 +3064,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (exactSpellValue) return { effect: { kind: "counter-target-spell" }, target: `spell-mana-value-${Number(exactSpellValue[1])}` };
   if (/^Counter target creature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "creature-spell" };
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
+  if ((match = /^At the beginning of your next main phase, add an amount of \{([WUBRGC])\} equal to that spell's mana value$/i.exec(text))) {
+    return { effect: { kind: "delayed-mana-equal-to-target-spell-mana-value", manaType: match[1]!.toUpperCase() as ManaType }, target: "spell" };
+  }
   const multiBasicSearch = parseMultiBasicSearch(text);
   if (multiBasicSearch) return { effect: multiBasicSearch, target: "none" };
   const token = parseManaSpentToken(text) ?? parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
