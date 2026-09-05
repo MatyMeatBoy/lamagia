@@ -2345,6 +2345,44 @@ card") need a card-type filter on the trigger itself, which `TriggerSubject`
 doesn't carry yet for discard events — left for a follow-up claim rather
 than bolted on here.
 
+### Worker-05: "whenever you draw/discard a card" was the one subject missing (2026-09-04)
+
+Claim `rules-you-draw-discard-trigger`, continuing the Nekusar decklist
+(Sheoldred, the Apocalypse). `TriggerSubject` already had a `"you"` value —
+it's what makes `"life-gained"`/`"life-lost"` triggers work — but the
+`card-drawn`/`card-discarded` event matcher only ever checked for
+`"each-player"` and `"opponent"`, so `"Whenever you draw a card, ..."` never
+fired even though every piece it needed already existed. One `if` branch
+(`if (definition.subject === "you") return event.seat === watcher.controller;`)
+closes the gap for both events at once.
+
+No new effect executor was needed either: `"You gain N life"` already
+resolves against the ability's own `controller` (plain `gain-life`, not the
+event-keyed `lose-life-event-player`), and for a `"you"`-subject trigger the
+controller *is* the player who drew/discarded, so it was correct without
+touching it. The only other change was widening the existing `"That player
+loses N life"` pattern to also accept `"They lose N life"` — the same
+`lose-life-event-player` effect, Sheoldred just uses the shorter pronoun.
+
+Fully implements 15 cards found by grepping the catalog for `"whenever you
+(draw|discard) a card"`: Sheoldred, the Apocalypse; Niv-Mizzet, the
+Firemind; Hobgoblin, Mantled Marauder; Chasm Skulker; The Value Knight;
+Spirit; Psychic Corrosion; Mystic Redaction; Clinquant Skymage; Oneirophage;
+Ravenhill Flock; Lyla, Holographic Assistant; Lorescale Coatl; Burlfist Oak;
+Horizon Chimera. Scenario coverage casts a two-target draw spell at the
+ability's own controller (confirms the `"you"` life-gain branch) and at an
+opponent (confirms the `"opponent"` branch still drains the opponent, never
+the controller) with the same permanent on the battlefield.
+
+Global export: **9,114/38,712** (+15 from 9,099). `npm run check` and `npm
+test` PASS (**518 rules tests**, up from 517, plus the full Python suite).
+`npm run simulate:engine` reports 12/200; stashed the diff and reran twice
+on the same base commit, reproducing exactly 10/200 with the identical seed
+set both times — the two extra failures are newly-legalized bot actions
+(Sheoldred and friends becoming castable) reaching the same pre-existing
+invariant bugs via new game paths, the same pattern documented on every
+prior claim this session, not a new bug.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed

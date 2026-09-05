@@ -1887,8 +1887,10 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "card-cycled", subject: "self", pattern: /^when\s+you\s+cycle\s+(?:this\s+card|~),?\s*(.+)$/i },
   { event: "card-drawn", subject: "each-player", pattern: /^whenever\s+a\s+player\s+draws\s+a\s+card,?\s*(.+)$/i },
   { event: "card-drawn", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+draws\s+a\s+card,?\s*(.+)$/i },
+  { event: "card-drawn", subject: "you", pattern: /^whenever\s+you\s+draw\s+a\s+card,?\s*(.+)$/i },
   { event: "card-discarded", subject: "each-player", pattern: /^whenever\s+a\s+player\s+discards\s+a\s+card,?\s*(.+)$/i },
   { event: "card-discarded", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+discards\s+a\s+card,?\s*(.+)$/i },
+  { event: "card-discarded", subject: "you", pattern: /^whenever\s+you\s+discard\s+a\s+card,?\s*(.+)$/i },
 
   // Turn-structure triggers (CR 603.2b).
   { event: "upkeep", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+upkeep,?\s*(.+)$/i },
@@ -2044,7 +2046,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-controller", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-controller", amount: "X" }, target: "none" };
   }
-  if ((match = /^That player loses (\w+) life$/i.exec(text))) {
+  if ((match = /^(?:That player|They) lose(?:s)? (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "lose-life-event-player", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "lose-life-event-player", amount: "X" }, target: "none" };

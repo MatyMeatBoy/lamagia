@@ -1307,6 +1307,7 @@ function triggerMatches(
 
   if (event.kind === "card-drawn" || event.kind === "card-discarded") {
     if (definition.subject === "each-player") return true;
+    if (definition.subject === "you") return event.seat === watcher.controller;
     return definition.subject === "opponent" && event.seat !== watcher.controller;
   }
 
