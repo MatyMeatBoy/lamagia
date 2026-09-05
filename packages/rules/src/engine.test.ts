@@ -2760,6 +2760,18 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((candidate) => candidate.instance_id === card.instance_id)).toBe(true);
   });
 
+  it("pays the explicitly selected discard when several hand cards are available", () => {
+    const sourceCard = DISCARD_ACTIVATION();
+    let game = readyToCast([BEAR(), SOL_RING()], [sourceCard]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sourceCard.name)!;
+    const selected = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id && entry.action.discardCardId === selected.instance_id)!;
+    game = applyAction(game, 0, activation.action);
+    expect(game.players[0]!.graveyard.some((card) => card.instance_id === selected.instance_id)).toBe(true);
+    expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+
   it("rejects an activation that names a card outside the available cost choices", () => {
     let game = readyToCast([BEAR()], [DISCARD_ACTIVATION()]);
     const source = game.players[0]!.battlefield[0]!;

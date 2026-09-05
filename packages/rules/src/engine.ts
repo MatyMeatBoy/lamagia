@@ -6872,7 +6872,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   }
   if (ability.discardsCard) {
     const hand = playerAt(next, seat).hand;
-    const discarded = hand.find((card) => card.instance_id === action.sacrificeId)
+    const discarded = hand.find((card) => card.instance_id === action.discardCardId)
       ?? [...hand].sort((left, right) => (cardProfile(right).cost?.symbols.length ?? 0) - (cardProfile(left).cost?.symbols.length ?? 0))[0];
     if (!discarded) throw new Error("No tienes una carta para descartar.");
     next = discardCard(next, seat, discarded);
