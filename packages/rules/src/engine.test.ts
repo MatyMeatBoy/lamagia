@@ -324,6 +324,7 @@ const C13_ARMY_OF_THE_DAMNED = () => {
 };
 const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for up to two basic land cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", scryfall_id: "8b755881-a72d-4e21-a369-d2924eb4585a" });
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice this artifact: Search your library for up to two basic land cards, reveal them, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d", oracle_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
+const C13_SPOILS_OF_VICTORY = () => make({ name: "Spoils of Victory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for a Plains, Island, Swamp, Mountain, or Forest card and put that card onto the battlefield. Then shuffle.", scryfall_id: "8a7ee186-b25f-4185-830d-e8e7cf23d4e5", oracle_id: "852bd598-6e48-43c8-9211-740ae9e0c42e" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
 const C13_CRADLE_OF_VITALITY = () => make({ name: "Cradle of Vitality", type_line: "Enchantment", mana_cost: "{2}{W}", cmc: 3, oracle_text: "Whenever you gain life, you may pay {1}{W}. If you do, put a +1/+1 counter on target creature for each 1 life you gained.", scryfall_id: "956250da-532a-4457-8696-73915be56943" });
@@ -5944,6 +5945,24 @@ describe("activated abilities", () => {
     expect(game.players[0]!.hand.filter((card) => card.name === "Swamp")).toHaveLength(1);
     expect(game.players[0]!.library.some((card) => card.name === "Island" || card.name === "Swamp")).toBe(false);
     expect(game.players[0]!.library.some((card) => card.name === "Mountain")).toBe(true);
+  });
+
+  it("reuses typed basic-land subtypes for Spoils of Victory", () => {
+    const profile = profileOf(C13_SPOILS_OF_VICTORY());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "search-library", types: ["Land"], subtypes: ["Plains", "Island", "Swamp", "Mountain", "Forest"], destination: "battlefield" }]
+    });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [C13_SPOILS_OF_VICTORY()]), library: [...toHand(0, [ISLAND(), MOUNTAIN(), BEAR()], "spoils-library")] }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    expect(choice.optionIds).toHaveLength(2);
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Island" });
+    expect(permanentNamed(game, 0, "Island")).toBeDefined();
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Spoils of Victory")).toBe(true);
   });
 
   it("sacrifices Burnished Hart and puts both selected basics tapped onto the battlefield", () => {

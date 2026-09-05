@@ -1730,6 +1730,14 @@ function searchCriterion(text: string): { types: CardType[]; subtypes: string[] 
 
 function parseLibrarySearch(text: string): SpellEffect | null {
   const single = /^Search your library for (?:a |an |up to (?:one|two|three|five) )?(.+?) card, (.+)$/i.exec(text);
+  const namedBasic = /^Search your library for a ((?:Plains|Island|Swamp|Mountain|Forest)(?:,\s*(?:Plains|Island|Swamp|Mountain|Forest))*?(?:,?\s+or\s+(?:Plains|Island|Swamp|Mountain|Forest))?) card and put that card onto the battlefield\.?$/i.exec(text.trim());
+  if (namedBasic) {
+    return {
+      kind: "search-library", types: ["Land"],
+      subtypes: namedBasic[1]!.match(/Plains|Island|Swamp|Mountain|Forest/gi) ?? [],
+      destination: "battlefield", reveal: false
+    };
+  }
   // Some historical imports use plural pronouns after selecting several
   // cards. Keep the amount as a structured operand instead of forcing this
   // through the single-card `it/that card` grammar.
@@ -2861,6 +2869,7 @@ function isIgnorableSentence(sentence: string): boolean {
   // cleanup discard only bites at 8+ cards and the sim rarely floods that far,
   // so treating this as a no-op keeps the card playable without new state.
   if (/^you have no maximum hand size for the rest of the game\.?$/i.test(s)) return true;
+  if (/^then shuffle\.?$/i.test(s)) return true;
   return false;
 }
 
