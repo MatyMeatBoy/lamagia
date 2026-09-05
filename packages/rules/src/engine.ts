@@ -13,7 +13,7 @@
  */
 
 import {
-  backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
+  backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaType, type RestrictedMana
@@ -245,6 +245,8 @@ export interface StackObject {
   readonly triggeredPermanentId?: string;
   /** This spell was cast using its own printed alternative cost, e.g. Baleful Mastery (CR 601.2b). */
   readonly castViaAlternativeCost?: boolean;
+  /** Color chosen while resolving a modal color effect. */
+  readonly chosenColor?: MagicColor;
 }
 
 export interface TriggerInstance {
@@ -387,6 +389,15 @@ export interface GameState {
 }
 
 export type PendingChoice =
+  | {
+      /** A spell resolves only after its controller chooses one of Magic's five colors. */
+      readonly type: "choose-color";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly effect: Extract<SpellEffect, { kind: "return-all-permanents-of-color" }>;
+      readonly exileSourceAfterResolution: boolean;
+    }
   | {
       readonly type: "reveal-card";
       readonly seat: SeatId;
@@ -614,6 +625,7 @@ export type GameAction =
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
+  | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
@@ -1521,6 +1533,25 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
   return next;
 }
 
+/** Returns a permanent to its owner's hand without treating it as a death. */
+function returnPermanentToOwnersHand(state: GameState, permanent: Permanent): GameState {
+  let next = withPlayer(state, permanent.controller, (player) => ({
+    ...player,
+    battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+  }));
+  next = removeFromCombat(next, permanent.instance_id);
+  next = raiseEvent(next, {
+    kind: "leaves-battlefield",
+    permanentId: permanent.instance_id,
+    controller: permanent.controller,
+    card: permanent.card
+  }, [permanent]);
+  // Tokens cease to exist rather than entering a player's hand (CR 111.8).
+  if (permanent.card.token) return logged(next, permanent.controller, `${permanent.card.name} leaves the battlefield.`);
+  next = withPlayer(next, permanent.card.owner, (player) => ({ ...player, hand: [...player.hand, permanent.card] }));
+  return logged(next, permanent.controller, `${permanent.card.name} returns to its owner's hand.`);
+}
+
 /** Removes a permanent from combat without moving it off the battlefield. */
 function removeFromCombat(state: GameState, instanceId: string): GameState {
   const attackers = state.combat.attackers.filter((entry) => entry.instanceId !== instanceId);
@@ -2310,6 +2341,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
       return logged(next, blocker.controller, `${blocker.card.name} intercambia su fuerza con ${attacker.card.name} hasta el final del combate.`);
+    }
+    case "return-all-permanents-of-color": {
+      const color = effect.color === "chosen" ? object.chosenColor : effect.color;
+      if (!color) return state;
+      const moved = allPermanents(state).filter((permanent) => cardProfile(permanent.card).colors.includes(color));
+      let next = state;
+      for (const permanent of moved) {
+        const current = findPermanent(next, permanent.instance_id);
+        if (current) next = returnPermanentToOwnersHand(next, current);
+      }
+      return logged(next, controller, `${sourceName} returns ${moved.length} permanent(s) of color ${color} to their owners' hands.`);
     }
     case "draw-equal-tapped-creatures": {
       const target = object.targets[0];
@@ -4804,6 +4846,22 @@ function resolveTop(state: GameState): GameState {
       `Se resuelve la ${TRIGGER_EVENT_LABELS[object.trigger.definition.event]} de ${object.card.name}.`);
   }
 
+  const colorEffect = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "return-all-permanents-of-color" }> =>
+    effect.kind === "return-all-permanents-of-color" && effect.color === "chosen");
+  if (colorEffect) {
+    return {
+      ...next,
+      pendingChoice: {
+        type: "choose-color",
+        seat: object.controller,
+        sourceId: object.id,
+        sourceCard: object.card,
+        effect: colorEffect,
+        exileSourceAfterResolution: retireZone === "exile"
+      }
+    };
+  }
+
   const activatedEffect = object.activated?.effect;
   const selectedEffect = object.selectedEffect;
   const scry = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "scry" }> => effect.kind === "scry");
@@ -5799,6 +5857,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   if (state.pendingChoice) {
     if (state.pendingChoice.seat !== seat) return actions;
     const choice = state.pendingChoice;
+    if (choice.type === "choose-color") {
+      const names: Readonly<Record<MagicColor, string>> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
+      for (const color of Object.keys(names) as MagicColor[]) {
+        actions.push({
+          action: { type: "choose-color", sourceId: choice.sourceId, color },
+          label: `Choose ${names[color]}`,
+          note: `${choice.sourceCard.name}: choose a color.`
+        });
+      }
+      return actions;
+    }
     if (choice.type === "optional-trigger") {
       const optionalCost = choice.payCost ?? choice.manaCost;
       if (choice.tapCost) {
@@ -7432,6 +7501,31 @@ function applyChooseReveal(state: GameState, seat: SeatId, action: Extract<GameA
   return logged(next, seat, `${playerAt(next, seat).name} revela ${revealed.name}; ${source.card.name} entra enderezada.`);
 }
 
+function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-color" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "choose-color" || choice.seat !== seat) throw new Error("You do not have a color choice pending.");
+  if (choice.sourceId !== action.sourceId) throw new Error("That color choice is no longer pending.");
+  const colors: readonly MagicColor[] = ["W", "U", "B", "R", "G"];
+  if (!colors.includes(action.color)) throw new Error("Choose one of Magic's five colors.");
+  const source: StackObject = {
+    id: choice.sourceId,
+    controller: choice.seat,
+    card: choice.sourceCard,
+    label: choice.sourceCard.name,
+    targets: [],
+    fromCommandZone: false,
+    flashback: false,
+    variableValue: 0,
+    countered: false,
+    chosenColor: action.color
+  };
+  let next = applyEffect({ ...state, pendingChoice: null }, source, choice.effect);
+  next = withPlayer(next, choice.sourceCard.owner, (player) => choice.exileSourceAfterResolution
+    ? { ...player, exile: [...player.exile, choice.sourceCard] }
+    : { ...player, graveyard: [...player.graveyard, choice.sourceCard] });
+  return logged(next, seat, `${choice.sourceCard.name}: ${action.color} chosen.`);
+}
+
 function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "optional-trigger" || choice.seat !== seat) throw new Error("No tienes una elección de trigger pendiente.");
@@ -8392,6 +8486,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "activate": next = applyActivate(state, seat, action); break;
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
+    case "choose-color": next = applyChooseColor(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-trigger-order": next = applyChooseTriggerOrder(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
