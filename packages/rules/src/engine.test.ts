@@ -322,6 +322,7 @@ const AERIE_MYSTICS = () => make({ name: "Aerie Mystics", type_line: "Creature â
 const RAKECLAW_GARGANTUAN = () => make({ name: "Rakeclaw Gargantuan", type_line: "Creature â€” Beast", mana_cost: "{2}{R}{G}{W}", cmc: 5, power: "5", toughness: "3", oracle_text: "{1}: Target creature with power 5 or greater gains first strike until end of turn.", scryfall_id: "8dbb4a8f-78e9-4ceb-824d-bb67bdf939db" });
 const HOMEWARD_PATH = () => make({ name: "Homeward Path", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Each player gains control of all creatures they own.", scryfall_id: "cb8ec2e4-8223-4172-8f2c-37c918a573fa" });
 const AZORIUS_KEYRUNE = () => make({ name: "Azorius Keyrune", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{T}: Add {W} or {U}.\n{W}{U}: This artifact becomes a 2/2 white and blue Bird artifact creature with flying until end of turn.", scryfall_id: "7266b491-54e6-4393-a448-d5ae99d965c6" });
+const VOLTAIC_KEY = () => make({ name: "Voltaic Key", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "{1}, {T}: Untap target artifact.", oracle_id: "09aeea91-b1dc-443f-a509-4758f052c0a7", scryfall_id: "09aeea91-b1dc-443f-a509-4758f052c0a7" });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
@@ -4154,6 +4155,27 @@ describe("casting", () => {
     expect(game.pendingChoice?.type).toBe("tap-or-untap");
     game = applyAction(game, 0, { type: "choose-tap-or-untap", sourceId: game.pendingChoice!.sourceId, mode: "tap" });
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.tapped).toBe(true);
+  });
+
+  it("reuses the untap primitive for Voltaic Key's artifact-only activation", () => {
+    // CR 602.1, 701.21: the target restriction is part of the activation,
+    // while the existing untap executor performs the resolution.
+    const key = VOLTAIC_KEY();
+    expect(profileOf(key)).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ manaCost: { raw: "{1}" }, requiresTap: true, effect: { kind: "untap-target-permanent" }, targetKind: "artifact" }]
+    });
+    let game = readyToCast([], [MOUNTAIN(), key, TEST_ARTIFACT()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Voltaic Key")!;
+    const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Relic")!;
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+      ? { ...permanent, tapped: true } : permanent) }));
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)!;
+    expect(action.requiresTarget).toBe("artifact");
+    if (action.action.type !== "activate") throw new Error("Voltaic Key activation missing.");
+    game = applyAction(game, 0, { ...action.action, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!.tapped).toBe(false);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.tapped).toBe(true);
   });
 
   it("resolves the optional ETB only after the controller accepts it", () => {

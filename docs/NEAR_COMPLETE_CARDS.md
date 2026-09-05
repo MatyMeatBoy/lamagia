@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,170**
-- Cards with a reusable existing primitive hint: **11,465**
-- Cards needing new primitive review: **3,705**
-- Templates: **11,991**
+- One-line cards: **15,166**
+- Cards with a reusable existing primitive hint: **11,462**
+- Cards needing new primitive review: **3,704**
+- Templates: **11,988**
 
 ## Worker rule
 
@@ -61,7 +61,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Harald, King of Skemfar | `0089b07c-7f47-4a9a-9fb7-cc38ec9d7bcd` | library-look | trigger / ETB | When ~ enters, look at the top five cards of your library. You may reveal an Elf, Warrior, or Tyvar card from among them and put it into your hand. Put the rest on the bottom of your library in a random order. |
 | needs-new-primitive | Mystical Dispute | `48390b8d-db41-48a5-9bac-316660ab7252` | activated | new primitive review | ~ costs {2} less to cast if it targets a blue spell. |
 | reuse-existing | Fae of Wishes // Granted | `c0abbed2-d213-47ef-8d6c-4a21efb9a55f` | discard | draw / discard | {1}{U}, Discard two cards: Return ~ to its owner's hand. |
-| reuse-existing | Voltaic Key | `09aeea91-b1dc-443f-a509-4758f052c0a7` | activated | activated ability / mana | {1}, {T}: Untap target artifact. |
 | reuse-existing | Lava Coil | `fa71db44-5181-4c51-8b24-7fbedf36e3ca` | exile | exile | If that creature would die this turn, exile it instead. |
 | reuse-existing | Tibalt, Rakish Instigator | `0b768f8f-2213-45b9-bced-8fb1bbb441c3` | gain-life | damage / life | Your opponents can't gain life. |
 | reuse-existing | Jiang Yanggu, Wildcrafter | `04f2c320-dfcc-440a-9e24-3c2083d74e7c` | counters | activated ability / mana | Each creature you control with a +1/+1 counter on it has "{T}: Add one mana of any color." |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Phyrexian Mite | `2667d723-01c8-4ea3-ac17-cedb3b842c3b` | activated | new primitive review | Toxic 1 |
 | reuse-existing | Guardian of Faith | `8e04a5e0-e22c-430b-a39a-c9f38e16ea86` | static-continuous | trigger / ETB | When ~ enters, any number of other target creatures you control phase out. |
 | needs-new-primitive | Changeling Outcast | `a61ef0cc-1da9-49f9-b0dc-01cf9f6205be` | combat-restriction | new primitive review | ~ can't block and can't be blocked. |
+| needs-new-primitive | Yavimaya, Cradle of Growth | `8dd5f5af-d2d8-4356-8617-8381081b930c` | activated | new primitive review | Each land is a Forest in addition to its other land types. |
 
-The JSON contains the remaining 14,670 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,666 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
