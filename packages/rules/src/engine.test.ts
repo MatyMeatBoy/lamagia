@@ -6156,4 +6156,32 @@ describe("bot games", () => {
     expect(result.state.log.some((entry) => entry.text.includes("ataca con"))).toBe(true);
     expect(result.state.log.some((entry) => entry.text.includes("de daño a"))).toBe(true);
   });
+
+  it("rechecks each bot blocker against its assigned attacker", () => {
+    const shadowAttacker = () => make({
+      name: "Dauthi Attacker", type_line: "Creature — Dauthi", mana_cost: "{B}", cmc: 1,
+      power: "2", toughness: "2", keywords: ["Shadow"], oracle_text: "Shadow"
+    });
+    const groundAttacker = () => make({
+      name: "Ground Attacker", type_line: "Creature — Soldier", mana_cost: "{1}", cmc: 1,
+      power: "2", toughness: "2"
+    });
+    const groundBlocker = () => make({
+      name: "Ground Blocker", type_line: "Creature — Elf", mana_cost: "{1}", cmc: 1,
+      power: "2", toughness: "2"
+    });
+    const shadowBlocker = () => make({
+      name: "Dauthi Blocker", type_line: "Creature — Dauthi", mana_cost: "{1}{B}", cmc: 2,
+      power: "2", toughness: "2", keywords: ["Shadow"], oracle_text: "Shadow"
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [shadowAttacker(), groundAttacker()]);
+    game = putOnBattlefield(game, 1, [groundBlocker(), shadowBlocker()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const attackers = game.players[0]!.battlefield.map((permanent) => ({ instanceId: permanent.instance_id, defender: 1 }));
+    game = applyAction(game, 0, { type: "declare-attackers", attackers });
+    const choice = botAction(game, 1);
+    expect(choice?.action.type).toBe("declare-blockers");
+    expect(() => applyAction(game, 1, choice!.action)).not.toThrow();
+  });
 });

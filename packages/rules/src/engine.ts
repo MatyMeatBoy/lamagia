@@ -1146,9 +1146,6 @@ function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { t
 }
 
 function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false): GameState {
-  if (process.env.DEBUG_COMMANDER && !isCommander && playerAt(state, card.owner).commanderIds.includes(card.instance_id)) {
-    console.error(`putOntoBattlefield called with isCommander=false for actual commander ${card.name}`, new Error().stack?.split("\n").slice(1, 5).join(" | "));
-  }
   const profile = cardProfile(card);
   const printed = entersTapped(state, seat, profile);
   // An effect that says "onto the battlefield tapped" overrides the card's own
@@ -3903,7 +3900,8 @@ function landwalkEvades(state: GameState, attacker: Permanent, defenderSeat: Sea
   });
 }
 
-function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): boolean {
+/** Whether this specific blocker may block this specific attacker (CR 509.1b). */
+export function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): boolean {
   const blockerProfile = cardProfile(blocker.card);
   if (!isCreaturePermanent(blocker) || blocker.tapped) return false;
   if (blockerProfile.combatRules.cannotBlock || blocker.cantBlockThisTurn) return false;
@@ -6280,14 +6278,6 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
       break;
     }
   }
-  if (process.env.DEBUG_COMMANDER) {
-    (globalThis as any).__lastAction = { action, seat };
-    const a = commanderCounts(state);
-    const b = commanderCounts(next);
-    for (let i = 0; i < a.length; i += 1) {
-      if (b[i]! < a[i]!) console.error(`PRE-SETTLE DROP seat=${i} ${a[i]}->${b[i]} action=${JSON.stringify(action)} by=${seat}`);
-    }
-  }
   return settle({ ...next, version: next.version + 1 });
 }
 
@@ -6370,37 +6360,11 @@ function shouldAutoPass(state: GameState, seat: SeatId): boolean {
  * themselves, combat declarations nobody can make are auto-submitted, and a
  * seat with no legal option other than passing passes automatically.
  */
-function commanderCounts(state: GameState): number[] {
-  return state.players.map((p) => {
-    const onBattlefield = p.battlefield.filter((x) => x.isCommander).length;
-    const onStack = state.stack.filter((obj) => obj.card.owner === p.seat && p.commanderIds.includes(obj.card.instance_id)).length;
-    return onBattlefield + p.commandZone.length + onStack;
-  });
-}
-
 export function settle(state: GameState): GameState {
   let next = state;
-  const debug = Boolean(process.env.DEBUG_COMMANDER);
-  const before = debug ? commanderCounts(state) : [];
   for (let guard = 0; guard < 4096; guard += 1) {
-    const preSBA = debug ? next : undefined;
     next = applyStateBasedActions(next);
-    if (debug) {
-      const a = commanderCounts(preSBA!);
-      const b = commanderCounts(next);
-      for (let i = 0; i < a.length; i += 1) {
-        if (b[i]! < a[i]!) console.error(`SBA DROP seat=${i} ${a[i]}->${b[i]} last=${JSON.stringify((globalThis as any).__lastAction)}`);
-      }
-    }
-    const preCombat = debug ? next : undefined;
     next = pruneCombat(next);
-    if (debug) {
-      const a = commanderCounts(preCombat!);
-      const b = commanderCounts(next);
-      for (let i = 0; i < a.length; i += 1) {
-        if (b[i]! < a[i]!) console.error(`COMBAT DROP seat=${i} ${a[i]}->${b[i]} last=${JSON.stringify((globalThis as any).__lastAction)}`);
-      }
-    }
     if (next.finished) return next;
 
     // A land's "as it enters" choice is resolved before the game can open
@@ -6411,22 +6375,12 @@ export function settle(state: GameState): GameState {
     // Triggers reach the stack before priority, on top of whatever is already
     // there (CR 603.3), so an ETB never has to wait for the stack to empty.
     if (next.triggerQueue.length) {
-      const pre = debug ? next : undefined;
       next = putNextTriggerOnStack(next);
-      if (debug) {
-        const a = commanderCounts(pre!); const b = commanderCounts(next);
-        for (let i = 0; i < a.length; i += 1) if (b[i]! < a[i]!) console.error(`TRIGGER DROP seat=${i} ${a[i]}->${b[i]} last=${JSON.stringify((globalThis as any).__lastAction)}`);
-      }
       continue;
     }
 
     if (!next.priorityOpen) {
-      const pre = debug ? next : undefined;
       next = advanceStep(next);
-      if (debug) {
-        const a = commanderCounts(pre!); const b = commanderCounts(next);
-        for (let i = 0; i < a.length; i += 1) if (b[i]! < a[i]!) console.error(`ADVANCE DROP seat=${i} ${a[i]}->${b[i]} last=${JSON.stringify((globalThis as any).__lastAction)}`);
-      }
       continue;
     }
 
@@ -6458,12 +6412,7 @@ export function settle(state: GameState): GameState {
     const seat = next.prioritySeat;
     const player = playerAt(next, seat);
     if (shouldAutoPass(next, seat)) {
-      const pre = debug ? next : undefined;
       next = applyPass(next, seat);
-      if (debug) {
-        const a = commanderCounts(pre!); const b = commanderCounts(next);
-        for (let i = 0; i < a.length; i += 1) if (b[i]! < a[i]!) console.error(`AUTOPASS DROP seat=${i} ${a[i]}->${b[i]} lastPasser=${seat}`);
-      }
       continue;
     }
     return next;
