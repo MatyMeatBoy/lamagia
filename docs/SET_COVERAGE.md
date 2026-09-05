@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,937** · cobertura: **30.5%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,942** · cobertura: **30.5%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -282,7 +282,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 | 2012-10-05 | Return to Ravnica (`RTR`) | expansion | ravnica | main | 254 | 94 | 160 | 37.0% |
 | 2012-10-05 | Return to Ravnica Promos (`PRTR`) | promos | return-to-ravnica | other | 10 | 1 | 9 | 10.0% |
 | 2012-11-02 | Commander's Arsenal (`CM1`) | commander | 2012 | other | 18 | 8 | 10 | 44.4% |
-| 2013-01-01 | Duels of the Planeswalkers 2014 Promos (`PDP14`) | promos | duels-of-the-planeswalkers-2014 | other | 3 | 1 | 2 | 33.3% |
+| 2013-01-01 | Duels of the Planeswalkers 2014 Promos (`PDP14`) | promos | duels-of-the-planeswalkers-2014 | other | 3 | 2 | 1 | 66.7% |
 | 2013-01-01 | Friday Night Magic 2013 (`F13`) | promos | fnm-2013 | other | 12 | 5 | 7 | 41.7% |
 | 2013-01-01 | Judge Gift Cards 2013 (`J13`) | promos | judge-2013 | other | 8 | 2 | 6 | 25.0% |
 | 2013-01-26 | Gatecrash Promos (`PGTC`) | promos | gatecrash | other | 10 | 0 | 10 | 0.0% |
@@ -294,7 +294,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 | 2013-06-07 | Modern Masters (`MMA`) | masters-remastered | modern-masters | other | 229 | 65 | 164 | 28.4% |
 | 2013-07-18 | Magic 2014 Promos (`PM14`) | promos | magic-2014 | other | 6 | 1 | 5 | 16.7% |
 | 2013-07-18 | San Diego Comic-Con 2013 (`PSDC`) | promos | comic-con-2013 | other | 5 | 0 | 5 | 0.0% |
-| 2013-07-19 | Magic 2014 (`M14`) | core | 2010s | main | 234 | 116 | 118 | 49.6% |
+| 2013-07-19 | Magic 2014 (`M14`) | core | 2010s | main | 234 | 117 | 117 | 50.0% |
 | 2013-08-23 | From the Vault: Twenty (`V13`) | from-the-vault | 2010s | other | 20 | 9 | 11 | 45.0% |
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 31 | 37 | 45.6% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
@@ -317,7 +317,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 | 2014-07-18 | Magic 2015 (`M15`) | core | 2010s | main | 269 | 107 | 162 | 39.8% |
 | 2014-07-18 | Magic 2015 Clash Pack (`CP1`) | starter | 2010s | other | 6 | 2 | 4 | 33.3% |
 | 2014-08-22 | From the Vault: Annihilation (`V14`) | from-the-vault | 2010s | other | 15 | 2 | 13 | 13.3% |
-| 2014-09-05 | Duel Decks: Speed vs. Cunning (`DDN`) | duel-decks | duel-decks-speed-vs-cunning | other | 71 | 30 | 41 | 42.3% |
+| 2014-09-05 | Duel Decks: Speed vs. Cunning (`DDN`) | duel-decks | duel-decks-speed-vs-cunning | other | 71 | 31 | 40 | 43.7% |
 | 2014-09-26 | Khans of Tarkir (`KTK`) | expansion | tarkir | main | 254 | 87 | 167 | 34.3% |
 | 2014-09-26 | Khans of Tarkir Promos (`PKTK`) | promos | khans-of-tarkir | other | 44 | 6 | 38 | 13.6% |
 | 2014-11-07 | Commander 2014 (`C14`) | commander | 2014 | commander | 322 | 207 | 115 | 64.3% |
@@ -474,7 +474,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 | 2020-08-01 | 2019 Heroes of the Realm (`PH19`) | funny-special | 2019-heroes-of-the-realm | other | 7 | 0 | 7 | 0.0% |
 | 2020-08-07 | Double Masters (`2XM`) | masters-remastered | double-masters | other | 337 | 104 | 233 | 30.9% |
 | 2020-08-13 | Amonkhet Remastered (`AKR`) | masters-remastered | amonkhet-remastered | other | 309 | 93 | 216 | 30.1% |
-| 2020-08-13 | Arena Beginner Set (`ANB`) | starter | 2020s | other | 120 | 71 | 49 | 59.2% |
+| 2020-08-13 | Arena Beginner Set (`ANB`) | starter | 2020s | other | 120 | 72 | 48 | 60.0% |
 | 2020-09-25 | Zendikar Rising (`ZNR`) | expansion | zendikar | main | 285 | 60 | 225 | 21.1% |
 | 2020-09-25 | Zendikar Rising Commander (`ZNC`) | commander | 2020 | commander | 140 | 50 | 90 | 35.7% |
 | 2020-09-25 | Zendikar Rising Expeditions (`ZNE`) | masterpieces | zendikar-rising-expeditions | other | 30 | 25 | 5 | 83.3% |
@@ -642,7 +642,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 | 2025-02-14 | Year of the Snake 2025 (`PL25`) | promos | year-of-the-snake-2025 | other | 5 | 2 | 3 | 40.0% |
 | 2025-04-11 | Love Your LGS 2025 (`PLG25`) | promos | lgs-2025 | other | 2 | 2 | 0 | 100.0% |
 | 2025-04-11 | Tarkir: Dragonstorm (`TDM`) | expansion | tarkir | main | 277 | 48 | 229 | 17.3% |
-| 2025-04-11 | Tarkir: Dragonstorm Commander (`TDC`) | commander | 2025 | commander | 373 | 155 | 218 | 41.6% |
+| 2025-04-11 | Tarkir: Dragonstorm Commander (`TDC`) | commander | 2025 | commander | 373 | 156 | 217 | 41.8% |
 | 2025-04-11 | Tarkir: Dragonstorm Promos (`PTDM`) | promos | tarkir-dragonstorm | other | 80 | 3 | 77 | 3.8% |
 | 2025-05-05 | Pioneer Anthology 1 (`PA1`) | anthologies | pioneer-anthology-1 | other | 11 | 2 | 9 | 18.2% |
 | 2025-06-13 | FIN Standard Showdown (`PSS5`) | promos | standard-showdown-2025 | other | 2 | 0 | 2 | 0.0% |
@@ -752,13 +752,13 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 | commander | 2022 | 7 | 1802 | 539 | 1263 | 29.9% |
 | commander | 2023 | 6 | 1597 | 533 | 1064 | 33.4% |
 | commander | 2024 | 7 | 1887 | 669 | 1218 | 35.5% |
-| commander | 2025 | 4 | 1046 | 409 | 637 | 39.1% |
+| commander | 2025 | 4 | 1046 | 410 | 636 | 39.2% |
 | commander | 2026 | 6 | 1265 | 362 | 903 | 28.6% |
 | conspiracy | conspiracy | 2 | 211 | 51 | 160 | 24.2% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 66 | 155 | 29.9% |
 | core | 1990s | 10 | 3267 | 1299 | 1968 | 39.8% |
 | core | 2000s | 4 | 1389 | 768 | 621 | 55.3% |
-| core | 2010s | 8 | 2011 | 961 | 1050 | 47.8% |
+| core | 2010s | 8 | 2011 | 962 | 1049 | 47.8% |
 | core | 2020s | 3 | 1132 | 431 | 701 | 38.1% |
 | deck-products | coldsnap-theme-decks | 1 | 52 | 16 | 36 | 30.8% |
 | deck-products | magic-online-theme-decks | 1 | 174 | 99 | 75 | 56.9% |
@@ -788,7 +788,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 | duel-decks | duel-decks-nissa-vs-ob-nixilis | 1 | 62 | 29 | 33 | 46.8% |
 | duel-decks | duel-decks-phyrexia-vs-the-coalition | 1 | 67 | 33 | 34 | 49.3% |
 | duel-decks | duel-decks-sorin-vs-tibalt | 1 | 71 | 31 | 40 | 43.7% |
-| duel-decks | duel-decks-speed-vs-cunning | 1 | 71 | 30 | 41 | 42.3% |
+| duel-decks | duel-decks-speed-vs-cunning | 1 | 71 | 31 | 40 | 43.7% |
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 36 | 34 | 51.4% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 146 | 391 | 27.2% |
@@ -969,7 +969,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 | promos | duels-of-the-planeswalkers-2010 | 1 | 2 | 0 | 2 | 0.0% |
 | promos | duels-of-the-planeswalkers-2012 | 1 | 3 | 2 | 1 | 66.7% |
 | promos | duels-of-the-planeswalkers-2013 | 1 | 3 | 1 | 2 | 33.3% |
-| promos | duels-of-the-planeswalkers-2014 | 1 | 3 | 1 | 2 | 33.3% |
+| promos | duels-of-the-planeswalkers-2014 | 1 | 3 | 2 | 1 | 66.7% |
 | promos | duels-of-the-planeswalkers-2015 | 1 | 2 | 0 | 2 | 0.0% |
 | promos | duskmourn-house-of-horror | 1 | 80 | 2 | 78 | 2.5% |
 | promos | edge-of-eternities | 1 | 80 | 6 | 74 | 7.5% |
@@ -1203,7 +1203,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 | starter | 1990s | 5 | 740 | 465 | 275 | 62.8% |
 | starter | 2000s | 1 | 20 | 20 | 0 | 100.0% |
 | starter | 2010s | 7 | 89 | 56 | 33 | 62.9% |
-| starter | 2020s | 1 | 120 | 71 | 49 | 59.2% |
+| starter | 2020s | 1 | 120 | 72 | 48 | 60.0% |
 | starter | 2022 | 1 | 337 | 154 | 183 | 45.7% |
 | supplemental | assassin-s-creed | 1 | 138 | 21 | 117 | 15.2% |
 | supplemental | battlebond | 1 | 254 | 95 | 159 | 37.4% |
@@ -19003,7 +19003,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 
 ### promos / duels-of-the-planeswalkers-2014 · Duels of the Planeswalkers 2014 Promos (`PDP14`)
 
-- [ ] Ogre Battledriver — `c834c4b5-c122-4c63-81c7-884ca4c0dc3b`
 - [ ] Scavenging Ooze — `1ff25f67-36a7-4cfa-a2b1-2135b5b6fb67`
 
 ### promos / fnm-2013 · Friday Night Magic 2013 (`F13`)
@@ -19641,7 +19640,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 - [ ] Mutavault — `6b3cc59a-7ea5-4eb5-9bf9-5a9c07f80e2b`
 - [ ] Nightmare — `375932e6-1b3e-48dc-8154-9b664c3add34`
 - [ ] Oath of the Ancient Wood — `385d70ed-07ab-4e01-a473-4408f4bcf6d0`
-- [ ] Ogre Battledriver — `c834c4b5-c122-4c63-81c7-884ca4c0dc3b`
 - [ ] Pacifism — `5f5e0b10-c8cf-450c-bfd3-bcb0528ec330`
 - [ ] Path of Bravery — `fc04bfa9-a8f9-478d-8164-34b1e6c85417`
 - [ ] Pay No Heed — `71da5acb-78bc-453a-ae28-d22faa5a4e43`
@@ -20940,7 +20938,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 - [ ] Krenko, Mob Boss — `68418069-f615-40ef-ae0d-764192acae00`
 - [ ] Lightning Helix — `800c258a-cfc4-4a54-a667-065ea8dea69e`
 - [ ] Mardu Heart-Piercer — `e4b15cba-9cd7-422d-9ca6-39243bf67dca`
-- [ ] Ogre Battledriver — `c834c4b5-c122-4c63-81c7-884ca4c0dc3b`
 - [ ] Oni of Wild Places — `f551093d-40b7-43ac-8023-4cfbb6c646da`
 - [ ] Orcish Cannonade — `af224f6f-cedd-498f-a08e-7be0db5a11b7`
 - [ ] Repeal — `b1f2b26c-91b2-4f3c-9f48-6429ec3fde48`
@@ -37358,7 +37355,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 - [ ] Mardu Outrider — `9bc5ed59-ae13-40df-94b9-c56c32673857`
 - [ ] Moorland Inquisitor — `76bbd280-dcbc-43b3-a8a1-603443b2ccaa`
 - [ ] Nightmare — `375932e6-1b3e-48dc-8154-9b664c3add34`
-- [ ] Ogre Battledriver — `c834c4b5-c122-4c63-81c7-884ca4c0dc3b`
 - [ ] Pacifism — `5f5e0b10-c8cf-450c-bfd3-bcb0528ec330`
 - [ ] Prized Unicorn — `766787ef-654a-4544-b5d7-d2f96949edf1`
 - [ ] Rabid Bite — `6d5dc34b-3eea-4b77-8db7-94bc30b14c4c`
@@ -57327,7 +57323,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,93
 - [ ] Noxious Gearhulk — `a77b5be2-f361-4135-ba25-670a74d268ac`
 - [ ] Nyx Weaver — `6f8bf968-0571-4582-8c04-9791e44d5df0`
 - [ ] Ob Nixilis, the Fallen — `154104b7-4125-4276-8bc7-9a6edfe48cb9`
-- [ ] Ogre Battledriver — `c834c4b5-c122-4c63-81c7-884ca4c0dc3b`
 - [ ] Opportunistic Dragon — `46f46bdd-52b8-436f-9a39-f5360a84b2cd`
 - [ ] Overgrown Battlement — `585f62dc-4461-42f1-a3a4-b19a1e550d2d`
 - [ ] Parapet Thrasher — `722e23d5-4f2a-43cd-bbd5-baf56b76e68d`

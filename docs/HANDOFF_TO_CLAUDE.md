@@ -3979,6 +3979,40 @@ Validation: **728 rules tests**, `npm run check`, `npm run simulate:engine`
 Prossh decklist status after this pass: **63 of 97 unique cards fully
 implemented (64.9%)**.
 
+Ogre Battledriver ("Whenever another creature you control enters, that
+creature gets +2/+0 and gains haste until end of turn.") needed a new
+`modify-event-creature-and-grant-keyword` effect kind — the closest
+existing template, `modify-triggered-creature-and-grant-keyword`, targets
+`object.trigger?.sourcePermanentId` (the "~" that has the ability itself),
+while this card's "that creature" refers to the OTHER creature named by
+the triggering event (`eventPermanentId`), the same distinction already
+drawn between `modify-triggered-creature` and the self-only pump kinds.
+Parsing this card surfaced a real, previously-unnoticed matching bug: the
+shared `TRIGGER_TEMPLATES` entry for "Whenever [a/another] creature you
+control enters" used an optional `(?:a|another)?` group but always
+assigned the self-inclusive `creature-you-control` subject regardless of
+which word actually matched — so every card phrased with "another
+creature you control enters" (Ogre Battledriver, Cathars' Crusade, etc.)
+was silently treated as if its own ETB also qualified (CR 109.5 requires
+"another" to exclude the source). Split it into two ordered templates:
+"another creature you control enters" → `another-creature-you-control`
+(checked first), "a creature you control enters" → the existing
+self-inclusive `creature-you-control`. Verified **+1** in the export
+count (10,072 → 10,073) and set coverage holds at 30.5%; the full **731**
+rules-test suite (up from 728) stayed green through the template split,
+confirming no other card's coverage regressed from tightening this
+subject. Scenario-tested: casting a Grizzly Bears while Ogre Battledriver
+is already on the battlefield pumps the ENTERING bear to 4/2 with haste
+while leaving Battledriver's own power/toughness/keywords untouched — the
+exact case the old bug would have gotten backwards on Battledriver's own
+resolution (or any other "another…enters" card) had it not already been
+placed via the ETB-bypassing test fixture. Validation: **731 rules
+tests**, `npm run check`, `npm run simulate:engine` 200/200, 10,073 global
+profiles.
+
+Prossh decklist status after this pass: **64 of 97 unique cards fully
+implemented (66.0%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
