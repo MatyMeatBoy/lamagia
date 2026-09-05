@@ -343,6 +343,11 @@ const AZAMI_WIZARD = () => make({ name: "Library Wizard", type_line: "Creature �
 const C13_BRILLIANT_PLAN = () => make({ name: "Brilliant Plan", type_line: "Sorcery", mana_cost: "{4}{U}", cmc: 5, oracle_text: "Draw three cards.", scryfall_id: "4fc6b5a0-9a0f-4934-8a43-a0e5364832ec" });
 const C13_HARMONIZE = () => make({ name: "Harmonize", type_line: "Sorcery", mana_cost: "{2}{G}{G}", cmc: 4, oracle_text: "Draw three cards.", scryfall_id: "83da2456-0c5c-4b2b-8183-20c332566127" });
 const C13_VISION_SKEINS = () => make({ name: "Vision Skeins", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Each player draws two cards.", scryfall_id: "b4b032de-808e-4c47-ba86-ac59609378e0" });
+const C13_SKYSCRIBING = () => make({
+  name: "Skyscribing", type_line: "Sorcery", mana_cost: "{X}{U}{U}", cmc: 2,
+  oracle_text: "Each player draws X cards.\nForecast — {2}{U}, Reveal this card from your hand: Each player draws a card. (Activate only during your upkeep and only once each turn.)",
+  scryfall_id: "c3416e6c-ec46-410c-ab80-6e8fdb89f42d", oracle_id: "c3416e6c-ec46-410c-ab80-6e8fdb89f42d"
+});
 const C13_DEEP_ANALYSIS = () => make({ name: "Deep Analysis", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Target player draws two cards.\nFlashback—{1}{U}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)", scryfall_id: "952800af-f52c-44bf-a98b-51c5f8142dc9" });
 const C13_BALEFUL_STRIX = () => make({ name: "Baleful Strix", type_line: "Artifact Creature — Bird", mana_cost: "{U}{B}", cmc: 2, power: "1", toughness: "1", keywords: ["Flying", "Deathtouch"], oracle_text: "Flying\nDeathtouch\nWhen this creature enters, draw a card.", scryfall_id: "47ac0f77-1294-4de9-93d1-141a9f314f98" });
 const C13_PHYREXIAN_GARGANTUA = () => make({ name: "Phyrexian Gargantua", type_line: "Creature — Phyrexian Horror", mana_cost: "{4}{B}{B}", cmc: 6, power: "4", toughness: "4", oracle_text: "When this creature enters, you draw two cards and you lose 2 life.", scryfall_id: "56ae94c2-8bbb-4807-b1e0-8ef178dd1697" });
@@ -1795,6 +1800,32 @@ describe("casting", () => {
     expect(profileOf(C13_HARMONIZE())).toMatchObject({ effects: [{ kind: "draw", amount: 3 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_VISION_SKEINS())).toMatchObject({ effects: [{ kind: "each-player-draw", amount: 2 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_DEEP_ANALYSIS())).toMatchObject({ effects: [{ kind: "draw-target-player", amount: 2 }], targetKind: "player", flashbackCost: { raw: "{1}{U}" }, fullyImplemented: true });
+    expect(profileOf(C13_SKYSCRIBING())).toMatchObject({
+      effects: [{ kind: "each-player-draw", amount: "X" }], fullyImplemented: true,
+      activatedAbilities: [{ sourceZone: "hand", upkeepOnly: true, oncePerTurn: true, manaCost: { raw: "{2}{U}" }, effect: { kind: "each-player-draw", amount: 1 } }]
+    });
+  });
+
+  it("activates Forecast from hand only during upkeep and once per turn", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [C13_SKYSCRIBING()]), library: toHand(0, [FOREST(), FOREST()], "library-a"), autoPass: false }));
+    game = stage(game, 1, (player) => ({ hand: [], library: toHand(1, [FOREST(), FOREST()], "library-b"), autoPass: false }));
+    game = putOnBattlefield(game, 0, [ISLAND(), ISLAND(), ISLAND()]);
+    game = { ...game, step: "upkeep", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null };
+
+    const forecast = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === "hand-0");
+    expect(forecast).toBeDefined();
+    game = applyAction(game, 0, forecast!.action);
+    expect(game.players[0]!.hand.some((card) => card.name === "Skyscribing")).toBe(true);
+    expect(game.players[0]!.oncePerTurnActivations).toContain("hand-0:0");
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.hand).toHaveLength(2);
+    expect(game.players[1]!.hand).toHaveLength(1);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.cardId === "hand-0")).toBe(false);
+
+    const mainPhase: GameState = { ...game, step: "precombat-main", priorityOpen: true, prioritySeat: 0, stack: [], passedSeats: [] };
+    expect(legalActions(mainPhase, 0).some((entry) => entry.action.type === "activate" && entry.cardId === "hand-0")).toBe(false);
   });
 
   it("offers storage-counter mana as variable colour choices", () => {

@@ -230,6 +230,27 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
   const player = state.players[seat]!;
   const isMyMain = state.activeSeat === seat && (state.step === "precombat-main" || state.step === "postcombat-main");
 
+  // Forecast is a hand activation during the controller's upkeep (CR 702.57).
+  // Treat it as a normal reusable activation so bots exercise the same
+  // primitive instead of silently skipping every Forecast card.
+  if (state.activeSeat === seat && state.step === "upkeep" && !state.stack.length) {
+    const forecast = available.find((entry) => {
+      const action = entry.action;
+      if (action.type !== "activate") return false;
+      const source = player.hand.find((card) => card.instance_id === action.sourceId);
+      if (!source) return false;
+      return cardProfile(source).activatedAbilities.find((ability) => ability.index === action.abilityIndex)?.sourceZone === "hand";
+    });
+    if (forecast) {
+      const targets = forecast.requiresTarget ? pickTargets(state, seat, forecast.requiresTarget) : undefined;
+      if (!forecast.requiresTarget || targets?.length) {
+        const action = forecast.action;
+        if (action.type !== "activate") return { action, label: forecast.label };
+        return { action: targets ? { ...action, targets } : action, label: forecast.label };
+      }
+    }
+  }
+
   if (isMyMain) {
     // Self-limiting activations come before anything else: a fetch land that
     // sacrifices itself, or a `{T}` ability, can only be used once, and using it
