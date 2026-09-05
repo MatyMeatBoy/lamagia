@@ -315,6 +315,7 @@ const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
 const C13_CRADLE_OF_VITALITY = () => make({ name: "Cradle of Vitality", type_line: "Enchantment", mana_cost: "{2}{W}", cmc: 3, oracle_text: "Whenever you gain life, you may pay {1}{W}. If you do, put a +1/+1 counter on target creature for each 1 life you gained.", scryfall_id: "956250da-532a-4457-8696-73915be56943" });
+const C13_THOPTER_FOUNDRY = () => make({ name: "Thopter Foundry", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{1}, Sacrifice a nontoken artifact: Create a 1/1 blue Thopter artifact creature token with flying. You gain 1 life.", scryfall_id: "88bef744-550e-4f33-b1ff-a8ee990ec754" });
 const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant", mana_cost: "{X}{U}{U}{U}", cmc: 3, oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library.", scryfall_id: "613a41b8-0b4f-4995-bf1e-ca41f96e6438" });
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
@@ -4580,6 +4581,27 @@ describe("triggered abilities", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     const countered = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ajani's Pridemate")!;
     expect(countered.counters["+1/+1"]).toBe(1);
+  });
+
+  it("reuses nontoken artifact sacrifice and token/life compound primitives", () => {
+    const profile = profileOf(C13_THOPTER_FOUNDRY());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{
+        sacrificesPermanent: { type: "Artifact", nontoken: true },
+        effect: { kind: "compound", effects: [{ kind: "create-token" }, { kind: "gain-life", amount: 1 }] }
+      }]
+    });
+    let game = readyToCast([], [C13_THOPTER_FOUNDRY(), FOREST(), TEST_ARTIFACT()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Thopter Foundry")!;
+    const sacrifice = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Relic")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === sacrifice.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Relic")).toBe(false);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Thopter")).toBe(true);
+    expect(game.players[0]!.life).toBe(41);
   });
 
   it("gains life for the chosen target player and raises that player's event", () => {

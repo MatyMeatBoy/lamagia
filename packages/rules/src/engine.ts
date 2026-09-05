@@ -4819,6 +4819,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           ? player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))
           : ability.sacrificesPermanent
             ? player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
+              && (!ability.sacrificesPermanent!.nontoken || !candidate.card.token)
               && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id))
             : [];
       const hasSacrificeCost = Boolean(ability.sacrificesCreatures || ability.sacrificesCreature || ability.sacrificesCreatureSubtype || ability.sacrificesPermanent);
@@ -5226,6 +5227,7 @@ function activatableAbility(
   }
   if (ability.sacrificesPermanent) {
     const candidates = player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
+      && (!ability.sacrificesPermanent!.nontoken || !candidate.card.token)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id));
     if (!candidates.length) return { legal: false };
   }
@@ -5325,6 +5327,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     sacrifices = [sacrifice];
   } else if (ability.sacrificesPermanent) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
+      && (!ability.sacrificesPermanent!.nontoken || !candidate.card.token)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== source.instance_id));
     const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesPermanent.type.toLowerCase()} para sacrificar.`);

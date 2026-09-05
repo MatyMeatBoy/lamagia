@@ -11,13 +11,13 @@ and Exalted primitives plus benchmark-selected compositional worker payloads;
 verify the Pages run before reporting a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,082 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,083 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 22,538 / 84,990 implemented (26.5%) across 685
+- **Edition memberships:** 22,570 / 84,990 implemented (26.6%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 223 / 341 unique cards (65.4%), 118 pending.
+- **Commander 2013:** 224 / 341 unique cards (65.7%), 117 pending.
 - **Commander 2014:** 196 / 322 unique cards (60.9%), 126 pending.
 - **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
   component references; 99.9% are reused across clauses. The full-catalog

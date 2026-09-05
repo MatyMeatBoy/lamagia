@@ -99,7 +99,7 @@ export interface ActivatedAbility {
   readonly sacrificesArtifact?: boolean;
   readonly sacrificesLand?: boolean;
   /** Noncreature permanent chosen as an activation cost, optionally excluding the source. */
-  readonly sacrificesPermanent?: { readonly type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token" | "Permanent"; readonly mode: "any" | "another" };
+  readonly sacrificesPermanent?: { readonly type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token" | "Permanent"; readonly mode: "any" | "another"; readonly nontoken?: boolean };
   /** One card chosen from the controller's hand as an activation cost. */
   readonly discardsCard?: boolean;
   /** One card chosen from the controller's graveyard and exiled as a cost. */
@@ -1314,6 +1314,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
   const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
   const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
+  const tokenAndLife = /^(Create\s+.+?\s+token(?:s)?(?:\s+named\s+[^,]+)?(?:\s+with\s+.+)?)\.\s*You gain (\w+) life\.?$/i.exec(parsedEffectText);
+  const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
+  const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
   const recognized = selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
@@ -1322,6 +1325,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: revealTopConditional, target: "none" as TargetKind }
     : revealTopToHand
     ? { effect: revealTopToHand, target: "none" as TargetKind }
+    : tokenEffect && tokenEffect.kind === "create-token" && tokenLifeAmount !== null
+    ? { effect: { kind: "compound", effects: [tokenEffect, { kind: "gain-life", amount: tokenLifeAmount }] } as SpellEffect, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 
@@ -1345,10 +1350,11 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sacrificeCreatures = /sacrifice\s+(two|three|four|five|\d+)\s+(?:(?:a|an)\s+)?([A-Za-z][A-Za-z'’-]*\s+)?creatures\b/i.exec(costText);
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature\b/i.exec(costText);
   const sacrificeCreatureSubtype = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?([A-Za-z][A-Za-z'’-]*)\b/i.exec(costText);
-  const typedCreature = !sacrificeCreatures && sacrificeCreatureSubtype && !/^(?:creature|artifact|enchantment|land|noncreature|token|permanent)$/i.test(sacrificeCreatureSubtype[2]!)
+  const typedCreature = !sacrificeCreatures && sacrificeCreatureSubtype && !/^(?:nontoken|creature|artifact|enchantment|land|noncreature|token|permanent)$/i.test(sacrificeCreatureSubtype[2]!)
     ? sacrificeCreatureSubtype
     : null;
-  const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
+  const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
+  const nontokenArtifact = Boolean(sacrificePermanent && /^nontoken\s+artifact$/i.test(sacrificePermanent[2]!));
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
   const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
   const removedCounters: CounterCost[] = [];
@@ -1367,7 +1373,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:two|three|four|five|\d+)\s+(?:(?:a|an)\s+)?(?:[A-Za-z][A-Za-z'’-]*\s+)?creatures\b/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?[A-Za-z][A-Za-z'’-]*\b/gi, (match) => typedCreature ? "" : match)
-    .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
+    .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
@@ -1382,7 +1388,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(sacrificeCreatures ? { sacrificesCreatures: { amount: toNumber(sacrificeCreatures[1])!, ...(sacrificeCreatures[2] ? { subtype: sacrificeCreatures[2].trim() } : {}) } } : {}),
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
     ...(typedCreature ? { sacrificesCreatureSubtype: { subtype: typedCreature[2]!, mode: typedCreature[1] ? "another" as const : "any" as const } } : {}),
-    ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]!.slice(1).toLowerCase()}` as "Artifact" | "Enchantment" | "Land" } } : {}),
+    ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: nontokenArtifact ? "Artifact" as const : /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]![1]! ? sacrificePermanent[2]!.slice(1).toLowerCase() : ""}` as "Artifact" | "Enchantment" | "Land", ...(nontokenArtifact ? { nontoken: true } : {}) } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
