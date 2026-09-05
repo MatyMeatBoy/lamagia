@@ -3164,3 +3164,29 @@ construction since only one is ever passed `true`), so a third shape
 same pattern rather than inventing a new one. Validation: **598 rules
 tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,361 global
 profiles.
+
+Daze | `70486bee-6ee7-41ea-b834-8caf4699302b` was closed with two pieces.
+First, a new `counter-target-spell-unless-pay` effect (CR 601.2b, 603.3,
+118.9): rather than building a new pendingChoice from scratch, it reuses
+the existing `optional-trigger` type with `unlessPayCost` (plus `payCost`
+for the affordability check `legalActions` already runs), setting `seat`
+to the *targeted spell's* controller and `targets: [target]` so the
+existing decline-path (`applyEffect` with `triggerEffect: { kind:
+"counter-target-spell" }`) finds and counters the right stack entry.
+Discovered along the way: `applyChooseTrigger` has an earlier, unrelated
+`choice.paymentBy === "opponent"` branch keyed off `choice.manaCost`
+specifically (a different pre-existing "unless that player pays" shape) —
+setting `paymentBy` on the new pendingChoice routes into that branch by
+mistake and throws, so Daze's construction deliberately omits it. This
+single primitive flips roughly 35 cards sharing the exact "Counter target
+spell unless its controller pays {N}." phrasing, including Mana Leak.
+Second, a third alternative-cost shape,
+`CardProfile.returnLandInsteadOfManaCost: { subtype } | null` (Daze's own
+"return an Island... rather than pay its mana cost"): unlike the first
+two shapes, this one needs the caster to *pick which* land, so
+`legalActions` offers one cast option per eligible controlled land
+(`returnPermanentId`) rather than a single flag, and `applyCast` moves
+that permanent to its owner's hand (mirroring the existing `karoo-bounce`
+executor's two-step move) instead of paying. Validation: **603 rules
+tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,396 global
+profiles.
