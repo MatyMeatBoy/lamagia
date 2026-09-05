@@ -3877,8 +3877,50 @@ budget, confirmed via a thrown error) but accepts one with mana value
 `npm run check`, `npm run simulate:engine` 200/200, 10,055 global
 profiles.
 
-Prossh decklist status after this pass: **58 of 97 unique cards fully
-implemented (59.8%)**.
+**Static mana-ability grants** — the biggest whole-mechanic gap found
+in this deck's sweep. "X [you control] have '{T}: Add ...'"
+(Chromatic Lantern, Joraga Treespeaker, Cryptolith Rite, Manaweft
+Sliver — 44 catalog-wide) had no support at all: every consumption
+site read `manaAbilities` straight off the permanent's own
+`CardProfile`, with no notion of a mana ability granted by a DIFFERENT
+permanent's static ability. Added `CardProfile.staticManaAbilityGrants`
+(`scope: "you-control" | "all"`, optional `excludesSelf` / `type` /
+`subtype` / `minLevel`, reusing the existing `ManaAbility` shape
+outright and the existing `parseManaAbilities` line-parser on the
+quoted inner ability text — no new mana-ability grammar needed at
+all) and a new `grantedManaAbilities` / `manaAbilitiesFor` pair in the
+engine that re-indexes granted abilities *after* a permanent's own
+printed ones so the two can never collide. Wired into all three real
+consumption sites: `manaSources` (automatic payment planning),
+`legalActions`'s offering loop, and `applyActivateMana`'s authoritative
+lookup — previously each read `profile.manaAbilities` or
+`cardProfile(...).manaAbilities` directly, and all three had to move in
+lockstep or the "offered" and "executed" ability sets would silently
+diverge.
+
+Joraga Treespeaker's own grant only applies at LEVEL 5+, not from
+level 0 — a real correctness trap the naive version of this feature
+would have missed entirely (the grant line sits inside a Level Up
+creature's text with no engine-level concept of "current level" for a
+static ability). The parser now tracks the nearest preceding
+"LEVEL N[+/-M]" marker the same way `parseLevelDefinitions` already
+does for power/toughness/keyword changes, attaching a `minLevel` the
+engine checks against `permanent.counters.level` before ever
+considering the grant active. Verified **+11** combined in the export
+count (10,055 → 10,066, across two passes — the second pass closed
+the bare-subtype phrasing gap Joraga Treespeaker itself uses, "Elves
+you control have..." with no "creatures" noun, which the first pass's
+regex required) and set coverage 30.4% → 30.5%. Scenario-tested:
+Chromatic Lantern lets its controller tap a plain Forest for blue
+mana, not just green; a Test Elf gains no mana ability at all while
+Joraga Treespeaker sits below level 5, then gains "{T}: Add {G}{G}."
+the instant a level counter pushes Joraga to level 5 — both branches
+confirmed, not just the happy path. Validation: **714 rules tests**,
+`npm run check`, `npm run simulate:engine` 200/200, 10,066 global
+profiles.
+
+Prossh decklist status after this pass: **60 of 97 unique cards fully
+implemented (61.9%)**.
 
 ## Gameplay interaction baseline (2026-09-05)
 

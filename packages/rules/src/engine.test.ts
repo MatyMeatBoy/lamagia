@@ -9863,6 +9863,52 @@ describe("Green Sun's Zenith tutors a green creature within the paid X", () => {
   });
 });
 
+describe("static mana-ability grants (Chromatic Lantern, Joraga Treespeaker)", () => {
+  const CHROMATIC_LANTERN = () => make({ name: "Chromatic Lantern", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "Lands you control have \"{T}: Add one mana of any color.\"\n{T}: Add one mana of any color." });
+  const JORAGA_TREESPEAKER = () => make({ name: "Joraga Treespeaker", type_line: "Creature — Elf Druid", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1", oracle_text: "Level up {1}{G} ({1}{G}: Put a level counter on this. Level up only as a sorcery.)\nLEVEL 1-4\n1/2\n{T}: Add {G}{G}.\nLEVEL 5+\n1/4\nElves you control have \"{T}: Add {G}{G}.\"" });
+  const TEST_ELF = () => make({ name: "Test Elf", type_line: "Creature — Elf", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1" });
+
+  it("recognizes Chromatic Lantern's land-wide grant and Joraga's level-5+ Elf grant", () => {
+    const lanternProfile = profileOf(CHROMATIC_LANTERN());
+    expect(lanternProfile.staticManaAbilityGrants).toEqual([
+      { scope: "you-control", excludesSelf: false, type: "Land", ability: expect.objectContaining({ produces: expect.arrayContaining(["W", "U", "B", "R", "G"]) }) }
+    ]);
+    expect(lanternProfile.fullyImplemented).toBe(true);
+
+    const joragaProfile = profileOf(JORAGA_TREESPEAKER());
+    expect(joragaProfile.staticManaAbilityGrants).toEqual([
+      { scope: "you-control", excludesSelf: false, type: "Creature", subtype: "Elf", minLevel: 5, ability: expect.objectContaining({ produces: ["G"], amount: 2 }) }
+    ]);
+    expect(joragaProfile.fullyImplemented).toBe(true);
+  });
+
+  it("lets Chromatic Lantern's controller tap a Forest for any color, not just green", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [CHROMATIC_LANTERN(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.action.sourceId === forest.instance_id && entry.action.mana === "U")).toBe(true);
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: forest.instance_id, abilityIndex: 1, mana: "U" });
+    expect(game.players[0]!.manaPool.U).toBe(1);
+  });
+
+  it("does not grant Elves the mana ability until Joraga Treespeaker reaches level 5", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [JORAGA_TREESPEAKER(), TEST_ELF()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const elf = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Elf")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.action.sourceId === elf.instance_id)).toBe(false);
+
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Joraga Treespeaker"
+        ? { ...permanent, counters: { ...permanent.counters, level: 5 } } : permanent)
+    }));
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.action.sourceId === elf.instance_id)).toBe(true);
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: elf.instance_id, abilityIndex: 0, mana: "G" });
+    expect(game.players[0]!.manaPool.G).toBe(2);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
