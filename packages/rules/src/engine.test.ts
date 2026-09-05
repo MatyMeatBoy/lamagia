@@ -1098,12 +1098,10 @@ describe("mana payment", () => {
     allowed = putOnBattlefield(allowed, 0, [halfling]);
     allowed = passUntil(allowed, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
     const allowedSource = allowed.players[0]!.battlefield.find((permanent) => permanent.card.name === halfling.name)!;
-    const allowedMana = legalActions(allowed, 0).find((entry) => entry.action.type === "activate-mana"
-      && entry.action.sourceId === allowedSource.instance_id && entry.action.abilityIndex === 1 && entry.action.mana === "G")!;
-    allowed = applyAction(allowed, 0, allowedMana.action);
     const cast = legalActions(allowed, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")!;
     expect(cast).toBeDefined();
     allowed = applyAction(allowed, 0, cast.action);
+    expect(allowed.players[0]!.battlefield.find((permanent) => permanent.instance_id === allowedSource.instance_id)?.tapped).toBe(true);
     const spell = allowed.stack.find((entry) => entry.card.name === legendary.name)!;
     expect(spell.cantBeCountered).toBe(true);
     expect(canCounterSpell(spell, allowed)).toBe(false);
