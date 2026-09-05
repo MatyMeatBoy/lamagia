@@ -3004,6 +3004,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       return putOntoBattlefield(removed, delayed.owner, exiled, false);
     }
+    case "gain-control-of-source-random-opponent": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!source) return state;
+      const opponents = state.players.filter((player) => player.seat !== source.controller && !player.lost).map((player) => player.seat);
+      if (!opponents.length) return state;
+      const rolled = nextRandom(state.rngState);
+      const target = opponents[Math.floor(rolled.value * opponents.length)]!;
+      const moved = changePermanentController({ ...state, rngState: rolled.state }, source, target);
+      return logged(moved, target, `${source.card.name} cambia de control al azar.`);
+    }
     case "exile-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

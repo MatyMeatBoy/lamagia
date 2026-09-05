@@ -521,6 +521,8 @@ export type SpellEffect =
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Return each non-token creature to its owner's control without changing zones. */
   | { readonly kind: "return-owned-creatures-to-control" }
+  /** Gives the source to a deterministic random opponent at the start of its controller's end step. */
+  | { readonly kind: "gain-control-of-source-random-opponent" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Destroy one random permanent from an already-selected target group. */
@@ -2751,6 +2753,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Each player gains control of all creatures they own$/i.test(text)) {
     return { effect: { kind: "return-owned-creatures-to-control" }, target: "none" };
+  }
+  if (/^Target opponent chosen at random gains control of ~$/i.test(text)) {
+    return { effect: { kind: "gain-control-of-source-random-opponent" }, target: "none" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or creature with mana value X\.?$/i.test(text)) {

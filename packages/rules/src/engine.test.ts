@@ -324,6 +324,7 @@ const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
 const C13_CONTESTED_CLIFFS = () => make({ name: "Contested Cliffs", type_line: "Land", oracle_text: "{T}: Add {C}.\n{R}{G}, {T}: Target Beast creature you control fights target creature an opponent controls.", produced_mana: ["C"], oracle_id: "b891a683-2ebc-4e9c-b402-5dd9c1b42b69" });
 const TEST_BEAST = () => make({ name: "Test Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "4", toughness: "4" });
+const C13_WITCH_HUNT = () => make({ name: "Witch Hunt", type_line: "Enchantment", oracle_text: "Players can't gain life.\nAt the beginning of your upkeep, this enchantment deals 4 damage to you.\nAt the beginning of your end step, target opponent chosen at random gains control of this enchantment.", oracle_id: "e86bd38f-7804-449d-af29-21e96a56ab30" });
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -5070,6 +5071,23 @@ describe("triggered abilities", () => {
     expect(choice.options).toContainEqual({ kind: "permanent", instanceId: ring.instance_id });
     game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "permanent", instanceId: ring.instance_id } });
     expect(game.players[1]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+
+  it("passes Witch Hunt to a deterministic random opponent at end step", () => {
+    const hunt = C13_WITCH_HUNT();
+    let game = readyToCast([], [hunt]);
+    expect(profileOf(hunt)).toMatchObject({
+      fullyImplemented: true,
+      triggers: [
+        { event: "upkeep", effect: { kind: "damage-controller", amount: 4 } },
+        { event: "end-step", effect: { kind: "gain-control-of-source-random-opponent" } }
+      ]
+    });
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Witch Hunt")!;
+    game = { ...game, step: "end", activeSeat: 0, prioritySeat: 0, priorityOpen: false, passedSeats: [] };
+    game = settle(game);
+    game = passUntil(game, (state) => state.players[1]!.battlefield.some((permanent) => permanent.instance_id === source.instance_id));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === source.instance_id)).toBe(false);
   });
 
  it("reads the event and the subject of each recognised trigger line", () => {
