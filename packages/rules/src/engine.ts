@@ -1081,6 +1081,31 @@ function manaChoiceVectors(options: readonly ManaType[], amount: number): readon
   return result;
 }
 
+/** Mana abilities granted to `permanent` by other permanents' static abilities (Chromatic Lantern, Joraga Treespeaker, CR 113.6), re-indexed after the permanent's own printed abilities so they never collide. */
+function grantedManaAbilities(state: GameState, permanent: Permanent): ManaAbility[] {
+  const profile = cardProfile(permanent.card);
+  const granted: ManaAbility[] = [];
+  let nextIndex = profile.manaAbilities.length;
+  for (const source of allPermanents(state)) {
+    for (const grant of cardProfile(source.card).staticManaAbilityGrants) {
+      if (grant.scope === "you-control" && source.controller !== permanent.controller) continue;
+      if (grant.excludesSelf && source.instance_id === permanent.instance_id) continue;
+      if (grant.type && !profile.types.includes(grant.type)) continue;
+      if (grant.subtype && !hasSubtype(profile, grant.subtype)) continue;
+      if (grant.minLevel !== undefined && (source.counters.level ?? 0) < grant.minLevel) continue;
+      granted.push({ ...grant.ability, index: nextIndex });
+      nextIndex += 1;
+    }
+  }
+  return granted;
+}
+/** `permanent`'s own printed mana abilities plus any granted by other permanents' static abilities. */
+function manaAbilitiesFor(state: GameState | undefined, permanent: Permanent): readonly ManaAbility[] {
+  const profile = cardProfile(permanent.card);
+  if (!state) return profile.manaAbilities;
+  const granted = grantedManaAbilities(state, permanent);
+  return granted.length ? [...profile.manaAbilities, ...granted] : profile.manaAbilities;
+}
 /** Untapped permanents this player can currently tap for mana. */
 export function manaSources(player: PlayerState, state?: GameState, sourceOptions: { readonly allowLegendaryMana?: boolean } = {}): ManaSource[] {
   const sources: ManaSource[] = [];
@@ -1091,7 +1116,7 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
     && cardProfile(permanent.card).doublesLandMana) : false;
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
-    for (const ability of profile.manaAbilities) {
+    for (const ability of manaAbilitiesFor(state, permanent)) {
       if (ability.manaRestriction && !sourceOptions.allowLegendaryMana) continue;
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
@@ -6973,7 +6998,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           : "Las habilidades opcionales de esta carta se declinan automáticamente; las habilidades obligatorias siguen entrando en la pila."
       });
     }
-    for (const ability of profile.manaAbilities) {
+    for (const ability of manaAbilitiesFor(state, permanent)) {
       if (!canUseManaAbility(player, permanent, ability, state)) continue;
       const options = manaOptionsFor(player, ability, state);
       if (!options.length) continue;
@@ -7282,7 +7307,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   const player = playerAt(state, seat);
   const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
-  const ability = cardProfile(source.card).manaAbilities.find((candidate) => candidate.index === action.abilityIndex);
+  const ability = manaAbilitiesFor(state, source).find((candidate) => candidate.index === action.abilityIndex);
   const options = ability ? manaOptionsFor(player, ability, state) : [];
   if (!ability || !options.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
   if (ability.variableAmountCounter) {

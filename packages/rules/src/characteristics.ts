@@ -321,6 +321,17 @@ export interface StaticKeywordGrant {
   readonly requiresControlledLandSubtype?: string;
 }
 
+/** "X [you control] have '{T}: Add ...'" (Chromatic Lantern, Joraga Treespeaker, Cryptolith Rite, CR 113.6). */
+export interface StaticManaAbilityGrant {
+  readonly scope: "you-control" | "all";
+  readonly excludesSelf: boolean;
+  readonly type?: CardType;
+  readonly subtype?: string;
+  readonly ability: ManaAbility;
+  /** Only active once the granting permanent (a Class or Level Up card) has reached this level (CR 702.134, 710.3). */
+  readonly minLevel?: number;
+}
+
 /** "If a triggered ability of X triggers, that ability triggers an additional time" (CR 603.3f). */
 export interface TriggerDoubler {
   readonly scope: "subtype-you-control" | "equipped-creature" | "draw-caused-triggers";
@@ -964,6 +975,7 @@ export interface CardProfile {
   /** Activated ability granted by an attached Aura (CR 303.4, 605.1a). */
   readonly auraActivatedAbility: ActivatedAbility | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
+  readonly staticManaAbilityGrants: readonly StaticManaAbilityGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
   /** Colors of creatures this permanent untaps during each other player's untap step (CR 502.2). */
@@ -1749,6 +1761,61 @@ function parseStaticKeywordGrant(line: string): StaticKeywordGrant[] {
 
 function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
   return text.split("\n").flatMap(parseStaticKeywordGrant);
+}
+
+const MANA_GRANT_TYPE_WORDS: Readonly<Record<string, CardType | undefined>> = {
+  creatures: "Creature", lands: "Land", artifacts: "Artifact", enchantments: "Enchantment", permanents: undefined
+};
+
+/** "X [you control] have '{T}: Add ...'" (Chromatic Lantern, Joraga Treespeaker, Cryptolith Rite, CR 113.6). */
+function parseManaAbilityGrant(line: string): StaticManaAbilityGrant | null {
+  const clean = line.trim().replace(/\.$/, "");
+  const build = (typeWord: string, scope: "you-control" | "all", excludesSelf: boolean, abilityText: string): StaticManaAbilityGrant | null => {
+    const type = MANA_GRANT_TYPE_WORDS[typeWord.toLowerCase()];
+    return finish({ scope, excludesSelf, ...(type ? { type } : {}) }, abilityText);
+  };
+  const buildSubtype = (subtypeWord: string, scope: "you-control" | "all", excludesSelf: boolean, abilityText: string): StaticManaAbilityGrant | null =>
+    finish({ scope, excludesSelf, type: "Creature", subtype: singularSubtype(subtypeWord) }, abilityText);
+  const finish = (base: { scope: "you-control" | "all"; excludesSelf: boolean; type?: CardType; subtype?: string }, abilityText: string): StaticManaAbilityGrant | null => {
+    const fakeCard: CardData = { scryfall_id: "mana-grant", name: "~", type_line: "", mana_cost: "", cmc: 0 };
+    const abilities = parseManaAbilities(fakeCard, abilityText.trim());
+    return abilities.length === 1 ? { ...base, ability: abilities[0]! } : null;
+  };
+
+  const typeWordAlt = "creatures|lands|artifacts|enchantments|permanents";
+  const allMatch = new RegExp(`^all (${typeWordAlt}) have "([^"]+)"$`, "i").exec(clean);
+  if (allMatch) return build(allMatch[1]!, "all", false, allMatch[2]!);
+  const otherMatch = new RegExp(`^other (${typeWordAlt}) you control have "([^"]+)"$`, "i").exec(clean);
+  if (otherMatch) return build(otherMatch[1]!, "you-control", true, otherMatch[2]!);
+  const typeMatch = new RegExp(`^(${typeWordAlt}) you control have "([^"]+)"$`, "i").exec(clean);
+  if (typeMatch) return build(typeMatch[1]!, "you-control", false, typeMatch[2]!);
+  const subtypeMatch = /^([A-Za-z][A-Za-z'’-]*) creatures you control have "([^"]+)"$/i.exec(clean);
+  if (subtypeMatch && !/^creatures?$/i.test(subtypeMatch[1]!)) return buildSubtype(subtypeMatch[1]!, "you-control", false, subtypeMatch[2]!);
+  // Bare subtype, no "creatures" noun (Joraga Treespeaker: "Elves you control have ...").
+  const bareSubtypeMatch = /^([A-Za-z][A-Za-z'’-]*) you control have "([^"]+)"$/i.exec(clean);
+  if (bareSubtypeMatch && !MANA_GRANT_TYPE_WORDS[bareSubtypeMatch[1]!.toLowerCase()] && bareSubtypeMatch[1]!.toLowerCase() !== "permanents") {
+    return buildSubtype(bareSubtypeMatch[1]!, "you-control", false, bareSubtypeMatch[2]!);
+  }
+  return null;
+}
+
+/**
+ * Scans every line for a mana-ability grant, gating each one on the nearest
+ * preceding "LEVEL N[+/-M]" marker (Joraga Treespeaker's grant only applies
+ * at LEVEL 5+, not from level 0) the same way `parseLevelDefinitions` tracks
+ * level blocks for power/toughness/keywords.
+ */
+function parseManaAbilityGrants(text: string): StaticManaAbilityGrant[] {
+  const grants: StaticManaAbilityGrant[] = [];
+  let currentMinLevel: number | undefined;
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.trim();
+    const marker = /^level\s+(\d+)(?:-\d+|\+)?$/i.exec(line);
+    if (marker) { currentMinLevel = Number(marker[1]); continue; }
+    const grant = parseManaAbilityGrant(line);
+    if (grant) grants.push(currentMinLevel !== undefined ? { ...grant, minLevel: currentMinLevel } : grant);
+  }
+  return grants;
 }
 
 /** "~ has flying during your turn" (Razorkin Needlehead) — self-only, gated on whose turn it is. */
@@ -4126,6 +4193,7 @@ function recognizeText(text: string): RecognizedText {
     // blocking and damage prevention, not stack resolution (CR 702.16).
     if (parseProtectionFromLine(line)) continue;
     if (parseStaticKeywordGrant(line).length) continue;
+    if (parseManaAbilityGrant(line)) continue;
     if (parseKeywordDuringYourTurn(line).length) continue;
     if (parseTriggerDoubler(line)) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
@@ -4740,6 +4808,7 @@ export function cardProfile(card: CardData): CardProfile {
   const auraActivatedAbility = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraGrantedActivatedAbility(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
+  const staticManaAbilityGrants = parseManaAbilityGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const grantsCreatureActivationHaste = text.split("\n").some((line) =>
     /^you may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line.trim()));
@@ -4851,6 +4920,7 @@ export function cardProfile(card: CardData): CardProfile {
     auraControlTarget,
     auraActivatedAbility,
     staticKeywordGrants,
+    staticManaAbilityGrants,
     keywordsDuringYourTurn,
     untapColorsDuringOtherPlayersUntap,
     triggerDoublers,
