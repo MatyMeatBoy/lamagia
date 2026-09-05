@@ -136,6 +136,8 @@ export interface Permanent {
   readonly regenerationShields?: number;
   /** The creature this Equipment is attached to, when it is equipped. */
   readonly attachedTo?: string;
+  /** The prior controller restored when an Aura control effect ends (CR 110.2, 613.7). */
+  readonly controlChange?: { readonly auraId: string; readonly previousController: SeatId };
   /** The last card exiled by an imprint ability, if any. */
   readonly exiledWith?: GameCard;
   /** Current Class level (CR 702.134); absent means level 1, a Class's starting level. */
@@ -794,6 +796,16 @@ function auraAttachmentLegal(target: Permanent, kind: TargetKind, auraController
 function attachedAuras(state: GameState, permanent: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === permanent.instance_id
     && hasSubtype(cardProfile(candidate.card), "Aura"));
+}
+/** Printed plus Aura-granted activations available from this permanent. */
+function activatedAbilitiesFor(state: GameState, permanent: Permanent): ActivatedAbility[] {
+  const printed = cardProfile(permanent.card).activatedAbilities;
+  const granted = attachedAuras(state, permanent).flatMap((aura, auraIndex) => {
+    const ability = cardProfile(aura.card).auraActivatedAbility;
+    if (!ability) return [];
+    return [{ ...ability, index: 1000 + auraIndex }];
+  });
+  return [...printed, ...granted];
 }
 function auraBonus(state: GameState | undefined, permanent: Permanent): { power: number; toughness: number } {
   if (!state) return { power: 0, toughness: 0 };
@@ -5133,6 +5145,49 @@ function applyStateBasedActions(state: GameState): GameState {
     changed = false;
     guard += 1;
 
+    // Control Magic-style Auras create a continuous control-changing effect,
+    // rather than a one-shot move (CR 110.2, 613.7). Keep the prior controller
+    // so removing the Aura restores the object to the controller it had before
+    // this specific effect began, including the case of a previously stolen
+    // permanent.
+    for (const aura of allPermanents(next)) {
+      const auraProfile = cardProfile(aura.card);
+      if (!auraProfile.auraControl || aura.attachedTo === undefined) continue;
+      const target = findPermanent(next, aura.attachedTo);
+      if (!target || target.instance_id === aura.instance_id) continue;
+      if (target.controller === aura.controller && target.controlChange?.auraId === aura.instance_id) continue;
+      if (target.controller === aura.controller) continue;
+      const previousController = target.controlChange?.previousController ?? target.controller;
+      next = changePermanentController(next, target, aura.controller);
+      next = withPlayer(next, aura.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+          ? { ...permanent, controlChange: { auraId: aura.instance_id, previousController } }
+          : permanent)
+      }));
+      changed = true;
+    }
+
+    // When the controlling Aura leaves or falls off, its continuous effect ends
+    // and the enchanted permanent returns to its recorded prior controller.
+    for (const permanent of allPermanents(next)) {
+      const change = permanent.controlChange;
+      if (!change) continue;
+      const aura = findPermanent(next, change.auraId);
+      if (aura?.attachedTo === permanent.instance_id && cardProfile(aura.card).auraControl) continue;
+      const restoredController = change.previousController;
+      next = changePermanentController(next, permanent, restoredController);
+      next = withPlayer(next, restoredController, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => {
+          if (candidate.instance_id !== permanent.instance_id) return candidate;
+          const { controlChange: _controlChange, ...restored } = candidate;
+          return restored;
+        })
+      }));
+      changed = true;
+    }
+
     // Rule 704.5q: an Equipment becomes unattached when its equipped object
     // leaves the battlefield or is no longer a creature.
     for (const equipment of allPermanents(next)) {
@@ -6571,7 +6626,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         }
       }
     }
-    for (const ability of profile.activatedAbilities) {
+    for (const ability of activatedAbilitiesFor(state, permanent)) {
       if (opponentsLocked && ["Artifact", "Creature", "Enchantment"].some((type) => profile.types.includes(type as CardType))) continue;
       const variableValues = ability.manaCost?.hasVariable
         ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()]
@@ -7091,13 +7146,20 @@ function activatableAbility(
   if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
   if (ability.requiresUntap) {
     if (!permanent.tapped) return { legal: false };
-    const hasHaste = cardProfile(permanent.card).keywords.includes("haste");
+    const hasHaste = cardProfile(permanent.card).keywords.includes("haste") ||
+      (isCreature(cardProfile(permanent.card)) && allPermanents(state).some((source) =>
+        source.controller === seat && cardProfile(source.card).grantsCreatureActivationHaste));
     if (permanent.summoningSick && !hasHaste) return { legal: false };
   }
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
   // the turn began. Non-creature permanents are unaffected by summoning sickness.
-  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return { legal: false };
+  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) {
+    const hasHaste = cardProfile(permanent.card).keywords.includes("haste") ||
+      allPermanents(state).some((source) =>
+        source.controller === seat && cardProfile(source.card).grantsCreatureActivationHaste);
+    if (!hasHaste) return { legal: false };
+  }
   if (ability.lifeCost >= player.life) return { legal: false };
   if (ability.sacrificesCreature) {
     const candidates = player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id));
@@ -7196,7 +7258,9 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     ?? (handSource ? handActivationSource(handSource, seat) : undefined)
     ?? (graveyardSource ? graveyardActivationSource(graveyardSource, seat) : undefined);
   if (!source) throw new Error("Ese permanente o carta ya no está bajo tu control.");
-  const ability = cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
+  const ability = battlefieldSource
+    ? activatedAbilitiesFor(state, battlefieldSource).find((candidate) => candidate.index === action.abilityIndex)
+    : cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
   if (!ability) throw new Error("Esa habilidad activada no existe.");
   if (ability.sourceZone === "hand" ? !handSource : ability.sourceZone === "graveyard" ? !graveyardSource : !battlefieldSource) {
     throw new Error("La zona de esa habilidad ya no es válida.");

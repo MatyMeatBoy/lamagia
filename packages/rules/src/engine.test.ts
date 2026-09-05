@@ -155,6 +155,8 @@ const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery"
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
+const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "You may activate abilities of creatures you control as though those creatures had haste.\n{1}, {T}: Untap target creature.", oracle_id: "4dc5726e-2f7e-4c2b-9616-c3301d212f78" });
+const SICK_TAPPER = () => make({ name: "Sick Tapper", type_line: "Creature — Human", mana_cost: "{1}", cmc: 1, power: "1", toughness: "1", oracle_text: "{T}: Draw a card." });
 const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
 const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle Slice and Dice, you may have it deal 1 damage to each creature.", oracle_id: "463fc961-d34e-4f40-b383-5b78a0fcb5c8" });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
@@ -8977,6 +8979,10 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   const HARDENED_SCALE_ARMOR = () => make({ name: "Hardened-Scale Armor", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature gets +3/+3.", oracle_id: "9eb58db8-7934-485c-8606-fb1a6cc60d42", scryfall_id: "54c4cb29-3eb9-4a24-a91a-896802c78aef" });
   const DEBILITATING_INJURY = () => make({ name: "Debilitating Injury", type_line: "Enchantment — Aura", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature gets -2/-2.", oracle_id: "52eab77d-9a07-4e14-8872-72681d3b3d0e", scryfall_id: "cf2d01e2-9f9f-4674-b8ab-b783d3faef03" });
   const WILD_GROWTH = () => make({ name: "Wild Growth", type_line: "Enchantment — Aura", mana_cost: "{G}", cmc: 1, oracle_text: "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.", oracle_id: "706ae742-1807-44b7-a4fa-f2e26f61519a", scryfall_id: "b87f2d2c-d6ad-4639-b8c3-e75569c5373f" });
+  const CONTROL_MAGIC = () => make({ name: "Control Magic", type_line: "Enchantment — Aura", mana_cost: "{2}{U}", cmc: 4, oracle_text: "Enchant creature\nYou control enchanted creature.", oracle_id: "cd0d7141-46d2-4aa3-bc77-6b3b4513803e", scryfall_id: "d845d044-7457-4015-a893-1b7ca35df889" });
+  const LEAFDRAKE_ROOST = () => make({ name: "Leafdrake Roost", type_line: "Enchantment — Aura", mana_cost: "{3}{G}{U}", cmc: 5, oracle_text: "Enchant land\nEnchanted land has \"{G}{U}, {T}: Create a 2/2 green and blue Drake creature token with flying.\"", oracle_id: "b5ff42a1-1ac4-472b-8479-5e3749845305" });
+  const PRESENCE_OF_GOND = () => make({ name: "Presence of Gond", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature has \"{T}: Create a 1/1 green Elf Warrior creature token.\"", oracle_id: "ab42398c-f0a1-4b94-ac5f-b8768e1b4e05" });
+  const SPAWNING_GROUNDS = () => make({ name: "Spawning Grounds", type_line: "Enchantment — Aura", mana_cost: "{6}{G}", cmc: 7, oracle_text: "Enchant land\nEnchanted land has \"{T}: Create a 5/5 green Beast creature token with trample.\"", oracle_id: "1961dd92-db0b-4f02-b9c8-08f760f4051b" });
 
   function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[]) {
     let game = twoSeatGame([], []);
@@ -9018,6 +9024,50 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: forest.instance_id }] });
     const aura = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wild Growth")!;
     expect(aura.attachedTo).toBe(forest.instance_id);
+  });
+
+  it("applies Control Magic control and restores the prior controller when it leaves", () => {
+    const profile = profileOf(CONTROL_MAGIC());
+    expect(profile.auraControl).toBe(true);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [CONTROL_MAGIC()]) }));
+    game = putOnBattlefield(game, 0, [ISLAND(), ISLAND(), ISLAND()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    const controlled = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    const aura = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Control Magic")!;
+    expect(controlled.controller).toBe(0);
+    expect(controlled.controlChange).toEqual({ auraId: aura.instance_id, previousController: 1 });
+
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== aura.instance_id) }));
+    game = settle(game);
+    const restored = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(restored.controller).toBe(1);
+    expect(restored.controlChange).toBeUndefined();
+  });
+
+  it("parses Aura-granted activated abilities as reusable primitives", () => {
+    for (const aura of [LEAFDRAKE_ROOST(), PRESENCE_OF_GOND(), SPAWNING_GROUNDS()]) {
+      expect(profileOf(aura)).toMatchObject({ fullyImplemented: true, auraActivatedAbility: { requiresTap: true, effect: { kind: "create-token" } } });
+    }
+    expect(profileOf(LEAFDRAKE_ROOST()).auraActivatedAbility).toMatchObject({ manaCost: { raw: "{G}{U}" } });
+  });
+
+  it("grants Presence of Gond's token ability to the enchanted creature", () => {
+    let game = readyToCast([PRESENCE_OF_GOND()], [BEAR(), FOREST(), FOREST(), FOREST()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === bear.instance_id && entry.action.abilityIndex >= 1000);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.battlefield.some((permanent) => permanent.card.name === "Elf Warrior"));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Elf Warrior")).toBe(true);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.tapped).toBe(true);
   });
 });
 
@@ -9203,6 +9253,23 @@ describe("projection privacy", () => {
     const acting = pendingSeat(game)!;
     expect(projectGame(game, acting).legalActions.length).toBeGreaterThan(0);
     expect(projectGame(game, acting === 0 ? 1 : 0).legalActions).toHaveLength(0);
+  });
+});
+
+describe("static activation haste", () => {
+  it("lets Thousand-Year Elixir activate a creature that entered this turn", () => {
+    const elixir = profileOf(THOUSAND_YEAR_ELIXIR());
+    expect(elixir.grantsCreatureActivationHaste).toBe(true);
+    expect(elixir.activatedAbilities).toContainEqual(expect.objectContaining({
+      effect: { kind: "untap-target-permanent" }, targetKind: "creature"
+    }));
+    expect(elixir.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [THOUSAND_YEAR_ELIXIR(), SICK_TAPPER(), FOREST()], { sick: true });
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const tapper = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sick Tapper")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === tapper.instance_id)).toBe(true);
   });
 });
 

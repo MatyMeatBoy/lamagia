@@ -898,6 +898,8 @@ export interface CardProfile {
   readonly colors: readonly string[];
   readonly colorIdentity: readonly string[];
   readonly keywords: readonly EnforcedKeyword[];
+  /** Static effect that lets creatures' activated abilities ignore summoning sickness (CR 302.6). */
+  readonly grantsCreatureActivationHaste: boolean;
   /** Changeling means this creature has every creature type (CR 702.73). */
   readonly changeling: boolean;
   readonly power: number | null;
@@ -926,6 +928,10 @@ export interface CardProfile {
   readonly equipmentModification: EquipmentModification | null;
   /** Static bonuses an Aura grants the permanent it's attached to (CR 303.4.5), e.g. "Enchanted creature gets +2/+2." */
   readonly auraModification: EquipmentModification | null;
+  /** Control-changing continuous effect from an Aura such as Control Magic (CR 110.2, 613.7). */
+  readonly auraControl: boolean;
+  /** Activated ability granted by an attached Aura (CR 303.4, 605.1a). */
+  readonly auraActivatedAbility: ActivatedAbility | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
@@ -1634,6 +1640,17 @@ function parseAuraModification(text: string): EquipmentModification | null {
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
       if (keywords.length) return { power: 0, toughness: 0, keywords, text: line.trim() };
     }
+  }
+  return null;
+}
+
+/** Parses the closed Oracle template used by Auras that grant an activated ability. */
+function parseAuraGrantedActivatedAbility(text: string): ActivatedAbility | null {
+  for (const line of text.split("\n")) {
+    const match = /^enchanted (?:creature|land) has "(.+)"\.?$/i.exec(line.trim());
+    if (!match) continue;
+    const ability = parseActivatedAbility(match[1]!, 0);
+    if (ability) return ability;
   }
   return null;
 }
@@ -3353,6 +3370,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
   }
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
+  if (/^Untap target creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent you control$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent-you-control" };
   if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
     return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
@@ -3396,6 +3414,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 function isIgnorableSentence(sentence: string, hasChosenColorEffect = false): boolean {
   const s = sentence.trim();
   if (/^(?:It|They|That creature) can't be regenerated\.?$/i.test(s)) return true;
+  // Control Magic's continuous effect is applied by the engine from the Aura
+  // attachment; it is not a one-shot resolution instruction (CR 110.2, 613.7).
+  if (/^You control enchanted creature\.?$/i.test(s)) return true;
   // The following sentence carries the actual chosen-color effect; the
   // standalone instruction only opens that resolution choice.
   if (hasChosenColorEffect && /^choose a color\.?$/i.test(s)) return true;
@@ -3408,6 +3429,10 @@ function isIgnorableSentence(sentence: string, hasChosenColorEffect = false): bo
   // the Abyss); the half-amount effect already rounds up, so this adds no
   // separate action (CR 107.1a).
   if (/^Round up each time\.?$/i.test(s)) return true;
+  // The quoted ability is parsed into CardProfile.auraActivatedAbility and
+  // granted to the enchanted permanent by the engine (CR 303.4, 605.1a).
+  const auraAbility = /^Enchanted (?:creature|land) has "(.+)"\.?$/i.exec(s);
+  if (auraAbility && parseActivatedAbility(auraAbility[1]!, 0)) return true;
   // "If the gift was promised, instead [wider target]" (CR 702.166) only
   // widens the legal target set for the already-printed effect; it is
   // consumed into CardProfile.giftPromisedTargetKind, not a second action.
@@ -3640,6 +3665,10 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Thousand-Year Elixir-style static permission (CR 302.6). The engine
+    // applies this as a characteristic of the controller's battlefield, not
+    // as a triggered or activated ability of the artifact.
+    if (/^You may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line)) continue;
     // Eternal Dragon-style graveyard activation (CR 602.1, 602.5).
     const graveyardReturn = /^((?:\{[^}]+\})+):\s*Return (?:~|this card) from your graveyard to your hand\.?/i.exec(line);
     const upkeepRestrictionOnNextLine = /^Activate only during your upkeep\.?$/i.test(body[lineIndex + 1]?.text ?? "");
@@ -4525,8 +4554,14 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const auraModification = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraModification(text) : null;
+  const auraControl = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
+    && text.split("\n").some((line) => /^You control enchanted creature\.?$/i.test(line.trim()));
+  const auraActivatedAbility = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
+    ? parseAuraGrantedActivatedAbility(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
+  const grantsCreatureActivationHaste = text.split("\n").some((line) =>
+    /^you may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line.trim()));
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
   const triggerDoublers = parseTriggerDoublers(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
@@ -4612,6 +4647,7 @@ export function cardProfile(card: CardData): CardProfile {
     colors: [...(face.colors ?? card.colors ?? [])],
     colorIdentity: [...(card.color_identity ?? [])],
     keywords,
+    grantsCreatureActivationHaste,
     changeling,
     power: numeric(face.power),
     toughness: numeric(face.toughness),
@@ -4628,6 +4664,8 @@ export function cardProfile(card: CardData): CardProfile {
     equipWorthyCost,
     equipmentModification,
     auraModification,
+    auraControl,
+    auraActivatedAbility,
     staticKeywordGrants,
     keywordsDuringYourTurn,
     untapColorsDuringOtherPlayersUntap,

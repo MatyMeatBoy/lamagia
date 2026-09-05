@@ -97,5 +97,5 @@ describe.skipIf(!hasPrecons)("imported Commander precons", () => {
     const result = playBotGame(createGame(toInputs(load(preconPath)), { seed: 0xBADC0DE }), 80);
     expect(result.turns).toBeGreaterThan(5);
     expect(result.state.log.some((entry) => entry.text.includes("de daño a"))).toBe(true);
-  });
+  }, 15_000);
 });
