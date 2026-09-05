@@ -3416,6 +3416,23 @@ draw-step catch earlier, fixed the same way, with an explicit
 `choose-library-card` action. Validation: **627 rules tests**, `npm run
 check`, `npm run simulate:engine` 200/200, 9,460 global profiles.
 
+`rules-prepared-trigger-templates` | Four more Prepared trigger shapes,
+all pure reuse of existing machinery: `attacks`/self (Encouraging
+Aviator — the mechanic's first test of this event, everything before
+only exercised `upkeep`/`first-main-phase`), unconditional `upkeep`/you
+(the printed "if ~ isn't prepared" guard is a no-op — setting an
+already-true flag true again does nothing, so no new condition kind was
+needed), unconditional `first-main-phase`/you (Scathing Shadelock,
+reusing the Black Market Connections event), and `spell-cast`/you with
+`spellType: "creature"` (Abigale, Poet Laureate, reusing the existing
+spell-type filter). Verified **+41** in the export count (9,460 →
+9,501) — well beyond the four cards targeted directly, since several
+`Emeritus of *` cards pair these same templates with already-supported
+iconic reprints (Lightning Bolt, Ancestral Recall, Demonic Tutor,
+Regrowth, Sign in Blood) that needed no back-face work at all.
+Validation: **640 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,501 global profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
