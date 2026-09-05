@@ -1088,13 +1088,14 @@ export type EntersTappedRule =
   | { readonly kind: "tapped" }
   | { readonly kind: "unless-few-lands"; readonly max: number }
   | { readonly kind: "unless-many-lands"; readonly min: number }
+  | { readonly kind: "unless-first-turns"; readonly maxTurn: number }
   | { readonly kind: "unless-pay-life"; readonly life: number }
   /** The controller may reveal a card with one of these subtypes to avoid entering tapped. */
   | { readonly kind: "unless-reveal-card"; readonly subtypes: readonly string[] };
 
 const WORD_NUMBERS: Record<string, number> = {
-  a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
-  eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, twenty: 20
+  a: 1, an: 1, one: 1, first: 1, two: 2, second: 2, three: 3, third: 3, four: 4, fourth: 4, five: 5, fifth: 5, six: 6, sixth: 6, seven: 7, seventh: 7,
+  eight: 8, eighth: 8, nine: 9, ninth: 9, ten: 10, tenth: 10, eleven: 11, twelve: 12, thirteen: 13, twenty: 20
 };
 
 function toNumber(token: string | undefined): number | null {
@@ -2073,6 +2074,16 @@ function parseEntersTapped(text: string, typeLine: string): EntersTappedRule {
   if (manyLands) {
     const min = toNumber(manyLands[1]);
     if (min !== null) return { kind: "unless-many-lands", min };
+  }
+  // Starting Town and similar designs use the game turn rather than a
+  // battlefield count: it enters untapped during the first N turns, then
+  // enters tapped. Keep this replacement effect explicit so it cannot fall
+  // through to the generic always-tapped case.
+  const firstTurns = /unless[^.\n]*your[^.\n]*turn\s+of\s+the\s+game/i.exec(text);
+  if (firstTurns) {
+    const ordinals = firstTurns[0]!.match(/first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+/gi) ?? [];
+    const maxTurn = Math.max(...ordinals.map((ordinal) => toNumber(ordinal) ?? 0));
+    if (maxTurn > 0) return { kind: "unless-first-turns", maxTurn };
   }
   const payLife = /(?:unless\s+you\s+pay|you\s+may\s+pay)\s+(\d+)\s+life/i.exec(text);
   if (payLife) return { kind: "unless-pay-life", life: Number(payLife[1]) };
