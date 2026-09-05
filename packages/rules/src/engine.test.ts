@@ -138,6 +138,7 @@ const BATTLE_LIFE_SPELL = () => make({ name: "Battle Blessing", type_line: "Inst
 const TEST_ARTIFACT = () => make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
 const POWER_LIFE_SPELL = () => make({ name: "Power Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain life equal to the power of target creature you control." });
 const BROODING_SAURIAN = () => make({ name: "Brooding Saurian", type_line: "Creature — Lizard", mana_cost: "{2}{G}{G}", cmc: 4, power: "4", toughness: "4", oracle_text: "At the beginning of each end step, each player gains control of all nontoken permanents they own.", scryfall_id: "2fb7f844-edaf-43ef-9121-318baf9ec9ce" });
+const MIRARI = () => make({ name: "Mirari", type_line: "Legendary Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever you cast an instant or sorcery spell, you may pay {3}. If you do, copy that spell. You may choose new targets for the copy.", oracle_id: "8f6a2fce-719e-4745-80d3-aabce5c9bafa", scryfall_id: "7de1dfcf-f2e7-4c7c-8b00-c5d30a2d3f98" });
 const CAPRICIOUS_EFREET = () => make({ name: "Capricious Efreet", type_line: "Creature — Efreet", mana_cost: "{3}{R}{R}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of your upkeep, choose target nonland permanent you control and up to two target nonland permanents you don't control. Destroy one of them at random.", scryfall_id: "9abd2286-23e9-49cd-be53-39423890f35c" });
 const CHARMBREAKER_DEVILS = () => make({ name: "Charmbreaker Devils", type_line: "Creature — Devil", mana_cost: "{5}{R}", cmc: 6, power: "5", toughness: "4", oracle_text: "At the beginning of your upkeep, return an instant or sorcery card at random from your graveyard to your hand.", scryfall_id: "1b9df437-6988-4ddc-80c4-893e11076067" });
 const ARCHAEOMANCER = () => make({ name: "Archaeomancer", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "1", toughness: "2", oracle_text: "When Archaeomancer enters the battlefield, return target instant or sorcery card from your graveyard to your hand.", oracle_id: "a91a3266-cadd-47a0-9b20-160307f14c07", scryfall_id: "dd94eb97-d231-4880-9c6f-e25da02782b4" });
@@ -4452,6 +4453,19 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId: "hand-1" });
     expect(game.players[0]!.library[0]!.name).toBe("Sol Ring");
     expect(game.players[0]!.hand.some((card) => card.instance_id === "hand-1")).toBe(false);
+   });
+
+  it("lets Mirari pay {3} to copy an instant or sorcery spell", () => {
+    const mirari = MIRARI();
+    let game = readyToCast([AZORIUS_SPELL()], [PLAINS(), ISLAND(), FOREST(), FOREST(), FOREST(), mirari]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), TEST_ARTIFACT()], "mirari-library"), ...player.library] }));
+    expect(profileOf(mirari).fullyImplemented).toBe(true);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", sourceCard: { name: "Mirari" } });
+    const accept = legalActions(game, 0).find((entry) => entry.action.type === "choose-trigger" && entry.action.accept);
+    expect(accept).toBeDefined();
+    game = applyAction(game, 0, accept!.action);
+    expect(game.players[0]!.hand.filter((card) => card.name === "Grizzly Bears" || card.name === "Test Relic")).toHaveLength(2);
   });
 
   it("reuses the library search family for top, hand and graveyard destinations", () => {

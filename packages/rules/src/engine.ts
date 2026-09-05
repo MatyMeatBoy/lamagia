@@ -194,6 +194,8 @@ export interface StackObject {
   readonly fromCommandZone: boolean;
   /** The spell was cast from a graveyard using Flashback (CR 702.34). */
   readonly flashback?: boolean;
+  /** A copied spell resolves without moving a physical card to a zone (CR 707.10). */
+  readonly fromCopy?: boolean;
   readonly variableValue: number;
   readonly countered: boolean;
   /** Seat that countered this spell with a replacement-to-battlefield effect. */
@@ -233,6 +235,8 @@ export interface TriggerInstance {
   readonly cause: string;
   /** Player whose action raised the event, used by payment clauses such as Rhystic Study. */
   readonly eventController?: SeatId;
+  /** The spell object that caused this trigger, retained by copy effects such as Mirari. */
+  readonly eventSpell?: StackObject;
   /** Permanent involved in the event, used by effects referring to "that creature". */
   readonly eventPermanentId?: string;
   /** Amount carried by life-gain/loss events for proportional triggers. */
@@ -285,7 +289,7 @@ export type GameEvent =
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
   | { readonly kind: "deals-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard; readonly spentMana?: number }
+  | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard; readonly spell: StackObject; readonly spentMana?: number }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard }
   | { readonly kind: "card-discarded"; readonly seat: SeatId; readonly card: GameCard }
@@ -357,6 +361,8 @@ export type PendingChoice =
       readonly sourceId: string;
       readonly triggerEffect: SpellEffect;
       readonly sourceCard: GameCard;
+      /** Retain the full trigger while an optional payment is pending. */
+      readonly trigger?: TriggerInstance;
       /** Mana cost that must be paid to accept ("you may pay {cost}. If you do"). */
       readonly payCost?: ManaCost;
       /** Upper bound for a variable optional cost, such as Well of Lost Dreams. */
@@ -1541,6 +1547,7 @@ function raiseEvent(
           definition,
           cause: causeOf(state, event),
           ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
+          ...(event.kind === "spell-cast" ? { eventSpell: event.spell } : {}),
           ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
           ...("amount" in event ? { eventAmount: event.amount } : {}),
           ...(event.kind === "spell-cast" && event.spentMana !== undefined ? { eventManaSpent: event.spentMana } : {}),
@@ -1822,6 +1829,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           optionIds: hand.map((card) => card.instance_id)
         }
       };
+    }
+    case "copy-triggered-spell": {
+      const original = object.trigger?.eventSpell;
+      if (!original) return state;
+      const copy: StackObject = {
+        ...original,
+        id: `copy:${object.id}`,
+        card: { ...original.card, instance_id: `copy:${object.id}` },
+        label: `${original.card.name} (copy)`,
+        fromCopy: true,
+        trigger: undefined,
+        activated: undefined,
+        sourcePermanentId: undefined,
+        triggeredPermanentId: undefined
+      };
+      return { ...state, stack: [...state.stack, copy] };
     }
     case "draw-equal-tapped-creatures": {
       const target = object.targets[0];
@@ -4074,6 +4097,7 @@ function resolveTop(state: GameState): GameState {
       const entered = putOntoBattlefield(next, object.counteredToBattlefieldController, object.card, false);
       return logged(entered, object.counteredToBattlefieldController, `${object.card.name} entra al campo de batalla bajo su control.`);
     }
+    if (object.fromCopy) return logged(next, object.controller, `La copia de ${object.card.name} es contrarrestada.`);
     next = sendSpellToOwnerZone(next, object);
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
   }
@@ -4087,6 +4111,7 @@ function resolveTop(state: GameState): GameState {
   if (object.targets.length && targetsGone) {
     if (object.trigger) return logged(next, object.controller, `La habilidad de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
     if (object.activated) return logged(next, object.controller, `La habilidad activada de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
+    if (object.fromCopy) return logged(next, object.controller, `La copia de ${object.card.name} no se resuelve: sus objetivos ya no son legales.`);
     next = sendSpellToOwnerZone(next, object);
     return logged(next, object.controller, `${object.card.name} se contrarresta: sus objetivos ya no son legales.`);
   }
@@ -4128,6 +4153,7 @@ function resolveTop(state: GameState): GameState {
           sourceId: object.trigger.id,
           triggerEffect: object.trigger.definition.effect,
           sourceCard: object.trigger.sourceCard,
+          trigger: object.trigger,
           ...(object.trigger.definition.payCost ? { payCost: object.trigger.definition.payCost } : {}),
           ...(object.trigger.definition.variablePayCost ? { variablePayCostMax: object.trigger.eventAmount ?? 0 } : {}),
           ...(object.trigger.definition.unlessPayCost ? { payCost: object.trigger.definition.unlessPayCost, unlessPayCost: object.trigger.definition.unlessPayCost } : {}),
@@ -4209,7 +4235,7 @@ function resolveTop(state: GameState): GameState {
         optionIds: options,
         sourceCard: object.card,
         search,
-        returnSourceToGraveyard: !object.activated,
+        returnSourceToGraveyard: !object.activated && !object.fromCopy,
         exileSourceAfterResolution: Boolean(object.flashback)
       }
     };
@@ -4244,7 +4270,7 @@ function resolveTop(state: GameState): GameState {
         selectedIds: [],
         sourceCard: object.card,
         search: multiSearch,
-        returnSourceToGraveyard: !object.activated,
+        returnSourceToGraveyard: !object.activated && !object.fromCopy,
         exileSourceAfterResolution: Boolean(object.flashback)
       }
     };
@@ -4258,7 +4284,7 @@ function resolveTop(state: GameState): GameState {
   if (selectedEffect) {
     const resolved = applyEffect(next, object, selectedEffect);
     next = logged(resolved, object.controller, `Se resuelve el modo elegido de ${object.card.name}.`);
-    return sendSpellToOwnerZone(next, object);
+    return object.fromCopy ? next : sendSpellToOwnerZone(next, object);
   }
 
   if (profile.isPermanent) {
@@ -4286,6 +4312,7 @@ function resolveTop(state: GameState): GameState {
   if (profile.effects.some(hasSelfShuffle)) {
     return logged(next, object.controller, `${object.card.name} se baraja en la biblioteca de su propietario.`);
   }
+  if (object.fromCopy) return next;
   const selfRetire = profile.effects.find((effect) => effect.kind === "exile-self" || effect.kind === "shuffle-self-into-library");
   if (selfRetire?.kind === "exile-self") {
     return withPlayer(next, object.card.owner, (player) => ({ ...player, exile: [...player.exile, object.card] }));
@@ -6276,7 +6303,7 @@ function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAc
   }));
   next = pushOnStack(next, seat, card, chosen, false, action.variableValue ?? 0, undefined, false, false, false);
   next = { ...next, stack: next.stack.map((entry, index) => index === next.stack.length - 1 ? { ...entry, fromRebound: true } : entry) };
-  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card });
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)! });
   return logged(next, seat, `${player.name} relanza ${card.name} desde el exilio (rebote).`);
 }
 
@@ -6362,7 +6389,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)));
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
-  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spentMana: poolTotal(payment.spent) },
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: poolTotal(payment.spent) },
     selfCastTriggers ? [castTriggerWatcher(card, seat)] : []);
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}.`);
 }
@@ -6529,6 +6556,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
    flashback: false,
    variableValue: choice.variablePayCostMax === undefined ? tapCount : variableValue,
     countered: false,
+   ...(choice.trigger?.definition.effect.kind === "copy-triggered-spell" ? { trigger: choice.trigger } : {}),
    sourcePermanentId: choice.sourcePermanentId,
    ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
  };

@@ -448,6 +448,8 @@ export type SpellEffect =
   | { readonly kind: "lose-life-event-player"; readonly amount: number | "X" }
   /** That player's choice to put a card from hand on top after a library shuffle (CR 401.5, 701.20). */
   | { readonly kind: "put-event-player-hand-card-on-library-top" }
+  /** Copy the instant or sorcery spell that caused this trigger (CR 707.10). */
+  | { readonly kind: "copy-triggered-spell" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
   /** Noncombat damage to the controller of the permanent source. */
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
@@ -2397,6 +2399,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^That player puts a card from their hand on top of their library$/i.test(text)) {
     return { effect: { kind: "put-event-player-hand-card-on-library-top" }, target: "none" };
+  }
+  if (/^Copy that spell\. You may choose new targets for the copy$/i.test(text)) {
+    return { effect: { kind: "copy-triggered-spell" }, target: "none" };
   }
   if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
     return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };
