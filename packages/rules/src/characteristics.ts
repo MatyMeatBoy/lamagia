@@ -391,6 +391,7 @@ export type SpellEffect =
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
+  | { readonly kind: "discard-target-player-then-draw-same"; readonly amount: number }
   | { readonly kind: "draw-then-discard"; readonly draw: number; readonly discard: number }
   | { readonly kind: "draw-then-put-back-on-top"; readonly draw: number; readonly putBack: number }
   | { readonly kind: "exile-self" }
@@ -2517,6 +2518,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "discard-target-player", amount }, target: "player" };
   }
   if ((match = /^Target player discards X cards?$/i.exec(text))) return { effect: { kind: "discard-target-player", amount: "X" }, target: "player" };
+  if ((match = /^Target player discards (\w+) cards?, then draws as many cards as they discarded this way$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null && amount > 0) return { effect: { kind: "discard-target-player-then-draw-same", amount }, target: "player" };
+  }
   if ((match = /^Target player draws (\w+) cards? and loses (\w+) life$/i.exec(text))) {
     const draw = toNumber(match[1]);
     const life = toNumber(match[2]);

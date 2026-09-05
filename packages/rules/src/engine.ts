@@ -458,6 +458,8 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       readonly amount: number;
       readonly remaining: number;
+      /** Forget: after all discards resolve, the same player draws this many cards. */
+      readonly thenDrawSame?: boolean;
     }
   | {
       /** Scry (CR 701.17) and Surveil (CR 701.42) share this shape: inspect the
@@ -492,14 +494,6 @@ export type PendingChoice =
       readonly returnAtEndStep: boolean;
       readonly returnSourceToGraveyard: boolean;
       readonly exileSourceAfterResolution: boolean;
-    }
-  | {
-      readonly type: "discard-cards";
-      readonly seat: SeatId;
-      readonly sourceId: string;
-      readonly sourceCard: GameCard;
-      readonly amount: number;
-      readonly remaining: number;
     }
   | {
       readonly type: "draw-cards";
@@ -2078,6 +2072,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           sourceCard: object.card,
           amount,
           remaining: amount
+        }
+      };
+    }
+    case "discard-target-player-then-draw-same": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const amount = Math.min(effect.amount, playerAt(state, target.seat).hand.length);
+      if (amount <= 0) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "discard-cards",
+          seat: target.seat,
+          sourceId: object.id,
+          sourceCard: object.card,
+          amount,
+          remaining: amount,
+          thenDrawSame: true
         }
       };
     }
@@ -7120,7 +7133,10 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
     ...state,
     pendingChoice: remaining > 0 ? { ...choice, remaining } : null
   };
-  const next = discardCard(stateWithChoice, seat, card);
+  let next = discardCard(stateWithChoice, seat, card);
+  if (remaining <= 0 && choice.thenDrawSame) {
+    next = drawCards(next, seat, choice.amount);
+  }
   return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
 }
 

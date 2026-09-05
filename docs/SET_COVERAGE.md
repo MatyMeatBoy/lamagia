@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,624** · cobertura: **27.8%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,627** · cobertura: **27.8%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -31,7 +31,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | media-and-collaboration | other | 97 | 35 | 62 | 36.1% |
 | 1995-08-01 | Renaissance (`REN`) | masters-remastered | renaissance | other | 122 | 29 | 93 | 23.8% |
 | 1995-08-01 | Rinascimento (`RIN`) | masters-remastered | rinascimento | other | 60 | 11 | 49 | 18.3% |
-| 1995-10-01 | Homelands (`HML`) | expansion | 1990s | main | 115 | 30 | 85 | 26.1% |
+| 1995-10-01 | Homelands (`HML`) | expansion | 1990s | main | 115 | 31 | 84 | 27.0% |
 | 1996-06-10 | Alliances (`ALL`) | expansion | 1990s | main | 144 | 17 | 127 | 11.8% |
 | 1996-07-01 | DCI Legend Membership (`PLGM`) | promos | dci-legend-membership | other | 2 | 1 | 1 | 50.0% |
 | 1996-07-01 | Rivals Quick Start Set (`RQS`) | boxed-products | rivals-quick-start-set | other | 56 | 27 | 29 | 48.2% |
@@ -41,7 +41,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 1996-11-01 | Multiverse Gift Box (`MGB`) | boxed-products | multiverse-gift-box | other | 10 | 1 | 9 | 10.0% |
 | 1996-12-31 | Introductory Two-Player Set (`ITP`) | starter | 1990s | other | 57 | 28 | 29 | 49.1% |
 | 1997-02-03 | Visions (`VIS`) | expansion | 1990s | main | 167 | 38 | 129 | 22.8% |
-| 1997-03-24 | Fifth Edition (`5ED`) | core | 1990s | main | 434 | 131 | 303 | 30.2% |
+| 1997-03-24 | Fifth Edition (`5ED`) | core | 1990s | main | 434 | 132 | 302 | 30.4% |
 | 1997-04-01 | Astral Cards (`PAST`) | boxed-products | astral-cards | other | 12 | 0 | 12 | 0.0% |
 | 1997-05-01 | Portal (`POR`) | starter | 1990s | other | 200 | 127 | 73 | 63.5% |
 | 1997-06-09 | Weatherlight (`WTH`) | expansion | 1990s | main | 167 | 26 | 141 | 15.6% |
@@ -62,7 +62,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 1999-01-01 | Junior Super Series (`PSUS`) | promos | junior-1999 | other | 18 | 8 | 10 | 44.4% |
 | 1999-02-06 | Urza's Legacy Promos (`PULG`) | promos | urza-s-legacy | other | 1 | 0 | 1 | 0.0% |
 | 1999-02-15 | Urza's Legacy (`ULG`) | expansion | urza | main | 143 | 57 | 86 | 39.9% |
-| 1999-04-21 | Classic Sixth Edition (`6ED`) | core | 1990s | main | 335 | 154 | 181 | 46.0% |
+| 1999-04-21 | Classic Sixth Edition (`6ED`) | core | 1990s | main | 335 | 155 | 180 | 46.3% |
 | 1999-04-29 | Portal Three Kingdoms Promos (`PPTK`) | promos | portal-three-kingdoms | other | 1 | 0 | 1 | 0.0% |
 | 1999-05-01 | Portal Three Kingdoms (`PTK`) | starter | 1990s | other | 170 | 95 | 75 | 55.9% |
 | 1999-05-29 | Urza's Destiny Promos (`PUDS`) | promos | urza-s-destiny | other | 1 | 0 | 1 | 0.0% |
@@ -756,7 +756,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | commander | 2026 | 6 | 1265 | 329 | 936 | 26.0% |
 | conspiracy | conspiracy | 2 | 211 | 45 | 166 | 21.3% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 60 | 161 | 27.1% |
-| core | 1990s | 10 | 3267 | 1130 | 2137 | 34.6% |
+| core | 1990s | 10 | 3267 | 1132 | 2135 | 34.6% |
 | core | 2000s | 4 | 1389 | 714 | 675 | 51.4% |
 | core | 2010s | 8 | 2011 | 889 | 1122 | 44.2% |
 | core | 2020s | 3 | 1132 | 401 | 731 | 35.4% |
@@ -792,7 +792,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 34 | 36 | 48.6% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 126 | 411 | 23.5% |
-| expansion | 1990s | 11 | 1573 | 328 | 1245 | 20.9% |
+| expansion | 1990s | 11 | 1573 | 329 | 1244 | 20.9% |
 | expansion | 2000s | 19 | 3082 | 626 | 2456 | 20.3% |
 | expansion | 2010s | 14 | 2735 | 647 | 2088 | 23.7% |
 | expansion | 2020s | 17 | 3739 | 582 | 3157 | 15.6% |
@@ -4202,7 +4202,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Faerie Noble — `6172e5b9-2a01-429c-a140-e9b22fbab56e`
 - [ ] Feast of the Unicorn — `274d89b8-1e59-4992-9299-dc793b7f6752`
 - [ ] Feroz's Ban — `445dd350-5165-4516-8669-9233f5558605`
-- [ ] Forget — `619ef7e1-33cd-4470-a1d4-83c5f1f5c31e`
 - [ ] Funeral March — `4d8afa5c-cef3-4e67-bd4c-ebd5c68b96a7`
 - [ ] Ghost Hounds — `26957a44-6155-4688-a850-a3b49b011a9f`
 - [ ] Giant Albatross — `8b59cacb-46ff-4400-a7f6-b258c81a9b14`
@@ -4965,7 +4964,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Fog — `27e9db49-7af7-4bef-ad4c-bf5dfb92030d`
 - [ ] Force of Nature — `e3c4c27d-f263-4c69-a4fe-2928136ff68b`
 - [ ] Force Spike — `896ea218-3019-47e4-b0a0-2487335872bb`
-- [ ] Forget — `619ef7e1-33cd-4470-a1d4-83c5f1f5c31e`
 - [ ] Foxfire — `6c270e6a-12a7-4323-87ba-6d770986fb48`
 - [ ] Funeral March — `4d8afa5c-cef3-4e67-bd4c-ebd5c68b96a7`
 - [ ] Fungusaur — `3e771f5b-2de3-4a1b-8281-ab1f7491e5a1`
@@ -6402,7 +6400,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Fog — `27e9db49-7af7-4bef-ad4c-bf5dfb92030d`
 - [ ] Fog Elemental — `b304fcc0-899e-433f-b6df-5cea504dc4ba`
 - [ ] Forbidden Crypt — `8b34b211-985b-4934-bb3b-8e6672685ac2`
-- [ ] Forget — `619ef7e1-33cd-4470-a1d4-83c5f1f5c31e`
 - [ ] Fyndhorn Brownie — `6d1f8073-4da2-4abc-abb4-2053c4a40bbf`
 - [ ] Gaseous Form — `896af9a9-12a2-4dd6-957c-e52150b5f3a2`
 - [ ] Giant Strength — `db85ba13-f00d-4cdd-99e1-22a4d39c8837`
