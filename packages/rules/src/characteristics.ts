@@ -465,6 +465,8 @@ export type SpellEffect =
   | { readonly kind: "return-owned-creatures-to-control" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
+  /** Return every permanent of a chosen color to its owner's hand (CR 701.19). */
+  | { readonly kind: "return-all-permanents-of-color"; readonly color: MagicColor | "chosen" }
   | { readonly kind: "chaos-warp" }
   /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
   | { readonly kind: "regenerate-source" }
@@ -685,6 +687,8 @@ export interface TriggerDefinition {
   /** Trigger target selection excludes the source permanent ("another"). */
   readonly excludesSourceFromTargets?: boolean;
 }
+
+export type MagicColor = "W" | "U" | "B" | "R" | "G";
 
 export type TargetKind =
   | `spell-mana-value-${number}`
@@ -2403,6 +2407,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Each player gains control of all creatures they own$/i.test(text)) {
     return { effect: { kind: "return-owned-creatures-to-control" }, target: "none" };
+  }
+  if (/^Return all permanents of the color of your choice to their owners' hands\.?$/i.test(text)) {
+    return { effect: { kind: "return-all-permanents-of-color", color: "chosen" }, target: "none" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target artifact or creature with mana value X\.?$/i.test(text)) {
