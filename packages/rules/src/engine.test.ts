@@ -314,6 +314,7 @@ const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice Armillary Sphere: Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
+const C13_CRADLE_OF_VITALITY = () => make({ name: "Cradle of Vitality", type_line: "Enchantment", mana_cost: "{2}{W}", cmc: 3, oracle_text: "Whenever you gain life, you may pay {1}{W}. If you do, put a +1/+1 counter on target creature for each 1 life you gained.", scryfall_id: "956250da-532a-4457-8696-73915be56943" });
 const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant", mana_cost: "{X}{U}{U}{U}", cmc: 3, oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library.", scryfall_id: "613a41b8-0b4f-4995-bf1e-ca41f96e6438" });
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
@@ -1686,6 +1687,19 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield).toHaveLength(0);
     expect(bane.counters["+1/+1"]).toBe(2);
     expect(powerOf(bane, game)).toBe(4);
+  });
+
+  it("recognizes modern split-sentence Bane of Progress Oracle wording", () => {
+    const modern = make({
+      name: "Bane of Progress", type_line: "Creature — Elemental", mana_cost: "{2}{G}{G}", cmc: 4,
+      power: "2", toughness: "2",
+      oracle_text: "When this creature enters, destroy all artifacts and enchantments. Put a +1/+1 counter on this creature for each permanent destroyed this way.",
+      scryfall_id: "c13-bane-of-progress-modern-wording"
+    });
+    expect(profileOf(modern)).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{ event: "enters-battlefield", effect: { kind: "destroy-all-artifacts-enchantments-add-counters", counter: "+1/+1" } }]
+    });
   });
 
   it("counts only destructible permanents for Bane of Progress", () => {
@@ -4539,6 +4553,33 @@ describe("triggered abilities", () => {
     game = applyAction(game, 1, { type: "pass" });
     const pridemate = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ajani's Pridemate")!;
     expect(pridemate.counters["+1/+1"]).toBe(1);
+  });
+
+  it("scales Cradle of Vitality counters with the life-gain event", () => {
+    const profile = profileOf(C13_CRADLE_OF_VITALITY());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{
+        event: "life-gained", subject: "you", optional: true, targetKind: "creature",
+        payCost: { raw: "{1}{W}" }, effect: { kind: "add-counter-target-creature-per-life-gained", counter: "+1/+1" }
+      }]
+    });
+    let game = readyToCast([LIFE_SPELL()], [FOREST(), FOREST(), C13_CRADLE_OF_VITALITY(), C13_AJANI_PRIDEMATE(), PLAINS()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ajani's Pridemate")!;
+    expect(game.pendingChoice?.type).toBe("optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.targets).toEqual([{ kind: "permanent", instanceId: target.instance_id }]);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    const countered = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ajani's Pridemate")!;
+    expect(countered.counters["+1/+1"]).toBe(1);
   });
 
   it("gains life for the chosen target player and raises that player's event", () => {

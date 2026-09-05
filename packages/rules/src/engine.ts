@@ -2476,6 +2476,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : candidate)
       }));
     }
+    case "add-counter-target-creature-per-life-gained": {
+      const target = object.targets[0];
+      const amount = object.trigger?.eventAmount ?? 0;
+      if (!target || target.kind !== "permanent" || amount <= 0) return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, counters: { ...candidate.counters, [effect.counter]: (candidate.counters[effect.counter] ?? 0) + amount } }
+          : candidate)
+      }));
+    }
     case "destroy-target-creature": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "permanent") return state;

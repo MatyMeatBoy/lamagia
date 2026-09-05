@@ -443,6 +443,8 @@ export type SpellEffect =
   | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
+  /** Cradle of Vitality: counters scale with the life-gain event amount. */
+  | { readonly kind: "add-counter-target-creature-per-life-gained"; readonly counter: string }
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
@@ -2998,6 +3000,31 @@ function recognizeText(text: string): RecognizedText {
       }
     }
     const leavesLine = line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
+    // Modern Oracle splits Bane of Progress's dependent instruction into a
+    // second sentence. Keep it attached to the ETB trigger so the existing
+    // counted sweep primitive remains reusable across printings (CR 603.2,
+    // 603.3; the count is locked to permanents destroyed by that event).
+    const modernBane = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*destroy all artifacts and enchantments\.\s*put a (\+1\/\+1|-1\/-1) counter on ~ for each permanent destroyed this way\.?$/i.exec(line);
+    if (modernBane) {
+      triggers.push({
+        event: "enters-battlefield", subject: "self",
+        effect: { kind: "destroy-all-artifacts-enchantments-add-counters", counter: modernBane[1]! },
+        optional: false, targetKind: "none", sourceText: line
+      });
+      continue;
+    }
+    const lifeGainCounter = /^whenever\s+you\s+gain\s+life,?\s+you may pay\s+((?:\{[^}]+\})+)\.?\s*if you do,?\s*put a (\+1\/\+1|-1\/-1) counter on target creature for each 1 life you gained\.?$/i.exec(line);
+    if (lifeGainCounter) {
+      const payCost = parseManaCost(lifeGainCounter[1]!);
+      if (payCost && !payCost.hasVariable) {
+        triggers.push({
+          event: "life-gained", subject: "you",
+          effect: { kind: "add-counter-target-creature-per-life-gained", counter: lifeGainCounter[2]! },
+          optional: true, targetKind: "creature", payCost, sourceText: line
+        });
+        continue;
+      }
+    }
     const triggered = matchTriggerLine(leavesLine !== line ? leavesLine : line);
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
