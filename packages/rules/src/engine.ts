@@ -1834,6 +1834,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return target?.kind === "player" ? drawCards(state, target.seat, effectAmount(effect.amount, object)) : state;
     }
     case "draw-active-player": return drawCards(state, state.activeSeat, 1);
+    case "draw-active-player-then-damage-if-opponent-hand-at-least": {
+      let next = drawCards(state, state.activeSeat, 1);
+      if (opponentsOf(next, controller).includes(state.activeSeat)
+        && playerAt(next, state.activeSeat).hand.length >= effect.handAtLeast) {
+        next = dealDamageFromObject(next, state.activeSeat, effect.damage, sourceName, object);
+      }
+      return next;
+    }
     case "put-active-player-hand-on-library-bottom-then-draw-same": {
       const seat = state.activeSeat;
       const hand = playerAt(state, seat).hand;

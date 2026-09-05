@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,662** · cobertura: **27.8%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,666** · cobertura: **27.8%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -354,8 +354,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | 2016-01-22 | Oath of the Gatewatch (`OGW`) | expansion | 2010s | main | 183 | 36 | 147 | 19.7% |
 | 2016-01-22 | Oath of the Gatewatch Promos (`POGW`) | promos | oath-of-the-gatewatch | other | 55 | 2 | 53 | 3.6% |
 | 2016-02-26 | Duel Decks: Blessed vs. Cursed (`DDQ`) | duel-decks | duel-decks-blessed-vs-cursed | other | 67 | 19 | 48 | 28.4% |
-| 2016-04-08 | Shadows over Innistrad (`SOI`) | expansion | innistrad | main | 287 | 58 | 229 | 20.2% |
-| 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | promos | shadows-over-innistrad | other | 79 | 9 | 70 | 11.4% |
+| 2016-04-08 | Shadows over Innistrad (`SOI`) | expansion | innistrad | main | 287 | 59 | 228 | 20.6% |
+| 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | promos | shadows-over-innistrad | other | 79 | 10 | 69 | 12.7% |
 | 2016-04-08 | Welcome Deck 2016 (`W16`) | starter | 2010s | other | 16 | 7 | 9 | 43.8% |
 | 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 109 | 140 | 43.8% |
 | 2016-07-22 | Eldritch Moon (`EMN`) | expansion | 2010s | main | 208 | 36 | 172 | 17.3% |
@@ -567,7 +567,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | 2023-02-19 | Secret Lair Promo (`SLP`) | secret-lair | secret-lair-promo | secret-lair | 52 | 15 | 37 | 28.8% |
 | 2023-03-21 | 30th Anniversary History Promos (`P30H`) | promos | 30th-anniversary-history | other | 5 | 3 | 2 | 60.0% |
 | 2023-03-21 | Shadows of the Past (`SIS`) | masters-remastered | shadows-of-the-past | other | 76 | 26 | 50 | 34.2% |
-| 2023-03-21 | Shadows over Innistrad Remastered (`SIR`) | masters-remastered | shadows-over-innistrad-remastered | other | 284 | 51 | 233 | 18.0% |
+| 2023-03-21 | Shadows over Innistrad Remastered (`SIR`) | masters-remastered | shadows-over-innistrad-remastered | other | 284 | 52 | 232 | 18.3% |
 | 2023-04-21 | March of the Machine (`MOM`) | expansion | phyrexia | main | 296 | 36 | 260 | 12.2% |
 | 2023-04-21 | March of the Machine Commander (`MOC`) | commander | 2023 | commander | 338 | 101 | 237 | 29.9% |
 | 2023-04-21 | March of the Machine Promos (`PMOM`) | promos | march-of-the-machine | other | 80 | 2 | 78 | 2.5% |
@@ -669,7 +669,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | 2025-09-26 | Marvel's Spider-Man Promos (`PSPM`) | promos | marvel-s-spider-man | other | 68 | 1 | 67 | 1.5% |
 | 2025-09-30 | Marvel Legends Series Inserts (`LMAR`) | promos | marvel-legends-series-inserts | other | 4 | 0 | 4 | 0.0% |
 | 2025-11-21 | Avatar: The Last Airbender (`TLA`) | expansion | 2020s | main | 286 | 40 | 246 | 14.0% |
-| 2025-11-21 | Avatar: The Last Airbender Eternal (`TLE`) | eternal | 2020s | other | 242 | 64 | 178 | 26.4% |
+| 2025-11-21 | Avatar: The Last Airbender Eternal (`TLE`) | eternal | 2020s | other | 242 | 65 | 177 | 26.9% |
 | 2025-11-21 | Avatar: The Last Airbender Promos (`PTLA`) | promos | avatar-the-last-airbender | other | 80 | 5 | 75 | 6.2% |
 | 2026-01-01 | Wizards Play Network 2026 (`PW26`) | promos | wpn-2026 | other | 23 | 10 | 13 | 43.5% |
 | 2026-01-23 | Lorwyn Eclipsed (`ECL`) | expansion | lorwyn | main | 273 | 41 | 232 | 15.0% |
@@ -791,7 +791,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | duel-decks | duel-decks-speed-vs-cunning | 1 | 71 | 27 | 44 | 38.0% |
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 34 | 36 | 48.6% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
-| eternal | 2020s | 6 | 537 | 126 | 411 | 23.5% |
+| eternal | 2020s | 6 | 537 | 127 | 410 | 23.6% |
 | expansion | 1990s | 11 | 1573 | 330 | 1243 | 21.0% |
 | expansion | 2000s | 19 | 3082 | 627 | 2455 | 20.3% |
 | expansion | 2010s | 14 | 2735 | 647 | 2088 | 23.7% |
@@ -803,7 +803,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | expansion | dominaria | 2 | 553 | 146 | 407 | 26.4% |
 | expansion | eldraine | 2 | 567 | 122 | 445 | 21.5% |
 | expansion | ice-age | 1 | 373 | 64 | 309 | 17.2% |
-| expansion | innistrad | 4 | 1103 | 228 | 875 | 20.7% |
+| expansion | innistrad | 4 | 1103 | 229 | 874 | 20.8% |
 | expansion | invasion | 1 | 335 | 102 | 233 | 30.4% |
 | expansion | ixalan | 3 | 771 | 174 | 597 | 22.6% |
 | expansion | kaladesh | 1 | 264 | 62 | 202 | 23.5% |
@@ -894,7 +894,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | masters-remastered | renaissance | 1 | 122 | 29 | 93 | 23.8% |
 | masters-remastered | rinascimento | 1 | 60 | 11 | 49 | 18.3% |
 | masters-remastered | shadows-of-the-past | 1 | 76 | 26 | 50 | 34.2% |
-| masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 51 | 233 | 18.0% |
+| masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 52 | 232 | 18.3% |
 | masters-remastered | tempest-remastered | 1 | 254 | 88 | 166 | 34.6% |
 | masters-remastered | the-list | 1 | 5221 | 1398 | 3823 | 26.8% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 100 | 313 | 24.2% |
@@ -1139,7 +1139,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | promos | scourge | 1 | 1 | 0 | 1 | 0.0% |
 | promos | secrets-of-strixhaven | 1 | 80 | 7 | 73 | 8.8% |
 | promos | shadowmoor | 1 | 2 | 0 | 2 | 0.0% |
-| promos | shadows-over-innistrad | 1 | 79 | 9 | 70 | 11.4% |
+| promos | shadows-over-innistrad | 1 | 79 | 10 | 69 | 12.7% |
 | promos | shards-of-alara | 1 | 2 | 1 | 1 | 50.0% |
 | promos | spotlight-series | 1 | 13 | 1 | 12 | 7.7% |
 | promos | standard-showdown-2017 | 1 | 5 | 5 | 0 | 100.0% |
@@ -24397,7 +24397,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Expose Evil — `b5483037-5dd2-4282-a201-de2e08aaa76e`
 - [ ] Falkenrath Gorger — `26aba6fa-830f-4a7f-8618-488d8e00215a`
 - [ ] Farbog Revenant — `6d32139f-839f-441b-930f-151816143142`
-- [ ] Fevered Visions — `70763549-4b4e-4cb8-8c02-0639ba18bb1a`
 - [ ] Fiery Temper — `f07bd49d-8e71-4d56-be2a-638514011318`
 - [ ] Flameblade Angel — `f912c739-27a2-4068-bf0c-0891309639df`
 - [ ] Fleeting Memories — `fbb0173d-7ec9-4f43-b457-f8de6703497e`
@@ -24588,7 +24587,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Epiphany at the Drownyard — `33befbd6-56ac-45a7-a4d0-448167162707`
 - [ ] Ever After — `86be501c-6f05-4ce0-adb0-7adb135bfb93`
 - [ ] Falkenrath Gorger — `26aba6fa-830f-4a7f-8618-488d8e00215a`
-- [ ] Fevered Visions — `70763549-4b4e-4cb8-8c02-0639ba18bb1a`
 - [ ] Flameblade Angel — `f912c739-27a2-4068-bf0c-0891309639df`
 - [ ] Forgotten Creation — `c26964c7-4259-4281-b450-f0c2ed34b37c`
 - [ ] From Under the Floorboards — `a1fc4269-f3e4-4a59-849d-aa1727eef23a`
@@ -49706,7 +49704,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Ever After — `86be501c-6f05-4ce0-adb0-7adb135bfb93`
 - [ ] Faith Unbroken — `a57fe358-baf3-4eb5-9417-8945b41f84de`
 - [ ] Falkenrath Gorger — `26aba6fa-830f-4a7f-8618-488d8e00215a`
-- [ ] Fevered Visions — `70763549-4b4e-4cb8-8c02-0639ba18bb1a`
 - [ ] Fiend Binder — `060c7999-ab81-4e37-af65-7cd219b693c8`
 - [ ] Fiery Temper — `f07bd49d-8e71-4d56-be2a-638514011318`
 - [ ] Flameblade Angel — `f912c739-27a2-4068-bf0c-0891309639df`
@@ -61705,7 +61702,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Empty City Ruse — `b0391ea4-e37d-48c9-91df-79aefe376bcc`
 - [ ] Fang, Roku's Companion — `6665bfe2-942c-4b3d-a976-776fe00c99f4`
 - [ ] Feed the Swarm — `5825997b-10d7-4a36-972c-a80ddd90b8ed`
-- [ ] Fevered Visions — `70763549-4b4e-4cb8-8c02-0639ba18bb1a`
 - [ ] Fierce Guardianship — `d09c9cba-fdd2-479b-ad5d-d05181c3e3f9`
 - [ ] Fiery Confluence — `3c22e031-4804-4c31-bd3c-c3f29d456b34`
 - [ ] Fire Lord Ozai — `5945306d-e792-4eae-999b-dfb44b10f062`
