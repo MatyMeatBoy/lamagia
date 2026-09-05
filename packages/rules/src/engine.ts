@@ -770,6 +770,30 @@ function equipmentBonus(state: GameState | undefined, creature: Permanent): { po
       : total;
   }, { power: 0, toughness: 0 });
 }
+/** Whether `target` is still a legal object for an Aura with the given enchant restriction to be attached to (CR 704.5n). */
+function auraAttachmentLegal(target: Permanent, kind: TargetKind, auraController: SeatId): boolean {
+  const profile = cardProfile(target.card);
+  switch (kind) {
+    case "creature": return isCreature(profile);
+    case "creature-you-control": return isCreature(profile) && target.controller === auraController;
+    case "land": return isLand(profile);
+    case "permanent": return true;
+    default: return false;
+  }
+}
+function attachedAuras(state: GameState, permanent: Permanent): Permanent[] {
+  return allPermanents(state).filter((candidate) => candidate.attachedTo === permanent.instance_id
+    && hasSubtype(cardProfile(candidate.card), "Aura"));
+}
+function auraBonus(state: GameState | undefined, permanent: Permanent): { power: number; toughness: number } {
+  if (!state) return { power: 0, toughness: 0 };
+  return attachedAuras(state, permanent).reduce((total, aura) => {
+    const modification = cardProfile(aura.card).auraModification;
+    return modification
+      ? { power: total.power + modification.power, toughness: total.toughness + modification.toughness }
+      : total;
+  }, { power: 0, toughness: 0 });
+}
 function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { power: number; toughness: number } {
   const base = allPermanents(state)
     .filter((source) => source.controller === permanent.controller)
@@ -827,7 +851,7 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
+  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + auraBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -840,7 +864,7 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.toughness, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
+  return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + auraBonus(state, permanent).toughness + staticBonus + globalBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const profile = cardProfile(permanent.card);
@@ -863,7 +887,8 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
         && grant.requiresControlledLandSubtype
         && player.battlefield.some((source) => isLand(cardProfile(source.card))
           && hasSubtype(cardProfile(source.card), grant.requiresControlledLandSubtype!)))))) return true;
-  return attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword));
+  if (attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword))) return true;
+  return attachedAuras(state, permanent).some((aura) => cardProfile(aura.card).auraModification?.keywords.includes(keyword));
 }
 
 // ---------------------------------------------------------------------------
@@ -5016,6 +5041,15 @@ function resolveTop(state: GameState): GameState {
     next = putOntoBattlefield(next, object.controller, object.card, isCommander, false, Boolean(object.kicked), Boolean(object.evoked), castFromHand,
       isCommander && object.commanderEntryCounters ? (playerAt(next, object.controller).commanderCasts[object.card.instance_id] ?? 0) : 0,
       object.spentMana ?? [], object.additionalCounters ?? []);
+    // CR 303.4h: an Aura enters the battlefield attached to the permanent it targeted.
+    const enchantTarget = hasSubtype(profile, "Aura") ? object.targets.find((target) => target.kind === "permanent") : undefined;
+    if (enchantTarget) {
+      next = withPlayer(next, object.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === object.card.instance_id
+          ? { ...permanent, attachedTo: enchantTarget.instanceId } : permanent)
+      }));
+    }
     next = logged(next, object.controller, `${playerAt(next, object.controller).name} resuelve ${object.card.name} al campo de batalla.`);
     return next;
   }
@@ -5062,6 +5096,7 @@ function applyStateBasedActions(state: GameState): GameState {
     // leaves the battlefield or is no longer a creature.
     for (const equipment of allPermanents(next)) {
       if (equipment.attachedTo === undefined) continue;
+      if (!hasSubtype(cardProfile(equipment.card), "Equipment")) continue;
       const target = findPermanent(next, equipment.attachedTo);
       if (target && isCreature(cardProfile(target.card))) continue;
       next = withPlayer(next, equipment.controller, (player) => ({
@@ -5071,6 +5106,22 @@ function applyStateBasedActions(state: GameState): GameState {
           const { attachedTo: _attachedTo, ...unattached } = permanent;
           return unattached;
         })
+      }));
+      changed = true;
+    }
+
+    // Rule 704.5n: an Aura not attached to a legal object is put into its
+    // owner's graveyard (it fell off, or its target became illegal).
+    for (const aura of allPermanents(next)) {
+      if (!hasSubtype(cardProfile(aura.card), "Aura")) continue;
+      const kind = cardProfile(aura.card).targetKind;
+      if (kind === "none") continue;
+      const target = aura.attachedTo ? findPermanent(next, aura.attachedTo) : undefined;
+      if (target && auraAttachmentLegal(target, kind, aura.controller)) continue;
+      next = withPlayer(next, aura.card.owner, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== aura.instance_id),
+        graveyard: [...player.graveyard, aura.card]
       }));
       changed = true;
     }

@@ -8844,6 +8844,54 @@ describe("static extra land drops", () => {
   });
 });
 
+describe("Aura targeting, attachment, and static bonuses", () => {
+  const HARDENED_SCALE_ARMOR = () => make({ name: "Hardened-Scale Armor", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature gets +3/+3.", oracle_id: "9eb58db8-7934-485c-8606-fb1a6cc60d42", scryfall_id: "54c4cb29-3eb9-4a24-a91a-896802c78aef" });
+  const DEBILITATING_INJURY = () => make({ name: "Debilitating Injury", type_line: "Enchantment — Aura", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature gets -2/-2.", oracle_id: "52eab77d-9a07-4e14-8872-72681d3b3d0e", scryfall_id: "cf2d01e2-9f9f-4674-b8ab-b783d3faef03" });
+  const WILD_GROWTH = () => make({ name: "Wild Growth", type_line: "Enchantment — Aura", mana_cost: "{G}", cmc: 1, oracle_text: "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.", oracle_id: "706ae742-1807-44b7-a4fa-f2e26f61519a", scryfall_id: "b87f2d2c-d6ad-4639-b8c3-e75569c5373f" });
+
+  function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[]) {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, cards) }));
+    game = putOnBattlefield(game, 0, battlefield);
+    return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+  }
+
+  it("recognizes Enchant creature plus a static +N/+N grant as fully implemented", () => {
+    const profile = profileOf(HARDENED_SCALE_ARMOR());
+    expect(profile.targetKind).toBe("creature");
+    expect(profile.auraModification).toMatchObject({ power: 3, toughness: 3 });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("attaches to its target creature on resolution and applies the static bonus", () => {
+    let game = readyToCast([HARDENED_SCALE_ARMOR()], [BEAR(), FOREST(), FOREST(), FOREST()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    const aura = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Hardened-Scale Armor")!;
+    expect(aura.attachedTo).toBe(bear.instance_id);
+    const enchantedBear = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(powerOf(enchantedBear, game)).toBe(5);
+    expect(toughnessOf(enchantedBear, game)).toBe(5);
+  });
+
+  it("falls to the graveyard (rule 704.5n) when its enchanted creature dies from the Aura's own -2/-2", () => {
+    let game = readyToCast([DEBILITATING_INJURY()], [BEAR(), SWAMP(), SWAMP()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Debilitating Injury")).toBe(true);
+  });
+
+  it("attaches Enchant land Auras to a land, not just creatures", () => {
+    let game = readyToCast([WILD_GROWTH()], [FOREST(), FOREST()]);
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: forest.instance_id }] });
+    const aura = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wild Growth")!;
+    expect(aura.attachedTo).toBe(forest.instance_id);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

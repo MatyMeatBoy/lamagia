@@ -3468,6 +3468,50 @@ controller plays 3 lands in one turn and is blocked from a 4th.
 Validation: **649 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,514 global profiles.
 
+`rules-aura-targeting-attachment` | The biggest gap found this sweep:
+Auras had **zero** targeting or attachment support — the "Enchant
+creature" line, the single most common unimplemented line in the whole
+catalog (880 unique-oracle Auras), was simply falling through to
+`unimplementedText` with nothing downstream to consume it even if it
+had matched. Mining unique oracle texts by their "Enchant X" phrasing
+showed creature (880), land (84), creature you control (57), player
+(43), and permanent (24) covering 89% of all 1,228 distinct Auras.
+Implemented the four permanent-shaped ones (not player — Curses need a
+player-attachment concept the engine doesn't have yet, left for a
+future pass): the "Enchant X" line now sets `CardProfile.targetKind`
+directly, so it rides every existing targeting mechanism for free —
+`castableCard`'s legality check, `legalTargets`, and the CR 608.2b
+fizzle-on-illegal-target check at spell resolution. The permanent
+attaches (`attachedTo`) to its chosen target on resolution (CR
+303.4h). New `CardProfile.auraModification` (the existing
+`EquipmentModification` shape, reused as-is) recognizes "Enchanted
+creature gets ±N/±N[ and has KEYWORDS]" and "Enchanted creature has
+KEYWORDS", wired into `powerOf`/`toughnessOf`/`keywordOf` through new
+`attachedAuras`/`auraBonus` helpers that mirror the pre-existing
+Equipment ones exactly. Added the CR 704.5n state-based action: an
+Aura not attached to a legal object falls to its owner's graveyard,
+via a new `auraAttachmentLegal` predicate (creature / creature-you-
+control / land / permanent only, deliberately excluding hexproof and
+protection-based fall-off — CR 702.16e — as a known boundary).
+Real bug caught while wiring that SBA: the pre-existing CR 704.5q
+Equipment-unattach loop iterated *every* permanent with `attachedTo`
+set and never checked it was actually an Equipment — harmless while
+only Equipment ever populated that field, but it would have ripped
+every land- or permanent-enchanting Aura right back off on the very
+next state-based-action pass, since `isCreature(land)` is false. Fixed
+by gating that loop to `hasSubtype(profile, "Equipment")` as part of
+this same change. Verified **+213** in the export count (9,514 →
+9,727) and set coverage 28.5% → 29.2% — by far the largest single
+jump this sweep, confirming Auras were the highest-value remaining
+gap. Scenario-tested end to end: Hardened-Scale Armor attaches to a
+Bear and its +3/+3 is visible through `powerOf`/`toughnessOf`;
+Debilitating Injury's -2/-2 kills the enchanted Bear through ordinary
+lethal-toughness state-based actions, and the Aura itself falls to the
+graveyard in the same state-based pass (704.5n); Wild Growth (Enchant
+land) attaches to a Forest, proving the attach path isn't creature-
+only. Validation: **654 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,727 global profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
