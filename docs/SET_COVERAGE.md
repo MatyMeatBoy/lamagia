@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,549** · cobertura: **27.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,556** · cobertura: **27.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -420,8 +420,8 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | 2018-07-19 | San Diego Comic-Con 2018 (`PS18`) | promos | comic-con-2018 | other | 5 | 0 | 5 | 0.0% |
 | 2018-08-01 | 2017 Heroes of the Realm (`PH17`) | funny-special | 2017-heroes-of-the-realm | other | 3 | 1 | 2 | 33.3% |
 | 2018-08-10 | Commander 2018 (`C18`) | commander | 2018 | commander | 297 | 126 | 171 | 42.4% |
-| 2018-10-05 | Guilds of Ravnica (`GRN`) | expansion | ravnica | main | 268 | 89 | 179 | 33.2% |
-| 2018-10-05 | Guilds of Ravnica Promos (`PGRN`) | promos | guilds-of-ravnica | other | 60 | 15 | 45 | 25.0% |
+| 2018-10-05 | Guilds of Ravnica (`GRN`) | expansion | ravnica | main | 268 | 90 | 178 | 33.6% |
+| 2018-10-05 | Guilds of Ravnica Promos (`PGRN`) | promos | guilds-of-ravnica | other | 60 | 16 | 44 | 26.7% |
 | 2018-10-05 | Mythic Edition (`MED`) | masterpieces | mythic-edition | other | 24 | 0 | 24 | 0.0% |
 | 2018-11-02 | GRN Guild Kit (`GK1`) | boxed-products | grn-guild-kit | other | 122 | 42 | 80 | 34.4% |
 | 2018-11-09 | GRN Ravnica Weekend (`PRWK`) | promos | grn-ravnica-weekend | other | 5 | 5 | 0 | 100.0% |
@@ -451,10 +451,10 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 11 | 109 | 9.2% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1392 | 3829 | 26.7% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1393 | 3828 | 26.7% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 20 | 39 | 33.9% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 11 | 9 | 55.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 369 | 1327 | 21.8% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 370 | 1326 | 21.8% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 53 | 220 | 19.4% |
@@ -528,7 +528,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | 2022-04-29 | Streets of New Capenna (`SNC`) | expansion | capenna | main | 310 | 43 | 267 | 13.9% |
 | 2022-04-29 | Streets of New Capenna Promos (`PSNC`) | promos | streets-of-new-capenna | other | 80 | 7 | 73 | 8.8% |
 | 2022-06-10 | Battle for Baldur's Gate Promos (`PCLB`) | promos | battle-for-baldur-s-gate | other | 99 | 6 | 93 | 6.1% |
-| 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | commander | 2022 | other | 651 | 125 | 526 | 19.2% |
+| 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | commander | 2022 | other | 651 | 126 | 525 | 19.4% |
 | 2022-07-01 | Love Your LGS 2022 (`PLG22`) | promos | lgs-2022 | other | 2 | 2 | 0 | 100.0% |
 | 2022-07-08 | Double Masters 2022 (`2X2`) | masters-remastered | double-masters-2022 | other | 332 | 84 | 248 | 25.3% |
 | 2022-07-09 | Store Championships (`SCH`) | promos | store-championships | other | 50 | 9 | 41 | 18.0% |
@@ -596,7 +596,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | 2023-11-17 | The Lost Caverns of Ixalan (`LCI`) | expansion | ixalan | main | 292 | 40 | 252 | 13.7% |
 | 2023-11-17 | The Lost Caverns of Ixalan Commander (`LCC`) | commander | 2023 | commander | 313 | 78 | 235 | 24.9% |
 | 2023-11-17 | The Lost Caverns of Ixalan Promos (`PLCI`) | promos | the-lost-caverns-of-ixalan | other | 68 | 1 | 67 | 1.5% |
-| 2024-01-12 | Ravnica Remastered (`RVR`) | masters-remastered | ravnica-remastered | other | 313 | 82 | 231 | 26.2% |
+| 2024-01-12 | Ravnica Remastered (`RVR`) | masters-remastered | ravnica-remastered | other | 313 | 83 | 230 | 26.5% |
 | 2024-02-08 | Year of the Dragon 2024 (`PL24`) | promos | year-of-the-dragon-2024 | other | 6 | 2 | 4 | 33.3% |
 | 2024-02-09 | Commander Legends Promos (`PCMR`) | promos | 2024 | other | 6 | 1 | 5 | 16.7% |
 | 2024-02-09 | Murders at Karlov Manor (`MKM`) | expansion | 2020s | main | 279 | 32 | 247 | 11.5% |
@@ -609,7 +609,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | 2024-04-19 | Breaking News (`OTP`) | masterpieces | breaking-news | other | 65 | 9 | 56 | 13.8% |
 | 2024-04-19 | Love Your LGS 2024 (`PLG24`) | promos | lgs-2024 | other | 5 | 2 | 3 | 40.0% |
 | 2024-04-19 | Outlaws of Thunder Junction (`OTJ`) | expansion | thunder-junction | main | 276 | 30 | 246 | 10.9% |
-| 2024-04-19 | Outlaws of Thunder Junction Commander (`OTC`) | commander | 2024 | commander | 306 | 104 | 202 | 34.0% |
+| 2024-04-19 | Outlaws of Thunder Junction Commander (`OTC`) | commander | 2024 | commander | 306 | 105 | 201 | 34.3% |
 | 2024-04-19 | Outlaws of Thunder Junction Promos (`POTJ`) | promos | outlaws-of-thunder-junction | other | 80 | 5 | 75 | 6.2% |
 | 2024-04-19 | The Big Score (`BIG`) | expansion | 2020s | main | 30 | 3 | 27 | 10.0% |
 | 2024-06-14 | Modern Horizons 2 Timeshifts (`H2R`) | supplemental | modern-horizons-2-timeshifts | other | 16 | 3 | 13 | 18.8% |
@@ -749,9 +749,9 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | commander | 2019 | 1 | 292 | 106 | 186 | 36.3% |
 | commander | 2020 | 4 | 1001 | 337 | 664 | 33.7% |
 | commander | 2021 | 5 | 1022 | 334 | 688 | 32.7% |
-| commander | 2022 | 7 | 1802 | 501 | 1301 | 27.8% |
+| commander | 2022 | 7 | 1802 | 502 | 1300 | 27.9% |
 | commander | 2023 | 6 | 1597 | 485 | 1112 | 30.4% |
-| commander | 2024 | 7 | 1887 | 626 | 1261 | 33.2% |
+| commander | 2024 | 7 | 1887 | 627 | 1260 | 33.2% |
 | commander | 2025 | 4 | 1046 | 388 | 658 | 37.1% |
 | commander | 2026 | 6 | 1265 | 328 | 937 | 25.9% |
 | conspiracy | conspiracy | 2 | 211 | 44 | 167 | 20.9% |
@@ -816,7 +816,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | expansion | odyssey | 1 | 335 | 96 | 239 | 28.7% |
 | expansion | onslaught | 1 | 335 | 74 | 261 | 22.1% |
 | expansion | phyrexia | 4 | 787 | 107 | 680 | 13.6% |
-| expansion | ravnica | 4 | 1081 | 341 | 740 | 31.5% |
+| expansion | ravnica | 4 | 1081 | 342 | 739 | 31.6% |
 | expansion | strixhaven | 2 | 561 | 92 | 469 | 16.4% |
 | expansion | tarkir | 3 | 785 | 176 | 609 | 22.4% |
 | expansion | tempest | 1 | 335 | 103 | 232 | 30.7% |
@@ -890,13 +890,13 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | masters-remastered | modern-masters-2017 | 1 | 249 | 107 | 142 | 43.0% |
 | masters-remastered | mystery-booster-2 | 1 | 384 | 64 | 320 | 16.7% |
 | masters-remastered | pioneer-masters | 1 | 398 | 68 | 330 | 17.1% |
-| masters-remastered | ravnica-remastered | 1 | 313 | 82 | 231 | 26.2% |
+| masters-remastered | ravnica-remastered | 1 | 313 | 83 | 230 | 26.5% |
 | masters-remastered | renaissance | 1 | 122 | 29 | 93 | 23.8% |
 | masters-remastered | rinascimento | 1 | 60 | 11 | 49 | 18.3% |
 | masters-remastered | shadows-of-the-past | 1 | 76 | 26 | 50 | 34.2% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 51 | 233 | 18.0% |
 | masters-remastered | tempest-remastered | 1 | 254 | 88 | 166 | 34.6% |
-| masters-remastered | the-list | 1 | 5221 | 1392 | 3829 | 26.7% |
+| masters-remastered | the-list | 1 | 5221 | 1393 | 3828 | 26.7% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 100 | 313 | 24.2% |
 | masters-remastered | ultimate-masters | 1 | 254 | 75 | 179 | 29.5% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -1008,7 +1008,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | promos | grand-prix | 1 | 20 | 8 | 12 | 40.0% |
 | promos | grn-ravnica-weekend | 1 | 5 | 5 | 0 | 100.0% |
 | promos | guildpact | 1 | 2 | 1 | 1 | 50.0% |
-| promos | guilds-of-ravnica | 1 | 60 | 15 | 45 | 25.0% |
+| promos | guilds-of-ravnica | 1 | 60 | 16 | 44 | 26.7% |
 | promos | guru-1999 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | harperprism-book | 1 | 5 | 2 | 3 | 40.0% |
 | promos | hobby-japan | 1 | 5 | 1 | 4 | 20.0% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 10 | 74 | 11.9% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 12 | 46 | 20.7% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 369 | 1327 | 21.8% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 370 | 1326 | 21.8% |
 | secret-lair | secret-lair-promo | 1 | 52 | 14 | 38 | 26.9% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 5 | 11 | 31.2% |
@@ -29633,7 +29633,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 - [ ] Narcomoeba — `dc65bb62-4ba2-4ec1-b3b9-9c51e64cbfc8`
 - [ ] Necrotic Wound — `a30159ae-f6a6-4e29-bca2-769d3657d310`
 - [ ] Never Happened — `ec4a1a8d-4071-40e9-812e-42c746180d99`
-- [ ] Niv-Mizzet, Parun — `33666a98-812f-4892-9f8d-33e0cbecc340`
 - [ ] Notion Rain — `f93dbe17-71d1-4542-96ff-81ac6da9513f`
 - [ ] Nullhide Ferox — `5b04a337-3152-481e-973f-a11dbd615f93`
 - [ ] Ochran Assassin — `ef6ecb67-7e49-4d40-84f2-1e7c02960a0d`
@@ -29733,7 +29732,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 - [ ] Mission Briefing — `c3a68018-9eff-47e6-a612-182886d28fe3`
 - [ ] Narcomoeba — `dc65bb62-4ba2-4ec1-b3b9-9c51e64cbfc8`
 - [ ] Necrotic Wound — `a30159ae-f6a6-4e29-bca2-769d3657d310`
-- [ ] Niv-Mizzet, Parun — `33666a98-812f-4892-9f8d-33e0cbecc340`
 - [ ] Pelt Collector — `2348f3d4-02cc-4611-a7e0-b77604d5f2e8`
 - [ ] Quasiduplicate — `76b709ae-5765-4b7a-99c9-89eade7c8cb8`
 - [ ] Risk Factor — `7f61a2a6-2fe2-48ec-8e2e-74d147be0a0a`
@@ -34224,7 +34222,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 - [ ] Nissa, Vastwood Seer // Nissa, Sage Animist — `35754a21-9fba-4370-a254-292918a777ba`
 - [ ] Nissa, Voice of Zendikar — `b0f36bf7-bdde-4576-9eca-ec02d41326ab`
 - [ ] Niv-Mizzet Reborn — `10764b35-5c6c-4161-8579-1124d5963a0e`
-- [ ] Niv-Mizzet, Parun — `33666a98-812f-4892-9f8d-33e0cbecc340`
 - [ ] Nivix, Aerie of the Firemind — `9c482f1d-08b4-4882-918c-448a556d3fbe`
 - [ ] No Rest for the Wicked — `d03fd358-ff3f-45ab-9601-07dbb535cb51`
 - [ ] Noble Benefactor — `78c1d6fe-38e4-40c4-9252-87ff272247ad`
@@ -36562,7 +36559,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 - [ ] Ninja of the Deep Hours — `1f3c2b00-0000-4ae1-9650-9553accac52e`
 - [ ] Nissa, Resurgent Animist — `c1fc5923-c3cd-448a-98d1-c154661c2812`
 - [ ] Nissa, Who Shakes the World — `5aa3abf1-d56b-4f42-8c84-7e5a2c15ee0f`
-- [ ] Niv-Mizzet, Parun — `33666a98-812f-4892-9f8d-33e0cbecc340`
 - [ ] Northern Paladin — `f5975294-508a-453e-893a-2fbea2487d17`
 - [ ] Notion Thief — `f8dab16e-1d50-443e-9431-8b6f1cf61c9c`
 - [ ] Noxious Revival — `97cabeda-9fe3-490d-99b4-4c8d87c17157`
@@ -45783,7 +45779,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 - [ ] Nihilith — `c235fda2-1a8d-4ac7-9a23-784529a520f0`
 - [ ] Nimbleclaw Adept — `32e5a4ac-69c7-4de0-8b9f-dd86682f2ffd`
 - [ ] Nine-Fingers Keene — `e06007cf-dc6e-4b50-93d5-9a7c8ee9c023`
-- [ ] Niv-Mizzet, Parun — `33666a98-812f-4892-9f8d-33e0cbecc340`
 - [ ] Noble Heritage — `2e342aa3-2590-4b59-852a-9adb31bafe5c`
 - [ ] Noble's Purse — `f3f10173-fead-48a2-9726-a4e7efec3951`
 - [ ] Nothic — `ec8c2927-d857-426e-b81b-c3b1aa81045a`
@@ -53404,7 +53399,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 - [ ] Narcomoeba — `dc65bb62-4ba2-4ec1-b3b9-9c51e64cbfc8`
 - [ ] Nicol Bolas, Dragon-God — `581eedc4-efe4-4ae4-baf2-88071e7e6f6d`
 - [ ] Niv-Mizzet Reborn — `10764b35-5c6c-4161-8579-1124d5963a0e`
-- [ ] Niv-Mizzet, Parun — `33666a98-812f-4892-9f8d-33e0cbecc340`
 - [ ] Orzhov Enforcer — `f60b879e-82b4-442d-a544-2349429fe4c9`
 - [ ] Orzhov Euthanist — `3cc82a02-2906-4411-aebf-474b0735bb53`
 - [ ] Overwhelm — `caeaad5e-2d68-481c-9a35-c2c3b345963d`
@@ -54898,7 +54892,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 - [ ] Nantuko Cultivator — `b8dab16c-681c-4abe-b164-fcfb5dc66678`
 - [ ] Nashi, Moon Sage's Scion — `d04b6c2c-50fc-464d-9991-230efec70d2b`
 - [ ] Nighthawk Scavenger — `379ed4ec-8f2e-448b-9ed2-a3181e2f877e`
-- [ ] Niv-Mizzet, Parun — `33666a98-812f-4892-9f8d-33e0cbecc340`
 - [ ] Oblivion Sower — `d39b9f64-dc9b-413f-8d05-e21ef46d6756`
 - [ ] Octavia, Living Thesis — `65681a2a-8395-4390-845f-9be974994dcb`
 - [ ] Ogre Slumlord — `0a5e3748-2e58-4e53-9653-8af4e21cf223`

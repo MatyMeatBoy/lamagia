@@ -14,9 +14,9 @@ and token-scaling paths; verify the Pages run before reporting a new client asse
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,329 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,330 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 23,535 / 84,990 implemented (27.7%) across 685
+- **Edition memberships:** 23,556 / 84,990 implemented (27.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
@@ -34,8 +34,8 @@ Audited worker intake added executable batches for mana-entry restrictions,
 noncreature-spell drain, surveil, reanimation, Hunted Troll, Grazing
 Gladehart, Disciple of Griselbrand, and Springjack Pasture. The optional
 cycling-target keyword grammar was generalized and tested with Dirge of Dread.
-Rules suite: **571 passing tests**. Latest pushed source: `d0a3ba7`; generated
-export: **9,308/38,711** profiles and C13 **257/341**.
+Rules suite: **582 passing tests**. Latest pushed source: `38846ba`; generated
+export: **9,330/38,711** profiles and C13 **264/341**.
 
 The latest origin audit also salvaged the executable portion of
 `origin/c14-batch2-clean` as `dd6c117`: draw triggers remain on the engine's
