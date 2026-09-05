@@ -5161,6 +5161,9 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (splitSecondActive(state)) return { legal: false };
   if (freeCast && !profile.freeCastIfCommander) return { legal: false };
   if (freeCast && !controlsCommander(state, seat)) return { legal: false };
+  // Commander alternative costs apply only while casting from hand. Do not let
+  // a forged action bypass flashback or commander-zone costs.
+  if (freeCast && (fromCommandZone || flashback)) return { legal: false };
   const cost = flashback
     ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
     : spellCostOf(profile, kicked, evoked, entwined);
