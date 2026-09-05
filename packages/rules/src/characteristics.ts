@@ -2868,6 +2868,11 @@ function recognizeText(text: string): RecognizedText {
     // paying whenever life can comfortably afford it — so the printed line
     // describes exactly what already executes, not an unresolved effect.
     if (/^As ~ enters, you may pay \d+ life\.\s*If you don['’]t, (?:~|it) enters tapped\.?$/i.test(line)) continue;
+    // Check lands (Choked Estuary, Game Trail, Ancient Amphitheater, ...):
+    // "As ~ enters, you may reveal a(n) <type(s)> card from your hand. If you
+    // don't, ~ enters tapped." is the same `unless-reveal-card` replacement
+    // effect above (`packages/rules/src/engine.ts`) already enforces it.
+    if (/^As ~ enters, you may reveal an?\s+[A-Za-z][A-Za-z'’ -]*\s+card from your hand\.\s*If you don['’]t, (?:~|it) enters tapped\.?$/i.test(line)) continue;
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
