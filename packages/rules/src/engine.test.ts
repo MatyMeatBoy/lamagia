@@ -129,6 +129,7 @@ const SPHINX_OF_THE_STEEL_WIND = () => make({
 });
 const RED_RAIDER = () => make({ name: "Red Raider", type_line: "Creature — Goblin", mana_cost: "{1}{R}", cmc: 2, power: "3", toughness: "3", colors: ["R"] });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
+const SEKKUAR = () => make({ name: "Sek'Kuar, Deathkeeper", type_line: "Legendary Creature — Orc Shaman", mana_cost: "{2}{B}{R}{G}", cmc: 5, power: "4", toughness: "3", colors: ["B", "R", "G"], oracle_text: "Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.", oracle_id: "94426127-65c2-435e-ba92-423a3c102061" });
 const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Regenerate target creature." });
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
 const WASH_OUT = () => make({ name: "Wash Out", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Return all permanents of the color of your choice to their owners' hands.", oracle_id: "54748cb1-d92a-4212-ad76-417ee79b5ef1" });
@@ -1662,6 +1663,26 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Plant")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Plant")).toBe(false);
+  });
+
+  it("creates a Graveborn token when Sek'Kuar sees another nontoken creature die", () => {
+    const profile = profileOf(SEKKUAR());
+    expect(profile.triggers).toMatchObject([{
+      event: "dies",
+      subject: "another-creature-you-control",
+      nontoken: true,
+      effect: { kind: "create-token", amount: 1, token: { name: "Graveborn", power: 3, toughness: 1, colors: ["B", "R"], keywords: ["haste"] } }
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([DESTROY_TARGET_CREATURE()], [SWAMP(), SWAMP(), SEKKUAR(), BEAR()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    const graveborn = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Graveborn");
+    expect(graveborn).toMatchObject({ card: { token: true, colors: ["B", "R"], keywords: ["haste"], power: "3", toughness: "1" } });
   });
 
   it("returns a targeted creature card from its controller's graveyard", () => {
