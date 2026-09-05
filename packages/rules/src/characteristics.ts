@@ -657,6 +657,8 @@ export type SpellEffect =
   /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
   | { readonly kind: "tap-or-untap-target-permanent" }
   | { readonly kind: "target-cant-block" }
+  /** "Your opponents can't cast spells this turn." (Silence, CR 116.3). */
+  | { readonly kind: "opponents-cant-cast-spells-this-turn" }
   | { readonly kind: "add-mana"; readonly pool: Readonly<Record<string, number>> }
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
   | { readonly kind: "untap-target-permanent" }
@@ -829,6 +831,8 @@ export interface TriggerDefinition {
     | { readonly kind: "second-draw-this-turn" }
     /** "if ~ is untapped" (Howling Mine): checks the source permanent's own tapped state. */
     | { readonly kind: "source-untapped" }
+    /** "if ~ is tapped" (Mana Vault): the inverse check on the source permanent's own tapped state. */
+    | { readonly kind: "source-tapped" }
     /** "except the first [card] they draw in each of their draw steps" (Orcish Bowmasters): suppressed only for the player's first draw during an actual draw step; any draw outside a draw step always counts. */
     | { readonly kind: "not-first-draw-step-draw" }
     /** "When this Class becomes level N" (CR 702.134): fires only for the transition that reaches exactly this level. */
@@ -868,7 +872,7 @@ export type MagicColor = "W" | "U" | "B" | "R" | "G";
 export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
-  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
+  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
   | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
@@ -3404,6 +3408,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Tap target permanent an opponent controls$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "permanent-opponent" };
   if (/^Tap or untap target permanent$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
+  if (/^Your opponents can'?t cast spells this turn$/i.test(text)) return { effect: { kind: "opponents-cant-cast-spells-this-turn" }, target: "none" };
   if (/^This turn, creatures can'?t block unless their controller pays \{X\} for each blocking creature they control$/i.test(text)) {
     return { effect: { kind: "set-blocking-tax", amount: "X" }, target: "none" };
   }
@@ -3427,9 +3432,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const exileAndTransfer = parseExileAndTransferSource(text);
   if (exileAndTransfer) return { effect: exileAndTransfer, target: "artifact-or-enchantment" };
   if (/^Counter target spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "spell" };
-  if ((match = /^Counter target spell unless its controller pays ((?:\{[^}]+\})+)\.?$/i.exec(text))) {
-    const cost = parseManaCost(match[1]!);
-    if (cost) return { effect: { kind: "counter-target-spell-unless-pay", cost }, target: "spell" };
+  if (/^Counter target instant or sorcery spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "instant-or-sorcery-spell" };
+  if ((match = /^Counter target (spell|instant or sorcery spell) unless its controller pays ((?:\{[^}]+\})+)\.?$/i.exec(text))) {
+    const cost = parseManaCost(match[2]!);
+    if (cost) return { effect: { kind: "counter-target-spell-unless-pay", cost }, target: match[1]!.toLowerCase() === "spell" ? "spell" : "instant-or-sorcery-spell" };
   }
   const exactSpellValue = /^Counter target spell with (?:mana value|converted mana cost) (\d+)$/i.exec(text);
   if (exactSpellValue) return { effect: { kind: "counter-target-spell" }, target: `spell-mana-value-${Number(exactSpellValue[1])}` };
@@ -4346,6 +4352,7 @@ function recognizeText(text: string): RecognizedText {
       const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggered.effectText);
       const commandZoneCondition = /^if\s+.+?\s+is\s+in\s+the\s+command\s+zone,\s*(.+)$/i.exec(triggered.effectText);
       const sourceUntappedCondition = /^if\s+~\s+is\s+untapped,\s*(.+)$/i.exec(triggered.effectText);
+      const sourceTappedCondition = /^if\s+~\s+is\s+tapped,\s*(.+)$/i.exec(triggered.effectText);
       const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
        const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
@@ -4353,7 +4360,7 @@ function recognizeText(text: string): RecognizedText {
       const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
@@ -4412,6 +4419,7 @@ function recognizeText(text: string): RecognizedText {
           ...(diedCondition ? { condition: { kind: "creature-died-this-turn" as const } } : {}),
           ...(castFromHandCondition ? { condition: { kind: "cast-from-hand" as const } } : {}),
           ...(sourceUntappedCondition ? { condition: { kind: "source-untapped" as const } } : {}),
+          ...(sourceTappedCondition ? { condition: { kind: "source-tapped" as const } } : {}),
           ...(commandZoneCondition ? { condition: { kind: "source-in-command-zone" as const } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),

@@ -3611,6 +3611,56 @@ but leaves itself and a Bear alone. Validation: **675 rules tests**,
 `npm run check`, `npm run simulate:engine` 200/200, 9,889 global
 profiles.
 
+## cEDH staples pass (2026-09-05)
+
+Pivoted from broad set coverage to naming specific competitive-EDH
+staples by request, working the gaps one card at a time rather than
+mining by pattern frequency. Three independent one-card primitives:
+
+**Mana Vault** — "At the beginning of your draw step, if ~ is tapped,
+it deals 1 damage to you." The "if ~ is untapped" trigger condition
+already existed (Howling Mine); this just adds its exact mirror, a new
+`TriggerCondition` kind `source-tapped`, checked at both the
+event-time gate and the resolution-time intervening-if re-check
+(mirroring `source-untapped` at both sites so a tap/untap between
+trigger and resolution is handled the same way). +1 in the export
+count (9,907 → 9,908).
+
+**Silence** — "Your opponents can't cast spells this turn." A whole
+new restriction category: a new `SpellEffect` kind
+`opponents-cant-cast-spells-this-turn` sets a new
+`PlayerState.cantCastSpellsUntilEndOfTurn` flag on every opponent,
+cleared every cleanup step alongside the other per-turn permanent
+flags. The flag is enforced in exactly one place, `castableCard`,
+which both `legalActions`'s offering path and `applyAction`'s cast
+handler already call for authoritative validation — so both paths
+respect the lock for free from a single check. +1 in the export count
+(9,908 → 9,909).
+
+**Flusterstorm** (and Miscalculation, Daze) — "Counter target instant
+or sorcery spell unless its controller pays {1}." The pre-existing
+`counter-target-spell-unless-pay` template only recognized the generic
+"Counter target spell..." wording; these are meaningfully different
+(a creature spell is a legal target of the generic template but must
+NOT be a legal target here). Added a new TargetKind
+`instant-or-sorcery-spell` with `legalTargets` support (filters the
+stack to Instant/Sorcery card types) and widened the parser regex to
+accept either noun phrase, mapping to the matching TargetKind. +6 in
+the export count (9,909 → 9,915).
+
+Set coverage moved 29.5% → 29.9% across the batch. Scenario-tested:
+Mana Vault deals exactly 1 damage on its controller's draw step while
+tapped and none while untapped (both branches exercised); Silence
+blocks the opponent's instant-speed cast for the rest of that turn
+only — confirmed cleared by their own next turn, not just assumed —
+while leaving the caster itself free to act; Flusterstorm's
+`legalTargets` accepts an on-stack Lightning Bolt but correctly
+rejects an on-stack Grizzly Bears (cast on its controller's own turn,
+since creatures are sorcery-speed), then the ordinary counter-unless-
+pay decline flow resolves normally against the Bolt. Validation: **684
+rules tests**, `npm run check`, `npm run simulate:engine` 200/200,
+9,915 global profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

@@ -181,6 +181,8 @@ export interface PlayerState {
   readonly landsPlayedThisTurn: number;
   /** Cards drawn this turn (Krang, Faerie Mastermind's "second card each turn"); reset each untap step. */
   readonly drawsThisTurn: number;
+  /** Silence-style lockout: can't cast spells for the rest of the turn it was set. Cleared every cleanup step. */
+  readonly cantCastSpellsUntilEndOfTurn?: boolean;
   /** Cards drawn during the current draw step (Orcish Bowmasters' "except the first ... in each of their draw steps"); reset each draw step. */
   readonly drawsThisDrawStep: number;
   readonly manaPool: ManaPool;
@@ -1789,6 +1791,10 @@ function triggerMatches(
     const source = findPermanent(state, watcher.instanceId);
     if (!source || source.tapped) return false;
   }
+  if (condition?.kind === "source-tapped") {
+    const source = findPermanent(state, watcher.instanceId);
+    if (!source || !source.tapped) return false;
+  }
   if (condition?.kind === "source-in-command-zone"
     && !playerAt(state, watcher.controller).commandZone.some((card) => card.instance_id === watcher.instanceId)) return false;
   if (condition?.kind === "class-level-reached" && (event.kind !== "class-level-up" || event.level !== condition.level)) return false;
@@ -1921,6 +1927,10 @@ function interveningIfStillTrue(state: GameState, trigger: TriggerInstance): boo
     case "source-untapped": {
       const source = findPermanent(state, trigger.sourcePermanentId);
       return Boolean(source && !source.tapped);
+    }
+    case "source-tapped": {
+      const source = findPermanent(state, trigger.sourcePermanentId);
+      return Boolean(source && source.tapped);
     }
     case "any-player-hand-at-most":
       return state.players.some((player) => player.hand.length <= condition.amount);
@@ -4546,6 +4556,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           ? { ...candidate, cantBlockThisTurn: true } : candidate)
       }));
     }
+    case "opponents-cant-cast-spells-this-turn": {
+      let next = state;
+      for (const opponent of opponentsOf(next, object.controller)) {
+        next = withPlayer(next, opponent, (player) => ({ ...player, cantCastSpellsUntilEndOfTurn: true }));
+      }
+      return next;
+    }
     case "set-blocking-tax": {
       const amount = effectAmount(effect.amount, object);
       if (amount <= 0) return state;
@@ -5854,6 +5871,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         blockingTaxPerCreature: undefined,
         players: next.players.map((current) => ({
           ...current,
+          cantCastSpellsUntilEndOfTurn: false,
           battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
         }))
       };
@@ -5985,6 +6003,9 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
+  // Silence (CR 116.3): this function only ever validates casting a spell
+  // (playing a land is a separate path), so no type carve-out is needed.
+  if (player.cantCastSpellsUntilEndOfTurn) return { legal: false };
   if (freeCast && payLifeCost) return { legal: false };
   if (freeCast && !profile.freeCastIfCommander) return { legal: false };
   if (freeCast && !controlsCommander(state, seat)) return { legal: false };
@@ -6776,6 +6797,12 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       .filter((entry) => kind === "creature-spell"
         ? isCreature(cardProfile(entry.card))
         : !isCreature(cardProfile(entry.card)))
+      .map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
+  }
+  if (kind === "instant-or-sorcery-spell") {
+    return state.stack
+      .filter((entry) => !entry.activated && !entry.trigger)
+      .filter((entry) => cardProfile(entry.card).types.some((type) => type === "Instant" || type === "Sorcery"))
       .map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   }
   const permanents = allPermanents(state)

@@ -501,6 +501,7 @@ const BALEFUL_MASTERY = () => make({ name: "Baleful Mastery", type_line: "Instan
 const BLACK_SOURCE = () => make({ name: "Onyx Mana Rock", type_line: "Land", produced_mana: ["B"] });
 const COUNTER_UNLESS_PAY = () => make({ name: "Test Mana Leak", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target spell unless its controller pays {1}." });
 const DAZE = () => make({ name: "Daze", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "You may return an Island you control to its owner's hand rather than pay this spell's mana cost.\nCounter target spell unless its controller pays {1}.", oracle_id: "70486bee-6ee7-41ea-b834-8caf4699302b", scryfall_id: "61968d99-6571-49ce-bcf1-2aaac3a10f45" });
+const FLUSTERSTORM = () => make({ name: "Flusterstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, keywords: ["storm"], oracle_text: "Counter target instant or sorcery spell unless its controller pays {1}.\nStorm (When you cast this spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)", oracle_id: "86bf58f2-7f25-4e10-b797-25e0e8e67769", scryfall_id: "0bc0f90d-1aef-4c70-9529-0482023d084f" });
 const MANA_DRAIN = () => make({ name: "Mana Drain", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell. At the beginning of your next main phase, add an amount of {C} equal to that spell's mana value.", oracle_id: "74d3277a-38e5-4732-afed-084a56148f20", scryfall_id: "f4e72225-0008-46cf-b403-3402ae8bfe47" });
 const LONG_RIVERS_PULL = () => make({ name: "Long River's Pull", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Gift a card (You may promise an opponent a gift as you cast this spell. If you do, they draw a card before its other effects.)\nCounter target creature spell. If the gift was promised, instead counter target spell.", oracle_id: "f1993767-1d07-49c8-b8dc-04ec9840a999", scryfall_id: "1c81d0fa-81a1-4f9b-a5fd-5a648fd01dea" });
 const PROPAGANDA = () => make({ name: "Propaganda", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.", oracle_id: "ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd", scryfall_id: "2a874a07-502a-48d8-a48f-f4357b38b4ae" });
@@ -5585,6 +5586,41 @@ describe("casting", () => {
     expect(game.players[0]!.life).toBe(life0Before);
   });
 
+  it("restricts Flusterstorm to instant-or-sorcery spells, unlike the generic 'target spell' template", () => {
+    const profile = profileOf(FLUSTERSTORM());
+    expect(profile).toMatchObject({
+      targetKind: "instant-or-sorcery-spell",
+      effects: [{ kind: "counter-target-spell-unless-pay", cost: { raw: "{1}" } }]
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([FLUSTERSTORM()], [ISLAND()], [BOLT(), BEAR()], [MOUNTAIN(), MOUNTAIN(), FOREST(), FOREST()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+
+    // Creatures are sorcery-speed, so seat 1 needs their own turn to cast one;
+    // seat 0 still gets priority to respond and try (and fail) to Flusterstorm it.
+    game = applyAction(game, 0, { type: "pass" });
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 1 && state.prioritySeat === 1);
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-1" });
+    const bearSpell = game.stack.at(-1)!;
+    expect(legalTargets(game, 0, "instant-or-sorcery-spell").some((target) => target.kind === "spell" && target.stackId === bearSpell.id)).toBe(false);
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "player", seat: 0 }] });
+    const bolt = game.stack.at(-1)!;
+    expect(legalTargets(game, 0, "instant-or-sorcery-spell").some((target) => target.kind === "spell" && target.stackId === bolt.id)).toBe(true);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", seat: 1 });
+    const declineFlusterstorm = legalActions(game, 1).find((entry) => entry.action.type === "choose-trigger" && (entry.action as { accept?: boolean }).accept === false);
+    const life0Before = game.players[0]!.life;
+    game = applyAction(game, 1, declineFlusterstorm!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(life0Before);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+  });
+
   it("counters the target spell and delays colorless mana equal to its mana value to the caster's next main phase", () => {
     const profile = profileOf(MANA_DRAIN());
     expect(profile.fullyImplemented).toBe(true);
@@ -9281,6 +9317,87 @@ describe("color anthem static bonuses (any controller)", () => {
     expect([powerOf(crusader, game), toughnessOf(crusader, game)]).toEqual([2, 2]);
     expect([powerOf(ownSoldier, game), toughnessOf(ownSoldier, game)]).toEqual([2, 2]);
     expect([powerOf(foeSoldier, game), toughnessOf(foeSoldier, game)]).toEqual([2, 2]);
+  });
+});
+
+describe("Mana Vault draw-step self-damage while tapped", () => {
+  const MANA_VAULT = () => make({ name: "Mana Vault", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "This artifact doesn't untap during your untap step.\nAt the beginning of your upkeep, you may pay {4}. If you do, untap this artifact.\nAt the beginning of your draw step, if this artifact is tapped, it deals 1 damage to you.\n{T}: Add {C}{C}{C}." });
+
+  // Mana Vault's own upkeep trigger ("you may pay {4}. If you do, untap it")
+  // is optional and has to be declined explicitly before the generic
+  // pass-forward helper can find a plain "pass" action again.
+  function passDecliningOptionalTriggers(game: ReturnType<typeof twoSeatGame>, predicate: (state: typeof game) => boolean) {
+    let current = game;
+    for (let guard = 0; guard < 50; guard += 1) {
+      current = passUntil(current, (state) => predicate(state) || state.pendingChoice?.type === "optional-trigger");
+      if (predicate(current)) return current;
+      const choice = current.pendingChoice!;
+      current = applyAction(current, choice.seat, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
+    }
+    throw new Error("passDecliningOptionalTriggers: guard exceeded");
+  }
+
+  it("recognizes the source-tapped condition on its draw-step damage trigger", () => {
+    const profile = profileOf(MANA_VAULT());
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "draw-step", subject: "you", condition: { kind: "source-tapped" }, effect: { kind: "damage-controller", amount: 1 }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("deals 1 damage to its controller on their draw step only while tapped", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [MANA_VAULT()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Mana Vault" ? { ...permanent, tapped: true } : permanent)
+    }));
+    const lifeBefore = game.players[0]!.life;
+    game = passDecliningOptionalTriggers(game, (state) => state.turn === 3 && state.activeSeat === 0 && state.step === "precombat-main");
+    expect(game.players[0]!.life).toBe(lifeBefore - 1);
+  });
+
+  it("deals no damage on the draw step while untapped", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [MANA_VAULT()]);
+    const lifeBefore = game.players[0]!.life;
+    game = passDecliningOptionalTriggers(game, (state) => state.turn === 3 && state.activeSeat === 0 && state.step === "precombat-main");
+    expect(game.players[0]!.life).toBe(lifeBefore);
+  });
+});
+
+describe("Silence locks out opponents' casting for the turn", () => {
+  const SILENCE = () => make({ name: "Silence", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Your opponents can't cast spells this turn." });
+  const TEST_INSTANT = () => make({ name: "Test Cantrip", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Draw a card." });
+
+  it("recognizes the effect", () => {
+    const profile = profileOf(SILENCE());
+    expect(profile.effects).toEqual([{ kind: "opponents-cant-cast-spells-this-turn" }]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("stops the opponent from casting an instant this turn, but clears by their next turn", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [SILENCE()]) }));
+    game = stage(game, 1, () => ({ hand: toHand(1, [TEST_INSTANT()], "foe") }));
+    game = putOnBattlefield(game, 0, [PLAINS()]);
+    game = putOnBattlefield(game, 1, [ISLAND()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.cantCastSpellsUntilEndOfTurn).toBe(true);
+    expect(game.prioritySeat).toBe(0);
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.prioritySeat).toBe(1);
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "cast")).toBe(false);
+    expect(() => applyAction(game, 1, { type: "cast", cardId: "hand-0" })).toThrow();
+
+    // The lock is only "this turn" (CR 116.3) -- it clears at cleanup, well
+    // before the opponent's own next turn opens.
+    game = passUntil(game, (state) => state.turn === 2 && state.activeSeat === 1 && state.step === "precombat-main" && state.prioritySeat === 1);
+    expect(game.players[1]!.cantCastSpellsUntilEndOfTurn).toBeFalsy();
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "cast")).toBe(true);
   });
 });
 
