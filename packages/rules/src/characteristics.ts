@@ -1610,7 +1610,9 @@ function parseCreateToken(text: string): SpellEffect | null {
   const colors = words.filter((word) => colorWords[word.toLowerCase()]).map((word) => colorWords[word.toLowerCase()]!);
   const artifact = /\bartifact\b/i.test(descriptor);
   const creature = /\bcreature\b/i.test(descriptor);
-  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature)$/i.test(word)).join(" ");
+  // Oracle token descriptors commonly join multiple colors with "and";
+  // conjunctions are grammar, not part of the token's subtype/name.
+  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature|and)$/i.test(word)).join(" ");
   const name = (match[5]?.trim() || (subtype || (artifact ? "Treasure" : "Token"))).replace(/\s+token$/i, "");
   const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
@@ -1794,6 +1796,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // not just the controller's own. Must stay after the "...under your
   // control" patterns above so those remain the first match when present.
   { event: "enters-battlefield", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "dies", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },

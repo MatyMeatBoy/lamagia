@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-oracle-create-token-triggered` | Sek'Kuar watches another nontoken creature you control die and creates a Graveborn token (CR 603.2, 603.6, 111.10) | `codex/c13-sekkuar-f99` | active | 2026-09-05 |
