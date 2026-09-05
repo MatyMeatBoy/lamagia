@@ -2754,6 +2754,27 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }
       };
     }
+    case "discard-target-player-or-planeswalker": {
+      const target = object.targets[0];
+      const seat = target?.kind === "player"
+        ? target.seat
+        : target?.kind === "permanent" ? findPermanent(state, target.instanceId)?.controller : undefined;
+      if (seat === undefined) return state;
+      const amount = Math.min(effectAmount(effect.amount, object), playerAt(state, seat).hand.length);
+      if (amount <= 0) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "discard-cards",
+          seat,
+          sourceId: object.id,
+          sourceCard: object.card,
+          amount,
+          remaining: amount
+        }
+      };
+    }
     case "discard-target-player-then-draw-same": {
       const target = object.targets[0];
       if (target?.kind !== "player") return state;

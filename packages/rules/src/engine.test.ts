@@ -185,6 +185,7 @@ const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Insta
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
 const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
+const BLIGHTNING = () => make({ name: "Blightning", type_line: "Sorcery", mana_cost: "{1}{B}{R}", cmc: 3, oracle_text: "Blightning deals 3 damage to target player or planeswalker. That player or that planeswalker's controller discards two cards.", oracle_id: "a6496440-dc0c-4d9b-bf37-f537b6f0187b", scryfall_id: "a6496440-dc0c-4d9b-bf37-f537b6f0187b" });
 const PEER_INTO_THE_ABYSS = () => make({ name: "Peer into the Abyss", type_line: "Sorcery", mana_cost: "{5}{B}{B}", cmc: 7, oracle_text: "Target player draws cards equal to half the number of cards in their library and loses half their life. Round up each time.", oracle_id: "21fa2442-6eac-4dce-a9cc-76f0053fdb8f", scryfall_id: "8627ecd0-3b32-43f9-8d0e-46a8d175ee2d" });
 const DISCARD_HAND_SPELL = () => make({ name: "Memory Collapse", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Target player discards their hand." });
 const X_DISCARD_SPELL = () => make({ name: "Scalable Mind Twist", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Target player discards X cards." });
@@ -4646,6 +4647,26 @@ describe("casting", () => {
     expect(game.pendingChoice).toBeNull();
     expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears"]);
     expect(game.players[1]!.graveyard.at(-1)?.name).toBe("Storm Crow");
+  });
+
+  it("reuses player-or-planeswalker targeting for Blightning's discard sentence", () => {
+    expect(profileOf(BLIGHTNING())).toMatchObject({
+      targetKind: "player-or-planeswalker",
+      effects: [
+        { kind: "damage-any-target", amount: 3 },
+        { kind: "discard-target-player-or-planeswalker", amount: 2 }
+      ],
+      fullyImplemented: true
+    });
+    let game = readyToCast([BLIGHTNING()], [MOUNTAIN(), SWAMP(), SWAMP()], [BEAR(), FLIER()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.life).toBe(37);
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 1, remaining: 2 });
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 1, { type: "choose-discard", sourceId, cardId: "foe-0" });
+    game = applyAction(game, 1, { type: "choose-discard", sourceId, cardId: "foe-1" });
+    expect(game.players[1]!.hand).toHaveLength(0);
   });
 
   it("reacts differently to each type of card an opponent discards, via Waste Not", () => {

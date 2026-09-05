@@ -424,6 +424,7 @@ export type SpellEffect =
   /** Baleful Mastery: "if the {cost} was paid, an opponent draws a card" — reads whether this cast used its own alternative cost (CR 601.2b). */
   | { readonly kind: "opponent-draws-if-cast-via-alternative-cost" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
+  | { readonly kind: "discard-target-player-or-planeswalker"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
   | { readonly kind: "discard-target-player-then-draw-same"; readonly amount: number }
   /** Curse of Chaos: the attacking player may discard one, then draws one. */
@@ -2980,6 +2981,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Target player discards (a|an|one|two|three|four|five|\d+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "discard-target-player", amount }, target: "player" };
+  }
+  if ((match = /^That player or that planeswalker['’]s controller discards (a|an|one|two|three|four|five|\d+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "discard-target-player-or-planeswalker", amount }, target: "none" };
   }
   if (/^Discard a card\. If the player does, they draw a card$/i.test(text)) {
     return { effect: { kind: "discard-event-controller-then-draw", amount: 1 }, target: "none" };
