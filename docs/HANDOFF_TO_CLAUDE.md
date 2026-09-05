@@ -3813,8 +3813,28 @@ rejection, not just an absent option. Validation: **702 rules tests**,
 `npm run check`, `npm run simulate:engine` 200/200, 10,051 global
 profiles.
 
-Prossh decklist status after this pass: **56 of 97 unique cards fully
-implemented (57.7%)**.
+**Beast Within / Generous Gift** — "Destroy target permanent. Its
+controller creates a 3/3 green Beast/Elephant creature token." turned
+out to have an exact sibling already implemented:
+`destroy-target-creature-then-controller-token`, built earlier for
+"Destroy target CREATURE..." cards (An Offer You Can't Refuse style).
+Its engine handler is target-agnostic — it destroys whatever
+`object.targets[0]` resolves to and hands the token to THAT
+permanent's controller, regardless of what kind of permanent it was —
+so this needed zero new `engine.ts` code, only a sibling parser branch
+in `recognizeText`'s closed-template section matching "Destroy target
+permanent..." instead of "...creature...", reusing the identical
+effect kind with `targetKind: "permanent"` in place of `"creature"`.
+Verified **+2** in the export count (10,051 → 10,053) and set coverage
+30.3% → 30.4%. Scenario-tested: casting Beast Within on an opponent's
+Grizzly Bears destroys it and creates the 3/3 Beast token under the
+OPPONENT's control, not the caster's — the entire point of the card,
+and the detail a naive "give myself a token" implementation would get
+backwards. Validation: **704 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,053 global profiles.
+
+Prossh decklist status after this pass: **57 of 97 unique cards fully
+implemented (58.8%)**.
 
 ## Gameplay interaction baseline (2026-09-05)
 

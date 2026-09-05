@@ -9747,6 +9747,35 @@ describe("Natural Order's green-restricted sacrifice and tutor", () => {
   });
 });
 
+describe("Beast Within gives the destroyed permanent's own controller the token", () => {
+  const BEAST_WITHIN = () => make({ name: "Beast Within", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target permanent. Its controller creates a 3/3 green Beast creature token." });
+
+  it("recognizes the compound effect", () => {
+    const profile = profileOf(BEAST_WITHIN());
+    expect(profile).toMatchObject({
+      targetKind: "permanent",
+      effects: [{ kind: "destroy-target-creature-then-controller-token", token: { name: "Beast", typeLine: "Creature — Beast", power: 3, toughness: 3, colors: ["G"] } }]
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("destroys the opponent's permanent and gives the token to the opponent, not the caster", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BEAST_WITHIN()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Beast" && permanent.card.token)).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Beast")).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
