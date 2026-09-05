@@ -58,6 +58,8 @@ export interface ManaAbility {
   readonly commanderIdentity?: boolean;
   /** "Add one mana of any color that a land you/an opponent control(s) could produce" (Fellwar Stone, Harvester Druid): the color set is computed from the battlefield at activation time, not fixed on the card. */
   readonly anyColorFromLandsControlledBy?: "opponent" | "you";
+  /** The produced mana can add Opal Palace's commander-entry counters when spent to cast that commander. */
+  readonly commanderEntryCounters?: boolean;
   readonly requiresTap: boolean;
   /** Life the ability costs (pain and filter lands). */
   readonly lifeCost: number;
@@ -108,6 +110,8 @@ export interface ActivatedAbility {
   readonly discardsCard?: boolean;
   /** One card chosen from the controller's graveyard and exiled as a cost. */
   readonly exilesGraveyardCard?: boolean;
+  /** Multiple creature cards chosen from one graveyard and exiled as a cost. */
+  readonly exilesGraveyardCards?: { readonly amount: number; readonly scope: "single-graveyard" };
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
   readonly lifeCost: number;
@@ -369,6 +373,8 @@ export type SpellEffect =
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
   | { readonly kind: "sacrifice-own-creature-then-draw"; readonly amount: number }
   | { readonly kind: "return-all-your-graveyard-to-hand" }
+  /** Return every creature card that entered your graveyard from the battlefield this turn. */
+  | { readonly kind: "return-creatures-died-this-turn-to-hand" }
   | { readonly kind: "look-put-one-in-hand"; readonly amount: number }
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   | { readonly kind: "oblation"; readonly draw: number }
@@ -407,6 +413,8 @@ export type SpellEffect =
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   /** Damage equal to the power of the creature that caused this trigger. */
   | { readonly kind: "damage-triggered-creature-power" }
+  /** Damage from the ability source equal to that source's current power. */
+  | { readonly kind: "damage-source-power" }
   /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
   | { readonly kind: "tap-creatures-pump-source-damage-attacker"; readonly subtype: string }
   | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
@@ -459,10 +467,14 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-creature-then-controller-token"; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent" }
+  /** Destroy a target artifact or creature whose mana value equals X. */
+  | { readonly kind: "destroy-target-artifact-or-creature-mana-value" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Return each non-token creature to its owner's control without changing zones. */
   | { readonly kind: "return-owned-creatures-to-control" }
+  /** Return each non-token permanent to its owner's control without changing zones. */
+  | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   | { readonly kind: "chaos-warp" }
   /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
   | { readonly kind: "regenerate-source" }
@@ -472,6 +484,10 @@ export type SpellEffect =
   /** Destroy artifact/enchantment permanents, then count the ones destroyed. */
   | { readonly kind: "destroy-all-artifacts-enchantments-add-counters"; readonly counter: string }
   | { readonly kind: "exile-target-permanent"; readonly gainSourceControl?: "target-controller" }
+  /** Exile a permanent now and return it under its owner's control next end step. */
+  | { readonly kind: "exile-target-permanent-delayed-return" }
+  /** Resolves a delayed return created by the previous effect. */
+  | { readonly kind: "return-delayed-permanent" }
   | { readonly kind: "exile-target-nontoken-creature" }
   /** Exile a controlled creature, then return it under its controller's control (CR 400.7). */
   | { readonly kind: "blink-target-creature" }
@@ -505,7 +521,7 @@ export type SpellEffect =
   | { readonly kind: "destroy-creatures-power-greater-than-target" }
   | { readonly kind: "return-n-nonland-permanents"; readonly count: number | "X" }
   | { readonly kind: "return-n-creatures"; readonly count: number | "X" }
-  | { readonly kind: "destroy-n-creatures"; readonly count: number | "X"; readonly nonblack?: boolean }
+  | { readonly kind: "destroy-n-creatures"; readonly count: number | "X"; readonly nonblack?: boolean; readonly counter?: string }
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
@@ -641,6 +657,8 @@ export interface TriggerDefinition {
   readonly sourceText: string;
   /** Mana that must be paid when an optional trigger is accepted. */
  readonly manaCost?: ManaCost;
+  /** Maximum value for an optional `{X}` cost, derived from the triggering event. */
+  readonly variablePayCost?: "event-amount";
   /** For "unless that player pays", the opponent is the payer and the trigger controller receives the effect if they decline. */
   readonly paymentBy?: "opponent";
   /**
@@ -676,11 +694,14 @@ export interface TriggerDefinition {
   readonly tapCost?: { readonly amount: number | "any"; readonly subtype?: string; readonly mode: "any" | "another" };
   /** For "sacrifice ~ unless you pay {cost}", declining the payment applies the effect. */
   readonly unlessPayCost?: ManaCost;
+  /** Trigger target selection excludes the source permanent ("another"). */
+  readonly excludesSourceFromTargets?: boolean;
 }
 
 export type TargetKind =
   | `spell-mana-value-${number}`
-  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment"
+  | `artifact-or-creature-mana-value-${number}`
+  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
@@ -709,6 +730,8 @@ export type TargetKind =
 export interface CardProfile {
   /** Unconditional self prohibition; targeting remains legal (CR 101.2). */
   readonly cantBeCountered: boolean;
+  /** Static protection for controlled creature spells meeting a power threshold. */
+  readonly uncounterableCreaturePowerThreshold: number | null;
   readonly name: string;
   readonly typeLine: string;
   readonly types: readonly CardType[];
@@ -856,7 +879,7 @@ function toNumber(token: string | undefined): number | null {
  * recognizers below.  The IR is only a parser front-end; the existing
  * SpellEffect executor remains authoritative (CR 609.3, 701.5, 701.13).
  */
-type SimpleEffectIROperation = "draw" | "mill" | "gain-life" | "lose-life";
+type SimpleEffectIROperation = "draw" | "mill" | "discard" | "gain-life" | "lose-life";
 type SimpleEffectIRSubject = "you" | "target-player" | "each-player" | "each-opponent";
 interface SimpleEffectIR {
   readonly operation: SimpleEffectIROperation;
@@ -865,7 +888,7 @@ interface SimpleEffectIR {
 }
 
 function simpleEffectIR(text: string): SimpleEffectIR | null {
-  const match = /^(?:(you|target player|each player|each opponent)\s+)?(draw|mill)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|twenty|\d+|X)\s+cards?$/i.exec(text)
+  const match = /^(?:(you|target player|each player|each opponent)\s+)?(draw|mill|discard)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|twenty|\d+|X)\s+cards?$/i.exec(text)
     ?? /^(you|target player|each player|each opponent)\s+(gain|gains|lose|loses)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|twenty|\d+|X)\s+life$/i.exec(text);
   if (!match) return null;
 
@@ -874,7 +897,7 @@ function simpleEffectIR(text: string): SimpleEffectIR | null {
     : subjectText === "each player" ? "each-player"
       : subjectText === "each opponent" ? "each-opponent" : "you";
   const operationText = match[2]!.toLowerCase();
-  const operation: SimpleEffectIROperation = operationText === "draw" || operationText === "mill"
+  const operation: SimpleEffectIROperation = operationText === "draw" || operationText === "mill" || operationText === "discard"
     ? operationText
     : operationText.startsWith("gain") ? "gain-life" : "lose-life";
   const amount = toNumber(match[3]) ?? (match[3]!.toUpperCase() === "X" ? "X" : null);
@@ -895,6 +918,10 @@ function simpleEffectFromIR(ir: SimpleEffectIR): { effect: SpellEffect; target: 
       : ir.subject === "each-player" ? "mill-each-player"
         : ir.subject === "each-opponent" ? "mill-each-opponent" : "mill-target-player";
     return { effect: { kind, amount: ir.amount } as SpellEffect, target };
+  }
+  if (ir.operation === "discard") {
+    if (ir.subject !== "target-player") return null;
+    return { effect: { kind: "discard-target-player", amount: ir.amount }, target: "player" };
   }
   if (ir.operation === "gain-life" && ir.subject === "each-opponent") return null;
   const kind = ir.operation === "gain-life"
@@ -1013,12 +1040,18 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
-function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; activationRestriction?: { enteredThisTurn: boolean; orControlsBasicLand?: boolean } } | null {
+function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; activationRestriction?: { enteredThisTurn: boolean; orControlsBasicLand?: boolean }; commanderEntryCounters?: boolean } | null {
   let remainder = effect.trim().replace(/\.$/, "");
   let gainLife: number | undefined;
   let requiresLands: number | undefined;
   let painDamage: number | undefined;
   let activationRestriction: { enteredThisTurn: boolean; orControlsBasicLand?: boolean } | undefined;
+  let commanderEntryCounters = false;
+  const commanderEntry = /\.\s*If you spend this mana to cast your commander, it enters with a number of additional \+1\/\+1 counters on it equal to the number of times it's been cast from the command zone this game$/i.exec(remainder);
+  if (commanderEntry) {
+    commanderEntryCounters = true;
+    remainder = remainder.slice(0, commanderEntry.index).trim();
+  }
   const gain = /\.\s*You gain (\w+) life$/i.exec(remainder);
   if (gain) {
     const amount = toNumber(gain[1]);
@@ -1059,7 +1092,8 @@ function parseManaInstruction(effect: string): { produced: ReturnType<typeof par
       ...(gainLife === undefined ? {} : { gainLife }),
       ...(requiresLands === undefined ? {} : { requiresLands }),
       ...(painDamage === undefined ? {} : { painDamage }),
-      ...(activationRestriction === undefined ? {} : { activationRestriction })
+      ...(activationRestriction === undefined ? {} : { activationRestriction }),
+      ...(commanderEntryCounters ? { commanderEntryCounters: true } : {})
     }
     : null;
 }
@@ -1094,10 +1128,14 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const removeCounters = counterMatch && counterAmount
       ? [{ kind: counterMatch[1]!.trim().replace(/\s+/g, " ").toLowerCase(), amount: counterAmount }]
       : [];
-    // Costs beyond tapping, life, and counters on the source (mana, sacrifice,
-    // discard) are not modeled.
+    // Costs beyond tapping, life, counters on the source, and mana are not
+    // modeled here; sacrifice/discard still stay excluded from mana abilities.
+    const manaSymbols = (costText.match(/\{[^}]+\}/g) ?? []).filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
+    const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
+    if (manaSymbols.length && !manaCost) continue;
     const leftovers = costText
       .replace(/\{T\}/g, "")
+      .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
       .replace(/remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+from\s+~/gi, "")
       .replace(/[,\s]/g, "");
@@ -1111,7 +1149,14 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // does not claim that trailing restriction is enforced.
     const instruction = parseManaInstruction(effectText) ?? (() => {
       const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
-      return produced ? { produced, gainLife: undefined, requiresLands: undefined, painDamage: undefined, activationRestriction: undefined } : null;
+      return produced ? {
+        produced,
+        gainLife: undefined,
+        requiresLands: undefined,
+        painDamage: undefined,
+        activationRestriction: undefined,
+        commanderEntryCounters: false
+      } : null;
     })();
     // "Add {C} for each <Subtype> on the battlefield / you control".
     const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(effectText.trim().replace(/\.$/, ""));
@@ -1142,10 +1187,12 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       index: abilities.length, produces: produced.produces, amount: produced.amount,
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
       ...(produced.commanderIdentity ? { commanderIdentity: true } : {}),
+      ...(instruction.commanderEntryCounters ? { commanderEntryCounters: true } : {}),
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
       ...(instruction.activationRestriction === undefined ? {} : { activationRestriction: instruction.activationRestriction }),
+      ...(manaCost ? { manaCost } : {}),
       requiresTap, lifeCost: lifeCost + (instruction.painDamage ?? 0), text: line.trim()
     });
   }
@@ -1364,6 +1411,7 @@ function effectUsesVariable(effect: SpellEffect): boolean {
   const anyEffect = effect as Record<string, unknown>;
   if (anyEffect.amount === "X" || anyEffect.count === "X") return true;
   if (effect.kind === "drain-target-toughness-pump-source-power") return true;
+  if (effect.kind === "destroy-target-artifact-or-creature-mana-value") return true;
   if (effect.kind === "compound") return effect.effects.some(effectUsesVariable);
   return false;
 }
@@ -1447,6 +1495,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const nontokenArtifact = Boolean(sacrificePermanent && /^nontoken\s+artifact$/i.test(sacrificePermanent[2]!));
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
   const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
+  const exilesGraveyardCardsMatch = /exile\s+(two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/i.exec(costText);
   const removedCounters: CounterCost[] = [];
   for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+~/gi)) {
     const amount = toNumber(match[1]);
@@ -1466,6 +1515,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
+    .replace(/exile\s+(?:two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
     .replace(/[,\s]/g, "");
@@ -1481,6 +1531,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: nontokenArtifact ? "Artifact" as const : /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]![1]! ? sacrificePermanent[2]!.slice(1).toLowerCase() : ""}` as "Artifact" | "Enchantment" | "Land", ...(nontokenArtifact ? { nontoken: true } : {}) } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
+    ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     ...(requiresOpponentLands !== null ? { requiresOpponentLands } : {}),
@@ -1878,6 +1929,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const simple = simpleEffectIR(text);
   const simpleResult = simple ? simpleEffectFromIR(simple) : null;
   if (simpleResult) return simpleResult;
+  if (/^Exile another target permanent\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
+    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "permanent" };
+  }
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
 
@@ -2004,6 +2058,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^~ deals damage equal to its power to any target$/i.test(text)) {
     return { effect: { kind: "damage-triggered-creature-power" }, target: "any" };
+  }
+  if (/^~ deals damage equal to its power to target player or planeswalker$/i.test(text)) {
+    return { effect: { kind: "damage-triggered-creature-power" }, target: "player-or-planeswalker" };
   }
   if ((match = /^(?:~|This spell) deals damage equal to the number of (creatures|artifacts|enchantments|lands) you control to any target$/i.exec(text))) {
     const type = match[1]![0]!.toUpperCase() + match[1]!.slice(1, -1) as CardType;
@@ -2276,6 +2333,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return a creature card at random from your graveyard to your hand$/i.test(text)) {
     return { effect: { kind: "return-random-creature-from-graveyard-to-hand" }, target: "none" };
   }
+  if (/^Return to your hand all creature cards that were put into your graveyard from the battlefield this turn$/i.test(text)) {
+    return { effect: { kind: "return-creatures-died-this-turn-to-hand" }, target: "none" };
+  }
   if ((match = /^Attacking creatures get ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-all-attacking-creatures", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
   }
@@ -2436,6 +2496,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "return-owned-creatures-to-control" }, target: "none" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
+  if (/^Destroy target artifact or creature with mana value X\.?$/i.test(text)) {
+    return { effect: { kind: "destroy-target-artifact-or-creature-mana-value" }, target: "artifact-or-creature" };
+  }
   if ((match = /^That creature gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-triggered-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
   }
@@ -2444,7 +2507,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "each-player-discard-and-draw", amount }, target: "none" };
   }
   if (/^Target player discards their hand$/i.test(text)) return { effect: { kind: "discard-target-player-hand" }, target: "player" };
-  if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on ~$/i.exec(text))) {
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on (?:~|this (?:artifact|enchantment|creature|permanent|land))$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-source", counter: match[2]!.trim().toLowerCase(), amount }, target: "none" };
   }
@@ -2462,6 +2525,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "blink-target-creature" }, target: "creature-you-control" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
+  if (/^Destroy up to X target nonblack creatures, where X is the number of verse counters on (?:~|this enchantment)\.?\s*(?:They can'?t be regenerated\.?)?$/i.test(text)) {
+    return { effect: { kind: "destroy-n-creatures", count: "X", nonblack: true, counter: "verse" }, target: "nonblack-creature" };
+  }
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
   if (/^Destroy target enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "enchantment" };
@@ -2969,6 +3035,7 @@ function recognizeText(text: string): RecognizedText {
     if (parseStaticKeywordGrant(line).length) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
+    if (/^creature spells you control with power \d+ or greater can't be countered\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     if (/^players have no maximum hand size\.?$/i.test(line)) continue;
     if (/^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line)) continue;
@@ -3128,6 +3195,15 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    // Stalking Vengeance: "it" refers to the source permanent, not the
+    // creature whose death caused the trigger (CR 109.5).
+    if (/^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s+it\s+deals\s+damage\s+equal\s+to\s+its\s+power\s+to\s+target\s+player\s+or\s+planeswalker\.?$/i.test(line)) {
+      triggers.push({
+        event: "dies", subject: "another-creature-you-control", effect: { kind: "damage-source-power" },
+        optional: false, targetKind: "player-or-planeswalker", sourceText: line
+      });
+      continue;
+    }
     const leavesLine = line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
     // Modern Oracle splits Bane of Progress's dependent instruction into a
     // second sentence. Keep it attached to the ETB trigger so the existing
@@ -3173,12 +3249,17 @@ function recognizeText(text: string): RecognizedText {
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
       const requiresKicked = Boolean(kickedGate);
       if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      // Well of Lost Dreams: X is chosen on resolution and capped by the life
+      // gain event (CR 107.3, 118.3). Keep this as a reusable variable-cost
+      // trigger shape instead of hard-coding the card in the engine.
+      const variableLifePay = /^you may pay \{X\}, where X is less than or equal to the amount of life you gained\.?\s*if you do,?\s*(draw X cards?\.?)$/i.test(effectText);
+      if (variableLifePay) effectText = effectText.replace(/^you may pay \{X\}, where X is less than or equal to the amount of life you gained\.?\s*if you do,?\s*/i, "");
       // "you may pay {cost}. If you do, X" — an optional mana cost gating X.
-      const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
+      const payGate = variableLifePay ? null : /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-      const optional = payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
-      const recognized = (payCost && payCost.hasVariable) ? null
+      const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
+      const recognized = (payCost && payCost.hasVariable && !variableLifePay) ? null
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
@@ -3195,6 +3276,7 @@ function recognizeText(text: string): RecognizedText {
           optional,
           targetKind: recognized.target,
           ...(capriciousMultiTarget ? { targetKinds: ["nonland-you-control", "nonland-opponent", "nonland-opponent"] as const, minimumTargets: 1 } : {}),
+          ...(recognized.effect.kind === "exile-target-permanent-delayed-return" ? { excludesSourceFromTargets: true } : {}),
           sourceText: line,
           ...(unlessPayment && payCost ? { paymentBy: "opponent" as const } : {}),
           ...(eventControllerChoice ? { choiceBy: "event-controller" as const } : {}),
@@ -3208,7 +3290,8 @@ function recognizeText(text: string): RecognizedText {
           ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),
           ...(triggered.nontoken ? { nontoken: true } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
-          ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment ? { payCost, manaCost: payCost } : {}),
+          ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment && !variableLifePay ? { payCost, manaCost: payCost } : {}),
+          ...(variableLifePay ? { payCost: parseManaCost("{X}")!, variablePayCost: "event-amount" as const } : {}),
           ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {})
         });
       } else {
@@ -3276,6 +3359,7 @@ export function cardProfile(card: CardData): CardProfile {
   const isPermanent = types.some((type) => type === "Land" || type === "Creature" || type === "Artifact" || type === "Enchantment" || type === "Planeswalker" || type === "Battle");
   const cost = parseManaCost(face.mana_cost);
   const cantBeCountered = /(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/i.test(text);
+  const uncounterableCreaturePowerMatch = /creature spells you control with power (\d+) or greater can't be countered\.?/i.exec(text);
   const recognized = recognizeText(text.replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n"));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
@@ -3405,6 +3489,7 @@ export function cardProfile(card: CardData): CardProfile {
     cost,
     manaValue: cost?.manaValue ?? Math.round(card.cmc ?? 0),
     cantBeCountered,
+    uncounterableCreaturePowerThreshold: uncounterableCreaturePowerMatch ? Number(uncounterableCreaturePowerMatch[1]) : null,
     colors: [...(face.colors ?? card.colors ?? [])],
     colorIdentity: [...(card.color_identity ?? [])],
     keywords,

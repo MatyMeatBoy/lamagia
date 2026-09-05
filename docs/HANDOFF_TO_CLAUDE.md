@@ -6,19 +6,20 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ## Current published checkpoint — 2026-09-05
 
-The latest source checkpoint includes verified Prowess, Changeling, Shadow,
-and Exalted primitives plus benchmark-selected compositional worker payloads;
-verify the Pages run before reporting a new client asset as live.
+The latest source checkpoint includes the verified C13 rescue primitives for
+creature-death history, Stalking Vengeance, and Opal Palace, plus benchmark-
+selected compositional worker payloads; verify the Pages run before reporting
+a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,083 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,094 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 22,570 / 84,990 implemented (26.6%) across 685
+- **Edition memberships:** 22,634 / 84,990 implemented (26.6%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 224 / 341 unique cards (65.7%), 117 pending.
-- **Commander 2014:** 196 / 322 unique cards (60.9%), 126 pending.
+- **Commander 2013:** 233 / 341 unique cards (68.3%), 108 pending.
+- **Commander 2014:** 197 / 322 unique cards (61.2%), 125 pending.
 - **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
   component references; 99.9% are reused across clauses. The full-catalog
   hybrid benchmark reduces worker context by 22.8% while preserving exact
@@ -2501,3 +2502,10 @@ test` PASS (**527 rules tests**, up from 525). `npm run simulate:engine`:
 The artifact-graveyard return primitive now supports optional recovery followed
 by life gain equal to the recovered card's mana value. Razor Hippogriff is the
 covered C13 application (CR 603.2, 608.2).
+### Worker checkpoint: Brooding Saurian ownership reset (2026-09-04)
+
+Added the reusable `return-owned-nontoken-permanents-to-control` trigger
+primitive. At each end step it restores control of every nontoken permanent
+to its owner without changing zones, covering Brooding Saurian (CR 603.2,
+603.6, 110.2). Commit `f6f8031` is queued for integration; this
+branch is based on `b008385` and excludes sibling worker commits.
