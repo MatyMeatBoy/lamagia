@@ -160,6 +160,8 @@ export interface PlayerState {
   readonly drewFromEmptyLibrary: boolean;
   /** Skip priority automatically in windows where this seat has nothing to do. */
   readonly autoPass: boolean;
+  /** Source/ability keys already activated during this turn (CR 702.57). */
+  readonly oncePerTurnActivations?: readonly string[];
   /** Rebound (CR 702.88): instance ids exiled this way, castable free at the next upkeep. */
   readonly reboundPending: readonly string[];
   /** Extra land plays granted this turn ("you may play an additional land"), reset each turn (CR 305.2). */
@@ -552,6 +554,19 @@ function nextLivingSeat(state: GameState, seat: SeatId): SeatId {
 
 function allPermanents(state: GameState): Permanent[] {
   return state.players.flatMap((player) => player.battlefield);
+}
+
+/** Gives zone-bound abilities the same deterministic source shape as permanents. */
+function handActivationSource(card: GameCard, controller: SeatId): Permanent {
+  return {
+    instance_id: card.instance_id, card, controller, tapped: false, summoningSick: false,
+    damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0,
+    isCommander: false
+  };
+}
+
+function activationKey(sourceId: string, abilityIndex: number): string {
+  return `${sourceId}:${abilityIndex}`;
 }
 
 function findPermanent(state: GameState, instanceId: string): Permanent | null {
@@ -4318,6 +4333,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,
+        oncePerTurnActivations: [],
         battlefield: player.battlefield.map((permanent) => ({
            ...permanent,
            tapped: cardProfile(permanent.card).doesNotUntapDuringUntap ? permanent.tapped : false,
@@ -4860,6 +4876,30 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
   }
 
+  // Zone-bound activated abilities (Forecast and future hand primitives) are
+  // offered beside cycling, but remain subject to the same authoritative
+  // activation validator and mana planner as battlefield abilities.
+  if (!splitSecondActive(state)) for (const card of player.hand) {
+    const source = handActivationSource(card, seat);
+    for (const ability of cardProfile(card).activatedAbilities.filter((candidate) => candidate.sourceZone === "hand")) {
+      const variableValues = ability.manaCost?.hasVariable
+        ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()]
+        : [0];
+      for (const variableValue of variableValues) {
+        const check = activatableAbility(state, seat, source, ability, variableValue);
+        if (!check.legal) continue;
+        actions.push({
+          action: { type: "activate", sourceId: card.instance_id, abilityIndex: ability.index,
+            ...(ability.manaCost?.hasVariable ? { variableValue } : {}) },
+          label: `${card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}`,
+          cardId: card.instance_id,
+          ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+          note: ability.text
+        });
+      }
+    }
+  }
+
   // Abilities of permanents this seat controls. Mana abilities resolve
   // immediately and never use the stack (rule 605.3a); everything else is
   // announced like a spell and waits for priority to pass.
@@ -5305,6 +5345,10 @@ function activatableAbility(
   const player = playerAt(state, seat);
   if (splitSecondActive(state)) return { legal: false };
   if (permanent.controller !== seat) return { legal: false };
+  if (ability.sourceZone === "hand" && !player.hand.some((card) => card.instance_id === permanent.instance_id)) return { legal: false };
+  if (ability.sourceZone !== "hand" && !player.battlefield.some((candidate) => candidate.instance_id === permanent.instance_id)) return { legal: false };
+  if (ability.upkeepOnly && (state.activeSeat !== seat || state.step !== "upkeep")) return { legal: false };
+  if (ability.oncePerTurn && (player.oncePerTurnActivations ?? []).includes(activationKey(permanent.instance_id, ability.index))) return { legal: false };
   if (ability.sorcerySpeed && !sorcerySpeed(state, seat)) return { legal: false };
   if (ability.loyaltyCost !== undefined) {
     // One loyalty ability per planeswalker per turn (CR 606.3); a minus ability
@@ -5404,10 +5448,13 @@ function triggerTapCostCandidates(
 function applyActivate(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate" }>): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para activar esa habilidad.");
   const player = playerAt(state, seat);
-  const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
-  if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
+  const battlefieldSource = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+  const handSource = player.hand.find((card) => card.instance_id === action.sourceId);
+  const source = battlefieldSource ?? (handSource ? handActivationSource(handSource, seat) : undefined);
+  if (!source) throw new Error("Ese permanente o carta ya no está bajo tu control.");
   const ability = cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
   if (!ability) throw new Error("Esa habilidad activada no existe.");
+  if (ability.sourceZone === "hand" ? !handSource : !battlefieldSource) throw new Error("La zona de esa habilidad ya no es válida.");
   const check = activatableAbility(state, seat, source, ability, action.variableValue ?? 0);
   if (!check.legal) throw new Error(`No puedes activar la habilidad de ${source.card.name} ahora.`);
 
@@ -5486,6 +5533,9 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   let next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost,
+    ...(ability.oncePerTurn ? {
+      oncePerTurnActivations: [...new Set([...(current.oncePerTurnActivations ?? []), activationKey(source.instance_id, ability.index)])]
+    } : {}),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
       let updated = permanent;

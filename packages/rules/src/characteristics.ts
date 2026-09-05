@@ -119,6 +119,14 @@ export interface ActivatedAbility {
   readonly loyaltyCost?: number;
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
+  /** The ability is activated from the named zone instead of the battlefield. */
+  readonly sourceZone?: "hand";
+  /** Printed upkeep restriction (Forecast, CR 702.57). */
+  readonly upkeepOnly?: boolean;
+  /** The same source ability can be activated only once during its controller's turn. */
+  readonly oncePerTurn?: boolean;
+  /** Reveal a hand source while announcing the ability (Forecast, CR 702.57). */
+  readonly revealSourceFromHand?: boolean;
   readonly requiresOpponentLands?: number;
   readonly text: string;
 }
@@ -1356,6 +1364,20 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const activated = /^([^:]{1,120}):\s*(.+)$/.exec(line.trim());
   if (!activated) return null;
   const [, costText, effectText] = activated as unknown as [string, string, string];
+  // Forecast is an activated ability whose source remains in hand (CR 702.57).
+  // Parse it through the shared sentence grammar so every supported effect is
+  // reusable by both the printed spell and its Forecast ability.
+  const forecast = /^Forecast\s+[—–-]\s*((?:\{[^}]+\})+),\s*Reveal\s+(?:~|this card)\s+from\s+your hand:\s*(.+)$/i.exec(line.trim());
+  if (forecast) {
+    const manaCost = parseManaCost(forecast[1]!);
+    const recognized = recognizeSentence(forecast[2]!.trim());
+    if (!manaCost || !recognized) return null;
+    return {
+      index, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost,
+      sourceZone: "hand", upkeepOnly: true, oncePerTurn: true, revealSourceFromHand: true,
+      effect: recognized.effect, targetKind: recognized.target, text: line.trim()
+    };
+  }
   // Mana abilities have their own immediate-resolution path (CR 605.1a).
   if (/^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
@@ -3414,7 +3436,7 @@ export function cardProfile(card: CardData): CardProfile {
     levelUpCost,
     levelDefinitions,
     protectionFrom,
-    activatedAbilities: isPermanent
+    activatedAbilities: isPermanent || recognized.activatedAbilities.some((ability) => ability.sourceZone === "hand")
       ? [
           ...recognized.activatedAbilities,
           ...(levelUpCost ? [{
