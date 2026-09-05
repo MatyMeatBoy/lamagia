@@ -12,13 +12,13 @@ selected compositional worker payloads; verify the Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,119 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,129 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
 - **Edition memberships:** 22,837 / 84,990 implemented (26.9%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 236 / 341 unique cards (69.2%), 105 pending.
+- **Commander 2013:** 239 / 341 unique cards (70.1%), 102 pending.
 - **Commander 2014:** 198 / 322 unique cards (61.5%), 124 pending.
 
 ### Historical worker intake audit — 2026-09-05
@@ -41,6 +41,11 @@ cluster with engine path, scenario test, CR citation, and exact `oracle_id` list
 - **Batch policy:** the benchmark chooses hybrid/compact/legacy per batch;
   current full-catalog and C13 runs both choose `hybrid-payload`. Compression
   never changes implementation status.
+
+The current parser also canonicalizes historical U+FFFD separators and keeps
+the subject when lowering optional `you may draw/gain/lose` clauses. This is a
+reusable import-boundary fix, not a card-name exception; it closed two C13
+Landfall/end-step life cards and is covered by a regression scenario.
 
 ### Worker-05 rescue — 2026-09-05
 
@@ -1666,7 +1671,6 @@ stale full tree. The clean branch currently exports **186/356 C13 printings**,
 **171/341 unique C13 Oracle IDs**, and **8,228/38,711 global cards**. Commits
 `5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
 queued for the next integration batch.
-
 ### Worker-05: reusable "any creature enters" trigger (2026-09-04)
 
 Claim `c14-any-creature-enters-trigger`. Wizards dropped "under your control"
@@ -2594,3 +2598,12 @@ The generic `card-cycled` trigger parser now normalizes “you may have it deal 
 and “you may have target creature gain …” into existing reusable effects. Slice
 and Dice uses the all-creature damage path; Dirge of Dread uses the targeted
 temporary keyword path (CR 603.2, 702.29).
+### Integrator checkpoint: Capricious Efreet multi-target random destruction (2026-09-05)
+
+Added reusable ordered multi-target trigger selection: mandatory targets are
+chosen first, optional target slots can be finished explicitly, and target
+filters remain authoritative per slot. Capricious Efreet now selects one
+controlled nonland permanent plus up to two opposing nonland permanents, then
+destroys one selected target using deterministic RNG (CR 603.3d, 601.2c,
+701.7). The functional worker commit `a868c8d` is integrated on top of the
+current authoritative engine; stale generated handoff text was not imported.

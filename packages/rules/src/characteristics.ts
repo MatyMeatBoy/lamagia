@@ -353,6 +353,8 @@ export type SpellEffect =
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
+  /** Each player discards their hand, then all draw the greatest discarded hand size. */
+  | { readonly kind: "each-player-discard-and-draw-greatest" }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
@@ -477,6 +479,8 @@ export type SpellEffect =
   | { readonly kind: "return-owned-creatures-to-control" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
+  /** Destroy one random permanent from an already-selected target group. */
+  | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
   | { readonly kind: "chaos-warp" }
   /** Creates one destruction-replacement shield for the source permanent (CR 701.19). */
   | { readonly kind: "regenerate-source" }
@@ -988,7 +992,11 @@ const SELF_NOUNS = [
  * phrasing of the same ability.
  */
 export function normalizedOracle(card: CardData): string {
-  const raw = (card.oracle_text ?? "").replace(/\([^)]*\)/g, " ");
+  // Some historical catalog imports decoded the UTF-8 em dash as U+FFFD.
+  // Treat that replacement character as the same keyword-ability separator
+  // used by current Oracle text; otherwise valid Landfall/Morbid lines fall
+  // out of the shared trigger grammar before they reach the legacy parser.
+  const raw = (card.oracle_text ?? "").replace(/\uFFFD/g, "—").replace(/\([^)]*\)/g, " ");
   const shortName = card.name.split(",")[0]!.split("//")[0]!.trim();
   const escaped = [card.name, shortName].filter(Boolean).map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   let text = raw;
@@ -2515,6 +2523,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-player-discard-and-draw", amount }, target: "none" };
   }
+  if (/^Each player discards their hand, then draws cards equal to the greatest number of cards a player discarded this way$/i.test(text)) {
+    return { effect: { kind: "each-player-discard-and-draw-greatest" }, target: "none" };
+  }
   if (/^Target player discards their hand$/i.test(text)) return { effect: { kind: "discard-target-player-hand" }, target: "player" };
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on (?:~|this (?:artifact|enchantment|creature|permanent|land))$/i.exec(text))) {
     const amount = toNumber(match[1]);
@@ -3233,7 +3244,12 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
-    const triggered = matchTriggerLine(leavesLine !== line ? leavesLine : line);
+    // Ability words are presentation labels, not part of the trigger grammar.
+    // Normalize both current and legacy-import separators here as a second
+    // boundary so a malformed historical U+FFFD cannot hide a valid trigger.
+    const triggerLine = (leavesLine !== line ? leavesLine : line)
+      .replace(/^(?:landfall|morbid)\s+[—–-\uFFFD]\s*/i, "");
+    const triggered = matchTriggerLine(triggerLine);
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
@@ -3269,7 +3285,12 @@ function recognizeText(text: string): RecognizedText {
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
-          const executableText = optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
+          const executableText = optional && !payGate
+            // Keep the subject for the compositional draw/life grammar. A
+            // blanket removal would turn "you may gain 2 life" into the
+            // invalid fragment "gain 2 life" (CR 609.3).
+            ? effectText.replace(/^you\s+may\s+(?=(?:draw|mill|discard|gain|lose)\b)/i, "You ").replace(/^you\s+may\s+/i, "")
+            : effectText;
           const lookTop = parseLookTopSelection(executableText);
           return lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
         })();
