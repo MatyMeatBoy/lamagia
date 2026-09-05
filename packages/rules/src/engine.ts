@@ -136,6 +136,8 @@ export interface Permanent {
   readonly regenerationShields?: number;
   /** The creature this Equipment is attached to, when it is equipped. */
   readonly attachedTo?: string;
+  /** The player this Aura is attached to (Curses; CR 303.4h). */
+  readonly attachedToPlayer?: SeatId;
   /** The prior controller restored when an Aura control effect ends (CR 110.2, 613.7). */
   readonly controlChange?: { readonly auraId: string; readonly previousController: SeatId };
   /** The last card exiled by an imprint ability, if any. */
