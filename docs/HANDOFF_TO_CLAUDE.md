@@ -18,6 +18,11 @@ Optional triggers can be yielded per source, while mandatory triggers and
 opponent response windows remain active. Validation after this checkpoint:
 714 rules tests, `npm run check`, and the 200-game engine matrix pass.
 
+Gameplay failure traces now include resolved names of stack targets in both the
+server NDJSON snapshot and the bounded stabilization diagnostic, so a stuck
+fetch, removal spell, or combat effect can be reconstructed without exposing
+hands or libraries.
+
 ## Current published checkpoint — 2026-09-05
 
 The latest source checkpoint includes the verified C13 Prossh cast-trigger,

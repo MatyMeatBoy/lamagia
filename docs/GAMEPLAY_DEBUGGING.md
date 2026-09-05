@@ -3,8 +3,9 @@
 The match server now writes a bounded public-state trace to
 `data/runtime/gameplay-debug.ndjson` (override with `GAMEPLAY_DEBUG_LOG`). It
 records each submitted action and stabilization failures with turn, step,
-priority, pending choice, stack, combat declarations, and the last public log
-entries. Hidden hands and libraries are never written.
+priority, pending choice, stack entries, their resolved target names, combat
+declarations, and the last public log entries. Hidden hands and libraries are
+never written.
 
 To inspect the latest failure locally:
 
