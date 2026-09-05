@@ -64,6 +64,23 @@ lobbies and the tier/EDHREC deck generator are still queued for UI/API wiring;
 the deterministic simulator and offline generator already support the related
 building blocks.
 
+### Centered gameplay decisions and Proliferate
+
+Required gameplay decisions are presented through the centered `decision-overlay`
+in `apps/client/src/main.ts`; the bottom action dock remains only as a compact
+fallback. This includes trigger targets/order/modes, optional triggers, reveal,
+graveyard/library choices, Scry/Surveil, cast-vs-cycle, mana choices, and the
+combat declarations. Do not move required choices back into the HUD dock.
+
+The rules engine now also recognizes and executes `Proliferate.` (CR 701.27):
+it offers only players/permanents that already have one or more counters, lets
+the controller choose any subset, and increments every counter type on each
+selected object. Player counters are private in projections except to their
+controller; the authoritative state remains `PlayerState.counters`. The
+scenario test covers permanent +1/+1/level counters and an opposing player
+energy counter. This is a reusable primitive for poison, loyalty, charge,
+experience, and future counter-based cards; do not add card-name branches.
+
 ### Historical worker intake audit — 2026-09-05
 
 `origin/claude/c14-precon-clusters` was audited commit-by-commit. Fourteen

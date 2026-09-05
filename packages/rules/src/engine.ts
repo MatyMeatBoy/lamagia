@@ -170,6 +170,8 @@ export interface PlayerState {
   readonly commanderCasts: Readonly<Record<string, number>>;
   /** Combat damage received from each opposing commander, keyed by commander instance id. */
   readonly commanderDamage: Readonly<Record<string, number>>;
+  /** Player counters such as poison, energy, experience, and rad counters. */
+  readonly counters: Readonly<Record<string, number>>;
   readonly landsPlayedThisTurn: number;
   /** Cards drawn this turn (Krang, Faerie Mastermind's "second card each turn"); reset each untap step. */
   readonly drawsThisTurn: number;
@@ -589,6 +591,15 @@ export type PendingChoice =
       readonly sourceId: string;
       readonly sourceCard: GameCard;
       readonly maxAmount: number;
+    }
+  | {
+      /** Proliferate (CR 701.27): add one counter to any number of eligible objects. */
+      readonly type: "proliferate";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly options: readonly Target[];
+      readonly selectedTargets: readonly Target[];
     };
 
 export type GameAction =
@@ -622,6 +633,8 @@ export type GameAction =
   | { readonly type: "choose-look-top-bottom"; readonly sourceId: string; readonly ordinal?: number }
   | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
+  | { readonly type: "choose-proliferate-target"; readonly sourceId: string; readonly target: Target }
+  | { readonly type: "finish-proliferate"; readonly sourceId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -1348,6 +1361,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       commanderColorIdentity: [...new Set(commanders.flatMap((card) => card.color_identity ?? []).map((color) => color.toUpperCase()))],
       commanderCasts: Object.fromEntries(commanders.map((card) => [card.instance_id, 0])),
       commanderDamage: {},
+      counters: {},
       landsPlayedThisTurn: 0,
       drawsThisTurn: 0,
       drawsThisDrawStep: 0,
@@ -2150,6 +2164,27 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         next = applyEffect(next, object, child, childTargetIndex ?? targetIndex);
       }
       return next;
+    }
+    case "proliferate": {
+      const options: Target[] = [];
+      for (const player of state.players) {
+        if (Object.values(player.counters).some((amount) => amount > 0)) options.push({ kind: "player", seat: player.seat });
+        for (const permanent of player.battlefield) {
+          if (Object.values(permanent.counters).some((amount) => amount > 0)) options.push({ kind: "permanent", instanceId: permanent.instance_id });
+        }
+      }
+      if (!options.length) return logged(state, controller, `${sourceName}: no hay permanentes ni jugadores con contadores para proliferar.`);
+      return {
+        ...state,
+        pendingChoice: {
+          type: "proliferate",
+          seat: controller,
+          sourceId: object.id,
+          sourceCard: object.card,
+          options,
+          selectedTargets: []
+        }
+      };
     }
     case "draw": return drawCards(state, controller, effectAmount(effect.amount, object));
     case "draw-combat-damage-participants": {
@@ -5941,6 +5976,22 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
       return actions;
     }
+    if (choice.type === "proliferate") {
+      for (const option of choice.options) {
+        actions.push({
+          action: { type: "choose-proliferate-target", sourceId: choice.sourceId, target: option },
+          label: `Proliferar ${targetLabel(state, option)}`,
+          ...(option.kind === "permanent" ? { cardId: option.instanceId } : {}),
+          note: `${choice.sourceCard.name}: agrega un contador a cada tipo de contador que ya tenga ese objetivo.`
+        });
+      }
+      actions.push({
+        action: { type: "finish-proliferate", sourceId: choice.sourceId },
+        label: choice.selectedTargets.length ? "Terminar proliferación" : "No proliferar",
+        note: "Puedes elegir cualquier cantidad de jugadores y permanentes elegibles."
+      });
+      return actions;
+    }
     if (choice.type === "discard-cards") {
       for (const card of player.hand) {
         actions.push({
@@ -8208,6 +8259,52 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
   return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
 }
 
+function applyChooseProliferateTarget(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-proliferate-target" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "proliferate" || choice.seat !== seat) throw new Error("No tienes una proliferación pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa proliferación ya no corresponde a la partida.");
+  const valid = choice.options.some((option) => JSON.stringify(option) === JSON.stringify(action.target));
+  if (!valid) throw new Error("Ese objetivo no es elegible para proliferar.");
+  if (choice.selectedTargets.some((target) => JSON.stringify(target) === JSON.stringify(action.target))) {
+    throw new Error("Ese objetivo ya fue elegido para proliferar.");
+  }
+  return logged({ ...state, pendingChoice: {
+    ...choice,
+    options: choice.options.filter((option) => JSON.stringify(option) !== JSON.stringify(action.target)),
+    selectedTargets: [...choice.selectedTargets, action.target]
+  } }, seat,
+    `${targetLabel(state, action.target)} queda seleccionado para proliferar.`);
+}
+
+function applyFinishProliferate(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-proliferate" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "proliferate" || choice.seat !== seat) throw new Error("No tienes una proliferación pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa proliferación ya no corresponde a la partida.");
+  let next: GameState = { ...state, pendingChoice: null };
+  for (const target of choice.selectedTargets) {
+    if (target.kind === "player") {
+      next = withPlayer(next, target.seat, (player) => ({
+        ...player,
+        counters: Object.fromEntries(Object.entries(player.counters).map(([kind, amount]) => [kind, amount > 0 ? amount + 1 : amount]))
+      }));
+      continue;
+    }
+    if (target.kind !== "permanent") continue;
+    const permanent = findPermanent(next, target.instanceId);
+    if (!permanent) continue;
+    next = withPlayer(next, permanent.controller, (player) => ({
+      ...player,
+      battlefield: player.battlefield.map((candidate) => candidate.instance_id !== permanent.instance_id ? candidate : {
+        ...candidate,
+        counters: Object.fromEntries(Object.entries(candidate.counters).map(([kind, amount]) => [kind, amount > 0 ? amount + 1 : amount]))
+      })
+    }));
+  }
+  return logged(next, seat, choice.selectedTargets.length
+    ? `${playerAt(next, seat).name} prolifera ${choice.selectedTargets.length} objetivo(s).`
+    : `${playerAt(next, seat).name} no prolifera ningún objetivo.`);
+}
+
 /** Applies one action for one seat, then settles the game to its next decision point. */
 export function applyAction(state: GameState, seat: SeatId, action: GameAction): GameState {
   if (state.finished) throw new Error("La partida ya terminó.");
@@ -8244,6 +8341,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-look-top-bottom": next = applyChooseLookTopBottom(state, seat, action); break;
     case "choose-draw": next = applyChooseDraw(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
+    case "choose-proliferate-target": next = applyChooseProliferateTarget(state, seat, action); break;
+    case "finish-proliferate": next = applyFinishProliferate(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {

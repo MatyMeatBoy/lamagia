@@ -373,6 +373,8 @@ export type SpellEffect =
   | { readonly kind: "compound"; readonly effects: readonly SpellEffect[]; readonly targetOffsets?: readonly (number | null)[] }
   | { readonly kind: "incite-rebellion" }
   | { readonly kind: "draw"; readonly amount: number | "X" }
+  /** Proliferate (CR 701.27): choose any number of players/permanents with counters. */
+  | { readonly kind: "proliferate" }
   /** Both the source controller and combat-damaged player draw the event amount. */
   | { readonly kind: "draw-combat-damage-participants" }
   /** Draw only if the controller currently has more life than an opponent. */
@@ -2952,6 +2954,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: "none"
     };
   }
+  if (/^Proliferate\.?$/i.test(text)) return { effect: { kind: "proliferate" }, target: "none" };
+
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };

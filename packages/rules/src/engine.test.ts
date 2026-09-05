@@ -1251,6 +1251,34 @@ describe("casting", () => {
     expect(game.players[0]!.hand).toHaveLength(0);
   });
 
+  it("recognizes and resolves Proliferate for selected permanents and players", () => {
+    const proliferate = make({ name: "Test Proliferate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Proliferate." });
+    expect(profileOf(proliferate)).toMatchObject({ effects: [{ kind: "proliferate" }], fullyImplemented: true });
+    let game = readyToCast([proliferate], [FOREST(), FOREST(), FOREST(), BEAR()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = stage(game, 0, (player) => ({
+      counters: { poison: 1 },
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === bear.instance_id
+        ? { ...permanent, counters: { "+1/+1": 2, "level": 1 } }
+        : permanent)
+    }));
+    game = stage(game, 1, (player) => ({ counters: { energy: 2 } }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "proliferate", seat: 0 });
+    const sourceId = game.pendingChoice!.sourceId;
+    const targetActions = legalActions(game, 0).filter((entry) => entry.action.type === "choose-proliferate-target");
+    expect(targetActions).toHaveLength(3);
+    const bearTarget = targetActions.find((entry) => entry.action.type === "choose-proliferate-target" && entry.action.target.kind === "permanent" && entry.action.target.instanceId === bear.instance_id)!;
+    game = applyAction(game, 0, bearTarget.action);
+    const playerTarget = legalActions(game, 0).find((entry) => entry.action.type === "choose-proliferate-target" && entry.action.target.kind === "player" && entry.action.target.seat === 1)!;
+    game = applyAction(game, 0, playerTarget.action);
+    game = applyAction(game, 0, { type: "finish-proliferate", sourceId });
+    const updatedBear = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(updatedBear.counters).toEqual({ "+1/+1": 3, level: 2 });
+    expect(game.players[0]!.counters).toEqual({ poison: 1 });
+    expect(game.players[1]!.counters).toEqual({ energy: 3 });
+  });
+
   it("preserves Azorius Herald when blue mana was spent to cast it", () => {
     const herald = C13_AZORIUS_HERALD();
     let game = readyToCast([herald], [PLAINS(), ISLAND(), ISLAND()]);
