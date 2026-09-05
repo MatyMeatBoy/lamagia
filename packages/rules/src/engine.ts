@@ -3129,7 +3129,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "counter-target-spell": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
-      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry) ? { ...entry, countered: true } : entry)) };
+      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
     }
     case "counter-target-spell-with-delayed-draw": {
       const target = object.targets[0];
@@ -3152,14 +3152,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       ];
       return {
         ...state,
-        stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry) ? { ...entry, countered: true } : entry)),
+        stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)),
         delayedDraws: [...state.delayedDraws, ...delayedDraws]
       };
     }
     case "counter-target-spell-to-battlefield": {
       const target = object.targets[0];
       if (!target || target.kind !== "spell") return state;
-      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry)
+      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state)
         ? { ...entry, countered: true, counteredToBattlefieldController: controller }
         : entry)) };
     }
@@ -6350,7 +6350,7 @@ export function hasRealChoice(state: GameState, seat: SeatId): boolean {
     }
     if (effects?.length && effects.every(isCounterOnlyEffect) && entry.requiresTarget) {
       return legalTargets(state, seat, entry.requiresTarget, sourceProfile).some(target => target.kind === "spell"
-        && state.stack.some(spell => spell.id === target.stackId && canCounterSpell(spell)));
+        && state.stack.some(spell => spell.id === target.stackId && canCounterSpell(spell, state)));
     }
     return true;
   });
@@ -6362,8 +6362,15 @@ export function stackSpellManaValue(spell: StackObject): number {
   return profile.manaValue + (profile.cost?.symbols.filter(symbol => symbol.kind === "variable").length ?? 0) * spell.variableValue;
 }
 
-export function canCounterSpell(spell: StackObject): boolean {
-  return !spell.trigger && !spell.activated && !spell.countered && !cardProfile(spell.card).cantBeCountered;
+export function canCounterSpell(spell: StackObject, state?: GameState): boolean {
+  if (spell.trigger || spell.activated || spell.countered) return false;
+  const profile = cardProfile(spell.card);
+  if (profile.cantBeCountered) return false;
+  if (!state || !isCreature(profile)) return true;
+  const power = profile.power ?? 0;
+  return !allPermanents(state).some((source) => source.controller === spell.controller
+    && cardProfile(source.card).uncounterableCreaturePowerThreshold !== null
+    && power >= cardProfile(source.card).uncounterableCreaturePowerThreshold!);
 }
 
 function isCounterOnlyEffect(effect: SpellEffect): boolean {

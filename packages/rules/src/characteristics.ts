@@ -703,6 +703,8 @@ export type TargetKind =
 export interface CardProfile {
   /** Unconditional self prohibition; targeting remains legal (CR 101.2). */
   readonly cantBeCountered: boolean;
+  /** Static protection for controlled creature spells meeting a power threshold. */
+  readonly uncounterableCreaturePowerThreshold: number | null;
   readonly name: string;
   readonly typeLine: string;
   readonly types: readonly CardType[];
@@ -2843,6 +2845,7 @@ function recognizeText(text: string): RecognizedText {
     if (parseStaticKeywordGrant(line).length) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
+    if (/^creature spells you control with power \d+ or greater can't be countered\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     if (/^players have no maximum hand size\.?$/i.test(line)) continue;
     if (/^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line)) continue;
@@ -3147,6 +3150,7 @@ export function cardProfile(card: CardData): CardProfile {
   const isPermanent = types.some((type) => type === "Land" || type === "Creature" || type === "Artifact" || type === "Enchantment" || type === "Planeswalker" || type === "Battle");
   const cost = parseManaCost(face.mana_cost);
   const cantBeCountered = /(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/i.test(text);
+  const uncounterableCreaturePowerMatch = /creature spells you control with power (\d+) or greater can't be countered\.?/i.exec(text);
   const recognized = recognizeText(text.replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n"));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
@@ -3276,6 +3280,7 @@ export function cardProfile(card: CardData): CardProfile {
     cost,
     manaValue: cost?.manaValue ?? Math.round(card.cmc ?? 0),
     cantBeCountered,
+    uncounterableCreaturePowerThreshold: uncounterableCreaturePowerMatch ? Number(uncounterableCreaturePowerMatch[1]) : null,
     colors: [...(face.colors ?? card.colors ?? [])],
     colorIdentity: [...(card.color_identity ?? [])],
     keywords,
