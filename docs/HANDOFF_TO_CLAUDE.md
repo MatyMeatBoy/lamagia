@@ -12,13 +12,13 @@ selected compositional worker payloads; verify the Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,111 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,117 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 22,804 / 84,990 implemented (26.8%) across 685
+- **Edition memberships:** 22,831 / 84,990 implemented (26.9%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 233 / 341 unique cards (68.3%), 108 pending.
+- **Commander 2013:** 235 / 341 unique cards (68.9%), 106 pending.
 - **Commander 2014:** 198 / 322 unique cards (61.5%), 124 pending.
 
 ### Historical worker intake audit — 2026-09-05
