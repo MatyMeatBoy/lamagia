@@ -317,3 +317,19 @@ Final validation after the recovery pass: **600 rules tests**, `npm run check`,
 **9,363/38,711** unique profiles, edition memberships **23,752/84,990
 (27.9%)**, C13 **269/341**, and C14 **199/322**. The C13 queue remains 72
 cards with 5 one-line candidates.
+
+The audited `origin/worker-05`/MtgFork history was recorded as merge
+`c8c5f51` after the executable content had already been selectively integrated;
+the current source tree was deliberately preserved because the worker tree
+would remove newer Mirror Entity and Faerie Conclave behavior. `git cherry`
+now reports no remaining worker-05 commits. The one local trigger-review patch
+that still differs by patch-id (`eeac0f3`) is semantically covered by the
+current entering-creature-power implementation and its scenarios.
+
+The C13 pending-card audit was also completed from the catalog: all **72
+unique pending oracle IDs** were read and cross-checked against the generated
+roadmap and set coverage. The five one-line candidates are War Cadence,
+Propaganda, Sudden Spoiling, Serene Master, and Wash Out; the remaining 67
+are grouped by their exact Oracle text templates in
+`docs/PRIMITIVE_ROADMAP_C13.md` and are not being treated as generic keyword
+matches.
