@@ -521,6 +521,8 @@ export type SpellEffect =
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
   | { readonly kind: "tap-target-permanent" }
+  /** Taps a creature and suppresses its controller's untap while the source is controlled. */
+  | { readonly kind: "tap-target-creature-and-lock" }
   /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
   | { readonly kind: "tap-or-untap-target-permanent" }
   | { readonly kind: "target-cant-block" }
@@ -692,7 +694,7 @@ export type TargetKind =
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
   | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
-  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
+  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
@@ -2561,6 +2563,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
   }
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
+  if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
+    return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
+  }
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
   if (/^Destroy all tapped creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures", tappedOnly: true }, target: "none" };
   if (/^Destroy all artifacts, creatures, and enchantments$/i.test(text)) {

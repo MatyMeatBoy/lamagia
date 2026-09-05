@@ -99,6 +99,9 @@ export interface Permanent {
   readonly echoDueTurn?: number;
   /** Doesn't untap during its controller's next untap step (Breaching Leviathan, CR 502.1). */
   readonly skipNextUntap?: boolean;
+  /** Source permanent whose controller continuously prevents this permanent's untap. */
+  readonly skipUntapWhileSourceId?: string;
+  readonly skipUntapWhileSourceController?: SeatId;
   /** A loyalty ability was activated on this planeswalker this turn (CR 606.3). */
   readonly loyaltyUsedThisTurn?: boolean;
   /** "Target creature can't block this turn"; cleared during cleanup. */
@@ -3308,6 +3311,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       return raiseTapEvents(next, state, [permanent.instance_id]);
     }
+    case "tap-target-creature-and-lock": {
+      const target = object.targets[0];
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!target || target.kind !== "permanent" || !source) return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      const next = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, tapped: true, skipUntapWhileSourceId: source.instance_id, skipUntapWhileSourceController: source.controller }
+          : candidate)
+      }));
+      return raiseTapEvents(next, state, [permanent.instance_id]);
+    }
     case "add-mana": {
       return withPlayer(state, controller, (player) => ({
         ...player,
@@ -4320,7 +4338,11 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         landsPlayedThisTurn: 0,
         battlefield: player.battlefield.map((permanent) => ({
            ...permanent,
-           tapped: cardProfile(permanent.card).doesNotUntapDuringUntap ? permanent.tapped : false,
+           tapped: permanent.skipUntapWhileSourceId
+             && permanent.skipUntapWhileSourceController !== undefined
+             && findPermanent(next, permanent.skipUntapWhileSourceId)?.controller === permanent.skipUntapWhileSourceController
+             ? permanent.tapped
+             : cardProfile(permanent.card).doesNotUntapDuringUntap ? permanent.tapped : false,
            summoningSick: false,
            loyaltyUsedThisTurn: false
          }))
@@ -5020,9 +5042,10 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (manaValueTarget) return (profile.types.includes("Artifact") || isCreature(profile)) && profile.manaValue === Number(manaValueTarget[1]);
     if (kind === "artifact-or-creature") return profile.types.includes("Artifact") || isCreature(profile);
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
-    if (kind === "creature" || kind === "creature-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
       if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
+      if (kind === "creature-opponent" && permanent.controller === seat) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
       if (kind === "nonartifact-nonblack-creature" && (profile.types.includes("Artifact") || profile.colors.some((color) => color.toUpperCase() === "B"))) return false;

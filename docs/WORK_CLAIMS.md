@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-dungeon-geists` | Dungeon Geists taps an opposing creature and suppresses its untap while the source remains controlled (CR 603.2, 502.1, 611.3) | `codex/c13-dungeon-geists-f99` | active | 2026-09-05 |

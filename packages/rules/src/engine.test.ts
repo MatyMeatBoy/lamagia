@@ -320,6 +320,12 @@ const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
+const C13_DUNGEON_GEISTS = () => make({
+  name: "Dungeon Geists", type_line: "Creature — Spirit", mana_cost: "{2}{U}{U}", cmc: 4, power: "3", toughness: "3",
+  keywords: ["Flying"],
+  oracle_text: "Flying\nWhen this creature enters, tap target creature an opponent controls. That creature doesn't untap during its controller's untap step for as long as you control this creature.",
+  scryfall_id: "d3c81fda-c23d-437c-85f0-62d7b492ea32", oracle_id: "ab5ebae2-cd77-4a7d-a93b-8042cd486429"
+});
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
 const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
 const C13_SALTCRUSTED_STEPPE = () => make({ name: "Saltcrusted Steppe", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {G} and/or {W}.", produced_mana: ["C", "G", "W"], scryfall_id: "c13-saltcrusted-steppe" });
@@ -3786,6 +3792,25 @@ describe("casting", () => {
     game = applyAction(game, 0, activation!.action);
     game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.battlefield.find((permanent) => permanent.instance_id === basalt.instance_id)?.tapped === false);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === basalt.instance_id)?.tapped).toBe(false);
+  });
+
+  it("locks an opposing creature with C13 Dungeon Geists while the source is controlled", () => {
+    let game = readyToCast([C13_DUNGEON_GEISTS()], [ISLAND(), ISLAND(), ISLAND(), ISLAND()], [], [BEAR(), BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.targetKind).toBe("creature-opponent");
+    expect(choice.options).toHaveLength(2);
+    const target = choice.options[0]!;
+    expect(target.kind).toBe("permanent");
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    const targetId = target.kind === "permanent" ? target.instanceId : "";
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === targetId)?.tapped).toBe(true);
+
+    game = { ...game, step: "untap", activeSeat: 1, priorityOpen: false, prioritySeat: 1, passedSeats: [] };
+    game = settle(game);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === targetId)?.tapped).toBe(true);
   });
 
   it("exiles a selected graveyard and returns any selected permanent to its owner", () => {
