@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,166**
-- Cards with a reusable existing primitive hint: **11,462**
+- One-line cards: **15,160**
+- Cards with a reusable existing primitive hint: **11,456**
 - Cards needing new primitive review: **3,704**
-- Templates: **11,988**
+- Templates: **11,990**
 
 ## Worker rule
 
@@ -61,7 +61,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Harald, King of Skemfar | `0089b07c-7f47-4a9a-9fb7-cc38ec9d7bcd` | library-look | trigger / ETB | When ~ enters, look at the top five cards of your library. You may reveal an Elf, Warrior, or Tyvar card from among them and put it into your hand. Put the rest on the bottom of your library in a random order. |
 | needs-new-primitive | Mystical Dispute | `48390b8d-db41-48a5-9bac-316660ab7252` | activated | new primitive review | ~ costs {2} less to cast if it targets a blue spell. |
 | reuse-existing | Fae of Wishes // Granted | `c0abbed2-d213-47ef-8d6c-4a21efb9a55f` | discard | draw / discard | {1}{U}, Discard two cards: Return ~ to its owner's hand. |
-| reuse-existing | Lava Coil | `fa71db44-5181-4c51-8b24-7fbedf36e3ca` | exile | exile | If that creature would die this turn, exile it instead. |
 | reuse-existing | Tibalt, Rakish Instigator | `0b768f8f-2213-45b9-bced-8fb1bbb441c3` | gain-life | damage / life | Your opponents can't gain life. |
 | reuse-existing | Jiang Yanggu, Wildcrafter | `04f2c320-dfcc-440a-9e24-3c2083d74e7c` | counters | activated ability / mana | Each creature you control with a +1/+1 counter on it has "{T}: Add one mana of any color." |
 | needs-new-primitive | Kaya, Bane of the Dead | `29d58aa4-9a7e-4052-9b0d-fc282f1be40e` | activated | new primitive review | Your opponents and permanents your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof. |
@@ -369,7 +368,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Mycoid Shepherd | `c4a4e607-7f37-4dc6-8fc0-f77bdafeb919` | gain-life | damage / life | Whenever ~ or another creature you control with power 5 or greater dies, you may gain 5 life. |
 | needs-new-primitive | Chill | `70a93d0f-9a02-4e60-a2b8-827fd2410604` | activated | new primitive review | Red spells cost {2} more to cast. |
 | needs-new-primitive | Winter Orb | `1dcbd583-3388-4b34-a7cd-131648aa6abd` | static-continuous | new primitive review | As long as ~ is untapped, players can't untap more than one land during their untap steps. |
-| reuse-existing | Magma Spray | `fe16f1ab-58b4-4452-abe4-cbd9addd348f` | exile | exile | If that creature would die this turn, exile it instead. |
 | reuse-existing | Eidolon of Blossoms | `77ccbea1-70af-4194-adad-39a904221c75` | draw | trigger / ETB | Constellation — Whenever ~ or another enchantment you control enters, draw a card. |
 | needs-new-primitive | Squelching Leeches | `662a2158-4176-4b4a-be6a-13f4501d22f9` | activated | new primitive review | ~'s power and toughness are each equal to the number of Swamps you control. |
 | reuse-existing | Kiora's Follower | `22c044ad-77d7-4c93-953d-e2daa9686ff7` | activated | activated ability / mana | {T}: Untap another target permanent. |
@@ -518,5 +516,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Guardian of Faith | `8e04a5e0-e22c-430b-a39a-c9f38e16ea86` | static-continuous | trigger / ETB | When ~ enters, any number of other target creatures you control phase out. |
 | needs-new-primitive | Changeling Outcast | `a61ef0cc-1da9-49f9-b0dc-01cf9f6205be` | combat-restriction | new primitive review | ~ can't block and can't be blocked. |
 | needs-new-primitive | Yavimaya, Cradle of Growth | `8dd5f5af-d2d8-4356-8617-8381081b930c` | activated | new primitive review | Each land is a Forest in addition to its other land types. |
+| reuse-existing | Sword of Truth and Justice | `7a8baaf9-e21f-41a0-9f15-80764f6e5e68` | damage | damage / life | Whenever equipped creature deals combat damage to a player, put a +1/+1 counter on a creature you control, then proliferate. |
+| reuse-existing | Splendid Reclamation | `13fe5e46-77a6-45d8-ac0b-c3d740eccf86` | return | return / graveyard | Return all land cards from your graveyard to the battlefield tapped. |
 
-The JSON contains the remaining 14,666 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,660 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

@@ -136,6 +136,8 @@ export interface Permanent {
   readonly regenerationShields?: number;
   /** This creature cannot use regeneration shields until cleanup (CR 701.19). */
   readonly cantRegenerateUntilEndOfTurn?: boolean;
+  /** Damage replacement that exiles this creature instead of letting it die this turn (CR 614.1). */
+  readonly exileIfWouldDieUntilEndOfTurn?: boolean;
   /** The creature this Equipment is attached to, when it is equipped. */
   readonly attachedTo?: string;
   /** The player this Aura is attached to (Curses; CR 303.4h). */
@@ -1581,6 +1583,7 @@ function millCards(state: GameState, seat: SeatId, amount: number): GameState {
 
 /** Moves a permanent off the battlefield, honouring the commander-zone replacement. */
 function movePermanentToZone(state: GameState, permanent: Permanent, zone: "graveyard" | "exile" | "library-bottom"): GameState {
+  const destinationZone = zone === "graveyard" && permanent.exileIfWouldDieUntilEndOfTurn ? "exile" : zone;
   const ownerSeat = permanent.card.owner;
   let next = withPlayer(state, permanent.controller, (player) => ({
     ...player,
@@ -1600,19 +1603,19 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
     return logged(next, ownerSeat, `${permanent.card.name} vuelve a la zona de mando.`);
   }
   if (permanent.card.token) {
-    if (zone === "graveyard" && isCreature(cardProfile(permanent.card))) {
+    if (destinationZone === "graveyard" && isCreature(cardProfile(permanent.card))) {
       next = { ...next, creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1 };
       next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state) }, [permanent]);
     }
     return logged(next, permanent.controller, `${permanent.card.name} deja el campo de batalla.`);
   }
-  const field = zone === "library-bottom" ? "library" : zone;
+  const field = destinationZone === "library-bottom" ? "library" : destinationZone;
   next = withPlayer(next, ownerSeat, (player) => ({ ...player, [field]: [...player[field], permanent.card] }));
   next = logged(next, permanent.controller,
-    `${permanent.card.name} va ${zone === "graveyard" ? "al cementerio" : zone === "exile" ? "al exilio" : "al fondo de la biblioteca"}.`);
+    `${permanent.card.name} va ${destinationZone === "graveyard" ? "al cementerio" : destinationZone === "exile" ? "al exilio" : "al fondo de la biblioteca"}.`);
   // "Dies" is specifically battlefield → graveyard (rule 700.4). A commander
   // redirected to the command zone above never reaches this point.
-  if (zone === "graveyard" && isCreature(cardProfile(permanent.card))) {
+  if (destinationZone === "graveyard" && isCreature(cardProfile(permanent.card))) {
     next = {
       ...next,
       creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1,
@@ -3373,6 +3376,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         ...player,
         battlefield: player.battlefield.map((permanent) => permanent.instance_id === after.instance_id
           ? { ...permanent, cantRegenerateUntilEndOfTurn: true }
+          : permanent)
+      }));
+    }
+    case "damage-any-target-exiles-if-dies": {
+      const target = object.targets[0];
+      if (!target) return state;
+      const amount = effectAmount(effect.amount, object);
+      if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
+      if (target.kind !== "permanent") return state;
+      const before = findPermanent(state, target.instanceId);
+      const next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+      const after = findPermanent(next, target.instanceId);
+      if (!before || !after || !isCreature(cardProfile(after.card)) || after.damage <= before.damage) return next;
+      return withPlayer(next, after.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === after.instance_id
+          ? { ...permanent, exileIfWouldDieUntilEndOfTurn: true }
           : permanent)
       }));
     }
@@ -6051,7 +6071,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         players: next.players.map((current) => ({
           ...current,
           cantCastSpellsUntilEndOfTurn: false,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false }))
         }))
       };
       break;
