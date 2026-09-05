@@ -2947,6 +2947,17 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       };
     }
   }
+  const damageAndSelf = /^~ deals (\w+) damage to any target and (\w+) damage to you$/i.exec(text);
+  if (damageAndSelf) {
+    const damage = damageAndSelf[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndSelf[1]!);
+    const selfDamage = damageAndSelf[2]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndSelf[2]!);
+    if (damage !== null && selfDamage !== null) {
+      return {
+        effect: { kind: "compound", effects: [{ kind: "damage-any-target", amount: damage }, { kind: "damage-controller", amount: selfDamage }] },
+        target: "any"
+      };
+    }
+  }
   if ((match = /^~ deals (\w+) damage to any target$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };

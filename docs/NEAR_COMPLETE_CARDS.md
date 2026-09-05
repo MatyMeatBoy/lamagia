@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,195**
-- Cards with a reusable existing primitive hint: **11,486**
+- One-line cards: **15,184**
+- Cards with a reusable existing primitive hint: **11,475**
 - Cards needing new primitive review: **3,709**
-- Templates: **12,003**
+- Templates: **11,999**
 
 ## Worker rule
 
@@ -48,7 +48,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Incinerate | `d8fd7a34-8418-4e98-b79b-119c4348c667` | damage | damage / life | A creature dealt damage this way can't be regenerated this turn. |
 | needs-new-primitive | Putrefy | `9b271430-f53d-42d6-a547-2f286dd9bcb6` | destroy | new primitive review | Destroy target artifact or creature. |
 | needs-new-primitive | Brave the Elements | `9d73a51a-1c8e-40cd-8124-aeff406a0884` | activated | new primitive review | White creatures you control gain protection from the chosen color until end of turn. |
-| reuse-existing | Psionic Blast | `7f221ad6-7ec4-483d-a6b5-1456c95c1cad` | damage | damage / life | ~ deals 4 damage to any target and 2 damage to you. |
 | reuse-existing | Strategic Betrayal | `0127c13f-7b0f-44c3-8b35-97f306c5f239` | exile | exile | Target opponent exiles a creature they control and their graveyard. |
 | reuse-existing | Twitching Doll | `fd6e1967-237a-41f6-bbf4-2c869f9447c8` | counters | activated ability / mana | {T}: Add one mana of any color. Put a nest counter on ~. |
 | reuse-existing | Beza, the Bounding Spring | `020de6d7-f5a2-4036-ad25-451e5977b4d4` | token | damage / life | When ~ enters, create a Treasure token if an opponent controls more lands than you. You gain 4 life if an opponent has more life than you. Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you. Draw a card if an opponent has more cards in hand than you. |
@@ -218,5 +217,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Reflecting Pool | `67f43ac6-2a58-4b53-b5d7-0330e2a252e2` | activated | activated ability / mana | {T}: Add one mana of any type that a land you control could produce. |
 | reuse-existing | Ob Nixilis Reignited | `65481ae1-54b2-44d2-91e1-20cd486386da` | draw | damage / life | −8: Target opponent gets an emblem with "Whenever a player draws a card, you lose 2 life." |
 | reuse-existing | Candelabra of Tawnos | `c7c7bffa-442d-4ba5-b778-ad394c192f27` | activated | activated ability / mana | {X}, {T}: Untap X target lands. |
+| needs-new-primitive | Temporal Manipulation | `6b6ac99a-7548-4cad-9fe5-ea611618ab9e` | activated | new primitive review | Take an extra turn after this one. |
 
-The JSON contains the remaining 14,995 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,984 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
