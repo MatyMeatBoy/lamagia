@@ -33,6 +33,10 @@ reprints/imports cannot silently collapse the fast-mana action into “cast”.
 The menu deduplicates the server actions, then keeps **View information** as
 the final non-gameplay row.
 
+Selecting a menu action with one or multiple targets always opens the same
+centered target picker used by direct card clicks; the menu never submits an
+incomplete target list.
+
 ## Yield from this card
 
 `toggle-trigger-yield` is a player preference for a battlefield source. It

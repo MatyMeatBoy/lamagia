@@ -393,6 +393,9 @@ function cardActionsForCard(cardId: string): LegalAction[] {
 function actionForCard(cardId: string): LegalAction | undefined {
   return cardActionsForCard(cardId)[0];
 }
+function actionNeedsTargetSelection(entry: LegalAction): boolean {
+  return Boolean(entry.requiresTarget || entry.requiresTargets?.length);
+}
 function passAction(): LegalAction | undefined { return view?.legalActions.find((entry) => entry.action.type === "pass"); }
 
 /** Every activation this viewer may take with one permanent, in menu order. */
@@ -1317,7 +1320,7 @@ function wireBoard(): void {
     button.addEventListener("click", () => {
       const entry = view?.legalActions[Number(button.dataset.actionIndex)];
       if (!entry) return;
-      if (entry.requiresTarget && entry.cardId) { onCardClick(entry.cardId, entry); return; }
+      if (actionNeedsTargetSelection(entry) && entry.cardId) { onCardClick(entry.cardId, entry); return; }
       void submit(entry.action);
     }));
   document.querySelectorAll<HTMLButtonElement>("[data-zone]").forEach((button) =>
