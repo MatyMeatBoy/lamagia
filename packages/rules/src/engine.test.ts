@@ -535,6 +535,7 @@ const BALEFUL_MASTERY = () => make({ name: "Baleful Mastery", type_line: "Instan
 const BLACK_SOURCE = () => make({ name: "Onyx Mana Rock", type_line: "Land", produced_mana: ["B"] });
 const COUNTER_UNLESS_PAY = () => make({ name: "Test Mana Leak", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target spell unless its controller pays {1}." });
 const DAZE = () => make({ name: "Daze", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "You may return an Island you control to its owner's hand rather than pay this spell's mana cost.\nCounter target spell unless its controller pays {1}.", oracle_id: "70486bee-6ee7-41ea-b834-8caf4699302b", scryfall_id: "61968d99-6571-49ce-bcf1-2aaac3a10f45" });
+const GUSH = () => make({ name: "Gush", type_line: "Instant", mana_cost: "{4}{U}", cmc: 5, oracle_text: "You may return two Islands you control to their owner's hand rather than pay this spell's mana cost.\nDraw two cards.", oracle_id: "16d8ee99-8ec8-429f-9ba7-818a74b6f910", scryfall_id: "b5f4475e-d97c-412d-8c8e-ec73f69dbb81" });
 const FLUSTERSTORM = () => make({ name: "Flusterstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, keywords: ["storm"], oracle_text: "Counter target instant or sorcery spell unless its controller pays {1}.\nStorm (When you cast this spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)", oracle_id: "86bf58f2-7f25-4e10-b797-25e0e8e67769", scryfall_id: "0bc0f90d-1aef-4c70-9529-0482023d084f" });
 const MANA_DRAIN = () => make({ name: "Mana Drain", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell. At the beginning of your next main phase, add an amount of {C} equal to that spell's mana value.", oracle_id: "74d3277a-38e5-4732-afed-084a56148f20", scryfall_id: "f4e72225-0008-46cf-b403-3402ae8bfe47" });
 const LONG_RIVERS_PULL = () => make({ name: "Long River's Pull", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Gift a card (You may promise an opponent a gift as you cast this spell. If you do, they draw a card before its other effects.)\nCounter target creature spell. If the gift was promised, instead counter target spell.", oracle_id: "f1993767-1d07-49c8-b8dc-04ec9840a999", scryfall_id: "1c81d0fa-81a1-4f9b-a5fd-5a648fd01dea" });
@@ -5935,6 +5936,20 @@ describe("casting", () => {
     game = applyAction(game, 1, declineOption!.action);
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[0]!.life).toBe(life0Before);
+  });
+
+  it("offers Gush one alternative-cost action per pair of Islands", () => {
+    const profile = profileOf(GUSH());
+    expect(profile).toMatchObject({ fullyImplemented: true, returnLandInsteadOfManaCost: { subtype: "Island", amount: 2 }, effects: [{ kind: "draw", amount: 2 }] });
+    let game = readyToCast([GUSH()], [ISLAND(), ISLAND(), ISLAND()]);
+    const options = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(options).toHaveLength(3);
+    expect(options.every((entry) => entry.action.type === "cast" && entry.action.returnPermanentIds?.length === 2)).toBe(true);
+    const chosen = options[0]!.action;
+    if (chosen.type !== "cast" || !chosen.returnPermanentIds) throw new Error("Gush alternative cost missing.");
+    game = applyAction(game, 0, chosen);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Island")).toHaveLength(1);
+    expect(game.players[0]!.hand.filter((card) => card.name === "Island")).toHaveLength(2);
   });
 
   it("restricts Flusterstorm to instant-or-sorcery spells, unlike the generic 'target spell' template", () => {

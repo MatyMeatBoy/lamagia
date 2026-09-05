@@ -656,7 +656,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly returnPermanentIds?: readonly string[]; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
@@ -6225,7 +6225,7 @@ function controlsLandType(state: GameState, seat: SeatId, subtype: string): bool
   return playerAt(state, seat).battlefield.some((permanent) => isLand(cardProfile(permanent.card)) && hasSubtype(cardProfile(permanent.card), subtype));
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false, giftPromised = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false, giftPromised = false, returnPermanentIds?: readonly string[]): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
@@ -6243,10 +6243,12 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (payLifeCost && !profile.payLifeInsteadOfManaCost) return { legal: false };
   if (payLifeCost && profile.payLifeInsteadOfManaCost
     && (!controlsLandType(state, seat, profile.payLifeInsteadOfManaCost.controlLandType) || profile.payLifeInsteadOfManaCost.life >= player.life)) return { legal: false };
-  if (returnPermanentId) {
+  const returnedLandIds = returnPermanentIds ?? (returnPermanentId ? [returnPermanentId] : []);
+  if (returnedLandIds.length) {
     if (!profile.returnLandInsteadOfManaCost) return { legal: false };
-    const returned = player.battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
-    if (!returned || !isLand(cardProfile(returned.card)) || !hasSubtype(cardProfile(returned.card), profile.returnLandInsteadOfManaCost.subtype)) return { legal: false };
+    if (returnedLandIds.length !== profile.returnLandInsteadOfManaCost.amount || new Set(returnedLandIds).size !== returnedLandIds.length) return { legal: false };
+    const returned = returnedLandIds.map((id) => player.battlefield.find((permanent) => permanent.instance_id === id));
+    if (returned.some((permanent) => !permanent || !isLand(cardProfile(permanent.card)) || !hasSubtype(cardProfile(permanent.card), profile.returnLandInsteadOfManaCost!.subtype))) return { legal: false };
   }
   if (payReducedCost && (!profile.payReducedCostInstead || fromCommandZone || flashback)) return { legal: false };
   if (giftPromised && !profile.giftPromisedTargetKind) return { legal: false };
@@ -6272,7 +6274,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
   const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowLegendaryMana });
+  const plan = (freeCast || payLifeCost || returnedLandIds.length) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowLegendaryMana });
   if (!plan) return { legal: false };
   const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -6708,15 +6710,20 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         });
       }
     }
-    // Daze-style land return: one offer per eligible land, each alongside the normal paid cast (CR 601.2b).
+    // Daze/Gush-style land return: one offer per eligible set, alongside the normal paid cast (CR 601.2b).
     if (profile.returnLandInsteadOfManaCost) {
-      for (const land of player.battlefield) {
-        if (!isLand(cardProfile(land.card)) || !hasSubtype(cardProfile(land.card), profile.returnLandInsteadOfManaCost.subtype)) continue;
-        const landCheck = castableCard(state, seat, card, false, 0, undefined, false, false, false, false, false, false, land.instance_id);
+      const eligibleLands = player.battlefield.filter((land) => isLand(cardProfile(land.card))
+        && hasSubtype(cardProfile(land.card), profile.returnLandInsteadOfManaCost!.subtype));
+      for (const lands of combinations(eligibleLands, profile.returnLandInsteadOfManaCost.amount)) {
+        const returnIds = lands.map((land) => land.instance_id);
+        const landCheck = castableCard(state, seat, card, false, 0, undefined, false, false, false, false, false, false, undefined, false, false, returnIds);
         if (!landCheck.legal) continue;
+        const returnAction = profile.returnLandInsteadOfManaCost.amount === 1
+          ? { type: "cast" as const, cardId: card.instance_id, returnPermanentId: returnIds[0]! }
+          : { type: "cast" as const, cardId: card.instance_id, returnPermanentIds: returnIds };
         actions.push({
-          action: { type: "cast", cardId: card.instance_id, returnPermanentId: land.instance_id },
-          label: `Lanzar ${card.name} devolviendo ${land.card.name} en vez de pagar su coste de maná`,
+          action: returnAction,
+          label: `Lanzar ${card.name} devolviendo ${lands.map((land) => land.card.name).join(", ")} en vez de pagar su coste de maná`,
           cardId: card.instance_id,
           manaValue: 0,
           ...(landCheck.targetKind ? { requiresTarget: landCheck.targetKind } : {}),
@@ -7834,9 +7841,10 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const freeCast = Boolean(action.freeCast);
   const payLifeCost = Boolean(action.payLifeCost);
   const returnPermanentId = action.returnPermanentId;
+  const returnPermanentIds = action.returnPermanentIds ?? (returnPermanentId ? [returnPermanentId] : []);
   const payReducedCost = Boolean(action.payReducedCost);
   const giftPromised = Boolean(action.giftPromised);
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId, payReducedCost, giftPromised);
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId, payReducedCost, giftPromised, returnPermanentIds);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
@@ -7852,8 +7860,9 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
   const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
-  if (!freeCast && !payLifeCost && !returnPermanentId && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
+  const alternativeReturn = returnPermanentIds.length > 0;
+  const plan = (freeCast || payLifeCost || alternativeReturn) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
+  if (!freeCast && !payLifeCost && !alternativeReturn && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
   if (check.targetKinds?.length) {
@@ -7873,24 +7882,27 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     action = { ...action, targets: chosen };
   }
 
-  let next = (freeCast || payLifeCost || returnPermanentId) ? state : applyManaPlan(state, seat, plan!);
+  let next = (freeCast || payLifeCost || alternativeReturn) ? state : applyManaPlan(state, seat, plan!);
   const payment = freeCast
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
     : payLifeCost
     ? { spent: emptyPool(), lifePaid: profile.payLifeInsteadOfManaCost!.life, remaining: playerAt(next, seat).manaPool }
-    : returnPermanentId
+    : alternativeReturn
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
     : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowLegendaryMana);
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
-  if (returnPermanentId) {
-    const returned = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
-    if (!returned) throw new Error(`No tienes esa tierra para devolver por ${card.name}.`);
+  if (alternativeReturn) {
+    const returned = returnPermanentIds.map((id) => playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === id));
+    if (returned.some((permanent) => !permanent)) throw new Error(`No tienes esas tierras para devolver por ${card.name}.`);
+    const returnedPermanents = returned as Permanent[];
     next = withPlayer(next, seat, (current) => ({
       ...current,
-      battlefield: current.battlefield.filter((candidate) => candidate.instance_id !== returnPermanentId)
+      battlefield: current.battlefield.filter((candidate) => !returnPermanentIds.includes(candidate.instance_id))
     }));
-    next = withPlayer(next, returned.card.owner, (current) => ({ ...current, hand: [...current.hand, returned.card] }));
-    next = logged(next, seat, `${player.name} devuelve ${returned.card.name} a su mano por ${card.name}.`);
+    for (const returned of returnedPermanents) {
+      next = withPlayer(next, returned.card.owner, (current) => ({ ...current, hand: [...current.hand, returned.card] }));
+    }
+    next = logged(next, seat, `${player.name} devuelve ${returnedPermanents.map((permanent) => permanent.card.name).join(", ")} a su mano por ${card.name}.`);
   }
   const paymentSpentTypes = [
     ...Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)),

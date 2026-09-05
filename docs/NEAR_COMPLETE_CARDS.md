@@ -5,9 +5,9 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,153**
-- Cards with a reusable existing primitive hint: **11,445**
-- Cards needing new primitive review: **3,708**
+- One-line cards: **15,152**
+- Cards with a reusable existing primitive hint: **11,443**
+- Cards needing new primitive review: **3,709**
 - Templates: **11,991**
 
 ## Worker rule
@@ -43,7 +43,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Nissa, Resurgent Animist | `c1fc5923-c3cd-448a-98d1-c154661c2812` | activated | activated ability / mana | Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second time this ability has resolved this turn, reveal cards from the top of your library until you reveal an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in a random order. |
 | reuse-existing | Tishana's Tidebinder | `2993dc7d-723d-4a9b-94bd-4bb02a9f7243` | counters | activated ability / mana | When ~ enters, counter up to one target activated or triggered ability. If an ability of an artifact, creature, or planeswalker is countered this way, that permanent loses all abilities for as long as ~ remains on the battlefield. |
 | reuse-existing | Ancestral Mask | `db5380ed-ba28-4ea2-abc3-4998e2022903` | static-continuous | static / continuous | Enchanted creature gets +2/+2 for each other enchantment on the battlefield. |
-| reuse-existing | Gush | `16d8ee99-8ec8-429f-9ba7-818a74b6f910` | return | activated ability / mana | You may return two Islands you control to their owner's hand rather than pay ~'s mana cost. |
 | needs-new-primitive | Cut Down | `1b30210d-10e9-4703-8967-032063bb4f26` | destroy | new primitive review | Destroy target creature with total power and toughness 5 or less. |
 | reuse-existing | Ruby, Daring Tracker | `5d1b0eee-3a7a-4f22-a40d-7658a368962a` | pump | trigger / ETB | Whenever ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn. |
 | reuse-existing | Lay Down Arms | `aa91d092-7f4a-4e4d-85db-e200692f3d9d` | exile | activated ability / mana | Exile target creature with mana value less than or equal to the number of Plains you control. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Cleaver Skaab | `9fa66e03-7b20-43f6-8c53-1ce18169c382` | sacrifice | sacrifice | {3}, {T}, Sacrifice another Zombie: Create two tokens that are copies of the sacrificed creature. |
 | reuse-existing | Lord of the Forsaken | `3a25d1e2-63d8-4a93-b0ce-f9307736b3f9` | activated | activated ability / mana | Pay 1 life: Add {C}. Spend this mana only to cast a spell from your graveyard. |
 | reuse-existing | Undead Augur | `c26887e1-27f4-4550-921b-53460e43c079` | draw | damage / life | Whenever ~ or another Zombie you control dies, you draw a card and you lose 1 life. |
+| needs-new-primitive | Timeless Dragon | `a5ae93e9-0385-47fd-9d8f-306e9a6b7fe6` | activated | new primitive review | Eternalize {2}{W}{W} |
 
-The JSON contains the remaining 14,653 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,652 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

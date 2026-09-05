@@ -1043,8 +1043,8 @@ export interface CardProfile {
   readonly freeCastIfCommander: boolean;
   /** "If you control a [land type], you may pay N life rather than pay ~'s mana cost" (Snuff Out, CR 601.2b, 118.9). */
   readonly payLifeInsteadOfManaCost: { readonly life: number; readonly controlLandType: string } | null;
-  /** "You may return a [land type] you control to its owner's hand rather than pay ~'s mana cost" (Daze, CR 601.2b, 118.9). */
-  readonly returnLandInsteadOfManaCost: { readonly subtype: string } | null;
+  /** "You may return N [land type]s you control to their owner's hand rather than pay ~'s mana cost" (Daze/Gush, CR 601.2b, 118.9). */
+  readonly returnLandInsteadOfManaCost: { readonly subtype: string; readonly amount: number } | null;
   /** "You may pay {cost} rather than pay ~'s mana cost" (Baleful Mastery, CR 601.2b, 118.9). */
   readonly payReducedCostInstead: ManaCost | null;
   /** "Gift a card" (CR 702.166): promising the gift while casting draws an opponent a card before other effects. */
@@ -4180,7 +4180,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, sacrifice a creature\.?$/i.test(line)) continue;
     if (/^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line)) continue;
     if (/^if you control an? [A-Za-z][A-Za-z'’-]*, you may pay \d+ life rather than pay ~'s mana cost\.?$/i.test(line)) continue;
-    if (/^you may return an? [A-Za-z][A-Za-z'’-]* you control to its owner's hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
+    if (/^you may return (?:a|an|one|two|three|four|five|\d+) [A-Za-z][A-Za-z'’-]*s? you control to (?:its|their) owner'?s hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you may pay (?:\{[^}]+\})+ rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^gift a card\.?$/i.test(line)) continue;
     if (/^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you\.?$/i.test(line)) continue;
@@ -4836,8 +4836,10 @@ export function cardProfile(card: CardData): CardProfile {
   const freeCastIfCommander = text.split("\n").some((line) => /^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line.trim()));
   const payLifeInsteadMatch = text.split("\n").map((line) => /^if you control an? ([A-Za-z][A-Za-z'’-]*), you may pay (\d+) life rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const payLifeInsteadOfManaCost = payLifeInsteadMatch ? { life: Number(payLifeInsteadMatch[2]), controlLandType: payLifeInsteadMatch[1]! } : null;
-  const returnLandInsteadMatch = text.split("\n").map((line) => /^you may return an? ([A-Za-z][A-Za-z'’-]*) you control to its owner's hand rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
-  const returnLandInsteadOfManaCost = returnLandInsteadMatch ? { subtype: returnLandInsteadMatch[1]! } : null;
+  const returnLandInsteadMatch = text.split("\n").map((line) => /^you may return (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z'’-]*?)(?:s)? you control to (?:its|their) owner'?s hand rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
+  const returnLandInsteadOfManaCost = returnLandInsteadMatch
+    ? { amount: toNumber(returnLandInsteadMatch[1]!)!, subtype: singularSubtype(returnLandInsteadMatch[2]!) }
+    : null;
   const payReducedCostMatch = text.split("\n").map((line) => /^you may pay ((?:\{[^}]+\})+) rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const payReducedCostInstead = payReducedCostMatch ? parseManaCost(payReducedCostMatch[1]!) : null;
   const giftDrawsCard = text.split("\n").some((line) => /^gift a card$/i.test(line.trim().replace(/\.$/, "")));
