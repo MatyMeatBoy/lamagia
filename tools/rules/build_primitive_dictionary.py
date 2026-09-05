@@ -114,6 +114,15 @@ WORD_GROUPS: tuple[dict[str, Any], ...] = (
         "patterns": ["{cost}: effect", "{T}: Add mana", "Pay life: effect", "Sacrifice a...: effect"],
         "notes": "Use the same legality function for offered actions and forged intents. A cost is paid before the ability resolves and cannot leak hidden choices.",
     },
+    {
+        "word": "static / continuous",
+        "meaning": "Apply a continuous layer effect to the correct set of permanents without putting a trigger on the stack.",
+        "parser": ["staticPowerToughnessGrants", "staticKeywordGrants", "auraControlTarget"],
+        "helpers": ["staticPowerToughnessBonus", "keywordOf", "syncAuraControlEffects"],
+        "effects": ["modify-source-creature", "aura-control"],
+        "patterns": ["Has base power and toughness", "Loses all abilities", "Gains/loses a keyword", "Continuous effect from an Aura"],
+        "notes": "Keep layer-sensitive base characteristics, keyword removal/grants, type changes and Aura scope as separate operands; do not turn a continuous effect into a one-shot activation.",
+    },
 )
 
 
