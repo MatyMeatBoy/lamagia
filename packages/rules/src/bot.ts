@@ -160,6 +160,10 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const richest = [...modeOptions].sort((a, b) => b.label.length - a.label.length)[0];
     if (richest) return { action: richest.action, label: richest.label };
   }
+  if (state.pendingChoice?.type === "view-hand" && state.pendingChoice.seat === seat) {
+    const acknowledge = available.find((entry) => entry.action.type === "acknowledge-view-hand");
+    if (acknowledge) return { action: acknowledge.action, label: acknowledge.label };
+  }
   if (state.pendingChoice?.type === "tap-or-untap" && state.pendingChoice.seat === seat) {
     const choice = state.pendingChoice;
     const targetPermanent = "instanceId" in choice.target ? choice.target : undefined;

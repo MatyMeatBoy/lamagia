@@ -390,6 +390,8 @@ export type SpellEffect =
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
+  /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
+  | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   /** Each player discards their hand, then all draw the greatest discarded hand size. */
@@ -2522,6 +2524,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-each-creature-and-player", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-each-creature-and-player", amount: "X" }, target: "none" };
+  }
+  // "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private
+  // reveal to the caster alone, resolved via a self-closing pendingChoice —
+  // it never crosses the hidden-information boundary the same way a public
+  // reveal or a card-transfer effect would, since only the caster's own
+  // projection ever includes the target's hand.
+  if (/^Look at target player'?s hand$/i.test(text)) {
+    return { effect: { kind: "look-at-target-players-hand" }, target: "player" };
   }
   if (/^Target player draws cards equal to half the number of cards in their library and loses half their life$/i.test(text)) {
     return { effect: { kind: "draw-half-library-then-lose-half-life-target-player" }, target: "player" };

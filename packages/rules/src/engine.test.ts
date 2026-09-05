@@ -459,6 +459,10 @@ const MJOLNIR = () => make({
   oracle_id: "7f9a8845-d760-44a7-a4c9-8a20dba4e14a", scryfall_id: "e0c7f566-5351-44e3-a346-b84b0eb10209"
 });
 const WORTHY_CREATURE = () => make({ name: "Test Worthy Avenger", type_line: "Legendary Creature — Human Hero", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", colors: ["R"] });
+const GITAXIAN_PROBE = () => make({
+  name: "Gitaxian Probe", type_line: "Sorcery", mana_cost: "{U/P}", cmc: 1, oracle_text: "Look at target player's hand.\nDraw a card.",
+  oracle_id: "1d67f5ff-1fce-45e5-b6a1-416c569351e2", scryfall_id: "995486ce-58bb-4753-a812-0ca73ef1a235"
+});
 const NOTION_THIEF = () => make({
   name: "Notion Thief", type_line: "Creature — Human Rogue", mana_cost: "{2}{U}{B}", cmc: 4, power: "3", toughness: "1", keywords: ["Flash"],
   oracle_text: "Flash\nIf an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card.",
@@ -8105,6 +8109,41 @@ describe("Notion Thief", () => {
     game = passUntil(game, (state) => state.turn > turnBefore && state.activeSeat === 1 && state.step === "precombat-main");
     expect(game.players[1]!.hand.length).toBe(handBefore1 + 1);
     expect(game.players[0]!.hand.length).toBe(handBefore0);
+  });
+});
+
+describe("Gitaxian Probe", () => {
+  it("shows the caster (and only the caster) the target's hand, then draws a card", () => {
+    const profile = profileOf(GITAXIAN_PROBE());
+    expect(profile.effects).toMatchObject([{ kind: "look-at-target-players-hand" }, { kind: "draw", amount: 1 }]);
+    expect(profile.targetKind).toBe("player");
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [GITAXIAN_PROBE()]) }));
+    game = stage(game, 1, () => ({ hand: toHand(1, [BEAR(), FOREST()], "foe") }));
+    game = putOnBattlefield(game, 0, [ISLAND()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const libraryBefore = game.players[0]!.library.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+
+    // The private view opens for the caster only, before anyone gets to act again.
+    expect(game.pendingChoice?.type).toBe("view-hand");
+    const casterView = projectGame(game, 0);
+    expect(casterView.viewedHand?.targetSeat).toBe(1);
+    expect(casterView.viewedHand?.cards.map((card) => card.name).sort()).toEqual(["Forest", "Grizzly Bears"]);
+    expect(game.players[0]!.library.length).toBe(libraryBefore - 1); // "Draw a card" already resolved
+
+    // Nobody else's projection ever includes it — not even the target's own.
+    expect(projectGame(game, 1).viewedHand).toBeNull();
+
+    // Closing the view sends the spell to the graveyard.
+    const acknowledge = legalActions(game, 0).find((entry) => entry.action.type === "acknowledge-view-hand")!;
+    expect(acknowledge).toBeDefined();
+    game = applyAction(game, 0, acknowledge.action);
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Gitaxian Probe")).toBe(true);
   });
 });
 

@@ -3235,14 +3235,38 @@ Orcish Bowmasters' own suppression condition on a fresh player's first
 turn. Validation: **618 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,435 global profiles.
 
-With Notion Thief, Black Market Connections, and Wizard Class closed, 91
-of 94 cards in the Nekusar, the Mindrazer decklist are implemented.
-Three remain, each needing its own new subsystem, none attempted yet:
-Gitaxian Probe ("look at target player's hand" — genuinely touches the
-hidden-information boundary, unlike Notion Thief; no safe design found
-yet for surfacing that to a caster without leaking it elsewhere),
-Reforge the Soul (the Miracle keyword, which requires
+Gitaxian Probe | `1d67f5ff-1fce-45e5-b6a1-416c569351e2` DOES genuinely
+cross the hidden-information boundary — unlike Notion Thief, "Look at
+target player's hand" really does need one player to see another's
+cards — but it turned out to fit an EXISTING pattern exactly:
+`projection.ts` already has three precedents (library search, Scry,
+top-of-library review) for "a `PendingChoice` scoped to one seat, whose
+private card contents `projectGame` includes ONLY when
+`viewerSeat === choice.seat`." A new `"view-hand"` `PendingChoice` plus a
+`ViewedHandView` follows the identical shape: the target's hand is copied
+into the projection only for the entitled viewer (the caster), and the
+gate is exactly one equality check — `state.pendingChoice?.type ===
+"view-hand" && state.pendingChoice.seat === viewerSeat` — so it is
+structurally impossible for the target's own projection, or any other
+seat's, to ever receive this field; the code that would need to leak it
+simply never runs for them. A new `acknowledge-view-hand` action closes
+the view, deferring the spell's move to its owner's graveyard/exile until
+then (exactly like Scry holds its own source card in limbo until its
+choice concludes) — resolveTop resolves "Draw a card" BEFORE opening the
+view, mirroring Scry's "resolve every sibling effect first, then open the
+private pause" ordering discipline exactly, including reusing the same
+`profile.effects.find(...)` / "resolve everything else" shape. Also
+needed a `botAction` heuristic to auto-acknowledge, since — like the
+"trigger-mode" choice from Black Market Connections — this choice type
+has no generic `"pass"` fallback and a bot would otherwise stall on it.
+Validation: **619 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,439 global profiles.
+
+With Gitaxian Probe, Notion Thief, Black Market Connections, and Wizard
+Class closed, 92 of 94 cards in the Nekusar, the Mindrazer decklist are
+implemented. Two remain, each needing its own new subsystem, neither
+attempted yet: Reforge the Soul (the Miracle keyword, which requires
 intercepting/pausing the `drawCards` loop to offer a cast option before
-the drawn card settles into hand — architecturally risky), and Naktamun
+the drawn card settles into hand — architecturally risky) and Naktamun
 Lorespinner // Wheel of Fortune (needs a transform/DFC state framework
 that does not exist in this engine at all).

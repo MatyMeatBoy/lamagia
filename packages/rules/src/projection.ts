@@ -122,6 +122,18 @@ export interface TopSelectionView {
   readonly selectedCardId?: string;
 }
 
+/**
+ * Another player's hand, disclosed only to the one viewer entitled to see it
+ * right now (Gitaxian Probe, CR 701.20) — the sole place this engine ever
+ * puts one player's hand into a projection other than their own.
+ */
+export interface ViewedHandView {
+  readonly sourceId: string;
+  readonly sourceName: string;
+  readonly targetSeat: SeatId;
+  readonly cards: readonly CardView[];
+}
+
 export interface GameView {
   /** Set by the authoritative match registry; no undo snapshots leave it. */
   readonly undoAvailable: boolean;
@@ -143,6 +155,8 @@ export interface GameView {
   readonly scry: ScryView | null;
   /** Present only for the player currently resolving a top-card selection. */
   readonly topSelection: TopSelectionView | null;
+  /** Present only for the player currently entitled to look at another player's hand. */
+  readonly viewedHand: ViewedHandView | null;
   readonly combat: {
     readonly attackers: readonly { readonly instanceId: string; readonly name: string; readonly defender: SeatId }[];
     readonly blockers: readonly { readonly instanceId: string; readonly name: string; readonly attackerId: string }[];
@@ -330,6 +344,18 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     eligibleTypes: pendingTopSelection.types,
     ...(pendingTopSelection.selectedCardId ? { selectedCardId: pendingTopSelection.selectedCardId } : {})
   } : null;
+  // Gitaxian Probe: the target's hand is included ONLY when THIS viewer is
+  // the one entitled to see it (`choice.seat`), never for the target
+  // themselves or any other seat — the projection for every other viewer
+  // simply never computes this field at all.
+  const pendingViewHand = state.pendingChoice?.type === "view-hand" && state.pendingChoice.seat === viewerSeat
+    ? state.pendingChoice : null;
+  const viewedHand: ViewedHandView | null = pendingViewHand ? {
+    sourceId: pendingViewHand.sourceId,
+    sourceName: pendingViewHand.sourceCard.name,
+    targetSeat: pendingViewHand.targetSeat,
+    cards: state.players[pendingViewHand.targetSeat]!.hand.map(cardView)
+  } : null;
 
   const targetKinds = new Set<string>([
     "any", "player", "creature", "spell", "creature-spell", "noncreature-spell", "permanent", "artifact-or-enchantment", "creature-with-defender", "creature-with-deathtouch", "creature-with-lifelink", "creature-with-menace", "creature-with-haste", "creature-with-first-strike", "creature-with-double-strike", "creature-with-trample", "creature-with-vigilance", "creature-with-indestructible", "creature-with-hexproof", "creature-with-shroud", "creature-with-reach", "creature-power-at-least-5", "creature-power-at-most-4", "creature-toughness-at-least-4", "creature-toughness-at-most-4",
@@ -369,6 +395,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     librarySearch,
     scry,
     topSelection,
+    viewedHand,
     combat: {
       attackers: state.combat.attackers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), defender: entry.defender })),
       blockers: state.combat.blockers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), attackerId: entry.attackerId })),

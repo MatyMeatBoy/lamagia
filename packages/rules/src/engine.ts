@@ -523,6 +523,22 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /**
+       * "Look at target player's hand" (Gitaxian Probe, CR 701.20): a
+       * private, self-closing reveal to the caster alone. `projectGame`
+       * includes the target's hand ONLY in the projection for `seat`
+       * (the caster), never for `targetSeat` or any other viewer — this is
+       * the sole moment this engine ever shows one player another's hand.
+       */
+      readonly type: "view-hand";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly targetSeat: SeatId;
+      readonly returnSourceToGraveyard: boolean;
+      readonly exileSourceAfterResolution: boolean;
+    }
+  | {
       /** Private top-of-library review for effects such as Augur of Bolas. */
       readonly type: "look-top-select";
       readonly seat: SeatId;
@@ -560,6 +576,7 @@ export type GameAction =
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
+  | { readonly type: "acknowledge-view-hand"; readonly sourceId: string }
   | { readonly type: "choose-tap-or-untap"; readonly sourceId: string; readonly mode: "tap" | "untap" }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
@@ -4506,6 +4523,26 @@ function resolveTop(state: GameState): GameState {
   if (lookTop) {
     return beginLookTopSelection(next, object.controller, object.id, object.card, lookTop.amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback));
   }
+  const viewHand = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-at-target-players-hand" }> => effect.kind === "look-at-target-players-hand");
+  if (viewHand) {
+    const target = object.targets.find((candidate) => candidate.kind === "player");
+    if (target?.kind === "player") {
+      // Resolve sibling instructions (Gitaxian Probe's "Draw a card.") before
+      // opening the private view, same ordering discipline as Scry above.
+      // The spell card itself stays out of its owner's graveyard/exile until
+      // the view is acknowledged, exactly like Scry holds its source there.
+      for (const effect of profile.effects) {
+        if (effect.kind !== "look-at-target-players-hand") next = applyEffect(next, object, effect);
+      }
+      return {
+        ...next,
+        pendingChoice: {
+          type: "view-hand", seat: object.controller, sourceId: object.id, sourceCard: object.card, targetSeat: target.seat,
+          returnSourceToGraveyard: !object.activated, exileSourceAfterResolution: Boolean(object.flashback)
+        }
+      };
+    }
+  }
   const search = activatedEffect?.kind === "search-library"
     ? activatedEffect
     : selectedEffect?.kind === "search-library"
@@ -5503,6 +5540,14 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.trigger.sourceCard.name}: ${option.text}`
         });
       }
+      return actions;
+    }
+    if (choice.type === "view-hand") {
+      actions.push({
+        action: { type: "acknowledge-view-hand", sourceId: choice.sourceId },
+        label: "Listo",
+        note: `${choice.sourceCard.name}: termina de mirar la mano de ${playerAt(state, choice.targetSeat).name}.`
+      });
       return actions;
     }
     if (choice.type === "tap-or-untap") {
@@ -7221,6 +7266,20 @@ function applyFinishLibrarySearch(state: GameState, seat: SeatId, action: Extrac
   return finishMultiLibrarySearch(state, seat, choice, choice.selectedIds);
 }
 
+/** Closes the private "look at target player's hand" view (Gitaxian Probe, CR 701.20). */
+function applyAcknowledgeViewHand(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "acknowledge-view-hand" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "view-hand" || choice.seat !== seat) throw new Error("No tienes una mano que revisar.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa vista ya no está pendiente.");
+  let next: GameState = { ...state, pendingChoice: null };
+  if (choice.returnSourceToGraveyard) {
+    next = withPlayer(next, choice.sourceCard.owner, (current) => choice.exileSourceAfterResolution
+      ? { ...current, exile: [...current.exile, choice.sourceCard] }
+      : { ...current, graveyard: [...current.graveyard, choice.sourceCard] });
+  }
+  return logged(next, seat, `${playerAt(state, seat).name} termina de mirar la mano de ${playerAt(state, choice.targetSeat).name}.`);
+}
+
 function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-scry" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "scry" || choice.seat !== seat) throw new Error("No tienes una elección de adivinar pendiente.");
@@ -7741,6 +7800,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
     case "choose-trigger-mode": next = applyChooseTriggerMode(state, seat, action); break;
+    case "acknowledge-view-hand": next = applyAcknowledgeViewHand(state, seat, action); break;
     case "choose-tap-or-untap": next = applyChooseTapOrUntap(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "resolve-library-pick": next = applyResolveLibraryPick(state, seat, action); break;
