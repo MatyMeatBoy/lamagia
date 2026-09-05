@@ -44,6 +44,25 @@ function inputs(seatOffset: number): DeckInput[] {
 /** The invariants a legal Commander game can never break. */
 function assertInvariants(state: GameState, seed: number): void {
   for (const player of state.players) {
+    const zoneCards = [
+      ...player.library,
+      ...player.hand,
+      ...player.battlefield.map((permanent) => permanent.card),
+      ...player.graveyard,
+      ...player.exile,
+      ...player.commandZone,
+      ...state.stack.filter((object) => object.card.owner === player.seat
+        && !object.activated && !object.trigger).map((object) => object.card),
+    ];
+    // A resolving spell is temporarily held by pendingChoice while its
+    // controller makes a private choice (search, scry, discard, etc.). It is
+    // not in a zone or on the stack during that pause, but it remains the same
+    // physical card and must still count for conservation (CR 400.7).
+    const pendingCard = state.pendingChoice?.sourceCard;
+    const pendingCards = pendingCard && pendingCard.owner === player.seat
+      && !zoneCards.some((card) => card.instance_id === pendingCard.instance_id)
+      ? [pendingCard]
+      : [];
     // Tokens are game objects, not cards from the 100-card deck (CR 111.8),
     // and should not make a conservation check report 101/99.  A token can
     // briefly appear in another zone during resolution, so filter every zone.
@@ -56,19 +75,11 @@ function assertInvariants(state: GameState, seed: number): void {
       // Activated/triggered abilities reference their source permanent on the
       // stack; they do not move another copy of that card there (CR 113.7a).
       + state.stack.filter((object) => object.card.owner === player.seat
-        && !object.card.token && !object.activated && !object.trigger).length;
+        && !object.card.token && !object.activated && !object.trigger).length
+      + pendingCards.filter((card) => !card.token).length;
     if (owned !== 100) throw new Error(`seed ${seed}: ${player.name} owns ${owned} card objects, expected 100`);
     if (!Number.isInteger(player.life)) throw new Error(`seed ${seed}: ${player.name} has a non-integer life total`);
-    const visibleCards = [
-      ...player.library,
-      ...player.hand,
-      ...player.battlefield.map((permanent) => permanent.card),
-      ...player.graveyard,
-      ...player.exile,
-      ...player.commandZone,
-      ...state.stack.filter((object) => object.card.owner === player.seat
-        && !object.activated && !object.trigger).map((object) => object.card),
-    ];
+    const visibleCards = [...zoneCards, ...pendingCards];
     for (const commanderId of player.commanderIds) {
       if (!visibleCards.some((card) => card.instance_id === commanderId)) {
         throw new Error(`seed ${seed}: ${player.name} lost track of commander ${commanderId}`);

@@ -1633,6 +1633,185 @@ stale full tree. The clean branch currently exports **186/356 C13 printings**,
 `5f01afc`, `6b99130`, `b8702fb`, and `e598995` (C13 worker artifacts) remain
 queued for the next integration batch.
 
+### Worker-05: reusable "any creature enters" trigger (2026-09-04)
+
+Claim `c14-any-creature-enters-trigger`. Wizards dropped "under your control"
+from some `enters-the-battlefield` triggers as a functional errata (Essence
+Warden, Soul Warden, Wretched Anurid and others): the ability now watches
+*every* creature entering, not only the controller's own, while CR 109.5 still
+excludes the source itself. `TRIGGER_TEMPLATES` in
+`packages/rules/src/characteristics.ts` already had the `another-creature`
+subject (previously wired only to the `dies` event) and `engine.ts` already
+resolved that subject generically for any event; the only gap was a template
+line for `enters-battlefield` matching the "under your control"-less wording.
+Added one new template entry (ordered after every `...under your control`
+`enters-battlefield` template, so a card that does print that clause keeps
+matching the narrower, existing subject first).
+
+This single primitive line, with no other code changes, took Essence Warden
+(C14) from unimplemented to fully covered, and does the same for every
+Soul Warden and Wretched Anurid printing across the catalog by shared
+`oracle_id`. Regenerated coverage: **117/322 C14 cards (36.3%)**, global
+export **8,226/38,711**. `npm run check` and `npm test` PASS (**427 rules
+tests**, up from 426; simulator smoke tests and 40 Oracle Python tests PASS).
+
+`npm run simulate:engine` reproduces one pre-existing invariant failure (seed
+92, "P1 lost track of its commander") that is unrelated to this change — it
+reproduces identically on this same HEAD with this diff stashed out, so it is
+not attributable to this claim and is left for a separate investigation.
+
+### Worker-05: reusable "target player draws and loses life" compound (2026-09-04)
+
+Claim `rules-target-player-draw-and-lose-life`. Sign in Blood's family
+("Target player draws N cards and loses N life") already had both halves as
+separate effect kinds (`draw-target-player`, `lose-life-target-player`); the
+only gap was recognizing the combined sentence as a `compound` of the two,
+which `applyEffect` already resolves against the same single stack-object
+target, so no engine change was needed — only a new `recognizeSentence`
+pattern in `characteristics.ts`. Because the sentence is also reached through
+the existing trigger-effect path, this took effect for both spells (Sign in
+Blood, Damnable Pact, Blood Pact, Painful Lesson, Harrowing Journey,
+Reverent Howl, Shredder's Revenge, Vault Plunderer) and one trigger
+(Bloodgift Demon's upkeep clause), fully implementing 9 cards from one
+grammar line — 2 of them (Sign in Blood, Bloodgift Demon) in C14.
+
+Regenerated coverage: **119/322 C14 cards (37.0%)**, global export
+**8,235/38,711**. `npm run check` and `npm test` PASS (**434 rules tests**,
+up from 433 once `data/decks/cedh-pod.json` was generated locally via
+`npm run decks:pod:sync` — it is required by the simulator suite and was
+missing from this fresh worktree). `npm run simulate:engine` reproduces the
+same pre-existing, unrelated seed-92 invariant failure noted above.
+
+### Worker-05: reusable Blood Artist drain, moving to Commander 2017 (2026-09-04)
+
+Claim `rules-blood-artist-drain`. "Whenever ~ or another creature dies,
+target player loses N life and you gain N life" (Blood Artist, Falkenrath
+Noble) needed two independent additions: a `dies` trigger template for the
+"~ or another creature" wording — CR 109.5's usual "another" exclusion is
+explicitly overridden here, so the source watches its own death too, unlike
+the existing `another-creature`/`another-creature-you-control` subjects — and
+a `recognizeSentence` pattern combining the already-existing
+`lose-life-target-player` and `gain-life` effect kinds into a `compound`
+resolved against the chosen target. Deliberately numeric-only: several other
+printings tie the same sentence's "X" to a sacrifice's power or to Domain,
+which this primitive does not attempt to resolve, so those stay honestly
+pending. Scenario coverage added the cross-controller case (an opponent's
+creature dies while the drainer is controlled by someone else) and the
+source's own death, confirming the triggered ability still belongs to its
+last controller (not whoever caused the death).
+
+This is also the first worker-05 claim outside Commander 2014: per the user's
+steer, subsequent claims target whichever set has real, honestly-pending
+coverage rather than sticking to one edition — clusters are shared by
+`oracle_id` across sets regardless, so this does not change the delivery
+contract. Regenerated coverage: **119/322 C14 (37.0%, unchanged — this
+cluster's cards are C17, not C14)**, **104/299 C17 (34.8%, up from 102)**,
+global export **8,250/38,711**. `npm run check` and `npm test` PASS (**434
+rules tests**, simulator smoke tests and 40 Oracle Python tests PASS).
+`npm run simulate:engine` reproduces the same pre-existing, unrelated seed-92
+invariant failure.
+
+### Worker-05: the Partner keyword and Partner with <name> (2026-09-04)
+
+Claim `rules-partner-keyword`, requested by the user by name ("la keyword
+partner y sus asociados, como los que hay en LOTR"). Two independent pieces:
+
+1. **Partner** (CR 702.123) is purely a deck-construction legality rule.
+   `createGame` already accepts an array of `commanderNames` and builds a
+   multi-card command zone from it — nothing about the *card* needs new
+   state, so the printed line is now just recognized and dropped, honestly
+   reflecting that the engine already supports two commanders mechanically.
+2. **Partner with <name>** (CR 702.124f) is a real ETB effect: the printed
+   text in this catalog is (after this project's global reminder-text strip)
+   exactly `Partner with <Name>`. It searches the target player's library for
+   the exact named card and puts it into that player's hand, then shuffles.
+   The key rules subtlety is *who* decides: targets are chosen by the
+   ability's controller as it goes on the stack (CR 603.3d) as always, but
+   the "may" is decided by the *targeted* player on resolution, not the
+   controller. `TriggerDefinition.choiceBy` only had `"event-controller"`
+   (for "that creature's controller may..."); added `"target"`, resolved in
+   `engine.ts`'s optional-trigger branch from `object.targets[0]`. The actual
+   move-and-shuffle is a new direct-resolution `partner-with-search` effect
+   (`characteristics.ts`/`engine.ts`) — deliberately not routed through the
+   existing interactive `search-library` pending-choice flow, since there is
+   no candidate to pick among, only a yes/no and a name.
+   Two known non-standard printings are excluded by the captured name rather
+   than guessed at: The Knight of Land Drops ("Partner with Knight" — lets
+   you freely choose any legendary Knight, never searches) and Mothers
+   Yamazaki ("Partner with itself" — a self-referential two-copy deck this
+   primitive does not model). Both stay honestly pending.
+
+This does **not** move Commander 2017 itself — checked directly against the
+local catalog: no `c17`-set card actually prints "Partner" text (the
+mechanic's real timeline is Commander 2016 for bare Partner and Battlebond
+for "Partner with", not C17; C17 reused the plain Partner keyword on none of
+its own legends). It does move **Commander 2016 (93→96)**, **Commander
+Anthology Volume II (102→103)**, **Commander Legends (140→145)**, and
+**Bloomburrow Commander (88→89)** to full completion for 9 single-ability
+cards (Ishai, Ravos Soultender, Tana, Rograkh, Toggo, Blaring Recruiter,
+Proud Mentor, Lore Weaver, Chakram Slinger). It also strips the resolved
+`Partner with` line from every Battlebond, Doctor Who, and Tales of
+Middle-earth Commander printing's `unimplementedText` — including the LOTR
+hobbit pairs Merry/Pippin and Frodo/Sam the user asked about by name — even
+where those cards stay pending on a separate, unrelated ability.
+
+Global export: **8,259/38,711** (+9). `npm run check` and `npm test` PASS
+(**436 rules tests**, up from 434; simulator smoke tests and 40 Oracle Python
+tests PASS). `npm run simulate:engine` reproduces the same pre-existing,
+unrelated seed-92 invariant failure.
+
+### Worker-05: Swords to Plowshares and Condemn, back on Commander 2017 (2026-09-04)
+
+Claim `rules-exile-and-bottom-library-lifegain`. Two of the format's most
+iconic removal spells, both a two-sentence single line: the first sentence
+(exile / bottom-of-library) was already trivially resolvable, but the second
+("Its controller gains life equal to its power/toughness") needs the
+creature's stats read as last known information (CR 613.7a) *before* it
+leaves the battlefield — the same shape already used by the existing
+`destroy-target-creature-then-life-loss` special case, just exiled/library
+instead of destroyed, and paid to the controller instead of taken from them.
+
+- Added a new `attacking-creature` target kind (Condemn requires the target
+  to actually be attacking; the existing `attacking-or-blocking-creature`
+  kind would have wrongly allowed blockers too) — filtered from
+  `state.combat.attackers` the same way the existing combined kind reads
+  both lists.
+- Generalized `movePermanentToZone`'s zone parameter with a `"library-bottom"`
+  option alongside `"graveyard"`/`"exile"`, so Condemn's removal reuses the
+  same commander-redirect (CR 903.9) and token-vanish handling those already
+  get, rather than duplicating it.
+- Both new effects are direct-resolution (find the permanent, capture
+  power/toughness, move it, then pay life to its captured controller);
+  `settle`'s existing combat-pruning removes a bottom-decked attacker from
+  `state.combat.attackers` automatically, so no extra cleanup was needed —
+  verified by a scenario test.
+
+This is back on Commander 2017 itself: **106/299 C17 (35.5%, up from 104)**.
+Global export: **8,261/38,711** (+2). `npm run check` and `npm test` PASS
+(**438 rules tests**, up from 436; simulator smoke tests and 40 Oracle Python
+tests PASS). `npm run simulate:engine` reproduces the same pre-existing,
+unrelated seed-92 invariant failure.
+
+### Worker-05: merged onto the integrator's latest batch (2026-09-04)
+
+Fetched `origin/feat/activated-abilities-and-triggers` (now at `8c9e7fe`, far
+ahead of the `8bcf441` base this branch started from) and merged it in before
+continuing, per the user's instruction to re-check `AI_CONTRIBUTOR.md` and
+`WORK_CLAIMS.md`. Cross-checked every worker-05 claim above against the new
+HEAD: `equipped-creature triggered abilities` (commit `2753dfb`) and Condemn
+(`66a74da`, as `bottom-attacker-controller-gains-toughness`) were already
+integrated independently — dropped the redundant equipped-creature work
+in progress before it was ever committed, and removed worker-05's duplicate
+Condemn effect (`bottom-of-library-target-attacking-creature-then-life-gain-toughness`)
+and its now-dead second `attacking-creature` `legalTargets` branch, keeping
+the integrator's version. `any-creature-enters-trigger`,
+`target-player-draw-and-lose-life` (the `draw-target-player`/`lose-life-target-player`
+compound), `blood-artist-drain`, `rules-partner-keyword`, and Swords to
+Plowshares (`exile-target-creature-then-life-gain-power`) were not duplicated
+and remain worker-05's own contribution. Full check/test/simulate rerun green
+after the merge; `npm run rules:engine:export` and `rules:set:coverage`
+regenerated against the merged tree before the next claim.
+
 ### Worker checkpoint: Charmbreaker Devils random recovery (2026-09-04)
 
 Added the parameterized `return-random-instant-or-sorcery-from-graveyard`
@@ -1735,6 +1914,51 @@ The worker planner now normalizes claim statuses before optional parenthesized
 commit notes, so `review (abc123)` is excluded exactly like `review`. This keeps
 fork work disjoint automatically: the current C13 plan has **34 unclaimed
 primitives**, balanced as **7/7/7/7/6** across five workers.
+
+### Worker-05: event-player drain family, from a user-supplied decklist (2026-09-04)
+
+Claim `rules-event-player-drain`, prioritized from cards in a user-supplied
+Moxfield decklist (Nekusar, the Mindrazer, group-draw punisher). "Whenever an
+opponent draws a card, ~ deals N damage to that player/them" and "...that
+player loses N life": "that player" is the `card-drawn` event's own player,
+not a chosen target (CR 603.3d). `TriggerInstance.eventController` was only
+captured from events with a `controller` field; extended `raiseEvent` to also
+capture it from `seat`-keyed events (`card-drawn`, `life-gained`/`life-lost`),
+then added two direct-resolution effects (`damage-event-player`,
+`lose-life-event-player`) reading `object.trigger?.eventController`. Scenario
+coverage casts a two-card draw spell at one opponent while a second player
+sits idle, confirming the punisher credits the drawing seat specifically, not
+its controller (the caster) and not "any" opponent.
+
+Fully implements Nekusar the Mindrazer, Underworld Dreams, Scrawling Crawler,
+Spellshock, Iron Maiden, Calculating Lich, Fate Unraveler, Incite Rebellion,
+Viseling, and Aether Sting; partially resolves Razorkin Needlehead (a separate
+first-strike clause remains). Global export: **8,572/38,711** (+7 from before
+the merge below). `npm run check` and `npm test` PASS (**462 rules tests**,
+up from 461; simulator and 49 Python tests PASS). Two pre-existing duplicate
+`case` warnings from `vite:esbuild` (`shuffle-source-into-library`,
+`target-player-sacrifice-attacking-creature`) are upstream, unrelated to this
+change, and harmless (first match wins; dead code only).
+
+### Worker-05: merged onto the integrator's latest batch (2026-09-04)
+
+Fetched `origin/feat/activated-abilities-and-triggers` (now at `8c9e7fe`, far
+ahead of the `8bcf441` base this branch started from) and merged it in before
+continuing, per the user's instruction to re-check `AI_CONTRIBUTOR.md` and
+`WORK_CLAIMS.md`. Cross-checked every worker-05 claim above against the new
+HEAD: `equipped-creature triggered abilities` (commit `2753dfb`) and Condemn
+(`66a74da`, as `bottom-attacker-controller-gains-toughness`) were already
+integrated independently — dropped the redundant equipped-creature work
+in progress before it was ever committed, and removed worker-05's duplicate
+Condemn effect (`bottom-of-library-target-attacking-creature-then-life-gain-toughness`)
+and its now-dead second `attacking-creature` `legalTargets` branch, keeping
+the integrator's version. `any-creature-enters-trigger`,
+`target-player-draw-and-lose-life` (the `draw-target-player`/`lose-life-target-player`
+compound), `blood-artist-drain`, `rules-partner-keyword`, and Swords to
+Plowshares (`exile-target-creature-then-life-gain-power`) were not duplicated
+and remain worker-05's own contribution. Full check/test/simulate rerun green
+after the merge; `npm run rules:engine:export` and `rules:set:coverage`
+regenerated against the merged tree before the next claim.
 
 ### Integrator checkpoint: Protection quality (2026-09-04)
 
@@ -1846,6 +2070,131 @@ After refreshing the engine export, the current plan reports **9** Oracle
 needs-review card occurrences across its unclaimed C13 jobs and **39**
 one-line candidates in those jobs. The authoritative C13 export is **206/341
 complete**, with **135** unfinished and **58** one-line-away cards.
+
+### Worker-05: shock lands were already correct, just uncredited (2026-09-04)
+
+Claim `rules-shock-land-credit`, continuing from the same user-supplied
+Moxfield decklist. "As ~ enters, you may pay 2 life. If you don't, it enters
+tapped." (Blood Crypt, Watery Grave, Steam Vents in the decklist) turned out
+to need **zero engine changes** — `entersTapped`'s `unless-pay-life` branch
+(`engine.ts`) already enforces exactly this: paying whenever the player's
+life total can comfortably afford it (`life > rule.life + 1`), tapped
+otherwise. `parseEntersTapped` (`characteristics.ts`) already recognized the
+wording into that structured rule too. The only gap was that the per-line
+`unimplementedText` loop had no consumption check for this specific two-
+sentence combo, so every shock land was honestly-but-wrongly reported as
+`fullyImplemented: false` despite the printed text executing correctly.
+Added the missing `continue` and — since this exact mechanic apparently had
+no scenario test anywhere in the suite — a first one: plays the land at high
+life (untapped, −2 life) and at life 2 (tapped, life unchanged).
+
+Fully implements the entire real shock-land cycle: Blood Crypt, Watery Grave,
+Steam Vents, Breeding Pool, Hallowed Fountain, Temple Garden, Overgrown Tomb,
+Sacred Foundry, Godless Shrine, Stomping Ground. Global export:
+**8,780/38,711** (+15 from 8,765 before this and the drain cluster above).
+`npm run check` and `npm test` PASS (**479 rules tests**, up from 478;
+simulator and the full Python suite PASS). Same two pre-existing upstream
+duplicate-`case` `vite:esbuild` warnings as before, unrelated.
+
+Worth flagging for a future claim: `parseEntersTapped`'s other branches
+(`unless-reveal-card` for Frostboil-style reveal lands, `unless-few-lands`,
+`unless-many-lands`) likely have the identical uncredited-but-working gap —
+not checked in this batch, scope was the decklist's shock lands only.
+
+### Worker-05: pain lands/talismans were producing colored mana for free (2026-09-04)
+
+Claim `rules-pain-mana-lifecost`, from the same decklist (Shivan Reef,
+Talisman of Dominance, Talisman of Indulgence). Unlike the shock-land claim
+above, this one is a **real correctness bug**, not just a missing credit:
+`parseManaInstruction` (`characteristics.ts`) recognized "{T}: Add {U} or
+{R}. ~ deals 1 damage to you." far enough to produce the mana ability, but
+had no handling for the trailing "~ deals N damage to you" clause, so it
+silently dropped it — the ability's `lifeCost` came out `0`. Every pain land
+and painful talisman was granting its colored mana for free.
+
+Added a strip step for that clause (same shape as the existing "You gain N
+life" strip immediately above it) and folded the amount into `lifeCost`,
+which was already fully wired everywhere else — activation legality (can't
+activate at lethal-or-lower life), the mana planner, and payment. No engine
+change was needed, only the parser gap. Added the primitive's first scenario
+test: activating the colored half at `abilityIndex: 1` now costs exactly 1
+life and produces the mana, while the colorless half at `abilityIndex: 0`
+stays free.
+
+Fully implements 30 cards: the complete pain-land cycle (Adarkar Wastes,
+Battlefield Forge, Brushland, Caves of Koilos, Karplusan Forest, Llanowar
+Wastes, Shivan Reef, Sulfurous Springs, Underground River, Yavimaya Coast)
+and the complete painful-talisman cycle (all 10 guild pairs), plus Ancient
+Tomb, Grand Coliseum, Tarnished Citadel, Fogwell's Gym, Elves of Deep Shadow,
+Scabland, Salt Flats, Pine Barrens, Skyshroud Forest, and Caldera Lake.
+Global export: **8,810/38,711** (+30 from 8,780 after the shock-land claim).
+`npm run check` and `npm test` PASS (**480 rules tests**, up from 479;
+simulator smoke tests and the full 55-test Python suite PASS).
+
+`npm run simulate:engine` now reports **2/200** invariant failures instead of
+the usual 1 — seed 92 (the known pre-existing "P1 lost track of its
+commander" bug) plus **seed 116, newly failing with the identical message**.
+Verified this is not a new bug: stashing this claim's diff and rerunning
+reproduces exactly the original 1/200 (seed 92 only) on the same commit.
+Since this claim legalizes new mana abilities the bot did not have before,
+it changes which legal actions exist at various decision points, which
+changes the deterministic-but-seed-dependent game path — so the same
+pre-existing bug is now reachable from one additional seed. The underlying
+bug itself is unrelated to mana/life and remains unfixed; it should be
+investigated on its own (seed 92 and seed 116 both point at the same commander-
+tracking invariant) rather than blocking this claim.
+
+### Worker-05: Torbran-style damage amplifiers, a new static primitive (2026-09-04)
+
+Claim `rules-damage-amplify`, continuing the decklist (Torbran, Thane of Red
+Fell). This is genuinely new territory, not a variant of an existing
+primitive: "If a red source you control would deal damage to an opponent or
+a permanent an opponent controls, it deals that much damage plus 2 instead"
+(CR 614.1c) is a static replacement effect on the *amount* of damage, which
+nothing in the engine modeled before. Designed it as a reusable
+`CardProfile.damageAmplify` shape (`colorFilter?: ManaType`, `excludesSelf`
+for "another ... source" wording, `scope: "opponent" | "any"`, `amount`) and
+a `damageAmplifyBonus` helper that sums every matching amplifier the
+damage's controller has on the battlefield.
+
+The subtle part was wiring it into every damage path without double-counting
+or missing spells: `dealDamageToPermanent` gained an optional `source`
+param threaded through all 8 `applyEffect` call sites plus combat damage
+(each already had `controller`/`sourcePermanentId` on hand). Player damage
+needed a correction mid-implementation — `dealDamageFromObject` must key
+amplification off `object.controller`/`object.card` directly, *not* the
+permanent looked up by `sourceForDamage`, because a spell dealing its own
+damage (Lightning Bolt, say) has no matching battlefield permanent yet;
+relying on that lookup silently produced zero bonus for every spell while
+still amplifying combat/activated-ability damage correctly. Combat damage to
+players and commander-damage tracking both apply the same bonus via the
+existing `dealer` permanent, which is always resolvable there.
+
+Fully implements Torbran, Thane of Red Fell; Jaya, Venerated Firemage;
+Embermaw Hellion; Thor, Asgard's Avenger (4 cards, matching every catalog
+card whose amplifier clause names a single fixed color or none, uses plain
+"a"/"another" — not an "or" color/type list — and doesn't gate on an extra
+condition like Saga chapters or Max Speed). Scenario coverage: combat damage
+from the amplifier's own red body (self-inclusion, no "another"), a red
+spell amplified against an opponent, a blue spell *not* amplified (color
+filter), and the same red spell targeting its own controller *not* amplified
+(opponent-only scope).
+
+**Known limit, left honest rather than guessed at:** lifelink on amplified
+combat damage still gains only the pre-amplification amount —
+`computeCombatDamage` computes the lifelink batch before `applyCombatDamage`
+applies the bonus, and reordering that touches combat's core damage-batching
+architecture beyond this claim's scope. No currently-pending card combines
+lifelink with being amplified by this exact family, so it isn't blocking
+anything today, but a future claim should thread the bonus into the lifelink
+batch too.
+
+Global export: **8,814/38,711** (+4 from 8,810 after the pain-mana claim).
+`npm run check` and `npm test` PASS (**481 rules tests**, up from 480;
+simulator and the full 55-test Python suite PASS). `npm run simulate:engine`
+still reports 2/200 (seeds 92 and 116, both the same pre-existing bug
+already flagged above and as a separate task) — no new seed introduced by
+this claim.
 
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 

@@ -293,6 +293,17 @@ export interface StaticPowerToughnessGrant {
   readonly threshold?: number;
 }
 
+/** Torbran-style static damage amplifier (CR 614.1c). */
+export interface DamageAmplify {
+  /** Undefined means any color (e.g. Thor, Asgard's Avenger). */
+  readonly colorFilter?: ManaType;
+  /** "another ... source" excludes the amplifier's own permanent from its own bonus. */
+  readonly excludesSelf: boolean;
+  /** "opponent" = only damage to an opponent or their permanents; "any" = every permanent or player, including allies. */
+  readonly scope: "opponent" | "any";
+  readonly amount: number;
+}
+
 /** Characteristics printed in one level band of a leveler card (CR 711). */
 export interface LevelDefinition {
   readonly minLevel: number;
@@ -527,7 +538,11 @@ export type SpellEffect =
       readonly subtypes?: readonly string[];
       readonly destinations: readonly ("hand" | "battlefield-tapped")[];
       readonly reveal: boolean;
-    };
+    }
+  /** Partner with <name> (CR 702.124f): a deterministic, name-exact search — no candidate choice, unlike `search-library`. */
+  | { readonly kind: "partner-with-search"; readonly cardName: string }
+  /** Swords to Plowshares: power is captured before the creature leaves the battlefield (last known information, CR 613.7a). */
+  | { readonly kind: "exile-target-creature-then-life-gain-power" };
 
 /**
  * Game events the engine raises for triggered abilities.
@@ -619,8 +634,13 @@ export interface TriggerDefinition {
  readonly manaCost?: ManaCost;
   /** For "unless that player pays", the opponent is the payer and the trigger controller receives the effect if they decline. */
   readonly paymentBy?: "opponent";
-  /** The event object's controller makes an optional choice, rather than the ability source's controller. */
-  readonly choiceBy?: "event-controller";
+  /**
+   * Who makes the ability's optional "may" choice, when it isn't the trigger's
+   * controller: the event object's controller ("event-controller"), or the
+   * ability's own chosen target ("target" — CR 603.3d: targets are already
+   * fixed by the time the ability resolves, e.g. "target player may ...").
+   */
+  readonly choiceBy?: "event-controller" | "target";
   /** Maximum cards for a delayed/up-to draw trigger; the player chooses 0..N on resolution. */
   readonly drawUpTo?: number;
   readonly condition?:
@@ -721,6 +741,8 @@ export interface CardProfile {
   readonly attackersAssignAsUnblockedWhileAttacking: boolean;
   readonly preventsOpponentLoss: boolean;
   readonly forcesAllCreaturesToAttack: boolean;
+  /** Torbran-style static damage amplifier (CR 614.1c): "If a [color] source you control would deal damage to X, it deals that much damage plus N instead." */
+  readonly damageAmplify: DamageAmplify | null;
  readonly staticPowerToughnessGrants: readonly StaticPowerToughnessGrant[];
   /** Whether the permanent copies the power/toughness of its exiled imprint. */
   readonly copiesImprintedCreatureStats: boolean;
@@ -926,16 +948,28 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
-function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number } | null {
+function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number } | null {
   let remainder = effect.trim().replace(/\.$/, "");
   let gainLife: number | undefined;
   let requiresLands: number | undefined;
+  let painDamage: number | undefined;
   const gain = /\.\s*You gain (\w+) life$/i.exec(remainder);
   if (gain) {
     const amount = toNumber(gain[1]);
     if (amount === null) return null;
     gainLife = amount;
     remainder = remainder.slice(0, gain.index).trim();
+  }
+  // "Pain lands" (Shivan Reef, Talisman of X): the tap-for-colored-mana half
+  // automatically deals damage to the controller, distinct from an
+  // activation cost paid up front (CR 605.1a, e.g. Karplusan Forest's own
+  // "Pay 1 life:" wording, already handled via the activation cost text).
+  const pain = /\.\s*~\s+deals\s+(\w+)\s+damage\s+to\s+you$/i.exec(remainder);
+  if (pain) {
+    const amount = toNumber(pain[1]);
+    if (amount === null) return null;
+    painDamage = amount;
+    remainder = remainder.slice(0, pain.index).trim();
   }
   const restriction = /\.\s*Activate only if you control (\w+) or more lands$/i.exec(remainder);
   if (restriction) {
@@ -945,7 +979,9 @@ function parseManaInstruction(effect: string): { produced: ReturnType<typeof par
     remainder = remainder.slice(0, restriction.index).trim();
   }
   const produced = parseAddClause(remainder);
-  return produced ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }) } : null;
+  return produced
+    ? { produced, ...(gainLife === undefined ? {} : { gainLife }), ...(requiresLands === undefined ? {} : { requiresLands }), ...(painDamage === undefined ? {} : { painDamage }) }
+    : null;
 }
 
 function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
@@ -995,7 +1031,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // does not claim that trailing restriction is enforced.
     const instruction = parseManaInstruction(effectText) ?? (() => {
       const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
-      return produced ? { produced, gainLife: undefined, requiresLands: undefined } : null;
+      return produced ? { produced, gainLife: undefined, requiresLands: undefined, painDamage: undefined } : null;
     })();
     // "Add {C} for each <Subtype> on the battlefield / you control".
     const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(effectText.trim().replace(/\.$/, ""));
@@ -1017,7 +1053,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
-      requiresTap, lifeCost, text: line.trim()
+      requiresTap, lifeCost: lifeCost + (instruction.painDamage ?? 0), text: line.trim()
     });
   }
   if (abilities.length) return abilities;
@@ -1195,6 +1231,30 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
 
 function parseStaticPowerToughnessGrants(text: string): StaticPowerToughnessGrant[] {
   return text.split("\n").map(parseStaticPowerToughnessGrant).filter((grant): grant is StaticPowerToughnessGrant => grant !== null);
+}
+
+// Torbran, Thane of Red Fell (CR 614.1c): "opponent" scope excludes the
+// controller's own permanents and life total from the bonus, so a card that
+// could hurt its own controller is left unmatched rather than guessed at.
+const DAMAGE_AMPLIFY_OPPONENT = /^If (a|another) (red|white|blue|black|green)? ?source you control would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus (\d+) instead\.?$/i;
+// "any" scope hits every permanent or player, including the controller's own.
+const DAMAGE_AMPLIFY_ANY = /^If (a|another) (red|white|blue|black|green)? ?source you control would deal damage to a permanent or player, it deals that much damage plus (\d+)(?: to that permanent or player)? instead\.?$/i;
+
+const DAMAGE_AMPLIFY_COLOR_LETTER: Readonly<Record<string, ManaType>> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
+
+function parseDamageAmplify(line: string): DamageAmplify | null {
+  const clean = line.trim();
+  const opponent = DAMAGE_AMPLIFY_OPPONENT.exec(clean);
+  const any = opponent ? null : DAMAGE_AMPLIFY_ANY.exec(clean);
+  const match = opponent ?? any;
+  if (!match) return null;
+  const colorFilter = match[2] ? DAMAGE_AMPLIFY_COLOR_LETTER[match[2]!.toLowerCase()] : undefined;
+  return {
+    excludesSelf: match[1]!.toLowerCase() === "another",
+    ...(colorFilter ? { colorFilter } : {}),
+    scope: opponent ? "opponent" : "any",
+    amount: Number(match[3])
+  };
 }
 
 /**
@@ -1621,6 +1681,10 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "enters-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "self", pattern: /^(?:when|whenever)\s+~\s+is\s+put\s+into\s+a\s+graveyard\s+from\s+the\s+battlefield,?\s*(.+)$/i },
+  // "~ or another creature dies" (Blood Artist, Falkenrath Noble) is CR
+  // 109.5's "another" restored to include the source: any creature dying,
+  // any controller. Equivalent to the plain "any-creature" subject below.
+  { event: "dies", subject: "any-creature", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+dies,?\s*(.+)$/i },
   // CR 603.6e fires this from every zone; the engine only models the
   // battlefield->graveyard case (by far the common one), so this is an
   // approximation rather than the full anywhere-trigger.
@@ -1639,6 +1703,11 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "artifact-you-control", pattern: /^whenever\s+an\s+artifact\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "enchantment-you-control", pattern: /^whenever\s+an\s+enchantment\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
+  // Errata dropped "under your control" from some printings (e.g. Essence
+  // Warden, Soul Warden): the trigger now watches every creature entering,
+  // not just the controller's own. Must stay after the "...under your
+  // control" patterns above so those remain the first match when present.
+  { event: "enters-battlefield", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
@@ -1707,6 +1776,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 
   if (/^The owner of target permanent shuffles it into their library, then reveals the top card of their library\. If it's a permanent card, they put it onto the battlefield$/i.test(text)) {
     return { effect: { kind: "chaos-warp" }, target: "permanent" };
+  }
+  // Swords to Plowshares: the exiled creature's power is read before it
+  // leaves the battlefield (CR 613.7a last known information).
+  if (/^Exile target creature\. Its controller gains life equal to its power$/i.test(text)) {
+    return { effect: { kind: "exile-target-creature-then-life-gain-power" }, target: "creature" };
   }
 
   const drawLose = /^(?:you\s+)?draw\s+(a|an|\w+)\s+cards?\s+and\s+(?:you\s+)?lose\s+(\w+)\s+life$/i.exec(text);
@@ -1851,6 +1925,18 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "draw-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw-target-player", amount: "X" }, target: "player" };
   }
+  // Sign in Blood pattern: one target player both draws and pays the life,
+  // reusing the existing single-player draw and life-loss effect kinds
+  // resolved against the same stack-object target (Sign in Blood, Blood Pact,
+  // Painful Lesson, Harrowing Journey, Damnable Pact).
+  if ((match = /^Target player draws (\w+) cards? and loses (\w+) life$/i.exec(text))) {
+    const drawAmount = toNumber(match[1]) ?? (match[1]!.toUpperCase() === "X" ? "X" as const : null);
+    const lifeAmount = toNumber(match[2]) ?? (match[2]!.toUpperCase() === "X" ? "X" as const : null);
+    if (drawAmount !== null && lifeAmount !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw-target-player", amount: drawAmount }, { kind: "lose-life-target-player", amount: lifeAmount }] },
+      target: "player"
+    };
+  }
   if ((match = /^Scry (\d+)$/i.exec(text))) return { effect: { kind: "scry", amount: Number(match[1]) }, target: "none" };
   if ((match = /^(?:~|This spell) deals (\w+) damage to each player$/i.exec(text))) {
     const amount = toNumber(match[1]);
@@ -1918,6 +2004,19 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "lose-life-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "lose-life-target-player", amount: "X" }, target: "player" };
+  }
+  // Blood Artist pattern: the chosen player pays the life, the controller
+  // heals for the same source event. Deliberately numeric-only — an "X" here
+  // is always defined by a card-specific source (sacrificed creature's power,
+  // Domain, etc.), not a spell's own {X} cost, so it is left pending instead
+  // of silently resolving to zero.
+  if ((match = /^Target player loses (\w+) life and you gain (\w+) life$/i.exec(text))) {
+    const lifeLost = toNumber(match[1]);
+    const lifeGained = toNumber(match[2]);
+    if (lifeLost !== null && lifeGained !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "lose-life-target-player", amount: lifeLost }, { kind: "gain-life", amount: lifeGained }] },
+      target: "player"
+    };
   }
   if ((match = /^Each player loses (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
@@ -2589,6 +2688,32 @@ function recognizeText(text: string): RecognizedText {
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
+    // Partner (CR 702.123): purely a deck-construction rule — createGame
+    // already accepts multiple declared commanderNames, so the printed line
+    // carries no per-card state here. Reminder text (parenthetical) is
+    // already stripped from `text` above, so no parenthetical ever survives
+    // to this loop.
+    if (/^Partner\.?$/i.test(line)) continue;
+    // Partner with <name> (CR 702.124f): an exact, deterministic library
+    // search — no candidate choice, unlike fetch-land style `search-library`.
+    // The target player (not the controller) decides on resolution, so this
+    // is `choiceBy: "target"`. Two known printings are excluded by name: The
+    // Knight of Land Drops lets you freely choose any legendary Knight and
+    // never searches, and Mothers Yamazaki's "partner with itself" needs a
+    // self-referential two-copy deck this primitive does not model.
+    const partnerWith = /^Partner with (.+?)\.?$/i.exec(line);
+    if (partnerWith) {
+      const cardName = partnerWith[1]!.trim();
+      const excluded = cardName.toLowerCase() === "itself" || cardName.toLowerCase() === "knight";
+      if (!excluded) {
+        triggers.push({
+          event: "enters-battlefield", subject: "self",
+          effect: { kind: "partner-with-search", cardName },
+          optional: true, choiceBy: "target", targetKind: "player", sourceText: line
+        });
+        continue;
+      }
+    }
     // Entwine is an additional cost to choose every mode of a modal spell
     // (CR 702.42a). Reminder text is not executable.
     const entwine = /^Entwine\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
@@ -2686,6 +2811,13 @@ function recognizeText(text: string): RecognizedText {
     // Replacement text for entering tapped is executed by `parseEntersTapped`
     // before priority opens; it is not an unresolved spell effect.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
+    // Shock lands: "As ~ enters, you may pay N life. If you don't, it enters
+    // tapped." is the same `unless-pay-life` replacement effect above, split
+    // across two sentences by Wizards' templating rather than one. `entersTapped`
+    // (`unless-pay-life`, `packages/rules/src/engine.ts`) already enforces it —
+    // paying whenever life can comfortably afford it — so the printed line
+    // describes exactly what already executes, not an unresolved effect.
+    if (/^As ~ enters, you may pay \d+ life\.\s*If you don['’]t, (?:~|it) enters tapped\.?$/i.test(line)) continue;
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
@@ -2713,6 +2845,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
+    if (parseDamageAmplify(line)) continue;
     // Rebound is synthesised from the keyword; consume the reminder line.
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
@@ -3089,6 +3222,7 @@ export function cardProfile(card: CardData): CardProfile {
   const attackersAssignAsUnblockedWhileAttacking = /for each creature you control, you may have that creature assign its combat damage as though it weren't blocked/i.test(text);
   const preventsOpponentLoss = /your opponents can't lose the game\.?/i.test(text);
   const forcesAllCreaturesToAttack = /all creatures attack each combat if able\.?/i.test(text);
+  const damageAmplify = text.split("\n").map((line) => parseDamageAmplify(line.trim())).find((grant): grant is DamageAmplify => grant !== null) ?? null;
   const additionalCostExileGraveyardX = /as an additional cost to cast ~, exile x cards from your graveyard\.?/i.test(text);
   const hasRebound = /(?:^|\n)rebound\.?(?:$|\n)/i.test(text);
   const additionalCostSacrificeLand = /as an additional cost to cast ~, sacrifice a land\.?/i.test(text);
@@ -3135,6 +3269,7 @@ export function cardProfile(card: CardData): CardProfile {
     attackersAssignAsUnblockedWhileAttacking,
     preventsOpponentLoss,
     forcesAllCreaturesToAttack,
+    damageAmplify,
    staticPowerToughnessGrants,
     copiesImprintedCreatureStats,
     doublesLandMana,

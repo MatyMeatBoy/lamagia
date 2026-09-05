@@ -155,11 +155,16 @@ const LIFE_LOCK = () => make({ name: "Life Lock", type_line: "Enchantment", mana
 const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment", mana_cost: "{3}", cmc: 3, oracle_text: "You have no maximum hand size." });
 const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other creatures you control get +1/+1." });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
-const X_MINUS_SWEEP = () => make({ name: "X Minus Sweep", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "All creatures get -X/-X until end of turn." });
-const POWER_DRAW_TRIGGER = () => make({ name: "Power Draw Trigger", type_line: "Creature — Human Druid", mana_cost: "{3}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your end step, if you control a creature with power 5 or greater, you may draw a card." });
+const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
+const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });
+// "That player" refers back to the card-drawn event's own player (the
+// opponent who drew), resolved from `object.trigger?.eventController` —
+// not a chosen target and not always `object.controller`'s opponent list.
 const DAMAGE_ON_OPPONENT_DRAW = () => make({ name: "Test Nekusar", type_line: "Creature — Wizard", mana_cost: "{2}{U}{B}{R}", cmc: 5, power: "2", toughness: "4", oracle_text: "Whenever an opponent draws a card, ~ deals 1 damage to that player." });
 const LIFELOSS_ON_OPPONENT_DRAW = () => make({ name: "Test Scrawling Crawler", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "Whenever an opponent draws a card, that player loses 1 life." });
 const DRAW_TWO_TARGET = () => make({ name: "Test Divination", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Target player draws two cards." });
+const X_MINUS_SWEEP = () => make({ name: "X Minus Sweep", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "All creatures get -X/-X until end of turn." });
+const POWER_DRAW_TRIGGER = () => make({ name: "Power Draw Trigger", type_line: "Creature — Human Druid", mana_cost: "{3}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your end step, if you control a creature with power 5 or greater, you may draw a card." });
 const NONFLYING_SWEEP = () => make({ name: "Nonflying Sweep", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell deals X damage to each creature without flying and each player." });
 const FLYING_SWEEP = () => make({ name: "Flying Sweep", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell deals X damage to each creature with flying." });
 const UPKEEP_DRAW_LOSS = () => make({ name: "Upkeep Draw Loss", type_line: "Creature — Demon", mana_cost: "{5}{B}", cmc: 6, power: "2", toughness: "2", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life." });
@@ -170,6 +175,7 @@ const LOSS_COUNTER = () => make({ name: "Pain Counter", type_line: "Creature —
 const TARGET_LIFE_SPELL = () => make({ name: "Shared Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Target player gains 2 life." });
 const EACH_LIFE_SPELL = () => make({ name: "Common Blessing", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Each player gains 1 life." });
 const TARGET_LOSS_SPELL = () => make({ name: "Shared Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player loses 3 life." });
+const SIGN_IN_BLOOD = () => make({ name: "Bled Wisdom", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Target player draws two cards and loses 2 life." });
 const CREATURE_COUNT_LOSS = () => make({ name: "Creature Toll", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Target player loses life equal to the number of creatures you control." });
 const EACH_LOSS_SPELL = () => make({ name: "Common Burden", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Each player loses 1 life." });
 const X_OPPONENT_LOSS = () => make({ name: "Scalable Burden", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Each opponent loses X life." });
@@ -404,6 +410,9 @@ const AZORIUS_SPELL = () => make({ name: "Azorius Lesson", type_line: "Sorcery",
 const AZORIUS_RELIC = () => make({ name: "Azorius Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{T}: Add {W}{U}.", produced_mana: ["W", "U"] });
 const SOL_RING = () => make({ name: "Sol Ring", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "{T}: Add {C}{C}.", produced_mana: ["C"] });
 const PRISTINE_TALISMAN = () => make({ name: "Pristine Talisman", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{T}: Add {C}. You gain 1 life.", produced_mana: ["C"] });
+// Pain lands / painful talismans: the colored half of the ability is
+// automatic damage, distinct from an up-front "Pay 1 life:" activation cost.
+const PAIN_LAND = () => make({ name: "Test Pain Land", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Add {U} or {R}. ~ deals 1 damage to you.", produced_mana: ["C", "U", "R"] });
 const TEMPLE_OF_FALSE_GOD = () => make({ name: "Temple of the False God", type_line: "Land", oracle_text: "{T}: Add {C}{C}. Activate only if you control five or more lands.", produced_mana: ["C"] });
 const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
 const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
@@ -441,6 +450,24 @@ const CYCLING_LAND = () => make({
 const WATERY_GRAVE = () => make({
   name: "Watery Grave", type_line: "Land — Island Swamp", oracle_text: "({T}: Add {U} or {B}.)"
 });
+// A shock land: the `unless-pay-life` entersTapped rule was already fully
+// enforced by the engine, but the printed line wasn't credited as covered.
+const SHOCK_LAND = () => make({
+  name: "Test Steam Vents", type_line: "Land — Island Mountain",
+  oracle_text: "({T}: Add {U} or {R}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+  produced_mana: ["U", "R"]
+});
+// Torbran-style static damage amplifier (CR 614.1c): a red source *you
+// control* deals that much damage plus 2 to an opponent (or their
+// permanents) instead — never to the controller's own side, and never for a
+// non-red source.
+const DAMAGE_AMPLIFIER = () => make({
+  name: "Test Torbran", type_line: "Creature — Dwarf Berserker", mana_cost: "{2}{R}{R}", cmc: 4, power: "2", toughness: "3",
+  colors: ["R"], color_identity: ["R"],
+  oracle_text: "If a red source you control would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus 2 instead."
+});
+const RED_BOLT = () => make({ name: "Test Red Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, colors: ["R"], oracle_text: "~ deals 3 damage to any target." });
+const BLUE_BOLT = () => make({ name: "Test Blue Bolt", type_line: "Instant", mana_cost: "{U}", cmc: 1, colors: ["U"], oracle_text: "~ deals 3 damage to any target." });
 const ETB_BOLTER = () => make({
   name: "Flame Herald", type_line: "Creature — Dragon", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3",
   oracle_text: "When Flame Herald enters the battlefield, Flame Herald deals 2 damage to any target."
@@ -456,6 +483,40 @@ const WATCHER = () => make({
 const ANY_DEATH_WATCHER = () => make({
   name: "Blood Chronicler", type_line: "Creature — Vampire", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "3",
   oracle_text: "Whenever a creature dies, you gain 1 life."
+});
+// Blood Artist / Falkenrath Noble: "~ or another creature" restores the
+// source itself to the death watch (unlike WATCHER above), and the drain
+// targets a chosen player rather than always the controller.
+const DRAIN_ARTIST = () => make({
+  name: "Vein Reaper", type_line: "Creature — Vampire", mana_cost: "{B}{B}", cmc: 2, power: "0", toughness: "2",
+  oracle_text: "Whenever ~ or another creature dies, target player loses 1 life and you gain 1 life."
+});
+// Partner (CR 702.123) is purely a deck-construction rule already covered by
+// createGame's multi-commander support; the printed line carries no state.
+const PARTNER_BARE = () => make({
+  name: "Twinbond Kin", type_line: "Legendary Creature — Human Scout", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2",
+  oracle_text: "Partner (You can have two commanders if both have partner.)"
+});
+// Partner with <name> (CR 702.124f) is an exact, deterministic library
+// search decided by the chosen target, not the controller.
+const PARTNER_WITH_SEEKER = () => make({
+  name: "Bonded Seeker", type_line: "Legendary Creature — Human Scout", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2",
+  oracle_text: "Partner with Bonded Kin (When this creature enters, target player may put Bonded Kin into their hand from their library, then shuffle.)"
+});
+const PARTNER_WITH_KIN = () => make({
+  name: "Bonded Kin", type_line: "Legendary Creature — Human Scout", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2",
+  oracle_text: "Partner with Bonded Seeker (When this creature enters, target player may put Bonded Seeker into their hand from their library, then shuffle.)"
+});
+// Modern errata dropped "under your control" from Essence Warden and Soul
+// Warden: the trigger now watches every creature entering, not only the
+// controller's own (still excluding the source itself, CR 109.5).
+const ANY_ENTER_WARDEN = () => make({
+  name: "Bramble Warden", type_line: "Creature — Elf Shaman", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1",
+  oracle_text: "Whenever another creature enters, you gain 1 life."
+});
+const ANY_ENTER_DRAINER = () => make({
+  name: "Anurid Sentinel", type_line: "Creature — Zombie", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2",
+  oracle_text: "Whenever another creature enters, you lose 1 life."
 });
 const RAIDER = () => make({
   name: "Bloodthirst Raider", type_line: "Creature — Orc", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2",
@@ -681,6 +742,30 @@ describe("turn structure", () => {
     expect(game.prioritySeat).toBe(0);
   });
 
+  it("lets a shock land enter untapped for 2 life when it can be afforded, tapped otherwise", () => {
+    const profile = profileOf(SHOCK_LAND());
+    expect(profile.entersTapped).toEqual({ kind: "unless-pay-life", life: 2 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let flush = twoSeatGame([], []);
+    flush = stage(flush, 0, () => ({ hand: toHand(0, [SHOCK_LAND()], "shock-flush") }));
+    flush = passUntil(flush, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const before = flush.players[0]!.life;
+    flush = applyAction(flush, 0, { type: "play-land", cardId: "shock-flush-0" });
+    const flushLand = flush.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
+    expect(flushLand.tapped).toBe(false);
+    expect(flush.players[0]!.life).toBe(before - 2);
+
+    // At low life, the same choice protects it and the land enters tapped instead.
+    let poor = twoSeatGame([], []);
+    poor = stage(poor, 0, () => ({ hand: toHand(0, [SHOCK_LAND()], "shock-poor"), life: 2 }));
+    poor = passUntil(poor, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    poor = applyAction(poor, 0, { type: "play-land", cardId: "shock-poor-0" });
+    const poorLand = poor.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
+    expect(poorLand.tapped).toBe(true);
+    expect(poor.players[0]!.life).toBe(2);
+  });
+
   it("skips the opening draw only for the starting player", () => {
     const game = twoSeatGame([], []);
     expect(game.players[0]!.hand).toHaveLength(7);
@@ -770,6 +855,22 @@ describe("mana payment", () => {
     game = putOnBattlefield(game, 0, [FOREST()]);
     const temple = game.players[0]!.battlefield[0]!;
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === temple.instance_id)).toBe(true);
+  });
+
+  it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
+    const profile = profileOf(PAIN_LAND());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.manaAbilities[0]).toMatchObject({ produces: ["C"], lifeCost: 0 });
+    expect(profile.manaAbilities[1]).toMatchObject({ produces: ["U", "R"], lifeCost: 1 });
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [PAIN_LAND()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const land = game.players[0]!.battlefield[0]!;
+    const before = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: land.instance_id, abilityIndex: 1, mana: "R" });
+    expect(game.players[0]!.life).toBe(before - 1);
+    expect(game.players[0]!.manaPool.R).toBe(1);
   });
 
   it("finds the lands that pay a colored cost", () => {
@@ -2553,6 +2654,36 @@ describe("casting", () => {
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("exiles the targeted creature and pays its controller life equal to its power", () => {
+    const profile = profileOf(EXILE_LIFEGAIN_REMOVAL());
+    expect(profile).toMatchObject({ targetKind: "creature", effects: [{ kind: "exile-target-creature-then-life-gain-power" }], fullyImplemented: true });
+    let game = readyToCast([EXILE_LIFEGAIN_REMOVAL()], [PLAINS()], [], [BEAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const before = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[1]!.life).toBe(before + 2);
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it("only lets Condemn-style removal target an attacking creature, paying life equal to toughness", () => {
+    const profile = profileOf(CONDEMN_LIKE());
+    expect(profile).toMatchObject({ targetKind: "attacking-creature", effects: [{ kind: "bottom-attacker-controller-gains-toughness" }], fullyImplemented: true });
+    let game = readyToCast([CONDEMN_LIKE()], [PLAINS()], [], [BEAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    // Not attacking yet: no legal target.
+    expect(legalTargets(game, 0, "attacking-creature")).toHaveLength(0);
+    game = { ...game, combat: { ...game.combat, attackers: [{ instanceId: bear.instance_id, defender: 0 }] } };
+    const before = game.players[1]!.life;
+    const libraryBefore = game.players[1]!.library.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[1]!.life).toBe(before + 2);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[1]!.library.length).toBe(libraryBefore + 1);
+    expect(game.players[1]!.library.at(-1)?.name).toBe("Grizzly Bears");
+    expect(game.combat.attackers).not.toContainEqual(expect.objectContaining({ instanceId: bear.instance_id }));
+  });
+
   it("punishes the specific opponent who drew, not the ability's own controller", () => {
     const profileDamage = profileOf(DAMAGE_ON_OPPONENT_DRAW());
     expect(profileDamage.triggers[0]).toMatchObject({ event: "card-drawn", subject: "opponent", effect: { kind: "damage-event-player", amount: 1 } });
@@ -2561,6 +2692,9 @@ describe("casting", () => {
     expect(profileLife.triggers[0]).toMatchObject({ event: "card-drawn", subject: "opponent", effect: { kind: "lose-life-event-player", amount: 1 } });
     expect(profileLife.fullyImplemented).toBe(true);
 
+    // Seat 0 controls the punisher and casts the draw spell, but both draws
+    // are targeted at seat 1: the trigger must credit seat 1, resolved from
+    // the card-drawn event itself, not seat 0 (the caster/controller).
     let game = readyToCast([DRAW_TWO_TARGET()], [DAMAGE_ON_OPPONENT_DRAW(), ISLAND(), ISLAND(), ISLAND()], [], []);
     const life0 = game.players[0]!.life;
     const life1 = game.players[1]!.life;
@@ -4152,6 +4286,21 @@ describe("triggered abilities", () => {
     expect(profileOf(ENCHANTMENT_ETB_DRAWER()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "enchantment-you-control", effect: { kind: "draw", amount: 1 } });
     expect(profileOf(DEATH_DRAIN()).triggers[0]).toMatchObject({ event: "dies", subject: "self" });
     expect(profileOf(WATCHER()).triggers[0]).toMatchObject({ event: "dies", subject: "another-creature-you-control" });
+    expect(profileOf(ANY_ENTER_WARDEN()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "another-creature", effect: { kind: "gain-life", amount: 1 } });
+    expect(profileOf(ANY_ENTER_WARDEN()).fullyImplemented).toBe(true);
+    expect(profileOf(ANY_ENTER_DRAINER()).triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "another-creature", effect: { kind: "lose-life", amount: 1 } });
+    expect(profileOf(ANY_ENTER_DRAINER()).fullyImplemented).toBe(true);
+    expect(profileOf(DRAIN_ARTIST()).triggers[0]).toMatchObject({
+      event: "dies", subject: "any-creature", targetKind: "player",
+      effect: { kind: "compound", effects: [{ kind: "lose-life-target-player", amount: 1 }, { kind: "gain-life", amount: 1 }] }
+    });
+    expect(profileOf(DRAIN_ARTIST()).fullyImplemented).toBe(true);
+    expect(profileOf(PARTNER_BARE())).toMatchObject({ triggers: [], effects: [], fullyImplemented: true });
+    expect(profileOf(PARTNER_WITH_SEEKER()).triggers[0]).toMatchObject({
+      event: "enters-battlefield", subject: "self", optional: true, choiceBy: "target", targetKind: "player",
+      effect: { kind: "partner-with-search", cardName: "Bonded Kin" }
+    });
+    expect(profileOf(PARTNER_WITH_SEEKER()).fullyImplemented).toBe(true);
     expect(profileOf(RAIDER()).triggers[0]).toMatchObject({ event: "attacks", subject: "self", targetKind: "any" });
     expect(profileOf(UPKEEP_SAGE()).triggers[0]).toMatchObject({ event: "upkeep", subject: "you" });
     expect(profileOf(CREATURE_COMBAT_DRAWER()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", effect: { kind: "draw", amount: 1 } });
@@ -4454,6 +4603,26 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.life).toBe(37);
   });
 
+  it("lets the target player both draw and pay the life for a Sign in Blood effect", () => {
+    const profile = profileOf(SIGN_IN_BLOOD());
+    expect(profile.effects[0]).toMatchObject({
+      kind: "compound",
+      effects: [{ kind: "draw-target-player", amount: 2 }, { kind: "lose-life-target-player", amount: 2 }]
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([SIGN_IN_BLOOD()], [SWAMP()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const targetHand = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    // The caster neither draws nor pays: both effects resolve against the
+    // single chosen target, not the controller.
+    expect(game.players[0]!.life).toBe(40);
+    expect(game.players[1]!.life).toBe(38);
+    expect(game.players[1]!.hand.length).toBe(targetHand + 2);
+  });
+
   it("makes each living player lose life", () => {
     const profile = profileOf(EACH_LOSS_SPELL());
     expect(profile.effects[0]).toMatchObject({ kind: "each-player-loses-life", amount: 1 });
@@ -4554,6 +4723,97 @@ describe("triggered abilities", () => {
     solo = applyAction(solo, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: watcher.instance_id }] });
     solo = passUntil(solo, (state) => state.stack.length === 0 && !state.triggerQueue.length);
     expect(solo.players[1]!.life).toBe(before);
+  });
+
+  it("drains a chosen player for any creature's death, including its own", () => {
+    // An opponent's creature dying fires it, and only the chosen player pays.
+    let game = readyToCast([BOLT()], [DRAIN_ARTIST(), MOUNTAIN()], [BEAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const life0 = game.players[0]!.life;
+    const life1 = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", seat: 0 });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(choice.options).toContainEqual({ kind: "player", seat: 1 });
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
+    expect(game.players[0]!.life).toBe(life0 + 1);
+    expect(game.players[1]!.life).toBe(life1 - 1);
+
+    // "~ or another creature" restores the source to its own death watch
+    // (unlike WATCHER above); the trigger still belongs to its last
+    // controller, seat 1, even though seat 0's spell killed it.
+    let solo = readyToCast([BOLT()], [MOUNTAIN()]);
+    solo = putOnBattlefield(solo, 1, [DRAIN_ARTIST()]);
+    const artist = solo.players[1]!.battlefield.find((permanent) => permanent.card.name === "Vein Reaper")!;
+    const soloLife0 = solo.players[0]!.life;
+    const soloLife1 = solo.players[1]!.life;
+    solo = applyAction(solo, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: artist.instance_id }] });
+    expect(solo.pendingChoice).toMatchObject({ type: "trigger-target", seat: 1 });
+    const soloChoice = solo.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    solo = applyAction(solo, 1, { type: "choose-trigger-target", sourceId: soloChoice.sourceId, target: { kind: "player", seat: 0 } });
+    expect(solo.players[0]!.life).toBe(soloLife0 - 1);
+    expect(solo.players[1]!.life).toBe(soloLife1 + 1);
+  });
+
+  it("lets the chosen target search for its exact partner", () => {
+    const bondedKin = PARTNER_WITH_KIN();
+    let game = readyToCast([PARTNER_WITH_SEEKER()], [FOREST(), FOREST()]);
+    game = stage(game, 1, (player) => ({ library: [...toHand(1, [bondedKin], "lib"), ...player.library] }));
+    const libraryBefore = game.players[1]!.library.length;
+    const handBefore = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    // The caster's controller chooses the target, as with any targeted ability.
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target", seat: 0 });
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "player", seat: 1 } });
+    // But the chosen player, not the caster, decides whether to search.
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", seat: 1 });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.players[1]!.hand.some((card) => card.name === "Bonded Kin")).toBe(true);
+    expect(game.players[1]!.hand.length).toBe(handBefore + 1);
+    expect(game.players[1]!.library.length).toBe(libraryBefore - 1);
+  });
+
+  it("leaves the chosen target's hand untouched when they decline the search", () => {
+    const bondedKin = PARTNER_WITH_KIN();
+    let game = readyToCast([PARTNER_WITH_SEEKER()], [FOREST(), FOREST()]);
+    game = stage(game, 1, (player) => ({ library: [...toHand(1, [bondedKin], "lib"), ...player.library] }));
+    const handBefore = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "player", seat: 1 } });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: optional.sourceId, accept: false });
+    expect(game.players[1]!.hand.some((card) => card.name === "Bonded Kin")).toBe(false);
+    expect(game.players[1]!.hand.length).toBe(handBefore);
+  });
+
+  it("fires another creature's enter trigger under any player's control, but not for itself", () => {
+    // The controller's own creature entering triggers it.
+    let game = readyToCast([BEAR()], [ANY_ENTER_WARDEN(), FOREST(), FOREST()]);
+    const life = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0 && !state.triggerQueue.length);
+    expect(game.players[0]!.life).toBe(life + 1);
+
+    // So does an opponent's creature entering: the errata dropped "you control".
+    let cross = twoSeatGame([], []);
+    cross = stage(cross, 1, () => ({ hand: toHand(1, [BEAR()]) }));
+    cross = putOnBattlefield(cross, 0, [ANY_ENTER_WARDEN()]);
+    cross = putOnBattlefield(cross, 1, [FOREST(), FOREST()]);
+    cross = passUntil(cross, (state) => state.activeSeat === 1 && state.step === "precombat-main" && state.prioritySeat === 1);
+    const crossLife = cross.players[0]!.life;
+    cross = applyAction(cross, 1, { type: "cast", cardId: "hand-0" });
+    cross = passUntil(cross, (state) => state.stack.length === 0 && !state.triggerQueue.length);
+    expect(cross.players[0]!.life).toBe(crossLife + 1);
+
+    // The warden entering itself must not trigger its own ability (CR 109.5).
+    let solo = readyToCast([ANY_ENTER_WARDEN()], [FOREST()]);
+    const before = solo.players[0]!.life;
+    solo = applyAction(solo, 0, { type: "cast", cardId: "hand-0" });
+    solo = passUntil(solo, (state) => state.stack.length === 0 && !state.triggerQueue.length);
+    expect(solo.players[0]!.life).toBe(before);
   });
 
   it("fires an attack trigger when attackers are declared", () => {
@@ -5686,6 +5946,42 @@ describe("combat", () => {
     const id = game.players[0]!.battlefield[0]!.instance_id;
     expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: id, defender: 0 }] })).toThrow(/no puede ser atacado/);
     expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: "ghost", defender: 1 }] })).toThrow(/no puede atacar/);
+  });
+
+  it("amplifies a red source's damage to an opponent, but not to its own controller or from off-color sources", () => {
+    const profile = profileOf(DAMAGE_AMPLIFIER());
+    expect(profile.damageAmplify).toEqual({ colorFilter: "R", excludesSelf: false, scope: "opponent", amount: 2 });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Combat damage: the amplifier itself is a red source, so no self-exclusion applies.
+    let game = atAttackers([DAMAGE_AMPLIFIER()], []);
+    const attacker = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Torbran")!;
+    const before = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    expect(game.players[1]!.life).toBe(before - 4); // 2 power + 2 bonus
+
+    // A red spell targeting the opponent is amplified too; a blue spell is not.
+    let spellGame = twoSeatGame([], []);
+    spellGame = putOnBattlefield(spellGame, 0, [DAMAGE_AMPLIFIER(), MOUNTAIN(), ISLAND()]);
+    spellGame = stage(spellGame, 0, () => ({ hand: toHand(0, [RED_BOLT(), BLUE_BOLT()]) }));
+    spellGame = passUntil(spellGame, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const life1 = spellGame.players[1]!.life;
+    spellGame = applyAction(spellGame, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    spellGame = passUntil(spellGame, (state) => state.stack.length === 0);
+    expect(spellGame.players[1]!.life).toBe(life1 - 5); // 3 + 2 amplified (red)
+    const life1After = spellGame.players[1]!.life;
+    spellGame = applyAction(spellGame, 0, { type: "cast", cardId: "hand-1", targets: [{ kind: "player", seat: 1 }] });
+    spellGame = passUntil(spellGame, (state) => state.stack.length === 0);
+    expect(spellGame.players[1]!.life).toBe(life1After - 3); // blue: not amplified
+
+    // Damage the amplifier's own controller deals to themselves is never amplified.
+    let selfGame = twoSeatGame([], []);
+    selfGame = putOnBattlefield(selfGame, 0, [DAMAGE_AMPLIFIER(), MOUNTAIN()]);
+    selfGame = stage(selfGame, 0, () => ({ hand: toHand(0, [RED_BOLT()]) }));
+    selfGame = passUntil(selfGame, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const ownLife = selfGame.players[0]!.life;
+    selfGame = applyAction(selfGame, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 0 }] });
+    expect(selfGame.players[0]!.life).toBe(ownLife - 3); // no amplification against self
   });
 });
 
