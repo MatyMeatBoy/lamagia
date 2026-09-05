@@ -2713,6 +2713,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // chooses this target as it is put on the stack (CR 603.3d).
   if (/^Return target instant or sorcery card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "instant-or-sorcery-card-in-your-graveyard" };
   if (/^Return (?:another )?target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
+  if (/^Return target creature card from your graveyard to the battlefield\. You lose life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) {
+    return { effect: { kind: "reanimate-target-creature-lose-mana-value-life" }, target: "creature-card-in-your-graveyard" };
+  }
   if (/^Return (?:another )?target permanent card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-your-graveyard" };
   if (/^Return (?:another )?target permanent card from a graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-a-graveyard" };
   if (/^Return (?:another )?target artifact card from your graveyard to your hand\. You gain life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) return { effect: { kind: "return-target-artifact-and-gain-mana-value" }, target: "artifact-card-in-your-graveyard" };
@@ -3394,7 +3397,12 @@ function recognizeText(text: string): RecognizedText {
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
-          const executableText = optional && !payGate
+          // Normalize cycling's optional targeted keyword wording to the
+          // existing temporary-keyword primitive (CR 603.1, 603.2).
+          const optionalTargetKeyword = /^you\s+may\s+have\s+target creature gain\s+(flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate)\s+until end of turn\.?$/i.exec(effectText);
+          const executableText = optionalTargetKeyword
+            ? `Target creature gains ${optionalTargetKeyword[1]} until end of turn`
+            : optional && !payGate
             // Keep the subject for the compositional draw/life grammar. A
             // blanket removal would turn "you may gain 2 life" into the
             // invalid fragment "gain 2 life" (CR 609.3).

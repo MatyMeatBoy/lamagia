@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,412** · cobertura: **27.5%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,417** · cobertura: **27.6%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -85,7 +85,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | 2000-06-05 | Prophecy (`PCY`) | expansion | 2000s | main | 143 | 18 | 125 | 12.6% |
 | 2000-09-23 | Invasion Promos (`PINV`) | promos | invasion | other | 1 | 1 | 0 | 100.0% |
 | 2000-10-01 | Beatdown Box Set (`BTD`) | boxed-products | beatdown-box-set | other | 82 | 47 | 35 | 57.3% |
-| 2000-10-02 | Invasion (`INV`) | expansion | invasion | main | 335 | 101 | 234 | 30.1% |
+| 2000-10-02 | Invasion (`INV`) | expansion | invasion | main | 335 | 102 | 233 | 30.4% |
 | 2001-01-01 | Arena League 2001 (`PAL01`) | promos | arena-2001 | other | 11 | 7 | 4 | 63.6% |
 | 2001-01-01 | Friday Night Magic 2001 (`F01`) | promos | fnm-2001 | other | 7 | 2 | 5 | 28.6% |
 | 2001-01-01 | Judge Gift Cards 2001 (`G01`) | promos | judge-2001 | other | 2 | 0 | 2 | 0.0% |
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 27 | 41 | 39.7% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 69 | 165 | 29.5% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 247 | 94 | 72.4% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 248 | 93 | 72.7% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 3 | 9 | 25.0% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 6 | 8 | 42.9% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 2 | 7 | 22.2% |
@@ -419,7 +419,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | 2018-07-14 | MTG Arena Promos (`PANA`) | promos | arena-2018 | other | 23 | 13 | 10 | 56.5% |
 | 2018-07-19 | San Diego Comic-Con 2018 (`PS18`) | promos | comic-con-2018 | other | 5 | 0 | 5 | 0.0% |
 | 2018-08-01 | 2017 Heroes of the Realm (`PH17`) | funny-special | 2017-heroes-of-the-realm | other | 3 | 1 | 2 | 33.3% |
-| 2018-08-10 | Commander 2018 (`C18`) | commander | 2018 | commander | 297 | 124 | 173 | 41.8% |
+| 2018-08-10 | Commander 2018 (`C18`) | commander | 2018 | commander | 297 | 125 | 172 | 42.1% |
 | 2018-10-05 | Guilds of Ravnica (`GRN`) | expansion | ravnica | main | 268 | 89 | 179 | 33.2% |
 | 2018-10-05 | Guilds of Ravnica Promos (`PGRN`) | promos | guilds-of-ravnica | other | 60 | 15 | 45 | 25.0% |
 | 2018-10-05 | Mythic Edition (`MED`) | masterpieces | mythic-edition | other | 24 | 0 | 24 | 0.0% |
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 11 | 109 | 9.2% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1379 | 3842 | 26.4% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1380 | 3841 | 26.4% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 20 | 39 | 33.9% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 11 | 9 | 55.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 366 | 1330 | 21.6% |
@@ -569,7 +569,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | 2023-03-21 | Shadows of the Past (`SIS`) | masters-remastered | shadows-of-the-past | other | 76 | 25 | 51 | 32.9% |
 | 2023-03-21 | Shadows over Innistrad Remastered (`SIR`) | masters-remastered | shadows-over-innistrad-remastered | other | 284 | 51 | 233 | 18.0% |
 | 2023-04-21 | March of the Machine (`MOM`) | expansion | phyrexia | main | 296 | 35 | 261 | 11.8% |
-| 2023-04-21 | March of the Machine Commander (`MOC`) | commander | 2023 | commander | 338 | 99 | 239 | 29.3% |
+| 2023-04-21 | March of the Machine Commander (`MOC`) | commander | 2023 | commander | 338 | 100 | 238 | 29.6% |
 | 2023-04-21 | March of the Machine Promos (`PMOM`) | promos | march-of-the-machine | other | 80 | 1 | 79 | 1.2% |
 | 2023-04-21 | Multiverse Legends (`MUL`) | masterpieces | multiverse-legends | other | 66 | 1 | 65 | 1.5% |
 | 2023-05-12 | March of the Machine: The Aftermath (`MAT`) | expansion | phyrexia | main | 50 | 1 | 49 | 2.0% |
@@ -740,17 +740,17 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | boxed-products | the-zeta-set | 1 | 121 | 41 | 80 | 33.9% |
 | commander | 2011 | 1 | 303 | 127 | 176 | 41.9% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 247 | 94 | 72.4% |
+| commander | 2013 | 1 | 341 | 248 | 93 | 72.7% |
 | commander | 2014 | 1 | 322 | 199 | 123 | 61.8% |
 | commander | 2015 | 1 | 327 | 134 | 193 | 41.0% |
 | commander | 2016 | 1 | 341 | 124 | 217 | 36.4% |
 | commander | 2017 | 1 | 299 | 131 | 168 | 43.8% |
-| commander | 2018 | 1 | 297 | 124 | 173 | 41.8% |
+| commander | 2018 | 1 | 297 | 125 | 172 | 42.1% |
 | commander | 2019 | 1 | 292 | 105 | 187 | 36.0% |
 | commander | 2020 | 4 | 1001 | 333 | 668 | 33.3% |
 | commander | 2021 | 5 | 1022 | 332 | 690 | 32.5% |
 | commander | 2022 | 7 | 1802 | 500 | 1302 | 27.7% |
-| commander | 2023 | 6 | 1597 | 482 | 1115 | 30.2% |
+| commander | 2023 | 6 | 1597 | 483 | 1114 | 30.2% |
 | commander | 2024 | 7 | 1887 | 625 | 1262 | 33.1% |
 | commander | 2025 | 4 | 1046 | 387 | 659 | 37.0% |
 | commander | 2026 | 6 | 1265 | 326 | 939 | 25.8% |
@@ -804,7 +804,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | expansion | eldraine | 2 | 567 | 121 | 446 | 21.3% |
 | expansion | ice-age | 1 | 373 | 63 | 310 | 16.9% |
 | expansion | innistrad | 4 | 1103 | 226 | 877 | 20.5% |
-| expansion | invasion | 1 | 335 | 101 | 234 | 30.1% |
+| expansion | invasion | 1 | 335 | 102 | 233 | 30.4% |
 | expansion | ixalan | 3 | 771 | 171 | 600 | 22.2% |
 | expansion | kaladesh | 1 | 264 | 62 | 202 | 23.5% |
 | expansion | kaldheim | 1 | 323 | 48 | 275 | 14.9% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | masters-remastered | shadows-of-the-past | 1 | 76 | 25 | 51 | 32.9% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 51 | 233 | 18.0% |
 | masters-remastered | tempest-remastered | 1 | 254 | 88 | 166 | 34.6% |
-| masters-remastered | the-list | 1 | 5221 | 1379 | 3842 | 26.4% |
+| masters-remastered | the-list | 1 | 5221 | 1380 | 3841 | 26.4% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 100 | 313 | 24.2% |
 | masters-remastered | ultimate-masters | 1 | 254 | 74 | 180 | 29.1% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -7479,7 +7479,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Overload — `07159efc-c69f-4164-a8ca-9da641dbf702`
 - [ ] Phantasmal Terrain — `7dcbce46-2973-4a9f-93df-95ac41ce668a`
 - [ ] Phyrexian Battleflies — `58ed1294-ba7d-43a1-b988-8d78d9fa0e3e`
-- [ ] Phyrexian Delver — `a13cbac0-4c76-4970-b61e-5f4e020ee95c`
 - [ ] Phyrexian Infiltrator — `f444a0f8-32d8-4748-af58-51a1a8ed72b4`
 - [ ] Phyrexian Reaper — `245c3681-fc47-47fe-b6e5-34c96315c135`
 - [ ] Phyrexian Slayer — `da74cb57-f6de-4d05-a339-6412beb8df25`
@@ -20892,7 +20891,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Order of Succession — `1b95970c-e7eb-41c4-a8d2-9889b64b3c63`
 - [ ] Phantom Nantuko — `0951b529-646c-4dfd-88ad-84ee117ce722`
 - [ ] Phthisis — `530f088d-bfa1-4410-b1aa-ade8abdb2b7a`
-- [ ] Phyrexian Delver — `a13cbac0-4c76-4970-b61e-5f4e020ee95c`
 - [ ] Plague Boiler — `fef502af-6e79-4c55-a86a-b45adb3fc64a`
 - [ ] Presence of Gond — `ab42398c-f0a1-4b94-ac5f-b8768e1b4e05`
 - [ ] Primal Vigor — `c665544f-557b-4631-a1dc-39571470ca2e`
@@ -29520,7 +29518,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Nylea's Colossus — `3d73dfd6-fd74-453f-b323-6505825caf4c`
 - [ ] Octopus Umbra — `6d2ce0ba-f2ff-4c2b-ba85-f6c011ebda6c`
 - [ ] Overgrowth — `e6ccebf4-f4f0-404f-a634-4d751ef9c8aa`
-- [ ] Phyrexian Delver — `a13cbac0-4c76-4970-b61e-5f4e020ee95c`
 - [ ] Phyrexian Rebirth — `6ef3c75d-6af2-4ea0-b98d-96c5d7d3af58`
 - [ ] Ponder — `02090581-61aa-4348-ad57-451be8ee91c2`
 - [ ] Portent — `e744dbb6-2d56-462a-8d49-d79c73944048`
@@ -34479,7 +34476,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Phyrexian Battleflies — `58ed1294-ba7d-43a1-b988-8d78d9fa0e3e`
 - [ ] Phyrexian Colossus — `caab555c-7852-418a-bdc3-f908af7e0932`
 - [ ] Phyrexian Crusader — `91760bdf-a82a-4f3d-b925-3bc81ffbd41f`
-- [ ] Phyrexian Delver — `a13cbac0-4c76-4970-b61e-5f4e020ee95c`
 - [ ] Phyrexian Etchings — `cf938a60-23ec-4834-a3cf-391a7b04747e`
 - [ ] Phyrexian Furnace — `4aafb7e7-b9fc-44ae-9c54-da11fd9dcc17`
 - [ ] Phyrexian Infiltrator — `f444a0f8-32d8-4748-af58-51a1a8ed72b4`
@@ -50487,7 +50483,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Path of the Schemer — `9cdb1cf6-2bf1-401b-83ae-6f3f7512e5a6`
 - [ ] Path to Exile — `d683d985-9888-4d21-8b5f-69e69ce4a03b`
 - [ ] Perplexing Test — `8682266c-2b0f-496e-b1c6-1fb338feac24`
-- [ ] Phyrexian Delver — `a13cbac0-4c76-4970-b61e-5f4e020ee95c`
 - [ ] Phyrexian Rebirth — `6ef3c75d-6af2-4ea0-b98d-96c5d7d3af58`
 - [ ] Phyrexian Scriptures — `11173ad3-c007-478f-bce0-d756eac07ccb`
 - [ ] Phyrexian Triniform — `f8526a36-eb8f-457d-b532-e12b47622cfa`

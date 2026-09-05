@@ -109,6 +109,7 @@ const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Inst
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
 const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
+const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
 const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle this card, you may have it deal 1 damage to each creature." });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
 const CREATURE_COUNT_BOLT = () => make({ name: "Creature Count Bolt", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals damage equal to the number of creatures you control to any target." });
@@ -189,6 +190,7 @@ const X_DRAW = () => make({ name: "Scalable Insight", type_line: "Sorcery", mana
 const GRAVEYARD_RETURN = () => make({ name: "Unearth Memory", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Return target creature card from your graveyard to your hand." });
 const GRAVEYARD_BATTLEFIELD = () => make({ name: "Reanimate Memory", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Return target creature card from your graveyard to the battlefield." });
 const REANIMATE_SPELL = () => make({ name: "Test Reanimate", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value." });
+const PHYREXIAN_DELVER = () => make({ name: "Phyrexian Delver", type_line: "Creature — Phyrexian Human", mana_cost: "{3}{B}{B}", cmc: 5, power: "3", toughness: "2", oracle_text: "When Phyrexian Delver enters the battlefield, return target creature card from your graveyard to the battlefield. You lose life equal to that card's mana value.", oracle_id: "a13cbac0-4c76-4970-b61e-5f4e020ee95c" });
 const PLAIN_GRAVEYARD_REANIMATE = () => make({ name: "Test Hymn of Rebirth", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Put target creature card from a graveyard onto the battlefield under your control." });
 const ARTIFACT_GRAVEYARD_RETURN = () => make({ name: "Artifact Reclaim", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Return target artifact card from your graveyard to your hand." });
 const LAND_GRAVEYARD_BATTLEFIELD = () => make({ name: "Restore Memory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Put target land card from a graveyard onto the battlefield under your control." });
@@ -1263,6 +1265,26 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.damage).toBe(1);
   });
 
+  it("resolves Dirge of Dread's optional cycling keyword trigger", () => {
+    const profile = profileOf(DIRGE_OF_DREAD());
+    expect(profile.cyclingCost?.raw).toBe("{1}{B}");
+    expect(profile.triggers).toMatchObject([{ event: "card-cycled", subject: "self", optional: true, targetKind: "creature", effect: { kind: "grant-target-creature-keyword", keyword: "fear" } }]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([DIRGE_OF_DREAD()], [SWAMP(), SWAMP()], [], [BEAR()]);
+    game = stage(game, 0, () => ({ library: toHand(0, [FOREST()], "dirge-library") }));
+    const cycled = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === "hand-0");
+    expect(cycled).toBeDefined();
+    game = applyAction(game, 0, cycled!.action);
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", sourceCard: { name: "Dirge of Dread" } });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    if (game.pendingChoice?.type === "trigger-target") game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "permanent", instanceId: bear.instance_id } });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.temporaryKeywords).toContain("fear");
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Dirge of Dread")).toBe(true);
+  });
+
   it("lets Mind's Eye pay for opponent draws", () => {
     const profile = profileOf(MINDS_EYE());
     expect(profile.triggers).toMatchObject([{
@@ -1465,6 +1487,12 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[0]!.life).toBe(life0 - 2);
+  });
+
+  it("reuses reanimation life-loss for Phyrexian Delver's ETB", () => {
+    const profile = profileOf(PHYREXIAN_DELVER());
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", targetKind: "creature-card-in-your-graveyard", effect: { kind: "reanimate-target-creature-lose-mana-value-life" } });
+    expect(profile.fullyImplemented).toBe(true);
   });
 
   it("reanimates for free when there is no cost clause", () => {
