@@ -10,6 +10,7 @@ feature name.
 | Cluster | Worker branch | Scope | Status |
 | --- | --- | --- | --- |
 | `c13-until-end-turn-creatures` | `codex/local-c13` | Sudden Spoiling: remove abilities and set target player's creatures to base 0/2 until end of turn | active |
+| `c13-aura-control-static` | `codex/c13-aura-granted-activation-7bd` | Reusable static Aura control primitive for `You control enchanted creature/land/permanent` (CR 303.4, 611.3, 613.7) | active |
 | `c13-oracle-damage-activated-cost` | `feat/activated-abilities-and-triggers` | Reusable self-sacrifice activation that damages attacking creatures without flying; Leonin Bladetrap | merged (`5ceb67a`) |
 | `c13-modern-self-reference-etb-sweep` | `feat/activated-abilities-and-triggers` | Normalize modern `this creature enters` Bane of Progress wording into the existing artifact/enchantment sweep-and-counters primitive | merged (`93ce7d4`) |
 | `c13-life-gained-counter-scaling` | `feat/activated-abilities-and-triggers` | Reuse life-gained event amount for Cradle of Vitality's optional paid counters | merged (`93ce7d4`) |
