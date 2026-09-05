@@ -698,6 +698,7 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 .pip.symbol-t { background: #c8b67a; color: #3d3012; }
 .pip.symbol-p { background: #b5a1bd; color: #30223a; }
 .pip.symbol-s { background: #c9e8f0; color: #1d5663; }
+.mana-reserve-item.restricted { padding: 1px 3px; border: 1px solid var(--gold-dim); border-radius: 5px; background: #302710; }
 
 /* --------------------------------------------------------------------- */
 /* Landing                                                                */

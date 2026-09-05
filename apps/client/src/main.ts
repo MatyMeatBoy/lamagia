@@ -182,10 +182,13 @@ function manaHtml(cost: string | undefined): string {
 
 const MANA_POOL_ORDER = ["W", "U", "B", "R", "G", "C"] as const;
 
-function manaReserveHtml(pool: Readonly<Record<string, number>>): string {
+function manaReserveHtml(pool: Readonly<Record<string, number>>, restricted: readonly string[] = []): string {
   const entries = MANA_POOL_ORDER.filter((symbol) => (pool[symbol] ?? 0) > 0);
-  if (!entries.length) return `<span class="mana-reserve-empty">—</span>`;
-  return entries.map((symbol) => `<span class="mana-reserve-item">${manaSymbolHtml(symbol)}<b>${pool[symbol] ?? 0}</b></span>`).join("");
+  const restrictedEntries = MANA_POOL_ORDER
+    .map((symbol) => ({ symbol, count: restricted.filter((candidate) => candidate === symbol).length }))
+    .filter((entry) => entry.count > 0);
+  if (!entries.length && !restrictedEntries.length) return `<span class="mana-reserve-empty">—</span>`;
+  return `${entries.map((symbol) => `<span class="mana-reserve-item">${manaSymbolHtml(symbol)}<b>${pool[symbol] ?? 0}</b></span>`).join("")}${restrictedEntries.map(({ symbol, count }) => `<span class="mana-reserve-item restricted" title="Solo para hechizos legendarios">${manaSymbolHtml(symbol)}<b>${count}</b></span>`).join("")}`;
 }
 
 /** Replaces Oracle mana tokens while keeping the rules text and line breaks. */
@@ -1071,7 +1074,7 @@ function render(): void {
               <span class="seat-avatar" style="border-color: var(--seat-${me.seat})${selectedAvatar ? `;background-image:url('${escapeHtml(selectedAvatar)}')` : ""}">${escapeHtml(me.name.slice(0, 1))}</span>
               <button class="self-life" type="button" data-target-player="${me.seat}"><b>${me.lost ? "✕" : me.life}</b><small>vidas</small></button>
               <span class="mana-chip" title="Maná que aún puedes producir">◇ <b>${me.availableMana}</b></span>
-              <span class="mana-reserve" title="Reserva de maná"><small>Reserva</small>${manaReserveHtml(me.manaPool)}</span>
+              <span class="mana-reserve" title="Reserva de maná"><small>Reserva</small>${manaReserveHtml(me.manaPool, me.restrictedMana)}</span>
             </div>
             <div class="self-zones">
               <button class="zone-chip" type="button" data-zone="library" data-seat="${me.seat}"><i>Biblioteca</i><b>${me.libraryCount}</b></button>

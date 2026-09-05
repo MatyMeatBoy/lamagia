@@ -18,7 +18,7 @@ export function isSafeManaUndo(before: GameState, after: GameState, seat: SeatId
   // Extra log entries reveal intervening work even if its board delta cancels.
   if (after.log.length !== before.log.length + 1 || JSON.stringify(after.log.slice(0, -1)) !== JSON.stringify(before.log)) return false;
   const normalized: GameState = { ...after, version: before.version, log: before.log,
-    players: after.players.map(p => p.seat !== seat ? p : { ...p, life: player.life, manaPool: player.manaPool,
+    players: after.players.map(p => p.seat !== seat ? p : { ...p, life: player.life, manaPool: player.manaPool, restrictedMana: player.restrictedMana,
       battlefield: p.battlefield.map(permanent => permanent.instance_id === source.instance_id
         ? { ...permanent, tapped: source.tapped } : permanent) }) };
   return JSON.stringify(normalized) === JSON.stringify(before);

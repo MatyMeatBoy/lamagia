@@ -91,7 +91,11 @@ describe("mana abilities", () => {
     }));
     expect(profile.manaAbilities).toHaveLength(2);
     expect(profile.manaAbilities[0]!.produces).toEqual(["C"]);
-    expect(profile.manaAbilities[1]!.produces).toEqual(["W", "U", "B", "R", "G"]);
+    expect(profile.manaAbilities[1]).toMatchObject({
+      produces: ["W", "U", "B", "R", "G"],
+      manaRestriction: { kind: "legendary-spell", makesSpellUncounterable: true }
+    });
+    expect(profile.fullyImplemented).toBe(true);
   });
 
   it("recognises generic cycling from hand", () => {

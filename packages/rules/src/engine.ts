@@ -16,7 +16,7 @@ import {
   cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
-  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaType
+  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaType, type RestrictedMana
 } from "./mana.js";
 
 /** {W/B} — the extort payment (CR 702.39a), reused when the ability is granted. */
@@ -174,6 +174,8 @@ export interface PlayerState {
   /** Cards drawn during the current draw step (Orcish Bowmasters' "except the first ... in each of their draw steps"); reset each draw step. */
   readonly drawsThisDrawStep: number;
   readonly manaPool: ManaPool;
+  /** Mana units carrying a restriction such as Delighted Halfling's legendary-spell rider. */
+  readonly restrictedMana?: readonly RestrictedMana[];
   /** Count of Opal Palace mana still floating; spent mana consumes this marker first. */
   readonly commanderMana: number;
   readonly lost: boolean;
@@ -208,6 +210,8 @@ export interface StackObject {
   readonly fromCopy?: boolean;
   readonly variableValue: number;
   readonly countered: boolean;
+  /** A replacement effect can make a spell uncounterable after it is cast. */
+  readonly cantBeCountered?: boolean;
   /** Seat that countered this spell with a replacement-to-battlefield effect. */
   readonly counteredToBattlefieldController?: SeatId;
   /** The spell was cast for its kicker cost (CR 702.33). */
@@ -839,6 +843,7 @@ export interface ManaSource {
   readonly requiresTap: boolean;
   readonly commanderMana?: boolean;
   readonly removeCounters?: readonly CounterCost[];
+  readonly restriction?: ManaRestriction;
 }
 
 /** Rule 302.6 applies to a creature's own tap ability, including Llanowar Elves. */
@@ -923,7 +928,7 @@ function manaChoiceVectors(options: readonly ManaType[], amount: number): readon
 }
 
 /** Untapped permanents this player can currently tap for mana. */
-export function manaSources(player: PlayerState, state?: GameState): ManaSource[] {
+export function manaSources(player: PlayerState, state?: GameState, sourceOptions: { readonly allowLegendaryMana?: boolean } = {}): ManaSource[] {
   const sources: ManaSource[] = [];
   const landBonuses = player.battlefield
     .map((permanent) => cardProfile(permanent.card).staticLandManaBonus)
@@ -933,6 +938,7 @@ export function manaSources(player: PlayerState, state?: GameState): ManaSource[
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
+      if (ability.manaRestriction && !sourceOptions.allowLegendaryMana) continue;
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
       if (ability.variableAmountCounter || ability.manaCost || ability.sacrificesCreatures) continue;
@@ -954,6 +960,7 @@ export function manaSources(player: PlayerState, state?: GameState): ManaSource[
         ...(doublesLandMana && isLand(profile) ? { bonusOptions: options } : {}),
         ...(ability.removeCounters ? { removeCounters: ability.removeCounters } : {}),
         ...(ability.commanderEntryCounters ? { commanderMana: true } : {}),
+        ...(ability.manaRestriction ? { restriction: ability.manaRestriction } : {}),
         lifeCost: ability.lifeCost,
         requiresTap: ability.requiresTap
       });
@@ -977,8 +984,21 @@ export function manaSourcePotential(player: PlayerState): number {
 }
 
 export interface ManaPlan {
-  readonly taps: readonly { readonly permanentId: string; readonly abilityIndex: number; readonly type: ManaType; readonly amount: number; readonly lifeCost: number; readonly requiresTap: boolean; readonly bonusType?: ManaType; readonly commanderMana?: boolean; readonly removeCounters?: readonly CounterCost[] }[];
+  readonly taps: readonly {
+    readonly permanentId: string;
+    readonly abilityIndex: number;
+    readonly type: ManaType;
+    readonly amount: number;
+    readonly lifeCost: number;
+    readonly requiresTap: boolean;
+    readonly bonusType?: ManaType;
+    readonly commanderMana?: boolean;
+    readonly removeCounters?: readonly CounterCost[];
+    readonly fixedProduces?: readonly ManaType[];
+    readonly restriction?: ManaRestriction;
+  }[];
   readonly pool: ManaPool;
+  readonly restrictedMana?: readonly RestrictedMana[];
   readonly lifeCost: number;
 }
 
@@ -1004,7 +1024,7 @@ function coloredRequirements(cost: ManaCost): ManaType[][] {
 
 function sourceSignature(source: ManaSource): string {
   const counters = (source.removeCounters ?? []).map((cost) => `${cost.amount}:${cost.kind}`).join(",");
-  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${[...(source.bonusOptions ?? [])].join("")}|${source.lifeCost}|${counters}`;
+  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${[...(source.bonusOptions ?? [])].join("")}|${source.lifeCost}|${counters}|${source.restriction?.kind ?? ""}`;
 }
 
 function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Tap {
@@ -1017,6 +1037,8 @@ function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Ta
     requiresTap: source.requiresTap,
     ...(source.removeCounters ? { removeCounters: source.removeCounters } : {}),
     ...(source.commanderMana ? { commanderMana: true } : {}),
+    ...(source.fixedProduces ? { fixedProduces: source.fixedProduces } : {}),
+    ...(source.restriction ? { restriction: source.restriction } : {}),
     ...(bonusType ? { bonusType } : {})
   };
 }
@@ -1026,6 +1048,35 @@ function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType, b
     ? addMana(pool, chosen, source.amount)
     : source.fixedProduces.reduce((current, mana) => addMana(current, mana, 1), pool);
   return bonusType ? addMana(base, bonusType, 1) : base;
+}
+
+function outputTypesForTap(tap: Tap): readonly ManaType[] {
+  const base = tap.fixedProduces
+    ? [...tap.fixedProduces]
+    : Array.from({ length: tap.amount }, () => tap.type);
+  return tap.bonusType ? [...base, tap.bonusType] : base;
+}
+
+/** The plan solver uses one aggregate pool, then restores restriction tags before state mutation. */
+function finalizeManaPlan(
+  pool: ManaPool,
+  taps: readonly Tap[],
+  existingRestricted: readonly RestrictedMana[],
+  preservedRestricted: readonly RestrictedMana[],
+  lifeCost: number
+): ManaPlan {
+  const createdRestricted = taps.flatMap((tap) => tap.restriction
+    ? outputTypesForTap(tap).map((type) => ({ type, restriction: tap.restriction! }))
+    : []);
+  const restrictedMana = [...preservedRestricted, ...createdRestricted];
+  const normalizedPool = [...existingRestricted, ...createdRestricted]
+    .reduce((current, mana) => addMana(current, mana.type, -1), pool);
+  return {
+    taps,
+    pool: normalizedPool,
+    ...(restrictedMana.length ? { restrictedMana } : {}),
+    lifeCost
+  };
 }
 
 /**
@@ -1041,10 +1092,20 @@ function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType, b
 export function planManaPayment(
   cost: ManaCost,
   player: PlayerState,
-  options: { readonly variableValue?: number; readonly additionalGeneric?: number; readonly state?: GameState; readonly lifeCost?: number } = {}
+  options: {
+    readonly variableValue?: number;
+    readonly additionalGeneric?: number;
+    readonly state?: GameState;
+    readonly lifeCost?: number;
+    /** Allows mana restricted to legendary spells during this payment plan. */
+    readonly allowLegendaryMana?: boolean;
+  } = {}
 ): ManaPlan | null {
-  const startingPool = player.manaPool;
-  const sources = manaSources(player, options.state);
+  const existingRestricted = options.allowLegendaryMana
+    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+    : [];
+  const startingPool = existingRestricted.reduce((pool, mana) => addMana(pool, mana.type, 1), player.manaPool);
+  const sources = manaSources(player, options.state, { allowLegendaryMana: options.allowLegendaryMana });
   const variableValue = options.variableValue ?? 0;
   const additionalGeneric = options.additionalGeneric ?? 0;
   const externalLifeCost = options.lifeCost ?? 0;
@@ -1072,7 +1133,7 @@ export function planManaPayment(
     let index = 0;
     for (;;) {
       const payment = payCost(cost, currentPool, payOptions(currentLife));
-      if (payment) return { taps: currentTaps, pool: currentPool, lifeCost: currentLife + externalLifeCost };
+      if (payment) return finalizeManaPlan(currentPool, currentTaps, existingRestricted, player.restrictedMana ?? [], currentLife + externalLifeCost);
       if (index >= spare.length) return null;
       const source = spare[index]!;
       index += 1;
@@ -1146,16 +1207,66 @@ function applyManaPlan(state: GameState, seat: SeatId, plan: ManaPlan): GameStat
       return { ...permanent, ...(tap.requiresTap ? { tapped: true } : {}), counters };
     }),
     manaPool: plan.pool,
+    ...(plan.restrictedMana ? { restrictedMana: plan.restrictedMana } : { restrictedMana: [] }),
     commanderMana: player.commanderMana + plan.taps.filter((tap) => tap.commanderMana).reduce((total, tap) => total + tap.amount, 0)
   }));
   return raiseTapEvents(next, state, tapped);
 }
 
-function consumeManaPayment(player: PlayerState, payment: { readonly remaining: ManaPool; readonly spent: ManaPool }): PlayerState {
+type PlayerPayment = NonNullable<ReturnType<typeof payCost>> & {
+  readonly spentRestricted?: readonly RestrictedMana[];
+  readonly remainingRestricted?: readonly RestrictedMana[];
+};
+
+/** Pays from normal mana first, then from tagged mana when the spell permits it. */
+function payPlayerCost(
+  cost: ManaCost,
+  player: PlayerState,
+  options: Parameters<typeof payCost>[2] = {},
+  allowLegendaryMana = false
+): PlayerPayment | null {
+  const restricted = allowLegendaryMana
+    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+    : [];
+  const normal = payCost(cost, player.manaPool, options);
+  if (normal) return { ...normal, spentRestricted: [], remainingRestricted: player.restrictedMana ?? [] };
+  if (!restricted.length) return null;
+
+  const aggregate = restricted.reduce((pool, mana) => addMana(pool, mana.type, 1), player.manaPool);
+  const combined = payCost(cost, aggregate, options);
+  if (!combined) return null;
+
+  const available = [...restricted];
+  const spentRestricted: RestrictedMana[] = [];
+  const spentNormal = { ...combined.spent };
+  for (const type of Object.keys(spentNormal) as ManaType[]) {
+    let needed = spentNormal[type];
+    while (needed > 0) {
+      const index = available.findIndex((mana) => mana.type === type);
+      if (index < 0) break;
+      spentRestricted.push(available[index]!);
+      available.splice(index, 1);
+      spentNormal[type] -= 1;
+      needed -= 1;
+    }
+  }
+  const remainingNormal = { ...player.manaPool };
+  for (const type of Object.keys(spentNormal) as ManaType[]) remainingNormal[type] -= spentNormal[type];
+  return {
+    ...combined,
+    spent: spentNormal,
+    remaining: remainingNormal,
+    spentRestricted,
+    remainingRestricted: [...(player.restrictedMana ?? []).filter((mana) => !restricted.includes(mana)), ...available]
+  };
+}
+
+function consumeManaPayment(player: PlayerState, payment: PlayerPayment): PlayerState {
   const spentFromCommanderSource = Math.min(player.commanderMana, poolTotal(payment.spent));
   return {
     ...player,
     manaPool: payment.remaining,
+    ...(payment.remainingRestricted ? { restrictedMana: payment.remainingRestricted } : {}),
     commanderMana: player.commanderMana - spentFromCommanderSource
   };
 }
@@ -1228,6 +1339,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       drawsThisTurn: 0,
       drawsThisDrawStep: 0,
       manaPool: emptyPool(),
+      restrictedMana: [],
       commanderMana: 0,
       lost: false,
       drewFromEmptyLibrary: false,
@@ -5134,8 +5246,8 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
 // ---------------------------------------------------------------------------
 
 function emptyManaPools(state: GameState): GameState {
-  if (state.players.every((player) => poolTotal(player.manaPool) === 0 && player.commanderMana === 0)) return state;
-  return { ...state, players: state.players.map((player) => ({ ...player, manaPool: emptyPool(), commanderMana: 0 })) };
+  if (state.players.every((player) => poolTotal(player.manaPool) === 0 && !(player.restrictedMana?.length) && player.commanderMana === 0)) return state;
+  return { ...state, players: state.players.map((player) => ({ ...player, manaPool: emptyPool(), restrictedMana: [], commanderMana: 0 })) };
 }
 
 function queueDelayedDraws(state: GameState): GameState {
@@ -5488,7 +5600,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
+  const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
+  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowLegendaryMana });
   if (!plan) return { legal: false };
   const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -6270,7 +6383,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, cantBeCountered = false): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -6281,6 +6394,7 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     flashback,
     variableValue,
     countered: false,
+    ...(cantBeCountered ? { cantBeCountered: true } : {}),
     ...(commanderEntryCounters ? { commanderEntryCounters: true } : {}),
     ...(spentMana.length ? { spentMana } : {}),
     ...(selectedEffect ? { selectedEffect } : {}),
@@ -6403,13 +6517,20 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
   const amount = ability.amountFromSacrifice ? sacrificedCount : ability.amount;
   const lifeGain = ability.gainLifeFromAmount ? sacrificedCount : (ability.gainLife ?? 0);
+  const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: amount + landBonus }, () => action.mana);
+  const restrictedOutput = ability.manaRestriction
+    ? outputTypes.map((type) => ({ type, restriction: ability.manaRestriction! }))
+    : [];
   let next = withPlayer(activationState, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost + lifeGain,
     commanderMana: current.commanderMana + (ability.commanderEntryCounters ? ability.amount : 0),
-    manaPool: (ability.fixedProduces
-      ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
-      : addMana(current.manaPool, action.mana, amount + landBonus)),
+    manaPool: restrictedOutput.length
+      ? current.manaPool
+      : (ability.fixedProduces
+        ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
+        : addMana(current.manaPool, action.mana, amount + landBonus)),
+    ...(restrictedOutput.length ? { restrictedMana: [...(current.restrictedMana ?? []), ...restrictedOutput] } : {}),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
       const counters = { ...permanent.counters };
@@ -6419,7 +6540,6 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   }));
   const withBonus = manaBonus ? withPlayer(next, seat, (current) => ({ ...current, manaPool: addMana(current.manaPool, manaBonus, 1) })) : next;
   const tapped = ability.requiresTap ? raiseTapEvents(withBonus, activationState, [source.instance_id]) : withBonus;
-  const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: amount + landBonus }, () => action.mana);
   const output = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((mana) => `{${mana}}`).join("");
   return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
 }
@@ -6950,7 +7070,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost });
+  const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
+  const plan = (freeCast || payLifeCost || returnPermanentId) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
   if (!freeCast && !payLifeCost && !returnPermanentId && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
@@ -6978,7 +7099,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     ? { spent: emptyPool(), lifePaid: profile.payLifeInsteadOfManaCost!.life, remaining: playerAt(next, seat).manaPool }
     : returnPermanentId
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
-    : payCost(spellCost, playerAt(next, seat).manaPool, { additionalGeneric, availableLife: playerAt(next, seat).life });
+    : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowLegendaryMana);
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
   if (returnPermanentId) {
     const returned = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
@@ -6990,7 +7111,12 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     next = withPlayer(next, returned.card.owner, (current) => ({ ...current, hand: [...current.hand, returned.card] }));
     next = logged(next, seat, `${player.name} devuelve ${returned.card.name} a su mano por ${card.name}.`);
   }
-  const commanderEntryCounters = Boolean(fromCommand && playerAt(next, seat).commanderMana > 0 && poolTotal(payment.spent) > 0);
+  const paymentSpentTypes = [
+    ...Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)),
+    ...(payment.spentRestricted ?? []).map((mana) => mana.type)
+  ];
+  const paymentSpentTotal = paymentSpentTypes.length;
+  const commanderEntryCounters = Boolean(fromCommand && playerAt(next, seat).commanderMana > 0 && paymentSpentTotal > 0);
   next = withPlayer(next, seat, (current) => ({
     ...consumeManaPayment(current, payment),
     life: current.life - payment.lifePaid,
@@ -7025,10 +7151,10 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
-    Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)), payReducedCost);
+    paymentSpentTypes, payReducedCost, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)));
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
-  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: poolTotal(payment.spent) },
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: paymentSpentTotal },
     selfCastTriggers ? [castTriggerWatcher(card, seat)] : []);
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}.`);
 }
@@ -7983,6 +8109,7 @@ export function stackSpellManaValue(spell: StackObject): number {
 
 export function canCounterSpell(spell: StackObject, state?: GameState): boolean {
   if (spell.trigger || spell.activated || spell.countered) return false;
+  if (spell.cantBeCountered) return false;
   const profile = cardProfile(spell.card);
   if (profile.cantBeCountered) return false;
   if (!state || !isCreature(profile)) return true;

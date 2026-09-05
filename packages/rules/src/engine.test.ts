@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { cardProfile } from "./characteristics.js";
 import type { CardData } from "./characteristics.js";
 import {
-  applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
+  applyAction, canCounterSpell, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
   hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
 } from "./engine.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
@@ -1059,6 +1059,43 @@ describe("mana payment", () => {
     game = applyAction(game, 0, { type: "activate-mana", sourceId: land.instance_id, abilityIndex: 1, mana: "R" });
     expect(game.players[0]!.life).toBe(before - 1);
     expect(game.players[0]!.manaPool.R).toBe(1);
+  });
+
+  it("keeps Delighted Halfling mana restricted and makes the eligible spell uncounterable", () => {
+    const halfling = make({
+      name: "Delighted Halfling", type_line: "Creature — Halfling", power: "1", toughness: "2",
+      oracle_text: "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a legendary spell, and that spell can't be countered.",
+      produced_mana: ["B", "C", "G", "R", "U", "W"]
+    });
+    const ordinary = make({ name: "Ordinary Spell", type_line: "Creature — Elf", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1" });
+    const legendary = make({ name: "Legendary Spell", type_line: "Legendary Creature — Elf", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1" });
+
+    let blocked = twoSeatGame([], []);
+    blocked = stage(blocked, 0, () => ({ hand: toHand(0, [ordinary]), autoPass: false }));
+    blocked = putOnBattlefield(blocked, 0, [halfling]);
+    blocked = passUntil(blocked, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const source = blocked.players[0]!.battlefield.find((permanent) => permanent.card.name === halfling.name)!;
+    const restrictedAction = legalActions(blocked, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === source.instance_id && entry.action.abilityIndex === 1 && entry.action.mana === "G")!;
+    blocked = applyAction(blocked, 0, restrictedAction.action);
+    expect(blocked.players[0]!.restrictedMana).toMatchObject([{ type: "G", restriction: { kind: "legendary-spell", makesSpellUncounterable: true } }]);
+    expect(legalActions(blocked, 0).some((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")).toBe(false);
+
+    let allowed = twoSeatGame([], []);
+    allowed = stage(allowed, 0, () => ({ hand: toHand(0, [legendary]), autoPass: false }));
+    allowed = stage(allowed, 1, () => ({ autoPass: false }));
+    allowed = putOnBattlefield(allowed, 0, [halfling]);
+    allowed = passUntil(allowed, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const allowedSource = allowed.players[0]!.battlefield.find((permanent) => permanent.card.name === halfling.name)!;
+    const allowedMana = legalActions(allowed, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === allowedSource.instance_id && entry.action.abilityIndex === 1 && entry.action.mana === "G")!;
+    allowed = applyAction(allowed, 0, allowedMana.action);
+    const cast = legalActions(allowed, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")!;
+    expect(cast).toBeDefined();
+    allowed = applyAction(allowed, 0, cast.action);
+    const spell = allowed.stack.find((entry) => entry.card.name === legendary.name)!;
+    expect(spell.cantBeCountered).toBe(true);
+    expect(canCounterSpell(spell, allowed)).toBe(false);
   });
 
   it("auto-passes an Equipment activation when no creature can be equipped", () => {

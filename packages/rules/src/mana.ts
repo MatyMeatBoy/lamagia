@@ -12,6 +12,19 @@ export type ManaColor = (typeof MANA_COLORS)[number];
 export type ManaType = ManaColor | "C";
 export const MANA_TYPES: readonly ManaType[] = [...MANA_COLORS, "C"];
 
+/** A tag carried by floating mana until it is spent or empties (CR 106.7). */
+export interface ManaRestriction {
+  readonly kind: "legendary-spell";
+  /** Delighted Halfling's rider also creates a can't-be-countered effect. */
+  readonly makesSpellUncounterable?: boolean;
+}
+
+/** One restricted unit of mana. Keeping units tagged makes future restrictions composable. */
+export interface RestrictedMana {
+  readonly type: ManaType;
+  readonly restriction: ManaRestriction;
+}
+
 export type ManaPool = Record<ManaType, number>;
 
 export function emptyPool(): ManaPool {

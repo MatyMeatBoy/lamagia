@@ -3338,3 +3338,19 @@ The current client contract for card interactions is:
 
 Validation for this baseline: **625 rules tests**, `npm run check` (rules,
 client, match-server), and `git diff --check`.
+
+## Restricted mana baseline (2026-09-05)
+
+Delighted Halfling is now executable instead of merely exposing its colour
+choice. `ManaAbility.manaRestriction` tags each generated mana unit, the
+payment planner excludes tagged mana from ordinary spells, and legendary-spell
+payments may consume it. When the payment uses the tagged mana, the resulting
+stack object carries `cantBeCountered`, so counter effects and counter-only
+auto-pass correctly see no legal counter. The tag empties with the mana pool,
+survives ordinary payments untouched, is projected only to its controller, and
+is rendered in the reserve with the same mana symbol and a restricted tooltip.
+The representation is unit-based so later restrictions can be added without
+turning the normal pool into card-specific conditionals. Regression coverage
+also checks that a nonlegendary spell cannot use it and that a legendary spell
+cast with it is not counterable. Validation: **627 rules tests**, `npm run
+check`.

@@ -8,7 +8,7 @@
  * so the table never pretends a card did something it did not do.
  */
 
-import { MANA_COLORS, parseManaCost, type ManaCost, type ManaType } from "./mana.js";
+import { MANA_COLORS, parseManaCost, type ManaCost, type ManaRestriction, type ManaType } from "./mana.js";
 
 
 export interface CardData {
@@ -60,6 +60,8 @@ export interface ManaAbility {
   readonly anyColorFromLandsControlledBy?: "opponent" | "you";
   /** The produced mana can add Opal Palace's commander-entry counters when spent to cast that commander. */
   readonly commanderEntryCounters?: boolean;
+  /** Restriction retained on the floating mana, e.g. Delighted Halfling. */
+  readonly manaRestriction?: ManaRestriction;
   readonly requiresTap: boolean;
   /** Life the ability costs (pain and filter lands). */
   readonly lifeCost: number;
@@ -1360,11 +1362,18 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     }
     if (!instruction?.produced) continue;
     const produced = instruction.produced;
+    const manaRestriction: ManaRestriction | undefined = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(effectText)
+      ? {
+          kind: "legendary-spell",
+          ...( /that\s+spell\s+can't\s+be\s+countered/i.test(effectText) ? { makesSpellUncounterable: true } : {})
+        }
+      : undefined;
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
       ...(produced.commanderIdentity ? { commanderIdentity: true } : {}),
       ...(instruction.commanderEntryCounters ? { commanderEntryCounters: true } : {}),
+      ...(manaRestriction ? { manaRestriction } : {}),
       ...(removeCounters.length ? { removeCounters } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
@@ -3751,7 +3760,9 @@ function recognizeText(text: string): RecognizedText {
       const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
       const variableSacrificeMana = /(?:\{T\},\s*)?sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s?\s*$/i.test(manaLine[1]!.trim())
         && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana) unimplementedText.push(line);
+      const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(manaLine[2]!)
+        && Boolean(parseAddClause(manaLine[2]!.split(/[.!?]/, 1)[0] ?? ""));
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine) unimplementedText.push(line);
       continue;
     }
 
