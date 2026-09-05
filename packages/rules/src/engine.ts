@@ -332,6 +332,8 @@ export interface CombatState {
   readonly blockers: readonly BlockerDeclaration[];
   readonly attackersDeclared: boolean;
   readonly blockersDeclared: boolean;
+  /** Defenders that already submitted their declaration this combat. */
+  readonly blockersDeclaredBy?: readonly SeatId[];
   readonly firstStrikeResolved: boolean;
   readonly damageResolved: boolean;
 }
@@ -1448,14 +1450,15 @@ function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { t
 }
 
 function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = [], additionalCounters: readonly CounterCost[] = []): GameState {
-  const profile = cardProfile(card);
+  const enteringCard = uniqueTokenCard(state, card);
+  const profile = cardProfile(enteringCard);
   const printed = entersTapped(state, seat, profile);
   // An effect that says "onto the battlefield tapped" overrides the card's own
   // printed entry rule; it never makes a tapped-by-default land enter untapped.
   const enters = forceTapped ? { tapped: true, lifeCost: 0 } : printed;
   const permanent: Permanent = {
-    instance_id: card.instance_id,
-    card,
+    instance_id: enteringCard.instance_id,
+    card: enteringCard,
     controller: seat,
     tapped: enters.tapped,
     summoningSick: true,
@@ -1485,10 +1488,32 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     life: player.life - enters.lifeCost,
     battlefield: [...player.battlefield, permanent]
   }));
-  if (enters.lifeCost) next = logged(next, seat, `${playerAt(next, seat).name} paga ${enters.lifeCost} vidas para que ${card.name} entre enderezada.`);
-  const entered = playerAt(next, seat).battlefield.find((candidate) => candidate.instance_id === card.instance_id);
+  if (enters.lifeCost) next = logged(next, seat, `${playerAt(next, seat).name} paga ${enters.lifeCost} vidas para que ${enteringCard.name} entre enderezada.`);
+  const entered = playerAt(next, seat).battlefield.find((candidate) => candidate.instance_id === enteringCard.instance_id);
   if (entered) next = raiseEvent(next, { kind: "enters-battlefield", permanentId: entered.instance_id, controller: seat, card: entered.card });
   return next;
+}
+
+/**
+ * Token generators are allowed to reuse a stack-object id when one effect
+ * contains multiple token-producing branches. Battlefield identity is still
+ * per object (CR 110.5), so repair only generated-token collisions here; real
+ * cards must retain their stable instance id and fail loudly elsewhere.
+ */
+function uniqueTokenCard(state: GameState, card: GameCard): GameCard {
+  if (!card.token) return card;
+  const occupied = new Set(state.players.flatMap((player) => [
+    ...player.battlefield.map((permanent) => permanent.instance_id),
+    ...player.hand.map((candidate) => candidate.instance_id),
+    ...player.graveyard.map((candidate) => candidate.instance_id),
+    ...player.exile.map((candidate) => candidate.instance_id),
+    ...player.commandZone.map((candidate) => candidate.instance_id)
+  ]));
+  if (!occupied.has(card.instance_id)) return card;
+  let suffix = 2;
+  let instanceId = `${card.instance_id}:${suffix}`;
+  while (occupied.has(instanceId)) instanceId = `${card.instance_id}:${++suffix}`;
+  return { ...card, instance_id: instanceId };
 }
 
 /** The object an event is about, when it is about an object at all. */
@@ -4923,7 +4948,8 @@ export function legalBlockers(state: GameState, seat: SeatId): Permanent[] {
 export function defendersAwaitingBlocks(state: GameState): SeatId[] {
   if (state.step !== "declare-blockers" || state.combat.blockersDeclared) return [];
   const defenders = new Set(state.combat.attackers.map((entry) => entry.defender));
-  return [...defenders].filter((seat) => !playerAt(state, seat).lost);
+  const declared = new Set(state.combat.blockersDeclaredBy ?? []);
+  return [...defenders].filter((seat) => !playerAt(state, seat).lost && !declared.has(seat));
 }
 
 function tapAttackers(state: GameState, attackers: readonly AttackerDeclaration[]): GameState {
@@ -5270,7 +5296,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
            loyaltyUsedThisTurn: false
          }))
       }));
-      next = { ...next, combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
+      next = { ...next, combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, blockersDeclaredBy: [], firstStrikeResolved: false, damageResolved: false } };
       next = logged(next, next.activeSeat, `Turno ${next.turn} · ${playerAt(next, next.activeSeat).name} endereza sus permanentes.`);
       break;
     }
@@ -7623,13 +7649,16 @@ function applyDeclareBlockers(state: GameState, seat: SeatId, blockers: readonly
     if (assigned === 1) throw new Error(`${attacker.card.name} tiene amenaza y no puede ser bloqueada por una sola criatura.`);
   }
 
-  const remaining = defendersAwaitingBlocks(state).filter((candidate) => candidate !== seat);
+  const declaredBy = [...new Set([...(state.combat.blockersDeclaredBy ?? []), seat])];
+  const afterDeclaration = { ...state, combat: { ...state.combat, blockersDeclaredBy: declaredBy } };
+  const remaining = defendersAwaitingBlocks(afterDeclaration);
   let next: GameState = {
     ...state,
     combat: {
       ...state.combat,
       blockers: [...state.combat.blockers, ...blockers],
-      blockersDeclared: remaining.length === 0
+      blockersDeclared: remaining.length === 0,
+      blockersDeclaredBy: declaredBy
     }
   };
   // Block triggers fire once this defender's declaration is complete (CR 509.1h).

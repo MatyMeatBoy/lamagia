@@ -3362,3 +3362,32 @@ implemented.** See `docs/WORK_CLAIMS.md` for the complete per-card
 primitive history across every cluster this and prior sessions
 delivered — nothing in this deck remains unimplemented or partially
 implemented.
+
+## Gameplay interaction baseline (2026-09-05)
+
+The current client contract for card interactions is:
+
+- Required choices are rendered in a centered, fixed dialog so they do not
+  move the hand, phase rail, or life/mana HUD. This includes library search,
+  scry, graveyard targets, optional triggers, reveal choices, and cast/cycle
+  mode selection.
+- The bottom action list remains a compact fallback. It must not become the
+  only way to reach a required choice.
+- `autoPass` ignores mana abilities and Equip when there is no legal creature
+  target, but stops for real activated abilities and for counterspells only
+  while a counterable spell is on the stack.
+- Right-clicking the playmat opens the reversible-action menu when the server
+  reports `undoAvailable`. The rules layer accepts only a single manual mana
+  activation whose settled delta is limited to mana/life and tapping its
+  source; triggers and stack-producing sources such as City of Brass remain
+  non-reversible.
+- `CardView.isToken` is authoritative. Token permanents receive the client
+  tombstone frame and keep their name and independent `instance_id`; broken
+  image URLs are removed by the global image fallback instead of showing the
+  browser's broken-image icon.
+- Multiplayer combat tracks which defending seats already submitted blockers;
+  a defender cannot be asked twice and the server logs a stabilization
+  snapshot if a match still hits a loop guard.
+
+Validation for this baseline: **625 rules tests**, `npm run check` (rules,
+client, match-server), and `git diff --check`.

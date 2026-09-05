@@ -242,6 +242,22 @@ h1, h2, h3 { margin: 0; }
   object-fit: cover; object-position: center;
   filter: contrast(1.09) saturate(1.06);
 }
+.card-tile.token-tile {
+  border-color: #a88a51;
+  border-radius: 10px 10px 4px 4px;
+  clip-path: polygon(0 7%, 8% 0, 92% 0, 100% 7%, 100% 91%, 50% 100%, 0 91%);
+  background: radial-gradient(circle at 50% 38%, #304d35, #101c15 68%);
+}
+.card-tile.token-tile::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  border: 1px solid #d1b56d66; clip-path: inherit;
+}
+.card-tile .token-placeholder { display: none; }
+.card-tile.token-tile .token-placeholder {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: #cdb574; font-size: clamp(1rem, 2vw, 1.6rem); opacity: .7;
+  background: radial-gradient(circle, #31523699, transparent 62%);
+}
 .card-tile .tile-name {
   position: absolute; inset: 0 0 auto; padding: 2px 3px 5px;
   background: linear-gradient(#050a07ed, #050a07a8 62%, transparent);
@@ -263,6 +279,7 @@ h1, h2, h3 { margin: 0; }
 .card-tile.assigned-blocker { box-shadow: 0 0 0 2px #3f9ad6; }
 .card-tile.targetable { animation: targetPulse 1.1s ease-in-out infinite; }
 .target-picker { max-width: 270px; padding: 7px; border: 1px solid var(--line); border-radius: 10px; background: #08140e; }
+.target-picker.decision-overlay { max-width: min(460px, calc(100vw - 28px)); padding: 12px; }
 .target-picker small { display: block; margin: 0 0 5px; color: var(--muted); }
 .target-cards { display: grid; gap: 5px; max-height: 190px; overflow: auto; }
 .target-card { display: flex; align-items: center; gap: 7px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 7px; background: #102319; color: var(--text); text-align: left; cursor: pointer; }
@@ -614,6 +631,28 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
   border: 1px solid var(--gold-dim); border-radius: 12px; background: #07120cf5;
   box-shadow: 0 22px 70px #000c, 0 0 0 9999px #02080435; backdrop-filter: blur(7px);
 }
+
+.context-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 228px;
+  padding: 5px;
+  border: 1px solid var(--gold);
+  border-radius: 9px;
+  background: #08120b;
+  box-shadow: 0 10px 26px #000b;
+}
+.context-menu button {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 11px;
+  color: var(--text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.context-menu button:hover, .context-menu button:focus-visible { background: #1d3022; color: var(--gold); }
 .decision-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line-soft); }
 .decision-head > div { min-width: 0; display: grid; gap: 3px; }
 .decision-head b { color: var(--gold); font-size: .82rem; }
@@ -622,6 +661,8 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 .decision-list { max-height: calc(min(58vh, 520px) - 65px); overflow: auto; padding: 5px; }
 .decision-list .action-row { padding: 10px 11px; font-size: .72rem; border-radius: 7px; border-bottom: 1px solid #14261b; }
 .decision-list .action-row:hover, .decision-list .action-row:focus-visible { background: #17291c; color: var(--gold); outline: 1px solid var(--gold-dim); }
+.decision-list .action-row small { display: block; margin-top: 3px; color: var(--text-faint); font-size: .58rem; line-height: 1.25; }
+.decision-list .action-disabled { opacity: .42; cursor: not-allowed; }
 
 .winner-banner {
   position: fixed; z-index: 50; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px;
@@ -735,7 +776,8 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
 .external-link:hover { border-color: var(--gold-dim); color: var(--gold); }
 
 .zone-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 9px; }
-.zone-cards article { display: grid; gap: 4px; color: var(--text-dim); font-size: .62rem; }
+.zone-card { display: grid; gap: 4px; padding: 4px; border: 1px solid var(--line-soft); border-radius: 7px; background: #0a1710; color: var(--text-dim); font-size: .62rem; text-align: left; cursor: pointer; }
+.zone-card:hover, .zone-card:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; }
 .zone-cards img { width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border: 1px solid #6d5c3a; border-radius: 5px; }
 .zone-private { margin: 0; color: var(--text-dim); font-size: .78rem; }
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { cardProfile } from "./characteristics.js";
 import type { CardData } from "./characteristics.js";
 import {
-  applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, manaSources, planManaPayment, powerOf, toughnessOf,
+  applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
   hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
 } from "./engine.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
@@ -50,13 +50,20 @@ describe("smart counter response and safe mana undo", () => {
     const action = legalActions(game, 0).find(a => a.action.type === "activate-mana")!.action;
     const next = applyAction(game, 0, action);
     expect(isSafeManaUndo(game, next, 0, action)).toBe(true);
-    expect(isSafeManaUndo(game, { ...next, players: next.players.map(p => p.seat === 0 ? { ...p, life: p.life - 1 } : p) }, 0, action)).toBe(false);
+    expect(isSafeManaUndo(game, { ...next, players: next.players.map(p => p.seat === 1 ? { ...p, life: p.life - 1 } : p) }, 0, action)).toBe(false);
     expect(isSafeManaUndo(game, applyAction(next, 0, { type: "pass" }), 0, action)).toBe(false);
     const city = putOnBattlefield(game, 0, [make({ name: "City of Brass", type_line: "Land", oracle_text: "Whenever City of Brass becomes tapped, it deals 1 damage to you.\n{T}: Add one mana of any color." })]);
     const cityAction = legalActions(city, 0).find(a => a.action.type === "activate-mana" && a.action.sourceId === city.players[0]!.battlefield.at(-1)!.instance_id)!.action;
     const tapped = applyAction(city, 0, cityAction);
     expect(tapped.stack.length).toBeGreaterThan(0);
     expect(isSafeManaUndo(city, tapped, 0, cityAction)).toBe(false);
+
+    const pain = putOnBattlefield(game, 0, [PAIN_LAND()]);
+    const painAction = legalActions(pain, 0).find(a => a.action.type === "activate-mana"
+      && a.action.sourceId === pain.players[0]!.battlefield.at(-1)!.instance_id && a.action.abilityIndex === 1)!.action;
+    const painTapped = applyAction(pain, 0, painAction);
+    expect(painTapped.players[0]!.life).toBe(39);
+    expect(isSafeManaUndo(pain, painTapped, 0, painAction)).toBe(true);
   });
 });
 
@@ -752,6 +759,13 @@ function twoSeatGame(left: CardData[], right: CardData[], options: { seed?: numb
   );
 }
 
+function threeSeatGame(): GameState {
+  return createGame(
+    [deck("A", COMMANDER("Alpha Captain"), []), deck("B", COMMANDER("Beta Captain"), []), deck("C", COMMANDER("Gamma Captain"), [])],
+    { seed: 7, allowPartialDecks: true }
+  );
+}
+
 /** Forces the exact board state a test needs without going through the action API. */
 function stage(state: GameState, seat: SeatId, update: (player: GameState["players"][number]) => Partial<GameState["players"][number]>): GameState {
   return { ...state, players: state.players.map((player, index) => (index === seat ? { ...player, ...update(player) } : player)) };
@@ -1056,6 +1070,15 @@ describe("mana payment", () => {
     game = applyAction(game, 0, { type: "activate-mana", sourceId: land.instance_id, abilityIndex: 1, mana: "R" });
     expect(game.players[0]!.life).toBe(before - 1);
     expect(game.players[0]!.manaPool.R).toBe(1);
+  });
+
+  it("auto-passes an Equipment activation when no creature can be equipped", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEHEMOTH_SLEDGE(), ISLAND()]);
+    game = stage(game, 0, () => ({ hand: [] }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "equip")).toBe(false);
+    expect(hasRealChoice(game, 0)).toBe(false);
   });
 
   it("adds a fixed mana pool from a ritual spell, including a mix of distinct colors", () => {
@@ -1523,6 +1546,7 @@ describe("casting", () => {
     const plants = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Plant");
     expect(plants).toHaveLength(3);
     expect(new Set(plants.map((permanent) => permanent.instance_id)).size).toBe(3);
+    expect(projectGame(game, 0).players[0]!.battlefield.filter((permanent) => permanent.name === "Plant").every((permanent) => permanent.isToken)).toBe(true);
 
     game = { ...game, players: game.players.map((player, seat) => seat === 0
       ? { ...player, battlefield: player.battlefield.map((permanent) => permanent.card.name === "Plant" ? { ...permanent, damage: 1 } : permanent) }
@@ -7423,6 +7447,31 @@ describe("combat restrictions and landwalk", () => {
     game = stage(game, 1, () => ({ autoPass: false }));
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
     expect(game.combat.attackers).toHaveLength(1);
+  });
+
+  it("advances each defending player once in multiplayer combat", () => {
+    let game = threeSeatGame();
+    game = game.players.reduce((current, player) => stage(current, player.seat, () => ({ autoPass: false, hand: [] })), game);
+    game = putOnBattlefield(game, 0, [BEAR(), BEAR()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = putOnBattlefield(game, 2, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const attackers = game.players[0]!.battlefield;
+    game = applyAction(game, 0, {
+      type: "declare-attackers",
+      attackers: [
+        { instanceId: attackers[0]!.instance_id, defender: 1 },
+        { instanceId: attackers[1]!.instance_id, defender: 2 }
+      ]
+    });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    expect(defendersAwaitingBlocks(game)).toEqual([1, 2]);
+    game = applyAction(game, 1, { type: "declare-blockers", blockers: [] });
+    expect(defendersAwaitingBlocks(game)).toEqual([2]);
+    expect(legalActions(game, 1)).toHaveLength(0);
+    game = applyAction(game, 2, { type: "declare-blockers", blockers: [] });
+    game = passUntil(game, (state) => state.step !== "declare-blockers");
+    expect(game.step).not.toBe("declare-blockers");
   });
 
   /** Both seats staged, attackers already declared by seat 0. */

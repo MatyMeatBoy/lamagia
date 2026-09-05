@@ -6,7 +6,7 @@ import { existsSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { GameAction } from "@prossh/rules";
-import { actInMatch, createMatch, getMatch, listMatches, matchSummary, seatForToken, setAutoPass, undoInMatch, viewMatch, type ImportedDeck } from "./matches.js";
+import { actInMatch, createMatch, gameplayDebugSnapshot, getMatch, listMatches, matchSummary, seatForToken, setAutoPass, undoInMatch, viewMatch, type ImportedDeck } from "./matches.js";
 import { readCompletedOracleIds, selectTestedPod } from "./tested-mode.js";
 
 const port = Number(process.env.PORT ?? 8787);
@@ -511,7 +511,16 @@ app.post<{ Params: { id: string }; Body: { token?: string; action?: GameAction }
     const view = actInMatch(request.params.id, request.body?.token, action);
     io.to(`match:${request.params.id}`).emit("match:updated", { matchId: request.params.id, version: view.version });
     return view;
-  } catch (error) { return reply.code(400).send({ error: failure(error, "La acción fue rechazada.") }); }
+  } catch (error) {
+    if (error instanceof Error && /estabilizar|bucle/i.test(error.message)) {
+      try {
+        request.log.error({ err: error, action: request.body?.action, debug: gameplayDebugSnapshot(getMatch(request.params.id)) }, "rules engine stabilization failure");
+      } catch (loggingError) {
+        request.log.error({ err: loggingError, originalError: error.message, matchId: request.params.id }, "rules engine failure could not be fully captured");
+      }
+    }
+    return reply.code(400).send({ error: failure(error, "La acción fue rechazada.") });
+  }
 });
 
 app.post<{ Params: { id: string }; Body: { token?: string; autoPass?: boolean } }>("/api/matches/:id/settings", async (request, reply) => {
