@@ -8979,6 +8979,7 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   const HARDENED_SCALE_ARMOR = () => make({ name: "Hardened-Scale Armor", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature gets +3/+3.", oracle_id: "9eb58db8-7934-485c-8606-fb1a6cc60d42", scryfall_id: "54c4cb29-3eb9-4a24-a91a-896802c78aef" });
   const DEBILITATING_INJURY = () => make({ name: "Debilitating Injury", type_line: "Enchantment — Aura", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature gets -2/-2.", oracle_id: "52eab77d-9a07-4e14-8872-72681d3b3d0e", scryfall_id: "cf2d01e2-9f9f-4674-b8ab-b783d3faef03" });
   const WILD_GROWTH = () => make({ name: "Wild Growth", type_line: "Enchantment — Aura", mana_cost: "{G}", cmc: 1, oracle_text: "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.", oracle_id: "706ae742-1807-44b7-a4fa-f2e26f61519a", scryfall_id: "b87f2d2c-d6ad-4639-b8c3-e75569c5373f" });
+  const CONTROL_MAGIC = () => make({ name: "Control Magic", type_line: "Enchantment — Aura", mana_cost: "{2}{U}", cmc: 4, oracle_text: "Enchant creature\nYou control enchanted creature.", oracle_id: "cd0d7141-46d2-4aa3-bc77-6b3b4513803e", scryfall_id: "d845d044-7457-4015-a893-1b7ca35df889" });
 
   function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[]) {
     let game = twoSeatGame([], []);
@@ -9020,6 +9021,31 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: forest.instance_id }] });
     const aura = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wild Growth")!;
     expect(aura.attachedTo).toBe(forest.instance_id);
+  });
+
+  it("applies Control Magic control and restores the prior controller when it leaves", () => {
+    const profile = profileOf(CONTROL_MAGIC());
+    expect(profile.auraControl).toBe(true);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [CONTROL_MAGIC()]) }));
+    game = putOnBattlefield(game, 0, [ISLAND(), ISLAND(), ISLAND()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    const controlled = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    const aura = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Control Magic")!;
+    expect(controlled.controller).toBe(0);
+    expect(controlled.controlChange).toEqual({ auraId: aura.instance_id, previousController: 1 });
+
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== aura.instance_id) }));
+    game = settle(game);
+    const restored = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(restored.controller).toBe(1);
+    expect(restored.controlChange).toBeUndefined();
   });
 });
 
