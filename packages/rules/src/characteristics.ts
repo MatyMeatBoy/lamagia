@@ -809,6 +809,8 @@ export interface CardProfile {
   readonly additionalLifeCostVariable: boolean;
   /** The printed Equip cost, when this permanent is an Equipment. */
   readonly equipCost: ManaCost | null;
+  /** A second, typically cheaper Equip cost restricted to a creature subtype (Wizard's Staff's "Equip Wizard {1}"). */
+  readonly typedEquipCost: { readonly subtype: string; readonly cost: ManaCost } | null;
   readonly equipmentModification: EquipmentModification | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
@@ -1316,6 +1318,17 @@ function parseEquipCost(text: string): ManaCost | null {
     if (!match) continue;
     const cost = parseManaCost(match[1]!.trim());
     if (cost && !cost.hasVariable) return cost;
+  }
+  return null;
+}
+
+/** "Equip Wizard {1}" (Wizard's Staff): a second, subtype-restricted Equip cost alongside the plain "Equip {cost}" line. */
+function parseTypedEquipCost(text: string): { subtype: string; cost: ManaCost } | null {
+  for (const line of text.split("\n")) {
+    const match = /^equip\s+([A-Za-z][A-Za-z'’-]*)\s+(.+)$/i.exec(line.trim().replace(/\.$/, ""));
+    if (!match) continue;
+    const cost = parseManaCost(match[2]!.trim());
+    if (cost && !cost.hasVariable) return { subtype: match[1]!, cost };
   }
   return null;
 }
@@ -3271,6 +3284,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
     if (/^as an additional cost to cast ~, pay (?:X|\d+) life\.?$/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^equip\s+[A-Za-z][A-Za-z'’-]*\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
    if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/i.test(line)) continue;
     if (/^level\s+\d+(?:-\d+|\+)?$/i.test(line) || /^\d+\/\d+$/.test(line)) continue;
@@ -3698,6 +3712,7 @@ export function cardProfile(card: CardData): CardProfile {
   const additionalLifeCost = additionalLifeMatch && additionalLifeMatch[1] !== "X" ? Number(additionalLifeMatch[1]) : 0;
   const additionalLifeCostVariable = additionalLifeMatch?.[1] === "X";
   const equipCost = parseEquipCost(text);
+  const typedEquipCost = parseTypedEquipCost(text);
   // "~ costs {N} less to cast for each creature on the battlefield" (Blasphemous Act, CR 118.9).
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
@@ -3804,6 +3819,7 @@ export function cardProfile(card: CardData): CardProfile {
     additionalLifeCost,
     additionalLifeCostVariable,
     equipCost,
+    typedEquipCost,
     equipmentModification,
     staticKeywordGrants,
     keywordsDuringYourTurn,

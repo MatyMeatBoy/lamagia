@@ -5342,7 +5342,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
     }
     if (!splitSecondActive(state) && profile.equipCost && profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
-      && planManaPayment(profile.equipCost, player, { state })
+      && (planManaPayment(profile.equipCost, player, { state })
+        || (profile.typedEquipCost && planManaPayment(profile.typedEquipCost.cost, player, { state })))
       && legalTargets(state, seat, "creature-you-control").length) {
       actions.push({
         action: { type: "equip", sourceId: permanent.instance_id },
@@ -5719,15 +5720,21 @@ function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, 
   if (!allowed.some((target) => target.kind === "permanent" && target.instanceId === targetId)) {
     throw new Error("Equip necesita una criatura que controles.");
   }
-  const plan = planManaPayment(profile.equipCost, player, { state });
+  // A typed Equip ability (Wizard's Staff's "Equip Wizard {1}") is cheaper
+  // than the general one but only usable on a matching creature.
+  const targetCreature = findPermanent(state, targetId);
+  const cost = profile.typedEquipCost && targetCreature && hasSubtype(cardProfile(targetCreature.card), profile.typedEquipCost.subtype)
+    ? profile.typedEquipCost.cost
+    : profile.equipCost;
+  const plan = planManaPayment(cost, player, { state });
   if (!plan) throw new Error(`No tienes maná suficiente para equipar ${source.card.name}.`);
   let next = applyManaPlan(state, seat, plan);
-  const payment = payCost(profile.equipCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+  const payment = payCost(cost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
   if (!payment) throw new Error(`No se pudo pagar el coste de equipar ${source.card.name}.`);
   next = withPlayer(next, seat, (current) => consumeManaPayment(current, payment));
   const ability: ActivatedAbility = {
     index: 0, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost: null,
-    effect: { kind: "attach-equipment" }, targetKind: "creature-you-control", text: `Equip ${profile.equipCost.raw}`
+    effect: { kind: "attach-equipment" }, targetKind: "creature-you-control", text: `Equip ${cost.raw}`
   };
   next = pushActivatedOnStack(next, seat, source, ability, [{ kind: "permanent", instanceId: targetId }]);
   return logged(next, seat, `${player.name} activa equipar de ${source.card.name}.`);
