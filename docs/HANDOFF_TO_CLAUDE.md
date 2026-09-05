@@ -2533,6 +2533,48 @@ Global export: **9,163/38,712** (+3 from 9,160). `npm run check` and `npm
 test` PASS (**538 rules tests**, up from 537). `npm run simulate:engine`:
 **200/200 passed**.
 
+### Worker-05: Surveil, built as a generalization of Scry rather than a duplicate (2026-09-05)
+
+Claim `rules-surveil`, continuing the Nekusar decklist (Otherworldly Gaze).
+Surveil N (CR 701.42) is mechanically Scry N with one difference: declined
+cards go to the graveyard instead of the library bottom. Rather than build
+a parallel `PendingChoice`/resolution path, generalized the existing one:
+the `"scry"` choice type and `beginScry` gained a
+`destination: "library-bottom" | "graveyard"` parameter, defaulting to
+`"library-bottom"` so every one of Scry's existing call sites, tests, and
+log messages needed zero changes — only `applyChooseScry`'s final-resolution
+branch gained a `destination === "graveyard"` fork routing the declined
+cards to the graveyard, and the Spanish log/label text got a graveyard
+variant ("en el cementerio" / "termina de vigilar").
+
+New `SpellEffect` kind `"surveil"` (`{ amount }`), wired at both places Scry
+itself is dispatched — as a spell's own effect and as a triggered ability's
+effect — calling the same `beginScry` helper with
+`destination: "graveyard"`. Two `recognizeSentence` patterns ("Surveil N"
+in both digit and word-number form, mirroring Scry's own pair) complete the
+parser side.
+
+This was the highest-leverage claim of the session by a wide margin: Surveil
+appears on **210** cards in the full catalog (only 1 was already
+implemented, apparently by accident/coincidence before this claim). Fully
+implements **73** of them — everywhere Surveil was the card's only
+unimplemented clause — including the target card Otherworldly Gaze plus
+well-known cards like Consider, Sinister Sabotage, Doom Whisperer,
+Unexplained Disappearance, Curate, and Think Tank. The other 137 have a
+second unmodeled clause (a triggered ability, a modal choice, etc.) and stay
+`fullyImplemented: false` pending separate claims.
+
+Scenario coverage: a spell-level Surveil 2 (declined card confirmed in the
+graveyard, never the library bottom) and a triggered ETB Surveil 2 through
+the trigger bus (same graveyard destination, exercising the second dispatch
+site). Both existing Scry tests pass completely unchanged, confirming the
+generalization didn't touch Scry's own behavior.
+
+Global export: **9,243/38,712** (+72 from 9,171; of the 73 now-`true`
+Surveil cards, one was already implemented before this claim by
+coincidence). `npm run check` and `npm test` PASS (**545 rules tests**, up
+from 543). `npm run simulate:engine`: **200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed
