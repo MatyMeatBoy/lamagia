@@ -962,9 +962,17 @@ function manaSacrificeCandidates(player: PlayerState, source: Permanent, ability
     && candidate.instance_id !== source.instance_id);
 }
 
+/** Thousand-Year Elixir-style permission: summoning sickness does not stop a
+ * creature's activated abilities, but the creature still pays every printed
+ * cost normally (CR 302.6, 602.5). */
+function hasCreatureActivationHaste(state: GameState, permanent: Permanent): boolean {
+  return isCreature(cardProfile(permanent.card))
+    && playerAt(state, permanent.controller).battlefield.some((source) => cardProfile(source.card).grantsCreatureActivationHaste);
+}
+
 function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: ManaAbility, state?: GameState): boolean {
   if (ability.requiresTap && permanent.tapped) return false;
-  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return false;
+  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card)) && (!state || !hasCreatureActivationHaste(state, permanent))) return false;
   if (ability.lifeCost >= player.life) return false;
   if (ability.requiresLands !== undefined && player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))).length < ability.requiresLands) return false;
   if (ability.activationRestriction) {
@@ -1042,7 +1050,7 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
       if (ability.variableAmountCounter || ability.manaCost || ability.sacrificesCreatures) continue;
-      if (!canUseManaAbility(player, permanent, ability)) continue;
+      if (!canUseManaAbility(player, permanent, ability, state)) continue;
       const options = manaOptionsFor(player, ability, state);
       if (!options.length) continue;
       // "<Basic type>s you control produce an additional {C}" (Crypt Ghast):
@@ -7173,12 +7181,12 @@ function activatableAbility(
   if (ability.requiresUntap) {
     if (!permanent.tapped) return { legal: false };
     const hasHaste = cardProfile(permanent.card).keywords.includes("haste");
-    if (permanent.summoningSick && !hasHaste) return { legal: false };
+    if (permanent.summoningSick && !hasHaste && !hasCreatureActivationHaste(state, permanent)) return { legal: false };
   }
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
   // the turn began. Non-creature permanents are unaffected by summoning sickness.
-  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return { legal: false };
+  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card)) && !hasCreatureActivationHaste(state, permanent)) return { legal: false };
   if (ability.lifeCost >= player.life) return { legal: false };
   if (ability.sacrificesCreature) {
     const candidates = player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id));

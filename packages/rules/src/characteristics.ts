@@ -957,6 +957,8 @@ export interface CardProfile {
   readonly noMaximumHandSize: boolean;
   readonly noMaximumHandSizeForAllPlayers: boolean;
   readonly locksOpponentsOnYourTurn: boolean;
+  /** "You may activate abilities of creatures you control as though those creatures had haste." (CR 302.6, 602.5). */
+  readonly grantsCreatureActivationHaste: boolean;
   readonly grantsExtortToOthers: boolean;
   readonly attackersAssignAsUnblockedWhileAttacking: boolean;
   readonly preventsOpponentLoss: boolean;
@@ -3394,6 +3396,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
   }
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
+  if (/^Untap target creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent you control$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent-you-control" };
   if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
     return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
@@ -3444,6 +3447,7 @@ function isIgnorableSentence(sentence: string, hasChosenColorEffect = false): bo
   // cleanup discard only bites at 8+ cards and the sim rarely floods that far,
   // so treating this as a no-op keeps the card playable without new state.
   if (/^you have no maximum hand size for the rest of the game\.?$/i.test(s)) return true;
+  if (/^you may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(s)) return true;
   if (/^then shuffle\.?$/i.test(s)) return true;
   // A rounding clarifier for a preceding "half of X" computation (Peer into
   // the Abyss); the half-amount effect already rounds up, so this adds no
@@ -4583,6 +4587,7 @@ export function cardProfile(card: CardData): CardProfile {
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const noMaximumHandSizeForAllPlayers = text.split("\n").some((line) => /^players have no maximum hand size\.?$/i.test(line.trim()));
   const locksOpponentsOnYourTurn = /during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?/i.test(text);
+  const grantsCreatureActivationHaste = text.split("\n").some((line) => /^you may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line.trim()));
   const grantsExtortToOthers = /other creatures you control have extort\.?/i.test(text);
   const attackersAssignAsUnblockedWhileAttacking = /for each creature you control, you may have that creature assign its combat damage as though it weren't blocked/i.test(text);
   const preventsOpponentLoss = /your opponents can't lose the game\.?/i.test(text);
@@ -4688,6 +4693,7 @@ export function cardProfile(card: CardData): CardProfile {
     noMaximumHandSize,
     noMaximumHandSizeForAllPlayers,
     locksOpponentsOnYourTurn,
+    grantsCreatureActivationHaste,
     grantsExtortToOthers,
     attackersAssignAsUnblockedWhileAttacking,
     preventsOpponentLoss,
