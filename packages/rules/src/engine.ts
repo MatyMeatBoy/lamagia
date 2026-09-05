@@ -6998,6 +6998,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "nonbasic-land") return isLand(profile) && !profile.supertypes.some((value) => value.toLowerCase() === "basic");
     if (kind === "artifact-or-enchantment") return profile.types.includes("Artifact") || profile.types.includes("Enchantment");
     if (kind === "creature-or-enchantment") return isCreature(profile) || profile.types.includes("Enchantment");
+    if (kind === "black-or-red-permanent") return profile.colors.includes("B") || profile.colors.includes("R");
     if (kind === "enchantment") return profile.types.includes("Enchantment");
     if (kind === "land") return isLand(profile);
     if (kind === "artifact-enchantment-or-land") return profile.types.includes("Artifact") || profile.types.includes("Enchantment") || isLand(profile);

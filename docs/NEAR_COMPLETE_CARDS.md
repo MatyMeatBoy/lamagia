@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,181**
-- Cards with a reusable existing primitive hint: **11,476**
+- One-line cards: **15,180**
+- Cards with a reusable existing primitive hint: **11,475**
 - Cards needing new primitive review: **3,705**
-- Templates: **11,998**
+- Templates: **11,997**
 
 ## Worker rule
 
@@ -40,7 +40,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Reciprocate | `ebdd29c0-2c33-4410-a05c-80ced58c7b81` | damage | damage / life | Exile target creature that dealt damage to you this turn. |
 | needs-new-primitive | Nameless Inversion | `d6911456-42cb-4b23-a560-dc98784530f5` | pump | new primitive review | Target creature gets +3/-3 and loses all creature types until end of turn. |
 | needs-new-primitive | Bituminous Blast | `d291d8f7-bb67-470c-8794-cd553c91e5cc` | activated | new primitive review | Cascade |
-| reuse-existing | Celestial Purge | `ec1f6188-2516-46ac-8a03-7b7285b23a62` | exile | exile | Exile target black or red permanent. |
 | reuse-existing | Hinder | `c9db6b94-a7b1-4b93-b454-4dead8f85e34` | counters | counter | If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard. |
 | reuse-existing | Cruel Edict | `10c585c4-bf5b-4d8f-94a9-e9a5036a688f` | sacrifice | sacrifice | Target opponent sacrifices a creature of their choice. |
 | reuse-existing | Blightning | `a6496440-dc0c-4d9b-bf37-f537b6f0187b` | discard | draw / discard | That player or that planeswalker's controller discards two cards. |
@@ -218,5 +217,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Temporal Manipulation | `6b6ac99a-7548-4cad-9fe5-ea611618ab9e` | activated | new primitive review | Take an extra turn after this one. |
 | reuse-existing | Abrupt Decay | `1c747fe2-289e-492a-a846-aa77707e2dc3` | destroy | activated ability / mana | Destroy target nonland permanent with mana value 3 or less. |
 | reuse-existing | The Tabernacle at Pendrell Vale | `69b409b3-fa16-4c79-8b46-215a7036ed46` | destroy | trigger / ETB | All creatures have "At the beginning of your upkeep, destroy ~ unless you pay {1}." |
+| reuse-existing | Hanna, Ship's Navigator | `3b008c71-e2a0-4f56-83d3-655c5dd58e0e` | return | activated ability / mana | {1}{W}{U}, {T}: Return target artifact or enchantment card from your graveyard to your hand. |
 
-The JSON contains the remaining 14,981 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,980 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
