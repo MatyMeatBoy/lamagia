@@ -455,6 +455,7 @@ const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", m
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
 const MORTIFY = () => make({ name: "Mortify", type_line: "Instant", mana_cost: "{1}{W}{B}", cmc: 3, oracle_text: "Destroy target creature or enchantment.", oracle_id: "faa01ed1-ccfa-4e58-951f-cd81f9068027", scryfall_id: "faa01ed1-ccfa-4e58-951f-cd81f9068027" });
 const CELESTIAL_PURGE = () => make({ name: "Celestial Purge", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Exile target black or red permanent.", oracle_id: "ec1f6188-2516-46ac-8a03-7b7285b23a62", scryfall_id: "ec1f6188-2516-46ac-8a03-7b7285b23a62" });
+const CRUEL_EDICT = () => make({ name: "Cruel Edict", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target opponent sacrifices a creature of their choice.", oracle_id: "10c585c4-bf5b-4d8f-94a9-e9a5036a688f", scryfall_id: "6f11fe08-d745-4dc7-b995-8ed28cc8b501" });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
 const ENCHANTMENT_REMOVAL = () => make({ name: "Demolish Enchantment", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Destroy target enchantment." });
 const LAND_REMOVAL = () => make({ name: "Stone Rain", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target land." });
@@ -9525,6 +9526,18 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
     expect(game.players[1]!.exile.some((card) => card.name === "Dusk Bat")).toBe(true);
+  });
+
+  it("resolves Cruel Edict against a chosen opponent's creature pool", () => {
+    expect(profileOf(CRUEL_EDICT())).toMatchObject({ targetKind: "opponent", fullyImplemented: true });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [CRUEL_EDICT()]) }));
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP()]);
+    game = putOnBattlefield(game, 1, [BEAR(), TRAMPLER()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")).toHaveLength(0);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(true);
   });
 
   // CR 303.4h (attachment), 613.1/613.6 (continuous effects), and 613.7 (base P/T).
