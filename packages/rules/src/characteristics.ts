@@ -480,6 +480,7 @@ export type SpellEffect =
   | { readonly kind: "return-random-creature-from-graveyard-to-hand" }
   | { readonly kind: "modify-all-attacking-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
+  | { readonly kind: "target-player-sacrifice-creature" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
   /** Peer into the Abyss: both halves are rounded up and computed independently at resolution (CR 107.1a). */
   | { readonly kind: "draw-half-library-then-lose-half-life-target-player" }
@@ -3130,6 +3131,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
+  }
+  if (/^Target player sacrifices a creature of their choice$/i.test(text)) {
+    return { effect: { kind: "target-player-sacrifice-creature" }, target: "player" };
+  }
+  if (/^Target opponent sacrifices a creature of their choice$/i.test(text)) {
+    return { effect: { kind: "target-player-sacrifice-creature" }, target: "opponent" };
   }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };

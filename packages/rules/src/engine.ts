@@ -3078,6 +3078,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const next = movePermanentToZone(state, victim, "graveyard");
       return logged(next, target.seat, `${playerAt(next, target.seat).name} sacrifica a ${victim.card.name}.`);
     }
+    case "target-player-sacrifice-creature": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const candidates = playerAt(state, target.seat).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
+      if (!candidates.length) return state;
+      // The card says "of their choice"; bots use the least valuable legal creature
+      // while the authoritative rules path remains deterministic for replays.
+      const victim = [...candidates].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
+      const next = movePermanentToZone(state, victim, "graveyard");
+      return logged(next, target.seat, `${playerAt(next, target.seat).name} sacrifica a ${victim.card.name}.`);
+    }
     case "each-player-gains-life": {
       if (playersCantGainLife(state)) return state;
       let next = state;
