@@ -132,7 +132,7 @@ export interface ActivatedAbility {
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
-  readonly sourceZone?: "hand";
+  readonly sourceZone?: "hand" | "graveyard";
   /** Printed upkeep restriction (Forecast, CR 702.57). */
   readonly upkeepOnly?: boolean;
   /** The same source ability can be activated only once during its controller's turn. */
@@ -3197,6 +3197,21 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Eternal Dragon-style graveyard activation (CR 602.1, 602.5).
+    const graveyardReturn = /^((?:\{[^}]+\})+):\s*Return ~ from your graveyard to your hand\.?$/i.exec(line);
+    if (graveyardReturn && /^Activate only during your upkeep\.?$/i.test(body[lineIndex + 1]?.text ?? "")) {
+      const manaCost = parseManaCost(graveyardReturn[1]!);
+      if (manaCost) {
+        activatedAbilities.push({
+          index: activatedAbilities.length, requiresTap: false, sacrificesSelf: false, lifeCost: 0,
+          manaCost, sourceZone: "graveyard", upkeepOnly: true,
+          effect: { kind: "return-source-to-hand" }, targetKind: "none",
+          text: `${line} ${body[lineIndex + 1]!.text}`
+        });
+        lineIndex += 1;
+        continue;
+      }
+    }
     // Echo is a delayed upkeep payment for permanents that just entered under
     // a player's control (CR 702.30a-b). Reminder text is not executable.
     const echo = /^Echo\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);

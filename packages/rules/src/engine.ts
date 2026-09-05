@@ -1566,6 +1566,10 @@ function triggerDoublerCount(state: GameState, watcher: Permanent): number {
   return extra;
 }
 
+function graveyardActivationSource(card: GameCard, controller: SeatId): Permanent {
+  return handActivationSource(card, controller);
+}
+
 /** Shuffles a library for a spell/ability and raises the corresponding event (CR 701.20). */
 function shuffleLibrary(state: GameState, seat: SeatId, cards: readonly GameCard[]): GameState {
   const shuffled = shuffle(cards, state.rngState);
@@ -5392,6 +5396,22 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
   }
 
+  if (!splitSecondActive(state)) for (const card of player.graveyard) {
+    const source = graveyardActivationSource(card, seat);
+    for (const ability of cardProfile(card).activatedAbilities.filter((candidate) => candidate.sourceZone === "graveyard")) {
+      const check = activatableAbility(state, seat, source, ability);
+      if (!check.legal) continue;
+      actions.push({
+        action: { type: "activate", sourceId: card.instance_id, abilityIndex: ability.index },
+        label: `${card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}`,
+        cardId: card.instance_id,
+        ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
+        note: ability.text
+      });
+    }
+  }
+
   // Abilities of permanents this seat controls. Mana abilities resolve
   // immediately and never use the stack (rule 605.3a); everything else is
   // announced like a spell and waits for priority to pass.
@@ -5906,7 +5926,8 @@ function activatableAbility(
   if (splitSecondActive(state)) return { legal: false };
   if (permanent.controller !== seat) return { legal: false };
   if (ability.sourceZone === "hand" && !player.hand.some((card) => card.instance_id === permanent.instance_id)) return { legal: false };
-  if (ability.sourceZone !== "hand" && !player.battlefield.some((candidate) => candidate.instance_id === permanent.instance_id)) return { legal: false };
+  if (ability.sourceZone === "graveyard" && !player.graveyard.some((card) => card.instance_id === permanent.instance_id)) return { legal: false };
+  if (!ability.sourceZone && !player.battlefield.some((candidate) => candidate.instance_id === permanent.instance_id)) return { legal: false };
   if (ability.upkeepOnly && (state.activeSeat !== seat || state.step !== "upkeep")) return { legal: false };
   if (ability.oncePerTurn && (player.oncePerTurnActivations ?? []).includes(activationKey(permanent.instance_id, ability.index))) return { legal: false };
   if (ability.sorcerySpeed && !sorcerySpeed(state, seat)) return { legal: false };
@@ -6014,11 +6035,16 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   const player = playerAt(state, seat);
   const battlefieldSource = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   const handSource = player.hand.find((card) => card.instance_id === action.sourceId);
-  const source = battlefieldSource ?? (handSource ? handActivationSource(handSource, seat) : undefined);
+  const graveyardSource = player.graveyard.find((card) => card.instance_id === action.sourceId);
+  const source = battlefieldSource
+    ?? (handSource ? handActivationSource(handSource, seat) : undefined)
+    ?? (graveyardSource ? graveyardActivationSource(graveyardSource, seat) : undefined);
   if (!source) throw new Error("Ese permanente o carta ya no está bajo tu control.");
   const ability = cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
   if (!ability) throw new Error("Esa habilidad activada no existe.");
-  if (ability.sourceZone === "hand" ? !handSource : !battlefieldSource) throw new Error("La zona de esa habilidad ya no es válida.");
+  if (ability.sourceZone === "hand" ? !handSource : ability.sourceZone === "graveyard" ? !graveyardSource : !battlefieldSource) {
+    throw new Error("La zona de esa habilidad ya no es válida.");
+  }
   const check = activatableAbility(state, seat, source, ability, action.variableValue ?? 0);
   if (!check.legal) throw new Error(`No puedes activar la habilidad de ${source.card.name} ahora.`);
 
