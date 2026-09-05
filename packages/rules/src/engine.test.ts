@@ -14,10 +14,11 @@ describe("smart counter response and safe mana undo", () => {
     const game = twoSeatGame([], []);
     const diagnostic = stabilizationDiagnostic({
       ...game,
-      stack: [{ id: "public-spell", controller: 1, card: toHand(1, [make({ name: "Visible Spell", type_line: "Instant", oracle_text: "" })])[0]!, label: "Visible Spell", targets: [], fromCommandZone: false, variableValue: 0, countered: false }],
+      stack: [{ id: "public-spell", controller: 1, card: toHand(1, [make({ name: "Visible Spell", type_line: "Instant", oracle_text: "" })])[0]!, label: "Visible Spell", targets: [{ kind: "player", seat: 0 }], fromCommandZone: false, variableValue: 0, countered: false }],
       log: [...game.log, { turn: game.turn, step: game.step, seat: 0, text: "public checkpoint" }]
     });
     expect(diagnostic).toContain("stack=public-spell:Visible Spell");
+    expect(diagnostic).toContain("targets=A");
     expect(diagnostic).toContain("recent=");
     expect(diagnostic).not.toContain("library");
     expect(diagnostic).not.toContain("hand");

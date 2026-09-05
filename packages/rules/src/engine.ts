@@ -9377,7 +9377,10 @@ function shouldAutoPass(state: GameState, seat: SeatId): boolean {
  * still retaining the full snapshot in its private log.
  */
 export function stabilizationDiagnostic(state: GameState): string {
-  const stack = state.stack.slice(-4).map((object) => `${object.id}:${object.card.name}`).join(",") || "empty";
+  const stack = state.stack.slice(-4).map((object) => {
+    const targets = object.targets.map((target) => targetLabel(state, target)).join(", ") || "none";
+    return `${object.id}:${object.card.name}[targets=${targets}]`;
+  }).join(",") || "empty";
   const recentLog = state.log.slice(-3).map((entry) => `${entry.turn}/${entry.step}:${entry.text}`).join(" || ") || "empty";
   return [
     `version=${state.version}`,
