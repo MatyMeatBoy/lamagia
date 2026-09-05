@@ -186,6 +186,30 @@ export function matchSummary(match: MatchRecord) {
   };
 }
 
+/** Compact server-side evidence for an engine failure; never sent to clients. */
+export function gameplayDebugSnapshot(match: MatchRecord) {
+  const state = match.state;
+  const combat = state.combat as GameState["combat"] & { readonly blockersDeclaredBy?: readonly SeatId[] };
+  return {
+    matchId: match.id,
+    version: state.version,
+    turn: state.turn,
+    step: state.step,
+    activeSeat: state.activeSeat,
+    prioritySeat: state.prioritySeat,
+    priorityOpen: state.priorityOpen,
+    pendingChoice: state.pendingChoice?.type ?? null,
+    stack: state.stack.map((object) => ({ id: object.id, name: object.card.name, controller: object.controller })),
+    combat: {
+      attackers: combat.attackers,
+      blockers: combat.blockers,
+      blockersDeclared: combat.blockersDeclared,
+      blockersDeclaredBy: combat.blockersDeclaredBy ?? []
+    },
+    recentLog: state.log.slice(-20)
+  };
+}
+
 export function listMatches() {
   evictStaleMatches();
   return [...matches.values()].map(matchSummary);

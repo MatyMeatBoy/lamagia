@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { cardProfile } from "./characteristics.js";
 import type { CardData } from "./characteristics.js";
 import {
-  applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, manaSources, planManaPayment, powerOf, toughnessOf,
+  applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
   hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
 } from "./engine.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
@@ -738,6 +738,13 @@ function twoSeatGame(left: CardData[], right: CardData[], options: { seed?: numb
   return createGame(
     [deck("A", COMMANDER("Alpha Captain"), left), deck("B", COMMANDER("Beta Captain"), right)],
     { seed: options.seed ?? 7, allowPartialDecks: true }
+  );
+}
+
+function threeSeatGame(): GameState {
+  return createGame(
+    [deck("A", COMMANDER("Alpha Captain"), []), deck("B", COMMANDER("Beta Captain"), []), deck("C", COMMANDER("Gamma Captain"), [])],
+    { seed: 7, allowPartialDecks: true }
   );
 }
 
@@ -7412,6 +7419,31 @@ describe("combat restrictions and landwalk", () => {
     game = stage(game, 1, () => ({ autoPass: false }));
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
     expect(game.combat.attackers).toHaveLength(1);
+  });
+
+  it("advances each defending player once in multiplayer combat", () => {
+    let game = threeSeatGame();
+    game = game.players.reduce((current, player) => stage(current, player.seat, () => ({ autoPass: false, hand: [] })), game);
+    game = putOnBattlefield(game, 0, [BEAR(), BEAR()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = putOnBattlefield(game, 2, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const attackers = game.players[0]!.battlefield;
+    game = applyAction(game, 0, {
+      type: "declare-attackers",
+      attackers: [
+        { instanceId: attackers[0]!.instance_id, defender: 1 },
+        { instanceId: attackers[1]!.instance_id, defender: 2 }
+      ]
+    });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    expect(defendersAwaitingBlocks(game)).toEqual([1, 2]);
+    game = applyAction(game, 1, { type: "declare-blockers", blockers: [] });
+    expect(defendersAwaitingBlocks(game)).toEqual([2]);
+    expect(legalActions(game, 1)).toHaveLength(0);
+    game = applyAction(game, 2, { type: "declare-blockers", blockers: [] });
+    game = passUntil(game, (state) => state.step !== "declare-blockers");
+    expect(game.step).not.toBe("declare-blockers");
   });
 
   /** Both seats staged, attackers already declared by seat 0. */

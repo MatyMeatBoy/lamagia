@@ -76,6 +76,8 @@ interface UiState {
   actionsOpen: boolean;
   /** The permanent whose ability menu is open, Arena-style. */
   abilityMenu: string | null;
+  /** The hand card whose cast/cycle alternatives are being chosen. */
+  cardActionMenu: string | null;
   showFullLibrary: boolean;
   /** The keyword or ability glyph whose help card is open. */
   glyphHelp: AbilityGlyph | null;
@@ -92,7 +94,7 @@ let coverageGroup = "all";
 let coverageSubgroup = "all";
 let coverageQuery = "";
 const ui: UiState = {
-  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, glyphHelp: null,
+  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, cardActionMenu: null, glyphHelp: null,
   notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", showFullLibrary: false,
   // Smart priority is the default; manual priority remains an explicit opt-out.
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
@@ -322,6 +324,7 @@ function applyView(next: GameView): void {
   ui.pendingTarget = null;
   ui.selectedBlocker = null;
   ui.abilityMenu = null;
+  ui.cardActionMenu = null;
   ui.showFullLibrary = false;
   if (!next.combat.awaitingAttackers) ui.attackers.clear();
   if (!next.combat.awaitingBlockersFrom.includes(next.viewerSeat)) ui.blockers.clear();
@@ -333,10 +336,13 @@ function applyView(next: GameView): void {
 // ---------------------------------------------------------------------------
 
 function seatOf(seat: number): PlayerView | undefined { return view?.players.find((player) => player.seat === seat); }
-function actionForCard(cardId: string): LegalAction | undefined {
+function cardActionsForCard(cardId: string): LegalAction[] {
   const choices = view?.legalActions.filter((entry) => entry.cardId === cardId &&
     (entry.action.type === "cast" || entry.action.type === "cycle" || entry.action.type === "play-land" || entry.action.type === "choose-reveal"));
-  return [...(choices ?? [])].sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0))[0];
+  return [...(choices ?? [])].sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0));
+}
+function actionForCard(cardId: string): LegalAction | undefined {
+  return cardActionsForCard(cardId)[0];
 }
 function passAction(): LegalAction | undefined { return view?.legalActions.find((entry) => entry.action.type === "pass"); }
 
@@ -413,12 +419,12 @@ function chooseTarget(target: Target): void {
 function graveyardTargetHtml(): string {
   const options = ui.pendingTarget?.options.filter((target) => target.kind === "graveyard-card") ?? [];
   if (!options.length) return "";
-  return `<div class="target-picker"><small>Elige una carta del cementerio</small><div class="target-cards">${options.map((target) => {
+  return `<section class="target-picker decision-overlay" role="dialog" aria-label="Elegir carta del cementerio"><small>Elige una carta del cementerio</small><div class="target-cards">${options.map((target) => {
     if (target.kind !== "graveyard-card") return "";
     const card = seatOf(target.seat)?.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
     if (!card) return "";
     return `<button class="target-card" type="button" data-graveyard-target="${escapeHtml(target.instanceId)}" data-graveyard-seat="${target.seat}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt=""/>` : ""}<b>${escapeHtml(card.name)}</b></button>`;
-  }).join("")}</div></div>`;
+  }).join("")}</div></section>`;
 }
 
 /** Starts the target flow for one action, or submits it when it needs no target. */
@@ -436,7 +442,16 @@ function runAction(entry: LegalAction, subject: string): void {
 }
 
 function onCardClick(cardId: string, forcedAction?: LegalAction): void {
-  const action = forcedAction ?? actionForCard(cardId);
+  const choices = cardActionsForCard(cardId);
+  const card = seatOf(view?.viewerSeat ?? -1)?.hand?.find((candidate) => candidate.instance_id === cardId);
+  const hasCycleOnly = choices.some((entry) => entry.action.type === "cycle") && !choices.some((entry) => entry.action.type === "cast");
+  if (!forcedAction && (choices.length > 1 || (hasCycleOnly && Boolean(card)))) {
+    ui.cardActionMenu = ui.cardActionMenu === cardId ? null : cardId;
+    ui.notice = "Elige qué hacer con esta carta.";
+    render();
+    return;
+  }
+  const action = forcedAction ?? choices[0];
   if (!action) {
     if (isChoosingReveal()) {
       ui.notice = "Solo puedes elegir una carta compatible para la revelación.";
@@ -882,6 +897,29 @@ function actionMenuHtml(): string {
   </details>`;
 }
 
+/** Arena-style choice for a card that has several legal modes (e.g. cast or cycle). */
+function cardActionMenuHtml(): string {
+  if (!ui.cardActionMenu) return "";
+  const card = seatOf(view?.viewerSeat ?? -1)?.hand?.find((candidate) => candidate.instance_id === ui.cardActionMenu);
+  const entries = cardActionsForCard(ui.cardActionMenu);
+  if (!card || !entries.length) return "";
+  const hasCast = entries.some((entry) => entry.action.type === "cast");
+  const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")
+    ? `<button class="action-row action-disabled" type="button" disabled><span><b>Lanzar ${escapeHtml(card.name)}</b><small>No disponible ahora; puedes ciclarla.</small></span></button>` : "";
+  return `<section class="decision-overlay card-action-overlay" role="dialog" aria-modal="false" aria-label="Acciones de ${escapeHtml(card.name)}">
+    <header class="decision-head"><div><b>${escapeHtml(card.name)}</b><span>Elige una acción</span></div>
+      <button id="close-card-action-menu" class="icon-button" type="button" aria-label="Cerrar acciones">×</button></header>
+    <div class="decision-list">${unavailableCast}${entries.map((entry) => {
+      const index = view!.legalActions.indexOf(entry);
+      const description = entry.action.type === "cycle"
+        ? (entry.note ?? "Cicla esta carta, paga su coste y roba una carta.")
+        : entry.note ?? entry.label;
+      return `<button class="action-row choice-action" type="button" data-action-index="${index}" title="${escapeHtml(description)}">
+        <span><b>${escapeHtml(entry.label)}</b><small>${escapeHtml(description)}</small></span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
+    }).join("")}</div>
+  </section>`;
+}
+
 /**
  * Primary decision surface for actions that need an explicit player choice.
  * The dock keeps the compact fallback menu, but the main interaction stays
@@ -892,7 +930,8 @@ function actionMenuHtml(): string {
 function decisionOverlayHtml(): string {
   const actions = view?.legalActions ?? [];
   const choices = actions.filter((entry) =>
-    entry.action.type !== "pass" && entry.action.type !== "concede" && entry.action.type !== "choose-library-card");
+    entry.action.type !== "pass" && entry.action.type !== "concede" && entry.action.type !== "choose-library-card"
+      && !["cast", "cycle", "play-land", "activate", "activate-mana", "equip", "declare-attackers", "declare-blockers"].includes(entry.action.type));
   if (!choices.length) return "";
   const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
   const title = hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
@@ -1055,6 +1094,7 @@ function render(): void {
     ${librarySearchHtml()}
     ${scryHtml()}
     ${abilityMenuHtml()}
+  ${cardActionMenuHtml()}
   ${decisionOverlayHtml()}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
@@ -1115,6 +1155,7 @@ function wireBoard(): void {
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
   on("#close-decision-overlay", () => document.querySelector(".decision-overlay")?.remove());
+  on("#close-card-action-menu", () => { ui.cardActionMenu = null; ui.notice = ""; render(); });
   on("#undo", () => void undoLatestMana());
   document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
     button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
@@ -1309,8 +1350,13 @@ function showZone(seat: number, zone: "library" | "hand" | "graveyard" | "exile"
   fillDialog("zone-view", panelHtml("zone-view", `${player.name} · ${label}`, hidden
     ? `<p class="zone-private">Zona oculta. El servidor nunca envía estas cartas: solo su conteo (${zone === "library" ? player.libraryCount : player.handCount}).</p>`
     : cards.length
-      ? `<div class="zone-cards">${cards.map((card) => `<article>${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></article>`).join("")}</div>`
+      ? `<div class="zone-cards">${cards.map((card) => `<button class="zone-card" type="button" data-zone-card="${escapeHtml(card.instance_id)}" title="Ver detalles de ${escapeHtml(card.name)}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></button>`).join("")}</div>`
       : `<p class="zone-private">No hay cartas en esta zona.</p>`));
+  document.querySelectorAll<HTMLButtonElement>("[data-zone-card]").forEach((button) => {
+    const open = (event: Event) => { event.preventDefault(); showCardDetail(button.dataset.zoneCard!); };
+    button.addEventListener("click", open);
+    button.addEventListener("contextmenu", open);
+  });
 }
 
 // ---------------------------------------------------------------------------
