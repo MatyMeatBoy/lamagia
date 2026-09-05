@@ -917,6 +917,10 @@ export interface CardProfile {
   readonly returnLandInsteadOfManaCost: { readonly subtype: string } | null;
   /** "You may pay {cost} rather than pay ~'s mana cost" (Baleful Mastery, CR 601.2b, 118.9). */
   readonly payReducedCostInstead: ManaCost | null;
+  /** "Gift a card" (CR 702.166): promising the gift while casting draws an opponent a card before other effects. */
+  readonly giftDrawsCard: boolean;
+  /** "If the gift was promised, instead [wider target]" — the printed effect stays the same; only the legal target set widens. */
+  readonly giftPromisedTargetKind: Exclude<TargetKind, "none"> | null;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
@@ -3104,6 +3108,16 @@ function isIgnorableSentence(sentence: string): boolean {
   // the Abyss); the half-amount effect already rounds up, so this adds no
   // separate action (CR 107.1a).
   if (/^Round up each time\.?$/i.test(s)) return true;
+  // "If the gift was promised, instead [wider target]" (CR 702.166) only
+  // widens the legal target set for the already-printed effect; it is
+  // consumed into CardProfile.giftPromisedTargetKind, not a second action.
+  // Only ignorable when that widened target actually parses — otherwise a
+  // genuinely different "instead" clause would be silently dropped.
+  const giftInstead = /^If the gift was promised, instead (.+)$/i.exec(s.replace(/\.$/, ""));
+  if (giftInstead) {
+    const recognized = recognizeSentence(giftInstead[1]!);
+    if (recognized && recognized.target !== "none") return true;
+  }
   return false;
 }
 
@@ -3507,6 +3521,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^if you control an? [A-Za-z][A-Za-z'’-]*, you may pay \d+ life rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you may return an? [A-Za-z][A-Za-z'’-]* you control to its owner's hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you may pay (?:\{[^}]+\})+ rather than pay ~'s mana cost\.?$/i.test(line)) continue;
+    if (/^gift a card\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     if (parseDamageAmplify(line)) continue;
@@ -4000,6 +4015,10 @@ export function cardProfile(card: CardData): CardProfile {
   const returnLandInsteadOfManaCost = returnLandInsteadMatch ? { subtype: returnLandInsteadMatch[1]! } : null;
   const payReducedCostMatch = text.split("\n").map((line) => /^you may pay ((?:\{[^}]+\})+) rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const payReducedCostInstead = payReducedCostMatch ? parseManaCost(payReducedCostMatch[1]!) : null;
+  const giftDrawsCard = text.split("\n").some((line) => /^gift a card$/i.test(line.trim().replace(/\.$/, "")));
+  const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
+  const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
+  const giftPromisedTargetKind = giftPromisedRecognized && giftPromisedRecognized.target !== "none" ? giftPromisedRecognized.target : null;
   const doesNotUntapDuringUntap = text.split("\n").some((line) => /^~ doesn[’']t untap during your untap step\.?$/i.test(line.trim()));
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
@@ -4090,6 +4109,8 @@ export function cardProfile(card: CardData): CardProfile {
     payLifeInsteadOfManaCost,
     returnLandInsteadOfManaCost,
     payReducedCostInstead,
+    giftDrawsCard,
+    giftPromisedTargetKind,
     costReducesPerBoardCreature,
     spellCostReductionGrant,
     staticLandManaBonus,

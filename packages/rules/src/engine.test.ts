@@ -449,6 +449,7 @@ const BLACK_SOURCE = () => make({ name: "Onyx Mana Rock", type_line: "Land", pro
 const COUNTER_UNLESS_PAY = () => make({ name: "Test Mana Leak", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target spell unless its controller pays {1}." });
 const DAZE = () => make({ name: "Daze", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "You may return an Island you control to its owner's hand rather than pay this spell's mana cost.\nCounter target spell unless its controller pays {1}.", oracle_id: "70486bee-6ee7-41ea-b834-8caf4699302b", scryfall_id: "61968d99-6571-49ce-bcf1-2aaac3a10f45" });
 const MANA_DRAIN = () => make({ name: "Mana Drain", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell. At the beginning of your next main phase, add an amount of {C} equal to that spell's mana value.", oracle_id: "74d3277a-38e5-4732-afed-084a56148f20", scryfall_id: "f4e72225-0008-46cf-b403-3402ae8bfe47" });
+const LONG_RIVERS_PULL = () => make({ name: "Long River's Pull", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Gift a card (You may promise an opponent a gift as you cast this spell. If you do, they draw a card before its other effects.)\nCounter target creature spell. If the gift was promised, instead counter target spell.", oracle_id: "f1993767-1d07-49c8-b8dc-04ec9840a999", scryfall_id: "1c81d0fa-81a1-4f9b-a5fd-5a648fd01dea" });
 const WIDESPREAD_PANIC = () => make({ name: "Widespread Panic", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Whenever a spell or ability causes its controller to shuffle their library, that player puts a card from their hand on top of their library.", oracle_id: "853a3c2b-3d37-453a-8a77-4d90bd3a1cb7", scryfall_id: "d9e1b37f-8168-4dc0-858f-434ee96ff748" });
 const BRAINSTORM = () => make({ name: "Brainstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Draw three cards, then put two cards from your hand on top of your library in any order.", oracle_id: "36cd2364-d113-47d1-b2c4-b088d9eb88dd", scryfall_id: "d8bcdbfb-27df-4553-b8ec-97c3f2053745" });
 const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Search your library for a creature card, reveal it, then shuffle and put the card on top." });
@@ -5084,6 +5085,32 @@ describe("casting", () => {
     expect(game.players[0]!.manaPool.C).toBe(1);
     expect(game.step).toBe("precombat-main");
     expect(game.activeSeat).toBe(0);
+  });
+
+  it("lets Long River's Pull widen its target to any spell by promising the gift, drawing the opponent a card first", () => {
+    const profile = profileOf(LONG_RIVERS_PULL());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.targetKind).toBe("creature-spell");
+    expect(profile.effects).toEqual([{ kind: "counter-target-spell" }]);
+
+    let game = readyToCast([LONG_RIVERS_PULL()], [ISLAND(), ISLAND()], [BOLT()], [MOUNTAIN()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "player", seat: 0 }] });
+    const bolt = game.stack.at(-1)!;
+    game = applyAction(game, 1, { type: "pass" });
+
+    // Lightning Bolt is not a creature spell, so every offered cast must
+    // have promised the gift; a plain cast is not a legal option here.
+    const options = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(options.length).toBeGreaterThan(0);
+    expect(options.every((entry) => (entry.action as { giftPromised?: boolean }).giftPromised)).toBe(true);
+
+    const hand1Before = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", giftPromised: true, targets: [{ kind: "spell", stackId: bolt.id }] });
+    expect(game.players[1]!.hand.length).toBe(hand1Before + 1);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
   });
 
   it("does not start Scry when the spell is countered", () => {

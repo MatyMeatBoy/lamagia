@@ -532,7 +532,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean; readonly giftPromised?: boolean }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
@@ -5244,7 +5244,7 @@ function controlsLandType(state: GameState, seat: SeatId, subtype: string): bool
   return playerAt(state, seat).battlefield.some((permanent) => isLand(cardProfile(permanent.card)) && hasSubtype(cardProfile(permanent.card), subtype));
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false, giftPromised = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
@@ -5263,6 +5263,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
     if (!returned || !isLand(cardProfile(returned.card)) || !hasSubtype(cardProfile(returned.card), profile.returnLandInsteadOfManaCost.subtype)) return { legal: false };
   }
   if (payReducedCost && (!profile.payReducedCostInstead || fromCommandZone || flashback)) return { legal: false };
+  if (giftPromised && !profile.giftPromisedTargetKind) return { legal: false };
   const cost = payReducedCost && profile.payReducedCostInstead
     ? profile.payReducedCostInstead
     : flashback
@@ -5288,7 +5289,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!plan) return { legal: false };
   const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
-  const targetKind = modal?.targetKind ?? profile.targetKind;
+  const targetKind = giftPromised && profile.giftPromisedTargetKind ? profile.giftPromisedTargetKind : (modal?.targetKind ?? profile.targetKind);
   const targetKinds = modal?.targetKinds ?? profile.targetKinds;
   if (targetKinds?.some((kind) => !legalTargets(state, seat, kind, profile).length)) return { legal: false };
   if (targetKind !== "none" && targetKind !== "any" && !legalTargets(state, seat, targetKind, profile).length) return { legal: false };
@@ -5649,6 +5650,23 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           ...(reducedCheck.targetKind ? { requiresTarget: reducedCheck.targetKind } : {}),
           ...(reducedCheck.targetKinds ? { requiresTargets: reducedCheck.targetKinds } : {}),
           ...(reducedCheck.note ? { note: reducedCheck.note } : {})
+        });
+      }
+    }
+    // Gift (CR 702.166): offered alongside the normal cast at the same mana
+    // cost, widening the legal target and drawing the gifted opponent a
+    // card before the spell's other effects, if a wider target exists.
+    if (profile.giftPromisedTargetKind) {
+      const giftCheck = castableCard(state, seat, card, false, 0, undefined, false, false, false, false, false, false, undefined, false, true);
+      if (giftCheck.legal) {
+        actions.push({
+          action: { type: "cast", cardId: card.instance_id, giftPromised: true },
+          label: `Lanzar ${card.name} prometiendo un regalo`,
+          cardId: card.instance_id,
+          manaValue: cardProfile(card).manaValue,
+          ...(giftCheck.targetKind ? { requiresTarget: giftCheck.targetKind } : {}),
+          ...(giftCheck.targetKinds ? { requiresTargets: giftCheck.targetKinds } : {}),
+          ...(giftCheck.note ? { note: giftCheck.note } : {})
         });
       }
     }
@@ -6648,7 +6666,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const payLifeCost = Boolean(action.payLifeCost);
   const returnPermanentId = action.returnPermanentId;
   const payReducedCost = Boolean(action.payReducedCost);
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId, payReducedCost);
+  const giftPromised = Boolean(action.giftPromised);
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId, payReducedCost, giftPromised);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
@@ -6717,6 +6736,10 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     if (!lands.length) throw new Error(`No tienes una tierra para sacrificar por ${card.name}.`);
     next = movePermanentToZone(next, lands[0]!, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${lands[0]!.card.name} por ${card.name}.`);
+  }
+  if (giftPromised && profile.giftDrawsCard) {
+    const gifted = opponentsOf(next, seat)[0];
+    if (gifted !== undefined) next = drawCards(next, gifted, 1);
   }
   if (profile.additionalCostExileGraveyardX) {
     const count = action.variableValue ?? 0;

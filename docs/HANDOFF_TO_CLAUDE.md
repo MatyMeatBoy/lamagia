@@ -2991,3 +2991,26 @@ broad). All four alternative-cost shapes (`freeCast`, `payLifeCost`,
 `returnPermanentId`, `payReducedCost`) now share one parameter family on
 `castableCard`'s signature. Validation: **605 rules tests**, `npm run
 check`, `npm run simulate:engine` 200/200, 9,405 global profiles.
+
+Long River's Pull | `f1993767-1d07-49c8-b8dc-04ec9840a999` was closed with
+the Gift keyword (CR 702.166), a different shape from the four
+alternative-cost primitives: promising the gift doesn't change the mana
+cost at all, only widens the legal target set for the *same* printed
+effect. `CardProfile.giftPromisedTargetKind` holds that wider `TargetKind`
+(parsed from "if the gift was promised, instead [wider target]" — reusing
+`recognizeSentence` just for its `target`, since the effect kind itself
+never changes); `castableCard` substitutes it in place of
+`profile.targetKind` when a new `giftPromised` flag is set, and because
+`applyCast` already validates targets against whatever `castableCard`
+returned rather than re-deriving them, no further target-side changes were
+needed. `giftDrawsCard` makes the gifted opponent draw immediately during
+`applyCast`, mirroring `additionalCostSacrificeLand`'s immediate-cast-time
+side effect. `legalActions` offers the gift-promised cast as a same-cost
+variant alongside the normal one, the same pattern used for kicker/evoke,
+except a boolean rather than an extra cost. Caught mid-work: the initial
+"if the gift was promised, instead ..." parser matched against whole
+*lines*, but the clause sits mid-line as the second of two sentences
+("Counter target creature spell. If the gift was promised, ...") — fixed
+by splitting on `SENTENCE_SPLIT` first, matching how the rest of the file
+already handles multi-sentence lines. Validation: **606 rules tests**,
+`npm run check`, `npm run simulate:engine` 200/200, 9,406 global profiles.

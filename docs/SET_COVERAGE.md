@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,888** · cobertura: **28.1%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,889** · cobertura: **28.1%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -617,7 +617,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,88
 | 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 2024 | commander | 320 | 101 | 219 | 31.6% |
 | 2024-06-14 | Modern Horizons 3 Promos (`PMH3`) | promos | modern-horizons-3 | other | 81 | 6 | 75 | 7.4% |
 | 2024-07-05 | Assassin's Creed (`ACR`) | supplemental | assassin-s-creed | other | 138 | 18 | 120 | 13.0% |
-| 2024-08-02 | Bloomburrow (`BLB`) | expansion | bloomburrow | main | 280 | 39 | 241 | 13.9% |
+| 2024-08-02 | Bloomburrow (`BLB`) | expansion | bloomburrow | main | 280 | 40 | 240 | 14.3% |
 | 2024-08-02 | Bloomburrow Commander (`BLC`) | commander | 2024 | commander | 312 | 119 | 193 | 38.1% |
 | 2024-08-02 | Bloomburrow Promos (`PBLB`) | promos | bloomburrow | other | 80 | 3 | 77 | 3.8% |
 | 2024-08-02 | Cowboy Bebop (`PCBB`) | promos | cowboy-bebop | other | 5 | 2 | 3 | 40.0% |
@@ -798,7 +798,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,88
 | expansion | 2020s | 17 | 3739 | 585 | 3154 | 15.6% |
 | expansion | alara | 2 | 379 | 143 | 236 | 37.7% |
 | expansion | amonkhet | 1 | 272 | 87 | 185 | 32.0% |
-| expansion | bloomburrow | 1 | 280 | 39 | 241 | 13.9% |
+| expansion | bloomburrow | 1 | 280 | 40 | 240 | 14.3% |
 | expansion | capenna | 1 | 310 | 43 | 267 | 13.9% |
 | expansion | dominaria | 2 | 553 | 146 | 407 | 26.4% |
 | expansion | eldraine | 2 | 567 | 122 | 445 | 21.5% |
@@ -55614,7 +55614,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,88
 - [ ] Lilypad Village — `5bb06e6f-e3af-4caa-b66d-77248ad46b61`
 - [ ] Lilysplash Mentor — `20194297-f2a4-4473-95bc-7c6835e5b6b3`
 - [ ] Long River Lurker — `c65c4d01-29da-47e6-993c-a265cf1f198c`
-- [ ] Long River's Pull — `f1993767-1d07-49c8-b8dc-04ec9840a999`
 - [ ] Longstalk Brawl — `adc8976a-0871-4fd6-9c4c-822ba9549b4b`
 - [ ] Lumra, Bellow of the Woods — `97a84e9d-bfc4-4ca2-b1e8-908dba56ccdb`
 - [ ] Lunar Convocation — `cb68d1e4-36aa-4a00-b671-8959e7d526d4`
