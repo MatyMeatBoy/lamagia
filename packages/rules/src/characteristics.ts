@@ -141,6 +141,8 @@ export interface ActivatedAbility {
   readonly revealSourceFromHand?: boolean;
   /** The ability's own source card is discarded from hand to pay its cost (Mjölnir, CR 702). */
   readonly discardsSelf?: boolean;
+  /** A Class's level-up ability: legal only while the source is exactly at this level (CR 702.134c). */
+  readonly requiresClassLevel?: number;
   readonly requiresOpponentLands?: number;
   readonly text: string;
 }
@@ -614,6 +616,8 @@ export type SpellEffect =
   | { readonly kind: "delayed-mana-equal-to-target-spell-mana-value"; readonly manaType: ManaType }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
   | { readonly kind: "level-up" }
+  /** Resolves a Class's level-up activation by setting its level directly (CR 702.134). */
+  | { readonly kind: "class-level-up"; readonly to: number }
   | { readonly kind: "tap-target-permanent" }
   /** Taps a creature and suppresses its controller's untap while the source is controlled. */
   | { readonly kind: "tap-target-creature-and-lock" }
@@ -680,7 +684,8 @@ export type TriggerEvent =
   | "end-step"
   | "leaves-battlefield"
   | "life-gained"
-  | "life-lost";
+  | "life-lost"
+  | "class-level-up";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -727,7 +732,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "end-step": "habilidad del paso final",
   "leaves-battlefield": "habilidad de salida del campo de batalla",
   "life-gained": "life-gain trigger",
-  "life-lost": "life-loss trigger"
+  "life-lost": "life-loss trigger",
+  "class-level-up": "habilidad de nivel de Clase"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -776,7 +782,11 @@ export interface TriggerDefinition {
     | { readonly kind: "source-untapped" }
     /** "except the first [card] they draw in each of their draw steps" (Orcish Bowmasters): suppressed only for the player's first draw during an actual draw step; any draw outside a draw step always counts. */
     | { readonly kind: "not-first-draw-step-draw" }
+    /** "When this Class becomes level N" (CR 702.134): fires only for the transition that reaches exactly this level. */
+    | { readonly kind: "class-level-reached"; readonly level: number }
     | { readonly kind: "entering-power-at-most"; readonly amount: number };
+  /** A Class's second/third-tier ability, inactive until the source reaches this level (CR 702.134d). */
+  readonly minClassLevel?: number;
   readonly spellType?: "creature" | "noncreature" | "instant-or-sorcery";
   readonly spellColor?: string;
   readonly spellSubtype?: string;
@@ -894,6 +904,8 @@ export interface CardProfile {
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
   readonly levelDefinitions: readonly LevelDefinition[];
+  /** A Class's printed "{cost}: Level N" lines, in order (CR 702.134). */
+  readonly classLevels: readonly { readonly level: number; readonly cost: ManaCost }[];
   /** Color qualities named by a Protection line (CR 702.16). */
   readonly protectionFrom: readonly string[];
   readonly activatedAbilities: readonly ActivatedAbility[];
@@ -1416,6 +1428,38 @@ function parseEquipWorthyCost(text: string): ManaCost | null {
     if (cost && !cost.hasVariable) return cost;
   }
   return null;
+}
+
+const CLASS_LEVEL_LINE = /^((?:\{[^}]+\})+):\s*Level\s+(\d+)\.?$/i;
+
+/** A Class enchantment's printed "{cost}: Level N" lines, in printed order (CR 702.134). */
+function parseClassLevelCosts(text: string): readonly { level: number; cost: ManaCost }[] {
+  const levels: { level: number; cost: ManaCost }[] = [];
+  for (const raw of text.split("\n")) {
+    const match = CLASS_LEVEL_LINE.exec(raw.trim());
+    if (!match) continue;
+    const cost = parseManaCost(match[1]!.trim());
+    if (cost && !cost.hasVariable) levels.push({ level: Number(match[2]), cost });
+  }
+  return levels;
+}
+
+/**
+ * Maps each printed line to the Class level active at its position: 1 for
+ * everything before the first "{cost}: Level N" line, else the most recently
+ * printed level number (CR 702.134d — a level's abilities stay active at every
+ * higher level too, so this is a floor, not an exact match).
+ */
+function classLevelByLine(text: string): ReadonlyMap<string, number> {
+  const map = new Map<string, number>();
+  let level = 1;
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    const match = CLASS_LEVEL_LINE.exec(line);
+    if (match) { level = Number(match[2]); continue; }
+    map.set(line, level);
+  }
+  return map;
 }
 
 function parseLevelUpCost(text: string): ManaCost | null {
@@ -2845,6 +2889,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };
   }
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature you control$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature-you-control" };
+  }
   if ((match = /^Put a (\+1\/\+1|-1\/-1) counter on target creature for each ([A-Za-z][A-Za-z'’-]*) (you control|on the battlefield)$/i.exec(text))) {
     return { effect: { kind: "add-counter-target-per-subtype", counter: match[1]!, subtype: singularSubtype(match[2]!), ...(/battlefield/i.test(match[3]!) ? { anywhere: true } : {}) }, target: "creature" };
   }
@@ -3534,6 +3582,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, pay (?:X|\d+) life\.?$/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^equip\s+worthy\s+(?:\{[^}]+\})+\s*(?:\(.*\))?(?:\.?$)/i.test(line)) continue;
+    if (CLASS_LEVEL_LINE.test(line)) continue;
     if (/^equip\s+[A-Za-z][A-Za-z'’-]*\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
    if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/i.test(line)) continue;
@@ -3668,6 +3717,20 @@ function recognizeText(text: string): RecognizedText {
         triggers.push({ event: "enters-battlefield", subject: "self", effect: rec.effect, optional: false, targetKind: rec.target, sourceText: line });
         triggers.push({
           event: "card-drawn", subject: "opponent", condition: { kind: "not-first-draw-step-draw" },
+          effect: rec.effect, optional: false, targetKind: rec.target, sourceText: line
+        });
+        continue;
+      }
+    }
+    // "When this Class becomes level N, X" (CR 702.134): self-gated by the
+    // reached level, so it needs no positional block-splitting like the other
+    // Class ability lines do.
+    const classLevelReached = /^when\s+this\s+class\s+becomes\s+level\s+(\d+),?\s*(.+)$/i.exec(line);
+    if (classLevelReached) {
+      const rec = recognizeSentence(classLevelReached[2]!.trim());
+      if (rec) {
+        triggers.push({
+          event: "class-level-up", subject: "self", condition: { kind: "class-level-reached", level: Number(classLevelReached[1]) },
           effect: rec.effect, optional: false, targetKind: rec.target, sourceText: line
         });
         continue;
@@ -4101,6 +4164,19 @@ export function cardProfile(card: CardData): CardProfile {
   const levelDefinitions = parseLevelDefinitions(text);
   const protectionFrom = text.split(/\r?\n/).flatMap((line) => parseProtectionFromLine(line) ?? []);
   const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
+  // A Class's second/third ability block is inactive until its level is
+  // reached (CR 702.134d); `recognizeText` parses the whole card body without
+  // knowing about card type, so the level floor for each printed line is
+  // derived here and applied to its resulting triggers as a post-pass.
+  const classLevels = subtypes.some((subtype) => subtype.toLowerCase() === "class") ? parseClassLevelCosts(text) : [];
+  const classLevelLines = classLevels.length ? classLevelByLine(text) : null;
+  const gatedTriggers = classLevelLines
+    ? recognized.triggers.map((trigger) => {
+        if (trigger.condition?.kind === "class-level-reached") return trigger;
+        const level = classLevelLines.get(trigger.sourceText.trim());
+        return level && level > 1 ? { ...trigger, minClassLevel: level } : trigger;
+      })
+    : recognized.triggers;
 
   const profile: CardProfile = {
     name: card.name,
@@ -4148,6 +4224,7 @@ export function cardProfile(card: CardData): CardProfile {
     doublesLandMana,
     levelUpCost,
     levelDefinitions,
+    classLevels,
     protectionFrom,
     activatedAbilities: isPermanent || recognized.activatedAbilities.some((ability) => ability.sourceZone === "hand")
       ? [
@@ -4162,12 +4239,24 @@ export function cardProfile(card: CardData): CardProfile {
             targetKind: "none" as const,
             sorcerySpeed: true,
             text: `Level up ${levelUpCost.raw}`
-          }] : [])
+          }] : []),
+          ...classLevels.map((entry, index) => ({
+            index: recognized.activatedAbilities.length + (levelUpCost ? 1 : 0) + index,
+            requiresTap: false,
+            sacrificesSelf: false,
+            lifeCost: 0,
+            manaCost: entry.cost,
+            effect: { kind: "class-level-up" as const, to: entry.level },
+            targetKind: "none" as const,
+            sorcerySpeed: true,
+            requiresClassLevel: entry.level - 1,
+            text: `${entry.cost.raw}: Level ${entry.level}`
+          }))
         ]
       : [],
     modalChoices: recognized.modalChoices,
     effects: recognized.effects,
-    triggers: [...recognized.triggers, ...synthesizedTriggers],
+    triggers: [...gatedTriggers, ...synthesizedTriggers],
     targetKind: recognized.targetKind,
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
     kickerCost: recognized.kickerCost ?? null,

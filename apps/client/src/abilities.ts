@@ -245,6 +245,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     rule: "Se dispara cuando el jugador indicado pierde vida.",
     enforced: "Se dispara una vez por cada evento de pérdida de vida.",
     path: "M5 12h14"
+  },
+  "class-level-up": {
+    label: "Al subir de nivel de Clase",
+    rule: "Se dispara cuando esta Clase alcanza el nivel indicado.",
+    enforced: "Se registra justo después de que la habilidad de subir de nivel resuelve.",
+    path: "M12 4 4 9l8 5 8-5-8-5zM4 15l8 5 8-5"
   }
 };
 

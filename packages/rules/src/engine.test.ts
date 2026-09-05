@@ -459,6 +459,11 @@ const MJOLNIR = () => make({
   oracle_id: "7f9a8845-d760-44a7-a4c9-8a20dba4e14a", scryfall_id: "e0c7f566-5351-44e3-a346-b84b0eb10209"
 });
 const WORTHY_CREATURE = () => make({ name: "Test Worthy Avenger", type_line: "Legendary Creature — Human Hero", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", colors: ["R"] });
+const WIZARD_CLASS = () => make({
+  name: "Wizard Class", type_line: "Enchantment — Class", mana_cost: "{U}", cmc: 1,
+  oracle_text: "You have no maximum hand size.\n{2}{U}: Level 2\nWhen this Class becomes level 2, draw two cards.\n{4}{U}: Level 3\nWhenever you draw a card, put a +1/+1 counter on target creature you control.",
+  oracle_id: "36f68aa3-9955-46f1-bc87-497f16ef5222", scryfall_id: "d1f629fb-b097-4240-8560-ef47f5678f48"
+});
 const BRAINSTORM = () => make({ name: "Brainstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Draw three cards, then put two cards from your hand on top of your library in any order.", oracle_id: "36cd2364-d113-47d1-b2c4-b088d9eb88dd", scryfall_id: "d8bcdbfb-27df-4553-b8ec-97c3f2053745" });
 const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Search your library for a creature card, reveal it, then shuffle and put the card on top." });
 const ELADAMRI = () => make({ name: "Eladamri's Call", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Search your library for a creature card, reveal that card, put it into your hand, then shuffle." });
@@ -7931,6 +7936,61 @@ describe("Mjölnir, Hammer of Thor", () => {
 
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+  });
+});
+
+describe("Wizard Class", () => {
+  it("gates its level-2 and level-3 abilities behind the Class's current level", () => {
+    const profile = profileOf(WIZARD_CLASS());
+    expect(profile.noMaximumHandSize).toBe(true);
+    expect(profile.classLevels).toMatchObject([
+      { level: 2, cost: { raw: "{2}{U}" } },
+      { level: 3, cost: { raw: "{4}{U}" } }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [WIZARD_CLASS(), BEAR(), ...Array.from({ length: 10 }, () => ISLAND())]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const wizardClass = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wizard Class")!;
+    // Only the level-2 ability is legal while the Class is at level 1.
+    const level2Options = legalActions(game, 0).filter((entry) => entry.action.type === "activate" && entry.cardId === wizardClass.instance_id);
+    expect(level2Options).toHaveLength(1);
+    expect(level2Options[0]!.note).toBe("{2}{U}: Level 2");
+
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, level2Options[0]!.action);
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wizard Class")?.classLevel).toBe(2);
+    // "When this Class becomes level 2, draw two cards."
+    expect(game.players[0]!.hand.length).toBe(handBefore + 2);
+
+    // The level-2 ability is gone now (already used); only level 3 remains.
+    const level3Options = legalActions(game, 0).filter((entry) => entry.action.type === "activate" && entry.cardId === wizardClass.instance_id);
+    expect(level3Options).toHaveLength(1);
+    expect(level3Options[0]!.note).toBe("{4}{U}: Level 3");
+
+    game = applyAction(game, 0, level3Options[0]!.action);
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wizard Class")?.classLevel).toBe(3);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.cardId === wizardClass.instance_id)).toBe(false);
+
+    // Level 3's "whenever you draw a card" trigger is inert before level 3 (it already
+    // drew twice above without adding any counters) and live only from here on. A trivial
+    // board auto-passes straight through the intervening draw step, so wait for the next
+    // time this seat is back in its OWN precombat main instead of trying to catch "draw"
+    // itself — by then this turn's one mandatory draw has already happened exactly once.
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(bear.counters["+1/+1"]).toBeUndefined();
+    const turnAfterLevel3 = game.turn;
+    game = passUntil(game, (state) => state.turn > turnAfterLevel3 && state.activeSeat === 0 && state.step === "precombat-main");
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    if (game.pendingChoice?.type === "trigger-target") {
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "permanent", instanceId: bear.instance_id } });
+      game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    }
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"]).toBe(1);
   });
 });
 

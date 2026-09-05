@@ -3101,3 +3101,56 @@ fixed by dropping the `\b`, matching the precedent already set by the
 neighboring `sacrificesSelf` regex, which has no trailing boundary either.
 Validation: **612 rules tests**, `npm run check`, `npm run simulate:engine`
 200/200, 9,415 global profiles.
+
+Wizard Class | `36f68aa3-9955-46f1-bc87-497f16ef5222` opened a brand new
+subsystem: Class enchantments (CR 702.134), which none of the deck's
+prior 88 cards had needed. A Class prints "{cost}: Level N" activation
+lines, each unlocking a NEW ability while keeping every lower-level
+ability active — a strictly sequential, cumulative unlock rather than a
+single repeatable "Level up {cost}" (the Kamigawa mechanic already
+supported via `levelUpCost`/`levelDefinitions`, which is architecturally
+unrelated: one repeatable cost with P/T *bands*, not N one-time costs each
+gaining a whole new ability). New pieces: `Permanent.classLevel` (absent
+= level 1); `CardProfile.classLevels`, parsed from the "{cost}: Level N"
+lines into synthetic per-level `ActivatedAbility`s carrying a new
+`requiresClassLevel` field (`activatableAbility` requires the source be
+*exactly* at that level minus one — Scryfall rulings confirm you can't
+skip levels); a `class-level-up` `TriggerEvent` and matching `SpellEffect`
+(the level-up ability's own resolution sets `classLevel` and raises the
+event, mirroring the Kamigawa `"level-up"` case exactly except it sets a
+dedicated field instead of incrementing a counter); and
+`TriggerDefinition.minClassLevel`, a floor gate checked in `raiseEvent`'s
+per-watcher loop alongside the existing `requiresKicked`/`requiresEvoked`
+gates. The interesting design problem: `recognizeText` (the shared
+body-parser used for spells, modal choices, AND activated-ability effect
+text) takes only a `text: string` — it has no idea a card is a Class, so
+it cannot itself decide that "whenever you draw a card, put a +1/+1
+counter on target creature you control" (level 3's ability, printed with
+no level number in its own wording) needs `minClassLevel: 3` gating. Two
+lines DO carry their level in-text ("When this Class becomes level 2,
+draw two cards.") and needed no such help — a new `class-level-reached`
+trigger condition keyed on the event's own `level` field makes those
+self-gating with zero positional awareness. For the rest, added
+`classLevelByLine(text)`: a small second pass over the SAME raw text,
+independent of `recognizeText`, that maps each printed line to the level
+active at its position (1 before the first "{cost}: Level N" line, else
+the most recent one) — then, back in `cardProfile`, `recognized.triggers`
+is mapped through this table by matching each trigger's own `sourceText`
+(a field every trigger constructor already stamps) and `minClassLevel` is
+attached to whichever ones land above level 1. This keeps `recognizeText`
+completely untouched and card-type-agnostic; only `cardProfile`'s
+Class-specific post-pass knows about levels at all. Also added the
+generic "Put a/an/N +1/+1 counter(s) on target creature you control"
+effect pattern needed for the level-3 ability — a gap that existed
+independently of Class cards and now flips other unrelated cards using
+the exact same wording. Caught while writing the scenario test: this
+trivial two-permanent board has nothing to do most steps, so the harness
+auto-fast-forwards straight through "draw" without ever pausing there —
+`passUntil(state => state.step === "draw" ...)` overshot 100+ turns
+before incidentally matching, stacking dozens of +1/+1 counters onto the
+same creature instead of the expected one. Fixed by waiting for the
+seat's next OWN `precombat-main` instead (reliably observable turn over
+turn, since sorcery-speed actions always keep a real priority window open
+there), by which point exactly one draw for that turn has already
+happened. Validation: **613 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,433 global profiles.

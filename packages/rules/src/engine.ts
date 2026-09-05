@@ -136,6 +136,8 @@ export interface Permanent {
   readonly attachedTo?: string;
   /** The last card exiled by an imprint ability, if any. */
   readonly exiledWith?: GameCard;
+  /** Current Class level (CR 702.134); absent means level 1, a Class's starting level. */
+  readonly classLevel?: number;
   readonly isCommander: boolean;
 }
 
@@ -315,6 +317,8 @@ export type GameEvent =
   | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard; readonly count: number; readonly drawStepCount: number }
   | { readonly kind: "card-discarded"; readonly seat: SeatId; readonly card: GameCard }
   | { readonly kind: "library-shuffled"; readonly controller: SeatId }
+  /** A Class permanent reaches a new level (CR 702.134); `level` is the level it just became. */
+  | { readonly kind: "class-level-up"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly level: number }
   | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
 
@@ -1453,6 +1457,7 @@ function triggerMatches(
     const source = findPermanent(state, watcher.instanceId);
     if (!source || source.tapped) return false;
   }
+  if (condition?.kind === "class-level-reached" && (event.kind !== "class-level-up" || event.level !== condition.level)) return false;
   if (condition?.kind === "not-first-draw-step-draw") {
     if (event.kind !== "card-drawn") return false;
     if (state.step === "draw" && event.drawStepCount === 1) return false;
@@ -1569,6 +1574,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "library-shuffled": return `${playerAt(state, event.controller).name} baraja su biblioteca`;
     case "life-gained": return `${playerAt(state, event.seat).name} gana ${event.amount} vidas`;
     case "life-lost": return `${playerAt(state, event.seat).name} pierde ${event.amount} vidas`;
+    case "class-level-up": return `${object!.card.name} alcanza el nivel ${event.level}`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -1606,6 +1612,8 @@ function raiseEvent(
       if (definition.requiresEvoked && !watcher.evoked) continue;
       // "if you cast it from your hand" gate (Angel of the Dire Hour, CR 601.2a).
       if (definition.condition?.kind === "cast-from-hand" && !watcher.castFromHand) continue;
+      // A Class's higher-tier ability is inactive until its printed level is reached (CR 702.134d).
+      if (definition.minClassLevel !== undefined && (watcher.classLevel ?? 1) < definition.minClassLevel) continue;
       // Undying / Persist only fire when the creature died without the relevant counter (CR 702.92c/702.93c).
       if (definition.effect.kind === "undying-return" && (watcher.counters[definition.effect.counter] ?? 0) > 0) continue;
       const copies = 1 + triggerDoublerCount(state, watcher, event);
@@ -3982,6 +3990,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           ? { ...permanent, counters: { ...permanent.counters, level: (permanent.counters.level ?? 0) + 1 } }
           : permanent)
       }));
+    }
+    case "class-level-up": {
+      const source = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
+      if (!source || source.controller !== controller) return state;
+      let next = withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, classLevel: effect.to }
+          : permanent)
+      }));
+      next = raiseEvent(next, { kind: "class-level-up", permanentId: source.instance_id, controller, card: source.card, level: effect.to });
+      return logged(next, controller, `${sourceName} alcanza el nivel ${effect.to}.`);
     }
     case "tap-target-permanent": {
       const target = object.targets[0];
@@ -6383,6 +6403,7 @@ function activatableAbility(
     if (permanent.loyaltyUsedThisTurn) return { legal: false };
     if (ability.loyaltyCost < 0 && (permanent.counters.loyalty ?? 0) < -ability.loyaltyCost) return { legal: false };
   }
+  if (ability.requiresClassLevel !== undefined && (permanent.classLevel ?? 1) !== ability.requiresClassLevel) return { legal: false };
   if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
