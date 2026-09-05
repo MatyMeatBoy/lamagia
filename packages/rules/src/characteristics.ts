@@ -771,7 +771,12 @@ export interface TriggerDefinition {
    * "Choose N or more" modal choices are, but resolved as a choice made when
    * the ability is put on the stack (CR 603.3d) rather than at cast time.
    */
-  readonly modalEffects?: readonly { readonly text: string; readonly effect: SpellEffect }[];
+  readonly modalEffects?: readonly {
+    readonly text: string;
+    readonly effect: SpellEffect;
+    readonly targetKind?: TargetKind;
+    readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  }[];
   /**
    * What the ability targets. Targets for a trigger are chosen when it is put
    * onto the stack (CR 603.3d), never when the source is cast, so this is kept
@@ -851,7 +856,7 @@ export type TargetKind =
   | `artifact-or-creature-mana-value-${number}`
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
   | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
-  | "enchantment" | "land"
+  | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
   | "creature-power-at-least-5"
@@ -3283,12 +3288,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
+  if (/^Tap target permanent an opponent controls$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "permanent-opponent" };
   if (/^Tap or untap target permanent$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
   if ((match = /^sacrifice it unless you return an untapped (Plains|Island|Swamp|Mountain|Forest) you control to its owner'?s hand$/i.exec(text))) {
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
   }
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
+  if (/^Untap target permanent you control$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent-you-control" };
   if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
     return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
   }
@@ -3362,7 +3369,10 @@ function recognizeText(text: string): RecognizedText {
     // place. Both are presentation markers, never part of Oracle semantics.
     .map((raw) => {
       const line = raw.trim();
-      return { text: line.replace(/^[•�]\s*/u, ""), bullet: /^[•�]\s*/u.test(line) };
+      return {
+        text: line.replace(/^[•\u2014\u2013\uFFFD]\s*/u, ""),
+        bullet: /^[•\u2014\u2013\uFFFD]\s*/u.test(line),
+      };
     })
     .filter(Boolean);
   if (!body.length) return { effects: [], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
@@ -3699,6 +3709,43 @@ function recognizeText(text: string): RecognizedText {
         lineIndex = Math.max(lineIndex, cursor - 1);
         continue;
       }
+    }
+    // ETB modal abilities such as Deceiver Exarch make their mode choice when
+    // the trigger is put on the stack (CR 603.3d), not when the creature is
+    // cast. Preserve each mode's target requirement so the same target-choice
+    // machinery used by ordinary triggered abilities can run afterward.
+    const triggerChooseOne = /^(?:when|whenever)\s+(?:~|this creature|this permanent)\s+enters(?:\s+the\s+battlefield)?,?\s*choose one(?:\s+[—–-\uFFFD])?\s*$/i.test(line);
+    if (triggerChooseOne) {
+      const start = lineIndex + 1;
+      const modes: { text: string; effect: SpellEffect; targetKind: TargetKind; targetKinds?: readonly Exclude<TargetKind, "none">[] }[] = [];
+      let cursor = start;
+      let invalid = false;
+      while (cursor < body.length && body[cursor]!.bullet) {
+        const entry = body[cursor]!;
+        const recognized = recognizeSentence(entry.text.replace(/\s+It can(?:not|'t) be regenerated\.?$/i, ""));
+        if (!recognized) {
+          invalid = true;
+          break;
+        }
+        modes.push({
+          text: entry.text, effect: recognized.effect, targetKind: recognized.target,
+          ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {})
+        });
+        cursor += 1;
+      }
+      if (!invalid && modes.length > 0 && cursor > start) {
+        triggers.push({
+          event: "enters-battlefield", subject: "self", effect: modes[0]!.effect,
+          modalEffects: modes.map(({ text, effect, targetKind, targetKinds }) => ({ text, effect, targetKind, ...(targetKinds ? { targetKinds } : {}) })),
+          optional: false, targetKind: modes[0]!.targetKind,
+          ...(modes[0]!.targetKinds ? { targetKinds: modes[0]!.targetKinds } : {}), sourceText: line
+        });
+        lineIndex = Math.max(lineIndex, cursor - 1);
+        continue;
+      }
+      unimplementedText.push(line, ...body.slice(start, cursor).map((entry) => entry.text));
+      lineIndex = Math.max(lineIndex, cursor - 1);
+      continue;
     }
     const chooseOneOrBoth = /^Choose one or both(?:\s+[—–-�])?\s*$/i.test(line);
     const chooseMoreMatch = /^Choose (one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more(?:\s+[—–-�])?\s*$/i.exec(line);

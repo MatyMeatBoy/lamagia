@@ -456,7 +456,13 @@ export type PendingChoice =
       readonly seat: SeatId;
       readonly sourceId: string;
       readonly trigger: TriggerInstance;
-      readonly options: readonly { readonly index: number; readonly text: string; readonly effect: SpellEffect }[];
+      readonly options: readonly {
+        readonly index: number;
+        readonly text: string;
+        readonly effect: SpellEffect;
+        readonly targetKind?: TargetKind;
+        readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+      }[];
     }
   | {
       /** Same-controller triggers must be ordered before they are stacked (CR 603.3b). */
@@ -6630,6 +6636,8 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     const manaValueTarget = /^artifact-or-creature-mana-value-(\d+)$/.exec(kind);
     if (manaValueTarget) return (profile.types.includes("Artifact") || isCreature(profile)) && profile.manaValue === Number(manaValueTarget[1]);
     if (kind === "artifact-or-creature") return profile.types.includes("Artifact") || isCreature(profile);
+    if (kind === "permanent-you-control") return profile.isPermanent && permanent.controller === seat;
+    if (kind === "permanent-opponent") return profile.isPermanent && permanent.controller !== seat;
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
     if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4") {
       if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
@@ -8245,42 +8253,47 @@ function putNextTriggerOnStack(state: GameState, forcedTriggerId?: string): Game
         seat: trigger.controller,
         sourceId: trigger.id,
         trigger,
-        options: trigger.definition.modalEffects.map((mode, index) => ({ index, text: mode.text, effect: mode.effect }))
+        options: trigger.definition.modalEffects.map((mode, index) => ({
+          index, text: mode.text, effect: mode.effect,
+          ...(mode.targetKind ? { targetKind: mode.targetKind } : {}),
+          ...(mode.targetKinds ? { targetKinds: mode.targetKinds } : {})
+        }))
       }
     };
   }
 
+  return openResolvedTriggerTargetChoice({ ...state, triggerQueue: remaining }, trigger, opened);
+}
+
+/** Puts a resolved trigger on the stack, opening its CR 603.3d target choice. */
+function openResolvedTriggerTargetChoice(
+  state: GameState,
+  trigger: TriggerInstance,
+  opened: { readonly prioritySeat: SeatId; readonly priorityOpen: boolean; readonly passedSeats: readonly SeatId[] }
+): GameState {
   const targetKind = trigger.definition.targetKind;
   if (targetKind === "none") {
-    return { ...state, triggerQueue: remaining, stack: [...state.stack, triggerStackObject(trigger, [])], ...opened };
+    return { ...state, stack: [...state.stack, triggerStackObject(trigger, [])], ...opened };
   }
-
   if (trigger.definition.targetKinds?.length) {
-    return openMultiTriggerTargetChoice({ ...state, triggerQueue: remaining }, trigger, [], opened);
+    return openMultiTriggerTargetChoice(state, trigger, [], opened);
   }
-
   const options = legalTriggerTargets(state, trigger, targetKind)
     .filter((target) => !trigger.definition.excludesSourceFromTargets
       || target.kind !== "permanent"
       || target.instanceId !== trigger.sourcePermanentId);
   if (!options.length) {
-    const dropped = logged({ ...state, triggerQueue: remaining }, trigger.controller,
+    return logged(state, trigger.controller,
       `La habilidad disparada de ${trigger.sourceCard.name} se retira de la pila: no hay objetivo legal.`);
-    return dropped;
   }
   if (options.length === 1) {
-    return { ...state, triggerQueue: remaining, stack: [...state.stack, triggerStackObject(trigger, options)], ...opened };
+    return { ...state, stack: [...state.stack, triggerStackObject(trigger, options)], ...opened };
   }
   return {
     ...state,
-    triggerQueue: remaining,
     pendingChoice: {
-      type: "trigger-target",
-      seat: trigger.controller,
-      sourceId: trigger.id,
-      trigger,
-      targetKind,
-      options
+      type: "trigger-target", seat: trigger.controller, sourceId: trigger.id,
+      trigger, targetKind, options
     }
   };
 }
@@ -8396,16 +8409,19 @@ function applyChooseTriggerMode(state: GameState, seat: SeatId, action: Extract<
   if (choice.sourceId !== action.sourceId) throw new Error("Esa habilidad ya no espera un modo.");
   const option = choice.options.find((candidate) => candidate.index === action.optionIndex);
   if (!option) throw new Error("Ese modo no es válido para esa habilidad.");
-  const resolvedTrigger: TriggerInstance = { ...choice.trigger, definition: { ...choice.trigger.definition, effect: option.effect } };
-  const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
-  const next: GameState = {
-    ...state,
-    pendingChoice: null,
-    stack: [...state.stack, triggerStackObject(resolvedTrigger, [])],
-    prioritySeat: active,
-    priorityOpen: true,
-    passedSeats: []
+  const resolvedTrigger: TriggerInstance = {
+    ...choice.trigger,
+    definition: {
+      ...choice.trigger.definition,
+      effect: option.effect,
+      ...(option.targetKind ? { targetKind: option.targetKind } : {}),
+      ...(option.targetKinds ? { targetKinds: option.targetKinds } : {})
+    }
   };
+  const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+  const next = openResolvedTriggerTargetChoice({ ...state, pendingChoice: null }, resolvedTrigger, {
+    prioritySeat: active, priorityOpen: true, passedSeats: []
+  });
   return logged(next, seat, `${choice.trigger.sourceCard.name}: ${option.text}.`);
 }
 
