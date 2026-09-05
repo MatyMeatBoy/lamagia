@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,928** · cobertura: **30.5%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,932** · cobertura: **30.5%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -446,7 +446,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 | 2019-07-18 | San Diego Comic-Con 2019 (`PS19`) | promos | comic-con-2019 | other | 5 | 0 | 5 | 0.0% |
 | 2019-08-01 | 2018 Heroes of the Realm (`PH18`) | funny-special | 2018-heroes-of-the-realm | other | 4 | 0 | 4 | 0.0% |
 | 2019-08-23 | Commander 2019 (`C19`) | commander | 2019 | commander | 292 | 109 | 183 | 37.3% |
-| 2019-10-01 | Planeswalker Championship Promos (`PWCS`) | promos | planeswalker-championship | other | 46 | 4 | 42 | 8.7% |
+| 2019-10-01 | Planeswalker Championship Promos (`PWCS`) | promos | planeswalker-championship | other | 46 | 5 | 41 | 10.9% |
 | 2019-10-04 | Throne of Eldraine (`ELD`) | expansion | eldraine | main | 286 | 76 | 210 | 26.6% |
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
@@ -560,7 +560,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 | 2023-01-07 | Regional Championship Qualifiers 2023 (`PR23`) | promos | regional-2023 | other | 3 | 0 | 3 | 0.0% |
 | 2023-01-13 | Dominaria Remastered (`DMR`) | masters-remastered | dominaria-remastered | other | 266 | 104 | 162 | 39.1% |
 | 2023-02-03 | Phyrexia: All Will Be One (`ONE`) | expansion | phyrexia | main | 271 | 41 | 230 | 15.1% |
-| 2023-02-10 | Phyrexia: All Will Be One Commander (`ONC`) | commander | 2023 | commander | 144 | 57 | 87 | 39.6% |
+| 2023-02-10 | Phyrexia: All Will Be One Commander (`ONC`) | commander | 2023 | commander | 144 | 58 | 86 | 40.3% |
 | 2023-02-10 | Phyrexia: All Will Be One Promos (`PONE`) | promos | phyrexia-all-will-be-one | other | 80 | 8 | 72 | 10.0% |
 | 2023-02-10 | Year of the Rabbit 2023 (`PL23`) | promos | year-of-the-rabbit-2023 | other | 5 | 1 | 4 | 20.0% |
 | 2023-02-17 | Unknown Event (`UNK`) | funny-special | unknown-event | other | 506 | 20 | 486 | 4.0% |
@@ -622,9 +622,9 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 | 2024-08-02 | Bloomburrow Promos (`PBLB`) | promos | bloomburrow | other | 80 | 4 | 76 | 5.0% |
 | 2024-08-02 | Cowboy Bebop (`PCBB`) | promos | cowboy-bebop | other | 5 | 2 | 3 | 40.0% |
 | 2024-08-02 | Mystery Booster 2 (`MB2`) | masters-remastered | mystery-booster-2 | other | 384 | 74 | 310 | 19.3% |
-| 2024-09-27 | Duskmourn: House of Horror (`DSK`) | expansion | 2020s | main | 278 | 44 | 234 | 15.8% |
+| 2024-09-27 | Duskmourn: House of Horror (`DSK`) | expansion | 2020s | main | 278 | 45 | 233 | 16.2% |
 | 2024-09-27 | Duskmourn: House of Horror Commander (`DSC`) | commander | 2024 | commander | 306 | 115 | 191 | 37.6% |
-| 2024-09-27 | Duskmourn: House of Horror Promos (`PDSK`) | promos | duskmourn-house-of-horror | other | 80 | 1 | 79 | 1.2% |
+| 2024-09-27 | Duskmourn: House of Horror Promos (`PDSK`) | promos | duskmourn-house-of-horror | other | 80 | 2 | 78 | 2.5% |
 | 2024-10-16 | Tales of Middle-earth Deluxe Commander Kit (`PLTC`) | promos | 2024 | other | 4 | 0 | 4 | 0.0% |
 | 2024-11-15 | Foundations (`FDN`) | core | 2020s | main | 517 | 195 | 322 | 37.7% |
 | 2024-11-15 | Foundations Commander (`FDC`) | commander | 2024 | commander | 3 | 3 | 0 | 100.0% |
@@ -750,7 +750,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 | commander | 2020 | 4 | 1001 | 361 | 640 | 36.1% |
 | commander | 2021 | 5 | 1022 | 360 | 662 | 35.2% |
 | commander | 2022 | 7 | 1802 | 528 | 1274 | 29.3% |
-| commander | 2023 | 6 | 1597 | 524 | 1073 | 32.8% |
+| commander | 2023 | 6 | 1597 | 525 | 1072 | 32.9% |
 | commander | 2024 | 7 | 1887 | 660 | 1227 | 35.0% |
 | commander | 2025 | 4 | 1046 | 404 | 642 | 38.6% |
 | commander | 2026 | 6 | 1265 | 356 | 909 | 28.1% |
@@ -795,7 +795,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 | expansion | 1990s | 11 | 1573 | 372 | 1201 | 23.6% |
 | expansion | 2000s | 19 | 3082 | 696 | 2386 | 22.6% |
 | expansion | 2010s | 14 | 2735 | 726 | 2009 | 26.5% |
-| expansion | 2020s | 17 | 3738 | 626 | 3112 | 16.7% |
+| expansion | 2020s | 17 | 3738 | 627 | 3111 | 16.8% |
 | expansion | alara | 2 | 379 | 154 | 225 | 40.6% |
 | expansion | amonkhet | 1 | 272 | 100 | 172 | 36.8% |
 | expansion | bloomburrow | 1 | 280 | 42 | 238 | 15.0% |
@@ -971,7 +971,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 | promos | duels-of-the-planeswalkers-2013 | 1 | 3 | 1 | 2 | 33.3% |
 | promos | duels-of-the-planeswalkers-2014 | 1 | 3 | 1 | 2 | 33.3% |
 | promos | duels-of-the-planeswalkers-2015 | 1 | 2 | 0 | 2 | 0.0% |
-| promos | duskmourn-house-of-horror | 1 | 80 | 1 | 79 | 1.2% |
+| promos | duskmourn-house-of-horror | 1 | 80 | 2 | 78 | 2.5% |
 | promos | edge-of-eternities | 1 | 80 | 6 | 74 | 7.5% |
 | promos | eighth-edition | 1 | 1 | 1 | 0 | 100.0% |
 | promos | eldritch-moon | 1 | 64 | 3 | 61 | 4.7% |
@@ -1111,7 +1111,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 | promos | phyrexia-all-will-be-one | 1 | 80 | 8 | 72 | 10.0% |
 | promos | planar-chaos | 1 | 2 | 0 | 2 | 0.0% |
 | promos | planeshift | 1 | 1 | 0 | 1 | 0.0% |
-| promos | planeswalker-championship | 1 | 46 | 4 | 42 | 8.7% |
+| promos | planeswalker-championship | 1 | 46 | 5 | 41 | 10.9% |
 | promos | player-rewards-2001 | 1 | 1 | 1 | 0 | 100.0% |
 | promos | player-rewards-2003 | 1 | 1 | 0 | 1 | 0.0% |
 | promos | player-rewards-2004 | 1 | 1 | 0 | 1 | 0.0% |
@@ -30066,7 +30066,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 - [ ] Strategic Betrayal — `0127c13f-7b0f-44c3-8b35-97f306c5f239`
 - [ ] The Wandering Emperor — `0c7f18d5-36cb-4bc6-a358-443b97666215`
 - [ ] The Wandering Rescuer — `b8ef65df-f8e7-44e3-9864-9c127232a2b6`
-- [ ] Twitching Doll — `fd6e1967-237a-41f6-bbf4-2c869f9447c8`
 - [ ] Voice of Victory — `b12cbda1-ac09-49eb-96b3-a4df27bc37ea`
 - [ ] Vraska, Golgari Queen — `131096a3-2d53-4ec2-96d3-fcb58e698a13`
 
@@ -47025,7 +47024,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 - [ ] Urtet, Remnant of Memnarch — `6222fccf-fc08-4190-8d40-a56d6d1423df`
 - [ ] Viridian Corrupter — `8ba5e97b-3eac-4291-8674-4b402a5554bc`
 - [ ] Vishgraz, the Doomhive — `7b1599c0-bb4f-48f8-a358-dc60166b13e7`
-- [ ] Vulshok Factory — `c5b0d98b-9743-488e-a3be-07043d6ad78a`
 - [ ] Windbrisk Heights — `3589bcfc-42b0-414a-adce-bc690dc631c8`
 - [ ] Wurmquake — `0eeb9a62-1b36-42f5-8820-3331fa5ca3a6`
 
@@ -54693,7 +54691,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 - [ ] Trial of Agony — `4ef07e5a-3dc3-41dd-a3a9-e8812b4d40d3`
 - [ ] Turn Inside Out — `be0a3925-8e0d-4ef6-85cb-c9f5eef6b4bb`
 - [ ] Twist Reality — `55b0518e-9c87-4f0e-81c2-9c984f760be1`
-- [ ] Twitching Doll — `fd6e1967-237a-41f6-bbf4-2c869f9447c8`
 - [ ] Tyvar, the Pummeler — `5a242eab-204c-4411-860f-c0f3582a8f38`
 - [ ] Unable to Scream — `3d240726-5214-4493-8537-29bf65db1e4b`
 - [ ] Undead Sprinter — `3416ac84-c5ef-44be-894f-ab3b89e592ce`
@@ -54986,7 +54983,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,92
 - [ ] The Wandering Rescuer — `b8ef65df-f8e7-44e3-9864-9c127232a2b6`
 - [ ] Thornspire Verge — `e861bc08-4f0b-4d22-9b85-9d20227fd5b4`
 - [ ] Toby, Beastie Befriender — `b4c27c89-fa50-4cf0-bf37-039732d16fef`
-- [ ] Twitching Doll — `fd6e1967-237a-41f6-bbf4-2c869f9447c8`
 - [ ] Tyvar, the Pummeler — `5a242eab-204c-4411-860f-c0f3582a8f38`
 - [ ] Undead Sprinter — `3416ac84-c5ef-44be-894f-ab3b89e592ce`
 - [ ] Unholy Annex // Ritual Chamber — `bd388ad9-a47b-4b0b-b94a-8e4343cd3de5`

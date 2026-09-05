@@ -331,6 +331,7 @@ const LIGHTNING_HELIX = () => make({ name: "Lightning Helix", type_line: "Instan
 const INCINERATE = () => make({ name: "Incinerate", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Incinerate deals 3 damage to any target. A creature dealt damage this way can't be regenerated this turn.", oracle_id: "d8fd7a34-8418-4e98-b79b-119c4348c667", scryfall_id: "d8fd7a34-8418-4e98-b79b-119c4348c667" });
 const LAVA_COIL = () => make({ name: "Lava Coil", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Lava Coil deals 4 damage to target creature. If that creature would die this turn, exile it instead.", oracle_id: "fa71db44-5181-4c51-8b24-7fbedf36e3ca", scryfall_id: "e165d16a-06c7-4373-9c36-89e127e669dd" });
 const BURST_LIGHTNING = () => make({ name: "Burst Lightning", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Kicker {4} (You may pay an additional {4} as you cast this spell.)\nBurst Lightning deals 2 damage to any target. If this spell was kicked, it deals 4 damage instead.", oracle_id: "ac2086fe-98ee-4280-9c7c-c5c2d6548a8b", scryfall_id: "0f350255-930a-41da-a58b-55beb66da7bd" });
+const TWITCHING_DOLL = () => make({ name: "Twitching Doll", type_line: "Artifact Creature — Spider", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2", oracle_text: "{T}: Add one mana of any color. Put a nest counter on this creature.\n{T}, Sacrifice this creature: Create a 2/2 green Spider creature token with reach for each counter on this creature. Activate only as a sorcery.", oracle_id: "fd6e1967-237a-41f6-bbf4-2c869f9447c8", scryfall_id: "294b65d7-7c0b-48a2-9375-e1a5a0d91831" });
 const FLING = () => make({ name: "Fling", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nFling deals damage equal to the sacrificed creature's power to any target.", oracle_id: "24227761-b50e-4b9e-93a2-e82d053b3e3d", scryfall_id: "050eb421-a446-4d84-b331-a267b02dc9f5" });
 const TREASURE_HUNT = () => make({ name: "Treasure Hunt", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand.", oracle_id: "05079479-86a6-4041-a395-83d325b6ddb7", scryfall_id: "53af54e3-412f-4bc4-8a3a-911eaa62be27" });
 const PSIONIC_BLAST = () => make({ name: "Psionic Blast", type_line: "Instant", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Psionic Blast deals 4 damage to any target and 2 damage to you.", oracle_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad", scryfall_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad" });
@@ -5439,6 +5440,25 @@ describe("casting", () => {
     if (!kickedAction || kickedAction.action.type !== "cast") throw new Error("Burst Lightning kicker action missing.");
     game = applyAction(game, 0, { ...kickedAction.action, targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.life).toBe(36);
+  });
+
+  it("resolves Twitching Doll's nest-counter rider with its mana ability", () => {
+    // CR 605.3b: a mana ability resolves immediately, including its printed
+    // counter rider, without creating a stack object or priority window.
+    const doll = TWITCHING_DOLL();
+    expect(profileOf(doll)).toMatchObject({
+      fullyImplemented: true,
+      manaAbilities: [{ produces: ["W", "U", "B", "R", "G"], amount: 1, addCounterOnSource: { kind: "nest", amount: 1 } }]
+    });
+    let game = readyToCast([], [doll]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Twitching Doll")!;
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana" && entry.action.sourceId === source.instance_id && entry.action.mana === "G");
+    expect(action).toBeDefined();
+    if (!action || action.action.type !== "activate-mana") throw new Error("Twitching Doll mana action missing.");
+    game = applyAction(game, 0, action.action);
+    expect(game.players[0]!.manaPool.G).toBe(1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.counters.nest).toBe(1);
+    expect(game.stack).toHaveLength(0);
   });
 
   it("can't cast Diabolic Intent with no creature to sacrifice", () => {

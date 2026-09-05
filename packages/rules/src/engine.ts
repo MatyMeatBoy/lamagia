@@ -7278,6 +7278,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
       if (permanent.instance_id !== source.instance_id) return permanent;
       const counters = { ...permanent.counters };
       for (const cost of ability.removeCounters ?? []) counters[cost.kind] = (counters[cost.kind] ?? 0) - cost.amount;
+      if (ability.addCounterOnSource) counters[ability.addCounterOnSource.kind] = (counters[ability.addCounterOnSource.kind] ?? 0) + ability.addCounterOnSource.amount;
       return { ...permanent, ...(ability.requiresTap ? { tapped: true } : {}), counters };
     })
   }));

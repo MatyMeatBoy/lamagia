@@ -80,6 +80,8 @@ export interface ManaAbility {
   readonly gainLifeFromAmount?: boolean;
   /** Some mana abilities have a small immediate side effect (CR 605). */
   readonly gainLife?: number;
+  /** A source-counter rider resolved atomically with the mana ability (CR 605.3b). */
+  readonly addCounterOnSource?: CounterCost;
   /** Static activation restriction such as Temple of the False God. */
   readonly requiresLands?: number;
   readonly text: string;
@@ -1331,6 +1333,14 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
+function parseManaSourceCounterRider(effect: string): { production: string; counter: CounterCost } | null {
+  const match = /^(.+?)\.\s*Put (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) ([+\-\w/ ]+?) counter(?:s)? on (?:~|this (?:artifact|creature|enchantment|land|permanent))\.?$/i.exec(effect.trim());
+  if (!match) return null;
+  const amount = toNumber(match[2]!);
+  if (amount === null) return null;
+  return { production: match[1]!.trim(), counter: { kind: match[3]!.trim().replace(/\s+/g, " ").toLowerCase(), amount } };
+}
+
 function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; activationRestriction?: { enteredThisTurn: boolean; orControlsBasicLand?: boolean }; commanderEntryCounters?: boolean } | null {
   let remainder = effect.trim().replace(/\.$/, "");
   let gainLife: number | undefined;
@@ -1397,6 +1407,8 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     if (!activated) continue;
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
+    const sourceCounterRider = parseManaSourceCounterRider(effectText);
+    const productionText = sourceCounterRider?.production ?? effectText;
     const requiresTap = /\{T\}/.test(costText);
     const variableSacrifice = /^(?:\{T\},\s*)?sacrifice\s+X\s+([A-Za-z][A-Za-z'’-]*)s?$/i.exec(costText.trim().replace(/,\s*$/, ""));
     if (variableSacrifice && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(effectText.trim())) {
@@ -1447,8 +1459,8 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // `manaAbilities` may still expose a production choice whose restriction
     // is not executable yet; `recognizeText` below remains strict so coverage
     // does not claim that trailing restriction is enforced.
-    const instruction = parseManaInstruction(effectText) ?? (() => {
-      const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
+    const instruction = parseManaInstruction(productionText) ?? (() => {
+      const produced = parseAddClause(productionText.split(/[.!?]/, 1)[0] ?? productionText);
       return produced ? {
         produced,
         gainLife: undefined,
@@ -1459,24 +1471,26 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       } : null;
     })();
     // "Add {C} for each <Subtype> on the battlefield / you control".
-    const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(effectText.trim().replace(/\.$/, ""));
+    const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(productionText.trim().replace(/\.$/, ""));
     if (scaled && (!instruction?.produced)) {
       abilities.push({
         index: abilities.length, produces: [scaled[1]!.toUpperCase() as ManaType], amount: 1,
         scalesWith: { kind: /you control/i.test(scaled[3]!) ? "subtype-you-control" : "subtype-anywhere", subtype: scaled[2]! },
         ...(removeCounters.length ? { removeCounters } : {}),
+        ...(sourceCounterRider ? { addCounterOnSource: sourceCounterRider.counter } : {}),
         requiresTap, lifeCost, text: line.trim()
       });
       continue;
     }
     // Board-dependent color (Fellwar Stone, Harvester Druid): resolved from
     // the battlefield at activation time, not a fixed color set on the card.
-    const anyColorFromLands = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(an\s+opponent\s+controls|you\s+control)\s+could\s+produce$/i.exec(effectText.trim().replace(/\.$/, ""));
+    const anyColorFromLands = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(an\s+opponent\s+controls|you\s+control)\s+could\s+produce$/i.exec(productionText.trim().replace(/\.$/, ""));
     if (anyColorFromLands && !instruction?.produced) {
       abilities.push({
         index: abilities.length, produces: [], amount: 1,
         anyColorFromLandsControlledBy: /opponent/i.test(anyColorFromLands[1]!) ? "opponent" : "you",
         ...(removeCounters.length ? { removeCounters } : {}),
+        ...(sourceCounterRider ? { addCounterOnSource: sourceCounterRider.counter } : {}),
         requiresTap, lifeCost, text: line.trim()
       });
       continue;
@@ -1496,6 +1510,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ...(instruction.commanderEntryCounters ? { commanderEntryCounters: true } : {}),
       ...(manaRestriction ? { manaRestriction } : {}),
       ...(removeCounters.length ? { removeCounters } : {}),
+      ...(sourceCounterRider ? { addCounterOnSource: sourceCounterRider.counter } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
       ...(instruction.activationRestriction === undefined ? {} : { activationRestriction: instruction.activationRestriction }),
@@ -4217,7 +4232,8 @@ function recognizeText(text: string): RecognizedText {
         && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
       const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(manaLine[2]!)
         && Boolean(parseAddClause(manaLine[2]!.split(/[.!?]/, 1)[0] ?? ""));
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine) unimplementedText.push(line);
+      const sourceCounterRider = parseManaSourceCounterRider(manaLine[2]!);
+      if (!parseManaInstruction(sourceCounterRider?.production ?? manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine) unimplementedText.push(line);
       continue;
     }
 
