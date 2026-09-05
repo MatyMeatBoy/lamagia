@@ -5,9 +5,9 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,201**
-- Cards with a reusable existing primitive hint: **11,493**
-- Cards needing new primitive review: **3,708**
+- One-line cards: **15,195**
+- Cards with a reusable existing primitive hint: **11,486**
+- Cards needing new primitive review: **3,709**
 - Templates: **12,003**
 
 ## Worker rule
@@ -27,7 +27,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Hapato's Might | `b819990c-802c-4847-9857-756dd66ec74a` | pump | new primitive review | Target creature gets +X/+0 until end of turn, where X is a number from 0 to 6 chosen at random. |
 | reuse-existing | Fling | `24227761-b50e-4b9e-93a2-e82d053b3e3d` | damage | sacrifice | ~ deals damage equal to the sacrificed creature's power to any target. |
 | reuse-existing | Laquatus's Champion | `693ddb18-00d2-4784-90a0-701a64195034` | gain-life | damage / life | When ~ leaves the battlefield, that player gains 6 life. |
-| reuse-existing | Lightning Helix | `800c258a-cfc4-4a54-a667-065ea8dea69e` | damage | damage / life | ~ deals 3 damage to any target and you gain 3 life. |
 | reuse-existing | Cloud, Midgar Mercenary | `33d2584b-bf29-4c22-bd45-14ba2fb98c0e` | static-continuous | activated ability / mana | As long as ~ is equipped, if a triggered ability of ~ or an Equipment attached to it triggers, that ability triggers an additional time. |
 | reuse-existing | Yidaro, Wandering Monster | `6c0e22f2-f0f3-43e6-87c5-c543032112d8` | activated | search / library | When you cycle ~, shuffle it into your library from your graveyard. If you've cycled a card named ~ four or more times this game, put it onto the battlefield from your graveyard instead. |
 | reuse-existing | Luminous Broodmoth | `28c7c816-07e7-42fb-923c-bf149ba28b38` | counters | trigger / ETB | Whenever a creature you control without flying dies, return it to the battlefield under its owner's control with a flying counter on it. |
@@ -42,7 +41,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Nameless Inversion | `d6911456-42cb-4b23-a560-dc98784530f5` | pump | new primitive review | Target creature gets +3/-3 and loses all creature types until end of turn. |
 | needs-new-primitive | Mortify | `faa01ed1-ccfa-4e58-951f-cd81f9068027` | destroy | new primitive review | Destroy target creature or enchantment. |
 | needs-new-primitive | Bituminous Blast | `d291d8f7-bb67-470c-8794-cd553c91e5cc` | activated | new primitive review | Cascade |
-| reuse-existing | Treasure Hunt | `05079479-86a6-4041-a395-83d325b6ddb7` | activated | search / library | Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand. |
 | reuse-existing | Celestial Purge | `ec1f6188-2516-46ac-8a03-7b7285b23a62` | exile | exile | Exile target black or red permanent. |
 | reuse-existing | Hinder | `c9db6b94-a7b1-4b93-b454-4dead8f85e34` | counters | counter | If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard. |
 | reuse-existing | Cruel Edict | `10c585c4-bf5b-4d8f-94a9-e9a5036a688f` | sacrifice | sacrifice | Target opponent sacrifices a creature of their choice. |
@@ -218,5 +216,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Stoneforge Mystic | `358789f9-7d87-411d-919e-d597da665cbd` | activated | activated ability / mana | {1}{W}, {T}: You may put an Equipment card from your hand onto the battlefield. |
 | needs-new-primitive | Snap | `ac914d98-221e-426c-8a50-342896b15f9e` | activated | new primitive review | Untap up to two lands. |
 | reuse-existing | Reflecting Pool | `67f43ac6-2a58-4b53-b5d7-0330e2a252e2` | activated | activated ability / mana | {T}: Add one mana of any type that a land you control could produce. |
+| reuse-existing | Ob Nixilis Reignited | `65481ae1-54b2-44d2-91e1-20cd486386da` | draw | damage / life | −8: Target opponent gets an emblem with "Whenever a player draws a card, you lose 2 life." |
+| reuse-existing | Candelabra of Tawnos | `c7c7bffa-442d-4ba5-b778-ad394c192f27` | activated | activated ability / mana | {X}, {T}: Untap X target lands. |
 
-The JSON contains the remaining 15,001 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,995 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
