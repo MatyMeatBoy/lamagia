@@ -14,7 +14,7 @@ When a compact IR is supplied, `Reusable atoms` are navigational hints only; exa
 
 ## Worker 1
 
-3 primitives / 5 unique cards
+2 primitives / 4 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -27,9 +27,6 @@ Cards: Echo Mage [fb98f6b7-5986-4c5d-98fc-e5c4106f48bf], Nivix Guildmage [d04356
 Reusable atoms: `kind:static-or-spell, op:other`
 
 Cards: Uyo, Silent Prophet [93da1e63-54d6-4b05-af91-f13e7e111176]
-
-| normal | `c13-oracle-counter-triggered-shape-2` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Sun Droplet [1820af5c-9cc2-4b77-b4ca-86084442f087]
 
 
 ## Worker 2
@@ -68,20 +65,20 @@ Reusable atoms: `amount:parameter, cost:mana-parameter, kind:static-or-spell, op
 
 Cards: Fireball [aa7714b0-2bfb-458a-8ebf-37ec2c53383e]
 
-| normal | `c13-oracle-counter-activated-cost-4` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
+| normal | `c13-oracle-counter-static-spell` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
 
-| normal | `c13-oracle-counter-triggered-shape-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
+| normal | `c13-oracle-counter-static-spell-2` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
 
-| normal | `c13-oracle-destroy-static-spell` | destroy | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
+| normal | `c13-oracle-counter-static-spell-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
 
-| normal | `c13-oracle-counter-static-spell-5` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
+| normal | `c13-oracle-damage-static-spell-2` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Furnace Celebration [af6d6844-c612-4731-86da-59a8fa02956b]
 
-| normal | `c13-oracle-damage-static-spell` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
+| normal | `c13-oracle-sacrifice-triggered-shape-2` | sacrifice | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Furnace Celebration [af6d6844-c612-4731-86da-59a8fa02956b]
 
 
 ## Worker 3
@@ -110,30 +107,32 @@ Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature,
 
 Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
 
-| needs-review | `c13-oracle-other-static-spell` | activated | 1 | 1 | 1 | 1 | 1 | 1 | 5 |
-Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, target:player, zone:battlefield`
+| needs-review | `c13-oracle-damage-static-spell-5` | damage | 1 | 1 | 0 | 0 | 1 | 1 | 4 |
+Reusable atoms: `amount:parameter, cost:mana-parameter, kind:static-or-spell, op:other`
 
-Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
+Cards: Street Spasm [95385d84-550c-4d6c-a889-62bdbc1d518d]
 
-| normal | `c13-oracle-counter-static-spell` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
+| needs-review | `c13-oracle-other-static-spell-8` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 4 |
+Reusable atoms: `amount:parameter, cost:mana-parameter, kind:static-or-spell, op:other`
 
-| normal | `c13-oracle-counter-static-spell-2` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
+Cards: Street Spasm [95385d84-550c-4d6c-a889-62bdbc1d518d]
 
-| normal | `c13-oracle-counter-static-spell-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
+| normal | `c13-oracle-counter-activated-cost-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Eye of Doom [e808a11e-29bd-4e99-a24e-67fa8f6fe502]
 
-| normal | `c13-oracle-counter-triggered-shape-4` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Thraximundar [9e0e4217-fefe-48dd-9153-032460192b19]
+| normal | `c13-oracle-counter-triggered-shape` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Eye of Doom [e808a11e-29bd-4e99-a24e-67fa8f6fe502]
 
-| normal | `c13-oracle-sacrifice-triggered-shape` | sacrifice | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Thraximundar [9e0e4217-fefe-48dd-9153-032460192b19]
+| normal | `c13-oracle-damage-static-spell-3` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Fiery Justice [333809cb-e196-45f2-8a67-31374438e56e]
+
+| normal | `c13-oracle-gain-life-static` | gain-life | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Fiery Justice [333809cb-e196-45f2-8a67-31374438e56e]
 
 
 ## Worker 4
 
-7 primitives / 4 unique cards
+6 primitives / 4 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -147,27 +146,24 @@ Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, zone:hand, zo
 
 Cards: Jar of Eyeballs [3075dadd-240f-4455-9286-9f1d48f53a3f]
 
-| needs-review | `c13-oracle-damage-static-spell-5` | damage | 1 | 1 | 0 | 0 | 1 | 1 | 4 |
-Reusable atoms: `amount:parameter, cost:mana-parameter, kind:static-or-spell, op:other`
+| needs-review | `c13-oracle-other-static-spell` | activated | 1 | 1 | 1 | 1 | 1 | 1 | 5 |
+Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, target:player, zone:battlefield`
 
-Cards: Street Spasm [95385d84-550c-4d6c-a889-62bdbc1d518d]
+Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
 
-| normal | `c13-oracle-counter-activated-cost-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Eye of Doom [e808a11e-29bd-4e99-a24e-67fa8f6fe502]
+| normal | `c13-oracle-counter-static-spell-5` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
 
-| normal | `c13-oracle-counter-triggered-shape` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Eye of Doom [e808a11e-29bd-4e99-a24e-67fa8f6fe502]
+| normal | `c13-oracle-damage-static-spell` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
 
-| normal | `c13-oracle-damage-static-spell-2` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Furnace Celebration [af6d6844-c612-4731-86da-59a8fa02956b]
-
-| normal | `c13-oracle-sacrifice-triggered-shape-2` | sacrifice | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Furnace Celebration [af6d6844-c612-4731-86da-59a8fa02956b]
+| normal | `c13-oracle-counter-triggered-shape-2` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Sun Droplet [1820af5c-9cc2-4b77-b4ca-86084442f087]
 
 
 ## Worker 5
 
-7 primitives / 4 unique cards
+8 primitives / 4 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -181,22 +177,25 @@ Reusable atoms: `amount:parameter, control:conditional, kind:static-or-spell, op
 
 Cards: Primal Vigor [c665544f-557b-4631-a1dc-39571470ca2e]
 
-| normal | `c13-oracle-exile-activated-target` | exile | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Roon of the Hidden Realm [fd336830-4a11-42b8-9fc7-d7526f569124]
+| normal | `c13-oracle-counter-activated-cost-4` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
 
-| normal | `c13-oracle-exile-activated-target-2` | exile | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Mistmeadow Witch [38e274e2-bd04-48de-a1df-44f0ee987ba8]
+| normal | `c13-oracle-counter-triggered-shape-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
 
-| normal | `c13-oracle-return-triggered-shape` | return | 2 | 0 | 0 | 0 | 2 | 1 | 0 |
-Cards: Mistmeadow Witch [38e274e2-bd04-48de-a1df-44f0ee987ba8], Roon of the Hidden Realm [fd336830-4a11-42b8-9fc7-d7526f569124]
+| normal | `c13-oracle-destroy-static-spell` | destroy | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
 
-| normal | `c13-oracle-damage-static-spell-3` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Fiery Justice [333809cb-e196-45f2-8a67-31374438e56e]
+| normal | `c13-oracle-counter-triggered-shape-4` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Thraximundar [9e0e4217-fefe-48dd-9153-032460192b19]
 
-| normal | `c13-oracle-gain-life-static` | gain-life | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Fiery Justice [333809cb-e196-45f2-8a67-31374438e56e]
+| normal | `c13-oracle-sacrifice-triggered-shape` | sacrifice | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Thraximundar [9e0e4217-fefe-48dd-9153-032460192b19]
+
+| normal | `c13-oracle-damage-triggered-target` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Derevi, Empyrial Tactician [afa49a09-146f-4439-850e-dd1938c93cef]
 
 
 ## Already claimed
 
-`c13-oracle-damage-triggered-shape`, `c13-oracle-other-activated-shape`
+`c13-oracle-damage-triggered-shape`, `c13-oracle-other-activated-shape`, `c13-oracle-other-activated-shape-2`

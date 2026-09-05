@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T22:47:00.739566+00:00`
+- Generated: `2026-09-05T22:59:45.007940+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **290**
+- Exported profiles in scope: **341**; fully implemented: **292**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -281,7 +281,7 @@ Apply a continuous layer effect to the correct set of permanents without putting
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **290/341** profiles complete; **1** unfinished cards have exactly one unmatched line.
+The engine export currently marks **292/341** profiles complete; **1** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
