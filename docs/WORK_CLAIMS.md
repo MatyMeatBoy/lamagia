@@ -85,8 +85,11 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
-| `global-prowess` | Prowess noncreature-spell trigger and temporary self pump (CR 702.108) | `feat/activated-abilities-and-triggers` | merged (`100f464`) | 2026-09-04 |
-| `c13-horsemanship` | Global Horsemanship evasion keyword and Lu Xun C13 regression scenario (CR 702.31) | `feat/activated-abilities-and-triggers` | active | 2026-09-04 |
+| `global-exalted` | Exalted sole-attacker trigger and temporary pump (CR 702.83) | `feat/activated-abilities-and-triggers` | merged (`a9c3c45`) | 2026-09-04 |
+| `global-shadow` | Shadow evasion and blocking symmetry (CR 702.28) | `feat/activated-abilities-and-triggers` | merged (`c5eeb6e`) | 2026-09-04 |
+| `global-changeling` | Changeling keyword coverage using the existing all-creature-types model (CR 702.73) | `feat/activated-abilities-and-triggers` | merged (`8d2d186`) | 2026-09-04 |
+| `global-prowess` | Prowess noncreature-spell trigger and temporary self pump (CR 702.108) | `feat/activated-abilities-and-triggers` | merged (`8d53f24`) | 2026-09-04 |
+| `c13-horsemanship` | Global Horsemanship evasion keyword and Lu Xun C13 regression scenario (CR 702.31) | `feat/activated-abilities-and-triggers` | merged (`76b1d78`) | 2026-09-04 |
 | `rules-land-search` | Landcycling variants and land-subtype search resolution | `feat/activated-abilities-and-triggers` | merged (`7c7f77c`) | 2026-09-03 |
 | `rules-equipment` | Equip actions, attachment state, and Equipment static bonuses | `codex/c13-equipment-cluster` | merged (`f61a096`) | 2026-09-03 |
 | `rules-c13-reprint-equivalence` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | `codex/c13-equipment-cluster` | merged (`44d0e78`) | 2026-09-04 |
@@ -390,4 +393,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
 | `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
+
+
+
 

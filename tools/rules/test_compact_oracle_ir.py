@@ -71,8 +71,27 @@ class CompactOracleIrTests(unittest.TestCase):
     def test_legacy_comparison_preserves_identity_and_clause_count(self) -> None:
         result = compare([card("a", "One", "Draw a card."), card("b", "Two", "Draw two cards.", amount=2)])
         self.assertEqual(result["identity_and_clause_checks"], "PASS")
+        self.assertEqual(result["identity_and_operand_checks"], "PASS")
         self.assertEqual(result["review_cards"], 2)
         self.assertEqual(result["clause_references"], 2)
+        self.assertEqual(result["recommended_workflow"], "hybrid-payload")
+        self.assertGreater(result["hybrid_bytes"], 0)
+
+    def test_comparison_accepts_single_pass_iterators(self) -> None:
+        result = compare(iter([card("a", "One", "Draw a card.")]))
+        self.assertEqual(result["review_cards"], 1)
+        self.assertEqual(result["clause_references"], 1)
+        self.assertEqual(result["identity_and_operand_checks"], "PASS")
+
+    def test_hybrid_keeps_unique_shapes_safe(self) -> None:
+        result = compare([
+            card("a", "Draw One", "Draw a card."),
+            card("b", "Draw Two", "Draw two cards.", amount=2),
+            card("c", "Target Draw", "Target player draws a card."),
+        ])
+        self.assertEqual(result["identity_and_operand_checks"], "PASS")
+        self.assertEqual(result["hybrid_reusable_primitive_count"], 1)
+        self.assertEqual(result["recommended_workflow"], "hybrid-payload")
 
     def test_solved_clauses_do_not_enter_the_dictionary(self) -> None:
         solved = card("a", "Solved", "Draw a card.")

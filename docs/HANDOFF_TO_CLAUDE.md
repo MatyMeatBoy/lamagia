@@ -6,13 +6,14 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ## Current published checkpoint — 2026-09-04
 
-The latest source checkpoint is the Prowess rules change being published from
-this branch; verify the Pages run before reporting it as live.
+The latest source checkpoint includes verified Prowess, Changeling, Shadow,
+and Exalted primitives plus benchmark-selected compositional worker payloads;
+verify the Pages run before reporting a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 8,932 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 8,994 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 21,698 / 84,990 implemented (25.5%) across 685
+- **Edition memberships:** 21,853 / 84,990 implemented (25.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
@@ -20,12 +21,36 @@ Coverage numbers have two deliberate units:
 - **Commander 2014:** 195 / 322 unique cards (60.6%), 127 pending.
 - **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
   component references; 99.9% are reused across clauses. The full-catalog
-  benchmark reduces worker context by 5.0% while preserving exact identities
-  and clause counts. This is scheduling
+  hybrid benchmark reduces worker context by 22.8% while preserving exact
+  identities, clause order, primitive keys, and operands. C13 separately
+  reduces context by 7.9%; repeated shapes use symbols and unique clauses
+  retain raw text. This is scheduling
   compression only: it does not mark a card implemented.
+- **Batch policy:** the benchmark chooses hybrid/compact/legacy per batch;
+  current full-catalog and C13 runs both choose `hybrid-payload`. Compression
+  never changes implementation status.
 
 Do not report the 38,711 profile catalog as implemented cards. Recompute both
 views after accepted rules commits and publish the generated `site/coverage.json`.
+
+### Claude/fork IR audit — 2026-09-04
+
+The old `origin/worker-05` IR benchmark was not safe enough for integration:
+it checked only card IDs and clause counts, so a changed target, zone, cost, or
+primitive key could still report `PASS`. It also consumed generator inputs
+before building the compact payload. Commit `2bb7612` adds exact per-card
+primitive/operand equivalence checks and fixes single-pass inputs. Commit
+`e1c03e1` adds the measured hybrid payload: repeated exact shapes use symbols,
+while unique or complex clauses retain Oracle text. Full catalog and C13 both
+currently select `hybrid-payload` (22.8% and 7.9% context reduction).
+
+Claude's `94aa4ca` repaired malformed `characteristics.ts` syntax and removed
+unreachable, unwired `SpellEffect` union members on a stale branch. It is useful
+as an audit finding, but must not be cherry-picked wholesale: the canonical
+branch already compiles and has moved on. The current 9/200 engine simulator
+invariant failures (duplicate card ownership and lost commander tracking) are
+runtime issues independent of the review IR; keep them as separate gameplay
+claims rather than attributing them to compression.
 
 ## Product objective
 

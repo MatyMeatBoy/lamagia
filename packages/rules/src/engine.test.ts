@@ -5557,6 +5557,18 @@ describe("combat restrictions and landwalk", () => {
     name: "River Rider", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3,
     power: "2", toughness: "2", keywords: ["Horsemanship"], oracle_text: "Horsemanship"
   });
+  const SHADOWER = () => make({
+    name: "Dauthi Slayer", type_line: "Creature — Dauthi Soldier", mana_cost: "{B}{B}", cmc: 2,
+    power: "2", toughness: "2", keywords: ["Shadow"], oracle_text: "Shadow"
+  });
+  const SHADOW_BLOCKER = () => make({
+    name: "Dauthi Horror", type_line: "Creature — Dauthi Horror", mana_cost: "{1}{B}", cmc: 2,
+    power: "2", toughness: "1", keywords: ["Shadow"], oracle_text: "Shadow"
+  });
+  const EXALTED = () => make({
+    name: "Noble Hierarch", type_line: "Creature — Human Druid", mana_cost: "{G}", cmc: 1,
+    power: "0", toughness: "1", keywords: ["Exalted"], oracle_text: "Exalted"
+  });
   const CRAWLSPACE = () => make({
     name: "Crawlspace", type_line: "Artifact", mana_cost: "{3}", cmc: 3,
     oracle_text: "No more than one creature can attack you each combat."
@@ -5573,6 +5585,13 @@ describe("combat restrictions and landwalk", () => {
     expect(profileOf(SWAMPWALKER()).fullyImplemented).toBe(true);
     expect(profileOf(HORSEMAN()).keywords).toContain("horsemanship");
     expect(profileOf(HORSEMAN()).fullyImplemented).toBe(true);
+    expect(profileOf(SHADOWER()).keywords).toContain("shadow");
+    expect(profileOf(SHADOWER()).fullyImplemented).toBe(true);
+    expect(profileOf(EXALTED()).triggers[0]).toMatchObject({
+      event: "attacks", subject: "creature-you-control", condition: { kind: "attacking-alone" },
+      effect: { kind: "modify-triggered-creature", power: 1, toughness: 1 }
+    });
+    expect(profileOf(EXALTED()).fullyImplemented).toBe(true);
     expect(profileOf(CRAWLSPACE()).fullyImplemented).toBe(true);
   });
 
@@ -5689,6 +5708,35 @@ describe("combat restrictions and landwalk", () => {
     const attacker = permanentNamed(game, 0, "Lu Xun, Scholar General");
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
     expect(legalBlockers(game, 1).map((permanent) => permanent.card.name)).toEqual(["River Rider"]);
+  });
+
+  it("allows shadow combat only between creatures with shadow", () => {
+    let shadowGame = attackWith([SHADOWER()], [BEAR(), SHADOW_BLOCKER()]);
+    const shadowAttacker = permanentNamed(shadowGame, 0, "Dauthi Slayer");
+    shadowGame = applyAction(shadowGame, 0, { type: "declare-attackers", attackers: [{ instanceId: shadowAttacker.instance_id, defender: 1 }] });
+    expect(legalBlockers(shadowGame, 1).map((permanent) => permanent.card.name)).toEqual(["Dauthi Horror"]);
+
+    let groundGame = attackWith([BEAR()], [SHADOW_BLOCKER()]);
+    const groundAttacker = permanentNamed(groundGame, 0, "Grizzly Bears");
+    groundGame = applyAction(groundGame, 0, { type: "declare-attackers", attackers: [{ instanceId: groundAttacker.instance_id, defender: 1 }] });
+    expect(legalBlockers(groundGame, 1)).toHaveLength(0);
+  });
+
+  it("pumps only the sole attacker for Exalted", () => {
+    let alone = attackWith([EXALTED()], []);
+    const exalted = permanentNamed(alone, 0, "Noble Hierarch");
+    alone = applyAction(alone, 0, { type: "declare-attackers", attackers: [{ instanceId: exalted.instance_id, defender: 1 }] });
+    alone = passUntil(alone, (state) => state.stack.length === 0 && state.triggerQueue.length === 0
+      && state.players[0]!.battlefield.find((permanent) => permanent.instance_id === exalted.instance_id)?.powerModifier === 1);
+    expect(alone.players[0]!.battlefield.find((permanent) => permanent.instance_id === exalted.instance_id)?.toughnessModifier).toBe(1);
+
+    let together = attackWith([EXALTED(), BEAR()], []);
+    const exaltedTogether = permanentNamed(together, 0, "Noble Hierarch");
+    const bear = permanentNamed(together, 0, "Grizzly Bears");
+    together = applyAction(together, 0, { type: "declare-attackers", attackers: [
+      { instanceId: exaltedTogether.instance_id, defender: 1 }, { instanceId: bear.instance_id, defender: 1 }
+    ] });
+    expect(together.stack.some((entry) => entry.trigger?.definition.sourceText === "Exalted")).toBe(false);
   });
 });
 

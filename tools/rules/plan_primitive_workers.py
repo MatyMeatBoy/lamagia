@@ -117,6 +117,7 @@ def build_worker_plan(
     claimed_keys: set[str] | None = None,
     oracle_review_ids: set[str] | None = None,
     semantic_atoms_by_oracle: dict[str, set[str]] | None = None,
+    review_payload_mode: str = "legacy-payload-with-compositional-hints",
 ) -> dict[str, Any]:
     """Build a deterministic greedy assignment of primitive work to workers.
 
@@ -263,6 +264,7 @@ def build_worker_plan(
         "estimated_worker_mb": estimated_worker_mb,
         "max_cards_per_commit": max_cards_per_commit,
         "min_integration_commits": min_integration_commits,
+        "review_payload_mode": review_payload_mode,
         "skipped_claims": sorted(skipped),
         "workers": worker_payload,
     }
@@ -282,6 +284,7 @@ def render_document(plan: dict[str, Any]) -> str:
         f"- Memory budget: **{plan['memory_budget_gb']:g} GB** ({plan['estimated_worker_mb']} MB reserved per worker)",
         f"- Maximum cards per commit batch: **{plan['max_cards_per_commit']}**",
         f"- Integrate fork commits only after **{plan['min_integration_commits']}** are available (unless explicitly overridden)",
+        f"- Review payload mode: **{plan['review_payload_mode']}**",
         "",
     ]
     for worker in plan["workers"]:
@@ -334,6 +337,12 @@ def main() -> None:
         default=None,
         help="Optional compact Oracle IR; annotates jobs with reusable semantic atoms.",
     )
+    parser.add_argument(
+        "--benchmark",
+        type=Path,
+        default=None,
+        help="Optional compact-vs-legacy benchmark; selects the measured review payload mode.",
+    )
     args = parser.parse_args()
     payload = json.loads(args.roadmap.read_text(encoding="utf-8"))
     oracle_review_ids: set[str] | None = None
@@ -361,6 +370,19 @@ def main() -> None:
             }
             if oracle_id:
                 semantic_atoms_by_oracle[oracle_id] = atoms
+    review_payload_mode = "legacy-payload-with-compositional-hints"
+    if args.benchmark:
+        if not args.benchmark.exists():
+            raise SystemExit(f"Benchmark not found: {args.benchmark}. Run the matching benchmark first.")
+        benchmark = json.loads(args.benchmark.read_text(encoding="utf-8"))
+        if (
+            benchmark.get("identity_and_clause_checks") != "PASS"
+            or benchmark.get("identity_and_operand_checks") != "PASS"
+        ):
+            raise SystemExit(
+                "Benchmark identity and exact operand checks must be PASS before scheduling workers."
+            )
+        review_payload_mode = str(benchmark.get("recommended_workflow") or review_payload_mode)
     plan = build_worker_plan(
         payload.get("roadmap") or payload.get("clusters") or [],
         workers=args.workers,
@@ -372,6 +394,7 @@ def main() -> None:
         claimed_keys=load_claimed_keys(args.claims),
         oracle_review_ids=oracle_review_ids,
         semantic_atoms_by_oracle=semantic_atoms_by_oracle,
+        review_payload_mode=review_payload_mode,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

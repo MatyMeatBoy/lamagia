@@ -76,6 +76,7 @@ class WorkerPlanReviewPriorityTests(unittest.TestCase):
         job = plan["workers"][0]["jobs"][0]
         self.assertEqual(job["claim_key"], "draw")
         self.assertEqual(job["semantic_atoms"], ["op:draw", "target:player", "zone:hand"])
+        self.assertEqual(plan["review_payload_mode"], "legacy-payload-with-compositional-hints")
 
 
 if __name__ == "__main__":

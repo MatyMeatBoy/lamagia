@@ -26,6 +26,8 @@ describe("type line parsing", () => {
     expect(profile.changeling).toBe(true);
     expect(hasSubtype(profile, "Elf")).toBe(true);
     expect(hasSubtype(profile, "Goblin")).toBe(true);
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.unimplementedText).toEqual([]);
   });
 });
 

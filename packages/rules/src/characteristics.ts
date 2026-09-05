@@ -41,7 +41,7 @@ const CARD_TYPES: readonly CardType[] = ["Land", "Creature", "Artifact", "Enchan
 export const ENFORCED_KEYWORDS = [
   "flying", "reach", "first strike", "double strike", "deathtouch", "trample",
   "vigilance", "lifelink", "menace", "defender", "haste", "indestructible",
-  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "prowess", "split second"
+  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "prowess", "shadow", "exalted", "split second"
 ] as const;
 export type EnforcedKeyword = (typeof ENFORCED_KEYWORDS)[number];
 
@@ -650,6 +650,7 @@ export interface TriggerDefinition {
     | { readonly kind: "entering-power-at-least"; readonly amount: number }
     | { readonly kind: "creature-died-this-turn" }
     | { readonly kind: "cast-from-hand" }
+    | { readonly kind: "attacking-alone" }
     | { readonly kind: "entering-power-at-most"; readonly amount: number };
   readonly spellType?: "creature" | "noncreature" | "instant-or-sorcery";
   readonly spellColor?: string;
@@ -2866,6 +2867,10 @@ function recognizeText(text: string): RecognizedText {
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
+    // Changeling is represented by `profile.changeling` and enforced by
+    // `hasSubtype` in every zone (CR 702.73a); consume the keyword line only
+    // after that semantic representation has been built.
+    if (/^changeling\.?$/i.test(line)) continue;
     // Storm remains a keyword-only marker until copy-count tracking is added.
     if (/^storm\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.
@@ -3146,6 +3151,13 @@ export function cardProfile(card: CardData): CardProfile {
     event: "spell-cast", subject: "you", spellType: "noncreature",
     effect: { kind: "modify-source-creature", power: 1, toughness: 1 },
     optional: false, targetKind: "none", sourceText: "Prowess"
+  });
+  // Exalted (CR 702.83): the attacking creature gets +1/+1 only when it is
+  // the sole attacker; the normal attack event carries the exact creature.
+  if (lowerKeywords.includes("exalted")) synthesizedTriggers.push({
+    event: "attacks", subject: "creature-you-control", condition: { kind: "attacking-alone" },
+    effect: { kind: "modify-triggered-creature", power: 1, toughness: 1 },
+    optional: false, targetKind: "none", sourceText: "Exalted"
   });
   const graftAmount = recognized.graftAmount ?? null;
   if (graftAmount !== null) synthesizedTriggers.push({
