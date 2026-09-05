@@ -47,3 +47,11 @@ branches.
 Accepted afterward: `58fd65f` adds the reusable active-turn keyword primitive
 (`keywordsDuringYourTurn`) with a scenario for Razorkin Needlehead; it raised
 the global export to 9,289 profiles without changing C13.
+
+The origin audit then reviewed `origin/c14-batch2-clean` as a branch, not as
+an unchecked bulk merge. Its executable delta was salvaged in `dd6c117` with
+the authoritative `card-drawn` event preserved, duplicate Siege/choice cases
+removed, and the C14 status map retained for provenance. Validation: 562 rules
+tests, `npm run check`, 9,290 global profiles, C13 249/341. Conflicting or
+stale worker history remains excluded until it supplies a focused scenario and
+exact oracle mapping.
