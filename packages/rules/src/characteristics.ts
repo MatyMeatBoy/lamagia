@@ -3955,6 +3955,22 @@ function recognizeText(text: string): RecognizedText {
       triggers.push({ event: "spell-cast", subject: "you", spellType: "creature", effect: { kind: "become-prepared" }, optional: false, targetKind: "none", sourceText: line });
       continue;
     }
+    // "Landfall — Whenever a land you control enters, ~ becomes prepared."
+    // (Prepared mechanic): reuses the existing "land-you-control" trigger
+    // subject, already used by real Landfall abilities, and the same
+    // ability-word-prefix stripping `matchTriggerLine` already applies.
+    const landfallPrepared = line.replace(/^landfall\s+[—–-]\s*/i, "");
+    if (/^whenever\s+a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*~\s+becomes\s+prepared\.?$/i.test(landfallPrepared)) {
+      triggers.push({ event: "enters-battlefield", subject: "land-you-control", effect: { kind: "become-prepared" }, optional: false, targetKind: "none", sourceText: line });
+      continue;
+    }
+    // "Whenever one or more creatures you control deal combat damage to a
+    // player, ~ becomes prepared." (Prepared mechanic): fires once per
+    // qualifying creature, harmless since `prepared` is already idempotent.
+    if (/^whenever\s+one\s+or\s+more\s+creatures\s+you\s+control\s+deal\s+combat\s+damage\s+to\s+a\s+player,?\s*~\s+becomes\s+prepared\.?$/i.test(line)) {
+      triggers.push({ event: "deals-combat-damage-to-player", subject: "creature-you-control", effect: { kind: "become-prepared" }, optional: false, targetKind: "none", sourceText: line });
+      continue;
+    }
     // "Whenever another creature you control with power N or less enters, X" (Mentor of the Meek).
     const highPowerEnters = /^whenever\s+(?:a|another)\s+creature\s+you\s+control\s+with\s+power\s+(\d+)\s+or\s+greater\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(line);
     if (highPowerEnters) {

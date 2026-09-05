@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,167** · cobertura: **28.4%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,169** · cobertura: **28.4%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -680,8 +680,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,16
 | 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | eternal | 2020s | other | 117 | 37 | 80 | 31.6% |
 | 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | teenage-mutant-ninja-turtles-source-material | other | 20 | 2 | 18 | 10.0% |
 | 2026-04-13 | MagicFest 2026 (`PF26`) | promos | magicfest-2026 | other | 13 | 8 | 5 | 61.5% |
-| 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 61 | 210 | 22.5% |
-| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 115 | 260 | 30.7% |
+| 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 62 | 209 | 22.9% |
+| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 116 | 259 | 30.9% |
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 17 | 48 | 26.2% |
 | 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 11 | 69 | 13.8% |
 | 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 48 | 233 | 17.1% |
@@ -753,7 +753,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,16
 | commander | 2023 | 6 | 1597 | 503 | 1094 | 31.5% |
 | commander | 2024 | 7 | 1887 | 645 | 1242 | 34.2% |
 | commander | 2025 | 4 | 1046 | 395 | 651 | 37.8% |
-| commander | 2026 | 6 | 1265 | 338 | 927 | 26.7% |
+| commander | 2026 | 6 | 1265 | 339 | 926 | 26.8% |
 | conspiracy | conspiracy | 2 | 211 | 45 | 166 | 21.3% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 61 | 160 | 27.6% |
 | core | 1990s | 10 | 3267 | 1155 | 2112 | 35.4% |
@@ -817,7 +817,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,16
 | expansion | onslaught | 1 | 335 | 75 | 260 | 22.4% |
 | expansion | phyrexia | 4 | 787 | 118 | 669 | 15.0% |
 | expansion | ravnica | 4 | 1081 | 346 | 735 | 32.0% |
-| expansion | strixhaven | 2 | 561 | 113 | 448 | 20.1% |
+| expansion | strixhaven | 2 | 561 | 114 | 447 | 20.3% |
 | expansion | tarkir | 3 | 785 | 176 | 609 | 22.4% |
 | expansion | tempest | 1 | 335 | 104 | 231 | 31.0% |
 | expansion | theros | 2 | 507 | 124 | 383 | 24.5% |
@@ -62349,7 +62349,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,16
 - [ ] Suspend Aggression — `883267f0-be7e-43c3-b7f8-82981f6d8c23`
 - [ ] Tablet of Discovery — `19cf5798-4600-4a66-b1c7-de77bde157d0`
 - [ ] Tackle Artist — `2e80d632-cf84-4562-8c93-5850cceb5bec`
-- [ ] Tam, Observant Sequencer // Deep Sight — `702e871d-90d8-4468-8f69-5ae42af2c9d3`
 - [ ] Teacher's Pest — `12397dbf-99a9-40c3-aa7c-76d09baad008`
 - [ ] Tenured Concocter — `0ecd4493-dfb4-4d56-a90e-08b74b474f39`
 - [ ] Tester of the Tangential — `a30a2b96-4a8c-4d18-b276-5005b8aff7ed`
@@ -62597,7 +62596,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,16
 - [ ] Stonecoil Serpent — `78124cd1-2658-43f3-a339-0755d84154d2`
 - [ ] Storm-Kiln Artist — `a145ff8c-5812-4bcb-bd16-9839dc25121d`
 - [ ] Stormcatch Mentor — `b2252471-01ca-4d58-aa99-4ab0aa5eae12`
-- [ ] Striding Shotcaller // Run the Play — `10389ff7-2ea4-4413-90cc-0e3ca268c64d`
 - [ ] Study Hall — `eb735501-19e7-4910-aa6a-6667fff6f4e5`
 - [ ] Sun Titan — `b2e950fb-cb7e-40a0-a311-5bbdd0477b29`
 - [ ] Surge to Victory — `8ea414c1-88cf-46d4-9a54-6dee9847c537`
