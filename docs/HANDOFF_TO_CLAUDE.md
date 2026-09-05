@@ -3147,3 +3147,20 @@ instead of paying) and Snuff Out (pay life instead) need their own
 distinct shapes and were not attempted here. Validation: **594 rules
 tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,353 global
 profiles.
+
+Snuff Out | `324824cb-f938-401c-b9b5-d8908b431ef0` was closed with the
+second alternative-cost shape: `CardProfile.payLifeInsteadOfManaCost:
+{ life, controlLandType } | null` (CR 601.2b, 118.9). `castableCard`/
+`applyCast` gained a `payLifeCost` parameter/flag alongside `freeCast`,
+sharing the same bypass-the-mana-plan structure but substituting a fixed
+life payment (`payment.lifePaid`) instead of an empty one; a new
+`controlsLandType(state, seat, subtype)` helper checks the land
+condition. `legalActions` offers it as an additional option next to the
+normal paid cast, exactly like the free-cast primitive. Both alternative
+costs now share one shape family in `castableCard`'s signature
+(`freeCast`, `payLifeCost` — both default `false`, mutually exclusive by
+construction since only one is ever passed `true`), so a third shape
+(e.g. Daze's "return a permanent instead of paying") should extend this
+same pattern rather than inventing a new one. Validation: **598 rules
+tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,361 global
+profiles.
