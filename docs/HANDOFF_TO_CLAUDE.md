@@ -14,13 +14,13 @@ and token-scaling paths; verify the Pages run before reporting a new client asse
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,328 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,330 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 23,535 / 84,990 implemented (27.7%) across 685
+- **Edition memberships:** 23,556 / 84,990 implemented (27.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 263 / 341 unique cards (77.1%), 78 pending.
+- **Commander 2013:** 264 / 341 unique cards (77.4%), 77 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
@@ -34,8 +34,8 @@ Audited worker intake added executable batches for mana-entry restrictions,
 noncreature-spell drain, surveil, reanimation, Hunted Troll, Grazing
 Gladehart, Disciple of Griselbrand, and Springjack Pasture. The optional
 cycling-target keyword grammar was generalized and tested with Dirge of Dread.
-Rules suite: **571 passing tests**. Latest pushed source: `d0a3ba7`; generated
-export: **9,308/38,711** profiles and C13 **257/341**.
+Rules suite: **582 passing tests**. Latest pushed source: `38846ba`; generated
+export: **9,330/38,711** profiles and C13 **264/341**.
 
 The latest origin audit also salvaged the executable portion of
 `origin/c14-batch2-clean` as `dd6c117`: draw triggers remain on the engine's
@@ -3008,3 +3008,8 @@ with 79 pending.
 reusable deterministic random-opponent control effect (CR 603.2, 110.2).
 Validation: **579 rules tests**, `npm run check`, 9,328 global profiles, C13
 **263/341** with 78 pending.
+
+`72c99c5` then closed Naya Soulbeast | `5ea0c608-2c56-4889-a5d3-d435df515950`
+with a reusable cast-trigger reveal that stores total revealed mana value as
+entry counters. Validation: **580 rules tests**, `npm run check`, 9,329 global
+profiles, C13 **264/341** with 77 pending.

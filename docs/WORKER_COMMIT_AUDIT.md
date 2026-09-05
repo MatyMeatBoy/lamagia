@@ -157,3 +157,26 @@ additional source was imported.
 reusable deterministic random-opponent control effect (CR 603.2, 110.2).
 Validation: 579 rules tests, `npm run check`, 9,328 global profiles, C13
 263/341.
+
+`72c99c5` closes Naya Soulbeast | `5ea0c608-2c56-4889-a5d3-d435df515950`
+with a reusable cast-trigger reveal that stores total revealed mana value as
+entry counters. Validation: 580 rules tests, `npm run check`, 9,329 global
+profiles, C13 264/341.
+
+The post-checkpoint origin audit was performed with `git fetch origin --prune`
+and patch-equivalence checks across all published worker heads. C13 heads had
+no unrepresented patch after the selective rescues above; their remaining
+differences are stale generated files, duplicate card loaders, or claims for
+cards already complete in the current export. `origin/worker-05` contained one
+new executable delta, `2e1de07`, which was selectively integrated as
+`38846ba`: a reusable `spell-cast` trigger for each player filtered to instant
+or sorcery spells, with scenario coverage. It has no card-name branch and is
+available to every matching reprint. Validation: 582 rules tests,
+`npm run check`, 9,330 global profiles, C13 264/341.
+
+The divergent `origin/master` cEDH sequence was not merged wholesale: it is an
+older branch with a large unrelated tree replacement and 60 incremental
+activate-only-as-sorcery variants. It remains an explicitly audited follow-up
+queue, not evidence to overwrite the current integration tree. The C14
+branches were left intact for their own next pass; no unreviewed C13 source
+was found in them.

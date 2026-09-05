@@ -457,6 +457,8 @@ export type SpellEffect =
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   /** Target two creatures; they deal damage equal to their power to each other (CR 701.12). */
   | { readonly kind: "fight" }
+  /** Reveals each player's top card and stores the total mana value for the source spell's entry counters. */
+  | { readonly kind: "reveal-top-cards-and-add-source-counters" }
   /** Damage equal to the power of the creature that caused this trigger. */
   | { readonly kind: "damage-triggered-creature-power" }
   /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
@@ -2410,6 +2412,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
     return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };
+  }
+  if (/^Each player reveals the top card of their library\. (?:~|this creature) enters with X \+1\/\+1 counters on it, where X is the total mana value of all cards revealed this way\.?$/i.test(text)) {
+    return { effect: { kind: "reveal-top-cards-and-add-source-counters" }, target: "none" };
   }
   const revealUntil = parseRevealUntilTypeToHand(text);
   if (revealUntil) return { effect: revealUntil, target: "none" };
