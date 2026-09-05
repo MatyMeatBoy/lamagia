@@ -179,6 +179,8 @@ const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "
 // not a chosen target and not always `object.controller`'s opponent list.
 const DAMAGE_ON_OPPONENT_DRAW = () => make({ name: "Test Nekusar", type_line: "Creature — Wizard", mana_cost: "{2}{U}{B}{R}", cmc: 5, power: "2", toughness: "4", oracle_text: "Whenever an opponent draws a card, ~ deals 1 damage to that player." });
 const FAERIE_MASTERMIND = () => make({ name: "Test Faerie Mastermind", type_line: "Creature — Faerie Wizard", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "1", oracle_text: "Flash\nWhenever an opponent draws their second card each turn, you draw a card." });
+const KRANG_DOUBLER = () => make({ name: "Test Krang", type_line: "Legendary Artifact Creature — Robot", mana_cost: "{5}", cmc: 5, power: "5", toughness: "5", oracle_text: "If a player drawing a card causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time." });
+const DRAW_WATCHER = () => make({ name: "Test Draw Watcher", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "Whenever an opponent draws a card, you draw a card." });
 const LIFELOSS_ON_OPPONENT_DRAW = () => make({ name: "Test Scrawling Crawler", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "Whenever an opponent draws a card, that player loses 1 life." });
 const LIFELOSS_ON_OPPONENT_DISCARD = () => make({ name: "Test Liliana's Caress", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Whenever an opponent discards a card, that player loses 2 life." });
 const GAIN_ON_YOUR_DRAW_DRAIN_ON_OPPONENT_DRAW = () => make({ name: "Test Sheoldred", type_line: "Creature — Phyrexian Praetor", mana_cost: "{3}{B}{B}", cmc: 5, power: "4", toughness: "5", oracle_text: "Deathtouch\nWhenever you draw a card, you gain 2 life.\nWhenever an opponent draws a card, they lose 2 life." });
@@ -3440,6 +3442,19 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.hand.length).toBe(2);
     expect(game.players[0]!.hand.length).toBe(hand0Before - 1 + 1);
+  });
+
+  it("doubles a controlled permanent's card-drawn trigger via Krang's static ability", () => {
+    expect(profileOf(KRANG_DOUBLER()).triggerDoublers).toEqual([{ scope: "draw-caused-triggers" }]);
+    expect(profileOf(DRAW_WATCHER()).triggers[0]).toMatchObject({ event: "card-drawn", subject: "opponent", effect: { kind: "draw", amount: 1 } });
+
+    let game = readyToCast([DRAW_TWO_TARGET()], [KRANG_DOUBLER(), DRAW_WATCHER(), ISLAND(), ISLAND(), ISLAND()], [], []);
+    const hand0Before = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.hand.length).toBe(2);
+    // Two opponent draws each fire the watcher's trigger once, and Krang
+    // doubles each of those card-drawn-caused triggers: 2 draws x 2 copies.
+    expect(game.players[0]!.hand.length).toBe(hand0Before - 1 + 4);
   });
 
   it("splits a two-clause draw trigger between its own controller and an opponent", () => {

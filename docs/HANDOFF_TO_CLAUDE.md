@@ -2954,3 +2954,21 @@ regardless of how many turns that takes. Both this and Draw Mine's family
 push directly onto `triggerQueue`, resolving through the normal stack
 rather than applying immediately. Validation: **603 rules tests**, `npm
 run check`, `npm run simulate:engine` 200/200, 9,397 global profiles.
+
+Krang, the All-Powerful | `466d5226-f4c7-4d69-9f56-4f893010127f` was
+closed with a new `draw-caused-triggers` scope on the existing
+`TriggerDoubler` primitive (CR 603.3f). Its own "second card each turn"
+clause was already covered by the earlier `second-draw-this-turn` work;
+only its static "if a player drawing a card causes a triggered ability of
+a permanent you control to trigger, it triggers an additional time"
+remained. Unlike the existing `subtype-you-control`/`equipped-creature`
+scopes (which key on *which permanent* is watching), this one keys on
+*which event* caused the trigger, so `triggerDoublerCount` gained an
+`event` parameter and checks `event.kind === "card-drawn"` instead of the
+watcher's own characteristics. A test fixture pitfall worth remembering:
+a naive "whenever a player draws a card, you draw a card" watcher
+self-triggers on the very draws it causes, producing a runaway feedback
+loop that has nothing to do with the doubler itself — the scenario test
+uses "whenever an **opponent** draws a card" instead, which only fires
+off draws it doesn't itself cause. Validation: **604 rules tests**, `npm
+run check`, `npm run simulate:engine` 200/200, 9,398 global profiles.

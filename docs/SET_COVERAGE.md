@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,870** · cobertura: **28.1%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,871** · cobertura: **28.1%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -677,7 +677,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,87
 | 2026-01-23 | Lorwyn Eclipsed Promos (`PECL`) | promos | lorwyn-eclipsed | other | 80 | 6 | 74 | 7.5% |
 | 2026-02-17 | Year of the Horse 2026 (`PL26`) | promos | year-of-the-horse-2026 | other | 4 | 1 | 3 | 25.0% |
 | 2026-03-06 | Teenage Mutant Ninja Turtles (`TMT`) | expansion | 2020s | main | 195 | 31 | 164 | 15.9% |
-| 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | eternal | 2020s | other | 117 | 36 | 81 | 30.8% |
+| 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | eternal | 2020s | other | 117 | 37 | 80 | 31.6% |
 | 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | teenage-mutant-ninja-turtles-source-material | other | 20 | 2 | 18 | 10.0% |
 | 2026-04-13 | MagicFest 2026 (`PF26`) | promos | magicfest-2026 | other | 13 | 7 | 6 | 53.8% |
 | 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 42 | 229 | 15.5% |
@@ -791,7 +791,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,87
 | duel-decks | duel-decks-speed-vs-cunning | 1 | 71 | 28 | 43 | 39.4% |
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 35 | 35 | 50.0% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
-| eternal | 2020s | 6 | 537 | 131 | 406 | 24.4% |
+| eternal | 2020s | 6 | 537 | 132 | 405 | 24.6% |
 | expansion | 1990s | 11 | 1573 | 335 | 1238 | 21.3% |
 | expansion | 2000s | 19 | 3082 | 636 | 2446 | 20.6% |
 | expansion | 2010s | 14 | 2735 | 652 | 2083 | 23.8% |
@@ -62347,7 +62347,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,87
 - [ ] Hidden Hideout — `b639e1fe-d099-4cab-a0d0-a1b33c7f31dd`
 - [ ] High Score — `d81fc181-ecb0-43a5-88e8-c61aca3428d8`
 - [ ] Irma, Part-Time Mutant — `deda54da-4fcc-4da3-9337-7768a2db3283`
-- [ ] Krang, the All-Powerful — `466d5226-f4c7-4d69-9f56-4f893010127f`
 - [ ] Leo's Guidance — `f386bca6-a08e-462b-b1d9-c3b03929c68d`
 - [ ] Leonardo, the Balance — `46ea8d02-b087-44f7-8403-93ffc1d3a8ad`
 - [ ] Leonardo, Worldly Warrior — `94dcbcc0-6941-4e8c-8741-4b47ae231eba`

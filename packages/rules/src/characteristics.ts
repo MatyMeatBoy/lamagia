@@ -313,7 +313,7 @@ export interface StaticKeywordGrant {
 
 /** "If a triggered ability of X triggers, that ability triggers an additional time" (CR 603.3f). */
 export interface TriggerDoubler {
-  readonly scope: "subtype-you-control" | "equipped-creature";
+  readonly scope: "subtype-you-control" | "equipped-creature" | "draw-caused-triggers";
   readonly subtypes?: readonly string[];
 }
 
@@ -1516,6 +1516,9 @@ function parseTriggerDoubler(line: string): TriggerDoubler | null {
   const clean = line.trim().replace(/\.$/, "");
   if (/^If a triggered ability of equipped creature triggers,\s*that ability triggers an additional time$/i.test(clean)) {
     return { scope: "equipped-creature" };
+  }
+  if (/^If a player drawing a card causes a triggered ability of a permanent you control to trigger,\s*that ability triggers an additional time$/i.test(clean)) {
+    return { scope: "draw-caused-triggers" };
   }
   const subtypeMatch = /^If a triggered ability of (?:an?|another)\s+([A-Za-z][A-Za-z'’-]*)(?:\s+or\s+(?:an?|another)\s+([A-Za-z][A-Za-z'’-]*))?\s+you control triggers,\s*that ability triggers an additional time$/i.exec(clean);
   if (!subtypeMatch) return null;

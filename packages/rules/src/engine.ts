@@ -1598,7 +1598,7 @@ function raiseEvent(
       if (definition.condition?.kind === "cast-from-hand" && !watcher.castFromHand) continue;
       // Undying / Persist only fire when the creature died without the relevant counter (CR 702.92c/702.93c).
       if (definition.effect.kind === "undying-return" && (watcher.counters[definition.effect.counter] ?? 0) > 0) continue;
-      const copies = 1 + triggerDoublerCount(state, watcher);
+      const copies = 1 + triggerDoublerCount(state, watcher, event);
       for (let copy = 0; copy < copies; copy += 1) {
         queued.push({
           id: `trigger:${state.version}:${state.triggerQueue.length + queued.length}:${watcher.instance_id}:${index}:${copy}`,
@@ -1622,13 +1622,14 @@ function raiseEvent(
 }
 
 /** Counts permanents controlled by the watcher controller that double this trigger source. */
-function triggerDoublerCount(state: GameState, watcher: Permanent): number {
+function triggerDoublerCount(state: GameState, watcher: Permanent, event: GameEvent): number {
   let extra = 0;
   for (const source of allPermanents(state)) {
     if (source.controller !== watcher.controller) continue;
     for (const doubler of cardProfile(source.card).triggerDoublers) {
       if (doubler.scope === "equipped-creature" && source.attachedTo === watcher.instance_id) extra += 1;
       if (doubler.scope === "subtype-you-control" && doubler.subtypes?.some((subtype) => hasSubtype(cardProfile(watcher.card), subtype))) extra += 1;
+      if (doubler.scope === "draw-caused-triggers" && event.kind === "card-drawn") extra += 1;
     }
   }
   return extra;
