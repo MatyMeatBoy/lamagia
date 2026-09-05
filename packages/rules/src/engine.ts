@@ -315,6 +315,8 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       /** Mana cost that must be paid to accept ("you may pay {cost}. If you do"). */
       readonly payCost?: ManaCost;
+      /** Upper bound for a variable optional cost, such as Well of Lost Dreams. */
+      readonly variablePayCostMax?: number;
       readonly manaCost?: ManaCost;
       readonly targets?: readonly Target[];
       readonly sourcePermanentId?: string;
@@ -449,7 +451,7 @@ export type GameAction =
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[] }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
-  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[] }
+  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-tap-or-untap"; readonly sourceId: string; readonly mode: "tap" | "untap" }
@@ -3510,6 +3512,7 @@ function resolveTop(state: GameState): GameState {
           triggerEffect: object.trigger.definition.effect,
           sourceCard: object.trigger.sourceCard,
           ...(object.trigger.definition.payCost ? { payCost: object.trigger.definition.payCost } : {}),
+          ...(object.trigger.definition.variablePayCost ? { variablePayCostMax: object.trigger.eventAmount ?? 0 } : {}),
           ...(object.trigger.definition.unlessPayCost ? { payCost: object.trigger.definition.unlessPayCost, unlessPayCost: object.trigger.definition.unlessPayCost } : {}),
           targets: object.targets,
           sourcePermanentId: object.trigger.sourcePermanentId,
@@ -4370,7 +4373,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         return actions;
       }
       const canPay = !optionalCost || !optionalCost.symbols.length || Boolean(planManaPayment(optionalCost, player, { state }));
-      if (canPay) {
+      if (choice.variablePayCostMax !== undefined) {
+        for (let variableValue = 0; variableValue <= choice.variablePayCostMax; variableValue += 1) {
+          const variableCanPay = !optionalCost || Boolean(planManaPayment(optionalCost, player, { state, variableValue }));
+          if (!variableCanPay) continue;
+          actions.push({
+            action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true, variableValue },
+            label: `Sí, pagar {${variableValue}}`,
+            note: `Elige X=${variableValue}; el máximo es ${choice.variablePayCostMax}.`
+          });
+        }
+      } else if (canPay) {
         actions.push({
           action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true },
           label: choice.paymentBy === "opponent"
@@ -5604,6 +5617,10 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     return logged(next, source.controller, `${choice.sourceCard.name} se sacrifica al no pagar ${choice.unlessPayCost.raw}.`);
   }
   if (!action.accept) return logged(next, seat, `${playerAt(state, seat).name} no realiza la habilidad opcional de ${choice.sourceCard.name}.`);
+  const variableValue = choice.variablePayCostMax === undefined ? 0 : action.variableValue ?? 0;
+  if (choice.variablePayCostMax !== undefined && (!Number.isInteger(variableValue) || variableValue < 0 || variableValue > choice.variablePayCostMax)) {
+    throw new Error(`X debe estar entre 0 y ${choice.variablePayCostMax}.`);
+  }
   if (choice.tapCost) {
     const candidates = triggerTapCostCandidates(state, seat, choice.sourcePermanentId, choice.tapCost);
     const selectedIds = action.tapIds ?? [];
@@ -5630,10 +5647,10 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
   }
   const optionalCost = choice.payCost ?? choice.manaCost;
   if (optionalCost && optionalCost.symbols.length) {
-    const plan = planManaPayment(optionalCost, playerAt(next, seat));
+    const plan = planManaPayment(optionalCost, playerAt(next, seat), { state: next, variableValue });
     if (!plan) throw new Error(`No puedes pagar ${optionalCost.raw} por ${choice.sourceCard.name}.`);
     next = applyManaPlan(next, seat, plan);
-    const paid = payCost(optionalCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+    const paid = payCost(optionalCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life, variableValue });
     if (!paid) throw new Error(`No se pudo pagar ${optionalCost.raw}.`);
     next = withPlayer(next, seat, (current) => ({ ...current, manaPool: paid.remaining, life: current.life - paid.lifePaid }));
     next = logged(next, seat, `${playerAt(next, seat).name} paga ${optionalCost.raw} por ${choice.sourceCard.name}.`);
@@ -5646,7 +5663,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     targets: choice.targets ?? [],
    fromCommandZone: false,
    flashback: false,
-   variableValue: tapCount,
+   variableValue: choice.variablePayCostMax === undefined ? tapCount : variableValue,
     countered: false,
    sourcePermanentId: choice.sourcePermanentId,
    ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})

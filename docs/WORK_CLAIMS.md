@@ -383,6 +383,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
 | `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
+| `c13-oracle-draw-triggered-shape` | Well of Lost Dreams variable optional payment capped by life gained, then draw X (CR 603.2, 603.5, 107.3, 118.3) | `codex/c13-well-lost-dreams` | active | 2026-09-04 |
 
 
 

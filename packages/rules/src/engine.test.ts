@@ -333,6 +333,7 @@ const C13_BOJUKA_BOG = () => make({ name: "Bojuka Bog", type_line: "Land", oracl
 const C13_ARCANE_DENIAL = () => make({ name: "Arcane Denial", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.", scryfall_id: "ab175817-da6a-4ae7-a016-c3bfb087eae0" });
 const C13_BANE_OF_PROGRESS = () => make({ name: "Bane of Progress", type_line: "Creature — Elemental", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "When Bane of Progress enters the battlefield, destroy all artifacts and enchantments, then put a +1/+1 counter on Bane of Progress for each permanent destroyed this way.", scryfall_id: "51f9a6cc-8eb2-44ed-a2d9-913ac514ad67" });
 const C13_RAZOR_HIPPOGRIFF = () => make({ name: "Razor Hippogriff", type_line: "Creature — Hippogriff", mana_cost: "{3}{W}{W}", cmc: 5, power: "3", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen Razor Hippogriff enters the battlefield, you may return target artifact card from your graveyard to your hand. You gain life equal to that card's converted mana cost.", scryfall_id: "d121108e-f0bc-469b-bf94-e5e530801a4" });
+const C13_WELL_OF_LOST_DREAMS = () => make({ name: "Well of Lost Dreams", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Whenever you gain life, you may pay {X}, where X is less than or equal to the amount of life you gained. If you do, draw X cards.", scryfall_id: "b0394cf2-12a0-4d4f-87e0-fe8937e6faff" });
 const C13_AUGUR_OF_BOLAS = () => make({ name: "Augur of Bolas", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order.", scryfall_id: "c13-augur-of-bolas" });
 const C13_ACT_OF_AUTHORITY = () => make({ name: "Act of Authority", type_line: "Enchantment", mana_cost: "{3}{W}", cmc: 4, oracle_text: "When this enchantment enters, you may exile target artifact or enchantment.\nAt the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of this enchantment.", scryfall_id: "c13-act-of-authority" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
@@ -1714,6 +1715,31 @@ describe("casting", () => {
     expect(game.players[0]!.life).toBe(41);
     expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(false);
+  });
+
+  it("offers Well of Lost Dreams X up to the life-gain event amount", () => {
+    const profile = profileOf(C13_WELL_OF_LOST_DREAMS());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "life-gained",
+      optional: true,
+      effect: { kind: "draw", amount: "X" },
+      payCost: { raw: "{X}" },
+      variablePayCost: "event-amount"
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([TARGET_LIFE_SPELL()], [C13_WELL_OF_LOST_DREAMS(), FOREST(), FOREST(), FOREST()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 0 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.variablePayCostMax).toBe(2);
+    const xTwo = legalActions(game, 0).find((entry) => entry.action.type === "choose-trigger" && entry.action.accept && entry.action.variableValue === 2);
+    expect(xTwo).toBeDefined();
+    game = applyAction(game, 0, xTwo!.action);
+    expect(game.players[0]!.hand).toHaveLength(2);
+    expect(game.players[0]!.life).toBe(42);
   });
 
   it("resolves Bojuka Bog's ETB exile while preserving its tapped land entry", () => {
