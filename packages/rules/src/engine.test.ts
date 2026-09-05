@@ -8323,6 +8323,48 @@ describe("Naktamun Lorespinner // Wheel of Fortune", () => {
   });
 });
 
+describe("Prepared mechanic — enters prepared", () => {
+  const STUDIOUS_FIRST_YEAR = () => make({
+    name: "Studious First-Year // Rampant Growth", type_line: "Creature — Bear Wizard // Sorcery", mana_cost: "{G} // {1}{G}", cmc: 1, power: "1", toughness: "1", colors: ["G"],
+    card_faces: [
+      { name: "Studious First-Year", mana_cost: "{G}", type_line: "Creature — Bear Wizard", power: "1", toughness: "1", oracle_text: "This creature enters prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)" },
+      { name: "Rampant Growth", mana_cost: "{1}{G}", type_line: "Sorcery", oracle_text: "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle." }
+    ],
+    oracle_id: "58b0c737-0a84-4f9a-b3b7-300c5de43874", scryfall_id: "24f888dd-785c-4089-a89c-03f9080130ed"
+  });
+
+  it("is already prepared the moment it enters the battlefield, with no trigger needed", () => {
+    const profile = profileOf(STUDIOUS_FIRST_YEAR());
+    expect(profile.entersPrepared).toBe(true);
+    expect(profile.preparedCast).toMatchObject({ spellName: "Rampant Growth", cost: { raw: "{1}{G}" } });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Cast it for real (not the raw `putOnBattlefield` test helper, which
+    // builds a Permanent directly and would bypass `putOntoBattlefield`'s
+    // own `entersPrepared` wiring) so this actually exercises the engine path.
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [STUDIOUS_FIRST_YEAR()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    const creature = game.players[0]!.battlefield.find((permanent) => permanent.card.name.includes("Studious First-Year"))!;
+    expect(creature.prepared).toBe(true);
+
+    const copyAction = legalActions(game, 0).find((entry) => entry.action.type === "cast-prepared-copy" && entry.cardId === creature.instance_id)!;
+    expect(copyAction).toBeDefined();
+    const landsBefore = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Forest").length;
+    game = applyAction(game, 0, copyAction.action);
+    expect(game.pendingChoice).toMatchObject({ type: "search-library", sourceCard: { name: "Rampant Growth" } });
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Forest" });
+
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Forest")).toHaveLength(landsBefore + 1);
+    const stillThere = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === creature.instance_id);
+    expect(stillThere?.prepared).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
