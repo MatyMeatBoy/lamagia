@@ -118,3 +118,12 @@ coverage files were not imported. The batch closes these cards:
 Validation: 573 rules tests, `npm run check`, 9,320 global profiles, C13
 258/341. The exact oracle mapping for every reprint remains in the generated
 profile export; no card-name branches were added.
+
+The remote C13 commits `9c2cbee` (Divinity of Pride) and `a8366c0` (Wight of
+Precinct Six) were audited after fetch and skipped as stale duplicates: their
+source behavior and scenarios already exist in the published tree. The
+corresponding cards remain fully implemented in the generated export.
+
+Hooded Horror | `8267561e-bc25-4aaa-8242-f6d7ec88143e` was implemented locally
+with a reusable combat restriction rather than a card-name branch. Validation:
+574 rules tests, `npm run check`, 9,321 global profiles, C13 259/341.

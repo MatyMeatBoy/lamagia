@@ -6,19 +6,19 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ## Current published checkpoint — 2026-09-05
 
-The latest source checkpoint includes the verified C13 mana-payment gate for
-Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
+The latest source checkpoint includes the verified C13 Hooded Horror combat
+evasion and mana-payment gate for Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
 and token-scaling paths; verify the Pages run before reporting a new client asset
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,311 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,321 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 23,507 / 84,990 implemented (27.7%) across 685
+- **Edition memberships:** 23,523 / 84,990 implemented (27.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 258 / 341 unique cards (75.7%), 83 pending.
+- **Commander 2013:** 259 / 341 unique cards (76.0%), 82 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
@@ -2721,3 +2721,9 @@ Azorius Herald | `a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6` was then closed in
 it”, the stack records colors actually spent, and permanents retain that
 payment context for the enters trigger (CR 603.4). Validation: 572 rules
 tests, `npm run check`, 9,311 global profiles, C13 258/341.
+
+Hooded Horror | `8267561e-bc25-4aaa-8242-f6d7ec88143e` was then closed with
+the dynamic defending-player creature-count evasion primitive (CR 509.1b).
+Its blocker legality compares the defender's creature count with the maximum
+among all players, including ties. Validation: 574 rules tests, `npm run
+check`, 9,321 global profiles, C13 259/341.
