@@ -312,6 +312,15 @@ export interface EquipmentModification {
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
+  /** Aura characteristic-setting layer (CR 613.1): replaces base values/types and may remove abilities. */
+  readonly characteristicSetting?: {
+    readonly basePower: number;
+    readonly baseToughness: number;
+    readonly types: readonly CardType[];
+    readonly subtypes: readonly string[];
+    readonly keywords: readonly EnforcedKeyword[];
+    readonly removeAbilities: boolean;
+  };
   readonly text: string;
 }
 
@@ -1716,6 +1725,25 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
 function parseAuraModification(text: string): EquipmentModification | null {
   for (const line of text.split("\n")) {
     const clean = line.trim().replace(/\.$/, "");
+    const characteristicSetting = /^enchanted creature is an insect artifact creature with base power and toughness (\d+)\/(\d+) and has (.+), and it loses all other abilities, card types, and creature types$/i.exec(clean);
+    if (characteristicSetting) {
+      const keywords = characteristicSetting[3]!.split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
+        .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
+      return {
+        power: 0,
+        toughness: 0,
+        keywords,
+        characteristicSetting: {
+          basePower: Number(characteristicSetting[1]),
+          baseToughness: Number(characteristicSetting[2]),
+          types: ["Artifact", "Creature"],
+          subtypes: ["Insect"],
+          keywords,
+          removeAbilities: true
+        },
+        text: line.trim()
+      };
+    }
     let match = /^enchanted creature gets ([+-]\d+)\/([+-]\d+)(?:\s+and\s+has\s+(.+))?$/i.exec(clean);
     if (match) {
       const keywords = (match[3] ?? "").split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())

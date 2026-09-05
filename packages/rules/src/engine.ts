@@ -13,7 +13,7 @@
  */
 
 import {
-  backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
+  backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type EquipmentModification, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaType, type RestrictedMana
@@ -869,8 +869,17 @@ function attachedAuras(state: GameState, permanent: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === permanent.instance_id
     && hasSubtype(cardProfile(candidate.card), "Aura"));
 }
+function auraCharacteristicSetting(state: GameState, permanent: Permanent): NonNullable<EquipmentModification["characteristicSetting"]> | undefined {
+  return attachedAuras(state, permanent)
+    .map((aura) => cardProfile(aura.card).auraModification?.characteristicSetting)
+    .find((setting): setting is NonNullable<EquipmentModification["characteristicSetting"]> => setting !== undefined);
+}
+function permanentLosesAbilities(state: GameState, permanent: Permanent): boolean {
+  return auraCharacteristicSetting(state, permanent)?.removeAbilities === true;
+}
 /** Printed plus Aura-granted activations available from this permanent. */
 function activatedAbilitiesFor(state: GameState, permanent: Permanent): ActivatedAbility[] {
+  if (permanentLosesAbilities(state, permanent)) return [];
   const printed = cardProfile(permanent.card).activatedAbilities;
   const granted = attachedAuras(state, permanent).flatMap((aura, auraIndex) => {
     const ability = cardProfile(aura.card).auraActivatedAbility;
@@ -953,6 +962,7 @@ function cdaPowerToughnessValue(state: GameState, permanent: Permanent, profile:
 
 export function powerOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
+  const auraSetting = state ? auraCharacteristicSetting(state, permanent) : undefined;
   const level = state ? profile.levelDefinitions.filter((definition) => {
     const count = permanent.counters.level ?? 0;
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
@@ -964,10 +974,11 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     .reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + auraBonus(state, permanent).power + staticBonus + globalBonus;
+  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? auraSetting?.basePower ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + auraBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
+  const auraSetting = state ? auraCharacteristicSetting(state, permanent) : undefined;
   const level = state ? profile.levelDefinitions.filter((definition) => {
     const count = permanent.counters.level ?? 0;
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
@@ -979,9 +990,11 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     .reduce((total, grant) => total + grant.toughness, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + auraBonus(state, permanent).toughness + staticBonus + globalBonus;
+  return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? auraSetting?.baseToughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + auraBonus(state, permanent).toughness + staticBonus + globalBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
+  const auraSetting = auraCharacteristicSetting(state, permanent);
+  if (auraSetting?.removeAbilities) return auraSetting.keywords.includes(keyword);
   const profile = cardProfile(permanent.card);
   if (profile.keywords.includes(keyword)) return true;
   const level = profile.levelDefinitions.filter((definition) => {
@@ -2284,10 +2297,12 @@ function raiseEvent(
     .map((permanent) => permanent.controller));
   for (const watcher of watchers) {
     const isCommandZoneWatcher = state.players.some((player) => player.commandZone.some((card) => card.instance_id === watcher.instance_id));
-    const base = (isCommandZoneWatcher
+    const printedTriggers = isCommandZoneWatcher
       ? cardProfile(watcher.card).triggers.filter((definition) => definition.condition?.kind === "source-in-command-zone")
-      : cardProfile(watcher.card).triggers)
-      .concat(watcher.temporaryTriggers ?? []);
+      : permanentLosesAbilities(state, watcher) ? [] : cardProfile(watcher.card).triggers;
+    const base = permanentLosesAbilities(state, watcher)
+      ? []
+      : printedTriggers.concat(watcher.temporaryTriggers ?? []);
     const grantedExtort: TriggerDefinition[] = extortGrantors.has(watcher.controller)
       && isCreature(cardProfile(watcher.card))
       && !base.some((definition) => definition.effect.kind === "extort")

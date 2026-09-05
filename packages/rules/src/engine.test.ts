@@ -9447,6 +9447,7 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   const CONTROL_MAGIC = () => make({ name: "Control Magic", type_line: "Enchantment — Aura", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Enchant creature\nYou control enchanted creature.", oracle_id: "cd0d7141-46d2-4aa3-bc77-6b3b4513803e", scryfall_id: "7b52f459-c703-4a0b-9114-ff69eec61287" });
   const HARDENED_SCALE_ARMOR = () => make({ name: "Hardened-Scale Armor", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature gets +3/+3.", oracle_id: "9eb58db8-7934-485c-8606-fb1a6cc60d42", scryfall_id: "54c4cb29-3eb9-4a24-a91a-896802c78aef" });
   const DEBILITATING_INJURY = () => make({ name: "Debilitating Injury", type_line: "Enchantment — Aura", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature gets -2/-2.", oracle_id: "52eab77d-9a07-4e14-8872-72681d3b3d0e", scryfall_id: "cf2d01e2-9f9f-4674-b8ab-b783d3faef03" });
+  const DARKSTEEL_MUTATION = () => make({ name: "Darksteel Mutation", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature is an Insect artifact creature with base power and toughness 0/1 and has indestructible, and it loses all other abilities, card types, and creature types.", oracle_id: "05a4f8ff-49da-42af-add5-6248c4b0644b", scryfall_id: "05a4f8ff-49da-42af-add5-6248c4b0644b" });
   const WILD_GROWTH = () => make({ name: "Wild Growth", type_line: "Enchantment — Aura", mana_cost: "{G}", cmc: 1, oracle_text: "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.", oracle_id: "706ae742-1807-44b7-a4fa-f2e26f61519a", scryfall_id: "b87f2d2c-d6ad-4639-b8c3-e75569c5373f" });
   const LEAFDRAKE_ROOST = () => make({ name: "Leafdrake Roost", type_line: "Enchantment — Aura", mana_cost: "{3}{G}{U}", cmc: 5, oracle_text: "Enchant land\nEnchanted land has \"{G}{U}, {T}: Create a 2/2 green and blue Drake creature token with flying.\"", oracle_id: "b5ff42a1-1ac4-472b-8479-5e3749845305" });
   const PRESENCE_OF_GOND = () => make({ name: "Presence of Gond", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature has \"{T}: Create a 1/1 green Elf Warrior creature token.\"", oracle_id: "ab42398c-f0a1-4b94-ac5f-b8768e1b4e05" });
@@ -9464,6 +9465,35 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     expect(profile.targetKind).toBe("creature");
     expect(profile.auraModification).toMatchObject({ power: 3, toughness: 3 });
     expect(profile.fullyImplemented).toBe(true);
+  });
+
+  // CR 303.4h (attachment), 613.1/613.6 (continuous effects), and 613.7 (base P/T).
+  it("applies Darksteel Mutation's layer-setting Aura and removes the enchanted creature's abilities", () => {
+    const mutation = DARKSTEEL_MUTATION();
+    expect(profileOf(mutation)).toMatchObject({
+      targetKind: "creature",
+      fullyImplemented: true,
+      auraModification: {
+        characteristicSetting: {
+          basePower: 0,
+          baseToughness: 1,
+          types: ["Artifact", "Creature"],
+          subtypes: ["Insect"],
+          keywords: ["indestructible"],
+          removeAbilities: true
+        }
+      }
+    });
+    let game = readyToCast([mutation], [SICK_TAPPER(), PLAINS(), PLAINS()]);
+    const creature = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sick Tapper")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: creature.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Darksteel Mutation")?.attachedTo).toBe(creature.instance_id);
+    const enchanted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === creature.instance_id)!;
+    expect(powerOf(enchanted, game)).toBe(0);
+    expect(toughnessOf(enchanted, game)).toBe(1);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === creature.instance_id)).toBe(false);
+    expect(enchanted.card.name).toBe("Sick Tapper");
   });
 
   it("attaches to its target creature on resolution and applies the static bonus", () => {
