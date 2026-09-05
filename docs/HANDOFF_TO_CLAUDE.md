@@ -14,13 +14,13 @@ and token-scaling paths; verify the Pages run before reporting a new client asse
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,328 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,329 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
 - **Edition memberships:** 23,535 / 84,990 implemented (27.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 263 / 341 unique cards (77.1%), 78 pending.
+- **Commander 2013:** 264 / 341 unique cards (77.4%), 77 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
@@ -2755,3 +2755,8 @@ with 79 pending.
 reusable deterministic random-opponent control effect (CR 603.2, 110.2).
 Validation: **579 rules tests**, `npm run check`, 9,328 global profiles, C13
 **263/341** with 78 pending.
+
+`72c99c5` then closed Naya Soulbeast | `5ea0c608-2c56-4889-a5d3-d435df515950`
+with a reusable cast-trigger reveal that stores total revealed mana value as
+entry counters. Validation: **580 rules tests**, `npm run check`, 9,329 global
+profiles, C13 **264/341** with 77 pending.

@@ -157,3 +157,8 @@ additional source was imported.
 reusable deterministic random-opponent control effect (CR 603.2, 110.2).
 Validation: 579 rules tests, `npm run check`, 9,328 global profiles, C13
 263/341.
+
+`72c99c5` closes Naya Soulbeast | `5ea0c608-2c56-4889-a5d3-d435df515950`
+with a reusable cast-trigger reveal that stores total revealed mana value as
+entry counters. Validation: 580 rules tests, `npm run check`, 9,329 global
+profiles, C13 264/341.
