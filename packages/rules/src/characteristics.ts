@@ -336,6 +336,8 @@ export interface StaticPowerToughnessGrant {
   readonly subtype?: string;
   readonly counterName?: string;
   readonly threshold?: number;
+  /** Dynamic +1/+1 per creature card in opponents' graveyards (Wight). */
+  readonly scaling?: "creature-cards-in-opponents-graveyards";
 }
 
 /** Torbran-style static damage amplifier (CR 614.1c). */
