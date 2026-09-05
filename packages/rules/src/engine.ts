@@ -134,6 +134,8 @@ export interface Permanent {
   readonly temporaryAllCreatureTypes?: boolean;
   /** One-shot destruction-replacement shields created by Regenerate (CR 701.19). */
   readonly regenerationShields?: number;
+  /** This creature cannot use regeneration shields until cleanup (CR 701.19). */
+  readonly cantRegenerateUntilEndOfTurn?: boolean;
   /** The creature this Equipment is attached to, when it is equipped. */
   readonly attachedTo?: string;
   /** The player this Aura is attached to (Curses; CR 303.4h). */
@@ -1655,7 +1657,7 @@ function removeFromCombat(state: GameState, instanceId: string): GameState {
 function destroyPermanent(state: GameState, permanent: Permanent): GameState {
   const current = findPermanent(state, permanent.instance_id);
   if (!current || keywordOf(state, current, "indestructible")) return state;
-  const shields = current.regenerationShields ?? 0;
+  const shields = current.cantRegenerateUntilEndOfTurn ? 0 : (current.regenerationShields ?? 0);
   if (shields <= 0) return movePermanentToZone(state, current, "graveyard");
   let next = withPlayer(state, current.controller, (player) => ({
     ...player,
@@ -3356,6 +3358,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       return state;
+    }
+    case "damage-any-target-prevents-regeneration": {
+      const target = object.targets[0];
+      if (!target) return state;
+      const amount = effectAmount(effect.amount, object);
+      if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
+      if (target.kind !== "permanent") return state;
+      const before = findPermanent(state, target.instanceId);
+      const next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+      const after = findPermanent(next, target.instanceId);
+      if (!before || !after || !isCreature(cardProfile(after.card)) || after.damage <= before.damage) return next;
+      return withPlayer(next, after.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === after.instance_id
+          ? { ...permanent, cantRegenerateUntilEndOfTurn: true }
+          : permanent)
+      }));
     }
     case "damage-any-target-equal-sacrificed-creature-power": {
       const target = object.targets[0];
@@ -6032,7 +6051,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         players: next.players.map((current) => ({
           ...current,
           cantCastSpellsUntilEndOfTurn: false,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, cantBlockThisTurn: false }))
         }))
       };
       break;
