@@ -5056,9 +5056,13 @@ function resolveTop(state: GameState): GameState {
   if (profile.isPermanent) {
     const castFromHand = !object.fromCommandZone && !object.fromFlashback && !object.fromRebound && !object.trigger && !object.activated;
     const isCommander = object.fromCommandZone || playerAt(next, object.card.owner).commanderIds.includes(object.card.instance_id);
+    // "~ enters with X <kind> counters on it" (Walking Ballista, Hangarback Walker):
+    // X is the value actually paid for the spell's own {X} in its cost.
+    const variableEntryCounters = profile.entersWithVariableCounters && object.variableValue > 0
+      ? [{ kind: profile.entersWithVariableCounters.kind, amount: object.variableValue }] : [];
     next = putOntoBattlefield(next, object.controller, object.card, isCommander, false, Boolean(object.kicked), Boolean(object.evoked), castFromHand,
       isCommander && object.commanderEntryCounters ? (playerAt(next, object.controller).commanderCasts[object.card.instance_id] ?? 0) : 0,
-      object.spentMana ?? [], object.additionalCounters ?? []);
+      object.spentMana ?? [], [...(object.additionalCounters ?? []), ...variableEntryCounters]);
     // CR 303.4h: an Aura enters the battlefield attached to the permanent it targeted.
     const enchantTarget = hasSubtype(profile, "Aura") ? object.targets.find((target) => target.kind === "permanent") : undefined;
     if (enchantTarget) {
