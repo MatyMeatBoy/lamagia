@@ -2786,3 +2786,16 @@ new top, so the player's chosen sequence determines draw order (CR 701.8a —
 "in any order" is the caster's choice). Brainsurge (draw 4, put back 2) is
 covered for free by the same recognizer. Validation: **586 rules tests**,
 `npm run check`, `npm run simulate:engine` 200/200, 9,341 global profiles.
+
+Forget | `619ef7e1-33cd-4470-a1d4-83c5f1f5c31e` was closed with a new
+`discard-target-player-then-draw-same` effect (CR 701.8). It reuses the
+existing `discard-cards` pendingChoice (the targeted player still chooses
+which cards to discard, CR 701.8a) with a new optional `thenDrawSame` flag;
+when the final discard resolves, the same player draws exactly as many
+cards as were actually discarded (capped by hand size, so a short hand
+still resolves correctly). While wiring this in, a latent duplicate
+`discard-cards` `PendingChoice` union member — dead weight left over from
+an earlier upstream merge — was deleted; it carried no behavior difference,
+only the live member now carries `thenDrawSame`. Validation: **587 rules
+tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,342 global
+profiles.

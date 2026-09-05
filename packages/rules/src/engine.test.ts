@@ -128,6 +128,7 @@ const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant",
 const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
 const DISCARD_HAND_SPELL = () => make({ name: "Memory Collapse", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Target player discards their hand." });
 const X_DISCARD_SPELL = () => make({ name: "Scalable Mind Twist", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Target player discards X cards." });
+const FORGET = () => make({ name: "Forget", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Target player discards two cards, then draws as many cards as they discarded this way.", oracle_id: "619ef7e1-33cd-4470-a1d4-83c5f1f5c31e", scryfall_id: "8cc8e367-1aa4-43b6-b17a-01bfb097f620" });
 const LIFE_SPELL = () => make({ name: "Simple Blessing", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "You gain 1 life." });
 const ARTIFACT_LIFE_SPELL = () => make({ name: "Artifact Blessing", type_line: "Instant", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 2 life for each artifact you control." });
 const CREATURE_LIFE_SPELL = () => make({ name: "Creature Blessing", type_line: "Instant", mana_cost: "{2}{W}", cmc: 3, oracle_text: "You gain 1 life for each creature you control." });
@@ -3974,6 +3975,27 @@ describe("casting", () => {
     expect(game.pendingChoice).toBeNull();
     expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears"]);
     expect(game.players[1]!.graveyard.at(-1)?.name).toBe("Storm Crow");
+  });
+
+  it("lets Forget's targeted player discard two then draw that many back", () => {
+    let game = readyToCast([FORGET()], [ISLAND(), ISLAND()], [BEAR(), FLIER(), SOL_RING()]);
+    game = stage(game, 1, (player) => ({ library: [...toHand(1, [TEST_ARTIFACT(), MOUNTAIN()], "forget-library"), ...player.library] }));
+    expect(profileOf(FORGET()).effects).toContainEqual({ kind: "discard-target-player-then-draw-same", amount: 2 });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 1, remaining: 2, thenDrawSame: true });
+    expect(game.players[1]!.hand).toHaveLength(3);
+
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "foe-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 1, remaining: 1 });
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "foe-1" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[1]!.graveyard.filter((card) => ["Grizzly Bears", "Storm Crow"].includes(card.name))).toHaveLength(2);
+    expect(game.players[1]!.hand).toHaveLength(3);
+    expect(game.players[1]!.hand.some((card) => card.name === "Test Relic")).toBe(true);
+    expect(game.players[1]!.hand.some((card) => card.name === "Mountain")).toBe(true);
   });
 
   it("uses X to request multiple private discard choices", () => {
