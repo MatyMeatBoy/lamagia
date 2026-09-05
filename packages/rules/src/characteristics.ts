@@ -344,6 +344,7 @@ export type SpellEffect =
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
+  | { readonly kind: "draw-you-and-event-player" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
@@ -1866,6 +1867,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
+  if (/^You and that player each draw that many cards$/i.test(text)) {
+    return { effect: { kind: "draw-you-and-event-player" }, target: "none" };
+  }
 
   if (/^The owner of target permanent shuffles it into their library, then reveals the top card of their library\. If it's a permanent card, they put it onto the battlefield$/i.test(text)) {
     return { effect: { kind: "chaos-warp" }, target: "permanent" };

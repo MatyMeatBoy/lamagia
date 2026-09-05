@@ -357,6 +357,7 @@ const C13_RUPTURE_SPIRE = () => make({ name: "Rupture Spire", type_line: "Land",
 const C13_TRANSGUILD_PROMENADE = () => make({ name: "Transguild Promenade", type_line: "Land", oracle_text: "Transguild Promenade enters the battlefield tapped.\nWhen Transguild Promenade enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.", produced_mana: ["W", "U", "B", "R", "G"], scryfall_id: "9f325665-43cd-4b6d-8878-e42a39178e3f" });
 const SCRY_TWO = () => make({ name: "Scry Two", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Scry 2." });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
+const C13_DIVINER_SPIRIT = () => make({ name: "Diviner Spirit", type_line: "Creature — Spirit", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "3", oracle_text: "Whenever Diviner Spirit deals combat damage to a player, you and that player each draw that many cards.", scryfall_id: "911b8849-dd0a-4383-8403-ea80227c5d7d", oracle_id: "911b8849-dd0a-4383-8403-ea80227c5d7d" });
 const AUGURY_ADEPT = () => make({ name: "Augury Adept", type_line: "Creature — Kithkin Wizard", mana_cost: "{1}{W/U}{W/U}", cmc: 3, power: "2", toughness: "2", colors: ["W", "U"], oracle_text: "Whenever this creature deals combat damage to a player, reveal the top card of your library and put that card into your hand. You gain life equal to its mana value.", scryfall_id: "be5a65fd-0d06-4771-bee7-0e42cc9871da" });
 const FOSTER = () => make({ name: "Foster", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature you control dies, you may pay {1}. If you do, reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest into your graveyard.", scryfall_id: "fb431500-152c-4524-b76b-de62922ff57f" });
 const MINDS_EYE = () => make({ name: "Mind's Eye", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card." });
@@ -5863,6 +5864,18 @@ describe("combat restrictions and landwalk", () => {
   function permanentNamed(game: GameState, seat: SeatId, name: string) {
     return game.players[seat]!.battlefield.find((permanent) => permanent.card.name === name)!;
   }
+
+  it("draws the combat-damaged player and its controller for Diviner Spirit's damage", () => {
+    let game = attackWith([C13_DIVINER_SPIRIT()], []);
+    game = stage(game, 0, () => ({ library: toHand(0, [BEAR(), BEAR(), BEAR(), BEAR()], "diviner-you") }));
+    game = stage(game, 1, () => ({ library: toHand(1, [BEAR(), BEAR(), BEAR(), BEAR()], "diviner-player") }));
+    const diviner = permanentNamed(game, 0, "Diviner Spirit");
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: diviner.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "postcombat-main");
+    expect(game.players[0]!.hand).toHaveLength(2);
+    expect(game.players[1]!.hand).toHaveLength(2);
+    expect(game.players[1]!.life).toBe(38);
+  });
 
   it("keeps a creature that can't block out of the legal blockers", () => {
     let game = attackWith([BEAR()], [NO_BLOCKER(), WALL()]);

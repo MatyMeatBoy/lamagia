@@ -216,6 +216,8 @@ export interface TriggerInstance {
   readonly eventController?: SeatId;
   /** Permanent involved in the event, used by effects referring to "that creature". */
   readonly eventPermanentId?: string;
+  /** Player involved as the victim of a damage event. */
+  readonly eventPlayer?: SeatId;
   /** Amount carried by life-gain/loss events for proportional triggers. */
   readonly eventAmount?: number;
   /** Delayed zone return data retained by a trigger created from an effect. */
@@ -256,7 +258,7 @@ export type GameEvent =
   | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
+  | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
   | { readonly kind: "deals-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
@@ -1383,6 +1385,7 @@ function raiseEvent(
         cause: causeOf(state, event),
         ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
+        ...("victim" in event ? { eventPlayer: event.victim } : {}),
         ...("amount" in event ? { eventAmount: event.amount } : {})
       });
     }
@@ -1603,6 +1606,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "each-player-draw": {
       let next = state;
       for (const player of state.players) if (!player.lost) next = drawCards(next, player.seat, effectAmount(effect.amount, object));
+      return next;
+    }
+    case "draw-you-and-event-player": {
+      const amount = object.trigger?.eventAmount ?? 0;
+      const eventPlayer = object.trigger?.eventPlayer;
+      if (eventPlayer === undefined || amount <= 0) return state;
+      let next = drawCards(state, controller, amount);
+      if (eventPlayer !== controller) next = drawCards(next, eventPlayer, amount);
       return next;
     }
     case "each-opponent-draw": {
@@ -4191,7 +4202,7 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
     if (dealer && hit.amount > 0) {
       next = raiseEvent(next, {
         kind: "deals-combat-damage-to-player",
-        permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card, victim: hit.seat
+        permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card, victim: hit.seat, amount: hit.amount + bonus
       });
     }
     if (hit.commanderId) {
