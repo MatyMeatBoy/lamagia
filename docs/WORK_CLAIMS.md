@@ -16,6 +16,7 @@ feature name.
 | `c13-sacrifice-nontoken-artifact-token-life` | `feat/activated-abilities-and-triggers` | Reuse typed nontoken-artifact activation costs and compound token/life resolution for Thopter Foundry | merged (`a154e2f`) |
 | `c13-whenever-deals-damage-opponent` | `codex/local-c13` | Reusable any-damage-to-opponent event for Charnelhoard Wurm's graveyard-return trigger | active |
 | `c13-remove-counter-from-deals` | `codex/local-c13` | Reusable activated cost for removing a counter, then dealing parameterized damage to any legal target; Deathbringer Thoctar | active |
+| `c13-oracle-gain-life-activated` | `codex/c13-springjack` | Springjack Pasture: reusable variable typed-creature sacrifice mana ability; add X mana of one color and gain X life (CR 605.1a, 605.3, 118.3) | active |
 | `c13-oracle-counter-static-spell` | `codex/c13-spellbreaker` | Spellbreaker Behemoth: creature spells you control with power 5 or greater can't be countered (CR 101.2, 601.2, 608.2b) | active |
 | `c13-oracle-exile-triggered-target` | `codex/c13-flickerwisp-final` | Flickerwisp: exile another target permanent and return it under its owner's control at the beginning of the next end step (CR 603.2, 603.3d, 603.7, 400.7) | active |
 | `rules-equipment` | `codex/c13-equipment-cluster` | Equip, attachment, Equipment static bonuses, and Sword of the Paruns untap abilities | Ready for integrator review |
