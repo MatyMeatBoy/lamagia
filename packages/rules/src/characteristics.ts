@@ -3157,7 +3157,15 @@ function recognizeText(text: string): RecognizedText {
         : (() => {
           const executableText = optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
           const lookTop = parseLookTopSelection(executableText);
-          return lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
+          // Optional triggered instructions are written as an imperative
+          // ("you may gain 2 life" -> "gain 2 life"), while the shared
+          // sentence parser uses the ordinary subject form. Re-add the
+          // subject only as a fallback so existing imperative parsers keep
+          // their behavior and effects such as Landfall life gain reuse the
+          // same primitive (CR 603.5, 609.3).
+          return lookTop
+            ? { effect: lookTop, target: "none" as TargetKind }
+            : recognizeSentence(executableText) ?? recognizeSentence(`You ${executableText}`);
         })();
       if (recognized) {
         const capriciousMultiTarget = /^choose target nonland permanent you control and up to two target nonland permanents you don't control\. destroy one of them at random\.?$/i.test(effectText);
