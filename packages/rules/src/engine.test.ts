@@ -8824,6 +8824,45 @@ describe("Prepared mechanic — additional trigger templates", () => {
   });
 });
 
+describe("static extra land drops", () => {
+  const EXPLORATION = () => make({ name: "Exploration", type_line: "Enchantment", mana_cost: "{G}", cmc: 1, oracle_text: "You may play an additional land on each of your turns.", oracle_id: "0c2841bb-038c-4fbf-8360-bc0a1522b58d", scryfall_id: "5b372045-a4a0-44c8-96ec-1e201d61ed26" });
+  const AZUSA = () => make({ name: "Azusa, Lost but Seeking", type_line: "Legendary Creature — Human Monk", mana_cost: "{2}{G}", cmc: 3, power: "1", toughness: "2", oracle_text: "You may play two additional lands on each of your turns.", oracle_id: "6c2c8bf3-9bf8-4a86-89d3-3bb36260dc51", scryfall_id: "2fe97fbe-a6d6-4e96-8c26-f81bcdf579a1" });
+
+  it("lets Exploration's controller play a second land the same turn, but not a third", () => {
+    const profile = profileOf(EXPLORATION());
+    expect(profile.extraLandDropsPerTurn).toBe(1);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [EXPLORATION()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [FOREST(), FOREST(), FOREST()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Forest")).toHaveLength(2);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "play-land")).toBe(false);
+    expect(() => applyAction(game, 0, { type: "play-land", cardId: "hand-2" })).toThrow();
+  });
+
+  it("stacks two static extra land drops (Azusa's own +2) on top of the printed one", () => {
+    const profile = profileOf(AZUSA());
+    expect(profile.extraLandDropsPerTurn).toBe(2);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [AZUSA()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [FOREST(), FOREST(), FOREST(), FOREST()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-2" });
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Forest")).toHaveLength(3);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "play-land")).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

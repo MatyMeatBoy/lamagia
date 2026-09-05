@@ -965,6 +965,8 @@ export interface CardProfile {
   readonly preparedCast: { readonly cost: ManaCost; readonly effect: SpellEffect; readonly targetKind: TargetKind; readonly spellName: string; readonly spellTypeLine: string } | null;
   /** "~ enters prepared" (Prepared mechanic): already prepared the moment it enters the battlefield. */
   readonly entersPrepared: boolean;
+  /** "You may play N additional land(s) on each of your turns" (Exploration, Azusa, CR 305.2). */
+  readonly extraLandDropsPerTurn: number;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
   readonly additionalCostExileGraveyardX: boolean;
   /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
@@ -3816,6 +3818,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you\.?$/i.test(line)) continue;
     if (/^double all damage equipped creature would deal\.?$/i.test(line)) continue;
     if (/^~ enters prepared\.?$/i.test(line)) continue;
+    if (/^you\s+may\s+play\s+(?:a|an|one|two|three)\s+additional\s+lands?\s+on\s+each\s+of\s+your\s+turns\.?$/i.test(line)) continue;
     if (/^if an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
@@ -4417,6 +4420,10 @@ export function cardProfile(card: CardData): CardProfile {
   const redirectsOpponentDrawsExceptFirst = text.split("\n").some((line) =>
     /^if an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card$/i.test(line.trim().replace(/\.$/, "")));
   const entersPrepared = text.split("\n").some((line) => /^~ enters prepared$/i.test(line.trim().replace(/\.$/, "")));
+  const extraLandDropsMatch = text.split("\n")
+    .map((line) => /^you\s+may\s+play\s+(a|an|one|two|three)\s+additional\s+lands?\s+on\s+each\s+of\s+your\s+turns$/i.exec(line.trim().replace(/\.$/, "")))
+    .find((match): match is RegExpExecArray => match !== null);
+  const extraLandDropsPerTurn = extraLandDropsMatch ? toNumber(extraLandDropsMatch[1]) ?? 1 : 0;
   const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
   const giftPromisedTargetKind = giftPromisedRecognized && giftPromisedRecognized.target !== "none" ? giftPromisedRecognized.target : null;
@@ -4545,6 +4552,7 @@ export function cardProfile(card: CardData): CardProfile {
     miracleCost: recognized.miracleCost ?? null,
     preparedCast,
     entersPrepared,
+    extraLandDropsPerTurn,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
     kickedKeywords: recognized.kickedKeywords ?? [],

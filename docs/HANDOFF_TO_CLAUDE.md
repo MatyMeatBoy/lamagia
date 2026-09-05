@@ -3449,6 +3449,25 @@ subject is genuinely "any creature you control." Validation: **645
 rules tests**, `npm run check`, `npm run simulate:engine` 200/200,
 9,508 global profiles.
 
+`rules-static-extra-land-drops` | New `CardProfile.extraLandDropsPerTurn:
+number` recognizes the printed template "You may play {a|an|one|two|
+three} additional land(s) on each of your turns" (CR 305.2). A new
+`maxLandDrops(state, seat)` engine helper sums the printed land drop,
+`player.extraLandDrops` (existing turn-limited grants), and every
+battlefield permanent's static `extraLandDropsPerTurn`, replacing the
+old inline `1 + player.extraLandDrops` expression at both consumption
+sites (`legalActions`'s land-play offering and `applyPlayLand`'s
+authoritative check) so the two can never drift apart. Verified **+6**
+in the export count (9,508 → 9,514), including two format staples —
+Exploration and Azusa, Lost but Seeking — plus Urban Evolution,
+Titania, The Explorer, Summer Bloom, Aesi Tyrant of Gyre Strait, and
+Journey of Discovery. Scenario-tested end to end: with Exploration in
+play a controller plays a 2nd land off one land drop and is correctly
+blocked from a 3rd; with Azusa's own +2 stacked on the printed drop a
+controller plays 3 lands in one turn and is blocked from a 4th.
+Validation: **649 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,514 global profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
