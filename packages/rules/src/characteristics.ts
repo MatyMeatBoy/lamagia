@@ -785,6 +785,8 @@ export interface CardProfile {
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
+  /** Colors of creatures this permanent untaps during each other player's untap step (CR 502.2). */
+  readonly untapColorsDuringOtherPlayersUntap: readonly string[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
   readonly noMaximumHandSizeForAllPlayers: boolean;
@@ -1401,6 +1403,14 @@ function parseKeywordDuringYourTurn(line: string): EnforcedKeyword[] {
 
 function parseKeywordsDuringYourTurn(text: string): EnforcedKeyword[] {
   return text.split("\n").flatMap(parseKeywordDuringYourTurn);
+}
+
+function parseUntapColorsDuringOtherPlayersUntap(text: string): string[] {
+  if (/untap all green and\/?or blue creatures you control during each other/i.test(text)) return ["G", "U"];
+  const match = /^untap all (.+?) creatures you control during each other .*?untap step\.?$/im.exec(text);
+  if (!match) return [];
+  const colors = match[1]!.toLowerCase().match(/green|blue/g) ?? [];
+  return [...new Set(colors.map((color) => color === "green" ? "G" : "U"))];
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
@@ -3138,6 +3148,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     if (/^players have no maximum hand size\.?$/i.test(line)) continue;
     if (/^during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?$/i.test(line)) continue;
+    if (/untap all (?:green|blue|green and\/?or blue|blue and\/?or green) creatures you control during each other/i.test(line)) continue;
     if (/^other creatures you control have extort\.?$/i.test(line)) continue;
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
@@ -3579,6 +3590,7 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
+  const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const noMaximumHandSizeForAllPlayers = text.split("\n").some((line) => /^players have no maximum hand size\.?$/i.test(line.trim()));
@@ -3628,6 +3640,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipmentModification,
     staticKeywordGrants,
     keywordsDuringYourTurn,
+    untapColorsDuringOtherPlayersUntap,
     preventsLifeGain,
     noMaximumHandSize,
     noMaximumHandSizeForAllPlayers,

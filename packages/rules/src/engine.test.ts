@@ -329,6 +329,7 @@ const C13_THOPTER_FOUNDRY = () => make({ name: "Thopter Foundry", type_line: "Ar
 const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant", mana_cost: "{X}{U}{U}{U}", cmc: 3, oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library.", scryfall_id: "613a41b8-0b4f-4995-bf1e-ca41f96e6438" });
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
+const MURKFIEND_LIEGE = () => make({ name: "Murkfiend Liege", type_line: "Creature — Horror", mana_cost: "{2}{G}{U}", cmc: 4, power: "4", toughness: "4", oracle_text: "Other green creatures you control get +1/+1. Other blue creatures you control get +1/+1. Untap all green and/or blue creatures you control during each other player's untap step.", oracle_id: "61d28182-498f-4bbc-bb7a-c5e1ef872dda" });
 const C13_GRAZING_GLADEHART = () => make({ name: "Grazing Gladehart", type_line: "Creature — Antelope", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Landfall — Whenever a land enters the battlefield under your control, you may gain 2 life.", scryfall_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4", oracle_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4" });
 const C13_HUNTED_TROLL = () => make({ name: "Hunted Troll", type_line: "Creature — Troll Warrior", mana_cost: "{2}{G}{G}", cmc: 4, power: "8", toughness: "4", oracle_text: "When Hunted Troll enters the battlefield, create four 1/1 blue Faerie creature tokens with flying under target opponent's control.", scryfall_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6", oracle_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
@@ -2100,6 +2101,17 @@ describe("casting", () => {
     expect(game.players[0]!.life).toBe(42);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Springjack Pasture")?.tapped).toBe(true);
     expect(game.players[0]!.graveyard.filter((card) => card.name === "Goat")).toHaveLength(2);
+  });
+
+  it("untaps green and blue creatures during another player's untap step", () => {
+    const profile = profileOf(MURKFIEND_LIEGE());
+    expect(profile.untapColorsDuringOtherPlayersUntap).toEqual(["G", "U"]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([], [MURKFIEND_LIEGE(), FOREST()]);
+    game = putOnBattlefield(game, 0, [MURKFIEND_LIEGE(), FOREST()]);
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => ({ ...permanent, tapped: true })) }));
+    game = passUntil(game, (state) => state.step === "untap" && state.activeSeat === 1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")?.tapped).toBe(false);
   });
 
   it("returns Razor Hippogriff's artifact and gains its mana value", () => {

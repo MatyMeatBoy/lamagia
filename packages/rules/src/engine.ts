@@ -4541,7 +4541,13 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         landsPlayedThisTurn: 0,
         battlefield: player.battlefield.map((permanent) => ({
            ...permanent,
-           tapped: cardProfile(permanent.card).doesNotUntapDuringUntap ? permanent.tapped : false,
+          tapped: cardProfile(permanent.card).doesNotUntapDuringUntap || allPermanents(next).some((source) => {
+            const sourceProfile = cardProfile(source.card);
+            const targetProfile = cardProfile(permanent.card);
+            return source.controller === permanent.controller && source.controller !== next.activeSeat
+              && sourceProfile.untapColorsDuringOtherPlayersUntap.some((color) => targetProfile.colors.includes(color))
+              && isCreature(targetProfile);
+          }) ? permanent.tapped : false,
            summoningSick: false,
            enteredThisTurn: false,
            loyaltyUsedThisTurn: false
