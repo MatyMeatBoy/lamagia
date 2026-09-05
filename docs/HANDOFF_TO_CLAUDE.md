@@ -47,10 +47,14 @@ currently select `hybrid-payload` (22.8% and 7.9% context reduction).
 Claude's `94aa4ca` repaired malformed `characteristics.ts` syntax and removed
 unreachable, unwired `SpellEffect` union members on a stale branch. It is useful
 as an audit finding, but must not be cherry-picked wholesale: the canonical
-branch already compiles and has moved on. The current 9/200 engine simulator
-invariant failures (duplicate card ownership and lost commander tracking) are
-runtime issues independent of the review IR; keep them as separate gameplay
-claims rather than attributing them to compression.
+branch already compiles and has moved on. The prior 9/200 simulator failures
+(duplicate card ownership and lost commander tracking) were runtime/diagnostic
+issues independent of the review IR. Commit `6202997` fixes the diagnostic and
+bot path: token/ability references are no longer counted as deck cards,
+commanders are searched in every legal zone, and the bot rechecks a blocker
+against the specific attacker. The matrix now passes **200/200** games. Keep
+future engine failures as separate gameplay claims rather than attributing
+them to compression.
 
 ## Product objective
 
