@@ -450,6 +450,7 @@ const COUNTER_UNLESS_PAY = () => make({ name: "Test Mana Leak", type_line: "Inst
 const DAZE = () => make({ name: "Daze", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "You may return an Island you control to its owner's hand rather than pay this spell's mana cost.\nCounter target spell unless its controller pays {1}.", oracle_id: "70486bee-6ee7-41ea-b834-8caf4699302b", scryfall_id: "61968d99-6571-49ce-bcf1-2aaac3a10f45" });
 const MANA_DRAIN = () => make({ name: "Mana Drain", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell. At the beginning of your next main phase, add an amount of {C} equal to that spell's mana value.", oracle_id: "74d3277a-38e5-4732-afed-084a56148f20", scryfall_id: "f4e72225-0008-46cf-b403-3402ae8bfe47" });
 const LONG_RIVERS_PULL = () => make({ name: "Long River's Pull", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Gift a card (You may promise an opponent a gift as you cast this spell. If you do, they draw a card before its other effects.)\nCounter target creature spell. If the gift was promised, instead counter target spell.", oracle_id: "f1993767-1d07-49c8-b8dc-04ec9840a999", scryfall_id: "1c81d0fa-81a1-4f9b-a5fd-5a648fd01dea" });
+const PROPAGANDA = () => make({ name: "Propaganda", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.", oracle_id: "ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd", scryfall_id: "2a874a07-502a-48d8-a48f-f4357b38b4ae" });
 const WIDESPREAD_PANIC = () => make({ name: "Widespread Panic", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Whenever a spell or ability causes its controller to shuffle their library, that player puts a card from their hand on top of their library.", oracle_id: "853a3c2b-3d37-453a-8a77-4d90bd3a1cb7", scryfall_id: "d9e1b37f-8168-4dc0-858f-434ee96ff748" });
 const BRAINSTORM = () => make({ name: "Brainstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Draw three cards, then put two cards from your hand on top of your library in any order.", oracle_id: "36cd2364-d113-47d1-b2c4-b088d9eb88dd", scryfall_id: "d8bcdbfb-27df-4553-b8ec-97c3f2053745" });
 const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Search your library for a creature card, reveal it, then shuffle and put the card on top." });
@@ -5862,6 +5863,28 @@ describe("triggered abilities", () => {
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: ravager.instance_id, defender: 1 }] });
     game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === ravager.instance_id)?.powerModifier).toBe(2);
+  });
+
+  it("makes an attack illegal without paying Propaganda's {2}-per-creature tax", () => {
+    const profile = profileOf(PROPAGANDA());
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Only one Mountain: not enough to pay the {2} tax, so the attack is illegal
+    // and legalActions must not offer it (a bot could otherwise crash on it).
+    let game = readyToCast([], [BEAR(), MOUNTAIN()], [PROPAGANDA()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "declare-attackers" && entry.action.attackers.length > 0)).toBe(false);
+    expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] })).toThrow();
+
+    // With enough mana, the tax is paid automatically and the attack proceeds.
+    game = readyToCast([], [BEAR(), MOUNTAIN(), MOUNTAIN()], [PROPAGANDA()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear2 = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear2.instance_id, defender: 1 }] });
+    expect(game.combat.attackersDeclared).toBe(true);
+    expect(game.players[0]!.manaPool.R).toBe(0);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Mountain" && permanent.tapped)).toHaveLength(2);
   });
 
   it("divides Inferno Titan's trigger damage across one to three targets", () => {

@@ -921,6 +921,8 @@ export interface CardProfile {
   readonly giftDrawsCard: boolean;
   /** "If the gift was promised, instead [wider target]" — the printed effect stays the same; only the legal target set widens. */
   readonly giftPromisedTargetKind: Exclude<TargetKind, "none"> | null;
+  /** "Creatures can't attack you unless their controller pays {N} for each creature they control that's attacking you" (Propaganda, CR 508.1a). Generic-mana amount per attacking creature. */
+  readonly attackTaxPerCreature: number | null;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
@@ -3522,6 +3524,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^you may return an? [A-Za-z][A-Za-z'’-]* you control to its owner's hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you may pay (?:\{[^}]+\})+ rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^gift a card\.?$/i.test(line)) continue;
+    if (/^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     if (parseDamageAmplify(line)) continue;
@@ -4016,6 +4019,8 @@ export function cardProfile(card: CardData): CardProfile {
   const payReducedCostMatch = text.split("\n").map((line) => /^you may pay ((?:\{[^}]+\})+) rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const payReducedCostInstead = payReducedCostMatch ? parseManaCost(payReducedCostMatch[1]!) : null;
   const giftDrawsCard = text.split("\n").some((line) => /^gift a card$/i.test(line.trim().replace(/\.$/, "")));
+  const attackTaxMatch = text.split("\n").map((line) => /^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you$/i.exec(line.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
+  const attackTaxPerCreature = attackTaxMatch ? Number(attackTaxMatch[1]) : null;
   const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
   const giftPromisedTargetKind = giftPromisedRecognized && giftPromisedRecognized.target !== "none" ? giftPromisedRecognized.target : null;
@@ -4111,6 +4116,7 @@ export function cardProfile(card: CardData): CardProfile {
     payReducedCostInstead,
     giftDrawsCard,
     giftPromisedTargetKind,
+    attackTaxPerCreature,
     costReducesPerBoardCreature,
     spellCostReductionGrant,
     staticLandManaBonus,

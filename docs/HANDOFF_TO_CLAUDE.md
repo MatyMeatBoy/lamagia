@@ -3014,3 +3014,23 @@ except a boolean rather than an extra cost. Caught mid-work: the initial
 by splitting on `SENTENCE_SPLIT` first, matching how the rest of the file
 already handles multi-sentence lines. Validation: **606 rules tests**,
 `npm run check`, `npm run simulate:engine` 200/200, 9,406 global profiles.
+
+Propaganda | `ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd` was closed with a new
+`CardProfile.attackTaxPerCreature: number | null` (a generic-mana amount
+per attacking creature, CR 508.1a) — the first change to shared combat
+code this session. `applyDeclareAttackers` sums every taxing permanent the
+targeted defender controls, multiplies by that defender's attacker count,
+and pays it from the attacking player automatically (throwing, and
+leaving the whole declaration undeclared, if unaffordable) right after the
+existing attack-requirement checks and before attackers are tapped.
+Caught while implementing: `legalActions`' attacker-offering loop only
+ever proposes one creature attacking at a time, and did not check
+affordability at all, so a bot could pick an offered "attack" action that
+`applyDeclareAttackers` would then throw on — fixed by having that loop
+skip offering an attacker against a defender whose tax it can't afford,
+the same "don't offer what would throw" invariant `castableCard` already
+upholds for spells. This bug had no test coverage until the scenario test
+added here asserted `legalActions` excludes the unaffordable declaration,
+not just that the direct `applyAction` call throws. Validation: **607
+rules tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,410
+global profiles.

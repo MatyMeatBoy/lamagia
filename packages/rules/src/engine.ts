@@ -5533,8 +5533,14 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const attackers = legalAttackers(state, seat);
     actions.push({ action: { type: "declare-attackers", attackers: [] }, label: "No atacar" });
     for (const attacker of attackers) {
+      const defender = opponentsOf(state, seat)[0] ?? seat;
+      // Propaganda-style attack tax (CR 508.1a): only offer this single-attacker
+      // declaration when the defender's tax for one creature is affordable.
+      const taxPerCreature = playerAt(state, defender).battlefield
+        .reduce((sum, permanent) => sum + (cardProfile(permanent.card).attackTaxPerCreature ?? 0), 0);
+      if (taxPerCreature > 0 && !planManaPayment(parseManaCost(`{${taxPerCreature}}`)!, playerAt(state, seat), { state })) continue;
       actions.push({
-        action: { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: opponentsOf(state, seat)[0] ?? seat }] },
+        action: { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender }] },
         label: `Atacar con ${attacker.card.name}`,
         cardId: attacker.instance_id
       });
@@ -7211,7 +7217,26 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
   const missing = requiredAttackers(state, seat).find((permanent) => !unique.has(permanent.instance_id));
   if (missing) throw new Error(`${missing.card.name} ataca en cada combate si puede.`);
 
-  let next: GameState = { ...state, combat: { ...state.combat, attackers: [...attackers], attackersDeclared: true } };
+  // Attack tax (Propaganda, CR 508.1a): pay {N} per attacking creature for
+  // each taxing permanent the defender controls, or the attack is illegal.
+  let next: GameState = state;
+  let totalTax = 0;
+  for (const [defender, count] of byDefender) {
+    const taxPerCreature = playerAt(next, defender).battlefield
+      .reduce((sum, permanent) => sum + (cardProfile(permanent.card).attackTaxPerCreature ?? 0), 0);
+    totalTax += taxPerCreature * count;
+  }
+  if (totalTax > 0) {
+    const taxCost = parseManaCost(`{${totalTax}}`)!;
+    const plan = planManaPayment(taxCost, playerAt(next, seat), { state: next });
+    if (!plan) throw new Error(`No tienes maná suficiente para pagar el impuesto de ataque de {${totalTax}}.`);
+    next = applyManaPlan(next, seat, plan);
+    const payment = payCost(taxCost, playerAt(next, seat).manaPool, {});
+    if (!payment) throw new Error("No se pudo pagar el impuesto de ataque.");
+    next = withPlayer(next, seat, (current) => consumeManaPayment(current, payment));
+    next = logged(next, seat, `${playerAt(next, seat).name} paga {${totalTax}} de impuesto de ataque.`);
+  }
+  next = { ...next, combat: { ...next.combat, attackers: [...attackers], attackersDeclared: true } };
   next = tapAttackers(next, attackers);
   // Attack triggers fire once the whole declaration is made (CR 508.1i).
   for (const entry of attackers) {
