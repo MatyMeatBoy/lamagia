@@ -7227,6 +7227,29 @@ describe("activated abilities", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Transguild Promenade")).toBe(true);
   });
 
+  it("reuses sacrifice-unless-paid and life-gain ETBs for C13 Azorius Herald", () => {
+    const profile = profileOf(C13_AZORIUS_HERALD());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers).toMatchObject([
+      { event: "enters-battlefield", effect: { kind: "sacrifice-source" }, unlessPayCost: { raw: "{W}" } },
+      { event: "enters-battlefield", effect: { kind: "gain-life", amount: 4 } }
+    ]);
+
+    let game = readyOnBoard([PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()], { hold: true });
+    game = stage(game, 0, () => ({ hand: toHand(0, [C13_AZORIUS_HERALD()], "azorius-herald-hand") }));
+    game = stage(game, 0, (player) => ({ autoPass: false }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    const lifeBefore = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "azorius-herald-hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.unlessPayCost?.raw).toBe("{W}");
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Azorius Herald")).toBe(true);
+    expect(game.players[0]!.life).toBe(lifeBefore + 4);
+  });
+
   it("fires an any-damage trigger from a permanent source", () => {
     expect(profileOf(CHARNELHOARD_WURM()).triggers[0]).toMatchObject({
       event: "deals-damage-to-player", subject: "self", optional: true,
