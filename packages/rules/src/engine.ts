@@ -655,7 +655,27 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
   return true;
 }
 
-function manaOptionsFor(player: PlayerState, ability: ManaAbility): readonly ManaType[] {
+/** Every color a land the given seats control could produce (CR "could produce" is characteristic-based, not activation-gated). */
+function colorsFromLandsControlledBy(state: GameState, seats: readonly SeatId[]): ManaType[] {
+  const colors = new Set<ManaType>();
+  for (const permanent of allPermanents(state)) {
+    if (!seats.includes(permanent.controller)) continue;
+    const profile = cardProfile(permanent.card);
+    if (!isLand(profile)) continue;
+    for (const manaAbility of profile.manaAbilities) {
+      for (const color of manaAbility.produces) colors.add(color);
+      for (const color of manaAbility.fixedProduces ?? []) colors.add(color);
+    }
+  }
+  return [...colors];
+}
+
+function manaOptionsFor(state: GameState | undefined, player: PlayerState, ability: ManaAbility): readonly ManaType[] {
+  if (ability.anyColorFromLandsControlledBy) {
+    if (!state) return [];
+    const seats = ability.anyColorFromLandsControlledBy === "you" ? [player.seat] : opponentsOf(state, player.seat);
+    return colorsFromLandsControlledBy(state, seats);
+  }
   return ability.commanderIdentity
     ? ability.produces.filter((mana) => player.commanderColorIdentity.includes(mana))
     : ability.produces;
@@ -693,7 +713,7 @@ export function manaSources(player: PlayerState, state?: GameState): ManaSource[
       // be used as an automatic source while paying another cost.
       if (ability.variableAmountCounter) continue;
       if (!canUseManaAbility(player, permanent, ability)) continue;
-      const options = manaOptionsFor(player, ability);
+      const options = manaOptionsFor(state, player, ability);
       if (!options.length) continue;
       // "<Basic type>s you control produce an additional {C}" (Crypt Ghast):
       // a matching land's ability produces one extra of the granted colour.
@@ -4757,7 +4777,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const profile = cardProfile(permanent.card);
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability, state)) continue;
-      const options = manaOptionsFor(player, ability);
+      const options = manaOptionsFor(state, player, ability);
       if (!options.length) continue;
       if (ability.variableAmountCounter) {
         const available = permanent.counters[ability.variableAmountCounter] ?? 0;
@@ -5006,7 +5026,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
   const ability = cardProfile(source.card).manaAbilities.find((candidate) => candidate.index === action.abilityIndex);
-  const options = ability ? manaOptionsFor(player, ability) : [];
+  const options = ability ? manaOptionsFor(state, player, ability) : [];
   if (!ability || !options.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
   if (ability.variableAmountCounter) {
     const amount = action.variableAmount;
@@ -5701,7 +5721,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
   }
   const optionalCost = choice.payCost ?? choice.manaCost;
   if (optionalCost && optionalCost.symbols.length) {
-    const plan = planManaPayment(optionalCost, playerAt(next, seat));
+    const plan = planManaPayment(optionalCost, playerAt(next, seat), { state: next });
     if (!plan) throw new Error(`No puedes pagar ${optionalCost.raw} por ${choice.sourceCard.name}.`);
     next = applyManaPlan(next, seat, plan);
     const paid = payCost(optionalCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });

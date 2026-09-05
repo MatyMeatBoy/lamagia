@@ -419,6 +419,11 @@ const PAIN_LAND = () => make({ name: "Test Pain Land", type_line: "Land", oracle
 // spell's own effect, not a permanent's activated ability.
 const RITUAL = () => make({ name: "Test Dark Ritual", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Add {B}{B}{B}." });
 const MIXED_RITUAL = () => make({ name: "Test Channel the Suns", type_line: "Sorcery", mana_cost: "{3}{W}{U}", cmc: 5, oracle_text: "Add {W}{U}{B}{R}{G}." });
+// Board-dependent mana (Fellwar Stone): the color set is whatever a land the
+// *opponent* controls could produce, recomputed at activation time — not a
+// fixed list on the card, and never influenced by the caster's own lands.
+const OPPONENT_LANDS_MANA_ROCK = () => make({ name: "Test Fellwar Stone", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{T}: Add one mana of any color that a land an opponent controls could produce." });
+const OWN_LANDS_MANA_DORK = () => make({ name: "Test Harvester Druid", type_line: "Creature — Human Druid", mana_cost: "{1}{G}", cmc: 2, power: "1", toughness: "1", oracle_text: "{T}: Add one mana of any color that a land you control could produce." });
 const TEMPLE_OF_FALSE_GOD = () => make({ name: "Temple of the False God", type_line: "Land", oracle_text: "{T}: Add {C}{C}. Activate only if you control five or more lands.", produced_mana: ["C"] });
 const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
 const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
@@ -895,6 +900,25 @@ describe("mana payment", () => {
     game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[0]!.manaPool.B).toBe(3);
+  });
+
+  it("computes an opponent-lands mana rock's colors from the battlefield, never the caster's own lands", () => {
+    const rockProfile = profileOf(OPPONENT_LANDS_MANA_ROCK());
+    expect(rockProfile.manaAbilities[0]).toMatchObject({ anyColorFromLandsControlledBy: "opponent" });
+    expect(rockProfile.fullyImplemented).toBe(true);
+    const dorkProfile = profileOf(OWN_LANDS_MANA_DORK());
+    expect(dorkProfile.manaAbilities[0]).toMatchObject({ anyColorFromLandsControlledBy: "you" });
+    expect(dorkProfile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [OPPONENT_LANDS_MANA_ROCK(), PLAINS()]);
+    game = putOnBattlefield(game, 1, [MOUNTAIN(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const rock = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Fellwar Stone")!;
+    const options = manaSources(game.players[0]!, game).find((source) => source.permanentId === rock.instance_id)!.options;
+    expect([...options].sort()).toEqual(["G", "R"]);
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: rock.instance_id, abilityIndex: 0, mana: "R" });
+    expect(game.players[0]!.manaPool.R).toBe(1);
   });
 
   it("finds the lands that pay a colored cost", () => {

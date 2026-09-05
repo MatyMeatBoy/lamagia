@@ -56,6 +56,8 @@ export interface ManaAbility {
   readonly fixedProduces?: readonly ManaType[];
   /** Restricts choices to the controller's commander color identity. */
   readonly commanderIdentity?: boolean;
+  /** "Add one mana of any color that a land you/an opponent control(s) could produce" (Fellwar Stone, Harvester Druid): the color set is computed from the battlefield at activation time, not fixed on the card. */
+  readonly anyColorFromLandsControlledBy?: "opponent" | "you";
   readonly requiresTap: boolean;
   /** Life the ability costs (pain and filter lands). */
   readonly lifeCost: number;
@@ -1041,6 +1043,18 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       abilities.push({
         index: abilities.length, produces: [scaled[1]!.toUpperCase() as ManaType], amount: 1,
         scalesWith: { kind: /you control/i.test(scaled[3]!) ? "subtype-you-control" : "subtype-anywhere", subtype: scaled[2]! },
+        ...(removeCounters.length ? { removeCounters } : {}),
+        requiresTap, lifeCost, text: line.trim()
+      });
+      continue;
+    }
+    // Board-dependent color (Fellwar Stone, Harvester Druid): resolved from
+    // the battlefield at activation time, not a fixed color set on the card.
+    const anyColorFromLands = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(an\s+opponent\s+controls|you\s+control)\s+could\s+produce$/i.exec(effectText.trim().replace(/\.$/, ""));
+    if (anyColorFromLands && !instruction?.produced) {
+      abilities.push({
+        index: abilities.length, produces: [], amount: 1,
+        anyColorFromLandsControlledBy: /opponent/i.test(anyColorFromLands[1]!) ? "opponent" : "you",
         ...(removeCounters.length ? { removeCounters } : {}),
         requiresTap, lifeCost, text: line.trim()
       });
@@ -2910,7 +2924,10 @@ function recognizeText(text: string): RecognizedText {
     if (manaLine) {
       const variableStorageMana = /^add\s+X\s+mana\s+in\s+any\s+combination\s+of\s+\{[WUBRGC]\}(?:\s+and\/or\s+\{[WUBRGC]\})?\.?$/i.test(manaLine[2]!.trim())
         && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(manaLine[1]!);
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana) unimplementedText.push(line);
+      // Board-dependent color (Fellwar Stone, Harvester Druid): resolved at
+      // activation time by `manaOptionsFor`, not by `parseAddClause`.
+      const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine) unimplementedText.push(line);
       continue;
     }
 
