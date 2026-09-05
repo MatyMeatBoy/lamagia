@@ -290,7 +290,8 @@ export interface StaticKeywordGrant {
 }
 
 export interface StaticPowerToughnessGrant {
-  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
+  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
+    | "source-opponents-graveyard-creatures" | "source-controller-life-threshold";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -1360,7 +1361,12 @@ function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
-  const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(line.trim().replace(/\.$/, ""));
+  const clean = line.trim().replace(/\.$/, "");
+  const graveyard = /^~ gets ([+-]\d+)\/([+-]\d+) for each creature card in your opponents' graveyards$/i.exec(clean);
+  if (graveyard) return { scope: "source-opponents-graveyard-creatures", power: Number(graveyard[1]), toughness: Number(graveyard[2]) };
+  const life = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(clean);
+  if (life) return { scope: "source-controller-life-threshold", power: Number(life[1]), toughness: Number(life[2]), threshold: Number(life[3]) };
+  const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   return match ? {
     scope: match[4] ? "all-creatures" : match[3] ? "creatures-you-control" : "other-creatures-you-control",
     ...(match[2] ? { color: match[2]!.toUpperCase() } : {}),

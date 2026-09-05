@@ -12,14 +12,19 @@ selected compositional worker payloads; verify the Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,141 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,188 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
 - **Edition memberships:** 22,837 / 84,990 implemented (26.9%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 241 / 341 unique cards (70.7%), 100 pending.
-- **Commander 2014:** 198 / 322 unique cards (61.5%), 124 pending.
+- **Commander 2013:** 244 / 341 unique cards (71.6%), 97 pending.
+- **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
+
+The static P/T vocabulary now also covers source-relative conditions such as
+life thresholds and opponent graveyard creature counts. These are parameterized
+primitives, so reprints reuse the same profile rather than adding card-specific
+branches.
 
 ### Tested-only pod mode
 

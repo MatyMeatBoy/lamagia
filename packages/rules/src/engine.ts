@@ -589,7 +589,7 @@ function equipmentBonus(state: GameState | undefined, creature: Permanent): { po
   }, { power: 0, toughness: 0 });
 }
 function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { power: number; toughness: number } {
-  return allPermanents(state)
+  const base = allPermanents(state)
     .filter((source) => source.controller === permanent.controller)
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants
       .filter((grant) => grant.scope === "creatures-you-control"
@@ -597,6 +597,26 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
       .map((grant) => ({ source, grant })))
     .filter(({ grant }) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, { grant }) => ({ power: total.power + grant.power, toughness: total.toughness + grant.toughness }), { power: 0, toughness: 0 });
+  let power = base.power;
+  let toughness = base.toughness;
+  for (const source of allPermanents(state)) {
+    if (source.instance_id !== permanent.instance_id) continue;
+    for (const grant of cardProfile(source.card).staticPowerToughnessGrants) {
+      if (grant.scope === "source-opponents-graveyard-creatures") {
+        const count = state.players
+          .filter((player) => player.seat !== source.controller)
+          .flatMap((player) => player.graveyard)
+          .filter((card) => cardProfile(card).types.includes("Creature")).length;
+        power += grant.power * count;
+        toughness += grant.toughness * count;
+      } else if (grant.scope === "source-controller-life-threshold"
+        && playerAt(state, source.controller).life >= (grant.threshold ?? Number.POSITIVE_INFINITY)) {
+        power += grant.power;
+        toughness += grant.toughness;
+      }
+    }
+  }
+  return { power, toughness };
 }
 export function powerOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);

@@ -155,6 +155,8 @@ const GLOBAL_REAL_FEAR = () => make({ name: "Global Real Fear", type_line: "Sorc
 const LIFE_LOCK = () => make({ name: "Life Lock", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Players can't gain life." });
 const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment", mana_cost: "{3}", cmc: 3, oracle_text: "You have no maximum hand size." });
 const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other creatures you control get +1/+1." });
+const C13_DIVINITY_OF_PRIDE = () => make({ name: "Divinity of Pride", type_line: "Creature — Spirit Avatar", mana_cost: "{3}{W}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature gets +4/+4 as long as you have 25 or more life.", scryfall_id: "2c91c236-34d7-4454-a55a-784db7f68bde" });
+const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "1B", cmc: 2, power: "1", toughness: "1", oracle_text: "This creature gets +1/+1 for each creature card in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
 const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });
@@ -2697,6 +2699,24 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [ALL_PUMP(), BEAR()]);
     expect(powerOf(game.players[0]!.battlefield[1]!, game)).toBe(3);
     expect(toughnessOf(game.players[0]!.battlefield[1]!, game)).toBe(3);
+  });
+
+  it("applies life-threshold and opponents' graveyard static bonuses", () => {
+    expect(profileOf(C13_DIVINITY_OF_PRIDE()).staticPowerToughnessGrants).toEqual([
+      { scope: "source-controller-life-threshold", power: 4, toughness: 4, threshold: 25 }
+    ]);
+    expect(profileOf(C13_WIGHT()).staticPowerToughnessGrants).toEqual([
+      { scope: "source-opponents-graveyard-creatures", power: 1, toughness: 1 }
+    ]);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [C13_DIVINITY_OF_PRIDE(), C13_WIGHT()]);
+    game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR(), FLIER()], "opponent-creatures") }));
+    const divinity = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Divinity of Pride")!;
+    const wight = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wight of Precinct Six")!;
+    expect([powerOf(divinity, game), toughnessOf(divinity, game)]).toEqual([8, 8]);
+    expect([powerOf(wight, game), toughnessOf(wight, game)]).toEqual([3, 3]);
+    game = stage(game, 0, () => ({ life: 24 }));
+    expect([powerOf(divinity, game), toughnessOf(divinity, game)]).toEqual([4, 4]);
   });
 
   it("resolves a compound draw-and-life-loss instruction as one effect", () => {
