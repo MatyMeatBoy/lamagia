@@ -35,11 +35,15 @@ effect kinds.
 
 Accepted and pushed executable batches: `b679a8a`, `37eb112`, `00b4cc6`,
 `bd2a775`, `6268464`, `b55de91`, `f6476d0`, `cc1bd83`, and the generalized
-cycling grammar in `3bceac3`. Rules validation reached 559 passing tests and
-the export reached 9,287 fully implemented profiles.
+cycling grammar in `3bceac3`, plus the Phyrexian Delver variant in `b0b7f51`.
+Rules validation reached 561 passing tests and the export reached 9,289 fully
+implemented profiles.
 
 Audited but skipped as duplicates or stale replays: `ac41278`, `527e77e`,
 `25d160b`, `5296336`, `b501d9e`, `0aaba1c`, and `8c34a4a`. These commits may
 remain useful as provenance, but their executable behavior already exists in
 the published tree; reapplying them would reintroduce conflicts or duplicate
 branches.
+Accepted afterward: `58fd65f` adds the reusable active-turn keyword primitive
+(`keywordsDuringYourTurn`) with a scenario for Razorkin Needlehead; it raised
+the global export to 9,289 profiles without changing C13.

@@ -12,7 +12,7 @@ selected compositional worker payloads; verify the Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,288 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,289 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
 - **Edition memberships:** 23,401 / 84,990 implemented (27.5%) across 685
   editions. This is what the public implementation-by-edition view displays,
@@ -33,7 +33,7 @@ noncreature-spell drain, surveil, reanimation, Hunted Troll, Grazing
 Gladehart, Disciple of Griselbrand, and Springjack Pasture. The optional
 cycling-target keyword grammar was generalized and tested with Dirge of Dread.
 Rules suite: **559 passing tests**. Latest pushed source: `3bceac3`; generated
-export: **9,288/38,711** profiles and C13 **248/341**.
+export: **9,289/38,711** profiles and C13 **248/341**.
 
 Sek'Kuar, Slice and Dice, graveyard exile, Well of Lost Dreams, Vile Requiem,
 and Flickerwisp arrivals were audited and skipped as duplicates of existing

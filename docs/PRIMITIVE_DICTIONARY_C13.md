@@ -2,7 +2,7 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T05:00:15.362397+00:00`
+- Generated: `2026-09-05T05:03:09.154828+00:00`
 - Scope: **C13**
 - Exported profiles in scope: **341**; fully implemented: **248**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
