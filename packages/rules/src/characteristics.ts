@@ -524,6 +524,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  /** Damage equal to the power of the creature paid for this spell's additional cost (CR 608.2h). */
+  | { readonly kind: "damage-any-target-equal-sacrificed-creature-power" }
   /** Amass N (CR 701.44): put N +1/+1 counters on an Army you control, or create a 0/0 black [tokenType] Army token with them if you control none. */
   | { readonly kind: "amass"; readonly amount: number; readonly tokenType: string }
   /** Target two creatures; they deal damage equal to their power to each other (CR 701.12). */
@@ -2964,6 +2966,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
+  }
+  if (/^~ deals damage equal to the sacrificed creature's power to any target$/i.test(text)) {
+    return { effect: { kind: "damage-any-target-equal-sacrificed-creature-power" }, target: "any" };
   }
   if (/^~ deals damage equal to its power to any target$/i.test(text)) {
     return { effect: { kind: "damage-triggered-creature-power" }, target: "any" };

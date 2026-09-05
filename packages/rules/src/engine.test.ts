@@ -431,6 +431,7 @@ const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
 const LIGHTNING_HELIX = () => make({ name: "Lightning Helix", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Lightning Helix deals 3 damage to any target and you gain 3 life.", oracle_id: "800c258a-cfc4-4a54-a667-065ea8dea69e", scryfall_id: "800c258a-cfc4-4a54-a667-065ea8dea69e" });
+const FLING = () => make({ name: "Fling", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nFling deals damage equal to the sacrificed creature's power to any target.", oracle_id: "24227761-b50e-4b9e-93a2-e82d053b3e3d", scryfall_id: "050eb421-a446-4d84-b331-a267b02dc9f5" });
 const TREASURE_HUNT = () => make({ name: "Treasure Hunt", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand.", oracle_id: "05079479-86a6-4041-a395-83d325b6ddb7", scryfall_id: "53af54e3-412f-4bc4-8a3a-911eaa62be27" });
 const PSIONIC_BLAST = () => make({ name: "Psionic Blast", type_line: "Instant", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Psionic Blast deals 4 damage to any target and 2 damage to you.", oracle_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad", scryfall_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad" });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
@@ -5514,6 +5515,36 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Sol Ring" });
     expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Diabolic Intent")).toBe(true);
+  });
+
+  it("lets Fling choose the sacrificed creature and uses its last-known power", () => {
+    // CR 601.2b, 608.2h: choose the additional-cost sacrifice while casting,
+    // then use that creature's power after it has left the battlefield.
+    const fling = FLING();
+    expect(profileOf(fling)).toMatchObject({
+      additionalCostSacrificeCreature: true,
+      targetKind: "any",
+      effects: [{ kind: "damage-any-target-equal-sacrificed-creature-power" }],
+      fullyImplemented: true
+    });
+    const small = make({ name: "Small Sacrifice", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
+    const large = make({ name: "Large Sacrifice", type_line: "Creature — Beast", mana_cost: "{4}{G}", cmc: 5, power: "5", toughness: "5" });
+    let game = readyToCast([fling], [MOUNTAIN(), MOUNTAIN(), small, large]);
+    const permanents = game.players[0]!.battlefield;
+    const smallPermanent = permanents.find((permanent) => permanent.card.name === "Small Sacrifice")!;
+    const largePermanent = permanents.find((permanent) => permanent.card.name === "Large Sacrifice")!;
+    const options = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(options.map((entry) => entry.action.type === "cast" ? entry.action.sacrificeId : undefined)).toEqual(expect.arrayContaining([smallPermanent.instance_id, largePermanent.instance_id]));
+
+    game = applyAction(game, 0, {
+      type: "cast",
+      cardId: "hand-0",
+      sacrificeId: largePermanent.instance_id,
+      targets: [{ kind: "player", seat: 1 }]
+    });
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Large Sacrifice")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === smallPermanent.instance_id)).toBe(true);
+    expect(game.players[1]!.life).toBe(35);
   });
 
   it("can't cast Diabolic Intent with no creature to sacrifice", () => {
