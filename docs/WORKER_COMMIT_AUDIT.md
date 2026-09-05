@@ -144,3 +144,11 @@ The latest origin audit processed the remaining executable C13 candidates:
 Validation after the integration: 577 rules tests, `npm run check`, 9,326
 global profiles, C13 261/341. No worker docs or claims were imported when they
 were stale; only executable source and scenario evidence was retained.
+
+`60cba3b` closes Contested Cliffs | `b891a683-2ebc-4e9c-b402-5dd9c1b42b69`
+with a reusable multi-target activation and CR 701.12 fight executor. The
+activation path validates each ordered target slot; no card-name branch was
+added. Validation: 578 rules tests, `npm run check`, 9,327 global profiles,
+C13 262/341. The remaining fetched branches were rechecked against the export;
+their claimed cards are either already complete or stale duplicates, so no
+additional source was imported.

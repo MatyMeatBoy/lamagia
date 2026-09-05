@@ -8,18 +8,19 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 The latest source checkpoint includes the verified C13 Prossh cast-trigger,
 Hooded Horror combat evasion, Dungeon Geists untap lock, Standstill event-player
-draw scope, and mana-payment gate for Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
+draw scope, Contested Cliffs multi-target fight, and mana-payment gate for
+Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
 and token-scaling paths; verify the Pages run before reporting a new client asset
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,326 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,327 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
 - **Edition memberships:** 23,535 / 84,990 implemented (27.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 261 / 341 unique cards (76.5%), 80 pending.
+- **Commander 2013:** 262 / 341 unique cards (76.8%), 79 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
@@ -2743,3 +2744,9 @@ event-caster opponent draw scope. Validation: **577 rules tests**, `npm run
 check`, 9,326 global profiles, C13 **261/341**. `fa5b133` (Phyrexian Delver)
 was skipped as a duplicate: the generic reanimate-plus-mana-value-loss
 primitive and scenario were already present in the published tree.
+
+`60cba3b` then closed Contested Cliffs | `b891a683-2ebc-4e9c-b402-5dd9c1b42b69`
+with a reusable multi-target activation and CR 701.12 fight executor. The
+authoritative action path validates each target slot independently. Validation:
+**578 rules tests**, `npm run check`, 9,327 global profiles, C13 **262/341**
+with 79 pending.

@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,544** · cobertura: **27.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,546** · cobertura: **27.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -108,7 +108,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | 2002-05-27 | Judgment (`JUD`) | expansion | 2000s | main | 143 | 27 | 116 | 18.9% |
 | 2002-07-01 | Hobby Japan Promos (`JP1`) | promos | hobby-japan | other | 5 | 1 | 4 | 20.0% |
 | 2002-09-28 | Onslaught Promos (`PONS`) | promos | onslaught | other | 1 | 0 | 1 | 0.0% |
-| 2002-10-07 | Onslaught (`ONS`) | expansion | onslaught | main | 335 | 73 | 262 | 21.8% |
+| 2002-10-07 | Onslaught (`ONS`) | expansion | onslaught | main | 335 | 74 | 261 | 22.1% |
 | 2003-01-01 | Arena League 2003 (`PAL03`) | promos | arena-2003 | other | 8 | 7 | 1 | 87.5% |
 | 2003-01-01 | Friday Night Magic 2003 (`F03`) | promos | fnm-2003 | other | 13 | 6 | 7 | 46.2% |
 | 2003-01-01 | Japan Junior Tournament (`PJJT`) | promos | junior-2003 | other | 12 | 5 | 7 | 41.7% |
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 27 | 41 | 39.7% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 69 | 165 | 29.5% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 261 | 80 | 76.5% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 262 | 79 | 76.8% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 3 | 9 | 25.0% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 6 | 8 | 42.9% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 2 | 7 | 22.2% |
@@ -740,7 +740,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | boxed-products | the-zeta-set | 1 | 121 | 41 | 80 | 33.9% |
 | commander | 2011 | 1 | 303 | 128 | 175 | 42.2% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 261 | 80 | 76.5% |
+| commander | 2013 | 1 | 341 | 262 | 79 | 76.8% |
 | commander | 2014 | 1 | 322 | 199 | 123 | 61.8% |
 | commander | 2015 | 1 | 327 | 137 | 190 | 41.9% |
 | commander | 2016 | 1 | 341 | 124 | 217 | 36.4% |
@@ -814,7 +814,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 | expansion | mirage | 1 | 335 | 82 | 253 | 24.5% |
 | expansion | mirrodin | 3 | 675 | 227 | 448 | 33.6% |
 | expansion | odyssey | 1 | 335 | 96 | 239 | 28.7% |
-| expansion | onslaught | 1 | 335 | 73 | 262 | 21.8% |
+| expansion | onslaught | 1 | 335 | 74 | 261 | 22.1% |
 | expansion | phyrexia | 4 | 787 | 107 | 680 | 13.6% |
 | expansion | ravnica | 4 | 1081 | 341 | 740 | 31.5% |
 | expansion | strixhaven | 2 | 561 | 92 | 469 | 16.4% |
@@ -8639,7 +8639,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 - [ ] Clone — `42226b87-0746-4ebf-9fd0-108d508462af`
 - [ ] Commando Raid — `3bd57758-00a6-4d49-b1fc-b14f8203da0b`
 - [ ] Complicate — `fc09cbc0-2d28-44c6-b9a9-b95e9e58bb1b`
-- [ ] Contested Cliffs — `b891a683-2ebc-4e9c-b402-5dd9c1b42b69`
 - [ ] Convalescent Care — `162407d9-3e3c-440f-a7a9-22936d99fc8a`
 - [ ] Cover of Darkness — `d78654fc-7d90-40ce-9c36-a211424d1a88`
 - [ ] Crafty Pathmage — `c4020178-71d9-4363-a0bd-b9a7eecd5d02`
@@ -20808,7 +20807,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **23,54
 
 ### commander / 2013 · Commander 2013 (`C13`)
 
-- [ ] Contested Cliffs — `b891a683-2ebc-4e9c-b402-5dd9c1b42b69`
 - [ ] Control Magic — `cd0d7141-46d2-4aa3-bc77-6b3b4513803e`
 - [ ] Cruel Ultimatum — `01294ac9-1a06-4ee8-b3b1-db1f07c9d94e`
 - [ ] Curse of Chaos — `a242af4b-5de6-4961-b684-f4bd809977c6`
