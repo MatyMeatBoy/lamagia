@@ -9070,6 +9070,74 @@ describe("untapped enters-with-counters templates", () => {
   });
 });
 
+describe("tribal lord static bonuses", () => {
+  const IMPERIOUS_PERFECT = () => make({ name: "Imperious Perfect", type_line: "Creature — Elf Warrior", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other Elves you control get +1/+1.\n{G}, {T}: Create a 1/1 green Elf Warrior creature token." });
+  const TEST_ELF = () => make({ name: "Test Elf", type_line: "Creature — Elf Warrior", mana_cost: "{1}{G}", cmc: 2, power: "1", toughness: "1" });
+
+  it("recognizes 'Other Elves you control get +1/+1' as a subtype-scoped grant", () => {
+    const profile = profileOf(IMPERIOUS_PERFECT());
+    expect(profile.staticPowerToughnessGrants).toEqual([
+      { scope: "other-subtype-creatures-you-control", subtype: "Elf", power: 1, toughness: 1 }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("boosts other Elves you control but not itself, non-Elves, or an opponent's Elf", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [IMPERIOUS_PERFECT(), TEST_ELF(), BEAR()]);
+    game = putOnBattlefield(game, 1, [TEST_ELF()]);
+    const lord = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Imperious Perfect")!;
+    const ownElf = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Elf")!;
+    const ownBear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const foeElf = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Test Elf")!;
+    expect([powerOf(lord, game), toughnessOf(lord, game)]).toEqual([2, 2]);
+    expect([powerOf(ownElf, game), toughnessOf(ownElf, game)]).toEqual([2, 2]);
+    expect([powerOf(ownBear, game), toughnessOf(ownBear, game)]).toEqual([2, 2]);
+    expect([powerOf(foeElf, game), toughnessOf(foeElf, game)]).toEqual([1, 1]);
+  });
+});
+
+describe("color anthem static bonuses (any controller)", () => {
+  const BAD_MOON = () => make({ name: "Bad Moon", type_line: "Enchantment", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Black creatures get +1/+1." });
+  const CELESTIAL_CRUSADER = () => make({ name: "Celestial Crusader", type_line: "Creature — Spirit", mana_cost: "{2}{W}{W}", cmc: 4, power: "2", toughness: "2", colors: ["W"], oracle_text: "Flash\nSplit second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nFlying\nOther white creatures get +1/+1." });
+  const TEST_BLACK_CREATURE = () => make({ name: "Test Black Creature", type_line: "Creature — Zombie", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2", colors: ["B"] });
+  const TEST_WHITE_CREATURE = () => make({ name: "Test White Creature", type_line: "Creature — Soldier", mana_cost: "{1}{W}", cmc: 2, power: "1", toughness: "1", colors: ["W"] });
+
+  it("recognizes a colorless-anthem-source's color-restricted grant covering every controller", () => {
+    const profile = profileOf(BAD_MOON());
+    expect(profile.staticPowerToughnessGrants).toEqual([{ scope: "all-creatures", color: "B", power: 1, toughness: 1 }]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("boosts every player's black creatures but leaves a green one alone", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BAD_MOON(), TEST_BLACK_CREATURE(), BEAR()]);
+    game = putOnBattlefield(game, 1, [TEST_BLACK_CREATURE()]);
+    const ownZombie = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Black Creature")!;
+    const ownBear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const foeZombie = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Test Black Creature")!;
+    expect([powerOf(ownZombie, game), toughnessOf(ownZombie, game)]).toEqual([3, 3]);
+    expect([powerOf(ownBear, game), toughnessOf(ownBear, game)]).toEqual([2, 2]);
+    expect([powerOf(foeZombie, game), toughnessOf(foeZombie, game)]).toEqual([3, 3]);
+  });
+
+  it("boosts white creatures under any controller but not itself ('other')", () => {
+    const profile = profileOf(CELESTIAL_CRUSADER());
+    expect(profile.staticPowerToughnessGrants).toEqual([{ scope: "other-all-creatures", color: "W", power: 1, toughness: 1 }]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [CELESTIAL_CRUSADER(), TEST_WHITE_CREATURE()]);
+    game = putOnBattlefield(game, 1, [TEST_WHITE_CREATURE()]);
+    const crusader = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Celestial Crusader")!;
+    const ownSoldier = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test White Creature")!;
+    const foeSoldier = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Test White Creature")!;
+    expect([powerOf(crusader, game), toughnessOf(crusader, game)]).toEqual([2, 2]);
+    expect([powerOf(ownSoldier, game), toughnessOf(ownSoldier, game)]).toEqual([2, 2]);
+    expect([powerOf(foeSoldier, game), toughnessOf(foeSoldier, game)]).toEqual([2, 2]);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
