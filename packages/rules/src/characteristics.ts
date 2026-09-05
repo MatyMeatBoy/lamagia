@@ -947,6 +947,8 @@ export interface CardProfile {
   readonly equipmentModification: EquipmentModification | null;
   /** Static bonuses an Aura grants the permanent it's attached to (CR 303.4.5), e.g. "Enchanted creature gets +2/+2." */
   readonly auraModification: EquipmentModification | null;
+  /** Permanent type continuously controlled by an Aura, e.g. "You control enchanted creature." (CR 611.3, 613.7). */
+  readonly auraControlTarget: "creature" | "land" | "permanent" | null;
   /** Activated ability granted by an attached Aura (CR 303.4, 605.1a). */
   readonly auraActivatedAbility: ActivatedAbility | null;
   readonly auraAnimation: AuraAnimation | null;
@@ -1660,6 +1662,15 @@ function parseAuraModification(text: string): EquipmentModification | null {
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
       if (keywords.length) return { power: 0, toughness: 0, keywords, text: line.trim() };
     }
+  }
+  return null;
+}
+
+/** Parses the reusable Control Magic-style static control template. */
+function parseAuraControlTarget(text: string): "creature" | "land" | "permanent" | null {
+  for (const line of text.split("\n")) {
+    const match = /^you control enchanted (creature|land|permanent)\.?$/i.exec(line.trim());
+    if (match) return match[1]!.toLowerCase() as "creature" | "land" | "permanent";
   }
   return null;
 }
@@ -3982,6 +3993,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^level\s+\d+(?:-\d+|\+)?$/i.test(line) || /^\d+\/\d+$/.test(line)) continue;
     if (parseEquipmentModification(line)) continue;
     if (parseAuraModification(line)) continue;
+    if (parseAuraControlTarget(line)) continue;
     // "Enchant creature/land/permanent/creature you control" (CR 303.4.5) is
     // an Aura's own targeting restriction, not a resolved effect — it becomes
     // the spell's targetKind so the whole existing targeting/fizzle pipeline
@@ -4593,6 +4605,8 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const auraModification = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraModification(text) : null;
+  const auraControlTarget = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
+    ? parseAuraControlTarget(text) : null;
   const auraActivatedAbility = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraGrantedActivatedAbility(text) : null;
   const auraAnimation = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
@@ -4701,6 +4715,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipWorthyCost,
     equipmentModification,
     auraModification,
+    auraControlTarget,
     auraActivatedAbility,
     auraAnimation,
     staticKeywordGrants,
