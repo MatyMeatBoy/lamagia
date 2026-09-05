@@ -622,6 +622,8 @@ export type SpellEffect =
   | { readonly kind: "level-up" }
   /** Resolves a Class's level-up activation by setting its level directly (CR 702.134). */
   | { readonly kind: "class-level-up"; readonly to: number }
+  /** Prepared (new mechanic, Naktamun Lorespinner // Wheel of Fortune): marks the source permanent prepared. */
+  | { readonly kind: "become-prepared" }
   | { readonly kind: "tap-target-permanent" }
   /** Taps a creature and suppresses its controller's untap while the source is controlled. */
   | { readonly kind: "tap-target-creature-and-lock" }
@@ -798,6 +800,8 @@ export interface TriggerDefinition {
     | { readonly kind: "not-first-draw-step-draw" }
     /** "When this Class becomes level N" (CR 702.134): fires only for the transition that reaches exactly this level. */
     | { readonly kind: "class-level-reached"; readonly level: number }
+    /** "If a player has N or fewer cards in hand" (Naktamun Lorespinner's Prepared trigger): true if ANY player qualifies. */
+    | { readonly kind: "any-player-hand-at-most"; readonly amount: number }
     | { readonly kind: "entering-power-at-most"; readonly amount: number };
   /** A Class's second/third-tier ability, inactive until the source reaches this level (CR 702.134d). */
   readonly minClassLevel?: number;
@@ -939,6 +943,8 @@ export interface CardProfile {
   readonly evokeCost: ManaCost | null;
   /** Miracle alternative cost (CR 702.93), offered only right after being drawn as the first card that turn. */
   readonly miracleCost: ManaCost | null;
+  /** Prepared (new mechanic): the back face's spell, castable as a copy while this permanent is prepared. */
+  readonly preparedCast: { readonly cost: ManaCost; readonly effect: SpellEffect; readonly targetKind: TargetKind; readonly spellName: string; readonly spellTypeLine: string } | null;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
   readonly additionalCostExileGraveyardX: boolean;
   /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
@@ -1102,6 +1108,33 @@ function frontFace(card: CardData): CardData {
     toughness: front.toughness ?? card.toughness,
     loyalty: front.loyalty ?? card.loyalty,
     colors: front.colors ?? card.colors
+  };
+}
+
+/**
+ * Back face of a two-faced card, e.g. the sorcery half of a Prepared creature
+ * (CR 702.120-ish new "Prepared" mechanic, Naktamun Lorespinner // Wheel of
+ * Fortune). Distinct from `frontFace`: this is never the face cast from hand,
+ * only ever "a copy of its spell" cast while prepared — so it gets its own
+ * synthetic `scryfall_id` to avoid colliding with the front face's cached
+ * `cardProfile` entry, which is keyed by that id.
+ */
+export function backFace(card: CardData): CardData | null {
+  const faces = card.card_faces;
+  const back = faces?.[1];
+  if (!back?.oracle_text) return null;
+  return {
+    ...card,
+    scryfall_id: `${card.scryfall_id}::back`,
+    name: back.name ?? card.name,
+    mana_cost: back.mana_cost ?? card.mana_cost,
+    type_line: back.type_line ?? card.type_line,
+    oracle_text: back.oracle_text,
+    power: back.power ?? null,
+    toughness: back.toughness ?? null,
+    loyalty: back.loyalty ?? null,
+    colors: back.colors ?? card.colors,
+    card_faces: undefined
   };
 }
 
@@ -3833,6 +3866,21 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    // "At the beginning of your upkeep, if a player has N or fewer cards in
+    // hand, ~ becomes prepared." (new "Prepared" mechanic, Naktamun
+    // Lorespinner // Wheel of Fortune): the source itself gains the state,
+    // no target and no further effect text.
+    const becomesPrepared = /^at\s+the\s+beginning\s+of\s+your\s+upkeep,\s*if\s+a\s+player\s+has\s+(\w+)\s+or\s+fewer\s+cards?\s+in\s+hand,?\s*~\s+becomes\s+prepared\.?$/i.exec(line);
+    if (becomesPrepared) {
+      const amount = toNumber(becomesPrepared[1]);
+      if (amount !== null) {
+        triggers.push({
+          event: "upkeep", subject: "you", condition: { kind: "any-player-hand-at-most", amount },
+          effect: { kind: "become-prepared" }, optional: false, targetKind: "none", sourceText: line
+        });
+        continue;
+      }
+    }
     // "Whenever another creature you control with power N or less enters, X" (Mentor of the Meek).
     const highPowerEnters = /^whenever\s+(?:a|another)\s+creature\s+you\s+control\s+with\s+power\s+(\d+)\s+or\s+greater\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(line);
     if (highPowerEnters) {
@@ -4276,6 +4324,21 @@ export function cardProfile(card: CardData): CardProfile {
         return level && level > 1 ? { ...trigger, minClassLevel: level } : trigger;
       })
     : recognized.triggers;
+  // Prepared (new mechanic): only compute the back face's profile — a
+  // recursive `cardProfile` call under its own synthetic `scryfall_id` — for
+  // a card that actually has a "becomes prepared" trigger, so unrelated
+  // multi-faced cards (Adventure, transform, split) never pay this cost.
+  const preparedBackCard = gatedTriggers.some((trigger) => trigger.effect.kind === "become-prepared") ? backFace(card) : null;
+  const preparedBackProfile = preparedBackCard ? cardProfile(preparedBackCard) : null;
+  const preparedCast = preparedBackProfile && preparedBackProfile.cost && preparedBackProfile.effects.length === 1
+    ? {
+        cost: preparedBackProfile.cost,
+        effect: preparedBackProfile.effects[0]!,
+        targetKind: preparedBackProfile.targetKind,
+        spellName: preparedBackCard!.name,
+        spellTypeLine: preparedBackCard!.type_line
+      }
+    : null;
 
   const profile: CardProfile = {
     name: card.name,
@@ -4363,6 +4426,7 @@ export function cardProfile(card: CardData): CardProfile {
     graftAmount,
     evokeCost: recognized.evokeCost ?? null,
     miracleCost: recognized.miracleCost ?? null,
+    preparedCast,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
     kickedKeywords: recognized.kickedKeywords ?? [],

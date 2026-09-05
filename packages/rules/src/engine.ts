@@ -13,7 +13,7 @@
  */
 
 import {
-  cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
+  backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaType, type RestrictedMana
@@ -138,6 +138,8 @@ export interface Permanent {
   readonly exiledWith?: GameCard;
   /** Current Class level (CR 702.134); absent means level 1, a Class's starting level. */
   readonly classLevel?: number;
+  /** Prepared (new mechanic): while true, may cast a copy of the back face's spell. */
+  readonly prepared?: boolean;
   readonly isCommander: boolean;
 }
 
@@ -597,6 +599,8 @@ export type GameAction =
   | { readonly type: "acknowledge-view-hand"; readonly sourceId: string }
   | { readonly type: "cast-miracle"; readonly sourceId: string }
   | { readonly type: "decline-miracle"; readonly sourceId: string }
+  /** Prepared (new mechanic): cast a copy of the source's back-face spell (CR 707.14 — copies never occupy a zone). */
+  | { readonly type: "cast-prepared-copy"; readonly sourceId: string; readonly targets?: readonly Target[] }
   | { readonly type: "choose-tap-or-untap"; readonly sourceId: string; readonly mode: "tap" | "untap" }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
@@ -1671,6 +1675,7 @@ function triggerMatches(
     if (!source || source.tapped) return false;
   }
   if (condition?.kind === "class-level-reached" && (event.kind !== "class-level-up" || event.level !== condition.level)) return false;
+  if (condition?.kind === "any-player-hand-at-most" && !state.players.some((player) => player.hand.length <= condition.amount)) return false;
   if (condition?.kind === "not-first-draw-step-draw") {
     if (event.kind !== "card-drawn") return false;
     if (state.step === "draw" && event.drawStepCount === 1) return false;
@@ -4217,6 +4222,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       next = raiseEvent(next, { kind: "class-level-up", permanentId: source.instance_id, controller, card: source.card, level: effect.to });
       return logged(next, controller, `${sourceName} alcanza el nivel ${effect.to}.`);
     }
+    case "become-prepared": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const source = findPermanent(state, sourceId);
+      if (!source) return state;
+      const next = withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === sourceId ? { ...permanent, prepared: true } : permanent)
+      }));
+      return logged(next, controller, `${sourceName} queda preparada.`);
+    }
     case "tap-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -6247,6 +6262,19 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         note: `Equip ${equipCost.raw}`
       });
     }
+    // Prepared (new mechanic): casting the copy never taps or moves this
+    // permanent, so it is offered independent of summoning sickness.
+    if (permanent.prepared && profile.preparedCast && !splitSecondActive(state)
+      && planManaPayment(profile.preparedCast.cost, player, { state })
+      && (profile.preparedCast.targetKind === "none" || legalTargets(state, seat, profile.preparedCast.targetKind, profile).length)) {
+      actions.push({
+        action: { type: "cast-prepared-copy", sourceId: permanent.instance_id },
+        label: `Copiar ${profile.preparedCast.spellName}`,
+        cardId: permanent.instance_id,
+        ...(profile.preparedCast.targetKind !== "none" ? { requiresTarget: profile.preparedCast.targetKind } : {}),
+        note: `${permanent.card.name}: lanza una copia de ${profile.preparedCast.spellName} (${profile.preparedCast.cost.raw}).`
+      });
+    }
   }
 
   actions.push({ action: { type: "concede" }, label: "Conceder" });
@@ -6383,17 +6411,18 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, cantBeCountered = false): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
     card,
-    label: card.name,
+    label: fromCopy ? `${card.name} (copia)` : card.name,
     targets,
     fromCommandZone,
     flashback,
     variableValue,
     countered: false,
+    ...(fromCopy ? { fromCopy: true } : {}),
     ...(cantBeCountered ? { cantBeCountered: true } : {}),
     ...(commanderEntryCounters ? { commanderEntryCounters: true } : {}),
     ...(spentMana.length ? { spentMana } : {}),
@@ -7151,7 +7180,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
-    paymentSpentTypes, payReducedCost, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)));
+    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)));
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: paymentSpentTotal },
@@ -7505,6 +7534,41 @@ function applyDeclineMiracle(state: GameState, seat: SeatId, action: Extract<Gam
   if (!choice || choice.type !== "miracle" || choice.seat !== seat) throw new Error("No tienes una carta esperando su coste de Milagro.");
   if (choice.sourceId !== action.sourceId) throw new Error("Esa carta ya no espera Milagro.");
   return logged({ ...state, pendingChoice: null }, seat, `${playerAt(state, seat).name} no paga el Milagro de ${choice.sourceCard.name}.`);
+}
+
+/**
+ * Prepared (new mechanic, CR 707.14-style): casts a COPY of the source's back
+ * face — the permanent itself never leaves the battlefield or changes zone,
+ * and the copy ceases to exist once it leaves the stack (`fromCopy`, already
+ * handled generically by `resolveTop`/`sendSpellToOwnerZone`).
+ */
+function applyCastPreparedCopy(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast-prepared-copy" }>): GameState {
+  if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para lanzar esa copia.");
+  const player = playerAt(state, seat);
+  const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+  if (!source || !source.prepared) throw new Error("Ese permanente no está preparado.");
+  const profile = cardProfile(source.card);
+  const preparedCast = profile.preparedCast;
+  if (!preparedCast) throw new Error(`${source.card.name} no tiene un hechizo preparado.`);
+  const plan = planManaPayment(preparedCast.cost, player, { state });
+  if (!plan) throw new Error(`No tienes maná suficiente para copiar ${preparedCast.spellName}.`);
+  let next = applyManaPlan(state, seat, plan);
+  const payment = payCost(preparedCast.cost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+  if (!payment) throw new Error(`No se pudo pagar la copia de ${preparedCast.spellName}.`);
+  next = withPlayer(next, seat, (current) => ({
+    ...consumeManaPayment(current, payment),
+    life: current.life - payment.lifePaid,
+    battlefield: current.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, prepared: false } : permanent)
+  }));
+  const back = backFace(source.card);
+  if (!back) throw new Error(`${source.card.name} no tiene una cara posterior válida.`);
+  const copyCard: GameCard = { ...back, instance_id: `prepared-copy:${next.version}:${source.instance_id}`, owner: seat };
+  const requested = action.targets ?? [];
+  const allowed = preparedCast.targetKind !== "none" ? legalTargets(next, seat, preparedCast.targetKind, profile) : [];
+  const targets = preparedCast.targetKind !== "none" ? (requested.length ? requested : allowed.slice(0, 1)) : [];
+  if (preparedCast.targetKind !== "none" && !targets.length) throw new Error(`${preparedCast.spellName} necesita un objetivo legal.`);
+  next = pushOnStack(next, seat, copyCard, targets, false, 0, undefined, false, false, false, false, [], false, true);
+  return logged(next, seat, `${player.name} lanza una copia de ${preparedCast.spellName} preparada por ${source.card.name}.`);
 }
 
 function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-scry" }>): GameState {
@@ -8033,6 +8097,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "acknowledge-view-hand": next = applyAcknowledgeViewHand(state, seat, action); break;
     case "cast-miracle": next = applyCastMiracle(state, seat, action); break;
     case "decline-miracle": next = applyDeclineMiracle(state, seat, action); break;
+    case "cast-prepared-copy": next = applyCastPreparedCopy(state, seat, action); break;
     case "choose-tap-or-untap": next = applyChooseTapOrUntap(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "resolve-library-pick": next = applyResolveLibraryPick(state, seat, action); break;
