@@ -383,6 +383,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
 | `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
+| `c13-oracle-draw-activated-cost-2` | Jace's Archivist: each player discards their hand, then all draw the greatest discarded hand size; reusable shared-discard primitive (CR 602.2b, 701.8, 121.1) | `codex/c13-f99-b033-next` | active | 2026-09-04 |
 
 
 

@@ -332,6 +332,8 @@ export type SpellEffect =
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
+  /** Each player discards their hand, then all draw the greatest discarded hand size. */
+  | { readonly kind: "each-player-discard-and-draw-greatest" }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
@@ -2215,6 +2217,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Each player discards their hand, then draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-player-discard-and-draw", amount }, target: "none" };
+  }
+  if (/^Each player discards their hand, then draws cards equal to the greatest number of cards a player discarded this way$/i.test(text)) {
+    return { effect: { kind: "each-player-discard-and-draw-greatest" }, target: "none" };
   }
   if (/^Target player discards their hand$/i.test(text)) return { effect: { kind: "discard-target-player-hand" }, target: "player" };
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on ~$/i.exec(text))) {
