@@ -20,9 +20,18 @@ submits actions already exposed as legal.
   non-reversible mana ability clears undo history.
 - Tokens have unique `instance_id` values, names, token frames, and independent
   combat/target selection. Creature stats are hidden on lands and noncreatures.
-- Right-click/long-press opens card details for battlefield, hand, graveyard,
-  exile, and command-zone cards. Image and mana-asset failures degrade to a
-  readable local fallback instead of a broken image element.
+- Right-click/long-press opens the general card action menu for battlefield,
+  hand, graveyard, exile, and command-zone cards. It lists legal cast/cycle/
+  activation/yield actions and keeps **View information** as the final row.
+  Image and mana-asset failures degrade to a readable local fallback instead
+  of a broken image element.
+- Human payments open a centered source chooser when available sources are not
+  interchangeable; bots retain the deterministic fast planner. The menu also
+  supports MTGO-style yielding from optional triggers of one source without
+  suppressing mandatory triggers or response priority.
+- The graphical stack shows one card-like item per spell, activated ability, or
+  trigger, with top-first resolution order, controller, targets, and rules
+  text. Priority remains authoritative in `packages/rules`.
 - Stabilization failures are logged server-side with a bounded public-state
   diagnostic: turn, step, priority, stack summary, pending choice, combat
   declarations, and recent log entries. Hidden hands and libraries are omitted.

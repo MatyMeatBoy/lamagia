@@ -919,7 +919,7 @@ function stackStripHtml(): string {
     `<span class="stack-chip${object.countered ? " countered" : ""}" title="${escapeHtml(object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}">
       <strong class="stack-order">${index + 1}</strong>
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
-      <span><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i></span>
+      <span><small class="stack-kind">${object.kind === "trigger" ? "Triggered" : object.kind === "activated" ? "Activated" : "Spell"}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
     </span>`).join("")}</div>`;
 }
 

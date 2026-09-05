@@ -433,7 +433,7 @@ export type PendingChoice =
       readonly allowLegendaryMana: boolean;
       readonly excludePermanentId?: string;
       readonly selected: readonly ManaPaymentSelection[];
-      readonly continuation: Extract<GameAction, { type: "cast" | "activate-mana" }>;
+      readonly continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "equip" }>;
     }
   | {
       /** Ghost Quarter's optional search belongs to the destroyed land's controller. */
@@ -1422,7 +1422,7 @@ function beginManaPayment(
   seat: SeatId,
   sourceCard: GameCard,
   cost: ManaCost,
-  continuation: Extract<GameAction, { type: "cast" | "activate-mana" }>,
+  continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "equip" }>,
   options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly lifeCost?: number; readonly allowLegendaryMana?: boolean; readonly excludePermanentId?: string }
 ): GameState | null {
   if (!shouldPromptManaPayment(state, seat, cost, options)) return null;
@@ -7485,7 +7485,7 @@ function equipTargets(state: GameState, seat: SeatId, profile: CardProfile): Tar
   });
 }
 
-function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "equip" }>): GameState {
+function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "equip" }>, manaAlreadyPaid = false): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para equipar.");
   if (splitSecondActive(state)) throw new Error("Split second impide activar habilidades que no sean de maná.");
   const player = playerAt(state, seat);
@@ -7507,9 +7507,13 @@ function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, 
   const cost = profile.typedEquipCost && targetCreature && hasSubtype(cardProfile(targetCreature.card), profile.typedEquipCost.subtype)
     ? profile.typedEquipCost.cost
     : (profile.equipCost ?? profile.equipWorthyCost)!;
-  const plan = planManaPayment(cost, player, { state });
-  if (!plan) throw new Error(`No tienes maná suficiente para equipar ${source.card.name}.`);
-  let next = applyManaPlan(state, seat, plan);
+  const plan = manaAlreadyPaid ? null : planManaPayment(cost, player, { state });
+  if (!manaAlreadyPaid && !plan) throw new Error(`No tienes maná suficiente para equipar ${source.card.name}.`);
+  if (!manaAlreadyPaid) {
+    const manual = beginManaPayment(state, seat, source.card, cost, action, {});
+    if (manual) return manual;
+  }
+  let next = manaAlreadyPaid ? state : applyManaPlan(state, seat, plan!);
   const payment = payCost(cost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
   if (!payment) throw new Error(`No se pudo pagar el coste de equipar ${source.card.name}.`);
   next = withPlayer(next, seat, (current) => consumeManaPayment(current, payment));
@@ -8148,7 +8152,9 @@ function applyChooseManaSource(state: GameState, seat: SeatId, action: Extract<G
   const continuation = choice.continuation;
   next = continuation.type === "cast"
     ? applyCast(next, seat, continuation, true)
-    : applyActivateMana(next, seat, continuation, true);
+    : continuation.type === "activate-mana"
+      ? applyActivateMana(next, seat, continuation, true)
+      : applyEquip(next, seat, continuation, true);
   return next;
 }
 
