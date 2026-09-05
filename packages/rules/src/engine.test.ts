@@ -185,6 +185,12 @@ const GRAVEYARD_BATTLEFIELD = () => make({ name: "Reanimate Memory", type_line: 
 const ARTIFACT_GRAVEYARD_RETURN = () => make({ name: "Artifact Reclaim", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Return target artifact card from your graveyard to your hand." });
 const LAND_GRAVEYARD_BATTLEFIELD = () => make({ name: "Restore Memory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Put target land card from a graveyard onto the battlefield under your control." });
 const ARTIFACT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Sharuum Memory", type_line: "Sorcery", mana_cost: "{2}{U}{B}", cmc: 4, oracle_text: "Return target artifact card from your graveyard to the battlefield." });
+const C13_SHARUUM = () => make({
+  name: "Sharuum the Hegemon", type_line: "Legendary Artifact Creature — Sphinx", mana_cost: "{3}{W}{U}{B}", cmc: 6, power: "5", toughness: "5",
+  keywords: ["Flying"],
+  oracle_text: "Flying\nWhen Sharuum the Hegemon enters the battlefield, you may return target artifact card from your graveyard to the battlefield.",
+  scryfall_id: "037e7fc9-3aa6-484c-a2c8-43009e45f1d8", oracle_id: "037e7fc9-3aa6-484c-a2c8-43009e45f1d8"
+});
 const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", type_line: "Sorcery", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Return target enchantment card from your graveyard to your hand." });
 const ENCHANTMENT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Enchantment Reanimate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Return target enchantment card from your graveyard to the battlefield." });
 const ARTIFACT_BOUNCE = () => make({ name: "Artifact Recall", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Return target artifact to its owner's hand." });
@@ -1461,6 +1467,28 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Equipment")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Test Equipment")).toBe(false);
+  });
+
+  it("reuses artifact graveyard recovery for C13 Sharuum's ETB", () => {
+    const profile = profileOf(C13_SHARUUM());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers).toMatchObject([{
+      event: "enters-battlefield",
+      targetKind: "artifact-card-in-your-graveyard",
+      effect: { kind: "return-target-artifact-card-from-graveyard-to-battlefield" }
+    }]);
+
+    let game = readyToCast([C13_SHARUUM()], [PLAINS(), ISLAND(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, graveyard: toHand(0, [EQUIPMENT(), BEAR()], "sharuum-yard") }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(optional.targets).toHaveLength(1);
+    expect(optional.targets?.[0]).toEqual({ kind: "graveyard-card", seat: 0, instanceId: "sharuum-yard-0" });
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Equipment")).toBe(true);
   });
 
   it("restricts enchantment graveyard recovery to enchantment cards", () => {

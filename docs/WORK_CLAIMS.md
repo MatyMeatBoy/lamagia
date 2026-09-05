@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-sharuum-hegemon` | Sharuum's optional ETB reanimates a targeted artifact card from its controller's graveyard (CR 603.2, 603.3d, 400.7) | `codex/c13-sharuum-hegemon-f99` | active | 2026-09-05 |
