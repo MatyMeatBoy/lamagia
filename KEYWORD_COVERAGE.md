@@ -2,7 +2,7 @@
 
 Generated from the local Comprehensive Rules snapshot and the normalized catalog. The report distinguishes keyword abilities from keyword actions and ability words; a high catalog count is a prioritization signal, not proof that all variants share one implementation.
 
-**Summary:** 30 implemented · 2 partial · 162 backlog
+**Summary:** 36 implemented · 2 partial · 156 backlog
 
 `catalog occurrences` counts Scryfall keyword metadata and is used to prioritize reusable primitives. Every implementation still requires a scenario test and a Comprehensive Rules citation.
 
@@ -38,11 +38,11 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.27 | Buyback | backlog | 99 | Needs a dedicated rules primitive and scenario tests |
 | 702.28 | Shadow | implemented | 101 | symmetric shadow evasion and blocking |
 | 702.29 | Cycling | implemented | 2060 | cycling action and optional search variants |
-| 702.30 | Echo | backlog | 147 | Needs a dedicated rules primitive and scenario tests |
+| 702.30 | Echo | implemented | 147 | upkeep payment or sacrifice trigger |
 | 702.31 | Horsemanship | implemented | 55 | symmetric horsemanship evasion and blocking |
 | 702.32 | Fading | backlog | 44 | Needs a dedicated rules primitive and scenario tests |
 | 702.33 | Kicker | implemented | 652 | alternative/additional cast cost |
-| 702.34 | Flashback | backlog | 793 | Needs a dedicated rules primitive and scenario tests |
+| 702.34 | Flashback | implemented | 793 | graveyard alternative cast and exile replacement |
 | 702.35 | Madness | backlog | 230 | Needs a dedicated rules primitive and scenario tests |
 | 702.36 | Fear | implemented | 120 | artifact-or-black blocking restriction |
 | 702.37 | Morph | backlog | 344 | Needs a dedicated rules primitive and scenario tests |
@@ -66,7 +66,7 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.55 | Haunt | backlog | 17 | Needs a dedicated rules primitive and scenario tests |
 | 702.56 | Replicate | backlog | 44 | Needs a dedicated rules primitive and scenario tests |
 | 702.57 | Forecast | backlog | 24 | Needs a dedicated rules primitive and scenario tests |
-| 702.58 | Graft | backlog | 39 | Needs a dedicated rules primitive and scenario tests |
+| 702.58 | Graft | implemented | 39 | ETB counter transfer to the entering creature |
 | 702.59 | Recover | backlog | 9 | Needs a dedicated rules primitive and scenario tests |
 | 702.60 | Ripple | backlog | 7 | Needs a dedicated rules primitive and scenario tests |
 | 702.61 | Split Second | implemented | 80 | stack response restriction |
@@ -87,7 +87,7 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.76 | Prowl | backlog | 19 | Needs a dedicated rules primitive and scenario tests |
 | 702.77 | Reinforce | backlog | 20 | Needs a dedicated rules primitive and scenario tests |
 | 702.78 | Conspire | backlog | 17 | Needs a dedicated rules primitive and scenario tests |
-| 702.79 | Persist | backlog | 65 | Needs a dedicated rules primitive and scenario tests |
+| 702.79 | Persist | implemented | 65 | dies trigger with a -1/-1 counter return |
 | 702.80 | Wither | backlog | 46 | Needs a dedicated rules primitive and scenario tests |
 | 702.81 | Retrace | backlog | 54 | Needs a dedicated rules primitive and scenario tests |
 | 702.82 | Devour | backlog | 62 | Needs a dedicated rules primitive and scenario tests |
@@ -96,12 +96,12 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.85 | Cascade | backlog | 169 | Needs a dedicated rules primitive and scenario tests |
 | 702.86 | Annihilator | backlog | 80 | Needs a dedicated rules primitive and scenario tests |
 | 702.87 | Level Up | implemented | 63 | activated level counters and level layers |
-| 702.88 | Rebound | backlog | 107 | Needs a dedicated rules primitive and scenario tests |
+| 702.88 | Rebound | implemented | 107 | exile-on-resolution and next-upkeep recast |
 | 702.89 | Umbra Armor | backlog | 52 | Needs a dedicated rules primitive and scenario tests |
 | 702.90 | Infect | backlog | 95 | Needs a dedicated rules primitive and scenario tests |
 | 702.91 | Battle Cry | backlog | 38 | Needs a dedicated rules primitive and scenario tests |
 | 702.92 | Living Weapon | backlog | 68 | Needs a dedicated rules primitive and scenario tests |
-| 702.93 | Undying | backlog | 62 | Needs a dedicated rules primitive and scenario tests |
+| 702.93 | Undying | implemented | 62 | dies trigger with a +1/+1 counter return |
 | 702.94 | Miracle | backlog | 51 | Needs a dedicated rules primitive and scenario tests |
 | 702.95 | Soulbond | backlog | 60 | Needs a dedicated rules primitive and scenario tests |
 | 702.96 | Overload | backlog | 129 | Needs a dedicated rules primitive and scenario tests |

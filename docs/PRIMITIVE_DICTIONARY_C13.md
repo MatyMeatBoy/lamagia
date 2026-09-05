@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T00:29:56.017385+00:00`
+- Generated: `2026-09-05T00:58:14.625964+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **220**
+- Exported profiles in scope: **341**; fully implemented: **224**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -259,7 +259,7 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **220/341** profiles complete; **47** unfinished cards have exactly one unmatched line.
+The engine export currently marks **224/341** profiles complete; **43** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
@@ -277,7 +277,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it — Prossh, Skyraider of Kher |
 | `unclaimed` | 1 | when you cycle ~, you may have it deal <n> damage to each creature — Slice and Dice |
 | `unclaimed` | 1 | when you cycle ~, you may have target creature gain fear until end of turn — Dirge of Dread |
-| `unclaimed` | 1 | when ~ enters, destroy all artifacts and enchantments. put <n> +<n>/+<n> counter on ~ for each permanent destroyed this way — Bane of Progress |
 | `unclaimed` | 1 | when ~ enters, exile another target permanent. return that card to the battlefield under its owner's control at the beginning of the next end step — Flickerwisp |
 | `unclaimed` | 1 | when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value — Phyrexian Delver |
 | `unclaimed` | 1 | when ~ enters, sacrifice it unless {cost} was spent to cast it — Azorius Herald |
@@ -288,7 +287,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever another nontoken creature you control dies, create <n> <n>/<n> black and red graveborn creature token with haste — Sek'Kuar, Deathkeeper |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy — Mirari |
 | `unclaimed` | 1 | whenever you gain life, you may pay {cost}, where <n> is less than or equal to the amount of life you gained. if you do, draw <n> cards — Well of Lost Dreams |
-| `unclaimed` | 1 | whenever you gain life, you may pay {cost}. if you do, put <n> +<n>/+<n> counter on target creature for each <n> life you gained — Cradle of Vitality |
 | `unclaimed` | 1 | whenever ~ attacks, it gets +<n>/+<n> until end of turn, where <n> is the number of lands defending player controls — Terra Ravager |
 | `unclaimed` | 1 | whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat — Serene Master |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you and that player each draw that many cards — Diviner Spirit |
@@ -297,9 +295,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | {cost}, exile <n> creature cards from <n> single graveyard: create <n> <n>/<n> green saproling creature token — Night Soil |
 | `unclaimed` | 1 | {cost}, sacrifice <n> creature: you gain life equal to the sacrificed creature's toughness — Disciple of Griselbrand |
 | `unclaimed` | 1 | {cost}, sacrifice <n> goats: add <n> mana of any <n> color. you gain <n> life — Springjack Pasture |
-| `unclaimed` | 1 | {cost}, sacrifice <n> nontoken artifact: create <n> <n>/<n> blue thopter artifact creature token with flying — Thopter Foundry |
 | `unclaimed` | 1 | {cost}, sacrifice ~: destroy up to <n> target nonblack creatures, where <n> is the number of verse counters on ~ — Vile Requiem |
-| `unclaimed` | 1 | {cost}, sacrifice ~: it deals <n> damage to each attacking creature without flying — Leonin Bladetrap |
 | `unclaimed` | 1 | {cost}, {cost}, sacrifice ~: search your library for up to <n> basic land cards, reveal them, put them into your hand, then shuffle — Armillary Sphere |
 | `unclaimed` | 1 | {cost}, {cost}: add <n> mana of any color in your commander's color identity. if you spend this mana to cast your commander, it enters with <n> number of additional +<n>/+<n> counters on it equal to the number of times it's been cast from the command zone this game — Opal Palace |
 | `unclaimed` | 1 | {cost}, {cost}: each player discards their hand, then draws cards equal to the greatest number of cards <n> player discarded this way — Jace's Archivist |

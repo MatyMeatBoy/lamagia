@@ -2152,6 +2152,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "damage-attacking-creatures": {
+      const amount = effectAmount(effect.amount, object);
+      const attacking = new Set(state.combat.attackers.map((entry) => entry.instanceId));
+      let next = state;
+      for (const permanent of allPermanents(state)) {
+        if (!attacking.has(permanent.instance_id) || !isCreature(cardProfile(permanent.card))) continue;
+        if (effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
+        if (effect.filter === "with-flying" && !keywordOf(next, permanent, "flying")) continue;
+        next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+      }
+      return next;
+    }
     case "damage-each-creature-and-player": {
       const amount = effectAmount(effect.amount, object);
       let next = state;
@@ -2493,6 +2505,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
                 [effect.counter]: (candidate.counters[effect.counter] ?? 0) + effect.amount
               }
             }
+          : candidate)
+      }));
+    }
+    case "add-counter-target-creature-per-life-gained": {
+      const target = object.targets[0];
+      const amount = object.trigger?.eventAmount ?? 0;
+      if (!target || target.kind !== "permanent" || amount <= 0) return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, counters: { ...candidate.counters, [effect.counter]: (candidate.counters[effect.counter] ?? 0) + amount } }
           : candidate)
       }));
     }
@@ -4821,6 +4846,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           ? player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))
           : ability.sacrificesPermanent
             ? player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
+              && (!ability.sacrificesPermanent!.nontoken || !candidate.card.token)
               && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id))
             : [];
       const hasSacrificeCost = Boolean(ability.sacrificesCreatures || ability.sacrificesCreature || ability.sacrificesCreatureSubtype || ability.sacrificesPermanent);
@@ -5228,6 +5254,7 @@ function activatableAbility(
   }
   if (ability.sacrificesPermanent) {
     const candidates = player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
+      && (!ability.sacrificesPermanent!.nontoken || !candidate.card.token)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== permanent.instance_id));
     if (!candidates.length) return { legal: false };
   }
@@ -5327,6 +5354,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     sacrifices = [sacrifice];
   } else if (ability.sacrificesPermanent) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
+      && (!ability.sacrificesPermanent!.nontoken || !candidate.card.token)
       && (ability.sacrificesPermanent!.mode !== "another" || candidate.instance_id !== source.instance_id));
     const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesPermanent.type.toLowerCase()} para sacrificar.`);

@@ -101,7 +101,7 @@ export interface ActivatedAbility {
   readonly sacrificesArtifact?: boolean;
   readonly sacrificesLand?: boolean;
   /** Noncreature permanent chosen as an activation cost, optionally excluding the source. */
-  readonly sacrificesPermanent?: { readonly type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token" | "Permanent"; readonly mode: "any" | "another" };
+  readonly sacrificesPermanent?: { readonly type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token" | "Permanent"; readonly mode: "any" | "another"; readonly nontoken?: boolean };
   /** One card chosen from the controller's hand as an activation cost. */
   readonly discardsCard?: boolean;
   /** One card chosen from the controller's graveyard and exiled as a cost. */
@@ -415,6 +415,7 @@ export type SpellEffect =
   | { readonly kind: "damage-active-player-hand-minus"; readonly offset: number }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" | "with-flying"; readonly alsoPlaneswalkers?: boolean }
+  | { readonly kind: "damage-attacking-creatures"; readonly amount: number | "X"; readonly filter?: "without-flying" | "with-flying" }
   | { readonly kind: "damage-each-creature-and-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-each-player"; readonly amount: number | "X" }
   | { readonly kind: "damage-nonflying-creatures-and-players"; readonly amount: number | "X" }
@@ -444,6 +445,8 @@ export type SpellEffect =
   | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
+  /** Cradle of Vitality: counters scale with the life-gain event amount. */
+  | { readonly kind: "add-counter-target-creature-per-life-gained"; readonly counter: string }
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
@@ -1327,6 +1330,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
   const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
   const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
+  const tokenAndLife = /^(Create\s+.+?\s+token(?:s)?(?:\s+named\s+[^,]+)?(?:\s+with\s+.+)?)\.\s*You gain (\w+) life\.?$/i.exec(parsedEffectText);
+  const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
+  const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
   const recognized = selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
@@ -1335,6 +1341,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: revealTopConditional, target: "none" as TargetKind }
     : revealTopToHand
     ? { effect: revealTopToHand, target: "none" as TargetKind }
+    : tokenEffect && tokenEffect.kind === "create-token" && tokenLifeAmount !== null
+    ? { effect: { kind: "compound", effects: [tokenEffect, { kind: "gain-life", amount: tokenLifeAmount }] } as SpellEffect, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 
@@ -1348,8 +1356,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // An {X} cost is payable only when the effect actually consumes X (CR 107.3).
   if (manaCost?.hasVariable && !effectUsesVariable(recognized.effect)) return null;
 
-  const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
-  const sacrificesSelf = /sacrifice\s+~/i.test(costText) || namedSelfSacrifice;
+  const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b|this\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
+  const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText) || namedSelfSacrifice;
   const tapCreatureMatch = /tap\s+(an|another)\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control/i.exec(costText);
   const tapsCreature = tapCreatureMatch ? {
     mode: tapCreatureMatch[1]!.toLowerCase() === "another" ? "another" as const : "any" as const,
@@ -1358,10 +1366,11 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sacrificeCreatures = /sacrifice\s+(two|three|four|five|\d+)\s+(?:(?:a|an)\s+)?([A-Za-z][A-Za-z'’-]*\s+)?creatures\b/i.exec(costText);
   const sacrificeCreature = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?creature\b/i.exec(costText);
   const sacrificeCreatureSubtype = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?([A-Za-z][A-Za-z'’-]*)\b/i.exec(costText);
-  const typedCreature = !sacrificeCreatures && sacrificeCreatureSubtype && !/^(?:creature|artifact|enchantment|land|noncreature|token|permanent)$/i.test(sacrificeCreatureSubtype[2]!)
+  const typedCreature = !sacrificeCreatures && sacrificeCreatureSubtype && !/^(?:nontoken|creature|artifact|enchantment|land|noncreature|token|permanent)$/i.test(sacrificeCreatureSubtype[2]!)
     ? sacrificeCreatureSubtype
     : null;
-  const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
+  const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
+  const nontokenArtifact = Boolean(sacrificePermanent && /^nontoken\s+artifact$/i.test(sacrificePermanent[2]!));
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
   const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
   const removedCounters: CounterCost[] = [];
@@ -1375,12 +1384,12 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const leftovers = costText
     .replace(/\{[^}]*\}/g, "")
     .replace(/pay\s+\d+\s+life/gi, "")
-    .replace(/sacrifice\s+~/gi, "")
+    .replace(/sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
     .replace(/\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/g, "")
     .replace(/sacrifice\s+(?:two|three|four|five|\d+)\s+(?:(?:a|an)\s+)?(?:[A-Za-z][A-Za-z'’-]*\s+)?creatures\b/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?[A-Za-z][A-Za-z'’-]*\b/gi, (match) => typedCreature ? "" : match)
-    .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
+    .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
@@ -1395,7 +1404,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(sacrificeCreatures ? { sacrificesCreatures: { amount: toNumber(sacrificeCreatures[1])!, ...(sacrificeCreatures[2] ? { subtype: sacrificeCreatures[2].trim() } : {}) } } : {}),
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
     ...(typedCreature ? { sacrificesCreatureSubtype: { subtype: typedCreature[2]!, mode: typedCreature[1] ? "another" as const : "any" as const } } : {}),
-    ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]!.slice(1).toLowerCase()}` as "Artifact" | "Enchantment" | "Land" } } : {}),
+    ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: nontokenArtifact ? "Artifact" as const : /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]![1]! ? sacrificePermanent[2]!.slice(1).toLowerCase() : ""}` as "Artifact" | "Enchantment" | "Land", ...(nontokenArtifact ? { nontoken: true } : {}) } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
@@ -2320,6 +2329,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "attacking-or-blocking-creature" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "attacking-or-blocking-creature" };
   }
+  if ((match = /^~ deals (\w+) damage to each attacking creature( without flying)?$/i.exec(text))) {
+    const amount = match[1]!.toUpperCase() === "X" ? "X" as const : toNumber(match[1]!);
+    if (amount !== null) return { effect: { kind: "damage-attacking-creatures", amount, ...(match[2] ? { filter: "without-flying" as const } : {}) }, target: "none" };
+  }
   if ((match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the other(?:s)? on the bottom of your library in any order$/i.exec(text))
       || (match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the rest on the bottom of your library in any order$/i.exec(text))
       || (match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the other on the bottom of your library$/i.exec(text))) {
@@ -3033,6 +3046,31 @@ function recognizeText(text: string): RecognizedText {
       }
     }
     const leavesLine = line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
+    // Modern Oracle splits Bane of Progress's dependent instruction into a
+    // second sentence. Keep it attached to the ETB trigger so the existing
+    // counted sweep primitive remains reusable across printings (CR 603.2,
+    // 603.3; the count is locked to permanents destroyed by that event).
+    const modernBane = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*destroy all artifacts and enchantments\.\s*put a (\+1\/\+1|-1\/-1) counter on ~ for each permanent destroyed this way\.?$/i.exec(line);
+    if (modernBane) {
+      triggers.push({
+        event: "enters-battlefield", subject: "self",
+        effect: { kind: "destroy-all-artifacts-enchantments-add-counters", counter: modernBane[1]! },
+        optional: false, targetKind: "none", sourceText: line
+      });
+      continue;
+    }
+    const lifeGainCounter = /^whenever\s+you\s+gain\s+life,?\s+you may pay\s+((?:\{[^}]+\})+)\.?\s*if you do,?\s*put a (\+1\/\+1|-1\/-1) counter on target creature for each 1 life you gained\.?$/i.exec(line);
+    if (lifeGainCounter) {
+      const payCost = parseManaCost(lifeGainCounter[1]!);
+      if (payCost && !payCost.hasVariable) {
+        triggers.push({
+          event: "life-gained", subject: "you",
+          effect: { kind: "add-counter-target-creature-per-life-gained", counter: lifeGainCounter[2]! },
+          optional: true, targetKind: "creature", payCost, sourceText: line
+        });
+        continue;
+      }
+    }
     const triggered = matchTriggerLine(leavesLine !== line ? leavesLine : line);
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);

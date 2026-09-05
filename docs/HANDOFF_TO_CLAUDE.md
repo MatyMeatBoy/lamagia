@@ -11,13 +11,13 @@ and Exalted primitives plus benchmark-selected compositional worker payloads;
 verify the Pages run before reporting a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,076 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,083 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 22,538 / 84,990 implemented (26.5%) across 685
+- **Edition memberships:** 22,570 / 84,990 implemented (26.6%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 220 / 341 unique cards (64.5%), 121 pending.
+- **Commander 2013:** 224 / 341 unique cards (65.7%), 117 pending.
 - **Commander 2014:** 196 / 322 unique cards (60.9%), 126 pending.
 - **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
   component references; 99.9% are reused across clauses. The full-catalog
@@ -43,6 +43,14 @@ accounting bug, not a lost card: `Eladamri's Call` was held in `pendingChoice`
 while its controller was eliminated. The invariant now counts that temporary
 physical card exactly once. Debug-only environment logging was removed from the
 pure rules package.
+
+### C13 quick-win — Leonin Bladetrap
+
+The compositional damage vocabulary now recognizes an activated self-sacrifice
+cost written as `Sacrifice this artifact`, and executes damage to the current
+attacker set with flying filtering. The scenario covers the actual combat
+state: a nonflying attacker dies, a flying attacker survives, and the source
+artifact is paid into its owner's graveyard (CR 602.2b, 120.2, 506.4).
 
 Do not report the 38,711 profile catalog as implemented cards. Recompute both
 views after accepted rules commits and publish the generated `site/coverage.json`.

@@ -28,6 +28,13 @@ Target/zone/type differences remain different keys. Original Oracle text is
 never discarded from the normal IR, and compact IR is never imported by the
 rules runtime. It is a context and scheduling artifact only.
 
+Use it as a partial compiler front-end: simple, repeated shapes such as
+`draw <amount>` can resolve through the known primitive and its operands;
+unique or compound clauses stay on the legacy Oracle path. Never force a
+complex clause through IR just to reduce bytes. The worker must still prove
+the same parser, executor, scenario, and `oracle_id` mapping before the card is
+counted.
+
 The artifact also contains a second, compositional dictionary of semantic
 atoms. For example, two clauses can share `op:draw` and `zone:hand` while
 retaining distinct `target:player` / `target:creature` atoms and their exact
