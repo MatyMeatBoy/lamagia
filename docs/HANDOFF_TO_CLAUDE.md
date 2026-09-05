@@ -3433,6 +3433,22 @@ Regrowth, Sign in Blood) that needed no back-face work at all.
 Validation: **640 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,501 global profiles.
 
+`rules-prepared-landfall-combat-damage` | Two more Prepared shapes, both
+zero-new-code reuse: Landfall — Whenever a land you control enters
+(Tam, Observant Sequencer; reuses the `land-you-control` subject) and
+Whenever one or more creatures you control deal combat damage to a
+player (Striding Shotcaller; reuses `creature-you-control` against
+`deals-combat-damage-to-player`). Caught by a debug script, not a test:
+Tam's front face literally starts with "Landfall — Whenever...", so the
+first version of the pattern (anchored on "Whenever...") silently never
+matched — fixed by stripping the `landfall\s+[—–-]\s*` ability-word
+prefix first, the same stripping `matchTriggerLine` already does
+elsewhere. Scenario-tested that Shotcaller becomes prepared from a
+DIFFERENT creature's combat damage (not its own), confirming the
+subject is genuinely "any creature you control." Validation: **645
+rules tests**, `npm run check`, `npm run simulate:engine` 200/200,
+9,508 global profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

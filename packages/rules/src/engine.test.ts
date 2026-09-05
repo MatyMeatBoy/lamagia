@@ -8729,8 +8729,24 @@ describe("Prepared mechanic — additional trigger templates", () => {
     ],
     oracle_id: "2f5f46ed-b8aa-4864-bd20-17281d4632bf", scryfall_id: "77285d12-e658-4eb3-ba13-ff202afab9c8"
   });
+  const TAM = () => make({
+    name: "Tam, Observant Sequencer // Deep Sight", type_line: "Legendary Creature — Gorgon Wizard // Sorcery", mana_cost: "{2}{G}{U} // {G}{U}", cmc: 4, power: "4", toughness: "3", colors: ["G", "U"], keywords: ["Landfall"],
+    card_faces: [
+      { name: "Tam, Observant Sequencer", mana_cost: "{2}{G}{U}", type_line: "Legendary Creature — Gorgon Wizard", power: "4", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, Tam becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)" },
+      { name: "Deep Sight", mana_cost: "{G}{U}", type_line: "Sorcery", oracle_text: "You draw a card and gain 1 life." }
+    ],
+    oracle_id: "702e871d-90d8-4468-8f69-5ae42af2c9d3", scryfall_id: "7120e71b-2976-451b-89a7-a1665dc6fb6b"
+  });
+  const STRIDING_SHOTCALLER = () => make({
+    name: "Striding Shotcaller // Run the Play", type_line: "Creature — Troll Druid // Sorcery", mana_cost: "{G}{U} // {X}{G}{U}", cmc: 2, power: "0", toughness: "4", colors: ["G", "U"], keywords: ["Reach"],
+    card_faces: [
+      { name: "Striding Shotcaller", mana_cost: "{G}{U}", type_line: "Creature — Troll Druid", power: "0", toughness: "4", oracle_text: "Reach\nWhenever one or more creatures you control deal combat damage to a player, this creature becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)" },
+      { name: "Run the Play", mana_cost: "{X}{G}{U}", type_line: "Sorcery", oracle_text: "Put a +1/+1 counter on each of up to X target creatures. Those creatures gain flying until end of turn. Draw a card." }
+    ],
+    oracle_id: "10389ff7-2ea4-4413-90cc-0e3ca268c64d", scryfall_id: "159c2891-c1e2-4ec3-8c20-d6b97315dd1c"
+  });
 
-  it("recognizes all four templates as fully implemented", () => {
+  it("recognizes all six templates as fully implemented", () => {
     expect(profileOf(ENCOURAGING_AVIATOR())).toMatchObject({
       fullyImplemented: true, triggers: [{ event: "attacks", subject: "self", effect: { kind: "become-prepared" } }]
     });
@@ -8743,6 +8759,38 @@ describe("Prepared mechanic — additional trigger templates", () => {
     expect(profileOf(ABIGALE())).toMatchObject({
       fullyImplemented: true, triggers: [{ event: "spell-cast", subject: "you", spellType: "creature", effect: { kind: "become-prepared" } }]
     });
+    expect(profileOf(TAM())).toMatchObject({
+      fullyImplemented: true, triggers: [{ event: "enters-battlefield", subject: "land-you-control", effect: { kind: "become-prepared" } }]
+    });
+    expect(profileOf(STRIDING_SHOTCALLER())).toMatchObject({
+      fullyImplemented: true, triggers: [{ event: "deals-combat-damage-to-player", subject: "creature-you-control", effect: { kind: "become-prepared" } }]
+    });
+  });
+
+  it("becomes prepared (landfall-shaped) when a land you control enters", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [TAM()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [FOREST()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const creature = game.players[0]!.battlefield.find((permanent) => permanent.card.name.includes("Tam"))!;
+    expect(creature.prepared).toBeUndefined();
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-0" });
+    const afterLand = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === creature.instance_id);
+    expect(afterLand?.prepared).toBe(true);
+  });
+
+  it("becomes prepared when a creature you control deals combat damage to a player", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [STRIDING_SHOTCALLER(), BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
+    const shotcaller = game.players[0]!.battlefield.find((permanent) => permanent.card.name.includes("Striding Shotcaller"))!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(shotcaller.prepared).toBeUndefined();
+    // Only the Bear attacks (power 0 Shotcaller wouldn't deal any damage itself); the trigger cares about ANY creature you control, not itself.
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 1);
+    const afterCombat = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === shotcaller.instance_id);
+    expect(afterCombat?.prepared).toBe(true);
   });
 
   it("becomes prepared when it attacks (new event wiring, not covered by the upkeep/main-phase templates)", () => {
