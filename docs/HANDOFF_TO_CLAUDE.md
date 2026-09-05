@@ -3761,6 +3761,31 @@ Food Chain, Craterhoof Behemoth, Protean Hulk, Chord of Calling, Green
 Sun's Zenith, Tooth and Nail, Yawgmoth's Will, planeswalker loyalty
 abilities for Garruk Wildspeaker and Xenagos the Reveler).
 
+**Skullclamp** — checked next, and it turned out the engine was already
+most of the way there: the `equipped-creature` `TriggerSubject` was
+already fully wired end-to-end in `matchesSubject` ("the watcher is
+the Equipment; the event object must be the creature it is attached
+to"), with a comment explicitly naming Skullclamp and Argentum Armor
+as the intended cards — but no `TRIGGER_TEMPLATES` entry had ever been
+added to actually produce a trigger with that subject, so the
+machinery sat completely unused. Added two entries — "Whenever
+equipped creature dies, ..." and "Whenever equipped creature
+attacks, ..." — both pure data-table additions with zero new engine
+code. The export crossed the 10,000 fully-implemented milestone in
+this same cycle (9,998 → 10,050), though that delta also folds in
+upstream contributions merged in alongside this change; Skullclamp and
+Argentum Armor are both individually confirmed `fullyImplemented:
+true`. Set coverage 30.2% → 30.3%. Scenario-tested: equipping
+Skullclamp onto a Grizzly Bears (2/2 → 3/1 from the clamp's own
++1/-1) leaves it alive on its own; a burn spell then finishes off the
+now-1-toughness Bear and the death trigger draws its controller two
+cards (net +1 hand size once the burn spell itself leaving hand to be
+cast is accounted for). Validation: **698 rules tests**, `npm run
+check`, `npm run simulate:engine` 200/200.
+
+Prossh decklist status after this pass: **55 of 97 unique cards fully
+implemented (56.7%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
