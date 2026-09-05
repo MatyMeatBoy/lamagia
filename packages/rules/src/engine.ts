@@ -218,6 +218,8 @@ export interface TriggerInstance {
   readonly eventPermanentId?: string;
   /** Amount carried by life-gain/loss events for proportional triggers. */
   readonly eventAmount?: number;
+  /** Delayed zone return data retained by a trigger created from an effect. */
+  readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId };
 }
 
 /** A delayed trigger created by a resolving spell (CR 603.7). */
@@ -228,6 +230,16 @@ export interface DelayedDraw {
   readonly sourceCard: GameCard;
   readonly amount: number;
   readonly optional: boolean;
+  readonly sourceText: string;
+}
+
+/** A permanent exiled until the next end step (CR 603.7, 400.7). */
+export interface DelayedReturn {
+  readonly id: string;
+  readonly triggerAtTurn: number;
+  readonly sourceCard: GameCard;
+  readonly card: GameCard;
+  readonly owner: SeatId;
   readonly sourceText: string;
 }
 
@@ -285,6 +297,8 @@ export interface GameState {
   readonly triggerQueue: readonly TriggerInstance[];
   /** Delayed draw triggers waiting for their next upkeep. */
   readonly delayedDraws: readonly DelayedDraw[];
+  /** Permanents waiting for a delayed return at the next end step. */
+  readonly delayedReturns: readonly DelayedReturn[];
   readonly combat: CombatState;
   readonly log: readonly LogEntry[];
   readonly winnerSeat: SeatId | null;
@@ -988,6 +1002,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     stack: [],
     triggerQueue: [],
     delayedDraws: [],
+    delayedReturns: [],
     combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false },
     log: [],
     winnerSeat: null,
@@ -2661,6 +2676,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
     }
+    case "return-delayed-permanent": {
+      const delayed = object.trigger?.delayedReturn;
+      if (!delayed) return state;
+      const exiled = playerAt(state, delayed.owner).exile.find((card) => card.instance_id === delayed.card.instance_id);
+      if (!exiled) return state;
+      const removed = withPlayer(state, delayed.owner, (player) => ({
+        ...player,
+        exile: player.exile.filter((card) => card.instance_id !== delayed.card.instance_id)
+      }));
+      return putOntoBattlefield(removed, delayed.owner, exiled, false);
+    }
     case "exile-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -2672,6 +2698,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
       const source = sourceId ? findPermanent(next, sourceId) : undefined;
       return source ? changePermanentController(next, source, targetController) : next;
+    }
+    case "exile-target-permanent-delayed-return": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const moved = movePermanentToZone(state, permanent, "exile");
+      // Tokens cease to exist in exile and cannot return (CR 111.8).
+      if (permanent.card.token) return moved;
+      const triggerAtTurn = state.step === "end" ? state.turn + 1 : state.turn;
+      const delayed: DelayedReturn = {
+        id: `${object.id}:return`, triggerAtTurn, sourceCard: object.card,
+        card: permanent.card, owner: permanent.card.owner,
+        sourceText: `${permanent.card.name} returns at the beginning of the next end step.`
+      };
+      return { ...moved, delayedReturns: [...moved.delayedReturns, delayed] };
     }
     case "exile-target-nontoken-creature": {
       const target = object.targets[0];
@@ -4189,6 +4231,31 @@ function queueDelayedDraws(state: GameState): GameState {
   return { ...state, delayedDraws: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
 }
 
+/** Queues permanents due to return at this end step (CR 603.7). */
+function queueDelayedReturns(state: GameState): GameState {
+  const due = state.delayedReturns.filter((delayed) => delayed.triggerAtTurn === state.turn);
+  if (!due.length) return state;
+  const remaining = state.delayedReturns.filter((delayed) => delayed.triggerAtTurn !== state.turn);
+  const triggers: TriggerInstance[] = due.map((delayed) => ({
+    id: delayed.id,
+    controller: delayed.owner,
+    sourcePermanentId: `delayed:${delayed.id}`,
+    sourceCard: delayed.sourceCard,
+    definition: {
+      event: "end-step",
+      subject: "you",
+      effect: { kind: "return-delayed-permanent" },
+      optional: false,
+      targetKind: "none",
+      sourceText: delayed.sourceText
+    },
+    cause: `${delayed.sourceCard.name}: delayed end-step return`,
+    delayedReturn: { card: delayed.card, owner: delayed.owner },
+    eventController: delayed.owner
+  }));
+  return { ...state, delayedReturns: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
+}
+
 /** Queues Echo once, at the controller's next upkeep (CR 702.30a-b). */
 function queueEchoTriggers(state: GameState): GameState {
   const due = allPermanents(state).filter((permanent) =>
@@ -4306,7 +4373,10 @@ function beginStep(state: GameState, step: TurnStep): GameState {
     next = raiseEvent(next, { kind: "upkeep", activeSeat: next.activeSeat });
   }
   if (step === "draw") next = raiseEvent(next, { kind: "draw-step", activeSeat: next.activeSeat });
-  if (step === "end") next = raiseEvent(next, { kind: "end-step", activeSeat: next.activeSeat });
+  if (step === "end") {
+    next = queueDelayedReturns(next);
+    next = raiseEvent(next, { kind: "end-step", activeSeat: next.activeSeat });
+  }
 
   const opensPriority = !NO_PRIORITY_STEPS.includes(step) && !next.finished;
   next = { ...next, priorityOpen: opensPriority };
@@ -6160,7 +6230,10 @@ function putNextTriggerOnStack(state: GameState): GameState {
     return openMultiTriggerTargetChoice({ ...state, triggerQueue: remaining }, trigger, [], opened);
   }
 
-  const options = legalTargets(state, trigger.controller, targetKind, cardProfile(trigger.sourceCard));
+  const options = legalTargets(state, trigger.controller, targetKind, cardProfile(trigger.sourceCard))
+    .filter((target) => !trigger.definition.excludesSourceFromTargets
+      || target.kind !== "permanent"
+      || target.instanceId !== trigger.sourcePermanentId);
   if (!options.length) {
     const dropped = logged({ ...state, triggerQueue: remaining }, trigger.controller,
       `La habilidad disparada de ${trigger.sourceCard.name} se retira de la pila: no hay objetivo legal.`);

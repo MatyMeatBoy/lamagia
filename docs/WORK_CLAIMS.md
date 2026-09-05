@@ -17,6 +17,7 @@ feature name.
 | `c13-whenever-deals-damage-opponent` | `codex/local-c13` | Reusable any-damage-to-opponent event for Charnelhoard Wurm's graveyard-return trigger | active |
 | `c13-remove-counter-from-deals` | `codex/local-c13` | Reusable activated cost for removing a counter, then dealing parameterized damage to any legal target; Deathbringer Thoctar | active |
 | `c13-oracle-counter-static-spell` | `codex/c13-spellbreaker` | Spellbreaker Behemoth: creature spells you control with power 5 or greater can't be countered (CR 101.2, 601.2, 608.2b) | active |
+| `c13-oracle-exile-triggered-target` | `codex/c13-flickerwisp-final` | Flickerwisp: exile another target permanent and return it under its owner's control at the beginning of the next end step (CR 603.2, 603.3d, 603.7, 400.7) | active |
 | `rules-equipment` | `codex/c13-equipment-cluster` | Equip, attachment, Equipment static bonuses, and Sword of the Paruns untap abilities | Ready for integrator review |
 | `rules-c13-reprint-equivalence` | `codex/c13-equipment-cluster` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | Ready for integrator review |
 | `rules-flashback` | `codex/c13-equipment-cluster` | Flashback cost parsing, graveyard casting, and exile replacement for instant and sorcery cards | Ready for integrator review |
