@@ -93,6 +93,12 @@ export interface StackView {
   readonly id: string;
   readonly controller: SeatId;
   readonly name: string;
+  /** Public category used by the graphical stack: spell, activated ability, or trigger. */
+  readonly kind: "spell" | "activated" | "trigger";
+  /** Printed/engine label, e.g. the trigger event or activated ability. */
+  readonly label: string;
+  /** Rules text for the visible stack object, when available. */
+  readonly text?: string;
   readonly image_normal?: string;
   readonly targets: readonly string[];
   readonly countered: boolean;
@@ -396,6 +402,11 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
       id: object.id,
       controller: object.controller,
       name: object.card.name,
+      kind: object.trigger ? "trigger" : object.activated ? "activated" : "spell",
+      label: object.label,
+      ...(object.trigger?.definition.sourceText || object.activated?.text || object.card.oracle_text
+        ? { text: object.trigger?.definition.sourceText ?? object.activated?.text ?? object.card.oracle_text ?? undefined }
+        : {}),
       ...(object.card.image_normal ? { image_normal: object.card.image_normal } : {}),
       targets: object.targets.map((target) =>
         target.kind === "player" ? state.players[target.seat]!.name

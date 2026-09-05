@@ -569,8 +569,10 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .stack-chip img { width: 32px; height: 44px; object-fit: cover; border-radius: 4px; }
 .stack-chip > .card-image-fallback { width: 32px; height: 44px; min-height: 0; flex: 0 0 32px; padding: 2px; font-size: .4rem; }
 .stack-chip span { display: grid; line-height: 1.15; }
+.stack-chip .stack-kind { color: var(--gold); font-size: .48rem; letter-spacing: .08em; text-transform: uppercase; }
 .stack-chip b { color: var(--text); font-size: .62rem; }
 .stack-chip i { font-style: normal; font-size: .54rem; }
+.stack-chip .stack-label { display: -webkit-box; overflow: hidden; margin-top: 2px; color: var(--text-faint); font-size: .48rem; line-height: 1.2; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .stack-chip.countered { opacity: .55; text-decoration: line-through; }
 .primary-button {
   padding: 9px 18px; border: 0; border-radius: 8px;
