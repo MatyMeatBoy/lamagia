@@ -1865,8 +1865,12 @@ function triggerMatches(
   switch (subject) {
     case "self": return isSelf;
     case "self-or-another-creature-you-control": return objectIsCreature && object.controller === watcher.controller;
-    case "creature-attacks-opponent":
+  case "creature-attacks-opponent":
       return event.kind === "attacks" && objectIsCreature && opponentsOf(state, watcher.controller).includes(event.defender);
+    case "creature-attacks-enchanted-player": {
+      const aura = findPermanent(state, watcher.instanceId);
+      return event.kind === "attacks" && objectIsCreature && aura?.attachedToPlayer === event.defender;
+    }
     // Rule 109.5: "another" excludes the object the ability is printed on.
     case "another-creature-you-control": return !isSelf && objectIsCreature && object.controller === watcher.controller;
     case "another-permanent-you-control": return !isSelf && cardProfile(object.card).isPermanent && object.controller === watcher.controller;
@@ -5103,12 +5107,17 @@ function resolveTop(state: GameState): GameState {
       isCommander && object.commanderEntryCounters ? (playerAt(next, object.controller).commanderCasts[object.card.instance_id] ?? 0) : 0,
       object.spentMana ?? [], [...(object.additionalCounters ?? []), ...variableEntryCounters]);
     // CR 303.4h: an Aura enters the battlefield attached to the permanent it targeted.
-    const enchantTarget = hasSubtype(profile, "Aura") ? object.targets.find((target) => target.kind === "permanent") : undefined;
+    const enchantTarget = hasSubtype(profile, "Aura")
+      ? object.targets.find((target) => target.kind === "permanent" || target.kind === "player")
+      : undefined;
     if (enchantTarget) {
       next = withPlayer(next, object.controller, (player) => ({
         ...player,
         battlefield: player.battlefield.map((permanent) => permanent.instance_id === object.card.instance_id
-          ? { ...permanent, attachedTo: enchantTarget.instanceId } : permanent)
+          ? enchantTarget.kind === "player"
+            ? { ...permanent, attachedToPlayer: enchantTarget.seat }
+            : { ...permanent, attachedTo: enchantTarget.instanceId }
+          : permanent)
       }));
     }
     next = logged(next, object.controller, `${playerAt(next, object.controller).name} resuelve ${object.card.name} al campo de batalla.`);
@@ -5220,8 +5229,13 @@ function applyStateBasedActions(state: GameState): GameState {
       if (!hasSubtype(cardProfile(aura.card), "Aura")) continue;
       const kind = cardProfile(aura.card).targetKind;
       if (kind === "none") continue;
-      const target = aura.attachedTo ? findPermanent(next, aura.attachedTo) : undefined;
-      if (target && auraAttachmentLegal(target, kind, aura.controller)) continue;
+      if (kind === "player") {
+        const targetPlayer = aura.attachedToPlayer === undefined ? undefined : playerAt(next, aura.attachedToPlayer);
+        if (targetPlayer && !targetPlayer.lost) continue;
+      } else {
+        const target = aura.attachedTo ? findPermanent(next, aura.attachedTo) : undefined;
+        if (target && auraAttachmentLegal(target, kind, aura.controller)) continue;
+      }
       next = withPlayer(next, aura.card.owner, (player) => ({
         ...player,
         battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== aura.instance_id),
