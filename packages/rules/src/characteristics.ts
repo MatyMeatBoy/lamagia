@@ -47,6 +47,10 @@ export type EnforcedKeyword = (typeof ENFORCED_KEYWORDS)[number];
 
 export interface ManaAbility {
   readonly index: number;
+  /** Zone from which this mana ability can be activated (battlefield by default). */
+  readonly sourceZone?: "battlefield" | "hand";
+  /** Exile the source card as part of a hand-based mana cost (e.g. Simian Spirit Guide). */
+  readonly exilesSelf?: boolean;
   /** The mana types the controller may choose between for each mana produced. */
   readonly produces: readonly ManaType[];
   readonly amount: number;
@@ -1386,6 +1390,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
     const requiresTap = /\{T\}/.test(costText);
+    const exilesSelfFromHand = /^exile\s+~\s+from\s+your\s+hand$/i.test(costText.trim());
     const variableSacrifice = /^(?:\{T\},\s*)?sacrifice\s+X\s+([A-Za-z][A-Za-z'’-]*)s?$/i.exec(costText.trim().replace(/,\s*$/, ""));
     if (variableSacrifice && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(effectText.trim())) {
       abilities.push({
@@ -1422,6 +1427,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
     if (manaSymbols.length && !manaCost) continue;
     const leftovers = costText
+      .replace(/exile\s+~\s+from\s+your\s+hand/gi, "")
       .replace(/\{T\}/g, "")
       .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
@@ -1479,6 +1485,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       : undefined;
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
+      ...(exilesSelfFromHand ? { sourceZone: "hand" as const, exilesSelf: true } : {}),
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
       ...(produced.commanderIdentity ? { commanderIdentity: true } : {}),
       ...(instruction.commanderEntryCounters ? { commanderEntryCounters: true } : {}),

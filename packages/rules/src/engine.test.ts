@@ -29,6 +29,32 @@ describe("smart counter response and safe mana undo", () => {
     expect(permanents.at(-2)).toMatchObject({ isCreature: false, power: null, toughness: null });
     expect(permanents.at(-1)).toMatchObject({ isCreature: true, power: 0, toughness: 0 });
   });
+  it("projects stack cards with their object kind and readable label", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [BOLT()], "stack-card") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "stack-card-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(projectGame(game, 1).stack[0]).toMatchObject({ kind: "spell", name: "Lightning Bolt", label: "Lightning Bolt", text: "Lightning Bolt deals 3 damage to any target." });
+  });
+  it("offers Simian Spirit Guide's hand mana instead of guessing cast", () => {
+    let game = twoSeatGame([], []);
+    const guide = SIMIAN_SPIRIT_GUIDE();
+    game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [guide], "guide") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const actions = legalActions(game, 0).filter((entry) => entry.cardId === "guide-0");
+    expect(actions.some((entry) => entry.action.type === "cast")).toBe(true);
+    const manaAction = actions.find((entry) => entry.action.type === "activate-mana");
+    expect(manaAction?.action).toMatchObject({ type: "activate-mana", mana: "R" });
+    game = applyAction(game, 0, manaAction!.action);
+    expect(game.players[0]!.hand.some((card) => card.instance_id === "guide-0")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.instance_id === "guide-0")).toBe(true);
+    expect(game.players[0]!.manaPool.R).toBe(1);
+    expect(game.stack).toHaveLength(0);
+  });
   it("projects player-attached Auras without leaking or losing the attachment", () => {
     const curse = make({ name: "Test Curse", type_line: "Enchantment — Aura", oracle_text: "Enchant player" });
     let game = putOnBattlefield(twoSeatGame([], []), 0, [curse]);
@@ -155,6 +181,7 @@ const SPHINX_OF_THE_STEEL_WIND = () => make({
 });
 const RED_RAIDER = () => make({ name: "Red Raider", type_line: "Creature — Goblin", mana_cost: "{1}{R}", cmc: 2, power: "3", toughness: "3", colors: ["R"] });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
+const SIMIAN_SPIRIT_GUIDE = () => make({ name: "Simian Spirit Guide", type_line: "Creature — Ape Spirit", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Exile Simian Spirit Guide from your hand: Add {R}." });
 const WAR_CADENCE = () => make({ name: "War Cadence", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "{X}: This turn, creatures can't block unless their controller pays {X} for each blocking creature they control.", oracle_id: "49d0fdd6-cc8f-4fe1-a6bd-4321dac18404" });
 const SEKKUAR = () => make({ name: "Sek'Kuar, Deathkeeper", type_line: "Legendary Creature — Orc Shaman", mana_cost: "{2}{B}{R}{G}", cmc: 5, power: "4", toughness: "3", colors: ["B", "R", "G"], oracle_text: "Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.", oracle_id: "94426127-65c2-435e-ba92-423a3c102061" });
 const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Regenerate target creature." });

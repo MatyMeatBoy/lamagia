@@ -367,7 +367,7 @@ function applyView(next: GameView): void {
 function seatOf(seat: number): PlayerView | undefined { return view?.players.find((player) => player.seat === seat); }
 function cardActionsForCard(cardId: string): LegalAction[] {
   const choices = view?.legalActions.filter((entry) => entry.cardId === cardId &&
-    (entry.action.type === "cast" || entry.action.type === "cycle" || entry.action.type === "play-land" || entry.action.type === "activate" || entry.action.type === "choose-reveal"));
+    (entry.action.type === "cast" || entry.action.type === "cycle" || entry.action.type === "play-land" || entry.action.type === "activate" || entry.action.type === "activate-mana" || entry.action.type === "choose-reveal"));
   return [...(choices ?? [])].sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0));
 }
 function actionForCard(cardId: string): LegalAction | undefined {
@@ -602,14 +602,6 @@ function wirePermanentPress(button: HTMLButtonElement): void {
   });
   button.addEventListener("pointerup", endCardDetailPress);
   button.addEventListener("pointercancel", endCardDetailPress);
-  button.addEventListener("contextmenu", (event) => {
-    event.preventDefault();
-    if (cardDetailPress?.button === button) {
-      cardDetailPress.longPressed = true;
-      if (cardDetailPress.timer !== null) window.clearTimeout(cardDetailPress.timer);
-    }
-    openCardActionMenu(button.dataset.permanent!);
-  });
   button.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     if (cardDetailPress?.button === button) {
@@ -983,7 +975,7 @@ function decisionOverlayHtml(): string {
   const actions = view?.legalActions ?? [];
   const choices = actions.filter((entry) =>
     entry.action.type !== "pass" && entry.action.type !== "concede" && entry.action.type !== "choose-library-card"
-      && !["cast", "cycle", "play-land", "activate", "activate-mana", "equip", "declare-attackers", "declare-blockers"].includes(entry.action.type));
+      && !["cast", "cycle", "play-land", "activate", "activate-mana", "equip", "toggle-trigger-yield", "declare-attackers", "declare-blockers"].includes(entry.action.type));
   if (!choices.length) return "";
   const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
   const title = hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
