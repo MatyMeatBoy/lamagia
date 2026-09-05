@@ -993,6 +993,15 @@ export function normalizedOracle(card: CardData): string {
   const escaped = [card.name, shortName].filter(Boolean).map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   let text = raw;
   for (const pattern of escaped) text = text.replace(new RegExp(pattern, "g"), "~");
+  // Older Oracle imports sometimes abbreviate a multi-word card name in its
+  // self-reference (e.g. "When Sharuum enters" for Sharuum the Hegemon).
+  // Only normalize the first name token when it is followed by a
+  // self-referential verb, avoiding accidental changes to descriptive text.
+  const firstName = card.name.trim().split(/\s+/)[0] ?? "";
+  if (firstName.length >= 4) {
+    const escapedFirst = firstName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    text = text.replace(new RegExp(`\\b${escapedFirst}(?=\\s+(?:enters|attacks|blocks|dies|gets|gains|deals|is|has|can't|doesn't|doesn’t)\\b)`, "g"), "~");
+  }
   const selfReference = new RegExp(`\\bthis (?:${SELF_NOUNS.join("|")})\\b`, "gi");
   text = text.replace(selfReference, "~");
   return text.replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").trim();
@@ -1599,6 +1608,22 @@ function searchCriterion(text: string): { types: CardType[]; subtypes: string[] 
 
 function parseLibrarySearch(text: string): SpellEffect | null {
   const single = /^Search your library for (?:a |an |up to (?:one|two|three|five) )?(.+?) card, (.+)$/i.exec(text);
+  // Some historical imports use plural pronouns after selecting several
+  // cards. Keep the amount as a structured operand instead of forcing this
+  // through the single-card `it/that card` grammar.
+  const multiHand = /^Search your library for up to (one|two|three|five) (.+?) cards, reveal (?:them|those cards), put (?:them|those cards) into your hand, then shuffle\.?$/i.exec(text);
+  if (multiHand) {
+    const count = toNumber(multiHand[1]!) ?? 1;
+    const criterion = searchCriterion(multiHand[2]!);
+    return {
+      kind: "search-library",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      destination: "hand",
+      reveal: true,
+      count
+    };
+  }
   // "up to N basic land cards, put them onto the battlefield tapped, then shuffle" (Burnished Hart, Harrow).
   const multi = /^Search your library for up to (one|two|three) (.+?) cards(?:\s+that share a land type)?, put them onto the battlefield( tapped)?,?\s*(?:then shuffle)?\.?$/i.exec(text);
   if (multi) {

@@ -134,6 +134,32 @@ describe("mana abilities", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("handles plural multi-card search pronouns", () => {
+    const profile = cardProfile(card({
+      name: "Armillary Sphere", type_line: "Artifact",
+      oracle_text: "{2}, {T}, Sacrifice ~: Search your library for up to two basic land cards, reveal them, put them into your hand, then shuffle."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sacrificesSelf: true,
+      effect: { kind: "search-library", types: ["Land"], subtypes: ["Basic"], destination: "hand", count: 2, reveal: true }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("normalizes abbreviated self references in historical Oracle imports", () => {
+    const profile = cardProfile(card({
+      name: "Sharuum the Hegemon", type_line: "Legendary Artifact Creature — Sphinx",
+      oracle_text: "When Sharuum enters, you may return target artifact card from your graveyard to the battlefield."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield",
+      optional: true,
+      targetKind: "artifact-card-in-your-graveyard",
+      effect: { kind: "return-target-artifact-card-from-graveyard-to-battlefield" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("recognises source and targeted regeneration as reusable effects", () => {
     const source = cardProfile(card({
       name: "Marrow Bats", type_line: "Creature — Bat", mana_cost: "{3}{B}", cmc: 4,

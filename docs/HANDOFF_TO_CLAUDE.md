@@ -12,14 +12,28 @@ selected compositional worker payloads; verify the Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,129 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,141 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
 - **Edition memberships:** 22,837 / 84,990 implemented (26.9%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 239 / 341 unique cards (70.1%), 102 pending.
+- **Commander 2013:** 241 / 341 unique cards (70.7%), 100 pending.
 - **Commander 2014:** 198 / 322 unique cards (61.5%), 124 pending.
+
+### Tested-only pod mode
+
+The Home client and match server expose **Tested mode**. It reads the
+authoritative engine profile export, keeps only cards whose stable `oracle_id`
+is marked `fullyImplemented`, preserves implemented commanders, and fills a
+Commander deck to 100 with legal basic lands. The server selects four suitable
+imported decks and never sends incomplete cards to that pod. This mode is
+covered by `services/match-server/src/tested-mode.test.ts`.
+
+This does not mean every planned pod option is live yet: custom 2–8 seat
+lobbies and the tier/EDHREC deck generator are still queued for UI/API wiring;
+the deterministic simulator and offline generator already support the related
+building blocks.
 
 ### Historical worker intake audit — 2026-09-05
 
