@@ -7,16 +7,23 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 ### Gameplay hardening checkpoint — 2026-09-05
 
 The graphical stack projects each spell, activated ability, and trigger as an
-ordered card-like item with controller, targets, rules text, and a clear
-top-first resolution marker. Human priority responses remain authoritative in
-`packages/rules`; the client only renders legal actions. The general right-click
-or long-press card menu lists legal play/activation/yield actions and keeps
-information last. Hand-only mana abilities, including Simian Spirit Guide, are
-separate from casting: selecting them exiles the card as a cost and adds mana;
-they are not used by automatic payment or shown as battlefield mana sources.
-Optional triggers can be yielded per source, while mandatory triggers and
-opponent response windows remain active. Validation after this checkpoint:
-714 rules tests, `npm run check`, and the 200-game engine matrix pass.
+ordered, inspectable card-like item with controller, targets, rules text, and a
+clear top-first resolution marker. Human priority responses remain authoritative
+in `packages/rules`; the client only renders legal actions. The general
+right-click or long-press card menu lists legal play/activation/yield actions and
+keeps information last. Hand-only mana abilities, including Simian Spirit Guide,
+are separate from casting: selecting them exiles the card as a cost and adds
+mana; they are not used by automatic payment or shown as battlefield mana
+sources. Optional triggers can be yielded per source, while mandatory triggers
+and opponent response windows remain active. Multi-target modal actions project
+every target kind required by their selected mode. Validation after this
+checkpoint: **720 rules tests**, `npm run check`, all Python suites, and the
+200-game engine matrix pass (163 terminal games, 37 reached the 60-turn cap).
+
+The latest engine-profile export reports **10,066 / 38,711** fully implemented
+profiles after adding reusable static mana-ability grants. The edition counts
+below are from an older published coverage export and must be regenerated before
+quoting new edition percentages.
 
 Gameplay failure traces now include resolved names of stack targets in both the
 server NDJSON snapshot and the bounded stabilization diagnostic, so a stuck
