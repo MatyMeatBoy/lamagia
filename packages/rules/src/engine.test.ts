@@ -54,6 +54,8 @@ describe("smart counter response and safe mana undo", () => {
     expect(game.players[0]!.exile.some((card) => card.instance_id === "guide-0")).toBe(true);
     expect(game.players[0]!.manaPool.R).toBe(1);
     expect(game.stack).toHaveLength(0);
+    const battlefieldGuide = putOnBattlefield(twoSeatGame([], []), 0, [guide]);
+    expect(projectGame(battlefieldGuide, 0).players[0]!.battlefield[0]!.producesMana).toBe(false);
   });
   it("projects player-attached Auras without leaking or losing the attachment", () => {
     const curse = make({ name: "Test Curse", type_line: "Enchantment — Aura", oracle_text: "Enchant player" });
