@@ -682,6 +682,8 @@ export type TriggerEvent =
   | "upkeep"
   | "draw-step"
   | "end-step"
+  /** Modeled as precombat main beginning (CR 505.1a); this project has no "additional main phase" effects, so the two coincide for every card in scope. */
+  | "first-main-phase"
   | "leaves-battlefield"
   | "life-gained"
   | "life-lost"
@@ -733,7 +735,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "leaves-battlefield": "habilidad de salida del campo de batalla",
   "life-gained": "life-gain trigger",
   "life-lost": "life-loss trigger",
-  "class-level-up": "habilidad de nivel de Clase"
+  "class-level-up": "habilidad de nivel de Clase",
+  "first-main-phase": "habilidad de la primera fase principal"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -742,6 +745,13 @@ export interface TriggerDefinition {
   readonly subject: TriggerSubject;
   readonly effect: SpellEffect;
   readonly optional: boolean;
+  /**
+   * "Choose one or more" for a triggered ability (Black Market Connections):
+   * every legal non-empty mode subset, precomputed the same way a spell's
+   * "Choose N or more" modal choices are, but resolved as a choice made when
+   * the ability is put on the stack (CR 603.3d) rather than at cast time.
+   */
+  readonly modalEffects?: readonly { readonly text: string; readonly effect: SpellEffect }[];
   /**
    * What the ability targets. Targets for a trigger are chosen when it is put
    * onto the stack (CR 603.3d), never when the source is cast, so this is kept
@@ -3487,6 +3497,61 @@ function recognizeText(text: string): RecognizedText {
     if (/^(?:(?:(?:white|blue|black|red|green)\s+spells)(?:\s+and\s+(?:white|blue|black|red|green)\s+spells)+|(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells) you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^instant and sorcery spells cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^[A-Za-z][A-Za-z'’/-]* spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
+    // "At the beginning of your first main phase, choose one or more —"
+    // (Black Market Connections): unlike a spell's modal choice, this is a
+    // TRIGGERED ability's own choice, made when it goes on the stack (CR
+    // 603.3d) rather than at cast time — so the subsets become
+    // `TriggerDefinition.modalEffects`, not `CardProfile.modalChoices`.
+    const triggerChooseMore = /^At the beginning of your first main phase,\s*choose (one|two|three|four|five) or more(?:\s+[—–-�])?\s*$/i.exec(line);
+    if (triggerChooseMore) {
+      const minimumModes = toNumber(triggerChooseMore[1]) ?? 1;
+      const start = lineIndex + 1;
+      const modes: { text: string; effect: SpellEffect }[] = [];
+      let cursor = start;
+      let invalid = false;
+      while (cursor < body.length && body[cursor]!.bullet) {
+        const entry = body[cursor]!;
+        // Each mode is printed as "Ability word — effect" (an ability word
+        // naming the mode, CR 207.2c); it carries no independent rules meaning.
+        // A mode is often two sentences ("Create a Treasure token. You lose 1
+        // life."); each is recognized on its own and joined into a compound
+        // here, rather than teaching `recognizeSentence` a generic "X. You
+        // lose N life." combinator that would also reshape unrelated cards
+        // already parsed as separate top-level sentences (Read the Bones).
+        const modeText = entry.text.replace(/^[A-Za-z][A-Za-z' ]*\s+[—–-]\s*/, "");
+        const sentences = modeText.split(SENTENCE_SPLIT).map((sentence) => sentence.trim()).filter(Boolean);
+        const recognizedSentences = sentences.map((sentence) => recognizeSentence(sentence));
+        if (!sentences.length || recognizedSentences.some((recognized) => !recognized || recognized.target !== "none")) {
+          invalid = true;
+          break;
+        }
+        const modeEffects = recognizedSentences.map((recognized) => recognized!.effect);
+        modes.push({ text: entry.text, effect: modeEffects.length === 1 ? modeEffects[0]! : { kind: "compound", effects: modeEffects } });
+        cursor += 1;
+      }
+      if (!invalid && modes.length > 0 && cursor > start) {
+        const subsets: { text: string; effect: SpellEffect }[] = [];
+        const visit = (from: number, selected: { text: string; effect: SpellEffect }[]): void => {
+          for (let index = from; index < modes.length; index += 1) {
+            const next = [...selected, modes[index]!];
+            if (next.length >= minimumModes) {
+              subsets.push({
+                text: next.map((mode) => mode.text.replace(/\.$/, "")).join("; "),
+                effect: next.length === 1 ? next[0]!.effect : { kind: "compound", effects: next.map((mode) => mode.effect) }
+              });
+            }
+            if (index + 1 < modes.length) visit(index + 1, next);
+          }
+        };
+        visit(0, []);
+        triggers.push({
+          event: "first-main-phase", subject: "you", effect: subsets[0]!.effect, modalEffects: subsets,
+          optional: false, targetKind: "none", sourceText: line
+        });
+        lineIndex = Math.max(lineIndex, cursor - 1);
+        continue;
+      }
+    }
     const chooseOneOrBoth = /^Choose one or both(?:\s+[—–-�])?\s*$/i.test(line);
     const chooseMoreMatch = /^Choose (one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more(?:\s+[—–-�])?\s*$/i.exec(line);
     if (chooseOneOrBoth || chooseMoreMatch || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {

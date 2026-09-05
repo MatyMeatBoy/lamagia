@@ -459,6 +459,11 @@ const MJOLNIR = () => make({
   oracle_id: "7f9a8845-d760-44a7-a4c9-8a20dba4e14a", scryfall_id: "e0c7f566-5351-44e3-a346-b84b0eb10209"
 });
 const WORTHY_CREATURE = () => make({ name: "Test Worthy Avenger", type_line: "Legendary Creature — Human Hero", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", colors: ["R"] });
+const BLACK_MARKET_CONNECTIONS = () => make({
+  name: "Black Market Connections", type_line: "Enchantment", mana_cost: "{2}{B}", cmc: 3,
+  oracle_text: "At the beginning of your first main phase, choose one or more —\n• Sell Contraband — Create a Treasure token. You lose 1 life.\n• Buy Information — Draw a card. You lose 2 life.\n• Hire a Mercenary — Create a 3/2 colorless Shapeshifter creature token with changeling. You lose 3 life.",
+  oracle_id: "d2664f28-49e1-46f8-a863-b217e961a57c", scryfall_id: "9d9ca869-e68a-4f53-9f52-85c714dac6f3"
+});
 const WIZARD_CLASS = () => make({
   name: "Wizard Class", type_line: "Enchantment — Class", mana_cost: "{U}", cmc: 1,
   oracle_text: "You have no maximum hand size.\n{2}{U}: Level 2\nWhen this Class becomes level 2, draw two cards.\n{4}{U}: Level 3\nWhenever you draw a card, put a +1/+1 counter on target creature you control.",
@@ -7991,6 +7996,65 @@ describe("Wizard Class", () => {
       game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
     }
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"]).toBe(1);
+  });
+});
+
+describe("Black Market Connections", () => {
+  it("offers all seven mode combinations at its controller's own first main phase, not the opponent's", () => {
+    const profile = profileOf(BLACK_MARKET_CONNECTIONS());
+    expect(profile.triggers[0]).toMatchObject({ event: "first-main-phase", subject: "you", targetKind: "none" });
+    expect(profile.triggers[0]!.modalEffects).toHaveLength(7);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BLACK_MARKET_CONNECTIONS()]);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-mode");
+    const choice = game.pendingChoice;
+    if (choice?.type !== "trigger-mode") throw new Error("expected a trigger-mode choice");
+    expect(choice.options).toHaveLength(7);
+    expect(game.activeSeat).toBe(0);
+
+    // Clear this turn's mandatory choice, then confirm the same trigger does
+    // not also fire during the opponent's first main phase.
+    const sellOnly = choice.options.find((option) => option.text.startsWith("Sell Contraband") && !option.text.includes(";"))!;
+    game = applyAction(game, 0, { type: "choose-trigger-mode", sourceId: choice.sourceId, optionIndex: sellOnly.index });
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 1);
+    expect(game.pendingChoice?.type).not.toBe("trigger-mode");
+  });
+
+  it("resolves a single chosen mode and its life cost", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BLACK_MARKET_CONNECTIONS()]);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-mode");
+    const choice = game.pendingChoice;
+    if (choice?.type !== "trigger-mode") throw new Error("expected a trigger-mode choice");
+    const sellOnly = choice.options.find((option) => option.text.startsWith("Sell Contraband") && !option.text.includes(";"))!;
+
+    const lifeBefore = game.players[0]!.life;
+    const treasuresBefore = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Treasure").length;
+    game = applyAction(game, 0, { type: "choose-trigger-mode", sourceId: choice.sourceId, optionIndex: sellOnly.index });
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Treasure")).toHaveLength(treasuresBefore + 1);
+    expect(game.players[0]!.life).toBe(lifeBefore - 1);
+  });
+
+  it("applies every effect and every life cost when multiple modes are chosen together", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BLACK_MARKET_CONNECTIONS()]);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-mode");
+    const choice = game.pendingChoice;
+    if (choice?.type !== "trigger-mode") throw new Error("expected a trigger-mode choice");
+    const sellAndBuy = choice.options.find((option) =>
+      option.text.startsWith("Sell Contraband") && option.text.includes("Buy Information") && !option.text.includes("Hire"))!;
+
+    const lifeBefore = game.players[0]!.life;
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "choose-trigger-mode", sourceId: choice.sourceId, optionIndex: sellAndBuy.index });
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Treasure")).toBe(true);
+    expect(game.players[0]!.hand).toHaveLength(handBefore + 1);
+    expect(game.players[0]!.life).toBe(lifeBefore - 3); // 1 (Sell Contraband) + 2 (Buy Information)
   });
 });
 

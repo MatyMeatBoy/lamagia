@@ -153,6 +153,13 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const pick = chosen ?? fallback;
     if (pick) return { action: pick.action, label: pick.label };
   }
+  if (state.pendingChoice?.type === "trigger-mode" && state.pendingChoice.seat === seat) {
+    // Greedy default: the richest subset (most modes chosen) has the longest
+    // joined label, since each option's text is its modes joined by "; ".
+    const modeOptions = available.filter((entry) => entry.action.type === "choose-trigger-mode");
+    const richest = [...modeOptions].sort((a, b) => b.label.length - a.label.length)[0];
+    if (richest) return { action: richest.action, label: richest.label };
+  }
   if (state.pendingChoice?.type === "tap-or-untap" && state.pendingChoice.seat === seat) {
     const choice = state.pendingChoice;
     const targetPermanent = "instanceId" in choice.target ? choice.target : undefined;

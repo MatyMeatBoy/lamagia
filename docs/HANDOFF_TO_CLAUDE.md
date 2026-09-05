@@ -3154,3 +3154,61 @@ turn, since sorcery-speed actions always keep a real priority window open
 there), by which point exactly one draw for that turn has already
 happened. Validation: **613 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,433 global profiles.
+
+Black Market Connections | `d2664f28-49e1-46f8-a863-b217e961a57c` closed
+the deck's last genuinely new-subsystem card: "At the beginning of your
+first main phase, choose one or more —" with three costed modes. Two
+pieces. First, a `first-main-phase` `TriggerEvent`, raised in `beginStep`
+right alongside the existing `step === "precombat-main"` hook that Mana
+Drain's delayed-mana queue already uses — this project has no card
+granting "an additional main phase," so modeling "first main phase" as
+literally "precombat main begins" is exact for every card in scope, not
+an approximation (documented as such in the `TriggerEvent` union comment
+in case a future card breaks that assumption). Second, and the harder
+piece: a triggered ability's own "choose one or more." CR 603.3d puts
+this choice at the SAME timing as choosing a trigger's targets — when the
+ability is put on the stack, not when cast (unlike a spell's modal
+choice, which is a cast-time decision already fully built via
+`CardProfile.modalChoices`). So rather than reuse the spell path, this
+needed a parallel one: `TriggerDefinition.modalEffects` holds every legal
+non-empty mode subset (computed with the exact same recursive
+subset-enumeration `visit()` already used for a spell's "Choose N or
+more," just targeting a different field), a new `"trigger-mode"`
+`PendingChoice` opened by `putNextTriggerOnStack` before its normal
+target-kind branching runs, and a `choose-trigger-mode` action resolved
+by `applyChooseTriggerMode` — which builds the chosen subset's `TriggerInstance`
+by spreading the ORIGINAL trigger with `definition.effect` swapped for
+the selected subset, then hands it to the existing `triggerStackObject`
+unmodified. That reuse meant zero new resolution code: the stack object
+behaves exactly like any other trigger once its effect is decided. Also
+added a `botAction` branch (pick the subset option with the longest
+joined label, a cheap proxy for "the richest combination") — a
+"trigger-mode" choice has no generic `"pass"` fallback the way most other
+choice types eventually get, so an unhandled bot encountering this card
+would have silently stalled instead of erroring. Caught mid-build: the
+first attempt taught `recognizeSentence` itself a generic "X. You lose N
+life." combinator so each mode's two sentences ("Create a Treasure
+token. You lose 1 life.") would fold into one compound — but this is a
+SHARED, global function, and the new pattern immediately also matched
+Read the Bones' unrelated "Scry 2, then draw two cards. You lose 2
+life.", reshaping its previously-correct flat two-element
+`CardProfile.effects` array into one nested compound and failing that
+card's existing test. Reverted the global change entirely and rebuilt it
+as a small LOCAL step inside this card's own bullet-parsing loop (split
+each mode's text on the same `SENTENCE_SPLIT` the rest of the file
+already uses for multi-sentence lines, recognize each sentence, join into
+a compound) — `recognizeSentence` itself is untouched. Validation: **616
+rules tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,434
+global profiles.
+
+With Black Market Connections and Wizard Class closed, 90 of 94 cards in
+the Nekusar, the Mindrazer decklist are implemented. Four remain, each
+needing its own new subsystem, none attempted yet: Notion Thief (a
+draw-replacement-effect framework, touching the hidden-information
+boundary CLAUDE.md mandates — deliberately deferred pending a careful
+design), Gitaxian Probe ("look at target player's hand," which also
+touches that same hidden-information boundary — no safe design found
+yet), Reforge the Soul (the Miracle keyword, which requires
+intercepting/pausing the `drawCards` loop — architecturally risky), and
+Naktamun Lorespinner // Wheel of Fortune (needs a transform/DFC state
+framework that does not exist in this engine at all).

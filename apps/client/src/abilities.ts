@@ -251,6 +251,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     rule: "Se dispara cuando esta Clase alcanza el nivel indicado.",
     enforced: "Se registra justo después de que la habilidad de subir de nivel resuelve.",
     path: "M12 4 4 9l8 5 8-5-8-5zM4 15l8 5 8-5"
+  },
+  "first-main-phase": {
+    label: "Al comenzar la primera fase principal",
+    rule: "Se dispara al comenzar la primera fase principal del turno indicado.",
+    enforced: "Se modela como el comienzo de la fase principal previa al combate.",
+    path: "M4 4h16v16H4V4zm4 4h8m-8 4h8m-8 4h4"
   }
 };
 

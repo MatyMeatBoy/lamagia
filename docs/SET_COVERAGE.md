@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,979** · cobertura: **28.2%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,984** · cobertura: **28.2%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 11 | 109 | 9.2% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1419 | 3802 | 27.2% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1420 | 3801 | 27.2% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 20 | 39 | 33.9% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 11 | 9 | 55.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 387 | 1309 | 22.8% |
@@ -528,7 +528,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 | 2022-04-29 | Streets of New Capenna (`SNC`) | expansion | capenna | main | 310 | 43 | 267 | 13.9% |
 | 2022-04-29 | Streets of New Capenna Promos (`PSNC`) | promos | streets-of-new-capenna | other | 80 | 7 | 73 | 8.8% |
 | 2022-06-10 | Battle for Baldur's Gate Promos (`PCLB`) | promos | battle-for-baldur-s-gate | other | 99 | 6 | 93 | 6.1% |
-| 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | commander | 2022 | other | 651 | 129 | 522 | 19.8% |
+| 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | commander | 2022 | other | 651 | 130 | 521 | 20.0% |
 | 2022-07-01 | Love Your LGS 2022 (`PLG22`) | promos | lgs-2022 | other | 2 | 2 | 0 | 100.0% |
 | 2022-07-08 | Double Masters 2022 (`2X2`) | masters-remastered | double-masters-2022 | other | 332 | 86 | 246 | 25.9% |
 | 2022-07-09 | Store Championships (`SCH`) | promos | store-championships | other | 50 | 9 | 41 | 18.0% |
@@ -594,7 +594,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 | 2023-11-17 | March of the Machine: The Aftermath Promos (`PMAT`) | promos | march-of-the-machine-the-aftermath | other | 8 | 0 | 8 | 0.0% |
 | 2023-11-17 | Special Guests (`SPG`) | masterpieces | special-guests | other | 139 | 30 | 109 | 21.6% |
 | 2023-11-17 | The Lost Caverns of Ixalan (`LCI`) | expansion | ixalan | main | 292 | 41 | 251 | 14.0% |
-| 2023-11-17 | The Lost Caverns of Ixalan Commander (`LCC`) | commander | 2023 | commander | 313 | 80 | 233 | 25.6% |
+| 2023-11-17 | The Lost Caverns of Ixalan Commander (`LCC`) | commander | 2023 | commander | 313 | 81 | 232 | 25.9% |
 | 2023-11-17 | The Lost Caverns of Ixalan Promos (`PLCI`) | promos | the-lost-caverns-of-ixalan | other | 68 | 1 | 67 | 1.5% |
 | 2024-01-12 | Ravnica Remastered (`RVR`) | masters-remastered | ravnica-remastered | other | 313 | 84 | 229 | 26.8% |
 | 2024-02-08 | Year of the Dragon 2024 (`PL24`) | promos | year-of-the-dragon-2024 | other | 6 | 2 | 4 | 33.3% |
@@ -616,7 +616,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 | 2024-06-14 | Modern Horizons 3 (`MH3`) | supplemental | modern-horizons-3 | other | 313 | 44 | 269 | 14.1% |
 | 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 2024 | commander | 320 | 102 | 218 | 31.9% |
 | 2024-06-14 | Modern Horizons 3 Promos (`PMH3`) | promos | modern-horizons-3 | other | 81 | 6 | 75 | 7.4% |
-| 2024-07-05 | Assassin's Creed (`ACR`) | supplemental | assassin-s-creed | other | 138 | 19 | 119 | 13.8% |
+| 2024-07-05 | Assassin's Creed (`ACR`) | supplemental | assassin-s-creed | other | 138 | 20 | 118 | 14.5% |
 | 2024-08-02 | Bloomburrow (`BLB`) | expansion | bloomburrow | main | 280 | 40 | 240 | 14.3% |
 | 2024-08-02 | Bloomburrow Commander (`BLC`) | commander | 2024 | commander | 312 | 120 | 192 | 38.5% |
 | 2024-08-02 | Bloomburrow Promos (`PBLB`) | promos | bloomburrow | other | 80 | 3 | 77 | 3.8% |
@@ -685,7 +685,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 17 | 48 | 26.2% |
 | 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 7 | 73 | 8.8% |
 | 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 48 | 233 | 17.1% |
-| 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 143 | 473 | 23.2% |
+| 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 144 | 472 | 23.4% |
 | 2026-08-14 | The Hobbit (`HOB`) | expansion | 2020s | main | 193 | 35 | 158 | 18.1% |
 | 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | 2020s | other | 117 | 24 | 93 | 20.5% |
 | 2026-09-02 | The Zeta Set (`SLZ`) | boxed-products | the-zeta-set | other | 121 | 42 | 79 | 34.7% |
@@ -749,11 +749,11 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 | commander | 2019 | 1 | 292 | 108 | 184 | 37.0% |
 | commander | 2020 | 4 | 1001 | 346 | 655 | 34.6% |
 | commander | 2021 | 5 | 1022 | 347 | 675 | 34.0% |
-| commander | 2022 | 7 | 1802 | 507 | 1295 | 28.1% |
-| commander | 2023 | 6 | 1597 | 494 | 1103 | 30.9% |
+| commander | 2022 | 7 | 1802 | 508 | 1294 | 28.2% |
+| commander | 2023 | 6 | 1597 | 495 | 1102 | 31.0% |
 | commander | 2024 | 7 | 1887 | 640 | 1247 | 33.9% |
 | commander | 2025 | 4 | 1046 | 391 | 655 | 37.4% |
-| commander | 2026 | 6 | 1265 | 334 | 931 | 26.4% |
+| commander | 2026 | 6 | 1265 | 335 | 930 | 26.5% |
 | conspiracy | conspiracy | 2 | 211 | 45 | 166 | 21.3% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 61 | 160 | 27.6% |
 | core | 1990s | 10 | 3267 | 1145 | 2122 | 35.0% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 | masters-remastered | shadows-of-the-past | 1 | 76 | 26 | 50 | 34.2% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 54 | 230 | 19.0% |
 | masters-remastered | tempest-remastered | 1 | 254 | 90 | 164 | 35.4% |
-| masters-remastered | the-list | 1 | 5221 | 1419 | 3802 | 27.2% |
+| masters-remastered | the-list | 1 | 5221 | 1420 | 3801 | 27.2% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 103 | 310 | 24.9% |
 | masters-remastered | ultimate-masters | 1 | 254 | 75 | 179 | 29.5% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -1205,7 +1205,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 | starter | 2010s | 7 | 89 | 47 | 42 | 52.8% |
 | starter | 2020s | 1 | 120 | 64 | 56 | 53.3% |
 | starter | 2022 | 1 | 337 | 148 | 189 | 43.9% |
-| supplemental | assassin-s-creed | 1 | 138 | 19 | 119 | 13.8% |
+| supplemental | assassin-s-creed | 1 | 138 | 20 | 118 | 14.5% |
 | supplemental | battlebond | 1 | 254 | 86 | 168 | 33.9% |
 | supplemental | innistrad-double-feature | 1 | 532 | 72 | 460 | 13.5% |
 | supplemental | modern-horizons | 1 | 255 | 68 | 187 | 26.7% |
@@ -32020,7 +32020,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 - [ ] Black Cat — `10edf7e0-d6be-4510-819f-8834bedfba41`
 - [ ] Black Dragon Gate — `dde6bce5-8bbe-4866-b5aa-2c05c7d37241`
 - [ ] Black Market — `21338b71-37f5-4121-9b84-565025ebcd17`
-- [ ] Black Market Connections — `d2664f28-49e1-46f8-a863-b217e961a57c`
 - [ ] Blackblade Reforged — `dca51281-fb21-45b6-beb4-1f13397caee2`
 - [ ] Blade Instructor — `77cff683-013c-4568-8ae0-f86ef0590fe1`
 - [ ] Blade of Selves — `9c329f3d-4d0a-4012-8aa6-92afdd120a52`
@@ -45175,7 +45174,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 - [ ] Bhaal, Lord of Murder — `0d2dd78c-103c-4286-a3a1-e471dc77ed91`
 - [ ] Black Dragon Gate — `dde6bce5-8bbe-4866-b5aa-2c05c7d37241`
 - [ ] Black Market — `21338b71-37f5-4121-9b84-565025ebcd17`
-- [ ] Black Market Connections — `d2664f28-49e1-46f8-a863-b217e961a57c`
 - [ ] Blade of Selves — `9c329f3d-4d0a-4012-8aa6-92afdd120a52`
 - [ ] Blessed Hippogriff // Tyr's Blessing — `3372b994-47de-4e89-9bfc-76e1cb3f1cfa`
 - [ ] Blood Money — `75f5d372-4ff9-430c-8302-72472439e0d2`
@@ -52615,7 +52613,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 - [ ] Bellowing Aegisaur — `7063abe1-87dd-4526-9867-f7ce255b2cf0`
 - [ ] Benthic Biomancer — `b9000917-4f09-42f4-ae85-fc1ac7571d93`
 - [ ] Bident of Thassa — `e1afaef7-9fa3-4662-a95f-adfb0da9fd11`
-- [ ] Black Market Connections — `d2664f28-49e1-46f8-a863-b217e961a57c`
 - [ ] Blade of the Bloodchief — `8985e545-07c3-45f9-9058-fe3c1f50de04`
 - [ ] Blood Money — `75f5d372-4ff9-430c-8302-72472439e0d2`
 - [ ] Bloodghast — `e97f9c2b-b41e-4f36-9245-77c0ac125647`
@@ -55327,7 +55324,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 - [ ] Battlefield Improvisation — `c5b85aa7-6a76-4fe2-a63e-4f376b6c9af7`
 - [ ] Bayek of Siwa — `b0322e2e-e9f9-4fe2-a7a5-3e49665ad177`
 - [ ] Become Anonymous — `bac0fcee-9c1a-46b7-86c8-ffbfcc1e96de`
-- [ ] Black Market Connections — `d2664f28-49e1-46f8-a863-b217e961a57c`
 - [ ] Bleeding Effect — `689c9a49-d0f5-494a-9fa2-948cd5517e74`
 - [ ] Brotherhood Ambushers — `aea65f96-3c76-4761-9a7a-2d5c10d75ca0`
 - [ ] Brotherhood Headquarters — `0d3a06d5-5bb9-4733-a55b-9e2c75de6b6e`
@@ -63216,7 +63212,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,97
 - [ ] Big Wheel — `b0941bc2-f482-4821-a96b-720b08c7334a`
 - [ ] Bionic Blow — `27683e43-7c3f-45b3-8ca4-968428000315`
 - [ ] Black Bolt, Inhuman King — `a30f30e3-dbbf-4cb2-b3d0-76f57dffb2dd`
-- [ ] Black Market Connections — `d2664f28-49e1-46f8-a863-b217e961a57c`
 - [ ] Black Panther, Claws of Bast — `0a41221a-0cce-4aae-989a-24b70acca8db`
 - [ ] Black Panther, Most Dangerous — `7ba593fd-93db-452f-ad80-7f0f37afb09d`
 - [ ] Black Tom Cassidy — `c0d20e66-deb6-4a20-a2c1-8a79514e3792`

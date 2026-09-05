@@ -319,7 +319,7 @@ export type GameEvent =
   | { readonly kind: "library-shuffled"; readonly controller: SeatId }
   /** A Class permanent reaches a new level (CR 702.134); `level` is the level it just became. */
   | { readonly kind: "class-level-up"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly level: number }
-  | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
+  | { readonly kind: "upkeep" | "draw-step" | "end-step" | "first-main-phase"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
@@ -420,6 +420,18 @@ export type PendingChoice =
       readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
       readonly selectedTargets?: readonly Target[];
       readonly minimumTargets?: number;
+    }
+  | {
+      /**
+       * A triggered ability's own "choose one or more" (Black Market
+       * Connections), made when it is put onto the stack (CR 603.3d) like a
+       * target choice, not at cast time like a spell's modal choice.
+       */
+      readonly type: "trigger-mode";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly trigger: TriggerInstance;
+      readonly options: readonly { readonly index: number; readonly text: string; readonly effect: SpellEffect }[];
     }
   | {
       /** Tidal Force-style choice after a target has been selected (CR 701.21). */
@@ -547,6 +559,7 @@ export type GameAction =
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
+  | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
   | { readonly type: "choose-tap-or-untap"; readonly sourceId: string; readonly mode: "tap" | "untap" }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
@@ -1476,7 +1489,7 @@ function triggerMatches(
   const subject = definition.subject;
 
   // Turn-structure triggers are about a player, not an object.
-  if (event.kind === "upkeep" || event.kind === "draw-step" || event.kind === "end-step") {
+  if (event.kind === "upkeep" || event.kind === "draw-step" || event.kind === "end-step" || event.kind === "first-main-phase") {
     if (subject === "you") return event.activeSeat === watcher.controller;
     if (subject === "each-player") return true;
     if (subject === "opponent") return event.activeSeat !== watcher.controller;
@@ -1575,6 +1588,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "life-gained": return `${playerAt(state, event.seat).name} gana ${event.amount} vidas`;
     case "life-lost": return `${playerAt(state, event.seat).name} pierde ${event.amount} vidas`;
     case "class-level-up": return `${object!.card.name} alcanza el nivel ${event.level}`;
+    case "first-main-phase": return `comienza la ${STEP_LABELS["precombat-main"]} de ${playerAt(state, event.activeSeat).name}`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -5216,7 +5230,10 @@ function beginStep(state: GameState, step: TurnStep): GameState {
     next = withPlayer(next, next.activeSeat, (player) => ({ ...player, drawsThisDrawStep: 0 }));
     next = raiseEvent(next, { kind: "draw-step", activeSeat: next.activeSeat });
   }
-  if (step === "precombat-main") next = queueDelayedManaAdds(next);
+  if (step === "precombat-main") {
+    next = queueDelayedManaAdds(next);
+    next = raiseEvent(next, { kind: "first-main-phase", activeSeat: next.activeSeat });
+  }
   if (step === "end") {
     next = queueDelayedReturns(next);
     next = raiseEvent(next, { kind: "end-step", activeSeat: next.activeSeat });
@@ -5449,6 +5466,16 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           label: `Objetivo: ${targetLabel(state, option)}`,
           ...(option.kind === "permanent" ? { cardId: option.instanceId } : {}),
           note: `${choice.trigger.sourceCard.name}: ${choice.trigger.definition.sourceText}`
+        });
+      }
+      return actions;
+    }
+    if (choice.type === "trigger-mode") {
+      for (const option of choice.options) {
+        actions.push({
+          action: { type: "choose-trigger-mode", sourceId: choice.sourceId, optionIndex: option.index },
+          label: option.text,
+          note: `${choice.trigger.sourceCard.name}: ${option.text}`
         });
       }
       return actions;
@@ -7472,6 +7499,20 @@ function putNextTriggerOnStack(state: GameState): GameState {
   // A trigger whose source's controller has already lost never reaches the stack.
   if (playerAt(state, trigger.controller).lost) return { ...state, triggerQueue: remaining };
 
+  if (trigger.definition.modalEffects?.length) {
+    return {
+      ...state,
+      triggerQueue: remaining,
+      pendingChoice: {
+        type: "trigger-mode",
+        seat: trigger.controller,
+        sourceId: trigger.id,
+        trigger,
+        options: trigger.definition.modalEffects.map((mode, index) => ({ index, text: mode.text, effect: mode.effect }))
+      }
+    };
+  }
+
   const targetKind = trigger.definition.targetKind;
   if (targetKind === "none") {
     return { ...state, triggerQueue: remaining, stack: [...state.stack, triggerStackObject(trigger, [])], ...opened };
@@ -7583,6 +7624,26 @@ function applyFinishTriggerTargets(state: GameState, seat: SeatId, action: Extra
   return logged(next, seat, `${choice.trigger.sourceCard.name} termina la selección de objetivos.`);
 }
 
+/** Resolves a triggered ability's own "choose one or more" (Black Market Connections, CR 603.3d). */
+function applyChooseTriggerMode(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger-mode" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "trigger-mode" || choice.seat !== seat) throw new Error("No tienes un modo de habilidad pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa habilidad ya no espera un modo.");
+  const option = choice.options.find((candidate) => candidate.index === action.optionIndex);
+  if (!option) throw new Error("Ese modo no es válido para esa habilidad.");
+  const resolvedTrigger: TriggerInstance = { ...choice.trigger, definition: { ...choice.trigger.definition, effect: option.effect } };
+  const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+  const next: GameState = {
+    ...state,
+    pendingChoice: null,
+    stack: [...state.stack, triggerStackObject(resolvedTrigger, [])],
+    prioritySeat: active,
+    priorityOpen: true,
+    passedSeats: []
+  };
+  return logged(next, seat, `${choice.trigger.sourceCard.name}: ${option.text}.`);
+}
+
 function applyChooseTapOrUntap(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-tap-or-untap" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "tap-or-untap" || choice.seat !== seat) throw new Error("No tienes una elección de girar/enderezar pendiente.");
@@ -7654,6 +7715,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
+    case "choose-trigger-mode": next = applyChooseTriggerMode(state, seat, action); break;
     case "choose-tap-or-untap": next = applyChooseTapOrUntap(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "resolve-library-pick": next = applyResolveLibraryPick(state, seat, action); break;
