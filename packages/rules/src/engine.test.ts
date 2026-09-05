@@ -453,6 +453,12 @@ const LONG_RIVERS_PULL = () => make({ name: "Long River's Pull", type_line: "Ins
 const PROPAGANDA = () => make({ name: "Propaganda", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.", oracle_id: "ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd", scryfall_id: "2a874a07-502a-48d8-a48f-f4357b38b4ae" });
 const ORCISH_BOWMASTERS = () => make({ name: "Orcish Bowmasters", type_line: "Creature — Orc Archer", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", keywords: ["Flash"], oracle_text: "Flash\nWhen ~ enters and whenever an opponent draws a card except the first one they draw in each of their draw steps, ~ deals 1 damage to any target. Then amass Orcs 1.", oracle_id: "ea5103f5-27e0-4eb1-902c-7f34652d6bf3", scryfall_id: "10f14c9e-6776-4efd-9e3b-1d25b7625e17" });
 const WIDESPREAD_PANIC = () => make({ name: "Widespread Panic", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Whenever a spell or ability causes its controller to shuffle their library, that player puts a card from their hand on top of their library.", oracle_id: "853a3c2b-3d37-453a-8a77-4d90bd3a1cb7", scryfall_id: "d9e1b37f-8168-4dc0-858f-434ee96ff748" });
+const MJOLNIR = () => make({
+  name: "Mjölnir, Hammer of Thor", type_line: "Legendary Artifact — Equipment", mana_cost: "{3}{R}", cmc: 4,
+  oracle_text: "When Mjölnir enters, it deals 4 damage to up to one target creature.\nDouble all damage equipped creature would deal.\nEquip worthy {1} (A creature is worthy if it's a legendary non-Villain that's red and/or white.)\n{2}{R}, Discard this card: It deals 2 damage to each creature.",
+  oracle_id: "7f9a8845-d760-44a7-a4c9-8a20dba4e14a", scryfall_id: "e0c7f566-5351-44e3-a346-b84b0eb10209"
+});
+const WORTHY_CREATURE = () => make({ name: "Test Worthy Avenger", type_line: "Legendary Creature — Human Hero", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", colors: ["R"] });
 const BRAINSTORM = () => make({ name: "Brainstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Draw three cards, then put two cards from your hand on top of your library in any order.", oracle_id: "36cd2364-d113-47d1-b2c4-b088d9eb88dd", scryfall_id: "d8bcdbfb-27df-4553-b8ec-97c3f2053745" });
 const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Search your library for a creature card, reveal it, then shuffle and put the card on top." });
 const ELADAMRI = () => make({ name: "Eladamri's Call", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Search your library for a creature card, reveal that card, put it into your hand, then shuffle." });
@@ -5908,6 +5914,35 @@ describe("triggered abilities", () => {
     expect(army!.counters["+1/+1"]).toBe(1);
   });
 
+  it("lets Mjölnir's ETB trigger optionally hit up to one target creature", () => {
+    const profile = profileOf(MJOLNIR());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield", effect: { kind: "damage-any-target", amount: 4 }, targetKinds: ["creature"], minimumTargets: 0
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let hit = readyToCast([MJOLNIR()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [TRAMPLER()]);
+    hit = applyAction(hit, 0, { type: "cast", cardId: "hand-0" });
+    const foeTrampler = hit.players[1]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    expect(hit.pendingChoice?.type).toBe("trigger-target");
+    if (hit.pendingChoice?.type === "trigger-target") {
+      hit = applyAction(hit, 0, { type: "choose-trigger-target", sourceId: hit.pendingChoice.sourceId, target: { kind: "permanent", instanceId: foeTrampler.instance_id } });
+    }
+    hit = passUntil(hit, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    // 6/6 survives 4 damage, so the marked damage itself is checkable (unlike a lethal hit, which would remove the permanent via state-based actions).
+    expect(hit.players[1]!.battlefield.find((permanent) => permanent.instance_id === foeTrampler.instance_id)?.damage).toBe(4);
+
+    // "up to one" means declining is legal too: `finish-trigger-targets` satisfies minimumTargets: 0.
+    let skip = readyToCast([MJOLNIR()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [BEAR()]);
+    skip = applyAction(skip, 0, { type: "cast", cardId: "hand-0" });
+    expect(skip.pendingChoice?.type).toBe("trigger-target");
+    if (skip.pendingChoice?.type === "trigger-target") {
+      skip = applyAction(skip, 0, { type: "finish-trigger-targets", sourceId: skip.pendingChoice.sourceId });
+    }
+    skip = passUntil(skip, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    expect(skip.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.damage).toBe(0);
+  });
+
   it("triggers Orcish Bowmasters again on an opponent's draw outside their draw step, growing the same Army", () => {
     let game = readyToCast([DRAW_TWO_TARGET()], [ORCISH_BOWMASTERS(), ISLAND(), ISLAND(), ISLAND()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
@@ -7837,6 +7872,65 @@ describe("combat", () => {
     const before = combatGame.players[1]!.life;
     combatGame = applyAction(combatGame, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
     expect(combatGame.players[1]!.life).toBe(before - 3); // just its own power, no amplification
+  });
+});
+
+describe("Mjölnir, Hammer of Thor", () => {
+  it("restricts Equip to a worthy creature and doubles its unblocked combat damage", () => {
+    const profile = profileOf(MJOLNIR());
+    expect(profile.equipWorthyCost?.raw).toBe("{1}");
+    expect(profile.equipCost).toBeNull();
+    expect(profile.doublesEquippedCreatureDamage).toBe(true);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [MJOLNIR(), WORTHY_CREATURE(), BEAR(), MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const equipment = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mjölnir, Hammer of Thor")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const worthy = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Worthy Avenger")!;
+
+    // Grizzly Bears is not legendary and not red/white: "Equip worthy" refuses it.
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "equip" && entry.cardId === equipment.instance_id)).toBe(true);
+    expect(() => applyAction(game, 0, { type: "equip", sourceId: equipment.instance_id, targetId: bear.instance_id }))
+      .toThrow("Equip necesita una criatura digna que controles.");
+
+    game = applyAction(game, 0, { type: "equip", sourceId: equipment.instance_id, targetId: worthy.instance_id });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mjölnir, Hammer of Thor")?.attachedTo).toBe(worthy.instance_id);
+
+    game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
+    const attacker = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Worthy Avenger")!;
+    const lifeBefore = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 1);
+    expect(game.players[1]!.life).toBe(lifeBefore - 4); // 2 power doubled by Mjölnir, unblocked
+  });
+
+  it("discards itself to pay for its {2}{R} board-wipe activated ability", () => {
+    const profile = profileOf(MJOLNIR());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sourceZone: "hand", discardsSelf: true, effect: { kind: "damage-all-creatures", amount: 2 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), BEAR()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [MJOLNIR()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const source = game.players[0]!.hand[0]!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === source.instance_id)!;
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation.action);
+    expect(game.players[0]!.hand).toHaveLength(0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Mjölnir, Hammer of Thor")).toBe(true);
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
   });
 });
 

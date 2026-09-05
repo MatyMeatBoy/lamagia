@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,940** · cobertura: **28.2%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,945** · cobertura: **28.2%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -492,7 +492,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 | 2021-03-19 | Time Spiral Remastered (`TSR`) | masters-remastered | time-spiral-remastered | other | 410 | 103 | 307 | 25.1% |
 | 2021-04-23 | Commander 2021 (`C21`) | commander | 2021 | commander | 329 | 115 | 214 | 35.0% |
 | 2021-04-23 | Strixhaven Mystical Archive (`STA`) | masterpieces | strixhaven-mystical-archive | other | 63 | 29 | 34 | 46.0% |
-| 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | strixhaven | main | 290 | 51 | 239 | 17.6% |
+| 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | strixhaven | main | 290 | 52 | 238 | 17.9% |
 | 2021-04-23 | Strixhaven: School of Mages Promos (`PSTX`) | promos | strixhaven-school-of-mages | other | 90 | 9 | 81 | 10.0% |
 | 2021-05-06 | Modern Horizons 2 Promos (`PMH2`) | promos | modern-horizons-2 | other | 80 | 8 | 72 | 10.0% |
 | 2021-05-27 | Historic Anthology 5 (`HA5`) | anthologies | historic-anthology-5 | other | 25 | 7 | 18 | 28.0% |
@@ -661,10 +661,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 | 2025-08-24 | 2023 Heroes of the Realm (`PH23`) | funny-special | 2023-heroes-of-the-realm | other | 2 | 0 | 2 | 0.0% |
 | 2025-09-23 | Arena Anthology 3 (`AA3`) | anthologies | arena-anthology-3 | other | 25 | 8 | 17 | 32.0% |
 | 2025-09-23 | Arena Anthology 4 (`AA4`) | anthologies | arena-anthology-4 | other | 28 | 15 | 13 | 53.6% |
-| 2025-09-23 | Through the Omenpaths (`OM1`) | expansion | 2020s | main | 188 | 24 | 164 | 12.8% |
+| 2025-09-23 | Through the Omenpaths (`OM1`) | expansion | 2020s | main | 188 | 25 | 163 | 13.3% |
 | 2025-09-23 | Through the Omenpaths Bonus Sheet (`OMB`) | masterpieces | through-the-omenpaths-bonus-sheet | other | 40 | 8 | 32 | 20.0% |
 | 2025-09-26 | Marvel Universe (`MAR`) | masterpieces | marvel-universe | other | 94 | 14 | 80 | 14.9% |
-| 2025-09-26 | Marvel's Spider-Man (`SPM`) | expansion | 2020s | main | 193 | 29 | 164 | 15.0% |
+| 2025-09-26 | Marvel's Spider-Man (`SPM`) | expansion | 2020s | main | 193 | 30 | 163 | 15.5% |
 | 2025-09-26 | Marvel's Spider-Man Eternal (`SPE`) | eternal | 2020s | other | 26 | 4 | 22 | 15.4% |
 | 2025-09-26 | Marvel's Spider-Man Promos (`PSPM`) | promos | marvel-s-spider-man | other | 68 | 1 | 67 | 1.5% |
 | 2025-09-30 | Marvel Legends Series Inserts (`LMAR`) | promos | marvel-legends-series-inserts | other | 4 | 0 | 4 | 0.0% |
@@ -684,8 +684,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 | 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 114 | 261 | 30.4% |
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 17 | 48 | 26.2% |
 | 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 7 | 73 | 8.8% |
-| 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 47 | 234 | 16.7% |
-| 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 141 | 475 | 22.9% |
+| 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 48 | 233 | 17.1% |
+| 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 142 | 474 | 23.1% |
 | 2026-08-14 | The Hobbit (`HOB`) | expansion | 2020s | main | 193 | 35 | 158 | 18.1% |
 | 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | 2020s | other | 117 | 24 | 93 | 20.5% |
 | 2026-09-02 | The Zeta Set (`SLZ`) | boxed-products | the-zeta-set | other | 121 | 42 | 79 | 34.7% |
@@ -753,7 +753,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 | commander | 2023 | 6 | 1597 | 494 | 1103 | 30.9% |
 | commander | 2024 | 7 | 1887 | 639 | 1248 | 33.9% |
 | commander | 2025 | 4 | 1046 | 391 | 655 | 37.4% |
-| commander | 2026 | 6 | 1265 | 331 | 934 | 26.2% |
+| commander | 2026 | 6 | 1265 | 332 | 933 | 26.2% |
 | conspiracy | conspiracy | 2 | 211 | 45 | 166 | 21.3% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 61 | 160 | 27.6% |
 | core | 1990s | 10 | 3267 | 1145 | 2122 | 35.0% |
@@ -795,7 +795,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 | expansion | 1990s | 11 | 1573 | 335 | 1238 | 21.3% |
 | expansion | 2000s | 19 | 3082 | 640 | 2442 | 20.8% |
 | expansion | 2010s | 14 | 2735 | 652 | 2083 | 23.8% |
-| expansion | 2020s | 17 | 3739 | 585 | 3154 | 15.6% |
+| expansion | 2020s | 17 | 3739 | 588 | 3151 | 15.7% |
 | expansion | alara | 2 | 379 | 143 | 236 | 37.7% |
 | expansion | amonkhet | 1 | 272 | 87 | 185 | 32.0% |
 | expansion | bloomburrow | 1 | 280 | 40 | 240 | 14.3% |
@@ -817,7 +817,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 | expansion | onslaught | 1 | 335 | 75 | 260 | 22.4% |
 | expansion | phyrexia | 4 | 787 | 108 | 679 | 13.7% |
 | expansion | ravnica | 4 | 1081 | 345 | 736 | 31.9% |
-| expansion | strixhaven | 2 | 561 | 93 | 468 | 16.6% |
+| expansion | strixhaven | 2 | 561 | 94 | 467 | 16.8% |
 | expansion | tarkir | 3 | 785 | 176 | 609 | 22.4% |
 | expansion | tempest | 1 | 335 | 104 | 231 | 31.0% |
 | expansion | theros | 2 | 507 | 124 | 383 | 24.5% |
@@ -40944,7 +40944,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 - [ ] Ecological Appreciation — `0635ab65-fc1a-4e43-9e11-3a1ad3093830`
 - [ ] Efreet Flamepainter — `fb5e8b8c-bad2-45bb-abb4-2ed454525749`
 - [ ] Elemental Expressionist — `dfc45c58-821c-42f3-ab48-05b912748bdf`
-- [ ] Elemental Masterpiece — `e9f5f87d-a485-4e69-9beb-49a51230bd53`
 - [ ] Elite Spellbinder — `8c4d7cbc-9cfc-4f0a-8844-e458ab806056`
 - [ ] Enthusiastic Study — `4233334d-bb19-41e4-a203-2b7bb0c48f52`
 - [ ] Essence Infusion — `60f412bb-27e9-4883-8862-96eae96dfee3`
@@ -60711,7 +60710,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 - [ ] Spiders-Man, Heroic Horde — `d21d7557-9702-46c1-8277-42a3442084c2`
 - [ ] Spinneret and Spiderling — `daca1d5e-349d-4e8a-abc7-427dab43fb0c`
 - [ ] Starling, Aerial Ally — `13fd7ca6-c278-409f-a9c4-57f16051ffce`
-- [ ] Steel Wrecking Ball — `3a07e22c-71cd-4723-b07e-0ff02009a878`
 - [ ] Stegron the Dinosaur Man — `5c94b616-8edf-465c-b316-4599df95c52a`
 - [ ] Strength of Will — `0389b48a-e64c-44fb-8a41-fd571cba237c`
 - [ ] Subway Train — `6d4472ad-3fbf-4a5d-94de-dfee04fda9c3`
@@ -60996,7 +60994,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 - [ ] Spiders-Man, Heroic Horde — `d21d7557-9702-46c1-8277-42a3442084c2`
 - [ ] Spinneret and Spiderling — `daca1d5e-349d-4e8a-abc7-427dab43fb0c`
 - [ ] Starling, Aerial Ally — `13fd7ca6-c278-409f-a9c4-57f16051ffce`
-- [ ] Steel Wrecking Ball — `3a07e22c-71cd-4723-b07e-0ff02009a878`
 - [ ] Stegron the Dinosaur Man — `5c94b616-8edf-465c-b316-4599df95c52a`
 - [ ] Strength of Will — `0389b48a-e64c-44fb-8a41-fd571cba237c`
 - [ ] Subway Train — `6d4472ad-3fbf-4a5d-94de-dfee04fda9c3`
@@ -63098,7 +63095,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 - [ ] Mister Fantastic, Reed Richards — `7fa5237e-dd79-4646-b935-cb8c6ee803ab`
 - [ ] Mister Hyde, Monster Within — `4a7c7ecc-df72-4da0-af35-dd0af58ec02c`
 - [ ] Misty Knight, Hero for Hire — `5b090ba3-0ecb-4585-b5b7-9d6028c32487`
-- [ ] Mjölnir, Hammer of Thor — `7f9a8845-d760-44a7-a4c9-8a20dba4e14a`
 - [ ] Mockingbird, Ace Agent — `1fd00656-83ba-4feb-b089-224007936b99`
 - [ ] Mole Man, Moloid Master — `34994475-b914-44f6-8ca1-c2747b6d5956`
 - [ ] Monica Rambeau // Photon, Living Light — `8dd929cb-0fe1-4cb3-bc8d-96ca37f194f3`
@@ -63638,7 +63634,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,94
 - [ ] Typhoid Mary, Fractured — `867b3923-692c-4444-a071-518a290e43d8`
 - [ ] Ultimate Alliance — `e59c07ab-08fd-4d5b-978e-1594604ba410`
 - [ ] Ultimate Nullification — `2fe0ebf5-52ed-4e92-9b93-81e9ae564439`
-- [ ] Ultimo, Civilization's End — `43d79ee6-8ba1-4ec9-9bb2-907ed8401a2f`
 - [ ] Ultron the Annihilator — `33f2c6cb-f864-4bee-b365-aedf33fbedf5`
 - [ ] Ultron's Auxiliary — `ff1ddf25-df25-4733-b9f1-236ad5a08782`
 - [ ] Ultron, Machine Overlord — `19fd953c-b6d4-457f-b85f-b681c5b0e341`

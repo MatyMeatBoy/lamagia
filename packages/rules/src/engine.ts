@@ -1717,6 +1717,14 @@ function castTriggerWatcher(card: GameCard, controller: SeatId): Permanent {
 type DamageSource = Pick<GameEvent & { kind: "deals-damage-to-player" }, "permanentId" | "controller" | "card">;
 
 /** Torbran-style static damage amplifiers (CR 614.1c): sums every applicable bonus the source's controller has in play. */
+/** "Double all damage equipped creature would deal" (Mjölnir, CR 301.5c). */
+function equippedCreatureDamageMultiplier(state: GameState, sourcePermanentId: string | undefined): number {
+  if (!sourcePermanentId) return 1;
+  const doubled = allPermanents(state).some((permanent) =>
+    permanent.attachedTo === sourcePermanentId && cardProfile(permanent.card).doublesEquippedCreatureDamage);
+  return doubled ? 2 : 1;
+}
+
 function damageAmplifyBonus(
   state: GameState,
   sourceController: SeatId,
@@ -1778,7 +1786,8 @@ function sourceForDamage(state: GameState, object: StackObject): DamageSource | 
  */
 function dealDamageFromObject(state: GameState, seat: SeatId, amount: number, sourceName: string, object: StackObject): GameState {
   const bonus = damageAmplifyBonus(state, object.controller, cardProfile(object.card), object.sourcePermanentId, seat);
-  return dealDamageToPlayer(state, seat, amount + bonus, sourceName, sourceForDamage(state, object));
+  const multiplier = equippedCreatureDamageMultiplier(state, object.sourcePermanentId);
+  return dealDamageToPlayer(state, seat, amount * multiplier + bonus, sourceName, sourceForDamage(state, object));
 }
 
 function loseLife(state: GameState, seat: SeatId, amount: number): GameState {
@@ -1824,7 +1833,8 @@ function dealDamageToPermanent(
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
   if (sourceProfile && hasProtectionFrom(sourceProfile, cardProfile(permanent.card))) return state;
-  const total = amount + (source ? damageAmplifyBonus(state, source.controller, sourceProfile, source.permanentId, permanent.controller, combat) : 0);
+  const multiplier = source ? equippedCreatureDamageMultiplier(state, source.permanentId) : 1;
+  const total = amount * multiplier + (source ? damageAmplifyBonus(state, source.controller, sourceProfile, source.permanentId, permanent.controller, combat) : 0);
   // Damage to a planeswalker removes that many loyalty counters (CR 120.3c).
   const isPlaneswalker = cardProfile(permanent.card).types.includes("Planeswalker") && "loyalty" in permanent.counters;
   const next = withPlayer(state, permanent.controller, (player) => ({
@@ -4950,7 +4960,8 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
   for (const hit of batch.toPlayers) {
     const dealer = findPermanent(state, hit.sourceId);
     const bonus = dealer ? damageAmplifyBonus(next, dealer.controller, cardProfile(dealer.card), dealer.instance_id, hit.seat, true) : 0;
-    next = dealDamageToPlayer(next, hit.seat, hit.amount + bonus, hit.sourceName, dealer
+    const multiplier = dealer ? equippedCreatureDamageMultiplier(next, dealer.instance_id) : 1;
+    next = dealDamageToPlayer(next, hit.seat, hit.amount * multiplier + bonus, hit.sourceName, dealer
       ? { permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card }
       : undefined);
     if (dealer && hit.amount > 0) {
@@ -5924,16 +5935,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
       }
     }
-    if (!splitSecondActive(state) && profile.equipCost && profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
-      && (planManaPayment(profile.equipCost, player, { state })
+    const equipCost = profile.equipCost ?? profile.equipWorthyCost;
+    if (!splitSecondActive(state) && equipCost && profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
+      && (planManaPayment(equipCost, player, { state })
         || (profile.typedEquipCost && planManaPayment(profile.typedEquipCost.cost, player, { state })))
-      && legalTargets(state, seat, "creature-you-control").length) {
+      && equipTargets(state, seat, profile).length) {
       actions.push({
         action: { type: "equip", sourceId: permanent.instance_id },
         label: `Equip ${permanent.card.name}`,
         cardId: permanent.instance_id,
         requiresTarget: "creature-you-control",
-        note: `Equip ${profile.equipCost.raw}`
+        note: `Equip ${equipCost.raw}`
       });
     }
   }
@@ -6289,6 +6301,23 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
   }, seat, `${player.name} usa ${searchAbility.text} de ${card.name}.`);
 }
 
+/** "Equip worthy" restricts the target to a legendary, non-Villain creature that's red and/or white (Mjölnir, Marvel set). */
+function isWorthyCreature(profile: CardProfile): boolean {
+  return profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary")
+    && !profile.subtypes.some((subtype) => subtype.toLowerCase() === "villain")
+    && (profile.colors.includes("R") || profile.colors.includes("W"));
+}
+
+/** Legal Equip targets, narrowed to worthy creatures when the source's Equip is so restricted. */
+function equipTargets(state: GameState, seat: SeatId, profile: CardProfile): Target[] {
+  const targets = legalTargets(state, seat, "creature-you-control");
+  if (!profile.equipWorthyCost) return targets;
+  return targets.filter((target) => {
+    const permanent = target.kind === "permanent" ? findPermanent(state, target.instanceId) : null;
+    return permanent !== null && isWorthyCreature(cardProfile(permanent.card));
+  });
+}
+
 function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "equip" }>): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para equipar.");
   if (splitSecondActive(state)) throw new Error("Split second impide activar habilidades que no sean de maná.");
@@ -6296,21 +6325,21 @@ function applyEquip(state: GameState, seat: SeatId, action: Extract<GameAction, 
   const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   if (!source) throw new Error("Ese equipo ya no está bajo tu control.");
   const profile = cardProfile(source.card);
-  if (!profile.equipCost || !profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")) {
+  if ((!profile.equipCost && !profile.equipWorthyCost) || !profile.subtypes.some((subtype) => subtype.toLowerCase() === "equipment")) {
     throw new Error("Ese permanente no tiene una habilidad de equipar válida.");
   }
   const targetId = action.targetId;
   if (!targetId) throw new Error("Equip necesita un objetivo.");
-  const allowed = legalTargets(state, seat, "creature-you-control");
+  const allowed = equipTargets(state, seat, profile);
   if (!allowed.some((target) => target.kind === "permanent" && target.instanceId === targetId)) {
-    throw new Error("Equip necesita una criatura que controles.");
+    throw new Error(profile.equipWorthyCost ? "Equip necesita una criatura digna que controles." : "Equip necesita una criatura que controles.");
   }
   // A typed Equip ability (Wizard's Staff's "Equip Wizard {1}") is cheaper
   // than the general one but only usable on a matching creature.
   const targetCreature = findPermanent(state, targetId);
   const cost = profile.typedEquipCost && targetCreature && hasSubtype(cardProfile(targetCreature.card), profile.typedEquipCost.subtype)
     ? profile.typedEquipCost.cost
-    : profile.equipCost;
+    : (profile.equipCost ?? profile.equipWorthyCost)!;
   const plan = planManaPayment(cost, player, { state });
   if (!plan) throw new Error(`No tienes maná suficiente para equipar ${source.card.name}.`);
   let next = applyManaPlan(state, seat, plan);
@@ -6608,6 +6637,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     if (!paid) throw new Error(`${source.card.name} ya no está en el campo para sacrificarse.`);
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${source.card.name}.`);
+  }
+  if (ability.discardsSelf) {
+    const paid = playerAt(next, seat).hand.find((card) => card.instance_id === source.instance_id);
+    if (!paid) throw new Error(`${source.card.name} ya no está en tu mano para descartarla.`);
+    next = discardCard(next, seat, paid);
+    next = logged(next, seat, `${player.name} descarta ${paid.name} para activar su habilidad.`);
   }
   let sacrificedArtifactMv = 0;
   if (ability.sacrificesArtifact) {

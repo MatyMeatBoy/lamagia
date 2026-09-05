@@ -3061,3 +3061,43 @@ in `recognizeSentence` (recursing on the leading effect via
 future "does something, then amasses" card. Validation: **609 rules
 tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,411 global
 profiles.
+
+Mjölnir, Hammer of Thor | `7f9a8845-d760-44a7-a4c9-8a20dba4e14a` was closed
+with three pieces. First, "When Mjölnir enters, it deals 4 damage to up to
+one target creature" reuses the EXISTING multi-target `targetKinds`/
+`minimumTargets` choice machinery (previously only used for mandatory
+multi-target triggers like Inferno Titan's divided damage) with
+`targetKinds: ["creature"], minimumTargets: 0` — "up to one target" is
+just "0-or-more picks from a 1-element array," so this needed zero new
+engine plumbing, only the parser special case. Second, a new
+`CardProfile.equipWorthyCost: ManaCost | null` for "Equip worthy {1} (A
+creature is worthy if it's a legendary non-Villain that's red and/or
+white.)" — a NEW Marvel-set Equip restriction — plus `isWorthyCreature`/
+`equipTargets` helpers in `engine.ts` that narrow both `legalActions`'
+Equip offer and `applyEquip`'s target validation to worthy creatures only
+when this cost is set (kept fully separate from the plain `equipCost` and
+the subtype-restricted `typedEquipCost`, since a card only ever has one of
+the three). Paired with `CardProfile.doublesEquippedCreatureDamage:
+boolean` for "Double all damage equipped creature would deal" (CR 301.5c)
+— a MULTIPLICATIVE modifier, architecturally distinct from the existing
+ADDITIVE `damageAmplify` primitive (Torbran) — via a new
+`equippedCreatureDamageMultiplier(state, sourcePermanentId)` helper wired
+into all three central damage-dealing call sites: `dealDamageFromObject`,
+`dealDamageToPermanent`, and `applyCombatDamage`'s to-players loop (so
+both combat damage and noncombat damage from the equipped creature are
+doubled). Third, "{2}{R}, Discard this card: It deals 2 damage to each
+creature" needed a genuinely new activation-cost primitive:
+`ActivatedAbility.discardsSelf?: boolean`, parsed from `discard\s+(?:~|this
+card)` in the generic activated-ability cost grammar, which forces
+`sourceZone: "hand"` (the ability can only ever be offered from hand,
+since paying its own cost requires the source to still be there) and, in
+`applyActivate`, moves the source card from hand to graveyard via the
+existing `discardCard` helper right alongside the pre-existing
+`sacrificesSelf` cost-payment block. Caught while writing this: the first
+regex (`/discard\s+(?:~|this\s+card)\b/i`) silently failed to match "Discard
+~" because `~` is a non-word character, so the trailing `\b` word-boundary
+assertion (fine for "this card," a real word) never matched after `~` —
+fixed by dropping the `\b`, matching the precedent already set by the
+neighboring `sacrificesSelf` regex, which has no trailing boundary either.
+Validation: **612 rules tests**, `npm run check`, `npm run simulate:engine`
+200/200, 9,415 global profiles.

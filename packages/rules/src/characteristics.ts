@@ -139,6 +139,8 @@ export interface ActivatedAbility {
   readonly oncePerTurn?: boolean;
   /** Reveal a hand source while announcing the ability (Forecast, CR 702.57). */
   readonly revealSourceFromHand?: boolean;
+  /** The ability's own source card is discarded from hand to pay its cost (Mjölnir, CR 702). */
+  readonly discardsSelf?: boolean;
   readonly requiresOpponentLands?: number;
   readonly text: string;
 }
@@ -865,6 +867,8 @@ export interface CardProfile {
   readonly equipCost: ManaCost | null;
   /** A second, typically cheaper Equip cost restricted to a creature subtype (Wizard's Staff's "Equip Wizard {1}"). */
   readonly typedEquipCost: { readonly subtype: string; readonly cost: ManaCost } | null;
+  /** "Equip worthy {cost}" (Mjölnir): Equip restricted to a legendary, non-Villain creature that's red and/or white. */
+  readonly equipWorthyCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
@@ -927,6 +931,8 @@ export interface CardProfile {
   readonly giftPromisedTargetKind: Exclude<TargetKind, "none"> | null;
   /** "Creatures can't attack you unless their controller pays {N} for each creature they control that's attacking you" (Propaganda, CR 508.1a). Generic-mana amount per attacking creature. */
   readonly attackTaxPerCreature: number | null;
+  /** "Double all damage equipped creature would deal" (Mjölnir, Equipment CR 301.5c). */
+  readonly doublesEquippedCreatureDamage: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
@@ -1401,6 +1407,17 @@ function parseTypedEquipCost(text: string): { subtype: string; cost: ManaCost } 
   return null;
 }
 
+/** "Equip worthy {cost} (reminder text)" (Mjölnir): Equip restricted to a worthy creature. */
+function parseEquipWorthyCost(text: string): ManaCost | null {
+  for (const line of text.split("\n")) {
+    const match = /^equip\s+worthy\s+((?:\{[^}]+\})+)\s*(?:\(.*\))?\.?$/i.exec(line.trim());
+    if (!match) continue;
+    const cost = parseManaCost(match[1]!.trim());
+    if (cost && !cost.hasVariable) return cost;
+  }
+  return null;
+}
+
 function parseLevelUpCost(text: string): ManaCost | null {
   for (const line of text.split("\n")) {
     const match = /^level up\s+(.+)$/i.exec(line.trim().replace(/\.$/, ""));
@@ -1729,6 +1746,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
   const nontokenArtifact = Boolean(sacrificePermanent && /^nontoken\s+artifact$/i.test(sacrificePermanent[2]!));
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
+  // "{cost}, Discard this card: ..." (Mjölnir): the source pays its own cost by
+  // leaving hand for the graveyard, so the ability can only be offered there.
+  const discardsSelf = /discard\s+(?:~|this\s+card)/i.test(costText);
   const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
   const exilesGraveyardCardsMatch = /exile\s+(two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/i.exec(costText);
   const removedCounters: CounterCost[] = [];
@@ -1750,6 +1770,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
+    .replace(/discard\s+(?:~|this\s+card)/gi, "")
     .replace(/exile\s+(?:two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
@@ -1765,6 +1786,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(typedCreature ? { sacrificesCreatureSubtype: { subtype: typedCreature[2]!, mode: typedCreature[1] ? "another" as const : "any" as const } } : {}),
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: nontokenArtifact ? "Artifact" as const : /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]![1]! ? sacrificePermanent[2]!.slice(1).toLowerCase() : ""}` as "Artifact" | "Enchantment" | "Land", ...(nontokenArtifact ? { nontoken: true } : {}) } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
+    ...(discardsSelf ? { discardsSelf: true, sourceZone: "hand" as const } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
@@ -3511,6 +3533,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
     if (/^as an additional cost to cast ~, pay (?:X|\d+) life\.?$/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^equip\s+worthy\s+(?:\{[^}]+\})+\s*(?:\(.*\))?(?:\.?$)/i.test(line)) continue;
     if (/^equip\s+[A-Za-z][A-Za-z'’-]*\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
    if (/^level up\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/i.test(line)) continue;
@@ -3542,6 +3565,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^you may pay (?:\{[^}]+\})+ rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^gift a card\.?$/i.test(line)) continue;
     if (/^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you\.?$/i.test(line)) continue;
+    if (/^double all damage equipped creature would deal\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     if (parseDamageAmplify(line)) continue;
@@ -3694,6 +3718,17 @@ function recognizeText(text: string): RecognizedText {
         });
         continue;
       }
+    }
+    // "When ~ enters, it deals N damage to up to one target creature" (Mjölnir,
+    // CR 603.2, 601.2c): the target is optional, so `minimumTargets: 0` lets
+    // the existing multi-target choice machinery offer "finish with none".
+    const optionalCreatureDamageEnters = /^when\s+~\s+enters,?\s+it deals (\d+) damage to up to one target creature\.?$/i.exec(line);
+    if (optionalCreatureDamageEnters) {
+      triggers.push({
+        event: "enters-battlefield", subject: "self", effect: { kind: "damage-any-target", amount: Number(optionalCreatureDamageEnters[1]) },
+        optional: false, targetKind: "creature", targetKinds: ["creature"], minimumTargets: 0, sourceText: line
+      });
+      continue;
     }
     const dividedDamageTrigger = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?\s+or\s+attacks,?\s+it deals (\d+) damage divided as you choose among one, two, or three targets\.?$/i.exec(line);
     if (dividedDamageTrigger) {
@@ -3968,6 +4003,7 @@ export function cardProfile(card: CardData): CardProfile {
   const additionalLifeCostVariable = additionalLifeMatch?.[1] === "X";
   const equipCost = parseEquipCost(text);
   const typedEquipCost = parseTypedEquipCost(text);
+  const equipWorthyCost = parseEquipWorthyCost(text);
   // "~ costs {N} less to cast for each creature on the battlefield" (Blasphemous Act, CR 118.9).
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
@@ -4053,6 +4089,7 @@ export function cardProfile(card: CardData): CardProfile {
   const giftDrawsCard = text.split("\n").some((line) => /^gift a card$/i.test(line.trim().replace(/\.$/, "")));
   const attackTaxMatch = text.split("\n").map((line) => /^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you$/i.exec(line.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const attackTaxPerCreature = attackTaxMatch ? Number(attackTaxMatch[1]) : null;
+  const doublesEquippedCreatureDamage = text.split("\n").some((line) => /^double all damage equipped creature would deal$/i.test(line.trim().replace(/\.$/, "")));
   const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
   const giftPromisedTargetKind = giftPromisedRecognized && giftPromisedRecognized.target !== "none" ? giftPromisedRecognized.target : null;
@@ -4091,6 +4128,7 @@ export function cardProfile(card: CardData): CardProfile {
     additionalLifeCostVariable,
     equipCost,
     typedEquipCost,
+    equipWorthyCost,
     equipmentModification,
     staticKeywordGrants,
     keywordsDuringYourTurn,
@@ -4149,6 +4187,7 @@ export function cardProfile(card: CardData): CardProfile {
     giftDrawsCard,
     giftPromisedTargetKind,
     attackTaxPerCreature,
+    doublesEquippedCreatureDamage,
     costReducesPerBoardCreature,
     spellCostReductionGrant,
     staticLandManaBonus,
