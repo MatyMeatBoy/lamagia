@@ -2605,21 +2605,6 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!(profile.types.includes("Artifact") || isCreature(profile)) || profile.manaValue !== object.variableValue) return state;
       return destroyPermanent(state, permanent);
     }
-    case "return-owned-nontoken-permanents-to-control": {
-      const moved = allPermanents(state).filter((permanent) => !permanent.card.token && permanent.card.owner !== permanent.controller);
-      if (!moved.length) return state;
-      const movedIds = new Set(moved.map((permanent) => permanent.instance_id));
-      return {
-        ...state,
-        players: state.players.map((player) => ({
-          ...player,
-          battlefield: player.battlefield
-            .filter((permanent) => !movedIds.has(permanent.instance_id))
-            .concat(moved.filter((permanent) => permanent.card.owner === player.seat)
-              .map((permanent) => ({ ...permanent, controller: player.seat })))
-        }))
-      };
-    }
     case "return-owned-creatures-to-control": {
       const moved = allPermanents(state).filter((permanent) => !permanent.card.token
         && isCreature(cardProfile(permanent.card)) && permanent.card.owner !== permanent.controller);
@@ -2951,22 +2936,6 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         ...current,
         graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
       }));
-      return putOntoBattlefield(next, object.controller, card, false);
-    }
-    case "return-target-creature-card-from-graveyard-threshold": {
-      const target = object.targets[0];
-      if (!target || target.kind !== "graveyard-card") return state;
-      const player = playerAt(state, target.seat);
-      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
-      if (!card || !isCreature(cardProfile(card))) return state;
-      const next = withPlayer(state, target.seat, (current) => ({
-        ...current,
-        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id),
-        ...(current.graveyard.length >= effect.threshold
-          ? {}
-          : { hand: [...current.hand, card] })
-      }));
-      if (player.graveyard.length < effect.threshold) return next;
       return putOntoBattlefield(next, object.controller, card, false);
     }
     case "return-target-creature-card-from-graveyard-threshold": {
