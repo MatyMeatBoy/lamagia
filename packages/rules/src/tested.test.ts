@@ -67,4 +67,24 @@ describe("tested-mode deck filter", () => {
     ];
     expect(() => filterTestedDeckCards(deck(noBasics), new Set(["commander-oracle", "spell-oracle"]))).toThrow(/minimum/);
   });
+
+  it("uses implemented competitive-pool cards before repeating basics", () => {
+    const counter: CardData = {
+      scryfall_id: "counter-printing",
+      oracle_id: "counter-oracle",
+      name: "Competitive Counter",
+      type_line: "Instant",
+      color_identity: ["G"],
+      oracle_text: "Counter target spell.",
+      cmc: 1
+    };
+    const shortDeck = [commander, incompleteSpell, incompleteSpell, forest];
+    const cards = filterTestedDeckCards(
+      deck(shortDeck),
+      new Set(["commander-oracle", "spell-oracle", "forest-oracle", "counter-oracle"]),
+      3,
+      [counter]
+    );
+    expect(cards.map((card) => card.oracle_id)).toEqual(["commander-oracle", "forest-oracle", "counter-oracle"]);
+  });
 });

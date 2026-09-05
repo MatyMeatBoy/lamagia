@@ -1018,7 +1018,7 @@ function landingHtml(): string {
       <p>Controlas el asiento inferior. Los otros tres los juega el bot determinista del motor, eligiendo solo entre las mismas acciones legales que se te ofrecen a ti.</p>
       <div class="landing-actions">
         <button id="start-cedh" class="primary-button">Jugar pod cEDH</button>
-        <button id="start-tested" class="text-button">Jugar modo probado</button>
+        <button id="start-tested" class="text-button">Jugar pod jugable</button>
         <button id="start-precon" class="text-button">Elegir mazo precon</button>
         <button id="open-catalog" class="text-button">Buscar cartas</button>
         <button id="open-coverage" class="text-button">Implementación por edición</button>
