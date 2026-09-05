@@ -153,6 +153,7 @@ const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", ty
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
+const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
 const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
 const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle Slice and Dice, you may have it deal 1 damage to each creature.", oracle_id: "463fc961-d34e-4f40-b383-5b78a0fcb5c8" });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
@@ -4702,6 +4703,32 @@ describe("casting", () => {
       ]
     });
     expect(game.players[1]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Sol Ring", "Blue Permanent"]));
+  });
+
+  it("offers Deceiver Exarch's ETB modes before selecting the mode's target", () => {
+    const profile = profileOf(C13_DECEIVER_EXARCH());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield",
+      modalEffects: [
+        { targetKind: "permanent-you-control" },
+        { targetKind: "permanent-opponent" }
+      ]
+    });
+
+    let game = readyToCast([C13_DECEIVER_EXARCH()], [ISLAND(), ISLAND(), ISLAND()], [], [SOL_RING()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-mode");
+    const mode = game.pendingChoice;
+    if (mode?.type !== "trigger-mode") throw new Error("expected Deceiver Exarch's mode choice");
+    expect(mode.options.map((option) => option.targetKind)).toEqual(["permanent-you-control", "permanent-opponent"]);
+    game = applyAction(game, 0, { type: "choose-trigger-mode", sourceId: mode.sourceId, optionIndex: 0 });
+    expect(game.pendingChoice?.type).toBe("trigger-target");
+    const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Island")!;
+    if (game.pendingChoice?.type !== "trigger-target") throw new Error("expected Deceiver Exarch target choice");
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "permanent", instanceId: target.instance_id } });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)?.tapped).toBe(false);
   });
 
   it("offers and resolves the synthetic both mode with ordered targets", () => {
