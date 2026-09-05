@@ -42,7 +42,7 @@ creature-type removal, you-cast-noncreature trigger, delayed creature-return,
 keyword-counter, multi-land alternative-cost, dynamic Plains-count target, and
 target-controller-rider primitives were added;
 the C13
-dictionary remains 341 profiles with 290 complete.
+dictionary remains 341 profiles with 292 complete.
 
 The static P/T vocabulary now also covers source-relative conditions such as
 life thresholds and opponent graveyard creature counts. These are parameterized
