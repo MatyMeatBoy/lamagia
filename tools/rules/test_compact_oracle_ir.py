@@ -91,6 +91,7 @@ class CompactOracleIrTests(unittest.TestCase):
         ])
         self.assertEqual(result["identity_and_operand_checks"], "PASS")
         self.assertEqual(result["hybrid_reusable_primitive_count"], 1)
+        self.assertEqual(result["hybrid_min_references"], 2)
         self.assertEqual(result["recommended_workflow"], "hybrid-payload")
 
     def test_solved_clauses_do_not_enter_the_dictionary(self) -> None:

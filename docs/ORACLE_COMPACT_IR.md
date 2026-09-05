@@ -57,10 +57,12 @@ generator-based callers cannot accidentally benchmark an empty compact
 payload.
 On the full current catalog it reports 22,210 clause references, 9,745 exact
 shapes, 47 compositional atoms, 99.9% atom reuse, and a **22.8%** worker-
-context byte reduction with the hybrid payload (1,606 repeated exact shapes),
-so hybrid is recommended. The current C13 batch is measured separately: 103
-review cards, 143 clause references, 24 atoms, and **7.9%** reduction with
-hybrid (14 repeated exact shapes). The benchmark emits
+context byte reduction with the hybrid payload (1,606 repeated exact shapes,
+adaptive minimum frequency 2), so hybrid is recommended. The current C13
+batch is measured separately: 103 review cards, 143 clause references, 24
+atoms, and **7.9%** reduction with hybrid (14 repeated exact shapes, adaptive
+minimum frequency 2). The benchmark tests multiple reuse thresholds per batch
+and emits
 `recommended_workflow` so workers do not choose by intuition.
 
 The output reports `reuse_ratio` (repeated exact-clause references),

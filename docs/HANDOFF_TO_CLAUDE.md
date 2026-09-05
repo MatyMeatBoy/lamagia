@@ -42,7 +42,8 @@ before building the compact payload. Commit `2bb7612` adds exact per-card
 primitive/operand equivalence checks and fixes single-pass inputs. Commit
 `e1c03e1` adds the measured hybrid payload: repeated exact shapes use symbols,
 while unique or complex clauses retain Oracle text. Full catalog and C13 both
-currently select `hybrid-payload` (22.8% and 7.9% context reduction).
+  currently select `hybrid-payload` (22.8% and 7.9% context reduction); the
+  reuse threshold is benchmarked per batch and is currently 2.
 
 Claude's `94aa4ca` repaired malformed `characteristics.ts` syntax and removed
 unreachable, unwired `SpellEffect` union members on a stale branch. It is useful

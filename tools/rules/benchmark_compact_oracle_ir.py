@@ -158,7 +158,17 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
     compact = build_compact_ir(card for card in cards)
     old = legacy_payload(rows)
     new = compact_worker_payload(compact)
-    hybrid = hybrid_worker_payload(compact, rows)
+    hybrid_candidates = [
+        (threshold, hybrid_worker_payload(compact, rows, min_references=threshold))
+        for threshold in (2, 3, 4, 5, 8, 12, 20)
+    ]
+    hybrid_threshold, hybrid = min(
+        hybrid_candidates,
+        key=lambda candidate: (
+            len(json.dumps(candidate[1], ensure_ascii=False, separators=(",", ":")).encode("utf-8")),
+            candidate[0],
+        ),
+    )
     old_bytes = len(json.dumps(old, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     new_bytes = len(json.dumps(new, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     hybrid_bytes = len(json.dumps(hybrid, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
@@ -203,6 +213,7 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
         "compositional_atom_reuse_ratio": compact["semantic_atom_reuse_ratio"],
         "compositional_bytes": new_bytes,
         "hybrid_bytes": hybrid_bytes,
+        "hybrid_min_references": hybrid_threshold,
         "hybrid_reusable_primitive_count": len(hybrid["reusable_primitives"]),
         "context_byte_reduction": reduction,
         "recommended_workflow": recommendation if recommendation != "legacy-payload" else "legacy-payload-with-compositional-hints",
