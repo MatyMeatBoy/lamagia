@@ -3661,6 +3661,31 @@ pay decline flow resolves normally against the Bolt. Validation: **684
 rules tests**, `npm run check`, `npm run simulate:engine` 200/200,
 9,915 global profiles.
 
+**City of Traitors** — switched from mining the export by pattern
+frequency to cross-referencing `data/decks/cedh-pod.json`, a real
+4-deck / 400-card imported cEDH pool the "tested pod" Home mode
+already draws from (see `docs/TESTED_POD.md`), against the export to
+find specific named staples still missing. "When you play another
+land, sacrifice this land." needed a whole new trigger EVENT, not just
+a condition or effect: nothing in the engine raised an event for the
+ACTION of playing a land, as distinct from that land's own "enters the
+battlefield." Added `TriggerEvent` kind `play-land`, raised once in
+`applyPlayLand` right after `putOntoBattlefield` (alongside, not
+instead of, the land's own ETB event), plus the matching
+`TRIGGER_TEMPLATES` entry, a Spanish log label, and a client
+`abilities.ts` glyph entry — both are `Record<TriggerEvent, ...>`
+maps, so the build failed loudly until every one was updated, which is
+exactly the safety net that kind of exhaustive map is for. Also added
+a bare `Sacrifice ~` sentence recognizer; only the compound "Sacrifice
+~. If you do, ..." form existed before. Verified **+3** in the export
+count (9,919 → 9,922 — City of Traitors has three printings in the
+catalog, each counted separately) with set coverage holding at 29.9%.
+Scenario-tested: with City of Traitors already on the battlefield,
+playing a Forest from hand fires the trigger, which resolves and sends
+City of Traitors to its owner's graveyard while the Forest stays in
+play. Validation: **689 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,922 global profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

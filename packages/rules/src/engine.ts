@@ -340,7 +340,8 @@ export type GameEvent =
   /** A Class permanent reaches a new level (CR 702.134); `level` is the level it just became. */
   | { readonly kind: "class-level-up"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly level: number }
   | { readonly kind: "upkeep" | "draw-step" | "end-step" | "first-main-phase"; readonly activeSeat: SeatId }
-  | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
+  | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number }
+  | { readonly kind: "play-land"; readonly seat: SeatId; readonly card: GameCard };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
 export interface BlockerDeclaration { readonly instanceId: string; readonly attackerId: string }
@@ -1858,6 +1859,10 @@ function triggerMatches(
     return subject === "you" && event.seat === watcher.controller;
   }
 
+  if (event.kind === "play-land") {
+    return subject === "you" && event.seat === watcher.controller;
+  }
+
   if (event.kind === "library-shuffled") {
     return subject === "shuffle-controller";
   }
@@ -1971,6 +1976,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "life-lost": return `${playerAt(state, event.seat).name} pierde ${event.amount} vidas`;
     case "class-level-up": return `${object!.card.name} alcanza el nivel ${event.level}`;
     case "first-main-phase": return `comienza la ${STEP_LABELS["precombat-main"]} de ${playerAt(state, event.activeSeat).name}`;
+    case "play-land": return `${playerAt(state, event.seat).name} juega ${event.card.name}`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -7736,6 +7742,7 @@ function applyPlayLand(state: GameState, seat: SeatId, cardId: string): GameStat
     landsPlayedThisTurn: current.landsPlayedThisTurn + 1
   }));
   next = putOntoBattlefield(next, seat, card, false);
+  next = raiseEvent(next, { kind: "play-land", seat, card });
   next = logged(next, seat, `${player.name} juega ${card.name}.`);
   const rule = cardProfile(card).entersTapped;
   if (rule.kind === "unless-reveal-card") {
