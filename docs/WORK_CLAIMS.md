@@ -411,6 +411,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
 | `c13-oracle-counter-activated-target` | Vile Requiem's verse-counter upkeep and self-sacrifice destruction scaled by its counters (CR 602.2b, 603.2b, 121.1) | `codex/c13-vile-requiem` | merged (`0d82d42`) | 2026-09-04 |
 | `c13-oracle-draw-triggered-shape` | Well of Lost Dreams variable optional payment capped by life gained, then draw X (CR 603.2, 603.5, 107.3, 118.3) | `codex/c13-well-lost-dreams` | merged (`0d74880`) | 2026-09-04 |
+| `c13-oracle-draw-activated-cost-2` | Jace's Archivist: each player discards their hand, then all draw the greatest discarded hand size; reusable shared-discard primitive (CR 602.2b, 701.8, 121.1) | `codex/c13-f99-b033-next` | active | 2026-09-04 |
 
 
 
