@@ -142,6 +142,7 @@ const SPHINX_OF_THE_STEEL_WIND = () => make({
 });
 const RED_RAIDER = () => make({ name: "Red Raider", type_line: "Creature — Goblin", mana_cost: "{1}{R}", cmc: 2, power: "3", toughness: "3", colors: ["R"] });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
+const WAR_CADENCE = () => make({ name: "War Cadence", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "{X}: This turn, creatures can't block unless their controller pays {X} for each blocking creature they control.", oracle_id: "49d0fdd6-cc8f-4fe1-a6bd-4321dac18404" });
 const SEKKUAR = () => make({ name: "Sek'Kuar, Deathkeeper", type_line: "Legendary Creature — Orc Shaman", mana_cost: "{2}{B}{R}{G}", cmc: 5, power: "4", toughness: "3", colors: ["B", "R", "G"], oracle_text: "Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.", oracle_id: "94426127-65c2-435e-ba92-423a3c102061" });
 const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Regenerate target creature." });
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
@@ -6902,6 +6903,39 @@ describe("activated abilities", () => {
     expect(profile.manaAbilities).toHaveLength(1);
     expect(profile.manaAbilities[0]!.produces).toEqual(["G"]);
     expect(profile.activatedAbilities).toHaveLength(0);
+  });
+
+  it("applies War Cadence's variable block tax and charges it per blocker", () => {
+    const card = WAR_CADENCE();
+    expect(profileOf(card)).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ manaCost: { raw: "{X}", hasVariable: true }, effect: { kind: "set-blocking-tax", amount: "X" }, targetKind: "none" }]
+    });
+    let game = readyOnBoard([card, MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], { hold: true });
+    const lands = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Mountain");
+    for (const land of lands.slice(0, 2)) game = applyAction(game, 0, { type: "activate-mana", sourceId: land.instance_id, abilityIndex: 0, mana: "R" });
+    const source = permanentNamed(game, 0, "War Cadence")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id && entry.action.abilityIndex === 0 && entry.action.variableValue === 2);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.blockingTaxPerCreature).toEqual([2]);
+
+    game = readyOnBoard([MOUNTAIN(), BEAR()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    const blocker = permanentNamed(game, 0, "Grizzly Bears")!;
+    const attacker = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = stage(game, 0, () => ({ manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0, C: 2 } }));
+    game = {
+      ...game,
+      step: "declare-blockers",
+      blockingTaxPerCreature: [2],
+      combat: { attackers: [{ instanceId: attacker.instance_id, defender: 0 }], blockers: [], attackersDeclared: true, blockersDeclared: false, blockersDeclaredBy: [], firstStrikeResolved: false, damageResolved: false }
+    };
+    game = applyAction(game, 0, { type: "declare-blockers", blockers: [{ instanceId: blocker.instance_id, attackerId: attacker.instance_id }] });
+    expect(game.players[0]!.manaPool.C).toBe(0);
+    expect(game.combat.blockers).toEqual([{ instanceId: blocker.instance_id, attackerId: attacker.instance_id }]);
   });
 
   it("supports Contested Cliffs multi-target Beast fights", () => {
