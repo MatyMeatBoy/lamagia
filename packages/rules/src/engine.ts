@@ -214,6 +214,8 @@ export interface TriggerInstance {
   readonly cause: string;
   /** Player whose action raised the event, used by payment clauses such as Rhystic Study. */
   readonly eventController?: SeatId;
+  /** Player damaged by a combat/noncombat damage event, for “that player” effects. */
+  readonly eventPlayer?: SeatId;
   /** Permanent involved in the event, used by effects referring to "that creature". */
   readonly eventPermanentId?: string;
   /** Amount carried by life-gain/loss events for proportional triggers. */
@@ -256,8 +258,8 @@ export type GameEvent =
   | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
-  | { readonly kind: "deals-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId }
+  | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
+  | { readonly kind: "deals-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
@@ -1382,6 +1384,7 @@ function raiseEvent(
         definition,
         cause: causeOf(state, event),
         ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
+        ...(event.kind === "deals-combat-damage-to-player" || event.kind === "deals-damage-to-player" ? { eventPlayer: event.victim } : {}),
         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
         ...("amount" in event ? { eventAmount: event.amount } : {})
       });
@@ -1464,7 +1467,8 @@ function dealDamageToPlayer(
       permanentId: source.permanentId,
       controller: source.controller,
       card: source.card,
-      victim: seat
+      victim: seat,
+      amount
     });
   }
   return logged(next, seat, `${sourceName} hace ${amount} de daño a ${playerAt(next, seat).name}.`);
@@ -1573,6 +1577,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "draw-target-player": {
       const target = object.targets[0];
       return target?.kind === "player" ? drawCards(state, target.seat, effectAmount(effect.amount, object)) : state;
+    }
+    case "you-and-event-player-each-draw": {
+      const eventPlayer = object.trigger?.eventPlayer;
+      const amount = object.trigger?.eventAmount ?? 0;
+      if (eventPlayer === undefined || amount <= 0) return state;
+      const next = drawCards(state, controller, amount);
+      return drawCards(next, eventPlayer, amount);
     }
     case "draw-active-player": return drawCards(state, state.activeSeat, 1);
     case "draw-equal-tapped-creatures": {
@@ -4191,7 +4202,7 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
     if (dealer && hit.amount > 0) {
       next = raiseEvent(next, {
         kind: "deals-combat-damage-to-player",
-        permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card, victim: hit.seat
+        permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card, victim: hit.seat, amount: hit.amount
       });
     }
     if (hit.commanderId) {

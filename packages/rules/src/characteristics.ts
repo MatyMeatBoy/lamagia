@@ -344,6 +344,8 @@ export type SpellEffect =
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
+  /** Draw the combat-damage amount for both the trigger controller and event player. */
+  | { readonly kind: "you-and-event-player-each-draw" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
@@ -3151,9 +3153,12 @@ function recognizeText(text: string): RecognizedText {
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
+      const eventPlayerDraw = /^you\s+and\s+that\s+player\s+each\s+draw\s+that\s+many\s+cards?\.?$/i.test(effectText);
       const recognized = (payCost && payCost.hasVariable && !variableLifePay) ? null
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
+        : eventPlayerDraw
+        ? { effect: { kind: "you-and-event-player-each-draw" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
           const executableText = optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
           const lookTop = parseLookTopSelection(executableText);
