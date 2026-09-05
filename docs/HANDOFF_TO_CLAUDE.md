@@ -2497,6 +2497,31 @@ Global export: **9,150/38,712** (+6 from 9,144). `npm run check` and `npm
 test` PASS (**527 rules tests**, up from 525). `npm run simulate:engine`:
 **200/200 passed**.
 
+### Worker-05: a missing trigger template, not a missing primitive (2026-09-04)
+
+Claim `rules-noncreature-spell-cast-each-player-drain`, continuing the
+Nekusar decklist (Mai, Scornful Striker). Every piece "Whenever a player
+casts a noncreature spell, they lose 2 life" needed already existed:
+`spellType: "noncreature"` filtering in the trigger matcher, the
+`each-player` subject, `eventController` capture off `spell-cast`'s own
+`controller` field (from an earlier claim this session), and
+`lose-life-event-player` as the effect. Nobody had ever combined
+`each-player` with the `noncreature` filter in a `TRIGGER_TEMPLATES` entry —
+only `you`+`noncreature` (Prowess) and `you`/`opponent`+`creature` existed.
+Adding the one template also required widening `TriggerTemplate`'s own
+`spellType` union, which had drifted out of sync with the sibling
+`TriggerDefinition` type (missing `"noncreature"` even though the executor
+already handled it) — caught immediately by `tsc`, not a runtime gap.
+
+Fully implements Mai, Scornful Striker; Ruric Thar, the Unbowed; Medusa,
+Inhuman Queen. Scenario coverage casts a noncreature spell as the trigger
+source's own controller (self-inflicted life loss — "a player" is not "an
+opponent") and confirms a creature spell never triggers it.
+
+Global export: **9,163/38,712** (+3 from 9,160). `npm run check` and `npm
+test` PASS (**538 rules tests**, up from 537). `npm run simulate:engine`:
+**200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed
