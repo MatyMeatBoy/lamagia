@@ -151,6 +151,7 @@ const TIDAL_FORCE = () => make({ name: "Tidal Force", type_line: "Creature — E
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
+const TEFERIS_PUZZLE_BOX = () => make({ name: "Teferi's Puzzle Box", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "At the beginning of each player's draw step, that player puts the cards in their hand on the bottom of their library in any order, then draws that many cards.", oracle_id: "37abcc92-9466-47ea-9e0b-5eda2eb62c8e", scryfall_id: "b5fb88b2-5dc6-43de-8a38-1f8982ed395a" });
 const HAND_MINUS_DAMAGE = () => make({ name: "Hand Minus Damage", type_line: "Creature — Artifact", mana_cost: "{5}", cmc: 5, power: "2", toughness: "2", oracle_text: "At the beginning of each opponent's upkeep, this creature deals X damage to that player, where X is the number of cards in their hand minus 4." });
 const HAND_EQUAL_DAMAGE = () => make({ name: "Hand Equal Damage", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of each opponent's upkeep, this creature deals damage to that player equal to the number of cards in that player's hand." });
 const EACH_HAND_DAMAGE = () => make({ name: "Shared Hand Damage", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Each player loses life equal to the number of cards in their hand." });
@@ -3067,6 +3068,25 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [DRAW_MINE()]);
     game = passUntil(game, (state) => state.turn === 2 && state.activeSeat === 0 && state.step === "precombat-main");
     expect(game.log.some((entry) => entry.text.includes("Se resuelve la habilidad del paso de robo de Draw Mine"))).toBe(true);
+  });
+
+  it("cycles the active player's whole hand through the library on Teferi's Puzzle Box", () => {
+    const profile = profileOf(TEFERIS_PUZZLE_BOX());
+    expect(profile.triggers[0]).toMatchObject({ event: "draw-step", subject: "each-player", effect: { kind: "put-active-player-hand-on-library-bottom-then-draw-same" } });
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [TEFERIS_PUZZLE_BOX()]);
+    game = stage(game, 0, () => ({
+      hand: toHand(0, [SOL_RING(), FLIER()], "puzzle-hand"),
+      library: toHand(0, [MOUNTAIN(), ISLAND()], "puzzle-library")
+    }));
+    // Turn 1's draw step already happened before the artifact entered play, so
+    // seat 0's own draw step first sees Teferi's Puzzle Box on turn 3 (their
+    // second real turn): the turn-based draw adds Mountain, then the trigger
+    // bottoms the whole 3-card hand and redraws 3, landing on top in order.
+    game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 0 && state.step === "precombat-main");
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Island", "Sol Ring", "Storm Crow"]);
+    expect(game.players[0]!.library.map((card) => card.name)).toEqual(["Mountain"]);
   });
 
   it("clamps opponent hand-count damage at zero", () => {

@@ -1817,6 +1817,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return target?.kind === "player" ? drawCards(state, target.seat, effectAmount(effect.amount, object)) : state;
     }
     case "draw-active-player": return drawCards(state, state.activeSeat, 1);
+    case "put-active-player-hand-on-library-bottom-then-draw-same": {
+      const seat = state.activeSeat;
+      const hand = playerAt(state, seat).hand;
+      const amount = hand.length;
+      if (amount <= 0) return state;
+      const next = withPlayer(state, seat, (player) => ({ ...player, hand: [], library: [...player.library, ...hand] }));
+      return drawCards(next, seat, amount);
+    }
     case "put-event-player-hand-card-on-library-top": {
       const seat = object.trigger?.eventController;
       if (seat === undefined) return state;
