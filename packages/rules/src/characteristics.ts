@@ -921,6 +921,8 @@ export interface CardProfile {
   /** "Equip worthy {cost}" (Mjölnir): Equip restricted to a legendary, non-Villain creature that's red and/or white. */
   readonly equipWorthyCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
+  /** Static bonuses an Aura grants the permanent it's attached to (CR 303.4.5), e.g. "Enchanted creature gets +2/+2." */
+  readonly auraModification: EquipmentModification | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
@@ -1602,6 +1604,26 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
       return { power: Number(match[1]), toughness: Number(match[2]), keywords, text: line.trim() };
     }
     match = /^equipped creature has\s+(.+)$/i.exec(clean);
+    if (match) {
+      const keywords = match[1]!.split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
+        .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
+      if (keywords.length) return { power: 0, toughness: 0, keywords, text: line.trim() };
+    }
+  }
+  return null;
+}
+
+/** Static bonuses granted by an Aura to the permanent it's attached to (CR 303.4.5). */
+function parseAuraModification(text: string): EquipmentModification | null {
+  for (const line of text.split("\n")) {
+    const clean = line.trim().replace(/\.$/, "");
+    let match = /^enchanted creature gets ([+-]\d+)\/([+-]\d+)(?:\s+and\s+has\s+(.+))?$/i.exec(clean);
+    if (match) {
+      const keywords = (match[3] ?? "").split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
+        .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
+      return { power: Number(match[1]), toughness: Number(match[2]), keywords, text: line.trim() };
+    }
+    match = /^enchanted creature has\s+(.+)$/i.exec(clean);
     if (match) {
       const keywords = match[1]!.split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
@@ -3848,6 +3870,16 @@ function recognizeText(text: string): RecognizedText {
     if (/^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/i.test(line)) continue;
     if (/^level\s+\d+(?:-\d+|\+)?$/i.test(line) || /^\d+\/\d+$/.test(line)) continue;
     if (parseEquipmentModification(line)) continue;
+    if (parseAuraModification(line)) continue;
+    // "Enchant creature/land/permanent/creature you control" (CR 303.4.5) is
+    // an Aura's own targeting restriction, not a resolved effect — it becomes
+    // the spell's targetKind so the whole existing targeting/fizzle pipeline
+    // (legalTargets, the stack fizzle check, castableCard) applies for free.
+    const enchantTarget = /^enchant (creature|land|permanent|creature you control)\.?$/i.exec(line);
+    if (enchantTarget) {
+      targetKind = enchantTarget[1]! === "creature you control" ? "creature-you-control" : enchantTarget[1]! as TargetKind;
+      continue;
+    }
     // Combat restrictions and landwalk are static: they change which
     // declarations are legal rather than resolving anything (CR 508.1d, 509.1a).
     if (combatRuleLines.has(line)) continue;
@@ -4448,6 +4480,8 @@ export function cardProfile(card: CardData): CardProfile {
     : null;
   const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
     ? parseEquipmentModification(text) : null;
+  const auraModification = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
+    ? parseAuraModification(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
@@ -4550,6 +4584,7 @@ export function cardProfile(card: CardData): CardProfile {
     typedEquipCost,
     equipWorthyCost,
     equipmentModification,
+    auraModification,
     staticKeywordGrants,
     keywordsDuringYourTurn,
     untapColorsDuringOtherPlayersUntap,
