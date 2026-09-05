@@ -524,6 +524,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  /** Incinerate-style damage rider that disables regeneration for the damaged creature (CR 615.1, 701.19). */
+  | { readonly kind: "damage-any-target-prevents-regeneration"; readonly amount: number | "X" }
   /** Damage equal to the power of the creature paid for this spell's additional cost (CR 608.2h). */
   | { readonly kind: "damage-any-target-equal-sacrificed-creature-power" }
   /** Amass N (CR 701.44): put N +1/+1 counters on an Army you control, or create a 0/0 black [tokenType] Army token with them if you control none. */
@@ -4844,7 +4846,9 @@ function recognizeText(text: string): RecognizedText {
       continue;
     }
 
-    for (const sentence of line.split(SENTENCE_SPLIT)) {
+    const sentences = line.split(SENTENCE_SPLIT);
+    for (let sentenceIndex = 0; sentenceIndex < sentences.length; sentenceIndex += 1) {
+      const sentence = sentences[sentenceIndex]!;
       if (!sentence.trim()) continue;
       // "If ~ was kicked, X" — X applies only on a kicked cast (CR 702.33e).
       const ifKicked = /^If (?:~|this spell|this creature) was kicked(?:\s+\d+ times?)?,\s*(.+)$/i.exec(sentence.trim());
@@ -4859,6 +4863,18 @@ function recognizeText(text: string): RecognizedText {
       const recognized = recognizeSentence(sentence);
       if (!recognized) {
         if (!isIgnorableSentence(sentence, /chosen color/i.test(joined))) unimplementedText.push(sentence.trim());
+        continue;
+      }
+      // Incinerate and the same reusable wording carry the regeneration rider
+      // in the sentence immediately following their damage instruction.
+      // Fold both clauses into one executable effect so the rider only applies
+      // to a creature that actually received this damage (CR 615.1, 701.19).
+      const noRegenerationRider = sentences[sentenceIndex + 1]?.trim();
+      if (recognized.effect.kind === "damage-any-target"
+        && /^a creature dealt damage this way can(?:not|'t) be regenerated this turn\.?$/i.test(noRegenerationRider ?? "")) {
+        effects.push({ kind: "damage-any-target-prevents-regeneration", amount: recognized.effect.amount });
+        if (recognized.target !== "none") targetKind = recognized.target;
+        sentenceIndex += 1;
         continue;
       }
       effects.push(recognized.effect);

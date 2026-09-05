@@ -431,6 +431,7 @@ const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
 const LIGHTNING_HELIX = () => make({ name: "Lightning Helix", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Lightning Helix deals 3 damage to any target and you gain 3 life.", oracle_id: "800c258a-cfc4-4a54-a667-065ea8dea69e", scryfall_id: "800c258a-cfc4-4a54-a667-065ea8dea69e" });
+const INCINERATE = () => make({ name: "Incinerate", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Incinerate deals 3 damage to any target. A creature dealt damage this way can't be regenerated this turn.", oracle_id: "d8fd7a34-8418-4e98-b79b-119c4348c667", scryfall_id: "d8fd7a34-8418-4e98-b79b-119c4348c667" });
 const FLING = () => make({ name: "Fling", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nFling deals damage equal to the sacrificed creature's power to any target.", oracle_id: "24227761-b50e-4b9e-93a2-e82d053b3e3d", scryfall_id: "050eb421-a446-4d84-b331-a267b02dc9f5" });
 const TREASURE_HUNT = () => make({ name: "Treasure Hunt", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand.", oracle_id: "05079479-86a6-4041-a395-83d325b6ddb7", scryfall_id: "53af54e3-412f-4bc4-8a3a-911eaa62be27" });
 const PSIONIC_BLAST = () => make({ name: "Psionic Blast", type_line: "Instant", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Psionic Blast deals 4 damage to any target and 2 damage to you.", oracle_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad", scryfall_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad" });
@@ -5545,6 +5546,29 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Large Sacrifice")).toBe(true);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === smallPermanent.instance_id)).toBe(true);
     expect(game.players[1]!.life).toBe(35);
+  });
+
+  it("keeps Incinerate from being regenerated after it deals damage", () => {
+    // CR 615.1, 701.19: the rider applies only to a creature actually dealt
+    // damage and lasts through the current cleanup step.
+    const incinerate = INCINERATE();
+    expect(profileOf(incinerate)).toMatchObject({
+      targetKind: "any",
+      effects: [{ kind: "damage-any-target-prevents-regeneration", amount: 3 }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([incinerate], [MOUNTAIN(), MOUNTAIN()], [], [make({ name: "Regeneration Test", type_line: "Creature — Beast", mana_cost: "{4}{G}", cmc: 5, power: "5", toughness: "5" })]);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Regeneration Test")!;
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+      ? { ...permanent, regenerationShields: 1 } : permanent) }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    const damaged = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
+    expect(damaged).toMatchObject({ damage: 3, regenerationShields: 1, cantRegenerateUntilEndOfTurn: true });
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+      ? { ...permanent, damage: 5 } : permanent) }));
+    game = applyAction(game, pendingSeat(game)!, { type: "pass" });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Regeneration Test")).toBe(true);
   });
 
   it("can't cast Diabolic Intent with no creature to sacrifice", () => {
