@@ -3304,8 +3304,61 @@ seat, whose first turn actually has a real mandatory draw to consume the
 decoy first. Validation: **622 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,443 global profiles.
 
-With Reforge the Soul, Gitaxian Probe, Notion Thief, Black Market
-Connections, and Wizard Class closed, 93 of 94 cards in the Nekusar, the
-Mindrazer decklist are implemented. One remains: Naktamun Lorespinner //
-Wheel of Fortune, which needs a transform/double-faced-card state
-framework that does not exist in this engine at all — not attempted yet.
+Naktamun Lorespinner // Wheel of Fortune | `c78783e5-868d-4a8b-a4f8-95a92853cf0a`
+closed the deck's last card, and it turned out this earlier assessment
+was simply wrong: "Prepared" (a brand-new mechanic, first seen in this
+project) is NOT a transform/DFC card at all. The permanent's zone and
+characteristics never change; "you may cast a copy of its spell" is a
+genuine CR 707.14-style spell copy — one that ceases to exist once it
+leaves the stack rather than occupying any zone — and this engine
+already had full support for that shape via the `fromCopy` `StackObject`
+flag, built earlier for `copy-triggered-spell` (Mirari-style effects).
+So the real work was much smaller than the deferred assessment implied.
+Confirmed first via the project's OWN exported
+`data/rules/engine-card-profiles.json`: this card's `unimplementedText`
+already read the FRONT face's real oracle line correctly (`~ becomes
+prepared`) — proving the existing `frontFace(card)` helper (used for any
+multi-faced card, e.g. transforming/split/adventure) already resolves
+`card_faces[0]` correctly, so no catalog or ingestion fix was needed at
+all; only a new parser pattern and a matching primitive were missing.
+New pieces: a `become-prepared` `SpellEffect` and an
+`any-player-hand-at-most` trigger condition recognize "At the beginning
+of your upkeep, if a player has N or fewer cards in hand, ~ becomes
+prepared." on the front face; a new `Permanent.prepared` boolean; a new
+EXPORTED `backFace(card)` — the mirror of the existing private
+`frontFace`, reading `card_faces[1]` instead of `[0]` — returning a
+synthetic `CardData` keyed under `${scryfall_id}::back` specifically so
+its recursive `cardProfile()` call gets its OWN cache entry rather than
+colliding with the front face's (the cache key is the raw `scryfall_id`,
+so reusing the same one would have returned the wrong profile back).
+That back-face profile is computed once, lazily — only for a card whose
+`gatedTriggers` actually contains a `become-prepared` effect, so
+unrelated multi-faced cards (transform, split, adventure) never pay this
+extra recursive-parse cost — and its cost/effect/targetKind/name are
+lifted straight into a new `CardProfile.preparedCast`. Casting the copy
+(`cast-prepared-copy` action, `applyCastPreparedCopy`) pays that cost,
+flips `prepared` back off, and constructs a synthetic `GameCard` for the
+copy via `backFace(source.card)` plus a fresh `instance_id`, pushed with
+`pushOnStack`'s newly-parameterized trailing `fromCopy` argument (that
+function previously had no way to mark a pushed spell as a copy at all —
+only the hand-rolled `copy-triggered-spell` `StackObject` literal did).
+Resolution needed ZERO new code past that: `resolveTop` and
+`sendSpellToOwnerZone` already special-case `fromCopy` to skip every
+zone-move step, exactly matching CR 707.14. Caught while writing the
+scenario test: `twoSeatGame` already settles all the way to turn 1's own
+precombat-main inside `createGame`, before the test has added ANY
+permanent — so a permanent staged afterward, as every test in this file
+does, has already missed that turn's upkeep by the time the test can
+observe it. `passUntil(state => state.step === "precombat-main" &&
+...)`, satisfied by the CURRENT untouched state, returned immediately
+without ever advancing to a fresh upkeep. Fixed by waiting for the
+seat's NEXT own precombat-main (`state.turn > turnBefore`, landing on
+turn 3) instead, whose own upkeep runs fresh with the permanent already
+present. Validation: **623 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,444 global profiles.
+
+**All 94 cards in the Nekusar, the Mindrazer decklist are now
+implemented.** See `docs/WORK_CLAIMS.md` for the complete per-card
+primitive history across every cluster this and prior sessions
+delivered — nothing in this deck remains unimplemented or partially
+implemented.

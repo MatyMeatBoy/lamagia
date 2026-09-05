@@ -459,6 +459,17 @@ const MJOLNIR = () => make({
   oracle_id: "7f9a8845-d760-44a7-a4c9-8a20dba4e14a", scryfall_id: "e0c7f566-5351-44e3-a346-b84b0eb10209"
 });
 const WORTHY_CREATURE = () => make({ name: "Test Worthy Avenger", type_line: "Legendary Creature — Human Hero", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", colors: ["R"] });
+const NAKTAMUN_LORESPINNER = () => make({
+  name: "Naktamun Lorespinner // Wheel of Fortune", type_line: "Creature — Jackal Wizard // Sorcery", mana_cost: "{2}{R} // {2}{R}", cmc: 3, power: "3", toughness: "3", colors: ["R"],
+  card_faces: [
+    {
+      name: "Naktamun Lorespinner", mana_cost: "{2}{R}", type_line: "Creature — Jackal Wizard", power: "3", toughness: "3",
+      oracle_text: "At the beginning of your upkeep, if a player has one or fewer cards in hand, this creature becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)"
+    },
+    { name: "Wheel of Fortune", mana_cost: "{2}{R}", type_line: "Sorcery", oracle_text: "Each player discards their hand, then draws seven cards." }
+  ],
+  oracle_id: "c78783e5-868d-4a8b-a4f8-95a92853cf0a", scryfall_id: "acca1fd4-6384-460e-905f-118f01aa76ed"
+});
 const REFORGE_THE_SOUL = () => make({
   name: "Reforge the Soul", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, keywords: ["Miracle"],
   oracle_text: "Each player discards their hand, then draws seven cards.\nMiracle {1}{R} (You may cast this card for its miracle cost when you draw it if it's the first card you drew this turn.)",
@@ -8207,6 +8218,47 @@ describe("Reforge the Soul", () => {
 
     expect(game.pendingChoice).toBeNull();
     expect(game.players[1]!.hand.some((card) => card.name === "Reforge the Soul")).toBe(true);
+  });
+});
+
+describe("Naktamun Lorespinner // Wheel of Fortune", () => {
+  it("becomes prepared at upkeep when a player is low on cards, then casts a copy without ever leaving the battlefield", () => {
+    const profile = profileOf(NAKTAMUN_LORESPINNER());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "upkeep", subject: "you", condition: { kind: "any-player-hand-at-most", amount: 1 }, effect: { kind: "become-prepared" }
+    });
+    expect(profile.preparedCast).toMatchObject({ spellName: "Wheel of Fortune", effect: { kind: "each-player-discard-and-draw", amount: 7 } });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // `twoSeatGame` already settles to turn 1's precombat-main before this
+    // permanent ever exists, so its first real chance at an upkeep trigger is
+    // turn 3 (this seat's next own turn) — wait for that one specifically.
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [NAKTAMUN_LORESPINNER(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 0, () => ({ hand: [] })); // qualifies "a player has one or fewer cards in hand"
+    const turnBefore = game.turn;
+    game = passUntil(game, (state) => state.turn > turnBefore && state.activeSeat === 0 && state.step === "precombat-main");
+
+    const creature = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Naktamun Lorespinner // Wheel of Fortune")!;
+    expect(creature.prepared).toBe(true);
+
+    const copyAction = legalActions(game, 0).find((entry) => entry.action.type === "cast-prepared-copy" && entry.cardId === creature.instance_id)!;
+    expect(copyAction).toBeDefined();
+    game = applyAction(game, 0, copyAction.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    // "Each player discards their hand, then draws seven cards" — both end at 7.
+    expect(game.players[0]!.hand).toHaveLength(7);
+    expect(game.players[1]!.hand).toHaveLength(7);
+    // The permanent itself never left the battlefield or changed zone (CR 707.14: the copy just ceases to exist,
+    // so neither it nor the discarded pre-Wheel hand's own draw ever names Naktamun Lorespinner or its copy).
+    const stillThere = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === creature.instance_id);
+    expect(stillThere).toBeDefined();
+    expect(stillThere?.prepared).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name.includes("Naktamun") || card.name === "Wheel of Fortune")).toBe(false);
+
+    // Unprepared now, so it can't be copied again immediately.
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast-prepared-copy")).toBe(false);
   });
 });
 

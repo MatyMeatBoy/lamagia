@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,029** · cobertura: **28.3%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,030** · cobertura: **28.3%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -681,7 +681,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,02
 | 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | teenage-mutant-ninja-turtles-source-material | other | 20 | 2 | 18 | 10.0% |
 | 2026-04-13 | MagicFest 2026 (`PF26`) | promos | magicfest-2026 | other | 13 | 7 | 6 | 53.8% |
 | 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 42 | 229 | 15.5% |
-| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 114 | 261 | 30.4% |
+| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 115 | 260 | 30.7% |
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 17 | 48 | 26.2% |
 | 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 7 | 73 | 8.8% |
 | 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 48 | 233 | 17.1% |
@@ -753,7 +753,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,02
 | commander | 2023 | 6 | 1597 | 496 | 1101 | 31.1% |
 | commander | 2024 | 7 | 1887 | 641 | 1246 | 34.0% |
 | commander | 2025 | 4 | 1046 | 391 | 655 | 37.4% |
-| commander | 2026 | 6 | 1265 | 335 | 930 | 26.5% |
+| commander | 2026 | 6 | 1265 | 336 | 929 | 26.6% |
 | conspiracy | conspiracy | 2 | 211 | 45 | 166 | 21.3% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 61 | 160 | 27.6% |
 | core | 1990s | 10 | 3267 | 1155 | 2112 | 35.4% |
@@ -62647,7 +62647,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,02
 - [ ] Muddle, the Ever-Changing — `9a8f6e5e-6cde-49df-861c-a26cb09c9b12`
 - [ ] Mycoloth — `d7fd16ce-282d-49cd-b2b4-0d25935e7a72`
 - [ ] Mystic Sanctuary — `17b60106-a4c7-410a-8ac3-ec8e74e29a7c`
-- [ ] Naktamun Lorespinner // Wheel of Fortune — `c78783e5-868d-4a8b-a4f8-95a92853cf0a`
 - [ ] Nether Traitor — `6f16c3ac-a9b8-47e6-b18b-ae37c74d44a0`
 - [ ] Nev, the Practical Dean — `42750e30-d022-4623-a290-d91fa80721c9`
 - [ ] Nexus Mentality — `6bdbe36f-b46d-4746-baf2-04f0977bb532`
