@@ -4099,10 +4099,11 @@ function recognizeText(text: string): RecognizedText {
             // invalid fragment "gain 2 life" (CR 609.3).
             ? effectText.replace(/^you\s+may\s+(?=(?:draw|mill|discard|gain|lose)\b)/i, "You ").replace(/^you\s+may\s+/i, "")
             : effectText;
-          const lookTop = parseLookTopSelection(executableText);
-          const manaSpentToken = parseManaSpentToken(executableText);
+          const normalizedExecutableText = executableText.replace(/^(?:have\s+)?(?:it|~)\s+deal\b/i, "~ deals");
+          const lookTop = parseLookTopSelection(normalizedExecutableText);
+          const manaSpentToken = parseManaSpentToken(normalizedExecutableText);
           return manaSpentToken ? { effect: manaSpentToken, target: "none" as TargetKind }
-            : lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
+            : lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(normalizedExecutableText);
         })();
       if (recognized) {
         const capriciousMultiTarget = /^choose target nonland permanent you control and up to two target nonland permanents you don't control\. destroy one of them at random\.?$/i.test(effectText);
