@@ -16,6 +16,20 @@ describe("smart counter response and safe mana undo", () => {
     expect(permanents.at(-2)).toMatchObject({ isCreature: false, power: null, toughness: null });
     expect(permanents.at(-1)).toMatchObject({ isCreature: true, power: 0, toughness: 0 });
   });
+  it("annihilates opposing +1/+1 and -1/-1 counters as a state-based action", () => {
+    let game = putOnBattlefield(twoSeatGame([], []), 0, [BEAR()]);
+    const bear = game.players[0]!.battlefield.at(-1)!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === bear.instance_id
+        ? { ...permanent, counters: { "+1/+1": 2, "-1/-1": 1 } }
+        : permanent)
+    }));
+    game = settle(game);
+    const updated = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(updated.counters).toEqual({ "+1/+1": 1 });
+    expect(powerOf(updated, game)).toBe(3);
+    expect(toughnessOf(updated, game)).toBe(3);
+  });
   function board(text = "Counter target spell with mana value 1.") {
     let game = twoSeatGame([], []);
     game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null,

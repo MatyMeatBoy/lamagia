@@ -3428,3 +3428,12 @@ server. Repeated copies with the same source/text/effect remain automatic
 because their order cannot change the result, and bot seats select the first
 deterministic option. The Cradle of Vitality scenario covers the meaningful
 ordering path before its optional trigger resolves.
+
+## Counter state-based action baseline (2026-09-05)
+
+The rules loop now applies CR 704.5r: matching `+1/+1` and `-1/-1` counters
+annihilate before lethal-toughness checks. The remaining counter amount is
+preserved, zero-valued keys are removed, and the normal state-based-action
+loop reevaluates the creature after the change. This is shared by undying,
+persist, graft, level and ordinary counter effects rather than a card branch;
+the regression suite covers both the stored counters and live P/T result.

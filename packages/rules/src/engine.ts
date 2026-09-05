@@ -4931,6 +4931,30 @@ function applyStateBasedActions(state: GameState): GameState {
       changed = true;
     }
 
+    // Rule 704.5r: +1/+1 and -1/-1 counters annihilate as a state-based
+    // action. Do this before checking lethal toughness; removing counters can
+    // change both the creature's power and whether it survives this pass.
+    for (const permanent of allPermanents(next)) {
+      const positive = permanent.counters["+1/+1"] ?? 0;
+      const negative = permanent.counters["-1/-1"] ?? 0;
+      const removed = Math.min(positive, negative);
+      if (!removed) continue;
+      const counters = { ...permanent.counters };
+      const remainingPositive = positive - removed;
+      const remainingNegative = negative - removed;
+      if (remainingPositive) counters["+1/+1"] = remainingPositive;
+      else delete counters["+1/+1"];
+      if (remainingNegative) counters["-1/-1"] = remainingNegative;
+      else delete counters["-1/-1"];
+      next = withPlayer(next, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, counters }
+          : candidate)
+      }));
+      changed = true;
+    }
+
     // Rule 704.5i: a planeswalker with 0 loyalty is put into its owner's graveyard.
     for (const permanent of allPermanents(next)) {
       const profile = cardProfile(permanent.card);
