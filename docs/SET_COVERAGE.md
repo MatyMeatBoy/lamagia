@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,831** · cobertura: **26.9%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,837** · cobertura: **26.9%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -163,7 +163,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 | 2006-04-22 | Dissension Promos (`PDIS`) | promos | dissension | other | 2 | 0 | 2 | 0.0% |
 | 2006-05-05 | Dissension (`DIS`) | expansion | 2000s | main | 180 | 35 | 145 | 19.4% |
 | 2006-07-08 | Coldsnap Promos (`PCSP`) | promos | coldsnap | other | 1 | 0 | 1 | 0.0% |
-| 2006-07-21 | Coldsnap (`CSP`) | expansion | 2000s | main | 155 | 28 | 127 | 18.1% |
+| 2006-07-21 | Coldsnap (`CSP`) | expansion | 2000s | main | 155 | 29 | 126 | 18.7% |
 | 2006-07-21 | Coldsnap Theme Decks (`CST`) | deck-products | coldsnap-theme-decks | other | 52 | 11 | 41 | 21.2% |
 | 2006-09-23 | Time Spiral Promos (`PTSP`) | promos | time-spiral | other | 3 | 1 | 2 | 33.3% |
 | 2006-10-06 | Time Spiral (`TSP`) | expansion | time-spiral | main | 286 | 57 | 229 | 19.9% |
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 27 | 41 | 39.7% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 68 | 166 | 29.1% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 235 | 106 | 68.9% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 236 | 105 | 69.2% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 3 | 9 | 25.0% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 6 | 8 | 42.9% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 2 | 7 | 22.2% |
@@ -580,7 +580,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 | 2023-07-18 | Explorer Anthology 3 (`EA3`) | anthologies | explorer-anthology-3 | other | 25 | 10 | 15 | 40.0% |
 | 2023-07-18 | Historic Anthology 7 (`HA7`) | anthologies | historic-anthology-7 | other | 25 | 10 | 15 | 40.0% |
 | 2023-08-01 | 2022 Heroes of the Realm (`PH22`) | funny-special | 2022-heroes-of-the-realm | other | 5 | 0 | 5 | 0.0% |
-| 2023-08-04 | Commander Masters (`CMM`) | masters-remastered | 2023 | other | 737 | 194 | 543 | 26.3% |
+| 2023-08-04 | Commander Masters (`CMM`) | masters-remastered | 2023 | other | 737 | 195 | 542 | 26.5% |
 | 2023-09-01 | 30th Anniversary Celebration Tokyo (`P30T`) | promos | 30th-anniversary-celebration-tokyo | other | 2 | 2 | 0 | 100.0% |
 | 2023-09-08 | Magic × Duel Masters Promos (`PMDA`) | masters-remastered | magic-duel-masters | other | 4 | 3 | 1 | 75.0% |
 | 2023-09-08 | Time Spiral Remastered Promos (`PTSR`) | masters-remastered | time-spiral-remastered | other | 3 | 0 | 3 | 0.0% |
@@ -661,12 +661,12 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 | 2025-08-24 | 2023 Heroes of the Realm (`PH23`) | funny-special | 2023-heroes-of-the-realm | other | 2 | 0 | 2 | 0.0% |
 | 2025-09-23 | Arena Anthology 3 (`AA3`) | anthologies | arena-anthology-3 | other | 25 | 6 | 19 | 24.0% |
 | 2025-09-23 | Arena Anthology 4 (`AA4`) | anthologies | arena-anthology-4 | other | 28 | 12 | 16 | 42.9% |
-| 2025-09-23 | Through the Omenpaths (`OM1`) | expansion | 2020s | main | 188 | 17 | 171 | 9.0% |
+| 2025-09-23 | Through the Omenpaths (`OM1`) | expansion | 2020s | main | 188 | 18 | 170 | 9.6% |
 | 2025-09-23 | Through the Omenpaths Bonus Sheet (`OMB`) | masterpieces | through-the-omenpaths-bonus-sheet | other | 40 | 7 | 33 | 17.5% |
 | 2025-09-26 | Marvel Universe (`MAR`) | masterpieces | marvel-universe | other | 94 | 13 | 81 | 13.8% |
-| 2025-09-26 | Marvel's Spider-Man (`SPM`) | expansion | 2020s | main | 193 | 22 | 171 | 11.4% |
+| 2025-09-26 | Marvel's Spider-Man (`SPM`) | expansion | 2020s | main | 193 | 23 | 170 | 11.9% |
 | 2025-09-26 | Marvel's Spider-Man Eternal (`SPE`) | eternal | 2020s | other | 26 | 3 | 23 | 11.5% |
-| 2025-09-26 | Marvel's Spider-Man Promos (`PSPM`) | promos | marvel-s-spider-man | other | 68 | 0 | 68 | 0.0% |
+| 2025-09-26 | Marvel's Spider-Man Promos (`PSPM`) | promos | marvel-s-spider-man | other | 68 | 1 | 67 | 1.5% |
 | 2025-09-30 | Marvel Legends Series Inserts (`LMAR`) | promos | marvel-legends-series-inserts | other | 4 | 0 | 4 | 0.0% |
 | 2025-11-21 | Avatar: The Last Airbender (`TLA`) | expansion | 2020s | main | 286 | 38 | 248 | 13.3% |
 | 2025-11-21 | Avatar: The Last Airbender Eternal (`TLE`) | eternal | 2020s | other | 242 | 61 | 181 | 25.2% |
@@ -740,7 +740,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 | boxed-products | the-zeta-set | 1 | 121 | 38 | 83 | 31.4% |
 | commander | 2011 | 1 | 303 | 122 | 181 | 40.3% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 235 | 106 | 68.9% |
+| commander | 2013 | 1 | 341 | 236 | 105 | 69.2% |
 | commander | 2014 | 1 | 322 | 198 | 124 | 61.5% |
 | commander | 2015 | 1 | 327 | 129 | 198 | 39.4% |
 | commander | 2016 | 1 | 341 | 115 | 226 | 33.7% |
@@ -793,9 +793,9 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 34 | 33 | 50.7% |
 | eternal | 2020s | 6 | 537 | 117 | 420 | 21.8% |
 | expansion | 1990s | 11 | 1573 | 324 | 1249 | 20.6% |
-| expansion | 2000s | 19 | 3082 | 597 | 2485 | 19.4% |
+| expansion | 2000s | 19 | 3082 | 598 | 2484 | 19.4% |
 | expansion | 2010s | 14 | 2735 | 637 | 2098 | 23.3% |
-| expansion | 2020s | 17 | 3738 | 525 | 3213 | 14.0% |
+| expansion | 2020s | 17 | 3738 | 527 | 3211 | 14.1% |
 | expansion | alara | 2 | 379 | 137 | 242 | 36.1% |
 | expansion | amonkhet | 1 | 272 | 83 | 189 | 30.5% |
 | expansion | bloomburrow | 1 | 280 | 37 | 243 | 13.2% |
@@ -867,7 +867,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 | masterpieces | wilds-of-eldraine-enchanting-tales | 1 | 63 | 8 | 55 | 12.7% |
 | masterpieces | zendikar-expeditions | 1 | 45 | 41 | 4 | 91.1% |
 | masterpieces | zendikar-rising-expeditions | 1 | 30 | 25 | 5 | 83.3% |
-| masters-remastered | 2023 | 1 | 737 | 194 | 543 | 26.3% |
+| masters-remastered | 2023 | 1 | 737 | 195 | 542 | 26.5% |
 | masters-remastered | amonkhet-remastered | 1 | 309 | 78 | 231 | 25.2% |
 | masters-remastered | chronicles | 1 | 116 | 28 | 88 | 24.1% |
 | masters-remastered | chronicles-foreign-black-border | 1 | 116 | 28 | 88 | 24.1% |
@@ -1090,7 +1090,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 | promos | march-of-the-machine | 1 | 80 | 1 | 79 | 1.2% |
 | promos | march-of-the-machine-the-aftermath | 1 | 8 | 0 | 8 | 0.0% |
 | promos | marvel-legends-series-inserts | 1 | 4 | 0 | 4 | 0.0% |
-| promos | marvel-s-spider-man | 1 | 68 | 0 | 68 | 0.0% |
+| promos | marvel-s-spider-man | 1 | 68 | 1 | 67 | 1.5% |
 | promos | media-and-collaboration | 1 | 94 | 33 | 61 | 35.1% |
 | promos | mercadian-masques | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin | 1 | 1 | 0 | 1 | 0.0% |
@@ -13668,7 +13668,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 - [ ] Ronom Serpent — `ff35e480-8ea2-47bb-bb2a-24cefe9c2139`
 - [ ] Rune Snag — `49bf3805-cc9e-4550-8a01-171282aa49c9`
 - [ ] Scrying Sheets — `0f98e055-ab61-4314-aae8-9d3c19f66acf`
-- [ ] Sek'Kuar, Deathkeeper — `94426127-65c2-435e-ba92-423a3c102061`
 - [ ] Shape of the Wiitigo — `16950554-0e39-4705-aab4-7a8734771844`
 - [ ] Sheltering Ancient — `4554ce06-4992-4689-8a40-558a1545b968`
 - [ ] Simian Brawler — `2497cfe2-a85c-47ea-af7a-9a745d84f8b4`
@@ -21057,7 +21056,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 - [ ] Reincarnation — `d6bf5e22-8d33-43a9-8824-435068e0a87a`
 - [ ] Roon of the Hidden Realm — `fd336830-4a11-42b8-9fc7-d7526f569124`
 - [ ] Rubinia Soulsinger — `bd3eeaba-964b-49ea-bb11-5875a78b8a4c`
-- [ ] Sek'Kuar, Deathkeeper — `94426127-65c2-435e-ba92-423a3c102061`
 - [ ] Serene Master — `2ce0d583-81ca-4dca-bde0-52f86b683afd`
 - [ ] Sharuum the Hegemon — `037e7fc9-3aa6-484c-a2c8-43009e45f1d8`
 - [ ] Shattergang Brothers — `7fb63d9a-8d90-4b43-8390-924de2d7e32c`
@@ -52204,7 +52202,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 - [ ] Scytheclaw — `a75ddd9c-2574-46e9-ac85-58082789ff3e`
 - [ ] Sea Gate Wreckage — `91f34686-cb96-49c0-b4a7-49dd1fd076e2`
 - [ ] Secluded Courtyard — `79ba18fd-f184-43c1-86df-56ee18ce806c`
-- [ ] Sek'Kuar, Deathkeeper — `94426127-65c2-435e-ba92-423a3c102061`
 - [ ] Selvala, Heart of the Wilds — `1d725121-e50c-42f0-9128-56802f07c89e`
 - [ ] Semester's End — `3aeba3c2-5517-4870-8802-29b0fa70ffae`
 - [ ] Sephara, Sky's Blade — `ac8952c9-bd30-48cd-b964-7e6271f9cbc8`
@@ -61597,7 +61594,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 
 ### expansion / 2020s · Through the Omenpaths (`OM1`)
 
-- [ ] Agent Venom — `14c356aa-178d-4c14-a88e-fbe92ee6d89f`
 - [ ] Alien Symbiosis — `19504e19-2886-4d28-a813-b798a9a446a2`
 - [ ] Amazing Acrobatics — `0466f23c-d07c-4015-82d5-eab4b226f1ff`
 - [ ] Angry Rabble — `cf6dc79e-840c-4d47-8f94-c8623528acd2`
@@ -61891,7 +61887,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 
 ### expansion / 2020s · Marvel's Spider-Man (`SPM`)
 
-- [ ] Agent Venom — `14c356aa-178d-4c14-a88e-fbe92ee6d89f`
 - [ ] Alien Symbiosis — `19504e19-2886-4d28-a813-b798a9a446a2`
 - [ ] Amazing Acrobatics — `0466f23c-d07c-4015-82d5-eab4b226f1ff`
 - [ ] Angry Rabble — `cf6dc79e-840c-4d47-8f94-c8623528acd2`
@@ -62091,7 +62086,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **22,83
 
 ### promos / marvel-s-spider-man · Marvel's Spider-Man Promos (`PSPM`)
 
-- [ ] Agent Venom — `14c356aa-178d-4c14-a88e-fbe92ee6d89f`
 - [ ] Anti-Venom, Horrifying Healer — `3c7bafe9-80cd-48d0-bcae-e7910c9fb83b`
 - [ ] Arachne, Psionic Weaver — `28d500ea-720f-4332-891e-404fb03acb5c`
 - [ ] Araña, Heart of the Spider — `a16037f2-a0f6-465d-8d6e-cec34b4a6320`

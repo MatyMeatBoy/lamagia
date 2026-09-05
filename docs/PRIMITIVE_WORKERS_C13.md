@@ -23,7 +23,7 @@ Reusable atoms: `kind:static-or-spell, op:other`
 
 Cards: Curse of Predation [69ea4ce2-f749-4d5b-a392-efcfdce14a30]
 
-| needs-review | `c13-oracle-create-token-triggered-2` | token | 1 | 1 | 0 | 1 | 1 | 2 |
+| needs-review | `c13-oracle-create-token-triggered` | token | 1 | 1 | 0 | 1 | 1 | 2 |
 Reusable atoms: `kind:static-or-spell, op:other`
 
 Cards: Curse of Shallow Graves [dc66dbed-f979-4ad1-b5f9-08538886167f]
@@ -43,19 +43,19 @@ Reusable atoms: `kind:static-or-spell, op:other`
 
 Cards: Curse of Inertia [0bbeb0ee-647b-43d3-91b3-6869d5ccb8b8]
 
-| quick-win | `c13-oracle-lose-life-triggered` | lose-life | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
+| quick-win | `c13-oracle-modify-stats-static` | pump | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Divinity of Pride [2c91c236-34d7-4454-a55a-784db7f68bde]
 
-| quick-win | `c13-oracle-other-triggered-shape` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Witch Hunt [e86bd38f-7804-449d-af29-21e96a56ab30]
+| quick-win | `c13-oracle-other-triggered-shape-2` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
 
-| quick-win | `c13-oracle-return-static-spell` | return | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
+| quick-win | `c13-oracle-return-triggered-target` | return | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
 
 
 ## Worker 2
 
-7 primitives / 8 unique cards
+8 primitives / 8 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -74,17 +74,22 @@ Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
 
 Cards: Darksteel Mutation [05a4f8ff-49da-42af-add5-6248c4b0644b]
 
-| quick-win | `c13-oracle-gain-life-activated-2` | gain-life | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Disciple of Griselbrand [2d92a035-dd7a-4426-a8c0-f04e0b836dad]
+| needs-review | `c13-oracle-other-static-spell-8` | activated | 1 | 1 | 0 | 1 | 1 | 2 |
+Reusable atoms: `kind:static-or-spell, op:other`
 
-| quick-win | `c13-oracle-modify-stats-static` | pump | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Divinity of Pride [2c91c236-34d7-4454-a55a-784db7f68bde]
+Cards: Control Magic [cd0d7141-46d2-4aa3-bc77-6b3b4513803e]
 
-| quick-win | `c13-oracle-other-triggered-shape-2` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Prossh, Skyraider of Kher [868882d2-ed4e-4171-a17c-478a341080fb]
+| quick-win | `c13-oracle-gain-life-triggered` | gain-life | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Vizkopa Guildmage [f19e7c5c-67fa-4ae4-89b8-afa0e08a6c48]
 
-| quick-win | `c13-oracle-return-triggered-target` | return | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Sharuum the Hegemon [037e7fc9-3aa6-484c-a2c8-43009e45f1d8]
+| quick-win | `c13-oracle-modify-stats-static-2` | pump | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Wight of Precinct Six [6397c046-4c59-4f0b-9b44-2a804eb95edf]
+
+| quick-win | `c13-oracle-other-triggered-shape-4` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
+
+| quick-win | `c13-oracle-sacrifice-triggered-shape` | sacrifice | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
 
 
 ## Worker 3
@@ -102,41 +107,6 @@ Cards: Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
 Reusable atoms: `control:conditional, kind:static-or-spell, op:other`
 
 Cards: Hooded Horror [8267561e-bc25-4aaa-8242-f6d7ec88143e]
-
-| quick-win | `c13-oracle-create-token-triggered` | token | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Sek'Kuar, Deathkeeper [94426127-65c2-435e-ba92-423a3c102061]
-
-| quick-win | `c13-oracle-draw-activated-cost` | draw | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
-
-| quick-win | `c13-oracle-gain-life-triggered` | gain-life | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Vizkopa Guildmage [f19e7c5c-67fa-4ae4-89b8-afa0e08a6c48]
-
-| quick-win | `c13-oracle-modify-stats-static-2` | pump | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Wight of Precinct Six [6397c046-4c59-4f0b-9b44-2a804eb95edf]
-
-| quick-win | `c13-oracle-other-triggered-shape-4` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Hunted Troll [1f789fcf-3df6-45a6-a732-9f43e33718d6]
-
-| quick-win | `c13-oracle-sacrifice-triggered-shape` | sacrifice | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Azorius Herald [a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6]
-
-
-## Worker 4
-
-8 primitives / 8 unique cards
-
-| Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches | Atoms |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-other-static-spell-2` | activated | 1 | 1 | 1 | 1 | 1 | 2 |
-Reusable atoms: `kind:static-or-spell, op:other`
-
-Cards: Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
-
-| needs-review | `c13-oracle-other-triggered-shape-3` | static-continuous | 1 | 1 | 1 | 1 | 1 | 4 |
-Reusable atoms: `control:conditional, kind:static-or-spell, op:other, target:creature`
-
-Cards: Dungeon Geists [ab5ebae2-cd77-4a7d-a93b-8042cd486429]
 
 | quick-win | `c13-oracle-damage-triggered-shape` | damage | 1 | 0 | 1 | 1 | 1 | 0 |
 Cards: Diviner Spirit [911b8849-dd0a-4383-8403-ea80227c5d7d]
@@ -157,6 +127,38 @@ Cards: Widespread Panic [853a3c2b-3d37-453a-8a77-4d90bd3a1cb7]
 Cards: Armillary Sphere [3963140c-da67-43e6-9514-fe9dc0a43c4d]
 
 
+## Worker 4
+
+7 primitives / 7 unique cards
+
+| Priority | Claim | Family | Cards | Needs review | One-line | Unlocks | Batches | Atoms |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| needs-review | `c13-oracle-other-static-spell-2` | activated | 1 | 1 | 1 | 1 | 1 | 2 |
+Reusable atoms: `kind:static-or-spell, op:other`
+
+Cards: Murkfiend Liege [61d28182-498f-4bbc-bb7a-c5e1ef872dda]
+
+| needs-review | `c13-oracle-other-triggered-shape-3` | static-continuous | 1 | 1 | 1 | 1 | 1 | 4 |
+Reusable atoms: `control:conditional, kind:static-or-spell, op:other, target:creature`
+
+Cards: Dungeon Geists [ab5ebae2-cd77-4a7d-a93b-8042cd486429]
+
+| quick-win | `c13-oracle-damage-triggered-shape-2` | damage | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Inferno Titan [0ce47c8b-1e1f-463f-94f0-35ca00be89e6]
+
+| quick-win | `c13-oracle-gain-life-activated` | gain-life | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Springjack Pasture [9eaadbbc-818b-4c21-9d4b-1bba48504d38]
+
+| quick-win | `c13-oracle-gain-life-triggered-3` | gain-life | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
+
+| quick-win | `c13-oracle-other-activated-shape` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Contested Cliffs [b891a683-2ebc-4e9c-b402-5dd9c1b42b69]
+
+| quick-win | `c13-oracle-other-triggered-shape-7` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Serene Master [2ce0d583-81ca-4dca-bde0-52f86b683afd]
+
+
 ## Worker 5
 
 7 primitives / 7 unique cards
@@ -173,20 +175,20 @@ Reusable atoms: `control:conditional, kind:static-or-spell, op:other, target:spe
 
 Cards: Mirari [8f6a2fce-719e-4745-80d3-aabce5c9bafa]
 
-| quick-win | `c13-oracle-damage-triggered-shape-2` | damage | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Inferno Titan [0ce47c8b-1e1f-463f-94f0-35ca00be89e6]
+| quick-win | `c13-oracle-draw-activated-cost` | draw | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Skyscribing [c3416e6c-ec46-410c-ab80-6e8fdb89f42d]
 
-| quick-win | `c13-oracle-gain-life-activated` | gain-life | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Springjack Pasture [9eaadbbc-818b-4c21-9d4b-1bba48504d38]
+| quick-win | `c13-oracle-gain-life-activated-2` | gain-life | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Disciple of Griselbrand [2d92a035-dd7a-4426-a8c0-f04e0b836dad]
 
-| quick-win | `c13-oracle-gain-life-triggered-3` | gain-life | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Grazing Gladehart [f19f28e5-9cad-4398-b2d4-9e7fefb23cb4]
+| quick-win | `c13-oracle-lose-life-triggered` | lose-life | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Phyrexian Delver [a13cbac0-4c76-4970-b61e-5f4e020ee95c]
 
-| quick-win | `c13-oracle-other-activated-shape` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Contested Cliffs [b891a683-2ebc-4e9c-b402-5dd9c1b42b69]
+| quick-win | `c13-oracle-other-triggered-shape` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Witch Hunt [e86bd38f-7804-449d-af29-21e96a56ab30]
 
-| quick-win | `c13-oracle-other-triggered-shape-7` | activated | 1 | 0 | 1 | 1 | 1 | 0 |
-Cards: Serene Master [2ce0d583-81ca-4dca-bde0-52f86b683afd]
+| quick-win | `c13-oracle-return-static-spell` | return | 1 | 0 | 1 | 1 | 1 | 0 |
+Cards: Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
 
 
 ## Already claimed
