@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,966** · cobertura: **29.4%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,968** · cobertura: **29.4%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -72,7 +72,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,96
 | 1999-08-04 | World Championship Promos (`PWOR`) | promos | championship-1999 | other | 2 | 0 | 2 | 0.0% |
 | 1999-09-04 | Wizards of the Coast Online Store (`PWOS`) | promos | wizards-of-the-coast-online-store | other | 1 | 1 | 0 | 100.0% |
 | 1999-09-25 | Mercadian Masques Promos (`PMMQ`) | promos | mercadian-masques | other | 1 | 0 | 1 | 0.0% |
-| 1999-10-04 | Mercadian Masques (`MMQ`) | expansion | masques | main | 335 | 99 | 236 | 29.6% |
+| 1999-10-04 | Mercadian Masques (`MMQ`) | expansion | masques | main | 335 | 100 | 235 | 29.9% |
 | 1999-11-12 | Battle Royale Box Set (`BRB`) | boxed-products | battle-royale-box-set | other | 105 | 56 | 49 | 53.3% |
 | 2000-01-01 | Arena League 2000 (`PAL00`) | promos | arena-2000 | other | 11 | 7 | 4 | 63.6% |
 | 2000-01-01 | Friday Night Magic 2000 (`FNM`) | promos | fnm-2000 | other | 11 | 10 | 1 | 90.9% |
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,96
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 29 | 39 | 42.6% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 75 | 159 | 32.1% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 276 | 65 | 80.9% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 277 | 64 | 81.2% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 3 | 9 | 25.0% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 7 | 7 | 50.0% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 2 | 7 | 22.2% |
@@ -740,7 +740,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,96
 | boxed-products | the-zeta-set | 1 | 121 | 43 | 78 | 35.5% |
 | commander | 2011 | 1 | 303 | 137 | 166 | 45.2% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 276 | 65 | 80.9% |
+| commander | 2013 | 1 | 341 | 277 | 64 | 81.2% |
 | commander | 2014 | 1 | 322 | 200 | 122 | 62.1% |
 | commander | 2015 | 1 | 327 | 140 | 187 | 42.8% |
 | commander | 2016 | 1 | 341 | 134 | 207 | 39.3% |
@@ -810,7 +810,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,96
 | expansion | kaldheim | 1 | 323 | 50 | 273 | 15.5% |
 | expansion | kamigawa | 4 | 925 | 119 | 806 | 12.9% |
 | expansion | lorwyn | 2 | 559 | 122 | 437 | 21.8% |
-| expansion | masques | 1 | 335 | 99 | 236 | 29.6% |
+| expansion | masques | 1 | 335 | 100 | 235 | 29.9% |
 | expansion | mirage | 1 | 335 | 87 | 248 | 26.0% |
 | expansion | mirrodin | 3 | 675 | 237 | 438 | 35.1% |
 | expansion | odyssey | 1 | 335 | 102 | 233 | 30.4% |
@@ -6775,7 +6775,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,96
 - [ ] Vine Dryad — `990cd7de-66a2-4def-bf00-390b2682e995`
 - [ ] Volcanic Wind — `baa85b14-1c9f-4a19-9f07-93e3192c597d`
 - [ ] Wall of Distortion — `cc9cbbbc-8b02-42ef-a4d8-e2837e742c88`
-- [ ] War Cadence — `49d0fdd6-cc8f-4fe1-a6bd-4321dac18404`
 - [ ] War Tax — `fd5ff6ad-f3f1-470f-adef-fb4ce6536365`
 - [ ] Warmonger — `bae92332-1a0b-476b-8719-190e8d8cc03a`
 - [ ] Warpath — `413520c7-5227-406f-8861-e844c153e5b0`
@@ -20307,7 +20306,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **24,96
 - [ ] Thraximundar — `9e0e4217-fefe-48dd-9153-032460192b19`
 - [ ] True-Name Nemesis — `112322ad-8f66-4cd4-98a1-f425d61a69ce`
 - [ ] Uyo, Silent Prophet — `93da1e63-54d6-4b05-af91-f13e7e111176`
-- [ ] War Cadence — `49d0fdd6-cc8f-4fe1-a6bd-4321dac18404`
 - [ ] Wild Ricochet — `8c35fd11-be45-4984-bd83-6e4f3fbc47a9`
 
 ### promos / fnm-2014 · Friday Night Magic 2014 (`F14`)

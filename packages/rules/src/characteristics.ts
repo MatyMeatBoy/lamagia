@@ -520,6 +520,8 @@ export type SpellEffect =
   | { readonly kind: "damage-flying-creatures"; readonly amount: number | "X" }
   /** Layer 7c P/T modifications which expire during cleanup (CR 613.4c, 514.2). */
   | { readonly kind: "modify-all-creatures"; readonly power: number; readonly toughness: number }
+  /** War Cadence: generic mana paid per creature that blocks this turn (CR 509.1a). */
+  | { readonly kind: "set-blocking-tax"; readonly amount: number | "X" }
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "modify-all-creatures-minus-X" }
   | { readonly kind: "modify-all-creatures-per-land"; readonly power: number; readonly toughness: number; readonly subtype: string }
@@ -3321,6 +3323,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Tap target permanent an opponent controls$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "permanent-opponent" };
   if (/^Tap or untap target permanent$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
+  if (/^This turn, creatures can'?t block unless their controller pays \{X\} for each blocking creature they control$/i.test(text)) {
+    return { effect: { kind: "set-blocking-tax", amount: "X" }, target: "none" };
+  }
   if ((match = /^sacrifice it unless you return an untapped (Plains|Island|Swamp|Mountain|Forest) you control to its owner'?s hand$/i.exec(text))) {
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
   }

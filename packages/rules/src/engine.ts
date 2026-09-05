@@ -386,6 +386,8 @@ export interface GameState {
   readonly creaturesDiedThisTurn: number;
   /** Creature cards that entered their owner's graveyard from the battlefield this turn. */
   readonly creatureCardsDiedThisTurn: readonly GameCard[];
+  /** War Cadence-style generic mana taxes, one entry per resolved activation, until cleanup. */
+  readonly blockingTaxPerCreature?: readonly number[];
 }
 
 export type PendingChoice =
@@ -4511,6 +4513,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           ? { ...candidate, cantBlockThisTurn: true } : candidate)
       }));
     }
+    case "set-blocking-tax": {
+      const amount = effectAmount(effect.amount, object);
+      if (amount <= 0) return state;
+      return { ...state, blockingTaxPerCreature: [...(state.blockingTaxPerCreature ?? []), amount] };
+    }
     case "untap-target-permanent": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -5758,6 +5765,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       }
       next = {
         ...next,
+        blockingTaxPerCreature: undefined,
         players: next.players.map((current) => ({
           ...current,
           battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
@@ -6265,7 +6273,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 
   if (state.step === "declare-blockers" && !state.combat.blockersDeclared && defendersAwaitingBlocks(state).includes(seat)) {
     actions.push({ action: { type: "declare-blockers", blockers: [] }, label: "No bloquear" });
+    const taxPerCreature = (state.blockingTaxPerCreature ?? []).reduce((sum, amount) => sum + amount, 0);
     for (const blocker of legalBlockers(state, seat)) {
+      if (taxPerCreature > 0 && !planManaPayment(parseManaCost(`{${taxPerCreature}}`)!, player, { state })) continue;
       actions.push({ action: { type: "declare-blockers", blockers: [{ instanceId: blocker.instance_id, attackerId: "" }] }, label: `Bloquear con ${blocker.card.name}`, cardId: blocker.instance_id });
     }
     return actions;
@@ -8160,14 +8170,30 @@ function applyDeclareBlockers(state: GameState, seat: SeatId, blockers: readonly
     if (assigned === 1) throw new Error(`${attacker.card.name} tiene amenaza y no puede ser bloqueada por una sola criatura.`);
   }
 
+  // War Cadence-style block tax (CR 509.1a): the defending player pays the
+  // accumulated generic cost once for each creature in this declaration.
+  let next: GameState = state;
+  const taxPerCreature = (state.blockingTaxPerCreature ?? []).reduce((sum, amount) => sum + amount, 0);
+  const totalTax = taxPerCreature * blockers.length;
+  if (totalTax > 0) {
+    const taxCost = parseManaCost(`{${totalTax}}`)!;
+    const plan = planManaPayment(taxCost, playerAt(next, seat), { state: next });
+    if (!plan) throw new Error(`No tienes maná suficiente para pagar el impuesto de bloqueo de {${totalTax}}.`);
+    next = applyManaPlan(next, seat, plan);
+    const payment = payCost(taxCost, playerAt(next, seat).manaPool, {});
+    if (!payment) throw new Error("No se pudo pagar el impuesto de bloqueo.");
+    next = withPlayer(next, seat, (current) => consumeManaPayment(current, payment));
+    next = logged(next, seat, `${playerAt(next, seat).name} paga {${totalTax}} de impuesto de bloqueo.`);
+  }
+
   const declaredBy = [...new Set([...(state.combat.blockersDeclaredBy ?? []), seat])];
   const afterDeclaration = { ...state, combat: { ...state.combat, blockersDeclaredBy: declaredBy } };
   const remaining = defendersAwaitingBlocks(afterDeclaration);
-  let next: GameState = {
-    ...state,
+  next = {
+    ...next,
     combat: {
-      ...state.combat,
-      blockers: [...state.combat.blockers, ...blockers],
+      ...next.combat,
+      blockers: [...next.combat.blockers, ...blockers],
       blockersDeclared: remaining.length === 0,
       blockersDeclaredBy: declaredBy
     }
