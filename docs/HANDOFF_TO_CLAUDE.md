@@ -2770,6 +2770,43 @@ test` PASS (**562 rules tests**, up from 561). `npm run simulate:engine`:
 `raiseEvent`, the single choke point every triggered ability in the engine
 flows through.
 
+### Worker-05: a cheaper Equip cost restricted to one subtype (2026-09-05)
+
+Claim `rules-typed-equip-cost`, closing out Wizard's Staff (started in the
+previous trigger-doubler claim, which handled its other clause). "Equip
+Wizard {1}" is a second Equip ability on the same card as the normal
+"Equip {3}" — CR 702.6e-style templating where equipping a matching
+creature is cheaper. The existing `parseEquipCost` already handled this
+safely by accident: its regex tries every line for `Equip <mana cost>`, and
+`parseManaCost("Wizard {1}")` fails (it's not a valid mana cost string), so
+the loop silently falls through to the next line and finds the general
+"Equip {3}" — meaning `equipCost` was already correct, just missing the
+typed discount entirely.
+
+Added `CardProfile.typedEquipCost: { subtype, cost } | null` via a sibling
+`parseTypedEquipCost`. The interesting wiring is in `applyEquip`
+(`engine.ts`): unlike a mana ability, Equip's cost can genuinely depend on
+*which* creature gets targeted, and by the time `applyEquip` runs, the
+target is already known (`action.targetId`) — so the cost is resolved with
+`hasSubtype(cardProfile(targetCreature.card), profile.typedEquipCost.subtype)`
+right there, picking whichever of the two costs actually applies before
+`planManaPayment`/`payCost` run. `legalActions`' equip-offering check was
+widened to accept either cost being affordable, since a player who can only
+afford the cheap typed cost should still see "Equip" offered.
+
+Fully implements Wizard's Staff. Scenario coverage equips the same artifact
+onto a Wizard creature (costs `{1}`) and then re-equips it onto a Bear
+(costs `{3}`) in the same game, confirming the resolved `Equip` ability's
+own cost text differs per target. As a reusable primitive, also flips 8
+other catalog cards using the identical "Equip \<Subtype\> {cost}" /
+"Equip {cost}" pairing: Commander's Plate, Unstable Molecule Suit,
+Dúnedain Blade, Thinking Cap, Pirate Hat, Veteran's Powerblade, Ceremonial
+Groundbreaker, Steelclaw Lance.
+
+Global export: **9,306/38,712** (+9 from 9,297). `npm run check` and `npm
+test` PASS (**566 rules tests**, up from 565). `npm run simulate:engine`:
+**200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed

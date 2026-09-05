@@ -426,6 +426,8 @@ const INFEST = () => make({ name: "Infest", type_line: "Sorcery", mana_cost: "{1
 const GIANT = () => make({ name: "Hill Giant", type_line: "Creature — Giant", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3" });
 const EQUIPMENT = () => make({ name: "Test Equipment", type_line: "Artifact — Equipment", mana_cost: "{1}", cmc: 1 });
 const BEHEMOTH_SLEDGE = () => make({ name: "Behemoth Sledge", type_line: "Artifact — Equipment", mana_cost: "{3}", cmc: 3, oracle_text: "Equipped creature gets +2/+2 and has trample and lifelink.\nEquip {3}" });
+const TYPED_EQUIP_ITEM = () => make({ name: "Test Wizard's Staff", type_line: "Artifact — Equipment", mana_cost: "{2}", cmc: 2, oracle_text: "Equipped creature has prowess.\nIf a triggered ability of equipped creature triggers, that ability triggers an additional time.\nEquip Wizard {1}\nEquip {3}" });
+const WIZARD_CREATURE = () => make({ name: "Test Wizard", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "1" });
 const SWIFTFOOT_BOOTS = () => make({ name: "Swiftfoot Boots", type_line: "Artifact — Equipment", mana_cost: "{2}", cmc: 2, oracle_text: "Equipped creature has hexproof and haste.\nEquip {1}" });
 const SWORD_OF_THE_PARUNS = () => make({ name: "Sword of the Paruns", type_line: "Artifact — Equipment", mana_cost: "{4}", cmc: 4, oracle_text: "Equipped creature gets +2/+0.\n{3}: Untap equipped creature.\n{3}: Untap all other creatures you control.\nEquip {3}" });
 const LEVELER = () => make({
@@ -6161,6 +6163,28 @@ describe("activated abilities", () => {
 
     game = settle(stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== equipped.instance_id) })));
     expect(permanentNamed(game, 0, "Behemoth Sledge")?.attachedTo).toBeUndefined();
+  });
+
+  it("equips a matching creature for the cheaper typed cost, everything else for the general cost", () => {
+    const profile = profileOf(TYPED_EQUIP_ITEM());
+    expect(profile.typedEquipCost).toMatchObject({ subtype: "Wizard", cost: { raw: "{1}" } });
+    expect(profile.equipCost).toMatchObject({ raw: "{3}" });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyOnBoard([TYPED_EQUIP_ITEM(), WIZARD_CREATURE(), BEAR(), ISLAND(), ISLAND(), ISLAND(), ISLAND()], { hold: true });
+    const staff = permanentNamed(game, 0, "Test Wizard's Staff")!;
+    const wizard = permanentNamed(game, 0, "Test Wizard")!;
+    const bear = permanentNamed(game, 0, "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "equip", sourceId: staff.instance_id, targetId: wizard.instance_id });
+    expect(game.stack.at(-1)?.activated?.text).toBe("Equip {1}");
+    game = applyAction(game, 0, { type: "pass" });
+    expect(permanentNamed(game, 0, "Test Wizard's Staff")?.attachedTo).toBe(wizard.instance_id);
+
+    game = applyAction(game, 0, { type: "equip", sourceId: staff.instance_id, targetId: bear.instance_id });
+    expect(game.stack.at(-1)?.activated?.text).toBe("Equip {3}");
+    game = applyAction(game, 0, { type: "pass" });
+    expect(permanentNamed(game, 0, "Test Wizard's Staff")?.attachedTo).toBe(bear.instance_id);
   });
 
   it("reuses Equip for Swiftfoot Boots and Sword of the Paruns", () => {
