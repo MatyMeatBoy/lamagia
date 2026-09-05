@@ -459,6 +459,11 @@ const MJOLNIR = () => make({
   oracle_id: "7f9a8845-d760-44a7-a4c9-8a20dba4e14a", scryfall_id: "e0c7f566-5351-44e3-a346-b84b0eb10209"
 });
 const WORTHY_CREATURE = () => make({ name: "Test Worthy Avenger", type_line: "Legendary Creature — Human Hero", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", colors: ["R"] });
+const REFORGE_THE_SOUL = () => make({
+  name: "Reforge the Soul", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, keywords: ["Miracle"],
+  oracle_text: "Each player discards their hand, then draws seven cards.\nMiracle {1}{R} (You may cast this card for its miracle cost when you draw it if it's the first card you drew this turn.)",
+  oracle_id: "ece854f8-8c60-4f30-894f-2286d3dd61b9", scryfall_id: "1c3509c6-2ae7-45be-8ac9-4d14d69db32f"
+});
 const GITAXIAN_PROBE = () => make({
   name: "Gitaxian Probe", type_line: "Sorcery", mana_cost: "{U/P}", cmc: 1, oracle_text: "Look at target player's hand.\nDraw a card.",
   oracle_id: "1d67f5ff-1fce-45e5-b6a1-416c569351e2", scryfall_id: "995486ce-58bb-4753-a812-0ca73ef1a235"
@@ -8144,6 +8149,64 @@ describe("Gitaxian Probe", () => {
     game = applyAction(game, 0, acknowledge.action);
     expect(game.pendingChoice).toBeNull();
     expect(game.players[0]!.graveyard.some((card) => card.name === "Gitaxian Probe")).toBe(true);
+  });
+});
+
+describe("Reforge the Soul", () => {
+  it("offers Miracle only as the first card drawn that turn, and resolves at its reduced cost", () => {
+    const profile = profileOf(REFORGE_THE_SOUL());
+    expect(profile.miracleCost?.raw).toBe("{1}{R}");
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 1, [MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 1, (player) => ({ library: [...toHand(1, [REFORGE_THE_SOUL()], "reforge-top"), ...player.library] }));
+    game = passUntil(game, (state) => state.pendingChoice?.type === "miracle");
+
+    const choice = game.pendingChoice;
+    if (choice?.type !== "miracle") throw new Error("expected a miracle choice");
+    expect(choice.seat).toBe(1);
+    expect(choice.sourceCard.name).toBe("Reforge the Soul");
+
+    game = applyAction(game, 1, { type: "cast-miracle", sourceId: choice.sourceId });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    // "Each player discards their hand, then draws seven cards" — both end at 7 regardless of starting size.
+    expect(game.players[0]!.hand).toHaveLength(7);
+    expect(game.players[1]!.hand).toHaveLength(7);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Reforge the Soul")).toBe(true);
+  });
+
+  it("does not offer Miracle when the card isn't the first draw of the turn", () => {
+    // seat0 is the starting player, whose very first draw step is skipped
+    // entirely (CR 103.7a) — use seat1 so the mandatory draw-step draw
+    // actually happens and consumes the decoy card first.
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 1, [LAND_SAC_ALTAR(), MOUNTAIN()]);
+    game = stage(game, 1, (player) => ({ library: [...toHand(1, [FOREST(), REFORGE_THE_SOUL()], "not-first-draw"), ...player.library] }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 1 && state.prioritySeat === 1);
+
+    const altar = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Land Memory")!;
+    const activation = legalActions(game, 1).find((entry) => entry.action.type === "activate" && entry.cardId === altar.instance_id)!;
+    game = applyAction(game, 1, activation.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    expect(game.players[1]!.hand.some((card) => card.name === "Reforge the Soul")).toBe(true);
+    expect(game.pendingChoice?.type).not.toBe("miracle");
+  });
+
+  it("leaves the card in hand for a normal cast when Miracle is declined", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 1, [MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 1, (player) => ({ library: [...toHand(1, [REFORGE_THE_SOUL()], "reforge-top"), ...player.library] }));
+    game = passUntil(game, (state) => state.pendingChoice?.type === "miracle");
+
+    const choice = game.pendingChoice;
+    if (choice?.type !== "miracle") throw new Error("expected a miracle choice");
+    game = applyAction(game, 1, { type: "decline-miracle", sourceId: choice.sourceId });
+
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[1]!.hand.some((card) => card.name === "Reforge the Soul")).toBe(true);
   });
 });
 

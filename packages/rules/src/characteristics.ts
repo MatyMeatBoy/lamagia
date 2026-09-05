@@ -935,6 +935,8 @@ export interface CardProfile {
   readonly kickedKeywords: readonly EnforcedKeyword[];
   /** Evoke alternative cost (CR 702.34), null when absent. */
   readonly evokeCost: ManaCost | null;
+  /** Miracle alternative cost (CR 702.93), offered only right after being drawn as the first card that turn. */
+  readonly miracleCost: ManaCost | null;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
   readonly additionalCostExileGraveyardX: boolean;
   /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
@@ -1903,6 +1905,7 @@ interface RecognizedText {
   echoCost?: ManaCost | null;
   evokeCost?: ManaCost | null;
   flashbackCost?: ManaCost | null;
+  miracleCost?: ManaCost | null;
   /** Exact normalized clauses the closed engine intentionally does not execute. */
   readonly unimplementedText: readonly string[];
   readonly covered: boolean;
@@ -3434,6 +3437,7 @@ function recognizeText(text: string): RecognizedText {
   let echoCost: ManaCost | null = null;
   let evokeCost: ManaCost | null = null;
   let flashbackCost: ManaCost | null = null;
+  let miracleCost: ManaCost | null = null;
   const kickedEffects: SpellEffect[] = [];
   const kickedKeywords: EnforcedKeyword[] = [];
 
@@ -3464,6 +3468,10 @@ function recognizeText(text: string): RecognizedText {
     // Evoke alternative cost (CR 702.34). Reminder text is dropped.
     const evoke = /^Evoke\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (evoke) { evokeCost = parseManaCost(evoke[1]!); continue; }
+    // Miracle (CR 702.93): an alternative cost offered only in the single
+    // window right after being drawn as the first card that turn. Reminder text is dropped.
+    const miracle = /^Miracle\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (miracle) { miracleCost = parseManaCost(miracle[1]!); continue; }
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
@@ -4080,7 +4088,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -4343,6 +4351,7 @@ export function cardProfile(card: CardData): CardProfile {
     entwineCost: recognized.entwineCost ?? null,
     graftAmount,
     evokeCost: recognized.evokeCost ?? null,
+    miracleCost: recognized.miracleCost ?? null,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
     kickedKeywords: recognized.kickedKeywords ?? [],

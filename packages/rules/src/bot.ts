@@ -160,6 +160,13 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const richest = [...modeOptions].sort((a, b) => b.label.length - a.label.length)[0];
     if (richest) return { action: richest.action, label: richest.label };
   }
+  if (state.pendingChoice?.type === "miracle" && state.pendingChoice.seat === seat) {
+    // Greedy default: pay the Miracle cost whenever it is affordable.
+    const cast = available.find((entry) => entry.action.type === "cast-miracle");
+    const decline = available.find((entry) => entry.action.type === "decline-miracle");
+    const chosen = cast ?? decline;
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "view-hand" && state.pendingChoice.seat === seat) {
     const acknowledge = available.find((entry) => entry.action.type === "acknowledge-view-hand");
     if (acknowledge) return { action: acknowledge.action, label: acknowledge.label };

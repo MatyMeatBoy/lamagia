@@ -539,6 +539,18 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /**
+       * Miracle (CR 702.93): offered only in the single window right after
+       * being drawn as the first card that turn. Declining leaves the card
+       * in hand for a normal cast later.
+       */
+      readonly type: "miracle";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly cost: ManaCost;
+    }
+  | {
       /** Private top-of-library review for effects such as Augur of Bolas. */
       readonly type: "look-top-select";
       readonly seat: SeatId;
@@ -577,6 +589,8 @@ export type GameAction =
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
   | { readonly type: "acknowledge-view-hand"; readonly sourceId: string }
+  | { readonly type: "cast-miracle"; readonly sourceId: string }
+  | { readonly type: "decline-miracle"; readonly sourceId: string }
   | { readonly type: "choose-tap-or-untap"; readonly sourceId: string; readonly mode: "tap" | "untap" }
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
@@ -1257,6 +1271,10 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
 function drawCards(state: GameState, seat: SeatId, amount: number): GameState {
   let next = state;
   let actuallyDrawn = 0;
+  // Miracle (CR 702.93): the window opens only for whichever single card is
+  // the first one this player drew all turn, so at most one candidate can
+  // ever surface across the whole batch this call draws.
+  let miracleCandidate: { seat: SeatId; card: GameCard; cost: ManaCost } | null = null;
   for (let index = 0; index < amount; index += 1) {
     const player = playerAt(next, seat);
     if (player.lost) return next;
@@ -1286,10 +1304,19 @@ function drawCards(state: GameState, seat: SeatId, amount: number): GameState {
     next = withPlayer(next, seat, (current) => ({ ...current, library: current.library.slice(1), hand: [...current.hand, card], drawsThisTurn: count, drawsThisDrawStep: drawStepCount }));
     next = raiseEvent(next, { kind: "card-drawn", seat, card, count, drawStepCount });
     actuallyDrawn += 1;
+    const miracleCost = cardProfile(card).miracleCost;
+    if (count === 1 && miracleCost) miracleCandidate = { seat, card, cost: miracleCost };
   }
   const player = playerAt(next, seat);
   if (actuallyDrawn > 0 && !player.drewFromEmptyLibrary) {
     next = logged(next, seat, `${player.name} roba ${actuallyDrawn === 1 ? "una carta" : `${actuallyDrawn} cartas`}.`);
+  }
+  if (miracleCandidate && !next.pendingChoice) {
+    next = logged(next, miracleCandidate.seat, `${player.name} revela ${miracleCandidate.card.name} por Milagro.`);
+    next = {
+      ...next,
+      pendingChoice: { type: "miracle", seat: miracleCandidate.seat, sourceId: miracleCandidate.card.instance_id, sourceCard: miracleCandidate.card, cost: miracleCandidate.cost }
+    };
   }
   return next;
 }
@@ -5550,6 +5577,22 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
       return actions;
     }
+    if (choice.type === "miracle") {
+      if (planManaPayment(choice.cost, player, { state })) {
+        actions.push({
+          action: { type: "cast-miracle", sourceId: choice.sourceId },
+          label: `Milagro ${choice.cost.raw}`,
+          cardId: choice.sourceId,
+          note: `Lanza ${choice.sourceCard.name} por su coste de Milagro.`
+        });
+      }
+      actions.push({
+        action: { type: "decline-miracle", sourceId: choice.sourceId },
+        label: "No pagar Milagro",
+        note: `${choice.sourceCard.name} se queda en tu mano.`
+      });
+      return actions;
+    }
     if (choice.type === "tap-or-untap") {
       actions.push(
         { action: { type: "choose-tap-or-untap", sourceId: choice.sourceId, mode: "tap" }, label: "Tap target permanent", note: `${choice.sourceCard.name}: tap the chosen permanent.` },
@@ -7280,6 +7323,38 @@ function applyAcknowledgeViewHand(state: GameState, seat: SeatId, action: Extrac
   return logged(next, seat, `${playerAt(state, seat).name} termina de mirar la mano de ${playerAt(state, choice.targetSeat).name}.`);
 }
 
+/** Pays a card's Miracle cost from the reveal window opened by `drawCards` (CR 702.93). */
+function applyCastMiracle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast-miracle" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "miracle" || choice.seat !== seat) throw new Error("No tienes una carta esperando su coste de Milagro.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa carta ya no espera Milagro.");
+  const player = playerAt(state, seat);
+  const card = player.hand.find((candidate) => candidate.instance_id === choice.sourceId);
+  if (!card) throw new Error(`${choice.sourceCard.name} ya no está en tu mano.`);
+  const plan = planManaPayment(choice.cost, player, { state });
+  if (!plan) throw new Error(`No tienes maná suficiente para el Milagro de ${card.name}.`);
+  let next = applyManaPlan({ ...state, pendingChoice: null }, seat, plan);
+  const payment = payCost(choice.cost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+  if (!payment) throw new Error(`No se pudo pagar el Milagro de ${card.name}.`);
+  next = withPlayer(next, seat, (current) => ({
+    ...consumeManaPayment(current, payment),
+    life: current.life - payment.lifePaid,
+    hand: current.hand.filter((candidate) => candidate.instance_id !== card.instance_id)
+  }));
+  const profile = cardProfile(card);
+  const targets = profile.targetKind !== "none" ? legalTargets(next, seat, profile.targetKind, profile).slice(0, 1) : [];
+  next = pushOnStack(next, seat, card, targets, false, 0, undefined, false, false, false, false, [], true);
+  return logged(next, seat, `${player.name} lanza ${card.name} por su coste de Milagro.`);
+}
+
+/** Declines a Miracle cast; the card simply stays in hand for a normal cast later (CR 702.93c). */
+function applyDeclineMiracle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "decline-miracle" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "miracle" || choice.seat !== seat) throw new Error("No tienes una carta esperando su coste de Milagro.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa carta ya no espera Milagro.");
+  return logged({ ...state, pendingChoice: null }, seat, `${playerAt(state, seat).name} no paga el Milagro de ${choice.sourceCard.name}.`);
+}
+
 function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-scry" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "scry" || choice.seat !== seat) throw new Error("No tienes una elección de adivinar pendiente.");
@@ -7801,6 +7876,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
     case "choose-trigger-mode": next = applyChooseTriggerMode(state, seat, action); break;
     case "acknowledge-view-hand": next = applyAcknowledgeViewHand(state, seat, action); break;
+    case "cast-miracle": next = applyCastMiracle(state, seat, action); break;
+    case "decline-miracle": next = applyDeclineMiracle(state, seat, action); break;
     case "choose-tap-or-untap": next = applyChooseTapOrUntap(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "resolve-library-pick": next = applyResolveLibraryPick(state, seat, action); break;

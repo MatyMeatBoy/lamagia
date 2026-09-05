@@ -3262,11 +3262,50 @@ has no generic `"pass"` fallback and a bot would otherwise stall on it.
 Validation: **619 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,439 global profiles.
 
-With Gitaxian Probe, Notion Thief, Black Market Connections, and Wizard
-Class closed, 92 of 94 cards in the Nekusar, the Mindrazer decklist are
-implemented. Two remain, each needing its own new subsystem, neither
-attempted yet: Reforge the Soul (the Miracle keyword, which requires
-intercepting/pausing the `drawCards` loop to offer a cast option before
-the drawn card settles into hand — architecturally risky) and Naktamun
-Lorespinner // Wheel of Fortune (needs a transform/DFC state framework
-that does not exist in this engine at all).
+Reforge the Soul | `ece854f8-8c60-4f30-894f-2286d3dd61b9` closed the
+Miracle keyword (CR 702.93), which turned out NOT to need the
+`castableCard`/`applyCast` alternative-cost family built earlier this
+session for free-cast/pay-life/return-land/pay-reduced-cost (Deadly
+Rollick, Snuff Out, Daze, Baleful Mastery): those are all offered any
+time the card sits in hand, evaluated fresh by `legalActions` on every
+turn of the game. Miracle is fundamentally different — it is a single,
+one-shot window that opens exactly once, for exactly one card, the
+instant it is drawn as a player's first draw of the turn, and closes
+forever the moment that draw resolves (or the choice is declined). New
+`CardProfile.miracleCost`, parsed identically to `evokeCost`/`echoCost`.
+The check lives directly inside `drawCards`'s existing per-card loop,
+reusing `count` (`drawsThisTurn + 1`, already computed there and already
+relied on by Krang, Faerie Mastermind's "second card each turn") — when
+`count === 1` and the just-drawn card has a `miracleCost`, a new
+`"miracle"` `PendingChoice` opens after the whole draw batch finishes
+(tracked via a `miracleCandidate` local so a multi-card draw like
+Reforge the Soul's own "draws seven cards" can't have more than one
+candidate: only the very first card of the batch can ever have
+`count === 1`). A dedicated `cast-miracle`/`decline-miracle` action pair
+resolves it: casting pays the reduced cost and pushes the card onto the
+stack through the existing `pushOnStack` with
+`castViaAlternativeCost: true` (reusing the flag from the Baleful
+Mastery work rather than adding a new one); declining leaves the card
+sitting in hand exactly where it already was, for an ordinary cast at
+its printed cost later. `applyCastMiracle` is deliberately its own small
+function rather than a `castableCard` extension — Miracle's timing (an
+interstitial reveal window between draw and priority, not a hand-cast
+menu entry) doesn't fit that function's "is this card offerable from
+hand right now" contract. Also added a `botAction` heuristic (pay
+whenever affordable) since, like the "trigger-mode" and "view-hand"
+choices added earlier this session, this new choice type has no generic
+`"pass"` fallback. Caught while writing the "not the first draw of the
+turn" scenario test: the decoy-card setup put the extra land-sacrifice
+draw on the STARTING player (seat 0), whose very first draw step is
+skipped entirely (CR 103.7a) — so the "first card this turn" slot was
+still open when the test's OWN activated-ability draw fired, defeating
+the test's own premise. Fixed by moving that test to the non-starting
+seat, whose first turn actually has a real mandatory draw to consume the
+decoy first. Validation: **622 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,443 global profiles.
+
+With Reforge the Soul, Gitaxian Probe, Notion Thief, Black Market
+Connections, and Wizard Class closed, 93 of 94 cards in the Nekusar, the
+Mindrazer decklist are implemented. One remains: Naktamun Lorespinner //
+Wheel of Fortune, which needs a transform/double-faced-card state
+framework that does not exist in this engine at all — not attempted yet.
