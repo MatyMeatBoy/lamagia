@@ -312,6 +312,7 @@ const C13_ARMY_OF_THE_DAMNED = () => {
 };
 const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for up to two basic land cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", scryfall_id: "8b755881-a72d-4e21-a369-d2924eb4585a" });
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice Armillary Sphere: Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
+const C13_AETHERMAGES_TOUCH = () => make({ name: "Aethermage's Touch", type_line: "Instant", mana_cost: "{2}{W}{U}", cmc: 4, oracle_text: "Reveal the top four cards of your library. You may put a creature card from among them onto the battlefield. It gains \"At the beginning of your end step, return this creature to its owner's hand.\" Then put the rest of the cards revealed this way on the bottom of your library in any order.", scryfall_id: "15692698-ef57-4672-bf76-5fe4a00c693a", oracle_id: "15692698-ef57-4672-bf76-5fe4a00c693a" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
 const C13_CRADLE_OF_VITALITY = () => make({ name: "Cradle of Vitality", type_line: "Enchantment", mana_cost: "{2}{W}", cmc: 3, oracle_text: "Whenever you gain life, you may pay {1}{W}. If you do, put a +1/+1 counter on target creature for each 1 life you gained.", scryfall_id: "956250da-532a-4457-8696-73915be56943" });
@@ -3853,6 +3854,30 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Grizzly Bears" });
     expect(game.players[0]!.graveyard.filter((card) => card.name === "Grizzly Bears")).toHaveLength(1);
+  });
+
+  it("puts Aethermage's Touch creature onto the battlefield and returns it next end step", () => {
+    const profile = profileOf(C13_AETHERMAGES_TOUCH());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "look-top-select", amount: 4, types: ["Creature"], destination: "battlefield", returnAtEndStep: true }]
+    });
+    let game = readyToCast([C13_AETHERMAGES_TOUCH()], [PLAINS(), ISLAND(), ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), ISLAND(), MOUNTAIN(), FLIER()], "aethermage-library"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "look-top-select", stage: "select", destination: "battlefield" });
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "choose-look-top", sourceId, ordinal: 0 });
+    while (game.pendingChoice?.type === "look-top-select" && game.pendingChoice.stage === "bottom") {
+      game = applyAction(game, 0, { type: "choose-look-top-bottom", sourceId, ordinal: 0 });
+    }
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Aethermage's Touch")).toBe(true);
+    expect(game.delayedReturns).toMatchObject([{ card: { name: "Grizzly Bears" }, destination: "hand" }]);
+    game = passUntil(game, (state) => state.players[0]!.hand.some((card) => card.name === "Grizzly Bears"));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
   it("lets Cultivate choose two basics for battlefield and hand", () => {

@@ -342,7 +342,7 @@ export type SpellEffect =
   | { readonly kind: "draw-equal-greatest-mana-value-you-control" }
   | { readonly kind: "scry"; readonly amount: number; readonly thenDraw?: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
-  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" }
+  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
@@ -1597,6 +1597,11 @@ function parseLibrarySearch(text: string): SpellEffect | null {
   };
 }
 
+function parseAethermagesTouch(text: string): SpellEffect | null {
+  if (!/^Reveal the top four cards of your library\. You may put a creature card from among them onto the battlefield\. It gains "At the beginning of your end step, return (?:this creature|~) to its owner'?s hand\." Then put the rest of the cards revealed this way on the bottom of your library in any order\.?$/i.test(text.trim())) return null;
+  return { kind: "look-top-select", amount: 4, types: ["Creature"], destination: "battlefield", returnAtEndStep: true };
+}
+
 function parseCreateToken(text: string): SpellEffect | null {
   const match = /^Create\s+(?:(a|an|one|two|three|four|five|six|seven|eight|nine|ten|thirteen|X|\d+)\s+)?(?:(\d+)\/(\d+)\s+)?(.+?)\s+token(?:s)?(?:\s+named\s+([^,]+))?(?:\s+with\s+(.+))?$/i.exec(text.trim().replace(/\.$/, ""));
   if (!match) return null;
@@ -2760,6 +2765,13 @@ function recognizeText(text: string): RecognizedText {
         triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
       };
     }
+  }
+  const aethermagesTouch = parseAethermagesTouch(joined);
+  if (aethermagesTouch) {
+    return {
+      effects: [aethermagesTouch],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
   }
 
   const effects: SpellEffect[] = [];
