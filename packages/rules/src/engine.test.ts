@@ -97,6 +97,7 @@ const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Ba
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
 const LIFELINKER = () => make({ name: "Kind Knight", type_line: "Creature — Knight", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink" });
 const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature — Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["First strike"], oracle_text: "First strike" });
+const FIRST_STRIKE_ON_YOUR_TURN = () => make({ name: "Test Razorkin Needlehead", type_line: "Creature — Goblin Berserker", mana_cost: "{B}", cmc: 1, power: "2", toughness: "2", oracle_text: "This creature has first strike during your turn." });
 const SPHINX_OF_THE_STEEL_WIND = () => make({
   name: "Sphinx of the Steel Wind", type_line: "Artifact Creature — Sphinx", mana_cost: "{5}{W}{U}{B}", cmc: 8,
   power: "6", toughness: "6", colors: ["W", "U", "B"],
@@ -6631,6 +6632,39 @@ describe("combat", () => {
     game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 1);
     expect(game.players[1]!.battlefield).toHaveLength(0);
     expect(game.players[0]!.battlefield).toHaveLength(1); // The first striker survives untouched.
+  });
+
+  it("grants first strike only on its controller's own turn", () => {
+    const profile = profileOf(FIRST_STRIKE_ON_YOUR_TURN());
+    expect(profile.keywordsDuringYourTurn).toEqual(["first strike"]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Attacking on its own turn: first strike applies, same as a plain
+    // first striker.
+    let attacking = atAttackers([FIRST_STRIKE_ON_YOUR_TURN()], [BEAR()]);
+    const attacker = attacking.players[0]!.battlefield[0]!.instance_id;
+    attacking = applyAction(attacking, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker, defender: 1 }] });
+    attacking = passUntil(attacking, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    const blocker = attacking.players[1]!.battlefield[0]!.instance_id;
+    attacking = applyAction(attacking, 1, { type: "declare-blockers", blockers: [{ instanceId: blocker, attackerId: attacker }] });
+    attacking = passUntil(attacking, (state) => state.step === "end-combat" || state.turn > 1);
+    expect(attacking.players[1]!.battlefield).toHaveLength(0);
+    expect(attacking.players[0]!.battlefield).toHaveLength(1);
+
+    // Blocking on the opponent's turn: no first strike, so both creatures
+    // trade in the regular damage step instead of the source surviving.
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [FIRST_STRIKE_ON_YOUR_TURN()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = passUntil(game, (state) => state.activeSeat === 1 && state.step === "declare-attackers" && !state.combat.attackersDeclared);
+    const defender = game.players[0]!.battlefield[0]!.instance_id;
+    const foeAttacker = game.players[1]!.battlefield[0]!.instance_id;
+    game = applyAction(game, 1, { type: "declare-attackers", attackers: [{ instanceId: foeAttacker, defender: 0 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    game = applyAction(game, 0, { type: "declare-blockers", blockers: [{ instanceId: defender, attackerId: foeAttacker }] });
+    game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 2);
+    expect(game.players[0]!.battlefield).toHaveLength(0);
+    expect(game.players[1]!.battlefield).toHaveLength(0);
   });
 
   it("kills any blocker with deathtouch and lets trample through", () => {

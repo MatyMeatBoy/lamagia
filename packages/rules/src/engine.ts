@@ -656,6 +656,7 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
   }).at(-1);
   if (level?.keywords.includes(keyword)) return true;
   if (permanent.temporaryKeywords?.includes(keyword)) return true;
+  if (profile.keywordsDuringYourTurn.includes(keyword) && state.activeSeat === permanent.controller) return true;
   if (isCreaturePermanent(permanent) && allPermanents(state).some((source) => cardProfile(source.card).staticKeywordGrants.some((grant) => grant.keyword === keyword
       && grant.sourceZone !== "graveyard"
       && (grant.scope === "all-creatures" || (source.controller === permanent.controller
