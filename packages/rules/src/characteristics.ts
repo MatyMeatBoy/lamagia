@@ -3155,7 +3155,14 @@ function recognizeText(text: string): RecognizedText {
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
-          const executableText = optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
+          // Cycling triggers commonly use "you may have target creature gain
+          // ...". Normalize that optional voice to the existing targeted
+          // temporary-keyword primitive so the trigger remains reusable for
+          // every keyword/card using this wording (CR 603.1, 603.2).
+          const optionalTargetKeyword = /^you\s+may\s+have\s+target creature gain\s+(flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate)\s+until end of turn\.?$/i.exec(effectText);
+          const executableText = optionalTargetKeyword
+            ? `Target creature gains ${optionalTargetKeyword[1]} until end of turn`
+            : optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
           const lookTop = parseLookTopSelection(executableText);
           return lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
         })();

@@ -108,6 +108,7 @@ const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Inst
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
 const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
+const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
 const CREATURE_COUNT_BOLT = () => make({ name: "Creature Count Bolt", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals damage equal to the number of creatures you control to any target." });
 const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Tap target creature." });
@@ -1094,6 +1095,41 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Decree of Pain")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("resolves Dirge of Dread's optional cycling keyword trigger", () => {
+    const profile = profileOf(DIRGE_OF_DREAD());
+    expect(profile.cyclingCost?.raw).toBe("{1}{B}");
+    expect(profile.triggers).toMatchObject([{
+      event: "card-cycled",
+      subject: "self",
+      optional: true,
+      targetKind: "creature",
+      effect: { kind: "grant-target-creature-keyword", keyword: "fear" }
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([DIRGE_OF_DREAD()], [SWAMP(), SWAMP()], [], [BEAR()]);
+    game = stage(game, 0, () => ({ library: toHand(0, [FOREST()], "dirge-library") }));
+    const cycled = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === "hand-0");
+    expect(cycled).toBeDefined();
+    game = applyAction(game, 0, cycled!.action);
+
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", sourceCard: { name: "Dirge of Dread" } });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    if (game.pendingChoice?.type === "trigger-target") {
+      const targetChoice = game.pendingChoice;
+      expect(targetChoice.targetKind).toBe("creature");
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "permanent", instanceId: bear.instance_id } });
+    }
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+
+    const affected = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(affected.temporaryKeywords).toContain("fear");
+    expect(game.players[0]!.hand).toHaveLength(1);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Dirge of Dread")).toBe(true);
   });
 
   it("lets Mind's Eye pay for opponent draws", () => {
