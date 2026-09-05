@@ -126,6 +126,10 @@ export interface Permanent {
     readonly subtypes: readonly string[];
     readonly keywords: readonly EnforcedKeyword[];
   };
+  /** Layer 7b/8 characteristic effect from Mirror Entity-style abilities. */
+  readonly temporaryBasePowerToughness?: { readonly power: number; readonly toughness: number };
+  /** The permanent has every creature subtype until cleanup (CR 205.3m). */
+  readonly temporaryAllCreatureTypes?: boolean;
   /** One-shot destruction-replacement shields created by Regenerate (CR 701.19). */
   readonly regenerationShields?: number;
   /** The creature this Equipment is attached to, when it is equipped. */
@@ -633,6 +637,15 @@ function counterModifier(permanent: Permanent): number {
 function isCreaturePermanent(permanent: Permanent): boolean {
   return permanent.temporaryAnimation !== undefined || isCreature(cardProfile(permanent.card));
 }
+function hasPermanentSubtype(state: GameState, permanent: Permanent, subtype: string): boolean {
+  if (hasSubtype(cardProfile(permanent.card), subtype)) return true;
+  if (!permanent.temporaryAllCreatureTypes || !isCreaturePermanent(permanent)) return false;
+  // Mirror Entity grants creature subtypes, not artifact/land/enchantment
+  // subtypes. Unknown named subtypes are treated as creature subtypes here;
+  // this keeps the engine extensible as new creature types are printed.
+  return !new Set(["equipment", "aura", "vehicle", "fortification", "blood", "clue", "food", "treasure", "powerstone", "map", "incubator", "attraction", "contraption", "plains", "island", "swamp", "mountain", "forest", "wastes", "desert", "gate", "locus", "sphere", "cave", "lair"])
+    .has(subtype.toLowerCase());
+}
 function attachedEquipment(state: GameState, creature: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === creature.instance_id
     && cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === "equipment"));
@@ -703,7 +716,7 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
+  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -716,7 +729,7 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.toughness, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryAnimation?.toughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
+  return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const profile = cardProfile(permanent.card);
@@ -2791,6 +2804,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const next = modifyCreatures(state, effect.power, effect.toughness, (permanent) => permanent.controller === controller);
       return logged(next, controller, `${sourceName} modifica tus criaturas hasta el final del turno.`);
     }
+    case "set-creatures-you-control-base-pt-all-types": {
+      const power = effect.power === "X" ? object.variableValue : effect.power;
+      const toughness = effect.toughness === "X" ? object.variableValue : effect.toughness;
+      const next = withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
+          ? { ...permanent, temporaryBasePowerToughness: { power, toughness }, temporaryAllCreatureTypes: true }
+          : permanent)
+      }));
+      return logged(next, controller, `${sourceName} fija tus criaturas en ${power}/${toughness} y les da todos los tipos de criatura hasta el final del turno.`);
+    }
     case "modify-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -2827,7 +2851,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
               power: effect.power,
               toughness: effect.toughness,
               colors: effect.colors,
-              types: ["Artifact", "Creature"],
+              types: effect.types ?? ["Artifact", "Creature"],
               subtypes: effect.subtypes,
               keywords: effect.keywords
             },
@@ -5024,7 +5048,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         ...next,
         players: next.players.map((current) => ({
           ...current,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, regenerationShields: 0, cantBlockThisTurn: false }))
         }))
       };
       break;
@@ -5826,7 +5850,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "artifact") return profile.types.includes("Artifact");
     if (kind.startsWith("subtype:")) {
       const subtype = kind.slice("subtype:".length).toLowerCase();
-      return hasSubtype(profile, subtype);
+      return hasPermanentSubtype(state, permanent, subtype);
     }
     if (kind === "artifact-creature-or-planeswalker") return profile.types.some((type) => ["Artifact", "Creature", "Planeswalker"].includes(type));
     if (kind === "nonland") return !isLand(profile);
