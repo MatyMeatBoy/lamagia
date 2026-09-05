@@ -2310,6 +2310,19 @@ function dealDamageToPermanent(
 ): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
+  const preventionCounter = cardProfile(permanent.card).combatRules.preventsDamageToSelfCounter;
+  if (preventionCounter) {
+    const available = permanent.counters[preventionCounter] ?? 0;
+    const next = available > 0
+      ? withPlayer(state, permanent.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.map((candidate) => candidate.instance_id === instanceId
+            ? { ...candidate, counters: { ...candidate.counters, [preventionCounter]: available - 1 } }
+            : candidate)
+        }))
+      : state;
+    return logged(next, permanent.controller, `${permanent.card.name} previene ${amount} daño${available > 0 ? ` y retira un contador ${preventionCounter}` : ""}.`);
+  }
   if (sourceProfile && hasProtectionFrom(sourceProfile, cardProfile(permanent.card))) return state;
   const multiplier = source ? equippedCreatureDamageMultiplier(state, source.permanentId) : 1;
   const total = amount * multiplier + (source ? damageAmplifyBonus(state, source.controller, sourceProfile, source.permanentId, permanent.controller, combat) : 0);

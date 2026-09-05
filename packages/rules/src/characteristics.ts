@@ -207,6 +207,8 @@ export interface CombatRules {
   readonly preventsAllCombatDamage: boolean;
   /** "Prevent all combat damage that would be dealt to ~" (Guard Gomazoa). */
   readonly preventsAllCombatDamageToSelf: boolean;
+  /** "If damage would be dealt to ~, prevent that damage. Remove a counter from ~." (CR 614.1). */
+  readonly preventsDamageToSelfCounter: string | null;
   /** "If a creature would deal combat damage to you, prevent N of that damage" while untapped (CR 615.1). */
   readonly preventsCombatDamageToController: number;
   /** "You may have ~ assign its combat damage as though it weren't blocked" (Tornado Elemental). */
@@ -224,6 +226,7 @@ export const NO_COMBAT_RULES: CombatRules = {
   landwalk: [],
   preventsAllCombatDamage: false,
   preventsAllCombatDamageToSelf: false,
+  preventsDamageToSelfCounter: null,
   preventsCombatDamageToController: 0,
   assignsAsUnblocked: false
 };
@@ -250,6 +253,8 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
   if (/^prevent all combat damage that would be dealt to and dealt by ~$/i.test(text)) return { preventsAllCombatDamage: true };
   if (/^prevent all combat damage that would be dealt to ~$/i.test(text)) return { preventsAllCombatDamageToSelf: true };
+  const damageCounter = /^if damage would be dealt to ~, prevent that damage\. remove (?:a|one) ([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*) counter from ~$/i.exec(text);
+  if (damageCounter) return { preventsDamageToSelfCounter: damageCounter[1]!.toLowerCase() };
   const controllerPrevention = /^as long as ~ is untapped, if a creature would deal combat damage to you, prevent (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) of that damage$/i.exec(text);
   if (controllerPrevention) return { preventsCombatDamageToController: toNumber(controllerPrevention[1]!) ?? 0 };
   if (/^you may have ~ assign its combat damage as though it weren't blocked$/i.test(text)) return { assignsAsUnblocked: true };

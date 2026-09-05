@@ -129,6 +129,7 @@ const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", m
 const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature — Jellyfish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", keywords: ["Defender", "Flying"], oracle_text: "Defender, flying\nPrevent all combat damage that would be dealt to this creature." });
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
 const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — Snake", mana_cost: "{B}", cmc: 1, power: "1", toughness: "1", keywords: ["Deathtouch"], oracle_text: "Deathtouch" });
+const PHANTOM_NANTUKO = () => make({ name: "Phantom Nantuko", type_line: "Creature — Insect Spirit", mana_cost: "{2}{G}", cmc: 3, power: "0", toughness: "0", keywords: ["Trample"], oracle_text: "Trample\nThis creature enters with two +1/+1 counters on it.\nIf damage would be dealt to this creature, prevent that damage. Remove a +1/+1 counter from this creature.\n{T}: Put a +1/+1 counter on this creature.", oracle_id: "0951b529-646c-4dfd-88ad-84ee117ce722", scryfall_id: "bfd9ba5b-534f-4d3b-a997-441f6911f670" });
 const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
 const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Bat", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", colors: ["B"] });
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
@@ -1379,6 +1380,20 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Red Raider")).toBe(false);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Dusk Bat")).toBe(true);
+  });
+
+  it("prevents damage to Phantom Nantuko and removes one matching counter", () => {
+    expect(profileOf(PHANTOM_NANTUKO())).toMatchObject({
+      fullyImplemented: true,
+      combatRules: { preventsDamageToSelfCounter: "+1/+1" }
+    });
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [], [PHANTOM_NANTUKO()]);
+    const phantom = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Phantom Nantuko")!;
+    expect(phantom.counters["+1/+1"]).toBe(2);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: phantom.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    const surviving = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === phantom.instance_id)!;
+    expect(surviving).toMatchObject({ damage: 0, counters: { "+1/+1": 1 } });
   });
 
   it("moves a Graft counter to the next creature that enters", () => {
