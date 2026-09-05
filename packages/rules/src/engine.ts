@@ -1973,6 +1973,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "gain-life-equal-sacrificed-toughness": {
+      if (playersCantGainLife(state)) return state;
+      const amount = object.variableValue;
+      if (amount <= 0) return state;
+      const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
+    }
     case "lose-life": {
       const amount = effectAmount(effect.amount, object);
       const next = loseLife(state, controller, amount);
@@ -5575,10 +5582,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
   let sacrificedPower = 0;
+  let sacrificedToughness = 0;
   for (const sacrifice of sacrifices) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);
     if (!paid) throw new Error("La criatura elegida para sacrificar ya no está en el campo.");
     sacrificedPower = Math.max(0, powerOf(paid, next));
+    sacrificedToughness = Math.max(0, toughnessOf(paid, next));
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
@@ -5602,7 +5611,9 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} exilia ${exiles.map((card) => card.name).join(", ")} de un cementerio.`);
   }
 
-  const effectVariable = ability.manaCost?.hasVariable ? abilityX : sacrificedPower || sacrificedArtifactMv;
+  const effectVariable = ability.manaCost?.hasVariable ? abilityX
+    : ability.effect.kind === "gain-life-equal-sacrificed-toughness" ? sacrificedToughness
+    : sacrificedPower || sacrificedArtifactMv;
   const counterValue = ability.effect.kind === "destroy-n-creatures" && ability.effect.counter
     ? source.counters[ability.effect.counter] ?? 0
     : 0;

@@ -362,6 +362,7 @@ export type SpellEffect =
   | { readonly kind: "gain-life-each-permanent"; readonly amount: number }
   | { readonly kind: "gain-life-each-creature-you-control"; readonly amount: number }
   | { readonly kind: "gain-life-equal-target-power" }
+  | { readonly kind: "gain-life-equal-sacrificed-toughness" }
   | { readonly kind: "lose-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
@@ -1391,6 +1392,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const tokenAndLife = /^(Create\s+.+?\s+token(?:s)?(?:\s+named\s+[^,]+)?(?:\s+with\s+.+)?)\.\s*You gain (\w+) life\.?$/i.exec(parsedEffectText);
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
+  const sacrificedToughnessLife = /^You gain life equal to the sacrificed creature's toughness\.?$/i.test(parsedEffectText);
   const recognized = selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
@@ -1401,6 +1403,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: revealTopToHand, target: "none" as TargetKind }
     : tokenEffect && tokenEffect.kind === "create-token" && tokenLifeAmount !== null
     ? { effect: { kind: "compound", effects: [tokenEffect, { kind: "gain-life", amount: tokenLifeAmount }] } as SpellEffect, target: "none" as TargetKind }
+    : sacrificedToughnessLife
+    ? { effect: { kind: "gain-life-equal-sacrificed-toughness" } as SpellEffect, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 
