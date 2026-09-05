@@ -16,8 +16,8 @@ feature name.
 | `c13-sacrifice-nontoken-artifact-token-life` | `feat/activated-abilities-and-triggers` | Reuse typed nontoken-artifact activation costs and compound token/life resolution for Thopter Foundry | merged (`a154e2f`) |
 | `c13-whenever-deals-damage-opponent` | `codex/local-c13` | Reusable any-damage-to-opponent event for Charnelhoard Wurm's graveyard-return trigger | active |
 | `c13-remove-counter-from-deals` | `codex/local-c13` | Reusable activated cost for removing a counter, then dealing parameterized damage to any legal target; Deathbringer Thoctar | active |
-| `c13-oracle-counter-static-spell` | `codex/c13-spellbreaker` | Spellbreaker Behemoth: creature spells you control with power 5 or greater can't be countered (CR 101.2, 601.2, 608.2b) | active |
-| `c13-oracle-exile-triggered-target` | `codex/c13-flickerwisp-final` | Flickerwisp: exile another target permanent and return it under its owner's control at the beginning of the next end step (CR 603.2, 603.3d, 603.7, 400.7) | active |
+| `c13-oracle-counter-static-spell` | `codex/c13-spellbreaker` | Spellbreaker Behemoth: creature spells you control with power 5 or greater can't be countered (CR 101.2, 601.2, 608.2b) | merged (`49fd8a7`) |
+| `c13-oracle-exile-triggered-target` | `codex/c13-flickerwisp-final` | Flickerwisp: exile another target permanent and return it under its owner's control at the beginning of the next end step (CR 603.2, 603.3d, 603.7, 400.7) | merged (`8c34a4a`) |
 | `rules-equipment` | `codex/c13-equipment-cluster` | Equip, attachment, Equipment static bonuses, and Sword of the Paruns untap abilities | Ready for integrator review |
 | `rules-c13-reprint-equivalence` | `codex/c13-equipment-cluster` | Verify C13 reprints reuse existing oracle-driven rules for Command Tower and Decree of Pain; track Army of the Damned's Flashback gap | Ready for integrator review |
 | `rules-flashback` | `codex/c13-equipment-cluster` | Flashback cost parsing, graveyard casting, and exile replacement for instant and sorcery cards | Ready for integrator review |
@@ -360,11 +360,11 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 | `c13-oracle-other-activated-shape-6` | Activated temporary animation: source becomes a 2/2 white and blue Bird artifact creature with flying until end of turn (CR 613.6, 707.2) | `codex/c13-azorius-keyrune-f99` | active | 2026-09-04 |
 | `c13-was-kicked-has-split` | Conditional Split second static keyword while a spell is kicked, reusable for Molten Disaster (CR 702.33e, 702.61) | `codex/c13-kicked-split-ebc` | active | 2026-09-04 |
 
-| `c13-oracle-counter-activated-cost` | Opal Palace commander-identity mana ability marks mana used for a commander cast and applies its cast-count +1/+1 counters (CR 605.1a, 614.1c, 903.8) | `codex/c13-mana-priority-f99` | active | 2026-09-04 |
+| `c13-oracle-counter-activated-cost` | Opal Palace commander-identity mana ability marks mana used for a commander cast and applies its cast-count +1/+1 counters (CR 605.1a, 614.1c, 903.8) | `codex/c13-mana-priority-f99` | merged (`c595ea7`) | 2026-09-04 |
 | `c13-oracle-damage-activated-cost` | Leonin Bladetrap sacrifices itself to deal damage to attacking creatures without flying (CR 602.2b, 608.2c, 120.4) | `codex/c13-leonin-bladetrap-f99` | active | 2026-09-04 |
-| `c13-oracle-damage-triggered-shape-7` | Fell Shepherd returns all creature cards put into your graveyard from the battlefield this turn after combat damage to a player (CR 603.2, 603.3d, 400.7) | `codex/c13-fell-shepherd-f99` | active | 2026-09-04 |
-| `c13-oracle-damage-triggered-target` | Stalking Vengeance uses a dead creature's last-known power to damage a target player or planeswalker (CR 603.2, 603.3d, 109.5) | `codex/c13-stalking-vengeance-f99` | active | 2026-09-04 |
-| `c13-oracle-destroy-activated-target` | Deepfire Elemental pays {X}{X}{1} and destroys a target artifact or creature with mana value X (CR 602.2b, 107.3, 608.2b) | `codex/c13-deepfire-elemental-f99` | active | 2026-09-04 |
+| `c13-oracle-damage-triggered-shape-7` | Fell Shepherd returns all creature cards put into your graveyard from the battlefield this turn after combat damage to a player (CR 603.2, 603.3d, 400.7) | `codex/c13-fell-shepherd-f99` | merged (`054deab`) | 2026-09-04 |
+| `c13-oracle-damage-triggered-target` | Stalking Vengeance uses a dead creature's last-known power to damage a target player or planeswalker (CR 603.2, 603.3d, 109.5) | `codex/c13-stalking-vengeance-f99` | merged (`15f50ee`) | 2026-09-04 |
+| `c13-oracle-destroy-activated-target` | Deepfire Elemental pays {X}{X}{1} and destroys a target artifact or creature with mana value X (CR 602.2b, 107.3, 608.2b) | `codex/c13-deepfire-elemental-f99` | merged (`0e824f9`) | 2026-09-04 |
 ## Claim format
 
 Copy this row when starting work:
@@ -399,16 +399,16 @@ rules citations and the integrator review remain mandatory.
 | `c13-echo-cost` | Reusable Echo cost and next-upkeep pay-or-sacrifice handling (CR 702.30) | `feat/activated-abilities-and-triggers` | merged (this commit) | 2026-09-04 |
 | `c13-thunderstaff-combat-prevention` | Thunderstaff prevents 1 combat damage from creatures to its controller while untapped (CR 615.1, 614.1) | `feat/activated-abilities-and-triggers` | merged (this commit) | 2026-09-04 |
 | `c13-blue-spells-and-red` | Nightscape Familiar's shared reduction for blue or red spells you cast (CR 118.9) | `feat/activated-abilities-and-triggers` | merged (this commit) | 2026-09-04 |
-| `c13-the-beginning-each-end` | Brooding Saurian's end-step owner-control reset | `codex/c13-brooding-saurian` | review (`73e07c7`) | 2026-09-04 |
+| `c13-the-beginning-each-end` | Brooding Saurian's end-step owner-control reset | `codex/c13-brooding-saurian` | merged (`ebc7243`) | 2026-09-04 |
 | `c13-the-beginning-your-end` | Wall of Reverence's optional end-step life gain | `codex/c13-wall-reverence` | active | 2026-09-04 |
 | `c13-the-beginning-your-upkeep` | Capricious Efreet's upkeep random destruction choice | `codex/c13-capricious-efreet` | review (`a868c8d`) | 2026-09-04 |
 | `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
 | `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
-| `c13-oracle-counter-activated-target` | Vile Requiem's verse-counter upkeep and self-sacrifice destruction scaled by its counters (CR 602.2b, 603.2b, 121.1) | `codex/c13-vile-requiem` | active | 2026-09-04 |
-| `c13-oracle-draw-triggered-shape` | Well of Lost Dreams variable optional payment capped by life gained, then draw X (CR 603.2, 603.5, 107.3, 118.3) | `codex/c13-well-lost-dreams` | active | 2026-09-04 |
+| `c13-oracle-counter-activated-target` | Vile Requiem's verse-counter upkeep and self-sacrifice destruction scaled by its counters (CR 602.2b, 603.2b, 121.1) | `codex/c13-vile-requiem` | merged (`0d82d42`) | 2026-09-04 |
+| `c13-oracle-draw-triggered-shape` | Well of Lost Dreams variable optional payment capped by life gained, then draw X (CR 603.2, 603.5, 107.3, 118.3) | `codex/c13-well-lost-dreams` | merged (`0d74880`) | 2026-09-04 |
 
 
 
 
-| `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | merged (`ebc7243`) | 2026-09-04 |
