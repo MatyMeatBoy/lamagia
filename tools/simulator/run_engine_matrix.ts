@@ -44,13 +44,36 @@ function inputs(seatOffset: number): DeckInput[] {
 /** The invariants a legal Commander game can never break. */
 function assertInvariants(state: GameState, seed: number): void {
   for (const player of state.players) {
-    const owned = player.library.length + player.hand.length + player.battlefield.length
-      + player.graveyard.length + player.exile.length + player.commandZone.length
-      + state.stack.filter((object) => object.card.owner === player.seat).length;
+    // Tokens are game objects, not cards from the 100-card deck (CR 111.8),
+    // and should not make a conservation check report 101/99.  A token can
+    // briefly appear in another zone during resolution, so filter every zone.
+    const owned = player.library.filter((card) => !card.token).length
+      + player.hand.filter((card) => !card.token).length
+      + player.battlefield.filter((permanent) => !permanent.card.token).length
+      + player.graveyard.filter((card) => !card.token).length
+      + player.exile.filter((card) => !card.token).length
+      + player.commandZone.filter((card) => !card.token).length
+      // Activated/triggered abilities reference their source permanent on the
+      // stack; they do not move another copy of that card there (CR 113.7a).
+      + state.stack.filter((object) => object.card.owner === player.seat
+        && !object.card.token && !object.activated && !object.trigger).length;
     if (owned !== 100) throw new Error(`seed ${seed}: ${player.name} owns ${owned} card objects, expected 100`);
     if (!Number.isInteger(player.life)) throw new Error(`seed ${seed}: ${player.name} has a non-integer life total`);
-    const commanders = player.battlefield.filter((permanent) => permanent.isCommander).length + player.commandZone.length;
-    if (commanders < 1) throw new Error(`seed ${seed}: ${player.name} lost track of its commander`);
+    const visibleCards = [
+      ...player.library,
+      ...player.hand,
+      ...player.battlefield.map((permanent) => permanent.card),
+      ...player.graveyard,
+      ...player.exile,
+      ...player.commandZone,
+      ...state.stack.filter((object) => object.card.owner === player.seat
+        && !object.activated && !object.trigger).map((object) => object.card),
+    ];
+    for (const commanderId of player.commanderIds) {
+      if (!visibleCards.some((card) => card.instance_id === commanderId)) {
+        throw new Error(`seed ${seed}: ${player.name} lost track of commander ${commanderId}`);
+      }
+    }
   }
   if (state.stack.length && !state.priorityOpen) throw new Error(`seed ${seed}: objects on the stack with priority closed`);
   // Compare identifiers as whole JSON values: `seat-1#4` is a substring of

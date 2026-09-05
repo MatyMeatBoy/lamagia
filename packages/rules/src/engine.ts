@@ -3818,7 +3818,8 @@ function landwalkEvades(state: GameState, attacker: Permanent, defenderSeat: Sea
   });
 }
 
-function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): boolean {
+/** Whether this specific blocker may block this specific attacker (CR 509.1b). */
+export function canBlock(state: GameState, attacker: Permanent, blocker: Permanent): boolean {
   const blockerProfile = cardProfile(blocker.card);
   if (!isCreaturePermanent(blocker) || blocker.tapped) return false;
   if (blockerProfile.combatRules.cannotBlock || blocker.cantBlockThisTurn) return false;

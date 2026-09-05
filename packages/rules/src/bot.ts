@@ -8,7 +8,7 @@
 
 import { cardProfile, isCreature, isLand } from "./characteristics.js";
 import {
-  applyAction, defendersAwaitingBlocks, legalAttackers, legalBlockers, legalTargets, legalActions, maxAttackersForDefender,
+  applyAction, canBlock, defendersAwaitingBlocks, legalAttackers, legalBlockers, legalTargets, legalActions, maxAttackersForDefender,
   type AttackerDeclaration, type BlockerDeclaration, type GameAction, type GameState, type Permanent, type SeatId
 } from "./engine.js";
 import type { TargetKind } from "./characteristics.js";
@@ -71,6 +71,9 @@ function chooseBlockers(state: GameState, seat: SeatId): BlockerDeclaration[] {
     if (keyword(attacker, "menace")) continue; // Needs two blockers; not modeled by this policy.
     const blocker = available.find((candidate) => {
       if (used.has(candidate.instance_id)) return false;
+      // legalBlockers is the union of blockers legal for at least one incoming
+      // attacker; re-check the pair before assigning it to this attacker.
+      if (!canBlock(state, attacker, candidate)) return false;
       const attackerProfile = cardProfile(attacker.card);
       const candidateProfile = cardProfile(candidate.card);
       if (attackerProfile.keywords.includes("flying") && !candidateProfile.keywords.includes("flying") && !candidateProfile.keywords.includes("reach")) return false;
