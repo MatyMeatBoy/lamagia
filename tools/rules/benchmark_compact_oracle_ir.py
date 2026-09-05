@@ -203,7 +203,7 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
     recommendation = min(payload_sizes, key=lambda mode: (payload_sizes[mode], mode))
     reduction = round(1 - (payload_sizes[recommendation] / old_bytes), 3) if old_bytes else 0.0
     return {
-        "format": "prossh-oracle-compression-benchmark/v1",
+        "format": "prossh-oracle-compression-benchmark/v2",
         "review_cards": len(old["cards"]),
         "clause_references": old_refs,
         "legacy_unique_shapes": len({primitive_key(row["clause"]) for row in rows}),

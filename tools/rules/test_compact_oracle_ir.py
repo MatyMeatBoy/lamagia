@@ -89,6 +89,7 @@ class CompactOracleIrTests(unittest.TestCase):
             card("b", "Draw Two", "Draw two cards.", amount=2),
             card("c", "Target Draw", "Target player draws a card."),
         ])
+        self.assertEqual(result["format"], "prossh-oracle-compression-benchmark/v2")
         self.assertEqual(result["identity_and_operand_checks"], "PASS")
         self.assertEqual(result["hybrid_reusable_primitive_count"], 1)
         self.assertEqual(result["hybrid_min_references"], 2)

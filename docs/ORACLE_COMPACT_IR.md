@@ -63,7 +63,9 @@ batch is measured separately: 103 review cards, 143 clause references, 24
 atoms, and **7.9%** reduction with hybrid (14 repeated exact shapes, adaptive
 minimum frequency 2). The benchmark tests multiple reuse thresholds per batch
 and emits
-`recommended_workflow` so workers do not choose by intuition.
+`recommended_workflow` so workers do not choose by intuition. The benchmark
+format is versioned because payload fields and thresholds are part of the
+worker contract.
 
 The output reports `reuse_ratio` (repeated exact-clause references),
 `semantic_atom_reuse_ratio` (repeated compositional atoms), and
