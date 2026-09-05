@@ -48,6 +48,24 @@ describe("tested-mode server route", () => {
     expect(JSON.stringify(created.view)).not.toContain("forest-oracle");
   });
 
+  it("exposes public priority state through the match route without hidden zones", async () => {
+    const decks = Array.from({ length: 4 }, (_, index) => importedDeck(index));
+    const selected = selectTestedPod(
+      [{ source: "precons-fixture", decks }, { source: "pod-fixture", decks: [] }],
+      new Set(decks.flatMap((deck) => [deck.cards[0]!.oracle_id!, "forest-oracle"])),
+      "deck-0"
+    );
+    const created = createMatch(selected.decks, { source: selected.source, seed: 11, humanSeats: [0, 1, 2, 3] });
+    const { app } = await import("./index.js");
+    const response = await app.inject({ method: "GET", url: `/api/matches/${created.matchId}?token=${created.token}` });
+    expect(response.statusCode).toBe(200);
+    const view = response.json() as { viewerSeat: number; prioritySeat: number; passedSeats: number[]; players: Array<{ libraryCount: number; hand?: unknown }> };
+    expect(view.prioritySeat).toBeTypeOf("number");
+    expect(view.passedSeats).toEqual([]);
+    expect(view.players.every((player, seat) => seat === view.viewerSeat || player.hand === undefined)).toBe(true);
+    expect(JSON.stringify(view)).not.toContain("forest-oracle");
+  });
+
   // Importing the Fastify/SQLite route can cold-start slower than Vitest's
   // default five-second test budget when this file runs beside matches.test.
   it("exposes a clear HTTP failure when the tested pool has fewer than four suitable decks", async () => {
@@ -70,7 +88,6 @@ describe("tested-mode server route", () => {
       const response = await app.inject({ method: "POST", url: "/api/matches", payload: { mode: "tested", seed: 7 } });
       expect(response.statusCode).toBe(400);
       expect(response.json().error).toMatch(/Tested mode is unavailable/);
-      await app.close();
     } finally {
       for (const [key, value] of Object.entries(previous)) {
         if (value === undefined) delete process.env[key];
