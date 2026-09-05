@@ -412,6 +412,15 @@ export type PendingChoice =
       readonly life: number;
     }
   | {
+      /** Ghost Quarter's optional search belongs to the destroyed land's controller. */
+      readonly type: "optional-basic-land-search";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+      readonly search: Extract<SpellEffect, { kind: "search-library" }>;
+    }
+  | {
       /** A spell resolves only after its controller chooses one of Magic's five colors. */
       readonly type: "choose-color";
       readonly seat: SeatId;
@@ -655,6 +664,7 @@ export type GameAction =
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
+  | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -736,6 +746,10 @@ function withPlayer(state: GameState, seat: SeatId, update: (player: PlayerState
 function logged(state: GameState, seat: SeatId | null, text: string): GameState {
   const entry: LogEntry = { turn: state.turn, step: state.step, seat, text };
   return { ...state, log: [...state.log, entry].slice(-400) };
+}
+
+function targetsText(state: GameState, targets: readonly Target[]): string {
+  return targets.length ? `; objetivo: ${targets.map((target) => targetLabel(state, target)).join(", ")}` : "";
 }
 
 function livingSeats(state: GameState): SeatId[] {
@@ -3793,6 +3807,41 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
     }
+    case "destroy-target-land-search-basic": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isLand(cardProfile(permanent.card))) return state;
+      const targetController = permanent.controller;
+      let next = destroyPermanent(state, permanent);
+      const stillOnBattlefield = Boolean(findPermanent(next, permanent.instance_id));
+      next = logged(next, controller,
+        stillOnBattlefield
+          ? `${sourceName} no destruye ${permanent.card.name} (el objetivo permanece en el campo).`
+          : `${sourceName} destruye ${permanent.card.name}.`);
+      const search: Extract<SpellEffect, { kind: "search-library" }> = {
+        kind: "search-library", types: ["Land"], subtypes: ["Basic"], destination: "battlefield", reveal: false
+      };
+      const optionIds = playerAt(next, targetController).library
+        .filter((card) => {
+          const profile = cardProfile(card);
+          return profile.types.includes("Land") && profile.supertypes.some((value) => value.toLowerCase() === "basic");
+        })
+        .map((card) => card.instance_id);
+      if (!optionIds.length) return logged(next, targetController, `${permanent.card.name}: no hay una tierra básica válida en la biblioteca.`);
+      return {
+        ...next,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "optional-basic-land-search",
+          seat: targetController,
+          sourceId: object.id,
+          sourceCard: object.card,
+          optionIds,
+          search
+        }
+      };
+    }
     case "destroy-target-artifact-or-creature-mana-value": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "permanent") return state;
@@ -6192,6 +6241,19 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
       return actions;
     }
+    if (choice.type === "optional-basic-land-search") {
+      actions.push({
+        action: { type: "choose-basic-land-search", sourceId: choice.sourceId, accept: true },
+        label: "Yes — search for a basic land",
+        note: `${choice.sourceCard.name}: search your library for a basic land and put it onto the battlefield.`
+      });
+      actions.push({
+        action: { type: "choose-basic-land-search", sourceId: choice.sourceId, accept: false },
+        label: "No — do not search",
+        note: `${choice.sourceCard.name}: decline the optional basic-land search.`
+      });
+      return actions;
+    }
     if (choice.type === "choose-color") {
       const names: Readonly<Record<MagicColor, string>> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
       for (const color of Object.keys(names) as MagicColor[]) {
@@ -7651,7 +7713,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     ? source.counters[ability.effect.counter] ?? 0
     : 0;
   next = pushActivatedOnStack(next, seat, source, ability, targets, effectVariable || counterValue);
-  return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
+  return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}${targetsText(next, targets)}.`);
 }
 
 /** The free recast of a Rebound spell from exile at the controller's upkeep (CR 702.88b). */
@@ -7804,7 +7866,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: paymentSpentTotal },
     selfCastTriggers ? [castTriggerWatcher(card, seat)] : []);
-  return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}.`);
+  return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}${targetsText(next, action.targets ?? [])}.`);
 }
 
 function applyPlayLand(state: GameState, seat: SeatId, cardId: string): GameState {
@@ -7879,6 +7941,31 @@ function applyChooseLandEntry(state: GameState, seat: SeatId, action: Extract<Ga
       permanent.instance_id === source.instance_id ? { ...permanent, tapped: false } : permanent)
   }));
   return logged(next, seat, `${choice.sourceCard.name} enters untapped; you pay ${choice.life} life.`);
+}
+
+function applyChooseBasicLandSearch(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-basic-land-search" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "optional-basic-land-search" || choice.seat !== seat) {
+    throw new Error("No optional basic-land search is pending.");
+  }
+  if (choice.sourceId !== action.sourceId) throw new Error("That basic-land search is no longer pending.");
+  if (!action.accept) {
+    return logged({ ...state, pendingChoice: null }, seat, `${choice.sourceCard.name}: you decline the basic-land search.`);
+  }
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "search-library",
+      seat,
+      sourceId: choice.sourceId,
+      optionIds: choice.optionIds,
+      sourceCard: choice.sourceCard,
+      search: choice.search,
+      returnSourceToGraveyard: false,
+      exileSourceAfterResolution: false
+    }
+  };
 }
 
 function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-color" }>): GameState {
@@ -8890,6 +8977,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "activate": next = applyActivate(state, seat, action); break;
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-land-entry": next = applyChooseLandEntry(state, seat, action); break;
+    case "choose-basic-land-search": next = applyChooseBasicLandSearch(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-color": next = applyChooseColor(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;

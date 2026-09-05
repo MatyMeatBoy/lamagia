@@ -574,6 +574,8 @@ export type SpellEffect =
   /** Counter target spell, then its (former) controller creates N tokens (An Offer You Can't Refuse). */
   | { readonly kind: "counter-target-spell-then-controller-token"; readonly amount: number; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent" }
+  /** Ghost Quarter: destroy a land, then its controller may search for a basic land. */
+  | { readonly kind: "destroy-target-land-search-basic" }
   /** Destroy a target artifact or creature whose mana value equals X. */
   | { readonly kind: "destroy-target-artifact-or-creature-mana-value" }
   /** Return each non-token permanent to its owner's control without changing zones. */
@@ -3315,10 +3317,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       targetKinds: ["artifact", "enchantment"]
     };
   }
-  if (/^Destroy target land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "land" };
   if (/^Destroy target land\.\s*Its controller may search their library for a basic land card, put it onto the battlefield, then shuffle$/i.test(text)) {
-    return { effect: { kind: "destroy-target-permanent" }, target: "land" };
+    return { effect: { kind: "destroy-target-land-search-basic" }, target: "land" };
   }
+  if (/^Destroy target land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "land" };
   if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };
   if (/^Destroy target artifact, creature, or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-creature-or-planeswalker" };
   if (/^Exile target creature or planeswalker$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-or-planeswalker" };

@@ -627,6 +627,17 @@ const DELTA = () => make({
   name: "Polluted Delta", type_line: "Land",
   oracle_text: "{T}, Pay 1 life, Sacrifice Polluted Delta: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle."
 });
+const GHOST_QUARTER = () => make({
+  name: "Ghost Quarter", type_line: "Land",
+  oracle_text: "{T}: Add {C}.\n{T}, Sacrifice Ghost Quarter: Destroy target land. Its controller may search their library for a basic land card, put it onto the battlefield, then shuffle."
+});
+const KHER_KEEP = () => make({
+  name: "Kher Keep", type_line: "Legendary Land",
+  oracle_text: "{T}: Add {C}."
+});
+const SNOW_FOREST = () => make({
+  name: "Snow-Covered Forest", type_line: "Basic Snow Land — Forest", produced_mana: ["G"]
+});
 const GRAFT_LAND = () => make({
   name: "Llanowar Reborn", type_line: "Land — Forest", oracle_text: "Llanowar Reborn enters the battlefield tapped.\n{T}: Add {G}.\nGraft 1",
   produced_mana: ["G"]
@@ -7489,6 +7500,37 @@ describe("activated abilities", () => {
     // The sacrificed land is not added to the graveyard a second time by the search.
     expect(game.players[0]!.graveyard.filter((card) => card.name === "Polluted Delta")).toHaveLength(1);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Island")).toBe(false);
+  });
+
+  it("resolves Ghost Quarter against its controller's land and offers Snow-Covered basics", () => {
+    const profile = profileOf(GHOST_QUARTER());
+    expect(profile).toMatchObject({ fullyImplemented: true });
+    expect(profile.activatedAbilities[0]).toMatchObject({ targetKind: "land", effect: { kind: "destroy-target-land-search-basic" } });
+
+    let game = readyOnBoard([GHOST_QUARTER(), KHER_KEEP()], { hold: true, library: [SNOW_FOREST(), FOREST()] });
+    const ghostQuarter = permanentNamed(game, 0, "Ghost Quarter")!;
+    const kherKeep = permanentNamed(game, 0, "Kher Keep")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === ghostQuarter.instance_id);
+    expect(activation).toBeDefined();
+
+    const activationAction = activation!.action;
+    if (activationAction.type !== "activate") throw new Error("Expected Ghost Quarter activation.");
+    game = applyAction(game, 0, { ...activationAction, targets: [{ kind: "permanent", instanceId: kherKeep.instance_id }] });
+    expect(game.log.at(-1)?.text).toContain("objetivo: Kher Keep");
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-basic-land-search");
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Kher Keep")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Kher Keep")).toBe(true);
+    expect(game.pendingChoice).toMatchObject({ type: "optional-basic-land-search", seat: 0 });
+
+    const optional = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-basic-land-search", sourceId: optional.sourceId, accept: true });
+    expect(game.pendingChoice).toMatchObject({ type: "search-library", seat: 0 });
+    const search = game.pendingChoice!;
+    expect((search as Extract<GameState["pendingChoice"], { type: "search-library" }>).optionIds)
+      .toContain("lib-0");
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: search.sourceId, query: "Snow-Covered Forest" });
+    expect(permanentNamed(game, 0, "Snow-Covered Forest")).toBeDefined();
   });
 
   it("sacrifices Armillary Sphere and puts both selected basics into hand", () => {
