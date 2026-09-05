@@ -367,7 +367,7 @@ export type SpellEffect =
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
   | { readonly kind: "sacrifice-own-creature-then-draw"; readonly amount: number }
   | { readonly kind: "return-all-your-graveyard-to-hand" }
-  | { readonly kind: "look-put-one-in-hand"; readonly amount: number }
+  | { readonly kind: "look-put-one-in-hand"; readonly amount: number; readonly restDestination?: "bottom" | "graveyard" }
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
@@ -2385,6 +2385,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       || (match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the other on the bottom of your library$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null && amount > 1) return { effect: { kind: "look-put-one-in-hand", amount }, target: "none" };
+  }
+  if ((match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the rest into your graveyard$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null && amount > 1) return { effect: { kind: "look-put-one-in-hand", amount, restDestination: "graveyard" }, target: "none" };
   }
   if ((match = /^Scry (\w+)$/i.exec(text))) {
     const amount = toNumber(match[1]);

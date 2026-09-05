@@ -311,6 +311,7 @@ const C13_ARMY_OF_THE_DAMNED = () => {
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
 };
 const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for up to two basic land cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", scryfall_id: "8b755881-a72d-4e21-a369-d2924eb4585a" });
+const C13_STRATEGIC_PLANNING = () => make({ name: "Strategic Planning", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Look at the top three cards of your library. Put one of them into your hand and the rest into your graveyard.", scryfall_id: "02b5acf3-47cb-4d39-9307-e02656f1879b", oracle_id: "02b5acf3-47cb-4d39-9307-e02656f1879b" });
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice Armillary Sphere: Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
@@ -3853,6 +3854,20 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Grizzly Bears" });
     expect(game.players[0]!.graveyard.filter((card) => card.name === "Grizzly Bears")).toHaveLength(1);
+  });
+
+  it("puts Strategic Planning's unselected top cards into the graveyard", () => {
+    const profile = profileOf(C13_STRATEGIC_PLANNING());
+    expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "look-put-one-in-hand", amount: 3, restDestination: "graveyard" }] });
+    let game = readyToCast([C13_STRATEGIC_PLANNING()], [ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), MOUNTAIN(), SWAMP()], "planning-library"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "library-pick", restDestination: "graveyard" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "library-pick" }>;
+    game = applyAction(game, 0, { type: "resolve-library-pick", sourceId: choice.sourceId, cardId: "planning-library-1" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Mountain")).toBe(true);
+    expect(game.players[0]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Grizzly Bears", "Swamp", "Strategic Planning"]));
+    expect(game.players[0]!.library.some((card) => ["Grizzly Bears", "Mountain", "Swamp"].includes(card.name))).toBe(false);
   });
 
   it("lets Cultivate choose two basics for battlefield and hand", () => {

@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-strategic-planning-top-graveyard` | Strategic Planning selects one of the top cards and sends the unselected cards to the graveyard (CR 401.5, 701.19) | `codex/c13-strategic-planning-f99` | active | 2026-09-05 |

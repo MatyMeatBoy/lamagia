@@ -404,6 +404,7 @@ export type PendingChoice =
       readonly sourceId: string;
       readonly sourceCard: GameCard;
       readonly optionIds: readonly string[];
+      readonly restDestination?: "bottom" | "graveyard";
     }
   | {
       readonly type: "discard-cards";
@@ -2371,7 +2372,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "look-put-one-in-hand": {
       const optionIds = playerAt(state, controller).library.slice(0, effect.amount).map((card) => card.instance_id);
       if (!optionIds.length) return state;
-      return { ...state, priorityOpen: false, pendingChoice: { type: "library-pick", seat: controller, sourceId: object.id, sourceCard: object.card, optionIds } };
+      return { ...state, priorityOpen: false, pendingChoice: { type: "library-pick", seat: controller, sourceId: object.id, sourceCard: object.card, optionIds, ...(effect.restDestination ? { restDestination: effect.restDestination } : {}) } };
     }
     case "grant-target-creature-keyword": {
       const target = object.targets[0];
@@ -5937,13 +5938,16 @@ function applyResolveLibraryPick(state: GameState, seat: SeatId, action: Extract
   const picked = player.library.find((card) => card.instance_id === action.cardId);
   if (!picked) throw new Error("La carta elegida ya no está en la biblioteca.");
   const optionIds = new Set(choice.optionIds);
-  const rest = player.library.filter((card) => !optionIds.has(card.instance_id) || card.instance_id !== picked.instance_id);
+  const unselected = player.library.filter((card) => optionIds.has(card.instance_id) && card.instance_id !== picked.instance_id);
   const next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
     ...current,
-    library: rest,
-    hand: [...current.hand, picked]
+    library: choice.restDestination === "graveyard"
+      ? current.library.filter((card) => !optionIds.has(card.instance_id))
+      : current.library.filter((card) => !optionIds.has(card.instance_id) || card.instance_id !== picked.instance_id),
+    hand: [...current.hand, picked],
+    ...(choice.restDestination === "graveyard" && unselected.length ? { graveyard: [...current.graveyard, ...unselected] } : {})
   }));
-  return logged(next, seat, `${player.name} pone ${picked.name} en su mano y el resto en el fondo de su biblioteca.`);
+  return logged(next, seat, `${player.name} pone ${picked.name} en su mano y el resto ${choice.restDestination === "graveyard" ? "en su cementerio" : "en el fondo de su biblioteca"}.`);
 }
 
 function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extract<PendingChoice, { type: "search-library-multi" }>, selectedIds: readonly string[]): GameState {
