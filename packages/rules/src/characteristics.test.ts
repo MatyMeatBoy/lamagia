@@ -572,6 +572,19 @@ describe("effect recognition", () => {
     expect(profile.targetKind).toBe("none");
   });
 
+  it("uses the partial compositional IR for repeated simple operations", () => {
+    expect(cardProfile(card({ name: "IR Draw", type_line: "Sorcery", oracle_text: "You draw a card." })).effects)
+      .toEqual([{ kind: "draw", amount: 1 }]);
+    expect(cardProfile(card({ name: "IR Target Draw", type_line: "Sorcery", oracle_text: "Target player draws X cards." })).effects)
+      .toEqual([{ kind: "draw-target-player", amount: "X" }]);
+    expect(cardProfile(card({ name: "IR Life", type_line: "Sorcery", oracle_text: "Each opponent loses two life." })).effects)
+      .toEqual([{ kind: "each-opponent-loses-life", amount: 2 }]);
+    expect(cardProfile(card({ name: "IR Mill", type_line: "Sorcery", oracle_text: "Each player mills three cards." })).effects)
+      .toEqual([{ kind: "mill-each-player", amount: 3 }]);
+    expect(cardProfile(card({ name: "IR Fallback", type_line: "Sorcery", oracle_text: "Draw a card for each creature you control." })).effects)
+      .toEqual([{ kind: "draw-equal-controlled-type", type: "Creature" }]);
+  });
+
   it("recognizes a token creation effect", () => {
     const profile = cardProfile(card({ name: "Plant Maker", type_line: "Sorcery", mana_cost: "{3}{G}", oracle_text: "Create three 0/1 green Plant creature tokens." }));
     expect(profile.effects[0]).toMatchObject({ kind: "create-token", amount: 3, token: { name: "Plant", power: 0, toughness: 1, colors: ["G"] } });
