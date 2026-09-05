@@ -925,6 +925,8 @@ export interface CardProfile {
   readonly equipmentModification: EquipmentModification | null;
   /** Static bonuses an Aura grants the permanent it's attached to (CR 303.4.5), e.g. "Enchanted creature gets +2/+2." */
   readonly auraModification: EquipmentModification | null;
+  /** Control-changing continuous effect from an Aura such as Control Magic (CR 110.2, 613.7). */
+  readonly auraControl: boolean;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
@@ -3373,6 +3375,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 function isIgnorableSentence(sentence: string, hasChosenColorEffect = false): boolean {
   const s = sentence.trim();
   if (/^(?:It|They|That creature) can't be regenerated\.?$/i.test(s)) return true;
+  // Control Magic's continuous effect is applied by the engine from the Aura
+  // attachment; it is not a one-shot resolution instruction (CR 110.2, 613.7).
+  if (/^You control enchanted creature\.?$/i.test(s)) return true;
   // The following sentence carries the actual chosen-color effect; the
   // standalone instruction only opens that resolution choice.
   if (hasChosenColorEffect && /^choose a color\.?$/i.test(s)) return true;
@@ -4502,6 +4507,8 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const auraModification = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraModification(text) : null;
+  const auraControl = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
+    && text.split("\n").some((line) => /^You control enchanted creature\.?$/i.test(line.trim()));
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
@@ -4605,6 +4612,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipWorthyCost,
     equipmentModification,
     auraModification,
+    auraControl,
     staticKeywordGrants,
     keywordsDuringYourTurn,
     untapColorsDuringOtherPlayersUntap,
