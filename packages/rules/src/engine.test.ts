@@ -3,7 +3,7 @@ import { cardProfile } from "./characteristics.js";
 import type { CardData } from "./characteristics.js";
 import {
   applyAction, canCounterSpell, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
-  hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
+  hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TriggerInstance, type TurnStep
 } from "./engine.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
 import { projectGame } from "./projection.js";
@@ -3290,6 +3290,49 @@ describe("casting", () => {
     const logLengthBeforeOpponentTurn = game.log.length;
     game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 1 && state.step === "precombat-main");
     expect(game.log.slice(logLengthBeforeOpponentTurn).some((entry) => entry.text.includes("Se resuelve la habilidad del paso de robo de Howling Mine"))).toBe(false);
+  });
+
+  it("applies intervening-if conditions before stacking and again on resolution", () => {
+    const sourceGame = putOnBattlefield(twoSeatGame(Array.from({ length: 10 }, () => BEAR()), []), 0, [HOWLING_MINE()]);
+    const source = sourceGame.players[0]!.battlefield.find((permanent) => permanent.card.name === "Howling Mine")!;
+    const definition = profileOf(HOWLING_MINE()).triggers[0]!;
+    const trigger: TriggerInstance = {
+      id: "howling-mine-intervening-if",
+      controller: 0,
+      sourcePermanentId: source.instance_id,
+      sourceCard: source.card,
+      definition,
+      cause: "comienza el paso de robo"
+    };
+    const quiet = (state: GameState): GameState => ({
+      ...state,
+      priorityOpen: true,
+      prioritySeat: 0,
+      players: state.players.map((player) => ({ ...player, autoPass: false }))
+    });
+
+    // The condition is already false when the queued trigger would be put on
+    // the stack, so it is removed before any player can respond.
+    let beforeStack = quiet({ ...sourceGame, triggerQueue: [trigger] });
+    beforeStack = stage(beforeStack, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: true } : permanent)
+    }));
+    beforeStack = settle(beforeStack);
+    expect(beforeStack.triggerQueue).toHaveLength(0);
+    expect(beforeStack.stack).toHaveLength(0);
+    expect(beforeStack.log.at(-1)?.text).toContain("no se pone en la pila");
+
+    // It may be stacked while untapped, but tapping it before resolution makes
+    // the intervening-if fail and prevents the extra draw.
+    let beforeResolution = settle(quiet({ ...sourceGame, triggerQueue: [trigger] }));
+    expect(beforeResolution.stack.at(-1)?.trigger?.id).toBe(trigger.id);
+    beforeResolution = stage(beforeResolution, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: true } : permanent)
+    }));
+    beforeResolution = applyAction(beforeResolution, 0, { type: "pass" });
+    beforeResolution = applyAction(beforeResolution, 1, { type: "pass" });
+    expect(beforeResolution.stack).toHaveLength(0);
+    expect(beforeResolution.log.at(-1)?.text).toContain("no se resuelve");
   });
 
   it("damages only an opponent whose hand reaches four after Fevered Visions' end-step draw", () => {

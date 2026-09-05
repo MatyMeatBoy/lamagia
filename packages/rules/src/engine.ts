@@ -1774,6 +1774,42 @@ function triggerMatches(
   }
 }
 
+/**
+ * Conditions written as an intervening "if" are checked twice (CR 603.4):
+ * when the trigger would be put onto the stack and again as it resolves.  The
+ * event-time check lives in `triggerMatches`; this helper covers the second
+ * check without pretending that event facts such as "was kicked" can change.
+ */
+function interveningIfStillTrue(state: GameState, trigger: TriggerInstance): boolean {
+  const condition = trigger.definition.condition;
+  if (!condition) return true;
+  switch (condition.kind) {
+    case "no-controlled-subtype":
+      return !playerAt(state, trigger.controller).battlefield.some((permanent) =>
+        hasSubtype(cardProfile(permanent.card), condition.subtype));
+    case "controlled-creature-power-at-least":
+      return playerAt(state, trigger.controller).battlefield.some((permanent) =>
+        isCreature(cardProfile(permanent.card)) && powerOf(permanent, state) >= condition.amount);
+    case "controlled-subtype-at-least": {
+      const subtype = condition.subtype.toLowerCase();
+      return playerAt(state, trigger.controller).battlefield.filter((permanent) =>
+        cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype)).length >= condition.amount;
+    }
+    case "creature-died-this-turn":
+      return state.creaturesDiedThisTurn > 0;
+    case "source-untapped": {
+      const source = findPermanent(state, trigger.sourcePermanentId);
+      return Boolean(source && !source.tapped);
+    }
+    case "any-player-hand-at-most":
+      return state.players.some((player) => player.hand.length <= condition.amount);
+    default:
+      // These conditions describe the event that already happened (for
+      // example "draws their second card" or "was cast from hand").
+      return true;
+  }
+}
+
 function causeOf(state: GameState, event: GameEvent): string {
   const object = eventObject(event);
   switch (event.kind) {
@@ -4607,6 +4643,13 @@ function resolveTop(state: GameState): GameState {
     if (object.fromCopy) return logged(next, object.controller, `La copia de ${object.card.name} es contrarrestada.`);
     next = sendSpellToOwnerZone(next, object);
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
+  }
+
+  // CR 603.4: an intervening-if trigger does nothing if its condition is no
+  // longer true when it resolves, even if its targets are still legal.
+  if (object.trigger && !interveningIfStillTrue(next, object.trigger)) {
+    return logged(next, object.controller,
+      `La habilidad disparada de ${object.card.name} no se resuelve: ya no se cumple su condición.`);
   }
 
   // A target that left the battlefield makes the spell fizzle (rule 608.2b).
@@ -7876,6 +7919,13 @@ function putNextTriggerOnStack(state: GameState): GameState {
 
   // A trigger whose source's controller has already lost never reaches the stack.
   if (playerAt(state, trigger.controller).lost) return { ...state, triggerQueue: remaining };
+
+  // CR 603.4: an intervening-if trigger is removed before it reaches the
+  // stack if its condition stopped being true after the event was raised.
+  if (!interveningIfStillTrue(state, trigger)) {
+    return logged({ ...state, triggerQueue: remaining }, trigger.controller,
+      `La habilidad disparada de ${trigger.sourceCard.name} no se pone en la pila: ya no se cumple su condición.`);
+  }
 
   if (trigger.definition.modalEffects?.length) {
     return {

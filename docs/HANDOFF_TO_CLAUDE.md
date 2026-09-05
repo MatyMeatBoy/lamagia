@@ -3409,3 +3409,20 @@ turning the normal pool into card-specific conditionals. Regression coverage
 also checks that a nonlegendary spell cannot use it and that a legendary spell
 cast with it is not counterable. Validation: **628 rules tests**, `npm run
 check`.
+
+## Intervening-if trigger baseline (2026-09-05)
+
+Triggered conditions that use the current game state now follow CR 603.4 at
+both checkpoints: the trigger is discarded before it reaches the stack when
+the condition has stopped being true, and it does nothing at resolution when
+the condition became false after stacking. The shared pure helper currently
+covers source-untapped, controlled-subtype/power thresholds, morbid-style
+"creature died this turn", and hand-size gates; event facts such as kicked,
+evoked, second-draw, and cast-from-hand remain fixed facts from the event.
+Howling Mine has regression scenarios for both checkpoints. Validation:
+**629 rules tests**, `npm run check`.
+
+Same-controller simultaneous-trigger ordering remains a documented follow-up;
+it is not silently auto-ordered because that would hide a required player
+choice. Do not claim it is implemented until it has a dedicated projected
+choice and scenario coverage.
