@@ -429,6 +429,7 @@ const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_c
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
+const LIGHTNING_HELIX = () => make({ name: "Lightning Helix", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Lightning Helix deals 3 damage to any target and you gain 3 life.", oracle_id: "800c258a-cfc4-4a54-a667-065ea8dea69e", scryfall_id: "800c258a-cfc4-4a54-a667-065ea8dea69e" });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
 const WONDER = () => make({ name: "Wonder", type_line: "Creature — Incarnation", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Flying\nAs long as this card is in your graveyard and you control an Island, creatures you control have flying.", scryfall_id: "232284f7-c623-4895-9ab9-8b1a39926830" });
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
@@ -4635,6 +4636,11 @@ describe("casting", () => {
     expect(profileOf(ANNIHILATE()).fullyImplemented).toBe(true);
     expect(profileOf(FAMINE()).fullyImplemented).toBe(true);
     expect(profileOf(DEATH_GRASP()).fullyImplemented).toBe(true);
+    expect(profileOf(LIGHTNING_HELIX())).toMatchObject({
+      targetKind: "any",
+      effects: [{ kind: "compound", effects: [{ kind: "damage-any-target", amount: 3 }, { kind: "gain-life", amount: 3 }] }],
+      fullyImplemented: true
+    });
     expect(profileOf(FLYING_REMOVAL()).fullyImplemented).toBe(true);
     expect(profileOf(NONBASIC_REMOVAL()).fullyImplemented).toBe(true);
 
@@ -4647,6 +4653,11 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.life).toBe(38);
     expect(game.players[0]!.life).toBe(42);
+
+    game = readyToCast([LIGHTNING_HELIX()], [MOUNTAIN(), PLAINS()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.life).toBe(37);
+    expect(game.players[0]!.life).toBe(43);
   });
 
   it("filters power-threshold creature targets before resolution", () => {

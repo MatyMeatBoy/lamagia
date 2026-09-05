@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,204**
-- Cards with a reusable existing primitive hint: **11,471**
-- Cards needing new primitive review: **3,733**
-- Templates: **11,973**
+- One-line cards: **15,201**
+- Cards with a reusable existing primitive hint: **11,493**
+- Cards needing new primitive review: **3,708**
+- Templates: **12,003**
 
 ## Worker rule
 
@@ -25,6 +25,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Lydari Druid | `e4afa53e-435e-4d0f-918b-e7b603c52f9c` | activated | trigger / ETB | When ~ enters, for each land on the battlefield, choose a basic land type at random. Those lands become the land types chosen this way. |
 | reuse-existing | Arden Angel | `82d51c8a-d42b-48b3-a726-3a8d28d057e5` | return | trigger / ETB | At the beginning of your upkeep, if ~ is in your graveyard, roll a four-sided die. If the result is 1, return ~ from your graveyard to the battlefield. |
 | needs-new-primitive | Hapato's Might | `b819990c-802c-4847-9857-756dd66ec74a` | pump | new primitive review | Target creature gets +X/+0 until end of turn, where X is a number from 0 to 6 chosen at random. |
+| reuse-existing | Fling | `24227761-b50e-4b9e-93a2-e82d053b3e3d` | damage | sacrifice | ~ deals damage equal to the sacrificed creature's power to any target. |
 | reuse-existing | Laquatus's Champion | `693ddb18-00d2-4784-90a0-701a64195034` | gain-life | damage / life | When ~ leaves the battlefield, that player gains 6 life. |
 | reuse-existing | Lightning Helix | `800c258a-cfc4-4a54-a667-065ea8dea69e` | damage | damage / life | ~ deals 3 damage to any target and you gain 3 life. |
 | reuse-existing | Cloud, Midgar Mercenary | `33d2584b-bf29-4c22-bd45-14ba2fb98c0e` | static-continuous | activated ability / mana | As long as ~ is equipped, if a triggered ability of ~ or an Equipment attached to it triggers, that ability triggers an additional time. |
@@ -56,12 +57,11 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Monstrous Rage | `646a2371-54c0-4492-ac2f-20f109d6108c` | token | create / token | Create a Monster Role token attached to it. |
 | reuse-existing | Nissa, Resurgent Animist | `c1fc5923-c3cd-448a-98d1-c154661c2812` | activated | activated ability / mana | Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second time this ability has resolved this turn, reveal cards from the top of your library until you reveal an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in a random order. |
 | reuse-existing | Tishana's Tidebinder | `2993dc7d-723d-4a9b-94bd-4bb02a9f7243` | counters | activated ability / mana | When ~ enters, counter up to one target activated or triggered ability. If an ability of an artifact, creature, or planeswalker is countered this way, that permanent loses all abilities for as long as ~ remains on the battlefield. |
-| reuse-existing | Ancestral Mask | `db5380ed-ba28-4ea2-abc3-4998e2022903` | pump | static / continuous | Enchanted creature gets +2/+2 for each other enchantment on the battlefield. |
+| reuse-existing | Ancestral Mask | `db5380ed-ba28-4ea2-abc3-4998e2022903` | static-continuous | static / continuous | Enchanted creature gets +2/+2 for each other enchantment on the battlefield. |
 | reuse-existing | Gush | `16d8ee99-8ec8-429f-9ba7-818a74b6f910` | return | activated ability / mana | You may return two Islands you control to their owner's hand rather than pay ~'s mana cost. |
 | needs-new-primitive | Cut Down | `1b30210d-10e9-4703-8967-032063bb4f26` | destroy | new primitive review | Destroy target creature with total power and toughness 5 or less. |
 | reuse-existing | Ruby, Daring Tracker | `5d1b0eee-3a7a-4f22-a40d-7658a368962a` | pump | trigger / ETB | Whenever ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn. |
 | reuse-existing | Lay Down Arms | `aa91d092-7f4a-4e4d-85db-e200692f3d9d` | exile | activated ability / mana | Exile target creature with mana value less than or equal to the number of Plains you control. |
-| reuse-existing | Culling the Weak | `6385fd0d-256d-4400-9319-afa8170024db` | sacrifice | sacrifice | As an additional cost to cast ~, sacrifice a creature. |
 | reuse-existing | Braids, Arisen Nightmare | `e0445c80-fa53-4c3e-881e-940e9fce7f57` | draw | sacrifice | At the beginning of your end step, you may sacrifice an artifact, creature, enchantment, land, or planeswalker. If you do, each opponent may sacrifice a permanent of their choice that shares a card type with it. For each opponent who doesn't, that player loses 2 life and you draw a card. |
 | needs-new-primitive | Gingerbrute | `10b8d4c7-7553-4d76-b643-d98b80701e13` | activated | new primitive review | {1}: ~ can't be blocked this turn except by creatures with haste. |
 | needs-new-primitive | Frantic Search | `16e015b2-f8a3-4b1a-80be-58a8f5fb5e8c` | activated | new primitive review | Untap up to three lands. |
@@ -80,7 +80,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Ajani, the Greathearted | `f5d9be71-91d0-4166-ba58-cbbf5d490c40` | counters | counter | −2: Put a +1/+1 counter on each creature you control and a loyalty counter on each other planeswalker you control. |
 | needs-new-primitive | Angrath, Captain of Chaos | `de08f5d4-8868-4d0f-8c0e-d0d3a2105581` | activated | new primitive review | −2: Amass Zombies 2. |
 | reuse-existing | Arlinn, Voice of the Pack | `a15b83df-91b7-49f0-9bec-5776a3dac8bd` | counters | trigger / ETB | Each creature you control that's a Wolf or a Werewolf enters with an additional +1/+1 counter on it. |
-| reuse-existing | Samut, Tyrant Smasher | `80405d7a-f533-44bd-ac85-890476cf2b78` | pump | static / continuous | −1: Target creature gets +2/+1 and gains haste until end of turn. |
+| reuse-existing | Samut, Tyrant Smasher | `80405d7a-f533-44bd-ac85-890476cf2b78` | static-continuous | static / continuous | −1: Target creature gets +2/+1 and gains haste until end of turn. |
 | reuse-existing | Davriel, Rogue Shadowmage | `1bd5e51f-f9a5-4eb7-bda2-957310602c20` | damage | damage / life | At the beginning of each opponent's upkeep, if that player has one or fewer cards in hand, ~ deals 2 damage to them. |
 | reuse-existing | Vraska, Swarm's Eminence | `cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb` | damage | damage / life | Whenever a creature you control with deathtouch deals damage to a player or planeswalker, put a +1/+1 counter on that creature. |
 | needs-new-primitive | Teyo, the Shieldmage | `cda93cf5-da51-4117-b461-f4448aa2d16c` | activated | new primitive review | You have hexproof. |
@@ -219,4 +219,4 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Snap | `ac914d98-221e-426c-8a50-342896b15f9e` | activated | new primitive review | Untap up to two lands. |
 | reuse-existing | Reflecting Pool | `67f43ac6-2a58-4b53-b5d7-0330e2a252e2` | activated | activated ability / mana | {T}: Add one mana of any type that a land you control could produce. |
 
-The JSON contains the remaining 15,004 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 15,001 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
