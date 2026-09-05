@@ -311,6 +311,17 @@ export interface EquipmentModification {
   readonly text: string;
 }
 
+/** Static characteristic-setting effect granted by an Aura (CR 613.1d, 613.4). */
+export interface AuraAnimation {
+  readonly power: number;
+  readonly toughness: number;
+  readonly types: readonly CardType[];
+  readonly subtypes: readonly string[];
+  readonly keywords: readonly EnforcedKeyword[];
+  readonly losesAbilities: boolean;
+  readonly text: string;
+}
+
 export interface StaticKeywordGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures" | "subtype-creatures-you-control";
   readonly keyword: EnforcedKeyword;
@@ -927,6 +938,7 @@ export interface CardProfile {
   readonly auraModification: EquipmentModification | null;
   /** Activated ability granted by an attached Aura (CR 303.4, 605.1a). */
   readonly auraActivatedAbility: ActivatedAbility | null;
+  readonly auraAnimation: AuraAnimation | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
@@ -1646,6 +1658,25 @@ function parseAuraGrantedActivatedAbility(text: string): ActivatedAbility | null
     if (!match) continue;
     const ability = parseActivatedAbility(match[1]!, 0);
     if (ability) return ability;
+  }
+  return null;
+}
+
+/** Parses the Darksteel Mutation-style Aura characteristic-setting template. */
+function parseAuraAnimation(text: string): AuraAnimation | null {
+  for (const line of text.split("\n")) {
+    const match = /^enchanted creature is an? (.+?) creature with base power and toughness (\d+)\/(\d+) and has (.+), and it loses all other abilities, card types, and creature types\.?$/i.exec(line.trim());
+    if (!match) continue;
+    const qualities = match[1]!.split(/\s+/).map((word) => word.toLowerCase());
+    const types = qualities
+      .filter((word): word is CardType => CARD_TYPES.some((type) => type.toLowerCase() === word))
+      .map((word) => CARD_TYPES.find((type) => type.toLowerCase() === word)!);
+    if (!types.includes("Creature")) types.push("Creature");
+    const subtypes = qualities.filter((word) => !CARD_TYPES.some((type) => type.toLowerCase() === word))
+      .map((word) => word[0]!.toUpperCase() + word.slice(1));
+    const keywords = parseKeywordList(match[4]!);
+    if (!subtypes.length || !keywords.length) continue;
+    return { power: Number(match[2]), toughness: Number(match[3]), types, subtypes, keywords, losesAbilities: true, text: line.trim() };
   }
   return null;
 }
@@ -3402,6 +3433,7 @@ function isIgnorableSentence(sentence: string, hasChosenColorEffect = false): bo
   // granted to the enchanted permanent by the engine (CR 303.4, 605.1a).
   const auraAbility = /^Enchanted (?:creature|land) has "(.+)"\.?$/i.exec(s);
   if (auraAbility && parseActivatedAbility(auraAbility[1]!, 0)) return true;
+  if (parseAuraAnimation(s)) return true;
   // "If the gift was promised, instead [wider target]" (CR 702.166) only
   // widens the legal target set for the already-printed effect; it is
   // consumed into CardProfile.giftPromisedTargetKind, not a second action.
@@ -4521,6 +4553,8 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseAuraModification(text) : null;
   const auraActivatedAbility = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraGrantedActivatedAbility(text) : null;
+  const auraAnimation = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
+    ? parseAuraAnimation(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
@@ -4625,6 +4659,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipmentModification,
     auraModification,
     auraActivatedAbility,
+    auraAnimation,
     staticKeywordGrants,
     keywordsDuringYourTurn,
     untapColorsDuringOtherPlayersUntap,

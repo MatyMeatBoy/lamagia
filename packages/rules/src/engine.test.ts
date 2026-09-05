@@ -8980,6 +8980,7 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   const LEAFDRAKE_ROOST = () => make({ name: "Leafdrake Roost", type_line: "Enchantment — Aura", mana_cost: "{3}{G}{U}", cmc: 5, oracle_text: "Enchant land\nEnchanted land has \"{G}{U}, {T}: Create a 2/2 green and blue Drake creature token with flying.\"", oracle_id: "b5ff42a1-1ac4-472b-8479-5e3749845305" });
   const PRESENCE_OF_GOND = () => make({ name: "Presence of Gond", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature has \"{T}: Create a 1/1 green Elf Warrior creature token.\"", oracle_id: "ab42398c-f0a1-4b94-ac5f-b8768e1b4e05" });
   const SPAWNING_GROUNDS = () => make({ name: "Spawning Grounds", type_line: "Enchantment — Aura", mana_cost: "{6}{G}", cmc: 7, oracle_text: "Enchant land\nEnchanted land has \"{T}: Create a 5/5 green Beast creature token with trample.\"", oracle_id: "1961dd92-db0b-4f02-b9c8-08f760f4051b" });
+  const DARKSTEEL_MUTATION = () => make({ name: "Darksteel Mutation", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature is an Insect artifact creature with base power and toughness 0/1 and has indestructible, and it loses all other abilities, card types, and creature types.", oracle_id: "05a4f8ff-49da-42af-add5-6248c4b0644b" });
 
   function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[]) {
     let game = twoSeatGame([], []);
@@ -9040,6 +9041,19 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.battlefield.some((permanent) => permanent.card.name === "Elf Warrior"));
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Elf Warrior")).toBe(true);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.tapped).toBe(true);
+  });
+
+  it("applies Darksteel Mutation's static type, ability, and base-stat replacement", () => {
+    const profile = profileOf(DARKSTEEL_MUTATION());
+    expect(profile).toMatchObject({ fullyImplemented: true, auraAnimation: { power: 0, toughness: 1, types: ["Artifact", "Creature"], subtypes: ["Insect"], keywords: ["indestructible"], losesAbilities: true } });
+    let game = readyToCast([DARKSTEEL_MUTATION()], [BEAR(), PLAINS(), PLAINS()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    const enchanted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(powerOf(enchanted, game)).toBe(0);
+    expect(toughnessOf(enchanted, game)).toBe(1);
+    expect(game.players[0]!.battlefield).toContainEqual(expect.objectContaining({ instance_id: bear.instance_id }));
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === bear.instance_id)).toBe(false);
   });
 });
 
