@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,280** · cobertura: **29.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,285** · cobertura: **29.8%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,28
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 30 | 38 | 44.1% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 76 | 158 | 32.5% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 284 | 57 | 83.3% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 287 | 54 | 84.2% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 3 | 9 | 25.0% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 7 | 7 | 50.0% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 2 | 7 | 22.2% |
@@ -380,7 +380,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,28
 | 2017-04-28 | Amonkhet (`AKH`) | expansion | amonkhet | main | 272 | 97 | 175 | 35.7% |
 | 2017-04-28 | Amonkhet Invocations (`MP2`) | masterpieces | amonkhet-invocations | other | 54 | 10 | 44 | 18.5% |
 | 2017-04-28 | Amonkhet Promos (`PAKH`) | promos | amonkhet | other | 69 | 12 | 57 | 17.4% |
-| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 167 | 122 | 57.8% |
+| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 168 | 121 | 58.1% |
 | 2017-06-16 | Archenemy: Nicol Bolas (`E01`) | archenemy | 2010s | other | 101 | 47 | 54 | 46.5% |
 | 2017-07-14 | Hour of Devastation (`HOU`) | expansion | 2010s | main | 199 | 59 | 140 | 29.6% |
 | 2017-07-14 | Hour of Devastation Promos (`PHOU`) | promos | hour-of-devastation | other | 55 | 6 | 49 | 10.9% |
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,28
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1523 | 3698 | 29.2% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1524 | 3697 | 29.2% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 12 | 8 | 60.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 404 | 1292 | 23.8% |
@@ -700,7 +700,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,28
 
 | Grupo | Subgrupo | Ediciones | Cartas únicas | Implementadas | Pendientes | % |
 |---|---|---:|---:|---:|---:|---:|
-| anthologies | 2017 | 1 | 289 | 167 | 122 | 57.8% |
+| anthologies | 2017 | 1 | 289 | 168 | 121 | 58.1% |
 | anthologies | 2018 | 1 | 279 | 136 | 143 | 48.7% |
 | anthologies | arena-anthology-1 | 1 | 26 | 21 | 5 | 80.8% |
 | anthologies | arena-anthology-2 | 1 | 25 | 13 | 12 | 52.0% |
@@ -740,7 +740,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,28
 | boxed-products | the-zeta-set | 1 | 121 | 44 | 77 | 36.4% |
 | commander | 2011 | 1 | 303 | 137 | 166 | 45.2% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 284 | 57 | 83.3% |
+| commander | 2013 | 1 | 341 | 287 | 54 | 84.2% |
 | commander | 2014 | 1 | 322 | 203 | 119 | 63.0% |
 | commander | 2015 | 1 | 327 | 141 | 186 | 43.1% |
 | commander | 2016 | 1 | 341 | 134 | 207 | 39.3% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,28
 | masters-remastered | shadows-of-the-past | 1 | 76 | 26 | 50 | 34.2% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 57 | 227 | 20.1% |
 | masters-remastered | tempest-remastered | 1 | 254 | 99 | 155 | 39.0% |
-| masters-remastered | the-list | 1 | 5221 | 1523 | 3698 | 29.2% |
+| masters-remastered | the-list | 1 | 5221 | 1524 | 3697 | 29.2% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 108 | 305 | 26.2% |
 | masters-remastered | ultimate-masters | 1 | 254 | 82 | 172 | 32.3% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -20103,9 +20103,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,28
 ### commander / 2013 · Commander 2013 (`C13`)
 
 - [ ] Cruel Ultimatum — `01294ac9-1a06-4ee8-b3b1-db1f07c9d94e`
-- [ ] Curse of Chaos — `a242af4b-5de6-4961-b684-f4bd809977c6`
-- [ ] Curse of Inertia — `0bbeb0ee-647b-43d3-91b3-6869d5ccb8b8`
-- [ ] Curse of Shallow Graves — `dc66dbed-f979-4ad1-b5f9-08538886167f`
 - [ ] Darksteel Mutation — `05a4f8ff-49da-42af-add5-6248c4b0644b`
 - [ ] Deadwood Treefolk — `b7efcb42-aa52-4d13-8c7c-b2db2dd51afd`
 - [ ] Derevi, Empyrial Tactician — `afa49a09-146f-4439-850e-dd1938c93cef`
@@ -26011,7 +26008,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,28
 - [ ] Congregate — `d139294c-36bb-4a1e-800d-50c4a4ae9877`
 - [ ] Corpse Augur — `06eb43af-637a-4f73-8071-a7036d4c8c3d`
 - [ ] Creeperhulk — `c6423251-759a-48f1-a9ae-b49b98172c08`
-- [ ] Curse of Inertia — `0bbeb0ee-647b-43d3-91b3-6869d5ccb8b8`
 - [ ] Darksteel Mutation — `05a4f8ff-49da-42af-add5-6248c4b0644b`
 - [ ] Death by Dragons — `88e912e3-0548-4a4a-94c1-c804093ca1b0`
 - [ ] Derevi, Empyrial Tactician — `afa49a09-146f-4439-850e-dd1938c93cef`
@@ -31627,7 +31623,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,28
 - [ ] Curse of Disturbance — `6cbd36d9-de47-41b0-9ef4-a72ca01adccd`
 - [ ] Curse of Echoes — `c99bac4b-7eec-4fdf-b344-0cf9639ff073`
 - [ ] Curse of Opulence — `ba0d3df2-3acf-46d7-8d64-8d67d1579adc`
-- [ ] Curse of Shallow Graves — `dc66dbed-f979-4ad1-b5f9-08538886167f`
 - [ ] Curse of the Nightly Hunt — `cc6f2b79-8fcd-4542-904b-943c7493b8ad`
 - [ ] Curse of Verbosity — `c6f76fa7-095e-4bfe-a38c-5c4531880880`
 - [ ] Cursed Mirror — `4d67e2a7-4aa7-44cc-853b-500d7aac046d`

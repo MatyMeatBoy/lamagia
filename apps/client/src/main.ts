@@ -233,10 +233,22 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return payload;
 }
 
+function recoverCardImage(image: HTMLImageElement): void {
+  const name = image.dataset.cardName?.trim() || image.alt.trim();
+  if (!name) { image.remove(); return; }
+  const fallback = document.createElement("span");
+  fallback.className = "card-image-fallback";
+  fallback.setAttribute("role", "img");
+  fallback.setAttribute("aria-label", `Imagen no disponible: ${name}`);
+  fallback.textContent = name;
+  image.replaceWith(fallback);
+}
+
 document.addEventListener("error", (event) => {
   const image = event.target;
   if (!(image instanceof HTMLImageElement)) return;
   if (image.dataset.manaSymbol) recoverManaImage(image);
+  else if (image.dataset.cardName) recoverCardImage(image);
   else image.remove();
 }, true);
 
@@ -431,7 +443,7 @@ function graveyardTargetHtml(): string {
     if (target.kind !== "graveyard-card") return "";
     const card = seatOf(target.seat)?.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
     if (!card) return "";
-    return `<button class="target-card" type="button" data-graveyard-target="${escapeHtml(target.instanceId)}" data-graveyard-seat="${target.seat}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt=""/>` : ""}<b>${escapeHtml(card.name)}</b></button>`;
+    return `<button class="target-card" type="button" data-graveyard-target="${escapeHtml(target.instanceId)}" data-graveyard-seat="${target.seat}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></button>`;
   }).join("")}</div></section>`;
 }
 
@@ -732,7 +744,7 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
 
   return `<button class="${classes.join(" ")}" type="button" data-permanent="${escapeHtml(permanent.instance_id)}"
     data-preview="${escapeHtml(permanent.instance_id)}" title="${escapeHtml(permanent.name)}">
-    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" alt="" loading="lazy" decoding="async"/>` : ""}<span class="token-placeholder" aria-hidden="true">${permanent.isToken ? "✦" : ""}</span>
+    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" data-card-name="${escapeHtml(permanent.name)}" alt="${escapeHtml(permanent.name)}" loading="lazy" decoding="async"/>` : ""}<span class="token-placeholder" aria-hidden="true">${permanent.isToken ? "✦" : ""}</span>
     <span class="tile-name">${escapeHtml(permanent.name)}</span>${stats}<span class="tile-badges">${badges}</span>${icons}
   </button>`;
 }
@@ -805,7 +817,7 @@ function handHtml(player: PlayerView): string {
     if (!card.fullyImplemented) classes.push("partial");
     return `<button class="${classes.join(" ")}" type="button" data-hand="${escapeHtml(card.instance_id)}"
       data-preview="${escapeHtml(card.instance_id)}" title="${escapeHtml(card.name)}">
-      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="" draggable="false" loading="lazy" decoding="async"/>` : ""}
+      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}" draggable="false" loading="lazy" decoding="async"/>` : ""}
       ${card.mana_cost ? `<span class="hand-cost" aria-label="Coste de maná">${manaHtml(card.mana_cost)}</span>` : ""}
       <span class="tile-name">${escapeHtml(card.name)}</span>
     </button>`;
@@ -877,7 +889,7 @@ function stackStripHtml(): string {
   if (!view?.stack.length) return "";
   return `<div class="stack-strip"><b>Pila</b>${[...view.stack].reverse().map((object) =>
     `<span class="stack-chip${object.countered ? " countered" : ""}">
-      ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" alt=""/>` : ""}
+      ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
       <span><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i></span>
     </span>`).join("")}</div>`;
 }
@@ -977,7 +989,7 @@ function librarySearchHtml(): string {
       <button class="choice-action" type="submit">Buscar</button>
     </form>
     <div class="library-search-cards">${cards.length ? cards.map((card) => `${(() => { const legal = search.candidates.some((candidate) => candidate.instance_id === card.instance_id); return `<button type="button" class="library-card${legal ? " legal" : ""}"${legal ? ` data-library-card="${escapeHtml(card.name)}"` : " disabled"} title="${escapeHtml(card.name)}">`; })()}
-      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="" loading="lazy"/>` : ""}<b>${escapeHtml(card.name)}</b><small>${escapeHtml(card.type_line)}</small></button>`).join("") : `<p class="zone-private">No hay cartas que cumplan esta búsqueda.</p>`}</div>
+      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}" loading="lazy"/>` : ""}<b>${escapeHtml(card.name)}</b><small>${escapeHtml(card.type_line)}</small></button>`).join("") : `<p class="zone-private">No hay cartas que cumplan esta búsqueda.</p>`}</div>
   </section>`;
 }
 
@@ -988,7 +1000,7 @@ function scryHtml(): string {
   return `<section class="library-search-overlay scry-overlay" aria-label="Scry">
     <header><div><b>${escapeHtml(scry.sourceName)}</b><span>Scry ${scry.topCards.length}</span></div></header>
     <div class="scry-cards">${scry.topCards.map((card) => `<article class="scry-card">
-      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="" loading="lazy"/>` : ""}<b>${escapeHtml(card.name)}</b><small>${escapeHtml(card.type_line)}</small>
+      ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}" loading="lazy"/>` : ""}<b>${escapeHtml(card.name)}</b><small>${escapeHtml(card.type_line)}</small>
     </article>`).join("")}</div>
     <div class="scry-actions">${actions.map((entry) => {
       const index = view!.legalActions.indexOf(entry);
@@ -1131,7 +1143,7 @@ function showPreview(card: CardView, anchor: HTMLElement): void {
   if (!panel) return;
   const onRightSide = anchor.getBoundingClientRect().left > window.innerWidth * 0.62;
   panel.className = `card-preview visible${onRightSide ? " left" : ""}`;
-  panel.innerHTML = `${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt=""/>` : ""}
+  panel.innerHTML = `${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}"/>` : ""}
     <div class="preview-body">
       <div class="preview-type">${escapeHtml(card.type_line)} ${manaHtml(card.mana_cost)}</div>
       ${hasCreatureStats(card) ? `<div class="preview-type">${card.power}/${card.toughness}</div>` : ""}
@@ -1312,7 +1324,7 @@ function rulingsHtml(rulings: readonly CardRuling[] | undefined): string {
 
 function cardDetailHtml(card: CardView, extra?: CatalogCard): string {
   return `<div class="card-detail">
-    ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="${escapeHtml(card.name)}"/>` : ""}
+    ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}"/>` : ""}
     <div class="detail-body">
       <div class="detail-type">${escapeHtml(card.type_line)} ${manaHtml(card.mana_cost)}</div>
       ${hasCreatureStats(card) ? `<div class="detail-type stats">${card.power}/${card.toughness}</div>` : ""}
@@ -1332,7 +1344,7 @@ function printingGalleryHtml(card: CatalogCard): string {
   const group = (title: string, entries: CatalogPrinting[]) => entries.length
     ? `<section class="printing-group"><h4>${title}</h4><div class="printings">${entries.map((printing) =>
       `<button class="printing-choice${printing.id === card.id ? " selected" : ""}" type="button" data-printing-id="${escapeHtml(printing.id)}" title="${escapeHtml(printing.set_name)}">
-        ${printing.image_normal ? `<img src="${escapeHtml(printing.image_normal)}" alt="" loading="lazy"/>` : ""}
+        ${printing.image_normal ? `<img src="${escapeHtml(printing.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}" loading="lazy"/>` : ""}
         <span>${escapeHtml(printing.set_code.toUpperCase())} · ${escapeHtml(printing.released_at.slice(0, 4))}</span></button>`).join("")}</div></section>`
     : "";
   return `<section class="printing-gallery"><h3>Galería de impresiones · ${printings.length}</h3>
@@ -1379,7 +1391,7 @@ function showZone(seat: number, zone: "library" | "hand" | "graveyard" | "exile"
   fillDialog("zone-view", panelHtml("zone-view", `${player.name} · ${label}`, hidden
     ? `<p class="zone-private">Zona oculta. El servidor nunca envía estas cartas: solo su conteo (${zone === "library" ? player.libraryCount : player.handCount}).</p>`
     : cards.length
-      ? `<div class="zone-cards">${cards.map((card) => `<button class="zone-card" type="button" data-zone-card="${escapeHtml(card.instance_id)}" title="Ver detalles de ${escapeHtml(card.name)}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></button>`).join("")}</div>`
+      ? `<div class="zone-cards">${cards.map((card) => `<button class="zone-card" type="button" data-zone-card="${escapeHtml(card.instance_id)}" title="Ver detalles de ${escapeHtml(card.name)}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></button>`).join("")}</div>`
       : `<p class="zone-private">No hay cartas en esta zona.</p>`));
   document.querySelectorAll<HTMLButtonElement>("[data-zone-card]").forEach((button) => {
     const open = (event: Event) => { event.preventDefault(); showCardDetail(button.dataset.zoneCard!); };
