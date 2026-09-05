@@ -479,6 +479,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-creature-then-controller-token"; readonly token: TokenDefinition }
+  /** Counter target spell, then its (former) controller creates N tokens (An Offer You Can't Refuse). */
+  | { readonly kind: "counter-target-spell-then-controller-token"; readonly amount: number; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent" }
   /** Destroy a target artifact or creature whose mana value equals X. */
   | { readonly kind: "destroy-target-artifact-or-creature-mana-value" }
@@ -2958,6 +2960,19 @@ function recognizeText(text: string): RecognizedText {
       return {
         effects: [{ kind: "destroy-target-creature-then-controller-token", token: token.token }],
         triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
+      };
+    }
+  }
+  // "Counter target noncreature spell. Its controller creates two Treasure
+  // tokens." (An Offer You Can't Refuse) — the reminder-text parenthetical
+  // explaining Treasure is stripped before `joined` is built.
+  const counterThenToken = /^Counter target noncreature spell\.\s*Its controller creates (.+?)\.?$/i.exec(joined);
+  if (counterThenToken) {
+    const token = parseCreateToken(`Create ${counterThenToken[1]!}`);
+    if (token?.kind === "create-token" && typeof token.amount === "number") {
+      return {
+        effects: [{ kind: "counter-target-spell-then-controller-token", amount: token.amount, token: token.token }],
+        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "noncreature-spell", unimplementedText: [], covered: true
       };
     }
   }

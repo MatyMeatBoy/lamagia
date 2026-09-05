@@ -2666,6 +2666,42 @@ Global export: **9,272/38,712** (+1 from 9,271). `npm run check` and `npm
 test` PASS (**552 rules tests**, up from 551). `npm run simulate:engine`:
 **200/200 passed**.
 
+### Worker-05: countering a spell can pay its own caster back (2026-09-05)
+
+Claim `rules-counter-then-controller-token`, continuing the Nekusar
+decklist (An Offer You Can't Refuse). "Counter target noncreature spell.
+Its controller creates two Treasure tokens." needed a new effect because
+"its controller" is the *countered spell's* controller — the player being
+punished, not the one casting An Offer You Can't Refuse. The precedent,
+`destroy-target-creature-then-controller-token` (Pongify/Afterlife), solves
+the same "read whose creature this was before it leaves" problem for a
+*permanent* target, but hardcodes exactly one token, since none of its
+existing cards need more. An Offer needs two, so the new
+`counter-target-spell-then-controller-token` effect carries an explicit
+`amount` and loops the token-creation the same number of times.
+
+The executor looks up the target's `stackId` in `state.stack` to read
+`targetSpell.controller` before marking the entry `countered`, matching how
+`counter-target-spell-with-delayed-draw` already reads the target spell's
+controller for its own delayed-draw scheduling.
+
+Fully implements An Offer You Can't Refuse. Scenario coverage casts it from
+seat 0 against seat 1's Lightning Bolt (targeting seat 0): the Bolt is
+countered, seat 0 takes no damage, and the two Treasures land on seat 1's
+battlefield — not seat 0's.
+
+**Known limit:** Swan Song and Strix Serenade share the identical "counter,
+then its controller creates a token" shape, but restrict the counter target
+to a different set of card types each ("enchantment, instant, or sorcery
+spell" and "artifact, creature, or planeswalker spell") that don't match
+any existing `TargetKind` — `noncreature-spell`/`creature-spell` are the
+only spell-type filters modeled today. Left for a follow-up claim that adds
+those filters rather than widening this one past what An Offer needed.
+
+Global export: **9,289/38,712** (+1 from 9,288). `npm run check` and `npm
+test` PASS (**559 rules tests**, up from 558). `npm run simulate:engine`:
+**200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed
