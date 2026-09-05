@@ -8600,6 +8600,31 @@ function shouldAutoPass(state: GameState, seat: SeatId): boolean {
 }
 
 /**
+ * Bounded, public-state-only evidence for a stabilization failure.
+ *
+ * Keep this deterministic and deliberately omit hands, libraries, and hidden
+ * choice options: the match server may include it in an error response while
+ * still retaining the full snapshot in its private log.
+ */
+export function stabilizationDiagnostic(state: GameState): string {
+  const stack = state.stack.slice(-4).map((object) => `${object.id}:${object.card.name}`).join(",") || "empty";
+  const recentLog = state.log.slice(-3).map((entry) => `${entry.turn}/${entry.step}:${entry.text}`).join(" || ") || "empty";
+  return [
+    `version=${state.version}`,
+    `turn=${state.turn}`,
+    `step=${state.step}`,
+    `active=${state.activeSeat}`,
+    `priority=${state.prioritySeat}`,
+    `open=${state.priorityOpen}`,
+    `stack=${stack}`,
+    `triggers=${state.triggerQueue.length}`,
+    `pending=${state.pendingChoice?.type ?? "none"}`,
+    `combat=${state.combat.attackersDeclared}/${state.combat.blockersDeclared}`,
+    `recent=${recentLog}`
+  ].join("; ");
+}
+
+/**
  * Drives the game forward until a player actually has to choose something.
  *
  * This is what keeps the table alive: steps without priority resolve
@@ -8663,7 +8688,7 @@ export function settle(state: GameState): GameState {
     }
     return next;
   }
-  throw new Error("El motor no pudo estabilizar la partida; posible bucle de reglas.");
+  throw new Error(`El motor no pudo estabilizar la partida; posible bucle de reglas. ${stabilizationDiagnostic(next)}`);
 }
 
 /** Seats that currently owe a decision. */

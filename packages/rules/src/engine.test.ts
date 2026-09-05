@@ -3,13 +3,26 @@ import { cardProfile } from "./characteristics.js";
 import type { CardData } from "./characteristics.js";
 import {
   applyAction, canCounterSpell, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
-  hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TriggerInstance, type TurnStep
+  hasRealChoice, profileOf, settle, stabilizationDiagnostic, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TriggerInstance, type TurnStep
 } from "./engine.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
 import { projectGame } from "./projection.js";
 import { isSafeManaUndo } from "./undo.js";
 
 describe("smart counter response and safe mana undo", () => {
+  it("creates bounded stabilization evidence without hidden zones", () => {
+    const game = twoSeatGame([], []);
+    const diagnostic = stabilizationDiagnostic({
+      ...game,
+      stack: [{ id: "public-spell", controller: 1, card: toHand(1, [make({ name: "Visible Spell", type_line: "Instant", oracle_text: "" })])[0]!, label: "Visible Spell", targets: [], fromCommandZone: false, variableValue: 0, countered: false }],
+      log: [...game.log, { turn: game.turn, step: game.step, seat: 0, text: "public checkpoint" }]
+    });
+    expect(diagnostic).toContain("stack=public-spell:Visible Spell");
+    expect(diagnostic).toContain("recent=");
+    expect(diagnostic).not.toContain("library");
+    expect(diagnostic).not.toContain("hand");
+  });
+
   it("projects creature status without invented noncreature 0/0 stats", () => {
     const game = putOnBattlefield(twoSeatGame([], []), 0, [ISLAND(), make({ name: "Zero", type_line: "Creature", power: "0", toughness: "0" })]);
     const permanents = projectGame(game, 0).players[0]!.battlefield;
@@ -7876,6 +7889,23 @@ describe("combat", () => {
     game = putOnBattlefield(game, 1, defender);
     return passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
   }
+
+  it("keeps identical generated tokens independently selectable in combat", () => {
+    let game = putOnBattlefield(twoSeatGame([], []), 0, [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [PLANT_SPELL()]) }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const plants = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Plant");
+    expect(plants).toHaveLength(3);
+    expect(new Set(plants.map((permanent) => permanent.instance_id)).size).toBe(3);
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => ({ ...permanent, summoningSick: false })) }));
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
+    const chosen = plants[1]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: chosen.instance_id, defender: 1 }] });
+    expect(game.combat.attackers).toEqual([{ instanceId: chosen.instance_id, defender: 1 }]);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Plant")).toHaveLength(3);
+  });
 
   it("swaps Serene Master's power with the creature it blocks until combat ends", () => {
     const serene = SERENE_MASTER();
