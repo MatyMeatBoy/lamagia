@@ -2,7 +2,7 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T22:00:12.293081+00:00`
+- Generated: `2026-09-05T22:47:00.739566+00:00`
 - Scope: **C13**
 - Exported profiles in scope: **341**; fully implemented: **290**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
@@ -286,7 +286,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 
 | Suggested claim | Cards | Remaining line template |
 | --- | ---: | --- |
-| `c13-until-end-turn-creatures` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
+| `unclaimed` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
 
 The highest-value fix is the shared template, not the first card name. A new primitive should parameterize type, zone, target, quantity and optionality so reprints and other sets inherit it.
 

@@ -10,7 +10,7 @@ When a compact IR is supplied, `Reusable atoms` are navigational hints only; exa
 - Memory budget: **2 GB** (256 MB reserved per worker)
 - Maximum cards per commit batch: **20**
 - Integrate fork commits only after **11** are available (unless explicitly overridden)
-- Review payload mode: **legacy-payload-with-compositional-hints**
+- Review payload mode: **hybrid-payload**
 
 ## Worker 1
 
@@ -18,10 +18,14 @@ When a compact IR is supplied, `Reusable atoms` are navigational hints only; exa
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-other-static-spell-2` | activated | 4 | 4 | 0 | 0 | 4 | 1 | 0 |
+| needs-review | `c13-oracle-other-static-spell-2` | activated | 4 | 4 | 0 | 0 | 4 | 1 | 6 |
+Reusable atoms: `kind:static-or-spell, op:other, target:spell, type:instant, type:sorcery, zone:battlefield`
+
 Cards: Echo Mage [fb98f6b7-5986-4c5d-98fc-e5c4106f48bf], Nivix Guildmage [d04356f1-0e1a-4689-8e54-f88c4c6dd936], Uyo, Silent Prophet [93da1e63-54d6-4b05-af91-f13e7e111176], Wild Ricochet [8c35fd11-be45-4984-bd83-6e4f3fbc47a9]
 
-| needs-review | `c13-oracle-return-activated-target` | return | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-return-activated-target` | return | 1 | 1 | 0 | 0 | 1 | 1 | 2 |
+Reusable atoms: `kind:static-or-spell, op:other`
+
 Cards: Uyo, Silent Prophet [93da1e63-54d6-4b05-af91-f13e7e111176]
 
 | normal | `c13-oracle-counter-triggered-shape-2` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
@@ -34,22 +38,34 @@ Cards: Sun Droplet [1820af5c-9cc2-4b77-b4ca-86084442f087]
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-counter-activated-cost` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-counter-activated-cost` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 3 |
+Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
+
 Cards: Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
 
-| needs-review | `c13-oracle-counter-static-spell-6` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-counter-static-spell-6` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 3 |
+Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
+
 Cards: Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
 
-| needs-review | `c13-oracle-counter-static-spell-7` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-counter-static-spell-7` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 3 |
+Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
+
 Cards: Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
 
-| needs-review | `c13-oracle-other-static-spell-5` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-other-static-spell-5` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 3 |
+Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
+
 Cards: Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
 
-| needs-review | `c13-oracle-damage-static-spell-4` | damage | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-damage-static-spell-4` | damage | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
+Reusable atoms: `amount:parameter, cost:mana-parameter, kind:static-or-spell, op:other, zone:battlefield`
+
 Cards: Fireball [aa7714b0-2bfb-458a-8ebf-37ec2c53383e]
 
-| needs-review | `c13-oracle-other-static-spell-7` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-other-static-spell-7` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
+Reusable atoms: `amount:parameter, cost:mana-parameter, kind:static-or-spell, op:other, zone:battlefield`
+
 Cards: Fireball [aa7714b0-2bfb-458a-8ebf-37ec2c53383e]
 
 | normal | `c13-oracle-counter-activated-cost-4` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
@@ -74,19 +90,29 @@ Cards: Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-create-token-static` | token | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-create-token-static` | token | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
+Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature, zone:battlefield`
+
 Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
 
-| needs-review | `c13-oracle-create-token-static-2` | token | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-create-token-static-2` | token | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
+Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature, zone:battlefield`
+
 Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
 
-| needs-review | `c13-oracle-create-token-static-3` | token | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-create-token-static-3` | token | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
+Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature, zone:battlefield`
+
 Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
 
-| needs-review | `c13-oracle-other-static-spell-6` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-other-static-spell-6` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
+Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature, zone:battlefield`
+
 Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
 
-| needs-review | `c13-oracle-other-static-spell` | activated | 1 | 1 | 1 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-other-static-spell` | activated | 1 | 1 | 1 | 1 | 1 | 1 | 5 |
+Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, target:player, zone:battlefield`
+
 Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
 
 | normal | `c13-oracle-counter-static-spell` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
@@ -111,13 +137,19 @@ Cards: Thraximundar [9e0e4217-fefe-48dd-9153-032460192b19]
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-counter-activated-cost-2` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-counter-activated-cost-2` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
+Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, zone:hand, zone:library`
+
 Cards: Jar of Eyeballs [3075dadd-240f-4455-9286-9f1d48f53a3f]
 
-| needs-review | `c13-oracle-other-static-spell-3` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-other-static-spell-3` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
+Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, zone:hand, zone:library`
+
 Cards: Jar of Eyeballs [3075dadd-240f-4455-9286-9f1d48f53a3f]
 
-| needs-review | `c13-oracle-damage-static-spell-5` | damage | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-damage-static-spell-5` | damage | 1 | 1 | 0 | 0 | 1 | 1 | 4 |
+Reusable atoms: `amount:parameter, cost:mana-parameter, kind:static-or-spell, op:other`
+
 Cards: Street Spasm [95385d84-550c-4d6c-a889-62bdbc1d518d]
 
 | normal | `c13-oracle-counter-activated-cost-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
@@ -139,10 +171,14 @@ Cards: Furnace Celebration [af6d6844-c612-4731-86da-59a8fa02956b]
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-counter-static-spell-4` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-counter-static-spell-4` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 4 |
+Reusable atoms: `amount:parameter, control:conditional, kind:static-or-spell, op:other`
+
 Cards: Primal Vigor [c665544f-557b-4631-a1dc-39571470ca2e]
 
-| needs-review | `c13-oracle-other-static-spell-4` | replacement | 1 | 1 | 0 | 0 | 1 | 1 | 0 |
+| needs-review | `c13-oracle-other-static-spell-4` | replacement | 1 | 1 | 0 | 0 | 1 | 1 | 4 |
+Reusable atoms: `amount:parameter, control:conditional, kind:static-or-spell, op:other`
+
 Cards: Primal Vigor [c665544f-557b-4631-a1dc-39571470ca2e]
 
 | normal | `c13-oracle-exile-activated-target` | exile | 1 | 0 | 0 | 0 | 1 | 1 | 0 |

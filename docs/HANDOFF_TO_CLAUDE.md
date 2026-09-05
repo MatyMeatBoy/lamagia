@@ -11,13 +11,14 @@ Hooded Horror combat evasion, Dungeon Geists untap lock, Standstill event-player
 draw scope, Contested Cliffs multi-target fight, and mana-payment gate for
 Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
 and token-scaling paths, plus reusable Fling, Incinerate, Voltaic Key, Lava Coil,
-and kicker damage-replacement and mana-ability counter-rider primitives; verify the Pages run before reporting
+and kicker damage-replacement, mana-ability counter-rider, temporary creature-type removal,
+and you-cast-noncreature trigger primitives; verify the Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 10,064 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 10,101 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 25,938 / 84,990 implemented (30.5%) across 685
+- **Edition memberships:** 26,042 / 84,990 implemented (30.6%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
@@ -31,10 +32,11 @@ catalog and the current rules tree. The refreshed artifacts are
 `data/rules/engine-card-profiles.json`, `data/rules/set-coverage.json`,
 `site/coverage.json`, `docs/SET_COVERAGE.md`, the C13 roadmap/dictionary/worker
 plan, and both near-complete queues. C13 remains at **290/341 (85.0%)**, with
-one one-line candidate: Sudden Spoiling. The global queue is now 15,158
-one-line profiles, 11,457 of them reusable, after the Fling, Incinerate, Voltaic
-Key, Lava Coil, kicker damage-replacement, and mana-ability counter-rider
-primitives were added; the C13
+one one-line candidate: Sudden Spoiling. The global queue is now 15,161
+one-line profiles, 11,453 of them reusable, after the Fling, Incinerate, Voltaic
+Key, Lava Coil, kicker damage-replacement, mana-ability counter-rider, temporary
+creature-type removal, and you-cast-noncreature trigger primitives were added;
+the C13
 dictionary remains 341 profiles with 290 complete.
 
 The static P/T vocabulary now also covers source-relative conditions such as

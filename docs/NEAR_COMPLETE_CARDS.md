@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,158**
-- Cards with a reusable existing primitive hint: **11,457**
-- Cards needing new primitive review: **3,701**
-- Templates: **11,984**
+- One-line cards: **15,161**
+- Cards with a reusable existing primitive hint: **11,453**
+- Cards needing new primitive review: **3,708**
+- Templates: **11,999**
 
 ## Worker rule
 
@@ -30,7 +30,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Yidaro, Wandering Monster | `6c0e22f2-f0f3-43e6-87c5-c543032112d8` | activated | search / library | When you cycle ~, shuffle it into your library from your graveyard. If you've cycled a card named ~ four or more times this game, put it onto the battlefield from your graveyard instead. |
 | reuse-existing | Luminous Broodmoth | `28c7c816-07e7-42fb-923c-bf149ba28b38` | counters | trigger / ETB | Whenever a creature you control without flying dies, return it to the battlefield under its owner's control with a flying counter on it. |
 | reuse-existing | Mysterious Egg | `d3b62851-6013-49e5-8808-fa61b1bdfe98` | counters | trigger / ETB | Whenever ~ mutates, put a +1/+1 counter on it. |
-| reuse-existing | Sprite Dragon | `a9d8ab76-70a4-475e-b87e-4737c090553a` | counters | trigger / ETB | Whenever you cast a noncreature spell, put a +1/+1 counter on ~. |
 | reuse-existing | Titanoth Rex | `8656a32b-eb95-402b-9daf-0b6d876b4b13` | counters | counter | When you cycle ~, put a trample counter on target creature you control. |
 | reuse-existing | Void Beckoner | `7185e345-d8a1-4dd3-a071-f90f265634b4` | counters | counter | When you cycle ~, put a deathtouch counter on target creature you control. |
 | needs-new-primitive | Boros Challenger | `bc6b40b1-0d17-4dd2-bec9-f1653611dba3` | activated | new primitive review | Mentor |
@@ -41,6 +40,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Brave the Elements | `9d73a51a-1c8e-40cd-8124-aeff406a0884` | activated | new primitive review | White creatures you control gain protection from the chosen color until end of turn. |
 | reuse-existing | Strategic Betrayal | `0127c13f-7b0f-44c3-8b35-97f306c5f239` | exile | exile | Target opponent exiles a creature they control and their graveyard. |
 | reuse-existing | Beza, the Bounding Spring | `020de6d7-f5a2-4036-ad25-451e5977b4d4` | token | damage / life | When ~ enters, create a Treasure token if an opponent controls more lands than you. You gain 4 life if an opponent has more life than you. Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you. Draw a card if an opponent has more cards in hand than you. |
+| needs-new-primitive | Slickshot Show-Off | `74c7a029-59aa-4511-8e4c-f8f167cda4e2` | activated | new primitive review | Plot {1}{R} |
 | reuse-existing | Monstrous Rage | `646a2371-54c0-4492-ac2f-20f109d6108c` | token | create / token | Create a Monster Role token attached to it. |
 | reuse-existing | Nissa, Resurgent Animist | `c1fc5923-c3cd-448a-98d1-c154661c2812` | activated | activated ability / mana | Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second time this ability has resolved this turn, reveal cards from the top of your library until you reveal an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in a random order. |
 | reuse-existing | Tishana's Tidebinder | `2993dc7d-723d-4a9b-94bd-4bb02a9f7243` | counters | activated ability / mana | When ~ enters, counter up to one target activated or triggered ability. If an ability of an artifact, creature, or planeswalker is countered this way, that permanent loses all abilities for as long as ~ remains on the battlefield. |
@@ -65,6 +65,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Angrath, Captain of Chaos | `de08f5d4-8868-4d0f-8c0e-d0d3a2105581` | activated | new primitive review | −2: Amass Zombies 2. |
 | reuse-existing | Arlinn, Voice of the Pack | `a15b83df-91b7-49f0-9bec-5776a3dac8bd` | counters | trigger / ETB | Each creature you control that's a Wolf or a Werewolf enters with an additional +1/+1 counter on it. |
 | reuse-existing | Samut, Tyrant Smasher | `80405d7a-f533-44bd-ac85-890476cf2b78` | static-continuous | static / continuous | −1: Target creature gets +2/+1 and gains haste until end of turn. |
+| needs-new-primitive | Saheeli, Sublime Artificer | `ab655810-f67e-4576-9174-35b16f5e3235` | activated | new primitive review | −2: Target artifact you control becomes a copy of another target artifact or creature you control until end of turn, except it's an artifact in addition to its other types. |
 | reuse-existing | Davriel, Rogue Shadowmage | `1bd5e51f-f9a5-4eb7-bda2-957310602c20` | damage | damage / life | At the beginning of each opponent's upkeep, if that player has one or fewer cards in hand, ~ deals 2 damage to them. |
 | reuse-existing | Vraska, Swarm's Eminence | `cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb` | damage | damage / life | Whenever a creature you control with deathtouch deals damage to a player or planeswalker, put a +1/+1 counter on that creature. |
 | needs-new-primitive | Teyo, the Shieldmage | `cda93cf5-da51-4117-b461-f4448aa2d16c` | activated | new primitive review | You have hexproof. |
@@ -231,7 +232,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Hero of Goma Fada | `f15908ea-2be0-4035-933d-4412fe032164` | activated | trigger / ETB | Rally — Whenever ~ or another Ally you control enters, creatures you control gain indestructible until end of turn. |
 | reuse-existing | Avalanche Tusker | `ccad8b03-5ff1-4895-94e0-0c96883cb875` | activated | trigger / ETB | Whenever ~ attacks, target creature defending player controls blocks it this combat if able. |
 | reuse-existing | Harbinger of the Hunt | `3256029f-6558-4fcc-9fa1-74ceba3e5c92` | damage | damage / life | {2}{G}: ~ deals 1 damage to each other creature with flying. |
-| reuse-existing | Sage of the Inward Eye | `02c741d0-99d3-48e5-9846-0fea5a0a29fe` | activated | damage / life | Whenever you cast a noncreature spell, creatures you control gain lifelink until end of turn. |
+| reuse-existing | Pristine Skywise | `de80c742-4da0-4d67-9711-2b4e6452e2d0` | activated | trigger / ETB | Whenever you cast a noncreature spell, untap ~. It gains protection from the color of your choice until end of turn. |
 | reuse-existing | Doomwake Giant | `ba069664-9f92-47c7-b556-9e5143a22579` | pump | trigger / ETB | Constellation — Whenever ~ or another enchantment you control enters, creatures your opponents control get -1/-1 until end of turn. |
 | reuse-existing | Scourge of Fleets | `57308fc8-8915-4211-a5fd-9363caea9ab9` | return | trigger / ETB | When ~ enters, return each creature your opponents control with toughness X or less to its owner's hand, where X is the number of Islands you control. |
 | reuse-existing | Dawnbringer Charioteers | `29263d48-cb28-478b-a99e-5a18dbc924f0` | counters | trigger / ETB | Heroic — Whenever you cast a spell that targets ~, put a +1/+1 counter on ~. |
@@ -517,6 +518,5 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Splendid Reclamation | `13fe5e46-77a6-45d8-ac0b-c3d740eccf86` | return | return / graveyard | Return all land cards from your graveyard to the battlefield tapped. |
 | needs-new-primitive | Universal Surveillance | `c5a5c17d-d1e4-4d23-9d2b-1c2febdcb0e7` | activated | new primitive review | Improvise |
 | reuse-existing | Cleaver Skaab | `9fa66e03-7b20-43f6-8c53-1ce18169c382` | sacrifice | sacrifice | {3}, {T}, Sacrifice another Zombie: Create two tokens that are copies of the sacrificed creature. |
-| reuse-existing | Lord of the Forsaken | `3a25d1e2-63d8-4a93-b0ce-f9307736b3f9` | activated | activated ability / mana | Pay 1 life: Add {C}. Spend this mana only to cast a spell from your graveyard. |
 
-The JSON contains the remaining 14,658 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,661 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
