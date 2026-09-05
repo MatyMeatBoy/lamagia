@@ -440,6 +440,8 @@ export type SpellEffect =
   | { readonly kind: "modify-all-attacking-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
+  /** Peer into the Abyss: both halves are rounded up and computed independently at resolution (CR 107.1a). */
+  | { readonly kind: "draw-half-library-then-lose-half-life-target-player" }
   /** Target loses the amount carried by the life-gain/loss event that caused this trigger. */
   | { readonly kind: "lose-life-target-event-amount" }
   | { readonly kind: "lose-life-target-player-each-controlled-type"; readonly type: CardType }
@@ -2371,6 +2373,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-each-creature-and-player", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-each-creature-and-player", amount: "X" }, target: "none" };
   }
+  if (/^Target player draws cards equal to half the number of cards in their library and loses half their life$/i.test(text)) {
+    return { effect: { kind: "draw-half-library-then-lose-half-life-target-player" }, target: "player" };
+  }
   if ((match = /^Target player draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "draw-target-player", amount }, target: "player" };
@@ -3014,6 +3019,10 @@ function isIgnorableSentence(sentence: string): boolean {
   // so treating this as a no-op keeps the card playable without new state.
   if (/^you have no maximum hand size for the rest of the game\.?$/i.test(s)) return true;
   if (/^then shuffle\.?$/i.test(s)) return true;
+  // A rounding clarifier for a preceding "half of X" computation (Peer into
+  // the Abyss); the half-amount effect already rounds up, so this adds no
+  // separate action (CR 107.1a).
+  if (/^Round up each time\.?$/i.test(s)) return true;
   return false;
 }
 

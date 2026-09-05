@@ -2414,6 +2414,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const next = loseLife(state, target.seat, amount);
       return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${amount} vidas.`);
     }
+    case "draw-half-library-then-lose-half-life-target-player": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const victim = playerAt(state, target.seat);
+      const drawAmount = Math.ceil(victim.library.length / 2);
+      const lifeLoss = Math.ceil(victim.life / 2);
+      let next = drawCards(state, target.seat, drawAmount);
+      next = loseLife(next, target.seat, lifeLoss);
+      return logged(next, controller, `${playerAt(next, target.seat).name} roba ${drawAmount} y pierde ${lifeLoss} vidas.`);
+    }
     case "lose-life-target-event-amount": {
       const target = object.targets[0];
       const amount = object.trigger?.eventAmount ?? 0;
