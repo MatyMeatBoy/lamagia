@@ -687,23 +687,12 @@ function onPermanentClick(instanceId: string): void {
     if (view.combat.attackers.some((entry) => entry.instanceId === instanceId)) { assignBlock(instanceId); return; }
   }
 
-  // Arena-style: a permanent with exactly one legal activation fires it, and a
-  // permanent with several opens a menu instead of guessing which one you meant.
   const activations = activationsFor(instanceId);
-  if (activations.length === 1) {
-    const only = activations[0]!;
-    runAction(only, only.label);
-    return;
-  }
-  if (activations.length > 1) {
-    ui.abilityMenu = ui.abilityMenu === instanceId ? null : instanceId;
-    ui.notice = "";
-    render();
-    return;
-  }
-
-  ui.notice = "Ese permanente no tiene una acción legal ahora. Manténlo pulsado o usa el botón derecho para ver sus detalles.";
-  render();
+  // Every battlefield click now opens the same general menu as hand cards.
+  // A single activation is still available there, but never fires implicitly:
+  // Simian Spirit Guide-like cards and modal permanents must not guess intent.
+  if (activations.length || visibleCards().has(instanceId)) openCardActionMenu(instanceId);
+  else { ui.notice = "Ese permanente no tiene una acción legal ahora."; render(); }
 }
 
 /** The floating list of activations for one permanent. */
