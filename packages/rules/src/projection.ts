@@ -23,6 +23,8 @@ export interface CardView {
   readonly oracle_text: string;
   readonly image_normal?: string;
   readonly image_art_crop?: string;
+  /** Generated tokens are distinct battlefield objects and use the token frame. */
+  readonly isToken: boolean;
   readonly power: number | null;
   readonly toughness: number | null;
   readonly keywords: readonly string[];
@@ -185,6 +187,7 @@ function cardView(card: GameCard): CardView {
     oracle_text: card.oracle_text ?? "",
     ...(card.image_normal ? { image_normal: card.image_normal } : {}),
     ...(card.image_art_crop ? { image_art_crop: card.image_art_crop } : {}),
+    isToken: Boolean(card.token),
     power: profile.power,
     toughness: profile.toughness,
     keywords: profile.keywords,

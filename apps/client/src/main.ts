@@ -232,7 +232,9 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 document.addEventListener("error", (event) => {
   const image = event.target;
-  if (image instanceof HTMLImageElement) recoverManaImage(image);
+  if (!(image instanceof HTMLImageElement)) return;
+  if (image.dataset.manaSymbol) recoverManaImage(image);
+  else image.remove();
 }, true);
 
 async function startMatch(mode: "cedh" | "precon" | "tested", deckId?: string): Promise<void> {
@@ -703,6 +705,7 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
   if (permanent.attacking !== null) classes.push("attacking");
   if (permanent.blocking) classes.push("blocking");
   if (permanent.isCommander) classes.push("is-commander");
+  if (permanent.isToken) classes.push("token-tile");
   if (isTargetable(permanent.instance_id)) classes.push("targetable");
   if (own && ui.attackers.has(permanent.instance_id)) classes.push("selected-attacker");
   if (own && ui.selectedBlocker === permanent.instance_id) classes.push("selected-blocker");
@@ -726,7 +729,7 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
 
   return `<button class="${classes.join(" ")}" type="button" data-permanent="${escapeHtml(permanent.instance_id)}"
     data-preview="${escapeHtml(permanent.instance_id)}" title="${escapeHtml(permanent.name)}">
-    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" alt="" loading="lazy" decoding="async"/>` : ""}
+    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" alt="" loading="lazy" decoding="async"/>` : ""}<span class="token-placeholder" aria-hidden="true">${permanent.isToken ? "✦" : ""}</span>
     <span class="tile-name">${escapeHtml(permanent.name)}</span>${stats}<span class="tile-badges">${badges}</span>${icons}
   </button>`;
 }

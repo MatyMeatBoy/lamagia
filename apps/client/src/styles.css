@@ -242,6 +242,22 @@ h1, h2, h3 { margin: 0; }
   object-fit: cover; object-position: center;
   filter: contrast(1.09) saturate(1.06);
 }
+.card-tile.token-tile {
+  border-color: #a88a51;
+  border-radius: 10px 10px 4px 4px;
+  clip-path: polygon(0 7%, 8% 0, 92% 0, 100% 7%, 100% 91%, 50% 100%, 0 91%);
+  background: radial-gradient(circle at 50% 38%, #304d35, #101c15 68%);
+}
+.card-tile.token-tile::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  border: 1px solid #d1b56d66; clip-path: inherit;
+}
+.card-tile .token-placeholder { display: none; }
+.card-tile.token-tile .token-placeholder {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: #cdb574; font-size: clamp(1rem, 2vw, 1.6rem); opacity: .7;
+  background: radial-gradient(circle, #31523699, transparent 62%);
+}
 .card-tile .tile-name {
   position: absolute; inset: 0 0 auto; padding: 2px 3px 5px;
   background: linear-gradient(#050a07ed, #050a07a8 62%, transparent);
