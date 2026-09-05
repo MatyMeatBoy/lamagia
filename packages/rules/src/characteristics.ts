@@ -2065,6 +2065,14 @@ function parseLibrarySearch(text: string): SpellEffect | null {
   };
 }
 
+/** Basic-land subtype search that Oracle prints without a comma before "and put". */
+function parseNamedBasicLandSearch(text: string): SpellEffect | null {
+  const match = /^Search your library for (a|an) ((?:Plains|Island|Swamp|Mountain|Forest)(?:,\s*(?:Plains|Island|Swamp|Mountain|Forest))*?(?:,?\s+or\s+(?:Plains|Island|Swamp|Mountain|Forest))?) card and put that card onto the battlefield\.?$/i.exec(text.trim());
+  if (!match) return null;
+  const subtypes = match[2]!.match(/Plains|Island|Swamp|Mountain|Forest/gi) ?? [];
+  return { kind: "search-library", types: ["Land"], subtypes, destination: "battlefield", reveal: false };
+}
+
 function parseCreateToken(text: string): SpellEffect | null {
   const match = /^Create\s+(?:(a|an|one|two|three|four|five|six|seven|eight|nine|ten|thirteen|X|\d+)\s+)?(?:(\d+)\/(\d+)\s+)?(.+?)\s+token(?:s)?(?:\s+named\s+([^,]+))?(?:\s+with\s+(.+))?$/i.exec(text.trim().replace(/\.$/, ""));
   if (!match) return null;
@@ -2078,7 +2086,9 @@ function parseCreateToken(text: string): SpellEffect | null {
   const colors = words.filter((word) => colorWords[word.toLowerCase()]).map((word) => colorWords[word.toLowerCase()]!);
   const artifact = /\bartifact\b/i.test(descriptor);
   const creature = /\bcreature\b/i.test(descriptor);
-  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(and|artifact|creature)$/i.test(word)).join(" ");
+  // Oracle token descriptors commonly join multiple colors with "and";
+  // conjunctions are grammar, not part of the token's subtype/name.
+  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature|and)$/i.test(word)).join(" ");
   const name = (match[5]?.trim() || (subtype || (artifact ? "Treasure" : "Token"))).replace(/\s+token$/i, "");
   const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
@@ -2286,6 +2296,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // not just the controller's own. Must stay after the "...under your
   // control" patterns above so those remain the first match when present.
   { event: "enters-battlefield", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "dies", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
@@ -3377,6 +3388,13 @@ function recognizeText(text: string): RecognizedText {
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library\.$/i.test(joined)) {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  const namedBasicLandSearch = parseNamedBasicLandSearch(joined.replace(/\s+Then shuffle\.?$/i, ""));
+  if (namedBasicLandSearch) {
+    return {
+      effects: [namedBasicLandSearch],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
