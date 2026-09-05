@@ -117,6 +117,7 @@ const EACH_MILL_SPELL = () => make({ name: "Shared Gravewind", type_line: "Sorce
 const ALL_MILL_SPELL = () => make({ name: "Universal Gravewind", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Each player mills two cards." });
 const EACH_DRAW_SPELL = () => make({ name: "Shared Insight", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Each opponent draws two cards." });
 const WHEEL_SPELL = () => make({ name: "Shared Wheel", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Each player discards their hand, then draws seven cards." });
+const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle Slice and Dice, you may have it deal 1 damage to each creature.", oracle_id: "463fc961-d34e-4f40-b383-5b78a0fcb5c8" });
 const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target creature spell." });
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
@@ -946,6 +947,28 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(0);
+  });
+
+  it("reuses the damage sweep primitive for Slice and Dice cycling", () => {
+    const profile = profileOf(SLICE_AND_DICE());
+    expect(profile.triggers).toMatchObject([{
+      event: "card-cycled",
+      subject: "self",
+      optional: true,
+      effect: { kind: "damage-all-creatures", amount: 1, excludeSource: false }
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([SLICE_AND_DICE()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), BEAR()], [], [BEAR(), IRON_BEAR()]);
+    const slice = game.players[0]!.hand.find((card) => card.name === "Slice and Dice")!;
+    const cycle = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === slice.instance_id);
+    expect(cycle).toBeDefined();
+    game = applyAction(game, 0, cycle!.action);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.damage).toBe(1);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.damage).toBe(1);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Iron Bear")!.damage).toBe(1);
   });
 
   it("moves a Graft counter to the next creature that enters", () => {
