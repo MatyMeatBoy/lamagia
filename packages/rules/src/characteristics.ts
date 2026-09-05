@@ -684,6 +684,8 @@ export type SpellEffect =
       readonly kind: "search-library";
       readonly types: readonly CardType[];
       readonly subtypes?: readonly string[];
+      /** "a green creature card" (Natural Order): restricts by color, not just type/subtype. */
+      readonly colors?: readonly string[];
       readonly destination: "top" | "hand" | "graveyard" | "battlefield";
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
@@ -1018,6 +1020,8 @@ export interface CardProfile {
   readonly additionalCostSacrificeLand: boolean;
   /** "As an additional cost to cast ~, sacrifice a creature" (Diabolic Intent, CR 601.2b). */
   readonly additionalCostSacrificeCreature: boolean;
+  /** "As an additional cost to cast ~, sacrifice a green creature" (Natural Order, CR 601.2b): the color-restricted sibling. */
+  readonly additionalCostSacrificeCreatureColor: string | null;
   /** "If you control a commander, you may cast ~ without paying its mana cost" (Deadly Rollick, CR 601.2b, 118.9). */
   readonly freeCastIfCommander: boolean;
   /** "If you control a [land type], you may pay N life rather than pay ~'s mana cost" (Snuff Out, CR 601.2b, 118.9). */
@@ -2131,14 +2135,19 @@ function parseEntersWithVariableCounters(text: string): { kind: string } | null 
 
 const SENTENCE_SPLIT = /(?<=\.)\s+(?=[A-Z~])/;
 
-function searchCriterion(text: string): { types: CardType[]; subtypes: string[] } {
-  const types = CARD_TYPES.filter((type) => new RegExp(`\\b${type}\\b`, "i").test(text));
-  const subtypes: string[] = /\bbasic\b/i.test(text) ? ["Basic"] : [];
+function searchCriterion(text: string): { types: CardType[]; subtypes: string[]; colors: string[] } {
+  // "a green creature card" (Natural Order): a leading color adjective
+  // restricts by color, not a creature subtype, so pull it out first.
+  const colorMatch = /\b(white|blue|black|red|green)\b/i.exec(text);
+  const colors = colorMatch ? [DAMAGE_AMPLIFY_COLOR_LETTER[colorMatch[1]!.toLowerCase()]!] : [];
+  const withoutColor = colorMatch ? text.replace(colorMatch[0], " ").replace(/\s+/g, " ").trim() : text;
+  const types = CARD_TYPES.filter((type) => new RegExp(`\\b${type}\\b`, "i").test(withoutColor));
+  const subtypes: string[] = /\bbasic\b/i.test(withoutColor) ? ["Basic"] : [];
   // Search criteria are open-ended in Oracle: Equipment, Aura, Goblin and
   // future creature/artefact subtypes must not be reduced to “all cards”.
   // Only collect a single lexical criterion after removing card-type words;
   // compound descriptions ("land with ...", "card with ...") stay pending.
-  const criterion = text.replace(/\b(?:a|an|up to (?:one|two|three|five))\b/gi, "")
+  const criterion = withoutColor.replace(/\b(?:a|an|up to (?:one|two|three|five))\b/gi, "")
     .replace(/\bcard\b/gi, "").replace(/\s+/g, " ").trim();
   for (const part of criterion.split(/\s+(?:or|and)\s+/i)) {
     const candidate = part.trim();
@@ -2148,7 +2157,7 @@ function searchCriterion(text: string): { types: CardType[]; subtypes: string[] 
       subtypes.push(candidate);
     }
   }
-  return { types, subtypes };
+  return { types, subtypes, colors };
 }
 
 function parseLibrarySearch(text: string): SpellEffect | null {
@@ -2172,6 +2181,7 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       kind: "search-library",
       types: criterion.types,
       ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
       destination: "hand",
       reveal: true,
       count
@@ -2186,6 +2196,7 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       kind: "search-library",
       types: criterion.types,
       ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
       destination: "battlefield",
       ...(multi[3] ? { tapped: true } : {}),
       reveal: false,
@@ -2205,6 +2216,7 @@ function parseLibrarySearch(text: string): SpellEffect | null {
     kind: "search-library",
     types: criterion.types,
     ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+    ...(criterion.colors.length ? { colors: criterion.colors } : {}),
     destination,
     ...(destination === "battlefield" && /onto the battlefield tapped/i.test(instructions) ? { tapped: true } : {}),
     reveal: /reveal/i.test(instructions)
@@ -2427,6 +2439,11 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "blocks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+blocks(?:\s+a\s+creature)?,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "becomes-tapped", subject: "self", pattern: /^(?:when|whenever)\s+~\s+becomes\s+tapped,?\s*(.+)$/i },
+  // Equipment triggers about the creature it's attached to (Skullclamp,
+  // Argentum Armor); the "equipped-creature" subject already exists for the
+  // static P/T-doubler grant, wired here for the first time as a real event.
+  { event: "dies", subject: "equipped-creature", pattern: /^whenever\s+equipped\s+creature\s+dies,?\s*(.+)$/i },
+  { event: "attacks", subject: "equipped-creature", pattern: /^whenever\s+equipped\s+creature\s+attacks,?\s*(.+)$/i },
 
   // Another object triggers it. `another` excludes the source itself (CR 109.5).
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
@@ -4092,6 +4109,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice a creature\.?$/i.test(line)) continue;
+    if (/^as an additional cost to cast ~, sacrifice an? (?:white|blue|black|red|green) creature\.?$/i.test(line)) continue;
     if (/^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line)) continue;
     if (/^if you control an? [A-Za-z][A-Za-z'’-]*, you may pay \d+ life rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you may return an? [A-Za-z][A-Za-z'’-]* you control to its owner's hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
@@ -4709,6 +4727,8 @@ export function cardProfile(card: CardData): CardProfile {
   const hasRebound = /(?:^|\n)rebound\.?(?:$|\n)/i.test(text);
   const additionalCostSacrificeLand = /as an additional cost to cast ~, sacrifice a land\.?/i.test(text);
   const additionalCostSacrificeCreature = /as an additional cost to cast ~, sacrifice a creature\.?/i.test(text);
+  const additionalCostSacrificeCreatureColorMatch = /as an additional cost to cast ~, sacrifice an? (white|blue|black|red|green) creature\.?/i.exec(text);
+  const additionalCostSacrificeCreatureColor = additionalCostSacrificeCreatureColorMatch ? DAMAGE_AMPLIFY_COLOR_LETTER[additionalCostSacrificeCreatureColorMatch[1]!.toLowerCase()]! : null;
   const freeCastIfCommander = text.split("\n").some((line) => /^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line.trim()));
   const payLifeInsteadMatch = text.split("\n").map((line) => /^if you control an? ([A-Za-z][A-Za-z'’-]*), you may pay (\d+) life rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const payLifeInsteadOfManaCost = payLifeInsteadMatch ? { life: Number(payLifeInsteadMatch[2]), controlLandType: payLifeInsteadMatch[1]! } : null;
@@ -4867,6 +4887,7 @@ export function cardProfile(card: CardData): CardProfile {
     hasRebound,
     additionalCostSacrificeLand,
     additionalCostSacrificeCreature,
+    additionalCostSacrificeCreatureColor,
     freeCastIfCommander,
     payLifeInsteadOfManaCost,
     returnLandInsteadOfManaCost,

@@ -9670,6 +9670,83 @@ describe("Persist and the each-opponent drain template", () => {
   });
 });
 
+describe("Skullclamp's equipped-creature-dies draw", () => {
+  const SKULLCLAMP = () => make({ name: "Skullclamp", type_line: "Artifact — Equipment", mana_cost: "{1}", cmc: 1, oracle_text: "Equipped creature gets +1/-1.\nWhenever equipped creature dies, draw two cards.\nEquip {1}" });
+
+  it("wires 'equipped creature dies' to the existing equipped-creature trigger subject", () => {
+    const profile = profileOf(SKULLCLAMP());
+    expect(profile.triggers).toContainEqual(expect.objectContaining({ event: "dies", subject: "equipped-creature", effect: { kind: "draw", amount: 2 } }));
+    expect(profile.equipmentModification).toMatchObject({ power: 1, toughness: -1 });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("draws two cards when the equipped creature dies from the clamp's own -1 toughness", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SKULLCLAMP(), BEAR(), MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BOLT()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const clamp = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Skullclamp")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    // 2/2 Bear -> 3/1 once clamped; still alive on its own.
+    game = applyAction(game, 0, { type: "equip", sourceId: clamp.instance_id, targetId: bear.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    const clamped = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(powerOf(clamped, game)).toBe(3);
+    expect(toughnessOf(clamped, game)).toBe(1);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+
+    const handBeforeCast = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    // Casting Bolt removes it from hand (-1); the Skullclamp death trigger draws two (+2).
+    expect(game.players[0]!.hand.length).toBe(handBeforeCast + 1);
+  });
+});
+
+describe("Natural Order's green-restricted sacrifice and tutor", () => {
+  const NATURAL_ORDER = () => make({ name: "Natural Order", type_line: "Sorcery", mana_cost: "{2}{G}{G}", cmc: 4, oracle_text: "As an additional cost to cast this spell, sacrifice a green creature.\nSearch your library for a green creature card, put it onto the battlefield, then shuffle." });
+  const GREEN_BEAST = () => make({ name: "Test Green Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"] });
+  const RED_GOBLIN = () => make({ name: "Test Red Goblin", type_line: "Creature — Goblin", mana_cost: "{R}", cmc: 1, power: "1", toughness: "1", colors: ["R"] });
+  const GREEN_HYDRA = () => make({ name: "Test Green Hydra", type_line: "Creature — Hydra", mana_cost: "{4}{G}{G}", cmc: 6, power: "6", toughness: "6", colors: ["G"] });
+
+  it("recognizes both the color-restricted sacrifice cost and the color-restricted tutor", () => {
+    const profile = profileOf(NATURAL_ORDER());
+    expect(profile.additionalCostSacrificeCreatureColor).toBe("G");
+    expect(profile.effects).toEqual([{ kind: "search-library", types: ["Creature"], colors: ["G"], destination: "battlefield", reveal: false }]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("sacrifices the green creature and only offers green creatures as the tutor target", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GREEN_BEAST(), RED_GOBLIN(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [NATURAL_ORDER()]),
+      library: [...toHand(0, [RED_GOBLIN(), GREEN_HYDRA()], "library"), ...player.library]
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Green Beast")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Green Beast")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Red Goblin")).toBe(true);
+    expect(game.pendingChoice).toMatchObject({ type: "search-library", seat: 0 });
+    expect(() => applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Red Goblin" })).toThrow();
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Green Hydra" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Green Hydra")).toBe(true);
+  });
+
+  it("can't be cast with only a non-green creature to sacrifice", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [RED_GOBLIN(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [NATURAL_ORDER()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(false);
+    expect(() => applyAction(game, 0, { type: "cast", cardId: "hand-0" })).toThrow();
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
