@@ -344,6 +344,7 @@ const C13_RAZOR_HIPPOGRIFF = () => make({ name: "Razor Hippogriff", type_line: "
 const C13_NIGHT_SOIL = () => make({ name: "Night Soil", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "{1}, Exile two creature cards from a single graveyard: Create a 1/1 green Saproling creature token.", scryfall_id: "52a0eca1-f936-4f5a-820b-fa12542c593d", oracle_id: "3165fe8f-52d7-40f7-bb14-8f4300a564e6" });
 const C13_SPELLBREAKER_BEHEMOTH = () => make({ name: "Spellbreaker Behemoth", type_line: "Creature — Beast", mana_cost: "{2}{R}{G}", cmc: 4, power: "5", toughness: "5", oracle_text: "Creature spells you control with power 5 or greater can't be countered.", scryfall_id: "cba07472-7212-4411-a9f9-38a48870ad69", oracle_id: "cba07472-7212-4411-a9f9-38a48870ad69" });
 const C13_FLICKERWISP = () => make({ name: "Flickerwisp", type_line: "Creature — Elemental", mana_cost: "{1}{W}{W}", cmc: 3, power: "3", toughness: "1", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, exile another target permanent. Return that card to the battlefield under its owner's control at the beginning of the next end step.", scryfall_id: "f6cccf30-2025-49bb-9b1e-240bbef03f27", oracle_id: "b23a3d30-6b8e-4aad-890f-db0c3af43ace" });
+const C13_VILE_REQUIEM = () => make({ name: "Vile Requiem", type_line: "Enchantment", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "At the beginning of your upkeep, you may put a verse counter on this enchantment.\n{1}{B}, Sacrifice this enchantment: Destroy up to X target nonblack creatures, where X is the number of verse counters on this enchantment. They can't be regenerated.", scryfall_id: "923972d3-d838-43f8-800a-904489c5791a" });
 const C13_AUGUR_OF_BOLAS = () => make({ name: "Augur of Bolas", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order.", scryfall_id: "c13-augur-of-bolas" });
 const C13_ACT_OF_AUTHORITY = () => make({ name: "Act of Authority", type_line: "Enchantment", mana_cost: "{3}{W}", cmc: 4, oracle_text: "When this enchantment enters, you may exile target artifact or enchantment.\nAt the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of this enchantment.", scryfall_id: "c13-act-of-authority" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
@@ -1879,6 +1880,38 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears"));
     expect(game.delayedReturns).toHaveLength(0);
     expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it("captures Vile Requiem's verse counters before its self-sacrifice", () => {
+    const profile = profileOf(C13_VILE_REQUIEM());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "upkeep",
+      optional: true,
+      effect: { kind: "add-counter-source", counter: "verse", amount: 1 }
+    });
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sacrificesSelf: true,
+      manaCost: { raw: "{1}{B}" },
+      targetKind: "nonblack-creature",
+      effect: { kind: "destroy-n-creatures", count: "X", nonblack: true, counter: "verse" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [C13_VILE_REQUIEM(), SWAMP(), SWAMP()], [], [BEAR(), TRAMPLER()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Vile Requiem")!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+        ? { ...permanent, counters: { ...permanent.counters, verse: 2 } }
+        : permanent)
+    }));
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const targets = game.players[1]!.battlefield.map((permanent) => ({ kind: "permanent" as const, instanceId: permanent.instance_id }));
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0, targets });
+    expect(game.stack.at(-1)?.variableValue).toBe(2);
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Vile Requiem")).toBe(true);
+    expect(game.players[1]!.battlefield.filter((permanent) => profileOf(permanent.card).types.includes("Creature"))).toHaveLength(0);
   });
 
   it("resolves Bojuka Bog's ETB exile while preserving its tapped land entry", () => {
