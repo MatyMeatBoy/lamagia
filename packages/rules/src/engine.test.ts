@@ -306,6 +306,12 @@ const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "En
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
+const C13_AZORIUS_HERALD = () => make({
+  name: "Azorius Herald", type_line: "Creature — Spirit", mana_cost: "{2}{W}{W}", cmc: 4, power: "4", toughness: "4",
+  keywords: ["Flying"],
+  oracle_text: "Flying\nWhen Azorius Herald enters the battlefield, sacrifice it unless you pay {W}.\nWhen Azorius Herald enters the battlefield, you gain 4 life.",
+  scryfall_id: "a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6", oracle_id: "a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6"
+});
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -5292,6 +5298,29 @@ describe("activated abilities", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: false });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Transguild Promenade")).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Transguild Promenade")).toBe(true);
+  });
+
+  it("reuses sacrifice-unless-paid and life-gain ETBs for C13 Azorius Herald", () => {
+    const profile = profileOf(C13_AZORIUS_HERALD());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers).toMatchObject([
+      { event: "enters-battlefield", effect: { kind: "sacrifice-source" }, unlessPayCost: { raw: "{W}" } },
+      { event: "enters-battlefield", effect: { kind: "gain-life", amount: 4 } }
+    ]);
+
+    let game = readyOnBoard([PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()], { hold: true });
+    game = stage(game, 0, () => ({ hand: toHand(0, [C13_AZORIUS_HERALD()], "azorius-herald-hand") }));
+    game = stage(game, 0, (player) => ({ autoPass: false }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    const lifeBefore = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "azorius-herald-hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.unlessPayCost?.raw).toBe("{W}");
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Azorius Herald")).toBe(true);
+    expect(game.players[0]!.life).toBe(lifeBefore + 4);
   });
 
   it("fires an any-damage trigger from a permanent source", () => {
