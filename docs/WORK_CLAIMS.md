@@ -412,3 +412,4 @@ rules citations and the integrator review remain mandatory.
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
 | `c13-armillary-sphere-search` | Armillary Sphere's reusable two-basic-library search accepts the current Oracle reveal wording (CR 701.19, 701.19a) | `codex/c13-armillary-sphere-search-f99` | active | 2026-09-05 |
+| `c13-spoils-of-victory-search` | Spoils of Victory's typed basic-land search is recognized across its split `Then shuffle` Oracle line (CR 701.19, 701.19a) | `codex/c13-spoils-of-victory-search-f99` | active | 2026-09-05 |
