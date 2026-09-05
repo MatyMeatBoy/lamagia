@@ -21,12 +21,14 @@ Coverage numbers have two deliberate units:
 - **Commander 2014:** 195 / 322 unique cards (60.6%), 127 pending.
 - **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
   component references; 99.9% are reused across clauses. The full-catalog
-  benchmark reduces worker context by 5.0% while preserving exact identities,
-  clause order, primitive keys, and operands. This is scheduling
+  hybrid benchmark reduces worker context by 22.8% while preserving exact
+  identities, clause order, primitive keys, and operands. C13 separately
+  reduces context by 7.9%; repeated shapes use symbols and unique clauses
+  retain raw text. This is scheduling
   compression only: it does not mark a card implemented.
-- **Batch policy:** C13 currently benchmarks at -22.1% because of fixed
-  dictionary overhead, so its workers receive exact Oracle text plus atom
-  hints; compact payloads are used only when the batch benchmark is positive.
+- **Batch policy:** the benchmark chooses hybrid/compact/legacy per batch;
+  current full-catalog and C13 runs both choose `hybrid-payload`. Compression
+  never changes implementation status.
 
 Do not report the 38,711 profile catalog as implemented cards. Recompute both
 views after accepted rules commits and publish the generated `site/coverage.json`.

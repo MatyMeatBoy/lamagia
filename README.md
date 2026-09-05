@@ -19,9 +19,10 @@ imported-deck, and optional cached EDHREC sources without inventing unresolved
 cards.
 
 Rules workers use the compositional Oracle IR as a shared vocabulary. Its
-benchmark selects the payload mode per batch: full-catalog jobs use compact
-references when they reduce context, while small sets such as C13 retain exact
-card text and use atoms as reusable navigation hints.
+benchmark selects the payload mode per batch: repeated exact shapes use
+hybrid symbols while unique or complex clauses retain exact card text. The
+same measured workflow applies to the full catalog and C13; no card is marked
+implemented by compression alone.
 
 ## AI contributor quick start
 

@@ -64,6 +64,91 @@ def compact_worker_payload(compact: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def hybrid_worker_payload(
+    compact: dict[str, Any],
+    rows: list[dict[str, Any]],
+    *,
+    min_references: int = 2,
+) -> dict[str, Any]:
+    """Use IR only for repeated exact shapes; keep unique clauses verbatim.
+
+    This is the safe middle ground for small sets.  A unique or unusually
+    complex clause keeps its original Oracle text, while repeated shapes such
+    as ``Draw N cards`` become short symbol references with their per-card
+    operands.  The raw sidecar remains authoritative for both paths.
+    """
+    references: dict[str, int] = {}
+    key_by_symbol = {item["symbol"]: item["key"] for item in compact["primitives"]}
+    for card in compact["cards"]:
+        for item in card["program"]:
+            key = key_by_symbol[item["primitive"]]
+            references[key] = references.get(key, 0) + 1
+    reusable_keys = {key for key, count in references.items() if count >= min_references}
+    reusable_symbols = {
+        item["symbol"]: item["key"]
+        for item in compact["primitives"]
+        if item["key"] in reusable_keys
+    }
+    text_by_card: dict[str, list[str]] = {}
+    for row in rows:
+        oracle_id = str(row["card"].get("oracle_id") or "")
+        text_by_card.setdefault(oracle_id, []).append(str(row["clause"].get("text") or ""))
+
+    cards: list[dict[str, Any]] = []
+    for card in compact["cards"]:
+        texts = text_by_card.get(card["oracle_id"], [])
+        program: list[dict[str, Any]] = []
+        for index, item in enumerate(card["program"]):
+            key = key_by_symbol[item["primitive"]]
+            if item["primitive"] in reusable_symbols:
+                program.append({"s": item["primitive"], "o": item["operands"]})
+            else:
+                program.append({
+                    "text": texts[index] if index < len(texts) else "",
+                    "k": key,
+                    "o": item["operands"],
+                })
+        cards.append({"i": card["oracle_id"], "p": program})
+    return {
+        "format": "prossh-oracle-hybrid-review/v1",
+        "min_references": min_references,
+        "reusable_primitives": sorted(reusable_symbols),
+        "cards": cards,
+    }
+
+
+def payload_signature(
+    cards: list[dict[str, Any]],
+    *,
+    compact: dict[str, Any],
+    rows: list[dict[str, Any]],
+) -> dict[str, list[tuple[str, str]]]:
+    """Return a normalized exact signature for compact or hybrid programs."""
+    key_by_symbol = {item["symbol"]: item["key"] for item in compact["primitives"]}
+    text_by_card: dict[str, list[str]] = {}
+    for row in rows:
+        oracle_id = str(row["card"].get("oracle_id") or "")
+        text_by_card.setdefault(oracle_id, []).append(str(row["clause"].get("text") or ""))
+    result: dict[str, list[tuple[str, str]]] = {}
+    for card in cards:
+        oracle_id = str(card.get("i") or card.get("oracle_id") or "")
+        program = card.get("p") or card.get("program") or []
+        signature: list[tuple[str, str]] = []
+        for index, item in enumerate(program):
+            if "primitive" in item:
+                key = key_by_symbol[item["primitive"]]
+            elif "s" in item:
+                key = key_by_symbol[item["s"]]
+            elif "k" in item:
+                key = str(item["k"])
+            else:
+                text = str(item.get("text") or "")
+                key = primitive_key({"text": text})
+            signature.append((key, json.dumps(item.get("operands", item.get("o", {})), ensure_ascii=False, sort_keys=True, separators=(",", ":"))))
+        result[oracle_id] = signature
+    return result
+
+
 def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
     # Materialize once: callers may provide a generator.  The old code first
     # consumed it while building the legacy payload and then benchmarked an
@@ -73,8 +158,10 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
     compact = build_compact_ir(card for card in cards)
     old = legacy_payload(rows)
     new = compact_worker_payload(compact)
+    hybrid = hybrid_worker_payload(compact, rows)
     old_bytes = len(json.dumps(old, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     new_bytes = len(json.dumps(new, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+    hybrid_bytes = len(json.dumps(hybrid, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     reduction = round(1 - (new_bytes / old_bytes), 3) if old_bytes else 0.0
     old_ids = sorted(card["oracle_id"] for card in old["cards"])
     new_ids = sorted(card["oracle_id"] for card in compact["cards"])
@@ -96,16 +183,15 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
         ]
         for card in old["cards"]
     }
-    key_by_symbol = {item["symbol"]: item["key"] for item in compact["primitives"]}
-    new_signatures = {
-        card["oracle_id"]: [
-            (key_by_symbol[item["primitive"]], json.dumps(item["operands"], ensure_ascii=False, sort_keys=True, separators=(",", ":")))
-            for item in card["program"]
-        ]
-        for card in compact["cards"]
-    }
+    new_signatures = payload_signature(compact["cards"], compact=compact, rows=rows)
+    hybrid_signatures = payload_signature(hybrid["cards"], compact=compact, rows=rows)
     if old_signatures != new_signatures:
         raise AssertionError("compact review payload changed primitive identity or operands")
+    if old_signatures != hybrid_signatures:
+        raise AssertionError("hybrid review payload changed primitive identity or operands")
+    payload_sizes = {"legacy-payload": old_bytes, "hybrid-payload": hybrid_bytes, "compact-payload": new_bytes}
+    recommendation = min(payload_sizes, key=lambda mode: (payload_sizes[mode], mode))
+    reduction = round(1 - (payload_sizes[recommendation] / old_bytes), 3) if old_bytes else 0.0
     return {
         "format": "prossh-oracle-compression-benchmark/v1",
         "review_cards": len(old["cards"]),
@@ -116,8 +202,10 @@ def compare(cards: Iterable[dict[str, Any]]) -> dict[str, Any]:
         "compositional_atom_references": compact["semantic_atom_reference_count"],
         "compositional_atom_reuse_ratio": compact["semantic_atom_reuse_ratio"],
         "compositional_bytes": new_bytes,
+        "hybrid_bytes": hybrid_bytes,
+        "hybrid_reusable_primitive_count": len(hybrid["reusable_primitives"]),
         "context_byte_reduction": reduction,
-        "recommended_workflow": "compact-payload" if reduction > 0 else "legacy-payload-with-compositional-hints",
+        "recommended_workflow": recommendation if recommendation != "legacy-payload" else "legacy-payload-with-compositional-hints",
         "exact_primitive_reuse_ratio": compact["reuse_ratio"],
         "identity_and_clause_checks": "PASS",
         "identity_and_operand_checks": "PASS",

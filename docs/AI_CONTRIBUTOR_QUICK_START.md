@@ -49,10 +49,12 @@ The IR also exposes compositional atoms such as `op:draw`, `target:player`,
 executor, but keep exact target/zone/type/cost operands distinct.
 For a comparison against the legacy repeated-text workflow, run
 `npm run rules:oracle:benchmark:compact` (or pass a set-specific Oracle IR).
-Use the emitted `recommended_workflow`: adopt the compact payload only when
-the measured reduction is positive; otherwise keep legacy card text and use
-the compositional atoms as navigation hints. In both modes the identity,
-clause-order, primitive-key, and exact-operand checks must report `PASS`.
+Use the emitted `recommended_workflow`: use `hybrid-payload` when available,
+so repeated exact shapes use IR symbols while unique/complex clauses retain
+Oracle text. Use `compact-payload` only when it wins the benchmark; otherwise
+keep legacy card text and use compositional atoms as navigation hints. In all
+modes the identity, clause-order, primitive-key, and exact-operand checks must
+report `PASS`.
 For work outside C13, use the same generated index with `npm run
 rules:dictionary`.
 The worker plan is review-first: jobs containing Oracle `needs-review` cards
