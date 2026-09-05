@@ -49,8 +49,9 @@ opponent's response window (CR 603.1, 603.3, 117.1b).
 
 The stack is shown in resolution order, with one card-like item per spell or
 ability, controller, targets, countered state, and a visible top-first marker.
-Priority still follows the engine's `pass` action; the strip is presentation,
-not a second rules state.
+Each public item can be opened to inspect its rules text and targets. Priority
+still follows the engine's `pass` action; the strip is presentation, not a
+second rules state.
 
 ## Regression rules
 
