@@ -551,6 +551,7 @@ export type SpellEffect =
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
+  | { readonly kind: "create-token-for-target-player"; readonly amount: number | "X"; readonly token: TokenDefinition }
   /** Reveals one library card, moves it to hand, then gains its mana value. */
   | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
   /** Reveals until a card type is found, then sends the rest to a zone. */
@@ -1987,6 +1988,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
           ? { [produced.produces[0]!]: produced.amount }
           : null;
     if (pool) return { effect: { kind: "add-mana", pool }, target: "none" };
+  }
+  const targetOpponentToken = /^Target opponent creates (.+)$/i.exec(text)
+    ?? /^Create (.+) under target opponent'?s control$/i.exec(text);
+  if (targetOpponentToken) {
+    const token = parseCreateToken(`Create ${targetOpponentToken[1]!}`);
+    if (token?.kind === "create-token") {
+      const amount = token.amount === "X" || typeof token.amount === "number" ? token.amount : 1;
+      return { effect: { kind: "create-token-for-target-player", amount, token: token.token }, target: "opponent" };
+    }
   }
 
   if (/^The owner of target permanent shuffles it into their library, then reveals the top card of their library\. If it's a permanent card, they put it onto the battlefield$/i.test(text)) {
