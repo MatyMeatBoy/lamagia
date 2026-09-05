@@ -248,3 +248,36 @@ animation primitive with parameterized types, so its temporary characteristic
 is `Land Creature` rather than the old hard-coded `Artifact Creature`.
 Validation after both C13 additions: 597 rules tests, `npm run check`,
 **9,356/38,711** profiles, and C13 **269/341**.
+
+### Origin tail audit — 2026-09-05 (continued)
+
+The fetched `origin/worker-05` tail was checked commit-by-commit before any
+new work was started. The executable changes in `083ba46` and `15ae30c` were
+integrated as `822e601` and `2893b82` respectively:
+
+- Geier Reach Sanitarium | `7b9fafe7-d26a-4ed5-b4c4-ce13763770b5` —
+  each-player draw, then private APNAP discard choices.
+- Deadly Rollick | `0456ec64-2c81-4763-a352-8ff64a4c3d6b` — optional free
+  cast while controlling a commander, alongside the normal paid action.
+
+The remaining worker-05 commits (`18e5928`, `a816d01`, `ffc4d51`, `2e1de07`,
+`1cb1fec`, `be9c65d`, `80d85c5`, `e02c860`, `a7677d8`, `6fc73df`, `2b49fc8`,
+`955ac67`, `881a066`, and `e3609ed`) were compared against the current source
+and existing scenario tests. Their executable primitives are already present
+from earlier selective rescues; cherry-picking them would reintroduce an
+older tree and remove the newer Mirror Entity/Faerie Conclave effects. Their
+stale generated coverage and claim edits were not imported.
+
+`origin/c14-batch2-clean` has no executable patch remaining relative to this
+HEAD. `origin/c14-self-pump` and `origin/claude/c14-precon-clusters` contain
+older divergent histories; their source deltas are either already represented
+or would replace current rules code, so they remain audited—not merged
+blindly. `origin/master` remains quarantined for the same reason. No
+`mtgfork` remote, ref, or configured fetch URL exists in this checkout, so
+there is no additional mtgfork object set to recover.
+
+After export and full validation: **599 rules tests**, `npm run check`,
+**9,361/38,711** unique profiles, edition memberships **23,743/84,990
+(27.9%)**, C13 **269/341**, and C14 **199/322**. The next C13 queue remains
+72 cards, with 5 one-line candidates; this audit is complete for all currently
+reachable origin heads.
