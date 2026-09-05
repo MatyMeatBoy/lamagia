@@ -439,6 +439,7 @@ const OWN_LANDS_MANA_DORK = () => make({ name: "Test Harvester Druid", type_line
 // draw or once a basic land is out — a real activation gate, not reminder
 // text, distinct from the unconditional {C} half on the same card.
 const ENTERED_THIS_TURN_LAND = () => make({ name: "Test Hidden Lair", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Add {U} or {B}. Activate only if this land entered this turn or if you control a basic land." });
+const NONCREATURE_CAST_DRAIN = () => make({ name: "Test Mai", type_line: "Creature — Human Warrior", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2", oracle_text: "First strike\nWhenever a player casts a noncreature spell, they lose 2 life." });
 const TEMPLE_OF_FALSE_GOD = () => make({ name: "Temple of the False God", type_line: "Land", oracle_text: "{T}: Add {C}{C}. Activate only if you control five or more lands.", produced_mana: ["C"] });
 const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
 const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
@@ -3286,6 +3287,25 @@ describe("casting", () => {
     game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.stack.some((entry) => entry.trigger?.definition.subject === "each-player")).toBe(true);
+  });
+
+  it("drains whichever player casts a noncreature spell, creature spells excluded", () => {
+    const profile = profileOf(NONCREATURE_CAST_DRAIN());
+    expect(profile.triggers[0]).toMatchObject({ event: "spell-cast", subject: "each-player", spellType: "noncreature", effect: { kind: "lose-life-event-player", amount: 2 } });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Casting a noncreature spell drains its own caster too — "a player" is
+    // not "an opponent".
+    let game = readyToCast([RITUAL()], [NONCREATURE_CAST_DRAIN(), SWAMP()]);
+    const life0 = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.life).toBe(life0 - 2);
+
+    // A creature spell never triggers it.
+    let creatureGame = readyToCast([BEAR()], [NONCREATURE_CAST_DRAIN(), FOREST(), FOREST()]);
+    const life0b = creatureGame.players[0]!.life;
+    creatureGame = applyAction(creatureGame, 0, { type: "cast", cardId: "hand-0" });
+    expect(creatureGame.players[0]!.life).toBe(life0b);
   });
 
   it("fires Prowess only for noncreature spells and pumps its source", () => {
