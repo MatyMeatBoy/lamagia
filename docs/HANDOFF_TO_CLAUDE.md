@@ -2166,6 +2166,55 @@ still reports 2/200 (seeds 92 and 116, both the same pre-existing bug
 already flagged above and as a separate task) — no new seed introduced by
 this claim.
 
+### Worker-05: ritual spells wire up the dormant "add-mana" spell effect (2026-09-04)
+
+Claim `rules-ritual-add-mana`, continuing the Nekusar decklist (Dark Ritual).
+The `"add-mana"` `SpellEffect` kind and its `engine.ts` executor already
+existed, fully correct, adding a fixed pool straight into the caster's mana
+pool — but nothing in `characteristics.ts` ever produced that effect. It was
+a dead primitive: type and executor present, zero `recognizeSentence`
+wiring, so every ritual spell parsed as unimplemented regardless of how
+simple its text was. This is the same "Nemotron pattern" flagged by the new
+`docs/WORKER_COMMIT_AUDIT.md` integrator gate, just found on our own side
+first.
+
+Added one `recognizeSentence` pattern matching the literal `Add {mana
+symbols}.` sentence and reusing the existing `parseAddClause` helper (already
+battle-tested for land/creature mana abilities) to build the effect's
+`pool: Record<string, number>`. `parseAddClause` returns either a single
+repeated symbol (`{R}{R}{R}` on Pyretic Ritual) or a `fixedProduces` list of
+distinct symbols (`{W}{U}{B}{R}{G}` on Channel the Suns); both shapes fold
+into the pool. Deliberately left unmatched: any ritual phrased as a choice
+("choose a color") or "any color" mana, since no printed ritual in the
+catalog asks the caster to pick and guessing at that shape isn't worth the
+risk of getting the choice-resolution UX wrong.
+
+Fully implements 10 cards, verified individually against `oracle_text`
+rather than assumed from the pattern match: Dark Ritual, Pyretic Ritual,
+Seething Song, Channel the Suns (single bare `Add {...}.` sentence); First
+Stage of Magic Design, Rapturous Moment, Liturgy of Blood, Seismic Spike,
+Deconstruct, Turn to Dust (an `Add {...}.` sentence alongside other clauses
+that were already independently parsed — draw/discard, destroy-target, life
+gain, damage). 12 other cards in the catalog also contain a bare `Add
+{mana}.` sentence but stay `fullyImplemented: false` because a different
+clause on the same card is still unmodeled (e.g. Cabal Ritual's
+life-payment-scaled amount, Desperate Ritual's Convoke-style alternate cost);
+this claim does not touch those.
+
+Global export: **9,032/38,712** (+18 from 9,014 — includes cards where the
+new pattern completed the *last* remaining unimplemented sentence, on top of
+the 10 named above whose entire text is now covered end-to-end). `npm run
+check` and `npm test` PASS (**514 rules tests**, up from 513, plus the full
+64-test Python suite). `npm run simulate:engine` reported 8/200 immediately
+after this change (up from 7/200); stashed the diff and reran on the exact
+same base commit twice in a row and got 7/200 both times but with two
+*different* seed sets (`23,40,68,84,92,114,175` vs. `23,34,40,55,68,92,158`)
+— the harness itself is not deterministic run-to-run at a fixed commit, so
+an 8-vs-7 delta carries no signal. Both failure classes ("owns N card
+objects, expected 100" and "lost track of its commander") are the
+pre-existing upstream invariant bugs already documented above and being
+tracked separately, not something this claim introduces.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed
