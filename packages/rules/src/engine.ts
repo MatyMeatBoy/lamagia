@@ -5348,7 +5348,8 @@ function resolveTop(state: GameState): GameState {
           subtype.toLowerCase() === "basic" ? profile.supertypes.some((value) => value.toLowerCase() === "basic")
             : hasSubtype(profile, subtype));
         const colorMatches = !search.colors?.length || search.colors.some((color) => profile.colors.some((candidate) => candidate.toUpperCase() === color));
-        return typeMatches && subtypeMatches && colorMatches;
+        const manaValueMatches = search.maxManaValue !== "X" || profile.manaValue <= object.variableValue;
+        return typeMatches && subtypeMatches && colorMatches && manaValueMatches;
       })
       .map((card) => card.instance_id);
     if (!options.length) {
