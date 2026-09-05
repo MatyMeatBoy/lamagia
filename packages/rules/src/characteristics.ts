@@ -374,6 +374,7 @@ export type SpellEffect =
   | { readonly kind: "draw-if-life-more-than-opponent"; readonly amount: number }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "draw-active-player" }
+  | { readonly kind: "put-active-player-hand-on-library-bottom-then-draw-same" }
   | { readonly kind: "draw-equal-tapped-creatures" }
   | { readonly kind: "draw-equal-controlled-type"; readonly type: CardType }
   | { readonly kind: "draw-equal-controlled-color-creature"; readonly color: string }
@@ -2424,6 +2425,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^That player draws an additional card$/i.test(text)) {
     return { effect: { kind: "draw-active-player" }, target: "none" };
+  }
+  if (/^That player puts the cards in their hand on the bottom of their library in any order, then draws that many cards$/i.test(text)) {
+    return { effect: { kind: "put-active-player-hand-on-library-bottom-then-draw-same" }, target: "none" };
   }
   if (/^That player puts a card from their hand on top of their library$/i.test(text)) {
     return { effect: { kind: "put-event-player-hand-card-on-library-top" }, target: "none" };

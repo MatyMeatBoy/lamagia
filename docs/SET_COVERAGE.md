@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,627** · cobertura: **27.8%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,635** · cobertura: **27.8%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -40,7 +40,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 1996-10-08 | Mirage (`MIR`) | expansion | mirage | main | 335 | 83 | 252 | 24.8% |
 | 1996-11-01 | Multiverse Gift Box (`MGB`) | boxed-products | multiverse-gift-box | other | 10 | 1 | 9 | 10.0% |
 | 1996-12-31 | Introductory Two-Player Set (`ITP`) | starter | 1990s | other | 57 | 28 | 29 | 49.1% |
-| 1997-02-03 | Visions (`VIS`) | expansion | 1990s | main | 167 | 38 | 129 | 22.8% |
+| 1997-02-03 | Visions (`VIS`) | expansion | 1990s | main | 167 | 39 | 128 | 23.4% |
 | 1997-03-24 | Fifth Edition (`5ED`) | core | 1990s | main | 434 | 132 | 302 | 30.4% |
 | 1997-04-01 | Astral Cards (`PAST`) | boxed-products | astral-cards | other | 12 | 0 | 12 | 0.0% |
 | 1997-05-01 | Portal (`POR`) | starter | 1990s | other | 200 | 127 | 73 | 63.5% |
@@ -62,7 +62,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 1999-01-01 | Junior Super Series (`PSUS`) | promos | junior-1999 | other | 18 | 8 | 10 | 44.4% |
 | 1999-02-06 | Urza's Legacy Promos (`PULG`) | promos | urza-s-legacy | other | 1 | 0 | 1 | 0.0% |
 | 1999-02-15 | Urza's Legacy (`ULG`) | expansion | urza | main | 143 | 57 | 86 | 39.9% |
-| 1999-04-21 | Classic Sixth Edition (`6ED`) | core | 1990s | main | 335 | 155 | 180 | 46.3% |
+| 1999-04-21 | Classic Sixth Edition (`6ED`) | core | 1990s | main | 335 | 156 | 179 | 46.6% |
 | 1999-04-29 | Portal Three Kingdoms Promos (`PPTK`) | promos | portal-three-kingdoms | other | 1 | 0 | 1 | 0.0% |
 | 1999-05-01 | Portal Three Kingdoms (`PTK`) | starter | 1990s | other | 170 | 95 | 75 | 55.9% |
 | 1999-05-29 | Urza's Destiny Promos (`PUDS`) | promos | urza-s-destiny | other | 1 | 0 | 1 | 0.0% |
@@ -92,7 +92,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 2001-01-01 | Magic Player Rewards 2001 (`MPR`) | promos | player-rewards-2001 | other | 1 | 1 | 0 | 100.0% |
 | 2001-01-27 | Planeshift Promos (`PPLS`) | promos | planeshift | other | 1 | 0 | 1 | 0.0% |
 | 2001-02-05 | Planeshift (`PLS`) | expansion | 2000s | main | 143 | 23 | 120 | 16.1% |
-| 2001-04-11 | Seventh Edition (`7ED`) | core | 2000s | main | 335 | 181 | 154 | 54.0% |
+| 2001-04-11 | Seventh Edition (`7ED`) | core | 2000s | main | 335 | 182 | 153 | 54.3% |
 | 2001-05-26 | Apocalypse Promos (`PAPC`) | promos | apocalypse | other | 1 | 0 | 1 | 0.0% |
 | 2001-06-04 | Apocalypse (`APC`) | expansion | 2000s | main | 143 | 41 | 102 | 28.7% |
 | 2001-06-28 | Sega Dreamcast Cards (`PSDG`) | boxed-products | sega-dreamcast-cards | other | 10 | 0 | 10 | 0.0% |
@@ -119,7 +119,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 2003-05-17 | Scourge Promos (`PSCG`) | promos | scourge | other | 1 | 0 | 1 | 0.0% |
 | 2003-05-26 | Scourge (`SCG`) | expansion | 2000s | main | 143 | 35 | 108 | 24.5% |
 | 2003-07-26 | Eighth Edition Promos (`P8ED`) | promos | eighth-edition | other | 1 | 1 | 0 | 100.0% |
-| 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 180 | 162 | 52.6% |
+| 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 181 | 161 | 52.9% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 108 | 183 | 37.1% |
 | 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 523 | 2166 | 19.4% |
@@ -143,7 +143,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 2005-02-04 | Betrayers of Kamigawa (`BOK`) | expansion | kamigawa | main | 165 | 11 | 154 | 6.7% |
 | 2005-05-21 | Saviors of Kamigawa Promos (`PSOK`) | promos | saviors-of-kamigawa | other | 2 | 0 | 2 | 0.0% |
 | 2005-06-03 | Saviors of Kamigawa (`SOK`) | expansion | kamigawa | main | 165 | 13 | 152 | 7.9% |
-| 2005-07-29 | Ninth Edition (`9ED`) | core | 2000s | main | 344 | 182 | 162 | 52.9% |
+| 2005-07-29 | Ninth Edition (`9ED`) | core | 2000s | main | 344 | 183 | 161 | 53.2% |
 | 2005-07-29 | Ninth Edition Promos (`P9ED`) | promos | ninth-edition | other | 2 | 1 | 1 | 50.0% |
 | 2005-08-22 | Salvat 2005 (`PSAL`) | boxed-products | salvat-2005 | other | 285 | 94 | 191 | 33.0% |
 | 2005-09-24 | Ravnica: City of Guilds Promos (`PRAV`) | promos | ravnica-city-of-guilds | other | 2 | 0 | 2 | 0.0% |
@@ -451,10 +451,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 11 | 109 | 9.2% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1395 | 3826 | 26.7% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1396 | 3825 | 26.7% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 20 | 39 | 33.9% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 11 | 9 | 55.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 372 | 1324 | 21.9% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 373 | 1323 | 22.0% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 53 | 220 | 19.4% |
@@ -552,7 +552,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | 2022-11-18 | The Brothers' War Retro Artifacts (`BRR`) | masterpieces | the-brothers-war-retro-artifacts | other | 63 | 20 | 43 | 31.7% |
 | 2022-11-18 | Transformers (`BOT`) | eternal | 2020s | other | 15 | 0 | 15 | 0.0% |
 | 2022-11-26 | Eternal Weekend (`PEWK`) | promos | eternal-weekend | other | 10 | 3 | 7 | 30.0% |
-| 2022-12-02 | Jumpstart 2022 (`J22`) | jumpstart | jumpstart-2022 | other | 819 | 246 | 573 | 30.0% |
+| 2022-12-02 | Jumpstart 2022 (`J22`) | jumpstart | jumpstart-2022 | other | 819 | 247 | 572 | 30.2% |
 | 2022-12-02 | Starter Commander Decks (`SCD`) | starter | 2022 | commander | 337 | 148 | 189 | 43.9% |
 | 2022-12-13 | Explorer Anthology 2 (`EA2`) | anthologies | explorer-anthology-2 | other | 25 | 3 | 22 | 12.0% |
 | 2023-01-01 | Judge Gift Cards 2023 (`P23`) | promos | judge-2023 | other | 10 | 6 | 4 | 60.0% |
@@ -756,8 +756,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | commander | 2026 | 6 | 1265 | 329 | 936 | 26.0% |
 | conspiracy | conspiracy | 2 | 211 | 45 | 166 | 21.3% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 60 | 161 | 27.1% |
-| core | 1990s | 10 | 3267 | 1132 | 2135 | 34.6% |
-| core | 2000s | 4 | 1389 | 714 | 675 | 51.4% |
+| core | 1990s | 10 | 3267 | 1133 | 2134 | 34.7% |
+| core | 2000s | 4 | 1389 | 717 | 672 | 51.6% |
 | core | 2010s | 8 | 2011 | 889 | 1122 | 44.2% |
 | core | 2020s | 3 | 1132 | 401 | 731 | 35.4% |
 | deck-products | coldsnap-theme-decks | 1 | 52 | 13 | 39 | 25.0% |
@@ -792,7 +792,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 34 | 36 | 48.6% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 126 | 411 | 23.5% |
-| expansion | 1990s | 11 | 1573 | 329 | 1244 | 20.9% |
+| expansion | 1990s | 11 | 1573 | 330 | 1243 | 21.0% |
 | expansion | 2000s | 19 | 3082 | 626 | 2456 | 20.3% |
 | expansion | 2010s | 14 | 2735 | 647 | 2088 | 23.7% |
 | expansion | 2020s | 17 | 3739 | 582 | 3157 | 15.6% |
@@ -845,7 +845,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | funny-special | unknown-event | 1 | 506 | 15 | 491 | 3.0% |
 | jumpstart | foundations-jumpstart | 1 | 768 | 233 | 535 | 30.3% |
 | jumpstart | jumpstart | 1 | 461 | 180 | 281 | 39.0% |
-| jumpstart | jumpstart-2022 | 1 | 819 | 246 | 573 | 30.0% |
+| jumpstart | jumpstart-2022 | 1 | 819 | 247 | 572 | 30.2% |
 | jumpstart | jumpstart-arena-exclusives | 1 | 18 | 5 | 13 | 27.8% |
 | jumpstart | jumpstart-historic-horizons | 1 | 389 | 94 | 295 | 24.2% |
 | masterpieces | amonkhet-invocations | 1 | 54 | 9 | 45 | 16.7% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | masters-remastered | shadows-of-the-past | 1 | 76 | 26 | 50 | 34.2% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 51 | 233 | 18.0% |
 | masters-remastered | tempest-remastered | 1 | 254 | 88 | 166 | 34.6% |
-| masters-remastered | the-list | 1 | 5221 | 1395 | 3826 | 26.7% |
+| masters-remastered | the-list | 1 | 5221 | 1396 | 3825 | 26.7% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 100 | 313 | 24.2% |
 | masters-remastered | ultimate-masters | 1 | 254 | 75 | 179 | 29.5% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 10 | 74 | 11.9% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 12 | 46 | 20.7% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 372 | 1324 | 21.9% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 373 | 1323 | 22.0% |
 | secret-lair | secret-lair-promo | 1 | 52 | 15 | 37 | 28.8% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -4838,7 +4838,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Talruum Piper — `d18e60ed-ab6e-4b73-88f6-caa3f8e9c78e`
 - [ ] Tar Pit Warrior — `05a7ca83-e820-433f-b9e9-151e817d3708`
 - [ ] Teferi's Honor Guard — `8a3a8a02-b7da-4648-a772-c9efb7c332da`
-- [ ] Teferi's Puzzle Box — `37abcc92-9466-47ea-9e0b-5eda2eb62c8e`
 - [ ] Teferi's Realm — `9851d934-2e07-49c8-b08b-15f96d0f3f0c`
 - [ ] Three Wishes — `6b3110a5-fd38-4d09-9073-c8a6f3f17840`
 - [ ] Time and Tide — `b6fee94a-30b8-415e-8567-ad03ccb1d658`
@@ -6494,7 +6493,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Sunweb — `832f96a4-0f4d-47bb-bc1c-3884e73feabc`
 - [ ] Syphon Soul — `d47e55a6-7a16-4ed9-a94b-f1575588ee9e`
 - [ ] Tariff — `e96b0560-1d91-48df-b42f-3b7d9c6d94bd`
-- [ ] Teferi's Puzzle Box — `37abcc92-9466-47ea-9e0b-5eda2eb62c8e`
 - [ ] Thicket Basilisk — `c4822813-cd81-465d-9fe8-3a4c2dcd31ef`
 - [ ] Throne of Bone — `f73c7edf-ed2c-41e8-ac83-c83ddd543f14`
 - [ ] Tidal Surge — `be738992-77fe-498d-b219-e5da4ce5bf07`
@@ -7870,7 +7868,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Sudden Impact — `2bf65e7d-6d31-4ad6-93cd-623612d3175d`
 - [ ] Sunweb — `832f96a4-0f4d-47bb-bc1c-3884e73feabc`
 - [ ] Tainted Aether — `a61ceda1-5993-479e-945f-15753eeb7049`
-- [ ] Teferi's Puzzle Box — `37abcc92-9466-47ea-9e0b-5eda2eb62c8e`
 - [ ] Telepathic Spies — `8162730e-2573-4bc0-827f-5b7b3dbf3bff`
 - [ ] Telepathy — `d2e647ac-717f-46e6-baa8-6a793e7bdc32`
 - [ ] Thoughtleech — `b74d3768-74bb-413c-b7c7-41028ff48225`
@@ -9252,7 +9249,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Sunweb — `832f96a4-0f4d-47bb-bc1c-3884e73feabc`
 - [ ] Swarm of Rats — `7fe21ade-01f1-45ff-9b70-bc6302c3d284`
 - [ ] Sword Dancer — `9ae49b45-a38f-4bd6-aa08-b5a5da6e75a1`
-- [ ] Teferi's Puzzle Box — `37abcc92-9466-47ea-9e0b-5eda2eb62c8e`
 - [ ] Telepathy — `d2e647ac-717f-46e6-baa8-6a793e7bdc32`
 - [ ] Thieves' Auction — `230ee0b4-eb75-457f-b171-72d585cfb5aa`
 - [ ] Throne of Bone — `f73c7edf-ed2c-41e8-ac83-c83ddd543f14`
@@ -12679,7 +12675,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Story Circle — `7071aee8-b5ca-4be5-9ba0-2df7e3af303b`
 - [ ] Sudden Impact — `2bf65e7d-6d31-4ad6-93cd-623612d3175d`
 - [ ] Swarm of Rats — `7fe21ade-01f1-45ff-9b70-bc6302c3d284`
-- [ ] Teferi's Puzzle Box — `37abcc92-9466-47ea-9e0b-5eda2eb62c8e`
 - [ ] Telepathy — `d2e647ac-717f-46e6-baa8-6a793e7bdc32`
 - [ ] Tempest of Light — `9399ed27-31c7-4d6a-99eb-644b74e67344`
 - [ ] Thran Golem — `fe55f366-2996-4a4f-9b30-fc494cc80f87`
@@ -35192,7 +35187,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Tectonic Rift — `b94fcdd2-7e50-439c-b5eb-aaa9ec7dee08`
 - [ ] Teferi's Honor Guard — `8a3a8a02-b7da-4648-a772-c9efb7c332da`
 - [ ] Teferi's Protection — `0d4ecdb1-ec90-497f-a7a4-1c68092b8757`
-- [ ] Teferi's Puzzle Box — `37abcc92-9466-47ea-9e0b-5eda2eb62c8e`
 - [ ] Teferi's Veil — `c6db2ea4-954c-443b-9603-c41596555c31`
 - [ ] Teferi, Hero of Dominaria — `f2f165b6-ef0a-42ad-9352-ba68be8248b0`
 - [ ] Teferi, Mage of Zhalfir — `2b6cbd55-5adc-4a34-ac45-8531705a7ee1`
@@ -36868,7 +36862,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Tasigur, the Golden Fang — `837e3fde-241f-4826-ad04-f146fdcf2278`
 - [ ] Teferi's Ageless Insight — `1c9e1f75-73f0-4846-b53f-458a0984b1bb`
 - [ ] Teferi's Protection — `0d4ecdb1-ec90-497f-a7a4-1c68092b8757`
-- [ ] Teferi's Puzzle Box — `37abcc92-9466-47ea-9e0b-5eda2eb62c8e`
 - [ ] Teferi, Hero of Dominaria — `f2f165b6-ef0a-42ad-9352-ba68be8248b0`
 - [ ] Teferi, Time Raveler — `ae7604bb-4818-45a3-960c-cf3d83f15964`
 - [ ] Telekinetic Sliver — `31ec6a73-f742-4dc6-809d-28d3c461c2a0`
@@ -48152,7 +48145,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,62
 - [ ] Tamiyo, the Moon Sage — `f88be051-36ae-407e-bd5a-2b029c26414e`
 - [ ] Taranika, Akroan Veteran — `1e3c1920-7bf5-44f9-b1ff-b17d6420e69b`
 - [ ] Task Force — `b80415cd-5887-4146-852e-73119fcd3ec6`
-- [ ] Teferi's Puzzle Box — `37abcc92-9466-47ea-9e0b-5eda2eb62c8e`
 - [ ] Tempered Veteran — `c19f3f00-2c7b-4e85-a034-e65760d9cc13`
 - [ ] Termination Facilitator — `56edd306-8676-49c4-b3c3-5ff840536c3a`
 - [ ] Tezzeret, Artifice Master — `e22824cf-07a1-4c83-b6c4-9d8fcff3892f`

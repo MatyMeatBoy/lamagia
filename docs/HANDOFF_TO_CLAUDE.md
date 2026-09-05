@@ -3052,3 +3052,18 @@ an earlier upstream merge — was deleted; it carried no behavior difference,
 only the live member now carries `thenDrawSame`. Validation: **587 rules
 tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,342 global
 profiles.
+
+Teferi's Puzzle Box | `37abcc92-9466-47ea-9e0b-5eda2eb62c8e` was closed with a
+new `put-active-player-hand-on-library-bottom-then-draw-same` effect
+(CR 504.1, 701.8), reusing the existing `draw-step`/`each-player` trigger
+template and resolving "that player" via `state.activeSeat`, the same
+pattern Draw Mine's `draw-active-player` already relies on. Since the
+turn-based mandatory draw (CR 504.1) happens before the triggered ability
+is even put on the stack, the hand bottomed includes that turn's draw. As
+with the existing "put the rest on the bottom of your library in any
+order" precedent (the `library-pick` family), the bottom placement order
+itself is not offered as a player choice — the cards land in their
+existing order, which is inconsequential since the very next action draws
+fresh cards off the top, not the ones just bottomed. Validation: **588
+rules tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,343
+global profiles.
