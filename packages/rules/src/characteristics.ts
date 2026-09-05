@@ -286,7 +286,7 @@ export interface StaticKeywordGrant {
 }
 
 export interface StaticPowerToughnessGrant {
-  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
+  readonly scope: "self" | "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -1297,6 +1297,10 @@ function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
+  const lifeThreshold = /^(?:~|this creature) gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(line.trim().replace(/\.$/, ""));
+  if (lifeThreshold) return {
+    scope: "self", power: Number(lifeThreshold[1]), toughness: Number(lifeThreshold[2]), threshold: Number(lifeThreshold[3])
+  };
   const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(line.trim().replace(/\.$/, ""));
   return match ? {
     scope: match[4] ? "all-creatures" : match[3] ? "creatures-you-control" : "other-creatures-you-control",

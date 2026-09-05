@@ -306,6 +306,11 @@ const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "En
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
+const C13_DIVINITY_OF_PRIDE = () => make({
+  name: "Divinity of Pride", type_line: "Creature — Spirit Avatar", mana_cost: "{W/B}{W/B}{W/B}{W/B}{W/B}", cmc: 5, power: "4", toughness: "4",
+  keywords: ["Flying", "Lifelink"], oracle_text: "Flying, lifelink\nThis creature gets +4/+4 as long as you have 25 or more life.",
+  scryfall_id: "2e40c246-276b-45f1-ac86-f15c0df62a08", oracle_id: "2c91c236-34d7-4454-a55a-784db7f68bde"
+});
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -1058,6 +1063,19 @@ describe("casting", () => {
     expect(C13_DECREE_OF_PAIN().scryfall_id).toBe("932668fa-d6e3-41c0-ad0c-8e0a00e68d11");
     expect(cardProfile(C13_COMMAND_TOWER()).manaAbilities).toHaveLength(1);
     expect(cardProfile(C13_DECREE_OF_PAIN()).effects).toMatchObject([{ kind: "destroy-all-creatures-draw-destroyed" }]);
+  });
+
+  it("reuses the life-threshold self-buff primitive for C13 Divinity of Pride", () => {
+    const profile = cardProfile(C13_DIVINITY_OF_PRIDE());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.staticPowerToughnessGrants).toContainEqual({ scope: "self", power: 4, toughness: 4, threshold: 25 });
+    let game = readyToCast([C13_DIVINITY_OF_PRIDE()], [PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()]);
+    const divinity = game.players[0]!.hand[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: divinity.instance_id });
+    const permanent = game.players[0]!.battlefield.find((candidate) => candidate.card.name === "Divinity of Pride")!;
+    expect(powerOf(permanent, game)).toBe(8);
+    game = stage(game, 0, (player) => ({ life: 24 }));
+    expect(powerOf(permanent, game)).toBe(4);
   });
 
   it("draws for each creature destroyed by Decree of Pain", () => {

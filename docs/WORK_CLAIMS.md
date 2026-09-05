@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-divinity-of-pride` | Divinity of Pride gets +4/+4 while its controller has 25 or more life (CR 604.1, 613.4) | `codex/c13-divinity-of-pride-f99b` | active | 2026-09-05 |
