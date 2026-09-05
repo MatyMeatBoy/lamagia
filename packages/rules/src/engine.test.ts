@@ -330,6 +330,11 @@ const AZAMI_WIZARD = () => make({ name: "Library Wizard", type_line: "Creature �
 const C13_BRILLIANT_PLAN = () => make({ name: "Brilliant Plan", type_line: "Sorcery", mana_cost: "{4}{U}", cmc: 5, oracle_text: "Draw three cards.", scryfall_id: "4fc6b5a0-9a0f-4934-8a43-a0e5364832ec" });
 const C13_HARMONIZE = () => make({ name: "Harmonize", type_line: "Sorcery", mana_cost: "{2}{G}{G}", cmc: 4, oracle_text: "Draw three cards.", scryfall_id: "83da2456-0c5c-4b2b-8183-20c332566127" });
 const C13_VISION_SKEINS = () => make({ name: "Vision Skeins", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Each player draws two cards.", scryfall_id: "b4b032de-808e-4c47-ba86-ac59609378e0" });
+const C13_DISCIPLE_OF_GRISELBRAND = () => make({
+  name: "Disciple of Griselbrand", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2,
+  power: "2", toughness: "2", oracle_text: "{1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.",
+  scryfall_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad", oracle_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad"
+});
 const C13_DEEP_ANALYSIS = () => make({ name: "Deep Analysis", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Target player draws two cards.\nFlashback—{1}{U}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)", scryfall_id: "952800af-f52c-44bf-a98b-51c5f8142dc9" });
 const C13_BALEFUL_STRIX = () => make({ name: "Baleful Strix", type_line: "Artifact Creature — Bird", mana_cost: "{U}{B}", cmc: 2, power: "1", toughness: "1", keywords: ["Flying", "Deathtouch"], oracle_text: "Flying\nDeathtouch\nWhen this creature enters, draw a card.", scryfall_id: "47ac0f77-1294-4de9-93d1-141a9f314f98" });
 const C13_PHYREXIAN_GARGANTUA = () => make({ name: "Phyrexian Gargantua", type_line: "Creature — Phyrexian Horror", mana_cost: "{4}{B}{B}", cmc: 6, power: "4", toughness: "4", oracle_text: "When this creature enters, you draw two cards and you lose 2 life.", scryfall_id: "56ae94c2-8bbb-4807-b1e0-8ef178dd1697" });
@@ -1563,6 +1568,26 @@ describe("casting", () => {
     expect(profileOf(C13_HARMONIZE())).toMatchObject({ effects: [{ kind: "draw", amount: 3 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_VISION_SKEINS())).toMatchObject({ effects: [{ kind: "each-player-draw", amount: 2 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_DEEP_ANALYSIS())).toMatchObject({ effects: [{ kind: "draw-target-player", amount: 2 }], targetKind: "player", flashbackCost: { raw: "{1}{U}" }, fullyImplemented: true });
+    expect(profileOf(C13_DISCIPLE_OF_GRISELBRAND())).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ sacrificesCreature: "any", effect: { kind: "gain-life-equal-sacrificed-toughness" } }]
+    });
+  });
+
+  it("uses the sacrificed creature's toughness for Disciple of Griselbrand", () => {
+    let game = readyToCast([], [C13_DISCIPLE_OF_GRISELBRAND(), ISLAND(), ISLAND()]);
+    const goat = putOnBattlefield(game, 0, [make({ name: "Tough Goat", type_line: "Creature — Goat", power: "1", toughness: "4" })]).players[0]!.battlefield.at(-1)!;
+    game = stage(game, 0, (player) => ({ battlefield: [...player.battlefield, goat], autoPass: false }));
+    const disciple = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Disciple of Griselbrand")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === disciple.instance_id);
+    expect(activation).toBeDefined();
+    const before = game.players[0]!.life;
+    const activationAction = activation!.action;
+    if (activationAction.type !== "activate") throw new Error("Expected Disciple activation.");
+    game = applyAction(game, 0, { ...activationAction, sacrificeId: goat.instance_id });
+    game = applyAction(game, pendingSeat(game)!, { type: "pass" });
+    expect(game.players[0]!.life).toBe(before + 4);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === goat.instance_id)).toBe(false);
   });
 
   it("offers storage-counter mana as variable colour choices", () => {

@@ -362,6 +362,8 @@ export type SpellEffect =
   | { readonly kind: "gain-life-each-permanent"; readonly amount: number }
   | { readonly kind: "gain-life-each-creature-you-control"; readonly amount: number }
   | { readonly kind: "gain-life-equal-target-power" }
+  /** Life from the toughness of the creature chosen as an activation sacrifice. */
+  | { readonly kind: "gain-life-equal-sacrificed-toughness" }
   | { readonly kind: "lose-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
@@ -1942,6 +1944,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^You gain life equal to the power of target creature you control$/i.test(text)) {
     return { effect: { kind: "gain-life-equal-target-power" }, target: "creature-you-control" };
+  }
+  if (/^You gain life equal to the sacrificed creature's toughness$/i.test(text)) {
+    return { effect: { kind: "gain-life-equal-sacrificed-toughness" }, target: "none" };
   }
   if ((match = /^Each opponent loses (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
