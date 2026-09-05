@@ -256,6 +256,12 @@ const PLAIN_GRAVEYARD_REANIMATE = () => make({ name: "Test Hymn of Rebirth", typ
 const ARTIFACT_GRAVEYARD_RETURN = () => make({ name: "Artifact Reclaim", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Return target artifact card from your graveyard to your hand." });
 const LAND_GRAVEYARD_BATTLEFIELD = () => make({ name: "Restore Memory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Put target land card from a graveyard onto the battlefield under your control." });
 const ARTIFACT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Sharuum Memory", type_line: "Sorcery", mana_cost: "{2}{U}{B}", cmc: 4, oracle_text: "Return target artifact card from your graveyard to the battlefield." });
+const C13_SHARUUM = () => make({
+  name: "Sharuum the Hegemon", type_line: "Legendary Artifact Creature — Sphinx", mana_cost: "{3}{W}{U}{B}", cmc: 6, power: "5", toughness: "5",
+  keywords: ["Flying"],
+  oracle_text: "Flying\nWhen Sharuum the Hegemon enters the battlefield, you may return target artifact card from your graveyard to the battlefield.",
+  scryfall_id: "037e7fc9-3aa6-484c-a2c8-43009e45f1d8", oracle_id: "037e7fc9-3aa6-484c-a2c8-43009e45f1d8"
+});
 const ENCHANTMENT_GRAVEYARD_RETURN = () => make({ name: "Enchantment Reclaim", type_line: "Sorcery", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Return target enchantment card from your graveyard to your hand." });
 const ENCHANTMENT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Enchantment Reanimate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Return target enchantment card from your graveyard to the battlefield." });
 const ARTIFACT_BOUNCE = () => make({ name: "Artifact Recall", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Return target artifact to its owner's hand." });
@@ -2025,6 +2031,28 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Test Equipment")).toBe(false);
   });
 
+  it("reuses artifact graveyard recovery for C13 Sharuum's ETB", () => {
+    const profile = profileOf(C13_SHARUUM());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers).toMatchObject([{
+      event: "enters-battlefield",
+      targetKind: "artifact-card-in-your-graveyard",
+      effect: { kind: "return-target-artifact-card-from-graveyard-to-battlefield" }
+    }]);
+
+    let game = readyToCast([C13_SHARUUM()], [PLAINS(), ISLAND(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, graveyard: toHand(0, [EQUIPMENT(), BEAR()], "sharuum-yard") }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(optional.targets).toHaveLength(1);
+    expect(optional.targets?.[0]).toEqual({ kind: "graveyard-card", seat: 0, instanceId: "sharuum-yard-0" });
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Equipment")).toBe(true);
+  });
+
   it("restricts enchantment graveyard recovery to enchantment cards", () => {
     const profile = profileOf(ENCHANTMENT_GRAVEYARD_RETURN());
     expect(profile).toMatchObject({ targetKind: "enchantment-card-in-your-graveyard", effects: [{ kind: "return-target-card-from-graveyard" }] });
@@ -2913,6 +2941,25 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === creature.instance_id)).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(1);
+  });
+
+  it("reuses sacrificed-toughness life gain for C13 Disciple of Griselbrand", () => {
+    const profile = profileOf(C13_DISCIPLE_OF_GRISELBRAND());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sacrificesCreature: "any", effect: { kind: "gain-life-equal-sacrificed-toughness" }
+    });
+    let game = readyToCast([], [C13_DISCIPLE_OF_GRISELBRAND(), TRAMPLER(), SWAMP()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Disciple of Griselbrand")!;
+    const sacrifice = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === sacrifice.instance_id);
+    expect(activation).toBeDefined();
+    const life = game.players[0]!.life;
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(life + 6);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Big Stomper")).toBe(true);
   });
 
   it("restricts Ravenous Baloth's sacrifice cost to Beasts and gains life", () => {
@@ -5032,6 +5079,16 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0
       && (state.players[0]!.battlefield.find((permanent) => permanent.instance_id === sourceId)?.powerModifier ?? 0) === 2);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === sourceId)).toMatchObject({ powerModifier: 2, toughnessModifier: 2 });
+  });
+
+  it("uses the defending player's lands for Terra Ravager", () => {
+    let game = readyToCast([], [TERRA_RAVAGER()], [], [FOREST(), FOREST(), FOREST()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })), step: "declare-attackers", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], combat: { ...game.combat, attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
+    const terra = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Terra Ravager")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: terra.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && state.stack.length === 0 && state.triggerQueue.length === 0);
+    const attackingTerra = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === terra.instance_id)!;
+    expect(powerOf(attackingTerra, game)).toBe(3);
   });
 
   it("keeps C13 Basalt Monolith tapped through untap and resolves its untap activation", () => {
