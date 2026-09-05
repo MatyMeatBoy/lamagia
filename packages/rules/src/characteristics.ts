@@ -1849,7 +1849,9 @@ function parseMultiBasicSearch(text: string): SpellEffect | null {
   if (/^Search your library for up to two basic land cards, (?:reveal those cards, )?put them onto the battlefield tapped, then shuffle\.?$/i.test(normalized)) {
     return { kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"], destinations: ["battlefield-tapped", "battlefield-tapped"], reveal: /reveal those cards/i.test(normalized) };
   }
-  if (/^Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle\.?$/i.test(normalized)) {
+  // Armillary Sphere's current Oracle uses "reveal them" while older
+  // printings use "reveal those cards"; both share this search primitive (CR 701.19).
+  if (/^Search your library for up to two basic land cards, reveal (?:those cards|them), put them into your hand, then shuffle\.?$/i.test(normalized)) {
     return { kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"], destinations: ["hand", "hand"], reveal: true };
   }
   return null;

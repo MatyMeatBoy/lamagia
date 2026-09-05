@@ -141,7 +141,7 @@ describe("mana abilities", () => {
     }));
     expect(profile.activatedAbilities[0]).toMatchObject({
       sacrificesSelf: true,
-      effect: { kind: "search-library", types: ["Land"], subtypes: ["Basic"], destination: "hand", count: 2, reveal: true }
+      effect: { kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"], destinations: ["hand", "hand"], reveal: true }
     });
     expect(profile.fullyImplemented).toBe(true);
   });
