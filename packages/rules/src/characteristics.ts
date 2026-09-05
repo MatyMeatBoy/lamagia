@@ -425,6 +425,8 @@ export type SpellEffect =
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
   | { readonly kind: "discard-target-player-then-draw-same"; readonly amount: number }
+  /** Curse of Chaos: the attacking player may discard one, then draws one. */
+  | { readonly kind: "discard-event-controller-then-draw"; readonly amount: number }
   | { readonly kind: "draw-then-discard"; readonly draw: number; readonly discard: number }
   | { readonly kind: "draw-then-put-back-on-top"; readonly draw: number; readonly putBack: number }
   | { readonly kind: "exile-self" }
@@ -748,6 +750,7 @@ export type TriggerSubject =
   | "equipped-creature"
   | "creature-attacks-opponent"
   | "creature-attacks-enchanted-player"
+  | "player-attacks-enchanted-player"
   | "you"
   | "each-player"
   | "opponent"
@@ -2400,6 +2403,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-attacks-opponent", pattern: /^whenever\s+a\s+creature\s+attacks\s+one\s+of\s+your\s+opponents(?:\s+or\s+a\s+planeswalker\s+an\s+opponent\s+controls)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-attacks-enchanted-player", pattern: /^whenever\s+a\s+creature\s+attacks\s+enchanted\s+player,?\s*(.+)$/i },
+  { event: "attacks", subject: "player-attacks-enchanted-player", pattern: /^whenever\s+a\s+player\s+attacks\s+enchanted\s+player\s+with\s+one\s+or\s+more\s+creatures,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", pattern: /^whenever\s+an\s+artifact\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
@@ -2864,6 +2868,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Target player discards (a|an|one|two|three|four|five|\d+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "discard-target-player", amount }, target: "player" };
+  }
+  if (/^Discard a card\. If the player does, they draw a card$/i.test(text)) {
+    return { effect: { kind: "discard-event-controller-then-draw", amount: 1 }, target: "none" };
   }
   if ((match = /^Target player discards X cards?$/i.exec(text))) return { effect: { kind: "discard-target-player", amount: "X" }, target: "player" };
   if ((match = /^Target player discards (\w+) cards?, then draws as many cards as they discarded this way$/i.exec(text))) {
@@ -3378,7 +3385,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
   if (/^Tap target permanent an opponent controls$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "permanent-opponent" };
-  if (/^Tap or untap target permanent$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
+  if (/^Tap or untap target permanent(?: of their choice)?$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
   if (/^This turn, creatures can'?t block unless their controller pays \{X\} for each blocking creature they control$/i.test(text)) {
     return { effect: { kind: "set-blocking-tax", amount: "X" }, target: "none" };
@@ -4315,7 +4322,7 @@ function recognizeText(text: string): RecognizedText {
       const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggered.effectText);
       const commandZoneCondition = /^if\s+.+?\s+is\s+in\s+the\s+command\s+zone,\s*(.+)$/i.exec(triggered.effectText);
       const sourceUntappedCondition = /^if\s+~\s+is\s+untapped,\s*(.+)$/i.exec(triggered.effectText);
-      const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
+      const eventControllerChoice = /^that\s+(?:creature[’']s\s+controller|attacking\s+player)\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
        const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
        const sacrificeUnlessSpent = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+\{([WUBRGC])\}\s+was\s+spent\s+to\s+cast\s+it\.?$/i.exec(triggered.effectText);

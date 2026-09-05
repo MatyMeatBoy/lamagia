@@ -8983,6 +8983,9 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   const DARKSTEEL_MUTATION = () => make({ name: "Darksteel Mutation", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature is an Insect artifact creature with base power and toughness 0/1 and has indestructible, and it loses all other abilities, card types, and creature types.", oracle_id: "05a4f8ff-49da-42af-add5-6248c4b0644b" });
   const CURSE_OF_PREDATION = () => make({ name: "Curse of Predation", type_line: "Enchantment — Aura Curse", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant player\nWhenever a creature attacks enchanted player, put a +1/+1 counter on it.", oracle_id: "69ea4ce2-f749-4d05-a392-efcfdce14a30" });
   const CURSE_OF_THE_FORSAKEN = () => make({ name: "Curse of the Forsaken", type_line: "Enchantment — Aura Curse", mana_cost: "{2}{W}", cmc: 3, oracle_text: "Enchant player\nWhenever a creature attacks enchanted player, its controller gains 1 life.", oracle_id: "e00f8d6b-5bb1-4625-9fa4-114cdc381bd4" });
+  const CURSE_OF_CHAOS = () => make({ name: "Curse of Chaos", type_line: "Enchantment — Aura Curse", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Enchant player\nWhenever a player attacks enchanted player with one or more creatures, that attacking player may discard a card. If the player does, they draw a card.", oracle_id: "a242af4b-5de6-4961-b684-f4bd809977c6" });
+  const CURSE_OF_INERTIA = () => make({ name: "Curse of Inertia", type_line: "Enchantment — Aura Curse", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Enchant player\nWhenever a player attacks enchanted player with one or more creatures, that attacking player may tap or untap target permanent of their choice.", oracle_id: "0bbeb0ee-647b-43d3-91b3-6869d5ccb8b8" });
+  const CURSE_OF_SHALLOW_GRAVES = () => make({ name: "Curse of Shallow Graves", type_line: "Enchantment — Aura Curse", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Enchant player\nWhenever a player attacks enchanted player with one or more creatures, that attacking player may create a tapped 2/2 black Zombie creature token.", oracle_id: "dc66dbed-f979-4ad1-b5f9-08538886167f" });
 
   function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[]) {
     let game = twoSeatGame([], []);
@@ -9079,6 +9082,35 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
     game = passUntil(game, (state) => (state.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"] ?? 0) === 1);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"]).toBe(1);
+  });
+
+  it("recognizes the optional group-attack Curse primitives", () => {
+    expect(profileOf(CURSE_OF_CHAOS())).toMatchObject({
+      fullyImplemented: true, targetKind: "player",
+      triggers: [{ subject: "player-attacks-enchanted-player", optional: true, choiceBy: "event-controller", effect: { kind: "discard-event-controller-then-draw", amount: 1 } }]
+    });
+    expect(profileOf(CURSE_OF_INERTIA())).toMatchObject({
+      fullyImplemented: true, targetKind: "player",
+      triggers: [{ subject: "player-attacks-enchanted-player", optional: true, choiceBy: "event-controller", effect: { kind: "tap-or-untap-target-permanent" }, targetKind: "permanent" }]
+    });
+    expect(profileOf(CURSE_OF_SHALLOW_GRAVES())).toMatchObject({
+      fullyImplemented: true, targetKind: "player",
+      triggers: [{ subject: "player-attacks-enchanted-player", optional: true, choiceBy: "event-controller", effect: { kind: "create-token", amount: 1, token: { name: "Zombie", power: 2, toughness: 2, tapped: true } } }]
+    });
+  });
+
+  it("fires one optional Curse of Shallow Graves trigger per attack group", () => {
+    let game = readyToCast([CURSE_OF_SHALLOW_GRAVES()], [BEAR(), BEAR(), SWAMP(), SWAMP(), SWAMP()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: bears.map((bear) => ({ instanceId: bear.instance_id, defender: 1 })) });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", seat: 0 });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Zombie")).toHaveLength(1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Zombie")?.tapped).toBe(true);
   });
 });
 
