@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-serene-master` | Serene Master exchanges its power with the creature it blocks until end of combat (CR 603.2, 603.3d, 613.4, 701.10) | `codex/c13-serene-master-f99` | active | 2026-09-05 |

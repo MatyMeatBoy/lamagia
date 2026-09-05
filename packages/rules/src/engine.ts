@@ -106,6 +106,8 @@ export interface Permanent {
   /** Layer 7c modifications that expire in the cleanup step. */
   readonly powerModifier: number;
   readonly toughnessModifier: number;
+  /** Combat-only power exchange, cleared as combat ends (CR 511.3). */
+  readonly combatPowerModifier?: number;
   /** Keyword effects from spells/abilities that expire during cleanup. */
   readonly temporaryKeywords?: readonly EnforcedKeyword[];
   /** Temporary characteristic-setting animation, cleared during cleanup (CR 613.6). */
@@ -597,7 +599,7 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
-  return (permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
+  return (permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -1575,6 +1577,32 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return target?.kind === "player" ? drawCards(state, target.seat, effectAmount(effect.amount, object)) : state;
     }
     case "draw-active-player": return drawCards(state, state.activeSeat, 1);
+    case "exchange-source-power-with-blocking-creature": {
+      const blockerId = object.trigger?.eventPermanentId;
+      if (!blockerId) return state;
+      const target = object.targets[targetIndex];
+      const targetAttackerId = target?.kind === "permanent" ? target.instanceId : undefined;
+      const block = state.combat.blockers.find((entry) => entry.instanceId === blockerId
+        && (!targetAttackerId || entry.attackerId === targetAttackerId));
+      const blocker = block ? findPermanent(state, block.instanceId) : undefined;
+      const attacker = block ? findPermanent(state, block.attackerId) : undefined;
+      if (!blocker || !attacker || !isCreature(cardProfile(blocker.card)) || !isCreature(cardProfile(attacker.card))) return state;
+      const blockerPower = powerOf(blocker, state);
+      const attackerPower = powerOf(attacker, state);
+      let next = withPlayer(state, blocker.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === blocker.instance_id
+          ? { ...permanent, combatPowerModifier: (permanent.combatPowerModifier ?? 0) + attackerPower - blockerPower }
+          : permanent)
+      }));
+      next = withPlayer(next, attacker.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === attacker.instance_id
+          ? { ...permanent, combatPowerModifier: (permanent.combatPowerModifier ?? 0) + blockerPower - attackerPower }
+          : permanent)
+      }));
+      return logged(next, blocker.controller, `${blocker.card.name} intercambia su fuerza con ${attacker.card.name} hasta el final del combate.`);
+    }
     case "draw-equal-tapped-creatures": {
       const target = object.targets[0];
       if (!target || target.kind !== "player") return state;
@@ -4347,7 +4375,14 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       break;
     }
     case "end-combat": {
-      next = { ...next, combat: { ...next.combat, attackers: [], blockers: [] } };
+      next = {
+        ...next,
+        combat: { ...next.combat, attackers: [], blockers: [] },
+        players: next.players.map((player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => ({ ...permanent, combatPowerModifier: undefined }))
+        }))
+      };
       break;
     }
     case "cleanup": {
@@ -6272,7 +6307,7 @@ function putNextTriggerOnStack(state: GameState): GameState {
     return openMultiTriggerTargetChoice({ ...state, triggerQueue: remaining }, trigger, [], opened);
   }
 
-  const options = legalTargets(state, trigger.controller, targetKind, cardProfile(trigger.sourceCard))
+  const options = legalTriggerTargets(state, trigger, targetKind)
     .filter((target) => !trigger.definition.excludesSourceFromTargets
       || target.kind !== "permanent"
       || target.instanceId !== trigger.sourcePermanentId);
@@ -6296,6 +6331,23 @@ function putNextTriggerOnStack(state: GameState): GameState {
       options
     }
   };
+}
+
+/** Resolves event-relative trigger targets without widening them to the board.
+ * "The creature it's blocking" is the attacker paired with this block event,
+ * not every attacking creature (CR 603.3d, 109.5).
+ */
+function legalTriggerTargets(
+  state: GameState,
+  trigger: TriggerInstance,
+  targetKind: Exclude<TargetKind, "none">
+): Target[] {
+  if (targetKind !== "blocked-creature") return legalTargets(state, trigger.controller, targetKind, cardProfile(trigger.sourceCard));
+  const blockerId = trigger.eventPermanentId;
+  const block = blockerId ? state.combat.blockers.find((entry) => entry.instanceId === blockerId) : undefined;
+  if (!block) return [];
+  return legalTargets(state, trigger.controller, "creature", cardProfile(trigger.sourceCard))
+    .filter((target) => target.kind === "permanent" && target.instanceId === block.attackerId);
 }
 
 function openMultiTriggerTargetChoice(
