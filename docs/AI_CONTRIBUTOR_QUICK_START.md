@@ -2,6 +2,8 @@
 
 Use this contract when adding rules to **La Magia**. Read `AGENTS.md`,
 `docs/HANDOFF_TO_CLAUDE.md`, and `docs/WORK_CLAIMS.md` before editing.
+For the current manual play-test state and gameplay interaction contract, see
+[`GAMEPLAY_HANDOFF.md`](GAMEPLAY_HANDOFF.md).
 
 ## Scope
 
