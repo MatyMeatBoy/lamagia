@@ -1731,6 +1731,8 @@ function triggerMatches(
     const source = findPermanent(state, watcher.instanceId);
     if (!source || source.tapped) return false;
   }
+  if (condition?.kind === "source-in-command-zone"
+    && !playerAt(state, watcher.controller).commandZone.some((card) => card.instance_id === watcher.instanceId)) return false;
   if (condition?.kind === "class-level-reached" && (event.kind !== "class-level-up" || event.level !== condition.level)) return false;
   if (condition?.kind === "any-player-hand-at-most" && !state.players.some((player) => player.hand.length <= condition.amount)) return false;
   if (condition?.kind === "not-first-draw-step-draw") {
@@ -1903,14 +1905,25 @@ function raiseEvent(
   event: GameEvent,
   extraWatchers: readonly Permanent[] = []
 ): GameState {
-  const watchers = [...allPermanents(state), ...extraWatchers];
+  // Oloro-style commander abilities can trigger while the commander remains
+  // in the command zone. They are represented as synthetic watchers, but only
+  // their explicitly command-zone-gated definitions are considered (CR 903.9,
+  // 603.2).
+  const commandZoneWatchers = state.players.flatMap((player) => player.commandZone
+    .filter((card) => cardProfile(card).triggers.some((definition) => definition.condition?.kind === "source-in-command-zone"))
+    .map((card) => castTriggerWatcher(card, player.seat)));
+  const watchers = [...allPermanents(state), ...extraWatchers, ...commandZoneWatchers];
   const queued: TriggerInstance[] = [];
   // Pontiff of Blight: "Other creatures you control have extort" (CR 702.39, 613).
   const extortGrantors = new Set(allPermanents(state)
     .filter((permanent) => cardProfile(permanent.card).grantsExtortToOthers)
     .map((permanent) => permanent.controller));
   for (const watcher of watchers) {
-    const base = [...cardProfile(watcher.card).triggers, ...(watcher.temporaryTriggers ?? [])];
+    const isCommandZoneWatcher = state.players.some((player) => player.commandZone.some((card) => card.instance_id === watcher.instance_id));
+    const base = (isCommandZoneWatcher
+      ? cardProfile(watcher.card).triggers.filter((definition) => definition.condition?.kind === "source-in-command-zone")
+      : cardProfile(watcher.card).triggers)
+      .concat(watcher.temporaryTriggers ?? []);
     const grantedExtort: TriggerDefinition[] = extortGrantors.has(watcher.controller)
       && isCreature(cardProfile(watcher.card))
       && !base.some((definition) => definition.effect.kind === "extort")
