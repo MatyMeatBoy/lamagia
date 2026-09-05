@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,366** · cobertura: **27.5%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,368** · cobertura: **27.5%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -622,9 +622,9 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,36
 | 2024-08-02 | Bloomburrow Promos (`PBLB`) | promos | bloomburrow | other | 80 | 3 | 77 | 3.8% |
 | 2024-08-02 | Cowboy Bebop (`PCBB`) | promos | cowboy-bebop | other | 5 | 2 | 3 | 40.0% |
 | 2024-08-02 | Mystery Booster 2 (`MB2`) | masters-remastered | mystery-booster-2 | other | 384 | 62 | 322 | 16.1% |
-| 2024-09-27 | Duskmourn: House of Horror (`DSK`) | expansion | 2020s | main | 278 | 40 | 238 | 14.4% |
+| 2024-09-27 | Duskmourn: House of Horror (`DSK`) | expansion | 2020s | main | 278 | 41 | 237 | 14.7% |
 | 2024-09-27 | Duskmourn: House of Horror Commander (`DSC`) | commander | 2024 | commander | 306 | 110 | 196 | 35.9% |
-| 2024-09-27 | Duskmourn: House of Horror Promos (`PDSK`) | promos | duskmourn-house-of-horror | other | 80 | 0 | 80 | 0.0% |
+| 2024-09-27 | Duskmourn: House of Horror Promos (`PDSK`) | promos | duskmourn-house-of-horror | other | 80 | 1 | 79 | 1.2% |
 | 2024-10-16 | Tales of Middle-earth Deluxe Commander Kit (`PLTC`) | promos | 2024 | other | 4 | 0 | 4 | 0.0% |
 | 2024-11-15 | Foundations (`FDN`) | core | 2020s | main | 517 | 182 | 335 | 35.2% |
 | 2024-11-15 | Foundations Commander (`FDC`) | commander | 2024 | commander | 3 | 3 | 0 | 100.0% |
@@ -795,7 +795,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,36
 | expansion | 1990s | 11 | 1573 | 327 | 1246 | 20.8% |
 | expansion | 2000s | 19 | 3082 | 616 | 2466 | 20.0% |
 | expansion | 2010s | 14 | 2735 | 643 | 2092 | 23.5% |
-| expansion | 2020s | 17 | 3739 | 574 | 3165 | 15.4% |
+| expansion | 2020s | 17 | 3739 | 575 | 3164 | 15.4% |
 | expansion | alara | 2 | 379 | 141 | 238 | 37.2% |
 | expansion | amonkhet | 1 | 272 | 85 | 187 | 31.2% |
 | expansion | bloomburrow | 1 | 280 | 39 | 241 | 13.9% |
@@ -971,7 +971,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,36
 | promos | duels-of-the-planeswalkers-2013 | 1 | 3 | 1 | 2 | 33.3% |
 | promos | duels-of-the-planeswalkers-2014 | 1 | 3 | 1 | 2 | 33.3% |
 | promos | duels-of-the-planeswalkers-2015 | 1 | 2 | 0 | 2 | 0.0% |
-| promos | duskmourn-house-of-horror | 1 | 80 | 0 | 80 | 0.0% |
+| promos | duskmourn-house-of-horror | 1 | 80 | 1 | 79 | 1.2% |
 | promos | edge-of-eternities | 1 | 80 | 6 | 74 | 7.5% |
 | promos | eighth-edition | 1 | 1 | 1 | 0 | 100.0% |
 | promos | eldritch-moon | 1 | 64 | 2 | 62 | 3.1% |
@@ -56987,7 +56987,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,36
 - [ ] Ragged Playmate — `d0732ebf-91ad-4e3c-a09a-f410d20587fc`
 - [ ] Rampaging Soulrager — `f6d8e6cb-0878-4f2c-9a89-ce84cb4f5bbc`
 - [ ] Razorkin Hordecaller — `3fc4bdf1-7da3-4f9f-806f-f82cd18ea65f`
-- [ ] Razorkin Needlehead — `a78f981a-bf8a-42a4-b171-d655cc2cc1a2`
 - [ ] Reluctant Role Model — `8d24c12a-a300-4199-b2a9-3d5ead8df617`
 - [ ] Restricted Office // Lecture Hall — `b36286fa-4007-4276-af9c-d8f0da9e94d1`
 - [ ] Resurrected Cultist — `8b6d37a7-a88e-45dd-b45e-642a44caaf05`
@@ -57316,7 +57315,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,36
 - [ ] Overlord of the Hauntwoods — `4669e8c7-fc37-4b97-9cb7-8d29b43d9176`
 - [ ] Overlord of the Mistmoors — `7e64b1dc-a238-4bff-98ff-2bea44340568`
 - [ ] Peer Past the Veil — `8fb7ad08-9bb2-49f1-8ed0-8cc8abca4fe0`
-- [ ] Razorkin Needlehead — `a78f981a-bf8a-42a4-b171-d655cc2cc1a2`
 - [ ] Reluctant Role Model — `8d24c12a-a300-4199-b2a9-3d5ead8df617`
 - [ ] Restricted Office // Lecture Hall — `b36286fa-4007-4276-af9c-d8f0da9e94d1`
 - [ ] Rip, Spawn Hunter — `c027f369-e445-46a8-94ad-93396321295a`

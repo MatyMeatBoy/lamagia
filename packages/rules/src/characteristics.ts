@@ -773,6 +773,8 @@ export interface CardProfile {
   readonly equipCost: ManaCost | null;
   readonly equipmentModification: EquipmentModification | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
+  /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
+  readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
   readonly preventsLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
   readonly noMaximumHandSizeForAllPlayers: boolean;
@@ -1379,6 +1381,17 @@ function parseStaticKeywordGrant(line: string): StaticKeywordGrant[] {
 
 function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
   return text.split("\n").flatMap(parseStaticKeywordGrant);
+}
+
+/** "~ has flying during your turn" (Razorkin Needlehead) — self-only, gated on whose turn it is. */
+function parseKeywordDuringYourTurn(line: string): EnforcedKeyword[] {
+  const clean = line.trim().replace(/\.$/, "");
+  const match = new RegExp(`^~ has ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*) during your turn$`, "i").exec(clean);
+  return match ? parseKeywordList(match[1]!) : [];
+}
+
+function parseKeywordsDuringYourTurn(text: string): EnforcedKeyword[] {
+  return text.split("\n").flatMap(parseKeywordDuringYourTurn);
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
@@ -3084,6 +3097,7 @@ function recognizeText(text: string): RecognizedText {
     // blocking and damage prevention, not stack resolution (CR 702.16).
     if (parseProtectionFromLine(line)) continue;
     if (parseStaticKeywordGrant(line).length) continue;
+    if (parseKeywordDuringYourTurn(line).length) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
     if (/^creature spells you control with power \d+ or greater can't be countered\.?$/i.test(line)) continue;
@@ -3523,6 +3537,7 @@ export function cardProfile(card: CardData): CardProfile {
   const equipmentModification = subtypes.some((subtype) => subtype.toLowerCase() === "equipment")
     ? parseEquipmentModification(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
+  const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const noMaximumHandSizeForAllPlayers = text.split("\n").some((line) => /^players have no maximum hand size\.?$/i.test(line.trim()));
@@ -3571,6 +3586,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipCost,
     equipmentModification,
     staticKeywordGrants,
+    keywordsDuringYourTurn,
     preventsLifeGain,
     noMaximumHandSize,
     noMaximumHandSizeForAllPlayers,

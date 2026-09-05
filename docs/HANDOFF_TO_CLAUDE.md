@@ -2633,6 +2633,34 @@ counted twice across reprints). `npm run check` and `npm test` PASS
 (**549 rules tests**, up from 547). `npm run simulate:engine`:
 **200/200 passed**.
 
+### Worker-05: a keyword gated on whose turn it is (2026-09-05)
+
+Claim `rules-keyword-during-your-turn`, continuing the Nekusar decklist
+(Razorkin Needlehead). "~ has first strike during your turn" needed a new
+primitive distinct from the existing `staticKeywordGrants`: that system
+grants keywords to *other* permanents (all creatures, creatures you
+control, a subtype, etc.) unconditionally; this is self-only and
+conditional on the active player. Added `CardProfile.keywordsDuringYourTurn`,
+parsed with the same `GRANTABLE_KEYWORDS` list and `parseKeywordList` helper
+`parseStaticKeywordGrant` already relies on, and checked in `keywordOf`
+against `state.activeSeat === permanent.controller`.
+
+Scenario coverage exercises both directions on the same creature: attacking
+on its own turn (first strike applies, kills the blocker before regular
+damage — identical to a plain first striker), and blocking on the
+opponent's turn (no first strike, so both creatures trade simultaneously
+instead of the source surviving). The second case is what actually proves
+the gate works rather than the keyword being unconditionally on.
+
+Fully implements Razorkin Needlehead. Hunter's Blowgun carries the
+identical clause but on an Equipment granting to whatever it's attached to,
+with an "otherwise it has reach" else-branch — a genuinely different shape
+(conditional-with-alternative on a non-self target) left for a follow-up.
+
+Global export: **9,272/38,712** (+1 from 9,271). `npm run check` and `npm
+test` PASS (**552 rules tests**, up from 551). `npm run simulate:engine`:
+**200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed
