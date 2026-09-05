@@ -641,6 +641,8 @@ export interface TriggerDefinition {
   readonly sourceText: string;
   /** Mana that must be paid when an optional trigger is accepted. */
  readonly manaCost?: ManaCost;
+  /** Maximum value for an optional `{X}` cost, derived from the triggering event. */
+  readonly variablePayCost?: "event-amount";
   /** For "unless that player pays", the opponent is the payer and the trigger controller receives the effect if they decline. */
   readonly paymentBy?: "opponent";
   /**
@@ -3130,12 +3132,17 @@ function recognizeText(text: string): RecognizedText {
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
       const requiresKicked = Boolean(kickedGate);
       if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      // Well of Lost Dreams: X is chosen on resolution and capped by the life
+      // gain event (CR 107.3, 118.3). Keep this as a reusable variable-cost
+      // trigger shape instead of hard-coding the card in the engine.
+      const variableLifePay = /^you may pay \{X\}, where X is less than or equal to the amount of life you gained\.?\s*if you do,?\s*(draw X cards?\.?)$/i.test(effectText);
+      if (variableLifePay) effectText = effectText.replace(/^you may pay \{X\}, where X is less than or equal to the amount of life you gained\.?\s*if you do,?\s*/i, "");
       // "you may pay {cost}. If you do, X" — an optional mana cost gating X.
-      const payGate = /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
+      const payGate = variableLifePay ? null : /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-      const optional = payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
-      const recognized = (payCost && payCost.hasVariable) ? null
+      const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
+      const recognized = (payCost && payCost.hasVariable && !variableLifePay) ? null
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
@@ -3166,7 +3173,8 @@ function recognizeText(text: string): RecognizedText {
           ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),
           ...(triggered.nontoken ? { nontoken: true } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
-          ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment ? { payCost, manaCost: payCost } : {}),
+          ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment && !variableLifePay ? { payCost, manaCost: payCost } : {}),
+          ...(variableLifePay ? { payCost: parseManaCost("{X}")!, variablePayCost: "event-amount" as const } : {}),
           ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {})
         });
       } else {
