@@ -2972,3 +2972,22 @@ loop that has nothing to do with the doubler itself — the scenario test
 uses "whenever an **opponent** draws a card" instead, which only fires
 off draws it doesn't itself cause. Validation: **604 rules tests**, `npm
 run check`, `npm run simulate:engine` 200/200, 9,398 global profiles.
+
+Baleful Mastery | `adfcdadd-ddda-477b-8e72-0cae2430fb63` was closed with a
+fourth alternative-cost shape, `CardProfile.payReducedCostInstead:
+ManaCost | null` (CR 601.2b, 118.9): unlike `freeCast`/`payLifeCost`,
+which bypass payment entirely, this one *replaces* `cost` with the
+reduced cost and runs the real `planManaPayment`/`payCost` path
+unchanged, so board cost reductions and commander tax still apply on top
+of it (CR 601.2f). Its second sentence, "if the {1}{B} cost was paid, an
+opponent draws a card," needed the resolving effect to know *how* the
+spell was cast — the first such case this session — so `StackObject`
+gained an optional `castViaAlternativeCost` flag, threaded through a new
+trailing `pushOnStack` parameter and read by the new
+`opponent-draws-if-cast-via-alternative-cost` effect. "Exile target
+creature or planeswalker" needed a new `creature-or-planeswalker`
+`TargetKind` (the existing `artifact-creature-or-planeswalker` was too
+broad). All four alternative-cost shapes (`freeCast`, `payLifeCost`,
+`returnPermanentId`, `payReducedCost`) now share one parameter family on
+`castableCard`'s signature. Validation: **605 rules tests**, `npm run
+check`, `npm run simulate:engine` 200/200, 9,405 global profiles.

@@ -444,6 +444,7 @@ const OFFER_YOU_CANT_REFUSE = () => make({ name: "Test An Offer You Can't Refuse
 const TUTOR = () => make({ name: "Enlightened Tutor", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an artifact or enchantment card, reveal it, then shuffle. Put that card on top of your library." });
 const DEADLY_ROLLICK = () => make({ name: "Deadly Rollick", type_line: "Instant", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "If you control a commander, you may cast this spell without paying its mana cost.\nExile target creature.", oracle_id: "0456ec64-2c81-4763-a352-8ff64a4c3d6b", scryfall_id: "a30c266d-579e-4757-a4d6-6722fa343a6c" });
 const SNUFF_OUT = () => make({ name: "Snuff Out", type_line: "Instant", mana_cost: "{3}{B}", cmc: 4, oracle_text: "If you control a Swamp, you may pay 4 life rather than pay this spell's mana cost.\nDestroy target nonblack creature. It can't be regenerated.", oracle_id: "324824cb-f938-401c-b9b5-d8908b431ef0", scryfall_id: "cdb4bdc5-2533-4e6d-ab69-ccbf3d497748" });
+const BALEFUL_MASTERY = () => make({ name: "Baleful Mastery", type_line: "Instant", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "You may pay {1}{B} rather than pay this spell's mana cost.\nIf the {1}{B} cost was paid, an opponent draws a card.\nExile target creature or planeswalker.", oracle_id: "adfcdadd-ddda-477b-8e72-0cae2430fb63", scryfall_id: "09f8d1e2-7f12-4828-8391-eb50f67e66a5" });
 const BLACK_SOURCE = () => make({ name: "Onyx Mana Rock", type_line: "Land", produced_mana: ["B"] });
 const COUNTER_UNLESS_PAY = () => make({ name: "Test Mana Leak", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target spell unless its controller pays {1}." });
 const DAZE = () => make({ name: "Daze", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "You may return an Island you control to its owner's hand rather than pay this spell's mana cost.\nCounter target spell unless its controller pays {1}.", oracle_id: "70486bee-6ee7-41ea-b834-8caf4699302b", scryfall_id: "61968d99-6571-49ce-bcf1-2aaac3a10f45" });
@@ -4791,6 +4792,38 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.tapped)).toBe(false);
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("gives the opponent a card only when Baleful Mastery pays its reduced cost", () => {
+    const profile = profileOf(BALEFUL_MASTERY());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.effects).toEqual([
+      { kind: "opponent-draws-if-cast-via-alternative-cost" },
+      { kind: "exile-target-permanent" }
+    ]);
+
+    // Paying the normal printed cost: no extra draw for the opponent.
+    let game = readyToCast([BALEFUL_MASTERY()], [SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], [BEAR()]);
+    let target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const options = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(options).toHaveLength(2);
+    const hand1BeforePaid = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.hand.length).toBe(hand1BeforePaid);
+
+    // Paying the reduced {1}{B} cost instead: the opponent draws a card.
+    game = readyToCast([BALEFUL_MASTERY()], [SWAMP(), SWAMP()], [], [BEAR()]);
+    target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const reducedOption = legalActions(game, 0).find((entry) => entry.action.type === "cast" && (entry.action as { payReducedCost?: boolean }).payReducedCost);
+    expect(reducedOption).toBeDefined();
+    const hand1Before = game.players[1]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", payReducedCost: true, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[0]!.manaPool).toEqual({ W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.hand.length).toBe(hand1Before + 1);
   });
 
   it("reuses the library search family for top, hand and graveyard destinations", () => {

@@ -393,6 +393,8 @@ export type SpellEffect =
   /** Geier Reach Sanitarium: draw happens for everyone at once; the discard is each player's own choice, queued one seat at a time (CR 701.8a, APNAP order). */
   | { readonly kind: "each-player-draws-then-discards" }
   | { readonly kind: "each-opponent-draw"; readonly amount: number | "X" }
+  /** Baleful Mastery: "if the {cost} was paid, an opponent draws a card" — reads whether this cast used its own alternative cost (CR 601.2b). */
+  | { readonly kind: "opponent-draws-if-cast-via-alternative-cost" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
   | { readonly kind: "discard-target-player-then-draw-same"; readonly amount: number }
@@ -796,7 +798,7 @@ export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
-  | "artifact-creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
+  | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature"
@@ -913,6 +915,8 @@ export interface CardProfile {
   readonly payLifeInsteadOfManaCost: { readonly life: number; readonly controlLandType: string } | null;
   /** "You may return a [land type] you control to its owner's hand rather than pay ~'s mana cost" (Daze, CR 601.2b, 118.9). */
   readonly returnLandInsteadOfManaCost: { readonly subtype: string } | null;
+  /** "You may pay {cost} rather than pay ~'s mana cost" (Baleful Mastery, CR 601.2b, 118.9). */
+  readonly payReducedCostInstead: ManaCost | null;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
@@ -2506,6 +2510,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "each-opponent-draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-opponent-draw", amount: "X" }, target: "none" };
   }
+  if (/^If the (?:\{[^}]+\})+ cost was paid, an opponent draws a card$/i.test(text)) {
+    return { effect: { kind: "opponent-draws-if-cast-via-alternative-cost" }, target: "none" };
+  }
   if ((match = /^You lose (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "lose-life", amount }, target: "none" };
@@ -2917,6 +2924,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };
   if (/^Destroy target artifact, creature, or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-creature-or-planeswalker" };
+  if (/^Exile target creature or planeswalker$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-or-planeswalker" };
   if (/^Destroy target artifact, enchantment, or land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-enchantment-or-land" };
   if (/^Destroy target permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "permanent" };
   if (/^Choose target nonland permanent you control and up to two target nonland permanents you don't control\. Destroy one of them at random$/i.test(text)) {
@@ -3498,6 +3506,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line)) continue;
     if (/^if you control an? [A-Za-z][A-Za-z'’-]*, you may pay \d+ life rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you may return an? [A-Za-z][A-Za-z'’-]* you control to its owner's hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
+    if (/^you may pay (?:\{[^}]+\})+ rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     if (parseDamageAmplify(line)) continue;
@@ -3989,6 +3998,8 @@ export function cardProfile(card: CardData): CardProfile {
   const payLifeInsteadOfManaCost = payLifeInsteadMatch ? { life: Number(payLifeInsteadMatch[2]), controlLandType: payLifeInsteadMatch[1]! } : null;
   const returnLandInsteadMatch = text.split("\n").map((line) => /^you may return an? ([A-Za-z][A-Za-z'’-]*) you control to its owner's hand rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const returnLandInsteadOfManaCost = returnLandInsteadMatch ? { subtype: returnLandInsteadMatch[1]! } : null;
+  const payReducedCostMatch = text.split("\n").map((line) => /^you may pay ((?:\{[^}]+\})+) rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
+  const payReducedCostInstead = payReducedCostMatch ? parseManaCost(payReducedCostMatch[1]!) : null;
   const doesNotUntapDuringUntap = text.split("\n").some((line) => /^~ doesn[’']t untap during your untap step\.?$/i.test(line.trim()));
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
@@ -4078,6 +4089,7 @@ export function cardProfile(card: CardData): CardProfile {
     freeCastIfCommander,
     payLifeInsteadOfManaCost,
     returnLandInsteadOfManaCost,
+    payReducedCostInstead,
     costReducesPerBoardCreature,
     spellCostReductionGrant,
     staticLandManaBonus,

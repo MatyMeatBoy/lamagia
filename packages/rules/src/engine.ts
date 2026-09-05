@@ -229,6 +229,8 @@ export interface StackObject {
   readonly sourcePermanentId?: string;
   /** Event permanent retained when an optional trigger is resolving through a choice. */
   readonly triggeredPermanentId?: string;
+  /** This spell was cast using its own printed alternative cost, e.g. Baleful Mastery (CR 601.2b). */
+  readonly castViaAlternativeCost?: boolean;
 }
 
 export interface TriggerInstance {
@@ -530,7 +532,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
@@ -1981,6 +1983,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = effectAmount(effect.amount, object);
       for (const seat of opponentsOf(state, controller)) next = drawCards(next, seat, amount);
       return next;
+    }
+    case "opponent-draws-if-cast-via-alternative-cost": {
+      if (!object.castViaAlternativeCost) return state;
+      const opponent = opponentsOf(state, controller)[0];
+      return opponent === undefined ? state : drawCards(state, opponent, 1);
     }
     case "exile-self":
     case "shuffle-self-into-library":
@@ -5237,7 +5244,7 @@ function controlsLandType(state: GameState, seat: SeatId, subtype: string): bool
   return playerAt(state, seat).battlefield.some((permanent) => isLand(cardProfile(permanent.card)) && hasSubtype(cardProfile(permanent.card), subtype));
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
@@ -5255,7 +5262,10 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
     const returned = player.battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
     if (!returned || !isLand(cardProfile(returned.card)) || !hasSubtype(cardProfile(returned.card), profile.returnLandInsteadOfManaCost.subtype)) return { legal: false };
   }
-  const cost = flashback
+  if (payReducedCost && (!profile.payReducedCostInstead || fromCommandZone || flashback)) return { legal: false };
+  const cost = payReducedCost && profile.payReducedCostInstead
+    ? profile.payReducedCostInstead
+    : flashback
     ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
     : spellCostOf(profile, kicked, evoked, entwined);
   const lifeCost = flashback
@@ -5627,6 +5637,21 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         });
       }
     }
+    // Baleful Mastery-style reduced cost: offered alongside the normal paid cast (CR 601.2b).
+    if (profile.payReducedCostInstead) {
+      const reducedCheck = castableCard(state, seat, card, false, 0, undefined, false, false, false, false, false, false, undefined, true);
+      if (reducedCheck.legal) {
+        actions.push({
+          action: { type: "cast", cardId: card.instance_id, payReducedCost: true },
+          label: `Lanzar ${card.name} pagando ${profile.payReducedCostInstead.raw} en vez de su coste de maná`,
+          cardId: card.instance_id,
+          manaValue: profile.payReducedCostInstead.manaValue,
+          ...(reducedCheck.targetKind ? { requiresTarget: reducedCheck.targetKind } : {}),
+          ...(reducedCheck.targetKinds ? { requiresTargets: reducedCheck.targetKinds } : {}),
+          ...(reducedCheck.note ? { note: reducedCheck.note } : {})
+        });
+      }
+    }
   }
 
   for (const card of player.graveyard) {
@@ -5954,6 +5979,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       return hasPermanentSubtype(state, permanent, subtype);
     }
     if (kind === "artifact-creature-or-planeswalker") return profile.types.some((type) => ["Artifact", "Creature", "Planeswalker"].includes(type));
+    if (kind === "creature-or-planeswalker") return profile.types.some((type) => ["Creature", "Planeswalker"].includes(type));
     if (kind === "nonland") return !isLand(profile);
     if (kind === "nonland-you-control") return !isLand(profile) && permanent.controller === seat;
     if (kind === "nonland-opponent") return !isLand(profile) && permanent.controller !== seat;
@@ -5982,7 +6008,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = []): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -5998,7 +6024,8 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     ...(selectedEffect ? { selectedEffect } : {}),
     ...(kicked ? { kicked: true } : {}),
     ...(evoked ? { evoked: true } : {}),
-    ...(flashback ? { fromFlashback: true } : {})
+    ...(flashback ? { fromFlashback: true } : {}),
+    ...(castViaAlternativeCost ? { castViaAlternativeCost: true } : {})
   };
   // After putting an object on the stack its controller receives priority again (rule 117.3c).
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
@@ -6620,11 +6647,14 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const freeCast = Boolean(action.freeCast);
   const payLifeCost = Boolean(action.payLifeCost);
   const returnPermanentId = action.returnPermanentId;
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId);
+  const payReducedCost = Boolean(action.payReducedCost);
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId, payReducedCost);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
-  const spellCost = fromGraveyard
+  const spellCost = payReducedCost && profile.payReducedCostInstead
+    ? profile.payReducedCostInstead
+    : fromGraveyard
     ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
     : spellCostOf(profile, kicked, evoked, entwined);
   const lifeCost = fromGraveyard
@@ -6704,7 +6734,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
-    Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)));
+    Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)), payReducedCost);
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: poolTotal(payment.spent) },
