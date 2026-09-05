@@ -111,6 +111,20 @@ describe("mana abilities", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("normalizes replacement-character keyword separators from legacy imports", () => {
+    const profile = cardProfile(card({
+      name: "Legacy Landfall", type_line: "Creature — Elf",
+      oracle_text: "Landfall � Whenever a land you control enters, you may gain 2 life."
+    }));
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield",
+      subject: "land-you-control",
+      optional: true,
+      effect: { kind: "gain-life", amount: 2 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("preserves an open-ended subtype in Steelshaper's Gift", () => {
     const profile = cardProfile(card({
       name: "Steelshaper's Gift", type_line: "Sorcery", mana_cost: "{W}",

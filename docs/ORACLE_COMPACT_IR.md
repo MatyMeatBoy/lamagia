@@ -88,3 +88,22 @@ for worker scheduling. A symbol is useful only when a worker maps it to a
 structured parser or profile, an authoritative executor, a scenario test with
 official CR numbers, and exact `oracle_id` evidence. Never merge symbols,
 clauses, or cards merely because their English text looks similar.
+
+## Tested optimization boundary
+
+The current workflow uses compiler techniques that are safe for card text:
+Unicode/ability-word canonicalization, typed operation atoms, exact operand
+keys, and a hybrid lowering pass. This is analogous to MLIR canonicalization:
+normalize only when the transformation is semantics-preserving, then validate
+the result before extracting a smaller form. `hybrid-payload` won against the
+repeated-text and all-compact variants in the full-catalog and C13 benchmarks,
+with both identity and operand checks passing.
+
+Equality-saturation/e-graph rewriting is not enabled for rules execution. Card
+effects have side effects, hidden zones, targets, timing, and replacement
+effects; two similar text trees are not interchangeable without proving those
+operands and their ordering. The safe workflow is to canonicalize and
+hash-cons exact clauses, then leave dependent or multi-zone clauses on legacy
+text. An e-graph may later discover offline candidates, but every candidate
+still needs the same scenario and Comprehensive Rules proof; textual similarity
+never selects an executor.

@@ -984,7 +984,11 @@ const SELF_NOUNS = [
  * phrasing of the same ability.
  */
 export function normalizedOracle(card: CardData): string {
-  const raw = (card.oracle_text ?? "").replace(/\([^)]*\)/g, " ");
+  // Some historical catalog imports decoded the UTF-8 em dash as U+FFFD.
+  // Treat that replacement character as the same keyword-ability separator
+  // used by current Oracle text; otherwise valid Landfall/Morbid lines fall
+  // out of the shared trigger grammar before they reach the legacy parser.
+  const raw = (card.oracle_text ?? "").replace(/\uFFFD/g, "—").replace(/\([^)]*\)/g, " ");
   const shortName = card.name.split(",")[0]!.split("//")[0]!.trim();
   const escaped = [card.name, shortName].filter(Boolean).map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   let text = raw;
@@ -3172,7 +3176,12 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
-    const triggered = matchTriggerLine(leavesLine !== line ? leavesLine : line);
+    // Ability words are presentation labels, not part of the trigger grammar.
+    // Normalize both current and legacy-import separators here as a second
+    // boundary so a malformed historical U+FFFD cannot hide a valid trigger.
+    const triggerLine = (leavesLine !== line ? leavesLine : line)
+      .replace(/^(?:landfall|morbid)\s+[—–-\uFFFD]\s*/i, "");
+    const triggered = matchTriggerLine(triggerLine);
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
@@ -3208,7 +3217,12 @@ function recognizeText(text: string): RecognizedText {
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
-          const executableText = optional && !payGate ? effectText.replace(/^you\s+may\s+/i, "") : effectText;
+          const executableText = optional && !payGate
+            // Keep the subject for the compositional draw/life grammar. A
+            // blanket removal would turn "you may gain 2 life" into the
+            // invalid fragment "gain 2 life" (CR 609.3).
+            ? effectText.replace(/^you\s+may\s+(?=(?:draw|mill|discard|gain|lose)\b)/i, "You ").replace(/^you\s+may\s+/i, "")
+            : effectText;
           const lookTop = parseLookTopSelection(executableText);
           return lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
         })();
