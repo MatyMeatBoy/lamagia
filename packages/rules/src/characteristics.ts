@@ -565,6 +565,8 @@ export type SpellEffect =
   /** Temporary pump based on the defending player in the triggering attack. */
   | { readonly kind: "modify-triggered-creature-by-defending-lands" }
   | { readonly kind: "modify-triggered-creature-and-grant-keyword"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
+  /** "That creature gets +X/+Y and gains KEYWORD until end of turn" (Ogre Battledriver): targets the OTHER creature named by the triggering event, not the source. */
+  | { readonly kind: "modify-event-creature-and-grant-keyword"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   /** Graft counter transfer to the creature that caused the trigger (CR 702.58). */
   | { readonly kind: "move-counter-from-source-to-triggered-creature"; readonly counter: string }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
@@ -2555,7 +2557,12 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
 
   // Another object triggers it. `another` excludes the source itself (CR 109.5).
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
-  { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  // "another" must exclude the source itself (CR 109.5); kept as its own
+  // template ahead of the bare "a creature you control enters" one below so a
+  // real "another" in the Oracle text is never collapsed into the
+  // self-inclusive subject (Ogre Battledriver, Cathars' Crusade).
+  { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+a?\s*creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "another-permanent-you-control", pattern: /^whenever\s+another\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "permanent-you-control", pattern: /^whenever\s+a\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
@@ -3414,6 +3421,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if ((match = /^That creature gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-triggered-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
+  }
+  if ((match = /^That creature gets ([+-]\d+)\/([+-]\d+) and gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text))) {
+    return {
+      effect: { kind: "modify-event-creature-and-grant-keyword", power: Number(match[1]), toughness: Number(match[2]), keyword: match[3]!.toLowerCase() as EnforcedKeyword },
+      target: "none"
+    };
   }
   if (/^~ gets \+X\/\+0 until end of turn, where X is the number of lands defending player controls$/i.test(text)) {
     return { effect: { kind: "modify-triggered-creature-by-defending-lands" }, target: "none" };

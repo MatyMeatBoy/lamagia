@@ -10036,6 +10036,40 @@ describe("Oracle of Mul Daya's top-of-library land drop and public reveal", () =
   });
 });
 
+describe("Ogre Battledriver pumps and hastes another entering creature", () => {
+  const OGRE_BATTLEDRIVER = () => make({
+    name: "Ogre Battledriver", type_line: "Creature — Ogre Warrior", mana_cost: "{3}{R}{R}", cmc: 5, power: "4", toughness: "4",
+    oracle_text: "Whenever another creature you control enters, that creature gets +2/+0 and gains haste until end of turn."
+  });
+
+  it("recognizes the trigger with the event creature (not the source) as its target", () => {
+    expect(profileOf(OGRE_BATTLEDRIVER())).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{
+        event: "enters-battlefield", subject: "another-creature-you-control",
+        effect: { kind: "modify-event-creature-and-grant-keyword", power: 2, toughness: 0, keyword: "haste" }
+      }]
+    });
+  });
+
+  it("pumps and hastes a creature that enters after Ogre Battledriver, leaving Battledriver itself untouched", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [OGRE_BATTLEDRIVER(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BEAR()], "battledriver-hand") }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "battledriver-hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const battledriver = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ogre Battledriver")!;
+    expect([powerOf(bear, game), toughnessOf(bear, game)]).toEqual([4, 2]);
+    expect(bear.temporaryKeywords).toContain("haste");
+    expect([powerOf(battledriver, game), toughnessOf(battledriver, game)]).toEqual([4, 4]);
+    expect(battledriver.temporaryKeywords ?? []).not.toContain("haste");
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
