@@ -111,6 +111,7 @@ const ANOTHER_PERMANENT_ETB_DRAWER = () => make({ name: "Another Archivist", typ
 const ANY_SPELL_TRIGGER = () => make({ name: "Spell Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever a player casts a spell, draw a card." });
 const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Optional Archivist enters the battlefield, you may draw a card." });
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
+const SERENE_MASTER = () => make({ name: "Serene Master", type_line: "Creature — Human Monk", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "2", oracle_text: "Whenever this creature blocks, exchange its power and the power of target creature it's blocking until end of combat.", oracle_id: "2ce0d583-81ca-4dca-bde0-52f86b683afd", scryfall_id: "06223a09-a32c-4c60-86a1-f8f7bf5a7cdd" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
 const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature — Jellyfish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", keywords: ["Defender", "Flying"], oracle_text: "Defender, flying\nPrevent all combat damage that would be dealt to this creature." });
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
@@ -7810,6 +7811,25 @@ describe("combat", () => {
     game = putOnBattlefield(game, 1, defender);
     return passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
   }
+
+  it("swaps Serene Master's power with the creature it blocks until combat ends", () => {
+    const serene = SERENE_MASTER();
+    expect(profileOf(serene).fullyImplemented).toBe(true);
+    let game = atAttackers([TRAMPLER()], [serene]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const attacker = game.players[0]!.battlefield[0]!;
+    const blocker = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    game = applyAction(game, 1, { type: "declare-blockers", blockers: [{ instanceId: blocker.instance_id, attackerId: attacker.instance_id }] });
+    expect(game.stack.at(-1)?.targets).toEqual([{ kind: "permanent", instanceId: attacker.instance_id }]);
+    game = passUntil(game, (state) => state.step === "declare-blockers" && state.combat.blockersDeclared && state.stack.length === 0);
+    const activeBlocker = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === blocker.instance_id)!;
+    expect(powerOf(activeBlocker, game)).toBe(6);
+    expect(powerOf(game.players[0]!.battlefield[0]!, game)).toBe(0);
+    game = passUntil(game, (state) => state.step === "end-combat" && state.combat.attackers.length === 0);
+    expect(powerOf(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === blocker.instance_id)!, game)).toBe(0);
+  });
 
   it("does not let a summoning-sick creature attack", () => {
     let game = twoSeatGame([], []);

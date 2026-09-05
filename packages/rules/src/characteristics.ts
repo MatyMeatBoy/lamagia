@@ -480,6 +480,8 @@ export type SpellEffect =
   | { readonly kind: "put-event-player-hand-card-on-library-top" }
   /** Copy the instant or sorcery spell that caused this trigger (CR 707.10). */
   | { readonly kind: "copy-triggered-spell" }
+  /** Swap a blocking source's power with the creature it blocked until combat ends (CR 701.10). */
+  | { readonly kind: "exchange-source-power-with-blocking-creature" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
   /** Noncombat damage to the controller of the permanent source. */
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
@@ -843,7 +845,7 @@ export type TargetKind =
   | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
-  | "attacking-or-blocking-creature" | "attacking-creature"
+  | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
   | "creature-power-at-most-4"
@@ -2649,6 +2651,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Copy that spell\. You may choose new targets for the copy$/i.test(text)) {
     return { effect: { kind: "copy-triggered-spell" }, target: "none" };
+  }
+  if (/^Exchange its power and the power of target creature it's blocking until end of combat$/i.test(text)) {
+    return { effect: { kind: "exchange-source-power-with-blocking-creature" }, target: "blocked-creature" };
   }
   if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
     return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };
