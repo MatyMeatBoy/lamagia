@@ -130,6 +130,7 @@ const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature �
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
 const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — Snake", mana_cost: "{B}", cmc: 1, power: "1", toughness: "1", keywords: ["Deathtouch"], oracle_text: "Deathtouch" });
 const PHANTOM_NANTUKO = () => make({ name: "Phantom Nantuko", type_line: "Creature — Insect Spirit", mana_cost: "{2}{G}", cmc: 3, power: "0", toughness: "0", keywords: ["Trample"], oracle_text: "Trample\nThis creature enters with two +1/+1 counters on it.\nIf damage would be dealt to this creature, prevent that damage. Remove a +1/+1 counter from this creature.\n{T}: Put a +1/+1 counter on this creature.", oracle_id: "0951b529-646c-4dfd-88ad-84ee117ce722", scryfall_id: "bfd9ba5b-534f-4d3b-a997-441f6911f670" });
+const ROON = () => make({ name: "Roon of the Hidden Realm", type_line: "Legendary Creature — Rhino Soldier", mana_cost: "{2}{G}{W}{U}", cmc: 5, power: "4", toughness: "4", oracle_text: "Vigilance, trample\n{2}, {T}: Exile another target creature.\nReturn that card to the battlefield under its owner's control at the beginning of the next end step.", oracle_id: "fd336830-4a11-42b8-9fc7-d7526f569124", scryfall_id: "dfd7e77a-bfc0-4d8c-b6fd-a190d9ecf3cf" });
 const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
 const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Bat", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", colors: ["B"] });
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
@@ -7128,6 +7129,22 @@ describe("activated abilities", () => {
     expect(game.players[1]!.graveyard.some((card) => card.instance_id === attacker.card.instance_id)).toBe(true);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === flier.instance_id)).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Leonin Bladetrap")).toBe(true);
+  });
+
+  it("joins split Oracle lines for Roon's delayed creature blink", () => {
+    const profile = profileOf(ROON());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ effect: { kind: "exile-target-permanent-delayed-return" }, targetKind: "creature" }]
+    });
+    let game = readyOnBoard([ROON(), ISLAND(), ISLAND(), ISLAND()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    const source = permanentNamed(game, 0, "Roon of the Hidden Realm")!;
+    const target = permanentNamed(game, 1, "Grizzly Bears")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)!;
+    game = applyAction(game, 0, { ...activation.action, targets: [{ kind: "permanent", instanceId: target.instance_id }] } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    game = passUntil(game, (state) => state.delayedReturns.length === 1);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
   });
 
   it("offers Deepfire Elemental targets and payment values for X", () => {

@@ -2497,8 +2497,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const simple = simpleEffectIR(text);
   const simpleResult = simple ? simpleEffectFromIR(simple) : null;
   if (simpleResult) return simpleResult;
-  if (/^Exile another target permanent\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
-    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "permanent" };
+  const delayedExile = /^Exile (another )?target (creature|permanent)\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.exec(text);
+  if (delayedExile) {
+    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: delayedExile[2]!.toLowerCase() as "creature" | "permanent" };
   }
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
@@ -3724,6 +3725,19 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Roon/Mistmeadow-style Oracle imports may split one activated blink
+    // ability across two lines; join it before the normal activation parser.
+    const splitBlink = /^((?:[^:]){1,120}):\s*Exile (another )?target (creature|permanent)\.?$/i.exec(line);
+    const blinkReturn = /^Return that card to the battlefield under its owner'?s control at the beginning of the next end step\.?$/i.test(body[lineIndex + 1]?.text ?? "");
+    if (splitBlink && blinkReturn) {
+      const joined = `${splitBlink[1]}: Exile ${splitBlink[2] ?? ""}target ${splitBlink[3]}. ${body[lineIndex + 1]!.text}`;
+      const activatedBlink = parseActivatedAbility(joined, activatedAbilities.length);
+      if (activatedBlink) {
+        activatedAbilities.push(activatedBlink);
+        lineIndex += 1;
+        continue;
+      }
+    }
     // Eternal Dragon-style graveyard activation (CR 602.1, 602.5).
     const graveyardReturn = /^((?:\{[^}]+\})+):\s*Return (?:~|this card) from your graveyard to your hand\.?/i.exec(line);
     const upkeepRestrictionOnNextLine = /^Activate only during your upkeep\.?$/i.test(body[lineIndex + 1]?.text ?? "");
