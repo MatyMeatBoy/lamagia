@@ -51,6 +51,23 @@ describe("smart counter response and safe mana undo", () => {
     expect(second.passedSeats).toEqual([0]);
     expect(projectGame(game, 0).passedSeats).toEqual([0]);
   });
+  it("projects stack spells as public targets and resolves the top object first", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ autoPass: false, hand: toHand(0, [BOLT()], "stack-bolt") }));
+    game = stage(game, 1, (player) => ({ autoPass: false, hand: toHand(1, [COUNTER()], "stack-counter") }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 1, [ISLAND(), ISLAND()]);
+    const boltCard = game.players[0]!.hand.find((card) => card.instance_id === "stack-bolt-0")!;
+    const bolt = { id: "stack-bolt", controller: 0 as SeatId, card: boltCard, label: boltCard.name, targets: [{ kind: "player", seat: 1 } as const], fromCommandZone: false, variableValue: 0, countered: false };
+    game = { ...game, step: "precombat-main", activeSeat: 1, prioritySeat: 1, priorityOpen: true, passedSeats: [], stack: [bolt] };
+    const counter = legalActions(game, 1).find((entry) => entry.action.type === "cast" && entry.cardId === "stack-counter-0")!;
+    expect(projectGame(game, 1).targetOptions.spell).toContainEqual({ kind: "spell", stackId: bolt.id });
+    game = applyAction(game, 1, { ...counter.action, targets: [{ kind: "spell", stackId: bolt.id }] } as Extract<import("./engine.js").GameAction, { type: "cast" }>);
+    expect(game.stack.map((object) => object.card.name)).toEqual(["Lightning Bolt", "Cancel Spell"]);
+    game = applyAction(game, 1, { type: "pass" });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.stack.at(-1)?.countered).toBe(true);
+  });
   it("projects every target kind for a multi-target modal action", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [FISSURE_VENT()], "multi-target") }));
