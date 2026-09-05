@@ -686,6 +686,8 @@ export type SpellEffect =
       readonly subtypes?: readonly string[];
       /** "a green creature card" (Natural Order): restricts by color, not just type/subtype. */
       readonly colors?: readonly string[];
+      /** "...card with mana value X or less" (Green Sun's Zenith): X is the spell's own paid {X}. */
+      readonly maxManaValue?: "X";
       readonly destination: "top" | "hand" | "graveyard" | "battlefield";
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
@@ -2201,6 +2203,22 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       ...(multi[3] ? { tapped: true } : {}),
       reveal: false,
       count
+    };
+  }
+  // "...card with mana value X or less, put it onto the battlefield, then
+  // shuffle" (Green Sun's Zenith, Chord of Calling): X is the spell's own
+  // paid {X}, read from the stack object at resolution.
+  const manaValueX = /^Search your library for (?:a |an )?(.+?) card with mana value X or less, put it onto the battlefield, then shuffle\.?$/i.exec(text);
+  if (manaValueX) {
+    const criterion = searchCriterion(manaValueX[1]!);
+    return {
+      kind: "search-library",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
+      maxManaValue: "X",
+      destination: "battlefield",
+      reveal: false
     };
   }
   if (!single) return null;

@@ -9776,6 +9776,37 @@ describe("Beast Within gives the destroyed permanent's own controller the token"
   });
 });
 
+describe("Green Sun's Zenith tutors a green creature within the paid X", () => {
+  const GREEN_SUNS_ZENITH = () => make({ name: "Green Sun's Zenith", type_line: "Sorcery", mana_cost: "{X}{G}", cmc: 0, oracle_text: "Search your library for a green creature card with mana value X or less, put it onto the battlefield, then shuffle. Shuffle Green Sun's Zenith into its owner's library." });
+  const CHEAP_GREEN_CREATURE = () => make({ name: "Test Cheap Sprout", type_line: "Creature — Plant", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1", colors: ["G"] });
+  const EXPENSIVE_GREEN_CREATURE = () => make({ name: "Test Expensive Titan", type_line: "Creature — Giant", mana_cost: "{4}{G}{G}", cmc: 6, power: "6", toughness: "6", colors: ["G"] });
+
+  it("recognizes the X-mana-value-restricted tutor", () => {
+    const profile = profileOf(GREEN_SUNS_ZENITH());
+    expect(profile.effects).toEqual([
+      { kind: "search-library", types: ["Creature"], colors: ["G"], maxManaValue: "X", destination: "battlefield", reveal: false },
+      { kind: "shuffle-self-into-library" }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("only offers a green creature within the paid X as the tutor target", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [GREEN_SUNS_ZENITH()]),
+      library: [...toHand(0, [EXPENSIVE_GREEN_CREATURE(), CHEAP_GREEN_CREATURE()], "library"), ...player.library]
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
+    expect(game.pendingChoice).toMatchObject({ type: "search-library", seat: 0 });
+    expect(() => applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Expensive Titan" })).toThrow();
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Cheap Sprout" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Cheap Sprout")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

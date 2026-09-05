@@ -3833,8 +3833,33 @@ and the detail a naive "give myself a token" implementation would get
 backwards. Validation: **704 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 10,053 global profiles.
 
-Prossh decklist status after this pass: **57 of 97 unique cards fully
-implemented (58.8%)**.
+**Green Sun's Zenith / Wargate** — "Search your library for a [green]
+creature/permanent card with mana value X or less, put it onto the
+battlefield, then shuffle." needed a genuinely new `search-library`
+restriction: the shared `single` regex requires a literal comma
+immediately after the word "card", but this text reads "...card with
+mana value X or less," — the comma lands after the whole clause, not
+right after "card" — so none of the existing branches matched at all.
+Added a dedicated regex branch, a new optional `maxManaValue?: "X"`
+field on the `search-library` effect, and a matching filter in the
+engine's resolution code reading the spell's own paid `{X}` straight
+off the stack object (`object.variableValue`) — the same value the
+untapped-`X`-counters and other X-reading primitives earlier this
+session already rely on. Verified **+2** in the export count (10,053 →
+10,055): Green Sun's Zenith and Wargate (a colorless, any-permanent
+sibling of the same template). Chord of Calling shares this exact
+search line but still needs Convoke — a wholly separate, unimplemented
+alternate-cost mechanic (paying part of a spell's cost by tapping
+creatures) — noted as a real boundary rather than pulled into scope
+here. Scenario-tested: casting Green Sun's Zenith for X=2 opens a
+tutor choice that rejects a green creature with mana value 6 (over
+budget, confirmed via a thrown error) but accepts one with mana value
+1, landing it on the battlefield. Validation: **711 rules tests**,
+`npm run check`, `npm run simulate:engine` 200/200, 10,055 global
+profiles.
+
+Prossh decklist status after this pass: **58 of 97 unique cards fully
+implemented (59.8%)**.
 
 ## Gameplay interaction baseline (2026-09-05)
 
