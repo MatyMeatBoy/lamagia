@@ -216,6 +216,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     enforced: "Se registra antes de que desaparezca la información necesaria del permanente.",
     path: "M21 12H7m0 0 4-4m-4 4 4 4M3 5v14"
   },
+  "permanent-sacrificed": {
+    label: "Al sacrificar un permanente",
+    rule: "Se dispara cuando sacrificas otro permanente que controlas.",
+    enforced: "Se registra después del sacrificio y conserva su última información relevante.",
+    path: "M12 3v18m-6-6 6 6 6-6M5 5h14"
+  },
   upkeep: {
     label: "En el mantenimiento",
     rule: "Se dispara al comenzar el paso de mantenimiento indicado.",

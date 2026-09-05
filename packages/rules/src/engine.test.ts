@@ -375,6 +375,11 @@ const GUTTERSNIPE = () => make({ name: "Guttersnipe", type_line: "Creature — G
 const FECUNDITY = () => make({ name: "Fecundity", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature dies, that creature's controller may draw a card." });
 const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "Enchantment", mana_cost: "{1}{R}{G}", cmc: 3, oracle_text: "Creatures you control have haste.\n{R}{G}, Sacrifice Fires of Yavimaya: Creatures you control get +2/+2 until end of turn." });
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
+const C13_FURNACE_CELEBRATION = () => make({
+  name: "Furnace Celebration", type_line: "Enchantment", mana_cost: "{1}{R}{R}", cmc: 3,
+  oracle_text: "Whenever you sacrifice another permanent, you may pay {2}. If you do, this enchantment deals 2 damage to any target.",
+  scryfall_id: "f48f7f79-fc49-4d1e-a84f-c630ba238e83", oracle_id: "af6d6844-c612-4731-86da-59a8fa02956b"
+});
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
 const C13_CONTESTED_CLIFFS = () => make({ name: "Contested Cliffs", type_line: "Land", oracle_text: "{T}: Add {C}.\n{R}{G}, {T}: Target Beast creature you control fights target creature an opponent controls.", produced_mana: ["C"], oracle_id: "b891a683-2ebc-4e9c-b402-5dd9c1b42b69" });
@@ -4906,6 +4911,37 @@ describe("casting", () => {
       targets: [{ kind: "player", seat: 1 }]
     });
     game = passUntil(game, (state) => state.stack.length === 0 && state.players[1]!.life === 39);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("reuses the sacrifice event for Furnace Celebration", () => {
+    const profile = profileOf(C13_FURNACE_CELEBRATION());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "permanent-sacrificed",
+      subject: "another-permanent-you-control-sacrificed",
+      optional: true,
+      payCost: { raw: "{2}" },
+      effect: { kind: "damage-any-target", amount: 2 },
+      targetKind: "any"
+    });
+    let game = readyToCast([], [C13_FURNACE_CELEBRATION(), GOBLIN_BOMBARDMENT(), BEAR(), MOUNTAIN(), MOUNTAIN()]);
+    const furnace = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Furnace Celebration")!;
+    const bombardment = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Bombardment")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: bombardment.instance_id, abilityIndex: 0,
+      sacrificeId: bear.instance_id, targets: [{ kind: "player", seat: 1 }]
+    });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(targetChoice.trigger.sourceCard.name).toBe("Furnace Celebration");
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "player", seat: 1 } });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(optional.sourceCard.name).toBe("Furnace Celebration");
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[1]!.life).toBe(37);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 

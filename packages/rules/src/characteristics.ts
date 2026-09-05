@@ -724,6 +724,7 @@ export type TriggerEvent =
   /** Modeled as precombat main beginning (CR 505.1a); this project has no "additional main phase" effects, so the two coincide for every card in scope. */
   | "first-main-phase"
   | "leaves-battlefield"
+  | "permanent-sacrificed"
   | "life-gained"
   | "life-lost"
   | "class-level-up";
@@ -740,6 +741,7 @@ export type TriggerSubject =
   | "creature-you-control"
   | "artifact-creature-you-control"
   | "another-permanent-you-control"
+  | "another-permanent-you-control-sacrificed"
   | "permanent-you-control"
   | "land-you-control"
   | "artifact-you-control"
@@ -774,6 +776,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "draw-step": "habilidad del paso de robo",
   "end-step": "habilidad del paso final",
   "leaves-battlefield": "habilidad de salida del campo de batalla",
+  "permanent-sacrificed": "habilidad de sacrificio",
   "life-gained": "life-gain trigger",
   "life-lost": "life-loss trigger",
   "class-level-up": "habilidad de nivel de Clase",
@@ -2402,6 +2405,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(that\s+creature[’']s\s+controller\s+may\s+.+)$/i },
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
   { event: "leaves-battlefield", subject: "self-or-another-creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "permanent-sacrificed", subject: "another-permanent-you-control-sacrificed", pattern: /^whenever\s+you\s+sacrifice\s+another\s+permanent,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-attacks-opponent", pattern: /^whenever\s+a\s+creature\s+attacks\s+one\s+of\s+your\s+opponents(?:\s+or\s+a\s+planeswalker\s+an\s+opponent\s+controls)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-attacks-enchanted-player", pattern: /^whenever\s+a\s+creature\s+attacks\s+enchanted\s+player,?\s*(.+)$/i },
@@ -3491,6 +3495,20 @@ function recognizeText(text: string): RecognizedText {
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
   const decreeJoined = decreeBody.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  // Furnace Celebration's payment gate spans two Oracle lines. Keep the
+  // sacrifice event and the optional damage payment in one reusable trigger
+  // definition so the normal CR 603.3d target/payment flow can resolve it.
+  const sacrificeDamage = /^Whenever you sacrifice another permanent, you may pay ((?:\{[^}]+\})+)\.\s*If you do, ~ deals (\d+) damage to any target\.?$/i.exec(joined);
+  if (sacrificeDamage) {
+    return {
+      effects: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true,
+      triggers: [{
+        event: "permanent-sacrificed", subject: "another-permanent-you-control-sacrificed",
+        effect: { kind: "damage-any-target", amount: Number(sacrificeDamage[2]) },
+        optional: true, ...(parseManaCost(sacrificeDamage[1]!) ? { payCost: parseManaCost(sacrificeDamage[1]!)! } : {}), targetKind: "any", sourceText: joined
+      }]
+    };
+  }
   const aethermagesTouch = parseAethermagesTouch(joined);
   if (aethermagesTouch) {
     return { effects: [aethermagesTouch], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
