@@ -311,6 +311,7 @@ const C13_ARMY_OF_THE_DAMNED = () => {
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
 };
 const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for up to two basic land cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", scryfall_id: "8b755881-a72d-4e21-a369-d2924eb4585a" });
+const C13_SKYWARD_EYE_PROPHETS = () => make({ name: "Skyward Eye Prophets", type_line: "Creature — Human Wizard", mana_cost: "{3}{G}{W}{U}", cmc: 6, power: "3", toughness: "3", oracle_text: "Vigilance\n{T}: Reveal the top card of your library. If it's a land card, put it onto the battlefield. Otherwise, put it into your hand.", scryfall_id: "056f9887-3ab0-486a-b859-5999d39f9ec2", oracle_id: "45bef776-121b-4489-9c46-f7b4fd4c3c0d" });
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice Armillary Sphere: Search your library for up to two basic land cards, reveal those cards, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
@@ -5340,6 +5341,26 @@ describe("activated abilities", () => {
     // The pool is emptied when the step ends (rule 500.4), never before.
     // A mana ability never uses the stack (rule 605.3a).
     expect(game.stack).toHaveLength(0);
+  });
+
+  it("reuses top-card land-or-hand selection for Skyward Eye Prophets", () => {
+    const profile = profileOf(C13_SKYWARD_EYE_PROPHETS());
+    expect(profile).toMatchObject({ fullyImplemented: true, activatedAbilities: [{ requiresTap: true, effect: { kind: "reveal-top-card-land-or-hand" } }] });
+    let game = readyOnBoard([C13_SKYWARD_EYE_PROPHETS()], { hold: true });
+    game = stage(game, 0, (player) => ({ library: toHand(0, [ISLAND()], "prophets-land") }));
+    const source = permanentNamed(game, 0, "Skyward Eye Prophets")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Island")).toBe(true);
+
+    game = readyOnBoard([C13_SKYWARD_EYE_PROPHETS()], { hold: true });
+    game = stage(game, 0, (player) => ({ library: toHand(0, [BEAR()], "prophets-spell") }));
+    const second = permanentNamed(game, 0, "Skyward Eye Prophets")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: second.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
   it("recognises the fetch land cost and refuses it while the land is tapped", () => {

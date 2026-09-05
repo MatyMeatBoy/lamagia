@@ -3373,6 +3373,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (isLand(profile)) return putOntoBattlefield(next, controller, card, false);
       return applyEffect(next, object, { kind: "gain-life", amount: effect.fallbackLife });
     }
+    case "reveal-top-card-land-or-hand": {
+      const player = playerAt(state, controller);
+      const card = player.library[0];
+      if (!card) return logged(state, controller, `${player.name} revela la biblioteca vacía.`);
+      let next = withPlayer(state, controller, (current) => ({ ...current, library: current.library.slice(1) }));
+      next = logged(next, controller, `${player.name} revela ${card.name}.`);
+      if (isLand(cardProfile(card))) return putOntoBattlefield(next, controller, card, false);
+      return withPlayer(next, controller, (current) => ({ ...current, hand: [...current.hand, card] }));
+    }
     case "reveal-top-card-to-hand-and-gain-mana-value": {
       const player = playerAt(state, controller);
       const card = player.library[0];

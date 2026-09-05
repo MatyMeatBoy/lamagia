@@ -535,6 +535,8 @@ export type SpellEffect =
   /** Reveals until a card type is found, then sends the rest to a zone. */
   | { readonly kind: "reveal-until-type-to-hand"; readonly type: CardType; readonly restDestination: "graveyard" }
   | { readonly kind: "reveal-top-card-conditional"; readonly creatureToken: TokenDefinition; readonly landDestination: "battlefield"; readonly fallbackLife: number }
+  /** Reveals the top card and sends lands to the battlefield, other cards to hand. */
+  | { readonly kind: "reveal-top-card-land-or-hand" }
   | {
       readonly kind: "search-library";
       readonly types: readonly CardType[];
@@ -1725,6 +1727,12 @@ function parseRevealTopCardConditional(text: string): SpellEffect | null {
   };
 }
 
+function parseRevealTopCardLandOrHand(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!/^Reveal the top card of your library\. If it's a land card, put it onto the battlefield\. Otherwise, put it into your hand\.?$/i.test(normalized)) return null;
+  return { kind: "reveal-top-card-land-or-hand" };
+}
+
 function parseRevealTopCardToHandAndGainManaValue(text: string): SpellEffect | null {
   const normalized = text.replace(/\s+/g, " ").trim();
   if (!/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value\.?$/i.test(normalized)) return null;
@@ -2760,6 +2768,15 @@ function recognizeText(text: string): RecognizedText {
         triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
       };
     }
+  }
+  const revealTopLandOrHand = parseRevealTopCardLandOrHand(joined.replace(/^vigilance\s+/i, "").replace(/^\{T\}:\s*/i, ""));
+  if (revealTopLandOrHand) {
+    return {
+      effects: [],
+      triggers: [],
+      activatedAbilities: [{ index: 0, requiresTap: true, sacrificesSelf: false, lifeCost: 0, manaCost: null, effect: revealTopLandOrHand, targetKind: "none", text: joined }],
+      modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
   }
 
   const effects: SpellEffect[] = [];
