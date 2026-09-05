@@ -581,8 +581,10 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
   return allPermanents(state)
     .filter((source) => source.controller === permanent.controller)
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants
-      .filter((grant) => grant.scope === "creatures-you-control"
-        || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))
+      .filter((grant) => grant.scope === "self"
+        ? source.instance_id === permanent.instance_id && playerAt(state, permanent.controller).life >= (grant.threshold ?? 0)
+        : grant.scope === "creatures-you-control"
+          || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))
       .map((grant) => ({ source, grant })))
     .filter(({ grant }) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, { grant }) => ({ power: total.power + grant.power, toughness: total.toughness + grant.toughness }), { power: 0, toughness: 0 });
