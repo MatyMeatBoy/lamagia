@@ -12,6 +12,7 @@ feature name.
 | `c13-until-end-turn-creatures` | `codex/local-c13` | Sudden Spoiling: remove abilities and set target player's creatures to base 0/2 until end of turn | active |
 | `global-opponent-life-gain-prevention` | `codex/c13-darksteel-mutation` | Reusable static prevention scope for `Your opponents can't gain life`, including Tibalt, Rakish Instigator (CR 614.12, 101.2) | active |
 | `global-attack-power-threshold` | `codex/c13-darksteel-mutation` | Reusable attack trigger condition for `if/while you control a creature with power N or greater`, including Ruby, Daring Tracker (CR 603.2, 603.4) | active |
+| `global-countered-spell-library-placement` | `codex/c13-darksteel-mutation` | Reusable counterspell replacement choice to put the countered spell on top or bottom of its owner's library, including Hinder (CR 701.18, 608.2b) | active |
 | `c13-linked-exile-return` | `codex/c13-aura-granted-activation-7bd` | Fiend Hunter-style ETB exile of another nontoken creature with a linked leaves-the-battlefield return under its owner's control (CR 603.6c, 400.7) | active |
 | `global-affinity-artifacts` | `feat/activated-abilities-and-triggers` | Reusable Affinity for artifacts cost reduction for artifact spells and affected cards (CR 702.41, 118.9) | active |
 | `c13-aura-control-static` | `codex/c13-aura-granted-activation-7bd` | Reusable static Aura control primitive for `You control enchanted creature/land/permanent` (CR 303.4, 611.3, 613.7) | active |
