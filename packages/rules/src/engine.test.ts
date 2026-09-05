@@ -227,6 +227,7 @@ const CREATURE_DRAW = () => make({ name: "Creature Insight", type_line: "Sorcery
 const GLOBAL_FEAR = () => make({ name: "Global Fear", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain menace until end of turn." });
 const GLOBAL_REAL_FEAR = () => make({ name: "Global Real Fear", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn." });
 const LIFE_LOCK = () => make({ name: "Life Lock", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Players can't gain life." });
+const OPPONENT_LIFE_LOCK = () => make({ name: "Opponent Life Lock", type_line: "Enchantment", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Your opponents can't gain life." });
 const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment", mana_cost: "{3}", cmc: 3, oracle_text: "You have no maximum hand size." });
 const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other creatures you control get +1/+1." });
 const C13_DIVINITY_OF_PRIDE = () => make({ name: "Divinity of Pride", type_line: "Creature — Spirit Avatar", mana_cost: "{3}{W}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature gets +4/+4 as long as you have 25 or more life.", scryfall_id: "2c91c236-34d7-4454-a55a-784db7f68bde" });
@@ -3853,6 +3854,22 @@ describe("casting", () => {
     const before = game.players[0]!.life;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[0]!.life).toBe(before);
+  });
+
+  it("prevents only opponents from gaining life and preserves the controller's gain", () => {
+    // CR 614.12 / 101.2: a static prevention effect applies only to the
+    // affected opponents; it does not prevent its controller from gaining life.
+    const lock = OPPONENT_LIFE_LOCK();
+    expect(profileOf(lock)).toMatchObject({ preventsOpponentLifeGain: true, preventsLifeGain: false, fullyImplemented: true });
+    let game = readyToCast([TARGET_LIFE_SPELL()], [lock, FOREST()]);
+    const opponentBefore = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.life).toBe(opponentBefore);
+
+    game = readyToCast([LIFE_SPELL()], [lock, FOREST()]);
+    const controllerBefore = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.life).toBe(controllerBefore + 1);
   });
 
   it("skips cleanup discards for a player with no maximum hand size", () => {

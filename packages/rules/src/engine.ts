@@ -2331,8 +2331,11 @@ function discardCards(state: GameState, seat: SeatId, cards: readonly GameCard[]
   return cards.reduce((acc, card) => discardCard(acc, seat, card), state);
 }
 
-function playersCantGainLife(state: GameState): boolean {
-  return allPermanents(state).some((permanent) => cardProfile(permanent.card).preventsLifeGain);
+function playerCantGainLife(state: GameState, seat: SeatId): boolean {
+  return allPermanents(state).some((permanent) => {
+    const profile = cardProfile(permanent.card);
+    return profile.preventsLifeGain || (profile.preventsOpponentLifeGain && permanent.controller !== seat);
+  });
 }
 
 function playerHasNoMaximumHandSize(state: GameState, seat: SeatId): boolean {
@@ -2839,26 +2842,26 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return next;
     }
     case "gain-life": {
-      if (playersCantGainLife(state)) return state;
+      if (playerCantGainLife(state, controller)) return state;
       const amount = effectAmount(effect.amount, object);
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
     case "gain-life-event-controller": {
-      if (playersCantGainLife(state)) return state;
       const targetController = object.targetController ?? object.trigger?.eventController ?? controller;
+      if (playerCantGainLife(state, targetController)) return state;
       const amount = effect.amount;
       const next = withPlayer(state, targetController, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: targetController, amount }), targetController, `${playerAt(next, targetController).name} gana ${amount} vidas.`);
     }
     case "gain-life-equal-sacrificed-toughness": {
-      if (playersCantGainLife(state)) return state;
+      if (playerCantGainLife(state, controller)) return state;
       const amount = Math.max(0, object.variableValue);
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
     case "gain-life-each-controlled-type": {
-      if (playersCantGainLife(state)) return state;
+      if (playerCantGainLife(state, controller)) return state;
       const amount = allPermanents(state).filter((permanent) => permanent.controller === controller
         && cardProfile(permanent.card).types.includes(effect.type)).length * effect.amount;
       if (amount === 0) return state;
@@ -2866,7 +2869,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
     case "gain-life-each-subtype": {
-      if (playersCantGainLife(state)) return state;
+      if (playerCantGainLife(state, controller)) return state;
       const amount = allPermanents(state).filter((permanent) =>
         cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length * effect.amount;
       if (amount === 0) return state;
@@ -2883,7 +2886,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const x = Math.max(0, powerOf(victim, state));
       let next = movePermanentToZone(state, victim, "graveyard");
       if (x > 0) {
-        if (!playersCantGainLife(next)) {
+        if (!playerCantGainLife(next, controller)) {
           next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + x }));
           next = raiseEvent(next, { kind: "life-gained", seat: controller, amount: x });
         }
@@ -2965,7 +2968,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
       if (amount <= 0) return state;
       let next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
-      if (!playersCantGainLife(next)) {
+      if (!playerCantGainLife(next, controller)) {
         next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + amount }));
         next = raiseEvent(next, { kind: "life-gained", seat: controller, amount });
       }
@@ -2996,7 +2999,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
       }));
       next = withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: [...player.library, permanent.card] }));
-      if (toughness > 0 && !playersCantGainLife(next)) {
+      if (toughness > 0 && !playerCantGainLife(next, permanent.controller)) {
         next = withPlayer(next, permanent.controller, (player) => ({ ...player, life: player.life + toughness }));
         next = raiseEvent(next, { kind: "life-gained", seat: permanent.controller, amount: toughness });
       }
@@ -3016,28 +3019,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         next = loseLife(next, player.seat, devotion);
         lost += devotion;
       }
-      if (lost > 0 && !playersCantGainLife(next)) {
+      if (lost > 0 && !playerCantGainLife(next, controller)) {
         next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + lost }));
         next = raiseEvent(next, { kind: "life-gained", seat: controller, amount: lost });
       }
       return logged(next, controller, `${sourceName}: devoción ${devotion}; cada oponente pierde ${devotion} vidas.`);
     }
     case "gain-life-each-permanent": {
-      if (playersCantGainLife(state)) return state;
+      if (playerCantGainLife(state, controller)) return state;
       const amount = playerAt(state, controller).battlefield.length * effect.amount;
       if (amount === 0) return state;
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
     case "gain-life-each-creature-you-control": {
-      if (playersCantGainLife(state)) return state;
+      if (playerCantGainLife(state, controller)) return state;
       const amount = playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length * effect.amount;
       if (amount === 0) return state;
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
     case "gain-life-equal-target-power": {
-      if (playersCantGainLife(state)) return state;
+      if (playerCantGainLife(state, controller)) return state;
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const creature = findPermanent(state, target.instanceId);
@@ -3054,7 +3057,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "gain-life-target-player": {
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
-      if (playersCantGainLife(state)) return state;
+      if (playerCantGainLife(state, target.seat)) return state;
       const amount = effectAmount(effect.amount, object);
       const next = withPlayer(state, target.seat, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: target.seat, amount }), controller, `${playerAt(next, target.seat).name} gana ${amount} vidas.`);
@@ -3133,11 +3136,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return logged(next, target.seat, `${playerAt(next, target.seat).name} sacrifica a ${victim.card.name}.`);
     }
     case "each-player-gains-life": {
-      if (playersCantGainLife(state)) return state;
       let next = state;
       const amount = effectAmount(effect.amount, object);
       for (const player of state.players) {
         if (player.lost) continue;
+        if (playerCantGainLife(next, player.seat)) continue;
         next = withPlayer(next, player.seat, (current) => ({ ...current, life: current.life + amount }));
         next = raiseEvent(next, { kind: "life-gained", seat: player.seat, amount });
       }
@@ -3882,7 +3885,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const gain = powerOf(permanent, state);
       const beneficiary = permanent.controller;
       let next = movePermanentToZone(state, permanent, "exile");
-      if (gain > 0 && !playersCantGainLife(next)) {
+      if (gain > 0 && !playerCantGainLife(next, beneficiary)) {
         next = withPlayer(next, beneficiary, (player) => ({ ...player, life: player.life + gain }));
         next = raiseEvent(next, { kind: "life-gained", seat: beneficiary, amount: gain });
       }
@@ -4268,7 +4271,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         hand: [...current.hand, card],
         graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
       }));
-      if (playersCantGainLife(next)) return next;
+      if (playerCantGainLife(next, object.controller)) return next;
       const amount = cardProfile(card).manaValue;
       next = withPlayer(next, object.controller, (current) => ({ ...current, life: current.life + amount }));
       return raiseEvent(next, { kind: "life-gained", seat: object.controller, amount });
@@ -4874,7 +4877,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       next = logged(next, controller, `${player.name} revela ${card.name} y la pone en su mano.`);
       const amount = cardProfile(card).manaValue;
-      if (amount <= 0 || playersCantGainLife(next)) return next;
+      if (amount <= 0 || playerCantGainLife(next, controller)) return next;
       next = withPlayer(next, controller, (current) => ({ ...current, life: current.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller,
         `${playerAt(next, controller).name} gana ${amount} vidas.`);
@@ -5884,6 +5887,7 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
     }
   }
   for (const gain of batch.lifelink) {
+    if (playerCantGainLife(next, gain.seat)) continue;
     next = withPlayer(next, gain.seat, (player) => ({ ...player, life: player.life + gain.amount }));
     next = raiseEvent(next, { kind: "life-gained", seat: gain.seat, amount: gain.amount });
     next = logged(next, gain.seat, `${playerAt(next, gain.seat).name} gana ${gain.amount} vidas por vínculo vital.`);

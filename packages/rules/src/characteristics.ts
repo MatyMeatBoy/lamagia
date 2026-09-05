@@ -988,6 +988,8 @@ export interface CardProfile {
   readonly untapColorsDuringOtherPlayersUntap: readonly string[];
   readonly triggerDoublers: readonly TriggerDoubler[];
   readonly preventsLifeGain: boolean;
+  /** Static prevention of life gain by this permanent's opponents (CR 614.12). */
+  readonly preventsOpponentLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
   readonly noMaximumHandSizeForAllPlayers: boolean;
   readonly locksOpponentsOnYourTurn: boolean;
@@ -4170,6 +4172,7 @@ function recognizeText(text: string): RecognizedText {
     if (parseTriggerDoubler(line)) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
+    if (/^your opponents can't gain life\.?$/i.test(line)) continue;
     if (/^creature spells you control with power \d+ or greater can't be countered\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     if (/^players have no maximum hand size\.?$/i.test(line)) continue;
@@ -4823,6 +4826,7 @@ export function cardProfile(card: CardData): CardProfile {
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
   const triggerDoublers = parseTriggerDoublers(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
+  const preventsOpponentLifeGain = text.split("\n").some((line) => /^your opponents can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const noMaximumHandSizeForAllPlayers = text.split("\n").some((line) => /^players have no maximum hand size\.?$/i.test(line.trim()));
   const locksOpponentsOnYourTurn = /during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?/i.test(text);
@@ -4932,6 +4936,7 @@ export function cardProfile(card: CardData): CardProfile {
     untapColorsDuringOtherPlayersUntap,
     triggerDoublers,
     preventsLifeGain,
+    preventsOpponentLifeGain,
     noMaximumHandSize,
     noMaximumHandSizeForAllPlayers,
     locksOpponentsOnYourTurn,

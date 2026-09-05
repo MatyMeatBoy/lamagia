@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,090** · cobertura: **30.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,096** · cobertura: **30.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -122,7 +122,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 194 | 148 | 56.7% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 123 | 168 | 42.3% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 597 | 2092 | 22.2% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 598 | 2091 | 22.2% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
@@ -435,8 +435,8 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 | 2019-02-15 | RNA Guild Kit (`GK2`) | boxed-products | rna-guild-kit | other | 128 | 41 | 87 | 32.0% |
 | 2019-02-16 | RNA Ravnica Weekend (`PRW2`) | promos | rna-ravnica-weekend | other | 5 | 5 | 0 | 100.0% |
 | 2019-04-10 | Judge Gift Cards 2019 (`J19`) | promos | judge-2019 | other | 8 | 1 | 7 | 12.5% |
-| 2019-05-03 | War of the Spark (`WAR`) | expansion | 2010s | main | 266 | 66 | 200 | 24.8% |
-| 2019-05-03 | War of the Spark Promos (`PWAR`) | promos | war-of-the-spark | other | 92 | 7 | 85 | 7.6% |
+| 2019-05-03 | War of the Spark (`WAR`) | expansion | 2010s | main | 266 | 67 | 199 | 25.2% |
+| 2019-05-03 | War of the Spark Promos (`PWAR`) | promos | war-of-the-spark | other | 92 | 8 | 84 | 8.7% |
 | 2019-06-14 | Modern Horizons (`MH1`) | supplemental | modern-horizons | other | 255 | 75 | 180 | 29.4% |
 | 2019-06-14 | Modern Horizons Promos (`PMH1`) | promos | modern-horizons | other | 2 | 0 | 2 | 0.0% |
 | 2019-06-28 | Signature Spellbook: Gideon (`SS2`) | spellbooks | 2010s | other | 8 | 1 | 7 | 12.5% |
@@ -451,10 +451,10 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 13 | 107 | 10.8% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1585 | 3636 | 30.4% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1586 | 3635 | 30.4% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 13 | 7 | 65.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 419 | 1277 | 24.7% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 420 | 1276 | 24.8% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 62 | 211 | 22.7% |
@@ -537,7 +537,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 | 2022-08-01 | Summer Vacation Promos 2022 (`PSVC`) | promos | summer-vacation-2022 | other | 3 | 2 | 1 | 66.7% |
 | 2022-09-02 | 30th Anniversary Misc Promos (`P30M`) | promos | 30th-anniversary-misc | other | 3 | 2 | 1 | 66.7% |
 | 2022-09-02 | 30th Anniversary Play Promos (`P30A`) | promos | 30th-anniversary-play | other | 30 | 14 | 16 | 46.7% |
-| 2022-09-09 | Dominaria United (`DMU`) | expansion | dominaria | main | 288 | 78 | 210 | 27.1% |
+| 2022-09-09 | Dominaria United (`DMU`) | expansion | dominaria | main | 288 | 79 | 209 | 27.4% |
 | 2022-09-09 | Dominaria United Commander (`DMC`) | commander | 2022 | commander | 192 | 71 | 121 | 37.0% |
 | 2022-09-09 | Dominaria United Promos (`PDMU`) | promos | dominaria-united | other | 81 | 12 | 69 | 14.8% |
 | 2022-10-01 | Regional Championship Qualifiers 2022 (`PRCQ`) | promos | regional-2022 | other | 3 | 1 | 2 | 33.3% |
@@ -794,13 +794,13 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 | eternal | 2020s | 6 | 537 | 143 | 394 | 26.6% |
 | expansion | 1990s | 11 | 1573 | 373 | 1200 | 23.7% |
 | expansion | 2000s | 19 | 3082 | 698 | 2384 | 22.6% |
-| expansion | 2010s | 14 | 2735 | 733 | 2002 | 26.8% |
+| expansion | 2010s | 14 | 2735 | 734 | 2001 | 26.8% |
 | expansion | 2020s | 17 | 3738 | 640 | 3098 | 17.1% |
 | expansion | alara | 2 | 379 | 154 | 225 | 40.6% |
 | expansion | amonkhet | 1 | 272 | 100 | 172 | 36.8% |
 | expansion | bloomburrow | 1 | 280 | 43 | 237 | 15.4% |
 | expansion | capenna | 1 | 310 | 51 | 259 | 16.5% |
-| expansion | dominaria | 2 | 553 | 162 | 391 | 29.3% |
+| expansion | dominaria | 2 | 553 | 163 | 390 | 29.5% |
 | expansion | eldraine | 2 | 567 | 126 | 441 | 22.2% |
 | expansion | ice-age | 1 | 373 | 76 | 297 | 20.4% |
 | expansion | innistrad | 4 | 1103 | 259 | 844 | 23.5% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 | masters-remastered | shadows-of-the-past | 1 | 76 | 28 | 48 | 36.8% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 57 | 227 | 20.1% |
 | masters-remastered | tempest-remastered | 1 | 254 | 101 | 153 | 39.8% |
-| masters-remastered | the-list | 1 | 5221 | 1585 | 3636 | 30.4% |
+| masters-remastered | the-list | 1 | 5221 | 1586 | 3635 | 30.4% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 111 | 302 | 26.9% |
 | masters-remastered | ultimate-masters | 1 | 254 | 87 | 167 | 34.3% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -1072,7 +1072,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 | promos | magic-2013 | 1 | 6 | 3 | 3 | 50.0% |
 | promos | magic-2014 | 1 | 6 | 1 | 5 | 16.7% |
 | promos | magic-2015 | 1 | 13 | 2 | 11 | 15.4% |
-| promos | magic-online | 1 | 2689 | 597 | 2092 | 22.2% |
+| promos | magic-online | 1 | 2689 | 598 | 2091 | 22.2% |
 | promos | magic-origins | 1 | 43 | 7 | 36 | 16.3% |
 | promos | magic-premiere-shop-2005 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | magic-premiere-shop-2006 | 1 | 5 | 5 | 0 | 100.0% |
@@ -1172,7 +1172,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 | promos | urza-s-destiny | 1 | 1 | 0 | 1 | 0.0% |
 | promos | urza-s-legacy | 1 | 1 | 0 | 1 | 0.0% |
 | promos | urza-s-saga | 1 | 1 | 1 | 0 | 100.0% |
-| promos | war-of-the-spark | 1 | 92 | 7 | 85 | 7.6% |
+| promos | war-of-the-spark | 1 | 92 | 8 | 84 | 8.7% |
 | promos | wilds-of-eldraine | 1 | 80 | 5 | 75 | 6.2% |
 | promos | wizards-of-the-coast-online-store | 1 | 1 | 1 | 0 | 100.0% |
 | promos | world-magic-cup-qualifiers | 1 | 5 | 1 | 4 | 20.0% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 10 | 74 | 11.9% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 14 | 44 | 24.1% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 419 | 1277 | 24.7% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 420 | 1276 | 24.8% |
 | secret-lair | secret-lair-promo | 1 | 52 | 16 | 36 | 30.8% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -10893,7 +10893,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 - [ ] Thundering Raiju — `3d713c11-36a7-4b19-8c42-a9b61ef5902c`
 - [ ] Tiamat — `f00e4df1-13fb-4514-8abb-92954068689a`
 - [ ] Tibalt's Trickery — `6623cb85-fb1e-4561-8b21-0977c25096c2`
-- [ ] Tibalt, Rakish Instigator — `0b768f8f-2213-45b9-bced-8fb1bbb441c3`
 - [ ] Tidehollow Sculler — `51b55057-8b14-4277-894b-4813b4f7eb39`
 - [ ] Time Spiral — `cac55e46-b730-4569-b92c-a4b5922fc20c`
 - [ ] Time Walk — `d0209d3f-3f7e-4fd5-bce5-10bce6f29c86`
@@ -29193,7 +29192,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 - [ ] The Wanderer — `4c2196e5-6ed7-4cd2-b8e7-f01aff236569`
 - [ ] Thunder Drake — `a0956c3d-d382-486a-81f1-9aa5cf49b2ab`
 - [ ] Thundering Ceratok — `b7a3a8a9-96ca-48f7-8354-345d9ccfcb77`
-- [ ] Tibalt, Rakish Instigator — `0b768f8f-2213-45b9-bced-8fb1bbb441c3`
 - [ ] Time Wipe — `36c78a5f-0148-4596-a346-f8e35037b694`
 - [ ] Toll of the Invasion — `3a7c2e32-8585-4f7f-8635-199e3c6cd8a9`
 - [ ] Tolsimir, Friend to Wolves — `3cef501b-5ce1-4699-89a5-3949f7e65bf1`
@@ -29294,7 +29292,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 - [ ] Teyo, the Shieldmage — `cda93cf5-da51-4117-b461-f4448aa2d16c`
 - [ ] The Elderspell — `eff0a1ad-ecc6-416f-a4ae-96b26cd8a905`
 - [ ] The Wanderer — `4c2196e5-6ed7-4cd2-b8e7-f01aff236569`
-- [ ] Tibalt, Rakish Instigator — `0b768f8f-2213-45b9-bced-8fb1bbb441c3`
 - [ ] Time Wipe — `36c78a5f-0148-4596-a346-f8e35037b694`
 - [ ] Tolsimir, Friend to Wolves — `3cef501b-5ce1-4699-89a5-3949f7e65bf1`
 - [ ] Tomik, Distinguished Advokist — `9895a33f-9bbd-4440-8c1a-0d401431b77f`
@@ -33656,7 +33653,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 - [ ] Thunderwave — `43de944b-e630-45f0-bce4-c66803e8b5c1`
 - [ ] Tiamat — `f00e4df1-13fb-4514-8abb-92954068689a`
 - [ ] Tiamat's Fanatics — `6eef7583-0716-49b5-b70e-8feb0e7c99fb`
-- [ ] Tibalt, Rakish Instigator — `0b768f8f-2213-45b9-bced-8fb1bbb441c3`
 - [ ] Tidal Warrior — `9a1bc869-08a1-4a70-9c9f-2e02e47cd95b`
 - [ ] Tide Skimmer — `8d83dfb3-5662-4109-b465-bf5f257e58a5`
 - [ ] Time of Ice — `93e0fd89-8a0d-4d97-aa22-aafe83d53515`
@@ -35221,7 +35217,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 - [ ] Throne of the God-Pharaoh — `ea750169-1f6f-40c2-96e9-55719e103a63`
 - [ ] Tiamat — `f00e4df1-13fb-4514-8abb-92954068689a`
 - [ ] Tibalt's Trickery — `6623cb85-fb1e-4561-8b21-0977c25096c2`
-- [ ] Tibalt, Rakish Instigator — `0b768f8f-2213-45b9-bced-8fb1bbb441c3`
 - [ ] Tibalt, the Fiend-Blooded — `ee9c57c6-41ef-4328-8417-e5a433eadf17`
 - [ ] Tidal Barracuda — `edfc0a46-414e-467d-9f27-e42d08ec127a`
 - [ ] Time Reversal — `9a63f6fc-dcf8-4529-a598-ca3d511f29e2`
@@ -44381,7 +44376,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,09
 - [ ] Keldon Strike Team — `6465f93d-e6bf-4a7b-86f3-5a2376f8b127`
 - [ ] King Darien XLVIII — `e923d956-b036-4789-9311-4763a71fcbf8`
 - [ ] Knight of Dawn's Light — `801e55c7-f8a1-4a90-81cb-3ad7022290ba`
-- [ ] Knight of Dusk's Shadow — `815ae30f-f455-4795-96eb-4bcc41d415e8`
 - [ ] Lagomos, Hand of Hatred — `12c98c1e-7e02-473d-b494-ad8a0731fe82`
 - [ ] Leyline Binding — `b49642f6-20bd-468d-9dac-e578f9ac3091`
 - [ ] Liliana of the Veil — `0ba134d8-ee7d-48ec-8dc6-57942b8e9261`

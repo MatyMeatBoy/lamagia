@@ -6,9 +6,9 @@ Before editing, claim the shared template, reuse the listed fields/handlers, add
 
 - Scope: **catalog**
 - One-line cards: **15,151**
-- Cards with a reusable existing primitive hint: **11,442**
-- Cards needing new primitive review: **3,709**
-- Templates: **11,990**
+- Cards with a reusable existing primitive hint: **11,441**
+- Cards needing new primitive review: **3,710**
+- Templates: **11,991**
 
 ## Worker rule
 
@@ -54,7 +54,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Harald, King of Skemfar | `0089b07c-7f47-4a9a-9fb7-cc38ec9d7bcd` | library-look | trigger / ETB | When ~ enters, look at the top five cards of your library. You may reveal an Elf, Warrior, or Tyvar card from among them and put it into your hand. Put the rest on the bottom of your library in a random order. |
 | needs-new-primitive | Mystical Dispute | `48390b8d-db41-48a5-9bac-316660ab7252` | activated | new primitive review | ~ costs {2} less to cast if it targets a blue spell. |
 | reuse-existing | Fae of Wishes // Granted | `c0abbed2-d213-47ef-8d6c-4a21efb9a55f` | discard | draw / discard | {1}{U}, Discard two cards: Return ~ to its owner's hand. |
-| reuse-existing | Tibalt, Rakish Instigator | `0b768f8f-2213-45b9-bced-8fb1bbb441c3` | gain-life | damage / life | Your opponents can't gain life. |
 | reuse-existing | Jiang Yanggu, Wildcrafter | `04f2c320-dfcc-440a-9e24-3c2083d74e7c` | counters | activated ability / mana | Each creature you control with a +1/+1 counter on it has "{T}: Add one mana of any color." |
 | needs-new-primitive | Kaya, Bane of the Dead | `29d58aa4-9a7e-4052-9b0d-fc282f1be40e` | activated | new primitive review | Your opponents and permanents your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof. |
 | reuse-existing | Ajani, the Greathearted | `f5d9be71-91d0-4166-ba58-cbbf5d490c40` | counters | counter | −2: Put a +1/+1 counter on each creature you control and a loyalty counter on each other planeswalker you control. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Undead Augur | `c26887e1-27f4-4550-921b-53460e43c079` | draw | damage / life | Whenever ~ or another Zombie you control dies, you draw a card and you lose 1 life. |
 | needs-new-primitive | Timeless Dragon | `a5ae93e9-0385-47fd-9d8f-306e9a6b7fe6` | activated | new primitive review | Eternalize {2}{W}{W} |
 | reuse-existing | Champion of the Perished | `f3654fbd-16a5-4953-84ac-534e8421032f` | counters | trigger / ETB | Whenever another Zombie you control enters, put a +1/+1 counter on ~. |
+| reuse-existing | Cultivator Colossus | `4d8505d3-c8a1-4850-95d4-5ddb8ad49770` | draw | trigger / ETB | When ~ enters, you may put a land card from your hand onto the battlefield tapped. If you do, draw a card and repeat this process. |
 
 The JSON contains the remaining 14,651 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
