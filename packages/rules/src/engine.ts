@@ -250,6 +250,7 @@ export type GameEvent =
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard }
+  | { readonly kind: "card-discarded"; readonly seat: SeatId; readonly card: GameCard }
   | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
 
@@ -1261,7 +1262,7 @@ function triggerMatches(
       && event.card.instance_id === watcher.instanceId;
   }
 
-  if (event.kind === "card-drawn") {
+  if (event.kind === "card-drawn" || event.kind === "card-discarded") {
     if (definition.subject === "each-player") return true;
     return definition.subject === "opponent" && event.seat !== watcher.controller;
   }
@@ -1319,6 +1320,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
     case "card-cycled": return `${playerAt(state, event.controller).name} cicla ${event.card.name}`;
     case "card-drawn": return `${playerAt(state, event.seat).name} roba una carta`;
+    case "card-discarded": return `${playerAt(state, event.seat).name} descarta una carta`;
     case "life-gained": return `${playerAt(state, event.seat).name} gana ${event.amount} vidas`;
     case "life-lost": return `${playerAt(state, event.seat).name} pierde ${event.amount} vidas`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
@@ -1480,6 +1482,19 @@ function loseLife(state: GameState, seat: SeatId, amount: number): GameState {
   if (amount <= 0) return state;
   const next = withPlayer(state, seat, (player) => ({ ...player, life: player.life - amount }));
   return raiseEvent(next, { kind: "life-lost", seat, amount });
+}
+
+function discardCard(state: GameState, seat: SeatId, card: GameCard): GameState {
+  const next = withPlayer(state, seat, (player) => ({
+    ...player,
+    hand: player.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
+    graveyard: [...player.graveyard, card]
+  }));
+  return raiseEvent(next, { kind: "card-discarded", seat, card });
+}
+
+function discardCards(state: GameState, seat: SeatId, cards: readonly GameCard[]): GameState {
+  return cards.reduce((acc, card) => discardCard(acc, seat, card), state);
 }
 
 function playersCantGainLife(state: GameState): boolean {
@@ -1861,11 +1876,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         if (!hand.length) continue;
         // Deterministic: give up the highest mana value card.
         const card = [...hand].sort((a, b) => cardProfile(b).manaValue - cardProfile(a).manaValue)[0]!;
-        next = withPlayer(next, player.seat, (current) => ({
-          ...current,
-          hand: current.hand.filter((c) => c.instance_id !== card.instance_id),
-          graveyard: [...current.graveyard, card]
-        }));
+        next = discardCard(next, player.seat, card);
         discarded += 1;
       }
       if (discarded > 0) next = drawCards(next, controller, discarded);
@@ -2150,7 +2161,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (const player of state.players) {
         const hand = playerAt(next, player.seat).hand;
-        next = withPlayer(next, player.seat, (current) => ({ ...current, hand: [], graveyard: [...current.graveyard, ...hand] }));
+        next = discardCards(next, player.seat, hand);
         next = drawCards(next, player.seat, effect.amount);
       }
       return next;
@@ -2406,7 +2417,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target?.kind !== "player") return state;
       const hand = playerAt(state, target.seat).hand;
       if (!hand.length) return state;
-      return withPlayer(state, target.seat, (player) => ({ ...player, hand: [], graveyard: [...player.graveyard, ...hand] }));
+      return discardCards(state, target.seat, hand);
     }
     case "modify-and-grant-target-creature": {
       const target = object.targets[0];
@@ -4255,12 +4266,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         // Deterministic discard: the most expensive cards go first.
         const ordered = [...player.hand].sort((left, right) => (cardProfile(right).manaValue) - (cardProfile(left).manaValue));
         const discarded = ordered.slice(0, excess);
-        const discardIds = new Set(discarded.map((card) => card.instance_id));
-        next = withPlayer(next, next.activeSeat, (current) => ({
-          ...current,
-          hand: current.hand.filter((card) => !discardIds.has(card.instance_id)),
-          graveyard: [...current.graveyard, ...discarded]
-        }));
+        next = discardCards(next, next.activeSeat, discarded);
         next = logged(next, next.activeSeat, `${player.name} descarta ${excess} carta(s) al límite de mano.`);
       }
       next = {
@@ -5411,11 +5417,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     const discarded = hand.find((card) => card.instance_id === action.sacrificeId)
       ?? [...hand].sort((left, right) => (cardProfile(right).cost?.symbols.length ?? 0) - (cardProfile(left).cost?.symbols.length ?? 0))[0];
     if (!discarded) throw new Error("No tienes una carta para descartar.");
-    next = withPlayer(next, seat, (current) => ({
-      ...current,
-      hand: current.hand.filter((card) => card.instance_id !== discarded.instance_id),
-      graveyard: [...current.graveyard, discarded]
-    }));
+    next = discardCard(next, seat, discarded);
     next = logged(next, seat, `${player.name} descarta ${discarded.name}.`);
   }
   if (ability.sacrificesLand) {
@@ -5434,11 +5436,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
   if (discard) {
-    next = withPlayer(next, seat, (current) => ({
-      ...current,
-      hand: current.hand.filter((card) => card.instance_id !== discard!.instance_id),
-      graveyard: [...current.graveyard, discard!]
-    }));
+    next = discardCard(next, seat, discard);
     next = logged(next, seat, `${player.name} descarta ${discard.name}.`);
   }
   if (exile) {
@@ -6236,14 +6234,11 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
   const card = playerAt(state, seat).hand.find((candidate) => candidate.instance_id === action.cardId);
   if (!card) throw new Error("Debes elegir una carta de tu mano.");
   const remaining = choice.remaining - 1;
-  const next = withPlayer({
+  const stateWithChoice: GameState = {
     ...state,
     pendingChoice: remaining > 0 ? { ...choice, remaining } : null
-  }, seat, (player) => ({
-    ...player,
-    hand: player.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
-    graveyard: [...player.graveyard, card]
-  }));
+  };
+  const next = discardCard(stateWithChoice, seat, card);
   return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
 }
 

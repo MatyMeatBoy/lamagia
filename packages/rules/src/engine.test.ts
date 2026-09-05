@@ -162,6 +162,7 @@ const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "
 // not a chosen target and not always `object.controller`'s opponent list.
 const DAMAGE_ON_OPPONENT_DRAW = () => make({ name: "Test Nekusar", type_line: "Creature — Wizard", mana_cost: "{2}{U}{B}{R}", cmc: 5, power: "2", toughness: "4", oracle_text: "Whenever an opponent draws a card, ~ deals 1 damage to that player." });
 const LIFELOSS_ON_OPPONENT_DRAW = () => make({ name: "Test Scrawling Crawler", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "Whenever an opponent draws a card, that player loses 1 life." });
+const LIFELOSS_ON_OPPONENT_DISCARD = () => make({ name: "Test Liliana's Caress", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Whenever an opponent discards a card, that player loses 2 life." });
 const DRAW_TWO_TARGET = () => make({ name: "Test Divination", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Target player draws two cards." });
 const X_MINUS_SWEEP = () => make({ name: "X Minus Sweep", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "All creatures get -X/-X until end of turn." });
 const POWER_DRAW_TRIGGER = () => make({ name: "Power Draw Trigger", type_line: "Creature — Human Druid", mana_cost: "{3}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your end step, if you control a creature with power 5 or greater, you may draw a card." });
@@ -3285,6 +3286,21 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "choose-discard", sourceId, cardId: "x-discard-hand-1" });
     expect(game.pendingChoice).toBeNull();
     expect(game.players[1]!.hand).toHaveLength(1);
+  });
+
+  it("punishes any discard by an opponent, not just draw-triggered ones", () => {
+    const profile = profileOf(LIFELOSS_ON_OPPONENT_DISCARD());
+    expect(profile.triggers[0]).toMatchObject({ event: "card-discarded", subject: "opponent", effect: { kind: "lose-life-event-player", amount: 2 } });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([DISCARD_SPELL()], [SWAMP(), SWAMP(), LIFELOSS_ON_OPPONENT_DISCARD()], [BEAR(), FLIER()]);
+    const life1 = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 1 });
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "foe-1" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[1]!.life).toBe(life1 - 2);
   });
 
   it("lets Lightning Bolt target a creature as well as a player", () => {

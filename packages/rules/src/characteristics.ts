@@ -562,6 +562,7 @@ export type TriggerEvent =
   | "spell-cast"
   | "card-cycled"
   | "card-drawn"
+  | "card-discarded"
   | "upkeep"
   | "draw-step"
   | "end-step"
@@ -605,6 +606,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "spell-cast": "habilidad de lanzamiento",
  "card-cycled": "habilidad de cycling",
   "card-drawn": "habilidad de robo",
+  "card-discarded": "habilidad de descarte",
   upkeep: "habilidad de mantenimiento",
   "draw-step": "habilidad del paso de robo",
   "end-step": "habilidad del paso final",
@@ -1737,6 +1739,8 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "card-cycled", subject: "self", pattern: /^when\s+you\s+cycle\s+(?:this\s+card|~),?\s*(.+)$/i },
   { event: "card-drawn", subject: "each-player", pattern: /^whenever\s+a\s+player\s+draws\s+a\s+card,?\s*(.+)$/i },
   { event: "card-drawn", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+draws\s+a\s+card,?\s*(.+)$/i },
+  { event: "card-discarded", subject: "each-player", pattern: /^whenever\s+a\s+player\s+discards\s+a\s+card,?\s*(.+)$/i },
+  { event: "card-discarded", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+discards\s+a\s+card,?\s*(.+)$/i },
 
   // Turn-structure triggers (CR 603.2b).
   { event: "upkeep", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+upkeep,?\s*(.+)$/i },
