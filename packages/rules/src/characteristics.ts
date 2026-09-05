@@ -2065,6 +2065,14 @@ function parseLibrarySearch(text: string): SpellEffect | null {
   };
 }
 
+/** Basic-land subtype search that Oracle prints without a comma before "and put". */
+function parseNamedBasicLandSearch(text: string): SpellEffect | null {
+  const match = /^Search your library for (a|an) ((?:Plains|Island|Swamp|Mountain|Forest)(?:,\s*(?:Plains|Island|Swamp|Mountain|Forest))*?(?:,?\s+or\s+(?:Plains|Island|Swamp|Mountain|Forest))?) card and put that card onto the battlefield\.?$/i.exec(text.trim());
+  if (!match) return null;
+  const subtypes = match[2]!.match(/Plains|Island|Swamp|Mountain|Forest/gi) ?? [];
+  return { kind: "search-library", types: ["Land"], subtypes, destination: "battlefield", reveal: false };
+}
+
 function parseCreateToken(text: string): SpellEffect | null {
   const match = /^Create\s+(?:(a|an|one|two|three|four|five|six|seven|eight|nine|ten|thirteen|X|\d+)\s+)?(?:(\d+)\/(\d+)\s+)?(.+?)\s+token(?:s)?(?:\s+named\s+([^,]+))?(?:\s+with\s+(.+))?$/i.exec(text.trim().replace(/\.$/, ""));
   if (!match) return null;
@@ -3380,6 +3388,13 @@ function recognizeText(text: string): RecognizedText {
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library\.$/i.test(joined)) {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  const namedBasicLandSearch = parseNamedBasicLandSearch(joined.replace(/\s+Then shuffle\.?$/i, ""));
+  if (namedBasicLandSearch) {
+    return {
+      effects: [namedBasicLandSearch],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }

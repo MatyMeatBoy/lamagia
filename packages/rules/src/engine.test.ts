@@ -5211,6 +5211,25 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Cultivate")).toBe(true);
   });
 
+  it("reuses typed basic-land subtypes for Spoils of Victory", () => {
+    const profile = profileOf(C13_SPOILS_OF_VICTORY());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "search-library", types: ["Land"], subtypes: ["Plains", "Island", "Swamp", "Mountain", "Forest"], destination: "battlefield" }]
+    });
+    let game = readyToCast([C13_SPOILS_OF_VICTORY()], [FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [ISLAND(), MOUNTAIN(), BEAR()], "spoils-library"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "search-library", seat: 0 });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    const options = game.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(options).toEqual(expect.arrayContaining(["Island", "Mountain"]));
+    expect(options).not.toContain("Grizzly Bears");
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Island" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Island")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Spoils of Victory")).toBe(true);
+  });
+
   it("allows an up-to-two basic search to finish without choosing a card", () => {
     let game = readyToCast([C13_CULTIVATE()], [FOREST(), FOREST(), FOREST()]);
     game = stage(game, 0, (player) => ({ library: [...toHand(0, [ISLAND()], "cultivate-optional"), ...player.library] }));
