@@ -557,7 +557,7 @@ export type SpellEffect =
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
-  | { readonly kind: "create-token-for-target-player"; readonly amount: number | "X"; readonly token: TokenDefinition }
+  | { readonly kind: "create-token-for-target-player"; readonly amount: number | "X"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
   /** Reveals one library card, moves it to hand, then gains its mana value. */
   | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
   /** Reveals until a card type is found, then sends the rest to a zone. */
@@ -2055,6 +2055,20 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const lifeAmount = toNumber(drawLose[2]);
     if (drawAmount !== null && lifeAmount !== null) return {
       effect: { kind: "compound", effects: [{ kind: "draw", amount: drawAmount }, { kind: "lose-life", amount: lifeAmount }] },
+      target: "none"
+    };
+  }
+  if ((match = /^You draw (\w+) cards? and you lose (\w+) life$/i.exec(text))) {
+    const draw = toNumber(match[1]);
+    const life = toNumber(match[2]);
+    if (draw !== null && life !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: draw }, { kind: "lose-life", amount: life }] },
+      target: "none"
+    };
+    const dX = draw ?? (match[1]!.toUpperCase() === "X" ? "X" as const : null);
+    const lX = life ?? (match[2]!.toUpperCase() === "X" ? "X" as const : null);
+    if (dX !== null && lX !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: dX }, { kind: "lose-life", amount: lX }] },
       target: "none"
     };
   }
