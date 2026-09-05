@@ -16,13 +16,13 @@ and you-cast-noncreature trigger primitives; verify the Pages run before reporti
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 10,101 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 10,105 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 26,042 / 84,990 implemented (30.6%) across 685
+- **Edition memberships:** 26,062 / 84,990 implemented (30.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 290 / 341 unique cards (85.0%), 51 pending.
+- **Commander 2013:** 292 / 341 unique cards (85.6%), 49 pending.
 - **Commander 2014:** 203 / 322 unique cards (63.0%), 119 pending.
 
 ### Derived-index refresh — 2026-09-05
@@ -31,11 +31,12 @@ The engine export and every derived C13 index were regenerated from the shared
 catalog and the current rules tree. The refreshed artifacts are
 `data/rules/engine-card-profiles.json`, `data/rules/set-coverage.json`,
 `site/coverage.json`, `docs/SET_COVERAGE.md`, the C13 roadmap/dictionary/worker
-plan, and both near-complete queues. C13 remains at **290/341 (85.0%)**, with
-one one-line candidate: Sudden Spoiling. The global queue is now 15,161
-one-line profiles, 11,453 of them reusable, after the Fling, Incinerate, Voltaic
+plan, and both near-complete queues. C13 is now **292/341 (85.6%)**, with
+one one-line candidate: Sudden Spoiling. The global queue is now 15,160
+one-line profiles, 11,452 of them reusable, after the Fling, Incinerate, Voltaic
 Key, Lava Coil, kicker damage-replacement, mana-ability counter-rider, temporary
-creature-type removal, and you-cast-noncreature trigger primitives were added;
+creature-type removal, you-cast-noncreature trigger, and delayed creature-return
+primitives were added;
 the C13
 dictionary remains 341 profiles with 290 complete.
 

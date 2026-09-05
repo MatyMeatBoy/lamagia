@@ -334,6 +334,8 @@ const BURST_LIGHTNING = () => make({ name: "Burst Lightning", type_line: "Instan
 const TWITCHING_DOLL = () => make({ name: "Twitching Doll", type_line: "Artifact Creature — Spider", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2", oracle_text: "{T}: Add one mana of any color. Put a nest counter on this creature.\n{T}, Sacrifice this creature: Create a 2/2 green Spider creature token with reach for each counter on this creature. Activate only as a sorcery.", oracle_id: "fd6e1967-237a-41f6-bbf4-2c869f9447c8", scryfall_id: "294b65d7-7c0b-48a2-9375-e1a5a0d91831" });
 const NAMELESS_INVERSION = () => make({ name: "Nameless Inversion", type_line: "Kindred Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Changeling (This card is every creature type.)\nTarget creature gets +3/-3 and loses all creature types until end of turn.", oracle_id: "d6911456-42cb-4b23-a560-dc98784530f5", scryfall_id: "4e2e70a6-2987-4e82-9dc6-72120e6dd02f" });
 const SPRITE_DRAGON = () => make({ name: "Sprite Dragon", type_line: "Creature — Faerie Dragon", mana_cost: "{U}{R}", cmc: 2, power: "1", toughness: "1", keywords: ["Flying", "Haste"], oracle_text: "Flying, haste\nWhenever you cast a noncreature spell, put a +1/+1 counter on this creature.", oracle_id: "a9d8ab76-70a4-475e-b87e-4737c090553a", scryfall_id: "c9f2c4ac-2e2b-4f15-bb9c-8ca54e4c3fbf" });
+const MISTMEADOW_WITCH = () => make({ name: "Mistmeadow Witch", type_line: "Creature — Kithkin Wizard", mana_cost: "{2}{W}{U}", cmc: 4, power: "1", toughness: "3", oracle_text: "{2}{W}{U}: Exile target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step.", oracle_id: "38e274e2-bd04-48de-a1df-44f0ee987ba8", scryfall_id: "aeb05bcc-345e-4883-9b43-1c3cfa3a4f51" });
+const ROON_OF_THE_HIDDEN_REALM = () => make({ name: "Roon of the Hidden Realm", type_line: "Legendary Creature — Rhino Soldier", mana_cost: "{2}{G}{W}{U}", cmc: 5, power: "4", toughness: "4", keywords: ["Vigilance", "Trample"], oracle_text: "Vigilance, trample\n{2}, {T}: Exile another target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step.", oracle_id: "fd336830-4a11-42b8-9fc7-d7526f569124", scryfall_id: "3045053c-9a90-4caa-9096-9256bf007d3a" });
 const FLING = () => make({ name: "Fling", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nFling deals damage equal to the sacrificed creature's power to any target.", oracle_id: "24227761-b50e-4b9e-93a2-e82d053b3e3d", scryfall_id: "050eb421-a446-4d84-b331-a267b02dc9f5" });
 const TREASURE_HUNT = () => make({ name: "Treasure Hunt", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand.", oracle_id: "05079479-86a6-4041-a395-83d325b6ddb7", scryfall_id: "53af54e3-412f-4bc4-8a3a-911eaa62be27" });
 const PSIONIC_BLAST = () => make({ name: "Psionic Blast", type_line: "Instant", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Psionic Blast deals 4 damage to any target and 2 damage to you.", oracle_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad", scryfall_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad" });
@@ -7402,6 +7404,40 @@ describe("activated abilities", () => {
     expect(profile.manaAbilities).toHaveLength(1);
     expect(profile.manaAbilities[0]!.produces).toEqual(["G"]);
     expect(profile.activatedAbilities).toHaveLength(0);
+  });
+
+  it("returns a creature exiled by Mistmeadow Witch at the next end step", () => {
+    // CR 603.7, 400.7: the delayed return tracks the exiled card, not the
+    // permanent that left the battlefield.
+    expect(profileOf(MISTMEADOW_WITCH())).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ manaCost: { raw: "{2}{W}{U}" }, targetKind: "creature", effect: { kind: "exile-target-permanent-delayed-return" } }]
+    });
+    expect(profileOf(ROON_OF_THE_HIDDEN_REALM())).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ requiresTap: true, excludesSourceFromTargets: true, targetKind: "creature", effect: { kind: "exile-target-permanent-delayed-return" } }]
+    });
+    let game = readyOnBoard([MISTMEADOW_WITCH()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = stage(game, 0, () => ({ manaPool: { W: 1, U: 1, B: 0, R: 0, G: 0, C: 2 } }));
+    const source = permanentNamed(game, 0, "Mistmeadow Witch")!;
+    const target = permanentNamed(game, 1, "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = passUntil(game, (state) => state.players[1]!.exile.some((card) => card.instance_id === target.card.instance_id));
+    expect(game.players[1]!.exile.some((card) => card.instance_id === target.card.instance_id)).toBe(true);
+    game = passUntil(game, (state) => state.players[1]!.battlefield.some((permanent) => permanent.card.instance_id === target.card.instance_id));
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.instance_id === target.card.instance_id)).toBe(true);
+  });
+
+  it("keeps Roon's another-target restriction on its delayed exile ability", () => {
+    let game = readyOnBoard([ROON_OF_THE_HIDDEN_REALM()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = stage(game, 0, () => ({ manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0, C: 2 } }));
+    const source = permanentNamed(game, 0, "Roon of the Hidden Realm")!;
+    expect(() => applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0,
+      targets: [{ kind: "permanent", instanceId: source.instance_id }]
+    })).toThrow("Objetivo ilegal");
   });
 
   it("applies War Cadence's variable block tax and charges it per blocker", () => {

@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,161**
-- Cards with a reusable existing primitive hint: **11,453**
+- One-line cards: **15,160**
+- Cards with a reusable existing primitive hint: **11,452**
 - Cards needing new primitive review: **3,708**
-- Templates: **11,999**
+- Templates: **11,998**
 
 ## Worker rule
 
@@ -519,4 +519,4 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Universal Surveillance | `c5a5c17d-d1e4-4d23-9d2b-1c2febdcb0e7` | activated | new primitive review | Improvise |
 | reuse-existing | Cleaver Skaab | `9fa66e03-7b20-43f6-8c53-1ce18169c382` | sacrifice | sacrifice | {3}, {T}, Sacrifice another Zombie: Create two tokens that are copies of the sacrificed creature. |
 
-The JSON contains the remaining 14,661 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,660 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

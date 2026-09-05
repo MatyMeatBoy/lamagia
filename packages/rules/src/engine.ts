@@ -7515,9 +7515,16 @@ function activatableAbility(
     if (ability.targetKinds.some((kind) => !legalTargets(state, seat, kind, sourceProfile).length)) return { legal: false };
     return { legal: true, targetKind, targetKinds: ability.targetKinds };
   }
-  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
-  if (!legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
+  if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalAbilityTargets(state, seat, ability, permanent, targetKind).length) return { legal: false };
+  if (!legalAbilityTargets(state, seat, ability, permanent, targetKind as Exclude<TargetKind, "none">).length) return { legal: false };
   return { legal: true, targetKind };
+}
+
+function legalAbilityTargets(state: GameState, seat: SeatId, ability: ActivatedAbility, source: Permanent, kind: Exclude<TargetKind, "none"> = ability.targetKind as Exclude<TargetKind, "none">): Target[] {
+  const targets = legalTargets(state, seat, kind, cardProfile(source.card));
+  return ability.excludesSourceFromTargets
+    ? targets.filter((target) => target.kind !== "permanent" || target.instanceId !== source.instance_id)
+    : targets;
 }
 
 /** Returns permanents that can pay a typed "tap an untapped ..." cost. */
@@ -7641,7 +7648,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     }
     targets = chosen;
   } else if (check.targetKind) {
-    const allowed = legalTargets(state, seat, check.targetKind, cardProfile(source.card));
+    const allowed = legalAbilityTargets(state, seat, ability, source, check.targetKind);
     const chosen = targets.length ? targets : allowed.slice(0, 1);
     if (!chosen.length) throw new Error(`${source.card.name} necesita un objetivo legal.`);
     const valid = chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));

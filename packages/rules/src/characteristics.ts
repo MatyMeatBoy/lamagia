@@ -129,6 +129,8 @@ export interface ActivatedAbility {
   readonly effect: SpellEffect;
   readonly targetKind: TargetKind;
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  /** Printed "another target" restriction; the source itself is not legal. */
+  readonly excludesSourceFromTargets?: boolean;
   /** Level up is an activated ability with a sorcery-speed restriction. */
   readonly sorcerySpeed?: boolean;
   /** Planeswalker loyalty ability: signed loyalty change paid as the cost (CR 606). */
@@ -2098,6 +2100,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     effect: recognized.effect,
     targetKind: recognized.target,
     ...("targetKinds" in recognized && recognized.targetKinds ? { targetKinds: recognized.targetKinds } : {}),
+    ...( /\banother\s+target\b/i.test(parsedEffectText) ? { excludesSourceFromTargets: true } : {}),
     text: line.trim()
   };
 }
@@ -2577,8 +2580,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const simple = simpleEffectIR(text);
   const simpleResult = simple ? simpleEffectFromIR(simple) : null;
   if (simpleResult) return simpleResult;
-  if (/^Exile another target permanent\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
-    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "permanent" };
+  const delayedReturn = /^Exile (?:another )?target (permanent|creature)\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.exec(text);
+  if (delayedReturn) {
+    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: delayedReturn[1]!.toLowerCase() === "creature" ? "creature" : "permanent" };
   }
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
