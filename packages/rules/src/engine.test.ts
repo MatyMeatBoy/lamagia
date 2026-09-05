@@ -7881,6 +7881,18 @@ describe("activated abilities", () => {
     expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(true);
   });
 
+  it("does not treat a hand fast-mana action as a smart-priority stop", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({
+      autoPass: true,
+      hand: toHand(0, [SIMIAN_SPIRIT_GUIDE()], "autopass-guide")
+    }));
+    game = stage(game, 1, () => ({ autoPass: true }));
+    game = { ...putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]), priorityOpen: true, prioritySeat: 0, step: "precombat-main", activeSeat: 1, stack: [], pendingChoice: null };
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === "autopass-guide-0")).toBe(true);
+    expect(hasRealChoice(game, 0)).toBe(false);
+  });
+
   it("reuses targeted tap and untap effects through the normal stack target flow", () => {
     let game = readyOnBoard([BEAR(), ISLAND(), ISLAND(), ISLAND(), ISLAND()], { hold: true });
     const creature = permanentNamed(game, 0, "Grizzly Bears")!;
