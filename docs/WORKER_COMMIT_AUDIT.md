@@ -334,3 +334,19 @@ Propaganda, Sudden Spoiling, Serene Master, and Wash Out; the remaining 67
 are grouped by their exact Oracle text templates in
 `docs/PRIMITIVE_ROADMAP_C13.md` and are not being treated as generic keyword
 matches.
+
+### Newly recovered dirty worker state — 2026-09-05 (continued)
+
+The MtgFork `worker-05` worktree contained uncommitted executable changes that
+were not visible in any remote head. They were validated in that worktree
+(603 rules tests, all simulator/deck/oracle checks, and `npm run check`),
+published as `eaa2296`, and integrated here as `366850c`:
+
+- Daze | `70486bee-6ee7-41ea-b834-8caf4699302b` — return-an-Island
+  alternative cost, offered beside the normal cast.
+- Counter-unless-pay — controller-private payment choice at resolution,
+  reusing the existing optional-choice path and correct spell controller.
+
+This recovery increased the export to **9,396/38,711** unique profiles and
+edition memberships to **23,860/84,990 (28.1%)**. C13 remains **269/341**;
+the recovered cards are not in C13, but the primitives are shared globally.
