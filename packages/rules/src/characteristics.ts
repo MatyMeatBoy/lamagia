@@ -3355,7 +3355,12 @@ function recognizeText(text: string): RecognizedText {
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
-          const executableText = optional && !payGate
+          // Normalize cycling's optional targeted keyword wording to the
+          // existing temporary-keyword primitive (CR 603.1, 603.2).
+          const optionalTargetKeyword = /^you\s+may\s+have\s+target creature gain\s+(flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate)\s+until end of turn\.?$/i.exec(effectText);
+          const executableText = optionalTargetKeyword
+            ? `Target creature gains ${optionalTargetKeyword[1]} until end of turn`
+            : optional && !payGate
             // Keep the subject for the compositional draw/life grammar. A
             // blanket removal would turn "you may gain 2 life" into the
             // invalid fragment "gain 2 life" (CR 609.3).

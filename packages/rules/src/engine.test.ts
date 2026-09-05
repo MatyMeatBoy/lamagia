@@ -108,6 +108,7 @@ const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Inst
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
 const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
+const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
 const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle this card, you may have it deal 1 damage to each creature." });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
 const CREATURE_COUNT_BOLT = () => make({ name: "Creature Count Bolt", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals damage equal to the number of creatures you control to any target." });
@@ -359,9 +360,6 @@ const C13_FLICKERWISP = () => make({ name: "Flickerwisp", type_line: "Creature �
 const C13_VILE_REQUIEM = () => make({ name: "Vile Requiem", type_line: "Enchantment", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "At the beginning of your upkeep, you may put a verse counter on this enchantment.\n{1}{B}, Sacrifice this enchantment: Destroy up to X target nonblack creatures, where X is the number of verse counters on this enchantment. They can't be regenerated.", scryfall_id: "923972d3-d838-43f8-800a-904489c5791a" });
 const C13_WELL_OF_LOST_DREAMS = () => make({ name: "Well of Lost Dreams", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Whenever you gain life, you may pay {X}, where X is less than or equal to the amount of life you gained. If you do, draw X cards.", scryfall_id: "b0394cf2-12a0-4d4f-87e0-fe8937e6faff" });
 const C13_JACES_ARCHIVIST = () => make({ name: "Jace's Archivist", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "{U}, {T}: Each player discards their hand, then draws cards equal to the greatest number of cards a player discarded this way.", scryfall_id: "b6c8ac69-daa7-4e2e-a1d9-439731a81870" });
-=======
-const C13_SPELLBREAKER_BEHEMOTH = () => make({ name: "Spellbreaker Behemoth", type_line: "Creature — Beast", mana_cost: "{2}{R}{G}", cmc: 4, power: "5", toughness: "5", oracle_text: "Creature spells you control with power 5 or greater can't be countered.", scryfall_id: "cba07472-7212-4411-a9f9-38a48870ad69", oracle_id: "cba07472-7212-4411-a9f9-38a48870ad69" });
->>>>>>> 49fd8a7 (feat(rules): add Spellbreaker Behemoth protection)
 const C13_AUGUR_OF_BOLAS = () => make({ name: "Augur of Bolas", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order.", scryfall_id: "c13-augur-of-bolas" });
 const C13_ACT_OF_AUTHORITY = () => make({ name: "Act of Authority", type_line: "Enchantment", mana_cost: "{3}{W}", cmc: 4, oracle_text: "When this enchantment enters, you may exile target artifact or enchantment.\nAt the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of this enchantment.", scryfall_id: "c13-act-of-authority" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
@@ -1264,6 +1262,26 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.damage).toBe(1);
   });
 
+  it("resolves Dirge of Dread's optional cycling keyword trigger", () => {
+    const profile = profileOf(DIRGE_OF_DREAD());
+    expect(profile.cyclingCost?.raw).toBe("{1}{B}");
+    expect(profile.triggers).toMatchObject([{ event: "card-cycled", subject: "self", optional: true, targetKind: "creature", effect: { kind: "grant-target-creature-keyword", keyword: "fear" } }]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([DIRGE_OF_DREAD()], [SWAMP(), SWAMP()], [], [BEAR()]);
+    game = stage(game, 0, () => ({ library: toHand(0, [FOREST()], "dirge-library") }));
+    const cycled = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === "hand-0");
+    expect(cycled).toBeDefined();
+    game = applyAction(game, 0, cycled!.action);
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", sourceCard: { name: "Dirge of Dread" } });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    if (game.pendingChoice?.type === "trigger-target") game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "permanent", instanceId: bear.instance_id } });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.temporaryKeywords).toContain("fear");
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Dirge of Dread")).toBe(true);
+  });
+
   it("lets Mind's Eye pay for opponent draws", () => {
     const profile = profileOf(MINDS_EYE());
     expect(profile.triggers).toMatchObject([{
@@ -2115,7 +2133,6 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Large creature")).toBe(true);
   });
 
-<<<<<<< HEAD
   it("delays Flickerwisp's exiled permanent until the next end step", () => {
     const profile = profileOf(C13_FLICKERWISP());
     expect(profile.triggers[0]).toMatchObject({
