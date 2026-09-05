@@ -10,193 +10,160 @@ When a compact IR is supplied, `Reusable atoms` are navigational hints only; exa
 - Memory budget: **2 GB** (256 MB reserved per worker)
 - Maximum cards per commit batch: **20**
 - Integrate fork commits only after **11** are available (unless explicitly overridden)
-- Review payload mode: **hybrid-payload**
+- Review payload mode: **legacy-payload-with-compositional-hints**
 
 ## Worker 1
 
-3 primitives / 5 unique cards
+4 primitives / 5 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-other-static-spell-3` | activated | 4 | 4 | 0 | 0 | 4 | 1 | 6 |
-Reusable atoms: `kind:static-or-spell, op:other, target:spell, type:instant, type:sorcery, zone:battlefield`
+| normal | `c13-cost-copy-target-instant` | activated | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Nivix Guildmage [d04356f1-0e1a-4689-8e54-f88c4c6dd936]
 
-Cards: Echo Mage [fb98f6b7-5986-4c5d-98fc-e5c4106f48bf], Nivix Guildmage [d04356f1-0e1a-4689-8e54-f88c4c6dd936], Uyo, Silent Prophet [93da1e63-54d6-4b05-af91-f13e7e111176], Wild Ricochet [8c35fd11-be45-4984-bd83-6e4f3fbc47a9]
-
-| needs-review | `c13-oracle-return-activated-target` | return | 1 | 1 | 0 | 0 | 1 | 1 | 2 |
-Reusable atoms: `kind:static-or-spell, op:other`
-
+| normal | `c13-cost-return-lands-you` | activated | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
 Cards: Uyo, Silent Prophet [93da1e63-54d6-4b05-af91-f13e7e111176]
 
-| normal | `c13-oracle-counter-triggered-shape-2` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Sun Droplet [1820af5c-9cc2-4b77-b4ca-86084442f087]
+| normal | `c13-you-may-choose-new` | other | 4 | 0 | 0 | 0 | 4 | 1 | 0 |
+Cards: Echo Mage [fb98f6b7-5986-4c5d-98fc-e5c4106f48bf], Nivix Guildmage [d04356f1-0e1a-4689-8e54-f88c4c6dd936], Uyo, Silent Prophet [93da1e63-54d6-4b05-af91-f13e7e111176], Wild Ricochet [8c35fd11-be45-4984-bd83-6e4f3fbc47a9]
+
+| normal | `c13-each-opponent-may-return` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Tempt with Immortality [06e1c0fa-767c-4204-972f-d98f770d85f3]
 
 
 ## Worker 2
 
-11 primitives / 4 unique cards
+8 primitives / 5 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-counter-activated-cost` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 3 |
-Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
+| normal | `c13-cost-cost-exile-another` | activated | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Roon of the Hidden Realm [fd336830-4a11-42b8-9fc7-d7526f569124]
 
-Cards: Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
+| normal | `c13-cost-exile-target-creature` | activated | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Mistmeadow Witch [38e274e2-bd04-48de-a1df-44f0ee987ba8]
 
-| needs-review | `c13-oracle-counter-static-spell-6` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 3 |
-Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
+| normal | `c13-return-that-card-the` | other | 2 | 0 | 0 | 0 | 2 | 1 | 0 |
+Cards: Mistmeadow Witch [38e274e2-bd04-48de-a1df-44f0ee987ba8], Roon of the Hidden Realm [fd336830-4a11-42b8-9fc7-d7526f569124]
 
-Cards: Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
+| normal | `c13-choose-target-creature` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Reincarnation [d6bf5e22-8d33-43a9-8824-435068e0a87a]
 
-| needs-review | `c13-oracle-counter-static-spell-7` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 3 |
-Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
+| normal | `c13-when-that-creature-dies` | triggered | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Reincarnation [d6bf5e22-8d33-43a9-8824-435068e0a87a]
 
-Cards: Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
+| normal | `c13-the-beginning-each-upkeep` | triggered | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Sun Droplet [1820af5c-9cc2-4b77-b4ca-86084442f087]
 
-| needs-review | `c13-oracle-other-static-spell-6` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 3 |
-Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
+| normal | `c13-whenever-you-dealt-damage` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Sun Droplet [1820af5c-9cc2-4b77-b4ca-86084442f087]
 
-Cards: Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
-
-| needs-review | `c13-oracle-damage-static-spell-4` | damage | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
-Reusable atoms: `amount:parameter, cost:mana-parameter, kind:static-or-spell, op:other, zone:battlefield`
-
-Cards: Fireball [aa7714b0-2bfb-458a-8ebf-37ec2c53383e]
-
-| needs-review | `c13-oracle-other-static-spell-8` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
-Reusable atoms: `amount:parameter, cost:mana-parameter, kind:static-or-spell, op:other, zone:battlefield`
-
-Cards: Fireball [aa7714b0-2bfb-458a-8ebf-37ec2c53383e]
-
-| normal | `c13-oracle-counter-activated-cost-4` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
-
-| normal | `c13-oracle-counter-triggered-shape-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
-
-| normal | `c13-oracle-destroy-static-spell` | destroy | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
-
-| normal | `c13-oracle-counter-static-spell-5` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
-
-| normal | `c13-oracle-damage-static-spell` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
+| normal | `c13-each-opponent-may-search` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Tempt with Discovery [4baa6145-216e-476b-b178-aaaa1e633701]
 
 
 ## Worker 3
 
-10 primitives / 4 unique cards
+10 primitives / 5 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-create-token-static` | token | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
-Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature, zone:battlefield`
+| normal | `c13-after-this-phase-there` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Illusionist's Gambit [333745d9-e930-439b-94d6-3aeea2877f69]
 
+| normal | `c13-cast-only-during-the` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Illusionist's Gambit [333745d9-e930-439b-94d6-3aeea2877f69]
+
+| normal | `c13-each-those-creatures-attacks` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Illusionist's Gambit [333745d9-e930-439b-94d6-3aeea2877f69]
+
+| normal | `c13-destroy-all-nonbasic-lands` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: From the Ashes [3e229329-65e4-4240-959a-b97b26908c0e]
+
+| normal | `c13-for-each-land-destroyed` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: From the Ashes [3e229329-65e4-4240-959a-b97b26908c0e]
+
+| normal | `c13-then-each-player-who` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: From the Ashes [3e229329-65e4-4240-959a-b97b26908c0e]
+
+| normal | `c13-create-token-that-copy` | token | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
 Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
 
-| needs-review | `c13-oracle-create-token-static-2` | token | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
-Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature, zone:battlefield`
-
+| normal | `c13-each-opponent-may-create-2` | token | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
 Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
 
-| needs-review | `c13-oracle-create-token-static-3` | token | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
-Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature, zone:battlefield`
+| normal | `c13-can` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
 
-Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
-
-| needs-review | `c13-oracle-other-static-spell-7` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
-Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature, zone:battlefield`
-
-Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
-
-| needs-review | `c13-oracle-other-static-spell` | activated | 1 | 1 | 1 | 1 | 1 | 1 | 3 |
-Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
-
-Cards: Darksteel Mutation [05a4f8ff-49da-42af-add5-6248c4b0644b]
-
-| normal | `c13-oracle-counter-static-spell` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
-
-| normal | `c13-oracle-counter-static-spell-2` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
-
-| normal | `c13-oracle-counter-static-spell-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
-
-| normal | `c13-oracle-counter-triggered-shape-4` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Thraximundar [9e0e4217-fefe-48dd-9153-032460192b19]
-
-| normal | `c13-oracle-sacrifice-triggered-shape` | sacrifice | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Thraximundar [9e0e4217-fefe-48dd-9153-032460192b19]
+| normal | `c13-many-times-you-choose` | library-look | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Lim-Dûl's Vault [3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97]
 
 
 ## Worker 4
 
-7 primitives / 4 unique cards
+9 primitives / 5 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-counter-activated-cost-2` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
-Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, zone:hand, zone:library`
+| normal | `c13-choose-left-right` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Order of Succession [1b95970c-e7eb-41c4-a8d2-9889b64b3c63]
 
-Cards: Jar of Eyeballs [3075dadd-240f-4455-9286-9f1d48f53a3f]
+| normal | `c13-each-player-gains-control` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Order of Succession [1b95970c-e7eb-41c4-a8d2-9889b64b3c63]
 
-| needs-review | `c13-oracle-other-static-spell-4` | activated | 1 | 1 | 0 | 0 | 1 | 1 | 5 |
-Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, zone:hand, zone:library`
+| normal | `c13-starting-with-you-and` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Order of Succession [1b95970c-e7eb-41c4-a8d2-9889b64b3c63]
 
-Cards: Jar of Eyeballs [3075dadd-240f-4455-9286-9f1d48f53a3f]
+| normal | `c13-cast-only-during-combat` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Spinal Embrace [4cf3fb65-9107-428a-8853-029ec97112b5]
 
-| needs-review | `c13-oracle-other-static-spell-2` | activated | 1 | 1 | 1 | 1 | 1 | 1 | 5 |
-Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, target:player, zone:battlefield`
+| normal | `c13-the-beginning-the-next-2` | triggered | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Spinal Embrace [4cf3fb65-9107-428a-8853-029ec97112b5]
 
-Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
+| normal | `c13-each-player-may-attack` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Mystic Barrier [0caf42f5-abff-48aa-9bbf-df6cba169ef3]
 
-| normal | `c13-oracle-counter-activated-cost-3` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Eye of Doom [e808a11e-29bd-4e99-a24e-67fa8f6fe502]
+| normal | `c13-when-enters-and-the` | triggered | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Mystic Barrier [0caf42f5-abff-48aa-9bbf-df6cba169ef3]
 
-| normal | `c13-oracle-counter-triggered-shape` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Eye of Doom [e808a11e-29bd-4e99-a24e-67fa8f6fe502]
+| normal | `c13-each-opponent-may-create` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Tempt with Vengeance [8e356df5-ca92-4be2-871e-8965c2510fbe]
 
-| normal | `c13-oracle-damage-static-spell-2` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Furnace Celebration [af6d6844-c612-4731-86da-59a8fa02956b]
-
-| normal | `c13-oracle-sacrifice-triggered-shape-2` | sacrifice | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Furnace Celebration [af6d6844-c612-4731-86da-59a8fa02956b]
+| normal | `c13-the-beginning-the-next` | triggered | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Flickerform [e5345c28-7046-4ff3-a5d6-eeb7a0fb230b]
 
 
 ## Worker 5
 
-7 primitives / 4 unique cards
+8 primitives / 4 unique cards
 
 | Priority | Claim | Family | Cards | Needs review | One-line | Reuse queue | Unlocks | Batches | Atoms |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| needs-review | `c13-oracle-counter-static-spell-4` | counters | 1 | 1 | 0 | 0 | 1 | 1 | 4 |
-Reusable atoms: `amount:parameter, control:conditional, kind:static-or-spell, op:other`
+| normal | `c13-cost-you-may-tap` | activated | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Sword of the Paruns [cc33444e-da8c-4af5-b3ed-552e91b0e656]
 
-Cards: Primal Vigor [c665544f-557b-4631-a1dc-39571470ca2e]
+| normal | `c13-long-equipped-creature-tapped` | pump | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Sword of the Paruns [cc33444e-da8c-4af5-b3ed-552e91b0e656]
 
-| needs-review | `c13-oracle-other-static-spell-5` | replacement | 1 | 1 | 0 | 0 | 1 | 1 | 4 |
-Reusable atoms: `amount:parameter, control:conditional, kind:static-or-spell, op:other`
+| normal | `c13-long-equipped-creature-untapped` | pump | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Sword of the Paruns [cc33444e-da8c-4af5-b3ed-552e91b0e656]
 
-Cards: Primal Vigor [c665544f-557b-4631-a1dc-39571470ca2e]
+| normal | `c13-choose` | modal | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Incendiary Command [d45a4924-daa0-4ac3-afd7-b66f636ce870]
 
-| normal | `c13-oracle-exile-activated-target` | exile | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Roon of the Hidden Realm [fd336830-4a11-42b8-9fc7-d7526f569124]
+| normal | `c13-each-player-discards-all` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Incendiary Command [d45a4924-daa0-4ac3-afd7-b66f636ce870]
 
-| normal | `c13-oracle-exile-activated-target-2` | exile | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Mistmeadow Witch [38e274e2-bd04-48de-a1df-44f0ee987ba8]
+| normal | `c13-enters-choose-player` | replacement | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: True-Name Nemesis [112322ad-8f66-4cd4-98a1-f425d61a69ce]
 
-| normal | `c13-oracle-return-triggered-shape` | return | 2 | 0 | 0 | 0 | 2 | 1 | 0 |
-Cards: Mistmeadow Witch [38e274e2-bd04-48de-a1df-44f0ee987ba8], Roon of the Hidden Realm [fd336830-4a11-42b8-9fc7-d7526f569124]
+| normal | `c13-has-protection-from-the` | other | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: True-Name Nemesis [112322ad-8f66-4cd4-98a1-f425d61a69ce]
 
-| normal | `c13-oracle-damage-static-spell-3` | damage | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Fiery Justice [333809cb-e196-45f2-8a67-31374438e56e]
-
-| normal | `c13-oracle-gain-life-static` | gain-life | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
-Cards: Fiery Justice [333809cb-e196-45f2-8a67-31374438e56e]
+| normal | `c13-each-opponent-may-put` | counters | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+Cards: Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
 
 
 ## Already claimed
 
-`c13-oracle-damage-triggered-shape`, `c13-oracle-other-activated-shape`
+`c13-until-end-turn-creatures`

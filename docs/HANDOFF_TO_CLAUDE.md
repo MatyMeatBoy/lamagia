@@ -14,21 +14,34 @@ and token-scaling paths; verify the Pages run before reporting a new client asse
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,396 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 10,031 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 23,860 / 84,990 implemented (28.1%) across 685
+- **Edition memberships:** 25,829 / 84,990 implemented (30.4%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 269 / 341 unique cards (78.9%), 72 pending.
-- **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
+- **Commander 2013:** 290 / 341 unique cards (85.0%), 51 pending.
+- **Commander 2014:** 203 / 322 unique cards (63.0%), 119 pending.
+
+### Derived-index refresh — 2026-09-05
+
+The engine export and every derived C13 index were regenerated from the shared
+catalog and the current rules tree. The refreshed artifacts are
+`data/rules/engine-card-profiles.json`, `data/rules/set-coverage.json`,
+`site/coverage.json`, `docs/SET_COVERAGE.md`, the C13 roadmap/dictionary/worker
+plan, and both near-complete queues. C13 now has one one-line candidate:
+Sudden Spoiling; the generated worker plan contains 39 disjoint primitives for
+five workers.
 
 The static P/T vocabulary now also covers source-relative conditions such as
 life thresholds and opponent graveyard creature counts. These are parameterized
 primitives, so reprints reuse the same profile rather than adding card-specific
 branches.
 
-### Latest integration checkpoint — 2026-09-05
+### Historical integration checkpoint — 2026-09-05
+
+This earlier checkpoint is retained for provenance; the derived-index refresh
+above is the current status.
 
 Audited worker intake added executable batches for mana-entry restrictions,
 noncreature-spell drain, surveil, reanimation, Hunted Troll, Grazing

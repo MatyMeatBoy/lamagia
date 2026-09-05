@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T20:22:46.084890+00:00`
+- Generated: `2026-09-05T21:49:07.799940+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **288**
+- Exported profiles in scope: **341**; fully implemented: **290**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -281,13 +281,12 @@ Apply a continuous layer effect to the correct set of permanents without putting
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **288/341** profiles complete; **2** unfinished cards have exactly one unmatched line.
+The engine export currently marks **290/341** profiles complete; **1** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
 | --- | ---: | --- |
-| `unclaimed` | 1 | enchanted creature is <n> insect artifact creature with base power and toughness <n>/<n> and has indestructible, and it loses all other abilities, card types, and creature types — Darksteel Mutation |
-| `unclaimed` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
+| `c13-until-end-turn-creatures` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
 
 The highest-value fix is the shared template, not the first card name. A new primitive should parameterize type, zone, target, quantity and optionality so reprints and other sets inherit it.
 
