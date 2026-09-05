@@ -443,6 +443,8 @@ const TUTOR = () => make({ name: "Enlightened Tutor", type_line: "Instant", mana
 const DEADLY_ROLLICK = () => make({ name: "Deadly Rollick", type_line: "Instant", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "If you control a commander, you may cast this spell without paying its mana cost.\nExile target creature.", oracle_id: "0456ec64-2c81-4763-a352-8ff64a4c3d6b", scryfall_id: "a30c266d-579e-4757-a4d6-6722fa343a6c" });
 const SNUFF_OUT = () => make({ name: "Snuff Out", type_line: "Instant", mana_cost: "{3}{B}", cmc: 4, oracle_text: "If you control a Swamp, you may pay 4 life rather than pay this spell's mana cost.\nDestroy target nonblack creature. It can't be regenerated.", oracle_id: "324824cb-f938-401c-b9b5-d8908b431ef0", scryfall_id: "cdb4bdc5-2533-4e6d-ab69-ccbf3d497748" });
 const BLACK_SOURCE = () => make({ name: "Onyx Mana Rock", type_line: "Land", produced_mana: ["B"] });
+const COUNTER_UNLESS_PAY = () => make({ name: "Test Mana Leak", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target spell unless its controller pays {1}." });
+const DAZE = () => make({ name: "Daze", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "You may return an Island you control to its owner's hand rather than pay this spell's mana cost.\nCounter target spell unless its controller pays {1}.", oracle_id: "70486bee-6ee7-41ea-b834-8caf4699302b", scryfall_id: "61968d99-6571-49ce-bcf1-2aaac3a10f45" });
 const WIDESPREAD_PANIC = () => make({ name: "Widespread Panic", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Whenever a spell or ability causes its controller to shuffle their library, that player puts a card from their hand on top of their library.", oracle_id: "853a3c2b-3d37-453a-8a77-4d90bd3a1cb7", scryfall_id: "d9e1b37f-8168-4dc0-858f-434ee96ff748" });
 const BRAINSTORM = () => make({ name: "Brainstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Draw three cards, then put two cards from your hand on top of your library in any order.", oracle_id: "36cd2364-d113-47d1-b2c4-b088d9eb88dd", scryfall_id: "d8bcdbfb-27df-4553-b8ec-97c3f2053745" });
 const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Search your library for a creature card, reveal it, then shuffle and put the card on top." });
@@ -4933,6 +4935,82 @@ describe("casting", () => {
     expect(game.players[0]!.life).toBe(life0Before);
     expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Treasure")).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Treasure")).toBe(false);
+  });
+
+  it("lets the targeted spell's own controller pay to avoid a counter-unless-pay effect", () => {
+    const profile = profileOf(COUNTER_UNLESS_PAY());
+    expect(profile).toMatchObject({ targetKind: "spell", effects: [{ kind: "counter-target-spell-unless-pay", cost: { raw: "{1}" } }] });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([COUNTER_UNLESS_PAY()], [ISLAND(), ISLAND()], [BOLT()], [MOUNTAIN(), MOUNTAIN()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const life0Before = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "player", seat: 0 }] });
+    const bolt = game.stack.at(-1)!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", seat: 1 });
+
+    const payOption = legalActions(game, 1).find((entry) => entry.action.type === "choose-trigger" && (entry.action as { accept?: boolean }).accept === true);
+    expect(payOption).toBeDefined();
+    game = applyAction(game, 1, payOption!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(life0Before - 3);
+  });
+
+  it("counters the targeted spell when its controller declines or can't pay", () => {
+    let game = readyToCast([COUNTER_UNLESS_PAY()], [ISLAND(), ISLAND()], [BOLT()], [MOUNTAIN()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const life0Before = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "player", seat: 0 }] });
+    const bolt = game.stack.at(-1)!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", seat: 1 });
+
+    const declineOption = legalActions(game, 1).find((entry) => entry.action.type === "choose-trigger" && (entry.action as { accept?: boolean }).accept === false);
+    expect(declineOption).toBeDefined();
+    game = applyAction(game, 1, declineOption!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(life0Before);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+  });
+
+  it("lets Daze be cast by returning an Island, still leaving the counter-unless-pay decision to the target's controller", () => {
+    const profile = profileOf(DAZE());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.effects).toEqual([{ kind: "counter-target-spell-unless-pay", cost: expect.objectContaining({ raw: "{1}" }) }]);
+
+    let game = readyToCast([DAZE()], [ISLAND(), MOUNTAIN()], [BOLT()], [MOUNTAIN()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "player", seat: 0 }] });
+    const bolt = game.stack.at(-1)!;
+    game = applyAction(game, 1, { type: "pass" });
+
+    // Once a legal target exists: one normal paid cast plus one alt-cost option per controlled Island.
+    const options = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(options).toHaveLength(2);
+    const returnOption = options.find((entry) => (entry.action as { returnPermanentId?: string }).returnPermanentId);
+    expect(returnOption).toBeDefined();
+
+    const island = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Island")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", returnPermanentId: island.instance_id, targets: [{ kind: "spell", stackId: bolt.id }] });
+    expect(game.players[0]!.hand.some((card) => card.name === "Island")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Island")).toBe(false);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", seat: 1 });
+
+    const declineOption = legalActions(game, 1).find((entry) => entry.action.type === "choose-trigger" && (entry.action as { accept?: boolean }).accept === false);
+    const life0Before = game.players[0]!.life;
+    game = applyAction(game, 1, declineOption!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(life0Before);
   });
 
   it("does not start Scry when the spell is countered", () => {
