@@ -398,6 +398,8 @@ export type SpellEffect =
   | { readonly kind: "each-opponent-loses-life"; readonly amount: number | "X" }
   /** "that player" in a triggered ability referring back to the event's own player (e.g. the opponent who drew) — CR 603.3d, not a chosen target. */
   | { readonly kind: "lose-life-event-player"; readonly amount: number | "X" }
+  /** Copy the instant or sorcery spell that caused this trigger (CR 707.10). */
+  | { readonly kind: "copy-triggered-spell" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
   /** Noncombat damage to the controller of the permanent source. */
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
@@ -2048,6 +2050,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^That player draws an additional card$/i.test(text)) {
     return { effect: { kind: "draw-active-player" }, target: "none" };
+  }
+  if (/^Copy that spell\. You may choose new targets for the copy$/i.test(text)) {
+    return { effect: { kind: "copy-triggered-spell" }, target: "none" };
   }
   if (/^Reveal the top card of your library and put that card into your hand\. You gain life equal to its mana value$/i.test(text)) {
     return { effect: { kind: "reveal-top-card-to-hand-and-gain-mana-value" }, target: "none" };
