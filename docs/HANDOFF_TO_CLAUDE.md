@@ -3542,6 +3542,50 @@ immediately to ordinary lethal-toughness state-based actions.
 Validation: **661 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,771 global profiles.
 
+`rules-tribal-lord-subtype-grants` | Another C14 one-liner, found the
+same way: `StaticPowerToughnessGrant` already declared an optional
+`subtype` field on its interface, but `staticPowerToughnessBonus`
+never read it anywhere — dead scaffolding left over from an earlier
+pass. "Other Elves you control get +1/+1." (Imperious Perfect, and 66
+other tribal lords catalog-wide: Goblins, Cats, Spirits, Soldiers,
+Clerics, ...) had no recognizer at all and fell straight into
+`unimplementedText`. Added the recognizer — reusing the pre-existing
+`singularSubtype` helper ("Elves" → "Elf", "Dwarves" → "Dwarf") so no
+new pluralization logic was needed — producing a new
+`other-subtype-creatures-you-control` scope, then wired `grant.subtype`
+into the existing "you control" filter branch of
+`staticPowerToughnessBonus` right alongside the color filter that was
+already there for the "other [color] creatures you control" case.
+In the same pass, also closed the sibling gap noted below: Bad Moon
+("Black creatures get +1/+1.") and Celestial Crusader ("Other white
+creatures get +1/+1.") are a color anthem with no "you control" at
+all — every player's creatures of that color, not just yours. Added
+`all-creatures`/`other-all-creatures` scopes and gave the
+`powerOf`/`toughnessOf` global-bonus path a color filter it never had
+(previously any "all-creatures" grant applied to every creature
+unconditionally — harmless only because no colored "all-creatures"
+grant had existed yet to expose it). Writing that filter surfaced a
+real, previously-uncaught bug in the pre-existing "Other [color]
+creatures you control get +N/+N" branch of the same parser function:
+it stored the color as `match[2].toUpperCase()` (e.g. "WHITE") instead
+of the single-letter form `cardProfile(...).colors` actually holds
+("W") — using plain `.toUpperCase()` on the color word instead of the
+`DAMAGE_AMPLIFY_COLOR_LETTER` map the file already uses elsewhere for
+this exact conversion. That branch's color filter could never have
+matched anything, for any card, ever, and nothing caught it because no
+existing test exercised a colored "you control" tribal-style grant.
+Fixed both the new and the pre-existing branch to go through
+`DAMAGE_AMPLIFY_COLOR_LETTER`. Verified **+34** combined in the export
+count (9,792 → 9,826) and set coverage 29.4% → 29.5%. Scenario-tested:
+Imperious Perfect turns a same-seat 1/1 Elf into a 2/2, leaves itself
+unboosted (the printed "Other"), leaves a same-seat non-Elf Bear
+unboosted, and leaves an opponent's Elf unboosted (the printed "you
+control"); Bad Moon boosts a black creature under either seat while
+leaving a green one alone; Celestial Crusader boosts a white creature
+under either seat but never itself. Validation: **668 rules tests**,
+`npm run check`, `npm run simulate:engine` 200/200, 9,826 global
+profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

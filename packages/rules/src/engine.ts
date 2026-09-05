@@ -823,7 +823,9 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
     .filter((source) => source.controller === permanent.controller)
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants
       .filter((grant) => grant.scope === "creatures-you-control"
-        || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))
+        || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id)
+        || (grant.scope === "other-subtype-creatures-you-control" && source.instance_id !== permanent.instance_id
+          && hasSubtype(cardProfile(permanent.card), grant.subtype!)))
       .map((grant) => ({ source, grant })))
     .filter(({ grant }) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, { grant }) => ({ power: total.power + grant.power, toughness: total.toughness + grant.toughness }), { power: 0, toughness: 0 });
@@ -871,8 +873,10 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
   }).at(-1) : undefined;
   const staticBonus = state ? staticPowerToughnessBonus(state, permanent).power : 0;
-  const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
-    .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
+  const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants
+      .filter((grant) => grant.scope === "all-creatures" || (grant.scope === "other-all-creatures" && source.instance_id !== permanent.instance_id))
+      .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color)))
+    .reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
   return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + auraBonus(state, permanent).power + staticBonus + globalBonus;
@@ -884,8 +888,10 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     return count >= definition.minLevel && (definition.maxLevel === undefined || count <= definition.maxLevel);
   }).at(-1) : undefined;
   const staticBonus = state ? staticPowerToughnessBonus(state, permanent).toughness : 0;
-  const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
-    .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.toughness, 0) : 0;
+  const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants
+      .filter((grant) => grant.scope === "all-creatures" || (grant.scope === "other-all-creatures" && source.instance_id !== permanent.instance_id))
+      .filter((grant) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color)))
+    .reduce((total, grant) => total + grant.toughness, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
   return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + auraBonus(state, permanent).toughness + staticBonus + globalBonus;

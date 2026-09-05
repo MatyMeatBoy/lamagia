@@ -329,7 +329,8 @@ export interface TriggerDoubler {
 
 export interface StaticPowerToughnessGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
-    | "source-opponents-graveyard-creatures" | "source-controller-life-threshold";
+    | "source-opponents-graveyard-creatures" | "source-controller-life-threshold" | "other-subtype-creatures-you-control"
+    | "other-all-creatures";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -1756,11 +1757,33 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   const life = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(clean);
   if (life) return { scope: "source-controller-life-threshold", power: Number(life[1]), toughness: Number(life[2]), threshold: Number(life[3]) };
   const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
-  return match ? {
-    scope: match[4] ? "all-creatures" : match[3] ? "creatures-you-control" : "other-creatures-you-control",
-    ...(match[2] ? { color: match[2]!.toUpperCase() } : {}),
-    power: Number(match[5]), toughness: Number(match[6])
-  } : null;
+  if (match) {
+    return {
+      scope: match[4] ? "all-creatures" : match[3] ? "creatures-you-control" : "other-creatures-you-control",
+      ...(match[2] ? { color: DAMAGE_AMPLIFY_COLOR_LETTER[match[2]!.toLowerCase()] } : {}),
+      power: Number(match[5]), toughness: Number(match[6])
+    };
+  }
+  // Tribal lord: "Other Elves you control get +1/+1." (CR 205.3g creature subtypes).
+  const subtypeLord = /^other\s+([A-Za-z]+)\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  if (subtypeLord) {
+    return {
+      scope: "other-subtype-creatures-you-control",
+      subtype: singularSubtype(subtypeLord[1]!),
+      power: Number(subtypeLord[2]), toughness: Number(subtypeLord[3])
+    };
+  }
+  // Color anthem, any controller (Bad Moon, Celestial Crusader): unlike the
+  // "you control" grants above, this affects every player's creatures.
+  const colorAnthem = /^(other\s+)?(white|blue|black|red|green)\s+creatures\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  if (colorAnthem) {
+    return {
+      scope: colorAnthem[1] ? "other-all-creatures" : "all-creatures",
+      color: DAMAGE_AMPLIFY_COLOR_LETTER[colorAnthem[2]!.toLowerCase()],
+      power: Number(colorAnthem[3]), toughness: Number(colorAnthem[4])
+    };
+  }
+  return null;
 }
 
 function parseStaticPowerToughnessGrants(text: string): StaticPowerToughnessGrant[] {
