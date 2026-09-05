@@ -663,6 +663,10 @@ const FIREBREATHER = () => make({
   name: "Firecoil Drake", type_line: "Creature — Dragon", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2",
   oracle_text: "{R}: Firecoil Drake gets +1/+0 until end of turn."
 });
+const HAND_SIZE_CDA_CREATURE = () => make({
+  name: "Test Psychosis Crawler", type_line: "Creature — Horror", mana_cost: "{3}{U}", cmc: 4,
+  oracle_text: "Test Psychosis Crawler's power and toughness are each equal to the number of cards in your hand.\nWhenever you draw a card, each opponent loses 1 life."
+});
 const SCRY_SPELL = () => make({ name: "Read the Bones Lite", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Scry 3." });
 const SCRY_ETB_CREATURE = () => make({ name: "Omen Owl", type_line: "Creature — Bird", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", oracle_text: "When Omen Owl enters the battlefield, scry 2." });
 const SURVEIL_ETB_CREATURE = () => make({ name: "Test Sinister Starfish", type_line: "Creature — Fish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", oracle_text: "When this creature enters, surveil 2." });
@@ -6593,6 +6597,22 @@ describe("activated abilities", () => {
     // The modifier is removed during the cleanup step (CR 514.2).
     game = passUntil(game, (state) => state.turn > 1);
     expect(powerOf(permanentNamed(game, 0, "Firecoil Drake")!, game)).toBe(2);
+  });
+
+  it("tracks a characteristic-defining power/toughness live off the controller's hand size", () => {
+    const profile = profileOf(HAND_SIZE_CDA_CREATURE());
+    expect(profile.cdaPowerToughness).toBe("cards-in-your-hand");
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyOnBoard([HAND_SIZE_CDA_CREATURE()]);
+    const crawler = permanentNamed(game, 0, "Test Psychosis Crawler")!;
+    expect([powerOf(crawler, game), toughnessOf(crawler, game)]).toEqual([0, 0]);
+
+    game = stage(game, 0, () => ({ hand: toHand(0, [BEAR(), FOREST(), FOREST()], "crawler-hand") }));
+    expect([powerOf(crawler, game), toughnessOf(crawler, game)]).toEqual([3, 3]);
+
+    game = stage(game, 0, (player) => ({ hand: player.hand.slice(1) }));
+    expect([powerOf(crawler, game), toughnessOf(crawler, game)]).toEqual([2, 2]);
   });
 
   it("keeps mana abilities out of the decision the table waits on", () => {

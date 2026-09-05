@@ -915,7 +915,7 @@ export interface CardProfile {
   /** "<Basic type>s you control produce an additional {C}" (Crypt Ghast, CR 605). */
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   /** Characteristic-defining P/T "equal to the number of X you control" (CR 604.3). */
-  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | "your-life-total" | null;
+  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | "your-life-total" | "cards-in-your-hand" | null;
   /** Lieutenant (Commander 2014): commander-conditional static bonuses. */
   readonly lieutenant: {
     readonly selfPower: number;
@@ -3484,6 +3484,7 @@ function recognizeText(text: string): RecognizedText {
     }
     if (/^~'?s power and toughness are each equal to the number of (?:creature|land|artifact|green permanent)s? you control\.?$/i.test(line)) continue;
     if (/^~'?s power and toughness are each equal to your life total\.?$/i.test(line)) continue;
+    if (/^~'?s power and toughness are each equal to the number of cards in your hand\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
@@ -3870,11 +3871,14 @@ export function cardProfile(card: CardData): CardProfile {
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
   const cdaMatch = /~'?s power and toughness are each equal to the number of (creature|land|artifact|green permanent)s? you control/i.exec(text);
   const lifeCdaMatch = /~'?s power and toughness are each equal to your life total/i.test(text);
+  const handCdaMatch = /~'?s power and toughness are each equal to the number of cards in your hand/i.test(text);
   const cdaPowerToughness = lifeCdaMatch
     ? "your-life-total"
-    : cdaMatch
-      ? (/green permanent/i.test(cdaMatch[1]!) ? "green-permanents-you-control" : `${cdaMatch[1]!.toLowerCase()}s-you-control`) as CardProfile["cdaPowerToughness"]
-      : null;
+    : handCdaMatch
+      ? "cards-in-your-hand"
+      : cdaMatch
+        ? (/green permanent/i.test(cdaMatch[1]!) ? "green-permanents-you-control" : `${cdaMatch[1]!.toLowerCase()}s-you-control`) as CardProfile["cdaPowerToughness"]
+        : null;
   // Lieutenant (Commander 2014): "As long as you control your commander, ~ gets
   // +N/+N and <bonus>." The quoted-ability variants are not covered.
   const lieutenantMatch = /Lieutenant\s+[—–-]\s+As long as you control your commander, ~ gets \+(\d+)\/\+(\d+)(?:\s+and\s+(.+?))?\.?(?:\n|$)/i.exec(text);
