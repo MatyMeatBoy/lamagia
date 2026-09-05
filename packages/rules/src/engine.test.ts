@@ -3,13 +3,26 @@ import { cardProfile } from "./characteristics.js";
 import type { CardData } from "./characteristics.js";
 import {
   applyAction, canCounterSpell, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
-  hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TriggerInstance, type TurnStep
+  hasRealChoice, profileOf, settle, stabilizationDiagnostic, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TriggerInstance, type TurnStep
 } from "./engine.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
 import { projectGame } from "./projection.js";
 import { isSafeManaUndo } from "./undo.js";
 
 describe("smart counter response and safe mana undo", () => {
+  it("creates bounded stabilization evidence without hidden zones", () => {
+    const game = twoSeatGame([], []);
+    const diagnostic = stabilizationDiagnostic({
+      ...game,
+      stack: [{ id: "public-spell", controller: 1, card: toHand(1, [make({ name: "Visible Spell", type_line: "Instant", oracle_text: "" })])[0]!, label: "Visible Spell", targets: [], fromCommandZone: false, variableValue: 0, countered: false }],
+      log: [...game.log, { turn: game.turn, step: game.step, seat: 0, text: "public checkpoint" }]
+    });
+    expect(diagnostic).toContain("stack=public-spell:Visible Spell");
+    expect(diagnostic).toContain("recent=");
+    expect(diagnostic).not.toContain("library");
+    expect(diagnostic).not.toContain("hand");
+  });
+
   it("projects creature status without invented noncreature 0/0 stats", () => {
     const game = putOnBattlefield(twoSeatGame([], []), 0, [ISLAND(), make({ name: "Zero", type_line: "Creature", power: "0", toughness: "0" })]);
     const permanents = projectGame(game, 0).players[0]!.battlefield;
