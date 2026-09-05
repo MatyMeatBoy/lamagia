@@ -127,3 +127,7 @@ corresponding cards remain fully implemented in the generated export.
 Hooded Horror | `8267561e-bc25-4aaa-8242-f6d7ec88143e` was implemented locally
 with a reusable combat restriction rather than a card-name branch. Validation:
 574 rules tests, `npm run check`, 9,321 global profiles, C13 259/341.
+
+Prossh, Skyraider of Kher | `868882d2-ed4e-4171-a17c-478a341080fb` was closed
+locally with the reusable mana-spent cast-trigger token primitive. Validation:
+575 rules tests, `npm run check`, 9,324 global profiles, C13 260/341.
