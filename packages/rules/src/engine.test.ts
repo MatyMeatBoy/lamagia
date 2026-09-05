@@ -330,6 +330,10 @@ const AZAMI_WIZARD = () => make({ name: "Library Wizard", type_line: "Creature �
 const C13_BRILLIANT_PLAN = () => make({ name: "Brilliant Plan", type_line: "Sorcery", mana_cost: "{4}{U}", cmc: 5, oracle_text: "Draw three cards.", scryfall_id: "4fc6b5a0-9a0f-4934-8a43-a0e5364832ec" });
 const C13_HARMONIZE = () => make({ name: "Harmonize", type_line: "Sorcery", mana_cost: "{2}{G}{G}", cmc: 4, oracle_text: "Draw three cards.", scryfall_id: "83da2456-0c5c-4b2b-8183-20c332566127" });
 const C13_VISION_SKEINS = () => make({ name: "Vision Skeins", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Each player draws two cards.", scryfall_id: "b4b032de-808e-4c47-ba86-ac59609378e0" });
+const C13_SPRINGJACK_PASTURE = () => make({
+  name: "Springjack Pasture", type_line: "Land", oracle_text: "{T}: Add {C}.\n{4}, {T}: Create a 0/1 white Goat creature token.\n{T}, Sacrifice X Goats: Add X mana of any one color. You gain X life.",
+  scryfall_id: "9eaadbbc-818b-4c21-9d4b-1bba48504d38", oracle_id: "9eaadbbc-818b-4c21-9d4b-1bba48504d38"
+});
 const C13_DEEP_ANALYSIS = () => make({ name: "Deep Analysis", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Target player draws two cards.\nFlashback—{1}{U}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)", scryfall_id: "952800af-f52c-44bf-a98b-51c5f8142dc9" });
 const C13_BALEFUL_STRIX = () => make({ name: "Baleful Strix", type_line: "Artifact Creature — Bird", mana_cost: "{U}{B}", cmc: 2, power: "1", toughness: "1", keywords: ["Flying", "Deathtouch"], oracle_text: "Flying\nDeathtouch\nWhen this creature enters, draw a card.", scryfall_id: "47ac0f77-1294-4de9-93d1-141a9f314f98" });
 const C13_PHYREXIAN_GARGANTUA = () => make({ name: "Phyrexian Gargantua", type_line: "Creature — Phyrexian Horror", mana_cost: "{4}{B}{B}", cmc: 6, power: "4", toughness: "4", oracle_text: "When this creature enters, you draw two cards and you lose 2 life.", scryfall_id: "56ae94c2-8bbb-4807-b1e0-8ef178dd1697" });
@@ -1563,6 +1567,35 @@ describe("casting", () => {
     expect(profileOf(C13_HARMONIZE())).toMatchObject({ effects: [{ kind: "draw", amount: 3 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_VISION_SKEINS())).toMatchObject({ effects: [{ kind: "each-player-draw", amount: 2 }], targetKind: "none", fullyImplemented: true });
     expect(profileOf(C13_DEEP_ANALYSIS())).toMatchObject({ effects: [{ kind: "draw-target-player", amount: 2 }], targetKind: "player", flashbackCost: { raw: "{1}{U}" }, fullyImplemented: true });
+    expect(profileOf(C13_SPRINGJACK_PASTURE())).toMatchObject({
+      fullyImplemented: true,
+      manaAbilities: [
+        { requiresTap: true, produces: ["C"], amount: 1 },
+        { requiresTap: true, variableAmountSacrifice: { subtype: "Goat" }, gainLife: "X", amount: 0 }
+      ],
+      activatedAbilities: [{ effect: { kind: "create-token" } }]
+    });
+  });
+
+  it("sacrifices a variable number of Goats for Springjack mana and life", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ hand: [], autoPass: false }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    const goat = make({ name: "Goat", type_line: "Creature — Goat", power: "0", toughness: "1" });
+    game = putOnBattlefield(game, 0, [C13_SPRINGJACK_PASTURE(), goat]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null };
+    const springjack = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Springjack Pasture")!;
+    const goatPermanent = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goat")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === springjack.instance_id && entry.action.abilityIndex === 1 && entry.action.variableAmount === 1
+      && entry.action.mana === "W");
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.life).toBe(41);
+    expect(game.players[0]!.manaPool.W).toBe(1);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === goatPermanent.instance_id)).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Goat")).toBe(true);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === springjack.instance_id)?.tapped).toBe(true);
   });
 
   it("offers storage-counter mana as variable colour choices", () => {

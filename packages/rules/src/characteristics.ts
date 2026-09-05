@@ -66,7 +66,9 @@ export interface ManaAbility {
   /** Storage-counter abilities produce one mana per removed counter. */
   readonly variableAmountCounter?: string;
   /** Some mana abilities have a small immediate side effect (CR 605). */
-  readonly gainLife?: number;
+  readonly gainLife?: number | "X";
+  /** Variable sacrifice cost, e.g. "Sacrifice X Goats" (CR 605.1a). */
+  readonly variableAmountSacrifice?: { readonly subtype: string };
   /** Static activation restriction such as Temple of the False God. */
   readonly requiresLands?: number;
   readonly text: string;
@@ -1068,6 +1070,23 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     if (!activated) continue;
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
+    const variableSacrifice = /sacrifice\s+X\s+([A-Za-z][A-Za-z'’-]*)s\b/i.exec(costText);
+    const variableSacrificeEffect = /^Add X mana of any one color\.\s*You gain X life\.?$/i.test(effectText.trim());
+    if (variableSacrifice && variableSacrificeEffect) {
+      const manaSymbols = costText.match(/\{[^}]+\}/g) ?? [];
+      const leftovers = costText
+        .replace(/\{T\}/gi, "")
+        .replace(/sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s\b/gi, "")
+        .replace(/[，,\s]/g, "");
+      if (!leftovers.length) {
+        abilities.push({
+          index: abilities.length, produces: [...MANA_COLORS] as ManaType[], amount: 0,
+          requiresTap: manaSymbols.some((symbol) => /^\{T\}$/i.test(symbol)), lifeCost: 0,
+          variableAmountSacrifice: { subtype: variableSacrifice[1]! }, gainLife: "X", text: line.trim()
+        });
+        continue;
+      }
+    }
     const requiresTap = /\{T\}/.test(costText);
     const variableStorage = /^add\s+X\s+mana\s+in\s+any\s+combination\s+of\s+(\{[WUBRGC]\})(?:\s+and\/or\s+(\{[WUBRGC]\}))?\.?$/i.exec(effectText.trim());
     if (variableStorage && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(costText)) {
@@ -2991,7 +3010,9 @@ function recognizeText(text: string): RecognizedText {
     if (manaLine) {
       const variableStorageMana = /^add\s+X\s+mana\s+in\s+any\s+combination\s+of\s+\{[WUBRGC]\}(?:\s+and\/or\s+\{[WUBRGC]\})?\.?$/i.test(manaLine[2]!.trim())
         && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(manaLine[1]!);
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana) unimplementedText.push(line);
+      const variableSacrificeMana = /^add\s+X\s+mana\s+of\s+any\s+one\s+color\.\s*you\s+gain\s+X\s+life\.?$/i.test(manaLine[2]!.trim())
+        && /sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s\b/i.test(manaLine[1]!);
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !variableSacrificeMana) unimplementedText.push(line);
       continue;
     }
 

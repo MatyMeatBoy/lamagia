@@ -462,7 +462,7 @@ export type GameAction =
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
-  | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[] }
+  | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeIds?: readonly string[] }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
@@ -666,6 +666,8 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
   if (ability.requiresLands !== undefined && player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))).length < ability.requiresLands) return false;
   if (!(ability.removeCounters ?? []).every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) return false;
   if (ability.variableAmountCounter && (permanent.counters[ability.variableAmountCounter] ?? 0) < 1) return false;
+  if (ability.variableAmountSacrifice && !player.battlefield.some((candidate) => isCreature(cardProfile(candidate.card))
+    && cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.variableAmountSacrifice!.subtype.toLowerCase()))) return false;
   if (ability.manaCost && !planManaPayment(ability.manaCost, player, { state })) return false;
   return true;
 }
@@ -706,7 +708,7 @@ export function manaSources(player: PlayerState, state?: GameState): ManaSource[
     for (const ability of profile.manaAbilities) {
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
-      if (ability.variableAmountCounter) continue;
+      if (ability.variableAmountCounter || ability.variableAmountSacrifice) continue;
       if (!canUseManaAbility(player, permanent, ability)) continue;
       const options = manaOptionsFor(player, ability);
       if (!options.length) continue;
@@ -4869,6 +4871,18 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       if (!canUseManaAbility(player, permanent, ability, state)) continue;
       const options = manaOptionsFor(player, ability);
       if (!options.length) continue;
+      if (ability.variableAmountSacrifice) {
+        const candidates = player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
+          && cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.variableAmountSacrifice!.subtype.toLowerCase()));
+        for (let amount = 1; amount <= candidates.length; amount += 1) {
+          for (const selected of combinations(candidates, amount)) for (const mana of options) actions.push({
+            action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana, variableAmount: amount, sacrificeIds: selected.map((candidate) => candidate.instance_id) },
+            label: `${permanent.card.name}: Sacrifice ${amount} ${ability.variableAmountSacrifice.subtype}${amount === 1 ? "" : "s"} — Add ${Array.from({ length: amount }, () => `{${mana}}`).join("")} and gain ${amount} life`,
+            cardId: permanent.instance_id
+          });
+        }
+        continue;
+      }
       if (ability.variableAmountCounter) {
         const available = permanent.counters[ability.variableAmountCounter] ?? 0;
         for (let amount = 1; amount <= available; amount += 1) {
@@ -5132,6 +5146,25 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   const ability = cardProfile(source.card).manaAbilities.find((candidate) => candidate.index === action.abilityIndex);
   const options = ability ? manaOptionsFor(player, ability) : [];
   if (!ability || !options.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
+  if (ability.variableAmountSacrifice) {
+    const amount = action.variableAmount;
+    const selectedIds = action.sacrificeIds ?? [];
+    const candidates = player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
+      && cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.variableAmountSacrifice!.subtype.toLowerCase()));
+    const selected = selectedIds.map((id) => candidates.find((candidate) => candidate.instance_id === id));
+    if (!amount || !Number.isInteger(amount) || selected.length !== amount || selected.some((candidate) => !candidate)
+      || new Set(selectedIds).size !== selectedIds.length) throw new Error("Debes elegir las criaturas correctas para sacrificar.");
+    if (!canUseManaAbility(player, source, ability, state)) throw new Error("No puedes activar esa habilidad de maná ahora.");
+    let next = state;
+    for (const goat of selected as Permanent[]) next = movePermanentToZone(next, goat, "graveyard");
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      life: current.life + amount,
+      manaPool: addMana(current.manaPool, action.mana, amount),
+      battlefield: current.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: true } : permanent)
+    }));
+    return logged(next, seat, `${player.name} sacrifica ${amount} ${ability.variableAmountSacrifice.subtype}${amount === 1 ? "" : "s"}, agrega ${Array.from({ length: amount }, () => `{${action.mana}}`).join("")} y gana ${amount} vida.`);
+  }
   if (ability.variableAmountCounter) {
     const amount = action.variableAmount;
     const choices = action.manaChoices ?? [];
@@ -5176,7 +5209,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
   const next = withPlayer(state, seat, (current) => ({
     ...current,
-    life: current.life - ability.lifeCost + (ability.gainLife ?? 0),
+    life: current.life - ability.lifeCost + (typeof ability.gainLife === "number" ? ability.gainLife : 0),
     manaPool: (ability.fixedProduces
       ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
       : addMana(current.manaPool, action.mana, ability.amount + landBonus)),

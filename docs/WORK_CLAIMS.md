@@ -406,6 +406,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
 | `c13-oracle-counter-activated-target` | Vile Requiem's verse-counter upkeep and self-sacrifice destruction scaled by its counters (CR 602.2b, 603.2b, 121.1) | `codex/c13-vile-requiem` | active | 2026-09-04 |
 | `c13-oracle-draw-triggered-shape` | Well of Lost Dreams variable optional payment capped by life gained, then draw X (CR 603.2, 603.5, 107.3, 118.3) | `codex/c13-well-lost-dreams` | active | 2026-09-04 |
+| `c13-oracle-gain-life-activated` | Springjack Pasture's variable Goat sacrifice for X mana of one color and X life, with reusable variable sacrifice mana primitive (CR 605.1a, 605.3) | `codex/c13-springjack` | review (`pending`) | 2026-09-05 |
 
 
 
