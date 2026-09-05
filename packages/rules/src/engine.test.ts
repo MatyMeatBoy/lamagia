@@ -1535,6 +1535,7 @@ describe("casting", () => {
     const plants = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Plant");
     expect(plants).toHaveLength(3);
     expect(new Set(plants.map((permanent) => permanent.instance_id)).size).toBe(3);
+    expect(projectGame(game, 0).players[0]!.battlefield.filter((permanent) => permanent.name === "Plant").every((permanent) => permanent.isToken)).toBe(true);
 
     game = { ...game, players: game.players.map((player, seat) => seat === 0
       ? { ...player, battlefield: player.battlefield.map((permanent) => permanent.card.name === "Plant" ? { ...permanent, damage: 1 } : permanent) }

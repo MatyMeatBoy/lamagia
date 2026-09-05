@@ -31,7 +31,7 @@ export interface MatchRecord {
   lastActivityAt: number;
   readonly source: string;
   readonly deckNames: readonly string[];
-  /** Consecutive cost-free mana activations that are still reversible. */
+  /** Consecutive manual mana activations whose settled deltas are reversible. */
   undoHistory: readonly { before: GameState; after: GameState; seat: SeatId }[];
 }
 
