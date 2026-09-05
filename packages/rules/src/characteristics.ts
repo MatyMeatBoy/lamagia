@@ -601,7 +601,9 @@ export type SpellEffect =
   | { readonly kind: "exile-target-permanent-delayed-return" }
   /** Resolves a delayed return created by the previous effect. */
   | { readonly kind: "return-delayed-permanent" }
-  | { readonly kind: "exile-target-nontoken-creature" }
+  | { readonly kind: "exile-target-nontoken-creature"; readonly returnOnSourceLeave?: boolean }
+  /** Return the card linked by a Fiend Hunter-style exile ability (CR 607.1). */
+  | { readonly kind: "return-exiled-card" }
   /** Exile a controlled creature, then return it under its controller's control (CR 400.7). */
   | { readonly kind: "blink-target-creature" }
   | { readonly kind: "exile-target-graveyard" }
@@ -1034,6 +1036,8 @@ export interface CardProfile {
   readonly redirectsOpponentDrawsExceptFirst: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
+  /** Affinity quality: reduce this spell's generic cost by one per matching permanent you control (CR 702.41, 118.9). */
+  readonly affinityFor: string | null;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
   readonly spellCostReductionGrant: {
     readonly amount: number;
@@ -2434,6 +2438,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(that\s+creature[’']s\s+controller\s+may\s+.+)$/i },
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
   { event: "leaves-battlefield", subject: "self-or-another-creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "leaves-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-attacks-opponent", pattern: /^whenever\s+a\s+creature\s+attacks\s+one\s+of\s+your\s+opponents(?:\s+or\s+a\s+planeswalker\s+an\s+opponent\s+controls)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-attacks-enchanted-player", pattern: /^whenever\s+a\s+creature\s+attacks\s+enchanted\s+player,?\s*(.+)$/i },
@@ -3291,7 +3296,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
   }
+  if (/^(?:You may )?exile another target creature$/i.test(text)) {
+    return { effect: { kind: "exile-target-nontoken-creature", returnOnSourceLeave: true }, target: "nontoken-creature" };
+  }
   if (/^(?:You may )?exile target nontoken creature$/i.test(text)) return { effect: { kind: "exile-target-nontoken-creature" }, target: "nontoken-creature" };
+  if (/^Return the exiled card to the battlefield under its owner'?s control$/i.test(text)) {
+    return { effect: { kind: "return-exiled-card" }, target: "none" };
+  }
   if (/^Exile target creature you control, then return that card to the battlefield under your control$/i.test(text)) {
     return { effect: { kind: "blink-target-creature" }, target: "creature-you-control" };
   }
@@ -4363,7 +4374,8 @@ function recognizeText(text: string): RecognizedText {
       });
       continue;
     }
-    const leavesLine = line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
+    const linkedLeavesReturn = /~\s+leaves\s+the\s+battlefield,?\s+return\s+the\s+exiled\s+card\s+to\s+the\s+battlefield\s+under\s+its\s+owner[\x27\u2019]?s\s+control/i.test(line);
+    const leavesLine = linkedLeavesReturn ? line : line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
     // Modern Oracle splits Bane of Progress's dependent instruction into a
     // second sentence. Keep it attached to the ETB trigger so the existing
     // counted sweep primitive remains reusable across printings (CR 603.2,
@@ -4460,7 +4472,9 @@ function recognizeText(text: string): RecognizedText {
           optional,
           targetKind: recognized.target,
           ...(capriciousMultiTarget ? { targetKinds: ["nonland-you-control", "nonland-opponent", "nonland-opponent"] as const, minimumTargets: 1 } : {}),
-          ...(recognized.effect.kind === "exile-target-permanent-delayed-return" ? { excludesSourceFromTargets: true } : {}),
+          ...(recognized.effect.kind === "exile-target-permanent-delayed-return"
+            || (recognized.effect.kind === "exile-target-nontoken-creature" && recognized.effect.returnOnSourceLeave)
+            ? { excludesSourceFromTargets: true } : {}),
           sourceText: line,
           ...(unlessPayment && payCost ? { paymentBy: "opponent" as const } : {}),
           ...(eventControllerChoice ? { choiceBy: "event-controller" as const } : {}),
@@ -4550,7 +4564,11 @@ export function cardProfile(card: CardData): CardProfile {
   const cost = parseManaCost(face.mana_cost);
   const cantBeCountered = /(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/i.test(text);
   const uncounterableCreaturePowerMatch = /creature spells you control with power (\d+) or greater can't be countered\.?/i.exec(text);
-  const recognized = recognizeText(text.replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n"));
+  const affinityMatch = /^Affinity for (.+)$/im.exec(text);
+  const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
+  const recognized = recognizeText(text
+    .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
+    .replace(/^Affinity for .+$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
   const hasExtort = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "extort");
@@ -4846,6 +4864,7 @@ export function cardProfile(card: CardData): CardProfile {
     doublesEquippedCreatureDamage,
     redirectsOpponentDrawsExceptFirst,
     costReducesPerBoardCreature,
+    affinityFor,
     spellCostReductionGrant,
     staticLandManaBonus,
     cdaPowerToughness,

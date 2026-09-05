@@ -465,6 +465,7 @@ const C13_NIGHT_SOIL = () => make({ name: "Night Soil", type_line: "Enchantment"
 const C13_DISCIPLE_OF_GRISELBRAND = () => make({ name: "Disciple of Griselbrand", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "{1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.", scryfall_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad", oracle_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad" });
 const C13_SPELLBREAKER_BEHEMOTH = () => make({ name: "Spellbreaker Behemoth", type_line: "Creature — Beast", mana_cost: "{2}{R}{G}", cmc: 4, power: "5", toughness: "5", oracle_text: "Creature spells you control with power 5 or greater can't be countered.", scryfall_id: "cba07472-7212-4411-a9f9-38a48870ad69", oracle_id: "cba07472-7212-4411-a9f9-38a48870ad69" });
 const C13_FLICKERWISP = () => make({ name: "Flickerwisp", type_line: "Creature — Elemental", mana_cost: "{1}{W}{W}", cmc: 3, power: "3", toughness: "1", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, exile another target permanent. Return that card to the battlefield under its owner's control at the beginning of the next end step.", scryfall_id: "f6cccf30-2025-49bb-9b1e-240bbef03f27", oracle_id: "b23a3d30-6b8e-4aad-890f-db0c3af43ace" });
+const C13_FIEND_HUNTER = () => make({ name: "Fiend Hunter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}{W}", cmc: 3, power: "1", toughness: "3", oracle_text: "When ~ enters, you may exile another target creature.\nWhen ~ leaves the battlefield, return the exiled card to the battlefield under its owner's control.", scryfall_id: "cb9d557a-fc06-428c-8be6-7d28add33028", oracle_id: "cb9d557a-fc06-428c-8be6-7d28add33028" });
 const C13_VILE_REQUIEM = () => make({ name: "Vile Requiem", type_line: "Enchantment", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "At the beginning of your upkeep, you may put a verse counter on this enchantment.\n{1}{B}, Sacrifice this enchantment: Destroy up to X target nonblack creatures, where X is the number of verse counters on this enchantment. They can't be regenerated.", scryfall_id: "923972d3-d838-43f8-800a-904489c5791a" });
 const C13_WELL_OF_LOST_DREAMS = () => make({ name: "Well of Lost Dreams", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Whenever you gain life, you may pay {X}, where X is less than or equal to the amount of life you gained. If you do, draw X cards.", scryfall_id: "b0394cf2-12a0-4d4f-87e0-fe8937e6faff" });
 const C13_OLORO = () => make({ name: "Oloro, Ageless Ascetic", type_line: "Legendary Creature — Giant Soldier", mana_cost: "{3}{W}{U}{B}", cmc: 6, power: "4", toughness: "5", oracle_text: "At the beginning of your upkeep, you gain 2 life.\nWhenever you gain life, you may pay {1}. If you do, draw a card and each opponent loses 1 life.\nAt the beginning of your upkeep, if Oloro, Ageless Ascetic is in the command zone, you gain 2 life.", scryfall_id: "abf8df47-405c-42d8-be9e-0f0d0a49589b", oracle_id: "620ff5f2-7d3f-467f-943d-3b62c2135023" });
@@ -997,7 +998,7 @@ describe("turn structure", () => {
     expect(game.prioritySeat).toBe(0);
   });
 
-  it("lets a shock land enter untapped for 2 life when it can be afforded, tapped otherwise", () => {
+  it("asks before a shock land pays 2 life or enters tapped", () => {
     const profile = profileOf(SHOCK_LAND());
     expect(profile.entersTapped).toEqual({ kind: "unless-pay-life", life: 2 });
     expect(profile.fullyImplemented).toBe(true);
@@ -1008,7 +1009,15 @@ describe("turn structure", () => {
     const before = flush.players[0]!.life;
     flush = applyAction(flush, 0, { type: "play-land", cardId: "shock-flush-0" });
     const flushLand = flush.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
-    expect(flushLand.tapped).toBe(false);
+    expect(flush.pendingChoice).toMatchObject({ type: "land-entry", life: 2, sourceId: flushLand.instance_id });
+    expect(flushLand.tapped).toBe(true);
+    expect(flush.players[0]!.life).toBe(before);
+    expect(legalActions(flush, 0).map((entry) => entry.action)).toEqual([
+      { type: "choose-land-entry", sourceId: flushLand.instance_id, payLife: true },
+      { type: "choose-land-entry", sourceId: flushLand.instance_id, payLife: false }
+    ]);
+    flush = applyAction(flush, 0, { type: "choose-land-entry", sourceId: flushLand.instance_id, payLife: true });
+    expect(flush.players[0]!.battlefield.find((permanent) => permanent.instance_id === flushLand.instance_id)!.tapped).toBe(false);
     expect(flush.players[0]!.life).toBe(before - 2);
 
     // At low life, the same choice protects it and the land enters tapped instead.
@@ -1017,6 +1026,11 @@ describe("turn structure", () => {
     poor = passUntil(poor, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
     poor = applyAction(poor, 0, { type: "play-land", cardId: "shock-poor-0" });
     const poorLand = poor.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
+    expect(legalActions(poor, 0).map((entry) => entry.action)).toEqual([
+      { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: true },
+      { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: false }
+    ]);
+    poor = applyAction(poor, 0, { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: false });
     expect(poorLand.tapped).toBe(true);
     expect(poor.players[0]!.life).toBe(2);
   });
@@ -2644,6 +2658,37 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears"));
     expect(game.delayedReturns).toHaveLength(0);
     expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it("returns Fiend Hunter's linked creature when the Hunter leaves", () => {
+    const profile = profileOf(C13_FIEND_HUNTER());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      triggers: [
+        { event: "enters-battlefield", effect: { kind: "exile-target-nontoken-creature", returnOnSourceLeave: true }, targetKind: "nontoken-creature", excludesSourceFromTargets: true },
+        { event: "leaves-battlefield", effect: { kind: "return-exiled-card" }, targetKind: "none" }
+      ]
+    });
+    let game = readyToCast([C13_FIEND_HUNTER(), DESTROY_TARGET_CREATURE()], [PLAINS(), PLAINS(), PLAINS(), SWAMP(), SWAMP()], [], [BEAR(), BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target" || state.pendingChoice?.type === "optional-trigger");
+    const targetChoice = game.pendingChoice?.type === "trigger-target" ? game.pendingChoice : null;
+    const hunter = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Fiend Hunter")!;
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    if (targetChoice) {
+      expect(targetChoice.options).toContainEqual({ kind: "permanent", instanceId: bear.instance_id });
+      expect(targetChoice.options).not.toContainEqual({ kind: "permanent", instanceId: hunter.instance_id });
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "permanent", instanceId: bear.instance_id } });
+      game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    }
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.players[1]!.exile.some((card) => card.instance_id === bear.card.instance_id)).toBe(true);
+    const removal = game.players[0]!.hand.find((card) => card.name === "Destroy Target Creature")!;
+    game = applyAction(game, 0, { type: "cast", cardId: removal.instance_id, targets: [{ kind: "permanent", instanceId: hunter.instance_id }] });
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Fiend Hunter")).toBe(true);
+    expect(game.players[1]!.exile.some((card) => card.instance_id === bear.card.instance_id)).toBe(false);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.instance_id === bear.card.instance_id)).toBe(true);
   });
 
   it("captures Vile Requiem's verse counters before its self-sacrifice", () => {

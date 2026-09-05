@@ -135,6 +135,15 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
       return { action: chosen.action, label: chosen.label };
     }
   }
+  if (state.pendingChoice?.type === "land-entry" && state.pendingChoice.seat === seat) {
+    // Shock lands are explicit replacement choices, never an implicit life
+    // payment. Bots prefer the untapped branch when it is legal, otherwise
+    // they use the tapped branch so a pending choice can never stall a match.
+    const untapped = available.find((entry) => entry.action.type === "choose-land-entry" && entry.action.payLife);
+    const tapped = available.find((entry) => entry.action.type === "choose-land-entry" && !entry.action.payLife);
+    const chosen = untapped ?? tapped;
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "optional-trigger" && state.pendingChoice.seat === seat) {
     const accept = available.find((entry) => entry.action.type === "choose-trigger" && entry.action.accept);
     const decline = available.find((entry) => entry.action.type === "choose-trigger" && !entry.action.accept);
