@@ -6229,6 +6229,16 @@ function maxLandDrops(state: GameState, seat: SeatId): number {
   return 1 + player.extraLandDrops + staticExtra;
 }
 
+/** "You may play lands from the top of your library" (Oracle of Mul Daya, CR 305.1). */
+function canPlayLandsFromLibraryTop(state: GameState, seat: SeatId): boolean {
+  return playerAt(state, seat).battlefield.some((permanent) => cardProfile(permanent.card).playLandsFromTopOfLibrary);
+}
+
+/** "Play with the top card of your library revealed": public information, exposed in the projection for every viewer. */
+export function revealsTopOfLibrary(state: GameState, seat: SeatId): boolean {
+  return playerAt(state, seat).battlefield.some((permanent) => cardProfile(permanent.card).revealsTopOfLibrary);
+}
+
 /** Generic cost reduction from board-scaled self text and Medallion-style grants (CR 118.9). */
 function affinityCount(state: GameState, seat: SeatId, quality: string): number {
   const normalized = quality.trim().toLowerCase();
@@ -6768,6 +6778,10 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     for (const card of player.hand) {
       if (!isLand(cardProfile(card))) continue;
       actions.push({ action: { type: "play-land", cardId: card.instance_id }, label: `Jugar ${card.name}`, cardId: card.instance_id });
+    }
+    const topCard = player.library[0];
+    if (topCard && isLand(cardProfile(topCard)) && canPlayLandsFromLibraryTop(state, seat)) {
+      actions.push({ action: { type: "play-land", cardId: topCard.instance_id }, label: `Jugar ${topCard.name} (desde arriba de tu biblioteca)`, cardId: topCard.instance_id });
     }
   }
 
@@ -8128,11 +8142,15 @@ function applyPlayLand(state: GameState, seat: SeatId, cardId: string): GameStat
   const player = playerAt(state, seat);
   if (!sorcerySpeed(state, seat)) throw new Error("Solo puedes jugar una tierra en tu fase principal con la pila vacía.");
   if (player.landsPlayedThisTurn >= maxLandDrops(state, seat)) throw new Error("Ya jugaste todas tus tierras este turno.");
-  const card = player.hand.find((candidate) => candidate.instance_id === cardId);
-  if (!card || !isLand(cardProfile(card))) throw new Error("Esa carta no es una tierra en tu mano.");
+  const fromHand = player.hand.find((candidate) => candidate.instance_id === cardId);
+  const fromLibraryTop = !fromHand && player.library[0]?.instance_id === cardId && canPlayLandsFromLibraryTop(state, seat)
+    ? player.library[0] : undefined;
+  const card = fromHand ?? fromLibraryTop;
+  if (!card || !isLand(cardProfile(card))) throw new Error("Esa carta no es una tierra jugable.");
   let next = withPlayer(state, seat, (current) => ({
     ...current,
-    hand: current.hand.filter((candidate) => candidate.instance_id !== cardId),
+    hand: fromHand ? current.hand.filter((candidate) => candidate.instance_id !== cardId) : current.hand,
+    library: fromLibraryTop ? current.library.slice(1) : current.library,
     landsPlayedThisTurn: current.landsPlayedThisTurn + 1
   }));
   next = putOntoBattlefield(next, seat, card, false);

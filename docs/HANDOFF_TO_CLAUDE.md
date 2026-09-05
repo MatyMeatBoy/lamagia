@@ -3952,6 +3952,33 @@ simulate:engine` 200/200, 10,068 global profiles.
 Prossh decklist status after this pass: **62 of 97 unique cards fully
 implemented (63.9%)**.
 
+Oracle of Mul Daya's three static lines are each real primitives, not a
+one-off card hack. Added `CardProfile.playLandsFromTopOfLibrary` and
+`CardProfile.revealsTopOfLibrary` (`extraLandDropsPerTurn` for the third
+line was already covered by Exploration/Azusa). `legalActions` now also
+offers a `play-land` action for the top card of the controller's library
+when a permanent grants that permission, and `applyPlayLand` accepts a
+`cardId` from either the hand or that exact top card, shifting the library
+instead of filtering the hand. "Play with the top card of your library
+revealed" is genuine public information (CR 108.4), not merely visible to
+its controller, so `projectGame` now exposes a `revealedTopLibraryCard` on
+`PlayerView` for EVERY viewer (including opponents) whenever that player
+controls a revealing permanent — the one deliberate, narrowly-scoped
+exception to the "opponent's library is structurally absent" boundary
+documented at the top of `projection.ts`, gated on an explicit static
+ability rather than a general leak. Verified **+4** in the export count
+(10,068 → 10,072, Oracle of Mul Daya's four printings); set coverage holds
+at 30.5%. Scenario-tested: the top-of-library land drop is offered and
+correctly removes the played land from the library (not the hand); it is
+NOT offered for a player without the static; the top card is visible in
+both the controller's own projection and the opponent's; a player without
+the reveal static keeps `revealedTopLibraryCard` undefined for opponents.
+Validation: **728 rules tests**, `npm run check`, `npm run simulate:engine`
+200/200, 10,072 global profiles.
+
+Prossh decklist status after this pass: **63 of 97 unique cards fully
+implemented (64.9%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
