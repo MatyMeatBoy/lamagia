@@ -12,19 +12,33 @@ selected compositional worker payloads; verify the Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,188 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,287 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 22,837 / 84,990 implemented (26.9%) across 685
+- **Edition memberships:** 23,401 / 84,990 implemented (27.5%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 244 / 341 unique cards (71.6%), 97 pending.
+- **Commander 2013:** 247 / 341 unique cards (72.4%), 94 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
 life thresholds and opponent graveyard creature counts. These are parameterized
 primitives, so reprints reuse the same profile rather than adding card-specific
 branches.
+
+### Latest integration checkpoint — 2026-09-05
+
+Audited worker intake added executable batches for mana-entry restrictions,
+noncreature-spell drain, surveil, reanimation, Hunted Troll, Grazing
+Gladehart, Disciple of Griselbrand, and Springjack Pasture. The optional
+cycling-target keyword grammar was generalized and tested with Dirge of Dread.
+Rules suite: **559 passing tests**. Latest pushed source: `3bceac3`; generated
+export: **9,287/38,711** profiles and C13 **247/341**.
+
+Sek'Kuar, Slice and Dice, graveyard exile, Well of Lost Dreams, Vile Requiem,
+and Flickerwisp arrivals were audited and skipped as duplicates of existing
+primitives. Do not cherry-pick stale branches wholesale; compare executable
+diffs and oracle IDs against the published checkpoint.
 
 ### Tested-only pod mode
 
