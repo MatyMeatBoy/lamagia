@@ -572,6 +572,8 @@ export type SpellEffect =
   /** Temporary keyword grant limited to creatures controlled by the effect's controller. */
   | { readonly kind: "grant-creatures-you-control-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "overwhelming-stampede" }
+  /** Craterhoof Behemoth: same trample/+X/+X grant as Overwhelming Stampede, but X is the creature count, not the greatest power. */
+  | { readonly kind: "creature-count-stampede" }
   | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
@@ -3153,6 +3155,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // "Until end of turn, creatures you control gain trample and get +X/+X, where X is the greatest power among creatures you control" (Overwhelming Stampede).
   if (/^Until end of turn, creatures you control gain trample and get \+X\/\+X, where X is the greatest power among creatures you control$/i.test(text)) {
     return { effect: { kind: "overwhelming-stampede" }, target: "none" };
+  }
+  // Same effect, "until end of turn" trailing instead of leading (Pathbreaker Ibex's attack trigger).
+  if (/^creatures you control gain trample and get \+X\/\+X until end of turn, where X is the greatest power among creatures you control$/i.test(text)) {
+    return { effect: { kind: "overwhelming-stampede" }, target: "none" };
+  }
+  // Craterhoof Behemoth: same shape, X is the creature COUNT instead of the greatest power.
+  if (/^creatures you control gain trample and get \+X\/\+X until end of turn, where X is the number of creatures you control$/i.test(text)) {
+    return { effect: { kind: "creature-count-stampede" }, target: "none" };
   }
   if ((match = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     // Firebreathing-style self pumps: the source is the only affected creature
