@@ -250,6 +250,7 @@ const GAIN_ON_YOUR_DRAW_DRAIN_ON_OPPONENT_DRAW = () => make({ name: "Test Sheold
 const DRAW_TWO_TARGET = () => make({ name: "Test Divination", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Target player draws two cards." });
 const X_MINUS_SWEEP = () => make({ name: "X Minus Sweep", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "All creatures get -X/-X until end of turn." });
 const POWER_DRAW_TRIGGER = () => make({ name: "Power Draw Trigger", type_line: "Creature — Human Druid", mana_cost: "{3}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your end step, if you control a creature with power 5 or greater, you may draw a card." });
+const RUBY_DARING_TRACKER = () => make({ name: "Ruby, Daring Tracker", type_line: "Legendary Creature — Human Scout", mana_cost: "{R}{G}", cmc: 2, power: "1", toughness: "2", oracle_text: "Haste (This creature can attack and {T} as soon as it comes under your control.)\nWhenever Ruby attacks while you control a creature with power 4 or greater, Ruby gets +2/+2 until end of turn.\n{T}: Add {R} or {G}.", oracle_id: "5d1b0eee-3a7a-4f22-a40d-7658a368962a" });
 const NONFLYING_SWEEP = () => make({ name: "Nonflying Sweep", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell deals X damage to each creature without flying and each player." });
 const FLYING_SWEEP = () => make({ name: "Flying Sweep", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell deals X damage to each creature with flying." });
 const UPKEEP_DRAW_LOSS = () => make({ name: "Upkeep Draw Loss", type_line: "Creature — Demon", mana_cost: "{5}{B}", cmc: 6, power: "2", toughness: "2", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life." });
@@ -4027,6 +4028,27 @@ describe("casting", () => {
   it("gates an optional end-step draw on a controlled power threshold", () => {
     const profile = profileOf(POWER_DRAW_TRIGGER());
     expect(profile.triggers[0]).toMatchObject({ condition: { kind: "controlled-creature-power-at-least", amount: 5 }, effect: { kind: "draw", amount: 1 } });
+  });
+
+  it("reuses the controlled-power threshold for Ruby's attack trigger", () => {
+    const profile = profileOf(RUBY_DARING_TRACKER());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "attacks", subject: "self",
+      condition: { kind: "controlled-creature-power-at-least", amount: 4 },
+      effect: { kind: "modify-source-creature", power: 2, toughness: 2 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // CR 603.2 puts the attack trigger on the stack; CR 603.4 checks the
+    // intervening "while" condition again as it resolves.
+    let game = readyToCast([], [RUBY_DARING_TRACKER(), TRAMPLER()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })), step: "declare-attackers", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], combat: { ...game.combat, attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
+    const ruby = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ruby, Daring Tracker")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: ruby.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && state.stack.length === 0 && state.triggerQueue.length === 0);
+    const attackingRuby = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === ruby.instance_id)!;
+    expect(powerOf(attackingRuby, game)).toBe(3);
+    expect(toughnessOf(attackingRuby, game)).toBe(4);
   });
 
   it("selects Capricious Efreet's required and optional random targets", () => {
