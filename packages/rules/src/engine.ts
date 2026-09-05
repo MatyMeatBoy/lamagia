@@ -4653,6 +4653,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
     }
+    case "make-target-spell-uncounterable": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, cantBeCountered: true } : entry)) };
+    }
     case "delayed-mana-equal-to-target-spell-mana-value": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;

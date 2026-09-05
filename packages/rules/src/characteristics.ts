@@ -665,6 +665,8 @@ export type SpellEffect =
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
+  /** "Target spell can't be countered" (Vexing Shusher): tags the targeted stack object, mirroring the cast-time StackObject.cantBeCountered flag. */
+  | { readonly kind: "make-target-spell-uncounterable" }
   /** Daze: the targeted spell's own controller decides whether to pay (CR 601.2b, 603.3, 118.9). */
   | { readonly kind: "counter-target-spell-unless-pay"; readonly cost: ManaCost }
   | { readonly kind: "counter-target-spell-to-battlefield" }
@@ -1497,7 +1499,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     }
     // Board-dependent color (Fellwar Stone, Harvester Druid): resolved from
     // the battlefield at activation time, not a fixed color set on the card.
-    const anyColorFromLands = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(an\s+opponent\s+controls|you\s+control)\s+could\s+produce$/i.exec(effectText.trim().replace(/\.$/, ""));
+    const anyColorFromLands = /^add\s+one\s+mana\s+of\s+any\s+(?:color|type)\s+that\s+a\s+land\s+(an\s+opponent\s+controls|you\s+control)\s+could\s+produce$/i.exec(effectText.trim().replace(/\.$/, ""));
     if (anyColorFromLands && !instruction?.produced) {
       abilities.push({
         index: abilities.length, produces: [], amount: 1,
@@ -3651,6 +3653,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^At the beginning of your next main phase, add an amount of \{([WUBRGC])\} equal to that spell's mana value$/i.exec(text))) {
     return { effect: { kind: "delayed-mana-equal-to-target-spell-mana-value", manaType: match[1]!.toUpperCase() as ManaType }, target: "spell" };
   }
+  if (/^Target spell can'?t be countered$/i.test(text)) return { effect: { kind: "make-target-spell-uncounterable" }, target: "spell" };
   const multiBasicSearch = parseMultiBasicSearch(text);
   if (multiBasicSearch) return { effect: multiBasicSearch, target: "none" };
   const token = parseManaSpentToken(text) ?? parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
@@ -4318,7 +4321,7 @@ function recognizeText(text: string): RecognizedText {
         && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(manaLine[1]!);
       // Board-dependent color (Fellwar Stone, Harvester Druid): resolved at
       // activation time by `manaOptionsFor`, not by `parseAddClause`.
-      const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
+      const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+(?:color|type)\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
       const variableSacrificeMana = /(?:\{T\},\s*)?sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s?\s*$/i.test(manaLine[1]!.trim())
         && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
       const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(manaLine[2]!)

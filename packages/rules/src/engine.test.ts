@@ -10094,6 +10094,58 @@ describe("Ogre Battledriver pumps and hastes another entering creature", () => {
   });
 });
 
+describe("Reflecting Pool's board-dependent 'any type' mana", () => {
+  const REFLECTING_POOL = () => make({ name: "Reflecting Pool", type_line: "Land", oracle_text: "{T}: Add one mana of any type that a land you control could produce." });
+
+  it("recognizes 'any type' the same way as the existing 'any color' Fellwar Stone template", () => {
+    const profile = profileOf(REFLECTING_POOL());
+    expect(profile.manaAbilities[0]).toMatchObject({ anyColorFromLandsControlledBy: "you" });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("computes its options from the controller's own other lands, including a colorless one", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [REFLECTING_POOL(), MOUNTAIN(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const pool = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Reflecting Pool")!;
+    const options = manaSources(game.players[0]!, game).find((source) => source.permanentId === pool.instance_id)!.options;
+    expect([...options].sort()).toEqual(["G", "R"]);
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: pool.instance_id, abilityIndex: 0, mana: "G" });
+    expect(game.players[0]!.manaPool.G).toBe(1);
+  });
+});
+
+describe("Vexing Shusher makes a target spell uncounterable", () => {
+  const VEXING_SHUSHER = () => make({ name: "Vexing Shusher", type_line: "Creature — Goblin Shaman", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "{R/G}: Target spell can't be countered." });
+
+  it("recognizes the activated ability targeting a spell on the stack", () => {
+    const profile = profileOf(VEXING_SHUSHER());
+    expect(profile.activatedAbilities[0]).toMatchObject({ effect: { kind: "make-target-spell-uncounterable" }, targetKind: "spell" });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("protects a spell already on the stack from being countered", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 1, () => ({ hand: toHand(1, [BOLT()], "shusher-bolt"), autoPass: false }));
+    game = putOnBattlefield(game, 1, [MOUNTAIN()]);
+    game = putOnBattlefield(game, 0, [VEXING_SHUSHER(), MOUNTAIN(), FOREST()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 1 && state.prioritySeat === 1);
+    game = applyAction(game, 1, { type: "cast", cardId: "shusher-bolt-0", targets: [{ kind: "player", seat: 0 }] });
+    game = applyAction(game, 1, { type: "pass" });
+
+    const shusher = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Vexing Shusher")!;
+    const bolt = game.stack.find((entry) => entry.card.name === "Lightning Bolt")!;
+    expect(canCounterSpell(bolt, game)).toBe(true);
+    game = applyAction(game, 0, { type: "activate", sourceId: shusher.instance_id, abilityIndex: 0, targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = passUntil(game, (state) => state.stack.length === 1 || state.stack.length === 0);
+
+    const protectedBolt = game.stack.find((entry) => entry.card.name === "Lightning Bolt")!;
+    expect(protectedBolt.cantBeCountered).toBe(true);
+    expect(canCounterSpell(protectedBolt, game)).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

@@ -4013,6 +4013,47 @@ profiles.
 Prossh decklist status after this pass: **64 of 97 unique cards fully
 implemented (66.0%)**.
 
+Reflecting Pool ("{T}: Add one mana of any type that a land you control
+could produce.") is functionally identical to the existing Fellwar
+Stone/Harvester Druid "any COLOR that a land you/an opponent controls
+could produce" board-dependent mana template — the underlying
+`ManaAbility.anyColorFromLandsControlledBy` mechanism and
+`colorsFromLandsControlledBy` already union every `ManaType` (including
+`C`) a controlled land's own mana abilities produce, so "type" was never
+a real semantic difference, only a wording one the parser rejected
+outright. Widened both the ability-construction regex and its matching
+`unimplementedText` coverage check to accept "color" or "type"
+interchangeably rather than adding a second parallel code path. Verified
+**+1** in the export count and confirmed the mana options returned by
+`manaSources` are exactly the colors the controller's OTHER lands (not
+Reflecting Pool itself) could produce.
+
+Vexing Shusher ("{R/G}: Target spell can't be countered.") needed a new
+`make-target-spell-uncounterable` effect kind: `StackObject` already
+carries a `cantBeCountered?: boolean` flag set at cast time (Delighted
+Halfling's legendary-spell mana), and `canCounterSpell` already checks
+it — the only missing piece was an ability that mutates that flag on an
+EXISTING stack entry, targeted the same way `counter-target-spell`
+already targets one (`target.kind === "spell"`, matched by
+`target.stackId`). Added the sentence-grammar branch ("Target spell
+can't be countered" → `targetKind: "spell"`) to the SHARED
+`recognizeSentence` grammar rather than a Vexing-Shusher-specific parser
+branch, so any future card with an identically-worded activated or
+triggered ability inherits it for free through the same generic
+activated-ability fallback every other targeted activation already uses.
+Verified **+2** combined in the export count (10,073 → 10,076, Reflecting
+Pool + Vexing Shusher) and set coverage holds at 30.5%. Scenario-tested:
+Reflecting Pool with a Mountain and a Forest in play offers exactly
+`{R, G}`, never colors from lands it doesn't see; casting a Lightning
+Bolt while Vexing Shusher is in play, THEN activating Vexing Shusher
+targeting that spell on the stack, flips `cantBeCountered` on that exact
+stack entry and `canCounterSpell` flips from true to false for it.
+Validation: **737 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,076 global profiles.
+
+Prossh decklist status after this pass: **66 of 97 unique cards fully
+implemented (68.0%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
