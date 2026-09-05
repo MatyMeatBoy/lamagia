@@ -7832,6 +7832,20 @@ describe("activated abilities", () => {
     expect(game.players[0]!.manaPool.R).toBe(0);
   });
 
+  it("preserves the chosen permanent target on the public stack object", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ autoPass: false, hand: toHand(0, [FLAMETONGUE()], "kavu") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const kavu = permanentNamed(game, 0, "Flametongue Kavu")!;
+    const bear = permanentNamed(game, 1, "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "kavu-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.stack.at(-1)?.targets).toEqual([{ kind: "permanent", instanceId: bear.instance_id }]);
+    expect(game.priorityOpen).toBe(true);
+  });
+
   it("resolves a self-pump activated ability through the stack and expires it in cleanup", () => {
     const profile = profileOf(FIREBREATHER());
     expect(profile.activatedAbilities).toHaveLength(1);
