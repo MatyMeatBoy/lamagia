@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-widespread-panic` | Widespread Panic watches spell/ability-caused library shuffles and lets the shuffling player put a hand card on top (CR 603.2, 603.3d, 401.5, 701.20) | `codex/c13-widespread-panic-f99` | active | 2026-09-05 |

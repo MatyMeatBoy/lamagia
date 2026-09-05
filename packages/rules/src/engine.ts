@@ -262,6 +262,7 @@ export type GameEvent =
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard }
+  | { readonly kind: "library-shuffled"; readonly controller: SeatId }
   | { readonly kind: "upkeep" | "draw-step" | "end-step"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number };
 
@@ -406,6 +407,14 @@ export type PendingChoice =
       readonly optionIds: readonly string[];
     }
   | {
+      /** Widespread Panic: choose one card from the shuffling player's hand. */
+      readonly type: "hand-card-to-library-top";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+    }
+  | {
       readonly type: "discard-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -472,6 +481,7 @@ export type GameAction =
   /** The query is a player intent; the library instance id never leaves the server. */
   | { readonly type: "choose-library-card"; readonly sourceId: string; readonly query: string }
   | { readonly type: "resolve-library-pick"; readonly sourceId: string; readonly cardId: string }
+  | { readonly type: "choose-hand-card-to-library-top"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
   | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean; readonly ordinal?: number }
   | { readonly type: "choose-look-top"; readonly sourceId: string; readonly ordinal?: number }
@@ -1284,6 +1294,10 @@ function triggerMatches(
     return subject === "you" && event.seat === watcher.controller;
   }
 
+  if (event.kind === "library-shuffled") {
+    return subject === "shuffle-controller";
+  }
+
   const object = eventObject(event);
   if (!object) return false;
   // The wording "to an opponent" is relative to the source controller, not
@@ -1333,6 +1347,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
     case "card-cycled": return `${playerAt(state, event.controller).name} cicla ${event.card.name}`;
     case "card-drawn": return `${playerAt(state, event.seat).name} roba una carta`;
+    case "library-shuffled": return `${playerAt(state, event.controller).name} baraja su biblioteca`;
     case "life-gained": return `${playerAt(state, event.seat).name} gana ${event.amount} vidas`;
     case "life-lost": return `${playerAt(state, event.seat).name} pierde ${event.amount} vidas`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
@@ -1388,6 +1403,13 @@ function raiseEvent(
     }
   }
   return queued.length ? { ...state, triggerQueue: [...state.triggerQueue, ...queued] } : state;
+}
+
+/** Shuffles a library for a spell/ability and raises the corresponding event (CR 701.20). */
+function shuffleLibrary(state: GameState, seat: SeatId, cards: readonly GameCard[]): GameState {
+  const shuffled = shuffle(cards, state.rngState);
+  const next = withPlayer({ ...state, rngState: shuffled.state }, seat, (player) => ({ ...player, library: shuffled.items }));
+  return raiseEvent(next, { kind: "library-shuffled", controller: seat });
 }
 
 /** Raises `becomes-tapped` for each permanent that went from untapped to tapped. */
@@ -1575,6 +1597,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return target?.kind === "player" ? drawCards(state, target.seat, effectAmount(effect.amount, object)) : state;
     }
     case "draw-active-player": return drawCards(state, state.activeSeat, 1);
+    case "put-event-player-hand-card-on-library-top": {
+      const seat = object.trigger?.eventController;
+      if (seat === undefined) return state;
+      const hand = playerAt(state, seat).hand;
+      if (!hand.length) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "hand-card-to-library-top",
+          seat,
+          sourceId: object.id,
+          sourceCard: object.card,
+          optionIds: hand.map((card) => card.instance_id)
+        }
+      };
+    }
     case "draw-equal-tapped-creatures": {
       const target = object.targets[0];
       if (!target || target.kind !== "player") return state;
@@ -1679,8 +1718,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const owner = object.card.owner;
       if (!playerAt(state, owner).graveyard.some((card) => card.instance_id === object.card.instance_id)) return state;
       const remaining = playerAt(state, owner).graveyard.filter((card) => card.instance_id !== object.card.instance_id);
-      const shuffled = shuffle([...playerAt(state, owner).library, object.card], state.rngState);
-      return withPlayer({ ...state, rngState: shuffled.state }, owner, (player) => ({ ...player, graveyard: remaining, library: shuffled.items }));
+      const next = withPlayer(state, owner, (player) => ({ ...player, graveyard: remaining }));
+      return shuffleLibrary(next, owner, [...playerAt(next, owner).library, object.card]);
     }
     case "undying-return": {
       // Undying / Persist: reanimate the card from its owner's graveyard with a counter (CR 702.92/93).
@@ -1720,8 +1759,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
       }));
       if (!permanent.card.token) {
-        const shuffled = shuffle([...playerAt(next, owner).library, permanent.card], next.rngState);
-        next = withPlayer({ ...next, rngState: shuffled.state }, owner, (player) => ({ ...player, library: shuffled.items }));
+        next = shuffleLibrary(next, owner, [...playerAt(next, owner).library, permanent.card]);
       }
       next = drawCards(next, owner, effect.draw);
       return logged(next, controller, `${sourceName}: ${permanent.card.name} se baraja en la biblioteca; su dueño roba ${effect.draw}.`);
@@ -2653,10 +2691,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         : withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: [...player.library, permanent.card] }));
 
       const owner = playerAt(next, permanent.card.owner);
-      const shuffled = shuffle(owner.library, next.rngState);
-      next = { ...next, rngState: shuffled.state };
-      const top = shuffled.items[0];
-      next = withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: shuffled.items.slice(1) }));
+      next = shuffleLibrary(next, permanent.card.owner, owner.library);
+      const shuffledLibrary = playerAt(next, permanent.card.owner).library;
+      const top = shuffledLibrary[0];
+      next = withPlayer(next, permanent.card.owner, (player) => ({ ...player, library: shuffledLibrary.slice(1) }));
       if (top && cardProfile(top).isPermanent) {
         next = putOntoBattlefield(next, permanent.card.owner, top, false);
       } else if (top) {
@@ -3088,13 +3126,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const player = playerAt(state, target.seat);
       const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
       if (!card) return state;
-      const shuffled = shuffle([...player.library, card], state.rngState);
       const next = withPlayer(state, target.seat, (current) => ({
         ...current,
         graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id),
-        library: shuffled.items
       }));
-      return { ...next, rngState: shuffled.state };
+      return shuffleLibrary(next, target.seat, [...player.library, card]);
     }
     case "untap-equipped-creature": {
       const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
@@ -3487,11 +3523,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const player = playerAt(state, target.seat);
       const found = player.library.find((card) => card.name === effect.cardName);
       const remaining = found ? player.library.filter((card) => card.instance_id !== found.instance_id) : player.library;
-      const shuffled = shuffle(remaining, state.rngState);
-      let next: GameState = { ...state, rngState: shuffled.state };
+      let next = shuffleLibrary(state, target.seat, remaining);
       next = withPlayer(next, target.seat, (current) => ({
         ...current,
-        library: shuffled.items,
         hand: found ? [...current.hand, found] : current.hand
       }));
       return logged(next, controller, found
@@ -3704,6 +3738,7 @@ function resolveTop(state: GameState): GameState {
       })
       .map((card) => card.instance_id);
     if (!options.length) {
+      next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library);
       if (!object.activated) next = sendSpellToOwnerZone(next, object);
       return logged(next, object.controller, `${object.card.name} se resuelve: no hay una carta válida en la biblioteca.`);
     }
@@ -3712,8 +3747,7 @@ function resolveTop(state: GameState): GameState {
       const picked = options.slice(0, search.count);
       const pickedSet = new Set(picked);
       const fetched = playerAt(next, object.controller).library.filter((card) => pickedSet.has(card.instance_id));
-      const shuffled = shuffle(playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)), next.rngState);
-      next = withPlayer({ ...next, rngState: shuffled.state }, object.controller, (player) => ({ ...player, library: shuffled.items }));
+      next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)));
       for (const card of fetched) next = putOntoBattlefield(next, object.controller, card, false, search.tapped === true);
       if (!object.activated) next = retire(next);
       return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en el campo${search.tapped ? " giradas" : ""}.`);
@@ -3748,6 +3782,7 @@ function resolveTop(state: GameState): GameState {
       })
       .map((card) => card.instance_id);
     if (!options.length) {
+      next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library);
       if (!object.activated) next = sendSpellToOwnerZone(next, object);
       return logged(next, object.controller, `${object.card.name} se resuelve: no hay tierras básicas válidas en la biblioteca.`);
     }
@@ -3805,8 +3840,7 @@ function resolveTop(state: GameState): GameState {
     return withPlayer(next, object.card.owner, (player) => ({ ...player, exile: [...player.exile, object.card] }));
   }
   if (selfRetire?.kind === "shuffle-self-into-library") {
-    const shuffled = shuffle([...playerAt(next, object.card.owner).library, object.card], next.rngState);
-    return withPlayer({ ...next, rngState: shuffled.state }, object.card.owner, (player) => ({ ...player, library: shuffled.items }));
+    return shuffleLibrary(next, object.card.owner, [...playerAt(next, object.card.owner).library, object.card]);
   }
   return sendSpellToOwnerZone(next, object);
 }
@@ -4636,6 +4670,19 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
       return actions;
     }
+    if (choice.type === "hand-card-to-library-top") {
+      for (const cardId of choice.optionIds) {
+        const card = player.hand.find((candidate) => candidate.instance_id === cardId);
+        if (!card) continue;
+        actions.push({
+          action: { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId },
+          label: `Put ${card.name} on top of your library`,
+          cardId,
+          note: `${choice.sourceCard.name}: choose a card from your hand to put on top.`
+        });
+      }
+      return actions;
+    }
     if (choice.type === "scry") {
       choice.remainingCards.forEach((card, ordinal) => {
         actions.push({
@@ -5245,8 +5292,7 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
         : hasSubtype(candidateProfile, subtype));
   }).map((candidate) => candidate.instance_id);
   if (!optionIds.length) {
-    const shuffled = shuffle(playerAt(next, seat).library, next.rngState);
-    const shuffledState = withPlayer({ ...next, rngState: shuffled.state }, seat, (current) => ({ ...current, library: shuffled.items }));
+    const shuffledState = shuffleLibrary(next, seat, playerAt(next, seat).library);
     return logged(shuffledState, seat, `${player.name} cicla ${card.name}, pero no encuentra una tierra válida.`);
   }
   return logged({
@@ -5904,12 +5950,12 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
   const selected = matches[0];
   if (!selected) throw new Error("La carta elegida ya no está en la biblioteca.");
   const remaining = player.library.filter((card) => card.instance_id !== selected.instance_id);
-  const shuffled = shuffle(remaining, state.rngState);
-  const nextLibrary = [selected, ...shuffled.items];
-  let next: GameState = { ...state, pendingChoice: null, rngState: shuffled.state };
+  let next = shuffleLibrary({ ...state, pendingChoice: null }, seat, remaining);
+  const shuffledLibrary = playerAt(next, seat).library;
+  const nextLibrary = [selected, ...shuffledLibrary];
   next = withPlayer(next, seat, (current) => ({
     ...current,
-    library: choice.search.destination === "top" ? nextLibrary : shuffled.items,
+    library: choice.search.destination === "top" ? nextLibrary : shuffledLibrary,
     hand: choice.search.destination === "hand" ? [...current.hand, selected] : current.hand,
     graveyard: [
       ...current.graveyard,
@@ -5946,18 +5992,34 @@ function applyResolveLibraryPick(state: GameState, seat: SeatId, action: Extract
   return logged(next, seat, `${player.name} pone ${picked.name} en su mano y el resto en el fondo de su biblioteca.`);
 }
 
+function applyChooseHandCardToLibraryTop(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-hand-card-to-library-top" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "hand-card-to-library-top" || choice.seat !== seat || choice.sourceId !== action.sourceId) {
+    throw new Error("No tienes una elección de carta de la mano pendiente.");
+  }
+  if (!choice.optionIds.includes(action.cardId)) throw new Error("Esa carta no está entre las opciones.");
+  const card = playerAt(state, seat).hand.find((candidate) => candidate.instance_id === action.cardId);
+  if (!card) throw new Error("La carta elegida ya no está en tu mano.");
+  const next = withPlayer({ ...state, pendingChoice: null }, seat, (player) => ({
+    ...player,
+    hand: player.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
+    library: [card, ...player.library]
+  }));
+  return logged(next, seat, `${playerAt(next, seat).name} pone ${card.name} en la parte superior de su biblioteca.`);
+}
+
 function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extract<PendingChoice, { type: "search-library-multi" }>, selectedIds: readonly string[]): GameState {
   const player = playerAt(state, seat);
   const selected = selectedIds
     .map((id) => player.library.find((card) => card.instance_id === id))
     .filter((card): card is GameCard => Boolean(card));
   const selectedSet = new Set(selected.map((card) => card.instance_id));
-  const shuffled = shuffle(player.library.filter((card) => !selectedSet.has(card.instance_id)), state.rngState);
-  let next: GameState = { ...state, pendingChoice: null, rngState: shuffled.state };
+  let next = shuffleLibrary({ ...state, pendingChoice: null }, seat, player.library.filter((card) => !selectedSet.has(card.instance_id)));
+  const shuffledLibrary = playerAt(next, seat).library;
   const handCards = selected.filter((_, index) => choice.search.destinations[index] === "hand");
   next = withPlayer(next, seat, (current) => ({
     ...current,
-    library: shuffled.items,
+    library: shuffledLibrary,
     hand: [...current.hand, ...handCards],
     graveyard: [
       ...current.graveyard,
@@ -6432,6 +6494,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-tap-or-untap": next = applyChooseTapOrUntap(state, seat, action); break;
     case "choose-library-card": next = applyChooseLibraryCard(state, seat, action); break;
     case "resolve-library-pick": next = applyResolveLibraryPick(state, seat, action); break;
+    case "choose-hand-card-to-library-top": next = applyChooseHandCardToLibraryTop(state, seat, action); break;
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-scry": next = applyChooseScry(state, seat, action); break;
     case "choose-look-top": next = applyChooseLookTop(state, seat, action); break;
