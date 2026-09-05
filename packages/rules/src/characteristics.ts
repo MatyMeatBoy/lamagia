@@ -726,7 +726,9 @@ export type TriggerEvent =
   | "leaves-battlefield"
   | "life-gained"
   | "life-lost"
-  | "class-level-up";
+  | "class-level-up"
+  /** The action of playing a land (CR 305.1), distinct from that land's own "enters the battlefield" event (City of Traitors). */
+  | "play-land";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -777,7 +779,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "life-gained": "life-gain trigger",
   "life-lost": "life-loss trigger",
   "class-level-up": "habilidad de nivel de Clase",
-  "first-main-phase": "habilidad de la primera fase principal"
+  "first-main-phase": "habilidad de la primera fase principal",
+  "play-land": "habilidad de jugar una tierra"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -2475,7 +2478,10 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "end-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+player[’']s\s+end\s+step,?\s*(.+)$/i },
-  { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i }
+  { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i },
+
+  // The action of playing a land (CR 305.1), not that land's own ETB (City of Traitors).
+  { event: "play-land", subject: "you", pattern: /^when\s+you\s+play\s+(?:a|another)\s+land,?\s*(.+)$/i }
 ];
 
 function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { effectText: string }) | null {
@@ -2557,6 +2563,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Exile target creature\. Its controller gains life equal to its power$/i.test(text)) {
     return { effect: { kind: "exile-target-creature-then-life-gain-power" }, target: "creature" };
   }
+
+  if (/^Sacrifice ~$/i.test(text)) return { effect: { kind: "sacrifice-source" }, target: "none" };
 
   // Standstill: "that player" refers to the player who cast the triggering
   // spell, so the executor must use TriggerInstance.eventController rather

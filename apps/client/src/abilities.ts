@@ -257,6 +257,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     rule: "Se dispara al comenzar la primera fase principal del turno indicado.",
     enforced: "Se modela como el comienzo de la fase principal previa al combate.",
     path: "M4 4h16v16H4V4zm4 4h8m-8 4h8m-8 4h4"
+  },
+  "play-land": {
+    label: "Al jugar una tierra",
+    rule: "Se dispara cuando el jugador indicado juega una tierra.",
+    enforced: "Se registra en el momento de jugar la tierra, no en su propia entrada al campo de batalla.",
+    path: "M4 20h16M4 20V10l8-6 8 6v10"
   }
 };
 

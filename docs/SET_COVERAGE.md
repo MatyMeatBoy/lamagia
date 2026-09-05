@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,389** · cobertura: **29.9%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,393** · cobertura: **29.9%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -51,7 +51,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,38
 | 1998-02-01 | Stronghold Promos (`PSTH`) | promos | stronghold | other | 1 | 0 | 1 | 0.0% |
 | 1998-03-02 | Stronghold (`STH`) | expansion | 1990s | main | 143 | 42 | 101 | 29.4% |
 | 1998-06-01 | Exodus Promos (`PEXO`) | promos | exodus | other | 1 | 0 | 1 | 0.0% |
-| 1998-06-15 | Exodus (`EXO`) | expansion | 1990s | main | 143 | 36 | 107 | 25.2% |
+| 1998-06-15 | Exodus (`EXO`) | expansion | 1990s | main | 143 | 37 | 106 | 25.9% |
 | 1998-06-24 | Portal Second Age (`P02`) | starter | 1990s | other | 155 | 91 | 64 | 58.7% |
 | 1998-09-01 | Asia Pacific Land Program (`PALP`) | promos | asia-pacific-land-program | other | 5 | 5 | 0 | 100.0% |
 | 1998-09-26 | Urza's Saga Promos (`PUSG`) | promos | urza-s-saga | other | 1 | 1 | 0 | 100.0% |
@@ -328,14 +328,14 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,38
 | 2015-01-01 | Friday Night Magic 2015 (`F15`) | promos | fnm-2015 | other | 12 | 4 | 8 | 33.3% |
 | 2015-01-01 | Judge Gift Cards 2015 (`J15`) | promos | judge-2015 | other | 8 | 2 | 6 | 25.0% |
 | 2015-01-17 | Ugin's Fate (`UGIN`) | promos | ugin-s-fate | other | 26 | 1 | 25 | 3.8% |
-| 2015-01-23 | Fate Reforged (`FRF`) | expansion | 2010s | main | 180 | 43 | 137 | 23.9% |
+| 2015-01-23 | Fate Reforged (`FRF`) | expansion | 2010s | main | 180 | 44 | 136 | 24.4% |
 | 2015-01-23 | Fate Reforged Clash Pack (`CP2`) | starter | 2010s | other | 6 | 1 | 5 | 16.7% |
 | 2015-01-23 | Fate Reforged Promos (`PFRF`) | promos | fate-reforged | other | 33 | 0 | 33 | 0.0% |
 | 2015-02-27 | Duel Decks: Elspeth vs. Kiora (`DDO`) | duel-decks | duel-decks-elspeth-vs-kiora | other | 58 | 26 | 32 | 44.8% |
 | 2015-03-27 | Dragons of Tarkir (`DTK`) | expansion | tarkir | main | 254 | 58 | 196 | 22.8% |
 | 2015-03-27 | Dragons of Tarkir Promos (`PDTK`) | promos | dragons-of-tarkir | other | 42 | 3 | 39 | 7.1% |
 | 2015-04-03 | Tarkir Dragonfury (`PTKDF`) | promos | tarkir-dragonfury | other | 4 | 3 | 1 | 75.0% |
-| 2015-05-06 | Tempest Remastered (`TPR`) | masters-remastered | tempest-remastered | other | 254 | 99 | 155 | 39.0% |
+| 2015-05-06 | Tempest Remastered (`TPR`) | masters-remastered | tempest-remastered | other | 254 | 100 | 154 | 39.4% |
 | 2015-05-22 | Modern Masters 2015 (`MM2`) | masters-remastered | modern-masters-2015 | other | 249 | 84 | 165 | 33.7% |
 | 2015-07-09 | San Diego Comic-Con 2015 (`PS15`) | promos | comic-con-2015 | other | 5 | 0 | 5 | 0.0% |
 | 2015-07-17 | Magic Origins (`ORI`) | core | 2010s | main | 273 | 100 | 173 | 36.6% |
@@ -584,7 +584,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,38
 | 2023-09-01 | 30th Anniversary Celebration Tokyo (`P30T`) | promos | 30th-anniversary-celebration-tokyo | other | 2 | 2 | 0 | 100.0% |
 | 2023-09-08 | Magic × Duel Masters Promos (`PMDA`) | masters-remastered | magic-duel-masters | other | 4 | 3 | 1 | 75.0% |
 | 2023-09-08 | Time Spiral Remastered Promos (`PTSR`) | masters-remastered | time-spiral-remastered | other | 3 | 0 | 3 | 0.0% |
-| 2023-09-08 | Wilds of Eldraine (`WOE`) | expansion | eldraine | main | 281 | 49 | 232 | 17.4% |
+| 2023-09-08 | Wilds of Eldraine (`WOE`) | expansion | eldraine | main | 281 | 50 | 231 | 17.8% |
 | 2023-09-08 | Wilds of Eldraine Commander (`WOC`) | commander | 2023 | commander | 143 | 45 | 98 | 31.5% |
 | 2023-09-08 | Wilds of Eldraine Promos (`PWOE`) | promos | wilds-of-eldraine | other | 80 | 5 | 75 | 6.2% |
 | 2023-09-08 | Wilds of Eldraine: Enchanting Tales (`WOT`) | masterpieces | wilds-of-eldraine-enchanting-tales | other | 63 | 11 | 52 | 17.5% |
@@ -792,16 +792,16 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,38
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 36 | 34 | 51.4% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 139 | 398 | 25.9% |
-| expansion | 1990s | 11 | 1573 | 367 | 1206 | 23.3% |
+| expansion | 1990s | 11 | 1573 | 368 | 1205 | 23.4% |
 | expansion | 2000s | 19 | 3082 | 680 | 2402 | 22.1% |
-| expansion | 2010s | 14 | 2735 | 716 | 2019 | 26.2% |
+| expansion | 2010s | 14 | 2735 | 717 | 2018 | 26.2% |
 | expansion | 2020s | 17 | 3739 | 614 | 3125 | 16.4% |
 | expansion | alara | 2 | 379 | 150 | 229 | 39.6% |
 | expansion | amonkhet | 1 | 272 | 97 | 175 | 35.7% |
 | expansion | bloomburrow | 1 | 280 | 42 | 238 | 15.0% |
 | expansion | capenna | 1 | 310 | 48 | 262 | 15.5% |
 | expansion | dominaria | 2 | 553 | 155 | 398 | 28.0% |
-| expansion | eldraine | 2 | 567 | 124 | 443 | 21.9% |
+| expansion | eldraine | 2 | 567 | 125 | 442 | 22.0% |
 | expansion | ice-age | 1 | 373 | 72 | 301 | 19.3% |
 | expansion | innistrad | 4 | 1103 | 247 | 856 | 22.4% |
 | expansion | invasion | 1 | 335 | 111 | 224 | 33.1% |
@@ -895,7 +895,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,38
 | masters-remastered | rinascimento | 1 | 60 | 12 | 48 | 20.0% |
 | masters-remastered | shadows-of-the-past | 1 | 76 | 27 | 49 | 35.5% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 57 | 227 | 20.1% |
-| masters-remastered | tempest-remastered | 1 | 254 | 99 | 155 | 39.0% |
+| masters-remastered | tempest-remastered | 1 | 254 | 100 | 154 | 39.4% |
 | masters-remastered | the-list | 1 | 5221 | 1530 | 3691 | 29.3% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 109 | 304 | 26.4% |
 | masters-remastered | ultimate-masters | 1 | 254 | 83 | 171 | 32.7% |
@@ -5556,7 +5556,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,38
 - [ ] Cat Burglar — `16aea5b3-9f43-4852-b8b8-80e87909b794`
 - [ ] Cataclysm — `b0479ca4-e925-4aa7-a4fa-f7e01f899ac5`
 - [ ] Cinder Crawler — `3850479f-1c1e-4a72-ae47-6da2997202e2`
-- [ ] City of Traitors — `f161111d-9747-47b3-bb10-3c8bded32e21`
 - [ ] Coat of Arms — `5f7f133e-58ea-41ab-b1be-be4b400fac4c`
 - [ ] Convalescence — `9ad86d0e-3363-4d98-b0bb-dc491be1ddd5`
 - [ ] Crashing Boars — `a4c59feb-e76a-4e08-b296-21c3e61cfc64`
@@ -21658,7 +21657,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,38
 - [ ] Frost Walker — `54a22814-c0d5-4637-9aa9-a6bc96401914`
 - [ ] Fruit of the First Tree — `8d579f04-b494-41a1-ba7c-b9779f75b818`
 - [ ] Ghastly Conscription — `3bf20e68-0e19-4242-bfba-a8a1bb244685`
-- [ ] Goblin Boom Keg — `8e819d68-3a6e-449a-8392-e072724b80f1`
 - [ ] Goblin Heelcutter — `ab52988f-ffd0-4154-9052-593a9d450d98`
 - [ ] Grave Strength — `feb2f08e-79c7-4d51-bf55-e649f5ff5e07`
 - [ ] Grim Contest — `3b78f940-f840-4d4d-a09b-147202963367`
@@ -22092,7 +22090,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,38
 - [ ] Carnophage — `9ac77cfd-7d78-4c8a-bffc-17649a852114`
 - [ ] Cataclysm — `b0479ca4-e925-4aa7-a4fa-f7e01f899ac5`
 - [ ] Cinder Marsh — `6f8cc374-e76c-4bfa-bf20-28dea0bfefbe`
-- [ ] City of Traitors — `f161111d-9747-47b3-bb10-3c8bded32e21`
 - [ ] Clot Sliver — `2a885729-0618-4a25-b18d-b0587f14718d`
 - [ ] Coat of Arms — `5f7f133e-58ea-41ab-b1be-be4b400fac4c`
 - [ ] Coercion — `68413337-ddb9-46f8-8c8e-f3d2d672c652`
@@ -50334,7 +50331,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,38
 - [ ] Hearth Elemental // Stoke Genius — `f01cf0c5-0ac6-4ad3-8642-dd21c8e8563e`
 - [ ] High Fae Negotiator — `90ecd452-333a-43b0-be08-a61f3779b3bd`
 - [ ] Hollow Scavenger // Bakery Raid — `4fad3816-41af-4fa4-85b4-ba37614ec848`
-- [ ] Hopeful Vigil — `33fff722-5cc5-4d0e-b788-166b3edb1223`
 - [ ] Hopeless Nightmare — `5e63b69c-d901-4a01-8dfa-88e044856239`
 - [ ] Horned Loch-Whale // Lagoon Breach — `adca3929-4ecc-45bc-932e-604bcc32550a`
 - [ ] Howling Galefang — `f12c2b65-4a04-4fab-ae77-973fe5cc823d`

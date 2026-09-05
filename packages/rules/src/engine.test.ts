@@ -9409,6 +9409,32 @@ describe("Silence locks out opponents' casting for the turn", () => {
   });
 });
 
+describe("City of Traitors sacrifices itself when another land is played", () => {
+  const CITY_OF_TRAITORS = () => make({ name: "City of Traitors", type_line: "Land", oracle_text: "When you play another land, sacrifice this land.\n{T}: Add {C}{C}." });
+
+  it("recognizes the trigger", () => {
+    const profile = profileOf(CITY_OF_TRAITORS());
+    expect(profile.triggers).toEqual([{
+      event: "play-land", subject: "you", effect: { kind: "sacrifice-source" },
+      optional: false, targetKind: "none", sourceText: "When you play another land, sacrifice ~."
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("sacrifices itself the moment its controller plays a different land", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [CITY_OF_TRAITORS()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [FOREST()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "City of Traitors")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "City of Traitors")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Forest")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
