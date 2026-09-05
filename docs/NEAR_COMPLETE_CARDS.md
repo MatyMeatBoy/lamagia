@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,160**
-- Cards with a reusable existing primitive hint: **11,456**
-- Cards needing new primitive review: **3,704**
-- Templates: **11,990**
+- One-line cards: **15,156**
+- Cards with a reusable existing primitive hint: **11,454**
+- Cards needing new primitive review: **3,702**
+- Templates: **11,982**
 
 ## Worker rule
 
@@ -35,7 +35,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Void Beckoner | `7185e345-d8a1-4dd3-a071-f90f265634b4` | counters | counter | When you cycle ~, put a deathtouch counter on target creature you control. |
 | needs-new-primitive | Boros Challenger | `bc6b40b1-0d17-4dd2-bec9-f1653611dba3` | activated | new primitive review | Mentor |
 | needs-new-primitive | Adorned Pouncer | `80b8ee3d-4174-4f47-a533-a3db1e703382` | activated | new primitive review | Eternalize {3}{W}{W} |
-| reuse-existing | Burst Lightning | `ac2086fe-98ee-4280-9c7c-c5c2d6548a8b` | damage | damage / life | If ~ was kicked, it deals 4 damage instead. |
 | reuse-existing | Reciprocate | `ebdd29c0-2c33-4410-a05c-80ced58c7b81` | damage | damage / life | Exile target creature that dealt damage to you this turn. |
 | needs-new-primitive | Nameless Inversion | `d6911456-42cb-4b23-a560-dc98784530f5` | pump | new primitive review | Target creature gets +3/-3 and loses all creature types until end of turn. |
 | needs-new-primitive | Bituminous Blast | `d291d8f7-bb67-470c-8794-cd553c91e5cc` | activated | new primitive review | Cascade |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Yavimaya, Cradle of Growth | `8dd5f5af-d2d8-4356-8617-8381081b930c` | activated | new primitive review | Each land is a Forest in addition to its other land types. |
 | reuse-existing | Sword of Truth and Justice | `7a8baaf9-e21f-41a0-9f15-80764f6e5e68` | damage | damage / life | Whenever equipped creature deals combat damage to a player, put a +1/+1 counter on a creature you control, then proliferate. |
 | reuse-existing | Splendid Reclamation | `13fe5e46-77a6-45d8-ac0b-c3d740eccf86` | return | return / graveyard | Return all land cards from your graveyard to the battlefield tapped. |
+| needs-new-primitive | Universal Surveillance | `c5a5c17d-d1e4-4d23-9d2b-1c2febdcb0e7` | activated | new primitive review | Improvise |
 
-The JSON contains the remaining 14,660 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,656 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
