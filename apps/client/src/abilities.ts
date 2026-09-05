@@ -204,6 +204,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     enforced: "Se registra por cada descarte, sea por costo, límite de mano o efecto.",
     path: "M6 3h8l4 4v14H6V3zm2 9 8 8m0-8-8 8"
   },
+  "library-shuffled": {
+    label: "Al barajar la biblioteca",
+    rule: "Se dispara cuando un hechizo o habilidad hace que un jugador baraje su biblioteca.",
+    enforced: "Se asocia al jugador que barajó y conserva sus opciones privadas.",
+    path: "M5 4h14M5 12h14M5 20h14M8 2v4m8-4v4m-8 8v4m8-4v4"
+  },
   "leaves-battlefield": {
     label: "Al dejar el campo",
     rule: "Se dispara cuando el permanente indicado deja el campo de batalla.",
