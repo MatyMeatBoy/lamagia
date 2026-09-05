@@ -232,6 +232,14 @@ describe("enters tapped", () => {
   it("defaults to untapped", () => { expect(rule("{T}: Add {G}.").kind).toBe("untapped"); });
   it("detects a plain tapped land", () => { expect(rule("Test Land enters tapped.\n{T}: Add {W} or {U}.").kind).toBe("tapped"); });
   it("detects a fast land condition", () => { expect(rule("Test Land enters tapped unless you control two or fewer other lands.")).toEqual({ kind: "unless-few-lands", max: 2 }); });
+  it("detects a game-turn condition such as Starting Town", () => {
+    const profile = cardProfile(card({
+      name: "Starting Town", type_line: "Land — Town",
+      oracle_text: "This land enters tapped unless it's your first, second, or third turn of the game.\n{T}: Add {C}."
+    }));
+    expect(profile.entersTapped).toEqual({ kind: "unless-first-turns", maxTurn: 3 });
+    expect(profile.fullyImplemented).toBe(true);
+  });
   it("detects a shock land condition", () => { expect(rule("As Test Land enters, you may pay 2 life. If you don't, it enters tapped.")).toEqual({ kind: "unless-pay-life", life: 2 }); });
   it("does not flag an entering-tapped replacement already handled by the profile", () => {
     const profile = cardProfile(card({ name: "Test Guildgate", type_line: "Land — Gate", oracle_text: "This land enters tapped.\n{T}: Add {W} or {U}." }));

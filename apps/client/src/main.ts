@@ -367,7 +367,7 @@ function applyView(next: GameView): void {
 function seatOf(seat: number): PlayerView | undefined { return view?.players.find((player) => player.seat === seat); }
 function cardActionsForCard(cardId: string): LegalAction[] {
   const choices = view?.legalActions.filter((entry) => entry.cardId === cardId &&
-    (entry.action.type === "cast" || entry.action.type === "cycle" || entry.action.type === "play-land" || entry.action.type === "choose-reveal"));
+    (entry.action.type === "cast" || entry.action.type === "cycle" || entry.action.type === "play-land" || entry.action.type === "activate" || entry.action.type === "choose-reveal"));
   return [...(choices ?? [])].sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0));
 }
 function actionForCard(cardId: string): LegalAction | undefined {
@@ -494,6 +494,16 @@ function onCardClick(cardId: string, forcedAction?: LegalAction): void {
   if (action.action.type === "choose-reveal") { void submit(action.action); return; }
   runAction(action, action.label.replace(/^Lanzar /, ""));
 }
+function triggerYieldActionsFor(instanceId: string): LegalAction[] {
+  return (view?.legalActions ?? []).filter((entry) =>
+    entry.action.type === "toggle-trigger-yield" && entry.action.sourceId === instanceId);
+}
+
+function openCardActionMenu(cardId: string): void {
+  ui.cardActionMenu = cardId;
+  ui.notice = "Elige una acción o consulta la información de la carta.";
+  render();
+}
 
 function updateCardDrag(event: PointerEvent): void {
   if (!cardDrag || cardDrag.pointerId !== event.pointerId) return;
@@ -542,7 +552,7 @@ function wireCardDrag(button: HTMLButtonElement): void {
       ghost: null, moved: false, longPressed: false, longPressTimer: window.setTimeout(() => {
         if (!cardDrag || cardDrag.pointerId !== event.pointerId || cardDrag.moved || ui.busy) return;
         cardDrag.longPressed = true;
-        showCardDetail(cardId);
+        openCardActionMenu(cardId);
       }, 520)
     };
     button.setPointerCapture(event.pointerId);
@@ -556,7 +566,7 @@ function wireCardDrag(button: HTMLButtonElement): void {
       cardDrag.longPressed = true;
       if (cardDrag.longPressTimer !== null) window.clearTimeout(cardDrag.longPressTimer);
     }
-    showCardDetail(button.dataset.hand!);
+    openCardActionMenu(button.dataset.hand!);
   });
 }
 
@@ -578,7 +588,7 @@ function wirePermanentPress(button: HTMLButtonElement): void {
       longPressed: false, timer: window.setTimeout(() => {
         if (!cardDetailPress || cardDetailPress.pointerId !== event.pointerId) return;
         cardDetailPress.longPressed = true;
-        showCardDetail(cardId);
+        openCardActionMenu(cardId);
       }, 520)
     };
     button.setPointerCapture(event.pointerId);
@@ -598,7 +608,15 @@ function wirePermanentPress(button: HTMLButtonElement): void {
       cardDetailPress.longPressed = true;
       if (cardDetailPress.timer !== null) window.clearTimeout(cardDetailPress.timer);
     }
-    showCardDetail(button.dataset.permanent!);
+    openCardActionMenu(button.dataset.permanent!);
+  });
+  button.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    if (cardDetailPress?.button === button) {
+      cardDetailPress.longPressed = true;
+      if (cardDetailPress.timer !== null) window.clearTimeout(cardDetailPress.timer);
+    }
+    openCardActionMenu(button.dataset.permanent!);
   });
 }
 
@@ -897,8 +915,9 @@ function logDrawerHtml(): string {
 /** The stack rides just above the hand so it is impossible to miss mid-combat. */
 function stackStripHtml(): string {
   if (!view?.stack.length) return "";
-  return `<div class="stack-strip"><b>Pila</b>${[...view.stack].reverse().map((object) =>
-    `<span class="stack-chip${object.countered ? " countered" : ""}">
+  return `<div class="stack-strip"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero</small>${[...view.stack].reverse().map((object, index) =>
+    `<span class="stack-chip${object.countered ? " countered" : ""}" title="${escapeHtml(object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}">
+      <strong class="stack-order">${index + 1}</strong>
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
       <span><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i></span>
     </span>`).join("")}</div>`;
@@ -933,9 +952,9 @@ function actionMenuHtml(): string {
 /** Arena-style choice for a card that has several legal modes (e.g. cast or cycle). */
 function cardActionMenuHtml(): string {
   if (!ui.cardActionMenu) return "";
-  const card = seatOf(view?.viewerSeat ?? -1)?.hand?.find((candidate) => candidate.instance_id === ui.cardActionMenu);
-  const entries = cardActionsForCard(ui.cardActionMenu);
-  if (!card || !entries.length) return "";
+  const card = visibleCards().get(ui.cardActionMenu);
+  const entries = [...cardActionsForCard(ui.cardActionMenu), ...activationsFor(ui.cardActionMenu), ...triggerYieldActionsFor(ui.cardActionMenu)];
+  if (!card) return "";
   const hasCast = entries.some((entry) => entry.action.type === "cast");
   const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")
     ? `<button class="action-row action-disabled" type="button" disabled><span><b>Lanzar ${escapeHtml(card.name)}</b><small>No disponible ahora; puedes ciclarla.</small></span></button>` : "";
@@ -949,7 +968,7 @@ function cardActionMenuHtml(): string {
         : entry.note ?? entry.label;
       return `<button class="action-row choice-action" type="button" data-action-index="${index}" title="${escapeHtml(description)}">
         <span><b>${escapeHtml(entry.label)}</b><small>${escapeHtml(description)}</small></span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
-    }).join("")}</div>
+    }).join("")}<button id="card-action-info" class="action-row" type="button"><span><b>Ver información</b><small>Texto de reglas, tipo, coste y rulings.</small></span></button></div>
   </section>`;
 }
 
@@ -1197,6 +1216,11 @@ function wireBoard(): void {
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
   on("#close-decision-overlay", () => document.querySelector(".decision-overlay")?.remove());
   on("#close-card-action-menu", () => { ui.cardActionMenu = null; ui.notice = ""; render(); });
+  on("#card-action-info", () => {
+    const cardId = ui.cardActionMenu;
+    ui.cardActionMenu = null;
+    if (cardId) showCardDetail(cardId);
+  });
   on("#undo", () => void undoLatestMana());
   on("#context-undo", () => { ui.contextMenu = null; void undoLatestMana(); });
   document.querySelector<HTMLElement>(".table")?.addEventListener("contextmenu", (event) => {
@@ -1408,9 +1432,11 @@ function showZone(seat: number, zone: "library" | "hand" | "graveyard" | "exile"
       ? `<div class="zone-cards">${cards.map((card) => `<button class="zone-card" type="button" data-zone-card="${escapeHtml(card.instance_id)}" title="Ver detalles de ${escapeHtml(card.name)}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></button>`).join("")}</div>`
       : `<p class="zone-private">No hay cartas en esta zona.</p>`));
   document.querySelectorAll<HTMLButtonElement>("[data-zone-card]").forEach((button) => {
-    const open = (event: Event) => { event.preventDefault(); showCardDetail(button.dataset.zoneCard!); };
-    button.addEventListener("click", open);
-    button.addEventListener("contextmenu", open);
+    button.addEventListener("click", () => showCardDetail(button.dataset.zoneCard!));
+    button.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      openCardActionMenu(button.dataset.zoneCard!);
+    });
   });
 }
 

@@ -125,6 +125,7 @@ const FROSTBOIL = () => make({
   name: "Frostboil Snarl", type_line: "Land", oracle_text: "As Frostboil Snarl enters, you may reveal an Island or Mountain card from your hand. If you don't, Frostboil Snarl enters tapped.\n{T}: Add {U} or {R}.", produced_mana: ["U", "R"]
 });
 const TAPLAND = () => make({ name: "Slow Gate", type_line: "Land", oracle_text: "Slow Gate enters tapped.\n{T}: Add {G}.", produced_mana: ["G"] });
+const STARTING_TOWN = () => make({ name: "Starting Town", type_line: "Land — Town", oracle_text: "This land enters tapped unless it's your first, second, or third turn of the game.\n{T}: Add {C}.", produced_mana: ["C"] });
 const BEAR = () => make({ name: "Grizzly Bears", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
 const ETB_DRAWER = () => make({ name: "Archivist Bear", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Archivist Bear enters the battlefield, draw a card." });
 const TRIGGER_DOUBLER_SUBTYPE = () => make({ name: "Test Harmonic Prodigy", type_line: "Creature — Fox Shaman", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "If a triggered ability of a Shaman or another Wizard you control triggers, that ability triggers an additional time." });
@@ -817,6 +818,7 @@ const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendar
 const GREEN_COMMANDER = () => make({ name: "Green Commander", type_line: "Legendary Creature — Human", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"], color_identity: ["G"] });
 const COMMAND_TOWER = () => make({ name: "Command Tower", type_line: "Land", oracle_text: "{T}: Add one mana of any color in your commander's color identity.", produced_mana: ["W", "U", "B", "R", "G"] });
 const OPAL_PALACE = () => make({ name: "Opal Palace", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Add one mana of any color in your commander's color identity. If you spend this mana to cast your commander, it enters with a number of additional +1/+1 counters on it equal to the number of times it's been cast from the command zone this game.", produced_mana: ["B", "C", "G", "R", "U", "W"], scryfall_id: "912553e7-1e67-4045-84fd-0a791754cf6c" });
+const RAKDOS_SIGNET = () => make({ name: "Rakdos Signet", type_line: "Artifact", mana_cost: "{2}", oracle_text: "{1}, {T}: Add {B}{R}." });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
   const cards = [commander, ...contents];
@@ -1081,6 +1083,18 @@ describe("playing lands", () => {
     expect(manaSources(game.players[0]!)).toHaveLength(0);
   });
 
+  it("keeps Starting Town untapped through turn three and taps it from turn four", () => {
+    const playAtTurn = (turn: number, prefix: string) => {
+      let game = twoSeatGame([], []);
+      game = stage(game, 0, () => ({ hand: toHand(0, [STARTING_TOWN()], prefix), autoPass: false }));
+      game = { ...game, turn, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true };
+      return applyAction(game, 0, { type: "play-land", cardId: `${prefix}-0` });
+    };
+    expect(playAtTurn(1, "starting-town-1").players[0]!.battlefield[0]!.tapped).toBe(false);
+    expect(playAtTurn(3, "starting-town-3").players[0]!.battlefield[0]!.tapped).toBe(false);
+    expect(playAtTurn(4, "starting-town-4").players[0]!.battlefield[0]!.tapped).toBe(true);
+  });
+
   it("asks whether to reveal a matching land before Frostboil Snarl enters", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ hand: toHand(0, [FROSTBOIL(), ISLAND(), FOREST()], "hand-frostboil") }));
@@ -1124,6 +1138,47 @@ describe("playing lands", () => {
 });
 
 describe("mana payment", () => {
+  it("asks which non-interchangeable source pays Rakdos Signet, then activates it", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ kind: "human" }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), FOREST(), RAKDOS_SIGNET()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const signet = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Rakdos Signet")!;
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana" && entry.action.sourceId === signet.instance_id)!;
+    game = applyAction(game, 0, action.action);
+    expect(game.pendingChoice?.type).toBe("mana-payment");
+    const sources = legalActions(game, 0).filter((entry) => entry.action.type === "choose-mana-source");
+    expect(sources.map((entry) => entry.label).join(" ")).toContain("Mountain");
+    expect(sources.map((entry) => entry.label).join(" ")).toContain("Forest");
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    const forestChoice = sources.find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === forest.instance_id)!;
+    game = applyAction(game, 0, forestChoice.action);
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.manaPool).toMatchObject({ B: 1, R: 1 });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === signet.instance_id)!.tapped).toBe(true);
+  });
+
+  it("asks for each source when casting a colored spell, preserving the hand action", () => {
+    const spell = make({ name: "Red Test Spell", type_line: "Creature — Goblin", mana_cost: "{1}{R}", power: "2", toughness: "2" });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ kind: "human" }));
+    game = stage(game, 0, () => ({ hand: toHand(0, [spell], "manual-cast") }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "manual-cast-0")!;
+    game = applyAction(game, 0, cast.action);
+    expect(game.pendingChoice?.type).toBe("mana-payment");
+    const mountain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mountain")!;
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    const red = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === mountain.instance_id && entry.action.mana === "R")!;
+    game = applyAction(game, 0, red.action);
+    expect(game.pendingChoice?.type).toBe("mana-payment");
+    const generic = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === forest.instance_id)!;
+    game = applyAction(game, 0, generic.action);
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Red Test Spell")).toBe(true);
+  });
+
   it("keeps five independent primitives executable in the same card batch", () => {
     expect(profileOf(PRISTINE_TALISMAN()).fullyImplemented).toBe(true);
     expect(profileOf(PRISTINE_TALISMAN()).manaAbilities[0]).toMatchObject({ gainLife: 1 });
@@ -6655,6 +6710,17 @@ describe("triggered abilities", () => {
     const before = game.players[1]!.hand.length;
     game = applyAction(game, 1, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     expect(game.players[1]!.hand).toHaveLength(before + 1);
+  });
+
+  it("yields optional triggers from a marked source without suppressing the trigger system", () => {
+    let game = readyToCast([BOLT()], [FECUNDITY(), MOUNTAIN(), BEAR()]);
+    const fecundity = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Fecundity")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "toggle-trigger-yield", sourceId: fecundity.instance_id, enabled: true });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.yieldedTriggerSources).toContain(fecundity.instance_id);
+    expect(game.log.some((entry) => entry.text.includes("no realiza la habilidad opcional de Fecundity"))).toBe(true);
   });
 
   it("pays Foster and reveals until a creature, sending the rest to the graveyard", () => {

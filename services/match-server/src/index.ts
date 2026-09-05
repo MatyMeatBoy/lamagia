@@ -2,7 +2,8 @@ import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { Server } from "socket.io";
 import { DatabaseSync } from "node:sqlite";
-import { existsSync, statSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { GameAction } from "@prossh/rules";
@@ -21,6 +22,22 @@ const preconsPath = process.env.PRECONS_PATH ?? fileURLToPath(new URL("../../../
 const engineReportPath = process.env.ENGINE_REPORT_PATH ?? fileURLToPath(new URL("../../../data/simulations/engine-matrix-last.json", import.meta.url));
 const engineProfilesPath = process.env.ENGINE_PROFILES_PATH ?? fileURLToPath(new URL("../../../data/rules/engine-card-profiles.json", import.meta.url));
 const setCoveragePath = process.env.SET_COVERAGE_PATH ?? fileURLToPath(new URL("../../../data/rules/set-coverage.json", import.meta.url));
+const gameplayDebugLogPath = process.env.GAMEPLAY_DEBUG_LOG ?? fileURLToPath(new URL("../../../data/runtime/gameplay-debug.ndjson", import.meta.url));
+const GAMEPLAY_DEBUG_MAX_BYTES = 4 * 1024 * 1024;
+
+/** Persist bounded, public-state-only traces so a stalled local match is debuggable after refresh. */
+function appendGameplayDebug(record: Record<string, unknown>): void {
+  try {
+    mkdirSync(dirname(gameplayDebugLogPath), { recursive: true });
+    const line = `${JSON.stringify({ at: new Date().toISOString(), ...record })}\n`;
+    if (existsSync(gameplayDebugLogPath) && statSync(gameplayDebugLogPath).size + Buffer.byteLength(line) > GAMEPLAY_DEBUG_MAX_BYTES) {
+      writeFileSync(gameplayDebugLogPath, "", "utf8");
+    }
+    appendFileSync(gameplayDebugLogPath, line, "utf8");
+  } catch (loggingError) {
+    app.log.warn({ err: loggingError, gameplayDebugLogPath }, "could not persist gameplay debug trace");
+  }
+}
 
 interface ImportedPod { readonly source: string; readonly synced_at: string; readonly decks: readonly ImportedDeck[] }
 interface ImportedPrecon extends ImportedDeck { readonly set_code: string; readonly released_at: string; readonly cover_art_uri?: string; readonly cover_art_kind: string }
@@ -509,12 +526,16 @@ app.post<{ Params: { id: string }; Body: { token?: string; action?: GameAction }
     const action = request.body?.action;
     if (!action || typeof action.type !== "string") return reply.code(400).send({ error: "Falta la acción." });
     const view = actInMatch(request.params.id, request.body?.token, action);
+    appendGameplayDebug({ kind: "action", matchId: request.params.id, action, debug: gameplayDebugSnapshot(getMatch(request.params.id)) });
     io.to(`match:${request.params.id}`).emit("match:updated", { matchId: request.params.id, version: view.version });
     return view;
   } catch (error) {
     if (error instanceof Error && /estabilizar|bucle/i.test(error.message)) {
       try {
-        request.log.error({ err: error, action: request.body?.action, debug: gameplayDebugSnapshot(getMatch(request.params.id)) }, "rules engine stabilization failure");
+        const match = getMatch(request.params.id);
+        const debug = gameplayDebugSnapshot(match);
+        appendGameplayDebug({ kind: "failure", matchId: request.params.id, action: request.body?.action, error: error.message, debug });
+        request.log.error({ err: error, action: request.body?.action, debug }, "rules engine stabilization failure");
       } catch (loggingError) {
         request.log.error({ err: loggingError, originalError: error.message, matchId: request.params.id }, "rules engine failure could not be fully captured");
       }

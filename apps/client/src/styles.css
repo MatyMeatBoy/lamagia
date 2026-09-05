@@ -473,6 +473,7 @@ button.chip:hover { border-color: var(--gold); }
 .hand-card:nth-child(5) { transform: rotate(2deg); }
 .hand-card:nth-child(6) { transform: rotate(4deg) translateY(2px); }
 .hand-card:nth-child(7) { transform: rotate(7deg) translateY(7px); }
+.shell:not([data-layout="mobile"]) .hand-card:nth-child(n) { transform: none; }
 .hand-card:first-child { margin-left: 0; }
 .hand-card:last-child { margin-right: 0; }
 .hand-card img {
@@ -489,7 +490,7 @@ button.chip:hover { border-color: var(--gold); }
 }
 .hand-card.playable { filter: saturate(1.05); border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold-dim), 0 4px 14px #000b; }
 .hand-card.choice-option { border-color: #8ddfff; box-shadow: 0 0 0 2px #54b8e5, 0 0 18px #54b8e566; filter: none; }
-.hand-card.choice-muted { filter: grayscale(.72) brightness(.58); opacity: .72; }
+.hand-card.choice-muted { filter: grayscale(.42) brightness(.78); opacity: .88; }
 .hand-card.drag-source { opacity: .22; transform: translateY(12px) scale(.96); }
 .hand-card:active { cursor: grabbing; }
 .hand-card:hover, .hand-card:focus-visible { transform: translateY(-30px) rotate(0deg) scale(1.14); z-index: 6; box-shadow: 0 14px 28px #000d; filter: none; }
@@ -559,11 +560,14 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .scry-card small { color: var(--text-faint); font-size: .52rem; }
 .scry-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; }
 
-.stack-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 3px 0; }
+.stack-strip { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 7px; overflow-x: auto; padding: 5px 0; }
 .stack-strip > b { color: var(--gold); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; }
-.stack-chip { display: flex; align-items: center; gap: 5px; padding: 2px 7px 2px 2px; border: 1px solid var(--gold-dim); border-radius: 99px; background: #141004; }
-.stack-chip img { width: 20px; border-radius: 50%; }
-.stack-chip > .card-image-fallback { width: 20px; height: 28px; min-height: 0; flex: 0 0 20px; padding: 2px; font-size: .4rem; }
+.stack-order-hint { align-self: center; color: var(--text-faint); font-size: .54rem; white-space: nowrap; }
+.stack-chip { position: relative; display: flex; align-items: center; gap: 6px; min-width: 150px; max-width: 235px; padding: 4px 8px 4px 4px; border: 1px solid var(--gold-dim); border-radius: 8px; background: linear-gradient(145deg, #1b180d, #0d160f); box-shadow: 0 3px 9px #0008; }
+.stack-chip:first-of-type { border-color: var(--gold); box-shadow: 0 0 0 1px #d9b64b66, 0 4px 12px #000b; }
+.stack-order { display: grid; place-items: center; width: 18px; height: 18px; flex: 0 0 18px; border: 1px solid var(--gold-dim); border-radius: 50%; color: var(--gold); font-size: .58rem; }
+.stack-chip img { width: 32px; height: 44px; object-fit: cover; border-radius: 4px; }
+.stack-chip > .card-image-fallback { width: 32px; height: 44px; min-height: 0; flex: 0 0 32px; padding: 2px; font-size: .4rem; }
 .stack-chip span { display: grid; line-height: 1.15; }
 .stack-chip b { color: var(--text); font-size: .62rem; }
 .stack-chip i { font-style: normal; font-size: .54rem; }
@@ -639,7 +643,7 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 
 /* Main decision surface: fixed so it never reflows the hand or HUD. */
 .decision-overlay {
-  position: fixed; z-index: 30; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  position: fixed; z-index: 30; left: 50%; top: 61%; transform: translate(-50%, -50%);
   width: min(460px, calc(100vw - 28px)); max-height: min(58vh, 520px); overflow: hidden;
   border: 1px solid var(--gold-dim); border-radius: 12px; background: #07120cf5;
   box-shadow: 0 22px 70px #000c, 0 0 0 9999px #02080435; backdrop-filter: blur(7px);

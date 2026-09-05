@@ -144,6 +144,12 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const chosen = untapped ?? tapped;
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
+  if (state.pendingChoice?.type === "mana-payment" && state.pendingChoice.seat === seat) {
+    const source = available.find((entry) => entry.action.type === "choose-mana-source");
+    const cancel = available.find((entry) => entry.action.type === "cancel-mana-payment");
+    const chosen = source ?? cancel;
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "optional-basic-land-search" && state.pendingChoice.seat === seat) {
     const accept = available.find((entry) => entry.action.type === "choose-basic-land-search" && entry.action.accept);
     const decline = available.find((entry) => entry.action.type === "choose-basic-land-search" && !entry.action.accept);

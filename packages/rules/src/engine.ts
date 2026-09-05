@@ -196,6 +196,8 @@ export interface PlayerState {
   readonly drewFromEmptyLibrary: boolean;
   /** Skip priority automatically in windows where this seat has nothing to do. */
   readonly autoPass: boolean;
+  /** Optional triggered abilities from these permanents are yielded automatically. */
+  readonly yieldedTriggerSources?: readonly string[];
   /** Source/ability keys already activated during this turn (CR 702.57). */
   readonly oncePerTurnActivations?: readonly string[];
   /** Rebound (CR 702.88): instance ids exiled this way, castable free at the next upkeep. */
@@ -402,6 +404,13 @@ export interface GameState {
   readonly blockingTaxPerCreature?: readonly number[];
 }
 
+export interface ManaPaymentSelection {
+  readonly sourceId: string;
+  readonly abilityIndex: number;
+  readonly mana: ManaType;
+  readonly manaBonus?: ManaType;
+}
+
 export type PendingChoice =
   | {
       /** Shock-land replacement choice (CR 614.1c, 614.12). */
@@ -410,6 +419,21 @@ export type PendingChoice =
       readonly sourceId: string;
       readonly sourceCard: GameCard;
       readonly life: number;
+    }
+  | {
+      /** Explicit mana-source selection for a non-interchangeable payment. */
+      readonly type: "mana-payment";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly cost: ManaCost;
+      readonly additionalGeneric: number;
+      readonly variableValue: number;
+      readonly lifeCost: number;
+      readonly allowLegendaryMana: boolean;
+      readonly excludePermanentId?: string;
+      readonly selected: readonly ManaPaymentSelection[];
+      readonly continuation: Extract<GameAction, { type: "cast" | "activate-mana" }>;
     }
   | {
       /** Ghost Quarter's optional search belongs to the destroyed land's controller. */
@@ -664,6 +688,9 @@ export type GameAction =
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
+  | { readonly type: "choose-mana-source"; readonly sourceId: string; readonly manaSourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType }
+  | { readonly type: "cancel-mana-payment"; readonly sourceId: string }
+  | { readonly type: "toggle-trigger-yield"; readonly sourceId: string; readonly enabled: boolean }
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
@@ -1321,6 +1348,103 @@ export function planManaPayment(
   return solve(0, { ...startingPool }, emptyPool(), new Set(), [], 0);
 }
 
+type ManaPaymentChoice = Extract<PendingChoice, { type: "mana-payment" }>;
+
+function paymentPlayer(state: GameState, seat: SeatId, excludePermanentId?: string): PlayerState {
+  const player = playerAt(state, seat);
+  if (!excludePermanentId) return player;
+  return {
+    ...player,
+    battlefield: player.battlefield.map((permanent) => permanent.instance_id === excludePermanentId
+      ? { ...permanent, tapped: true }
+      : permanent)
+  };
+}
+
+function shouldPromptManaPayment(
+  state: GameState,
+  seat: SeatId,
+  cost: ManaCost,
+  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly allowLegendaryMana?: boolean; readonly excludePermanentId?: string }
+): boolean {
+  // Manual source selection is a player-facing decision. Bots keep the
+  // deterministic planner so AI turns do not stall on a UI-only choice.
+  if (playerAt(state, seat).kind !== "human") return false;
+  const payer = paymentPlayer(state, seat, options.excludePermanentId);
+  const plan = planManaPayment(cost, payer, {
+    state,
+    additionalGeneric: options.additionalGeneric,
+    variableValue: options.variableValue,
+    allowLegendaryMana: options.allowLegendaryMana
+  });
+  if (!plan?.taps.length) return false;
+  const sources = manaSources(payer, state, { allowLegendaryMana: options.allowLegendaryMana });
+  // Preserve the fast path when every available source is interchangeable:
+  // two Mountains paying generic one do not need a dialog.
+  return new Set(sources.map(sourceSignature)).size > 1;
+}
+
+function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan | null {
+  const player = playerAt(state, choice.seat);
+  const payer = paymentPlayer(state, choice.seat, choice.excludePermanentId);
+  const sources = manaSources(payer, state, { allowLegendaryMana: choice.allowLegendaryMana });
+  const existingRestricted = choice.allowLegendaryMana
+    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+    : [];
+  let pool = existingRestricted.reduce((current, mana) => addMana(current, mana.type, 1), player.manaPool);
+  const taps: Tap[] = [];
+  const used = new Set<string>();
+  let lifeCost = choice.lifeCost;
+  for (const selection of choice.selected) {
+    if (used.has(selection.sourceId)) return null;
+    const source = sources.find((candidate) => candidate.permanentId === selection.sourceId && candidate.abilityIndex === selection.abilityIndex);
+    if (!source || !source.options.includes(selection.mana)) return null;
+    const bonusOptions = source.bonusOptions ?? [];
+    if (selection.manaBonus !== undefined && !bonusOptions.includes(selection.manaBonus)) return null;
+    if (player.life - lifeCost - source.lifeCost <= 0) return null;
+    used.add(selection.sourceId);
+    lifeCost += source.lifeCost;
+    pool = addSourceOutput(pool, source, selection.mana, selection.manaBonus);
+    taps.push(sourceTap(source, selection.mana, selection.manaBonus));
+  }
+  const virtualPlayer = { ...player, manaPool: pool };
+  const payment = payPlayerCost(choice.cost, virtualPlayer, {
+    additionalGeneric: choice.additionalGeneric,
+    variableValue: choice.variableValue,
+    availableLife: player.life - lifeCost
+  }, choice.allowLegendaryMana);
+  if (!payment) return null;
+  return finalizeManaPlan(pool, taps, existingRestricted, player.restrictedMana ?? [], lifeCost);
+}
+
+function beginManaPayment(
+  state: GameState,
+  seat: SeatId,
+  sourceCard: GameCard,
+  cost: ManaCost,
+  continuation: Extract<GameAction, { type: "cast" | "activate-mana" }>,
+  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly lifeCost?: number; readonly allowLegendaryMana?: boolean; readonly excludePermanentId?: string }
+): GameState | null {
+  if (!shouldPromptManaPayment(state, seat, cost, options)) return null;
+  return {
+    ...state,
+    pendingChoice: {
+      type: "mana-payment",
+      seat,
+      sourceId: `mana-payment:${state.version}:${sourceCard.instance_id}`,
+      sourceCard,
+      cost,
+      additionalGeneric: options.additionalGeneric ?? 0,
+      variableValue: options.variableValue ?? 0,
+      lifeCost: options.lifeCost ?? 0,
+      allowLegendaryMana: options.allowLegendaryMana ?? false,
+      ...(options.excludePermanentId ? { excludePermanentId: options.excludePermanentId } : {}),
+      selected: [],
+      continuation
+    }
+  };
+}
+
 function applyManaPlan(state: GameState, seat: SeatId, plan: ManaPlan): GameState {
   const tapped = new Set(plan.taps.filter((tap) => tap.requiresTap).map((tap) => tap.permanentId));
   const next = withPlayer(state, seat, (player) => ({
@@ -1473,7 +1597,8 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       drewFromEmptyLibrary: false,
       reboundPending: [],
       extraLandDrops: 0,
-      autoPass: kind === "bot"
+      autoPass: kind === "bot",
+      yieldedTriggerSources: []
     } satisfies PlayerState;
   });
 
@@ -1738,6 +1863,8 @@ function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { t
       const otherLands = player.battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length;
       return { tapped: otherLands < rule.min, lifeCost: 0 };
     }
+    case "unless-first-turns":
+      return { tapped: state.turn > rule.maxTurn, lifeCost: 0 };
     case "unless-pay-life":
       // The controller chooses; never silently pay a replacement cost. The
       // provisional tapped state is corrected by the pending choice below.
@@ -6245,6 +6372,29 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
       return actions;
     }
+    if (choice.type === "mana-payment") {
+      const selected = new Set(choice.selected.map((entry) => entry.sourceId));
+      const payer = paymentPlayer(state, seat, choice.excludePermanentId);
+      const sources = manaSources(payer, state, { allowLegendaryMana: choice.allowLegendaryMana });
+      for (const source of sources) {
+        if (selected.has(source.permanentId)) continue;
+        const bonusOptions = source.bonusOptions?.length ? source.bonusOptions : [undefined];
+        for (const mana of source.options) for (const manaBonus of bonusOptions) {
+          actions.push({
+            action: { type: "choose-mana-source", sourceId: choice.sourceId, manaSourceId: source.permanentId, abilityIndex: source.abilityIndex, mana, ...(manaBonus ? { manaBonus } : {}) },
+            label: `${source.requiresTap ? "Girar" : "Usar"} ${source.name} · agregar ${source.fixedProduces?.map((type) => `{${type}}`).join("") ?? `{${mana}}`}${manaBonus ? ` + {${manaBonus}}` : ""}`,
+            cardId: source.permanentId,
+            note: `Pago de ${choice.cost.raw}: elige qué fuente de maná usar.`
+          });
+        }
+      }
+      actions.push({
+        action: { type: "cancel-mana-payment", sourceId: choice.sourceId },
+        label: "Cancelar pago",
+        note: `No se lanza ni activa ${choice.sourceCard.name}.`
+      });
+      return actions;
+    }
     if (choice.type === "optional-basic-land-search") {
       actions.push({
         action: { type: "choose-basic-land-search", sourceId: choice.sourceId, accept: true },
@@ -6811,6 +6961,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   // announced like a spell and waits for priority to pass.
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
+    if (profile.triggers.length) {
+      const yielded = player.yieldedTriggerSources?.includes(permanent.instance_id) ?? false;
+      actions.push({
+        action: { type: "toggle-trigger-yield", sourceId: permanent.instance_id, enabled: !yielded },
+        label: yielded ? `Reactivar triggers de ${permanent.card.name}` : `Ignorar triggers de ${permanent.card.name}`,
+        cardId: permanent.instance_id,
+        note: yielded
+          ? "Volver a mostrar las decisiones opcionales de esta carta."
+          : "Las habilidades opcionales de esta carta se declinan automáticamente; las habilidades obligatorias siguen entrando en la pila."
+      });
+    }
     for (const ability of profile.manaAbilities) {
       if (!canUseManaAbility(player, permanent, ability, state)) continue;
       const options = manaOptionsFor(player, ability, state);
@@ -7115,7 +7276,7 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
 }
 
-function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate-mana" }>): GameState {
+function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate-mana" }>, manaAlreadyPaid = false): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para activar esa habilidad de maná.");
   const player = playerAt(state, seat);
   const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
@@ -7135,9 +7296,13 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     }
     if (!canUseManaAbility(player, source, ability, state)) throw new Error("No puedes activar esa habilidad de maná ahora.");
     if (!ability.manaCost) throw new Error("Falta el coste de maná de esa habilidad.");
-    const plan = planManaPayment(ability.manaCost, player, { state });
-    if (!plan) throw new Error("No tienes maná suficiente para activar esa habilidad.");
-    let next = applyManaPlan(state, seat, plan);
+    const plan = manaAlreadyPaid ? null : planManaPayment(ability.manaCost, player, { state });
+    if (!manaAlreadyPaid && !plan) throw new Error("No tienes maná suficiente para activar esa habilidad.");
+    if (!manaAlreadyPaid) {
+      const manual = beginManaPayment(state, seat, source.card, ability.manaCost, action, { excludePermanentId: ability.requiresTap ? source.instance_id : undefined });
+      if (manual) return manual;
+    }
+    let next = manaAlreadyPaid ? state : applyManaPlan(state, seat, plan!);
     const current = playerAt(next, seat);
     const payment = payCost(ability.manaCost, current.manaPool, { availableLife: current.life });
     if (!payment) throw new Error("No se pudo pagar el coste de esa habilidad.");
@@ -7165,9 +7330,13 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
         ? player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: true } : permanent)
         : player.battlefield
     };
-    const plan = planManaPayment(ability.manaCost, budget, { state });
-    if (!plan) throw new Error("No tienes maná suficiente para activar esa habilidad de maná.");
-    activationState = applyManaPlan(state, seat, plan);
+    const plan = manaAlreadyPaid ? null : planManaPayment(ability.manaCost, budget, { state });
+    if (!manaAlreadyPaid && !plan) throw new Error("No tienes maná suficiente para activar esa habilidad de maná.");
+    if (!manaAlreadyPaid) {
+      const manual = beginManaPayment(state, seat, source.card, ability.manaCost, action, { excludePermanentId: ability.requiresTap ? source.instance_id : undefined });
+      if (manual) return manual;
+    }
+    activationState = manaAlreadyPaid ? state : applyManaPlan(state, seat, plan!);
     const payment = payCost(ability.manaCost, playerAt(activationState, seat).manaPool, { availableLife: playerAt(activationState, seat).life });
     if (!payment) throw new Error("No se pudo pagar el coste de esa habilidad de maná.");
     activationState = withPlayer(activationState, seat, (current) => ({
@@ -7747,7 +7916,7 @@ function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAc
   return logged(next, seat, `${player.name} relanza ${card.name} desde el exilio (rebote).`);
 }
 
-function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast" }>): GameState {
+function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast" }>, manaAlreadyPaid = false): GameState {
   const player = playerAt(state, seat);
   const fromGraveyard = action.fromGraveyard === true || action.flashback === true;
   const fromHand = fromGraveyard ? undefined : player.hand.find((card) => card.instance_id === action.cardId);
@@ -7779,8 +7948,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
   const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
-  if (!freeCast && !payLifeCost && !returnPermanentId && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
+  const plan = (freeCast || payLifeCost || returnPermanentId || manaAlreadyPaid) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
+  if (!freeCast && !payLifeCost && !returnPermanentId && !manaAlreadyPaid && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
   if (check.targetKinds?.length) {
@@ -7800,7 +7969,12 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     action = { ...action, targets: chosen };
   }
 
-  let next = (freeCast || payLifeCost || returnPermanentId) ? state : applyManaPlan(state, seat, plan!);
+  if (!freeCast && !payLifeCost && !returnPermanentId && !manaAlreadyPaid) {
+    const manual = beginManaPayment(state, seat, card, spellCost, action, { additionalGeneric, variableValue: action.variableValue ?? 0, lifeCost, allowLegendaryMana });
+    if (manual) return manual;
+  }
+
+  let next = (freeCast || payLifeCost || returnPermanentId || manaAlreadyPaid) ? state : applyManaPlan(state, seat, plan!);
   const payment = freeCast
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
     : payLifeCost
@@ -7952,6 +8126,49 @@ function applyChooseLandEntry(state: GameState, seat: SeatId, action: Extract<Ga
       permanent.instance_id === source.instance_id ? { ...permanent, tapped: false } : permanent)
   }));
   return logged(next, seat, `${choice.sourceCard.name} enters untapped; you pay ${choice.life} life.`);
+}
+
+function applyChooseManaSource(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-mana-source" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "mana-payment" || choice.seat !== seat) throw new Error("No tienes un pago de maná pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Ese pago de maná ya no corresponde a la partida.");
+  const nextChoice: ManaPaymentChoice = {
+    ...choice,
+    selected: [...choice.selected, {
+      sourceId: action.manaSourceId,
+      abilityIndex: action.abilityIndex,
+      mana: action.mana,
+      ...(action.manaBonus ? { manaBonus: action.manaBonus } : {})
+    }]
+  };
+  const plan = manualManaPlan(state, nextChoice);
+  if (!plan) return { ...state, pendingChoice: nextChoice };
+  let next = applyManaPlan({ ...state, pendingChoice: null }, seat, plan);
+  const continuation = choice.continuation;
+  next = continuation.type === "cast"
+    ? applyCast(next, seat, continuation, true)
+    : applyActivateMana(next, seat, continuation, true);
+  return next;
+}
+
+function applyCancelManaPayment(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cancel-mana-payment" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "mana-payment" || choice.seat !== seat) throw new Error("No tienes un pago de maná pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Ese pago de maná ya no corresponde a la partida.");
+  return logged({ ...state, pendingChoice: null }, seat, `${playerAt(state, seat).name} cancela el pago de ${choice.sourceCard.name}.`);
+}
+
+function applyToggleTriggerYield(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "toggle-trigger-yield" }>): GameState {
+  if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para cambiar esta preferencia.");
+  const source = playerAt(state, seat).battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+  if (!source || !cardProfile(source.card).triggers.length) throw new Error("Esa carta no tiene triggers configurables.");
+  return logged(withPlayer(state, seat, (player) => {
+    const current = new Set(player.yieldedTriggerSources ?? []);
+    if (action.enabled) current.add(action.sourceId); else current.delete(action.sourceId);
+    return { ...player, yieldedTriggerSources: [...current] };
+  }), seat, action.enabled
+    ? `${source.card.name}: se ignoran sus triggers opcionales.`
+    : `${source.card.name}: vuelven a mostrarse sus triggers opcionales.`);
 }
 
 function applyChooseBasicLandSearch(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-basic-land-search" }>): GameState {
@@ -8988,6 +9205,9 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "activate": next = applyActivate(state, seat, action); break;
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-land-entry": next = applyChooseLandEntry(state, seat, action); break;
+    case "choose-mana-source": next = applyChooseManaSource(state, seat, action); break;
+    case "cancel-mana-payment": next = applyCancelManaPayment(state, seat, action); break;
+    case "toggle-trigger-yield": next = applyToggleTriggerYield(state, seat, action); break;
     case "choose-basic-land-search": next = applyChooseBasicLandSearch(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-color": next = applyChooseColor(state, seat, action); break;
@@ -9045,6 +9265,7 @@ export function hasRealChoice(state: GameState, seat: SeatId): boolean {
   return legalActions(state, seat).some((entry) => {
     if (entry.action.type === "pass" || entry.action.type === "concede") return false;
     if (entry.action.type === "activate-mana") return false;
+    if (entry.action.type === "toggle-trigger-yield") return false;
     const action = entry.action;
     let effects: readonly SpellEffect[] | undefined;
     let sourceProfile: CardProfile | undefined;
@@ -9145,7 +9366,23 @@ export function settle(state: GameState): GameState {
     // A land's "as it enters" choice is resolved before the game can open
     // priority again. It is a real decision, so leave it projected to the
     // controller instead of advancing the turn while it is pending.
-    if (next.pendingChoice) return next;
+    if (next.pendingChoice) {
+      const choice = next.pendingChoice;
+      const sourceId = choice.type === "optional-trigger" ? choice.sourcePermanentId : undefined;
+      const sourceController = choice.type === "optional-trigger"
+        ? (choice.sourceController ?? choice.trigger?.controller ?? choice.seat)
+        : undefined;
+      const yielded = choice.type === "optional-trigger"
+        && choice.trigger?.definition.optional === true
+        && sourceId !== undefined
+        && sourceController === choice.seat
+        && (playerAt(next, sourceController).yieldedTriggerSources?.includes(sourceId) ?? false);
+      if (yielded) {
+        next = applyChooseTrigger(next, choice.seat, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
+        continue;
+      }
+      return next;
+    }
 
     // Triggers reach the stack before priority, on top of whatever is already
     // there (CR 603.3), so an ETB never has to wait for the stack to empty.
