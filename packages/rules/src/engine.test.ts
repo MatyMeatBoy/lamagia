@@ -9897,6 +9897,52 @@ describe("static mana-ability grants (Chromatic Lantern, Joraga Treespeaker)", (
   });
 });
 
+describe("the stampede family (Craterhoof Behemoth, Pathbreaker Ibex)", () => {
+  const CRATERHOOF = () => make({ name: "Craterhoof Behemoth", type_line: "Creature — Beast", mana_cost: "{5}{G}{G}{G}", cmc: 8, power: "5", toughness: "5", keywords: ["Haste"], oracle_text: "Haste\nWhen this creature enters, creatures you control gain trample and get +X/+X until end of turn, where X is the number of creatures you control." });
+  const PATHBREAKER_IBEX = () => make({ name: "Pathbreaker Ibex", type_line: "Creature — Goat", mana_cost: "{4}{G}{G}", cmc: 6, power: "3", toughness: "3", oracle_text: "Whenever this creature attacks, creatures you control gain trample and get +X/+X until end of turn, where X is the greatest power among creatures you control." });
+
+  it("recognizes both stampede shapes", () => {
+    expect(profileOf(CRATERHOOF())).toMatchObject({ fullyImplemented: true, triggers: [{ event: "enters-battlefield", subject: "self", effect: { kind: "creature-count-stampede" } }] });
+    expect(profileOf(PATHBREAKER_IBEX())).toMatchObject({ fullyImplemented: true, triggers: [{ event: "attacks", subject: "self", effect: { kind: "overwhelming-stampede" } }] });
+  });
+
+  it("pumps every controlled creature (including itself) by the creature count when Craterhoof enters", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEAR(), BEAR(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [CRATERHOOF()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    // Two Bears already in play plus Craterhoof itself: X = 3.
+    const bears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    const hoof = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Craterhoof Behemoth")!;
+    expect(bears).toHaveLength(2);
+    for (const bear of bears) {
+      expect([powerOf(bear, game), toughnessOf(bear, game)]).toEqual([5, 5]);
+      expect(bear.temporaryKeywords).toContain("trample");
+    }
+    expect([powerOf(hoof, game), toughnessOf(hoof, game)]).toEqual([8, 8]);
+  });
+
+  it("pumps every controlled creature by the greatest power among them when Pathbreaker Ibex attacks", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [PATHBREAKER_IBEX(), BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const ibex = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Pathbreaker Ibex")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: ibex.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    const attackedIbex = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === ibex.instance_id)!;
+    const pumpedBear = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    // Greatest power among Ibex (3) and Bear (2) is 3.
+    expect([powerOf(attackedIbex, game), toughnessOf(attackedIbex, game)]).toEqual([6, 6]);
+    expect([powerOf(pumpedBear, game), toughnessOf(pumpedBear, game)]).toEqual([5, 5]);
+    expect(pumpedBear.temporaryKeywords).toContain("trample");
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

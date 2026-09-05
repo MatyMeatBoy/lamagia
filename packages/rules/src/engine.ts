@@ -3766,11 +3766,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
     }
-    case "overwhelming-stampede": {
+    case "overwhelming-stampede":
+    case "creature-count-stampede": {
       // Creatures you control gain trample and get +X/+X until end of turn,
-      // where X is the greatest power among them (CR 613).
+      // where X is the greatest power (Overwhelming Stampede, Pathbreaker
+      // Ibex) or the creature count (Craterhoof Behemoth) among them (CR 613).
       const mine = playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
-      const x = Math.max(0, ...mine.map((permanent) => powerOf(permanent, state)));
+      const x = effect.kind === "creature-count-stampede" ? mine.length : Math.max(0, ...mine.map((permanent) => powerOf(permanent, state)));
       let next = modifyCreatures(state, x, x, (candidate) => candidate.controller === controller && isCreature(cardProfile(candidate.card)));
       next = withPlayer(next, controller, (player) => ({
         ...player,

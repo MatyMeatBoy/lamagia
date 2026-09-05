@@ -3919,8 +3919,31 @@ confirmed, not just the happy path. Validation: **714 rules tests**,
 `npm run check`, `npm run simulate:engine` 200/200, 10,066 global
 profiles.
 
-Prossh decklist status after this pass: **60 of 97 unique cards fully
-implemented (61.9%)**.
+**Craterhoof Behemoth / Pathbreaker Ibex** — Overwhelming Stampede's
+effect ("creatures you control gain trample and get +X/+X until end
+of turn, where X is the greatest power among creatures you control")
+already existed as a dedicated `overwhelming-stampede` kind, but the
+regex only matched with "Until end of turn," as a LEADING clause.
+Pathbreaker Ibex's attack trigger carries the identical effect with
+"until end of turn" TRAILING instead of leading, so the existing regex
+missed it completely; added a sibling regex reusing the exact same
+effect kind and handler, zero new engine code. Craterhoof Behemoth is
+the same template with a different X formula — creature count, not
+greatest power — so it got a new `creature-count-stampede` kind
+sharing the SAME handler body (merged into one `case` label,
+branching only on which `effect.kind` actually matched). Verified
+**+2** in the export count (10,066 → 10,068); set coverage holds at
+30.5%. Scenario-tested: casting Craterhoof Behemoth with two Grizzly
+Bears already in play pumps all three creatures (Craterhoof counts
+itself as a controlled creature at the moment its own ETB resolves)
+by +3/+3 with trample; attacking with Pathbreaker Ibex (3 power)
+alongside a Grizzly Bears (2 power) pumps both creatures by +3/+3 with
+trample, correctly using Ibex's own power as the greatest among them.
+Validation: **721 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,068 global profiles.
+
+Prossh decklist status after this pass: **62 of 97 unique cards fully
+implemented (63.9%)**.
 
 ## Gameplay interaction baseline (2026-09-05)
 
