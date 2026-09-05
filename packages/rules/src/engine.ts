@@ -587,6 +587,18 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
     .filter(({ grant }) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, { grant }) => ({ power: total.power + grant.power, toughness: total.toughness + grant.toughness }), { power: 0, toughness: 0 });
 }
+function characteristicDefiningValue(state: GameState, permanent: Permanent, kind: NonNullable<CardProfile["cdaPowerToughness"]>): number {
+  const player = playerAt(state, permanent.controller);
+  if (kind === "your-life-total") return player.life;
+  if (kind === "opponent-graveyard-creatures") {
+    return state.players.filter((candidate) => candidate.seat !== permanent.controller)
+      .reduce((total, candidate) => total + candidate.graveyard.filter((card) => isCreature(cardProfile(card))).length, 0);
+  }
+  if (kind === "creatures-you-control") return player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))).length;
+  if (kind === "lands-you-control") return player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))).length;
+  if (kind === "artifacts-you-control") return player.battlefield.filter((candidate) => isArtifact(cardProfile(candidate.card))).length;
+  return player.battlefield.filter((candidate) => cardProfile(candidate.card).colors.includes("G")).length;
+}
 export function powerOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
   const level = state ? profile.levelDefinitions.filter((definition) => {
@@ -597,7 +609,8 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
-  return (permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
+  const base = state && profile.cdaPowerToughness ? characteristicDefiningValue(state, permanent, profile.cdaPowerToughness) : (permanent.temporaryAnimation?.power ?? imprint?.power ?? level?.power ?? profile.power ?? 0);
+  return base + counterModifier(permanent) + permanent.powerModifier + equipmentBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -609,7 +622,8 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const globalBonus = state ? allPermanents(state).flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants)
     .filter((grant) => grant.scope === "all-creatures").reduce((total, grant) => total + grant.toughness, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
-  return (permanent.temporaryAnimation?.toughness ?? imprint?.toughness ?? level?.toughness ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
+  const base = state && profile.cdaPowerToughness ? characteristicDefiningValue(state, permanent, profile.cdaPowerToughness) : (permanent.temporaryAnimation?.toughness ?? imprint?.toughness ?? level?.toughness ?? profile.toughness ?? 0);
+  return base + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + staticBonus + globalBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const profile = cardProfile(permanent.card);

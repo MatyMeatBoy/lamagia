@@ -319,6 +319,7 @@ const C13_THOPTER_FOUNDRY = () => make({ name: "Thopter Foundry", type_line: "Ar
 const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant", mana_cost: "{X}{U}{U}{U}", cmc: 3, oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library.", scryfall_id: "613a41b8-0b4f-4995-bf1e-ca41f96e6438" });
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
+const C13_WIGHT_OF_PRECINCT_SIX = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2", oracle_text: "Wight of Precinct Six's power and toughness are each equal to the number of creature cards in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf", oracle_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
 const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
@@ -3727,6 +3728,17 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Beast")).toHaveLength(1);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Beast")?.card).toMatchObject({ power: "4", toughness: "4", type_line: "Creature — Beast" });
+  });
+
+  it("uses opponents' graveyard creature count for Wight of Precinct Six", () => {
+    const profile = profileOf(C13_WIGHT_OF_PRECINCT_SIX());
+    expect(profile.cdaPowerToughness).toBe("opponent-graveyard-creatures");
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([], [C13_WIGHT_OF_PRECINCT_SIX()]);
+    game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR(), FLIER()], "wight-yard") }));
+    const wight = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wight of Precinct Six")!;
+    expect(powerOf(wight, game)).toBe(2);
+    expect(toughnessOf(wight, game)).toBe(2);
   });
 
   it("offers each landcycling variant and searches the matching subtype", () => {

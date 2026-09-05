@@ -810,7 +810,7 @@ export interface CardProfile {
   /** "<Basic type>s you control produce an additional {C}" (Crypt Ghast, CR 605). */
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   /** Characteristic-defining P/T "equal to the number of X you control" (CR 604.3). */
-  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | "your-life-total" | null;
+  readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | "opponent-graveyard-creatures" | "your-life-total" | null;
   /** Lieutenant (Commander 2014): commander-conditional static bonuses. */
   readonly lieutenant: {
     readonly selfPower: number;
@@ -2975,6 +2975,7 @@ function recognizeText(text: string): RecognizedText {
       }
     }
     if (/^~'?s power and toughness are each equal to the number of (?:creature|land|artifact|green permanent)s? you control\.?$/i.test(line)) continue;
+    if (/^~'?s power and toughness are each equal to the number of creature cards in your opponents[’'] graveyards\.?$/i.test(line)) continue;
     if (/^~'?s power and toughness are each equal to your life total\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
@@ -3298,9 +3299,12 @@ export function cardProfile(card: CardData): CardProfile {
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
   const cdaMatch = /~'?s power and toughness are each equal to the number of (creature|land|artifact|green permanent)s? you control/i.exec(text);
+  const opponentGraveyardCda = /~'?s power and toughness are each equal to the number of creature cards in your opponents[’'] graveyards/i.test(text);
   const lifeCdaMatch = /~'?s power and toughness are each equal to your life total/i.test(text);
   const cdaPowerToughness = lifeCdaMatch
     ? "your-life-total"
+    : opponentGraveyardCda
+      ? "opponent-graveyard-creatures"
     : cdaMatch
       ? (/green permanent/i.test(cdaMatch[1]!) ? "green-permanents-you-control" : `${cdaMatch[1]!.toLowerCase()}s-you-control`) as CardProfile["cdaPowerToughness"]
       : null;
