@@ -52,7 +52,9 @@ The stack is shown in resolution order, with one card-like item per spell or
 ability, controller, targets, countered state, and a visible top-first marker.
 Each public item can be opened to inspect its rules text and targets. Priority
 still follows the engine's `pass` action; the strip is presentation, not a
-second rules state.
+second rules state. When a response requires targeting a spell, the same stack
+card becomes highlighted and clickable; clicking it selects the spell rather
+than opening the inspector.
 
 ## Regression rules
 

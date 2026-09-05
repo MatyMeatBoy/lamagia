@@ -424,6 +424,11 @@ function isPlayerTargetable(seat: number): boolean {
     entry.action.type === "choose-trigger-target" && entry.action.target.kind === "player" && entry.action.target.seat === seat)) return true;
   return Boolean(ui.pendingTarget?.options.some((target) => target.kind === "player" && target.seat === seat));
 }
+function isStackTargetable(stackId: string): boolean {
+  if (triggerTargetActions().some((entry) =>
+    entry.action.type === "choose-trigger-target" && entry.action.target.kind === "spell" && entry.action.target.stackId === stackId)) return true;
+  return Boolean(ui.pendingTarget?.options.some((target) => target.kind === "spell" && target.stackId === stackId));
+}
 
 /** Every card the viewer can currently see, for preview lookups and log linking. */
 function visibleCards(): Map<string, CardView> {
@@ -934,7 +939,7 @@ function logDrawerHtml(): string {
 function stackStripHtml(): string {
   if (!view?.stack.length) return "";
   return `<div class="stack-strip" aria-label="Pila de hechizos y habilidades"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · clic para inspeccionar</small>${[...view.stack].reverse().map((object, index) =>
-    `<button class="stack-chip${object.countered ? " countered" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}">
+    `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este hechizo como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}">
       <strong class="stack-order">${index + 1}</strong>
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
       <span><small class="stack-kind">${object.kind === "trigger" ? "Triggered" : object.kind === "activated" ? "Activated" : "Spell"}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
@@ -1345,7 +1350,11 @@ function wireBoard(): void {
       void submit(entry.action);
     }));
   document.querySelectorAll<HTMLButtonElement>("[data-stack-id]").forEach((button) =>
-    button.addEventListener("click", () => { ui.stackDetail = button.dataset.stackId ?? null; render(); }));
+    button.addEventListener("click", () => {
+      const stackId = button.dataset.stackId!;
+      if (isStackTargetable(stackId)) chooseTarget({ kind: "spell", stackId });
+      else { ui.stackDetail = stackId; render(); }
+    }));
   document.querySelectorAll<HTMLButtonElement>("[data-zone]").forEach((button) =>
     button.addEventListener("click", () => showZone(Number(button.dataset.seat), button.dataset.zone as never)));
 
