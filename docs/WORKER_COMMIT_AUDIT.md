@@ -61,3 +61,31 @@ activation (`638e6e8`), Terra Ravager defending-land scaling (`08a4d51`), and
 Inferno Titan divided damage (`25e456a`). The Vizkopa Guildmage worker change
 (`1ab35c4`) was also salvaged and validated in the current tree. Validation is
 now 565 rules tests, 9,294 global profiles, and C13 252/341.
+
+Worker commit `18e5928` from `origin/worker-05` was audited and selectively
+integrated as `c531f66`. It adds the reusable CR 603.3f trigger-doubler
+primitive, with a parser, executor, and scenario test. Accepted card mappings:
+
+- Harmonic Prodigy | `2e2ace5b-4018-43af-8e72-ebafec1a7739`
+- Katara, the Fearless | `0972d46e-423b-454e-87c7-a2d40fb6fb6d`
+
+Wizard's Staff | `30c3c700-46f4-4a77-8c45-5c7e3a21bd62` uses the same
+doubler scope, but remains pending because its typed Equip Wizard cost is a
+separate missing primitive. Validation: 568 tests, 9,299 global profiles,
+C13 254/341. The worker's generated status pages were discarded as stale and
+regenerated from the published tree.
+
+The next three origin worker commits were audited as focused C13 rescues:
+`8044a60` (Aethermage's Touch), `232ecd7` (Strategic Planning), and
+`8818654` (Skyward Eye Prophets). Their shared stale trigger-doubler hunks
+were discarded because `c531f66` already published that primitive; the
+executable deltas were manually integrated and tested together as `d0a3ba7`.
+Accepted mappings:
+
+- Aethermage's Touch | `15692698-ef57-4672-bf76-5fe4a00c693a`
+- Strategic Planning | `02b5acf3-47cb-4d39-9307-e02656f1879b`
+- Skyward Eye Prophets | `45bef776-121b-4489-9c46-f7b4fd4c3c0d`
+
+Validation: 571 rules tests, `npm run check`, 9,308 global profiles,
+C13 257/341. This rescue also fixed the latent `enteredThisTurn` field
+omission in the hand-activation source exposed by the type check.

@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T05:27:50.531653+00:00`
+- Generated: `2026-09-05T05:53:09.920136+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **252**
+- Exported profiles in scope: **341**; fully implemented: **257**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -259,7 +259,7 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **252/341** profiles complete; **15** unfinished cards have exactly one unmatched line.
+The engine export currently marks **257/341** profiles complete; **14** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
@@ -274,7 +274,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library — Widespread Panic |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy — Mirari |
 | `unclaimed` | 1 | whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat — Serene Master |
-| `unclaimed` | 1 | whenever ~ enters or attacks, it deals <n> damage divided as you choose among <n>, <n>, or <n> targets — Inferno Titan |
 | `unclaimed` | 1 | {cost}, {cost}: target beast creature you control fights target creature <n> opponent controls — Contested Cliffs |
 | `unclaimed` | 1 | {cost}: this turn, creatures can't block unless their controller pays {cost} for each blocking creature they control — War Cadence |
 | `unclaimed` | 1 | {cost}: until end of turn, creatures you control have base power and toughness <n>/<n> and gain all creature types — Mirror Entity |
