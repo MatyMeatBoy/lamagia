@@ -156,6 +156,8 @@ export interface CombatRules {
   readonly cannotBlock: boolean;
   /** "~ can't be blocked" (CR 509.1a). */
   readonly cannotBeBlocked: boolean;
+  /** "~ can't be blocked as long as defending player has the most creatures". */
+  readonly cannotBeBlockedIfDefenderHasMostCreatures: boolean;
   /** "~ attacks each combat if able" (CR 508.1d). */
   readonly mustAttack: boolean;
   /** "No more than N creatures can attack you each combat" (CR 508.1d). */
@@ -185,6 +187,7 @@ export const NO_COMBAT_RULES: CombatRules = {
   cannotAttack: false,
   cannotBlock: false,
   cannotBeBlocked: false,
+  cannotBeBlockedIfDefenderHasMostCreatures: false,
   mustAttack: false,
   maxAttackers: null,
   blocksOnlyWithKeyword: null,
@@ -210,6 +213,9 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   if (/^~ can't attack$/.test(text)) return { cannotAttack: true };
   if (/^~ can't block$/.test(text)) return { cannotBlock: true };
   if (/^~ can't be blocked$/.test(text)) return { cannotBeBlocked: true };
+  if (/^~ can't be blocked as long as defending player controls the most creatures or is tied for the most$/.test(text)) {
+    return { cannotBeBlockedIfDefenderHasMostCreatures: true };
+  }
   if (/^~ can't attack or block$/.test(text)) return { cannotAttack: true, cannotBlock: true };
   if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
   if (/^prevent all combat damage that would be dealt to and dealt by ~$/i.test(text)) return { preventsAllCombatDamage: true };

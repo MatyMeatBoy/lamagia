@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-hooded-horror` | Hooded Horror checks the defending player's creature count, including ties, before allowing blocks (CR 509.1a, 509.1b) | `codex/c13-hooded-horror-f99` | active | 2026-09-05 |

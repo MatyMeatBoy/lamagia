@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { cardProfile } from "./characteristics.js";
 import type { CardData } from "./characteristics.js";
 import {
-  applyAction, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, manaSources, planManaPayment, powerOf, toughnessOf,
+  applyAction, canBlock, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, manaSources, planManaPayment, powerOf, toughnessOf,
   hasRealChoice, profileOf, settle, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TurnStep
 } from "./engine.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
@@ -306,6 +306,11 @@ const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "En
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
+const C13_HOODED_HORROR = () => make({
+  name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4",
+  oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.",
+  scryfall_id: "15414338-506b-458f-a067-1a2053373594", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e"
+});
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -1058,6 +1063,19 @@ describe("casting", () => {
     expect(C13_DECREE_OF_PAIN().scryfall_id).toBe("932668fa-d6e3-41c0-ad0c-8e0a00e68d11");
     expect(cardProfile(C13_COMMAND_TOWER()).manaAbilities).toHaveLength(1);
     expect(cardProfile(C13_DECREE_OF_PAIN()).effects).toMatchObject([{ kind: "destroy-all-creatures-draw-destroyed" }]);
+  });
+
+  it("reuses the defending-player creature-count evasion primitive for C13 Hooded Horror", () => {
+    const profile = cardProfile(C13_HOODED_HORROR());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.combatRules.cannotBeBlockedIfDefenderHasMostCreatures).toBe(true);
+    let game = readyToCast([], [C13_HOODED_HORROR(), BEAR()], [], [BEAR()]);
+    const horror = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Hooded Horror")!;
+    const blocker = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(canBlock(game, horror, blocker)).toBe(true);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    const secondBlocker = game.players[1]!.battlefield.find((permanent) => permanent.instance_id !== blocker.instance_id)!;
+    expect(canBlock(game, horror, secondBlocker)).toBe(false);
   });
 
   it("draws for each creature destroyed by Decree of Pain", () => {

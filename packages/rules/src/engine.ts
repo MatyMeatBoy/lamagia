@@ -3974,6 +3974,11 @@ export function canBlock(state: GameState, attacker: Permanent, blocker: Permane
   if (blockerProfile.combatRules.cannotBlock || blocker.cantBlockThisTurn) return false;
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
+  if (attackerProfile.combatRules.cannotBeBlockedIfDefenderHasMostCreatures) {
+    const defenderCount = playerAt(state, blocker.controller).battlefield.filter((permanent) => isCreaturePermanent(permanent)).length;
+    const most = state.players.every((player) => defenderCount >= player.battlefield.filter((permanent) => isCreaturePermanent(permanent)).length);
+    if (most) return false;
+  }
   if (attackerProfile.protectionFrom.some((quality) => blockerProfile.colors.includes(quality))) return false;
   // Horsemanship is not flying: only a creature with horsemanship can block
   // one with it (CR 702.31b), and reach does not bypass this restriction.
