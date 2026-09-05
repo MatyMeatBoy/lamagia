@@ -319,6 +319,7 @@ const C13_THOPTER_FOUNDRY = () => make({ name: "Thopter Foundry", type_line: "Ar
 const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant", mana_cost: "{X}{U}{U}{U}", cmc: 3, oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library.", scryfall_id: "613a41b8-0b4f-4995-bf1e-ca41f96e6438" });
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
+const C13_GRAZING_GLADEHART = () => make({ name: "Grazing Gladehart", type_line: "Creature — Antelope", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Landfall — Whenever a land enters the battlefield under your control, you may gain 2 life.", scryfall_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4", oracle_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
 const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
@@ -3727,6 +3728,20 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Beast")).toHaveLength(1);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Beast")?.card).toMatchObject({ power: "4", toughness: "4", type_line: "Creature — Beast" });
+  });
+
+  it("offers optional life gain for Grazing Gladehart landfall", () => {
+    const profile = profileOf(C13_GRAZING_GLADEHART());
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "land-you-control", optional: true, effect: { kind: "gain-life", amount: 2 } });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([C13_GRAZING_GLADEHART(), FOREST()], [FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.life).toBe(42);
   });
 
   it("offers each landcycling variant and searches the matching subtype", () => {
