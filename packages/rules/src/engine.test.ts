@@ -362,6 +362,7 @@ const C13_DRUIDIC_SATCHEL = () => make({ name: "Druidic Satchel", type_line: "Ar
 const C13_RUPTURE_SPIRE = () => make({ name: "Rupture Spire", type_line: "Land", oracle_text: "Rupture Spire enters the battlefield tapped.\nWhen Rupture Spire enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.", produced_mana: ["W", "U", "B", "R", "G"], scryfall_id: "622087fc-4e34-43cd-a46f-fd2c339b3905" });
 const C13_TRANSGUILD_PROMENADE = () => make({ name: "Transguild Promenade", type_line: "Land", oracle_text: "Transguild Promenade enters the battlefield tapped.\nWhen Transguild Promenade enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.", produced_mana: ["W", "U", "B", "R", "G"], scryfall_id: "9f325665-43cd-4b6d-8878-e42a39178e3f" });
 const SCRY_TWO = () => make({ name: "Scry Two", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Scry 2." });
+const SURVEIL_TWO = () => make({ name: "Surveil Two", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Surveil 2." });
 const EDRIC = () => make({ name: "Edric, Spymaster of Trest", type_line: "Legendary Creature — Elf Rogue", mana_cost: "{1}{G}{U}", cmc: 3, power: "2", toughness: "2", colors: ["G", "U"], oracle_text: "Whenever a creature deals combat damage to one of your opponents, you may draw a card." });
 const AUGURY_ADEPT = () => make({ name: "Augury Adept", type_line: "Creature — Kithkin Wizard", mana_cost: "{1}{W/U}{W/U}", cmc: 3, power: "2", toughness: "2", colors: ["W", "U"], oracle_text: "Whenever this creature deals combat damage to a player, reveal the top card of your library and put that card into your hand. You gain life equal to its mana value.", scryfall_id: "be5a65fd-0d06-4771-bee7-0e42cc9871da" });
 const FOSTER = () => make({ name: "Foster", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature you control dies, you may pay {1}. If you do, reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest into your graveyard.", scryfall_id: "fb431500-152c-4524-b76b-de62922ff57f" });
@@ -607,6 +608,7 @@ const FIREBREATHER = () => make({
 });
 const SCRY_SPELL = () => make({ name: "Read the Bones Lite", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Scry 3." });
 const SCRY_ETB_CREATURE = () => make({ name: "Omen Owl", type_line: "Creature — Bird", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", oracle_text: "When Omen Owl enters the battlefield, scry 2." });
+const SURVEIL_ETB_CREATURE = () => make({ name: "Test Sinister Starfish", type_line: "Creature — Fish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", oracle_text: "When this creature enters, surveil 2." });
 const SCRY_DRAW_SPELL = () => make({ name: "Read the Bones", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Scry 2, then draw two cards. You lose 2 life." });
 const COMBAT_SEAR = () => make({ name: "Combat Sear", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Combat Sear deals 3 damage to target attacking or blocking creature." });
 const THUNDERSTAFF = () => make({ name: "Thunderstaff", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "As long as Thunderstaff is untapped, if a creature would deal combat damage to you, prevent 1 of that damage.\n{2}, {T}: Attacking creatures get +1/+0 until end of turn." });
@@ -4127,6 +4129,25 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Scry Two")).toBe(true);
   });
 
+  it("sends declined cards to the graveyard for Surveil, not the library bottom", () => {
+    expect(profileOf(SURVEIL_TWO()).effects).toContainEqual({ kind: "surveil", amount: 2 });
+    expect(profileOf(SURVEIL_TWO()).fullyImplemented).toBe(true);
+
+    let game = readyToCast([SURVEIL_TWO()], [ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), SWAMP()], "surveil-two"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "scry", destination: "graveyard", remainingCards: [{ name: "Grizzly Bears" }, { name: "Swamp" }] });
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "choose-scry", sourceId, query: "Grizzly Bears", bottom: true });
+    game = applyAction(game, 0, { type: "choose-scry", sourceId, query: "Swamp", bottom: false });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.library[0]?.name).toBe("Swamp");
+    // The declined card lands in the graveyard, never the library bottom.
+    expect(game.players[0]!.library.some((card) => card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Surveil Two")).toBe(true);
+  });
+
   it("uses an opaque ordinal so duplicate Scry names remain independently selectable", () => {
     let game = readyToCast([SCRY_TWO()], [ISLAND()]);
     game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), BEAR()], "scry-duplicates"), ...player.library] }));
@@ -4341,6 +4362,22 @@ describe("scry and combat-restricted damage", () => {
     game = applyAction(game, 0, { type: "choose-scry", sourceId: scryId, query: second.name, ordinal: 0, bottom: false });
     expect(game.pendingChoice).toBeNull();
     expect(game.players[0]!.library[game.players[0]!.library.length - 1]!.name).toBe("Grizzly Bears");
+  });
+
+  it("runs an enters-the-battlefield surveil through the trigger bus, sending declined cards to the graveyard", () => {
+    expect(profileOf(SURVEIL_ETB_CREATURE()).fullyImplemented).toBe(true);
+    let game = ready([SURVEIL_ETB_CREATURE()], [ISLAND(), ISLAND(), ISLAND()], [BEAR(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "scry" || state.players[0]!.battlefield.some((p) => p.card.name === "Test Sinister Starfish") && !state.stack.length);
+    expect(game.pendingChoice).toMatchObject({ type: "scry", destination: "graveyard" });
+    const surveilId = game.pendingChoice!.sourceId;
+    const first = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).remainingCards[0]!;
+    game = applyAction(game, 0, { type: "choose-scry", sourceId: surveilId, query: first.name, ordinal: 0, bottom: true });
+    const second = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "scry" }>).remainingCards[0]!;
+    game = applyAction(game, 0, { type: "choose-scry", sourceId: surveilId, query: second.name, ordinal: 0, bottom: false });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.library.some((card) => card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
   it("normalises 'it deals' in an ETB trigger so Flametongue Kavu resolves", () => {

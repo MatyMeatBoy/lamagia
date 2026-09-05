@@ -350,6 +350,8 @@ export type SpellEffect =
   | { readonly kind: "draw-equal-graveyard-creatures" }
   | { readonly kind: "draw-equal-greatest-mana-value-you-control" }
   | { readonly kind: "scry"; readonly amount: number; readonly thenDraw?: number }
+  /** Surveil N (CR 701.42): look at the top N, put any number in the graveyard, the rest on top in any order. */
+  | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
@@ -2152,6 +2154,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     };
   }
   if ((match = /^Scry (\d+)$/i.exec(text))) return { effect: { kind: "scry", amount: Number(match[1]) }, target: "none" };
+  if ((match = /^Surveil (\d+)$/i.exec(text))) return { effect: { kind: "surveil", amount: Number(match[1]) }, target: "none" };
   if ((match = /^(?:~|This spell) deals (\w+) damage to each player$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-each-player", amount }, target: "none" };
@@ -2516,6 +2519,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Scry (\w+)$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null && amount > 0) return { effect: { kind: "scry", amount }, target: "none" };
+  }
+  if ((match = /^Surveil (\w+)$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null && amount > 0) return { effect: { kind: "surveil", amount }, target: "none" };
   }
   if ((match = /^Scry (\w+), then draw (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);

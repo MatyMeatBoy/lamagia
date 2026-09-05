@@ -427,7 +427,9 @@ export type PendingChoice =
       readonly remaining: number;
     }
   | {
-      /** Scry (CR 701.17): inspect the top N cards and order each to top or bottom. */
+      /** Scry (CR 701.17) and Surveil (CR 701.42) share this shape: inspect the
+       * top N cards and sort each to the top or to `destination` (the bottom
+       * of the library for Scry, the graveyard for Surveil). */
       readonly type: "scry";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -435,6 +437,7 @@ export type PendingChoice =
       readonly remainingCards: readonly GameCard[];
       readonly topCards: readonly GameCard[];
       readonly bottomCards: readonly GameCard[];
+      readonly destination: "library-bottom" | "graveyard";
       /** Cards drawn after all Scry decisions, for "Scry N, then draw M". */
       readonly thenDraw: number;
       readonly returnSourceToGraveyard: boolean;
@@ -3599,6 +3602,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "scry":
       // Scry is completed through the private top-card choice below.
       return state;
+    case "surveil":
+      // Surveil is completed through the private top-card choice below.
+      return state;
     case "look-top-select":
       // Top-card selection is completed through the private choice below.
       return state;
@@ -3668,7 +3674,8 @@ function beginScry(
   amount: number,
   returnSourceToGraveyard: boolean,
   exileSourceAfterResolution: boolean,
-  thenDraw = 0
+  thenDraw = 0,
+  destination: "library-bottom" | "graveyard" = "library-bottom"
 ): GameState {
   if (amount <= 0) return state;
   const topCard = playerAt(state, seat).library[0];
@@ -3690,6 +3697,7 @@ function beginScry(
       remainingCards: playerAt(state, seat).library.slice(0, amount),
       topCards: [],
       bottomCards: [],
+      destination,
       thenDraw,
       returnSourceToGraveyard,
       exileSourceAfterResolution
@@ -3767,6 +3775,8 @@ function resolveTop(state: GameState): GameState {
   if (object.trigger) {
     const triggerScry = object.trigger.definition.effect.kind === "scry" ? object.trigger.definition.effect : null;
     if (triggerScry) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerScry.amount, false, false, triggerScry.thenDraw ?? 0);
+    const triggerSurveil = object.trigger.definition.effect.kind === "surveil" ? object.trigger.definition.effect : null;
+    if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
     if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types);
     if (object.trigger.definition.drawUpTo !== undefined) {
@@ -3828,6 +3838,13 @@ function resolveTop(state: GameState): GameState {
       if (effect.kind !== "scry") next = applyEffect(next, object, effect);
     }
     return beginScry(next, object.controller, object.id, object.card, scry.amount, !object.activated, Boolean(object.flashback), scry.thenDraw ?? 0);
+  }
+  const surveil = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "surveil" }> => effect.kind === "surveil");
+  if (surveil) {
+    for (const effect of profile.effects) {
+      if (effect.kind !== "surveil") next = applyEffect(next, object, effect);
+    }
+    return beginScry(next, object.controller, object.id, object.card, surveil.amount, !object.activated, Boolean(object.flashback), 0, "graveyard");
   }
   const search = activatedEffect?.kind === "search-library"
     ? activatedEffect
@@ -4777,6 +4794,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       return actions;
     }
     if (choice.type === "scry") {
+      const toGraveyard = choice.destination === "graveyard";
       choice.remainingCards.forEach((card, ordinal) => {
         actions.push({
           action: { type: "choose-scry", sourceId: choice.sourceId, query: card.name, bottom: false, ordinal },
@@ -4785,8 +4803,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         });
         actions.push({
           action: { type: "choose-scry", sourceId: choice.sourceId, query: card.name, bottom: true, ordinal },
-          label: `Poner ${card.name} en el fondo`,
-          note: `${choice.sourceCard.name}: coloca esta carta en el fondo.`
+          label: toGraveyard ? `Poner ${card.name} en el cementerio` : `Poner ${card.name} en el fondo`,
+          note: toGraveyard ? `${choice.sourceCard.name}: pon esta carta en el cementerio.` : `${choice.sourceCard.name}: coloca esta carta en el fondo.`
         });
       });
       return actions;
@@ -6166,20 +6184,19 @@ function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAct
   const bottomCards = action.bottom ? [...choice.bottomCards, selected] : choice.bottomCards;
   if (remainingCards.length) {
     return logged({ ...state, pendingChoice: { ...choice, remainingCards, topCards, bottomCards } }, seat,
-      `${player.name} coloca ${selected.name} ${action.bottom ? "en el fondo" : "arriba"}.`);
+      `${player.name} coloca ${selected.name} ${action.bottom ? (choice.destination === "graveyard" ? "en el cementerio" : "en el fondo") : "arriba"}.`);
   }
   const rest = player.library.slice(choice.remainingCards.length);
-  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
-    ...current,
-    library: [...topCards, ...rest, ...bottomCards]
-  }));
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => choice.destination === "graveyard"
+    ? { ...current, library: [...topCards, ...rest], graveyard: [...current.graveyard, ...bottomCards] }
+    : { ...current, library: [...topCards, ...rest, ...bottomCards] });
   if (choice.returnSourceToGraveyard) {
     next = withPlayer(next, choice.sourceCard.owner, (current) => choice.exileSourceAfterResolution
       ? { ...current, exile: [...current.exile, choice.sourceCard] }
       : { ...current, graveyard: [...current.graveyard, choice.sourceCard] });
   }
   if (choice.thenDraw > 0) next = drawCards(next, seat, choice.thenDraw);
-  return logged(next, seat, `${player.name} termina de adivinar.`);
+  return logged(next, seat, choice.destination === "graveyard" ? `${player.name} termina de vigilar.` : `${player.name} termina de adivinar.`);
 }
 
 function finishLookTopSelection(
