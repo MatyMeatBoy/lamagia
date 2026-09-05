@@ -3932,6 +3932,29 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    // "Whenever ~ attacks, it becomes prepared." (Prepared mechanic): unconditional, no target.
+    if (/^whenever\s+~\s+attacks,?\s*(?:it\s+)?becomes\s+prepared\.?$/i.test(line)) {
+      triggers.push({ event: "attacks", subject: "self", effect: { kind: "become-prepared" }, optional: false, targetKind: "none", sourceText: line });
+      continue;
+    }
+    // "At the beginning of your upkeep, if ~ isn't prepared, it becomes
+    // prepared." (Prepared mechanic): the guard is a no-op (setting an
+    // already-true flag to true again), so this is just an unconditional
+    // per-upkeep re-preparation.
+    if (/^at\s+the\s+beginning\s+of\s+your\s+upkeep,\s*if\s+~\s+isn['’]t\s+prepared,?\s*(?:it\s+)?becomes\s+prepared\.?$/i.test(line)) {
+      triggers.push({ event: "upkeep", subject: "you", effect: { kind: "become-prepared" }, optional: false, targetKind: "none", sourceText: line });
+      continue;
+    }
+    // "At the beginning of your first main phase, ~ becomes prepared." (Prepared mechanic): unconditional.
+    if (/^at\s+the\s+beginning\s+of\s+your\s+first\s+main\s+phase,?\s*~\s+becomes\s+prepared\.?$/i.test(line)) {
+      triggers.push({ event: "first-main-phase", subject: "you", effect: { kind: "become-prepared" }, optional: false, targetKind: "none", sourceText: line });
+      continue;
+    }
+    // "Whenever you cast a creature spell, ~ becomes prepared." (Prepared mechanic).
+    if (/^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*~\s+becomes\s+prepared\.?$/i.test(line)) {
+      triggers.push({ event: "spell-cast", subject: "you", spellType: "creature", effect: { kind: "become-prepared" }, optional: false, targetKind: "none", sourceText: line });
+      continue;
+    }
     // "Whenever another creature you control with power N or less enters, X" (Mentor of the Meek).
     const highPowerEnters = /^whenever\s+(?:a|another)\s+creature\s+you\s+control\s+with\s+power\s+(\d+)\s+or\s+greater\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(line);
     if (highPowerEnters) {

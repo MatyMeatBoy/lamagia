@@ -8651,6 +8651,67 @@ describe("Prepared mechanic — enters prepared", () => {
   });
 });
 
+describe("Prepared mechanic — additional trigger templates", () => {
+  const ENCOURAGING_AVIATOR = () => make({
+    name: "Encouraging Aviator // Jump", type_line: "Creature — Bird Wizard // Instant", mana_cost: "{2}{U} // {U}", cmc: 3, power: "2", toughness: "3", colors: ["U"], keywords: ["Flying"],
+    card_faces: [
+      { name: "Encouraging Aviator", mana_cost: "{2}{U}", type_line: "Creature — Bird Wizard", power: "2", toughness: "3", oracle_text: "Flying\nWhenever this creature attacks, it becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)" },
+      { name: "Jump", mana_cost: "{U}", type_line: "Instant", oracle_text: "Target creature gains flying until end of turn." }
+    ],
+    oracle_id: "d6accaed-ff35-4324-b31b-35e6837bc079", scryfall_id: "72654b84-9902-41db-92ab-a3499c31221c"
+  });
+  const PARADOX_SHAPER = () => make({
+    name: "Paradox Shaper // Omit Variables", type_line: "Creature — Octopus Wizard // Sorcery", mana_cost: "{1}{U/B} // {U/B}", cmc: 2, power: "1", toughness: "3", colors: ["B", "U"],
+    card_faces: [
+      { name: "Paradox Shaper", mana_cost: "{1}{U/B}", type_line: "Creature — Octopus Wizard", power: "1", toughness: "3", oracle_text: "At the beginning of your upkeep, if this creature isn't prepared, it becomes prepared.\n{2}: Put target card from your graveyard on the bottom of your library." },
+      { name: "Omit Variables", mana_cost: "{U/B}", type_line: "Sorcery", oracle_text: "Mill three cards." }
+    ],
+    oracle_id: "511951ed-fbff-4e44-9429-27f237496672", scryfall_id: "e61b9d48-0ace-4453-afe0-a1024444bac0"
+  });
+  const SCATHING_SHADELOCK = () => make({
+    name: "Scathing Shadelock // Venomous Words", type_line: "Creature — Snake Warlock // Sorcery", mana_cost: "{4}{B} // {B}", cmc: 5, power: "4", toughness: "6", colors: ["B"],
+    card_faces: [
+      { name: "Scathing Shadelock", mana_cost: "{4}{B}", type_line: "Creature — Snake Warlock", power: "4", toughness: "6", oracle_text: "At the beginning of your first main phase, this creature becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)" },
+      { name: "Venomous Words", mana_cost: "{B}", type_line: "Sorcery", oracle_text: "Target creature you control gets +2/+0 and gains deathtouch until end of turn." }
+    ],
+    oracle_id: "2796c3d9-9e56-40f2-8398-7a131c4657ff", scryfall_id: "03e664cd-c3a6-4263-b2d8-dd99058fb8ec"
+  });
+  const ABIGALE = () => make({
+    name: "Abigale, Poet Laureate // Heroic Stanza", type_line: "Legendary Creature — Bird Bard // Sorcery", mana_cost: "{1}{W}{B} // {1}{W/B}", cmc: 3, power: "2", toughness: "3", colors: ["B", "W"], keywords: ["Flying"],
+    card_faces: [
+      { name: "Abigale, Poet Laureate", mana_cost: "{1}{W}{B}", type_line: "Legendary Creature — Bird Bard", power: "2", toughness: "3", oracle_text: "Flying\nWhenever you cast a creature spell, Abigale becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)" },
+      { name: "Heroic Stanza", mana_cost: "{1}{W/B}", type_line: "Sorcery", oracle_text: "Put a +1/+1 counter on target creature." }
+    ],
+    oracle_id: "2f5f46ed-b8aa-4864-bd20-17281d4632bf", scryfall_id: "77285d12-e658-4eb3-ba13-ff202afab9c8"
+  });
+
+  it("recognizes all four templates as fully implemented", () => {
+    expect(profileOf(ENCOURAGING_AVIATOR())).toMatchObject({
+      fullyImplemented: true, triggers: [{ event: "attacks", subject: "self", effect: { kind: "become-prepared" } }]
+    });
+    expect(profileOf(PARADOX_SHAPER())).toMatchObject({
+      fullyImplemented: true, triggers: [{ event: "upkeep", subject: "you", effect: { kind: "become-prepared" } }]
+    });
+    expect(profileOf(SCATHING_SHADELOCK())).toMatchObject({
+      fullyImplemented: true, triggers: [{ event: "first-main-phase", subject: "you", effect: { kind: "become-prepared" } }]
+    });
+    expect(profileOf(ABIGALE())).toMatchObject({
+      fullyImplemented: true, triggers: [{ event: "spell-cast", subject: "you", spellType: "creature", effect: { kind: "become-prepared" } }]
+    });
+  });
+
+  it("becomes prepared when it attacks (new event wiring, not covered by the upkeep/main-phase templates)", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ENCOURAGING_AVIATOR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
+    const attacker = game.players[0]!.battlefield[0]!;
+    expect(attacker.prepared).toBeUndefined();
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    const afterAttack = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === attacker.instance_id);
+    expect(afterAttack?.prepared).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
