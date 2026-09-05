@@ -4799,6 +4799,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return logged(next, controller,
         `${player.name} revela ${revealed.map((card) => card.name).join(", ")}; pone ${selected.name} en su mano y el resto en su cementerio.`);
     }
+    case "reveal-until-nonland-to-hand": {
+      const player = playerAt(state, controller);
+      const foundIndex = player.library.findIndex((card) => !isLand(cardProfile(card)));
+      const revealed = foundIndex < 0 ? player.library : player.library.slice(0, foundIndex + 1);
+      if (!revealed.length) return logged(state, controller, `${player.name} no tiene cartas para revelar.`);
+      const next = withPlayer(state, controller, (current) => ({
+        ...current,
+        library: current.library.slice(revealed.length),
+        hand: [...current.hand, ...revealed]
+      }));
+      return logged(next, controller,
+        `${player.name} revela ${revealed.map((card) => card.name).join(", ")} y las pone en su mano.`);
+    }
     case "create-token": {
       const amount = effect.amount === "lands-you-control"
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length

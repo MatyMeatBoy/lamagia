@@ -685,6 +685,8 @@ export type SpellEffect =
   | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
   /** Reveals until a card type is found, then sends the rest to a zone. */
   | { readonly kind: "reveal-until-type-to-hand"; readonly type: CardType; readonly restDestination: "graveyard" }
+  /** Reveals through the first nonland, then moves every revealed card to hand. */
+  | { readonly kind: "reveal-until-nonland-to-hand" }
   | { readonly kind: "reveal-top-card-conditional"; readonly creatureToken: TokenDefinition; readonly landDestination: "battlefield"; readonly fallbackLife: number }
   | { readonly kind: "reveal-top-card-land-or-hand" }
   | {
@@ -2402,6 +2404,12 @@ function parseRevealUntilTypeToHand(text: string): SpellEffect | null {
   };
 }
 
+function parseRevealUntilNonlandToHand(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!/^Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand\.?$/i.test(normalized)) return null;
+  return { kind: "reveal-until-nonland-to-hand" };
+}
+
 /**
  * Recognises the trigger condition of one printed line.
  *
@@ -2887,6 +2895,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   const revealUntil = parseRevealUntilTypeToHand(text);
   if (revealUntil) return { effect: revealUntil, target: "none" };
+  const revealUntilNonland = parseRevealUntilNonlandToHand(text);
+  if (revealUntilNonland) return { effect: revealUntilNonland, target: "none" };
   if (/^Draw a card for each tapped creature target opponent controls$/i.test(text)) {
     return { effect: { kind: "draw-equal-tapped-creatures" }, target: "opponent" };
   }
