@@ -8,7 +8,7 @@
 
 import { cardProfile, type TriggerEvent } from "./characteristics.js";
 import {
-  STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSourcePotential, powerOf, toughnessOf,
+  STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSourcePotential, powerOf, revealsTopOfLibrary, toughnessOf,
   type GameCard, type GameState, type LegalAction, type LogEntry, type Permanent, type SeatId, type Target, type TurnStep
 } from "./engine.js";
 import { emptyPool, type ManaPool, type ManaType } from "./mana.js";
@@ -74,6 +74,8 @@ export interface PlayerView {
   readonly handCount: number;
   /** Present only for the viewer's own seat. */
   readonly hand?: readonly CardView[];
+  /** Public only when this player controls a "top card revealed" static (Oracle of Mul Daya). */
+  readonly revealedTopLibraryCard?: CardView;
   readonly battlefield: readonly PermanentView[];
   readonly graveyard: readonly CardView[];
   readonly exile: readonly CardView[];
@@ -307,6 +309,9 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     libraryCount: player.library.length,
     handCount: player.hand.length,
     ...(player.seat === viewerSeat ? { hand: player.hand.map(cardView) } : {}),
+    // "Play with the top card of your library revealed" (Oracle of Mul Daya) makes
+    // that single card public information for every viewer, not just its owner.
+    ...(revealsTopOfLibrary(state, player.seat) && player.library[0] ? { revealedTopLibraryCard: cardView(player.library[0]) } : {}),
     battlefield: player.battlefield.map((permanent) => permanentView(state, permanent, player.seat === viewerSeat ? viewerActions : [])),
     graveyard: player.graveyard.map(cardView),
     exile: player.exile.map(cardView),

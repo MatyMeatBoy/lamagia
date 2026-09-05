@@ -1032,6 +1032,10 @@ export interface CardProfile {
   readonly entersPrepared: boolean;
   /** "You may play N additional land(s) on each of your turns" (Exploration, Azusa, CR 305.2). */
   readonly extraLandDropsPerTurn: number;
+  /** "You may play lands from the top of your library" (Oracle of Mul Daya, CR 305.1). */
+  readonly playLandsFromTopOfLibrary: boolean;
+  /** "Play with the top card of your library revealed" (Oracle of Mul Daya): public information, not merely visible to its controller. */
+  readonly revealsTopOfLibrary: boolean;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
   readonly additionalCostExileGraveyardX: boolean;
   /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
@@ -4245,6 +4249,11 @@ function recognizeText(text: string): RecognizedText {
     if (/^double all damage equipped creature would deal\.?$/i.test(line)) continue;
     if (/^~ enters prepared\.?$/i.test(line)) continue;
     if (/^you\s+may\s+play\s+(?:a|an|one|two|three)\s+additional\s+lands?\s+on\s+each\s+of\s+your\s+turns\.?$/i.test(line)) continue;
+    // Oracle of Mul Daya (CR 305.1): consumed into CardProfile.playLandsFromTopOfLibrary.
+    if (/^you\s+may\s+play\s+lands\s+from\s+the\s+top\s+of\s+your\s+library\.?$/i.test(line)) continue;
+    // Consumed into CardProfile.revealsTopOfLibrary; the engine exposes the top
+    // card as public information in the projection rather than a one-shot effect.
+    if (/^play\s+with\s+the\s+top\s+card\s+of\s+your\s+library\s+revealed\.?$/i.test(line)) continue;
     if (/^if an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
@@ -4874,6 +4883,8 @@ export function cardProfile(card: CardData): CardProfile {
     .map((line) => /^you\s+may\s+play\s+(a|an|one|two|three)\s+additional\s+lands?\s+on\s+each\s+of\s+your\s+turns$/i.exec(line.trim().replace(/\.$/, "")))
     .find((match): match is RegExpExecArray => match !== null);
   const extraLandDropsPerTurn = extraLandDropsMatch ? toNumber(extraLandDropsMatch[1]) ?? 1 : 0;
+  const playLandsFromTopOfLibrary = text.split("\n").some((line) => /^you may play lands from the top of your library$/i.test(line.trim().replace(/\.$/, "")));
+  const revealsTopOfLibrary = text.split("\n").some((line) => /^play with the top card of your library revealed$/i.test(line.trim().replace(/\.$/, "")));
   const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
   const giftPromisedTargetKind = giftPromisedRecognized && giftPromisedRecognized.target !== "none" ? giftPromisedRecognized.target : null;
@@ -5008,6 +5019,8 @@ export function cardProfile(card: CardData): CardProfile {
     preparedCast,
     entersPrepared,
     extraLandDropsPerTurn,
+    playLandsFromTopOfLibrary,
+    revealsTopOfLibrary,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
     kickedKeywords: recognized.kickedKeywords ?? [],

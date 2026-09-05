@@ -9996,6 +9996,58 @@ describe("the stampede family (Craterhoof Behemoth, Pathbreaker Ibex)", () => {
   });
 });
 
+describe("Oracle of Mul Daya's top-of-library land drop and public reveal", () => {
+  const ORACLE_OF_MUL_DAYA = () => make({
+    name: "Oracle of Mul Daya", type_line: "Creature — Human Shaman", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2",
+    oracle_text: "Play with the top card of your library revealed.\nYou may play lands from the top of your library.\nYou may play an additional land on each of your turns."
+  });
+
+  it("recognizes all three static lines", () => {
+    expect(profileOf(ORACLE_OF_MUL_DAYA())).toMatchObject({
+      fullyImplemented: true, playLandsFromTopOfLibrary: true, revealsTopOfLibrary: true, extraLandDropsPerTurn: 1
+    });
+  });
+
+  it("offers and resolves playing a land straight from the top of the library", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ORACLE_OF_MUL_DAYA()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [MOUNTAIN()], "mul-daya-top"), ...player.library] }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const actions = legalActions(game, 0);
+    expect(actions.some((entry) => entry.action.type === "play-land" && entry.action.cardId === "mul-daya-top-0")).toBe(true);
+
+    const librarySizeBefore = game.players[0]!.library.length;
+    game = applyAction(game, 0, { type: "play-land", cardId: "mul-daya-top-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Mountain")).toBe(true);
+    expect(game.players[0]!.library).toHaveLength(librarySizeBefore - 1);
+  });
+
+  it("does not offer a top-of-library land drop without the static permission", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [MOUNTAIN()], "no-mul-daya-top"), ...player.library] }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const actions = legalActions(game, 0);
+    expect(actions.some((entry) => entry.action.type === "play-land" && entry.action.cardId === "no-mul-daya-top-0")).toBe(false);
+  });
+
+  it("exposes the controller's top library card publicly, including to the opponent's projection", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ORACLE_OF_MUL_DAYA()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [MOUNTAIN()], "mul-daya-reveal"), ...player.library] }));
+    const ownView = projectGame(game, 0).players[0]!;
+    const opponentView = projectGame(game, 1).players[0]!;
+    expect(ownView.revealedTopLibraryCard).toMatchObject({ name: "Mountain" });
+    expect(opponentView.revealedTopLibraryCard).toMatchObject({ name: "Mountain" });
+  });
+
+  it("keeps the top card private for a player without the reveal static", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [MOUNTAIN()], "no-reveal"), ...player.library] }));
+    expect(projectGame(game, 1).players[0]!.revealedTopLibraryCard).toBeUndefined();
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
