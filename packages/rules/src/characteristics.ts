@@ -67,14 +67,19 @@ export interface ManaAbility {
   readonly removeCounters?: readonly CounterCost[];
   /** Fixed mana cost paid before a variable counter-to-mana ability resolves. */
   readonly manaCost?: ManaCost;
+  /** Fast-mana restriction: the source entered this turn, or a basic land is controlled. */
+  readonly activationRestriction?: { readonly enteredThisTurn: boolean; readonly orControlsBasicLand?: boolean };
   /** Storage-counter abilities produce one mana per removed counter. */
   readonly variableAmountCounter?: string;
+  /** A variable number of typed creatures is paid as an activation cost. */
+  readonly sacrificesCreatures?: { readonly amount: number | "X"; readonly subtype?: string };
+  /** The amount of mana/life is the number of creatures sacrificed. */
+  readonly amountFromSacrifice?: boolean;
+  readonly gainLifeFromAmount?: boolean;
   /** Some mana abilities have a small immediate side effect (CR 605). */
   readonly gainLife?: number;
   /** Static activation restriction such as Temple of the False God. */
   readonly requiresLands?: number;
-  /** "Activate only if ~ entered the battlefield this turn (or if you control a basic land)" (Hidden Lair, Mirrex). */
-  readonly activationRestriction?: { readonly enteredThisTurn: boolean; readonly orControlsBasicLand?: boolean };
   readonly text: string;
 }
 
@@ -292,7 +297,8 @@ export interface StaticKeywordGrant {
 }
 
 export interface StaticPowerToughnessGrant {
-  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
+  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
+    | "source-opponents-graveyard-creatures" | "source-controller-life-threshold";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -337,6 +343,8 @@ export type SpellEffect =
   | { readonly kind: "compound"; readonly effects: readonly SpellEffect[]; readonly targetOffsets?: readonly (number | null)[] }
   | { readonly kind: "incite-rebellion" }
   | { readonly kind: "draw"; readonly amount: number | "X" }
+  /** Both the source controller and combat-damaged player draw the event amount. */
+  | { readonly kind: "draw-combat-damage-participants" }
   /** Draw only if the controller currently has more life than an opponent. */
   | { readonly kind: "draw-if-life-more-than-opponent"; readonly amount: number }
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
@@ -372,6 +380,7 @@ export type SpellEffect =
   | { readonly kind: "gain-life-each-permanent"; readonly amount: number }
   | { readonly kind: "gain-life-each-creature-you-control"; readonly amount: number }
   | { readonly kind: "gain-life-equal-target-power" }
+  | { readonly kind: "gain-life-equal-sacrificed-toughness" }
   | { readonly kind: "lose-life"; readonly amount: number | "X" }
   | { readonly kind: "gain-life-target-player"; readonly amount: number | "X" }
   | { readonly kind: "each-player-gains-life"; readonly amount: number | "X" }
@@ -548,6 +557,7 @@ export type SpellEffect =
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
   | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
+  | { readonly kind: "create-token-for-target-player"; readonly amount: number | "X"; readonly token: TokenDefinition }
   /** Reveals one library card, moves it to hand, then gains its mana value. */
   | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
   /** Reveals until a card type is found, then sends the rest to a zone. */
@@ -1130,6 +1140,15 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
     const requiresTap = /\{T\}/.test(costText);
+    const variableSacrifice = /^(?:\{T\},\s*)?sacrifice\s+X\s+([A-Za-z][A-Za-z'’-]*)s?$/i.exec(costText.trim().replace(/,\s*$/, ""));
+    if (variableSacrifice && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(effectText.trim())) {
+      abilities.push({
+        index: abilities.length, produces: [...MANA_COLORS], amount: 0, requiresTap, lifeCost: 0,
+        sacrificesCreatures: { amount: "X", subtype: variableSacrifice[1]!.replace(/s$/i, "") },
+        amountFromSacrifice: true, gainLifeFromAmount: true, text: line.trim()
+      });
+      continue;
+    }
     const variableStorage = /^add\s+X\s+mana\s+in\s+any\s+combination\s+of\s+(\{[WUBRGC]\})(?:\s+and\/or\s+(\{[WUBRGC]\}))?\.?$/i.exec(effectText.trim());
     if (variableStorage && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(costText)) {
       const manaSymbols = costText.match(/\{[^}]+\}/g) ?? [];
@@ -1395,7 +1414,12 @@ function parseKeywordsDuringYourTurn(text: string): EnforcedKeyword[] {
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
-  const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(line.trim().replace(/\.$/, ""));
+  const clean = line.trim().replace(/\.$/, "");
+  const graveyard = /^~ gets ([+-]\d+)\/([+-]\d+) for each creature card in your opponents' graveyards$/i.exec(clean);
+  if (graveyard) return { scope: "source-opponents-graveyard-creatures", power: Number(graveyard[1]), toughness: Number(graveyard[2]) };
+  const life = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(clean);
+  if (life) return { scope: "source-controller-life-threshold", power: Number(life[1]), toughness: Number(life[2]), threshold: Number(life[3]) };
+  const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   return match ? {
     scope: match[4] ? "all-creatures" : match[3] ? "creatures-you-control" : "other-creatures-you-control",
     ...(match[2] ? { color: match[2]!.toUpperCase() } : {}),
@@ -1489,6 +1513,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const tokenAndLife = /^(Create\s+.+?\s+token(?:s)?(?:\s+named\s+[^,]+)?(?:\s+with\s+.+)?)\.\s*You gain (\w+) life\.?$/i.exec(parsedEffectText);
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
+  const sacrificedToughnessLife = /^You gain life equal to the sacrificed creature's toughness\.?$/i.test(parsedEffectText);
   const recognized = selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
@@ -1499,6 +1524,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: revealTopToHand, target: "none" as TargetKind }
     : tokenEffect && tokenEffect.kind === "create-token" && tokenLifeAmount !== null
     ? { effect: { kind: "compound", effects: [tokenEffect, { kind: "gain-life", amount: tokenLifeAmount }] } as SpellEffect, target: "none" as TargetKind }
+    : sacrificedToughnessLife
+    ? { effect: { kind: "gain-life-equal-sacrificed-toughness" } as SpellEffect, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 
@@ -1900,7 +1927,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "enters-battlefield", subject: "another-permanent-you-control", pattern: /^whenever\s+another\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "permanent-you-control", pattern: /^whenever\s+a\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
-  { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "artifact-you-control", pattern: /^whenever\s+an\s+artifact\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "enchantment-you-control", pattern: /^whenever\s+an\s+enchantment\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   // Errata dropped "under your control" from some printings (e.g. Essence
@@ -2002,6 +2029,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
           ? { [produced.produces[0]!]: produced.amount }
           : null;
     if (pool) return { effect: { kind: "add-mana", pool }, target: "none" };
+  }
+  const targetOpponentToken = /^Target opponent creates (.+)$/i.exec(text)
+    ?? /^Create (.+) under target opponent'?s control$/i.exec(text);
+  if (targetOpponentToken) {
+    const token = parseCreateToken(`Create ${targetOpponentToken[1]!}`);
+    if (token?.kind === "create-token") {
+      const amount = token.amount === "X" || typeof token.amount === "number" ? token.amount : 1;
+      return { effect: { kind: "create-token-for-target-player", amount, token: token.token }, target: "opponent" };
+    }
   }
 
   if (/^The owner of target permanent shuffles it into their library, then reveals the top card of their library\. If it's a permanent card, they put it onto the battlefield$/i.test(text)) {
@@ -2205,6 +2241,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Draw a card for each (white|blue|black|red|green) creature you control$/i.exec(text))) {
     const COLOR: Record<string, string> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
     return { effect: { kind: "draw-equal-controlled-color-creature", color: COLOR[match[1]!.toLowerCase()]! }, target: "none" };
+  }
+  if (/^You and that player each draw that many cards?$/i.test(text)) {
+    return { effect: { kind: "draw-combat-damage-participants" }, target: "none" };
   }
   if ((match = /^Each player draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
@@ -3081,6 +3120,8 @@ function recognizeText(text: string): RecognizedText {
     // two sentences on one line. `parseEntersTapped` already executes it as
     // the permanent enters (CR 614.12); this is not a separate instruction.
     if (/^as\s+~\s+enters,\s*you\s+may\s+(?:pay\s+\d+\s+life|reveal\s+.+?\s+card\s+from\s+your\s+hand)\.\s*if\s+you\s+don[’']t,\s*(?:it|~)\s+enters\s+tapped\.?$/i.test(line)) continue;
+    // Check lands use the same enters-tapped replacement with a reveal choice.
+    if (/^As ~ enters, you may reveal an?\s+[A-Za-z][A-Za-z'’ -]*\s+card from your hand\.\s*If you don['’]t, (?:~|it) enters tapped\.?$/i.test(line)) continue;
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
@@ -3155,7 +3196,9 @@ function recognizeText(text: string): RecognizedText {
       // Board-dependent color (Fellwar Stone, Harvester Druid): resolved at
       // activation time by `manaOptionsFor`, not by `parseAddClause`.
       const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine) unimplementedText.push(line);
+      const variableSacrificeMana = /(?:\{T\},\s*)?sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s?\s*$/i.test(manaLine[1]!.trim())
+        && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana) unimplementedText.push(line);
       continue;
     }
 

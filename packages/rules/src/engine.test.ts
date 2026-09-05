@@ -156,6 +156,8 @@ const GLOBAL_REAL_FEAR = () => make({ name: "Global Real Fear", type_line: "Sorc
 const LIFE_LOCK = () => make({ name: "Life Lock", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Players can't gain life." });
 const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment", mana_cost: "{3}", cmc: 3, oracle_text: "You have no maximum hand size." });
 const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other creatures you control get +1/+1." });
+const C13_DIVINITY_OF_PRIDE = () => make({ name: "Divinity of Pride", type_line: "Creature — Spirit Avatar", mana_cost: "{3}{W}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature gets +4/+4 as long as you have 25 or more life.", scryfall_id: "2c91c236-34d7-4454-a55a-784db7f68bde" });
+const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "1B", cmc: 2, power: "1", toughness: "1", oracle_text: "This creature gets +1/+1 for each creature card in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
 const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });
@@ -325,6 +327,8 @@ const C13_THOPTER_FOUNDRY = () => make({ name: "Thopter Foundry", type_line: "Ar
 const C13_BLUE_SUN = () => make({ name: "Blue Sun's Zenith", type_line: "Instant", mana_cost: "{X}{U}{U}{U}", cmc: 3, oracle_text: "Target player draws X cards. Shuffle Blue Sun's Zenith into its owner's library.", scryfall_id: "613a41b8-0b4f-4995-bf1e-ca41f96e6438" });
 const C13_NEW_BENALIA = () => make({ name: "New Benalia", type_line: "Land", oracle_text: "New Benalia enters the battlefield tapped.\nWhen New Benalia enters the battlefield, scry 1.\n{T}: Add {W}.", produced_mana: ["W"], scryfall_id: "6e743fbf-b5b6-4176-a4f2-6933f521f2fe" });
 const C13_BALOTH_WOODCRASHER = () => make({ name: "Baloth Woodcrasher", type_line: "Creature — Beast", mana_cost: "{4}{G}{G}", cmc: 6, power: "4", toughness: "4", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +4/+4 and gains trample until end of turn.", scryfall_id: "d8af1377-72bb-4d93-80bd-2c927b02cc73" });
+const C13_GRAZING_GLADEHART = () => make({ name: "Grazing Gladehart", type_line: "Creature — Antelope", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Landfall — Whenever a land enters the battlefield under your control, you may gain 2 life.", scryfall_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4", oracle_id: "f19f28e5-9cad-4398-b2d4-9e7fefb23cb4" });
+const C13_HUNTED_TROLL = () => make({ name: "Hunted Troll", type_line: "Creature — Troll Warrior", mana_cost: "{2}{G}{G}", cmc: 4, power: "8", toughness: "4", oracle_text: "When Hunted Troll enters the battlefield, create four 1/1 blue Faerie creature tokens with flying under target opponent's control.", scryfall_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6", oracle_id: "1f789fcf-3df6-45a6-a732-9f43e33718d6" });
 const LANDFALL_SELF_PUMP = () => make({ name: "Landfall Self Pump", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", oracle_text: "Landfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn." });
 const C13_BASALT_MONOLITH = () => make({ name: "Basalt Monolith", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.", produced_mana: ["C"], scryfall_id: "7770e48e-72e1-4475-a4b5-c1c561a1beaa" });
 const C13_MOLTEN_SLAGHEAP = () => make({ name: "Molten Slagheap", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.", produced_mana: ["C", "B", "R"], scryfall_id: "c13-molten-slagheap" });
@@ -344,10 +348,13 @@ const C13_RECKLESS_SPITE = () => make({ name: "Reckless Spite", type_line: "Inst
 const C13_UNEXPECTEDLY_ABSENT = () => make({ name: "Unexpectedly Absent", type_line: "Instant", mana_cost: "{X}{W}{U}", cmc: 2, oracle_text: "Put target nonland permanent into its owner's library just beneath the top X cards of that library.", scryfall_id: "e8d78a83-c932-4b55-8f75-7094c672c3a9" });
 const C13_ANGEL_OF_FINALITY = () => make({ name: "Angel of Finality", type_line: "Creature — Angel", mana_cost: "{3}{W}", cmc: 4, power: "3", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, exile target player's graveyard.", scryfall_id: "bd3c34c9-2072-4ebb-93ef-34173015bfb8" });
 const C13_BOJUKA_BOG = () => make({ name: "Bojuka Bog", type_line: "Land", oracle_text: "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", produced_mana: ["B"], scryfall_id: "2ef9848c-fe7f-4434-8936-4074f67883af" });
+const C13_SPRINGJACK_PASTURE = () => make({ name: "Springjack Pasture", type_line: "Land", oracle_text: "{T}: Add {C}.\n{4}, {T}: Create a 0/1 white Goat creature token.\n{T}, Sacrifice X Goats: Add X mana of any one color. You gain X life.", produced_mana: ["C", "W", "U", "B", "R", "G"], scryfall_id: "035438b1-f794-41e5-9e2b-bc5136766cd5", oracle_id: "9eaadbbc-818b-4c21-9d4b-1bba48504d38" });
+const GOAT = () => make({ name: "Goat", type_line: "Token Creature — Goat", power: "0", toughness: "1" });
 const C13_ARCANE_DENIAL = () => make({ name: "Arcane Denial", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.", scryfall_id: "ab175817-da6a-4ae7-a016-c3bfb087eae0" });
 const C13_BANE_OF_PROGRESS = () => make({ name: "Bane of Progress", type_line: "Creature — Elemental", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "When Bane of Progress enters the battlefield, destroy all artifacts and enchantments, then put a +1/+1 counter on Bane of Progress for each permanent destroyed this way.", scryfall_id: "51f9a6cc-8eb2-44ed-a2d9-913ac514ad67" });
 const C13_RAZOR_HIPPOGRIFF = () => make({ name: "Razor Hippogriff", type_line: "Creature — Hippogriff", mana_cost: "{3}{W}{W}", cmc: 5, power: "3", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen Razor Hippogriff enters the battlefield, you may return target artifact card from your graveyard to your hand. You gain life equal to that card's converted mana cost.", scryfall_id: "d121108e-f0bc-469b-bf94-e5e530801a4" });
 const C13_NIGHT_SOIL = () => make({ name: "Night Soil", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "{1}, Exile two creature cards from a single graveyard: Create a 1/1 green Saproling creature token.", scryfall_id: "52a0eca1-f936-4f5a-820b-fa12542c593d", oracle_id: "3165fe8f-52d7-40f7-bb14-8f4300a564e6" });
+const C13_DISCIPLE_OF_GRISELBRAND = () => make({ name: "Disciple of Griselbrand", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "{1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.", scryfall_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad", oracle_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad" });
 const C13_SPELLBREAKER_BEHEMOTH = () => make({ name: "Spellbreaker Behemoth", type_line: "Creature — Beast", mana_cost: "{2}{R}{G}", cmc: 4, power: "5", toughness: "5", oracle_text: "Creature spells you control with power 5 or greater can't be countered.", scryfall_id: "cba07472-7212-4411-a9f9-38a48870ad69", oracle_id: "cba07472-7212-4411-a9f9-38a48870ad69" });
 const C13_FLICKERWISP = () => make({ name: "Flickerwisp", type_line: "Creature — Elemental", mana_cost: "{1}{W}{W}", cmc: 3, power: "3", toughness: "1", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, exile another target permanent. Return that card to the battlefield under its owner's control at the beginning of the next end step.", scryfall_id: "f6cccf30-2025-49bb-9b1e-240bbef03f27", oracle_id: "b23a3d30-6b8e-4aad-890f-db0c3af43ace" });
 const C13_VILE_REQUIEM = () => make({ name: "Vile Requiem", type_line: "Enchantment", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "At the beginning of your upkeep, you may put a verse counter on this enchantment.\n{1}{B}, Sacrifice this enchantment: Destroy up to X target nonblack creatures, where X is the number of verse counters on this enchantment. They can't be regenerated.", scryfall_id: "923972d3-d838-43f8-800a-904489c5791a" });
@@ -2027,6 +2034,46 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Angel of Finality")).toBe(true);
   });
 
+  it("gains the sacrificed creature's toughness with Disciple of Griselbrand", () => {
+    const profile = profileOf(C13_DISCIPLE_OF_GRISELBRAND());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sacrificesCreature: "any",
+      manaCost: { symbols: [{ kind: "generic", amount: 1 }] },
+      effect: { kind: "gain-life-equal-sacrificed-toughness" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([], [C13_DISCIPLE_OF_GRISELBRAND(), WALL(), PLAINS()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Disciple of Griselbrand")!;
+    const victim = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Stone Wall")!;
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === victim.instance_id)!;
+    expect(action).toBeDefined();
+    game = applyAction(game, 0, action.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(44);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Stone Wall")).toBe(true);
+  });
+  it("sacrifices X Goats to add X mana and gain life with Springjack Pasture", () => {
+    const profile = profileOf(C13_SPRINGJACK_PASTURE());
+    expect(profile.manaAbilities).toMatchObject([
+      { produces: ["C"], amount: 1, requiresTap: true },
+      { sacrificesCreatures: { amount: "X", subtype: "Goat" }, amountFromSacrifice: true, gainLifeFromAmount: true, requiresTap: true }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([], [C13_SPRINGJACK_PASTURE(), GOAT(), GOAT()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Springjack Pasture")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === source.instance_id && entry.action.variableAmount === 1)).toBe(true);
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === source.instance_id && entry.action.variableAmount === 2 && entry.action.mana === "G")!;
+    expect(action).toBeDefined();
+    game = applyAction(game, 0, action.action);
+    expect(game.players[0]!.manaPool.G).toBe(2);
+    expect(game.players[0]!.life).toBe(42);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Springjack Pasture")?.tapped).toBe(true);
+    expect(game.players[0]!.graveyard.filter((card) => card.name === "Goat")).toHaveLength(2);
+  });
+
   it("returns Razor Hippogriff's artifact and gains its mana value", () => {
     const profile = profileOf(C13_RAZOR_HIPPOGRIFF());
     expect(profile.triggers[0]).toMatchObject({
@@ -2773,6 +2820,24 @@ describe("casting", () => {
     game = putOnBattlefield(game, 0, [ALL_PUMP(), BEAR()]);
     expect(powerOf(game.players[0]!.battlefield[1]!, game)).toBe(3);
     expect(toughnessOf(game.players[0]!.battlefield[1]!, game)).toBe(3);
+  });
+
+  it("applies life-threshold and opponents' graveyard static bonuses", () => {
+    expect(profileOf(C13_DIVINITY_OF_PRIDE()).staticPowerToughnessGrants).toEqual([
+      { scope: "source-controller-life-threshold", power: 4, toughness: 4, threshold: 25 }
+    ]);
+    expect(profileOf(C13_WIGHT()).staticPowerToughnessGrants).toEqual([
+      { scope: "source-opponents-graveyard-creatures", power: 1, toughness: 1 }
+    ]);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [C13_DIVINITY_OF_PRIDE(), C13_WIGHT()]);
+    game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR(), FLIER()], "opponent-creatures") }));
+    const divinity = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Divinity of Pride")!;
+    const wight = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wight of Precinct Six")!;
+    expect([powerOf(divinity, game), toughnessOf(divinity, game)]).toEqual([8, 8]);
+    expect([powerOf(wight, game), toughnessOf(wight, game)]).toEqual([3, 3]);
+    game = stage(game, 0, () => ({ life: 24 }));
+    expect([powerOf(divinity, game), toughnessOf(divinity, game)]).toEqual([4, 4]);
   });
 
   it("resolves a compound draw-and-life-loss instruction as one effect", () => {
@@ -3978,6 +4043,31 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Beast")).toHaveLength(1);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Beast")?.card).toMatchObject({ power: "4", toughness: "4", type_line: "Creature — Beast" });
+  });
+
+  it("offers optional life gain for Grazing Gladehart landfall", () => {
+    const profile = profileOf(C13_GRAZING_GLADEHART());
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "land-you-control", optional: true, effect: { kind: "gain-life", amount: 2 } });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([C13_GRAZING_GLADEHART(), FOREST()], [FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-1" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.life).toBe(42);
+  });
+
+  it("creates Hunted Troll's Faeries under the targeted opponent's control", () => {
+    const profile = profileOf(C13_HUNTED_TROLL());
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", targetKind: "opponent", effect: { kind: "create-token-for-target-player", amount: 4 } });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([C13_HUNTED_TROLL()], [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Faerie")).toHaveLength(4);
+    expect(game.players[1]!.battlefield.every((permanent) => permanent.card.name !== "Faerie" || permanent.card.keywords?.includes("flying"))).toBe(true);
   });
 
   it("offers each landcycling variant and searches the matching subtype", () => {
@@ -6362,6 +6452,21 @@ describe("combat", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
+  it("draws Diviner Spirit's combat damage amount for both players", () => {
+    let game = atAttackers([DIVINER_SPIRIT()], []);
+    const attacker = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Diviner Spirit")!;
+    const beforeController = game.players[0]!.hand.length;
+    const beforeDamaged = game.players[1]!.hand.length;
+    expect(profileOf(DIVINER_SPIRIT()).triggers[0]).toMatchObject({
+      event: "deals-combat-damage-to-player", subject: "self", effect: { kind: "draw-combat-damage-participants" }, targetKind: "none"
+    });
+
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "postcombat-main" || state.turn > 1);
+
+    expect(game.players[0]!.hand.length).toBe(beforeController + 2);
+    expect(game.players[1]!.hand.length).toBe(beforeDamaged + 2);
   });
 
   it("reveals the top card, puts it into hand, and gains its mana value", () => {
