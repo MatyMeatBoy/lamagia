@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,666** · cobertura: **27.8%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,672** · cobertura: **27.9%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -314,7 +314,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | 2014-07-08 | San Diego Comic-Con 2014 (`PS14`) | promos | comic-con-2014 | other | 6 | 0 | 6 | 0.0% |
 | 2014-07-09 | Duels of the Planeswalkers 2015 Promos (`PDP15`) | promos | duels-of-the-planeswalkers-2015 | other | 2 | 0 | 2 | 0.0% |
 | 2014-07-17 | Magic 2015 Promos (`PM15`) | promos | magic-2015 | other | 13 | 2 | 11 | 15.4% |
-| 2014-07-18 | Magic 2015 (`M15`) | core | 2010s | main | 269 | 97 | 172 | 36.1% |
+| 2014-07-18 | Magic 2015 (`M15`) | core | 2010s | main | 269 | 98 | 171 | 36.4% |
 | 2014-07-18 | Magic 2015 Clash Pack (`CP1`) | starter | 2010s | other | 6 | 2 | 4 | 33.3% |
 | 2014-08-22 | From the Vault: Annihilation (`V14`) | from-the-vault | 2010s | other | 15 | 2 | 13 | 13.3% |
 | 2014-09-05 | Duel Decks: Speed vs. Cunning (`DDN`) | duel-decks | duel-decks-speed-vs-cunning | other | 71 | 27 | 44 | 38.0% |
@@ -367,7 +367,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | 2016-09-30 | Kaladesh Inventions (`MPS`) | masterpieces | kaladesh-inventions | other | 54 | 9 | 45 | 16.7% |
 | 2016-09-30 | Kaladesh Promos (`PKLD`) | promos | kaladesh | other | 70 | 5 | 65 | 7.1% |
 | 2016-10-01 | San Diego Comic-Con 2016 (`PS16`) | promos | comic-con-2016 | other | 5 | 0 | 5 | 0.0% |
-| 2016-11-11 | Commander 2016 (`C16`) | commander | 2016 | commander | 341 | 126 | 215 | 37.0% |
+| 2016-11-11 | Commander 2016 (`C16`) | commander | 2016 | commander | 341 | 127 | 214 | 37.2% |
 | 2016-11-16 | Treasure Chest (`PZ2`) | treasure-chest | 2010s | other | 270 | 44 | 226 | 16.3% |
 | 2016-11-25 | Planechase Anthology (`PCA`) | planechase | planechase-anthology | other | 136 | 46 | 90 | 33.8% |
 | 2017-01-01 | Friday Night Magic 2017 (`F17`) | promos | fnm-2017 | other | 9 | 2 | 7 | 22.2% |
@@ -454,12 +454,12 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1398 | 3823 | 26.8% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 20 | 39 | 33.9% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 11 | 9 | 55.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 375 | 1321 | 22.1% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 376 | 1320 | 22.2% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 53 | 220 | 19.4% |
 | 2020-01-24 | Theros Beyond Death Promos (`PTHB`) | promos | theros-beyond-death | other | 68 | 6 | 62 | 8.8% |
-| 2020-03-12 | Historic Anthology 2 (`HA2`) | anthologies | historic-anthology-2 | other | 25 | 9 | 16 | 36.0% |
+| 2020-03-12 | Historic Anthology 2 (`HA2`) | anthologies | historic-anthology-2 | other | 25 | 10 | 15 | 40.0% |
 | 2020-04-17 | Commander 2020 (`C20`) | commander | 2020 | commander | 322 | 117 | 205 | 36.3% |
 | 2020-04-24 | Ikoria: Lair of Behemoths (`IKO`) | expansion | 2020s | main | 266 | 61 | 205 | 22.9% |
 | 2020-04-24 | Ikoria: Lair of Behemoths Promos (`PIKO`) | promos | ikoria-lair-of-behemoths | other | 68 | 6 | 62 | 8.8% |
@@ -587,7 +587,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | 2023-09-08 | Wilds of Eldraine (`WOE`) | expansion | eldraine | main | 281 | 49 | 232 | 17.4% |
 | 2023-09-08 | Wilds of Eldraine Commander (`WOC`) | commander | 2023 | commander | 143 | 42 | 101 | 29.4% |
 | 2023-09-08 | Wilds of Eldraine Promos (`PWOE`) | promos | wilds-of-eldraine | other | 80 | 5 | 75 | 6.2% |
-| 2023-09-08 | Wilds of Eldraine: Enchanting Tales (`WOT`) | masterpieces | wilds-of-eldraine-enchanting-tales | other | 63 | 8 | 55 | 12.7% |
+| 2023-09-08 | Wilds of Eldraine: Enchanting Tales (`WOT`) | masterpieces | wilds-of-eldraine-enchanting-tales | other | 63 | 9 | 54 | 14.3% |
 | 2023-10-01 | Wizards Play Network 2024 (`PW24`) | promos | wpn-2024 | other | 18 | 5 | 13 | 27.8% |
 | 2023-10-13 | Doctor Who (`WHO`) | commander | 2023 | commander | 318 | 90 | 228 | 28.3% |
 | 2023-11-17 | Jurassic World Collection (`REX`) | eternal | 2020s | other | 20 | 0 | 20 | 0.0% |
@@ -677,7 +677,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | 2026-01-23 | Lorwyn Eclipsed Promos (`PECL`) | promos | lorwyn-eclipsed | other | 80 | 6 | 74 | 7.5% |
 | 2026-02-17 | Year of the Horse 2026 (`PL26`) | promos | year-of-the-horse-2026 | other | 4 | 1 | 3 | 25.0% |
 | 2026-03-06 | Teenage Mutant Ninja Turtles (`TMT`) | expansion | 2020s | main | 195 | 31 | 164 | 15.9% |
-| 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | eternal | 2020s | other | 117 | 35 | 82 | 29.9% |
+| 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | eternal | 2020s | other | 117 | 36 | 81 | 30.8% |
 | 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | teenage-mutant-ninja-turtles-source-material | other | 20 | 2 | 18 | 10.0% |
 | 2026-04-13 | MagicFest 2026 (`PF26`) | promos | magicfest-2026 | other | 13 | 7 | 6 | 53.8% |
 | 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 42 | 229 | 15.5% |
@@ -710,7 +710,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | anthologies | explorer-anthology-2 | 1 | 25 | 3 | 22 | 12.0% |
 | anthologies | explorer-anthology-3 | 1 | 25 | 10 | 15 | 40.0% |
 | anthologies | historic-anthology-1 | 1 | 20 | 11 | 9 | 55.0% |
-| anthologies | historic-anthology-2 | 1 | 25 | 9 | 16 | 36.0% |
+| anthologies | historic-anthology-2 | 1 | 25 | 10 | 15 | 40.0% |
 | anthologies | historic-anthology-3 | 1 | 27 | 8 | 19 | 29.6% |
 | anthologies | historic-anthology-4 | 1 | 25 | 4 | 21 | 16.0% |
 | anthologies | historic-anthology-5 | 1 | 25 | 7 | 18 | 28.0% |
@@ -743,7 +743,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | commander | 2013 | 1 | 341 | 265 | 76 | 77.7% |
 | commander | 2014 | 1 | 322 | 199 | 123 | 61.8% |
 | commander | 2015 | 1 | 327 | 139 | 188 | 42.5% |
-| commander | 2016 | 1 | 341 | 126 | 215 | 37.0% |
+| commander | 2016 | 1 | 341 | 127 | 214 | 37.2% |
 | commander | 2017 | 1 | 299 | 131 | 168 | 43.8% |
 | commander | 2018 | 1 | 297 | 128 | 169 | 43.1% |
 | commander | 2019 | 1 | 292 | 106 | 186 | 36.3% |
@@ -758,7 +758,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 60 | 161 | 27.1% |
 | core | 1990s | 10 | 3267 | 1143 | 2124 | 35.0% |
 | core | 2000s | 4 | 1389 | 721 | 668 | 51.9% |
-| core | 2010s | 8 | 2011 | 890 | 1121 | 44.3% |
+| core | 2010s | 8 | 2011 | 891 | 1120 | 44.3% |
 | core | 2020s | 3 | 1132 | 402 | 730 | 35.5% |
 | deck-products | coldsnap-theme-decks | 1 | 52 | 13 | 39 | 25.0% |
 | deck-products | magic-online-theme-decks | 1 | 174 | 93 | 81 | 53.4% |
@@ -791,7 +791,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | duel-decks | duel-decks-speed-vs-cunning | 1 | 71 | 27 | 44 | 38.0% |
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 34 | 36 | 48.6% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
-| eternal | 2020s | 6 | 537 | 127 | 410 | 23.6% |
+| eternal | 2020s | 6 | 537 | 128 | 409 | 23.8% |
 | expansion | 1990s | 11 | 1573 | 330 | 1243 | 21.0% |
 | expansion | 2000s | 19 | 3082 | 627 | 2455 | 20.3% |
 | expansion | 2010s | 14 | 2735 | 647 | 2088 | 23.7% |
@@ -864,7 +864,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | masterpieces | the-brothers-war-retro-artifacts | 1 | 63 | 21 | 42 | 33.3% |
 | masterpieces | through-the-omenpaths-bonus-sheet | 1 | 40 | 8 | 32 | 20.0% |
 | masterpieces | ultimate-box-topper | 1 | 40 | 6 | 34 | 15.0% |
-| masterpieces | wilds-of-eldraine-enchanting-tales | 1 | 63 | 8 | 55 | 12.7% |
+| masterpieces | wilds-of-eldraine-enchanting-tales | 1 | 63 | 9 | 54 | 14.3% |
 | masterpieces | zendikar-expeditions | 1 | 45 | 41 | 4 | 91.1% |
 | masterpieces | zendikar-rising-expeditions | 1 | 30 | 25 | 5 | 83.3% |
 | masters-remastered | 2023 | 1 | 737 | 198 | 539 | 26.9% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 10 | 74 | 11.9% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 12 | 46 | 20.7% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 375 | 1321 | 22.1% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 376 | 1320 | 22.2% |
 | secret-lair | secret-lair-promo | 1 | 52 | 15 | 37 | 28.8% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -21795,7 +21795,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Wall of Frost — `741e4f32-0587-40fa-a73d-5bcf66b52348`
 - [ ] Wall of Limbs — `1aabb6bd-8061-42a5-9a71-f9eac718bd22`
 - [ ] Warden of the Beyond — `6e9d5e5e-d571-4a1a-be8c-6672fd6b582f`
-- [ ] Waste Not — `00fdcc19-88ed-46c3-91f0-095806228105`
 - [ ] Will-Forged Golem — `25fb0396-7355-4ff1-8ad3-d5a82adf6cc1`
 - [ ] Xathrid Slyblade — `931c0cd3-06fb-42da-86f2-476d08a238f9`
 - [ ] Yisan, the Wanderer Bard — `7f4b0233-a2b0-41a2-8448-2df1f845148c`
@@ -25776,7 +25775,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Volcanic Vision — `fe3b4c74-2bf8-464a-8f55-9de401a8c4b9`
 - [ ] Vorel of the Hull Clade — `3001f971-c4db-4176-89b5-e7f4a8890c0f`
 - [ ] Vulturous Zombie — `11a28f60-2456-4ed5-b1cc-03c395f55e59`
-- [ ] Waste Not — `00fdcc19-88ed-46c3-91f0-095806228105`
 - [ ] Wave of Reckoning — `24f7143c-d43a-4120-baa0-0235b15d8186`
 - [ ] Wheel of Fate — `15e4938d-1cd3-4670-9de5-2dc10abe4c19`
 - [ ] Whims of the Fates — `7d359434-eb1b-478e-a745-10e2c564d89f`
@@ -36995,7 +36993,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Warp World — `50a228a2-c8b6-4416-b0ab-417926a9b9b6`
 - [ ] Warren Instigator — `47f75e25-8a52-4452-a3a8-bf1bd00942d1`
 - [ ] Wasitora, Nekoru Queen — `13fc4168-fcc2-4011-804f-211d5d86b7dd`
-- [ ] Waste Not — `00fdcc19-88ed-46c3-91f0-095806228105`
 - [ ] Wayward Swordtooth — `3875aef0-3102-4fbf-be90-e4139f7a2348`
 - [ ] Weatherlight — `73b3682f-396a-4ebe-aaac-6ce3ee36283a`
 - [ ] Wedding Ring — `0c34e962-99d9-4163-b852-4f61886546aa`
@@ -37366,7 +37363,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Terravore — `f44fb61a-9aa5-4178-b958-5115d62a7f50`
 - [ ] Thalia, Guardian of Thraben — `9b7f1d05-707c-4ed3-9f0e-8ced1232c2ee`
 - [ ] Virulent Plague — `adfba95e-c73c-415d-adea-edcd04372ba4`
-- [ ] Waste Not — `00fdcc19-88ed-46c3-91f0-095806228105`
 
 ### commander / 2020 · Commander 2020 (`C20`)
 
@@ -52208,7 +52204,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Unnatural Growth — `7324abaa-48da-439d-9339-b0ea5eea612e`
 - [ ] Utopia Sprawl — `00d8efa6-a2d9-4249-8da7-b45173675329`
 - [ ] Vampiric Rites — `660de988-b6fb-4f36-8006-42af3e7f908d`
-- [ ] Waste Not — `00fdcc19-88ed-46c3-91f0-095806228105`
 
 ### promos / wpn-2024 · Wizards Play Network 2024 (`PW24`)
 
@@ -62590,7 +62585,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,66
 - [ ] Utrom Monitor — `976e1fe6-ac32-4ea9-9828-acd3c4791e01`
 - [ ] Vigor — `70787d8b-0a40-43ea-837a-9617dc13e7e5`
 - [ ] Voracious Hydra — `ff8f5a4b-112a-425e-b489-7ee26d1d9fb3`
-- [ ] Waste Not — `00fdcc19-88ed-46c3-91f0-095806228105`
 - [ ] Wave Goodbye — `06ef46c6-00ba-40e6-b866-d0095ab83749`
 - [ ] Wooden Cane — `d41eec6c-de14-4809-abae-b94355674a33`
 

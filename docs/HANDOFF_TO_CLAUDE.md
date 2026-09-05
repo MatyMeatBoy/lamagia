@@ -3103,3 +3103,13 @@ was missing "each player's end step" entirely (only "your end step" and
 unlock other pending cards using that exact wording. Validation: **591
 rules tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,347
 global profiles.
+
+Waste Not | `00fdcc19-88ed-46c3-91f0-095806228105` was closed with a new
+`discardedCardType` field on `TriggerTemplate`/`TriggerDefinition` (CR
+603.2, 701.8), mirroring the existing `spellType` filter but checked
+against the discarded card's own type in `triggerMatches` rather than a
+cast spell's. All three of Waste Not's reactions (Zombie token, `{B}{B}`,
+a card) reuse pre-existing effect kinds (`create-token`, `add-mana`,
+`draw`) unchanged — only the trigger-matching side needed new plumbing.
+Validation: **592 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 9,348 global profiles.

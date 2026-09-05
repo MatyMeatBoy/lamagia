@@ -155,6 +155,7 @@ const TEFERIS_PUZZLE_BOX = () => make({ name: "Teferi's Puzzle Box", type_line: 
 const HOWLING_MINE = () => make({ name: "Howling Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, if this artifact is untapped, that player draws an additional card.", oracle_id: "d26b27db-a567-4631-b4b6-7294222fbdd1", scryfall_id: "3d911839-cb2c-4068-aba3-3441fc0c79ac" });
 const FEVERED_VISIONS = () => make({ name: "Fevered Visions", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "At the beginning of each player's end step, that player draws a card. If the player is your opponent and has four or more cards in hand, this enchantment deals 2 damage to that player.", oracle_id: "70763549-4b4e-4cb8-8c02-0639ba18bb1a", scryfall_id: "8badb2d3-530b-40ca-bcca-4137487f9f01" });
 const HAND_MINUS_DAMAGE = () => make({ name: "Hand Minus Damage", type_line: "Creature — Artifact", mana_cost: "{5}", cmc: 5, power: "2", toughness: "2", oracle_text: "At the beginning of each opponent's upkeep, this creature deals X damage to that player, where X is the number of cards in their hand minus 4." });
+const WASTE_NOT = () => make({ name: "Waste Not", type_line: "Enchantment", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Whenever an opponent discards a creature card, create a 2/2 black Zombie creature token.\nWhenever an opponent discards a land card, add {B}{B}.\nWhenever an opponent discards a noncreature, nonland card, draw a card.", oracle_id: "00fdcc19-88ed-46c3-91f0-095806228105", scryfall_id: "5737b4ac-1a0c-475c-bc0c-489bce302ff0" });
 const HAND_EQUAL_DAMAGE = () => make({ name: "Hand Equal Damage", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of each opponent's upkeep, this creature deals damage to that player equal to the number of cards in that player's hand." });
 const EACH_HAND_DAMAGE = () => make({ name: "Shared Hand Damage", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Each player loses life equal to the number of cards in their hand." });
 const TAPPED_DRAW = () => make({ name: "Tapped Draw", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls." });
@@ -4026,6 +4027,39 @@ describe("casting", () => {
     expect(game.pendingChoice).toBeNull();
     expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Grizzly Bears"]);
     expect(game.players[1]!.graveyard.at(-1)?.name).toBe("Storm Crow");
+  });
+
+  it("reacts differently to each type of card an opponent discards, via Waste Not", () => {
+    const profile = profileOf(WASTE_NOT());
+    expect(profile.triggers).toHaveLength(3);
+    expect(profile.triggers[0]).toMatchObject({ event: "card-discarded", subject: "opponent", discardedCardType: "creature", effect: { kind: "create-token" } });
+    expect(profile.triggers[1]).toMatchObject({ event: "card-discarded", subject: "opponent", discardedCardType: "land", effect: { kind: "add-mana", pool: { B: 2 } } });
+    expect(profile.triggers[2]).toMatchObject({ event: "card-discarded", subject: "opponent", discardedCardType: "noncreature-nonland", effect: { kind: "draw", amount: 1 } });
+
+    // A discarded creature card creates a Zombie token for Waste Not's controller.
+    let game = readyToCast([DISCARD_SPELL()], [SWAMP(), SWAMP()], [BEAR()]);
+    game = putOnBattlefield(game, 0, [WASTE_NOT()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "foe-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Zombie")).toBe(true);
+
+    // A discarded land card adds {B}{B} for Waste Not's controller.
+    game = readyToCast([DISCARD_SPELL()], [SWAMP(), SWAMP()], [FOREST()]);
+    game = putOnBattlefield(game, 0, [WASTE_NOT()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "foe-0" });
+    expect(game.players[0]!.manaPool.B).toBe(2);
+
+    // A discarded noncreature, nonland card draws a card for Waste Not's controller.
+    game = readyToCast([DISCARD_SPELL()], [SWAMP(), SWAMP()], [SOL_RING()]);
+    game = putOnBattlefield(game, 0, [WASTE_NOT()]);
+    const hand0Before = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "foe-0" });
+    expect(game.players[0]!.hand.length).toBe(hand0Before);
   });
 
   it("lets Forget's targeted player discard two then draw that many back", () => {
