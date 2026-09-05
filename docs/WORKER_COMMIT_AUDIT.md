@@ -242,3 +242,9 @@ this separate from additive P/T modifiers and exposes subtype targets during
 the temporary effect. Scenario coverage verifies activation payment, X=2,
 cleanup-scoped characteristics, and that creature subtypes do not leak into
 Equipment targets. Validation: 596 rules tests and `npm run check`.
+
+Faerie Conclave (`0c25f6b1-8fb3-4406-9605-0282d2dbbcec`) reuses the same
+animation primitive with parameterized types, so its temporary characteristic
+is `Land Creature` rather than the old hard-coded `Artifact Creature`.
+Validation after both C13 additions: 597 rules tests, `npm run check`,
+**9,356/38,711** profiles, and C13 **269/341**.

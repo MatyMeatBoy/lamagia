@@ -2821,7 +2821,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
               power: effect.power,
               toughness: effect.toughness,
               colors: effect.colors,
-              types: ["Artifact", "Creature"],
+              types: effect.types ?? ["Artifact", "Creature"],
               subtypes: effect.subtypes,
               keywords: effect.keywords
             },

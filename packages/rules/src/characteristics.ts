@@ -504,7 +504,7 @@ export type SpellEffect =
   /** Mirror Entity: set base P/T and grant every creature type until cleanup. */
   | { readonly kind: "set-creatures-you-control-base-pt-all-types"; readonly power: number | "X"; readonly toughness: number | "X" }
   /** Temporary characteristic-setting animation for artifact manlands (CR 613.6). */
-  | { readonly kind: "animate-source"; readonly power: number; readonly toughness: number; readonly colors: readonly string[]; readonly subtypes: readonly string[]; readonly keywords: readonly EnforcedKeyword[] }
+  | { readonly kind: "animate-source"; readonly power: number; readonly toughness: number; readonly colors: readonly string[]; readonly subtypes: readonly string[]; readonly keywords: readonly EnforcedKeyword[]; readonly types?: readonly CardType[] }
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
@@ -2765,6 +2765,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^(?:~|This artifact) becomes a 2\/2 white and blue Bird artifact creature with flying until end of turn$/i.test(text)) {
     return {
       effect: { kind: "animate-source", power: 2, toughness: 2, colors: ["W", "U"], subtypes: ["Bird"], keywords: ["flying"] },
+      target: "none"
+    };
+  }
+  if (/^(?:~|This land) becomes a 2\/1 blue Faerie creature with flying until end of turn\. It's still a land\.?$/i.test(text)) {
+    return {
+      effect: { kind: "animate-source", power: 2, toughness: 1, colors: ["U"], subtypes: ["Faerie"], keywords: ["flying"], types: ["Land", "Creature"] },
       target: "none"
     };
   }

@@ -10,8 +10,8 @@ cards but never completes one is correctly ranked low.
 When enabled, `oracle:` signatures merge parameterized actions by operation, target, zone, and type; the engine profile still decides whether a card is complete.
 
 - Catalog cards: **341**
-- Fully implemented: **268**
-- Unfinished: **73**, of which **5** are a single line away
+- Fully implemented: **269**
+- Unfinished: **72**, of which **5** are a single line away
 - This queue's 40 entries would finish **24** more cards
 - Scope: **C13**
 
