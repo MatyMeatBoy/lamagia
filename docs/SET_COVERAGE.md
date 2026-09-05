@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,417** · cobertura: **27.6%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,424** · cobertura: **27.6%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -207,7 +207,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | 2009-01-01 | Friday Night Magic 2009 (`F09`) | promos | fnm-2009 | other | 12 | 5 | 7 | 41.7% |
 | 2009-01-01 | Judge Gift Cards 2009 (`G09`) | promos | judge-2009 | other | 10 | 6 | 4 | 60.0% |
 | 2009-01-01 | Magic Premiere Shop 2009 (`PMPS09`) | promos | magic-premiere-shop-2009 | other | 5 | 5 | 0 | 100.0% |
-| 2009-01-01 | URL/Convention Promos (`PURL`) | promos | url-convention | other | 18 | 6 | 12 | 33.3% |
+| 2009-01-01 | URL/Convention Promos (`PURL`) | promos | url-convention | other | 18 | 7 | 11 | 38.9% |
 | 2009-01-31 | Conflux Promos (`PCON`) | promos | conflux | other | 2 | 1 | 1 | 50.0% |
 | 2009-02-06 | Conflux (`CON`) | expansion | 2000s | main | 145 | 49 | 96 | 33.8% |
 | 2009-04-10 | Duel Decks: Divine vs. Demonic (`DDC`) | duel-decks | duel-decks-divine-vs-demonic | other | 56 | 27 | 29 | 48.2% |
@@ -494,17 +494,17 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | 2021-04-23 | Strixhaven Mystical Archive (`STA`) | masterpieces | strixhaven-mystical-archive | other | 63 | 26 | 37 | 41.3% |
 | 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | strixhaven | main | 290 | 50 | 240 | 17.2% |
 | 2021-04-23 | Strixhaven: School of Mages Promos (`PSTX`) | promos | strixhaven-school-of-mages | other | 90 | 8 | 82 | 8.9% |
-| 2021-05-06 | Modern Horizons 2 Promos (`PMH2`) | promos | modern-horizons-2 | other | 80 | 7 | 73 | 8.8% |
+| 2021-05-06 | Modern Horizons 2 Promos (`PMH2`) | promos | modern-horizons-2 | other | 80 | 8 | 72 | 10.0% |
 | 2021-05-27 | Historic Anthology 5 (`HA5`) | anthologies | historic-anthology-5 | other | 25 | 7 | 18 | 28.0% |
 | 2021-06-18 | Modern Horizons 1 Timeshifts (`H1R`) | supplemental | modern-horizons-1-timeshifts | other | 40 | 11 | 29 | 27.5% |
-| 2021-06-18 | Modern Horizons 2 (`MH2`) | supplemental | modern-horizons-2 | other | 310 | 72 | 238 | 23.2% |
+| 2021-06-18 | Modern Horizons 2 (`MH2`) | supplemental | modern-horizons-2 | other | 310 | 73 | 237 | 23.5% |
 | 2021-06-18 | Wizards Play Network 2021 (`PW21`) | promos | wpn-2021 | other | 6 | 4 | 2 | 66.7% |
 | 2021-07-23 | Adventures in the Forgotten Realms (`AFR`) | expansion | 2020s | main | 288 | 36 | 252 | 12.5% |
 | 2021-07-23 | Adventures in the Forgotten Realms Promos (`PAFR`) | promos | adventures-in-the-forgotten-realms | other | 81 | 5 | 76 | 6.2% |
 | 2021-07-23 | Forgotten Realms Commander (`AFC`) | commander | 2021 | commander | 275 | 91 | 184 | 33.1% |
 | 2021-08-01 | 2020 Heroes of the Realm (`PH20`) | funny-special | 2020-heroes-of-the-realm | other | 3 | 0 | 3 | 0.0% |
 | 2021-08-20 | Mystery Booster Playtest Cards 2021 (`CMB2`) | funny-special | mystery-booster-playtest-cards-2021 | other | 120 | 11 | 109 | 9.2% |
-| 2021-08-26 | Jumpstart: Historic Horizons (`J21`) | jumpstart | jumpstart-historic-horizons | other | 389 | 92 | 297 | 23.7% |
+| 2021-08-26 | Jumpstart: Historic Horizons (`J21`) | jumpstart | jumpstart-historic-horizons | other | 389 | 93 | 296 | 23.9% |
 | 2021-09-24 | Innistrad: Midnight Hunt (`MID`) | expansion | innistrad | main | 279 | 48 | 231 | 17.2% |
 | 2021-09-24 | Innistrad: Midnight Hunt Promos (`PMID`) | promos | innistrad-midnight-hunt | other | 84 | 7 | 77 | 8.3% |
 | 2021-09-24 | Midnight Hunt Commander (`MIC`) | commander | 2021 | commander | 149 | 39 | 110 | 26.2% |
@@ -668,9 +668,9 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | 2025-09-26 | Marvel's Spider-Man Eternal (`SPE`) | eternal | 2020s | other | 26 | 4 | 22 | 15.4% |
 | 2025-09-26 | Marvel's Spider-Man Promos (`PSPM`) | promos | marvel-s-spider-man | other | 68 | 1 | 67 | 1.5% |
 | 2025-09-30 | Marvel Legends Series Inserts (`LMAR`) | promos | marvel-legends-series-inserts | other | 4 | 0 | 4 | 0.0% |
-| 2025-11-21 | Avatar: The Last Airbender (`TLA`) | expansion | 2020s | main | 286 | 39 | 247 | 13.6% |
+| 2025-11-21 | Avatar: The Last Airbender (`TLA`) | expansion | 2020s | main | 286 | 40 | 246 | 14.0% |
 | 2025-11-21 | Avatar: The Last Airbender Eternal (`TLE`) | eternal | 2020s | other | 242 | 62 | 180 | 25.6% |
-| 2025-11-21 | Avatar: The Last Airbender Promos (`PTLA`) | promos | avatar-the-last-airbender | other | 80 | 4 | 76 | 5.0% |
+| 2025-11-21 | Avatar: The Last Airbender Promos (`PTLA`) | promos | avatar-the-last-airbender | other | 80 | 5 | 75 | 6.2% |
 | 2026-01-01 | Wizards Play Network 2026 (`PW26`) | promos | wpn-2026 | other | 23 | 10 | 13 | 43.5% |
 | 2026-01-23 | Lorwyn Eclipsed (`ECL`) | expansion | lorwyn | main | 273 | 41 | 232 | 15.0% |
 | 2026-01-23 | Lorwyn Eclipsed Commander (`ECC`) | commander | 2026 | commander | 153 | 50 | 103 | 32.7% |
@@ -681,7 +681,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | teenage-mutant-ninja-turtles-source-material | other | 20 | 1 | 19 | 5.0% |
 | 2026-04-13 | MagicFest 2026 (`PF26`) | promos | magicfest-2026 | other | 13 | 7 | 6 | 53.8% |
 | 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 42 | 229 | 15.5% |
-| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 111 | 264 | 29.6% |
+| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 112 | 263 | 29.9% |
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 16 | 49 | 24.6% |
 | 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 7 | 73 | 8.8% |
 | 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 46 | 235 | 16.4% |
@@ -753,7 +753,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | commander | 2023 | 6 | 1597 | 483 | 1114 | 30.2% |
 | commander | 2024 | 7 | 1887 | 625 | 1262 | 33.1% |
 | commander | 2025 | 4 | 1046 | 387 | 659 | 37.0% |
-| commander | 2026 | 6 | 1265 | 326 | 939 | 25.8% |
+| commander | 2026 | 6 | 1265 | 327 | 938 | 25.8% |
 | conspiracy | conspiracy | 2 | 211 | 44 | 167 | 20.9% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 59 | 162 | 26.7% |
 | core | 1990s | 10 | 3267 | 1128 | 2139 | 34.5% |
@@ -795,7 +795,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | expansion | 1990s | 11 | 1573 | 328 | 1245 | 20.9% |
 | expansion | 2000s | 19 | 3082 | 618 | 2464 | 20.1% |
 | expansion | 2010s | 14 | 2735 | 644 | 2091 | 23.5% |
-| expansion | 2020s | 17 | 3739 | 576 | 3163 | 15.4% |
+| expansion | 2020s | 17 | 3739 | 577 | 3162 | 15.4% |
 | expansion | alara | 2 | 379 | 141 | 238 | 37.2% |
 | expansion | amonkhet | 1 | 272 | 85 | 187 | 31.2% |
 | expansion | bloomburrow | 1 | 280 | 39 | 241 | 13.9% |
@@ -847,7 +847,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | jumpstart | jumpstart | 1 | 461 | 180 | 281 | 39.0% |
 | jumpstart | jumpstart-2022 | 1 | 819 | 245 | 574 | 29.9% |
 | jumpstart | jumpstart-arena-exclusives | 1 | 18 | 5 | 13 | 27.8% |
-| jumpstart | jumpstart-historic-horizons | 1 | 389 | 92 | 297 | 23.7% |
+| jumpstart | jumpstart-historic-horizons | 1 | 389 | 93 | 296 | 23.9% |
 | masterpieces | amonkhet-invocations | 1 | 54 | 9 | 45 | 16.7% |
 | masterpieces | breaking-news | 1 | 65 | 9 | 56 | 13.8% |
 | masterpieces | edge-of-eternities-stellar-sights | 1 | 45 | 8 | 37 | 17.8% |
@@ -931,7 +931,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | promos | arena-2018 | 1 | 23 | 13 | 10 | 56.5% |
 | promos | asia-pacific-land-program | 1 | 5 | 5 | 0 | 100.0% |
 | promos | avacyn-restored | 1 | 6 | 1 | 5 | 16.7% |
-| promos | avatar-the-last-airbender | 1 | 80 | 4 | 76 | 5.0% |
+| promos | avatar-the-last-airbender | 1 | 80 | 5 | 75 | 6.2% |
 | promos | battle-for-baldur-s-gate | 1 | 99 | 6 | 93 | 6.1% |
 | promos | battle-for-zendikar | 1 | 70 | 9 | 61 | 12.9% |
 | promos | battlebond | 1 | 22 | 4 | 18 | 18.2% |
@@ -1096,7 +1096,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | promos | mirrodin | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin-besieged | 1 | 4 | 1 | 3 | 25.0% |
 | promos | modern-horizons | 1 | 2 | 0 | 2 | 0.0% |
-| promos | modern-horizons-2 | 1 | 80 | 7 | 73 | 8.8% |
+| promos | modern-horizons-2 | 1 | 80 | 8 | 72 | 10.0% |
 | promos | modern-horizons-3 | 1 | 81 | 6 | 75 | 7.4% |
 | promos | morningtide | 1 | 2 | 0 | 2 | 0.0% |
 | promos | murders-at-karlov-manor | 1 | 90 | 12 | 78 | 13.3% |
@@ -1168,7 +1168,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | promos | ugin-s-fate | 1 | 26 | 0 | 26 | 0.0% |
 | promos | unhinged | 1 | 1 | 0 | 1 | 0.0% |
 | promos | unstable | 1 | 1 | 0 | 1 | 0.0% |
-| promos | url-convention | 1 | 18 | 6 | 12 | 33.3% |
+| promos | url-convention | 1 | 18 | 7 | 11 | 38.9% |
 | promos | urza-s-destiny | 1 | 1 | 0 | 1 | 0.0% |
 | promos | urza-s-legacy | 1 | 1 | 0 | 1 | 0.0% |
 | promos | urza-s-saga | 1 | 1 | 1 | 0 | 100.0% |
@@ -1210,7 +1210,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 | supplemental | innistrad-double-feature | 1 | 532 | 70 | 462 | 13.2% |
 | supplemental | modern-horizons | 1 | 255 | 67 | 188 | 26.3% |
 | supplemental | modern-horizons-1-timeshifts | 1 | 40 | 11 | 29 | 27.5% |
-| supplemental | modern-horizons-2 | 1 | 310 | 72 | 238 | 23.2% |
+| supplemental | modern-horizons-2 | 1 | 310 | 73 | 237 | 23.5% |
 | supplemental | modern-horizons-2-timeshifts | 1 | 16 | 3 | 13 | 18.8% |
 | supplemental | modern-horizons-3 | 1 | 313 | 43 | 270 | 13.7% |
 | supplemental | ravnica-clue-edition | 1 | 268 | 107 | 161 | 39.9% |
@@ -15990,7 +15990,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Borg Queen, Perfection Manifest — `f9b46a1a-474f-4fac-8d71-131c1720e4c0`
 - [ ] Chandra's Fury — `eb16f188-fe12-4a13-9947-d43cd6ce270c`
 - [ ] Hylda of the Icy Crown — `1733c71b-fd28-48dd-8a3d-41afd4b22f0e`
-- [ ] Katara, the Fearless — `0972d46e-423b-454e-87c7-a2d40fb6fb6d`
 - [ ] Kirk, Enterprising Captain — `6a70e571-6932-45d8-9f14-ede4a561cc49`
 - [ ] Kor Skyfisher — `054a0193-861e-4644-ab0a-8aa33407abc8`
 - [ ] Ral, Monsoon Mage // Ral, Leyline Prodigy — `16d40f56-691b-42a7-a5ab-157568921e03`
@@ -41609,7 +41608,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Glimpse of Tomorrow — `12778951-7b11-400b-98ed-06434d7ecc11`
 - [ ] Grief — `0d6b89dc-23fb-48e9-a54b-cea2838ae7c8`
 - [ ] Grist, the Hunger Tide — `0efb0d7e-dea0-4817-a243-15066e9ef333`
-- [ ] Harmonic Prodigy — `2e2ace5b-4018-43af-8e72-ebafec1a7739`
 - [ ] Inevitable Betrayal — `aa5e9269-b1db-4bf0-a548-24f999f60e44`
 - [ ] Kaldra Compleat — `7359e82b-db79-488d-a1d4-75a00f12a4cf`
 - [ ] Lonis, Cryptozoologist — `0ee06ed0-717a-4bfa-b634-d00e013c1f16`
@@ -41818,7 +41816,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Grief — `0d6b89dc-23fb-48e9-a54b-cea2838ae7c8`
 - [ ] Grist, the Hunger Tide — `0efb0d7e-dea0-4817-a243-15066e9ef333`
 - [ ] Hard Evidence — `0728b195-2dfe-4d73-91ae-e658a97b0b9a`
-- [ ] Harmonic Prodigy — `2e2ace5b-4018-43af-8e72-ebafec1a7739`
 - [ ] Hell Mongrel — `64aa732c-d939-48c7-b1d6-c73fa1eedb40`
 - [ ] Herd Baloth — `03873314-6e64-43ab-95c0-3d8692a57a03`
 - [ ] Imperial Recruiter — `4d6a1391-817a-4ddc-840d-886b138eeb3f`
@@ -42720,7 +42717,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Hanweir Militia Captain // Westvale Cult Leader — `2d8eba16-cfca-4a38-bde0-6ee36c67231a`
 - [ ] Hard Evidence — `0728b195-2dfe-4d73-91ae-e658a97b0b9a`
 - [ ] Hardened Scales — `a1f3da21-af6d-450e-bf0b-985d158418e6`
-- [ ] Harmonic Prodigy — `2e2ace5b-4018-43af-8e72-ebafec1a7739`
 - [ ] Haunted Dead — `03259490-a789-4f96-8c5b-b410425bdd02`
 - [ ] Heir of Falkenrath // Heir to the Night — `d5b9c62d-fe98-4cbc-b4b6-012702bf6657`
 - [ ] Hell Mongrel — `64aa732c-d939-48c7-b1d6-c73fa1eedb40`
@@ -61754,7 +61750,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Joo Dee, One of Many — `4601ed7b-716e-4c89-b733-1eeabe8bf5a2`
 - [ ] June, Bounty Hunter — `1779869a-5e54-4ab5-86b8-d4d20e2e1ba4`
 - [ ] Katara, Bending Prodigy — `55adde23-c818-40fe-9bba-123de93568a5`
-- [ ] Katara, the Fearless — `0972d46e-423b-454e-87c7-a2d40fb6fb6d`
 - [ ] Katara, Water Tribe's Hope — `234fb291-0b62-4092-9071-81311c71bd53`
 - [ ] Knowledge Seeker — `bdc2d980-ca14-4040-a9a1-786d724dc65c`
 - [ ] Koh, the Face Stealer — `2bbb33e3-7d03-457c-92bb-b0c943615fa1`
@@ -62096,7 +62091,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Iroh, Grand Lotus — `ee8e6ef3-eb96-48bd-8619-8a9112b3d4f0`
 - [ ] Iroh, Tea Master — `87adda41-113b-4126-8978-25a258b31bdd`
 - [ ] Jasmine Dragon Tea Shop — `d9a24444-289f-473f-9985-8df275257555`
-- [ ] Katara, the Fearless — `0972d46e-423b-454e-87c7-a2d40fb6fb6d`
 - [ ] Katara, Water Tribe's Hope — `234fb291-0b62-4092-9071-81311c71bd53`
 - [ ] Koh, the Face Stealer — `2bbb33e3-7d03-457c-92bb-b0c943615fa1`
 - [ ] Momo, Friendly Flier — `a3c56e71-0de6-447a-a9b4-0971f56c2362`
@@ -63201,7 +63195,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,41
 - [ ] Hall of Oracles — `0bb896ba-e15e-43a9-9120-e674d7ba003c`
 - [ ] Hangarback Walker — `dde55256-5259-44e7-a267-fca45a7f0d04`
 - [ ] Hardened Scales — `a1f3da21-af6d-450e-bf0b-985d158418e6`
-- [ ] Harmonic Prodigy — `2e2ace5b-4018-43af-8e72-ebafec1a7739`
 - [ ] Hateful Eidolon — `a3b39590-34b7-4fd0-877f-748e6df30e88`
 - [ ] Haywire Mite — `749d2994-44e7-40d3-8630-7bebed239e9e`
 - [ ] Herald of Amity — `6c25c6b5-d98c-4eb4-aacd-b6960a8779a9`

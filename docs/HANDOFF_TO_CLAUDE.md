@@ -2716,6 +2716,53 @@ Global export: **9,289/38,712** (+1 from 9,288). `npm run check` and `npm
 test` PASS (**559 rules tests**, up from 558). `npm run simulate:engine`:
 **200/200 passed**.
 
+### Worker-05: "Panharmonicon" trigger doublers (2026-09-05)
+
+Claim `rules-trigger-doubler`, continuing the Nekusar decklist (Harmonic
+Prodigy, Wizard's Staff). "If a triggered ability of X triggers, that
+ability triggers an additional time" (CR 603.3f) appears on 12 catalog
+cards with wildly different scope filters — subtype, equipped creature,
+power threshold, ownership-vs-control, legendary status, color. Rather than
+try to model every variant, built the primitive around the two shapes the
+target cards actually need: `subtype-you-control` (a subtype list; matches
+any creature with one of them) and `equipped-creature`.
+
+The enforcement point is `raiseEvent`'s trigger-queueing loop in
+`engine.ts` — the single place every triggered ability is ever turned into
+a `TriggerInstance`. Added `triggerDoublerCount(state, watcher)`, which
+scans the watcher's controller's battlefield for permanents whose
+`CardProfile.triggerDoublers` matches the watcher, and changed the loop to
+push `1 + count` copies of the same trigger object (distinct `id`s) instead
+of always exactly one. Every other triggered-ability code path — resolution,
+optional choices, targeting — is untouched, since it now just processes
+more `TriggerInstance`s off the same queue it always did.
+
+Fully implements Harmonic Prodigy ("a Shaman or another Wizard you
+control" — modeled as subtypes `["Shaman", "Wizard"]`; Harmonic Prodigy is
+itself a Shaman, so it doubles its own triggers too, correctly) and, as a
+byproduct of the identical single-subtype shape, Katara, the Fearless
+("an Ally you control"). Scenario coverage puts a Wizard creature with a
+"when this enters, draw a card" ETB trigger onto the battlefield alongside
+Harmonic Prodigy and confirms it draws *two* cards, versus one without the
+doubler present.
+
+**Known limits:** Wizard's Staff carries this exact clause too but stays
+`fullyImplemented: false` — its remaining gap is an unrelated "Equip Wizard
+{1}" typed-equip-cost line (a cheaper Equip cost restricted to Wizard
+creatures), not the doubler itself. The other 10 catalog cards using this
+mechanic (Delney, Cloud, Echoes of Eternity, Annie Joins Up, Splinter,
+Clara Oswald, Chief of the Wilds, Jabs, Bifur) use scope filters
+(`power ≤ 2`, `legendary`, `colorless`, `permanent you control but don't
+own`, a same-subtype-or-battle union) this claim deliberately doesn't
+model — extending `TriggerDoubler.scope` is a natural follow-up once a
+pending card needs one of those shapes.
+
+Global export: **9,292/38,712** (+2 from 9,290). `npm run check` and `npm
+test` PASS (**562 rules tests**, up from 561). `npm run simulate:engine`:
+**200/200 passed** — meaningful to call out since this claim touches
+`raiseEvent`, the single choke point every triggered ability in the engine
+flows through.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed
