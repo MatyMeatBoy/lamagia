@@ -232,3 +232,13 @@ represented by published C13/C14 work were classified as non-integrable; no
 unreferenced executable commit was applied without a scenario test. The
 divergent `origin/master` cEDH sequence remains quarantined because it is an
 older tree replacement plus unrelated variants, not a safe integration source.
+
+### C13 primitive follow-up — Mirror Entity — 2026-09-05
+
+Mirror Entity (`17e905ca-c0bd-473d-95a7-e180ba5fea43`) now uses a reusable
+activated-ability primitive: `{X}` sets the controller's creatures' base P/T
+to X/X and grants all creature types until cleanup. The implementation keeps
+this separate from additive P/T modifiers and exposes subtype targets during
+the temporary effect. Scenario coverage verifies activation payment, X=2,
+cleanup-scoped characteristics, and that creature subtypes do not leak into
+Equipment targets. Validation: 596 rules tests and `npm run check`.

@@ -501,6 +501,8 @@ export type SpellEffect =
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
+  /** Mirror Entity: set base P/T and grant every creature type until cleanup. */
+  | { readonly kind: "set-creatures-you-control-base-pt-all-types"; readonly power: number | "X"; readonly toughness: number | "X" }
   /** Temporary characteristic-setting animation for artifact manlands (CR 613.6). */
   | { readonly kind: "animate-source"; readonly power: number; readonly toughness: number; readonly colors: readonly string[]; readonly subtypes: readonly string[]; readonly keywords: readonly EnforcedKeyword[] }
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
@@ -1593,7 +1595,7 @@ function parseDamageAmplify(line: string): DamageAmplify | null {
 /** True when an effect reads the spell/ability's X (so an `{X}` cost is meaningful). */
 function effectUsesVariable(effect: SpellEffect): boolean {
   const anyEffect = effect as Record<string, unknown>;
-  if (anyEffect.amount === "X" || anyEffect.count === "X") return true;
+  if (anyEffect.amount === "X" || anyEffect.count === "X" || anyEffect.power === "X" || anyEffect.toughness === "X") return true;
   if (effect.kind === "drain-target-toughness-pump-source-power") return true;
   if (effect.kind === "destroy-target-artifact-or-creature-mana-value") return true;
   if (effect.kind === "compound") return effect.effects.some(effectUsesVariable);
@@ -2603,6 +2605,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       effect: { kind, power, toughness } as SpellEffect,
       target: kind === "modify-target-creature" ? "creature" : "none"
     };
+  }
+  if ((match = /^Until end of turn, creatures you control have base power and toughness (X|\d+)\/(X|\d+) and gain all creature types\.?$/i.exec(text))) {
+    const power = match[1]!.toUpperCase() === "X" ? "X" as const : Number(match[1]);
+    const toughness = match[2]!.toUpperCase() === "X" ? "X" as const : Number(match[2]);
+    return { effect: { kind: "set-creatures-you-control-base-pt-all-types", power, toughness }, target: "none" };
   }
   // "Creatures you control get +N/+N and gain <keywords> until end of turn" (Overrun).
   if ((match = /^Creatures you control get ([+-]\d+)\/([+-]\d+) and gain ((?:flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear)(?:(?:,| and )(?:flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear))*) until end of turn$/i.exec(text))) {
