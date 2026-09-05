@@ -242,6 +242,12 @@ h1, h2, h3 { margin: 0; }
   object-fit: cover; object-position: center;
   filter: contrast(1.09) saturate(1.06);
 }
+.card-image-fallback {
+  display: grid; place-items: center; width: 100%; height: 100%; min-height: 2rem;
+  padding: 7px; overflow: hidden; background: radial-gradient(circle at 50% 25%, #2b4632, #0b1710 72%);
+  color: #e6d9ae; font-size: .62rem; line-height: 1.15; text-align: center;
+  overflow-wrap: anywhere;
+}
 .card-tile.token-tile {
   border-color: #a88a51;
   border-radius: 10px 10px 4px 4px;
@@ -285,6 +291,7 @@ h1, h2, h3 { margin: 0; }
 .target-card { display: flex; align-items: center; gap: 7px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 7px; background: #102319; color: var(--text); text-align: left; cursor: pointer; }
 .target-card:hover, .target-card:focus-visible { border-color: var(--accent); background: #1a3022; }
 .target-card img { width: 25px; height: 35px; object-fit: cover; border-radius: 3px; }
+.target-card > .card-image-fallback { width: 25px; height: 35px; min-height: 0; flex: 0 0 25px; padding: 2px; font-size: .42rem; }
 .card-tile .pt {
   position: absolute; right: 1px; bottom: 1px; z-index: 2;
   padding: 0 3px; border-radius: 3px; background: #050a07e8;
@@ -301,6 +308,7 @@ h1, h2, h3 { margin: 0; }
 .tile-badge.blk { background: #1c4a70; color: #c9e6ff; }
 .tile-badge.sick { background: #38384f; color: #c9c6ff; }
 .tile-badge.mana { background: #14402a; color: #a5e8c1; }
+.tile-badge.aura { background: #54316d; color: #f0d5ff; }
 
 @keyframes targetPulse {
   0%, 100% { box-shadow: 0 0 0 2px #ff8f6b; }
@@ -471,6 +479,7 @@ button.chip:hover { border-color: var(--gold); }
   width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none;
   user-select: none; -webkit-user-drag: none; filter: contrast(1.05) saturate(1.04);
 }
+.hand-card > .card-image-fallback { pointer-events: none; }
 .hand-card .tile-name {
   position: absolute; inset: auto 0 0; padding: 2px 4px;
   background: linear-gradient(transparent, #050a07f2 50%);
@@ -554,6 +563,7 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .stack-strip > b { color: var(--gold); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; }
 .stack-chip { display: flex; align-items: center; gap: 5px; padding: 2px 7px 2px 2px; border: 1px solid var(--gold-dim); border-radius: 99px; background: #141004; }
 .stack-chip img { width: 20px; border-radius: 50%; }
+.stack-chip > .card-image-fallback { width: 20px; height: 28px; min-height: 0; flex: 0 0 20px; padding: 2px; font-size: .4rem; }
 .stack-chip span { display: grid; line-height: 1.15; }
 .stack-chip b { color: var(--text); font-size: .62rem; }
 .stack-chip i { font-style: normal; font-size: .54rem; }
@@ -783,6 +793,8 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
 .zone-card { display: grid; gap: 4px; padding: 4px; border: 1px solid var(--line-soft); border-radius: 7px; background: #0a1710; color: var(--text-dim); font-size: .62rem; text-align: left; cursor: pointer; }
 .zone-card:hover, .zone-card:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; }
 .zone-cards img { width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border: 1px solid #6d5c3a; border-radius: 5px; }
+.zone-cards > .card-image-fallback, .zone-card > .card-image-fallback { width: 100%; height: auto; aspect-ratio: 5 / 7; min-height: 0; border: 1px solid #6d5c3a; border-radius: 5px; }
+.card-detail > .card-image-fallback { width: 100%; height: auto; aspect-ratio: 5 / 7; min-height: 0; border-radius: 10px; }
 .zone-private { margin: 0; color: var(--text-dim); font-size: .78rem; }
 
 .avatar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 9px; }

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { filterTestedDeckCards } from "@prossh/rules";
+import { filterTestedDeckCards, type CardData } from "@prossh/rules";
 import type { ImportedDeck } from "./matches.js";
 
 interface EngineProfile {
@@ -42,8 +42,8 @@ export async function readCompletedOracleIds(path: string): Promise<ReadonlySet<
   return complete;
 }
 
-function prepareDeck(deck: ImportedDeck, completeOracleIds: ReadonlySet<string>): ImportedDeck {
-  const cards = filterTestedDeckCards(deck, completeOracleIds);
+function prepareDeck(deck: ImportedDeck, completeOracleIds: ReadonlySet<string>, competitivePool: readonly CardData[]): ImportedDeck {
+  const cards = filterTestedDeckCards(deck, completeOracleIds, undefined, competitivePool);
   return { ...deck, cards } satisfies ImportedDeck;
 }
 
@@ -54,6 +54,12 @@ export function selectTestedPod(
   preferredDeckId?: string
 ): TestedPod {
   const candidates = pools.flatMap((pool) => pool.decks.map((deck) => ({ deck, source: pool.source })));
+  // Use the cEDH import as an upgrade pool, but only cards already marked as
+  // fully implemented can enter tested mode. This makes the mode stronger
+  // without silently exposing unsupported interactions.
+  const competitivePool = pools
+    .filter((pool) => /cedh/i.test(pool.source))
+    .flatMap((pool) => pool.decks.flatMap((deck) => deck.cards));
   const ordered = preferredDeckId
     ? [...candidates].sort((left, right) => Number(right.deck.id === preferredDeckId) - Number(left.deck.id === preferredDeckId))
     : candidates;
@@ -63,7 +69,7 @@ export function selectTestedPod(
   for (const candidate of ordered) {
     if (selectedIds.has(candidate.deck.id)) continue;
     try {
-      selected.push(prepareDeck(candidate.deck, completeOracleIds));
+      selected.push(prepareDeck(candidate.deck, completeOracleIds, competitivePool));
       sources.add(candidate.source);
       selectedIds.add(candidate.deck.id);
     } catch {

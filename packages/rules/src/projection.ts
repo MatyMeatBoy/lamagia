@@ -58,6 +58,8 @@ export interface PermanentView extends CardView {
   readonly blockedBy: readonly string[];
   readonly producesMana: boolean;
   readonly attachedTo?: string;
+  /** Seat targeted by a player-attached Aura such as a Curse (CR 303.4h). */
+  readonly attachedToPlayer?: SeatId;
 }
 
 export interface PlayerView {
@@ -264,7 +266,8 @@ function permanentView(state: GameState, permanent: Permanent, available: readon
     blocking: blocking ? blocking.attackerId : null,
     blockedBy,
     producesMana: cardProfile(permanent.card).manaAbilities.length > 0,
-    ...(permanent.attachedTo ? { attachedTo: permanent.attachedTo } : {})
+    ...(permanent.attachedTo ? { attachedTo: permanent.attachedTo } : {}),
+    ...(permanent.attachedToPlayer !== undefined ? { attachedToPlayer: permanent.attachedToPlayer } : {})
   };
 }
 

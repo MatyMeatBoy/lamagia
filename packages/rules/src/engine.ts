@@ -1880,6 +1880,16 @@ function triggerMatches(
       const aura = findPermanent(state, watcher.instanceId);
       return event.kind === "attacks" && objectIsCreature && aura?.attachedToPlayer === event.defender;
     }
+    case "player-attacks-enchanted-player": {
+      const aura = findPermanent(state, watcher.instanceId);
+      const firstAttacker = event.kind === "attacks"
+        ? state.combat.attackers.find((entry) => entry.defender === event.defender)
+        : undefined;
+      return event.kind === "attacks"
+        && objectIsCreature
+        && aura?.attachedToPlayer === event.defender
+        && firstAttacker?.instanceId === object.permanentId;
+    }
     // Rule 109.5: "another" excludes the object the ability is printed on.
     case "another-creature-you-control": return !isSelf && objectIsCreature && object.controller === watcher.controller;
     case "another-permanent-you-control": return !isSelf && cardProfile(object.card).isPermanent && object.controller === watcher.controller;
@@ -2663,6 +2673,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         pendingChoice: {
           type: "discard-cards",
           seat: target.seat,
+          sourceId: object.id,
+          sourceCard: object.card,
+          amount,
+          remaining: amount,
+          thenDrawSame: true
+        }
+      };
+    }
+    case "discard-event-controller-then-draw": {
+      const eventSeat = object.trigger?.eventController;
+      if (eventSeat === undefined) return state;
+      const amount = Math.min(effect.amount, playerAt(state, eventSeat).hand.length);
+      if (amount <= 0) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "discard-cards",
+          seat: eventSeat,
           sourceId: object.id,
           sourceCard: object.card,
           amount,
@@ -4263,6 +4292,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         next = destroyPermanent(next, permanent);
       }
       return logged(next, controller, `${sourceName} destruye ${effect.tappedOnly ? "las criaturas giradas" : effect.flyingOnly ? "las criaturas voladoras" : "todas las criaturas"}.`);
+    }
+    case "kirtars-wrath": {
+      // Threshold is checked before this spell leaves the stack (CR 702.34a),
+      // so the resolving Wrath itself is not counted in the graveyard.
+      const thresholdMet = playerAt(state, controller).graveyard.length >= effect.threshold;
+      let next = state;
+      for (const permanent of allPermanents(state)) {
+        if (!isCreature(cardProfile(permanent.card))) continue;
+        next = destroyPermanent(next, permanent);
+      }
+      if (thresholdMet) {
+        next = applyEffect(next, object, { kind: "create-token", amount: 2, token: effect.token });
+        return logged(next, controller, `${sourceName} destruye todas las criaturas y crea dos fichas de Espíritu.`);
+      }
+      return logged(next, controller, `${sourceName} destruye todas las criaturas.`);
     }
     case "destroy-all-creatures-draw-destroyed": {
       const destroyed = allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))

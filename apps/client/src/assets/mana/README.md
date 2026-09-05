@@ -15,7 +15,7 @@ need no public assets. Vite supplies base-aware URLs or embeds small files.
 The client disables public-directory copying to exclude unrelated local assets.
 The Pages workflow copies the resulting dist directory. Failed mana images
 become their literal symbol text, preserving the pip's accessible label.
-Card images do not participate in this fallback.
+Card images opt in via `data-card-name` and fall back to a readable card name when the remote image fails.
 
 Verification: npm run check --workspace=@prossh/client;
 npm run build --workspace=@prossh/client;

@@ -29,6 +29,18 @@ describe("smart counter response and safe mana undo", () => {
     expect(permanents.at(-2)).toMatchObject({ isCreature: false, power: null, toughness: null });
     expect(permanents.at(-1)).toMatchObject({ isCreature: true, power: 0, toughness: 0 });
   });
+  it("projects player-attached Auras without leaking or losing the attachment", () => {
+    const curse = make({ name: "Test Curse", type_line: "Enchantment — Aura", oracle_text: "Enchant player" });
+    let game = putOnBattlefield(twoSeatGame([], []), 0, [curse]);
+    const aura = game.players[0]!.battlefield[0]!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === aura.instance_id
+        ? { ...permanent, attachedToPlayer: 1 }
+        : permanent)
+    }));
+    expect(projectGame(game, 0).players[0]!.battlefield[0]).toMatchObject({ attachedToPlayer: 1 });
+    expect(projectGame(game, 1).players[0]!.battlefield[0]).toMatchObject({ attachedToPlayer: 1 });
+  });
   it("annihilates opposing +1/+1 and -1/-1 counters as a state-based action", () => {
     let game = putOnBattlefield(twoSeatGame([], []), 0, [BEAR()]);
     const bear = game.players[0]!.battlefield.at(-1)!;
@@ -156,6 +168,7 @@ const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcer
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
 const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "You may activate abilities of creatures you control as though those creatures had haste.\n{1}, {T}: Untap target creature.", oracle_id: "4dc5726e-2f7e-4c2b-9616-c3301d212f78" });
+const KIRTARS_WRATH = () => make({ name: "Kirtar's Wrath", type_line: "Sorcery", mana_cost: "{4}{W}{W}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated.\nThreshold — If there are seven or more cards in your graveyard, instead destroy all creatures, then create two 1/1 white Spirit creature tokens with flying. Creatures destroyed this way can't be regenerated.", oracle_id: "4f66d82a-492f-4638-9f77-190d4a33ad7f" });
 const SICK_TAPPER = () => make({ name: "Sick Tapper", type_line: "Creature — Human", mana_cost: "{1}", cmc: 1, power: "1", toughness: "1", oracle_text: "{T}: Draw a card." });
 const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
 const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle Slice and Dice, you may have it deal 1 damage to each creature.", oracle_id: "463fc961-d34e-4f40-b383-5b78a0fcb5c8" });
@@ -9483,6 +9496,32 @@ describe("static activation haste", () => {
     game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
     const tapper = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sick Tapper")!;
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === tapper.instance_id)).toBe(true);
+  });
+});
+
+describe("threshold board wipes", () => {
+  it("uses Kirtar's Wrath threshold to create Spirits after destroying creatures", () => {
+    const profile = profileOf(KIRTARS_WRATH());
+    expect(profile.effects).toMatchObject([{
+      kind: "kirtars-wrath", threshold: 7,
+      token: { name: "Spirit", power: 1, toughness: 1, keywords: ["flying"] }
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [KIRTARS_WRATH()]),
+      graveyard: toHand(0, Array.from({ length: 7 }, (_, index) => make({ name: `Spent ${index}`, type_line: "Sorcery" })), "grave")
+    }));
+    game = putOnBattlefield(game, 0, [BEAR(), PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    expect(game.players.flatMap((player) => player.battlefield).filter((permanent) => permanent.card.name === "Grizzly Bears")).toHaveLength(0);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Spirit")).toHaveLength(2);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Spirit").map((permanent) => permanent.card.keywords)).toEqual([["flying"], ["flying"]]);
   });
 });
 
