@@ -131,6 +131,10 @@ const RED_RAIDER = () => make({ name: "Red Raider", type_line: "Creature — Gob
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
 const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Regenerate target creature." });
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
+const WASH_OUT = () => make({ name: "Wash Out", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Return all permanents of the color of your choice to their owners' hands.", oracle_id: "54748cb1-d92a-4212-ad76-417ee79b5ef1" });
+const BLUE_PERMANENT = () => make({ name: "Blue Permanent", type_line: "Enchantment", colors: ["U"] });
+const RED_PERMANENT = () => make({ name: "Red Permanent", type_line: "Enchantment", colors: ["R"] });
+const COLORLESS_PERMANENT = () => make({ name: "Colorless Permanent", type_line: "Artifact" });
 const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
 const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
@@ -1311,6 +1315,27 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Kobolds of Kher Keep")).toHaveLength(6);
+  });
+
+  it("chooses a color and returns matching permanents to their owners' hands", () => {
+    let game = readyToCast([WASH_OUT()], [ISLAND(), FOREST(), FOREST(), FOREST()], [], [BLUE_PERMANENT(), RED_PERMANENT(), COLORLESS_PERMANENT()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const wash = game.players[0]!.hand.find((card) => card.name === "Wash Out")!;
+    expect(profileOf(WASH_OUT())).toMatchObject({
+      effects: [{ kind: "return-all-permanents-of-color", color: "chosen" }],
+      fullyImplemented: true
+    });
+    game = applyAction(game, 0, { type: "cast", cardId: wash.instance_id });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "choose-color");
+    expect(game.pendingChoice).toMatchObject({ type: "choose-color", sourceCard: { name: "Wash Out" } });
+    const choice = game.pendingChoice!;
+    expect(legalActions(game, 0).filter((entry) => entry.action.type === "choose-color")).toHaveLength(5);
+    game = applyAction(game, 0, { type: "choose-color", sourceId: choice.sourceId, color: "U" });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Blue Permanent")).toBe(false);
+    expect(game.players[1]!.hand.some((card) => card.name === "Blue Permanent")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Red Permanent")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Colorless Permanent")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Wash Out")).toBe(true);
   });
 
   it("moves a Graft counter to the next creature that enters", () => {
