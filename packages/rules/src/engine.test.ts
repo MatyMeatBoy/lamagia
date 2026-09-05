@@ -440,6 +440,7 @@ const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost:
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const OFFER_YOU_CANT_REFUSE = () => make({ name: "Test An Offer You Can't Refuse", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target noncreature spell. Its controller creates two Treasure tokens." });
 const TUTOR = () => make({ name: "Enlightened Tutor", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an artifact or enchantment card, reveal it, then shuffle. Put that card on top of your library." });
+const DEADLY_ROLLICK = () => make({ name: "Deadly Rollick", type_line: "Instant", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "If you control a commander, you may cast this spell without paying its mana cost.\nExile target creature.", oracle_id: "0456ec64-2c81-4763-a352-8ff64a4c3d6b", scryfall_id: "a30c266d-579e-4757-a4d6-6722fa343a6c" });
 const WIDESPREAD_PANIC = () => make({ name: "Widespread Panic", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Whenever a spell or ability causes its controller to shuffle their library, that player puts a card from their hand on top of their library.", oracle_id: "853a3c2b-3d37-453a-8a77-4d90bd3a1cb7", scryfall_id: "d9e1b37f-8168-4dc0-858f-434ee96ff748" });
 const BRAINSTORM = () => make({ name: "Brainstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Draw three cards, then put two cards from your hand on top of your library in any order.", oracle_id: "36cd2364-d113-47d1-b2c4-b088d9eb88dd", scryfall_id: "d8bcdbfb-27df-4553-b8ec-97c3f2053745" });
 const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Search your library for a creature card, reveal it, then shuffle and put the card on top." });
@@ -4702,6 +4703,42 @@ describe("casting", () => {
     expect(game.players[0]!.hand).toHaveLength(1);
     expect(game.players[0]!.library[0]!.name).toBe("Grizzly Bears");
     expect(game.players[0]!.library[1]!.name).toBe("Sol Ring");
+  });
+
+  it("lets Deadly Rollick be cast free only while controlling a commander, exiling the target either way", () => {
+    const profile = profileOf(DEADLY_ROLLICK());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.effects).toEqual([{ kind: "exile-target-permanent" }]);
+
+    // No commander in play: only the normal paid cast is offered.
+    let game = readyToCast([DEADLY_ROLLICK()], [SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], [BEAR()]);
+    let target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    let options = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(options).toHaveLength(1);
+    expect(options[0]!.action).not.toHaveProperty("freeCast");
+    const manaBefore = game.players[0]!.manaPool;
+    expect(manaBefore.B).toBe(0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+
+    // Controlling a commander unlocks a free-cast option offered alongside the paid one.
+    game = readyToCast([DEADLY_ROLLICK()], [SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], [BEAR()]);
+    game = putOnBattlefield(game, 0, [COMMANDER("Test Commander")]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Test Commander" ? { ...permanent, isCommander: true } : permanent)
+    }));
+    target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    options = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(options).toHaveLength(2);
+    const freeOption = options.find((entry) => (entry.action as { freeCast?: boolean }).freeCast);
+    expect(freeOption).toBeDefined();
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", freeCast: true, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[0]!.manaPool).toEqual({ W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.tapped)).toBe(false);
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
   it("reuses the library search family for top, hand and graveyard destinations", () => {

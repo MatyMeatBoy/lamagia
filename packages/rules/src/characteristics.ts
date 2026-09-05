@@ -903,6 +903,8 @@ export interface CardProfile {
   readonly hasRebound: boolean;
   /** "As an additional cost to cast ~, sacrifice a land" (Harrow, CR 601.2b). */
   readonly additionalCostSacrificeLand: boolean;
+  /** "If you control a commander, you may cast ~ without paying its mana cost" (Deadly Rollick, CR 601.2b, 118.9). */
+  readonly freeCastIfCommander: boolean;
   /** Generic cost reduction per creature on the battlefield ("costs {N} less to cast for each creature"). */
   readonly costReducesPerBoardCreature: number;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
@@ -3475,6 +3477,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
+    if (/^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     if (parseDamageAmplify(line)) continue;
@@ -3961,6 +3964,7 @@ export function cardProfile(card: CardData): CardProfile {
   const additionalCostExileGraveyardX = /as an additional cost to cast ~, exile x cards from your graveyard\.?/i.test(text);
   const hasRebound = /(?:^|\n)rebound\.?(?:$|\n)/i.test(text);
   const additionalCostSacrificeLand = /as an additional cost to cast ~, sacrifice a land\.?/i.test(text);
+  const freeCastIfCommander = text.split("\n").some((line) => /^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line.trim()));
   const doesNotUntapDuringUntap = text.split("\n").some((line) => /^~ doesn[’']t untap during your untap step\.?$/i.test(line.trim()));
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
@@ -4047,6 +4051,7 @@ export function cardProfile(card: CardData): CardProfile {
     additionalCostExileGraveyardX,
     hasRebound,
     additionalCostSacrificeLand,
+    freeCastIfCommander,
     costReducesPerBoardCreature,
     spellCostReductionGrant,
     staticLandManaBonus,
