@@ -633,6 +633,8 @@ export type SpellEffect =
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean; readonly flyingOnly?: boolean; readonly xThreshold?: number; readonly excludeSource?: boolean }
+  /** Kirtar's Wrath: threshold chooses the token-producing replacement mode (CR 702.34, 608.2h). */
+  | { readonly kind: "kirtars-wrath"; readonly threshold: number; readonly token: TokenDefinition }
   | { readonly kind: "destroy-creatures-power-greater-than-target" }
   | { readonly kind: "return-n-nonland-permanents"; readonly count: number | "X" }
   | { readonly kind: "return-n-creatures"; readonly count: number | "X" }
@@ -3548,6 +3550,16 @@ function recognizeText(text: string): RecognizedText {
       activatedAbilities: [], modalChoices: [], targetKind: "none",
       unimplementedText: cycleTrigger && !cycleEffect ? [cycleTrigger.text, ...unsupported] : unsupported,
       covered: unsupported.length === 0 && Boolean(cycleEffect)
+    };
+  }
+  const kirtarsWrath = /^Destroy all creatures\. They can't be regenerated\.\s*Threshold\s*[—–-]\s*If there are (one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more cards in your graveyard, instead destroy all creatures, then create two 1\/1 white Spirit creature tokens with flying\. Creatures destroyed this way can't be regenerated\.?$/i.exec(joined);
+  const kirtarsThreshold = kirtarsWrath ? toNumber(kirtarsWrath[1]!) : null;
+  if (kirtarsThreshold !== null) {
+    return {
+      effects: [{ kind: "kirtars-wrath", threshold: kirtarsThreshold, token: {
+        name: "Spirit", typeLine: "Creature — Spirit", power: 1, toughness: 1, colors: ["W"], keywords: ["flying"], tapped: false
+      } }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
   if (/^Counter target spell\. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard\.?$/i.test(joined)) {
