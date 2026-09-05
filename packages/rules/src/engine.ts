@@ -229,7 +229,7 @@ export interface TriggerInstance {
   /** Amount carried by life-gain/loss events for proportional triggers. */
   readonly eventAmount?: number;
   /** Delayed zone return data retained by a trigger created from an effect. */
-  readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId };
+  readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId; readonly destination?: "battlefield" | "hand" };
   /** Last-known power carried by a creature-dies event (CR 603.3d, 608.2h). */
   readonly eventPower?: number;
   /** Player damaged by a damage event, for effects referring to "that player". */
@@ -255,6 +255,7 @@ export interface DelayedReturn {
   readonly card: GameCard;
   readonly owner: SeatId;
   readonly sourceText: string;
+  readonly destination?: "battlefield" | "hand";
 }
 
 /**
@@ -421,6 +422,7 @@ export type PendingChoice =
       readonly sourceId: string;
       readonly sourceCard: GameCard;
       readonly optionIds: readonly string[];
+      readonly restDestination?: "bottom" | "graveyard";
     }
   | {
       readonly type: "discard-cards";
@@ -459,6 +461,10 @@ export type PendingChoice =
       readonly bottomCards: readonly GameCard[];
       readonly stage: "select" | "bottom";
       readonly selectedCardId?: string;
+      readonly destination: "hand" | "battlefield";
+      readonly returnAtEndStep: boolean;
+      readonly returnSourceToGraveyard: boolean;
+      readonly exileSourceAfterResolution: boolean;
     }
   | {
       readonly type: "discard-cards";
@@ -579,6 +585,7 @@ function handActivationSource(card: GameCard, controller: SeatId): Permanent {
   return {
     instance_id: card.instance_id, card, controller, tapped: false, summoningSick: false,
     damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0,
+    enteredThisTurn: false,
     isCommander: false
   };
 }
@@ -2601,7 +2608,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "look-put-one-in-hand": {
       const optionIds = playerAt(state, controller).library.slice(0, effect.amount).map((card) => card.instance_id);
       if (!optionIds.length) return state;
-      return { ...state, priorityOpen: false, pendingChoice: { type: "library-pick", seat: controller, sourceId: object.id, sourceCard: object.card, optionIds } };
+      return { ...state, priorityOpen: false, pendingChoice: {
+        type: "library-pick", seat: controller, sourceId: object.id, sourceCard: object.card, optionIds,
+        ...(effect.restDestination ? { restDestination: effect.restDestination } : {})
+      } };
     }
     case "grant-target-creature-keyword": {
       const target = object.targets[0];
@@ -2920,6 +2930,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "return-delayed-permanent": {
       const delayed = object.trigger?.delayedReturn;
       if (!delayed) return state;
+      if (delayed.destination === "hand") {
+        const permanent = findPermanent(state, delayed.card.instance_id);
+        if (!permanent) return state;
+        const removed = withPlayer(state, permanent.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+        }));
+        return withPlayer(removed, delayed.owner, (player) => ({ ...player, hand: [...player.hand, delayed.card] }));
+      }
       const exiled = playerAt(state, delayed.owner).exile.find((card) => card.instance_id === delayed.card.instance_id);
       if (!exiled) return state;
       const removed = withPlayer(state, delayed.owner, (player) => ({
@@ -3635,6 +3654,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (isLand(profile)) return putOntoBattlefield(next, controller, card, false);
       return applyEffect(next, object, { kind: "gain-life", amount: effect.fallbackLife });
     }
+    case "reveal-top-card-land-or-hand": {
+      const player = playerAt(state, controller);
+      const card = player.library[0];
+      if (!card) return logged(state, controller, `${player.name} revela la biblioteca vacía.`);
+      let next = withPlayer(state, controller, (current) => ({ ...current, library: current.library.slice(1) }));
+      next = logged(next, controller, `${player.name} revela ${card.name}.`);
+      return isLand(cardProfile(card))
+        ? putOntoBattlefield(next, controller, card, false)
+        : withPlayer(next, controller, (current) => ({ ...current, hand: [...current.hand, card] }));
+    }
     case "reveal-top-card-to-hand-and-gain-mana-value": {
       const player = playerAt(state, controller);
       const card = player.library[0];
@@ -3855,7 +3884,11 @@ function beginLookTopSelection(
   sourceId: string,
   sourceCard: GameCard,
   amount: number,
-  types: readonly CardType[]
+  types: readonly CardType[],
+  destination: "hand" | "battlefield" = "hand",
+  returnAtEndStep = false,
+  returnSourceToGraveyard = false,
+  exileSourceAfterResolution = false
 ): GameState {
   const visible = playerAt(state, seat).library.slice(0, Math.max(0, amount));
   if (!visible.length) return state;
@@ -3871,7 +3904,11 @@ function beginLookTopSelection(
       lookedCount: visible.length,
       remainingCards: visible,
       bottomCards: [],
-      stage: "select"
+      stage: "select",
+      destination,
+      returnAtEndStep,
+      returnSourceToGraveyard,
+      exileSourceAfterResolution
     }
   };
 }
@@ -3922,7 +3959,7 @@ function resolveTop(state: GameState): GameState {
     const triggerSurveil = object.trigger.definition.effect.kind === "surveil" ? object.trigger.definition.effect : null;
     if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
-    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types);
+    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep);
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,
@@ -3989,6 +4026,10 @@ function resolveTop(state: GameState): GameState {
       if (effect.kind !== "surveil") next = applyEffect(next, object, effect);
     }
     return beginScry(next, object.controller, object.id, object.card, surveil.amount, !object.activated, Boolean(object.flashback), 0, "graveyard");
+  }
+  const lookTop = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-top-select" }> => effect.kind === "look-top-select");
+  if (lookTop) {
+    return beginLookTopSelection(next, object.controller, object.id, object.card, lookTop.amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback));
   }
   const search = activatedEffect?.kind === "search-library"
     ? activatedEffect
@@ -4567,7 +4608,7 @@ function queueDelayedReturns(state: GameState): GameState {
       sourceText: delayed.sourceText
     },
     cause: `${delayed.sourceCard.name}: delayed end-step return`,
-    delayedReturn: { card: delayed.card, owner: delayed.owner },
+    delayedReturn: { card: delayed.card, owner: delayed.owner, ...(delayed.destination ? { destination: delayed.destination } : {}) },
     eventController: delayed.owner
   }));
   return { ...state, delayedReturns: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
@@ -6334,13 +6375,16 @@ function applyResolveLibraryPick(state: GameState, seat: SeatId, action: Extract
   const picked = player.library.find((card) => card.instance_id === action.cardId);
   if (!picked) throw new Error("La carta elegida ya no está en la biblioteca.");
   const optionIds = new Set(choice.optionIds);
-  const rest = player.library.filter((card) => !optionIds.has(card.instance_id) || card.instance_id !== picked.instance_id);
+  const unselected = player.library.filter((card) => optionIds.has(card.instance_id) && card.instance_id !== picked.instance_id);
   const next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
     ...current,
-    library: rest,
-    hand: [...current.hand, picked]
+    library: choice.restDestination === "graveyard"
+      ? current.library.filter((card) => !optionIds.has(card.instance_id))
+      : [...current.library.filter((card) => !optionIds.has(card.instance_id)), ...unselected],
+    hand: [...current.hand, picked],
+    ...(choice.restDestination === "graveyard" && unselected.length ? { graveyard: [...current.graveyard, ...unselected] } : {})
   }));
-  return logged(next, seat, `${player.name} pone ${picked.name} en su mano y el resto en el fondo de su biblioteca.`);
+  return logged(next, seat, `${player.name} pone ${picked.name} en su mano y el resto ${choice.restDestination === "graveyard" ? "en su cementerio" : "en el fondo de su biblioteca"}.`);
 }
 
 function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extract<PendingChoice, { type: "search-library-multi" }>, selectedIds: readonly string[]): GameState {
@@ -6434,13 +6478,32 @@ function finishLookTopSelection(
     : undefined;
   const bottom = choice.bottomCards;
   const player = playerAt(state, seat);
-  const next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
     ...current,
     library: [...current.library.slice(choice.lookedCount), ...bottom],
-    ...(selected ? { hand: [...current.hand, selected] } : {})
+    ...(selected && choice.destination === "hand" ? { hand: [...current.hand, selected] } : {})
   }));
+  if (selected && choice.destination === "battlefield") {
+    next = putOntoBattlefield(next, seat, selected, false);
+    if (choice.returnAtEndStep && !selected.token) {
+      const triggerAtTurn = next.step === "end" ? next.turn + 1 : next.turn;
+      next = {
+        ...next,
+        delayedReturns: [...next.delayedReturns, {
+          id: `${choice.sourceId}:return`, triggerAtTurn, sourceCard: choice.sourceCard,
+          card: selected, owner: selected.owner, destination: "hand",
+          sourceText: `${selected.name} returns to its owner's hand at the beginning of the next end step.`
+        }]
+      };
+    }
+  }
+  if (choice.returnSourceToGraveyard) {
+    next = withPlayer(next, choice.sourceCard.owner, (current) => choice.exileSourceAfterResolution
+      ? { ...current, exile: [...current.exile, choice.sourceCard] }
+      : { ...current, graveyard: [...current.graveyard, choice.sourceCard] });
+  }
   return logged(next, seat, selected
-    ? `${player.name} pone ${selected.name} en su mano y ordena el resto en el fondo.`
+    ? `${player.name} ${choice.destination === "battlefield" ? `pone ${selected.name} en el campo de batalla` : `pone ${selected.name} en su mano`} y ordena el resto en el fondo.`
     : `${player.name} no elige una carta y ordena las cartas en el fondo.`);
 }
 

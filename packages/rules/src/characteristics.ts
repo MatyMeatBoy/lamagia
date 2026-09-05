@@ -372,7 +372,7 @@ export type SpellEffect =
   /** Surveil N (CR 701.42): look at the top N, put any number in the graveyard, the rest on top in any order. */
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
-  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" }
+  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
   /** Each player discards their hand, then all draw the greatest discarded hand size. */
@@ -404,7 +404,7 @@ export type SpellEffect =
   | { readonly kind: "return-all-your-graveyard-to-hand" }
   /** Return every creature card that entered your graveyard from the battlefield this turn. */
   | { readonly kind: "return-creatures-died-this-turn-to-hand" }
-  | { readonly kind: "look-put-one-in-hand"; readonly amount: number }
+  | { readonly kind: "look-put-one-in-hand"; readonly amount: number; readonly restDestination?: "bottom" | "graveyard" }
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
@@ -587,6 +587,7 @@ export type SpellEffect =
   /** Reveals until a card type is found, then sends the rest to a zone. */
   | { readonly kind: "reveal-until-type-to-hand"; readonly type: CardType; readonly restDestination: "graveyard" }
   | { readonly kind: "reveal-top-card-conditional"; readonly creatureToken: TokenDefinition; readonly landDestination: "battlefield"; readonly fallbackLife: number }
+  | { readonly kind: "reveal-top-card-land-or-hand" }
   | {
       readonly kind: "search-library";
       readonly types: readonly CardType[];
@@ -1864,6 +1865,11 @@ function parseLookTopSelection(text: string): SpellEffect | null {
   return { kind: "look-top-select", amount, types, destination: "hand" };
 }
 
+function parseAethermagesTouch(text: string): SpellEffect | null {
+  if (!/^Reveal the top four cards of your library. You may put a creature card from among them onto the battlefield. It gains "At the beginning of your end step, return (?:this creature|~) to its owner'?s hand." Then put the rest of the cards revealed this way on the bottom of your library in any order.?$/i.test(text.trim())) return null;
+  return { kind: "look-top-select", amount: 4, types: ["Creature"], destination: "battlefield", returnAtEndStep: true };
+}
+
 function parseExileAndTransferSource(text: string): SpellEffect | null {
   if (/^Exile target artifact or enchantment$/i.test(text.trim().replace(/\.$/, ""))) {
     return { kind: "exile-target-permanent" };
@@ -1941,6 +1947,12 @@ function parseRevealTopCardConditional(text: string): SpellEffect | null {
     landDestination: "battlefield",
     fallbackLife: 2
   };
+}
+
+function parseRevealTopCardLandOrHand(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!/^Reveal the top card of your library\. If it's a land card, put it onto the battlefield\. Otherwise, put it into your hand\.?$/i.test(normalized)) return null;
+  return { kind: "reveal-top-card-land-or-hand" };
 }
 
 function parseRevealTopCardToHandAndGainManaValue(text: string): SpellEffect | null {
@@ -2663,6 +2675,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null && amount > 1) return { effect: { kind: "look-put-one-in-hand", amount }, target: "none" };
   }
+  if ((match = /^Look at the top (\w+) cards of your library\. Put one of them into your hand and the rest into your graveyard$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null && amount > 1) return { effect: { kind: "look-put-one-in-hand", amount, restDestination: "graveyard" }, target: "none" };
+  }
   if ((match = /^Scry (\w+)$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null && amount > 0) return { effect: { kind: "scry", amount }, target: "none" };
@@ -2915,6 +2931,20 @@ function recognizeText(text: string): RecognizedText {
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
   const decreeJoined = decreeBody.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  const aethermagesTouch = parseAethermagesTouch(joined);
+  if (aethermagesTouch) {
+    return { effects: [aethermagesTouch], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
+  }
+  const revealTopLandOrHand = parseRevealTopCardLandOrHand(joined.replace(/^vigilance\s+/i, "").replace(/^\{T\}:\s*/i, ""));
+  if (revealTopLandOrHand) {
+    return {
+      effects: [], triggers: [], activatedAbilities: [{
+        index: 0, requiresTap: true, sacrificesSelf: false, lifeCost: 0, manaCost: null,
+        effect: revealTopLandOrHand, targetKind: "none", text: joined
+      }],
+      modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
   if (/^Destroy all creatures\. They can't be regenerated\. Draw a card for each creature destroyed this way\.?$/i.test(decreeJoined)) {
     const cycleTrigger = body.find((entry) => /^when\s+you\s+cycle\s+(?:this\s+card|~),/i.test(entry.text));
     const matchedCycle = cycleTrigger ? matchTriggerLine(cycleTrigger.text) : null;

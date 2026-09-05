@@ -325,6 +325,9 @@ const C13_ARMY_OF_THE_DAMNED = () => {
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
 };
 const C13_CULTIVATE = () => make({ name: "Cultivate", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for up to two basic land cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", scryfall_id: "8b755881-a72d-4e21-a369-d2924eb4585a" });
+const C13_AETHERMAGES_TOUCH = () => make({ name: "Aethermage's Touch", type_line: "Instant", mana_cost: "{2}{W}{U}", cmc: 4, oracle_text: "Reveal the top four cards of your library. You may put a creature card from among them onto the battlefield. It gains \"At the beginning of your end step, return this creature to its owner's hand.\" Then put the rest of the cards revealed this way on the bottom of your library in any order.", scryfall_id: "15692698-ef57-4672-bf76-5fe4a00c693a", oracle_id: "15692698-ef57-4672-bf76-5fe4a00c693a" });
+const C13_STRATEGIC_PLANNING = () => make({ name: "Strategic Planning", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Look at the top three cards of your library. Put one of them into your hand and the rest into your graveyard.", scryfall_id: "02b5acf3-47cb-4d39-9307-e02656f1879b", oracle_id: "02b5acf3-47cb-4d39-9307-e02656f1879b" });
+const C13_SKYWARD_EYE_PROPHETS = () => make({ name: "Skyward Eye Prophets", type_line: "Creature — Human Wizard", mana_cost: "{3}{G}{W}{U}", cmc: 6, power: "3", toughness: "3", oracle_text: "Vigilance\n{T}: Reveal the top card of your library. If it's a land card, put it onto the battlefield. Otherwise, put it into your hand.", scryfall_id: "056f9887-3ab0-486a-b859-5999d39f9ec2", oracle_id: "45bef776-121b-4489-9c46-f7b4fd4c3c0d" });
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice this artifact: Search your library for up to two basic land cards, reveal them, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d", oracle_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
 const C13_SPOILS_OF_VICTORY = () => make({ name: "Spoils of Victory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for a Plains, Island, Swamp, Mountain, or Forest card and put that card onto the battlefield. Then shuffle.", scryfall_id: "8a7ee186-b25f-4185-830d-e8e7cf23d4e5", oracle_id: "852bd598-6e48-43c8-9211-740ae9e0c42e" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
@@ -4290,6 +4293,44 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.filter((card) => card.name === "Grizzly Bears")).toHaveLength(1);
   });
 
+  it("puts Aethermage's Touch creature onto the battlefield and returns it next end step", () => {
+    const profile = profileOf(C13_AETHERMAGES_TOUCH());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "look-top-select", amount: 4, types: ["Creature"], destination: "battlefield", returnAtEndStep: true }]
+    });
+    let game = readyToCast([C13_AETHERMAGES_TOUCH()], [PLAINS(), ISLAND(), ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), ISLAND(), MOUNTAIN(), FLIER()], "aethermage-library"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "look-top-select", stage: "select", destination: "battlefield" });
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "choose-look-top", sourceId, ordinal: 0 });
+    while (game.pendingChoice?.type === "look-top-select" && game.pendingChoice.stage === "bottom") {
+      game = applyAction(game, 0, { type: "choose-look-top-bottom", sourceId, ordinal: 0 });
+    }
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Aethermage's Touch")).toBe(true);
+    expect(game.delayedReturns).toMatchObject([{ card: { name: "Grizzly Bears" }, destination: "hand" }]);
+    game = passUntil(game, (state) => state.players[0]!.hand.some((card) => card.name === "Grizzly Bears"));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("puts Strategic Planning's unselected top cards into the graveyard", () => {
+    const profile = profileOf(C13_STRATEGIC_PLANNING());
+    expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "look-put-one-in-hand", amount: 3, restDestination: "graveyard" }] });
+    let game = readyToCast([C13_STRATEGIC_PLANNING()], [ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), MOUNTAIN(), SWAMP()], "planning-library"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "library-pick", restDestination: "graveyard" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "library-pick" }>;
+    game = applyAction(game, 0, { type: "resolve-library-pick", sourceId: choice.sourceId, cardId: "planning-library-1" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Mountain")).toBe(true);
+    expect(game.players[0]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Grizzly Bears", "Swamp", "Strategic Planning"]));
+    expect(game.players[0]!.library.some((card) => ["Grizzly Bears", "Mountain", "Swamp"].includes(card.name))).toBe(false);
+  });
+
   it("lets Cultivate choose two basics for battlefield and hand", () => {
     let game = readyToCast([C13_CULTIVATE()], [FOREST(), FOREST(), FOREST()]);
     game = stage(game, 0, (player) => ({ library: [...toHand(0, [ISLAND(), SWAMP()], "cultivate-library"), ...player.library] }));
@@ -5901,6 +5942,26 @@ describe("activated abilities", () => {
     // The pool is emptied when the step ends (rule 500.4), never before.
     // A mana ability never uses the stack (rule 605.3a).
     expect(game.stack).toHaveLength(0);
+  });
+
+  it("reuses top-card land-or-hand selection for Skyward Eye Prophets", () => {
+    const profile = profileOf(C13_SKYWARD_EYE_PROPHETS());
+    expect(profile).toMatchObject({ fullyImplemented: true, activatedAbilities: [{ requiresTap: true, effect: { kind: "reveal-top-card-land-or-hand" } }] });
+    let game = readyOnBoard([C13_SKYWARD_EYE_PROPHETS()], { hold: true });
+    game = stage(game, 0, (player) => ({ library: toHand(0, [ISLAND()], "prophets-land") }));
+    const source = permanentNamed(game, 0, "Skyward Eye Prophets")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Island")).toBe(true);
+
+    game = readyOnBoard([C13_SKYWARD_EYE_PROPHETS()], { hold: true });
+    game = stage(game, 0, (player) => ({ library: toHand(0, [BEAR()], "prophets-spell") }));
+    const second = permanentNamed(game, 0, "Skyward Eye Prophets")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: second.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
   it("recognises the fetch land cost and refuses it while the land is tapped", () => {
