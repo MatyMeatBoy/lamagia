@@ -334,7 +334,7 @@ const C13_CONTESTED_CLIFFS = () => make({ name: "Contested Cliffs", type_line: "
 const TEST_BEAST = () => make({ name: "Test Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "4", toughness: "4" });
 const C13_WITCH_HUNT = () => make({ name: "Witch Hunt", type_line: "Enchantment", oracle_text: "Players can't gain life.\nAt the beginning of your upkeep, this enchantment deals 4 damage to you.\nAt the beginning of your end step, target opponent chosen at random gains control of this enchantment.", oracle_id: "e86bd38f-7804-449d-af29-21e96a56ab30" });
 const C13_NAYA_SOULBEAST = () => make({ name: "Naya Soulbeast", type_line: "Creature — Beast", mana_cost: "{6}{G}{G}", cmc: 8, power: "0", toughness: "0", oracle_text: "When you cast this spell, each player reveals the top card of their library. This creature enters with X +1/+1 counters on it, where X is the total mana value of all cards revealed this way.\nTrample", oracle_id: "5ea0c608-2c56-4889-a5d3-d435df515950" });
-const C13_ETERNAL_DRAGON = () => make({ name: "Eternal Dragon", type_line: "Creature — Dragon", mana_cost: "{5}{W}{W}", cmc: 7, power: "5", toughness: "5", oracle_text: "Flying\n{3}{W}{W}: Return ~ from your graveyard to your hand.\nActivate only during your upkeep.", oracle_id: "04d8615c-3883-4251-9790-1d8a4a40e142" });
+const C13_ETERNAL_DRAGON = () => make({ name: "Eternal Dragon", type_line: "Creature — Dragon Spirit", mana_cost: "{5}{W}{W}", cmc: 7, power: "5", toughness: "5", oracle_text: "Flying\n{3}{W}{W}: Return this card from your graveyard to your hand. Activate only during your upkeep.\nPlainscycling {2} ({2}, Discard this card: Search your library for a Plains card, reveal it, put it into your hand, then shuffle.)", oracle_id: "04d8615c-3883-4251-9790-1d8a4a40e142" });
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -1912,6 +1912,7 @@ describe("casting", () => {
       sourceZone: "graveyard", upkeepOnly: true, manaCost: { raw: "{3}{W}{W}" },
       effect: { kind: "return-source-to-hand" }
     });
+    expect(profileOf(dragon).cyclingSearches).toMatchObject([{ subtypes: ["Plains"], cost: { raw: "{2}" } }]);
     let game = twoSeatGame([], []);
     game = stage(game, 0, (player) => ({ graveyard: toHand(0, [dragon], "graveyard"), autoPass: false }));
     game = putOnBattlefield(game, 0, [PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()]);

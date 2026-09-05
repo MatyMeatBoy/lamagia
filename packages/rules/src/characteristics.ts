@@ -3270,17 +3270,19 @@ function recognizeText(text: string): RecognizedText {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
     // Eternal Dragon-style graveyard activation (CR 602.1, 602.5).
-    const graveyardReturn = /^((?:\{[^}]+\})+):\s*Return ~ from your graveyard to your hand\.?$/i.exec(line);
-    if (graveyardReturn && /^Activate only during your upkeep\.?$/i.test(body[lineIndex + 1]?.text ?? "")) {
+    const graveyardReturn = /^((?:\{[^}]+\})+):\s*Return (?:~|this card) from your graveyard to your hand\.?/i.exec(line);
+    const upkeepRestrictionOnNextLine = /^Activate only during your upkeep\.?$/i.test(body[lineIndex + 1]?.text ?? "");
+    const upkeepRestrictionInline = /Activate only during your upkeep\.?$/i.test(line);
+    if (graveyardReturn && (upkeepRestrictionInline || upkeepRestrictionOnNextLine)) {
       const manaCost = parseManaCost(graveyardReturn[1]!);
       if (manaCost) {
         activatedAbilities.push({
           index: activatedAbilities.length, requiresTap: false, sacrificesSelf: false, lifeCost: 0,
           manaCost, sourceZone: "graveyard", upkeepOnly: true,
           effect: { kind: "return-source-to-hand" }, targetKind: "none",
-          text: `${line} ${body[lineIndex + 1]!.text}`
+          text: upkeepRestrictionInline ? line : `${line} ${body[lineIndex + 1]!.text}`
         });
-        lineIndex += 1;
+        if (upkeepRestrictionOnNextLine) lineIndex += 1;
         continue;
       }
     }
