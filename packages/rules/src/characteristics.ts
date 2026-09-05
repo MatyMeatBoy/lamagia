@@ -3755,6 +3755,19 @@ function recognizeText(text: string): RecognizedText {
       };
     }
   }
+  // Beast Within / Generous Gift: the same shape, but any permanent (the
+  // engine's handler for the effect kind above is target-agnostic — it just
+  // destroys whatever was targeted and hands its controller the token).
+  const destroyPermanentThenToken = /^Destroy target permanent\.\s+Its controller creates (.+?)\.?$/i.exec(joined);
+  if (destroyPermanentThenToken) {
+    const token = parseCreateToken(`Create ${destroyPermanentThenToken[1]!}`);
+    if (token?.kind === "create-token") {
+      return {
+        effects: [{ kind: "destroy-target-creature-then-controller-token", token: token.token }],
+        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "permanent", unimplementedText: [], covered: true
+      };
+    }
+  }
   // "Counter target noncreature spell. Its controller creates two Treasure
   // tokens." (An Offer You Can't Refuse) — the reminder-text parenthetical
   // explaining Treasure is stripped before `joined` is built.
