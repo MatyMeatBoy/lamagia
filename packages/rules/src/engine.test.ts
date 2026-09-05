@@ -10019,4 +10019,16 @@ describe("bot games", () => {
     expect(choice?.action.type).toBe("declare-blockers");
     expect(() => applyAction(game, 1, choice!.action)).not.toThrow();
   });
+
+  it("uses hand fast mana only when it unlocks a cast", () => {
+    let game = twoSeatGame([], []);
+    const guide = SIMIAN_SPIRIT_GUIDE();
+    const expensive = make({ name: "Fast Mana Test", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Draw a card." });
+    game = stage(game, 0, () => ({ autoPass: false, hand: toHand(0, [guide, expensive], "fast") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const choice = botAction(game, 0);
+    expect(choice?.action).toMatchObject({ type: "activate-mana", sourceId: "fast-0" });
+  });
 });
