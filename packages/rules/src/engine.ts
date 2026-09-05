@@ -138,8 +138,9 @@ export interface Permanent {
   readonly attachedTo?: string;
   /** The player this Aura is attached to (Curses; CR 303.4h). */
   readonly attachedToPlayer?: SeatId;
-  /** The prior controller restored when an Aura control effect ends (CR 110.2, 613.7). */
-  readonly controlChange?: { readonly auraId: string; readonly previousController: SeatId };
+  /** Static Aura control marker; stores the controller to restore when the Aura leaves. */
+  readonly auraControlSourceId?: string;
+  readonly controllerBeforeAuraControl?: SeatId;
   /** The last card exiled by an imprint ability, if any. */
   readonly exiledWith?: GameCard;
   /** Current Class level (CR 702.134); absent means level 1, a Class's starting level. */
@@ -1651,6 +1652,50 @@ function changePermanentController(state: GameState, permanent: Permanent, contr
     ...player,
     battlefield: [...player.battlefield, { ...permanent, controller }]
   }));
+  return next;
+}
+
+/** Applies Control Magic-style continuous control effects (CR 611.3, 613.7). */
+function syncAuraControlEffects(state: GameState): GameState {
+  let next = state;
+  const active = new Map<string, { auraId: string; controller: SeatId }>();
+  for (const aura of allPermanents(next)) {
+    const targetKind = cardProfile(aura.card).auraControlTarget;
+    if (!targetKind || !aura.attachedTo) continue;
+    const target = findPermanent(next, aura.attachedTo);
+    if (!target || !auraAttachmentLegal(target, targetKind, aura.controller)) continue;
+    active.set(target.instance_id, { auraId: aura.instance_id, controller: aura.controller });
+  }
+  for (const target of allPermanents(next)) {
+    const effect = active.get(target.instance_id);
+    if (effect) {
+      const previous = target.controllerBeforeAuraControl ?? target.controller;
+      if (target.controller !== effect.controller) next = changePermanentController(next, target, effect.controller);
+      const current = findPermanent(next, target.instance_id);
+      if (!current) continue;
+      if (current.auraControlSourceId === effect.auraId && current.controllerBeforeAuraControl === previous) continue;
+      next = withPlayer(next, current.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === current.instance_id
+          ? { ...permanent, auraControlSourceId: effect.auraId, controllerBeforeAuraControl: previous }
+          : permanent)
+      }));
+      continue;
+    }
+    if (target.auraControlSourceId === undefined) continue;
+    const restore = target.controllerBeforeAuraControl;
+    if (restore !== undefined && target.controller !== restore) next = changePermanentController(next, target, restore);
+    const current = findPermanent(next, target.instance_id);
+    if (!current) continue;
+    next = withPlayer(next, current.controller, (player) => ({
+      ...player,
+      battlefield: player.battlefield.map((permanent) => {
+        if (permanent.instance_id !== current.instance_id) return permanent;
+        const { auraControlSourceId: _source, controllerBeforeAuraControl: _previous, ...cleared } = permanent;
+        return cleared;
+      })
+    }));
+  }
   return next;
 }
 
@@ -5225,55 +5270,12 @@ function resolveTop(state: GameState): GameState {
 // ---------------------------------------------------------------------------
 
 function applyStateBasedActions(state: GameState): GameState {
-  let next = state;
+  let next = syncAuraControlEffects(state);
   let changed = true;
   let guard = 0;
   while (changed && guard < 32) {
     changed = false;
     guard += 1;
-
-    // Control Magic-style Auras create a continuous control-changing effect,
-    // rather than a one-shot move (CR 110.2, 613.7). Keep the prior controller
-    // so removing the Aura restores the object to the controller it had before
-    // this specific effect began, including the case of a previously stolen
-    // permanent.
-    for (const aura of allPermanents(next)) {
-      const auraProfile = cardProfile(aura.card);
-      if (!auraProfile.auraControl || aura.attachedTo === undefined) continue;
-      const target = findPermanent(next, aura.attachedTo);
-      if (!target || target.instance_id === aura.instance_id) continue;
-      if (target.controller === aura.controller && target.controlChange?.auraId === aura.instance_id) continue;
-      if (target.controller === aura.controller) continue;
-      const previousController = target.controlChange?.previousController ?? target.controller;
-      next = changePermanentController(next, target, aura.controller);
-      next = withPlayer(next, aura.controller, (player) => ({
-        ...player,
-        battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
-          ? { ...permanent, controlChange: { auraId: aura.instance_id, previousController } }
-          : permanent)
-      }));
-      changed = true;
-    }
-
-    // When the controlling Aura leaves or falls off, its continuous effect ends
-    // and the enchanted permanent returns to its recorded prior controller.
-    for (const permanent of allPermanents(next)) {
-      const change = permanent.controlChange;
-      if (!change) continue;
-      const aura = findPermanent(next, change.auraId);
-      if (aura?.attachedTo === permanent.instance_id && cardProfile(aura.card).auraControl) continue;
-      const restoredController = change.previousController;
-      next = changePermanentController(next, permanent, restoredController);
-      next = withPlayer(next, restoredController, (player) => ({
-        ...player,
-        battlefield: player.battlefield.map((candidate) => {
-          if (candidate.instance_id !== permanent.instance_id) return candidate;
-          const { controlChange: _controlChange, ...restored } = candidate;
-          return restored;
-        })
-      }));
-      changed = true;
-    }
 
     // Rule 704.5q: an Equipment becomes unattached when its equipped object
     // leaves the battlefield or is no longer a creature.

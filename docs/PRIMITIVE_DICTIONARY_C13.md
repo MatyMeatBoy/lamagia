@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T09:10:28.934545+00:00`
+- Generated: `2026-09-05T20:22:46.084890+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **266**
+- Exported profiles in scope: **341**; fully implemented: **288**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -149,6 +149,7 @@ Add, remove or inspect public counters, including counters used as costs.
 - ⚠️ `stateBasedActions`
 **Existing effect handlers**
 - ✅ `add-counter-source`
+- ✅ `proliferate`
 **Wording families**
 - Put a +1/+1 counter
 - Remove a counter from ~
@@ -257,19 +258,36 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 - Sacrifice a...: effect
 **Rule-engine note:** Use the same legality function for offered actions and forged intents. A cost is paid before the ability resolves and cannot leak hidden choices.
 
+### static / continuous
+
+Apply a continuous layer effect to the correct set of permanents without putting a trigger on the stack.
+
+**Parser / IR fields**
+- ✅ `staticPowerToughnessGrants`
+- ✅ `staticKeywordGrants`
+- ✅ `auraControlTarget`
+**Reusable engine helpers**
+- ✅ `staticPowerToughnessBonus`
+- ✅ `keywordOf`
+- ✅ `syncAuraControlEffects`
+**Existing effect handlers**
+- ✅ `modify-source-creature`
+**Wording families**
+- Has base power and toughness
+- Loses all abilities
+- Gains/loses a keyword
+- Continuous effect from an Aura
+**Rule-engine note:** Keep layer-sensitive base characteristics, keyword removal/grants, type changes and Aura scope as separate operands; do not turn a continuous effect into a one-shot activation.
+
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **266/341** profiles complete; **6** unfinished cards have exactly one unmatched line.
+The engine export currently marks **288/341** profiles complete; **2** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
 | --- | ---: | --- |
-| `unclaimed` | 1 | creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you — Propaganda |
-| `unclaimed` | 1 | return all permanents of the color of your choice to their owners' hands — Wash Out |
+| `unclaimed` | 1 | enchanted creature is <n> insect artifact creature with base power and toughness <n>/<n> and has indestructible, and it loses all other abilities, card types, and creature types — Darksteel Mutation |
 | `unclaimed` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
-| `unclaimed` | 1 | whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat — Serene Master |
-| `unclaimed` | 1 | {cost}: this turn, creatures can't block unless their controller pays {cost} for each blocking creature they control — War Cadence |
-| `unclaimed` | 1 | {cost}: until end of turn, creatures you control have base power and toughness <n>/<n> and gain all creature types — Mirror Entity |
 
 The highest-value fix is the shared template, not the first card name. A new primitive should parameterize type, zone, target, quantity and optionality so reprints and other sets inherit it.
 

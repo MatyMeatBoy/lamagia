@@ -10,87 +10,73 @@ cards but never completes one is correctly ranked low.
 When enabled, `oracle:` signatures merge parameterized actions by operation, target, zone, and type; the engine profile still decides whether a card is complete.
 
 - Catalog cards: **341**
-- Fully implemented: **269**
-- Unfinished: **72**, of which **5** are a single line away
-- This queue's 40 entries would finish **24** more cards
+- Fully implemented: **288**
+- Unfinished: **53**, of which **2** are a single line away
+- This queue's 40 entries would finish **19** more cards
 - Scope: **C13**
 
 ## Queue
 
 | # | Unlocks | Cumulative | Blocks | One-line review | Family | Claim key | Template |
 | --- | --- | --- | --- | ---: | --- | --- | --- |
-| 1 | 1 | 1 | 1 | 1 | combat-restriction | `c13-oracle-other-activated-shape` | `oracle:other\|activated\|shape:{cost}: this turn, creatures can't block unless their controller pays {cost} for each blocking creature they control\|cost-context:activated-cost` |
-| 2 | 1 | 2 | 1 | 1 | combat-restriction | `c13-oracle-other-static-spell` | `oracle:other\|static-or-spell\|shape:creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you` |
-| 3 | 1 | 3 | 1 | 1 | activated | `c13-oracle-other-static-spell-2` | `oracle:other\|static-or-spell\|shape:until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n>\|zone:battlefield` |
-| 4 | 1 | 4 | 1 | 1 | activated | `c13-oracle-other-triggered-shape` | `oracle:other\|triggered\|shape:whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat\|target-types:Creature\|zone:battlefield` |
-| 5 | 1 | 5 | 1 | 1 | return | `c13-oracle-return-static-spell` | `oracle:return\|static-or-spell\|shape:return all permanents of the color of your choice to their owners' hands` |
-| 6 | 0 | 5 | 5 | 0 | activated | `c13-oracle-other-static-spell-3` | `oracle:other\|static-or-spell\|shape:enchant player` |
-| 7 | 1 | 6 | 1 | 0 | counters | `c13-oracle-counter-triggered-shape` | `oracle:counter\|triggered\|shape:whenever <n> creature attacks enchanted player, put <n> +<n>/+<n> counter on it` |
-| 8 | 1 | 7 | 1 | 0 | token | `c13-oracle-create-token-triggered` | `oracle:create-token\|triggered\|shape:whenever <n> player attacks enchanted player with <n> or more creatures, that attacking player may create <n> tapped <n>/<n> black zombie creature token` |
-| 9 | 1 | 8 | 1 | 0 | gain-life | `c13-oracle-gain-life-triggered` | `oracle:gain-life\|triggered\|shape:whenever <n> creature attacks enchanted player, its controller gains <n> life` |
-| 10 | 1 | 9 | 1 | 0 | activated | `c13-oracle-other-triggered-shape-2` | `oracle:other\|triggered\|shape:whenever <n> player attacks enchanted player with <n> or more creatures, that attacking player may tap or untap target permanent of their choice\|zone:battlefield` |
-| 11 | 0 | 9 | 4 | 0 | activated | `c13-oracle-other-static-spell-4` | `oracle:other\|static-or-spell\|shape:enchant creature` |
-| 12 | 1 | 10 | 1 | 0 | token | `c13-oracle-create-token-activated` | `oracle:create-token\|activated\|cost-context:activated-cost\|shape:enchanted creature has "{cost}: create <n> <n>/<n> green elf warrior creature token."` |
-| 13 | 1 | 11 | 1 | 0 | activated | `c13-oracle-other-static-spell-5` | `oracle:other\|static-or-spell\|shape:enchanted creature is <n> insect artifact creature with base power and toughness <n>/<n> and has indestructible, and it loses all other abilities, card types, a` |
-| 14 | 1 | 12 | 1 | 0 | activated | `c13-oracle-other-static-spell-6` | `oracle:other\|static-or-spell\|shape:you control enchanted creature` |
-| 15 | 0 | 12 | 4 | 0 | activated | `c13-oracle-other-static-spell-7` | `oracle:other\|static-or-spell\|shape:you may choose new targets for the copy` |
-| 16 | 1 | 13 | 1 | 0 | activated | `c13-oracle-other-activated-shape-2` | `oracle:other\|activated\|shape:{cost}: copy target instant or sorcery spell you control\|target-types:Instant,Sorcery\|zone:battlefield\|cost-context:activated-cost` |
-| 17 | 1 | 14 | 1 | 0 | return | `c13-oracle-return-activated-target` | `oracle:return\|activated\|target-types:Instant,Sorcery\|zone:battlefield\|cost-context:activated-cost\|cost-actions:return\|shape:{cost}, return <n> lands you control to their owner's hand: copy target instant or sorcery spell` |
-| 18 | 0 | 14 | 2 | 0 | activated | `c13-oracle-other-static-spell-8` | `oracle:other\|static-or-spell\|shape:enchant land` |
-| 19 | 1 | 15 | 1 | 0 | token | `c13-oracle-create-token-activated-2` | `oracle:create-token\|activated\|cost-context:activated-cost\|shape:enchanted land has "{cost}, {cost}: create <n> <n>/<n> green and blue drake creature token with flying."` |
-| 20 | 1 | 16 | 1 | 0 | token | `c13-oracle-create-token-activated-3` | `oracle:create-token\|activated\|cost-context:activated-cost\|shape:enchanted land has "{cost}: create <n> <n>/<n> green beast creature token with trample."` |
-| 21 | 0 | 16 | 2 | 0 | return | `c13-oracle-return-triggered-shape` | `oracle:return\|triggered\|shape:return that card to the battlefield under its owner's control at the beginning of the next end step` |
-| 22 | 1 | 17 | 1 | 0 | exile | `c13-oracle-exile-activated-target` | `oracle:exile\|activated\|target-types:Creature\|zone:battlefield\|cost-context:activated-cost\|shape:{cost}, {cost}: exile another target creature` |
-| 23 | 1 | 18 | 1 | 0 | exile | `c13-oracle-exile-activated-target-2` | `oracle:exile\|activated\|target-types:Creature\|zone:battlefield\|cost-context:activated-cost\|shape:{cost}: exile target creature` |
-| 24 | 0 | 18 | 1 | 0 | counters | `c13-oracle-counter-activated-cost` | `oracle:counter\|activated\|cost-context:activated-cost\|cost-actions:counter,modify-stats\|modal\|modal-mode:one\|shape:{cost}, remove <n> +<n>/+<n> counters from ~: choose <n> -` |
-| 25 | 0 | 18 | 1 | 0 | counters | `c13-oracle-counter-activated-cost-2` | `oracle:counter\|activated\|cost-context:activated-cost\|cost-actions:counter\|shape:{cost}, {cost}, remove all eyeball counters from ~: look at the top <n> card of your library, where <n> is the number of eyeball counters removed this way` |
-| 26 | 1 | 19 | 1 | 0 | activated | `c13-oracle-other-static-spell-9` | `oracle:other\|static-or-spell\|shape:put <n> of them into your hand and the rest on the bottom of your library in any order` |
-| 27 | 0 | 19 | 1 | 0 | counters | `c13-oracle-counter-activated-cost-3` | `oracle:counter\|activated\|cost-context:activated-cost\|cost-actions:sacrifice\|shape:{cost}, {cost}, sacrifice ~: destroy each permanent with <n> doom counter on it` |
-| 28 | 1 | 20 | 1 | 0 | counters | `c13-oracle-counter-triggered-shape-2` | `oracle:counter\|triggered\|shape:when ~ enters, each player chooses <n> nonland permanent and puts <n> doom counter on it` |
-| 29 | 0 | 20 | 1 | 0 | counters | `c13-oracle-counter-activated-cost-4` | `oracle:counter\|activated\|cost-context:activated-cost\|shape:{cost}: put <n> plague counter on ~ or remove <n> plague counter from it` |
-| 30 | 0 | 20 | 1 | 0 | counters | `c13-oracle-counter-static-spell` | `oracle:counter\|static-or-spell\|shape:each opponent may put <n> +<n>/+<n> counter on each creature they control` |
-| 31 | 0 | 20 | 1 | 0 | counters | `c13-oracle-counter-static-spell-2` | `oracle:counter\|static-or-spell\|shape:for each opponent who does, put <n> +<n>/+<n> counter on each creature you control` |
-| 32 | 1 | 21 | 1 | 0 | counters | `c13-oracle-counter-static-spell-3` | `oracle:counter\|static-or-spell\|shape:tempting offer - put <n> +<n>/+<n> counter on each creature you control` |
-| 33 | 0 | 21 | 1 | 0 | counters | `c13-oracle-counter-static-spell-4` | `oracle:counter\|static-or-spell\|shape:if <n> or more +<n>/+<n> counters would be put on <n> creature, twice that many +<n>/+<n> counters are put on that creature instead` |
-| 34 | 1 | 22 | 1 | 0 | replacement | `c13-oracle-other-static-spell-10` | `oracle:other\|static-or-spell\|shape:if <n> or more tokens would be created, twice that many of those tokens are created instead` |
-| 35 | 0 | 22 | 1 | 0 | counters | `c13-oracle-counter-static-spell-5` | `oracle:counter\|static-or-spell\|shape:remove <n> +<n>/+<n> counter from ~` |
-| 36 | 0 | 22 | 1 | 0 | counters | `c13-oracle-counter-static-spell-6` | `oracle:counter\|static-or-spell\|shape:~ enters with <n> +<n>/+<n> counters on it` |
-| 37 | 1 | 23 | 1 | 0 | damage | `c13-oracle-damage-static-spell` | `oracle:damage\|static-or-spell\|shape:if damage would be dealt to ~, prevent that damage` |
-| 38 | 0 | 23 | 1 | 0 | counters | `c13-oracle-counter-static-spell-7` | `oracle:counter\|static-or-spell\|shape:~ enters with <n> number of +<n>/+<n> counters on it equal to the amount of mana spent to cast it` |
-| 39 | 0 | 23 | 1 | 0 | counters | `c13-oracle-counter-static-spell-8` | `oracle:counter\|static-or-spell\|target-types:Creature\|zone:battlefield\|shape:put <n> +<n>/+<n> counters on target creature` |
-| 40 | 1 | 24 | 1 | 0 | activated | `c13-oracle-other-static-spell-11` | `oracle:other\|static-or-spell\|shape:<n> can't be <n>` |
+| 1 | 1 | 1 | 1 | 1 | activated | `c13-oracle-other-static-spell` | `oracle:other\|static-or-spell\|shape:enchanted creature is <n> insect artifact creature with base power and toughness <n>/<n> and has indestructible, and it loses all other abilities, card types, a` |
+| 2 | 1 | 2 | 1 | 1 | activated | `c13-oracle-other-static-spell-2` | `oracle:other\|static-or-spell\|shape:until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n>\|zone:battlefield` |
+| 3 | 0 | 2 | 4 | 0 | activated | `c13-oracle-other-static-spell-3` | `oracle:other\|static-or-spell\|shape:you may choose new targets for the copy` |
+| 4 | 1 | 3 | 1 | 0 | activated | `c13-oracle-other-activated-shape` | `oracle:other\|activated\|shape:{cost}: copy target instant or sorcery spell you control\|target-types:Instant,Sorcery\|zone:battlefield\|cost-context:activated-cost` |
+| 5 | 1 | 4 | 1 | 0 | return | `c13-oracle-return-activated-target` | `oracle:return\|activated\|target-types:Instant,Sorcery\|zone:battlefield\|cost-context:activated-cost\|cost-actions:return\|shape:{cost}, return <n> lands you control to their owner's hand: copy target instant or sorcery spell` |
+| 6 | 0 | 4 | 2 | 0 | return | `c13-oracle-return-triggered-shape` | `oracle:return\|triggered\|shape:return that card to the battlefield under its owner's control at the beginning of the next end step` |
+| 7 | 1 | 5 | 1 | 0 | exile | `c13-oracle-exile-activated-target` | `oracle:exile\|activated\|target-types:Creature\|zone:battlefield\|cost-context:activated-cost\|shape:{cost}, {cost}: exile another target creature` |
+| 8 | 1 | 6 | 1 | 0 | exile | `c13-oracle-exile-activated-target-2` | `oracle:exile\|activated\|target-types:Creature\|zone:battlefield\|cost-context:activated-cost\|shape:{cost}: exile target creature` |
+| 9 | 0 | 6 | 1 | 0 | counters | `c13-oracle-counter-activated-cost` | `oracle:counter\|activated\|cost-context:activated-cost\|cost-actions:counter,modify-stats\|modal\|modal-mode:one\|shape:{cost}, remove <n> +<n>/+<n> counters from ~: choose <n> -` |
+| 10 | 0 | 6 | 1 | 0 | counters | `c13-oracle-counter-activated-cost-2` | `oracle:counter\|activated\|cost-context:activated-cost\|cost-actions:counter\|shape:{cost}, {cost}, remove all eyeball counters from ~: look at the top <n> card of your library, where <n> is the number of eyeball counters removed this way` |
+| 11 | 1 | 7 | 1 | 0 | activated | `c13-oracle-other-static-spell-4` | `oracle:other\|static-or-spell\|shape:put <n> of them into your hand and the rest on the bottom of your library in any order` |
+| 12 | 0 | 7 | 1 | 0 | counters | `c13-oracle-counter-activated-cost-3` | `oracle:counter\|activated\|cost-context:activated-cost\|cost-actions:sacrifice\|shape:{cost}, {cost}, sacrifice ~: destroy each permanent with <n> doom counter on it` |
+| 13 | 1 | 8 | 1 | 0 | counters | `c13-oracle-counter-triggered-shape` | `oracle:counter\|triggered\|shape:when ~ enters, each player chooses <n> nonland permanent and puts <n> doom counter on it` |
+| 14 | 0 | 8 | 1 | 0 | counters | `c13-oracle-counter-activated-cost-4` | `oracle:counter\|activated\|cost-context:activated-cost\|shape:{cost}: put <n> plague counter on ~ or remove <n> plague counter from it` |
+| 15 | 0 | 8 | 1 | 0 | counters | `c13-oracle-counter-static-spell` | `oracle:counter\|static-or-spell\|shape:each opponent may put <n> +<n>/+<n> counter on each creature they control` |
+| 16 | 0 | 8 | 1 | 0 | counters | `c13-oracle-counter-static-spell-2` | `oracle:counter\|static-or-spell\|shape:for each opponent who does, put <n> +<n>/+<n> counter on each creature you control` |
+| 17 | 1 | 9 | 1 | 0 | counters | `c13-oracle-counter-static-spell-3` | `oracle:counter\|static-or-spell\|shape:tempting offer - put <n> +<n>/+<n> counter on each creature you control` |
+| 18 | 0 | 9 | 1 | 0 | counters | `c13-oracle-counter-static-spell-4` | `oracle:counter\|static-or-spell\|shape:if <n> or more +<n>/+<n> counters would be put on <n> creature, twice that many +<n>/+<n> counters are put on that creature instead` |
+| 19 | 1 | 10 | 1 | 0 | replacement | `c13-oracle-other-static-spell-5` | `oracle:other\|static-or-spell\|shape:if <n> or more tokens would be created, twice that many of those tokens are created instead` |
+| 20 | 0 | 10 | 1 | 0 | counters | `c13-oracle-counter-static-spell-5` | `oracle:counter\|static-or-spell\|shape:remove <n> +<n>/+<n> counter from ~` |
+| 21 | 1 | 11 | 1 | 0 | damage | `c13-oracle-damage-static-spell` | `oracle:damage\|static-or-spell\|shape:if damage would be dealt to ~, prevent that damage` |
+| 22 | 0 | 11 | 1 | 0 | counters | `c13-oracle-counter-static-spell-6` | `oracle:counter\|static-or-spell\|shape:~ enters with <n> number of +<n>/+<n> counters on it equal to the amount of mana spent to cast it` |
+| 23 | 0 | 11 | 1 | 0 | counters | `c13-oracle-counter-static-spell-7` | `oracle:counter\|static-or-spell\|target-types:Creature\|zone:battlefield\|shape:put <n> +<n>/+<n> counters on target creature` |
+| 24 | 1 | 12 | 1 | 0 | activated | `c13-oracle-other-static-spell-6` | `oracle:other\|static-or-spell\|shape:<n> can't be <n>` |
+| 25 | 0 | 12 | 1 | 0 | counters | `c13-oracle-counter-triggered-shape-2` | `oracle:counter\|triggered\|shape:at the beginning of each upkeep, you may remove <n> charge counter from ~. if you do, you gain <n> life` |
+| 26 | 1 | 13 | 1 | 0 | damage | `c13-oracle-damage-triggered-shape` | `oracle:damage\|triggered\|shape:whenever you're dealt damage, put that many charge counters on ~` |
+| 27 | 0 | 13 | 1 | 0 | counters | `c13-oracle-counter-triggered-shape-3` | `oracle:counter\|triggered\|shape:when ~ has <n> or more plague counters on it, sacrifice it` |
+| 28 | 1 | 14 | 1 | 0 | destroy | `c13-oracle-destroy-static-spell` | `oracle:destroy\|static-or-spell\|shape:if you do, destroy all nonland permanents` |
+| 29 | 0 | 14 | 1 | 0 | counters | `c13-oracle-counter-triggered-shape-4` | `oracle:counter\|triggered\|shape:whenever <n> player sacrifices <n> creature, you may put <n> +<n>/+<n> counter on ~` |
+| 30 | 1 | 15 | 1 | 0 | sacrifice | `c13-oracle-sacrifice-triggered-shape` | `oracle:sacrifice\|triggered\|shape:whenever ~ attacks, defending player sacrifices <n> creature of their choice` |
+| 31 | 0 | 15 | 1 | 0 | token | `c13-oracle-create-token-static` | `oracle:create-token\|static-or-spell\|shape:create <n> token that's <n> copy of that creature` |
+| 32 | 0 | 15 | 1 | 0 | token | `c13-oracle-create-token-static-2` | `oracle:create-token\|static-or-spell\|shape:each opponent may create <n> token that's <n> copy of that creature` |
+| 33 | 0 | 15 | 1 | 0 | token | `c13-oracle-create-token-static-3` | `oracle:create-token\|static-or-spell\|shape:for each opponent who does, create <n> token that's <n> copy of that creature` |
+| 34 | 1 | 16 | 1 | 0 | activated | `c13-oracle-other-static-spell-7` | `oracle:other\|static-or-spell\|shape:tempting offer - choose target creature you control\|target-types:Creature\|zone:battlefield` |
+| 35 | 0 | 16 | 1 | 0 | damage | `c13-oracle-damage-static-spell-2` | `oracle:damage\|static-or-spell\|shape:if you do, ~ deals <n> damage to any target` |
+| 36 | 1 | 17 | 1 | 0 | sacrifice | `c13-oracle-sacrifice-triggered-shape-2` | `oracle:sacrifice\|triggered\|shape:whenever you sacrifice another permanent, you may pay {cost}` |
+| 37 | 0 | 17 | 1 | 0 | damage | `c13-oracle-damage-static-spell-3` | `oracle:damage\|static-or-spell\|shape:~ deals <n> damage divided as you choose among any number of targets` |
+| 38 | 1 | 18 | 1 | 0 | gain-life | `c13-oracle-gain-life-static` | `oracle:gain-life\|static-or-spell\|zone:battlefield\|shape:target opponent gains <n> life` |
+| 39 | 0 | 18 | 1 | 0 | damage | `c13-oracle-damage-static-spell-4` | `oracle:damage\|static-or-spell\|shape:~ deals <n> damage divided evenly, rounded down, among any number of targets` |
+| 40 | 1 | 19 | 1 | 0 | activated | `c13-oracle-other-static-spell-8` | `oracle:other\|static-or-spell\|shape:~ costs {cost} more to cast for each target beyond the first\|zone:battlefield` |
 
 ## Work orders
 
-### 1. `c13-oracle-other-activated-shape` — finishes 1 cards
+### 1. `c13-oracle-other-static-spell` — finishes 1 cards
 
-- Template: `oracle:other|activated|shape:{cost}: this turn, creatures can't block unless their controller pays {cost} for each blocking creature they control|cost-context:activated-cost`
-- Family: combat-restriction
+- Template: `oracle:other|static-or-spell|shape:enchanted creature is <n> insect artifact creature with base power and toughness <n>/<n> and has indestructible, and it loses all other abilities, card types, a`
+- Family: activated
 - Appears in 1 unfinished cards; it is the last blocker for 1.
 - One-line review candidates: **1**.
 
 Printed examples:
 
 
-Cards finished (first 1): War Cadence.
+Cards finished (first 1): Darksteel Mutation.
 
-All affected cards (1): War Cadence [49d0fdd6-cc8f-4fe1-a6bd-4321dac18404]
+All affected cards (1): Darksteel Mutation [05a4f8ff-49da-42af-add5-6248c4b0644b]
 
-### 2. `c13-oracle-other-static-spell` — finishes 1 cards
-
-- Template: `oracle:other|static-or-spell|shape:creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you`
-- Family: combat-restriction
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-
-Cards finished (first 1): Propaganda.
-
-All affected cards (1): Propaganda [ea9709b6-4c37-4d5a-b04d-cd4c42e4f9dd]
-
-### 3. `c13-oracle-other-static-spell-2` — finishes 1 cards
+### 2. `c13-oracle-other-static-spell-2` — finishes 1 cards
 
 - Template: `oracle:other|static-or-spell|shape:until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n>|zone:battlefield`
 - Family: activated
@@ -104,157 +90,7 @@ Cards finished (first 1): Sudden Spoiling.
 
 All affected cards (1): Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]
 
-### 4. `c13-oracle-other-triggered-shape` — finishes 1 cards
-
-- Template: `oracle:other|triggered|shape:whenever ~ blocks, exchange its power and the power of target creature it's blocking until end of combat|target-types:Creature|zone:battlefield`
-- Family: activated
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-
-Cards finished (first 1): Serene Master.
-
-All affected cards (1): Serene Master [2ce0d583-81ca-4dca-bde0-52f86b683afd]
-
-### 5. `c13-oracle-return-static-spell` — finishes 1 cards
-
-- Template: `oracle:return|static-or-spell|shape:return all permanents of the color of your choice to their owners' hands`
-- Family: return
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **1**.
-
-Printed examples:
-
-
-Cards finished (first 1): Wash Out.
-
-All affected cards (1): Wash Out [54748cb1-d92a-4212-ad76-417ee79b5ef1]
-
-### 6. `c13-oracle-other-static-spell-3` — finishes 0 cards
-
-- Template: `oracle:other|static-or-spell|shape:enchant player`
-- Family: activated
-- Appears in 5 unfinished cards; it is the last blocker for 0.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-All affected cards (5): Curse of Chaos [a242af4b-5de6-4961-b684-f4bd809977c6], Curse of Inertia [0bbeb0ee-647b-43d3-91b3-6869d5ccb8b8], Curse of Predation [69ea4ce2-f749-4d5b-a392-efcfdce14a30], Curse of Shallow Graves [dc66dbed-f979-4ad1-b5f9-08538886167f], Curse of the Forsaken [e00f8d6b-5bb1-4625-9fa4-114cdc381bd4]
-
-### 7. `c13-oracle-counter-triggered-shape` — finishes 1 cards
-
-- Template: `oracle:counter|triggered|shape:whenever <n> creature attacks enchanted player, put <n> +<n>/+<n> counter on it`
-- Family: counters
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-Cards finished (first 1): Curse of Predation.
-
-All affected cards (1): Curse of Predation [69ea4ce2-f749-4d5b-a392-efcfdce14a30]
-
-### 8. `c13-oracle-create-token-triggered` — finishes 1 cards
-
-- Template: `oracle:create-token|triggered|shape:whenever <n> player attacks enchanted player with <n> or more creatures, that attacking player may create <n> tapped <n>/<n> black zombie creature token`
-- Family: token
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-Cards finished (first 1): Curse of Shallow Graves.
-
-All affected cards (1): Curse of Shallow Graves [dc66dbed-f979-4ad1-b5f9-08538886167f]
-
-### 9. `c13-oracle-gain-life-triggered` — finishes 1 cards
-
-- Template: `oracle:gain-life|triggered|shape:whenever <n> creature attacks enchanted player, its controller gains <n> life`
-- Family: gain-life
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-Cards finished (first 1): Curse of the Forsaken.
-
-All affected cards (1): Curse of the Forsaken [e00f8d6b-5bb1-4625-9fa4-114cdc381bd4]
-
-### 10. `c13-oracle-other-triggered-shape-2` — finishes 1 cards
-
-- Template: `oracle:other|triggered|shape:whenever <n> player attacks enchanted player with <n> or more creatures, that attacking player may tap or untap target permanent of their choice|zone:battlefield`
-- Family: activated
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-Cards finished (first 1): Curse of Inertia.
-
-All affected cards (1): Curse of Inertia [0bbeb0ee-647b-43d3-91b3-6869d5ccb8b8]
-
-### 11. `c13-oracle-other-static-spell-4` — finishes 0 cards
-
-- Template: `oracle:other|static-or-spell|shape:enchant creature`
-- Family: activated
-- Appears in 4 unfinished cards; it is the last blocker for 0.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-All affected cards (4): Control Magic [cd0d7141-46d2-4aa3-bc77-6b3b4513803e], Darksteel Mutation [05a4f8ff-49da-42af-add5-6248c4b0644b], Flickerform [e5345c28-7046-4ff3-a5d6-eeb7a0fb230b], Presence of Gond [ab42398c-f0a1-4b94-ac5f-b8768e1b4e05]
-
-### 12. `c13-oracle-create-token-activated` — finishes 1 cards
-
-- Template: `oracle:create-token|activated|cost-context:activated-cost|shape:enchanted creature has "{cost}: create <n> <n>/<n> green elf warrior creature token."`
-- Family: token
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-Cards finished (first 1): Presence of Gond.
-
-All affected cards (1): Presence of Gond [ab42398c-f0a1-4b94-ac5f-b8768e1b4e05]
-
-### 13. `c13-oracle-other-static-spell-5` — finishes 1 cards
-
-- Template: `oracle:other|static-or-spell|shape:enchanted creature is <n> insect artifact creature with base power and toughness <n>/<n> and has indestructible, and it loses all other abilities, card types, a`
-- Family: activated
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-Cards finished (first 1): Darksteel Mutation.
-
-All affected cards (1): Darksteel Mutation [05a4f8ff-49da-42af-add5-6248c4b0644b]
-
-### 14. `c13-oracle-other-static-spell-6` — finishes 1 cards
-
-- Template: `oracle:other|static-or-spell|shape:you control enchanted creature`
-- Family: activated
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-Cards finished (first 1): Control Magic.
-
-All affected cards (1): Control Magic [cd0d7141-46d2-4aa3-bc77-6b3b4513803e]
-
-### 15. `c13-oracle-other-static-spell-7` — finishes 0 cards
+### 3. `c13-oracle-other-static-spell-3` — finishes 0 cards
 
 - Template: `oracle:other|static-or-spell|shape:you may choose new targets for the copy`
 - Family: activated
@@ -266,7 +102,7 @@ Printed examples:
 
 All affected cards (4): Echo Mage [fb98f6b7-5986-4c5d-98fc-e5c4106f48bf], Nivix Guildmage [d04356f1-0e1a-4689-8e54-f88c4c6dd936], Uyo, Silent Prophet [93da1e63-54d6-4b05-af91-f13e7e111176], Wild Ricochet [8c35fd11-be45-4984-bd83-6e4f3fbc47a9]
 
-### 16. `c13-oracle-other-activated-shape-2` — finishes 1 cards
+### 4. `c13-oracle-other-activated-shape` — finishes 1 cards
 
 - Template: `oracle:other|activated|shape:{cost}: copy target instant or sorcery spell you control|target-types:Instant,Sorcery|zone:battlefield|cost-context:activated-cost`
 - Family: activated
@@ -280,7 +116,7 @@ Cards finished (first 1): Nivix Guildmage.
 
 All affected cards (1): Nivix Guildmage [d04356f1-0e1a-4689-8e54-f88c4c6dd936]
 
-### 17. `c13-oracle-return-activated-target` — finishes 1 cards
+### 5. `c13-oracle-return-activated-target` — finishes 1 cards
 
 - Template: `oracle:return|activated|target-types:Instant,Sorcery|zone:battlefield|cost-context:activated-cost|cost-actions:return|shape:{cost}, return <n> lands you control to their owner's hand: copy target instant or sorcery spell`
 - Family: return
@@ -294,47 +130,7 @@ Cards finished (first 1): Uyo, Silent Prophet.
 
 All affected cards (1): Uyo, Silent Prophet [93da1e63-54d6-4b05-af91-f13e7e111176]
 
-### 18. `c13-oracle-other-static-spell-8` — finishes 0 cards
-
-- Template: `oracle:other|static-or-spell|shape:enchant land`
-- Family: activated
-- Appears in 2 unfinished cards; it is the last blocker for 0.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-All affected cards (2): Leafdrake Roost [b5ff42a1-1ac4-472b-8479-5e3749845305], Spawning Grounds [1961dd92-db0b-4f02-b9c8-08f760f4051b]
-
-### 19. `c13-oracle-create-token-activated-2` — finishes 1 cards
-
-- Template: `oracle:create-token|activated|cost-context:activated-cost|shape:enchanted land has "{cost}, {cost}: create <n> <n>/<n> green and blue drake creature token with flying."`
-- Family: token
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-Cards finished (first 1): Leafdrake Roost.
-
-All affected cards (1): Leafdrake Roost [b5ff42a1-1ac4-472b-8479-5e3749845305]
-
-### 20. `c13-oracle-create-token-activated-3` — finishes 1 cards
-
-- Template: `oracle:create-token|activated|cost-context:activated-cost|shape:enchanted land has "{cost}: create <n> <n>/<n> green beast creature token with trample."`
-- Family: token
-- Appears in 1 unfinished cards; it is the last blocker for 1.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-Cards finished (first 1): Spawning Grounds.
-
-All affected cards (1): Spawning Grounds [1961dd92-db0b-4f02-b9c8-08f760f4051b]
-
-### 21. `c13-oracle-return-triggered-shape` — finishes 0 cards
+### 6. `c13-oracle-return-triggered-shape` — finishes 0 cards
 
 - Template: `oracle:return|triggered|shape:return that card to the battlefield under its owner's control at the beginning of the next end step`
 - Family: return
@@ -346,7 +142,7 @@ Printed examples:
 
 All affected cards (2): Mistmeadow Witch [38e274e2-bd04-48de-a1df-44f0ee987ba8], Roon of the Hidden Realm [fd336830-4a11-42b8-9fc7-d7526f569124]
 
-### 22. `c13-oracle-exile-activated-target` — finishes 1 cards
+### 7. `c13-oracle-exile-activated-target` — finishes 1 cards
 
 - Template: `oracle:exile|activated|target-types:Creature|zone:battlefield|cost-context:activated-cost|shape:{cost}, {cost}: exile another target creature`
 - Family: exile
@@ -360,7 +156,7 @@ Cards finished (first 1): Roon of the Hidden Realm.
 
 All affected cards (1): Roon of the Hidden Realm [fd336830-4a11-42b8-9fc7-d7526f569124]
 
-### 23. `c13-oracle-exile-activated-target-2` — finishes 1 cards
+### 8. `c13-oracle-exile-activated-target-2` — finishes 1 cards
 
 - Template: `oracle:exile|activated|target-types:Creature|zone:battlefield|cost-context:activated-cost|shape:{cost}: exile target creature`
 - Family: exile
@@ -374,7 +170,7 @@ Cards finished (first 1): Mistmeadow Witch.
 
 All affected cards (1): Mistmeadow Witch [38e274e2-bd04-48de-a1df-44f0ee987ba8]
 
-### 24. `c13-oracle-counter-activated-cost` — finishes 0 cards
+### 9. `c13-oracle-counter-activated-cost` — finishes 0 cards
 
 - Template: `oracle:counter|activated|cost-context:activated-cost|cost-actions:counter,modify-stats|modal|modal-mode:one|shape:{cost}, remove <n> +<n>/+<n> counters from ~: choose <n> -`
 - Family: counters
@@ -386,7 +182,7 @@ Printed examples:
 
 All affected cards (1): Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
 
-### 25. `c13-oracle-counter-activated-cost-2` — finishes 0 cards
+### 10. `c13-oracle-counter-activated-cost-2` — finishes 0 cards
 
 - Template: `oracle:counter|activated|cost-context:activated-cost|cost-actions:counter|shape:{cost}, {cost}, remove all eyeball counters from ~: look at the top <n> card of your library, where <n> is the number of eyeball counters removed this way`
 - Family: counters
@@ -398,7 +194,7 @@ Printed examples:
 
 All affected cards (1): Jar of Eyeballs [3075dadd-240f-4455-9286-9f1d48f53a3f]
 
-### 26. `c13-oracle-other-static-spell-9` — finishes 1 cards
+### 11. `c13-oracle-other-static-spell-4` — finishes 1 cards
 
 - Template: `oracle:other|static-or-spell|shape:put <n> of them into your hand and the rest on the bottom of your library in any order`
 - Family: activated
@@ -412,7 +208,7 @@ Cards finished (first 1): Jar of Eyeballs.
 
 All affected cards (1): Jar of Eyeballs [3075dadd-240f-4455-9286-9f1d48f53a3f]
 
-### 27. `c13-oracle-counter-activated-cost-3` — finishes 0 cards
+### 12. `c13-oracle-counter-activated-cost-3` — finishes 0 cards
 
 - Template: `oracle:counter|activated|cost-context:activated-cost|cost-actions:sacrifice|shape:{cost}, {cost}, sacrifice ~: destroy each permanent with <n> doom counter on it`
 - Family: counters
@@ -424,7 +220,7 @@ Printed examples:
 
 All affected cards (1): Eye of Doom [e808a11e-29bd-4e99-a24e-67fa8f6fe502]
 
-### 28. `c13-oracle-counter-triggered-shape-2` — finishes 1 cards
+### 13. `c13-oracle-counter-triggered-shape` — finishes 1 cards
 
 - Template: `oracle:counter|triggered|shape:when ~ enters, each player chooses <n> nonland permanent and puts <n> doom counter on it`
 - Family: counters
@@ -438,7 +234,7 @@ Cards finished (first 1): Eye of Doom.
 
 All affected cards (1): Eye of Doom [e808a11e-29bd-4e99-a24e-67fa8f6fe502]
 
-### 29. `c13-oracle-counter-activated-cost-4` — finishes 0 cards
+### 14. `c13-oracle-counter-activated-cost-4` — finishes 0 cards
 
 - Template: `oracle:counter|activated|cost-context:activated-cost|shape:{cost}: put <n> plague counter on ~ or remove <n> plague counter from it`
 - Family: counters
@@ -450,7 +246,7 @@ Printed examples:
 
 All affected cards (1): Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
 
-### 30. `c13-oracle-counter-static-spell` — finishes 0 cards
+### 15. `c13-oracle-counter-static-spell` — finishes 0 cards
 
 - Template: `oracle:counter|static-or-spell|shape:each opponent may put <n> +<n>/+<n> counter on each creature they control`
 - Family: counters
@@ -462,7 +258,7 @@ Printed examples:
 
 All affected cards (1): Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
 
-### 31. `c13-oracle-counter-static-spell-2` — finishes 0 cards
+### 16. `c13-oracle-counter-static-spell-2` — finishes 0 cards
 
 - Template: `oracle:counter|static-or-spell|shape:for each opponent who does, put <n> +<n>/+<n> counter on each creature you control`
 - Family: counters
@@ -474,7 +270,7 @@ Printed examples:
 
 All affected cards (1): Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
 
-### 32. `c13-oracle-counter-static-spell-3` — finishes 1 cards
+### 17. `c13-oracle-counter-static-spell-3` — finishes 1 cards
 
 - Template: `oracle:counter|static-or-spell|shape:tempting offer - put <n> +<n>/+<n> counter on each creature you control`
 - Family: counters
@@ -488,7 +284,7 @@ Cards finished (first 1): Tempt with Glory.
 
 All affected cards (1): Tempt with Glory [5a8dd1b7-b63e-4997-9fe8-5e8816bc051b]
 
-### 33. `c13-oracle-counter-static-spell-4` — finishes 0 cards
+### 18. `c13-oracle-counter-static-spell-4` — finishes 0 cards
 
 - Template: `oracle:counter|static-or-spell|shape:if <n> or more +<n>/+<n> counters would be put on <n> creature, twice that many +<n>/+<n> counters are put on that creature instead`
 - Family: counters
@@ -500,7 +296,7 @@ Printed examples:
 
 All affected cards (1): Primal Vigor [c665544f-557b-4631-a1dc-39571470ca2e]
 
-### 34. `c13-oracle-other-static-spell-10` — finishes 1 cards
+### 19. `c13-oracle-other-static-spell-5` — finishes 1 cards
 
 - Template: `oracle:other|static-or-spell|shape:if <n> or more tokens would be created, twice that many of those tokens are created instead`
 - Family: replacement
@@ -514,7 +310,7 @@ Cards finished (first 1): Primal Vigor.
 
 All affected cards (1): Primal Vigor [c665544f-557b-4631-a1dc-39571470ca2e]
 
-### 35. `c13-oracle-counter-static-spell-5` — finishes 0 cards
+### 20. `c13-oracle-counter-static-spell-5` — finishes 0 cards
 
 - Template: `oracle:counter|static-or-spell|shape:remove <n> +<n>/+<n> counter from ~`
 - Family: counters
@@ -526,19 +322,7 @@ Printed examples:
 
 All affected cards (1): Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
 
-### 36. `c13-oracle-counter-static-spell-6` — finishes 0 cards
-
-- Template: `oracle:counter|static-or-spell|shape:~ enters with <n> +<n>/+<n> counters on it`
-- Family: counters
-- Appears in 1 unfinished cards; it is the last blocker for 0.
-- One-line review candidates: **0**.
-
-Printed examples:
-
-
-All affected cards (1): Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
-
-### 37. `c13-oracle-damage-static-spell` — finishes 1 cards
+### 21. `c13-oracle-damage-static-spell` — finishes 1 cards
 
 - Template: `oracle:damage|static-or-spell|shape:if damage would be dealt to ~, prevent that damage`
 - Family: damage
@@ -552,7 +336,7 @@ Cards finished (first 1): Phantom Nantuko.
 
 All affected cards (1): Phantom Nantuko [0951b529-646c-4dfd-88ad-84ee117ce722]
 
-### 38. `c13-oracle-counter-static-spell-7` — finishes 0 cards
+### 22. `c13-oracle-counter-static-spell-6` — finishes 0 cards
 
 - Template: `oracle:counter|static-or-spell|shape:~ enters with <n> number of +<n>/+<n> counters on it equal to the amount of mana spent to cast it`
 - Family: counters
@@ -564,7 +348,7 @@ Printed examples:
 
 All affected cards (1): Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
 
-### 39. `c13-oracle-counter-static-spell-8` — finishes 0 cards
+### 23. `c13-oracle-counter-static-spell-7` — finishes 0 cards
 
 - Template: `oracle:counter|static-or-spell|target-types:Creature|zone:battlefield|shape:put <n> +<n>/+<n> counters on target creature`
 - Family: counters
@@ -576,7 +360,7 @@ Printed examples:
 
 All affected cards (1): Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
 
-### 40. `c13-oracle-other-static-spell-11` — finishes 1 cards
+### 24. `c13-oracle-other-static-spell-6` — finishes 1 cards
 
 - Template: `oracle:other|static-or-spell|shape:<n> can't be <n>`
 - Family: activated
@@ -589,4 +373,210 @@ Printed examples:
 Cards finished (first 1): Marath, Will of the Wild.
 
 All affected cards (1): Marath, Will of the Wild [fae87115-8749-4d25-a594-7139dd01a034]
+
+### 25. `c13-oracle-counter-triggered-shape-2` — finishes 0 cards
+
+- Template: `oracle:counter|triggered|shape:at the beginning of each upkeep, you may remove <n> charge counter from ~. if you do, you gain <n> life`
+- Family: counters
+- Appears in 1 unfinished cards; it is the last blocker for 0.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+All affected cards (1): Sun Droplet [1820af5c-9cc2-4b77-b4ca-86084442f087]
+
+### 26. `c13-oracle-damage-triggered-shape` — finishes 1 cards
+
+- Template: `oracle:damage|triggered|shape:whenever you're dealt damage, put that many charge counters on ~`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+Cards finished (first 1): Sun Droplet.
+
+All affected cards (1): Sun Droplet [1820af5c-9cc2-4b77-b4ca-86084442f087]
+
+### 27. `c13-oracle-counter-triggered-shape-3` — finishes 0 cards
+
+- Template: `oracle:counter|triggered|shape:when ~ has <n> or more plague counters on it, sacrifice it`
+- Family: counters
+- Appears in 1 unfinished cards; it is the last blocker for 0.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+All affected cards (1): Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
+
+### 28. `c13-oracle-destroy-static-spell` — finishes 1 cards
+
+- Template: `oracle:destroy|static-or-spell|shape:if you do, destroy all nonland permanents`
+- Family: destroy
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+Cards finished (first 1): Plague Boiler.
+
+All affected cards (1): Plague Boiler [fef502af-6e79-4c55-a86a-b45adb3fc64a]
+
+### 29. `c13-oracle-counter-triggered-shape-4` — finishes 0 cards
+
+- Template: `oracle:counter|triggered|shape:whenever <n> player sacrifices <n> creature, you may put <n> +<n>/+<n> counter on ~`
+- Family: counters
+- Appears in 1 unfinished cards; it is the last blocker for 0.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+All affected cards (1): Thraximundar [9e0e4217-fefe-48dd-9153-032460192b19]
+
+### 30. `c13-oracle-sacrifice-triggered-shape` — finishes 1 cards
+
+- Template: `oracle:sacrifice|triggered|shape:whenever ~ attacks, defending player sacrifices <n> creature of their choice`
+- Family: sacrifice
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+Cards finished (first 1): Thraximundar.
+
+All affected cards (1): Thraximundar [9e0e4217-fefe-48dd-9153-032460192b19]
+
+### 31. `c13-oracle-create-token-static` — finishes 0 cards
+
+- Template: `oracle:create-token|static-or-spell|shape:create <n> token that's <n> copy of that creature`
+- Family: token
+- Appears in 1 unfinished cards; it is the last blocker for 0.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+All affected cards (1): Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
+
+### 32. `c13-oracle-create-token-static-2` — finishes 0 cards
+
+- Template: `oracle:create-token|static-or-spell|shape:each opponent may create <n> token that's <n> copy of that creature`
+- Family: token
+- Appears in 1 unfinished cards; it is the last blocker for 0.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+All affected cards (1): Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
+
+### 33. `c13-oracle-create-token-static-3` — finishes 0 cards
+
+- Template: `oracle:create-token|static-or-spell|shape:for each opponent who does, create <n> token that's <n> copy of that creature`
+- Family: token
+- Appears in 1 unfinished cards; it is the last blocker for 0.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+All affected cards (1): Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
+
+### 34. `c13-oracle-other-static-spell-7` — finishes 1 cards
+
+- Template: `oracle:other|static-or-spell|shape:tempting offer - choose target creature you control|target-types:Creature|zone:battlefield`
+- Family: activated
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+Cards finished (first 1): Tempt with Reflections.
+
+All affected cards (1): Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
+
+### 35. `c13-oracle-damage-static-spell-2` — finishes 0 cards
+
+- Template: `oracle:damage|static-or-spell|shape:if you do, ~ deals <n> damage to any target`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 0.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+All affected cards (1): Furnace Celebration [af6d6844-c612-4731-86da-59a8fa02956b]
+
+### 36. `c13-oracle-sacrifice-triggered-shape-2` — finishes 1 cards
+
+- Template: `oracle:sacrifice|triggered|shape:whenever you sacrifice another permanent, you may pay {cost}`
+- Family: sacrifice
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+Cards finished (first 1): Furnace Celebration.
+
+All affected cards (1): Furnace Celebration [af6d6844-c612-4731-86da-59a8fa02956b]
+
+### 37. `c13-oracle-damage-static-spell-3` — finishes 0 cards
+
+- Template: `oracle:damage|static-or-spell|shape:~ deals <n> damage divided as you choose among any number of targets`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 0.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+All affected cards (1): Fiery Justice [333809cb-e196-45f2-8a67-31374438e56e]
+
+### 38. `c13-oracle-gain-life-static` — finishes 1 cards
+
+- Template: `oracle:gain-life|static-or-spell|zone:battlefield|shape:target opponent gains <n> life`
+- Family: gain-life
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+Cards finished (first 1): Fiery Justice.
+
+All affected cards (1): Fiery Justice [333809cb-e196-45f2-8a67-31374438e56e]
+
+### 39. `c13-oracle-damage-static-spell-4` — finishes 0 cards
+
+- Template: `oracle:damage|static-or-spell|shape:~ deals <n> damage divided evenly, rounded down, among any number of targets`
+- Family: damage
+- Appears in 1 unfinished cards; it is the last blocker for 0.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+All affected cards (1): Fireball [aa7714b0-2bfb-458a-8ebf-37ec2c53383e]
+
+### 40. `c13-oracle-other-static-spell-8` — finishes 1 cards
+
+- Template: `oracle:other|static-or-spell|shape:~ costs {cost} more to cast for each target beyond the first|zone:battlefield`
+- Family: activated
+- Appears in 1 unfinished cards; it is the last blocker for 1.
+- One-line review candidates: **0**.
+
+Printed examples:
+
+
+Cards finished (first 1): Fireball.
+
+All affected cards (1): Fireball [aa7714b0-2bfb-458a-8ebf-37ec2c53383e]
 

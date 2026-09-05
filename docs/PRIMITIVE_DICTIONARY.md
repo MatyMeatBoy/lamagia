@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-04T20:36:33.746120+00:00`
+- Generated: `2026-09-05T20:22:43.871725+00:00`
 - Scope: **catalog**
-- Exported profiles in scope: **38711**; fully implemented: **8733**
+- Exported profiles in scope: **38711**; fully implemented: **9911**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -149,6 +149,7 @@ Add, remove or inspect public counters, including counters used as costs.
 - ⚠️ `stateBasedActions`
 **Existing effect handlers**
 - ✅ `add-counter-source`
+- ✅ `proliferate`
 **Wording families**
 - Put a +1/+1 counter
 - Remove a counter from ~
@@ -256,4 +257,25 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 - Pay life: effect
 - Sacrifice a...: effect
 **Rule-engine note:** Use the same legality function for offered actions and forged intents. A cost is paid before the ability resolves and cannot leak hidden choices.
+
+### static / continuous
+
+Apply a continuous layer effect to the correct set of permanents without putting a trigger on the stack.
+
+**Parser / IR fields**
+- ✅ `staticPowerToughnessGrants`
+- ✅ `staticKeywordGrants`
+- ✅ `auraControlTarget`
+**Reusable engine helpers**
+- ✅ `staticPowerToughnessBonus`
+- ✅ `keywordOf`
+- ✅ `syncAuraControlEffects`
+**Existing effect handlers**
+- ✅ `modify-source-creature`
+**Wording families**
+- Has base power and toughness
+- Loses all abilities
+- Gains/loses a keyword
+- Continuous effect from an Aura
+**Rule-engine note:** Keep layer-sensitive base characteristics, keyword removal/grants, type changes and Aura scope as separate operands; do not turn a continuous effect into a one-shot activation.
 

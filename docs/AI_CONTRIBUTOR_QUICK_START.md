@@ -32,6 +32,7 @@ queue, choose one unclaimed generated cluster at random, then claim it:
 
 ```text
 npm run rules:engine:export
+npm run rules:near-complete
 npm run rules:roadmap:c13
 npm run rules:oracle:plan:c13
 npm run rules:dictionary:c13
@@ -41,6 +42,11 @@ Read `docs/PRIMITIVE_ROADMAP_C13.md` and `docs/PRIMITIVE_WORKERS_C13.md`.
 Use `docs/PRIMITIVE_DICTIONARY_C13.md` to link common wording to existing
 parser fields and engine handlers before creating a new primitive; its
 one-line queue is the mass-review starting point, not a substitute for tests.
+Use `docs/NEAR_COMPLETE_CARDS.md` (or the C13 variant) to find cards with
+exactly one unresolved engine line. Prefer its `reuse-existing` hints and fix
+the shared primitive; never add a card-name branch just to close one card.
+The machine-readable queue is `data/rules/near-complete-cards.json`; refresh it
+after every accepted batch so workers do not chase stale candidates.
 Use [the compact Oracle IR](ORACLE_COMPACT_IR.md) to reuse operation symbols
 and operands across cards. The Python artifact is a context/scheduling aid;
 the TypeScript parser also lowers exact simple `draw`/`mill`/life clauses to

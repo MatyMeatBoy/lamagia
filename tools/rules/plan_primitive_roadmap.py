@@ -38,7 +38,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable
 
-from compile_oracle_effects import classify, cluster_text
+try:
+    from compile_oracle_effects import classify, cluster_text
+except ModuleNotFoundError:  # Package import from repository-root test discovery.
+    from tools.rules.compile_oracle_effects import classify, cluster_text
 
 ROADMAP_FORMAT = "prossh-primitive-roadmap/v1"
 
