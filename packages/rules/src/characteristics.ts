@@ -587,7 +587,7 @@ export type SpellEffect =
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
-  | { readonly kind: "create-token"; readonly amount: number | "X" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
+  | { readonly kind: "create-token"; readonly amount: number | "X" | "mana-spent" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
   | { readonly kind: "create-token-for-target-player"; readonly amount: number | "X"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
   /** Reveals one library card, moves it to hand, then gains its mana value. */
   | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
@@ -1960,6 +1960,13 @@ function parseCreatureScaledToken(text: string): SpellEffect | null {
   return base?.kind === "create-token" ? { ...base, amount: "creatures-you-control" } : null;
 }
 
+function parseManaSpentToken(text: string): SpellEffect | null {
+  const suffix = /,?\s*where x is the amount of mana spent to cast it\.?$/i;
+  if (!suffix.test(text.trim())) return null;
+  const base = parseCreateToken(text.trim().replace(suffix, ""));
+  return base?.kind === "create-token" ? { ...base, amount: "mana-spent" } : null;
+}
+
 function parseRevealTopCardConditional(text: string): SpellEffect | null {
   const normalized = text.replace(/\s+/g, " ").trim();
   if (!/^Reveal the top card of your library\. If it's a creature card, create a 1\/1 green Saproling creature token\. If it's a land card, put that card onto the battlefield under your control\. If it's a noncreature, nonland card, you gain 2 life\.?$/i.test(normalized)) return null;
@@ -2065,6 +2072,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "deals-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+damage\s+to\s+an?\s+opponent,?\s*(.+)$/i },
 
   // A player is the subject.
+  { event: "spell-cast", subject: "you", pattern: /^when\s+you\s+cast\s+~,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellSubtype: "elf", pattern: /^whenever\s+you\s+cast\s+an\s+elf\s+spell,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
@@ -2913,7 +2921,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Counter target noncreature spell$/i.test(text)) return { effect: { kind: "counter-target-spell" }, target: "noncreature-spell" };
   const multiBasicSearch = parseMultiBasicSearch(text);
   if (multiBasicSearch) return { effect: multiBasicSearch, target: "none" };
-  const token = parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
+  const token = parseManaSpentToken(text) ?? parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
   const genericSearch = parseLibrarySearch(text);
   if (genericSearch) return { effect: genericSearch, target: "none" };
@@ -3580,7 +3588,9 @@ function recognizeText(text: string): RecognizedText {
             ? effectText.replace(/^you\s+may\s+(?=(?:draw|mill|discard|gain|lose)\b)/i, "You ").replace(/^you\s+may\s+/i, "")
             : effectText;
           const lookTop = parseLookTopSelection(executableText);
-          return lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
+          const manaSpentToken = parseManaSpentToken(executableText);
+          return manaSpentToken ? { effect: manaSpentToken, target: "none" as TargetKind }
+            : lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(executableText);
         })();
       if (recognized) {
         const capriciousMultiTarget = /^choose target nonland permanent you control and up to two target nonland permanents you don't control\. destroy one of them at random\.?$/i.test(effectText);

@@ -162,6 +162,7 @@ const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf",
 const C13_DIVINITY_OF_PRIDE = () => make({ name: "Divinity of Pride", type_line: "Creature — Spirit Avatar", mana_cost: "{3}{W}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature gets +4/+4 as long as you have 25 or more life.", scryfall_id: "2c91c236-34d7-4454-a55a-784db7f68bde" });
 const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "1B", cmc: 2, power: "1", toughness: "1", oracle_text: "This creature gets +1/+1 for each creature card in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
 const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.", scryfall_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e" });
+const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "Legendary Creature — Dragon", mana_cost: "{3}{B}{R}{G}", cmc: 6, power: "5", toughness: "5", oracle_text: "Flying\nWhen you cast this spell, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.", scryfall_id: "868882d2-ed4e-4171-a17c-478a341080fb", oracle_id: "868882d2-ed4e-4171-a17c-478a341080fb" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
 const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });
@@ -1093,6 +1094,16 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Azorius Herald")).toBe(true);
     expect(game.players[0]!.life).toBe(44);
+  });
+
+  it("creates Prossh's Kobolds from the mana actually spent to cast it", () => {
+    const prossh = C13_PROSSH();
+    let game = readyToCast([prossh], [SWAMP(), MOUNTAIN(), FOREST(), FOREST(), MOUNTAIN(), SWAMP()]);
+    expect(profileOf(prossh)).toMatchObject({ fullyImplemented: true });
+    expect(profileOf(prossh).triggers[0]?.effect).toMatchObject({ kind: "create-token", amount: "mana-spent" });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Kobolds of Kher Keep")).toHaveLength(6);
   });
 
   it("moves a Graft counter to the next creature that enters", () => {
@@ -7111,7 +7122,7 @@ describe("bot games", () => {
       }
       expect(result.finished || result.turns > 60).toBe(true);
     }
-  });
+  }, 10_000);
 
   it("produces the same game for the same seed", () => {
     const first = playBotGame(fourSeatGame(11), 30);

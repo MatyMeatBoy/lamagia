@@ -232,6 +232,8 @@ export interface TriggerInstance {
   readonly eventPermanentId?: string;
   /** Amount carried by life-gain/loss events for proportional triggers. */
   readonly eventAmount?: number;
+  /** Total mana spent to cast the triggering spell (CR 107.3h). */
+  readonly eventManaSpent?: number;
   /** Delayed zone return data retained by a trigger created from an effect. */
   readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId; readonly destination?: "battlefield" | "hand" };
   /** Last-known power carried by a creature-dies event (CR 603.3d, 608.2h). */
@@ -278,7 +280,7 @@ export type GameEvent =
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
   | { readonly kind: "deals-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard; readonly spentMana?: number }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "card-drawn"; readonly seat: SeatId; readonly card: GameCard }
   | { readonly kind: "card-discarded"; readonly seat: SeatId; readonly card: GameCard }
@@ -1520,6 +1522,7 @@ function raiseEvent(
           ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
           ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
           ...("amount" in event ? { eventAmount: event.amount } : {}),
+          ...(event.kind === "spell-cast" && event.spentMana !== undefined ? { eventManaSpent: event.spentMana } : {}),
           ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
           ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {})
         });
@@ -1574,8 +1577,30 @@ function opponentsOf(state: GameState, seat: SeatId): SeatId[] {
   return state.players.filter((player) => player.seat !== seat && !player.lost).map((player) => player.seat);
 }
 
-function effectAmount(amount: number | "X", object: StackObject): number {
-  return amount === "X" ? object.variableValue : amount;
+function effectAmount(amount: number | "X" | "mana-spent", object: StackObject): number {
+  if (amount === "X") return object.variableValue;
+  if (amount === "mana-spent") return object.trigger?.eventManaSpent ?? object.spentMana?.length ?? 0;
+  return amount;
+}
+
+/** Temporary watcher for self-referential "when you cast this spell" triggers (CR 603.2). */
+function castTriggerWatcher(card: GameCard, controller: SeatId): Permanent {
+  return {
+    instance_id: card.instance_id,
+    card,
+    controller,
+    tapped: false,
+    summoningSick: true,
+    enteredThisTurn: false,
+    damage: 0,
+    deathtouched: false,
+    counters: {},
+    powerModifier: 0,
+    toughnessModifier: 0,
+    temporaryKeywords: [],
+    regenerationShields: 0,
+    isCommander: false
+  };
 }
 
 type DamageSource = Pick<GameEvent & { kind: "deals-damage-to-player" }, "permanentId" | "controller" | "card">;
@@ -6179,7 +6204,10 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
     Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)));
-  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card });
+  const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
+    && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spentMana: poolTotal(payment.spent) },
+    selfCastTriggers ? [castTriggerWatcher(card, seat)] : []);
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}.`);
 }
 
