@@ -9145,6 +9145,45 @@ describe("tribal lord static bonuses", () => {
     expect([powerOf(ownBear, game), toughnessOf(ownBear, game)]).toEqual([2, 2]);
     expect([powerOf(foeElf, game), toughnessOf(foeElf, game)]).toEqual([1, 1]);
   });
+
+  const GOBLIN_LORD = () => make({ name: "Test Goblin Lord", type_line: "Creature — Goblin", mana_cost: "{1}{R}", cmc: 2, power: "1", toughness: "1", oracle_text: "Other Goblin creatures you control get +1/+1." });
+  const TEST_GOBLIN = () => make({ name: "Test Goblin Grunt", type_line: "Creature — Goblin", mana_cost: "{R}", cmc: 1, power: "1", toughness: "1" });
+  const ARTIFACT_LORD = () => make({ name: "Test Artifact Lord", type_line: "Artifact Creature — Construct", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "1", oracle_text: "Other artifact creatures you control get +1/+1." });
+  const TEST_ARTIFACT_CREATURE = () => make({ name: "Test Artifact Creature", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "1", toughness: "1" });
+
+  it("recognizes the 'Other <Subtype> creatures you control get' phrasing (explicit 'creatures')", () => {
+    const profile = profileOf(GOBLIN_LORD());
+    expect(profile.staticPowerToughnessGrants).toEqual([
+      { scope: "other-subtype-creatures-you-control", subtype: "Goblin", power: 1, toughness: 1 }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("boosts other Goblins you control but not itself or a non-Goblin", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GOBLIN_LORD(), TEST_GOBLIN(), BEAR()]);
+    const lord = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Goblin Lord")!;
+    const grunt = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Goblin Grunt")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect([powerOf(lord, game), toughnessOf(lord, game)]).toEqual([1, 1]);
+    expect([powerOf(grunt, game), toughnessOf(grunt, game)]).toEqual([2, 2]);
+    expect([powerOf(bear, game), toughnessOf(bear, game)]).toEqual([2, 2]);
+  });
+
+  it("also matches a card TYPE qualifier ('Other artifact creatures you control'), not just a creature subtype", () => {
+    const profile = profileOf(ARTIFACT_LORD());
+    expect(profile.staticPowerToughnessGrants).toEqual([
+      { scope: "other-subtype-creatures-you-control", subtype: "artifact", power: 1, toughness: 1 }
+    ]);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ARTIFACT_LORD(), TEST_ARTIFACT_CREATURE(), BEAR()]);
+    const lord = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Artifact Lord")!;
+    const otherArtifact = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Artifact Creature")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect([powerOf(lord, game), toughnessOf(lord, game)]).toEqual([1, 1]);
+    expect([powerOf(otherArtifact, game), toughnessOf(otherArtifact, game)]).toEqual([2, 2]);
+    expect([powerOf(bear, game), toughnessOf(bear, game)]).toEqual([2, 2]);
+  });
 });
 
 describe("color anthem static bonuses (any controller)", () => {

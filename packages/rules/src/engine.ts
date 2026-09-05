@@ -823,7 +823,8 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
       .filter((grant) => grant.scope === "creatures-you-control"
         || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id)
         || (grant.scope === "other-subtype-creatures-you-control" && source.instance_id !== permanent.instance_id
-          && hasSubtype(cardProfile(permanent.card), grant.subtype!)))
+          && (hasSubtype(cardProfile(permanent.card), grant.subtype!)
+            || cardProfile(permanent.card).types.some((type) => type.toLowerCase() === grant.subtype!.toLowerCase()))))
       .map((grant) => ({ source, grant })))
     .filter(({ grant }) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
     .reduce((total, { grant }) => ({ power: total.power + grant.power, toughness: total.toughness + grant.toughness }), { power: 0, toughness: 0 });

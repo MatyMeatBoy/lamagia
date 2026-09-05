@@ -1767,6 +1767,18 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
       power: Number(subtypeLord[2]), toughness: Number(subtypeLord[3])
     };
   }
+  // Same tribal lord, spelled with an explicit "creatures" (Mad Auntie: "Other
+  // Goblin creatures you control get +1/+1."). The qualifier is already
+  // singular here — some of these are card types ("artifact"/"enchantment"
+  // creatures), not creature subtypes, so the engine checks both.
+  const subtypeCreaturesLord = /^other\s+([A-Za-z]+)\s+creatures\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  if (subtypeCreaturesLord) {
+    return {
+      scope: "other-subtype-creatures-you-control",
+      subtype: subtypeCreaturesLord[1]!,
+      power: Number(subtypeCreaturesLord[2]), toughness: Number(subtypeCreaturesLord[3])
+    };
+  }
   // Color anthem, any controller (Bad Moon, Celestial Crusader): unlike the
   // "you control" grants above, this affects every player's creatures.
   const colorAnthem = /^(other\s+)?(white|blue|black|red|green)\s+creatures\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
