@@ -1168,9 +1168,9 @@ function wireBoard(): void {
   on("#undo", () => void undoLatestMana());
   on("#context-undo", () => { ui.contextMenu = null; void undoLatestMana(); });
   document.querySelector<HTMLElement>(".table")?.addEventListener("contextmenu", (event) => {
-    event.preventDefault();
     if (event.target instanceof Element && event.target.closest("[data-hand], [data-permanent], [data-zone-card]")) return;
     if (!view?.undoAvailable) return;
+    event.preventDefault();
     ui.contextMenu = {
       x: Math.min(event.clientX, Math.max(8, window.innerWidth - 250)),
       y: Math.min(event.clientY, Math.max(8, window.innerHeight - 58))
