@@ -446,12 +446,16 @@ export type PendingChoice =
       readonly restDestination?: "bottom" | "graveyard";
     }
   | {
-      /** Widespread Panic: choose one card from the shuffling player's hand. */
+      /** Widespread Panic: choose one card from the shuffling player's hand.
+       * Brainstorm-style effects reuse this with `remaining` > 1 to place
+       * several cards in the player-chosen order (each placement becomes
+       * the new top, so later choices land above earlier ones). */
       readonly type: "hand-card-to-library-top";
       readonly seat: SeatId;
       readonly sourceId: string;
       readonly sourceCard: GameCard;
       readonly optionIds: readonly string[];
+      readonly remaining: number;
     }
   | {
       readonly type: "discard-cards";
@@ -1832,7 +1836,26 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           seat,
           sourceId: object.id,
           sourceCard: object.card,
-          optionIds: hand.map((card) => card.instance_id)
+          optionIds: hand.map((card) => card.instance_id),
+          remaining: 1
+        }
+      };
+    }
+    case "draw-then-put-back-on-top": {
+      const next = drawCards(state, controller, effect.draw);
+      const hand = playerAt(next, controller).hand;
+      const remaining = Math.min(effect.putBack, hand.length);
+      if (remaining <= 0) return next;
+      return {
+        ...next,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "hand-card-to-library-top",
+          seat: controller,
+          sourceId: object.id,
+          sourceCard: object.card,
+          optionIds: hand.map((card) => card.instance_id),
+          remaining
         }
       };
     }
@@ -6639,7 +6662,12 @@ function applyChooseHandCardToLibraryTop(state: GameState, seat: SeatId, action:
   if (!choice.optionIds.includes(action.cardId)) throw new Error("Esa carta no está entre las opciones.");
   const card = playerAt(state, seat).hand.find((candidate) => candidate.instance_id === action.cardId);
   if (!card) throw new Error("La carta elegida ya no está en tu mano.");
-  const next = withPlayer({ ...state, pendingChoice: null }, seat, (player) => ({
+  const remaining = choice.remaining - 1;
+  const stateWithChoice: GameState = {
+    ...state,
+    pendingChoice: remaining > 0 ? { ...choice, remaining } : null
+  };
+  const next = withPlayer(stateWithChoice, seat, (player) => ({
     ...player,
     hand: player.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
     library: [card, ...player.library]

@@ -432,6 +432,7 @@ const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_co
 const OFFER_YOU_CANT_REFUSE = () => make({ name: "Test An Offer You Can't Refuse", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target noncreature spell. Its controller creates two Treasure tokens." });
 const TUTOR = () => make({ name: "Enlightened Tutor", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an artifact or enchantment card, reveal it, then shuffle. Put that card on top of your library." });
 const WIDESPREAD_PANIC = () => make({ name: "Widespread Panic", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Whenever a spell or ability causes its controller to shuffle their library, that player puts a card from their hand on top of their library.", oracle_id: "853a3c2b-3d37-453a-8a77-4d90bd3a1cb7", scryfall_id: "d9e1b37f-8168-4dc0-858f-434ee96ff748" });
+const BRAINSTORM = () => make({ name: "Brainstorm", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Draw three cards, then put two cards from your hand on top of your library in any order.", oracle_id: "36cd2364-d113-47d1-b2c4-b088d9eb88dd", scryfall_id: "d8bcdbfb-27df-4553-b8ec-97c3f2053745" });
 const WORLDLY = () => make({ name: "Worldly Tutor", type_line: "Instant", mana_cost: "{G}", cmc: 1, oracle_text: "Search your library for a creature card, reveal it, then shuffle and put the card on top." });
 const ELADAMRI = () => make({ name: "Eladamri's Call", type_line: "Instant", mana_cost: "{G}{W}", cmc: 2, oracle_text: "Search your library for a creature card, reveal that card, put it into your hand, then shuffle." });
 const ENTOMB = () => make({ name: "Entomb", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Search your library for a card, put that card into your graveyard, then shuffle." });
@@ -4483,6 +4484,33 @@ describe("casting", () => {
     expect(accept).toBeDefined();
     game = applyAction(game, 0, accept!.action);
     expect(game.players[0]!.hand.filter((card) => card.name === "Grizzly Bears" || card.name === "Test Relic")).toHaveLength(2);
+  });
+
+  it("lets Brainstorm draw three then put two back on top in the chosen order", () => {
+    const profile = profileOf(BRAINSTORM());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.effects[0]).toEqual({ kind: "draw-then-put-back-on-top", draw: 3, putBack: 2 });
+
+    let game = readyToCast([BRAINSTORM()], [ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [SOL_RING(), BEAR(), TEST_ARTIFACT()], "brainstorm-library"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.hand).toHaveLength(3);
+    expect(game.pendingChoice).toMatchObject({ type: "hand-card-to-library-top", seat: 0, remaining: 2 });
+    expect(legalActions(game, 1)).toHaveLength(0);
+
+    let choice = game.pendingChoice!;
+    const solRingId = game.players[0]!.hand.find((card) => card.name === "Sol Ring")!.instance_id;
+    game = applyAction(game, 0, { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId: solRingId });
+    expect(game.pendingChoice).toMatchObject({ type: "hand-card-to-library-top", seat: 0, remaining: 1 });
+    expect(game.players[0]!.library[0]!.name).toBe("Sol Ring");
+
+    choice = game.pendingChoice!;
+    const bearId = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!.instance_id;
+    game = applyAction(game, 0, { type: "choose-hand-card-to-library-top", sourceId: choice.sourceId, cardId: bearId });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.hand).toHaveLength(1);
+    expect(game.players[0]!.library[0]!.name).toBe("Grizzly Bears");
+    expect(game.players[0]!.library[1]!.name).toBe("Sol Ring");
   });
 
   it("reuses the library search family for top, hand and graveyard destinations", () => {
