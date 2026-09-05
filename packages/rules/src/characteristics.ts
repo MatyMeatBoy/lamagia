@@ -526,6 +526,8 @@ export type SpellEffect =
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
   /** Incinerate-style damage rider that disables regeneration for the damaged creature (CR 615.1, 701.19). */
   | { readonly kind: "damage-any-target-prevents-regeneration"; readonly amount: number | "X" }
+  /** Lava Coil-style damage rider that exiles the damaged creature if it would die this turn (CR 614.1). */
+  | { readonly kind: "damage-any-target-exiles-if-dies"; readonly amount: number | "X" }
   /** Damage equal to the power of the creature paid for this spell's additional cost (CR 608.2h). */
   | { readonly kind: "damage-any-target-equal-sacrificed-creature-power" }
   /** Amass N (CR 701.44): put N +1/+1 counters on an Army you control, or create a 0/0 black [tokenType] Army token with them if you control none. */
@@ -4874,6 +4876,13 @@ function recognizeText(text: string): RecognizedText {
       if (recognized.effect.kind === "damage-any-target"
         && /^a creature dealt damage this way can(?:not|'t) be regenerated this turn\.?$/i.test(noRegenerationRider ?? "")) {
         effects.push({ kind: "damage-any-target-prevents-regeneration", amount: recognized.effect.amount });
+        if (recognized.target !== "none") targetKind = recognized.target;
+        sentenceIndex += 1;
+        continue;
+      }
+      if (recognized.effect.kind === "damage-any-target"
+        && /^if that creature would die this turn, exile it instead\.?$/i.test(noRegenerationRider ?? "")) {
+        effects.push({ kind: "damage-any-target-exiles-if-dies", amount: recognized.effect.amount });
         if (recognized.target !== "none") targetKind = recognized.target;
         sentenceIndex += 1;
         continue;
