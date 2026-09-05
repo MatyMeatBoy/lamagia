@@ -3563,7 +3563,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "damage-any-target": {
       const target = object.targets[0];
       if (!target) return state;
-      const amount = effectAmount(effect.amount, object);
+      const amount = effectAmount(object.kicked && effect.kickedAmount !== undefined ? effect.kickedAmount : effect.amount, object);
       if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       return state;

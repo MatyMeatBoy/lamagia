@@ -523,7 +523,7 @@ export type SpellEffect =
   /** Noncombat damage to the controller of the permanent source. */
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
-  | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  | { readonly kind: "damage-any-target"; readonly amount: number | "X"; readonly kickedAmount?: number | "X" }
   /** Incinerate-style damage rider that disables regeneration for the damaged creature (CR 615.1, 701.19). */
   | { readonly kind: "damage-any-target-prevents-regeneration"; readonly amount: number | "X" }
   /** Lava Coil-style damage rider that exiles the damaged creature if it would die this turn (CR 614.1). */
@@ -4858,7 +4858,26 @@ function recognizeText(text: string): RecognizedText {
       if (ifKicked) {
         const keyword = /^it has (split second)\.?$/i.exec(ifKicked[1]!.trim());
         if (keyword) { kickedKeywords.push(keyword[1]!.toLowerCase() as EnforcedKeyword); continue; }
-        const rk = recognizeSentence(ifKicked[1]!);
+        const kickedText = ifKicked[1]!
+          .replace(/^instead\s+/i, "")
+          .replace(/^it\b/i, "~")
+          .replace(/\s+instead\.?$/i, "");
+        // Kicker replacement clauses commonly omit the already-established
+        // target ("If kicked, it deals 4 damage instead"). Infer the same
+        // any-target damage primitive and retain the base sentence's target.
+        const damageOnly = /^~ deals (\w+) damage$/i.exec(kickedText);
+        const damageAmount = damageOnly ? (damageOnly[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageOnly[1]!)) : null;
+        const rk = recognizeSentence(kickedText) ?? (damageAmount !== null
+          ? { effect: { kind: "damage-any-target", amount: damageAmount } as SpellEffect, target: "none" as TargetKind }
+          : null);
+        if (rk && /\binstead\b/i.test(ifKicked[1]!)) {
+          const base = effects[effects.length - 1];
+          if (base?.kind === "damage-any-target" && rk.effect.kind === "damage-any-target") {
+            effects[effects.length - 1] = { ...base, kickedAmount: rk.effect.amount };
+            if (rk.target !== "none") targetKind = rk.target;
+            continue;
+          }
+        }
         if (rk) { kickedEffects.push(rk.effect); if (rk.target !== "none") targetKind = rk.target; }
         else unimplementedText.push(sentence.trim());
         continue;
