@@ -163,6 +163,7 @@ const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "
 const DAMAGE_ON_OPPONENT_DRAW = () => make({ name: "Test Nekusar", type_line: "Creature — Wizard", mana_cost: "{2}{U}{B}{R}", cmc: 5, power: "2", toughness: "4", oracle_text: "Whenever an opponent draws a card, ~ deals 1 damage to that player." });
 const LIFELOSS_ON_OPPONENT_DRAW = () => make({ name: "Test Scrawling Crawler", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "Whenever an opponent draws a card, that player loses 1 life." });
 const LIFELOSS_ON_OPPONENT_DISCARD = () => make({ name: "Test Liliana's Caress", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Whenever an opponent discards a card, that player loses 2 life." });
+const GAIN_ON_YOUR_DRAW_DRAIN_ON_OPPONENT_DRAW = () => make({ name: "Test Sheoldred", type_line: "Creature — Phyrexian Praetor", mana_cost: "{3}{B}{B}", cmc: 5, power: "4", toughness: "5", oracle_text: "Deathtouch\nWhenever you draw a card, you gain 2 life.\nWhenever an opponent draws a card, they lose 2 life." });
 const DRAW_TWO_TARGET = () => make({ name: "Test Divination", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Target player draws two cards." });
 const X_MINUS_SWEEP = () => make({ name: "X Minus Sweep", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "All creatures get -X/-X until end of turn." });
 const POWER_DRAW_TRIGGER = () => make({ name: "Power Draw Trigger", type_line: "Creature — Human Druid", mana_cost: "{3}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "At the beginning of your end step, if you control a creature with power 5 or greater, you may draw a card." });
@@ -2726,6 +2727,27 @@ describe("casting", () => {
     expect(game.players[1]!.hand.length).toBe(handBefore1 + 2);
     expect(game.players[0]!.life).toBe(life0);
     expect(game.players[1]!.life).toBe(life1 - 2);
+  });
+
+  it("splits a two-clause draw trigger between its own controller and an opponent", () => {
+    const profile = profileOf(GAIN_ON_YOUR_DRAW_DRAIN_ON_OPPONENT_DRAW());
+    expect(profile.triggers).toContainEqual(expect.objectContaining({ event: "card-drawn", subject: "you", effect: { kind: "gain-life", amount: 2 } }));
+    expect(profile.triggers).toContainEqual(expect.objectContaining({ event: "card-drawn", subject: "opponent", effect: { kind: "lose-life-event-player", amount: 2 } }));
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Seat 0 controls the praetor. Drawing itself gains life; making seat 1
+    // draw instead drains seat 1, never seat 0.
+    let game = readyToCast([DRAW_TWO_TARGET()], [GAIN_ON_YOUR_DRAW_DRAIN_ON_OPPONENT_DRAW(), ISLAND(), ISLAND(), ISLAND()], [], []);
+    const life0 = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 0 }] });
+    expect(game.players[0]!.life).toBe(life0 + 4);
+
+    game = readyToCast([DRAW_TWO_TARGET()], [GAIN_ON_YOUR_DRAW_DRAIN_ON_OPPONENT_DRAW(), ISLAND(), ISLAND(), ISLAND()], [], []);
+    const life0b = game.players[0]!.life;
+    const life1 = game.players[1]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[0]!.life).toBe(life0b);
+    expect(game.players[1]!.life).toBe(life1 - 4);
   });
 
   it("uses the announced X value for variable all-creature debuffs", () => {
