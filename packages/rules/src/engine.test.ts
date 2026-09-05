@@ -9544,6 +9544,66 @@ describe("City of Traitors sacrifices itself when another land is played", () =>
   });
 });
 
+describe("Persist and the each-opponent drain template", () => {
+  const MURDEROUS_REDCAP = () => make({ name: "Murderous Redcap", type_line: "Creature — Goblin Assassin", mana_cost: "{2}{B/R}{B/R}", cmc: 4, power: "2", toughness: "2", keywords: ["Persist"], oracle_text: "When this creature enters, it deals damage equal to its power to any target.\nPersist (When this creature dies, if it had no -1/-1 counters on it, return it to the battlefield under its owner's control with a -1/-1 counter on it.)" });
+  // A Persist creature with no other triggers, to isolate the mechanic under
+  // test from Murderous Redcap's own ETB damage (which would need its own
+  // target-selection flow to resolve).
+  const TEST_PERSIST_CREATURE = () => make({ name: "Test Persist Creature", type_line: "Creature — Spirit", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2", keywords: ["Persist"], oracle_text: "Persist (When this creature dies, if it had no -1/-1 counters on it, return it to the battlefield under its owner's control with a -1/-1 counter on it.)" });
+  const ZULAPORT_CUTTHROAT = () => make({ name: "Zulaport Cutthroat", type_line: "Creature — Human Rogue Ally", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", oracle_text: "Whenever this creature or another creature you control dies, each opponent loses 1 life and you gain 1 life." });
+
+  it("recognizes the bare 'Persist' reminder line as consumed by the synthesized keyword trigger", () => {
+    const profile = profileOf(MURDEROUS_REDCAP());
+    expect(profile.triggers).toContainEqual(expect.objectContaining({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "-1/-1" } }));
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("returns a Persist creature once with a -1/-1 counter, but not a second time", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [TEST_PERSIST_CREATURE(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BOLT(), BOLT()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    let persistCreature = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Persist Creature")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: persistCreature.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    persistCreature = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Persist Creature")!;
+    expect(persistCreature.counters["-1/-1"]).toBe(1);
+    expect(powerOf(persistCreature, game)).toBe(1);
+    expect(toughnessOf(persistCreature, game)).toBe(1);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-1", targets: [{ kind: "permanent", instanceId: persistCreature.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Persist Creature")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Persist Creature")).toBe(true);
+  });
+
+  it("recognizes the each-opponent drain template, distinct from Blood Artist's single-target one", () => {
+    const profile = profileOf(ZULAPORT_CUTTHROAT());
+    expect(profile.triggers).toEqual([{
+      event: "dies", subject: "creature-you-control",
+      effect: { kind: "compound", effects: [{ kind: "each-opponent-loses-life", amount: 1 }, { kind: "gain-life", amount: 1 }] },
+      optional: false, targetKind: "none",
+      sourceText: "Whenever ~ or another creature you control dies, each opponent loses 1 life and you gain 1 life."
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("drains every opponent by 1 when another creature you control dies", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ZULAPORT_CUTTHROAT(), BEAR(), MOUNTAIN()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BOLT()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const life0Before = game.players[0]!.life;
+    const life1Before = game.players[1]!.life;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
+    expect(game.players[0]!.life).toBe(life0Before + 1);
+    expect(game.players[1]!.life).toBe(life1Before - 1);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

@@ -3707,6 +3707,60 @@ zero creatures on the battlefield the cast is absent from
 rules tests**, `npm run check`, `npm run simulate:engine` 200/200,
 9,948 global profiles.
 
+## Second target deck: Prossh, Skyraider of Kher (2026-09-05)
+
+By request, switched the standing-goal target deck from the C14/cEDH-
+pod sweep to a user-supplied Prossh, Skyraider of Kher decklist (97
+unique cards, tappedout.net — the site's own bot-check blocked
+automated fetching, so the user pasted the list directly). Cross-
+referencing it against the export the same way as the cEDH pod
+surfaced two more one-line gaps:
+
+**Persist's missing skip line** — the bare "Persist" reminder line
+(and its "Undying" sibling) was never consumed by `recognizeText`,
+even though both keywords already synthesize a real `undying-return`
+trigger from `card.keywords` at the top level of `cardProfile()`. Same
+class of gap as the untapped enters-with-counters fix earlier this
+session: the VALUE was already computed correctly, only the line
+consumption was missing. Added both skip lines, mirroring the existing
+`rebound`/`extort` pattern immediately above them.
+
+**Zulaport Cutthroat's each-opponent drain** — "Whenever ~ or another
+creature you control dies, each opponent loses 1 life and you gain 1
+life." looks like Blood Artist's "...target player loses 1 life and
+you gain 1 life." but is a genuinely different template: every
+opponent drains at once, not one chosen target. The underlying
+`each-opponent-loses-life` effect already existed with a bare-sentence
+recognizer ("Each opponent loses N life"); this only needed the
+compound "...and you gain N life" tail, mirroring the pre-existing
+"Draw N cards and each opponent loses N life" compound already in the
+file.
+
+Verified **+50** combined in the export count (9,948 → 9,998) — the
+Zulaport template alone matched 126 distinct catalog-wide oracle
+texts, the single largest regex win of the entire session. Set
+coverage 30.0% → 30.2%. Scenario-tested: a synthetic Persist creature
+comes back once with a -1/-1 counter after dying, then stays dead on a
+second death (the "if it had no counter" guard correctly suppresses
+the second trigger before it's even queued); Zulaport Cutthroat drains
+1 from every opponent and gains its controller 1 life when a different
+creature that controller owns dies. Validation: **695 rules tests**,
+`npm run check`, `npm run simulate:engine` 200/200, 9,998 global
+profiles.
+
+Prossh decklist status after this pass: **54 of 97 unique cards fully
+implemented (55.7%)**. Remaining, roughly ranked by apparent size:
+Skullclamp (equipped-creature-dies trigger subject — worth doing next,
+high catalog-wide reuse), Natural Order (green-creature-restricted
+sibling of the sacrifice-a-creature cost added this session), Urborg
+Tomb of Yawgmoth (global land-type grant), Chromatic Lantern / Joraga
+Treespeaker (granting a mana ability to other permanents), Purphoros /
+Xenagos God of Revels (devotion-gated "isn't a creature", a Theros god
+family), then the larger multi-line cards (Necropotence, Birthing Pod,
+Food Chain, Craterhoof Behemoth, Protean Hulk, Chord of Calling, Green
+Sun's Zenith, Tooth and Nail, Yawgmoth's Will, planeswalker loyalty
+abilities for Garruk Wildspeaker and Xenagos the Reveler).
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

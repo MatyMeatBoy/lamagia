@@ -2695,6 +2695,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "each-opponent-loses-life", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-opponent-loses-life", amount: "X" }, target: "none" };
   }
+  // Zulaport Cutthroat template (CR 119.3): a drain that hits every opponent
+  // at once, unlike Blood Artist's single "target player" variant above.
+  if ((match = /^Each opponent loses (\w+) life and you gain \1 life$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount) return {
+      effect: { kind: "compound", effects: [{ kind: "each-opponent-loses-life", amount }, { kind: "gain-life", amount }] },
+      target: "none"
+    };
+  }
   // "that player" in these two refers back to the event's own player (e.g.
   // the opponent who drew the card that triggered this), not a chosen
   // target — CR 603.3d. Resolved from `object.trigger?.eventController`.
@@ -4089,6 +4098,9 @@ function recognizeText(text: string): RecognizedText {
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
+    // Undying / Persist (CR 702.93/702.92) are synthesised from the keyword below.
+    if (/^undying\.?$/i.test(line)) continue;
+    if (/^persist\.?$/i.test(line)) continue;
     // Changeling is represented by `profile.changeling` and enforced by
     // `hasSubtype` in every zone (CR 702.73a); consume the keyword line only
     // after that semantic representation has been built.
