@@ -39,6 +39,18 @@ describe("smart counter response and safe mana undo", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "stack-card-0", targets: [{ kind: "player", seat: 1 }] });
     expect(projectGame(game, 1).stack[0]).toMatchObject({ kind: "spell", name: "Lightning Bolt", label: "Lightning Bolt", text: "Lightning Bolt deals 3 damage to any target." });
   });
+  it("projects every target kind for a multi-target modal action", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [FISSURE_VENT()], "multi-target") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 1, [SOL_RING(), COMMAND_TOWER()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const projected = projectGame(game, 0);
+    expect(projected.targetOptions["nonbasic-land"]).toEqual(expect.arrayContaining([
+      { kind: "permanent", instanceId: expect.any(String) }
+    ]));
+  });
   it("offers Simian Spirit Guide's hand mana instead of guessing cast", () => {
     let game = twoSeatGame([], []);
     const guide = SIMIAN_SPIRIT_GUIDE();

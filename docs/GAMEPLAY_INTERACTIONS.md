@@ -35,7 +35,8 @@ the final non-gameplay row.
 
 Selecting a menu action with one or multiple targets always opens the same
 centered target picker used by direct card clicks; the menu never submits an
-incomplete target list.
+incomplete target list. Multi-target modal actions also project every target
+kind required by the selected mode.
 
 ## Yield from this card
 

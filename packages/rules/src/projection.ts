@@ -383,7 +383,10 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     "nonland", "nonartifact-creature", "non-demon-creature", "creature-you-control", "land-you-control", "enchantment", "land",
     "attacking-or-blocking-creature",
     "player-or-planeswalker", "card-in-your-graveyard", "card-in-a-graveyard", "creature-card-in-your-graveyard", "creature-card-in-a-graveyard", "artifact-card-in-your-graveyard", "artifact-card-in-a-graveyard", "enchantment-card-in-your-graveyard", "enchantment-card-in-a-graveyard", "land-card-in-a-graveyard",
-    ...viewerActions.flatMap((action) => action.requiresTarget ? [action.requiresTarget] : [])
+    ...viewerActions.flatMap((action) => [
+      ...(action.requiresTarget ? [action.requiresTarget] : []),
+      ...(action.requiresTargets ?? [])
+    ])
   ]);
   const targetOptions = Object.fromEntries([...targetKinds].map((kind) => [kind, legalTargets(state, viewerSeat, kind as Exclude<import("./characteristics.js").TargetKind, "none">)]));
 
