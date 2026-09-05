@@ -131,3 +131,16 @@ with a reusable combat restriction rather than a card-name branch. Validation:
 Prossh, Skyraider of Kher | `868882d2-ed4e-4171-a17c-478a341080fb` was closed
 locally with the reusable mana-spent cast-trigger token primitive. Validation:
 575 rules tests, `npm run check`, 9,324 global profiles, C13 260/341.
+
+The latest origin audit processed the remaining executable C13 candidates:
+
+- `e8d97ae` Dungeon Geists was selectively rescued into `0fc5e12` with a
+  reusable opponent-creature target and source-controlled untap lock.
+- `ffc4d51` Standstill was selectively rescued into the same integration with
+  the `When` spell-cast grammar and event-caster opponent draw scope.
+- `fa5b133` Phyrexian Delver was skipped as a duplicate: its generic
+  reanimation-plus-mana-value-loss effect and scenario already exist locally.
+
+Validation after the integration: 577 rules tests, `npm run check`, 9,326
+global profiles, C13 261/341. No worker docs or claims were imported when they
+were stale; only executable source and scenario evidence was retained.
