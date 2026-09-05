@@ -3125,3 +3125,24 @@ Currently hardcodes one discard per queued seat — the only caller so far
 — rather than threading a per-seat variable amount through the chain.
 Validation: **593 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,350 global profiles.
+
+Deadly Rollick | `0456ec64-2c81-4763-a352-8ff64a4c3d6b` was closed with the
+first alternative-cost primitive: `CardProfile.freeCastIfCommander`
+(CR 601.2b, 118.9), the "may cast without paying its mana cost if you
+control a commander" shape. `castableCard`/`applyCast` both gained a
+trailing `freeCast` parameter/`GameAction.freeCast` flag; when set and
+`controlsCommander(state, seat)` holds, the whole `planManaPayment`/
+`applyManaPlan`/`payCost` path is bypassed with an `emptyPool()` payment
+instead — the printed mana cost itself is untouched (still relevant to
+anything that reads it), only the payment step is skipped. `legalActions`
+offers the free cast as an *additional* option alongside the normal paid
+cast (CR 601.2b: the caster still chooses which cost to pay), not a
+replacement. Flawless Maneuver and Fierce Guardianship share the exact
+phrasing and are now covered for free; Deflecting Swat and Obscuring Haze
+still have other unimplemented text and correctly remain
+`fullyImplemented: false`. This is deliberately the minimal-footprint
+version of a general alternative-cost system — Daze (return a permanent
+instead of paying) and Snuff Out (pay life instead) need their own
+distinct shapes and were not attempted here. Validation: **594 rules
+tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,353 global
+profiles.

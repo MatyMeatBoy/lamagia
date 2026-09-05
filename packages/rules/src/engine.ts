@@ -508,7 +508,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
@@ -5099,10 +5099,16 @@ function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean, ent
   return withKicker(cost, entwined ? profile.entwineCost : null);
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
+function controlsCommander(state: GameState, seat: SeatId): boolean {
+  return playerAt(state, seat).battlefield.some((permanent) => permanent.isCommander);
+}
+
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
+  if (freeCast && !profile.freeCastIfCommander) return { legal: false };
+  if (freeCast && !controlsCommander(state, seat)) return { legal: false };
   const cost = flashback
     ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
     : spellCostOf(profile, kicked, evoked, entwined);
@@ -5122,7 +5128,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
+  const plan = freeCast ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost });
   if (!plan) return { legal: false };
   const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -5427,6 +5433,21 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
       });
+    }
+    // Deadly Rollick-style free cast: offered alongside the normal paid cast, not instead of it (CR 601.2b).
+    if (profile.freeCastIfCommander) {
+      const freeCheck = castableCard(state, seat, card, false, 0, undefined, false, false, false, false, true);
+      if (freeCheck.legal) {
+        actions.push({
+          action: { type: "cast", cardId: card.instance_id, freeCast: true },
+          label: `Lanzar ${card.name} sin pagar su coste de maná`,
+          cardId: card.instance_id,
+          manaValue: 0,
+          ...(freeCheck.targetKind ? { requiresTarget: freeCheck.targetKind } : {}),
+          ...(freeCheck.targetKinds ? { requiresTargets: freeCheck.targetKinds } : {}),
+          ...(freeCheck.note ? { note: freeCheck.note } : {})
+        });
+      }
     }
   }
 
@@ -6396,7 +6417,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const kicked = Boolean(action.kicked);
   const evoked = Boolean(action.evoked);
   const entwined = Boolean(action.entwined);
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined);
+  const freeCast = Boolean(action.freeCast);
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
@@ -6409,8 +6431,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
-  const plan = planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost });
-  if (!plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
+  const plan = freeCast ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost });
+  if (!freeCast && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
   if (check.targetKinds?.length) {
@@ -6430,8 +6452,10 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     action = { ...action, targets: chosen };
   }
 
-  let next = applyManaPlan(state, seat, plan);
-  const payment = payCost(spellCost, playerAt(next, seat).manaPool, { additionalGeneric, availableLife: playerAt(next, seat).life });
+  let next = freeCast ? state : applyManaPlan(state, seat, plan!);
+  const payment = freeCast
+    ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
+    : payCost(spellCost, playerAt(next, seat).manaPool, { additionalGeneric, availableLife: playerAt(next, seat).life });
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
   const commanderEntryCounters = Boolean(fromCommand && playerAt(next, seat).commanderMana > 0 && poolTotal(payment.spent) > 0);
   next = withPlayer(next, seat, (current) => ({
