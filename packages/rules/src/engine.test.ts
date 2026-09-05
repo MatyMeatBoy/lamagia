@@ -187,6 +187,8 @@ const X_OPPONENT_LOSS = () => make({ name: "Scalable Burden", type_line: "Sorcer
 const X_DRAW = () => make({ name: "Scalable Insight", type_line: "Sorcery", mana_cost: "{X}{U}", cmc: 1, oracle_text: "Draw X cards." });
 const GRAVEYARD_RETURN = () => make({ name: "Unearth Memory", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Return target creature card from your graveyard to your hand." });
 const GRAVEYARD_BATTLEFIELD = () => make({ name: "Reanimate Memory", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Return target creature card from your graveyard to the battlefield." });
+const REANIMATE_SPELL = () => make({ name: "Test Reanimate", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value." });
+const PLAIN_GRAVEYARD_REANIMATE = () => make({ name: "Test Hymn of Rebirth", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Put target creature card from a graveyard onto the battlefield under your control." });
 const ARTIFACT_GRAVEYARD_RETURN = () => make({ name: "Artifact Reclaim", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Return target artifact card from your graveyard to your hand." });
 const LAND_GRAVEYARD_BATTLEFIELD = () => make({ name: "Restore Memory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Put target land card from a graveyard onto the battlefield under your control." });
 const ARTIFACT_GRAVEYARD_BATTLEFIELD = () => make({ name: "Sharuum Memory", type_line: "Sorcery", mana_cost: "{2}{U}{B}", cmc: 4, oracle_text: "Return target artifact card from your graveyard to the battlefield." });
@@ -1436,6 +1438,43 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it("reanimates a creature from an opponent's graveyard, paying life equal to its mana value", () => {
+    const profile = profileOf(REANIMATE_SPELL());
+    expect(profile).toMatchObject({ targetKind: "creature-card-in-a-graveyard", effects: [{ kind: "reanimate-target-creature-lose-mana-value-life" }] });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([REANIMATE_SPELL()], [SWAMP()], [], []);
+    game = stage(game, 1, (player) => ({ autoPass: false, graveyard: toHand(1, [BEAR()], "reanimate-yard") }));
+    game = stage(game, 0, (player) => ({ autoPass: false }));
+    const life0 = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "graveyard-card", seat: 1, instanceId: "reanimate-yard-0" }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    // The reanimated creature enters under the CASTER's control, not its
+    // original owner's, and only the caster pays the life cost.
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.life).toBe(life0 - 2);
+  });
+
+  it("reanimates for free when there is no cost clause", () => {
+    expect(profileOf(PLAIN_GRAVEYARD_REANIMATE())).toMatchObject({
+      targetKind: "creature-card-in-a-graveyard",
+      effects: [{ kind: "return-target-creature-card-from-graveyard-to-battlefield" }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([PLAIN_GRAVEYARD_REANIMATE()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], []);
+    game = stage(game, 0, (player) => ({ autoPass: false, graveyard: toHand(0, [BEAR()], "hymn-yard") }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    const life0 = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "graveyard-card", seat: 0, instanceId: "hymn-yard-0" }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.life).toBe(life0);
   });
 
   it("uses Stitch Together's threshold at resolution", () => {

@@ -3083,6 +3083,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       return putOntoBattlefield(next, object.controller, card, false);
     }
+    case "reanimate-target-creature-lose-mana-value-life": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "graveyard-card") return state;
+      const player = playerAt(state, target.seat);
+      const card = player.graveyard.find((candidate) => candidate.instance_id === target.instanceId);
+      if (!card || !isCreature(cardProfile(card))) return state;
+      const amount = cardProfile(card).manaValue;
+      const next = withPlayer(state, target.seat, (current) => ({
+        ...current,
+        graveyard: current.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
+      }));
+      return loseLife(putOntoBattlefield(next, object.controller, card, false), object.controller, amount);
+    }
     case "return-target-creature-card-from-graveyard-threshold": {
       const target = object.targets[0];
       if (!target || target.kind !== "graveyard-card") return state;
