@@ -50,13 +50,20 @@ describe("smart counter response and safe mana undo", () => {
     const action = legalActions(game, 0).find(a => a.action.type === "activate-mana")!.action;
     const next = applyAction(game, 0, action);
     expect(isSafeManaUndo(game, next, 0, action)).toBe(true);
-    expect(isSafeManaUndo(game, { ...next, players: next.players.map(p => p.seat === 0 ? { ...p, life: p.life - 1 } : p) }, 0, action)).toBe(false);
+    expect(isSafeManaUndo(game, { ...next, players: next.players.map(p => p.seat === 1 ? { ...p, life: p.life - 1 } : p) }, 0, action)).toBe(false);
     expect(isSafeManaUndo(game, applyAction(next, 0, { type: "pass" }), 0, action)).toBe(false);
     const city = putOnBattlefield(game, 0, [make({ name: "City of Brass", type_line: "Land", oracle_text: "Whenever City of Brass becomes tapped, it deals 1 damage to you.\n{T}: Add one mana of any color." })]);
     const cityAction = legalActions(city, 0).find(a => a.action.type === "activate-mana" && a.action.sourceId === city.players[0]!.battlefield.at(-1)!.instance_id)!.action;
     const tapped = applyAction(city, 0, cityAction);
     expect(tapped.stack.length).toBeGreaterThan(0);
     expect(isSafeManaUndo(city, tapped, 0, cityAction)).toBe(false);
+
+    const pain = putOnBattlefield(game, 0, [PAIN_LAND()]);
+    const painAction = legalActions(pain, 0).find(a => a.action.type === "activate-mana"
+      && a.action.sourceId === pain.players[0]!.battlefield.at(-1)!.instance_id && a.action.abilityIndex === 1)!.action;
+    const painTapped = applyAction(pain, 0, painAction);
+    expect(painTapped.players[0]!.life).toBe(39);
+    expect(isSafeManaUndo(pain, painTapped, 0, painAction)).toBe(true);
   });
 });
 
@@ -1052,6 +1059,15 @@ describe("mana payment", () => {
     game = applyAction(game, 0, { type: "activate-mana", sourceId: land.instance_id, abilityIndex: 1, mana: "R" });
     expect(game.players[0]!.life).toBe(before - 1);
     expect(game.players[0]!.manaPool.R).toBe(1);
+  });
+
+  it("auto-passes an Equipment activation when no creature can be equipped", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEHEMOTH_SLEDGE(), ISLAND()]);
+    game = stage(game, 0, () => ({ hand: [] }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "equip")).toBe(false);
+    expect(hasRealChoice(game, 0)).toBe(false);
   });
 
   it("adds a fixed mana pool from a ritual spell, including a mix of distinct colors", () => {

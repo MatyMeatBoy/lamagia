@@ -615,6 +615,28 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
   border: 1px solid var(--gold-dim); border-radius: 12px; background: #07120cf5;
   box-shadow: 0 22px 70px #000c, 0 0 0 9999px #02080435; backdrop-filter: blur(7px);
 }
+
+.context-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 228px;
+  padding: 5px;
+  border: 1px solid var(--gold);
+  border-radius: 9px;
+  background: #08120b;
+  box-shadow: 0 10px 26px #000b;
+}
+.context-menu button {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 11px;
+  color: var(--text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.context-menu button:hover, .context-menu button:focus-visible { background: #1d3022; color: var(--gold); }
 .decision-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line-soft); }
 .decision-head > div { min-width: 0; display: grid; gap: 3px; }
 .decision-head b { color: var(--gold); font-size: .82rem; }

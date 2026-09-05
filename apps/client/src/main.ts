@@ -78,6 +78,8 @@ interface UiState {
   abilityMenu: string | null;
   /** The hand card whose cast/cycle alternatives are being chosen. */
   cardActionMenu: string | null;
+  /** Context menu opened from the playmat for reversible actions. */
+  contextMenu: { x: number; y: number } | null;
   showFullLibrary: boolean;
   /** The keyword or ability glyph whose help card is open. */
   glyphHelp: AbilityGlyph | null;
@@ -94,7 +96,7 @@ let coverageGroup = "all";
 let coverageSubgroup = "all";
 let coverageQuery = "";
 const ui: UiState = {
-  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, cardActionMenu: null, glyphHelp: null,
+  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, cardActionMenu: null, contextMenu: null, glyphHelp: null,
   notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", showFullLibrary: false,
   // Smart priority is the default; manual priority remains an explicit opt-out.
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
@@ -325,6 +327,7 @@ function applyView(next: GameView): void {
   ui.selectedBlocker = null;
   ui.abilityMenu = null;
   ui.cardActionMenu = null;
+  ui.contextMenu = null;
   ui.showFullLibrary = false;
   if (!next.combat.awaitingAttackers) ui.attackers.clear();
   if (!next.combat.awaitingBlockersFrom.includes(next.viewerSeat)) ui.blockers.clear();
@@ -1096,6 +1099,9 @@ function render(): void {
     ${abilityMenuHtml()}
   ${cardActionMenuHtml()}
   ${decisionOverlayHtml()}
+  ${ui.contextMenu && view.undoAvailable ? `<div class="context-menu" style="left:${ui.contextMenu.x}px;top:${ui.contextMenu.y}px" role="menu">
+    <button id="context-undo" type="button">Deshacer última acción de maná</button>
+  </div>` : ""}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
   <div class="card-preview" id="card-preview"></div>
@@ -1157,6 +1163,20 @@ function wireBoard(): void {
   on("#close-decision-overlay", () => document.querySelector(".decision-overlay")?.remove());
   on("#close-card-action-menu", () => { ui.cardActionMenu = null; ui.notice = ""; render(); });
   on("#undo", () => void undoLatestMana());
+  on("#context-undo", () => { ui.contextMenu = null; void undoLatestMana(); });
+  document.querySelector<HTMLElement>(".table")?.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    if (event.target instanceof Element && event.target.closest("[data-hand], [data-permanent], [data-zone-card]")) return;
+    if (!view?.undoAvailable) return;
+    ui.contextMenu = {
+      x: Math.min(event.clientX, Math.max(8, window.innerWidth - 250)),
+      y: Math.min(event.clientY, Math.max(8, window.innerHeight - 58))
+    };
+    render();
+  });
+  document.querySelector<HTMLElement>(".table")?.addEventListener("click", () => {
+    if (ui.contextMenu) { ui.contextMenu = null; render(); }
+  });
   document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
     button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
   on("#close-ability-menu", () => { ui.abilityMenu = null; render(); });
@@ -1694,8 +1714,8 @@ document.querySelector<HTMLInputElement>("#card-query")?.addEventListener("input
 window.addEventListener("keydown", (event) => {
   if (event.target instanceof HTMLInputElement) return;
   if (event.code === "Space") { event.preventDefault(); document.querySelector<HTMLButtonElement>("#pass")?.click(); }
-  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.glyphHelp)) {
-    ui.pendingTarget = null; ui.abilityMenu = null; ui.glyphHelp = null; ui.notice = ""; render();
+  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.glyphHelp)) {
+    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.glyphHelp = null; ui.notice = ""; render();
   }
   if (event.code === "KeyL") { ui.logOpen = !ui.logOpen; render(); }
 });
