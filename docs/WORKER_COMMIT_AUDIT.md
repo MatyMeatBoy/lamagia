@@ -281,3 +281,39 @@ After export and full validation: **599 rules tests**, `npm run check`,
 (27.9%)**, C13 **269/341**, and C14 **199/322**. The next C13 queue remains
 72 cards, with 5 one-line candidates; this audit is complete for all currently
 reachable origin heads.
+
+### MtgFork and unreachable-object audit — 2026-09-05 (continued)
+
+The previously unconnected fork checkout was found and inspected at
+`C:/Users/MP/Documents/00 Claude/MtgFork/lamagia`. Its `worker-05` worktree
+tip is `1ad1325`, the same published worker history fetched as
+`origin/worker-05`; its `master` is the old 60-variant cEDH tree and is not a
+safe source branch. The only new executable worker tail was `f565d69`,
+integrated as `8aa9490`:
+
+- Snuff Out | `324824cb-f938-401c-b9b5-d8908b431ef0` — a reusable
+  `payLifeInsteadOfManaCost` alternative cost, offered beside the normal cast
+  and gated by controlling the required land subtype.
+
+The local C13 trigger-review head had one patch-equivalent difference,
+`eeac0f3` (entering-creature power damage); the current engine already carries
+the same primitive through `081b81a`/`61e867d` with the broader target handling,
+so it was not duplicated. The C13 Serene Master, Nemotron audit, C14 batch,
+and other worker heads have no remaining non-equivalent patch according to
+`git cherry` against the current HEAD. Backup refs that would delete newer
+rules code were quarantined.
+
+`git fsck --full --no-reflogs --unreachable` found 130 unreachable commits,
+69 touching executable source. They were inspected as recovery candidates;
+the completed ones (Tidal Force, Mirari, static land-mana bonuses, Aerie
+Mystics, Hippogriff recovery, entering-power damage, Graft, Homeward Path,
+Myr Battlesphere, and related C13/C14 primitives) are already represented by
+current source commits or tests. Remaining objects are WIP/index states,
+stale duplicate patches, or destructive alternate trees; none was applied
+without a scenario test. No additional `mtgfork` object set remains outside
+the discovered checkout.
+
+Final validation after the recovery pass: **600 rules tests**, `npm run check`,
+**9,363/38,711** unique profiles, edition memberships **23,752/84,990
+(27.9%)**, C13 **269/341**, and C14 **199/322**. The C13 queue remains 72
+cards with 5 one-line candidates.
