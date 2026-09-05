@@ -503,6 +503,11 @@ const WATCHER = () => make({
   name: "Mortuary Watcher", type_line: "Creature — Spirit", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
   oracle_text: "Whenever another creature you control dies, you gain 1 life."
 });
+const SEK_KUAR = () => make({
+  name: "Sek'Kuar, Deathkeeper", type_line: "Legendary Creature — Orc Shaman", mana_cost: "{2}{B}{R}{G}", cmc: 5, power: "4", toughness: "3",
+  oracle_text: "Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.",
+  oracle_id: "94426127-65c2-435e-ba92-423a3c102061", scryfall_id: "94426127-65c2-435e-ba92-423a3c102061"
+});
 const ANY_DEATH_WATCHER = () => make({
   name: "Blood Chronicler", type_line: "Creature — Vampire", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "3",
   oracle_text: "Whenever a creature dies, you gain 1 life."
@@ -4932,6 +4937,37 @@ describe("triggered abilities", () => {
     solo = applyAction(solo, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: watcher.instance_id }] });
     solo = passUntil(solo, (state) => state.stack.length === 0 && !state.triggerQueue.length);
     expect(solo.players[1]!.life).toBe(before);
+  });
+
+  it("creates a Graveborn only when another nontoken creature dies", () => {
+    const profile = profileOf(SEK_KUAR());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "dies", subject: "another-creature-you-control", nontoken: true,
+      effect: { kind: "create-token", amount: 1, token: { name: "Graveborn", typeLine: "Creature — Graveborn", power: 3, toughness: 1, colors: ["B", "R"], keywords: ["haste"] } }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([BOLT()], [MOUNTAIN()]);
+    game = putOnBattlefield(game, 1, [SEK_KUAR(), BEAR()]);
+    const victim = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const sekKuar = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sek'Kuar, Deathkeeper")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: victim.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    const tokens = game.players[1]!.battlefield.filter((permanent) => permanent.card.token && permanent.card.name === "Graveborn");
+    expect(tokens).toHaveLength(1);
+    expect(tokens[0]!.card.power).toBe("3");
+    expect(tokens[0]!.card.toughness).toBe("1");
+    expect(tokens[0]!.card.keywords).toEqual(["haste"]);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === sekKuar.instance_id)).toBe(true);
+
+    let tokenGame = readyToCast([BOLT()], [MOUNTAIN()]);
+    tokenGame = putOnBattlefield(tokenGame, 1, [SEK_KUAR()]);
+    tokenGame = putOnBattlefield(tokenGame, 1, [make({ name: "Graveborn token", type_line: "Creature — Graveborn", power: "3", toughness: "1", keywords: ["Haste"] })]);
+    tokenGame = stage(tokenGame, 1, (player) => ({ battlefield: player.battlefield.map((permanent) => ({ ...permanent, card: { ...permanent.card, token: true } })) }));
+    const tokenVictim = tokenGame.players[1]!.battlefield.find((permanent) => permanent.card.token)!;
+    tokenGame = applyAction(tokenGame, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: tokenVictim.instance_id }] });
+    tokenGame = passUntil(tokenGame, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(tokenGame.players[1]!.battlefield.filter((permanent) => permanent.card.token && permanent.card.name === "Graveborn")).toHaveLength(0);
   });
 
   it("drains a chosen player for any creature's death, including its own", () => {
