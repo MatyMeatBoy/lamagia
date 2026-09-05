@@ -763,6 +763,8 @@ export interface TriggerDefinition {
   readonly spellSubtype?: string;
   readonly nontoken?: boolean;
   readonly excludeSubtype?: string;
+  /** Filters a card-discarded event by the discarded card's own type (Waste Not). */
+  readonly discardedCardType?: "creature" | "land" | "noncreature-nonland";
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
   /** "sacrifice it unless {U} was spent to cast it" gate (CR 603.4). */
@@ -2050,6 +2052,7 @@ type TriggerTemplate = {
   readonly spellColor?: string;
   readonly spellSubtype?: string;
   readonly nontoken?: boolean;
+  readonly discardedCardType?: "creature" | "land" | "noncreature-nonland";
   /** A condition baked into the trigger phrase itself (e.g. "their second card each turn"), not the "if X, Y" style attached to effectText below. */
   readonly condition?: TriggerDefinition["condition"];
 };
@@ -2128,6 +2131,9 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "card-discarded", subject: "each-player", pattern: /^whenever\s+a\s+player\s+discards\s+a\s+card,?\s*(.+)$/i },
   { event: "card-discarded", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+discards\s+a\s+card,?\s*(.+)$/i },
   { event: "card-discarded", subject: "you", pattern: /^whenever\s+you\s+discard\s+a\s+card,?\s*(.+)$/i },
+  { event: "card-discarded", subject: "opponent", discardedCardType: "creature", pattern: /^whenever\s+an\s+opponent\s+discards\s+a\s+creature\s+card,?\s*(.+)$/i },
+  { event: "card-discarded", subject: "opponent", discardedCardType: "land", pattern: /^whenever\s+an\s+opponent\s+discards\s+a\s+land\s+card,?\s*(.+)$/i },
+  { event: "card-discarded", subject: "opponent", discardedCardType: "noncreature-nonland", pattern: /^whenever\s+an\s+opponent\s+discards\s+an?\s+noncreature,\s*nonland\s+card,?\s*(.+)$/i },
 
   // Turn-structure triggers (CR 603.2b).
   { event: "upkeep", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+upkeep,?\s*(.+)$/i },
@@ -2147,7 +2153,7 @@ function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { e
   const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "").replace(/^morbid\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
-    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}), ...(template.spellSubtype ? { spellSubtype: template.spellSubtype } : {}), ...(template.nontoken ? { nontoken: true } : {}), ...(template.condition ? { condition: template.condition } : {}) };
+    if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}), ...(template.spellSubtype ? { spellSubtype: template.spellSubtype } : {}), ...(template.nontoken ? { nontoken: true } : {}), ...(template.discardedCardType ? { discardedCardType: template.discardedCardType } : {}), ...(template.condition ? { condition: template.condition } : {}) };
   }
   return null;
 }
@@ -3724,6 +3730,7 @@ function recognizeText(text: string): RecognizedText {
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
           ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),
           ...(triggered.nontoken ? { nontoken: true } : {}),
+          ...(triggered.discardedCardType ? { discardedCardType: triggered.discardedCardType } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
           ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment && !variableLifePay ? { payCost, manaCost: payCost } : {}),
           ...(variableLifePay ? { payCost: parseManaCost("{X}")!, variablePayCost: "event-amount" as const } : {}),
