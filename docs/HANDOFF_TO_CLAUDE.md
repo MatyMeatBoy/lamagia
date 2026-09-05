@@ -2835,3 +2835,18 @@ sentence, not a separate instruction, so it was added to the existing
 needing its own effect — a reusable hook for any future card with the
 same trailing clarifier. Validation: **590 rules tests**, `npm run check`,
 `npm run simulate:engine` 200/200, 9,346 global profiles.
+
+Fevered Visions | `70763549-4b4e-4cb8-8c02-0639ba18bb1a` was closed with a
+new `draw-active-player-then-damage-if-opponent-hand-at-least` effect
+(CR 603.2, 603.3). Its two sentences are one trigger, not two: the draw is
+unconditional for whichever player's end step it is, while the damage only
+applies when that player is an opponent of the enchantment's controller
+and their hand (after the draw) meets the threshold — an effect-level
+branch, not a trigger-gating condition, since "opponent" here is relative
+to the event's active player, not a fixed watcher scope. Discovered along
+the way: `TRIGGER_TEMPLATES` had "at the beginning of each end step" but
+was missing "each player's end step" entirely (only "your end step" and
+"each opponent's end step" existed alongside it) — added, which may
+unlock other pending cards using that exact wording. Validation: **591
+rules tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,347
+global profiles.

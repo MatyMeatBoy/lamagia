@@ -154,6 +154,7 @@ const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", 
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
 const TEFERIS_PUZZLE_BOX = () => make({ name: "Teferi's Puzzle Box", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "At the beginning of each player's draw step, that player puts the cards in their hand on the bottom of their library in any order, then draws that many cards.", oracle_id: "37abcc92-9466-47ea-9e0b-5eda2eb62c8e", scryfall_id: "b5fb88b2-5dc6-43de-8a38-1f8982ed395a" });
 const HOWLING_MINE = () => make({ name: "Howling Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, if this artifact is untapped, that player draws an additional card.", oracle_id: "d26b27db-a567-4631-b4b6-7294222fbdd1", scryfall_id: "3d911839-cb2c-4068-aba3-3441fc0c79ac" });
+const FEVERED_VISIONS = () => make({ name: "Fevered Visions", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "At the beginning of each player's end step, that player draws a card. If the player is your opponent and has four or more cards in hand, this enchantment deals 2 damage to that player.", oracle_id: "70763549-4b4e-4cb8-8c02-0639ba18bb1a", scryfall_id: "8badb2d3-530b-40ca-bcca-4137487f9f01" });
 const HAND_MINUS_DAMAGE = () => make({ name: "Hand Minus Damage", type_line: "Creature — Artifact", mana_cost: "{5}", cmc: 5, power: "2", toughness: "2", oracle_text: "At the beginning of each opponent's upkeep, this creature deals X damage to that player, where X is the number of cards in their hand minus 4." });
 const HAND_EQUAL_DAMAGE = () => make({ name: "Hand Equal Damage", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "At the beginning of each opponent's upkeep, this creature deals damage to that player equal to the number of cards in that player's hand." });
 const EACH_HAND_DAMAGE = () => make({ name: "Shared Hand Damage", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Each player loses life equal to the number of cards in their hand." });
@@ -3109,6 +3110,29 @@ describe("casting", () => {
     const logLengthBeforeOpponentTurn = game.log.length;
     game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 1 && state.step === "precombat-main");
     expect(game.log.slice(logLengthBeforeOpponentTurn).some((entry) => entry.text.includes("Se resuelve la habilidad del paso de robo de Howling Mine"))).toBe(false);
+  });
+
+  it("damages only an opponent whose hand reaches four after Fevered Visions' end-step draw", () => {
+    const profile = profileOf(FEVERED_VISIONS());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "end-step",
+      subject: "each-player",
+      effect: { kind: "draw-active-player-then-damage-if-opponent-hand-at-least", handAtLeast: 4, damage: 2 }
+    });
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [FEVERED_VISIONS()]);
+    game = stage(game, 0, () => ({ hand: [], library: toHand(0, Array.from({ length: 15 }, () => FOREST()), "self-lib") }));
+    // Three staged cards plus the unconditional end-step draw brings the
+    // opponent's hand to exactly four, crossing the damage threshold.
+    game = stage(game, 1, () => ({
+      hand: toHand(1, [BEAR(), FLIER(), SOL_RING()], "fevered-hand"),
+      library: toHand(1, Array.from({ length: 15 }, () => FOREST()), "foe-lib")
+    }));
+    const opponentLifeBefore = game.players[1]!.life;
+    game = passUntil(game, (state) => state.log.some((entry) => entry.text.includes("Fevered Visions hace")));
+    expect(game.players[1]!.hand.length).toBeGreaterThanOrEqual(4);
+    expect(game.players[1]!.life).toBe(opponentLifeBefore - 2);
   });
 
   it("clamps opponent hand-count damage at zero", () => {

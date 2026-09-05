@@ -371,6 +371,8 @@ export type SpellEffect =
   | { readonly kind: "draw-target-player"; readonly amount: number | "X" }
   | { readonly kind: "draw-active-player" }
   | { readonly kind: "put-active-player-hand-on-library-bottom-then-draw-same" }
+  /** Fevered Visions: the draw always happens; the damage only hits an opponent whose hand, after drawing, meets the threshold (CR 603.2, 603.3). */
+  | { readonly kind: "draw-active-player-then-damage-if-opponent-hand-at-least"; readonly handAtLeast: number; readonly damage: number }
   | { readonly kind: "draw-equal-tapped-creatures" }
   | { readonly kind: "draw-equal-controlled-type"; readonly type: CardType }
   | { readonly kind: "draw-equal-controlled-color-creature"; readonly color: string }
@@ -2135,6 +2137,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "draw-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+player[’']s\s+draw\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+end\s+step,?\s*(.+)$/i },
+  { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+player[’']s\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i }
 ];
 
@@ -2415,6 +2418,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^That player puts the cards in their hand on the bottom of their library in any order, then draws that many cards$/i.test(text)) {
     return { effect: { kind: "put-active-player-hand-on-library-bottom-then-draw-same" }, target: "none" };
+  }
+  if ((match = /^That player draws a card\.\s*If the player is your opponent and has (\w+) or more cards in hand,\s*~\s*deals (\w+) damage to that player$/i.exec(text))) {
+    const handAtLeast = toNumber(match[1]);
+    const damage = toNumber(match[2]);
+    if (handAtLeast !== null && damage !== null) {
+      return { effect: { kind: "draw-active-player-then-damage-if-opponent-hand-at-least", handAtLeast, damage }, target: "none" };
+    }
   }
   if (/^That player puts a card from their hand on top of their library$/i.test(text)) {
     return { effect: { kind: "put-event-player-hand-card-on-library-top" }, target: "none" };
