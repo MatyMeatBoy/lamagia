@@ -557,7 +557,7 @@ export type SpellEffect =
   | { readonly kind: "modify-all-creatures-per-land"; readonly power: number; readonly toughness: number; readonly subtype: string }
   | { readonly kind: "modify-target-creature-morbid"; readonly power: number; readonly toughness: number; readonly morbidPower: number; readonly morbidToughness: number }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
-  | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number; readonly losesAllCreatureTypes?: boolean }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
   /** Mirror Entity: set base P/T and grant every creature type until cleanup. */
   | { readonly kind: "set-creatures-you-control-base-pt-all-types"; readonly power: number | "X"; readonly toughness: number | "X" }
@@ -3160,6 +3160,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
+  }
+  if ((match = /^Target creature gets ([+-]\d+)\/([+-]\d+) and loses all creature types until end of turn$/i.exec(text))) {
+    return { effect: { kind: "modify-target-creature", power: Number(match[1]), toughness: Number(match[2]), losesAllCreatureTypes: true }, target: "creature" };
   }
   if (/^Target player sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-creature" }, target: "player" };

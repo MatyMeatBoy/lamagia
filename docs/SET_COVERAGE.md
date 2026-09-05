@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,932** · cobertura: **30.5%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,938** · cobertura: **30.5%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -122,7 +122,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 194 | 148 | 56.7% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 123 | 168 | 42.3% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 588 | 2101 | 21.9% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 589 | 2100 | 21.9% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
@@ -184,7 +184,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | 2007-07-13 | Tenth Edition Promos (`P10E`) | promos | tenth-edition | other | 3 | 2 | 1 | 66.7% |
 | 2007-09-10 | Masters Edition (`ME1`) | masters-remastered | masters-edition | other | 185 | 52 | 133 | 28.1% |
 | 2007-09-27 | Lorwyn Promos (`PLRW`) | promos | lorwyn | other | 3 | 1 | 2 | 33.3% |
-| 2007-10-12 | Lorwyn (`LRW`) | expansion | lorwyn | main | 286 | 86 | 200 | 30.1% |
+| 2007-10-12 | Lorwyn (`LRW`) | expansion | lorwyn | main | 286 | 87 | 199 | 30.4% |
 | 2007-11-16 | Duel Decks: Elves vs. Goblins (`DD1`) | duel-decks | duel-decks-elves-vs-goblins | other | 56 | 29 | 27 | 51.8% |
 | 2008-01-01 | Friday Night Magic 2008 (`F08`) | promos | fnm-2008 | other | 12 | 4 | 8 | 33.3% |
 | 2008-01-01 | Judge Gift Cards 2008 (`G08`) | promos | judge-2008 | other | 5 | 1 | 4 | 20.0% |
@@ -199,7 +199,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | 2008-07-25 | Eventide (`EVE`) | expansion | 2000s | main | 180 | 33 | 147 | 18.3% |
 | 2008-08-29 | From the Vault: Dragons (`DRB`) | from-the-vault | 2000s | other | 15 | 5 | 10 | 33.3% |
 | 2008-09-22 | Masters Edition II (`ME2`) | masters-remastered | masters-edition-ii | other | 245 | 69 | 176 | 28.2% |
-| 2008-10-03 | Magic Player Rewards 2009 (`P09`) | promos | player-rewards-2009 | other | 13 | 10 | 3 | 76.9% |
+| 2008-10-03 | Magic Player Rewards 2009 (`P09`) | promos | player-rewards-2009 | other | 13 | 11 | 2 | 84.6% |
 | 2008-10-03 | Shards of Alara (`ALA`) | expansion | alara | main | 234 | 113 | 121 | 48.3% |
 | 2008-10-03 | Shards of Alara Promos (`PALA`) | promos | shards-of-alara | other | 2 | 1 | 1 | 50.0% |
 | 2008-11-07 | Duel Decks: Jace vs. Chandra (`DD2`) | duel-decks | duel-decks-jace-vs-chandra | other | 56 | 30 | 26 | 53.6% |
@@ -336,7 +336,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | 2015-03-27 | Dragons of Tarkir Promos (`PDTK`) | promos | dragons-of-tarkir | other | 42 | 3 | 39 | 7.1% |
 | 2015-04-03 | Tarkir Dragonfury (`PTKDF`) | promos | tarkir-dragonfury | other | 4 | 3 | 1 | 75.0% |
 | 2015-05-06 | Tempest Remastered (`TPR`) | masters-remastered | tempest-remastered | other | 254 | 101 | 153 | 39.8% |
-| 2015-05-22 | Modern Masters 2015 (`MM2`) | masters-remastered | modern-masters-2015 | other | 249 | 92 | 157 | 36.9% |
+| 2015-05-22 | Modern Masters 2015 (`MM2`) | masters-remastered | modern-masters-2015 | other | 249 | 93 | 156 | 37.3% |
 | 2015-07-09 | San Diego Comic-Con 2015 (`PS15`) | promos | comic-con-2015 | other | 5 | 0 | 5 | 0.0% |
 | 2015-07-17 | Magic Origins (`ORI`) | core | 2010s | main | 273 | 101 | 172 | 37.0% |
 | 2015-07-17 | Magic Origins Clash Pack (`CP3`) | starter | 2010s | other | 6 | 2 | 4 | 33.3% |
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1567 | 3654 | 30.0% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1568 | 3653 | 30.0% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 13 | 7 | 65.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 417 | 1279 | 24.6% |
@@ -672,7 +672,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | 2025-11-21 | Avatar: The Last Airbender Eternal (`TLE`) | eternal | 2020s | other | 242 | 70 | 172 | 28.9% |
 | 2025-11-21 | Avatar: The Last Airbender Promos (`PTLA`) | promos | avatar-the-last-airbender | other | 80 | 5 | 75 | 6.2% |
 | 2026-01-01 | Wizards Play Network 2026 (`PW26`) | promos | wpn-2026 | other | 23 | 12 | 11 | 52.2% |
-| 2026-01-23 | Lorwyn Eclipsed (`ECL`) | expansion | lorwyn | main | 273 | 43 | 230 | 15.8% |
+| 2026-01-23 | Lorwyn Eclipsed (`ECL`) | expansion | lorwyn | main | 273 | 44 | 229 | 16.1% |
 | 2026-01-23 | Lorwyn Eclipsed Commander (`ECC`) | commander | 2026 | commander | 153 | 55 | 98 | 35.9% |
 | 2026-01-23 | Lorwyn Eclipsed Promos (`PECL`) | promos | lorwyn-eclipsed | other | 80 | 6 | 74 | 7.5% |
 | 2026-02-17 | Year of the Horse 2026 (`PL26`) | promos | year-of-the-horse-2026 | other | 4 | 1 | 3 | 25.0% |
@@ -809,7 +809,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | expansion | kaladesh | 1 | 264 | 66 | 198 | 25.0% |
 | expansion | kaldheim | 1 | 323 | 53 | 270 | 16.4% |
 | expansion | kamigawa | 4 | 925 | 121 | 804 | 13.1% |
-| expansion | lorwyn | 2 | 559 | 129 | 430 | 23.1% |
+| expansion | lorwyn | 2 | 559 | 131 | 428 | 23.4% |
 | expansion | masques | 1 | 335 | 100 | 235 | 29.9% |
 | expansion | mirage | 1 | 335 | 89 | 246 | 26.6% |
 | expansion | mirrodin | 3 | 675 | 251 | 424 | 37.2% |
@@ -886,7 +886,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | masters-remastered | masters-edition-iii | 1 | 220 | 94 | 126 | 42.7% |
 | masters-remastered | masters-edition-iv | 1 | 260 | 97 | 163 | 37.3% |
 | masters-remastered | modern-masters | 1 | 229 | 62 | 167 | 27.1% |
-| masters-remastered | modern-masters-2015 | 1 | 249 | 92 | 157 | 36.9% |
+| masters-remastered | modern-masters-2015 | 1 | 249 | 93 | 156 | 37.3% |
 | masters-remastered | modern-masters-2017 | 1 | 249 | 115 | 134 | 46.2% |
 | masters-remastered | mystery-booster-2 | 1 | 384 | 74 | 310 | 19.3% |
 | masters-remastered | pioneer-masters | 1 | 398 | 80 | 318 | 20.1% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | masters-remastered | shadows-of-the-past | 1 | 76 | 28 | 48 | 36.8% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 57 | 227 | 20.1% |
 | masters-remastered | tempest-remastered | 1 | 254 | 101 | 153 | 39.8% |
-| masters-remastered | the-list | 1 | 5221 | 1567 | 3654 | 30.0% |
+| masters-remastered | the-list | 1 | 5221 | 1568 | 3653 | 30.0% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 111 | 302 | 26.9% |
 | masters-remastered | ultimate-masters | 1 | 254 | 86 | 168 | 33.9% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -1072,7 +1072,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | promos | magic-2013 | 1 | 6 | 3 | 3 | 50.0% |
 | promos | magic-2014 | 1 | 6 | 1 | 5 | 16.7% |
 | promos | magic-2015 | 1 | 13 | 2 | 11 | 15.4% |
-| promos | magic-online | 1 | 2689 | 588 | 2101 | 21.9% |
+| promos | magic-online | 1 | 2689 | 589 | 2100 | 21.9% |
 | promos | magic-origins | 1 | 43 | 6 | 37 | 14.0% |
 | promos | magic-premiere-shop-2005 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | magic-premiere-shop-2006 | 1 | 5 | 5 | 0 | 100.0% |
@@ -1119,7 +1119,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 | promos | player-rewards-2006 | 1 | 7 | 5 | 2 | 71.4% |
 | promos | player-rewards-2007 | 1 | 7 | 7 | 0 | 100.0% |
 | promos | player-rewards-2008 | 1 | 7 | 5 | 2 | 71.4% |
-| promos | player-rewards-2009 | 1 | 13 | 10 | 3 | 76.9% |
+| promos | player-rewards-2009 | 1 | 13 | 11 | 2 | 84.6% |
 | promos | player-rewards-2010 | 1 | 13 | 9 | 4 | 69.2% |
 | promos | player-rewards-2011 | 1 | 7 | 3 | 4 | 42.9% |
 | promos | portal-three-kingdoms | 1 | 1 | 0 | 1 | 0.0% |
@@ -10250,7 +10250,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 - [ ] Nahiri, Storm of Stone — `6332d6d3-1d77-486c-b040-02fc7225f245`
 - [ ] Najeela, the Blade-Blossom — `09619943-6aec-4080-ace5-a0c6ebb23f1c`
 - [ ] Nalathni Dragon — `0887dc95-3e75-4f72-bf05-4067d3785376`
-- [ ] Nameless Inversion — `d6911456-42cb-4b23-a560-dc98784530f5`
 - [ ] Narfi, Betrayer King — `18beb8eb-6f67-482f-9a7d-282f1e7ecbc1`
 - [ ] Narset of the Ancient Way — `b7ac6e89-941f-4ad9-a437-38ec38ec5263`
 - [ ] Narset, Parter of Veils — `ab26fbe2-e808-48b9-8d0d-3fbb6c3d554f`
@@ -14224,7 +14223,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 - [ ] Militia's Pride — `d311154b-4742-49e5-9b65-4de2d3e0d50b`
 - [ ] Mistbind Clique — `d1946f91-0653-4647-b3de-95d78b9597c4`
 - [ ] Mosswort Bridge — `7cb9e29f-835f-4155-a2a5-4b778866c773`
-- [ ] Nameless Inversion — `d6911456-42cb-4b23-a560-dc98784530f5`
 - [ ] Nath of the Gilt-Leaf — `87a44a87-a2a5-4193-a163-e4846e5b8387`
 - [ ] Nath's Buffoon — `da404c9c-3fb0-418c-947f-f42d6aff6899`
 - [ ] Nath's Elite — `2445fb97-a9c9-4078-8a8e-64b8c3951c4a`
@@ -15069,7 +15067,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 
 - [ ] Cryptic Command — `a3e51a35-09df-4189-b131-08a21e6a557d`
 - [ ] Feral Hydra — `b5d5dd1f-2d31-4849-8cb9-08354dd48d31`
-- [ ] Nameless Inversion — `d6911456-42cb-4b23-a560-dc98784530f5`
 
 ### expansion / alara · Shards of Alara (`ALA`)
 
@@ -22062,7 +22059,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 - [ ] Mortarpod — `77248a76-373c-48fc-939f-aa378ab57f7c`
 - [ ] Mox Opal — `de2440de-e948-4811-903c-0bbe376ff64d`
 - [ ] Myrsmith — `7fc3798a-3907-4f50-98a1-25b8e1977197`
-- [ ] Nameless Inversion — `d6911456-42cb-4b23-a560-dc98784530f5`
 - [ ] Narcolepsy — `3da1412e-a72c-4da1-8848-37145ca6614a`
 - [ ] Necrogenesis — `ad08952a-bcae-41d6-8093-c18535dad7d5`
 - [ ] Necroskitter — `536f7c92-2f1e-49e7-98de-47382a9488f1`
@@ -32616,7 +32612,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 - [ ] Nagging Thoughts — `e74c70be-2b70-4b04-9909-161d6f41a156`
 - [ ] Nahiri's Machinations — `b119e0de-6af4-4b5b-9920-187f0a414231`
 - [ ] Nahiri, the Lithomancer — `a554aa2c-d947-4fc6-929d-d5891f467615`
-- [ ] Nameless Inversion — `d6911456-42cb-4b23-a560-dc98784530f5`
 - [ ] Nantuko Vigilante — `28ea78dc-7ad6-4006-aaf8-4b25057ec019`
 - [ ] Narcolepsy — `3da1412e-a72c-4da1-8848-37145ca6614a`
 - [ ] Narfi, Betrayer King — `18beb8eb-6f67-482f-9a7d-282f1e7ecbc1`
@@ -59868,7 +59863,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,93
 - [ ] Morningtide's Light — `a25bcf65-4417-45e9-a4b1-94e0ea78af63`
 - [ ] Mornsong Aria — `8ca2f668-2a4d-4a1e-abcc-093ccbc29295`
 - [ ] Mudbutton Cursetosser — `b63e5518-61f3-4cde-a799-5f3ee6aba70b`
-- [ ] Nameless Inversion — `d6911456-42cb-4b23-a560-dc98784530f5`
 - [ ] Nightmare Sower — `4121b7d9-5fbe-40e2-a2a6-d7633f423b5f`
 - [ ] Noggle Robber — `a2f33166-6cfc-4dc5-8edc-088bf40f06b5`
 - [ ] Noggle the Mind — `b49efbe8-e15b-4dc7-82de-970cbce92b79`

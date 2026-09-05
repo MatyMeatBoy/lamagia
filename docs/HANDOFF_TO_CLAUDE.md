@@ -15,9 +15,9 @@ and kicker damage-replacement and mana-ability counter-rider primitives; verify 
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 10,063 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 10,064 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 25,932 / 84,990 implemented (30.5%) across 685
+- **Edition memberships:** 25,938 / 84,990 implemented (30.5%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
@@ -31,7 +31,7 @@ catalog and the current rules tree. The refreshed artifacts are
 `data/rules/engine-card-profiles.json`, `data/rules/set-coverage.json`,
 `site/coverage.json`, `docs/SET_COVERAGE.md`, the C13 roadmap/dictionary/worker
 plan, and both near-complete queues. C13 remains at **290/341 (85.0%)**, with
-one one-line candidate: Sudden Spoiling. The global queue is now 15,159
+one one-line candidate: Sudden Spoiling. The global queue is now 15,158
 one-line profiles, 11,457 of them reusable, after the Fling, Incinerate, Voltaic
 Key, Lava Coil, kicker damage-replacement, and mana-ability counter-rider
 primitives were added; the C13

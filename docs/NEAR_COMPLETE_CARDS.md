@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,159**
+- One-line cards: **15,158**
 - Cards with a reusable existing primitive hint: **11,457**
-- Cards needing new primitive review: **3,702**
-- Templates: **11,985**
+- Cards needing new primitive review: **3,701**
+- Templates: **11,984**
 
 ## Worker rule
 
@@ -36,7 +36,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Boros Challenger | `bc6b40b1-0d17-4dd2-bec9-f1653611dba3` | activated | new primitive review | Mentor |
 | needs-new-primitive | Adorned Pouncer | `80b8ee3d-4174-4f47-a533-a3db1e703382` | activated | new primitive review | Eternalize {3}{W}{W} |
 | reuse-existing | Reciprocate | `ebdd29c0-2c33-4410-a05c-80ced58c7b81` | damage | damage / life | Exile target creature that dealt damage to you this turn. |
-| needs-new-primitive | Nameless Inversion | `d6911456-42cb-4b23-a560-dc98784530f5` | pump | new primitive review | Target creature gets +3/-3 and loses all creature types until end of turn. |
 | needs-new-primitive | Bituminous Blast | `d291d8f7-bb67-470c-8794-cd553c91e5cc` | activated | new primitive review | Cascade |
 | reuse-existing | Hinder | `c9db6b94-a7b1-4b93-b454-4dead8f85e34` | counters | counter | If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard. |
 | needs-new-primitive | Brave the Elements | `9d73a51a-1c8e-40cd-8124-aeff406a0884` | activated | new primitive review | White creatures you control gain protection from the chosen color until end of turn. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Splendid Reclamation | `13fe5e46-77a6-45d8-ac0b-c3d740eccf86` | return | return / graveyard | Return all land cards from your graveyard to the battlefield tapped. |
 | needs-new-primitive | Universal Surveillance | `c5a5c17d-d1e4-4d23-9d2b-1c2febdcb0e7` | activated | new primitive review | Improvise |
 | reuse-existing | Cleaver Skaab | `9fa66e03-7b20-43f6-8c53-1ce18169c382` | sacrifice | sacrifice | {3}, {T}, Sacrifice another Zombie: Create two tokens that are copies of the sacrificed creature. |
+| reuse-existing | Lord of the Forsaken | `3a25d1e2-63d8-4a93-b0ce-f9307736b3f9` | activated | activated ability / mana | Pay 1 life: Add {C}. Spend this mana only to cast a spell from your graveyard. |
 
-The JSON contains the remaining 14,659 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,658 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

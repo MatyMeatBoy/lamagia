@@ -132,6 +132,8 @@ export interface Permanent {
   readonly temporaryBasePowerToughness?: { readonly power: number; readonly toughness: number };
   /** The permanent has every creature subtype until cleanup (CR 205.3m). */
   readonly temporaryAllCreatureTypes?: boolean;
+  /** Temporary layer-4 removal of all creature subtypes (CR 205.3a, 613.1d). */
+  readonly temporaryNoCreatureTypes?: boolean;
   /** One-shot destruction-replacement shields created by Regenerate (CR 701.19). */
   readonly regenerationShields?: number;
   /** This creature cannot use regeneration shields until cleanup (CR 701.19). */
@@ -786,6 +788,7 @@ function isCreaturePermanent(permanent: Permanent): boolean {
   return permanent.temporaryAnimation !== undefined || isCreature(cardProfile(permanent.card));
 }
 function hasPermanentSubtype(state: GameState, permanent: Permanent, subtype: string): boolean {
+  if (permanent.temporaryNoCreatureTypes && isCreaturePermanent(permanent)) return false;
   if (hasSubtype(cardProfile(permanent.card), subtype)) return true;
   if (!permanent.temporaryAllCreatureTypes || !isCreaturePermanent(permanent)) return false;
   // Mirror Entity grants creature subtypes, not artifact/land/enchantment
@@ -3573,7 +3576,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
-      return modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === permanent.instance_id);
+       const next = modifyCreatures(state, effect.power, effect.toughness, (candidate) => candidate.instance_id === permanent.instance_id);
+       if (!effect.losesAllCreatureTypes) return next;
+       return withPlayer(next, permanent.controller, (player) => ({
+         ...player,
+         battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+           ? { ...candidate, temporaryNoCreatureTypes: true }
+           : candidate)
+       }));
     }
     case "modify-target-creature-morbid": {
       const target = object.targets[0];
@@ -6071,7 +6081,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         players: next.players.map((current) => ({
           ...current,
           cantCastSpellsUntilEndOfTurn: false,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false }))
         }))
       };
       break;
