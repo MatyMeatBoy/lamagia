@@ -814,7 +814,9 @@ export interface TriggerDefinition {
     | { readonly kind: "class-level-reached"; readonly level: number }
     /** "If a player has N or fewer cards in hand" (Naktamun Lorespinner's Prepared trigger): true if ANY player qualifies. */
     | { readonly kind: "any-player-hand-at-most"; readonly amount: number }
-    | { readonly kind: "entering-power-at-most"; readonly amount: number };
+    | { readonly kind: "entering-power-at-most"; readonly amount: number }
+    /** Commander-only trigger that functions while the source remains in the command zone. */
+    | { readonly kind: "source-in-command-zone" };
   /** A Class's second/third-tier ability, inactive until the source reaches this level (CR 702.134d). */
   readonly minClassLevel?: number;
   readonly spellType?: "creature" | "noncreature" | "instant-or-sorcery";
@@ -2439,6 +2441,19 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return {
       effect: { kind: "compound", effects: [{ kind: "sacrifice-source" }, { kind: "each-opponent-of-event-player-draws", amount }] },
+      target: "none"
+    };
+  }
+
+  // Oloro and similar triggers combine the controller's draw with a
+  // table-wide life loss. Reuse the shared primitives instead of adding a
+  // card-specific executor (CR 609.3, 118.1).
+  const drawAndOpponentLoss = /^Draw (a|an|\w+) cards? and each opponent loses (\w+) life$/i.exec(text);
+  if (drawAndOpponentLoss) {
+    const draw = toNumber(drawAndOpponentLoss[1]);
+    const life = toNumber(drawAndOpponentLoss[2]);
+    if (draw !== null && life !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount: draw }, { kind: "each-opponent-loses-life", amount: life }] },
       target: "none"
     };
   }
@@ -4099,6 +4114,7 @@ function recognizeText(text: string): RecognizedText {
       const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
       const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggered.effectText);
       const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggered.effectText);
+      const commandZoneCondition = /^if\s+.+?\s+is\s+in\s+the\s+command\s+zone,\s*(.+)$/i.exec(triggered.effectText);
       const sourceUntappedCondition = /^if\s+~\s+is\s+untapped,\s*(.+)$/i.exec(triggered.effectText);
       const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
@@ -4107,7 +4123,7 @@ function recognizeText(text: string): RecognizedText {
       const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
@@ -4166,6 +4182,7 @@ function recognizeText(text: string): RecognizedText {
           ...(diedCondition ? { condition: { kind: "creature-died-this-turn" as const } } : {}),
           ...(castFromHandCondition ? { condition: { kind: "cast-from-hand" as const } } : {}),
           ...(sourceUntappedCondition ? { condition: { kind: "source-untapped" as const } } : {}),
+          ...(commandZoneCondition ? { condition: { kind: "source-in-command-zone" as const } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
           ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),
