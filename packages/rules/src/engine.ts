@@ -5722,6 +5722,13 @@ function sorcerySpeed(state: GameState, seat: SeatId): boolean {
   return state.activeSeat === seat && MAIN_STEPS.includes(state.step) && state.stack.length === 0;
 }
 
+/** Total land drops available this turn: the printed one, "this turn only" grants, and static "you may play N additional lands" permanents (CR 305.2, Exploration/Azusa-style). */
+function maxLandDrops(state: GameState, seat: SeatId): number {
+  const player = playerAt(state, seat);
+  const staticExtra = player.battlefield.reduce((sum, permanent) => sum + cardProfile(permanent.card).extraLandDropsPerTurn, 0);
+  return 1 + player.extraLandDrops + staticExtra;
+}
+
 /** Generic cost reduction from board-scaled self text and Medallion-style grants (CR 118.9). */
 function boardCostReduction(state: GameState, seat: SeatId, card: GameCard, profile: CardProfile): number {
   let reduction = 0;
@@ -6182,7 +6189,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     cardProfile(permanent.card).locksOpponentsOnYourTurn
     && permanent.controller === state.activeSeat && permanent.controller !== seat);
 
-  if (sorcerySpeed(state, seat) && player.landsPlayedThisTurn < 1 + player.extraLandDrops) {
+  if (sorcerySpeed(state, seat) && player.landsPlayedThisTurn < maxLandDrops(state, seat)) {
     for (const card of player.hand) {
       if (!isLand(cardProfile(card))) continue;
       actions.push({ action: { type: "play-land", cardId: card.instance_id }, label: `Jugar ${card.name}`, cardId: card.instance_id });
@@ -7450,7 +7457,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
 function applyPlayLand(state: GameState, seat: SeatId, cardId: string): GameState {
   const player = playerAt(state, seat);
   if (!sorcerySpeed(state, seat)) throw new Error("Solo puedes jugar una tierra en tu fase principal con la pila vacía.");
-  if (player.landsPlayedThisTurn >= 1 + player.extraLandDrops) throw new Error("Ya jugaste todas tus tierras este turno.");
+  if (player.landsPlayedThisTurn >= maxLandDrops(state, seat)) throw new Error("Ya jugaste todas tus tierras este turno.");
   const card = player.hand.find((candidate) => candidate.instance_id === cardId);
   if (!card || !isLand(cardProfile(card))) throw new Error("Esa carta no es una tierra en tu mano.");
   let next = withPlayer(state, seat, (current) => ({
