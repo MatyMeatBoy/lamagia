@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,657** · cobertura: **27.8%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,662** · cobertura: **27.8%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -122,7 +122,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 182 | 160 | 53.2% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 108 | 183 | 37.1% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 523 | 2166 | 19.4% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 524 | 2165 | 19.5% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
@@ -451,10 +451,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 11 | 109 | 9.2% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1397 | 3824 | 26.8% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1398 | 3823 | 26.8% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 20 | 39 | 33.9% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 11 | 9 | 55.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 374 | 1322 | 22.1% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 375 | 1321 | 22.1% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 53 | 220 | 19.4% |
@@ -467,8 +467,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 | 2020-05-21 | Historic Anthology 3 (`HA3`) | anthologies | historic-anthology-3 | other | 27 | 8 | 19 | 29.6% |
 | 2020-06-12 | Secret Lair: Ultimate Edition (`SLU`) | secret-lair | secret-lair-ultimate-edition | secret-lair | 16 | 15 | 1 | 93.8% |
 | 2020-06-26 | Signature Spellbook: Chandra (`SS3`) | spellbooks | 2020s | other | 8 | 1 | 7 | 12.5% |
-| 2020-07-03 | Core Set 2021 (`M21`) | core | 2020s | main | 285 | 95 | 190 | 33.3% |
-| 2020-07-03 | Core Set 2021 Promos (`PM21`) | promos | core-set-2021 | other | 68 | 11 | 57 | 16.2% |
+| 2020-07-03 | Core Set 2021 (`M21`) | core | 2020s | main | 285 | 96 | 189 | 33.7% |
+| 2020-07-03 | Core Set 2021 Promos (`PM21`) | promos | core-set-2021 | other | 68 | 12 | 56 | 17.6% |
 | 2020-07-17 | Jumpstart (`JMP`) | jumpstart | jumpstart | other | 461 | 180 | 281 | 39.0% |
 | 2020-07-17 | Jumpstart Arena Exclusives (`AJMP`) | jumpstart | jumpstart-arena-exclusives | other | 18 | 5 | 13 | 27.8% |
 | 2020-08-01 | 2019 Heroes of the Realm (`PH19`) | funny-special | 2019-heroes-of-the-realm | other | 7 | 0 | 7 | 0.0% |
@@ -759,7 +759,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 | core | 1990s | 10 | 3267 | 1143 | 2124 | 35.0% |
 | core | 2000s | 4 | 1389 | 721 | 668 | 51.9% |
 | core | 2010s | 8 | 2011 | 890 | 1121 | 44.3% |
-| core | 2020s | 3 | 1132 | 401 | 731 | 35.4% |
+| core | 2020s | 3 | 1132 | 402 | 730 | 35.5% |
 | deck-products | coldsnap-theme-decks | 1 | 52 | 13 | 39 | 25.0% |
 | deck-products | magic-online-theme-decks | 1 | 174 | 93 | 81 | 53.4% |
 | deck-products | modern-event-deck-2014 | 1 | 26 | 11 | 15 | 42.3% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 | masters-remastered | shadows-of-the-past | 1 | 76 | 26 | 50 | 34.2% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 51 | 233 | 18.0% |
 | masters-remastered | tempest-remastered | 1 | 254 | 88 | 166 | 34.6% |
-| masters-remastered | the-list | 1 | 5221 | 1397 | 3824 | 26.8% |
+| masters-remastered | the-list | 1 | 5221 | 1398 | 3823 | 26.8% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 100 | 313 | 24.2% |
 | masters-remastered | ultimate-masters | 1 | 254 | 75 | 179 | 29.5% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -953,7 +953,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 | promos | conflux | 1 | 2 | 1 | 1 | 50.0% |
 | promos | core-set-2019 | 1 | 74 | 10 | 64 | 13.5% |
 | promos | core-set-2020 | 1 | 73 | 11 | 62 | 15.1% |
-| promos | core-set-2021 | 1 | 68 | 11 | 57 | 16.2% |
+| promos | core-set-2021 | 1 | 68 | 12 | 56 | 17.6% |
 | promos | cowboy-bebop | 1 | 5 | 2 | 3 | 40.0% |
 | promos | dark-ascension | 1 | 5 | 0 | 5 | 0.0% |
 | promos | darksteel | 1 | 1 | 0 | 1 | 0.0% |
@@ -1072,7 +1072,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 | promos | magic-2013 | 1 | 6 | 3 | 3 | 50.0% |
 | promos | magic-2014 | 1 | 6 | 1 | 5 | 16.7% |
 | promos | magic-2015 | 1 | 13 | 2 | 11 | 15.4% |
-| promos | magic-online | 1 | 2689 | 523 | 2166 | 19.4% |
+| promos | magic-online | 1 | 2689 | 524 | 2165 | 19.5% |
 | promos | magic-origins | 1 | 43 | 6 | 37 | 14.0% |
 | promos | magic-premiere-shop-2005 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | magic-premiere-shop-2006 | 1 | 5 | 5 | 0 | 100.0% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 10 | 74 | 11.9% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 12 | 46 | 20.7% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 374 | 1322 | 22.1% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 375 | 1321 | 22.1% |
 | secret-lair | secret-lair-promo | 1 | 52 | 15 | 37 | 28.8% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -10841,7 +10841,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 - [ ] Path to Exile — `d683d985-9888-4d21-8b5f-69e69ce4a03b`
 - [ ] Pathrazer of Ulamog — `4bf95747-4572-49b8-b892-87fe7f910252`
 - [ ] Patrician Geist — `1f65c853-5262-4b75-b324-1fe0c165170d`
-- [ ] Peer into the Abyss — `21fa2442-6eac-4dce-a9cc-76f0053fdb8f`
 - [ ] Pendelhaven — `f70e72e1-9abe-485b-9fea-e8b35352f5b3`
 - [ ] Perennial Behemoth — `ee4b7aca-31dd-4369-8e85-b300892b9b41`
 - [ ] Pernicious Deed — `62e44e0d-eda0-4275-8367-49dab9a087c3`
@@ -34300,7 +34299,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 - [ ] Pedantic Learning — `194c0ace-4c5d-4698-a924-901bdef99a5f`
 - [ ] Peel from Reality — `65dc05d0-f885-4fe5-9a23-d6b75185c179`
 - [ ] Peema Outrider — `7747e94c-35a7-4e3b-956b-339a16634502`
-- [ ] Peer into the Abyss — `21fa2442-6eac-4dce-a9cc-76f0053fdb8f`
 - [ ] Peerless Recycling — `938c03fc-8adf-4c7a-8ae1-eca8401f7a83`
 - [ ] Pegasus Courser — `24db5905-d513-42c6-9e9d-114ac5cbd21d`
 - [ ] Pegasus Guardian // Rescue the Foal — `e71863a7-0de1-4ab5-95e8-c39e6810d899`
@@ -36533,7 +36531,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 - [ ] Pathbreaker Ibex — `7e52e91b-70e6-4f26-a5d4-b8e33d1debbf`
 - [ ] Patron Wizard — `2d70b4fe-7aaf-4ffd-920c-023b44707e1f`
 - [ ] Peek — `873abbf4-c9b5-4b8f-8cd0-613cf3b9b1d5`
-- [ ] Peer into the Abyss — `21fa2442-6eac-4dce-a9cc-76f0053fdb8f`
 - [ ] Peregrine Drake — `0bd67481-6bd9-48d6-92bd-8933b5ea1eae`
 - [ ] Pernicious Deed — `62e44e0d-eda0-4275-8367-49dab9a087c3`
 - [ ] Persistent Petitioners — `0e488c6c-aae2-450f-b969-7bb5a1b37a66`
@@ -38004,7 +38001,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 - [ ] Niambi, Esteemed Speaker — `91c9dbd8-a8d8-4a4e-8408-3ad92e974d11`
 - [ ] Nine Lives — `236e1f57-7ef5-455a-82a6-8ff6b85d8849`
 - [ ] Pack Leader — `3701ed34-a97c-4d7b-a15a-4faec02ef24b`
-- [ ] Peer into the Abyss — `21fa2442-6eac-4dce-a9cc-76f0053fdb8f`
 - [ ] Pestilent Haze — `b24d1540-ed8b-4df3-abfe-1b8492a58388`
 - [ ] Portcullis Vine — `a217f386-11b5-48f0-b173-3b0700ba295f`
 - [ ] Predatory Wurm — `99ed6e18-7f14-4ea8-baee-ad6c081388ff`
@@ -38125,7 +38121,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,65
 - [ ] Niambi, Esteemed Speaker — `91c9dbd8-a8d8-4a4e-8408-3ad92e974d11`
 - [ ] Nine Lives — `236e1f57-7ef5-455a-82a6-8ff6b85d8849`
 - [ ] Pack Leader — `3701ed34-a97c-4d7b-a15a-4faec02ef24b`
-- [ ] Peer into the Abyss — `21fa2442-6eac-4dce-a9cc-76f0053fdb8f`
 - [ ] Primal Might — `58d7b8b3-ac47-4805-8259-4ba8e70d7dc3`
 - [ ] Pursued Whale — `6de2d53c-06e3-4c56-a5cf-c9cb2db42527`
 - [ ] Radha, Heart of Keld — `927fb139-0493-48be-8cc4-2c7d854d6a55`

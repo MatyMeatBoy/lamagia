@@ -3077,3 +3077,14 @@ permanent's own state, not any event object — so no new effect kind was
 needed: "that player draws an additional card" already recognizes to the
 existing `draw-active-player`. Validation: **589 rules tests**, `npm run
 check`, `npm run simulate:engine` 200/200, 9,345 global profiles.
+
+Peer into the Abyss | `21fa2442-6eac-4dce-a9cc-76f0053fdb8f` was closed
+with a new `draw-half-library-then-lose-half-life-target-player` effect
+(CR 107.1a — both halves round up independently, computed live off the
+target's own library length and life total at resolution, not fixed
+amounts). "Round up each time." is a rounding clarifier for the preceding
+sentence, not a separate instruction, so it was added to the existing
+`isIgnorableSentence` whitelist (alongside "then shuffle.") rather than
+needing its own effect — a reusable hook for any future card with the
+same trailing clarifier. Validation: **590 rules tests**, `npm run check`,
+`npm run simulate:engine` 200/200, 9,346 global profiles.

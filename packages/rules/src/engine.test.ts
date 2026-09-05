@@ -126,6 +126,7 @@ const CREATURE_COUNTER = () => make({ name: "Creature Denial", type_line: "Insta
 const NONCREATURE_COUNTER = () => make({ name: "Noncreature Denial", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target noncreature spell." });
 const GROWTH_SPELL = () => make({ name: "Measured Growth", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Put a +1/+1 counter on target creature." });
 const DISCARD_SPELL = () => make({ name: "Mind Twist", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target player discards a card." });
+const PEER_INTO_THE_ABYSS = () => make({ name: "Peer into the Abyss", type_line: "Sorcery", mana_cost: "{5}{B}{B}", cmc: 7, oracle_text: "Target player draws cards equal to half the number of cards in their library and loses half their life. Round up each time.", oracle_id: "21fa2442-6eac-4dce-a9cc-76f0053fdb8f", scryfall_id: "8627ecd0-3b32-43f9-8d0e-46a8d175ee2d" });
 const DISCARD_HAND_SPELL = () => make({ name: "Memory Collapse", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Target player discards their hand." });
 const X_DISCARD_SPELL = () => make({ name: "Scalable Mind Twist", type_line: "Sorcery", mana_cost: "{X}{B}", cmc: 1, oracle_text: "Target player discards X cards." });
 const FORGET = () => make({ name: "Forget", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Target player discards two cards, then draws as many cards as they discarded this way.", oracle_id: "619ef7e1-33cd-4470-a1d4-83c5f1f5c31e", scryfall_id: "8cc8e367-1aa4-43b6-b17a-01bfb097f620" });
@@ -4022,6 +4023,20 @@ describe("casting", () => {
     expect(game.players[1]!.hand).toHaveLength(3);
     expect(game.players[1]!.hand.some((card) => card.name === "Test Relic")).toBe(true);
     expect(game.players[1]!.hand.some((card) => card.name === "Mountain")).toBe(true);
+  });
+
+  it("draws and loses life equal to half the targeted player's library and life, rounded up", () => {
+    expect(profileOf(PEER_INTO_THE_ABYSS()).effects).toEqual([{ kind: "draw-half-library-then-lose-half-life-target-player" }]);
+    let game = readyToCast([PEER_INTO_THE_ABYSS()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 1, () => ({
+      library: toHand(1, [BEAR(), FLIER(), SOL_RING(), MOUNTAIN(), ISLAND(), TEST_ARTIFACT(), FOREST()], "abyss-library"),
+      life: 15
+    }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.players[1]!.hand).toHaveLength(4);
+    expect(game.players[1]!.library).toHaveLength(3);
+    expect(game.players[1]!.life).toBe(7);
   });
 
   it("uses X to request multiple private discard choices", () => {
