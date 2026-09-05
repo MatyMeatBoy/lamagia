@@ -171,6 +171,7 @@ const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "
 // opponent who drew), resolved from `object.trigger?.eventController` —
 // not a chosen target and not always `object.controller`'s opponent list.
 const DAMAGE_ON_OPPONENT_DRAW = () => make({ name: "Test Nekusar", type_line: "Creature — Wizard", mana_cost: "{2}{U}{B}{R}", cmc: 5, power: "2", toughness: "4", oracle_text: "Whenever an opponent draws a card, ~ deals 1 damage to that player." });
+const FAERIE_MASTERMIND = () => make({ name: "Test Faerie Mastermind", type_line: "Creature — Faerie Wizard", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "1", oracle_text: "Flash\nWhenever an opponent draws their second card each turn, you draw a card." });
 const LIFELOSS_ON_OPPONENT_DRAW = () => make({ name: "Test Scrawling Crawler", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "3", toughness: "3", oracle_text: "Whenever an opponent draws a card, that player loses 1 life." });
 const LIFELOSS_ON_OPPONENT_DISCARD = () => make({ name: "Test Liliana's Caress", type_line: "Enchantment", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Whenever an opponent discards a card, that player loses 2 life." });
 const GAIN_ON_YOUR_DRAW_DRAIN_ON_OPPONENT_DRAW = () => make({ name: "Test Sheoldred", type_line: "Creature — Phyrexian Praetor", mana_cost: "{3}{B}{B}", cmc: 5, power: "4", toughness: "5", oracle_text: "Deathtouch\nWhenever you draw a card, you gain 2 life.\nWhenever an opponent draws a card, they lose 2 life." });
@@ -3293,6 +3294,22 @@ describe("casting", () => {
     expect(game.players[1]!.hand.length).toBe(handBefore1 + 2);
     expect(game.players[0]!.life).toBe(life0);
     expect(game.players[1]!.life).toBe(life1 - 2);
+  });
+
+  it("draws only off an opponent's second card each turn, not their first", () => {
+    const profile = profileOf(FAERIE_MASTERMIND());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "card-drawn", subject: "opponent", condition: { kind: "second-draw-this-turn" }, effect: { kind: "draw", amount: 1 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Seat 1 draws twice from one spell; only the second draw should trigger
+    // Faerie Mastermind, giving seat 0 exactly one card back.
+    let game = readyToCast([DRAW_TWO_TARGET()], [FAERIE_MASTERMIND(), ISLAND(), ISLAND(), ISLAND()], [], []);
+    const hand0Before = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.hand.length).toBe(2);
+    expect(game.players[0]!.hand.length).toBe(hand0Before - 1 + 1);
   });
 
   it("splits a two-clause draw trigger between its own controller and an opponent", () => {
