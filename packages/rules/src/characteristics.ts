@@ -1014,6 +1014,8 @@ export interface CardProfile {
   readonly hasRebound: boolean;
   /** "As an additional cost to cast ~, sacrifice a land" (Harrow, CR 601.2b). */
   readonly additionalCostSacrificeLand: boolean;
+  /** "As an additional cost to cast ~, sacrifice a creature" (Diabolic Intent, CR 601.2b). */
+  readonly additionalCostSacrificeCreature: boolean;
   /** "If you control a commander, you may cast ~ without paying its mana cost" (Deadly Rollick, CR 601.2b, 118.9). */
   readonly freeCastIfCommander: boolean;
   /** "If you control a [land type], you may pay N life rather than pay ~'s mana cost" (Snuff Out, CR 601.2b, 118.9). */
@@ -4067,6 +4069,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^as long as ~ is attacking, for each creature you control, you may have that creature assign its combat damage as though it weren't blocked\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
+    if (/^as an additional cost to cast ~, sacrifice a creature\.?$/i.test(line)) continue;
     if (/^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line)) continue;
     if (/^if you control an? [A-Za-z][A-Za-z'’-]*, you may pay \d+ life rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you may return an? [A-Za-z][A-Za-z'’-]* you control to its owner's hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
@@ -4680,6 +4683,7 @@ export function cardProfile(card: CardData): CardProfile {
   const additionalCostExileGraveyardX = /as an additional cost to cast ~, exile x cards from your graveyard\.?/i.test(text);
   const hasRebound = /(?:^|\n)rebound\.?(?:$|\n)/i.test(text);
   const additionalCostSacrificeLand = /as an additional cost to cast ~, sacrifice a land\.?/i.test(text);
+  const additionalCostSacrificeCreature = /as an additional cost to cast ~, sacrifice a creature\.?/i.test(text);
   const freeCastIfCommander = text.split("\n").some((line) => /^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line.trim()));
   const payLifeInsteadMatch = text.split("\n").map((line) => /^if you control an? ([A-Za-z][A-Za-z'’-]*), you may pay (\d+) life rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const payLifeInsteadOfManaCost = payLifeInsteadMatch ? { life: Number(payLifeInsteadMatch[2]), controlLandType: payLifeInsteadMatch[1]! } : null;
@@ -4837,6 +4841,7 @@ export function cardProfile(card: CardData): CardProfile {
     additionalCostExileGraveyardX,
     hasRebound,
     additionalCostSacrificeLand,
+    additionalCostSacrificeCreature,
     freeCastIfCommander,
     payLifeInsteadOfManaCost,
     returnLandInsteadOfManaCost,

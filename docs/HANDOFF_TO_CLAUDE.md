@@ -3686,6 +3686,27 @@ City of Traitors to its owner's graveyard while the Forest stays in
 play. Validation: **689 rules tests**, `npm run check`, `npm run
 simulate:engine` 200/200, 9,922 global profiles.
 
+**Diabolic Intent / Culling the Weak** — both `cedh-pod.json` staples
+share "As an additional cost to cast ~, sacrifice a creature." The
+mana-cost sibling `additionalCostSacrificeLand` already existed
+(Harrow); this is the exact same shape with `isCreature` swapped in
+for `isLand`. New `CardProfile.additionalCostSacrificeCreature`, wired
+into `applyCast` the same way the land case is (auto-picks the first
+qualifying creature — the same simplification the land case already
+made, not a new corner cut introduced here). One thing added that the
+land case was missing: a `castableCard` legality gate, so a player
+with no creature to sacrifice never sees the spell offered as castable
+at all, instead of only discovering it's illegal via a thrown error at
+execution time. Verified **+21** in the export count (9,927 → 9,948)
+— by far the largest single jump of this cEDH pass — and set coverage
+29.9% → 30.0%. Scenario-tested: casting Diabolic Intent with a Bear on
+the battlefield sacrifices the Bear and opens the ordinary
+`search-library` tutor choice, landing the chosen card in hand; with
+zero creatures on the battlefield the cast is absent from
+`legalActions` entirely and throws if forced anyway. Validation: **691
+rules tests**, `npm run check`, `npm run simulate:engine` 200/200,
+9,948 global profiles.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
