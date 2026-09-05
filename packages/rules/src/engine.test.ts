@@ -8980,6 +8980,9 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   const DEBILITATING_INJURY = () => make({ name: "Debilitating Injury", type_line: "Enchantment — Aura", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature gets -2/-2.", oracle_id: "52eab77d-9a07-4e14-8872-72681d3b3d0e", scryfall_id: "cf2d01e2-9f9f-4674-b8ab-b783d3faef03" });
   const WILD_GROWTH = () => make({ name: "Wild Growth", type_line: "Enchantment — Aura", mana_cost: "{G}", cmc: 1, oracle_text: "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.", oracle_id: "706ae742-1807-44b7-a4fa-f2e26f61519a", scryfall_id: "b87f2d2c-d6ad-4639-b8c3-e75569c5373f" });
   const CONTROL_MAGIC = () => make({ name: "Control Magic", type_line: "Enchantment — Aura", mana_cost: "{2}{U}", cmc: 4, oracle_text: "Enchant creature\nYou control enchanted creature.", oracle_id: "cd0d7141-46d2-4aa3-bc77-6b3b4513803e", scryfall_id: "d845d044-7457-4015-a893-1b7ca35df889" });
+  const LEAFDRAKE_ROOST = () => make({ name: "Leafdrake Roost", type_line: "Enchantment — Aura", mana_cost: "{3}{G}{U}", cmc: 5, oracle_text: "Enchant land\nEnchanted land has \"{G}{U}, {T}: Create a 2/2 green and blue Drake creature token with flying.\"", oracle_id: "b5ff42a1-1ac4-472b-8479-5e3749845305" });
+  const PRESENCE_OF_GOND = () => make({ name: "Presence of Gond", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature has \"{T}: Create a 1/1 green Elf Warrior creature token.\"", oracle_id: "ab42398c-f0a1-4b94-ac5f-b8768e1b4e05" });
+  const SPAWNING_GROUNDS = () => make({ name: "Spawning Grounds", type_line: "Enchantment — Aura", mana_cost: "{6}{G}", cmc: 7, oracle_text: "Enchant land\nEnchanted land has \"{T}: Create a 5/5 green Beast creature token with trample.\"", oracle_id: "1961dd92-db0b-4f02-b9c8-08f760f4051b" });
 
   function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[]) {
     let game = twoSeatGame([], []);
@@ -9046,6 +9049,25 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     const restored = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
     expect(restored.controller).toBe(1);
     expect(restored.controlChange).toBeUndefined();
+  });
+
+  it("parses Aura-granted activated abilities as reusable primitives", () => {
+    for (const aura of [LEAFDRAKE_ROOST(), PRESENCE_OF_GOND(), SPAWNING_GROUNDS()]) {
+      expect(profileOf(aura)).toMatchObject({ fullyImplemented: true, auraActivatedAbility: { requiresTap: true, effect: { kind: "create-token" } } });
+    }
+    expect(profileOf(LEAFDRAKE_ROOST()).auraActivatedAbility).toMatchObject({ manaCost: { raw: "{G}{U}" } });
+  });
+
+  it("grants Presence of Gond's token ability to the enchanted creature", () => {
+    let game = readyToCast([PRESENCE_OF_GOND()], [BEAR(), FOREST(), FOREST(), FOREST()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === bear.instance_id && entry.action.abilityIndex >= 1000);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.battlefield.some((permanent) => permanent.card.name === "Elf Warrior"));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Elf Warrior")).toBe(true);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.tapped).toBe(true);
   });
 });
 

@@ -797,6 +797,16 @@ function attachedAuras(state: GameState, permanent: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === permanent.instance_id
     && hasSubtype(cardProfile(candidate.card), "Aura"));
 }
+/** Printed plus Aura-granted activations available from this permanent. */
+function activatedAbilitiesFor(state: GameState, permanent: Permanent): ActivatedAbility[] {
+  const printed = cardProfile(permanent.card).activatedAbilities;
+  const granted = attachedAuras(state, permanent).flatMap((aura, auraIndex) => {
+    const ability = cardProfile(aura.card).auraActivatedAbility;
+    if (!ability) return [];
+    return [{ ...ability, index: 1000 + auraIndex }];
+  });
+  return [...printed, ...granted];
+}
 function auraBonus(state: GameState | undefined, permanent: Permanent): { power: number; toughness: number } {
   if (!state) return { power: 0, toughness: 0 };
   return attachedAuras(state, permanent).reduce((total, aura) => {
@@ -6610,7 +6620,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         }
       }
     }
-    for (const ability of profile.activatedAbilities) {
+    for (const ability of activatedAbilitiesFor(state, permanent)) {
       if (opponentsLocked && ["Artifact", "Creature", "Enchantment"].some((type) => profile.types.includes(type as CardType))) continue;
       const variableValues = ability.manaCost?.hasVariable
         ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()]
@@ -7242,7 +7252,9 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     ?? (handSource ? handActivationSource(handSource, seat) : undefined)
     ?? (graveyardSource ? graveyardActivationSource(graveyardSource, seat) : undefined);
   if (!source) throw new Error("Ese permanente o carta ya no está bajo tu control.");
-  const ability = cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
+  const ability = battlefieldSource
+    ? activatedAbilitiesFor(state, battlefieldSource).find((candidate) => candidate.index === action.abilityIndex)
+    : cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
   if (!ability) throw new Error("Esa habilidad activada no existe.");
   if (ability.sourceZone === "hand" ? !handSource : ability.sourceZone === "graveyard" ? !graveyardSource : !battlefieldSource) {
     throw new Error("La zona de esa habilidad ya no es válida.");
