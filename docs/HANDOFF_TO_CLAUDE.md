@@ -6,19 +6,19 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ## Current published checkpoint — 2026-09-05
 
-The latest source checkpoint includes the verified C13 untap-during-opponent-
-untap primitive for Murkfiend Liege, the trigger-doubler primitive, plus rescued
-C14 draw/compound-effect and token-scaling paths; verify the Pages run before reporting
-a new client asset as live.
+The latest source checkpoint includes the verified C13 mana-payment gate for
+Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
+and token-scaling paths; verify the Pages run before reporting a new client asset
+as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,308 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,311 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 23,497 / 84,990 implemented (27.6%) across 685
+- **Edition memberships:** 23,507 / 84,990 implemented (27.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 257 / 341 unique cards (75.4%), 84 pending.
+- **Commander 2013:** 258 / 341 unique cards (75.7%), 83 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
@@ -2715,3 +2715,9 @@ controlled nonland permanent plus up to two opposing nonland permanents, then
 destroys one selected target using deterministic RNG (CR 603.3d, 601.2c,
 701.7). The functional worker commit `a868c8d` is integrated on top of the
 current authoritative engine; stale generated handoff text was not imported.
+
+Azorius Herald | `a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6` was then closed in
+`c11cd0f`. The parser recognizes “sacrifice it unless {U} was spent to cast
+it”, the stack records colors actually spent, and permanents retain that
+payment context for the enters trigger (CR 603.4). Validation: 572 rules
+tests, `npm run check`, 9,311 global profiles, C13 258/341.

@@ -20,6 +20,16 @@ They supplied no verified card mapping, no executor coverage, and the public
 The useful part was the warning pattern, now encoded in this gate and in the
 contributor contract.
 
+## 2026-09-05 — Azorius Herald payment-gate primitive
+
+Accepted as focused commit `c11cd0f`:
+
+- Azorius Herald | `a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6`
+
+The engine stores colors spent on a spell and carries that context to the
+permanent, enabling the reusable “sacrifice unless {color} was spent to cast
+it” trigger shape (CR 603.4). Validation: 572 rules tests and `npm run check`.
+
 Instruction to the worker: keep using available compute, but spend it on
 reusable executable improvements and their tests. A small correct change is
 accepted; a large batch of declarations without behavior is rejected. Never
@@ -89,3 +99,22 @@ Accepted mappings:
 Validation: 571 rules tests, `npm run check`, 9,308 global profiles,
 C13 257/341. This rescue also fixed the latent `enteredThisTurn` field
 omission in the hand-activation source exposed by the type check.
+
+Typed Equip worker commit `a816d01` from `origin/worker-05` was selectively
+rescued as the current source change. It adds the reusable subtype-restricted
+Equip cost primitive and scenario coverage; the stale generated handoff and
+coverage files were not imported. The batch closes these cards:
+
+- Wizard's Staff | `30c3c700-46f4-4a77-8c45-5c7e3a21bd62`
+- Commander's Plate | `cae166de-e681-40a0-83a8-3c17cf40e2fc`
+- Unstable Molecule Suit | `2bc0821a-5a8f-465d-8532-3fb5c5d11d8f`
+- Dúnedain Blade | `4b418846-6426-448a-b4cb-ce631e0a99a2`
+- Thinking Cap | `a54fb3de-0581-461e-be33-dc4f4d16a33e`
+- Pirate Hat | `b9080653-87cb-4443-a4a3-36637d5ad165`
+- Veteran's Powerblade | `da0b4e01-b312-4f37-a034-824ce58db02e`
+- Ceremonial Groundbreaker | `5bb05573-7e8f-471f-908d-04bccead79e3`
+- Steelclaw Lance | `bfe06fb5-83b5-4212-86f8-947dfba15b26`
+
+Validation: 573 rules tests, `npm run check`, 9,320 global profiles, C13
+258/341. The exact oracle mapping for every reprint remains in the generated
+profile export; no card-name branches were added.
