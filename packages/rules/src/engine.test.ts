@@ -7820,6 +7820,18 @@ describe("activated abilities", () => {
     expect(game.players[0]!.hand).toHaveLength(hand + 1);
   });
 
+  it("returns priority to the activating player with a graphical stack object", () => {
+    let game = readyOnBoard([FIREBREATHER(), MOUNTAIN()], { hold: true });
+    const drake = permanentNamed(game, 0, "Firecoil Drake")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: drake.instance_id, abilityIndex: 0 });
+    expect(game.stack).toHaveLength(1);
+    expect(game.stack[0]).toMatchObject({ activated: expect.any(Object), sourcePermanentId: drake.instance_id });
+    expect(game.priorityOpen).toBe(true);
+    expect(game.prioritySeat).toBe(0);
+    expect(game.passedSeats).toEqual([]);
+    expect(game.players[0]!.manaPool.R).toBe(0);
+  });
+
   it("resolves a self-pump activated ability through the stack and expires it in cleanup", () => {
     const profile = profileOf(FIREBREATHER());
     expect(profile.activatedAbilities).toHaveLength(1);
@@ -7879,6 +7891,18 @@ describe("activated abilities", () => {
   it("keeps non-mana activated abilities as smart-priority stops", () => {
     const game = readyOnBoard([SIGNAL_PEST(), ISLAND(), ISLAND()]);
     expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(true);
+  });
+
+  it("does not treat a hand fast-mana action as a smart-priority stop", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({
+      autoPass: true,
+      hand: toHand(0, [SIMIAN_SPIRIT_GUIDE()], "autopass-guide")
+    }));
+    game = stage(game, 1, () => ({ autoPass: true }));
+    game = { ...putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]), priorityOpen: true, prioritySeat: 0, step: "precombat-main", activeSeat: 1, stack: [], pendingChoice: null };
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === "autopass-guide-0")).toBe(true);
+    expect(hasRealChoice(game, 0)).toBe(false);
   });
 
   it("reuses targeted tap and untap effects through the normal stack target flow", () => {
