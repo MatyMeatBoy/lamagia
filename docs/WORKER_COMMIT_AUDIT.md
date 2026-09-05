@@ -55,3 +55,9 @@ removed, and the C14 status map retained for provenance. Validation: 562 rules
 tests, `npm run check`, 9,290 global profiles, C13 249/341. Conflicting or
 stale worker history remains excluded until it supplies a focused scenario and
 exact oracle mapping.
+
+Follow-up executable cards were added with focused scenarios: Forecast hand
+activation (`638e6e8`), Terra Ravager defending-land scaling (`08a4d51`), and
+Inferno Titan divided damage (`25e456a`). The Vizkopa Guildmage worker change
+(`1ab35c4`) was also salvaged and validated in the current tree. Validation is
+now 565 rules tests, 9,294 global profiles, and C13 252/341.
