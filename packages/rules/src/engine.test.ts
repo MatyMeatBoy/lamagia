@@ -535,6 +535,10 @@ const DAMAGE_AMPLIFIER = () => make({
   colors: ["R"], color_identity: ["R"],
   oracle_text: "If a red source you control would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus 2 instead."
 });
+const NONCOMBAT_ONLY_AMPLIFIER = () => make({
+  name: "Test Hawkeye", type_line: "Creature — Human Archer", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", keywords: ["Reach"],
+  oracle_text: "Reach\nIf a source you control would deal noncombat damage to an opponent or a permanent an opponent controls, instead it deals that much damage plus X, where X is this creature's power."
+});
 const RED_BOLT = () => make({ name: "Test Red Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, colors: ["R"], oracle_text: "~ deals 3 damage to any target." });
 const BLUE_BOLT = () => make({ name: "Test Blue Bolt", type_line: "Instant", mana_cost: "{U}", cmc: 1, colors: ["U"], oracle_text: "~ deals 3 damage to any target." });
 const ETB_BOLTER = () => make({
@@ -7173,6 +7177,29 @@ describe("combat", () => {
     const ownLife = selfGame.players[0]!.life;
     selfGame = applyAction(selfGame, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 0 }] });
     expect(selfGame.players[0]!.life).toBe(ownLife - 3); // no amplification against self
+  });
+
+  it("amplifies noncombat damage by the source's own power, but leaves combat damage untouched", () => {
+    const profile = profileOf(NONCOMBAT_ONLY_AMPLIFIER());
+    expect(profile.damageAmplify).toEqual({ excludesSelf: false, scope: "opponent", amount: "source-power", noncombatOnly: true });
+    expect(profile.fullyImplemented).toBe(true);
+
+    // Noncombat: a spell dealing damage to the opponent gets +3 (the amplifier's own power).
+    let spellGame = twoSeatGame([], []);
+    spellGame = putOnBattlefield(spellGame, 0, [NONCOMBAT_ONLY_AMPLIFIER(), MOUNTAIN()]);
+    spellGame = stage(spellGame, 0, () => ({ hand: toHand(0, [RED_BOLT()]) }));
+    spellGame = passUntil(spellGame, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const life1 = spellGame.players[1]!.life;
+    spellGame = applyAction(spellGame, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    spellGame = passUntil(spellGame, (state) => state.stack.length === 0);
+    expect(spellGame.players[1]!.life).toBe(life1 - 6); // 3 (Bolt) + 3 (source's own power)
+
+    // Combat damage from the same creature is never amplified, unlike Torbran.
+    let combatGame = atAttackers([NONCOMBAT_ONLY_AMPLIFIER()], []);
+    const attacker = combatGame.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Hawkeye")!;
+    const before = combatGame.players[1]!.life;
+    combatGame = applyAction(combatGame, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    expect(combatGame.players[1]!.life).toBe(before - 3); // just its own power, no amplification
   });
 });
 

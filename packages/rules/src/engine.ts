@@ -1635,17 +1635,19 @@ function damageAmplifyBonus(
   sourceController: SeatId,
   sourceProfile: CardProfile | undefined,
   sourcePermanentId: string | undefined,
-  victimController: SeatId
+  victimController: SeatId,
+  combat = false
 ): number {
   let bonus = 0;
   for (const amplifier of allPermanents(state)) {
     if (amplifier.controller !== sourceController) continue;
     const amp = cardProfile(amplifier.card).damageAmplify;
     if (!amp) continue;
+    if (amp.noncombatOnly && combat) continue;
     if (amp.excludesSelf && amplifier.instance_id === sourcePermanentId) continue;
     if (amp.colorFilter && !(sourceProfile?.colors ?? []).includes(amp.colorFilter)) continue;
     if (amp.scope === "opponent" && victimController === sourceController) continue;
-    bonus += amp.amount;
+    bonus += amp.amount === "source-power" ? powerOf(amplifier, state) : amp.amount;
   }
   return bonus;
 }
@@ -1729,12 +1731,13 @@ function dealDamageToPermanent(
   deathtouch: boolean,
   sourceName: string,
   sourceProfile?: CardProfile,
-  source?: { readonly controller: SeatId; readonly permanentId?: string }
+  source?: { readonly controller: SeatId; readonly permanentId?: string },
+  combat = false
 ): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
   if (sourceProfile && hasProtectionFrom(sourceProfile, cardProfile(permanent.card))) return state;
-  const total = amount + (source ? damageAmplifyBonus(state, source.controller, sourceProfile, source.permanentId, permanent.controller) : 0);
+  const total = amount + (source ? damageAmplifyBonus(state, source.controller, sourceProfile, source.permanentId, permanent.controller, combat) : 0);
   // Damage to a planeswalker removes that many loyalty counters (CR 120.3c).
   const isPlaneswalker = cardProfile(permanent.card).types.includes("Planeswalker") && "loyalty" in permanent.counters;
   const next = withPlayer(state, permanent.controller, (player) => ({
@@ -4636,11 +4639,11 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
   for (const hit of batch.toPermanents) {
     const source = findPermanent(state, hit.sourceId);
     next = dealDamageToPermanent(next, hit.instanceId, hit.amount, hit.deathtouch, hit.sourceName, source ? cardProfile(source.card) : undefined,
-      source ? { controller: source.controller, permanentId: source.instance_id } : undefined);
+      source ? { controller: source.controller, permanentId: source.instance_id } : undefined, true);
   }
   for (const hit of batch.toPlayers) {
     const dealer = findPermanent(state, hit.sourceId);
-    const bonus = dealer ? damageAmplifyBonus(next, dealer.controller, cardProfile(dealer.card), dealer.instance_id, hit.seat) : 0;
+    const bonus = dealer ? damageAmplifyBonus(next, dealer.controller, cardProfile(dealer.card), dealer.instance_id, hit.seat, true) : 0;
     next = dealDamageToPlayer(next, hit.seat, hit.amount + bonus, hit.sourceName, dealer
       ? { permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card }
       : undefined);

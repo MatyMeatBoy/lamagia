@@ -2908,6 +2908,40 @@ test` PASS (**577 rules tests**, up from 576). `npm run simulate:engine`:
 `powerOf`/`toughnessOf`, functions every creature's combat math runs
 through.
 
+### Worker-05: a damage amplifier that's dynamic and noncombat-only (2026-09-05)
+
+Claim `rules-noncombat-damage-amplify-source-power`, continuing the Nekusar
+decklist (Hawkeye, Young Avenger). The existing Torbran-style
+`DamageAmplify` primitive from earlier this session assumed a fixed bonus
+that applies to every kind of damage, including combat. Hawkeye breaks both
+assumptions: "plus X, where X is ~'s power" is read live off the
+amplifier's own permanent, and "noncombat damage" explicitly excludes
+combat — the opposite of Torbran's own "opponent or a permanent an
+opponent controls" reach, which never distinguished damage sources.
+
+`DamageAmplify.amount` widened to `number | "source-power"` (resolved via
+`powerOf(amplifier, state)` inside `damageAmplifyBonus`, which already had
+the amplifier permanent in scope), and a new `noncombatOnly?: boolean`
+flag checked per-amplifier inside the same loop (so a Torbran and a Hawkeye
+in the same game apply independently and correctly to their own damage
+types). The "combat or not" question only exists at two places in the
+engine — `applyCombatDamage`'s loop over `toPermanents` and `toPlayers` —
+so a `combat` boolean threads through `damageAmplifyBonus` and
+`dealDamageToPermanent`, defaulting `false` everywhere else (all 13
+existing non-combat call sites of `dealDamageToPermanent` needed zero
+changes) and set `true` only at those two combat-specific calls.
+
+Fully implements Hawkeye, Young Avenger. Scenario coverage confirms a
+noncombat spell (Lightning Bolt) gets Hawkeye's own power added when it
+hits the opponent, then confirms Hawkeye's own *combat* damage is
+completely unaffected — the exact opposite of how the existing Torbran test
+behaves, which is what actually proves the `noncombatOnly` gate works
+rather than being a no-op.
+
+Global export: **9,334/38,712** (+1 from 9,333). `npm run check` and `npm
+test` PASS (**582 rules tests**, up from 581). `npm run simulate:engine`:
+**200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed

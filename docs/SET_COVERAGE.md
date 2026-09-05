@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,580** · cobertura: **27.7%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,581** · cobertura: **27.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -684,7 +684,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 | 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 112 | 263 | 29.9% |
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 16 | 49 | 24.6% |
 | 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 7 | 73 | 8.8% |
-| 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 46 | 235 | 16.4% |
+| 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 47 | 234 | 16.7% |
 | 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 140 | 476 | 22.7% |
 | 2026-08-14 | The Hobbit (`HOB`) | expansion | 2020s | main | 193 | 34 | 159 | 17.6% |
 | 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | 2020s | other | 117 | 23 | 94 | 19.7% |
@@ -795,7 +795,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 | expansion | 1990s | 11 | 1573 | 328 | 1245 | 20.9% |
 | expansion | 2000s | 19 | 3082 | 626 | 2456 | 20.3% |
 | expansion | 2010s | 14 | 2735 | 647 | 2088 | 23.7% |
-| expansion | 2020s | 17 | 3739 | 581 | 3158 | 15.5% |
+| expansion | 2020s | 17 | 3739 | 582 | 3157 | 15.6% |
 | expansion | alara | 2 | 379 | 141 | 238 | 37.2% |
 | expansion | amonkhet | 1 | 272 | 85 | 187 | 31.2% |
 | expansion | bloomburrow | 1 | 280 | 39 | 241 | 13.9% |
@@ -63409,7 +63409,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **23,58
 - [ ] H.E.R.B.I.E. Scout Unit — `393ff8c5-4da0-4290-b498-222cc0244026`
 - [ ] Hawkeye's Bow — `83798eb8-b14f-4620-bce2-1a6804a24dc7`
 - [ ] Hawkeye, Master Marksman — `6b59bb1f-f2d4-4d47-bd57-23927d588381`
-- [ ] Hawkeye, Young Avenger — `c8f8b4ed-8455-45cd-a24c-e2f42cd5e5b1`
 - [ ] Helicarrier Strike — `ca3cda24-0ecd-4edf-b1b3-54311ad58a51`
 - [ ] Hellcat, Undying Vigilante — `4c27ba61-6812-4dd7-8efc-65435a8df7b5`
 - [ ] Hercules, Prince of Power — `c3a8cc79-3771-484d-84dd-1a97f8bd12c2`

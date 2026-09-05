@@ -337,7 +337,10 @@ export interface DamageAmplify {
   readonly excludesSelf: boolean;
   /** "opponent" = only damage to an opponent or their permanents; "any" = every permanent or player, including allies. */
   readonly scope: "opponent" | "any";
-  readonly amount: number;
+  /** "source-power" (Hawkeye, Young Avenger): the bonus is the amplifier's own power, read live rather than fixed on the card. */
+  readonly amount: number | "source-power";
+  /** "noncombat damage" (Hawkeye, Young Avenger): excludes combat damage from the bonus, unlike Torbran-style amplifiers. */
+  readonly noncombatOnly?: boolean;
 }
 
 /** Characteristics printed in one level band of a leveler card (CR 711). */
@@ -1525,8 +1528,24 @@ const DAMAGE_AMPLIFY_ANY = /^If (a|another) (red|white|blue|black|green)? ?sourc
 
 const DAMAGE_AMPLIFY_COLOR_LETTER: Readonly<Record<string, ManaType>> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
 
+// Hawkeye, Young Avenger: the same replacement shape, restricted to
+// noncombat damage, with a dynamic bonus equal to the source's own power
+// rather than a fixed number.
+const DAMAGE_AMPLIFY_OPPONENT_SOURCE_POWER = /^If (a|another) (red|white|blue|black|green)? ?source you control would deal noncombat damage to an opponent or a permanent an opponent controls, instead it deals that much damage plus X, where X is ~'s power\.?$/i;
+
 function parseDamageAmplify(line: string): DamageAmplify | null {
   const clean = line.trim();
+  const sourcePower = DAMAGE_AMPLIFY_OPPONENT_SOURCE_POWER.exec(clean);
+  if (sourcePower) {
+    const colorFilter = sourcePower[2] ? DAMAGE_AMPLIFY_COLOR_LETTER[sourcePower[2]!.toLowerCase()] : undefined;
+    return {
+      excludesSelf: sourcePower[1]!.toLowerCase() === "another",
+      ...(colorFilter ? { colorFilter } : {}),
+      scope: "opponent",
+      amount: "source-power",
+      noncombatOnly: true
+    };
+  }
   const opponent = DAMAGE_AMPLIFY_OPPONENT.exec(clean);
   const any = opponent ? null : DAMAGE_AMPLIFY_ANY.exec(clean);
   const match = opponent ?? any;
