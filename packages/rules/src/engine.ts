@@ -2373,6 +2373,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "threshold": {
+      const active = playerAt(state, controller).graveyard.length >= effect.threshold ? effect.ifTrue : effect.ifFalse;
+      return applyEffect(state, object, active, targetIndex);
+    }
     case "proliferate": {
       const options: Target[] = [];
       for (const player of state.players) {

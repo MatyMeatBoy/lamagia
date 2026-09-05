@@ -391,6 +391,8 @@ export interface TokenDefinition {
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
   | { readonly kind: "compound"; readonly effects: readonly SpellEffect[]; readonly targetOffsets?: readonly (number | null)[] }
+  /** Threshold alternative that replaces the base effect once the graveyard count is met. */
+  | { readonly kind: "threshold"; readonly threshold: number; readonly ifTrue: SpellEffect; readonly ifFalse: SpellEffect }
   | { readonly kind: "incite-rebellion" }
   | { readonly kind: "draw"; readonly amount: number | "X" }
   /** Add public player counters such as energy (CR 121.1, 121.3). */
@@ -3588,6 +3590,22 @@ function recognizeText(text: string): RecognizedText {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
+  }
+  const thresholdWrath = /^Destroy all creatures\. They can'?t be regenerated\.\s*Threshold\s*[—–-]\s*If there are (one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|\d+) or more cards in your graveyard, instead destroy all creatures, then create two 1\/1 white Spirit creature tokens with flying\. Creatures destroyed this way can'?t be regenerated\.?$/i.exec(joined);
+  const thresholdWrathAmount = thresholdWrath ? toNumber(thresholdWrath[1]!) : null;
+  if (thresholdWrathAmount !== null) {
+    const spirit = parseCreateToken("Create two 1/1 white Spirit creature tokens with flying.");
+    if (spirit?.kind === "create-token" && typeof spirit.amount === "number") {
+      return {
+        effects: [{
+          kind: "threshold",
+          threshold: thresholdWrathAmount,
+          ifTrue: { kind: "compound", effects: [{ kind: "destroy-all-creatures" }, spirit] },
+          ifFalse: { kind: "destroy-all-creatures" }
+        }],
+        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+      };
+    }
   }
   const namedBasicLandSearch = parseNamedBasicLandSearch(joined.replace(/\s+Then shuffle\.?$/i, ""));
   if (namedBasicLandSearch) {

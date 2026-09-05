@@ -3629,3 +3629,18 @@ preserved, zero-valued keys are removed, and the normal state-based-action
 loop reevaluates the creature after the change. This is shared by undying,
 persist, graft, level and ordinary counter effects rather than a card branch;
 the regression suite covers both the stored counters and live P/T result.
+## C13 coverage refresh and Kirtar's Wrath (2026-09-05)
+
+The C13 implementation bases were regenerated from the current engine profiles
+and precon catalog: **341** unique profiles, **294** fully implemented, **47**
+pending, with **1** card one line away. The reusable C13 roadmap and primitive
+dictionary now reflect this state; the set coverage index was refreshed across
+**685** editions. Ignored local exports are in `data/rules/` and should be
+regenerated after each rules batch rather than committed as source data.
+
+Kirtar's Wrath now uses a shared `threshold` effect: once the controller has at
+least seven cards in their graveyard, the base creature destruction is replaced
+by destruction plus two flying Spirit tokens. The parser and resolver stay
+card-agnostic and the scenario cites CR 702.66 and 614.1a. Validation: targeted
+scenario passed, **671 rules tests** passed (6 skipped), `npm run check` passed,
+and the simulator/deck/oracle suites passed.

@@ -154,6 +154,7 @@ const RED_PERMANENT = () => make({ name: "Red Permanent", type_line: "Enchantmen
 const COLORLESS_PERMANENT = () => make({ name: "Colorless Permanent", type_line: "Artifact" });
 const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
+const C13_KIRTARS_WRATH = () => make({ name: "Kirtar's Wrath", type_line: "Sorcery", mana_cost: "{4}{W}{W}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated.\nThreshold — If there are seven or more cards in your graveyard, instead destroy all creatures, then create two 1/1 white Spirit creature tokens with flying. Creatures destroyed this way can't be regenerated.", scryfall_id: "4f66d82a-492f-4638-9f77-190d4a33ad7f", oracle_id: "4f66d82a-492f-4638-9f77-190d4a33ad7f" });
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
@@ -3790,6 +3791,28 @@ describe("casting", () => {
     expect(toughnessOf(lord, game)).toBe(2);
     expect(powerOf(bear, game)).toBe(3);
     expect(toughnessOf(bear, game)).toBe(3);
+  });
+
+  it("applies Kirtar's Wrath threshold instead and creates flying Spirits", () => {
+    const profile = profileOf(C13_KIRTARS_WRATH());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      effects: [{
+        kind: "threshold",
+        threshold: 7,
+        ifFalse: { kind: "destroy-all-creatures" },
+        ifTrue: { kind: "compound", effects: [{ kind: "destroy-all-creatures" }, { kind: "create-token", amount: 2 }] }
+      }]
+    });
+    let game = readyToCast([C13_KIRTARS_WRATH()], [PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS()], [], [BEAR()]);
+    game = stage(game, 0, (player) => ({
+      graveyard: toHand(0, Array.from({ length: 7 }, (_, index) => make({ name: `Threshold card ${index}`, type_line: "Sorcery" })), "threshold-yard")
+    }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    const spirits = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Spirit");
+    expect(spirits).toHaveLength(2);
+    expect(spirits.every((spirit) => (spirit.card.keywords ?? []).includes("flying"))).toBe(true);
   });
 
   it("uses current power and toughness before destroying the targeted creature", () => {
