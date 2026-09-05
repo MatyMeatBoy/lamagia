@@ -941,7 +941,12 @@ function logDrawerHtml(): string {
 /** The stack rides just above the hand so it is impossible to miss mid-combat. */
 function stackStripHtml(): string {
   if (!view?.stack.length) return "";
-  return `<div class="stack-strip" aria-label="Pila de hechizos y habilidades"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · clic para inspeccionar</small>${[...view.stack].reverse().map((object, index) =>
+  const passed = view.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`);
+  const priority = view.priorityOpen ? seatOf(view.prioritySeat)?.name : undefined;
+  const status = priority
+    ? `Prioridad: ${priority}${passed.length ? ` · Pasaron: ${passed.join(", ")}` : ""}`
+    : "Sin prioridad abierta";
+  return `<div class="stack-strip" aria-label="Pila de hechizos y habilidades"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)} · clic para inspeccionar</small>${[...view.stack].reverse().map((object, index) =>
     `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este hechizo como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}">
       <strong class="stack-order">${index + 1}</strong>
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}

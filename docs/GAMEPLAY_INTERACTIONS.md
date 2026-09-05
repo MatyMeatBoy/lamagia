@@ -52,9 +52,13 @@ The stack is shown in resolution order, with one card-like item per spell or
 ability, controller, targets, countered state, and a visible top-first marker.
 Each public item can be opened to inspect its rules text and targets. Priority
 still follows the engine's `pass` action; the strip is presentation, not a
-second rules state. When a response requires targeting a spell, the same stack
-card becomes highlighted and clickable; clicking it selects the spell rather
-than opening the inspector.
+second rules state. The projection also exposes the public pass cycle through
+`prioritySeat` and `passedSeats`; the client may display who currently has
+priority and who has already passed without exposing any hidden information.
+When a response requires targeting a spell, the same stack card becomes
+highlighted and clickable; clicking it selects the spell rather than opening
+the inspector. Passing by every living player resolves only the top object,
+then resets the public pass cycle (CR 117.4).
 
 ## Regression rules
 
