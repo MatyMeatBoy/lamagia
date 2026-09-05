@@ -6,19 +6,19 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ## Current published checkpoint — 2026-09-05
 
-The latest source checkpoint includes the verified C13 mana-payment gate for
-Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
+The latest source checkpoint includes the verified C13 Prossh cast-trigger,
+Hooded Horror combat evasion and mana-payment gate for Azorius Herald, trigger-doubler primitive, plus rescued C14 draw/compound-effect
 and token-scaling paths; verify the Pages run before reporting a new client asset
 as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,311 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,324 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 23,507 / 84,990 implemented (27.7%) across 685
+- **Edition memberships:** 23,535 / 84,990 implemented (27.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 258 / 341 unique cards (75.7%), 83 pending.
+- **Commander 2013:** 260 / 341 unique cards (76.2%), 81 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
 The static P/T vocabulary now also covers source-relative conditions such as
@@ -2901,3 +2901,16 @@ Azorius Herald | `a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6` was then closed in
 it”, the stack records colors actually spent, and permanents retain that
 payment context for the enters trigger (CR 603.4). Validation: 572 rules
 tests, `npm run check`, 9,311 global profiles, C13 258/341.
+
+Hooded Horror | `8267561e-bc25-4aaa-8242-f6d7ec88143e` was then closed with
+the dynamic defending-player creature-count evasion primitive (CR 509.1b).
+Its blocker legality compares the defender's creature count with the maximum
+among all players, including ties. Validation: 574 rules tests, `npm run
+check`, 9,321 global profiles, C13 259/341.
+
+Prossh, Skyraider of Kher | `868882d2-ed4e-4171-a17c-478a341080fb` was closed
+with the reusable mana-spent cast-trigger token primitive (CR 603.2, 107.3h).
+The stack carries total spent mana into the trigger; a temporary watcher is
+used only for the explicit “when you cast this spell” wording, so keyword
+triggers such as Extort remain battlefield-only. Validation: 575 rules tests,
+`npm run check`, 9,324 global profiles, C13 260/341.

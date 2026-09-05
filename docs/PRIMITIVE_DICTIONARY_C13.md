@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T06:05:24.439551+00:00`
+- Generated: `2026-09-05T06:22:57.897469+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **258**
+- Exported profiles in scope: **341**; fully implemented: **260**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -259,7 +259,7 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **258/341** profiles complete; **13** unfinished cards have exactly one unmatched line.
+The engine export currently marks **260/341** profiles complete; **12** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
@@ -268,7 +268,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | creatures can't attack you unless their controller pays {cost} for each creature they control that's attacking you — Propaganda |
 | `unclaimed` | 1 | return all permanents of the color of your choice to their owners' hands — Wash Out |
 | `unclaimed` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
-| `unclaimed` | 1 | when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it — Prossh, Skyraider of Kher |
+| `unclaimed` | 1 | when you cast ~, each player reveals the top card of their library. ~ enters with <n> +<n>/+<n> counters on it, where <n> is the total mana value of all cards revealed this way — Naya Soulbeast |
 | `unclaimed` | 1 | when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~ — Dungeon Geists |
 | `unclaimed` | 1 | whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library — Widespread Panic |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy — Mirari |
@@ -276,7 +276,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | {cost}, {cost}: target beast creature you control fights target creature <n> opponent controls — Contested Cliffs |
 | `unclaimed` | 1 | {cost}: this turn, creatures can't block unless their controller pays {cost} for each blocking creature they control — War Cadence |
 | `unclaimed` | 1 | {cost}: until end of turn, creatures you control have base power and toughness <n>/<n> and gain all creature types — Mirror Entity |
-| `unclaimed` | 1 | ~ can't be blocked as long as defending player controls the most creatures or is tied for the most — Hooded Horror |
 
 The highest-value fix is the shared template, not the first card name. A new primitive should parameterize type, zone, target, quantity and optionality so reprints and other sets inherit it.
 
