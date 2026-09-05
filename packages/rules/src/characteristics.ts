@@ -508,6 +508,8 @@ export type SpellEffect =
   /** Return N random instant/sorcery cards from your graveyard to hand. */
   | { readonly kind: "return-random-instant-or-sorcery-from-graveyard"; readonly amount: number }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
+  /** Reanimate: put target creature card from any graveyard onto the battlefield under your control, then you lose life equal to its mana value. */
+  | { readonly kind: "reanimate-target-creature-lose-mana-value-life" }
   | { readonly kind: "return-target-creature-card-from-graveyard-threshold"; readonly threshold: number }
   | { readonly kind: "return-target-legendary-creature-card-from-graveyard-to-battlefield" }
   | { readonly kind: "return-target-permanent-card-from-graveyard-to-battlefield" }
@@ -2642,6 +2644,16 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return target legendary creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-legendary-creature-card-from-graveyard-to-battlefield" }, target: "legendary-creature-card-in-your-graveyard" };
   if (/^Return target permanent card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-your-graveyard" };
   if (/^Return target permanent card from a graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-a-graveyard" };
+  // Reanimate/Hymn of Rebirth phrasing ("Put ... onto the battlefield under
+  // your control") rather than "Return ... to the battlefield" — same
+  // executor, since it already moves the card under the caster's control
+  // regardless of whose graveyard it started in.
+  if (/^Put target creature card from a graveyard onto the battlefield under your control\. You lose life equal to that card['’]s mana value$/i.test(text)) {
+    return { effect: { kind: "reanimate-target-creature-lose-mana-value-life" }, target: "creature-card-in-a-graveyard" };
+  }
+  if (/^Put target creature card from a graveyard onto the battlefield under your control$/i.test(text)) {
+    return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-a-graveyard" };
+  }
   if (/^Return target artifact card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "artifact-card-in-your-graveyard" };
   if (/^Return target enchantment card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "enchantment-card-in-your-graveyard" };
   if (/^Put target land card from a graveyard onto the battlefield under your control$/i.test(text)) return { effect: { kind: "return-target-land-card-from-graveyard-to-battlefield" }, target: "land-card-in-a-graveyard" };

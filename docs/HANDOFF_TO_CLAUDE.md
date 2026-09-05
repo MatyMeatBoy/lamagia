@@ -2579,6 +2579,46 @@ Surveil cards, one was already implemented before this claim by
 coincidence). `npm run check` and `npm test` PASS (**545 rules tests**, up
 from 543). `npm run simulate:engine`: **200/200 passed**.
 
+### Worker-05: Reanimate needed a phrasing variant, not a new mechanic (2026-09-05)
+
+Claim `rules-reanimate`, continuing the Nekusar decklist (Reanimate itself).
+"Put target creature card from a graveyard onto the battlefield under your
+control" was completely unmodeled, but only because of wording: the
+existing `return-target-creature-card-from-graveyard-to-battlefield`
+executor already does exactly this — `putOntoBattlefield(next,
+object.controller, card, false)` puts the card under the *caster's*
+control regardless of which player's graveyard it came from — it was just
+never matched, because every existing recognizer looked for "Return ... to
+the battlefield," and Reanimate/Hymn of Rebirth say "Put ... onto the
+battlefield under your control" instead. Added that phrasing as a second
+pattern mapping to the same effect and the already-existing (but
+previously unused) `creature-card-in-a-graveyard` target kind.
+
+The costed half ("You lose life equal to that card's mana value") needed a
+genuinely new compound effect, `reanimate-target-creature-lose-mana-value-life`,
+modeled on the existing `return-target-artifact-and-gain-mana-value`
+precedent: read the card's mana value before it leaves the graveyard, move
+it to the battlefield, then apply the cost. Life is lost by the caster, not
+the card's original owner — confirmed with a scenario that reanimates from
+an *opponent's* graveyard and checks life drops only on the caster's side.
+
+Fully implements Reanimate and Hymn of Rebirth outright. Teneb, the
+Harvester (combat-damage trigger with an optional `{2}{B}` pay-cost) and
+Debtors' Knell (upkeep trigger) both use the identical clause as a
+*triggered* ability and flip to fully implemented for free — the trigger
+and optional-cost infrastructure they route through was already generic
+enough to need no changes at all.
+
+Scenario coverage: reanimating a Bear from seat 1's graveyard onto seat 0's
+battlefield with the correct 2-life cost (Grizzly Bears has mana value 2),
+and a second test confirming the plain (no-cost) phrasing reanimates for
+free.
+
+Global export: **9,259/38,712** (+5 from 9,254 — 4 unique cards, one
+counted twice across reprints). `npm run check` and `npm test` PASS
+(**549 rules tests**, up from 547). `npm run simulate:engine`:
+**200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed
