@@ -17,6 +17,7 @@ feature name.
 | `c13-whenever-deals-damage-opponent` | `codex/local-c13` | Reusable any-damage-to-opponent event for Charnelhoard Wurm's graveyard-return trigger | active |
 | `c13-remove-counter-from-deals` | `codex/local-c13` | Reusable activated cost for removing a counter, then dealing parameterized damage to any legal target; Deathbringer Thoctar | active |
 | `c13-oracle-gain-life-triggered-3` | `codex/c13-gladehart` | Reusable landfall trigger with optional life gain, including the modern “enters the battlefield under your control” wording (CR 603.1, 603.2, 118.3) | active |
+| `c13-oracle-other-triggered-shape-5` | `codex/c13-gladehart` | Reusable triggered token creation under a target opponent's control, applied to Hunted Troll (CR 603.3d, 111.2) | active |
 | `c13-oracle-counter-static-spell` | `codex/c13-spellbreaker` | Spellbreaker Behemoth: creature spells you control with power 5 or greater can't be countered (CR 101.2, 601.2, 608.2b) | active |
 | `c13-oracle-exile-triggered-target` | `codex/c13-flickerwisp-final` | Flickerwisp: exile another target permanent and return it under its owner's control at the beginning of the next end step (CR 603.2, 603.3d, 603.7, 400.7) | active |
 | `rules-equipment` | `codex/c13-equipment-cluster` | Equip, attachment, Equipment static bonuses, and Sword of the Paruns untap abilities | Ready for integrator review |
