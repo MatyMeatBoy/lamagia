@@ -1499,7 +1499,7 @@ function raiseEvent(
         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
         ...("amount" in event ? { eventAmount: event.amount } : {}),
         ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
-        ...("victim" in event ? { eventPlayer: event.victim } : {})
+        ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {})
       });
     }
   }
@@ -2411,6 +2411,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!source || !attack || !isCreature(cardProfile(source.card))) return state;
       const pumped = modifyCreatures(state, amount, 0, (candidate) => candidate.instance_id === sourceId);
       return dealDamageFromObject(pumped, attack.defender, amount, sourceName, object);
+    }
+    case "pump-source-by-defending-lands": {
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const defender = object.trigger?.eventPlayer;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!source || defender === undefined || !isCreature(cardProfile(source.card))) return state;
+      const amount = playerAt(state, defender).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length;
+      return modifyCreatures(state, amount, 0, (candidate) => candidate.instance_id === source.instance_id);
     }
     case "incite-rebellion": {
       let next = state;

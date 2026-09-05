@@ -438,6 +438,8 @@ export type SpellEffect =
   | { readonly kind: "damage-source-power" }
   /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
   | { readonly kind: "tap-creatures-pump-source-damage-attacker"; readonly subtype: string }
+  /** Terra Ravager: +X/+0 where X is the defending player's land count. */
+  | { readonly kind: "pump-source-by-defending-lands" }
   | { readonly kind: "destroy-random-target-permanent"; readonly amount: number }
   | { readonly kind: "damage-any-target-each-controlled-type"; readonly type: CardType }
   | { readonly kind: "damage-controller-equal-hand" }
@@ -3342,6 +3344,14 @@ function recognizeText(text: string): RecognizedText {
         });
         continue;
       }
+    }
+    const defendingLandsPump = /^(?:when|whenever)\s+~\s+attacks,?\s+it gets \+X\/\+0 until end of turn,?\s+where X is the number of lands defending player controls\.?$/i.test(line);
+    if (defendingLandsPump) {
+      triggers.push({
+        event: "attacks", subject: "self", effect: { kind: "pump-source-by-defending-lands" },
+        optional: false, targetKind: "none", sourceText: line
+      });
+      continue;
     }
     // Stalking Vengeance: "it" refers to the source permanent, not the
     // creature whose death caused the trigger (CR 109.5).

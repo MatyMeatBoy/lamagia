@@ -310,6 +310,7 @@ const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — G
 const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "Legendary Creature — Elemental", mana_cost: "{5}{G}{U}{R}", cmc: 8, power: "7", toughness: "5", oracle_text: "Creatures you control have haste.\nCascade\nCascade" });
 const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Creature — Vampire", mana_cost: "{3}{U}{B}", cmc: 5, power: "4", toughness: "4", colors: ["U", "B"], keywords: ["Intimidate"], oracle_text: "Intimidate\nOther creatures you control have intimidate.\nWhenever Vela the Night-Clad or another creature you control leaves the battlefield, each opponent loses 1 life." });
 const GAHIJI = () => make({ name: "Gahiji, Honored One", type_line: "Legendary Creature — Beast", mana_cost: "{3}{R}{G}{W}", cmc: 6, power: "4", toughness: "4", oracle_text: "Whenever a creature attacks one of your opponents or a planeswalker an opponent controls, that creature gets +2/+0 until end of turn." });
+const TERRA_RAVAGER = () => make({ name: "Terra Ravager", type_line: "Creature — Elemental", mana_cost: "{3}{R}", cmc: 4, power: "0", toughness: "4", oracle_text: "Whenever Terra Ravager attacks, it gets +X/+0 until end of turn, where X is the number of lands defending player controls.", oracle_id: "c7686204-0433-48cf-bbfb-5d32b6a25cc3" });
 const GUTTERSNIPE = () => make({ name: "Guttersnipe", type_line: "Creature — Goblin Shaman", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever you cast an instant or sorcery spell, Guttersnipe deals 2 damage to each opponent." });
 const FECUNDITY = () => make({ name: "Fecundity", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Whenever a creature dies, that creature's controller may draw a card." });
 const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "Enchantment", mana_cost: "{1}{R}{G}", cmc: 3, oracle_text: "Creatures you control have haste.\n{R}{G}, Sacrifice Fires of Yavimaya: Creatures you control get +2/+2 until end of turn." });
@@ -5059,6 +5060,21 @@ describe("triggered abilities", () => {
       && state.stack.length === 0
       && state.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.powerModifier === 2);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.powerModifier).toBe(2);
+  });
+
+  it("scales Terra Ravager's attack trigger from the defending player's lands", () => {
+    expect(profileOf(TERRA_RAVAGER())).toMatchObject({
+      triggers: [{ event: "attacks", subject: "self", effect: { kind: "pump-source-by-defending-lands" } }],
+      fullyImplemented: true
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [TERRA_RAVAGER()]);
+    game = putOnBattlefield(game, 1, [BEAR(), FOREST(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const ravager = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Terra Ravager")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: ravager.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === ravager.instance_id)?.powerModifier).toBe(2);
   });
 
   it("triggers Guttersnipe only from instant and sorcery casts", () => {
