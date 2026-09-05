@@ -108,6 +108,7 @@ const REGENERATE_TARGET = () => make({ name: "Regrowth Shield", type_line: "Inst
 const CHAOS_WARP = () => make({ name: "Chaos Warp", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield." });
 const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
+const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle this card, you may have it deal 1 damage to each creature." });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
 const CREATURE_COUNT_BOLT = () => make({ name: "Creature Count Bolt", type_line: "Instant", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals damage equal to the number of creatures you control to any target." });
 const TAP_SPELL = () => make({ name: "Tactical Tap", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Tap target creature." });
@@ -570,6 +571,16 @@ const MYR_TOKEN = () => make({ name: "Myr", type_line: "Artifact Creature — My
 const CREATURE_COMBAT_DRAWER = () => make({
   name: "Combat Chronicler", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "Whenever a creature deals combat damage to a player, draw a card."
+});
+const DIVINER_SPIRIT = () => make({
+  name: "Diviner Spirit", type_line: "Creature — Spirit", mana_cost: "{4}{U}", cmc: 5, power: "2", toughness: "4",
+  oracle_text: "Whenever this creature deals combat damage to a player, you and that player each draw that many cards.",
+  scryfall_id: "911b8849-dd0a-4383-8403-ea80227c5d7d"
+});
+const SEKKUAR_DEATHKEEPER = () => make({
+  name: "Sek'Kuar, Deathkeeper", type_line: "Legendary Creature — Orc Shaman", mana_cost: "{2}{B}{R}{G}", cmc: 5, power: "4", toughness: "3",
+  oracle_text: "Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.",
+  scryfall_id: "94426127-65c2-435e-ba92-423a3c102061"
 });
 const CREATURE_CAST_DRAWER = () => make({
   name: "Creature Scholar", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
@@ -1187,6 +1198,32 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Decree of Pain")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("resolves Slice and Dice's optional cycling damage trigger", () => {
+    const profile = profileOf(SLICE_AND_DICE());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "card-cycled",
+      subject: "self",
+      optional: true,
+      effect: { kind: "damage-all-creatures", amount: 1 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast(
+      [SLICE_AND_DICE()],
+      [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()],
+      [],
+      [BEAR()]
+    );
+    const slice = game.players[0]!.hand[0]!;
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "cycle" && entry.cardId === slice.instance_id);
+    expect(offered).toBeDefined();
+    game = applyAction(game, 0, offered!.action);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.damage).toBe(1);
   });
 
   it("lets Mind's Eye pay for opponent draws", () => {
@@ -4565,6 +4602,26 @@ describe("triggered abilities", () => {
     if (opponentBoard.length) game = putOnBattlefield(game, 1, opponentBoard);
     return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
   }
+
+  it("creates Sek'Kuar's Graveborn token when another nontoken creature dies", () => {
+    let game = readyToCast([], [SEKKUAR_DEATHKEEPER(), GOBLIN_BOMBARDMENT(), BEAR()]);
+    const sacrifice = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const bombardment = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Bombardment")!;
+    const before = game.players[0]!.battlefield.length;
+    expect(profileOf(SEKKUAR_DEATHKEEPER()).triggers[0]).toMatchObject({
+      event: "dies", subject: "another-creature-you-control", nontoken: true,
+      effect: { kind: "create-token", amount: 1, token: { power: 3, toughness: 1, colors: ["B", "R"], keywords: ["haste"] } }
+    });
+
+    game = applyAction(game, 0, { type: "activate", sourceId: bombardment.instance_id, abilityIndex: 0,
+      sacrificeId: sacrifice.instance_id, targets: [{ kind: "player", seat: 1 }] });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.some((permanent) => permanent.card.name === "Graveborn"));
+
+    expect(game.players[0]!.battlefield).toHaveLength(before);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Graveborn")).toMatchObject({
+      card: { type_line: "Creature — Graveborn", power: "3", toughness: "1", colors: ["B", "R"] }
+    });
+  });
 
   it("aims Acidic Slime at an artifact, enchantment, or land", () => {
     const profile = profileOf(ACIDIC_SLIME());

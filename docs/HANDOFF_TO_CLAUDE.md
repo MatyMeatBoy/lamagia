@@ -12,14 +12,25 @@ selected compositional worker payloads; verify the Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 9,094 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 9,119 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 22,634 / 84,990 implemented (26.6%) across 685
+- **Edition memberships:** 22,837 / 84,990 implemented (26.9%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 233 / 341 unique cards (68.3%), 108 pending.
-- **Commander 2014:** 197 / 322 unique cards (61.2%), 125 pending.
+- **Commander 2013:** 236 / 341 unique cards (69.2%), 105 pending.
+- **Commander 2014:** 198 / 322 unique cards (61.5%), 124 pending.
+
+### Historical worker intake audit — 2026-09-05
+
+`origin/claude/c14-precon-clusters` was audited commit-by-commit. Fourteen
+intermediate commits were type-only or duplicated union declarations and were
+not treated as completed cards. Its final graveyard-return commit also rewrites
+large portions of the current engine and conflicts with the authoritative
+implementation, so it was not imported wholesale. The useful C14 shock/reveal
+land parser was rescued separately as `4b4d733`, verified with the rules suite,
+and raised C14 by one card. Future workers must submit the smallest executable
+cluster with engine path, scenario test, CR citation, and exact `oracle_id` list.
 - **Composable review vocabulary:** 47 semantic atoms cover 70,477 unresolved
   component references; 99.9% are reused across clauses. The full-catalog
   hybrid benchmark reduces worker context by 22.8% while preserving exact
@@ -2534,3 +2545,10 @@ primitive. At each end step it restores control of every nontoken permanent
 to its owner without changing zones, covering Brooding Saurian (CR 603.2,
 603.6, 110.2). Commit `f6f8031` is queued for integration; this
 branch is based on `b008385` and excludes sibling worker commits.
+
+### C13 optional cycle “may have” triggers (2026-09-04)
+
+The generic `card-cycled` trigger parser now normalizes “you may have it deal …”
+and “you may have target creature gain …” into existing reusable effects. Slice
+and Dice uses the all-creature damage path; Dirge of Dread uses the targeted
+temporary keyword path (CR 603.2, 702.29).

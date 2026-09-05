@@ -1674,7 +1674,7 @@ function parseCreateToken(text: string): SpellEffect | null {
   const colors = words.filter((word) => colorWords[word.toLowerCase()]).map((word) => colorWords[word.toLowerCase()]!);
   const artifact = /\bartifact\b/i.test(descriptor);
   const creature = /\bcreature\b/i.test(descriptor);
-  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature)$/i.test(word)).join(" ");
+  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(and|artifact|creature)$/i.test(word)).join(" ");
   const name = (match[5]?.trim() || (subtype || (artifact ? "Treasure" : "Token"))).replace(/\s+token$/i, "");
   const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
@@ -1859,6 +1859,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // control" patterns above so those remain the first match when present.
   { event: "enters-battlefield", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
+  { event: "dies", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },
@@ -3006,18 +3007,12 @@ function recognizeText(text: string): RecognizedText {
     // Replacement text for entering tapped is executed by `parseEntersTapped`
     // before priority opens; it is not an unresolved spell effect.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+tapped(?:\s+with\s+.+?\s+counters?\s+on\s+it)?(?:\s+unless\b.*)?\.?$/i.test(line)) continue;
-    // Shock lands: "As ~ enters, you may pay N life. If you don't, it enters
-    // tapped." is the same `unless-pay-life` replacement effect above, split
-    // across two sentences by Wizards' templating rather than one. `entersTapped`
-    // (`unless-pay-life`, `packages/rules/src/engine.ts`) already enforces it —
-    // paying whenever life can comfortably afford it — so the printed line
-    // describes exactly what already executes, not an unresolved effect.
-    if (/^As ~ enters, you may pay \d+ life\.\s*If you don['’]t, (?:~|it) enters tapped\.?$/i.test(line)) continue;
-    // Check lands (Choked Estuary, Game Trail, Ancient Amphitheater, ...):
-    // "As ~ enters, you may reveal a(n) <type(s)> card from your hand. If you
-    // don't, ~ enters tapped." is the same `unless-reveal-card` replacement
-    // effect above (`packages/rules/src/engine.ts`) already enforces it.
-    if (/^As ~ enters, you may reveal an?\s+[A-Za-z][A-Za-z'’ -]*\s+card from your hand\.\s*If you don['’]t, (?:~|it) enters tapped\.?$/i.test(line)) continue;
+    // Shock lands ("As ~ enters, you may pay 2 life. If you don't, it enters
+    // tapped.") and reveal lands ("...you may reveal a <type> card from your
+    // hand. If you don't, ~ enters tapped.") print the same replacement as
+    // two sentences on one line. `parseEntersTapped` already executes it as
+    // the permanent enters (CR 614.12); this is not a separate instruction.
+    if (/^as\s+~\s+enters,\s*you\s+may\s+(?:pay\s+\d+\s+life|reveal\s+.+?\s+card\s+from\s+your\s+hand)\.\s*if\s+you\s+don[’']t,\s*(?:it|~)\s+enters\s+tapped\.?$/i.test(line)) continue;
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
@@ -3242,9 +3237,12 @@ function recognizeText(text: string): RecognizedText {
       const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
       const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
+      const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
       let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
+        .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
+        .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "if it was kicked" gate (CR 702.33e).
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
@@ -3259,7 +3257,7 @@ function recognizeText(text: string): RecognizedText {
       const payGate = variableLifePay ? null : /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-      const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice ? true : /^you\s+may\b/i.test(effectText);
+      const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice || mayHave ? true : /^you\s+may\b/i.test(effectText);
       const recognized = (payCost && payCost.hasVariable && !variableLifePay) ? null
         : sacrificeUnlessPayment
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }

@@ -166,6 +166,27 @@ describe("enters tapped", () => {
     const profile = cardProfile(card({ name: "Test Guildgate", type_line: "Land — Gate", oracle_text: "This land enters tapped.\n{T}: Add {W} or {U}." }));
     expect(profile.fullyImplemented).toBe(true);
   });
+  // CR 614.12: entering-the-battlefield replacement effects worded as "As
+  // [this permanent] enters, ..." are executed as the permanent enters, not
+  // as a later resolved instruction — the two-sentence shock/reveal land
+  // wording must not leak into unimplementedText once entersTapped already
+  // captures the same replacement structurally.
+  it("does not flag a shock land's two-sentence pay-life wording as unimplemented", () => {
+    const profile = cardProfile(card({
+      name: "Test Shock Land", type_line: "Land — Island Swamp",
+      oracle_text: "({T}: Add {U} or {B}.)\nAs Test Shock Land enters, you may pay 2 life. If you don't, it enters tapped."
+    }));
+    expect(profile.entersTapped).toEqual({ kind: "unless-pay-life", life: 2 });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+  it("does not flag a reveal land's two-sentence wording as unimplemented", () => {
+    const profile = cardProfile(card({
+      name: "Test Reveal Land", type_line: "Land",
+      oracle_text: "As Test Reveal Land enters, you may reveal an Island or Swamp card from your hand. If you don't, Test Reveal Land enters tapped.\n{T}: Add {U} or {B}."
+    }));
+    expect(profile.entersTapped).toEqual({ kind: "unless-reveal-card", subtypes: ["Island", "Swamp"] });
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("payment trigger parsing", () => {
@@ -679,6 +700,26 @@ describe("effect recognition", () => {
     }));
     expect(sphinx.triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", optional: true });
     expect(sphinx.fullyImplemented).toBe(true);
+  });
+
+  it("normalizes optional cycle triggers that use 'you may have'", () => {
+    const slice = cardProfile(card({
+      name: "Slice and Dice", type_line: "Sorcery", oracle_text: "Cycling {2}{R}\nWhen you cycle this card, you may have it deal 1 damage to each creature."
+    }));
+    expect(slice.triggers[0]).toMatchObject({
+      event: "card-cycled", subject: "self", optional: true,
+      effect: { kind: "damage-all-creatures", amount: 1 }
+    });
+    expect(slice.fullyImplemented).toBe(true);
+
+    const dirge = cardProfile(card({
+      name: "Dirge of Dread", type_line: "Sorcery", oracle_text: "Cycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn."
+    }));
+    expect(dirge.triggers[0]).toMatchObject({
+      event: "card-cycled", subject: "self", optional: true,
+      targetKind: "creature", effect: { kind: "grant-target-creature-keyword", keyword: "fear" }
+    });
+    expect(dirge.fullyImplemented).toBe(true);
   });
 
   it("reuses the top-card reveal primitive with a mana-value amount", () => {
