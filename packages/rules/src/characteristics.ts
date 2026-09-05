@@ -71,6 +71,11 @@ export interface ManaAbility {
   readonly activationRestriction?: { readonly enteredThisTurn: boolean; readonly orControlsBasicLand?: boolean };
   /** Storage-counter abilities produce one mana per removed counter. */
   readonly variableAmountCounter?: string;
+  /** A variable number of typed creatures is paid as an activation cost. */
+  readonly sacrificesCreatures?: { readonly amount: number | "X"; readonly subtype?: string };
+  /** The amount of mana/life is the number of creatures sacrificed. */
+  readonly amountFromSacrifice?: boolean;
+  readonly gainLifeFromAmount?: boolean;
   /** Some mana abilities have a small immediate side effect (CR 605). */
   readonly gainLife?: number;
   /** Static activation restriction such as Temple of the False God. */
@@ -1123,6 +1128,15 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
     const requiresTap = /\{T\}/.test(costText);
+    const variableSacrifice = /^(?:\{T\},\s*)?sacrifice\s+X\s+([A-Za-z][A-Za-z'’-]*)s?$/i.exec(costText.trim().replace(/,\s*$/, ""));
+    if (variableSacrifice && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(effectText.trim())) {
+      abilities.push({
+        index: abilities.length, produces: [...MANA_COLORS], amount: 0, requiresTap, lifeCost: 0,
+        sacrificesCreatures: { amount: "X", subtype: variableSacrifice[1]!.replace(/s$/i, "") },
+        amountFromSacrifice: true, gainLifeFromAmount: true, text: line.trim()
+      });
+      continue;
+    }
     const variableStorage = /^add\s+X\s+mana\s+in\s+any\s+combination\s+of\s+(\{[WUBRGC]\})(?:\s+and\/or\s+(\{[WUBRGC]\}))?\.?$/i.exec(effectText.trim());
     if (variableStorage && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(costText)) {
       const manaSymbols = costText.match(/\{[^}]+\}/g) ?? [];
@@ -3158,7 +3172,9 @@ function recognizeText(text: string): RecognizedText {
       // Board-dependent color (Fellwar Stone, Harvester Druid): resolved at
       // activation time by `manaOptionsFor`, not by `parseAddClause`.
       const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine) unimplementedText.push(line);
+      const variableSacrificeMana = /(?:\{T\},\s*)?sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s?\s*$/i.test(manaLine[1]!.trim())
+        && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana) unimplementedText.push(line);
       continue;
     }
 
