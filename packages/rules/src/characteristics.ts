@@ -540,6 +540,8 @@ export type SpellEffect =
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
+  /** Temporary pump based on the defending player in the triggering attack. */
+  | { readonly kind: "modify-triggered-creature-by-defending-lands" }
   | { readonly kind: "modify-triggered-creature-and-grant-keyword"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   /** Graft counter transfer to the creature that caused the trigger (CR 702.58). */
   | { readonly kind: "move-counter-from-source-to-triggered-creature"; readonly counter: string }
@@ -3172,6 +3174,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if ((match = /^That creature gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-triggered-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
+  }
+  if (/^~ gets \+X\/\+0 until end of turn, where X is the number of lands defending player controls$/i.test(text)) {
+    return { effect: { kind: "modify-triggered-creature-by-defending-lands" }, target: "none" };
   }
   if ((match = /^Each player discards their hand, then draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);

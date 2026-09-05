@@ -5081,6 +5081,16 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === sourceId)).toMatchObject({ powerModifier: 2, toughnessModifier: 2 });
   });
 
+  it("uses the defending player's lands for Terra Ravager", () => {
+    let game = readyToCast([], [C13_TERRA_RAVAGER()], [], [FOREST(), FOREST(), FOREST()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })), step: "declare-attackers", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], combat: { ...game.combat, attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
+    const terra = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Terra Ravager")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: terra.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && state.stack.length === 0 && state.triggerQueue.length === 0);
+    const attackingTerra = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === terra.instance_id)!;
+    expect(powerOf(attackingTerra, game)).toBe(3);
+  });
+
   it("keeps C13 Basalt Monolith tapped through untap and resolves its untap activation", () => {
     let game = readyToCast([], [C13_BASALT_MONOLITH(), FOREST(), FOREST(), FOREST()]);
     const basalt = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Basalt Monolith")!;
