@@ -2377,7 +2377,7 @@ function singularSubtype(word: string): string {
 }
 
 /** Matches one sentence against the closed effect templates. */
-function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind } | null {
+function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind; targetKinds?: readonly Exclude<TargetKind, "none">[] } | null {
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
   let match: RegExpExecArray | null;
 
@@ -3143,6 +3143,17 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
   if (/^Destroy target enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "enchantment" };
+  if (/^Destroy target artifact and target enchantment$/i.test(text)) {
+    return {
+      effect: {
+        kind: "compound",
+        effects: [{ kind: "destroy-target-permanent" }, { kind: "destroy-target-permanent" }],
+        targetOffsets: [0, 1]
+      },
+      target: "artifact",
+      targetKinds: ["artifact", "enchantment"]
+    };
+  }
   if (/^Destroy target land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "land" };
   if (/^Destroy target land\.\s*Its controller may search their library for a basic land card, put it onto the battlefield, then shuffle$/i.test(text)) {
     return { effect: { kind: "destroy-target-permanent" }, target: "land" };
@@ -3707,7 +3718,7 @@ function recognizeText(text: string): RecognizedText {
           invalid = true;
           unimplementedChoices.push(choiceText);
         }
-        else choices.push({ index: choices.length, text: choiceText, effect: recognized.effect, targetKind: recognized.target });
+        else choices.push({ index: choices.length, text: choiceText, effect: recognized.effect, targetKind: recognized.target, ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}) });
         cursor += 1;
       }
       if (!invalid && choices.length > 0 && choices.length === cursor - start) {
