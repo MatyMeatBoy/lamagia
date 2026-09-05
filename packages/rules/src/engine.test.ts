@@ -811,6 +811,11 @@ function passUntil(state: GameState, predicate: (state: GameState) => boolean, l
     const seat = pendingSeat(current);
     if (seat === null) throw new Error("Nobody owes a decision but the predicate is unmet.");
     const available = legalActions(current, seat);
+    const triggerOrder = available.find((entry) => entry.action.type === "choose-trigger-order");
+    if (triggerOrder) {
+      current = applyAction(current, seat, triggerOrder.action);
+      continue;
+    }
     const pass = available.find((entry) => entry.action.type === "pass")
       ?? available.find((entry) => entry.action.type === "declare-attackers")
       ?? available.find((entry) => entry.action.type === "declare-blockers");
@@ -6253,11 +6258,18 @@ describe("triggered abilities", () => {
     game = applyAction(game, 1, { type: "pass" });
     game = applyAction(game, 0, { type: "pass" });
     game = applyAction(game, 1, { type: "pass" });
+    if (game.pendingChoice?.type === "trigger-order") {
+      const order = legalActions(game, 0).find((entry) => entry.action.type === "choose-trigger-order" && entry.label.includes("Ajani"));
+      expect(order).toBeDefined();
+      game = applyAction(game, 0, order!.action);
+      game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    }
     const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ajani's Pridemate")!;
     expect(game.pendingChoice?.type).toBe("optional-trigger");
     const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
     expect(choice.targets).toEqual([{ kind: "permanent", instanceId: target.instance_id }]);
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => (state.players[0]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)?.counters["+1/+1"] ?? 0) > 0);
     const countered = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ajani's Pridemate")!;
     expect(countered.counters["+1/+1"]).toBe(1);
   });

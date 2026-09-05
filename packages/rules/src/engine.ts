@@ -442,6 +442,14 @@ export type PendingChoice =
       readonly options: readonly { readonly index: number; readonly text: string; readonly effect: SpellEffect }[];
     }
   | {
+      /** Same-controller triggers must be ordered before they are stacked (CR 603.3b). */
+      readonly type: "trigger-order";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      /** Private authoritative options; legalActions exposes only labels. */
+      readonly options: readonly TriggerInstance[];
+    }
+  | {
       /** Tidal Force-style choice after a target has been selected (CR 701.21). */
       readonly type: "tap-or-untap";
       readonly seat: SeatId;
@@ -596,6 +604,7 @@ export type GameAction =
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
+  | { readonly type: "choose-trigger-order"; readonly sourceId: string; readonly triggerId: string }
   | { readonly type: "acknowledge-view-hand"; readonly sourceId: string }
   | { readonly type: "cast-miracle"; readonly sourceId: string }
   | { readonly type: "decline-miracle"; readonly sourceId: string }
@@ -5766,6 +5775,16 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
       return actions;
     }
+    if (choice.type === "trigger-order") {
+      for (const option of choice.options) {
+        actions.push({
+          action: { type: "choose-trigger-order", sourceId: choice.sourceId, triggerId: option.id },
+          label: `Poner primero: ${option.sourceCard.name}`,
+          note: option.definition.sourceText
+        });
+      }
+      return actions;
+    }
     if (choice.type === "view-hand") {
       actions.push({
         action: { type: "acknowledge-view-hand", sourceId: choice.sourceId },
@@ -7909,9 +7928,11 @@ function apnapOrder(state: GameState): readonly TriggerInstance[] {
  * legal, through a real choice when several are, and by being removed from the
  * stack entirely when none is (CR 603.3d).
  */
-function putNextTriggerOnStack(state: GameState): GameState {
+function putNextTriggerOnStack(state: GameState, forcedTriggerId?: string): GameState {
   const ordered = apnapOrder(state);
-  const trigger = ordered[0];
+  const trigger = forcedTriggerId
+    ? ordered.find((candidate) => candidate.id === forcedTriggerId) ?? ordered[0]
+    : ordered[0];
   if (!trigger) return state;
   const remaining = state.triggerQueue.filter((candidate) => candidate.id !== trigger.id);
   const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
@@ -7925,6 +7946,34 @@ function putNextTriggerOnStack(state: GameState): GameState {
   if (!interveningIfStillTrue(state, trigger)) {
     return logged({ ...state, triggerQueue: remaining }, trigger.controller,
       `La habilidad disparada de ${trigger.sourceCard.name} no se pone en la pila: ya no se cumple su condición.`);
+  }
+
+  // CR 603.3b: if the first APNAP group contains multiple triggers from the
+  // same player, that player orders them before the first one is stacked. We
+  // choose one at a time so target/mode choices remain independent decisions.
+  if (!forcedTriggerId) {
+    const sameController: TriggerInstance[] = [];
+    for (const candidate of ordered) {
+      if (candidate.controller !== trigger.controller) break;
+      sameController.push(candidate);
+    }
+    // Repeated copies of the exact same trigger have no meaningful ordering
+    // choice. Keeping them automatic avoids forcing a player through two
+    // indistinguishable clicks while preserving choices that can change the
+    // result (different source/effect definitions).
+    const distinctDefinitions = new Set(sameController.map((candidate) =>
+      `${candidate.sourcePermanentId}|${candidate.definition.sourceText}|${JSON.stringify(candidate.definition.effect)}`));
+    if (sameController.length > 1 && distinctDefinitions.size > 1) {
+      return {
+        ...state,
+        pendingChoice: {
+          type: "trigger-order",
+          seat: trigger.controller,
+          sourceId: `trigger-order:${state.version}:${trigger.id}`,
+          options: sameController
+        }
+      };
+    }
   }
 
   if (trigger.definition.modalEffects?.length) {
@@ -8035,6 +8084,17 @@ function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extrac
   return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
 }
 
+function applyChooseTriggerOrder(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger-order" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "trigger-order" || choice.seat !== seat) throw new Error("No tienes un orden de habilidades pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Ese orden de habilidades ya no corresponde a la partida.");
+  const selected = choice.options.find((trigger) => trigger.id === action.triggerId);
+  if (!selected) throw new Error("Esa habilidad no pertenece al orden pendiente.");
+  const reorderedQueue = [selected, ...state.triggerQueue.filter((trigger) => trigger.id !== selected.id)];
+  const next = putNextTriggerOnStack({ ...state, pendingChoice: null, triggerQueue: reorderedQueue }, selected.id);
+  return logged(next, seat, `${selected.sourceCard.name} se pone primero en la pila.`);
+}
+
 function applyFinishTriggerTargets(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-trigger-targets" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "trigger-target" || !choice.targetKinds || choice.seat !== seat) throw new Error("No tienes objetivos opcionales pendientes.");
@@ -8142,6 +8202,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
+    case "choose-trigger-order": next = applyChooseTriggerOrder(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
     case "choose-trigger-mode": next = applyChooseTriggerMode(state, seat, action); break;
     case "acknowledge-view-hand": next = applyAcknowledgeViewHand(state, seat, action); break;

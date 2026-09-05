@@ -3422,7 +3422,9 @@ evoked, second-draw, and cast-from-hand remain fixed facts from the event.
 Howling Mine has regression scenarios for both checkpoints. Validation:
 **629 rules tests**, `npm run check`.
 
-Same-controller simultaneous-trigger ordering remains a documented follow-up;
-it is not silently auto-ordered because that would hide a required player
-choice. Do not claim it is implemented until it has a dedicated projected
-choice and scenario coverage.
+Same-controller simultaneous triggers now expose a projected `trigger-order`
+choice using only public labels; the authoritative trigger objects stay on the
+server. Repeated copies with the same source/text/effect remain automatic
+because their order cannot change the result, and bot seats select the first
+deterministic option. The Cradle of Vitality scenario covers the meaningful
+ordering path before its optional trigger resolves.
