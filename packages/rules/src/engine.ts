@@ -5254,49 +5254,6 @@ function applyStateBasedActions(state: GameState): GameState {
     changed = false;
     guard += 1;
 
-    // Control Magic-style Auras create a continuous control-changing effect,
-    // rather than a one-shot move (CR 110.2, 613.7). Keep the prior controller
-    // so removing the Aura restores the object to the controller it had before
-    // this specific effect began, including the case of a previously stolen
-    // permanent.
-    for (const aura of allPermanents(next)) {
-      const auraProfile = cardProfile(aura.card);
-      if (!auraProfile.auraControl || aura.attachedTo === undefined) continue;
-      const target = findPermanent(next, aura.attachedTo);
-      if (!target || target.instance_id === aura.instance_id) continue;
-      if (target.controller === aura.controller && target.controlChange?.auraId === aura.instance_id) continue;
-      if (target.controller === aura.controller) continue;
-      const previousController = target.controlChange?.previousController ?? target.controller;
-      next = changePermanentController(next, target, aura.controller);
-      next = withPlayer(next, aura.controller, (player) => ({
-        ...player,
-        battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
-          ? { ...permanent, controlChange: { auraId: aura.instance_id, previousController } }
-          : permanent)
-      }));
-      changed = true;
-    }
-
-    // When the controlling Aura leaves or falls off, its continuous effect ends
-    // and the enchanted permanent returns to its recorded prior controller.
-    for (const permanent of allPermanents(next)) {
-      const change = permanent.controlChange;
-      if (!change) continue;
-      const aura = findPermanent(next, change.auraId);
-      if (aura?.attachedTo === permanent.instance_id && cardProfile(aura.card).auraControl) continue;
-      const restoredController = change.previousController;
-      next = changePermanentController(next, permanent, restoredController);
-      next = withPlayer(next, restoredController, (player) => ({
-        ...player,
-        battlefield: player.battlefield.map((candidate) => {
-          if (candidate.instance_id !== permanent.instance_id) return candidate;
-          const { controlChange: _controlChange, ...restored } = candidate;
-          return restored;
-        })
-      }));
-      changed = true;
-    }
-
     // Rule 704.5q: an Equipment becomes unattached when its equipped object
     // leaves the battlefield or is no longer a creature.
     for (const equipment of allPermanents(next)) {
