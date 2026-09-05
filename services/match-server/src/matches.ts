@@ -206,7 +206,18 @@ export function gameplayDebugSnapshot(match: MatchRecord) {
     prioritySeat: state.prioritySeat,
     priorityOpen: state.priorityOpen,
     pendingChoice: state.pendingChoice?.type ?? null,
-    stack: state.stack.map((object) => ({ id: object.id, name: object.card.name, controller: object.controller })),
+    stack: state.stack.map((object) => ({
+      id: object.id,
+      name: object.card.name,
+      controller: object.controller,
+      targets: object.targets.map((target) => target.kind === "player"
+        ? state.players[target.seat]?.name ?? `seat-${target.seat}`
+        : target.kind === "permanent"
+          ? state.players.flatMap((player) => player.battlefield).find((permanent) => permanent.instance_id === target.instanceId)?.card.name ?? target.instanceId
+          : target.kind === "graveyard-card"
+            ? state.players[target.seat]?.graveyard.find((card) => card.instance_id === target.instanceId)?.name ?? target.instanceId
+            : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? target.stackId)
+    })),
     combat: {
       attackers: combat.attackers,
       blockers: combat.blockers,

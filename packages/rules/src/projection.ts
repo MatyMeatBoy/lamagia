@@ -271,7 +271,9 @@ function permanentView(state: GameState, permanent: Permanent, available: readon
     attacking: attacking ? attacking.defender : null,
     blocking: blocking ? blocking.attackerId : null,
     blockedBy,
-    producesMana: cardProfile(permanent.card).manaAbilities.length > 0,
+    // A hand-only fast-mana ability (e.g. Simian Spirit Guide) is not active
+    // once the card is on the battlefield; do not show a misleading mana badge.
+    producesMana: cardProfile(permanent.card).manaAbilities.some((ability) => ability.sourceZone !== "hand"),
     ...(permanent.attachedTo ? { attachedTo: permanent.attachedTo } : {}),
     ...(permanent.attachedToPlayer !== undefined ? { attachedToPlayer: permanent.attachedToPlayer } : {})
   };

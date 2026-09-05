@@ -4,6 +4,25 @@
 
 Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
+### Gameplay hardening checkpoint — 2026-09-05
+
+The graphical stack projects each spell, activated ability, and trigger as an
+ordered card-like item with controller, targets, rules text, and a clear
+top-first resolution marker. Human priority responses remain authoritative in
+`packages/rules`; the client only renders legal actions. The general right-click
+or long-press card menu lists legal play/activation/yield actions and keeps
+information last. Hand-only mana abilities, including Simian Spirit Guide, are
+separate from casting: selecting them exiles the card as a cost and adds mana;
+they are not used by automatic payment or shown as battlefield mana sources.
+Optional triggers can be yielded per source, while mandatory triggers and
+opponent response windows remain active. Validation after this checkpoint:
+714 rules tests, `npm run check`, and the 200-game engine matrix pass.
+
+Gameplay failure traces now include resolved names of stack targets in both the
+server NDJSON snapshot and the bounded stabilization diagnostic, so a stuck
+fetch, removal spell, or combat effect can be reconstructed without exposing
+hands or libraries.
+
 ## Current published checkpoint — 2026-09-05
 
 The latest source checkpoint includes the verified C13 Prossh cast-trigger,

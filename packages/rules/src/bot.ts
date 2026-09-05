@@ -358,6 +358,20 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
       if (targetKinds.length && targets?.length !== targetKinds.length) return passOr(available);
       return { action: targets ? { ...chosen.action, targets } : chosen.action, label: chosen.label };
     }
+
+    // Use a hand-based mana ability only when it immediately unlocks a real
+    // cast. This lets bots use Simian Spirit Guide without exiling it on an
+    // empty turn or turning fast mana into an infinite priority loop.
+    const handMana = available.filter((entry) => {
+      const action = entry.action;
+      return action.type === "activate-mana"
+        && player.hand.some((card) => card.instance_id === action.sourceId);
+    });
+    for (const mana of handMana) {
+      const funded = applyAction(state, seat, mana.action);
+      const unlocked = legalActions(funded, seat).some((entry) => entry.action.type === "cast");
+      if (unlocked) return { action: mana.action, label: mana.label };
+    }
   }
 
   const pass = available.find((entry) => entry.action.type === "pass");

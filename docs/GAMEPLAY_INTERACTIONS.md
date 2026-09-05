@@ -23,6 +23,16 @@ legal action (cast, cycle, activated ability, alternate action, or trigger
 yield) and always puts **View information** last. A click is only a shortcut
 when one unambiguous action exists.
 
+Hand-based mana abilities such as Simian Spirit Guide are legal actions in that
+same menu. They are never folded into casting or automatic payment: choosing
+the mana action exiles the card as its cost and adds the selected mana directly
+(CR 605.1a, 605.3a).
+
+The parser accepts the printed card name, `~`, and `this card` in that cost, so
+reprints/imports cannot silently collapse the fast-mana action into “cast”.
+The menu deduplicates the server actions, then keeps **View information** as
+the final non-gameplay row.
+
 ## Yield from this card
 
 `toggle-trigger-yield` is a player preference for a battlefield source. It
@@ -43,4 +53,3 @@ not a second rules state.
 Every new interaction needs a deterministic rules scenario. Keep public logs
 and projections free of hidden zones. For stuck games, use
 `docs/GAMEPLAY_DEBUGGING.md` and inspect `data/runtime/gameplay-debug.ndjson`.
-

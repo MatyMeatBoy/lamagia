@@ -1117,6 +1117,7 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
     for (const ability of manaAbilitiesFor(state, permanent)) {
+      if (ability.sourceZone === "hand") continue;
       if (ability.manaRestriction && !sourceOptions.allowLegendaryMana) continue;
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
@@ -6999,6 +7000,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
     }
     for (const ability of manaAbilitiesFor(state, permanent)) {
+      if (ability.sourceZone === "hand") continue;
       if (!canUseManaAbility(player, permanent, ability, state)) continue;
       const options = manaOptionsFor(player, ability, state);
       if (!options.length) continue;
@@ -7115,6 +7117,26 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         ...(profile.preparedCast.targetKind !== "none" ? { requiresTarget: profile.preparedCast.targetKind } : {}),
         note: `${permanent.card.name}: lanza una copia de ${profile.preparedCast.spellName} (${profile.preparedCast.cost.raw}).`
       });
+    }
+  }
+
+  // Hand-based mana abilities (CR 605.1a), such as Simian Spirit Guide,
+  // stay separate from casting actions so a click cannot guess the wrong mode.
+  for (const card of player.hand) {
+    const source = handActivationSource(card, seat);
+    for (const ability of cardProfile(card).manaAbilities.filter((candidate) => candidate.sourceZone === "hand")) {
+      const options = manaOptionsFor(player, ability, state);
+      if (!options.length || !canUseManaAbility(player, source, ability, state)) continue;
+      const activations = ability.fixedProduces ? [ability.fixedProduces[0]!] : options;
+      for (const mana of activations) {
+        const outputTypes = ability.fixedProduces ?? Array.from({ length: ability.amount }, () => mana);
+        actions.push({
+          action: { type: "activate-mana", sourceId: card.instance_id, abilityIndex: ability.index, mana },
+          label: `${card.name}: Add ${outputTypes.map((type) => `{${type}}`).join("")}`,
+          cardId: card.instance_id,
+          note: "Exile esta carta de tu mano como coste."
+        });
+      }
     }
   }
 
@@ -7305,11 +7327,27 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
 function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate-mana" }>, manaAlreadyPaid = false): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para activar esa habilidad de maná.");
   const player = playerAt(state, seat);
-  const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+  const battlefieldSource = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
+  const handSourceCard = player.hand.find((card) => card.instance_id === action.sourceId);
+  const source = battlefieldSource ?? (handSourceCard ? handActivationSource(handSourceCard, seat) : undefined);
   if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
   const ability = manaAbilitiesFor(state, source).find((candidate) => candidate.index === action.abilityIndex);
   const options = ability ? manaOptionsFor(player, ability, state) : [];
   if (!ability || !options.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
+  if (ability.sourceZone === "hand") {
+    if (!handSourceCard || battlefieldSource || !ability.exilesSelf) throw new Error("Esa habilidad solo puede activarse desde tu mano.");
+    if (!canUseManaAbility(player, source, ability, state)) throw new Error("No puedes activar esa habilidad de maná ahora.");
+    if (ability.manaCost) throw new Error("Las habilidades de maná desde la mano no admiten un coste adicional de maná.");
+    const outputTypes = ability.fixedProduces ?? Array.from({ length: ability.amount }, () => action.mana);
+    const produced = outputTypes.map((type) => `{${type}}`).join("");
+    const next = withPlayer(state, seat, (current) => ({
+      ...current,
+      hand: current.hand.filter((card) => card.instance_id !== handSourceCard.instance_id),
+      exile: [...current.exile, handSourceCard],
+      manaPool: outputTypes.reduce((pool, mana) => addMana(pool, mana), current.manaPool)
+    }));
+    return logged(next, seat, `${player.name} exilia ${source.card.name} de su mano y agrega ${produced}.`);
+  }
   if (ability.variableAmountCounter) {
     const amount = action.variableAmount;
     const choices = action.manaChoices ?? [];
@@ -9364,7 +9402,10 @@ function shouldAutoPass(state: GameState, seat: SeatId): boolean {
  * still retaining the full snapshot in its private log.
  */
 export function stabilizationDiagnostic(state: GameState): string {
-  const stack = state.stack.slice(-4).map((object) => `${object.id}:${object.card.name}`).join(",") || "empty";
+  const stack = state.stack.slice(-4).map((object) => {
+    const targets = object.targets.map((target) => targetLabel(state, target)).join(", ") || "none";
+    return `${object.id}:${object.card.name}[targets=${targets}]`;
+  }).join(",") || "empty";
   const recentLog = state.log.slice(-3).map((entry) => `${entry.turn}/${entry.step}:${entry.text}`).join(" || ") || "empty";
   return [
     `version=${state.version}`,

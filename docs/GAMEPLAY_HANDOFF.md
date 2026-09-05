@@ -29,6 +29,11 @@ submits actions already exposed as legal.
   interchangeable; bots retain the deterministic fast planner. The menu also
   supports MTGO-style yielding from optional triggers of one source without
   suppressing mandatory triggers or response priority.
+- Hand-based mana cards such as Simian Spirit Guide expose a separate mana
+  action beside casting; selecting it exiles the card as a cost and never
+  auto-casts or silently pays with it. The general menu recognizes the printed
+  name, `~`, and `this card` Oracle variants and deduplicates its actions before
+  the final **View information** row.
 - The graphical stack shows one card-like item per spell, activated ability, or
   trigger, with top-first resolution order, controller, targets, and rules
   text. Priority remains authoritative in `packages/rules`.

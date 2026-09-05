@@ -365,10 +365,30 @@ function applyView(next: GameView): void {
 // ---------------------------------------------------------------------------
 
 function seatOf(seat: number): PlayerView | undefined { return view?.players.find((player) => player.seat === seat); }
+const CARD_ACTION_TYPES = new Set<LegalAction["action"]["type"]>([
+  "cast", "cycle", "play-land", "activate", "activate-mana", "equip", "choose-reveal", "toggle-trigger-yield"
+]);
+
+/**
+ * One general card menu for hand, battlefield and visible zone cards.
+ * Keep the server's action objects intact so menu clicks still use the same
+ * authoritative legal-action index as the compact action dock.
+ */
+function cardActionEntriesForCard(cardId: string): LegalAction[] {
+  const seen = new Set<string>();
+  return (view?.legalActions ?? [])
+    .filter((entry) => entry.cardId === cardId && CARD_ACTION_TYPES.has(entry.action.type))
+    .filter((entry) => {
+      const key = JSON.stringify(entry.action);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0));
+}
+
 function cardActionsForCard(cardId: string): LegalAction[] {
-  const choices = view?.legalActions.filter((entry) => entry.cardId === cardId &&
-    (entry.action.type === "cast" || entry.action.type === "cycle" || entry.action.type === "play-land" || entry.action.type === "activate" || entry.action.type === "choose-reveal"));
-  return [...(choices ?? [])].sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0));
+  return cardActionEntriesForCard(cardId);
 }
 function actionForCard(cardId: string): LegalAction | undefined {
   return cardActionsForCard(cardId)[0];
@@ -602,14 +622,6 @@ function wirePermanentPress(button: HTMLButtonElement): void {
   });
   button.addEventListener("pointerup", endCardDetailPress);
   button.addEventListener("pointercancel", endCardDetailPress);
-  button.addEventListener("contextmenu", (event) => {
-    event.preventDefault();
-    if (cardDetailPress?.button === button) {
-      cardDetailPress.longPressed = true;
-      if (cardDetailPress.timer !== null) window.clearTimeout(cardDetailPress.timer);
-    }
-    openCardActionMenu(button.dataset.permanent!);
-  });
   button.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     if (cardDetailPress?.button === button) {
@@ -953,7 +965,7 @@ function actionMenuHtml(): string {
 function cardActionMenuHtml(): string {
   if (!ui.cardActionMenu) return "";
   const card = visibleCards().get(ui.cardActionMenu);
-  const entries = [...cardActionsForCard(ui.cardActionMenu), ...activationsFor(ui.cardActionMenu), ...triggerYieldActionsFor(ui.cardActionMenu)];
+  const entries = cardActionEntriesForCard(ui.cardActionMenu);
   if (!card) return "";
   const hasCast = entries.some((entry) => entry.action.type === "cast");
   const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")
@@ -983,7 +995,7 @@ function decisionOverlayHtml(): string {
   const actions = view?.legalActions ?? [];
   const choices = actions.filter((entry) =>
     entry.action.type !== "pass" && entry.action.type !== "concede" && entry.action.type !== "choose-library-card"
-      && !["cast", "cycle", "play-land", "activate", "activate-mana", "equip", "declare-attackers", "declare-blockers"].includes(entry.action.type));
+      && !["cast", "cycle", "play-land", "activate", "activate-mana", "equip", "toggle-trigger-yield", "declare-attackers", "declare-blockers"].includes(entry.action.type));
   if (!choices.length) return "";
   const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
   const title = hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
