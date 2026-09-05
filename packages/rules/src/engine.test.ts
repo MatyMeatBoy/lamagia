@@ -7288,6 +7288,21 @@ describe("triggered abilities", () => {
     expect(triggers[0]!.controller).toBe(0);
     expect(triggers[1]!.controller).toBe(1);
   });
+
+  it("keeps a mandatory trigger on the graphical stack even when its source left", () => {
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [BEAR()]);
+    game = putOnBattlefield(game, 0, [ANY_DEATH_WATCHER()]);
+    const watcher = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Blood Chronicler")!;
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== watcher.instance_id) }));
+    game = { ...game, triggerQueue: [], priorityOpen: true, prioritySeat: 0, passedSeats: [], players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const trigger = {
+      id: "mandatory-left-source", controller: 0 as SeatId, sourcePermanentId: watcher.instance_id,
+      sourceCard: watcher.card, definition: profileOf(watcher.card).triggers[0]!, cause: "criatura murió"
+    } satisfies TriggerInstance;
+    game = settle({ ...game, triggerQueue: [trigger] });
+    expect(game.stack.some((object) => object.trigger?.id === trigger.id)).toBe(true);
+    expect(game.priorityOpen).toBe(true);
+  });
 });
 
 
@@ -7830,6 +7845,20 @@ describe("activated abilities", () => {
     expect(game.prioritySeat).toBe(0);
     expect(game.passedSeats).toEqual([]);
     expect(game.players[0]!.manaPool.R).toBe(0);
+  });
+
+  it("preserves the chosen permanent target on the public stack object", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ autoPass: false, hand: toHand(0, [FLAMETONGUE()], "kavu") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const kavu = permanentNamed(game, 0, "Flametongue Kavu")!;
+    const bear = permanentNamed(game, 1, "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "kavu-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.stack.at(-1)?.targets).toEqual([{ kind: "permanent", instanceId: bear.instance_id }]);
+    expect(game.priorityOpen).toBe(true);
   });
 
   it("resolves a self-pump activated ability through the stack and expires it in cleanup", () => {
