@@ -155,6 +155,8 @@ const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery"
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
+const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "You may activate abilities of creatures you control as though those creatures had haste.\n{1}, {T}: Untap target creature.", oracle_id: "4dc5726e-2f7e-4c2b-9616-c3301d212f78" });
+const SICK_TAPPER = () => make({ name: "Sick Tapper", type_line: "Creature — Human", mana_cost: "{1}", cmc: 1, power: "1", toughness: "1", oracle_text: "{T}: Draw a card." });
 const DIRGE_OF_DREAD = () => make({ name: "Dirge of Dread", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "All creatures gain fear until end of turn.\nCycling {1}{B}\nWhen you cycle this card, you may have target creature gain fear until end of turn.", oracle_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9", scryfall_id: "be7b16ef-32aa-40d5-b287-c5e79d52d6b9" });
 const SLICE_AND_DICE = () => make({ name: "Slice and Dice", type_line: "Sorcery", mana_cost: "{4}{R}{R}", cmc: 6, oracle_text: "Cycling {2}{R}\nWhen you cycle Slice and Dice, you may have it deal 1 damage to each creature.", oracle_id: "463fc961-d34e-4f40-b383-5b78a0fcb5c8" });
 const DESERTION = () => make({ name: "Desertion", type_line: "Instant", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Counter target spell. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard." });
@@ -9086,6 +9088,23 @@ describe("projection privacy", () => {
     const acting = pendingSeat(game)!;
     expect(projectGame(game, acting).legalActions.length).toBeGreaterThan(0);
     expect(projectGame(game, acting === 0 ? 1 : 0).legalActions).toHaveLength(0);
+  });
+});
+
+describe("static activation haste", () => {
+  it("lets Thousand-Year Elixir activate a creature that entered this turn", () => {
+    const elixir = profileOf(THOUSAND_YEAR_ELIXIR());
+    expect(elixir.grantsCreatureActivationHaste).toBe(true);
+    expect(elixir.activatedAbilities).toContainEqual(expect.objectContaining({
+      effect: { kind: "untap-target-permanent" }, targetKind: "creature"
+    }));
+    expect(elixir.fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [THOUSAND_YEAR_ELIXIR(), SICK_TAPPER(), FOREST()], { sick: true });
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const tapper = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sick Tapper")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === tapper.instance_id)).toBe(true);
   });
 });
 

@@ -897,6 +897,8 @@ export interface CardProfile {
   readonly colors: readonly string[];
   readonly colorIdentity: readonly string[];
   readonly keywords: readonly EnforcedKeyword[];
+  /** Static effect that lets creatures' activated abilities ignore summoning sickness (CR 302.6). */
+  readonly grantsCreatureActivationHaste: boolean;
   /** Changeling means this creature has every creature type (CR 702.73). */
   readonly changeling: boolean;
   readonly power: number | null;
@@ -3322,6 +3324,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
   }
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
+  if (/^Untap target creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent you control$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent-you-control" };
   if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
     return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
@@ -3609,6 +3612,10 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Thousand-Year Elixir-style static permission (CR 302.6). The engine
+    // applies this as a characteristic of the controller's battlefield, not
+    // as a triggered or activated ability of the artifact.
+    if (/^You may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line)) continue;
     // Eternal Dragon-style graveyard activation (CR 602.1, 602.5).
     const graveyardReturn = /^((?:\{[^}]+\})+):\s*Return (?:~|this card) from your graveyard to your hand\.?/i.exec(line);
     const upkeepRestrictionOnNextLine = /^Activate only during your upkeep\.?$/i.test(body[lineIndex + 1]?.text ?? "");
@@ -4489,6 +4496,8 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseAuraModification(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
+  const grantsCreatureActivationHaste = text.split("\n").some((line) =>
+    /^you may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line.trim()));
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
   const triggerDoublers = parseTriggerDoublers(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
@@ -4574,6 +4583,7 @@ export function cardProfile(card: CardData): CardProfile {
     colors: [...(face.colors ?? card.colors ?? [])],
     colorIdentity: [...(card.color_identity ?? [])],
     keywords,
+    grantsCreatureActivationHaste,
     changeling,
     power: numeric(face.power),
     toughness: numeric(face.toughness),

@@ -7081,13 +7081,20 @@ function activatableAbility(
   if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
   if (ability.requiresUntap) {
     if (!permanent.tapped) return { legal: false };
-    const hasHaste = cardProfile(permanent.card).keywords.includes("haste");
+    const hasHaste = cardProfile(permanent.card).keywords.includes("haste") ||
+      (isCreature(cardProfile(permanent.card)) && allPermanents(state).some((source) =>
+        source.controller === seat && cardProfile(source.card).grantsCreatureActivationHaste));
     if (permanent.summoningSick && !hasHaste) return { legal: false };
   }
   if (ability.requiresTap && permanent.tapped) return { legal: false };
   // Rule 302.6: a `{T}` cost needs a creature that has been controlled since
   // the turn began. Non-creature permanents are unaffected by summoning sickness.
-  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return { legal: false };
+  if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) {
+    const hasHaste = cardProfile(permanent.card).keywords.includes("haste") ||
+      allPermanents(state).some((source) =>
+        source.controller === seat && cardProfile(source.card).grantsCreatureActivationHaste);
+    if (!hasHaste) return { legal: false };
+  }
   if (ability.lifeCost >= player.life) return { legal: false };
   if (ability.sacrificesCreature) {
     const candidates = player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id));
