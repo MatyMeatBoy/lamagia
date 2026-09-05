@@ -422,6 +422,10 @@ const PRISTINE_TALISMAN = () => make({ name: "Pristine Talisman", type_line: "Ar
 // Pain lands / painful talismans: the colored half of the ability is
 // automatic damage, distinct from an up-front "Pay 1 life:" activation cost.
 const PAIN_LAND = () => make({ name: "Test Pain Land", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Add {U} or {R}. ~ deals 1 damage to you.", produced_mana: ["C", "U", "R"] });
+// Ritual spells (Dark Ritual, Channel the Suns): a one-shot mana burst as the
+// spell's own effect, not a permanent's activated ability.
+const RITUAL = () => make({ name: "Test Dark Ritual", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Add {B}{B}{B}." });
+const MIXED_RITUAL = () => make({ name: "Test Channel the Suns", type_line: "Sorcery", mana_cost: "{3}{W}{U}", cmc: 5, oracle_text: "Add {W}{U}{B}{R}{G}." });
 const TEMPLE_OF_FALSE_GOD = () => make({ name: "Temple of the False God", type_line: "Land", oracle_text: "{T}: Add {C}{C}. Activate only if you control five or more lands.", produced_mana: ["C"] });
 const VIVID_CREEK = () => make({ name: "Vivid Creek", type_line: "Land", oracle_text: "Vivid Creek enters the battlefield tapped with two charge counters on it.\n{T}: Add {U}.\n{T}, Remove a charge counter from Vivid Creek: Add one mana of any color.", produced_mana: ["U", "W", "B", "R", "G"] });
 const VIVID_SPELL = () => make({ name: "Vivid Lesson", type_line: "Sorcery", mana_cost: "{R}", cmc: 1, oracle_text: "Draw a card." });
@@ -908,6 +912,24 @@ describe("mana payment", () => {
     game = applyAction(game, 0, { type: "activate-mana", sourceId: land.instance_id, abilityIndex: 1, mana: "R" });
     expect(game.players[0]!.life).toBe(before - 1);
     expect(game.players[0]!.manaPool.R).toBe(1);
+  });
+
+  it("adds a fixed mana pool from a ritual spell, including a mix of distinct colors", () => {
+    const profile = profileOf(RITUAL());
+    expect(profile.effects).toEqual([{ kind: "add-mana", pool: { B: 3 } }]);
+    expect(profile.fullyImplemented).toBe(true);
+    const mixedProfile = profileOf(MIXED_RITUAL());
+    expect(mixedProfile.effects).toEqual([{ kind: "add-mana", pool: { W: 1, U: 1, B: 1, R: 1, G: 1 } }]);
+    expect(mixedProfile.fullyImplemented).toBe(true);
+
+    // Casting the ritual spends the Swamp's own {B} on its cost, then the
+    // spell's own effect adds three fresh black mana to the now-empty pool.
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SWAMP()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [RITUAL()]) }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.manaPool.B).toBe(3);
   });
 
   it("finds the lands that pay a colored cost", () => {

@@ -1929,6 +1929,23 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
 
+  // Ritual spells (Dark Ritual, Pyretic Ritual, Seething Song, Channel the
+  // Suns): a one-shot mana burst as the spell's own effect, not a permanent's
+  // activated ability. Only deterministic pools are modeled — a fixed color
+  // repeated (`{B}{B}{B}`) or a fixed mix of distinct colors (`{W}{U}{B}{R}{G}`).
+  // No printed ritual asks the caster to choose among colors, so that shape
+  // is deliberately left unmatched rather than guessed at.
+  if (/^Add (?:\{[WUBRGC]\})+$/i.test(text)) {
+    const produced = parseAddClause(text);
+    const pool: Record<string, number> | null = !produced ? null
+      : produced.fixedProduces
+        ? produced.fixedProduces.reduce<Record<string, number>>((acc, symbol) => ({ ...acc, [symbol]: (acc[symbol] ?? 0) + 1 }), {})
+        : produced.produces.length === 1
+          ? { [produced.produces[0]!]: produced.amount }
+          : null;
+    if (pool) return { effect: { kind: "add-mana", pool }, target: "none" };
+  }
+
   if (/^The owner of target permanent shuffles it into their library, then reveals the top card of their library\. If it's a permanent card, they put it onto the battlefield$/i.test(text)) {
     return { effect: { kind: "chaos-warp" }, target: "permanent" };
   }
