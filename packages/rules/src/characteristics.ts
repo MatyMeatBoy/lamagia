@@ -131,6 +131,8 @@ export interface ActivatedAbility {
   readonly sorcerySpeed?: boolean;
   /** Planeswalker loyalty ability: signed loyalty change paid as the cost (CR 606). */
   readonly loyaltyCost?: number;
+  /** Energy paid from the controller's player counters (CR 107.4, 118.3). */
+  readonly energyCost?: number;
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
@@ -1738,7 +1740,7 @@ function parseDamageAmplify(line: string): DamageAmplify | null {
  * sacrificing its own source, removing counters, plus an effect the engine can
  * resolve.
  *
- * Everything else — untapping ({Q}), loyalty, energy, exiling or sacrificing
+ * Everything else — untapping ({Q}), exiling or sacrificing
  * other permanents or discarding — leaves the ability out of
  * the profile rather than letting the table activate a cost it cannot pay.
  */
@@ -1828,7 +1830,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const requiresTap = symbols.some((symbol) => symbol.toUpperCase() === "{T}");
   // `{Q}` (untap) and every other non-mana symbol are outside the payable set.
   if (symbols.some((symbol) => /^\{Q\}$/i.test(symbol))) return null;
-  const manaSymbols = symbols.filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
+  const energyCost = (costText.match(/pay\s+(?:\{E\})+/i)?.[0].match(/\{E\}/gi) ?? []).length;
+  const manaSymbols = symbols.filter((symbol) => !/^\{[TQE]\}$/i.test(symbol));
   const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
   if (manaSymbols.length && !manaCost) return null;
   // An {X} cost is payable only when the effect actually consumes X (CR 107.3).
@@ -1864,6 +1867,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const lifeMatch = /pay\s+(\d+)\s+life/i.exec(costText);
   const lifeCost = lifeMatch ? Number(lifeMatch[1]) : 0;
   const leftovers = costText
+    .replace(/pay\s+(?:\{E\})+/gi, "")
     .replace(/\{[^}]*\}/g, "")
     .replace(/pay\s+\d+\s+life/gi, "")
     .replace(/sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
@@ -1895,6 +1899,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
+    ...(energyCost ? { energyCost } : {}),
     ...(requiresOpponentLands !== null ? { requiresOpponentLands } : {}),
     lifeCost,
     manaCost,

@@ -115,6 +115,15 @@ describe("mana abilities", () => {
     expect(profile.fullyImplemented).toBe(true);
   });
 
+  it("recognises energy as a player-counter activation cost", () => {
+    const profile = cardProfile(card({
+      name: "Energy Device", type_line: "Artifact", mana_cost: "{2}",
+      oracle_text: "{T}, Pay {E}: Draw a card."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({ requiresTap: true, energyCost: 1, effect: { kind: "draw", amount: 1 } });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
   it("normalizes replacement-character keyword separators from legacy imports", () => {
     const profile = cardProfile(card({
       name: "Legacy Landfall", type_line: "Creature — Elf",

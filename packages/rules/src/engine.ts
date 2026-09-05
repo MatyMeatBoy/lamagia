@@ -6855,6 +6855,7 @@ function activatableAbility(
     if (permanent.loyaltyUsedThisTurn) return { legal: false };
     if (ability.loyaltyCost < 0 && (permanent.counters.loyalty ?? 0) < -ability.loyaltyCost) return { legal: false };
   }
+  if (ability.energyCost !== undefined && (player.counters.energy ?? 0) < ability.energyCost) return { legal: false };
   if (ability.requiresClassLevel !== undefined && (permanent.classLevel ?? 1) !== ability.requiresClassLevel) return { legal: false };
   if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
   if (ability.requiresTap && permanent.tapped) return { legal: false };
@@ -7050,6 +7051,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   let next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost,
+    ...(ability.energyCost ? { counters: { ...current.counters, energy: (current.counters.energy ?? 0) - ability.energyCost } } : {}),
     ...(ability.oncePerTurn ? {
       oncePerTurnActivations: [...new Set([...(current.oncePerTurnActivations ?? []), activationKey(source.instance_id, ability.index)])]
     } : {}),

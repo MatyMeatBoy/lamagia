@@ -2690,6 +2690,28 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.tapped).toBe(false);
   });
 
+  it("pays energy from player counters for an activated ability", () => {
+    const energyDevice = make({
+      name: "Energy Device", type_line: "Artifact", mana_cost: "{2}", cmc: 2,
+      oracle_text: "{T}, Pay {E}: Draw a card."
+    });
+    let game = readyToCast([], [energyDevice]);
+    game = stage(game, 0, (player) => ({ counters: { energy: 1 } }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Energy Device")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.counters).toEqual({ energy: 0 });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.tapped).toBe(true);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand.length).toBe(1);
+
+    game = readyToCast([], [energyDevice]);
+    game = stage(game, 0, (player) => ({ counters: {} }));
+    const unavailable = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Energy Device")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === unavailable.instance_id)).toBe(false);
+  });
+
   it("does not offer a typed tap activation without an untapped matching creature", () => {
     let game = readyToCast([], [C13_AZAMI(), BEAR()]);
     const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Azami, Lady of Scrolls")!;

@@ -420,6 +420,9 @@ button.chip:hover { border-color: var(--gold); }
 .self-life { display: flex; align-items: baseline; gap: 3px; padding: 3px 10px; border: 1px solid var(--gold-dim); border-radius: 9px; background: #0a120b; }
 .self-life b { color: var(--gold); font-size: 1.35rem; line-height: 1; }
 .self-life small { color: var(--text-faint); font-size: .55rem; }
+.counter-chip { display: inline-flex; align-items: baseline; gap: 3px; padding: 3px 7px; border: 1px solid #6b4c79; border-radius: 7px; background: #1b1020; color: #e5c8ee; }
+.counter-chip b { font-size: .85rem; line-height: 1; }
+.counter-chip small { color: #c9a9d3; font-size: .54rem; text-transform: capitalize; }
 .self-zones { display: flex; gap: 4px; }
 .self-zones .zone-chip { flex-direction: column; gap: 0; min-width: 52px; padding: 3px 6px; text-align: center; }
 .self-zones .zone-chip i { font-style: normal; font-size: .52rem; }
