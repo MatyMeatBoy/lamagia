@@ -1782,6 +1782,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!permanent) return state;
       return logged(movePermanentToZone(state, permanent, "graveyard"), permanent.controller, `${permanent.card.name} es sacrificado.`);
     }
+    case "each-opponent-of-event-player-draws": {
+      const eventPlayer = object.trigger?.eventController;
+      if (eventPlayer === undefined) return state;
+      let next = state;
+      for (const seat of opponentsOf(next, eventPlayer)) next = drawCards(next, seat, effect.amount);
+      return next;
+    }
     case "return-source-to-hand": {
       // "When ~ is put into a graveyard from the battlefield, return it to its
       // owner's hand" (Fool's Demise, Spine of Ish Sah). By the time this

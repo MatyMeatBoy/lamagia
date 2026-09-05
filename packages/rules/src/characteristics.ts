@@ -386,6 +386,8 @@ export type SpellEffect =
   | { readonly kind: "shuffle-self-into-library" }
   | { readonly kind: "return-source-to-hand" }
   | { readonly kind: "sacrifice-source" }
+  /** "Each of that player's opponents draws N cards" (Standstill): scoped to the triggering event's own player, not the ability's controller. */
+  | { readonly kind: "each-opponent-of-event-player-draws"; readonly amount: number }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
@@ -2050,7 +2052,9 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "instant-or-sorcery", pattern: /^whenever\s+you\s+cast\s+an?\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
-  { event: "spell-cast", subject: "each-player", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
+  // Standstill's Oracle text uses "When", not "Whenever", even though the
+  // ability can only ever fire once (it sacrifices its own source).
+  { event: "spell-cast", subject: "each-player", pattern: /^(?:when|whenever)\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellType: "noncreature", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+noncreature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", pattern: /^whenever\s+you\s+cast\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+spell,?\s*(.+)$/i },
@@ -2362,6 +2366,18 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-opponent-draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-opponent-draw", amount: "X" }, target: "none" };
+  }
+  // Standstill: the sacrifice always succeeds (it is the ability's own
+  // permanent), so "if you do" is unconditional here; "that player" is the
+  // spell-cast event's own caster, not the ability's controller.
+  if ((match = /^Sacrifice ~\.\s*If you do,\s*each of that player['’]s opponents draws (\w+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount) {
+      return {
+        effect: { kind: "compound", effects: [{ kind: "sacrifice-source" }, { kind: "each-opponent-of-event-player-draws", amount }] },
+        target: "none"
+      };
+    }
   }
   if ((match = /^You lose (\w+) life$/i.exec(text))) {
     const amount = toNumber(match[1]);

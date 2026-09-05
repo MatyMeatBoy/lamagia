@@ -2807,6 +2807,37 @@ Global export: **9,306/38,712** (+9 from 9,297). `npm run check` and `npm
 test` PASS (**566 rules tests**, up from 565). `npm run simulate:engine`:
 **200/200 passed**.
 
+### Worker-05: Standstill needed a template widened, not rebuilt (2026-09-05)
+
+Claim `rules-standstill`, continuing the Nekusar decklist (Standstill
+itself). "When a player casts a spell, sacrifice ~. If you do, each of
+that player's opponents draws three cards." was completely unmodeled, but
+the gap was narrow: the `each-player` variant of the `spell-cast` trigger
+template only matched literal "Whenever", and Standstill's real printed
+Oracle text says "When" — unusual phrasing, but correct, since the ability
+can only ever fire once (sacrificing its own permanent ends the watch).
+Widened the one regex to accept either word.
+
+The effect itself needed one new piece: `each-opponent-of-event-player-draws`,
+which reads `object.trigger.eventController` — the spell-cast event's own
+caster, already captured generically for any `controller`-keyed event
+since an earlier claim this session — and draws for every opponent of
+*that* player, not the ability's controller. Combined with the existing
+`sacrifice-source` effect via the pre-existing `compound` wrapper (no new
+compound machinery needed); "if you do" is unconditional here since the
+sacrifice is of the ability's own permanent and always succeeds.
+
+Fully implements Standstill. Scenario coverage has seat 1 (not Standstill's
+controller) cast the triggering spell, confirming Standstill leaves seat
+0's battlefield and seat 0 — seat 1's own opponent — draws the three cards,
+while seat 1 itself draws nothing.
+
+Global export: **9,309/38,712** (+1 from 9,308 — a single-card claim; the
+value here is a genuinely reusable "opponents of whoever caused this"
+effect shape, not raw card count). `npm run check` and `npm test` PASS
+(**569 rules tests**, up from 568). `npm run simulate:engine`:
+**200/200 passed**.
+
 ### C13 Razor Hippogriff artifact recovery (2026-09-04)
 
 The artifact-graveyard return primitive now supports optional recovery followed
