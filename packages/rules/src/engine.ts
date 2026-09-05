@@ -2662,6 +2662,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
     }
+    case "gain-life-equal-sacrificed-toughness": {
+      if (playersCantGainLife(state)) return state;
+      const amount = Math.max(0, object.variableValue);
+      const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
+    }
     case "gain-life-each-controlled-type": {
       if (playersCantGainLife(state)) return state;
       const amount = allPermanents(state).filter((permanent) => permanent.controller === controller

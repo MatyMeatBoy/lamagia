@@ -2915,6 +2915,25 @@ describe("casting", () => {
     expect(game.players[0]!.hand).toHaveLength(1);
   });
 
+  it("reuses sacrificed-toughness life gain for C13 Disciple of Griselbrand", () => {
+    const profile = profileOf(C13_DISCIPLE_OF_GRISELBRAND());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sacrificesCreature: "any", effect: { kind: "gain-life-equal-sacrificed-toughness" }
+    });
+    let game = readyToCast([], [C13_DISCIPLE_OF_GRISELBRAND(), TRAMPLER(), SWAMP()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Disciple of Griselbrand")!;
+    const sacrifice = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === sacrifice.instance_id);
+    expect(activation).toBeDefined();
+    const life = game.players[0]!.life;
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(life + 6);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Big Stomper")).toBe(true);
+  });
+
   it("restricts Ravenous Baloth's sacrifice cost to Beasts and gains life", () => {
     const baloth = RAVENOUS_BALOTH();
     let game = readyToCast([], [baloth, TRAMPLER(), BEAR()]);
