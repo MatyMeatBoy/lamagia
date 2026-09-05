@@ -3136,7 +3136,10 @@ function recognizeText(text: string): RecognizedText {
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
       let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
-        .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+        .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1")
+        // "you may have it deal ..." uses the infinitive after "have";
+        // lower it to the same source-relative effect as "it deals".
+        .replace(/^you\s+may\s+have\s+(?:it|that creature|~)\s+deal\b/i, "you may ~ deals");
       // "if it was kicked" gate (CR 702.33e).
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
       const requiresKicked = Boolean(kickedGate);
