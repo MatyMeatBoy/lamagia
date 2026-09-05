@@ -383,6 +383,7 @@ rules citations and the integrator review remain mandatory.
 | `c13-beast-spells-you-cast` | Krosan Warchief's Beast spell cost reduction | `codex/c13-krosan-warchief-a32` | review (`d755782`) | 2026-09-04 |
 | `c13-choose-more` | Rain of Thorns choose-N-or-more modal selection | `codex/c13-choose-more-a32` | review (`b6ba4d1`) | 2026-09-04 |
 | `c13-players-have-maximum-hand` | Price of Knowledge global maximum-hand-size replacement | `codex/c13-global-hand-limit-a32` | review (`bc09726`) | 2026-09-04 |
+| `c13-oracle-counter-activated-target` | Vile Requiem's verse-counter upkeep and self-sacrifice destruction scaled by its counters (CR 602.2b, 603.2b, 121.1) | `codex/c13-vile-requiem` | active | 2026-09-04 |
 
 
 

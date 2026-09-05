@@ -333,6 +333,7 @@ const C13_BOJUKA_BOG = () => make({ name: "Bojuka Bog", type_line: "Land", oracl
 const C13_ARCANE_DENIAL = () => make({ name: "Arcane Denial", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.", scryfall_id: "ab175817-da6a-4ae7-a016-c3bfb087eae0" });
 const C13_BANE_OF_PROGRESS = () => make({ name: "Bane of Progress", type_line: "Creature — Elemental", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", oracle_text: "When Bane of Progress enters the battlefield, destroy all artifacts and enchantments, then put a +1/+1 counter on Bane of Progress for each permanent destroyed this way.", scryfall_id: "51f9a6cc-8eb2-44ed-a2d9-913ac514ad67" });
 const C13_RAZOR_HIPPOGRIFF = () => make({ name: "Razor Hippogriff", type_line: "Creature — Hippogriff", mana_cost: "{3}{W}{W}", cmc: 5, power: "3", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen Razor Hippogriff enters the battlefield, you may return target artifact card from your graveyard to your hand. You gain life equal to that card's converted mana cost.", scryfall_id: "d121108e-f0bc-469b-bf94-e5e530801a4" });
+const C13_VILE_REQUIEM = () => make({ name: "Vile Requiem", type_line: "Enchantment", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "At the beginning of your upkeep, you may put a verse counter on this enchantment.\n{1}{B}, Sacrifice this enchantment: Destroy up to X target nonblack creatures, where X is the number of verse counters on this enchantment. They can't be regenerated.", scryfall_id: "923972d3-d838-43f8-800a-904489c5791a" });
 const C13_AUGUR_OF_BOLAS = () => make({ name: "Augur of Bolas", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order.", scryfall_id: "c13-augur-of-bolas" });
 const C13_ACT_OF_AUTHORITY = () => make({ name: "Act of Authority", type_line: "Enchantment", mana_cost: "{3}{W}", cmc: 4, oracle_text: "When this enchantment enters, you may exile target artifact or enchantment.\nAt the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of this enchantment.", scryfall_id: "c13-act-of-authority" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
@@ -1714,6 +1715,38 @@ describe("casting", () => {
     expect(game.players[0]!.life).toBe(41);
     expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(false);
+  });
+
+  it("captures Vile Requiem's verse counters before its self-sacrifice", () => {
+    const profile = profileOf(C13_VILE_REQUIEM());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "upkeep",
+      optional: true,
+      effect: { kind: "add-counter-source", counter: "verse", amount: 1 }
+    });
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sacrificesSelf: true,
+      manaCost: { raw: "{1}{B}" },
+      targetKind: "nonblack-creature",
+      effect: { kind: "destroy-n-creatures", count: "X", nonblack: true, counter: "verse" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [C13_VILE_REQUIEM(), SWAMP(), SWAMP()], [], [BEAR(), TRAMPLER()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Vile Requiem")!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+        ? { ...permanent, counters: { ...permanent.counters, verse: 2 } }
+        : permanent)
+    }));
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const targets = game.players[1]!.battlefield.map((permanent) => ({ kind: "permanent" as const, instanceId: permanent.instance_id }));
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0, targets });
+    expect(game.stack.at(-1)?.variableValue).toBe(2);
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Vile Requiem")).toBe(true);
+    expect(game.players[1]!.battlefield.filter((permanent) => profileOf(permanent.card).types.includes("Creature"))).toHaveLength(0);
   });
 
   it("resolves Bojuka Bog's ETB exile while preserving its tapped land entry", () => {

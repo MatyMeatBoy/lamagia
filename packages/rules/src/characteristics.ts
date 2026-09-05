@@ -487,7 +487,7 @@ export type SpellEffect =
   | { readonly kind: "destroy-creatures-power-greater-than-target" }
   | { readonly kind: "return-n-nonland-permanents"; readonly count: number | "X" }
   | { readonly kind: "return-n-creatures"; readonly count: number | "X" }
-  | { readonly kind: "destroy-n-creatures"; readonly count: number | "X"; readonly nonblack?: boolean }
+  | { readonly kind: "destroy-n-creatures"; readonly count: number | "X"; readonly nonblack?: boolean; readonly counter?: string }
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
@@ -1273,7 +1273,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   if (manaCost?.hasVariable && !effectUsesVariable(recognized.effect)) return null;
 
   const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
-  const sacrificesSelf = /sacrifice\s+~/i.test(costText) || namedSelfSacrifice;
+  const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|enchantment|creature|permanent|land))/i.test(costText) || namedSelfSacrifice;
   const tapCreatureMatch = /tap\s+(an|another)\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control/i.exec(costText);
   const tapsCreature = tapCreatureMatch ? {
     mode: tapCreatureMatch[1]!.toLowerCase() === "another" ? "another" as const : "any" as const,
@@ -1300,6 +1300,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/\{[^}]*\}/g, "")
     .replace(/pay\s+\d+\s+life/gi, "")
     .replace(/sacrifice\s+~/gi, "")
+    .replace(/sacrifice\s+this\s+(?:artifact|enchantment|creature|permanent|land)/gi, "")
     .replace(/\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/g, "")
     .replace(/sacrifice\s+(?:two|three|four|five|\d+)\s+(?:(?:a|an)\s+)?(?:[A-Za-z][A-Za-z'’-]*\s+)?creatures\b/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
@@ -2217,7 +2218,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "each-player-discard-and-draw", amount }, target: "none" };
   }
   if (/^Target player discards their hand$/i.test(text)) return { effect: { kind: "discard-target-player-hand" }, target: "player" };
-  if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on ~$/i.exec(text))) {
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on (?:~|this (?:artifact|enchantment|creature|permanent|land))$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-source", counter: match[2]!.trim().toLowerCase(), amount }, target: "none" };
   }
@@ -2235,6 +2236,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "blink-target-creature" }, target: "creature-you-control" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
+  if (/^Destroy up to X target nonblack creatures, where X is the number of verse counters on (?:~|this enchantment)\.?\s*(?:They can'?t be regenerated\.?)?$/i.test(text)) {
+    return { effect: { kind: "destroy-n-creatures", count: "X", nonblack: true, counter: "verse" }, target: "nonblack-creature" };
+  }
   if (/^Destroy target artifact or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-enchantment" };
   if (/^Destroy target artifact$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact" };
   if (/^Destroy target enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "enchantment" };

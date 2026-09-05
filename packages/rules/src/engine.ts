@@ -4913,7 +4913,7 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
     targets,
     fromCommandZone: false,
     flashback: false,
-    variableValue: 0,
+    variableValue,
     countered: false,
     activated: ability,
     sourcePermanentId: source.instance_id
@@ -5376,7 +5376,10 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} exilia ${exile.name} de su cementerio.`);
   }
 
-  next = pushActivatedOnStack(next, seat, source, ability, targets, abilityX || sacrificedPower || sacrificedArtifactMv);
+  const counterValue = ability.effect.kind === "destroy-n-creatures" && ability.effect.counter
+    ? source.counters[ability.effect.counter] ?? 0
+    : 0;
+  next = pushActivatedOnStack(next, seat, source, ability, targets, abilityX || sacrificedPower || sacrificedArtifactMv || counterValue);
   return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
 }
 
