@@ -3,33 +3,33 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,108** · cobertura: **29.5%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **25,231** · cobertura: **29.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
 
 | Fecha | Edición | Grupo | Subgrupo | Categoría | Cartas únicas | Implementadas | Pendientes | % |
 |---|---|---|---|---:|---:|---:|---:|---:|
-| 1993-08-05 | Limited Edition Alpha (`LEA`) | core | 1990s | main | 290 | 113 | 177 | 39.0% |
-| 1993-10-04 | Limited Edition Beta (`LEB`) | core | 1990s | main | 292 | 114 | 178 | 39.0% |
-| 1993-12-01 | Unlimited Edition (`2ED`) | core | 1990s | main | 292 | 114 | 178 | 39.0% |
+| 1993-08-05 | Limited Edition Alpha (`LEA`) | core | 1990s | main | 290 | 115 | 175 | 39.7% |
+| 1993-10-04 | Limited Edition Beta (`LEB`) | core | 1990s | main | 292 | 116 | 176 | 39.7% |
+| 1993-12-01 | Unlimited Edition (`2ED`) | core | 1990s | main | 292 | 116 | 176 | 39.7% |
 | 1993-12-17 | Arabian Nights (`ARN`) | expansion | 1990s | main | 78 | 23 | 55 | 29.5% |
 | 1994-03-04 | Antiquities (`ATQ`) | expansion | 1990s | main | 85 | 18 | 67 | 21.2% |
-| 1994-04-11 | Foreign Black Border (`FBB`) | core | 1990s | main | 296 | 117 | 179 | 39.5% |
-| 1994-04-11 | Revised Edition (`3ED`) | core | 1990s | main | 296 | 117 | 179 | 39.5% |
+| 1994-04-11 | Foreign Black Border (`FBB`) | core | 1990s | main | 296 | 119 | 177 | 40.2% |
+| 1994-04-11 | Revised Edition (`3ED`) | core | 1990s | main | 296 | 119 | 177 | 40.2% |
 | 1994-06-01 | Legends (`LEG`) | expansion | 1990s | main | 310 | 78 | 232 | 25.2% |
-| 1994-06-21 | Summer Magic / Edgar (`SUM`) | core | 1990s | main | 296 | 117 | 179 | 39.5% |
+| 1994-06-21 | Summer Magic / Edgar (`SUM`) | core | 1990s | main | 296 | 119 | 177 | 40.2% |
 | 1994-07-15 | Dragon Con (`PDRC`) | promos | dragon-con | other | 1 | 0 | 1 | 0.0% |
 | 1994-08-01 | The Dark (`DRK`) | expansion | 1990s | main | 119 | 30 | 89 | 25.2% |
 | 1994-11-01 | Fallen Empires (`FEM`) | expansion | 1990s | main | 102 | 19 | 83 | 18.6% |
 | 1994-11-01 | HarperPrism Book Promos (`PHPR`) | promos | harperprism-book | other | 5 | 2 | 3 | 40.0% |
-| 1995-04-01 | Fourth Edition (`4ED`) | core | 1990s | main | 368 | 128 | 240 | 34.8% |
-| 1995-04-01 | Fourth Edition Foreign Black Border (`4BB`) | core | 1990s | main | 368 | 128 | 240 | 34.8% |
+| 1995-04-01 | Fourth Edition (`4ED`) | core | 1990s | main | 368 | 131 | 237 | 35.6% |
+| 1995-04-01 | Fourth Edition Foreign Black Border (`4BB`) | core | 1990s | main | 368 | 131 | 237 | 35.6% |
 | 1995-06-03 | Ice Age (`ICE`) | expansion | ice-age | main | 373 | 72 | 301 | 19.3% |
 | 1995-07-01 | Chronicles (`CHR`) | masters-remastered | chronicles | other | 116 | 28 | 88 | 24.1% |
 | 1995-07-01 | Chronicles Foreign Black Border (`BCHR`) | masters-remastered | chronicles-foreign-black-border | other | 116 | 28 | 88 | 24.1% |
-| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | media-and-collaboration | other | 94 | 36 | 58 | 38.3% |
-| 1995-08-01 | Renaissance (`REN`) | masters-remastered | renaissance | other | 122 | 35 | 87 | 28.7% |
+| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | media-and-collaboration | other | 97 | 37 | 60 | 38.1% |
+| 1995-08-01 | Renaissance (`REN`) | masters-remastered | renaissance | other | 122 | 36 | 86 | 29.5% |
 | 1995-08-01 | Rinascimento (`RIN`) | masters-remastered | rinascimento | other | 60 | 12 | 48 | 20.0% |
 | 1995-10-01 | Homelands (`HML`) | expansion | 1990s | main | 115 | 33 | 82 | 28.7% |
 | 1996-06-10 | Alliances (`ALL`) | expansion | 1990s | main | 144 | 18 | 126 | 12.5% |
@@ -41,12 +41,12 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 1996-11-01 | Multiverse Gift Box (`MGB`) | boxed-products | multiverse-gift-box | other | 10 | 2 | 8 | 20.0% |
 | 1996-12-31 | Introductory Two-Player Set (`ITP`) | starter | 1990s | other | 57 | 30 | 27 | 52.6% |
 | 1997-02-03 | Visions (`VIS`) | expansion | 1990s | main | 167 | 40 | 127 | 24.0% |
-| 1997-03-24 | Fifth Edition (`5ED`) | core | 1990s | main | 434 | 150 | 284 | 34.6% |
+| 1997-03-24 | Fifth Edition (`5ED`) | core | 1990s | main | 434 | 152 | 282 | 35.0% |
 | 1997-04-01 | Astral Cards (`PAST`) | boxed-products | astral-cards | other | 12 | 0 | 12 | 0.0% |
 | 1997-05-01 | Portal (`POR`) | starter | 1990s | other | 200 | 128 | 72 | 64.0% |
 | 1997-06-09 | Weatherlight (`WTH`) | expansion | 1990s | main | 167 | 27 | 140 | 16.2% |
 | 1997-10-01 | Tempest Promos (`PTMP`) | promos | tempest | other | 1 | 0 | 1 | 0.0% |
-| 1997-10-14 | Tempest (`TMP`) | expansion | tempest | main | 335 | 112 | 223 | 33.4% |
+| 1997-10-14 | Tempest (`TMP`) | expansion | tempest | main | 335 | 113 | 222 | 33.7% |
 | 1998-01-01 | Judge Gift Cards 1998 (`JGP`) | promos | judge-1998 | other | 3 | 2 | 1 | 66.7% |
 | 1998-02-01 | Stronghold Promos (`PSTH`) | promos | stronghold | other | 1 | 0 | 1 | 0.0% |
 | 1998-03-02 | Stronghold (`STH`) | expansion | 1990s | main | 143 | 42 | 101 | 29.4% |
@@ -62,7 +62,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 1999-01-01 | Junior Super Series (`PSUS`) | promos | junior-1999 | other | 18 | 10 | 8 | 55.6% |
 | 1999-02-06 | Urza's Legacy Promos (`PULG`) | promos | urza-s-legacy | other | 1 | 0 | 1 | 0.0% |
 | 1999-02-15 | Urza's Legacy (`ULG`) | expansion | urza | main | 143 | 61 | 82 | 42.7% |
-| 1999-04-21 | Classic Sixth Edition (`6ED`) | core | 1990s | main | 335 | 168 | 167 | 50.1% |
+| 1999-04-21 | Classic Sixth Edition (`6ED`) | core | 1990s | main | 335 | 170 | 165 | 50.7% |
 | 1999-04-29 | Portal Three Kingdoms Promos (`PPTK`) | promos | portal-three-kingdoms | other | 1 | 0 | 1 | 0.0% |
 | 1999-05-01 | Portal Three Kingdoms (`PTK`) | starter | 1990s | other | 170 | 95 | 75 | 55.9% |
 | 1999-05-29 | Urza's Destiny Promos (`PUDS`) | promos | urza-s-destiny | other | 1 | 0 | 1 | 0.0% |
@@ -122,7 +122,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 191 | 151 | 55.8% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 111 | 180 | 38.1% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 553 | 2136 | 20.6% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 558 | 2131 | 20.8% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
@@ -159,15 +159,15 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2006-01-01 | Magic Premiere Shop 2006 (`PMPS06`) | promos | magic-premiere-shop-2006 | other | 5 | 5 | 0 | 100.0% |
 | 2006-01-21 | Guildpact Promos (`PGPT`) | promos | guildpact | other | 2 | 1 | 1 | 50.0% |
 | 2006-02-03 | Guildpact (`GPT`) | expansion | 2000s | main | 165 | 44 | 121 | 26.7% |
-| 2006-03-18 | Champs and States (`PCMP`) | promos | champs-and-states | other | 12 | 4 | 8 | 33.3% |
+| 2006-03-18 | Champs and States (`PCMP`) | promos | champs-and-states | other | 12 | 5 | 7 | 41.7% |
 | 2006-04-22 | Dissension Promos (`PDIS`) | promos | dissension | other | 2 | 0 | 2 | 0.0% |
 | 2006-05-05 | Dissension (`DIS`) | expansion | 2000s | main | 180 | 46 | 134 | 25.6% |
 | 2006-07-08 | Coldsnap Promos (`PCSP`) | promos | coldsnap | other | 1 | 0 | 1 | 0.0% |
 | 2006-07-21 | Coldsnap (`CSP`) | expansion | 2000s | main | 155 | 30 | 125 | 19.4% |
 | 2006-07-21 | Coldsnap Theme Decks (`CST`) | deck-products | coldsnap-theme-decks | other | 52 | 16 | 36 | 30.8% |
 | 2006-09-23 | Time Spiral Promos (`PTSP`) | promos | time-spiral | other | 3 | 1 | 2 | 33.3% |
-| 2006-10-06 | Time Spiral (`TSP`) | expansion | time-spiral | main | 286 | 64 | 222 | 22.4% |
-| 2006-10-06 | Time Spiral Timeshifted (`TSB`) | expansion | time-spiral | main | 121 | 34 | 87 | 28.1% |
+| 2006-10-06 | Time Spiral (`TSP`) | expansion | time-spiral | main | 286 | 65 | 221 | 22.7% |
+| 2006-10-06 | Time Spiral Timeshifted (`TSB`) | expansion | time-spiral | main | 121 | 35 | 86 | 28.9% |
 | 2006-10-20 | Pro Tour Promos (`PPRO`) | promos | pro-tour | other | 18 | 4 | 14 | 22.2% |
 | 2006-10-31 | DCI Promos (`DCI`) | promos | dci | other | 67 | 27 | 40 | 40.3% |
 | 2006-12-01 | Happy Holidays (`HHO`) | funny-special | happy-holidays | other | 20 | 0 | 20 | 0.0% |
@@ -184,8 +184,8 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2007-07-13 | Tenth Edition Promos (`P10E`) | promos | tenth-edition | other | 3 | 2 | 1 | 66.7% |
 | 2007-09-10 | Masters Edition (`ME1`) | masters-remastered | masters-edition | other | 185 | 51 | 134 | 27.6% |
 | 2007-09-27 | Lorwyn Promos (`PLRW`) | promos | lorwyn | other | 3 | 1 | 2 | 33.3% |
-| 2007-10-12 | Lorwyn (`LRW`) | expansion | lorwyn | main | 286 | 82 | 204 | 28.7% |
-| 2007-11-16 | Duel Decks: Elves vs. Goblins (`DD1`) | duel-decks | duel-decks-elves-vs-goblins | other | 56 | 28 | 28 | 50.0% |
+| 2007-10-12 | Lorwyn (`LRW`) | expansion | lorwyn | main | 286 | 83 | 203 | 29.0% |
+| 2007-11-16 | Duel Decks: Elves vs. Goblins (`DD1`) | duel-decks | duel-decks-elves-vs-goblins | other | 56 | 29 | 27 | 51.8% |
 | 2008-01-01 | Friday Night Magic 2008 (`F08`) | promos | fnm-2008 | other | 12 | 4 | 8 | 33.3% |
 | 2008-01-01 | Judge Gift Cards 2008 (`G08`) | promos | judge-2008 | other | 5 | 1 | 4 | 20.0% |
 | 2008-01-01 | Magic Player Rewards 2008 (`P08`) | promos | player-rewards-2008 | other | 7 | 4 | 3 | 57.1% |
@@ -233,7 +233,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2010-03-19 | Duel Decks: Phyrexia vs. the Coalition (`DDE`) | duel-decks | duel-decks-phyrexia-vs-the-coalition | other | 67 | 33 | 34 | 49.3% |
 | 2010-04-23 | Rise of the Eldrazi (`ROE`) | expansion | 2010s | main | 233 | 86 | 147 | 36.9% |
 | 2010-04-23 | Rise of the Eldrazi Promos (`PROE`) | promos | rise-of-the-eldrazi | other | 4 | 2 | 2 | 50.0% |
-| 2010-06-04 | Duels of the Planeswalkers (`DPA`) | boxed-products | duels-of-the-planeswalkers | other | 101 | 63 | 38 | 62.4% |
+| 2010-06-04 | Duels of the Planeswalkers (`DPA`) | boxed-products | duels-of-the-planeswalkers | other | 101 | 64 | 37 | 63.4% |
 | 2010-06-18 | Archenemy (`ARC`) | archenemy | 2010s | other | 141 | 64 | 77 | 45.4% |
 | 2010-07-16 | Magic 2011 (`M11`) | core | 2010s | main | 234 | 119 | 115 | 50.9% |
 | 2010-08-27 | From the Vault: Relics (`V10`) | from-the-vault | 2010s | other | 15 | 4 | 11 | 26.7% |
@@ -247,7 +247,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2011-01-01 | Judge Gift Cards 2011 (`G11`) | promos | judge-2011 | other | 8 | 1 | 7 | 12.5% |
 | 2011-01-01 | Magic Player Rewards 2011 (`P11`) | promos | player-rewards-2011 | other | 7 | 2 | 5 | 28.6% |
 | 2011-01-01 | Magic Premiere Shop 2011 (`PMPS11`) | promos | magic-premiere-shop-2011 | other | 5 | 5 | 0 | 100.0% |
-| 2011-01-01 | Salvat 2011 (`PS11`) | boxed-products | salvat-2011 | other | 209 | 126 | 83 | 60.3% |
+| 2011-01-01 | Salvat 2011 (`PS11`) | boxed-products | salvat-2011 | other | 209 | 127 | 82 | 60.8% |
 | 2011-01-10 | Masters Edition IV (`ME4`) | masters-remastered | masters-edition-iv | other | 260 | 96 | 164 | 36.9% |
 | 2011-02-03 | Mirrodin Besieged Promos (`PMBS`) | promos | mirrodin-besieged | other | 4 | 1 | 3 | 25.0% |
 | 2011-02-04 | Mirrodin Besieged (`MBS`) | expansion | mirrodin | main | 150 | 41 | 109 | 27.3% |
@@ -357,7 +357,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2016-04-08 | Shadows over Innistrad (`SOI`) | expansion | innistrad | main | 287 | 61 | 226 | 21.3% |
 | 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | promos | shadows-over-innistrad | other | 79 | 10 | 69 | 12.7% |
 | 2016-04-08 | Welcome Deck 2016 (`W16`) | starter | 2010s | other | 16 | 9 | 7 | 56.2% |
-| 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 113 | 136 | 45.4% |
+| 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 114 | 135 | 45.8% |
 | 2016-07-22 | Eldritch Moon (`EMN`) | expansion | 2010s | main | 208 | 42 | 166 | 20.2% |
 | 2016-07-22 | Eldritch Moon Promos (`PEMN`) | promos | eldritch-moon | other | 64 | 3 | 61 | 4.7% |
 | 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | 2010s | other | 15 | 0 | 15 | 0.0% |
@@ -380,7 +380,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2017-04-28 | Amonkhet (`AKH`) | expansion | amonkhet | main | 272 | 97 | 175 | 35.7% |
 | 2017-04-28 | Amonkhet Invocations (`MP2`) | masterpieces | amonkhet-invocations | other | 54 | 10 | 44 | 18.5% |
 | 2017-04-28 | Amonkhet Promos (`PAKH`) | promos | amonkhet | other | 69 | 12 | 57 | 17.4% |
-| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 164 | 125 | 56.7% |
+| 2017-06-09 | Commander Anthology (`CMA`) | anthologies | 2017 | commander | 289 | 165 | 124 | 57.1% |
 | 2017-06-16 | Archenemy: Nicol Bolas (`E01`) | archenemy | 2010s | other | 101 | 47 | 54 | 46.5% |
 | 2017-07-14 | Hour of Devastation (`HOU`) | expansion | 2010s | main | 199 | 59 | 140 | 29.6% |
 | 2017-07-14 | Hour of Devastation Promos (`PHOU`) | promos | hour-of-devastation | other | 55 | 6 | 49 | 10.9% |
@@ -437,7 +437,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2019-04-10 | Judge Gift Cards 2019 (`J19`) | promos | judge-2019 | other | 8 | 0 | 8 | 0.0% |
 | 2019-05-03 | War of the Spark (`WAR`) | expansion | 2010s | main | 266 | 63 | 203 | 23.7% |
 | 2019-05-03 | War of the Spark Promos (`PWAR`) | promos | war-of-the-spark | other | 92 | 7 | 85 | 7.6% |
-| 2019-06-14 | Modern Horizons (`MH1`) | supplemental | modern-horizons | other | 255 | 71 | 184 | 27.8% |
+| 2019-06-14 | Modern Horizons (`MH1`) | supplemental | modern-horizons | other | 255 | 72 | 183 | 28.2% |
 | 2019-06-14 | Modern Horizons Promos (`PMH1`) | promos | modern-horizons | other | 2 | 0 | 2 | 0.0% |
 | 2019-06-28 | Signature Spellbook: Gideon (`SS2`) | spellbooks | 2010s | other | 8 | 1 | 7 | 12.5% |
 | 2019-07-12 | Core Set 2020 (`M20`) | core | 2020s | main | 330 | 131 | 199 | 39.7% |
@@ -451,10 +451,10 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1510 | 3711 | 28.9% |
-| 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 20 | 39 | 33.9% |
-| 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 11 | 9 | 55.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 402 | 1294 | 23.7% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1518 | 3703 | 29.1% |
+| 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
+| 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 12 | 8 | 60.0% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 403 | 1293 | 23.8% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 61 | 212 | 22.3% |
@@ -469,7 +469,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2020-06-26 | Signature Spellbook: Chandra (`SS3`) | spellbooks | 2020s | other | 8 | 1 | 7 | 12.5% |
 | 2020-07-03 | Core Set 2021 (`M21`) | core | 2020s | main | 285 | 101 | 184 | 35.4% |
 | 2020-07-03 | Core Set 2021 Promos (`PM21`) | promos | core-set-2021 | other | 68 | 13 | 55 | 19.1% |
-| 2020-07-17 | Jumpstart (`JMP`) | jumpstart | jumpstart | other | 461 | 192 | 269 | 41.6% |
+| 2020-07-17 | Jumpstart (`JMP`) | jumpstart | jumpstart | other | 461 | 194 | 267 | 42.1% |
 | 2020-07-17 | Jumpstart Arena Exclusives (`AJMP`) | jumpstart | jumpstart-arena-exclusives | other | 18 | 6 | 12 | 33.3% |
 | 2020-08-01 | 2019 Heroes of the Realm (`PH19`) | funny-special | 2019-heroes-of-the-realm | other | 7 | 0 | 7 | 0.0% |
 | 2020-08-07 | Double Masters (`2XM`) | masters-remastered | double-masters | other | 337 | 102 | 235 | 30.3% |
@@ -480,7 +480,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2020-09-25 | Zendikar Rising Expeditions (`ZNE`) | masterpieces | zendikar-rising-expeditions | other | 30 | 25 | 5 | 83.3% |
 | 2020-09-25 | Zendikar Rising Promos (`PZNR`) | promos | zendikar-rising | other | 84 | 10 | 74 | 11.9% |
 | 2020-11-12 | Kaladesh Remastered (`KLR`) | masters-remastered | kaladesh-remastered | other | 292 | 59 | 233 | 20.2% |
-| 2020-11-20 | Commander Legends (`CMR`) | commander | 2020 | other | 531 | 180 | 351 | 33.9% |
+| 2020-11-20 | Commander Legends (`CMR`) | commander | 2020 | other | 531 | 181 | 350 | 34.1% |
 | 2020-12-04 | Commander Collection: Green (`CC1`) | commander | 2020 | other | 8 | 5 | 3 | 62.5% |
 | 2021-01-01 | Judge Gift Cards 2021 (`PJ21`) | promos | judge-2021 | other | 10 | 0 | 10 | 0.0% |
 | 2021-01-01 | Love Your LGS 2021 (`PLG21`) | promos | lgs-2021 | other | 9 | 0 | 9 | 0.0% |
@@ -489,7 +489,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2021-02-05 | Kaldheim (`KHM`) | expansion | kaldheim | main | 323 | 52 | 271 | 16.1% |
 | 2021-02-05 | Kaldheim Commander (`KHC`) | commander | 2021 | commander | 119 | 46 | 73 | 38.7% |
 | 2021-03-11 | Historic Anthology 4 (`HA4`) | anthologies | historic-anthology-4 | other | 25 | 4 | 21 | 16.0% |
-| 2021-03-19 | Time Spiral Remastered (`TSR`) | masters-remastered | time-spiral-remastered | other | 410 | 105 | 305 | 25.6% |
+| 2021-03-19 | Time Spiral Remastered (`TSR`) | masters-remastered | time-spiral-remastered | other | 410 | 107 | 303 | 26.1% |
 | 2021-04-23 | Commander 2021 (`C21`) | commander | 2021 | commander | 329 | 116 | 213 | 35.3% |
 | 2021-04-23 | Strixhaven Mystical Archive (`STA`) | masterpieces | strixhaven-mystical-archive | other | 63 | 29 | 34 | 46.0% |
 | 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | strixhaven | main | 290 | 53 | 237 | 18.3% |
@@ -504,12 +504,12 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2021-07-23 | Forgotten Realms Commander (`AFC`) | commander | 2021 | commander | 275 | 101 | 174 | 36.7% |
 | 2021-08-01 | 2020 Heroes of the Realm (`PH20`) | funny-special | 2020-heroes-of-the-realm | other | 3 | 0 | 3 | 0.0% |
 | 2021-08-20 | Mystery Booster Playtest Cards 2021 (`CMB2`) | funny-special | mystery-booster-playtest-cards-2021 | other | 120 | 12 | 108 | 10.0% |
-| 2021-08-26 | Jumpstart: Historic Horizons (`J21`) | jumpstart | jumpstart-historic-horizons | other | 389 | 99 | 290 | 25.4% |
-| 2021-09-24 | Innistrad: Midnight Hunt (`MID`) | expansion | innistrad | main | 279 | 52 | 227 | 18.6% |
+| 2021-08-26 | Jumpstart: Historic Horizons (`J21`) | jumpstart | jumpstart-historic-horizons | other | 389 | 101 | 288 | 26.0% |
+| 2021-09-24 | Innistrad: Midnight Hunt (`MID`) | expansion | innistrad | main | 279 | 53 | 226 | 19.0% |
 | 2021-09-24 | Innistrad: Midnight Hunt Promos (`PMID`) | promos | innistrad-midnight-hunt | other | 84 | 7 | 77 | 8.3% |
 | 2021-09-24 | Midnight Hunt Commander (`MIC`) | commander | 2021 | commander | 149 | 40 | 109 | 26.8% |
 | 2021-10-15 | Pioneer Challenger Decks 2021 (`Q06`) | deck-products | pioneer-challenger-decks-2021 | other | 10 | 0 | 10 | 0.0% |
-| 2021-11-19 | Crimson Vow Commander (`VOC`) | commander | 2021 | commander | 150 | 52 | 98 | 34.7% |
+| 2021-11-19 | Crimson Vow Commander (`VOC`) | commander | 2021 | commander | 150 | 53 | 97 | 35.3% |
 | 2021-11-19 | Innistrad: Crimson Vow (`VOW`) | expansion | innistrad | main | 283 | 34 | 249 | 12.0% |
 | 2021-11-19 | Innistrad: Crimson Vow Promos (`PVOW`) | promos | innistrad-crimson-vow | other | 84 | 5 | 79 | 6.0% |
 | 2021-12-25 | 2021 Heroes of the Realm (`PH21`) | funny-special | 2021-heroes-of-the-realm | other | 4 | 0 | 4 | 0.0% |
@@ -552,7 +552,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2022-11-18 | The Brothers' War Retro Artifacts (`BRR`) | masterpieces | the-brothers-war-retro-artifacts | other | 63 | 22 | 41 | 34.9% |
 | 2022-11-18 | Transformers (`BOT`) | eternal | 2020s | other | 15 | 0 | 15 | 0.0% |
 | 2022-11-26 | Eternal Weekend (`PEWK`) | promos | eternal-weekend | other | 10 | 3 | 7 | 30.0% |
-| 2022-12-02 | Jumpstart 2022 (`J22`) | jumpstart | jumpstart-2022 | other | 819 | 257 | 562 | 31.4% |
+| 2022-12-02 | Jumpstart 2022 (`J22`) | jumpstart | jumpstart-2022 | other | 819 | 259 | 560 | 31.6% |
 | 2022-12-02 | Starter Commander Decks (`SCD`) | starter | 2022 | commander | 337 | 150 | 187 | 44.5% |
 | 2022-12-13 | Explorer Anthology 2 (`EA2`) | anthologies | explorer-anthology-2 | other | 25 | 3 | 22 | 12.0% |
 | 2023-01-01 | Judge Gift Cards 2023 (`P23`) | promos | judge-2023 | other | 10 | 6 | 4 | 60.0% |
@@ -592,7 +592,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2023-10-13 | Doctor Who (`WHO`) | commander | 2023 | commander | 318 | 92 | 226 | 28.9% |
 | 2023-11-17 | Jurassic World Collection (`REX`) | eternal | 2020s | other | 20 | 0 | 20 | 0.0% |
 | 2023-11-17 | March of the Machine: The Aftermath Promos (`PMAT`) | promos | march-of-the-machine-the-aftermath | other | 8 | 0 | 8 | 0.0% |
-| 2023-11-17 | Special Guests (`SPG`) | masterpieces | special-guests | other | 139 | 32 | 107 | 23.0% |
+| 2023-11-17 | Special Guests (`SPG`) | masterpieces | special-guests | other | 139 | 33 | 106 | 23.7% |
 | 2023-11-17 | The Lost Caverns of Ixalan (`LCI`) | expansion | ixalan | main | 292 | 43 | 249 | 14.7% |
 | 2023-11-17 | The Lost Caverns of Ixalan Commander (`LCC`) | commander | 2023 | commander | 313 | 88 | 225 | 28.1% |
 | 2023-11-17 | The Lost Caverns of Ixalan Promos (`PLCI`) | promos | the-lost-caverns-of-ixalan | other | 68 | 1 | 67 | 1.5% |
@@ -617,9 +617,9 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 2024 | commander | 320 | 105 | 215 | 32.8% |
 | 2024-06-14 | Modern Horizons 3 Promos (`PMH3`) | promos | modern-horizons-3 | other | 81 | 6 | 75 | 7.4% |
 | 2024-07-05 | Assassin's Creed (`ACR`) | supplemental | assassin-s-creed | other | 138 | 20 | 118 | 14.5% |
-| 2024-08-02 | Bloomburrow (`BLB`) | expansion | bloomburrow | main | 280 | 41 | 239 | 14.6% |
-| 2024-08-02 | Bloomburrow Commander (`BLC`) | commander | 2024 | commander | 312 | 121 | 191 | 38.8% |
-| 2024-08-02 | Bloomburrow Promos (`PBLB`) | promos | bloomburrow | other | 80 | 3 | 77 | 3.8% |
+| 2024-08-02 | Bloomburrow (`BLB`) | expansion | bloomburrow | main | 280 | 42 | 238 | 15.0% |
+| 2024-08-02 | Bloomburrow Commander (`BLC`) | commander | 2024 | commander | 312 | 122 | 190 | 39.1% |
+| 2024-08-02 | Bloomburrow Promos (`PBLB`) | promos | bloomburrow | other | 80 | 4 | 76 | 5.0% |
 | 2024-08-02 | Cowboy Bebop (`PCBB`) | promos | cowboy-bebop | other | 5 | 2 | 3 | 40.0% |
 | 2024-08-02 | Mystery Booster 2 (`MB2`) | masters-remastered | mystery-booster-2 | other | 384 | 71 | 313 | 18.5% |
 | 2024-09-27 | Duskmourn: House of Horror (`DSK`) | expansion | 2020s | main | 278 | 42 | 236 | 15.1% |
@@ -689,7 +689,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | 2026-08-14 | The Hobbit (`HOB`) | expansion | 2020s | main | 193 | 36 | 157 | 18.7% |
 | 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | 2020s | other | 117 | 26 | 91 | 22.2% |
 | 2026-09-02 | The Zeta Set (`SLZ`) | boxed-products | the-zeta-set | other | 121 | 43 | 78 | 35.5% |
-| 2026-10-02 | Reality Fracture (`FRA`) | expansion | 2020s | main | 23 | 4 | 19 | 17.4% |
+| 2026-10-02 | Reality Fracture (`FRA`) | expansion | 2020s | main | 24 | 4 | 20 | 16.7% |
 | 2026-10-02 | Reality Fracture Commander (`FRC`) | commander | 2026 | commander | 1 | 0 | 1 | 0.0% |
 | 2026-11-09 | Mystery Booster Commander Edition (`MBC`) | commander | 2026 | other | 80 | 7 | 73 | 8.8% |
 | 2026-11-13 | Star Trek (`TRK`) | expansion | 2020s | main | 91 | 30 | 61 | 33.0% |
@@ -700,7 +700,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 
 | Grupo | Subgrupo | Ediciones | Cartas únicas | Implementadas | Pendientes | % |
 |---|---|---:|---:|---:|---:|---:|
-| anthologies | 2017 | 1 | 289 | 164 | 125 | 56.7% |
+| anthologies | 2017 | 1 | 289 | 165 | 124 | 57.1% |
 | anthologies | 2018 | 1 | 279 | 136 | 143 | 48.7% |
 | anthologies | arena-anthology-1 | 1 | 26 | 21 | 5 | 80.8% |
 | anthologies | arena-anthology-2 | 1 | 25 | 13 | 12 | 52.0% |
@@ -723,7 +723,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | boxed-products | astral-cards | 1 | 12 | 0 | 12 | 0.0% |
 | boxed-products | battle-royale-box-set | 1 | 105 | 58 | 47 | 55.2% |
 | boxed-products | beatdown-box-set | 1 | 82 | 48 | 34 | 58.5% |
-| boxed-products | duels-of-the-planeswalkers | 1 | 101 | 63 | 38 | 62.4% |
+| boxed-products | duels-of-the-planeswalkers | 1 | 101 | 64 | 37 | 63.4% |
 | boxed-products | explorers-of-ixalan | 1 | 47 | 20 | 27 | 42.6% |
 | boxed-products | game-night | 1 | 63 | 32 | 31 | 50.8% |
 | boxed-products | game-night-2019 | 1 | 59 | 21 | 38 | 35.6% |
@@ -735,31 +735,31 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | boxed-products | rivals-quick-start-set | 1 | 56 | 29 | 27 | 51.8% |
 | boxed-products | rna-guild-kit | 1 | 128 | 40 | 88 | 31.2% |
 | boxed-products | salvat-2005 | 1 | 285 | 98 | 187 | 34.4% |
-| boxed-products | salvat-2011 | 1 | 209 | 126 | 83 | 60.3% |
+| boxed-products | salvat-2011 | 1 | 209 | 127 | 82 | 60.8% |
 | boxed-products | sega-dreamcast-cards | 1 | 10 | 0 | 10 | 0.0% |
 | boxed-products | the-zeta-set | 1 | 121 | 43 | 78 | 35.5% |
 | commander | 2011 | 1 | 303 | 137 | 166 | 45.2% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
 | commander | 2013 | 1 | 341 | 282 | 59 | 82.7% |
-| commander | 2014 | 1 | 322 | 200 | 122 | 62.1% |
+| commander | 2014 | 1 | 322 | 203 | 119 | 63.0% |
 | commander | 2015 | 1 | 327 | 141 | 186 | 43.1% |
 | commander | 2016 | 1 | 341 | 134 | 207 | 39.3% |
 | commander | 2017 | 1 | 299 | 133 | 166 | 44.5% |
 | commander | 2018 | 1 | 297 | 132 | 165 | 44.4% |
 | commander | 2019 | 1 | 292 | 108 | 184 | 37.0% |
-| commander | 2020 | 4 | 1001 | 357 | 644 | 35.7% |
-| commander | 2021 | 5 | 1022 | 354 | 668 | 34.6% |
+| commander | 2020 | 4 | 1001 | 358 | 643 | 35.8% |
+| commander | 2021 | 5 | 1022 | 356 | 666 | 34.8% |
 | commander | 2022 | 7 | 1802 | 517 | 1285 | 28.7% |
-| commander | 2023 | 6 | 1597 | 508 | 1089 | 31.8% |
-| commander | 2024 | 7 | 1887 | 653 | 1234 | 34.6% |
+| commander | 2023 | 6 | 1597 | 512 | 1085 | 32.1% |
+| commander | 2024 | 7 | 1887 | 654 | 1233 | 34.7% |
 | commander | 2025 | 4 | 1046 | 398 | 648 | 38.0% |
 | commander | 2026 | 6 | 1265 | 349 | 916 | 27.6% |
 | conspiracy | conspiracy | 2 | 211 | 48 | 163 | 22.7% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 62 | 159 | 28.1% |
-| core | 1990s | 10 | 3267 | 1266 | 2001 | 38.8% |
+| core | 1990s | 10 | 3267 | 1288 | 1979 | 39.4% |
 | core | 2000s | 4 | 1389 | 763 | 626 | 54.9% |
-| core | 2010s | 8 | 2011 | 946 | 1065 | 47.0% |
-| core | 2020s | 3 | 1132 | 418 | 714 | 36.9% |
+| core | 2010s | 8 | 2011 | 948 | 1063 | 47.1% |
+| core | 2020s | 3 | 1132 | 421 | 711 | 37.2% |
 | deck-products | coldsnap-theme-decks | 1 | 52 | 16 | 36 | 30.8% |
 | deck-products | magic-online-theme-decks | 1 | 174 | 96 | 78 | 55.2% |
 | deck-products | modern-event-deck-2014 | 1 | 26 | 11 | 15 | 42.3% |
@@ -792,24 +792,24 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 36 | 34 | 51.4% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 139 | 398 | 25.9% |
-| expansion | 1990s | 11 | 1573 | 362 | 1211 | 23.0% |
-| expansion | 2000s | 19 | 3082 | 678 | 2404 | 22.0% |
+| expansion | 1990s | 11 | 1573 | 364 | 1209 | 23.1% |
+| expansion | 2000s | 19 | 3082 | 679 | 2403 | 22.0% |
 | expansion | 2010s | 14 | 2735 | 709 | 2026 | 25.9% |
-| expansion | 2020s | 17 | 3738 | 608 | 3130 | 16.3% |
+| expansion | 2020s | 17 | 3739 | 613 | 3126 | 16.4% |
 | expansion | alara | 2 | 379 | 149 | 230 | 39.3% |
 | expansion | amonkhet | 1 | 272 | 97 | 175 | 35.7% |
-| expansion | bloomburrow | 1 | 280 | 41 | 239 | 14.6% |
-| expansion | capenna | 1 | 310 | 47 | 263 | 15.2% |
-| expansion | dominaria | 2 | 553 | 152 | 401 | 27.5% |
-| expansion | eldraine | 2 | 567 | 123 | 444 | 21.7% |
+| expansion | bloomburrow | 1 | 280 | 42 | 238 | 15.0% |
+| expansion | capenna | 1 | 310 | 48 | 262 | 15.5% |
+| expansion | dominaria | 2 | 553 | 154 | 399 | 27.8% |
+| expansion | eldraine | 2 | 567 | 124 | 443 | 21.9% |
 | expansion | ice-age | 1 | 373 | 72 | 301 | 19.3% |
-| expansion | innistrad | 4 | 1103 | 242 | 861 | 21.9% |
-| expansion | invasion | 1 | 335 | 109 | 226 | 32.5% |
-| expansion | ixalan | 3 | 771 | 182 | 589 | 23.6% |
+| expansion | innistrad | 4 | 1103 | 243 | 860 | 22.0% |
+| expansion | invasion | 1 | 335 | 110 | 225 | 32.8% |
+| expansion | ixalan | 3 | 771 | 185 | 586 | 24.0% |
 | expansion | kaladesh | 1 | 264 | 65 | 199 | 24.6% |
-| expansion | kaldheim | 1 | 323 | 50 | 273 | 15.5% |
+| expansion | kaldheim | 1 | 323 | 52 | 271 | 16.1% |
 | expansion | kamigawa | 4 | 925 | 120 | 805 | 13.0% |
-| expansion | lorwyn | 2 | 559 | 124 | 435 | 22.2% |
+| expansion | lorwyn | 2 | 559 | 125 | 434 | 22.4% |
 | expansion | masques | 1 | 335 | 100 | 235 | 29.9% |
 | expansion | mirage | 1 | 335 | 87 | 248 | 26.0% |
 | expansion | mirrodin | 3 | 675 | 237 | 438 | 35.1% |
@@ -818,13 +818,13 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | expansion | phyrexia | 4 | 787 | 124 | 663 | 15.8% |
 | expansion | ravnica | 4 | 1081 | 361 | 720 | 33.4% |
 | expansion | strixhaven | 2 | 561 | 116 | 445 | 20.7% |
-| expansion | tarkir | 3 | 785 | 184 | 601 | 23.4% |
-| expansion | tempest | 1 | 335 | 112 | 223 | 33.4% |
+| expansion | tarkir | 3 | 785 | 185 | 600 | 23.6% |
+| expansion | tempest | 1 | 335 | 113 | 222 | 33.7% |
 | expansion | theros | 2 | 507 | 137 | 370 | 27.0% |
 | expansion | thunder-junction | 1 | 276 | 31 | 245 | 11.2% |
-| expansion | time-spiral | 2 | 407 | 98 | 309 | 24.1% |
+| expansion | time-spiral | 2 | 407 | 100 | 307 | 24.6% |
 | expansion | urza | 3 | 621 | 233 | 388 | 37.5% |
-| expansion | zendikar | 3 | 773 | 222 | 551 | 28.7% |
+| expansion | zendikar | 3 | 773 | 223 | 550 | 28.8% |
 | from-the-vault | 2000s | 2 | 30 | 9 | 21 | 30.0% |
 | from-the-vault | 2010s | 8 | 126 | 27 | 99 | 21.4% |
 | funny-special | 2016-heroes-of-the-realm | 1 | 3 | 0 | 3 | 0.0% |
@@ -842,12 +842,12 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | funny-special | ponies-the-galloping | 1 | 3 | 0 | 3 | 0.0% |
 | funny-special | the-list-unfinity-foil-edition | 1 | 62 | 2 | 60 | 3.2% |
 | funny-special | unfinity-sticker-sheets | 1 | 48 | 0 | 48 | 0.0% |
-| funny-special | unknown-event | 1 | 506 | 16 | 490 | 3.2% |
-| jumpstart | foundations-jumpstart | 1 | 768 | 252 | 516 | 32.8% |
-| jumpstart | jumpstart | 1 | 461 | 192 | 269 | 41.6% |
-| jumpstart | jumpstart-2022 | 1 | 819 | 257 | 562 | 31.4% |
+| funny-special | unknown-event | 1 | 506 | 17 | 489 | 3.4% |
+| jumpstart | foundations-jumpstart | 1 | 768 | 256 | 512 | 33.3% |
+| jumpstart | jumpstart | 1 | 461 | 194 | 267 | 42.1% |
+| jumpstart | jumpstart-2022 | 1 | 819 | 259 | 560 | 31.6% |
 | jumpstart | jumpstart-arena-exclusives | 1 | 18 | 6 | 12 | 33.3% |
-| jumpstart | jumpstart-historic-horizons | 1 | 389 | 99 | 290 | 25.4% |
+| jumpstart | jumpstart-historic-horizons | 1 | 389 | 101 | 288 | 26.0% |
 | masterpieces | amonkhet-invocations | 1 | 54 | 10 | 44 | 18.5% |
 | masterpieces | breaking-news | 1 | 65 | 10 | 55 | 15.4% |
 | masterpieces | edge-of-eternities-stellar-sights | 1 | 45 | 8 | 37 | 17.8% |
@@ -857,7 +857,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | masterpieces | multiverse-legends | 1 | 66 | 2 | 64 | 3.0% |
 | masterpieces | mythic-edition | 1 | 24 | 0 | 24 | 0.0% |
 | masterpieces | secrets-of-strixhaven-mystical-archive | 1 | 65 | 17 | 48 | 26.2% |
-| masterpieces | special-guests | 1 | 139 | 32 | 107 | 23.0% |
+| masterpieces | special-guests | 1 | 139 | 33 | 106 | 23.7% |
 | masterpieces | stardates | 1 | 1 | 1 | 0 | 100.0% |
 | masterpieces | strixhaven-mystical-archive | 1 | 63 | 29 | 34 | 46.0% |
 | masterpieces | teenage-mutant-ninja-turtles-source-material | 1 | 20 | 2 | 18 | 10.0% |
@@ -875,13 +875,13 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | masters-remastered | dominaria-remastered | 1 | 266 | 101 | 165 | 38.0% |
 | masters-remastered | double-masters | 1 | 337 | 102 | 235 | 30.3% |
 | masters-remastered | double-masters-2022 | 1 | 332 | 92 | 240 | 27.7% |
-| masters-remastered | eternal-masters | 1 | 249 | 113 | 136 | 45.4% |
+| masters-remastered | eternal-masters | 1 | 249 | 114 | 135 | 45.8% |
 | masters-remastered | iconic-masters | 1 | 249 | 99 | 150 | 39.8% |
 | masters-remastered | innistrad-remastered | 1 | 300 | 65 | 235 | 21.7% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 59 | 233 | 20.2% |
 | masters-remastered | magic-duel-masters | 1 | 4 | 3 | 1 | 75.0% |
 | masters-remastered | masters-25 | 1 | 249 | 101 | 148 | 40.6% |
-| masters-remastered | masters-edition | 1 | 185 | 49 | 136 | 26.5% |
+| masters-remastered | masters-edition | 1 | 185 | 51 | 134 | 27.6% |
 | masters-remastered | masters-edition-ii | 1 | 245 | 66 | 179 | 26.9% |
 | masters-remastered | masters-edition-iii | 1 | 220 | 93 | 127 | 42.3% |
 | masters-remastered | masters-edition-iv | 1 | 260 | 96 | 164 | 36.9% |
@@ -896,8 +896,8 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | masters-remastered | shadows-of-the-past | 1 | 76 | 26 | 50 | 34.2% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 57 | 227 | 20.1% |
 | masters-remastered | tempest-remastered | 1 | 254 | 99 | 155 | 39.0% |
-| masters-remastered | the-list | 1 | 5221 | 1510 | 3711 | 28.9% |
-| masters-remastered | time-spiral-remastered | 2 | 413 | 105 | 308 | 25.4% |
+| masters-remastered | the-list | 1 | 5221 | 1518 | 3703 | 29.1% |
+| masters-remastered | time-spiral-remastered | 2 | 413 | 107 | 306 | 25.9% |
 | masters-remastered | ultimate-masters | 1 | 254 | 81 | 173 | 31.9% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
 | masters-remastered | vintage-masters | 1 | 325 | 135 | 190 | 41.5% |
@@ -1072,7 +1072,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | promos | magic-2013 | 1 | 6 | 3 | 3 | 50.0% |
 | promos | magic-2014 | 1 | 6 | 1 | 5 | 16.7% |
 | promos | magic-2015 | 1 | 13 | 2 | 11 | 15.4% |
-| promos | magic-online | 1 | 2689 | 553 | 2136 | 20.6% |
+| promos | magic-online | 1 | 2689 | 558 | 2131 | 20.8% |
 | promos | magic-origins | 1 | 43 | 6 | 37 | 14.0% |
 | promos | magic-premiere-shop-2005 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | magic-premiere-shop-2006 | 1 | 5 | 5 | 0 | 100.0% |
@@ -1091,7 +1091,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | promos | march-of-the-machine-the-aftermath | 1 | 8 | 0 | 8 | 0.0% |
 | promos | marvel-legends-series-inserts | 1 | 4 | 0 | 4 | 0.0% |
 | promos | marvel-s-spider-man | 1 | 68 | 1 | 67 | 1.5% |
-| promos | media-and-collaboration | 1 | 94 | 36 | 58 | 38.3% |
+| promos | media-and-collaboration | 1 | 97 | 37 | 60 | 38.1% |
 | promos | mercadian-masques | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin-besieged | 1 | 4 | 1 | 3 | 25.0% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 10 | 74 | 11.9% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 12 | 46 | 20.7% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 402 | 1294 | 23.7% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 403 | 1293 | 23.8% |
 | secret-lair | secret-lair-promo | 1 | 52 | 15 | 37 | 28.8% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -1203,14 +1203,14 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 | starter | 1990s | 5 | 740 | 464 | 276 | 62.7% |
 | starter | 2000s | 1 | 20 | 20 | 0 | 100.0% |
 | starter | 2010s | 7 | 89 | 54 | 35 | 60.7% |
-| starter | 2020s | 1 | 120 | 69 | 51 | 57.5% |
+| starter | 2020s | 1 | 120 | 70 | 50 | 58.3% |
 | starter | 2022 | 1 | 337 | 150 | 187 | 44.5% |
 | supplemental | assassin-s-creed | 1 | 138 | 20 | 118 | 14.5% |
 | supplemental | battlebond | 1 | 254 | 93 | 161 | 36.6% |
-| supplemental | innistrad-double-feature | 1 | 532 | 75 | 457 | 14.1% |
-| supplemental | modern-horizons | 1 | 255 | 71 | 184 | 27.8% |
-| supplemental | modern-horizons-1-timeshifts | 1 | 40 | 11 | 29 | 27.5% |
-| supplemental | modern-horizons-2 | 1 | 310 | 76 | 234 | 24.5% |
+| supplemental | innistrad-double-feature | 1 | 532 | 76 | 456 | 14.3% |
+| supplemental | modern-horizons | 1 | 255 | 72 | 183 | 28.2% |
+| supplemental | modern-horizons-1-timeshifts | 1 | 40 | 12 | 28 | 30.0% |
+| supplemental | modern-horizons-2 | 1 | 310 | 77 | 233 | 24.8% |
 | supplemental | modern-horizons-2-timeshifts | 1 | 16 | 3 | 13 | 18.8% |
 | supplemental | modern-horizons-3 | 1 | 313 | 47 | 266 | 15.0% |
 | supplemental | ravnica-clue-edition | 1 | 268 | 108 | 160 | 40.3% |
@@ -3832,6 +3832,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 - [ ] Diabolic Edict — `058917c1-21ab-488a-9f9c-591c55f3c596`
 - [ ] Duress — `33d405ea-7a9a-4970-b70f-9c05d90dd6f0`
 - [ ] Dáin Ironfoot — `9924c189-3c82-431a-b570-7805b2a406f0`
+- [ ] Final Showdown — `7e7ec3d6-a84f-4cc3-93f4-4d181d41e126`
 - [ ] Fireball — `aa7714b0-2bfb-458a-8ebf-37ec2c53383e`
 - [ ] Frantic Search — `16e015b2-f8a3-4b1a-80be-58a8f5fb5e8c`
 - [ ] Gingerbrute — `10b8d4c7-7553-4d76-b643-d98b80701e13`
@@ -3852,6 +3853,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 - [ ] Patchwork Banner — `4fb00dbe-1f82-4ba6-b18c-97e816d10d3a`
 - [ ] Peter Parker // Amazing Spider-Man — `f1b7488c-c675-42e9-818a-24a50347ec2c`
 - [ ] Phantasmal Dragon — `7f32c581-4d4a-4873-8e4b-b95e13790481`
+- [ ] Picard, Steadfast Captain — `cda786aa-1259-45e8-a834-21c7ad0259a6`
 - [ ] Pyromancer's Gauntlet — `5cbb70e7-a52c-4b35-bc31-d9a0a7df893c`
 - [ ] Sandbar Crocodile — `e11926bf-ca14-4e1e-aca5-9ffedb91868c`
 - [ ] Scent of Cinder — `ff50d002-834e-4b5e-8db0-b0c8b4efb21f`
@@ -54695,7 +54697,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 - [ ] Sphinx of Enlightenment — `e6284fb3-7cf8-4730-b156-10085b70b0e8`
 - [ ] Spore Frog — `97db6c39-e690-49b6-93a6-e51b8dfad10b`
 - [ ] Squirrel Mob — `451486df-6160-4ff7-b47c-dd3760417a31`
-- [ ] Squirrel Sovereign — `f43d1ea5-8127-4b64-a87b-ee5cc9b9e9fa`
 - [ ] Steelburr Champion — `d1f3d5ca-cb17-400f-8ed9-3b9a4f151b62`
 - [ ] Stolen by the Fae — `5bafd0e0-8bf8-4e06-a54a-81cc6cc4bdb7`
 - [ ] Storm of Souls — `7022ae9a-2589-493b-a050-a230fd02f80b`
@@ -62754,6 +62755,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **25,10
 - [ ] Enlightened Confidant — `a139eb7f-3853-490c-a839-35d0e5aed7b5`
 - [ ] Garruk, Curse Breaker — `184d4672-05a9-4182-8b3f-3561fb33ed62`
 - [ ] Garruk, Veiled Butcher — `4a6972fe-348a-4a19-a1d0-bdf8f1f9c792`
+- [ ] Generous Revival — `f8601f5f-0f7c-4689-9d15-137f1e82c49c`
 - [ ] Liliana the Faultless — `22c2e66d-a2a1-46db-a70a-dff5ad5d6c14`
 - [ ] Liliana the Repentant — `5eb4403f-f199-4f75-a7c6-e76783f9b07d`
 - [ ] Perfected Theory — `d824a319-fa74-42e4-9cbe-dba1576d6bad`
