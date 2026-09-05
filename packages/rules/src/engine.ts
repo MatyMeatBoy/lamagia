@@ -581,11 +581,17 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
   return allPermanents(state)
     .filter((source) => source.controller === permanent.controller)
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants
-      .filter((grant) => grant.scope === "creatures-you-control"
+      .filter((grant) => grant.scope === "self" ? source.instance_id === permanent.instance_id : grant.scope === "creatures-you-control"
         || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))
       .map((grant) => ({ source, grant })))
     .filter(({ grant }) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
-    .reduce((total, { grant }) => ({ power: total.power + grant.power, toughness: total.toughness + grant.toughness }), { power: 0, toughness: 0 });
+    .reduce((total, { grant }) => {
+      const scaling = grant.scaling === "creature-cards-in-opponents-graveyards"
+        ? state.players.filter((player) => player.seat !== permanent.controller)
+          .reduce((count, player) => count + player.graveyard.filter((card) => isCreature(cardProfile(card))).length, 0)
+        : 1;
+      return { power: total.power + grant.power * scaling, toughness: total.toughness + grant.toughness * scaling };
+    }, { power: 0, toughness: 0 });
 }
 export function powerOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);

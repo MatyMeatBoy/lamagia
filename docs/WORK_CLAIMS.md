@@ -411,3 +411,4 @@ rules citations and the integrator review remain mandatory.
 
 
 | `c13-brooding-saurian-owner-control` | Each-end-step control reset for all nontoken permanents to their owners (CR 603.2, 603.6, 110.2) | `codex/c13-brooding-saurian` | active | 2026-09-04 |
+| `c13-wight-precinct-six` | Wight of Precinct Six gets +1/+1 for each creature card in opponents' graveyards (CR 604.3, 613.4) | `codex/c13-wight-precinct-f99` | active | 2026-09-05 |

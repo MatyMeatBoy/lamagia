@@ -286,13 +286,15 @@ export interface StaticKeywordGrant {
 }
 
 export interface StaticPowerToughnessGrant {
-  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
+  readonly scope: "self" | "creatures-you-control" | "other-creatures-you-control" | "all-creatures";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
   readonly subtype?: string;
   readonly counterName?: string;
   readonly threshold?: number;
+  /** Dynamic +1/+1 per creature card in opponents' graveyards (Wight). */
+  readonly scaling?: "creature-cards-in-opponents-graveyards";
 }
 
 /** Torbran-style static damage amplifier (CR 614.1c). */
@@ -1297,6 +1299,8 @@ function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
 }
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
+  const graveyardScaling = /^(?:~|this creature) gets \+1\/\+1 for each creature card in your opponents' graveyards$/i.test(line.trim().replace(/\.$/, ""));
+  if (graveyardScaling) return { scope: "self", power: 1, toughness: 1, scaling: "creature-cards-in-opponents-graveyards" };
   const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(line.trim().replace(/\.$/, ""));
   return match ? {
     scope: match[4] ? "all-creatures" : match[3] ? "creatures-you-control" : "other-creatures-you-control",

@@ -306,6 +306,11 @@ const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "En
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
+const C13_WIGHT_OF_PRECINCT_SIX = () => make({
+  name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",
+  oracle_text: "This creature gets +1/+1 for each creature card in your opponents' graveyards.",
+  scryfall_id: "32aec0ec-0feb-4276-ab9c-5bb18b5005a0", oracle_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf"
+});
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -1058,6 +1063,20 @@ describe("casting", () => {
     expect(C13_DECREE_OF_PAIN().scryfall_id).toBe("932668fa-d6e3-41c0-ad0c-8e0a00e68d11");
     expect(cardProfile(C13_COMMAND_TOWER()).manaAbilities).toHaveLength(1);
     expect(cardProfile(C13_DECREE_OF_PAIN()).effects).toMatchObject([{ kind: "destroy-all-creatures-draw-destroyed" }]);
+  });
+
+  it("reuses the opponent-graveyard creature scaling primitive for C13 Wight", () => {
+    const profile = cardProfile(C13_WIGHT_OF_PRECINCT_SIX());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.staticPowerToughnessGrants).toContainEqual({
+      scope: "self", power: 1, toughness: 1, scaling: "creature-cards-in-opponents-graveyards"
+    });
+    let game = readyToCast([C13_WIGHT_OF_PRECINCT_SIX()], [SWAMP(), SWAMP()]);
+    game = stage(game, 1, () => ({ graveyard: toHand(1, [BEAR(), BEAR()], "wight-opponent-graveyard") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const wight = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wight of Precinct Six")!;
+    expect(powerOf(wight, game)).toBe(3);
+    expect(toughnessOf(wight, game)).toBe(3);
   });
 
   it("draws for each creature destroyed by Decree of Pain", () => {
