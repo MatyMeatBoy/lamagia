@@ -161,6 +161,7 @@ const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment"
 const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other creatures you control get +1/+1." });
 const C13_DIVINITY_OF_PRIDE = () => make({ name: "Divinity of Pride", type_line: "Creature — Spirit Avatar", mana_cost: "{3}{W}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature gets +4/+4 as long as you have 25 or more life.", scryfall_id: "2c91c236-34d7-4454-a55a-784db7f68bde" });
 const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "1B", cmc: 2, power: "1", toughness: "1", oracle_text: "This creature gets +1/+1 for each creature card in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
+const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.", scryfall_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
 const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });
@@ -2930,6 +2931,20 @@ describe("casting", () => {
     expect([powerOf(wight, game), toughnessOf(wight, game)]).toEqual([3, 3]);
     game = stage(game, 0, () => ({ life: 24 }));
     expect([powerOf(divinity, game), toughnessOf(divinity, game)]).toEqual([4, 4]);
+  });
+
+  it("applies Hooded Horror's defending-player creature-count evasion", () => {
+    expect(profileOf(C13_HOODED_HORROR()).combatRules.cannotBeBlockedWhenDefenderHasMostCreatures).toBe(true);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [C13_HOODED_HORROR(), BEAR(), BEAR()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    const horror = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Hooded Horror")!;
+    const blocker = game.players[1]!.battlefield[0]!;
+    const attack = { ...game, combat: { ...game.combat, attackers: [{ instanceId: horror.instance_id, defender: 1 }] } };
+    expect(legalBlockers(attack, 1)).toContain(blocker);
+    game = putOnBattlefield(game, 1, [BEAR(), BEAR()]);
+    const tiedAttack = { ...game, combat: { ...game.combat, attackers: [{ instanceId: horror.instance_id, defender: 1 }] } };
+    expect(legalBlockers(tiedAttack, 1)).not.toContain(blocker);
   });
 
   it("resolves a compound draw-and-life-loss instruction as one effect", () => {
