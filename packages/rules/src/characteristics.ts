@@ -751,6 +751,8 @@ export interface TriggerDefinition {
     | { readonly kind: "attacking-alone" }
     /** "draws their second card each turn" (Krang, Faerie Mastermind): gated on the per-turn draw count, not just any draw. */
     | { readonly kind: "second-draw-this-turn" }
+    /** "if ~ is untapped" (Howling Mine): checks the source permanent's own tapped state. */
+    | { readonly kind: "source-untapped" }
     | { readonly kind: "entering-power-at-most"; readonly amount: number };
   readonly spellType?: "creature" | "noncreature" | "instant-or-sorcery";
   readonly spellColor?: string;
@@ -3633,6 +3635,7 @@ function recognizeText(text: string): RecognizedText {
       const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
       const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggered.effectText);
       const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggered.effectText);
+      const sourceUntappedCondition = /^if\s+~\s+is\s+untapped,\s*(.+)$/i.exec(triggered.effectText);
       const eventControllerChoice = /^that\s+creature[’']s\s+controller\s+may\s+(.+)$/i.exec(triggered.effectText);
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
        const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
@@ -3640,7 +3643,7 @@ function recognizeText(text: string): RecognizedText {
       const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
@@ -3697,6 +3700,7 @@ function recognizeText(text: string): RecognizedText {
           ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),
           ...(diedCondition ? { condition: { kind: "creature-died-this-turn" as const } } : {}),
           ...(castFromHandCondition ? { condition: { kind: "cast-from-hand" as const } } : {}),
+          ...(sourceUntappedCondition ? { condition: { kind: "source-untapped" as const } } : {}),
           ...(triggered.spellType ? { spellType: triggered.spellType } : {}),
           ...(triggered.spellColor ? { spellColor: triggered.spellColor } : {}),
           ...(triggered.spellSubtype ? { spellSubtype: triggered.spellSubtype } : {}),

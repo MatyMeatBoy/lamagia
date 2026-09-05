@@ -2814,3 +2814,13 @@ existing order, which is inconsequential since the very next action draws
 fresh cards off the top, not the ones just bottomed. Validation: **588
 rules tests**, `npm run check`, `npm run simulate:engine` 200/200, 9,343
 global profiles.
+
+Howling Mine | `d26b27db-a567-4631-b4b6-7294222fbdd1` was closed with a new
+`source-untapped` trigger condition (CR 603.4), attached via the existing
+ad-hoc "if X, Y" post-condition extraction (`triggered.effectText`), the
+same mechanism used for `no-controlled-subtype`/`creature-died-this-turn`.
+It checks `findPermanent(state, watcher.instanceId).tapped` — the watching
+permanent's own state, not any event object — so no new effect kind was
+needed: "that player draws an additional card" already recognizes to the
+existing `draw-active-player`. Validation: **589 rules tests**, `npm run
+check`, `npm run simulate:engine` 200/200, 9,345 global profiles.
