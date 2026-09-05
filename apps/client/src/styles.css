@@ -562,7 +562,7 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 
 .stack-strip { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 7px; overflow-x: auto; padding: 5px 0; }
 .stack-strip > b { color: var(--gold); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; }
-.stack-order-hint { align-self: center; color: var(--text-faint); font-size: .54rem; white-space: nowrap; }
+.stack-order-hint { align-self: center; min-width: 0; max-width: min(250px, 32vw); overflow: hidden; color: var(--text-faint); font-size: .54rem; text-overflow: ellipsis; white-space: nowrap; }
 .stack-chip { position: relative; display: flex; align-items: center; gap: 6px; min-width: 150px; max-width: 235px; padding: 4px 8px 4px 4px; border: 1px solid var(--gold-dim); border-radius: 8px; background: linear-gradient(145deg, #1b180d, #0d160f); box-shadow: 0 3px 9px #0008; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .stack-chip:hover, .stack-chip:focus-visible { border-color: var(--gold); outline: 1px solid var(--gold-dim); transform: translateY(-1px); }
 .stack-chip.targetable { border-color: #7fd6a6; box-shadow: 0 0 0 2px #7fd6a666, 0 4px 14px #000b; }
