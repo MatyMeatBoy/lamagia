@@ -207,6 +207,8 @@ export interface StackObject {
   readonly commanderEntryCounters?: boolean;
   /** Mana colors actually spent to cast this spell, before it resolves. */
   readonly spentMana?: readonly ManaType[];
+  /** Additional +1/+1 (or other) counters assigned by a cast trigger before entry. */
+  readonly additionalCounters?: readonly CounterCost[];
   /** The free recast of a Rebound spell from exile (CR 702.88); it goes to the graveyard afterwards. */
   readonly fromRebound?: boolean;
   /** Selected `Choose one` mode, when the spell has supported modal text. */
@@ -1290,7 +1292,7 @@ function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { t
   }
 }
 
-function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = []): GameState {
+function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = [], additionalCounters: readonly CounterCost[] = []): GameState {
   const profile = cardProfile(card);
   const printed = entersTapped(state, seat, profile);
   // An effect that says "onto the battlefield tapped" overrides the card's own
@@ -1313,6 +1315,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     counters: {
       ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
       ...(isCommander && commanderEntryCounters > 0 ? { "+1/+1": commanderEntryCounters } : {}),
+      ...Object.fromEntries(additionalCounters.map((counter) => [counter.kind, (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount])),
       // A planeswalker enters with loyalty counters equal to its printed value (CR 306.5b).
       ...(profile.types.includes("Planeswalker") && profile.loyalty !== null ? { loyalty: profile.loyalty } : {})
     },
@@ -1829,6 +1832,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (const seat of opponentsOf(next, eventPlayer)) next = drawCards(next, seat, effect.amount);
       return next;
+    }
+    case "reveal-top-cards-and-add-source-counters": {
+      const sourceCard = object.trigger?.sourceCard ?? object.card;
+      const spellIndex = state.stack.findIndex((entry) => entry.card.instance_id === sourceCard.instance_id && !entry.trigger);
+      if (spellIndex < 0) return state;
+      const revealed = state.players.map((player) => player.library[0]).filter((card): card is GameCard => Boolean(card));
+      const amount = revealed.reduce((total, card) => total + cardProfile(card).manaValue, 0);
+      const next = {
+        ...state,
+        stack: state.stack.map((entry, index) => index === spellIndex
+          ? { ...entry, additionalCounters: [{ kind: "+1/+1", amount }] }
+          : entry)
+      };
+      return logged(next, object.controller, `${sourceCard.name} revela ${revealed.map((card) => card.name).join(", ")} y entra con ${amount} contadores +1/+1.`);
     }
     case "return-source-to-hand": {
       // "When ~ is put into a graveyard from the battlefield, return it to its
@@ -4210,7 +4227,7 @@ function resolveTop(state: GameState): GameState {
     const isCommander = object.fromCommandZone || playerAt(next, object.card.owner).commanderIds.includes(object.card.instance_id);
     next = putOntoBattlefield(next, object.controller, object.card, isCommander, false, Boolean(object.kicked), Boolean(object.evoked), castFromHand,
       isCommander && object.commanderEntryCounters ? (playerAt(next, object.controller).commanderCasts[object.card.instance_id] ?? 0) : 0,
-      object.spentMana ?? []);
+      object.spentMana ?? [], object.additionalCounters ?? []);
     next = logged(next, object.controller, `${playerAt(next, object.controller).name} resuelve ${object.card.name} al campo de batalla.`);
     return next;
   }
