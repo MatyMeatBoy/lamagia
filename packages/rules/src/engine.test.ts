@@ -7890,6 +7890,23 @@ describe("combat", () => {
     return passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
   }
 
+  it("keeps identical generated tokens independently selectable in combat", () => {
+    let game = putOnBattlefield(twoSeatGame([], []), 0, [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [PLANT_SPELL()]) }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const plants = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Plant");
+    expect(plants).toHaveLength(3);
+    expect(new Set(plants.map((permanent) => permanent.instance_id)).size).toBe(3);
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => ({ ...permanent, summoningSick: false })) }));
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
+    const chosen = plants[1]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: chosen.instance_id, defender: 1 }] });
+    expect(game.combat.attackers).toEqual([{ instanceId: chosen.instance_id, defender: 1 }]);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Plant")).toHaveLength(3);
+  });
+
   it("swaps Serene Master's power with the creature it blocks until combat ends", () => {
     const serene = SERENE_MASTER();
     expect(profileOf(serene).fullyImplemented).toBe(true);
