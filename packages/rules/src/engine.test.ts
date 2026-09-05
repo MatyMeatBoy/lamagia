@@ -189,6 +189,7 @@ const X_DRAW = () => make({ name: "Scalable Insight", type_line: "Sorcery", mana
 const GRAVEYARD_RETURN = () => make({ name: "Unearth Memory", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Return target creature card from your graveyard to your hand." });
 const GRAVEYARD_BATTLEFIELD = () => make({ name: "Reanimate Memory", type_line: "Sorcery", mana_cost: "{B}", cmc: 1, oracle_text: "Return target creature card from your graveyard to the battlefield." });
 const REANIMATE_SPELL = () => make({ name: "Test Reanimate", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value." });
+const PHYREXIAN_DELVER = () => make({ name: "Phyrexian Delver", type_line: "Creature — Phyrexian Human", mana_cost: "{3}{B}{B}", cmc: 5, power: "3", toughness: "2", oracle_text: "When Phyrexian Delver enters the battlefield, return target creature card from your graveyard to the battlefield. You lose life equal to that card's mana value.", oracle_id: "a13cbac0-4c76-4970-b61e-5f4e020ee95c" });
 const PLAIN_GRAVEYARD_REANIMATE = () => make({ name: "Test Hymn of Rebirth", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Put target creature card from a graveyard onto the battlefield under your control." });
 const ARTIFACT_GRAVEYARD_RETURN = () => make({ name: "Artifact Reclaim", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Return target artifact card from your graveyard to your hand." });
 const LAND_GRAVEYARD_BATTLEFIELD = () => make({ name: "Restore Memory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Put target land card from a graveyard onto the battlefield under your control." });
@@ -1484,6 +1485,12 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[0]!.life).toBe(life0 - 2);
+  });
+
+  it("reuses reanimation life-loss for Phyrexian Delver's ETB", () => {
+    const profile = profileOf(PHYREXIAN_DELVER());
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", targetKind: "creature-card-in-your-graveyard", effect: { kind: "reanimate-target-creature-lose-mana-value-life" } });
+    expect(profile.fullyImplemented).toBe(true);
   });
 
   it("reanimates for free when there is no cost clause", () => {

@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-05T04:54:37.558771+00:00`
+- Generated: `2026-09-05T05:00:15.362397+00:00`
 - Scope: **C13**
-- Exported profiles in scope: **341**; fully implemented: **247**
+- Exported profiles in scope: **341**; fully implemented: **248**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -259,7 +259,7 @@ Pay a structured cost, announce targets and put a non-mana ability on the stack;
 
 ## Mass review: C13 one-line queue
 
-The engine export currently marks **247/341** profiles complete; **20** unfinished cards have exactly one unmatched line.
+The engine export currently marks **248/341** profiles complete; **19** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
@@ -271,7 +271,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | untap all green and/or blue creatures you control during each other player's untap step — Murkfiend Liege |
 | `unclaimed` | 1 | until end of turn, creatures target player controls lose all abilities and have base power and toughness <n>/<n> — Sudden Spoiling |
 | `unclaimed` | 1 | when you cast ~, create <n> <n>/<n> red kobold creature tokens named kobolds of kher keep, where <n> is the amount of mana spent to cast it — Prossh, Skyraider of Kher |
-| `unclaimed` | 1 | when ~ enters, return target creature card from your graveyard to the battlefield. you lose life equal to that card's mana value — Phyrexian Delver |
 | `unclaimed` | 1 | when ~ enters, sacrifice it unless {cost} was spent to cast it — Azorius Herald |
 | `unclaimed` | 1 | when ~ enters, tap target creature <n> opponent controls. that creature doesn't untap during its controller's untap step for as long as you control ~ — Dungeon Geists |
 | `unclaimed` | 1 | whenever <n> spell or ability causes its controller to shuffle their library, that player puts <n> card from their hand on top of their library — Widespread Panic |
