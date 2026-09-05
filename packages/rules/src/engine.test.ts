@@ -306,6 +306,11 @@ const FIRES_OF_YAVIMAYA = () => make({ name: "Fires of Yavimaya", type_line: "En
 const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "Enchantment", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Sacrifice a creature: Goblin Bombardment deals 1 damage to any target." });
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
+const C13_DISCIPLE_OF_GRISELBRAND = () => make({
+  name: "Disciple of Griselbrand", type_line: "Creature — Human Cleric", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",
+  oracle_text: "{1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.",
+  scryfall_id: "30c9c0f0-2668-4163-8158-fada2d953cb3", oracle_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad"
+});
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
   return { ...card, oracle_text: `${card.oracle_text}\nFlashback {7}{B}{B}`, scryfall_id: "75d667ec-86f4-4850-a3b6-e7a9fc7053b0" };
@@ -2126,6 +2131,25 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === creature.instance_id)).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(1);
+  });
+
+  it("reuses sacrificed-toughness life gain for C13 Disciple of Griselbrand", () => {
+    const profile = profileOf(C13_DISCIPLE_OF_GRISELBRAND());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      sacrificesCreature: "any", effect: { kind: "gain-life-equal-sacrificed-toughness" }
+    });
+    let game = readyToCast([], [C13_DISCIPLE_OF_GRISELBRAND(), TRAMPLER(), SWAMP()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Disciple of Griselbrand")!;
+    const sacrifice = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id && entry.action.sacrificeId === sacrifice.instance_id);
+    expect(activation).toBeDefined();
+    const life = game.players[0]!.life;
+    game = applyAction(game, 0, activation!.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(life + 6);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Big Stomper")).toBe(true);
   });
 
   it("restricts Ravenous Baloth's sacrifice cost to Beasts and gains life", () => {
