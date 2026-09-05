@@ -48,6 +48,8 @@ describe("tested-mode server route", () => {
     expect(JSON.stringify(created.view)).not.toContain("forest-oracle");
   });
 
+  // Importing the Fastify/SQLite route can cold-start slower than Vitest's
+  // default five-second test budget when this file runs beside matches.test.
   it("exposes a clear HTTP failure when the tested pool has fewer than four suitable decks", async () => {
     const folder = mkdtempSync(join(tmpdir(), "prossh-tested-mode-"));
     const profilePath = join(folder, "profiles.json");
@@ -76,5 +78,5 @@ describe("tested-mode server route", () => {
       }
       rmSync(folder, { recursive: true, force: true });
     }
-  });
+  }, 30000);
 });
