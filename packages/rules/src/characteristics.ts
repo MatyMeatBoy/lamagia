@@ -609,6 +609,8 @@ export type SpellEffect =
   /** Graft counter transfer to the creature that caused the trigger (CR 702.58). */
   | { readonly kind: "move-counter-from-source-to-triggered-creature"; readonly counter: string }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
+  /** Temporary evasion that only allows blockers with the named keyword. */
+  | { readonly kind: "grant-source-cannot-be-blocked-except-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "grant-permanents-you-control-keyword"; readonly keyword: EnforcedKeyword }
   /** Temporary keyword grant limited to creatures controlled by the effect's controller. */
   | { readonly kind: "grant-creatures-you-control-keyword"; readonly keyword: EnforcedKeyword }
@@ -3376,6 +3378,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   const temporaryKeyword = /^Target creature gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };
+  const evasionExceptKeyword = /^~ can't be blocked this turn except by creatures with (flying|reach|haste|menace|trample|vigilance|lifelink|deathtouch|first strike|double strike)$/i.exec(text);
+  if (evasionExceptKeyword) return { effect: { kind: "grant-source-cannot-be-blocked-except-keyword", keyword: evasionExceptKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "none" };
   const thresholdKeyword = /^Target creature with power 5 or greater gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
   if (thresholdKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: thresholdKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature-power-at-least-5" };
   const globalKeyword = /^Permanents you control gain (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);

@@ -3941,3 +3941,10 @@ The next one-line rescan item, Two-Headed Dragon, now uses a reusable
 the parsed additional-blocker clause permits two assignments and validates the
 limit authoritatively on the server (CR 509.1, 702.2). Current validation:
 **730 rules tests**, `npm run check`, and `git diff --check` pass.
+
+The next one-line rescan item, Gingerbrute, now uses a reusable temporary
+evasion exception: only blockers with the named keyword may block for the
+turn, and cleanup removes the restriction. The scenario verifies that a
+haste creature remains legal while a normal creature is excluded (CR 509.1,
+602.2, 702.9). Current validation: **731 rules tests**, `npm run check`, and
+`git diff --check` pass.

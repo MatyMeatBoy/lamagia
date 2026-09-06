@@ -244,6 +244,7 @@ const RUTHLESS_CULLBLADE = () => make({ name: "Ruthless Cullblade", type_line: "
 const LOAM_LION = () => make({ name: "Loam Lion", type_line: "Creature — Cat", mana_cost: "{W}", cmc: 1, power: "1", toughness: "1", oracle_text: "Loam Lion gets +1/+2 as long as you control a Forest.", oracle_id: "18961e25-3feb-4dba-a77f-240a4d664ecb", scryfall_id: "18961e25-3feb-4dba-a77f-240a4d664ecb" });
 const GOBLIN_CHIEFTAIN = () => make({ name: "Goblin Chieftain", type_line: "Creature — Goblin", mana_cost: "{1}{R}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other Goblin creatures you control get +1/+1 and have haste.", oracle_id: "368b4052-174e-4458-a6e6-eaf8093aa0fe", scryfall_id: "368b4052-174e-4458-a6e6-eaf8093aa0fe" });
 const GOBLIN = () => make({ name: "Goblin Token", type_line: "Creature — Goblin", power: "1", toughness: "1" });
+const GINGERBRUTE = () => make({ name: "Gingerbrute", type_line: "Artifact Creature — Food Golem", mana_cost: "{1}", cmc: 1, power: "1", toughness: "1", oracle_text: "{1}: Gingerbrute can't be blocked this turn except by creatures with haste.", oracle_id: "10b8d4c7-7553-4f76-b643-d98b80701e13", scryfall_id: "10b8d4c7-7553-4f76-b643-d98b80701e13" });
 const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "1B", cmc: 2, power: "1", toughness: "1", oracle_text: "This creature gets +1/+1 for each creature card in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
 const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.", scryfall_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e" });
 const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "Legendary Creature — Dragon", mana_cost: "{3}{B}{R}{G}", cmc: 6, power: "5", toughness: "5", oracle_text: "Flying\nWhen you cast this spell, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.", scryfall_id: "868882d2-ed4e-4171-a17c-478a341080fb", oracle_id: "868882d2-ed4e-4171-a17c-478a341080fb" });
@@ -7696,6 +7697,26 @@ describe("activated abilities", () => {
     expect(profile.manaAbilities).toHaveLength(1);
     expect(profile.manaAbilities[0]!.produces).toEqual(["G"]);
     expect(profile.activatedAbilities).toHaveLength(0);
+  });
+
+  it("keeps Gingerbrute unblockable except by haste creatures for the turn", () => {
+    const hasteBlocker = make({ name: "Haste Blocker", type_line: "Creature — Human", power: "2", toughness: "2", keywords: ["Haste"] });
+    expect(profileOf(GINGERBRUTE())).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ manaCost: { raw: "{1}" }, targetKind: "none", effect: { kind: "grant-source-cannot-be-blocked-except-keyword", keyword: "haste" } }]
+    });
+    let game = readyOnBoard([GINGERBRUTE()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR(), hasteBlocker]);
+    game = stage(game, 0, () => ({ manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0, C: 1 } }));
+    const source = permanentNamed(game, 0, "Gingerbrute")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    game = {
+      ...game,
+      step: "declare-blockers",
+      combat: { ...game.combat, attackers: [{ instanceId: source.instance_id, defender: 1 }], attackersDeclared: true, blockersDeclared: false, blockersDeclaredBy: [] }
+    };
+    expect(legalBlockers(game, 1).map((permanent) => permanent.card.name)).toEqual(["Haste Blocker"]);
   });
 
   it("returns a creature exiled by Mistmeadow Witch at the next end step", () => {

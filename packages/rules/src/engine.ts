@@ -110,6 +110,8 @@ export interface Permanent {
   readonly loyaltyUsedThisTurn?: boolean;
   /** "Target creature can't block this turn"; cleared during cleanup. */
   readonly cantBlockThisTurn?: boolean;
+  /** Temporary evasion restriction; only blockers with this keyword may block. */
+  readonly temporaryCannotBeBlockedExcept?: EnforcedKeyword;
   /** Layer 7c modifications that expire in the cleanup step. */
   readonly powerModifier: number;
   readonly toughnessModifier: number;
@@ -4816,6 +4818,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
     }
+    case "grant-source-cannot-be-blocked-except-keyword": {
+      const sourceId = object.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!source || !isCreature(cardProfile(source.card))) return state;
+      return withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === source.instance_id
+          ? { ...candidate, temporaryCannotBeBlockedExcept: effect.keyword }
+          : candidate)
+      }));
+    }
     case "add-counter-source": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
       const source = findPermanent(state, sourceId);
@@ -5848,6 +5861,7 @@ export function canBlock(state: GameState, attacker: Permanent, blocker: Permane
   if (blockerProfile.combatRules.cannotBlock || blocker.cantBlockThisTurn) return false;
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
+  if (attacker.temporaryCannotBeBlockedExcept && !keywordOf(state, blocker, attacker.temporaryCannotBeBlockedExcept)) return false;
   if (attackerProfile.combatRules.cannotBeBlockedWhenDefenderHasMostCreatures) {
     const defenderCount = playerAt(state, blocker.controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length;
     const most = Math.max(...state.players.map((player) => player.battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length));
@@ -6299,7 +6313,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         players: next.players.map((current) => ({
           ...current,
           cantCastSpellsUntilEndOfTurn: false,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false, temporaryCannotBeBlockedExcept: undefined }))
         }))
       };
       break;
