@@ -459,7 +459,7 @@ export type SpellEffect =
   /** Surveil N (CR 701.42): look at the top N, put any number in the graveyard, the rest on top in any order. */
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
-  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
+  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number }
   /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
   | { readonly kind: "look-top-reorder"; readonly amount: number }
   /** "Draw a card, then put ~ on top of its owner's library" (Sensei's Divining Top's tap ability). */
@@ -645,6 +645,8 @@ export type SpellEffect =
   | { readonly kind: "set-target-player-creatures-base-pt-remove-abilities"; readonly power: number; readonly toughness: number }
   /** Temporary characteristic-setting animation for artifact manlands (CR 613.6). */
   | { readonly kind: "animate-source"; readonly power: number; readonly toughness: number; readonly colors: readonly string[]; readonly subtypes: readonly string[]; readonly keywords: readonly EnforcedKeyword[]; readonly types?: readonly CardType[] }
+  /** Sydri: animate a target noncreature artifact using its mana value (CR 613.6). */
+  | { readonly kind: "animate-target-artifact-mana-value" }
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
@@ -1034,7 +1036,7 @@ export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
-  | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
+  | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "noncreature-artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
@@ -2297,6 +2299,16 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     // Normalize it to the same source marker used by the shared effect parser.
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
     .trim();
+  const mayaelEffect = parseMayaelLookTop(parsedEffectText);
+  if (mayaelEffect) {
+    const symbols = costText.match(/\{[^}]+\}/g) ?? [];
+    const manaSymbols = symbols.filter((symbol) => !/^\{[TQE]\}$/i.test(symbol));
+    const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
+    if (manaSymbols.length && manaCost) return {
+      index, requiresTap: symbols.some((symbol) => symbol.toUpperCase() === "{T}"), sacrificesSelf: false,
+      lifeCost: 0, manaCost, effect: mayaelEffect, targetKind: "none", text: line.trim()
+    };
+  }
   const selfUntap = /^Untap ~\.?$/i.test(parsedEffectText);
   // Planeswalker loyalty abilities (CR 606): the cost is a signed loyalty change.
   const loyalty = /^\s*([+\u2212\u2013-])?\s*(\d+)\s*$/.exec(costText);
@@ -2767,6 +2779,11 @@ function parseLookTopSelection(text: string): SpellEffect | null {
 function parseAethermagesTouch(text: string): SpellEffect | null {
   if (!/^Reveal the top four cards of your library. You may put a creature card from among them onto the battlefield. It gains "At the beginning of your end step, return (?:this creature|~) to its owner'?s hand." Then put the rest of the cards revealed this way on the bottom of your library in any order.?$/i.test(text.trim())) return null;
   return { kind: "look-top-select", amount: 4, types: ["Creature"], destination: "battlefield", returnAtEndStep: true };
+}
+
+function parseMayaelLookTop(text: string): SpellEffect | null {
+  const match = /Look at the top five cards of your library\. You may put a creature card with power (\d+) or greater from among them onto the battlefield\. Put the rest on the bottom of your library in any order\.?$/i.exec(text.trim());
+  return match ? { kind: "look-top-select", amount: 5, types: ["Creature"], destination: "battlefield", minPower: Number(match[1]) } : null;
 }
 
 function parseExileAndTransferSource(text: string): SpellEffect | null {
@@ -3783,6 +3800,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   const temporaryKeyword = /^Target creature gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };
+  if (/^Target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value until end of turn$/i.test(text)) {
+    return { effect: { kind: "animate-target-artifact-mana-value" }, target: "noncreature-artifact" };
+  }
+  if (/^Target artifact creature gains deathtouch and lifelink until end of turn$/i.test(text)) {
+    return { effect: { kind: "compound", effects: [{ kind: "grant-target-creature-keyword", keyword: "deathtouch" }, { kind: "grant-target-creature-keyword", keyword: "lifelink" }] }, target: "artifact-creature" };
+  }
   const thresholdKeyword = /^Target creature with power 5 or greater gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
   if (thresholdKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: thresholdKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature-power-at-least-5" };
   const globalKeyword = /^Permanents you control gain (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
@@ -4930,6 +4953,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^~'?s power and toughness are each equal to the number of (?:creature|land|artifact|green permanent)s? you control\.?$/i.test(line)) continue;
     if (/^~'?s power and toughness are each equal to your life total\.?$/i.test(line)) continue;
     if (/^~'?s power and toughness are each equal to the number of cards in your hand\.?$/i.test(line)) continue;
+    if (/^Look at the top five cards of your library\. You may put a creature card with power \d+ or greater from among them onto the battlefield\. Put the rest on the bottom of your library in any order\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;

@@ -334,6 +334,7 @@ const VRASKA_SWARMS_EMINENCE = () => make({ name: "Vraska, Swarm's Eminence", ty
 const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
 const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Bat", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", colors: ["B"] });
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
+const C13_SYDRI = () => make({ name: "Sydri, Galvanic Genius", type_line: "Legendary Creature — Human Wizard", mana_cost: "{W}{U}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "{U}: Target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value until end of turn.\n{W}{B}: Target artifact creature gains deathtouch and lifelink until end of turn.", oracle_id: "4e92d36b-1a35-4fa9-87ea-10eace5a3cc7" });
 const LIFELINKER = () => make({ name: "Kind Knight", type_line: "Creature — Knight", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink" });
 const FIRST_STRIKER = () => make({ name: "Quick Blade", type_line: "Creature — Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", keywords: ["First strike"], oracle_text: "First strike" });
 const FIRST_STRIKE_ON_YOUR_TURN = () => make({ name: "Test Razorkin Needlehead", type_line: "Creature — Goblin Berserker", mana_cost: "{B}", cmc: 1, power: "2", toughness: "2", oracle_text: "This creature has first strike during your turn." });
@@ -6065,6 +6066,14 @@ describe("casting", () => {
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("filters Mayael's top-five selection by minimum power", () => {
+    const mayael = make({ name: "Mayael, the Anima", type_line: "Legendary Creature — Elf Shaman", oracle_text: "{3}{R}{G}{W}, {T}: Look at the top five cards of your library. You may put a creature card with power 5 or greater from among them onto the battlefield. Put the rest on the bottom of your library in any order.", scryfall_id: "fixture-mayael" });
+    const small = make({ name: "Small Creature", type_line: "Creature — Bear", power: "4", toughness: "4", scryfall_id: "fixture-mayael-small" });
+    const large = make({ name: "Large Creature", type_line: "Creature — Beast", power: "5", toughness: "5", scryfall_id: "fixture-mayael-large" });
+    const profile = profileOf(mayael);
+    expect(profile.activatedAbilities).toContainEqual(expect.objectContaining({ effect: { kind: "look-top-select", amount: 5, types: ["Creature"], destination: "battlefield", minPower: 5 } }));
+  });
+
   it("puts Strategic Planning's unselected top cards into the graveyard", () => {
     const profile = profileOf(C13_STRATEGIC_PLANNING());
     expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "look-put-one-in-hand", amount: 3, restDestination: "graveyard" }] });
@@ -8244,6 +8253,22 @@ describe("triggered abilities", () => {
 
 
 describe("activated abilities", () => {
+  it("animates Sydri's target artifact and grants its artifact-creature keywords", () => {
+    expect(profileOf(C13_SYDRI())).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [
+        { targetKind: "noncreature-artifact", effect: { kind: "animate-target-artifact-mana-value" } },
+        { targetKind: "artifact-creature", effect: { kind: "compound" } }
+      ]
+    });
+    let game = readyOnBoard([C13_SYDRI(), TEST_ARTIFACT()], { hold: true });
+    game = stage(game, 0, () => ({ manaPool: { W: 0, U: 1, B: 0, R: 0, G: 0, C: 0 } }));
+    const sydri = permanentNamed(game, 0, "Sydri, Galvanic Genius")!;
+    const relic = permanentNamed(game, 0, "Test Relic")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: sydri.instance_id, abilityIndex: 0, targets: [{ kind: "permanent", instanceId: relic.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(permanentNamed(game, 0, "Test Relic")!.temporaryAnimation).toMatchObject({ power: 2, toughness: 2, types: ["Artifact", "Creature"] });
+  });
   /** Board plus priority in the controller's own precombat main phase. */
   function readyOnBoard(cards: CardData[], options: { sick?: boolean; library?: CardData[]; hold?: boolean } = {}) {
     let game = twoSeatGame([], []);
