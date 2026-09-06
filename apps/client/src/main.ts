@@ -633,8 +633,8 @@ function chooseTarget(target: Target): void {
   }
   const action = pending.action.action;
   if (action.type !== "cast" && action.type !== "activate" && action.type !== "equip") return;
-  ui.pendingTarget = null;
   if (action.type === "equip") {
+    ui.pendingTarget = null;
     if (target.kind !== "permanent") return;
     void submit({ ...action, targetId: target.instanceId });
     return;
@@ -646,6 +646,7 @@ function chooseTarget(target: Target): void {
     const selected = new Set(selectedTargets.map((candidate) => JSON.stringify(candidate)));
     const options = (view?.targetOptions[nextKind] ?? []).filter((candidate) => !selected.has(JSON.stringify(candidate)));
     if (!options.length) {
+      ui.pendingTarget = { ...pending, options: pending.options, selectedTargets, targetIndex: nextIndex };
       ui.notice = "Ya no hay objetivos legales para completar esta elección.";
       render();
       return;
@@ -655,6 +656,7 @@ function chooseTarget(target: Target): void {
     render();
     return;
   }
+  ui.pendingTarget = null;
   void submit({ ...action, targets: selectedTargets });
 }
 
@@ -1836,10 +1838,21 @@ function showZone(seat: number, zone: "library" | "hand" | "graveyard" | "exile"
   fillDialog("zone-view", panelHtml("zone-view", `${player.name} · ${label}`, hidden
     ? `<p class="zone-private">Zona oculta. El servidor nunca envía estas cartas: solo su conteo (${zone === "library" ? player.libraryCount : player.handCount}).</p>`
     : cards.length
-      ? `<div class="zone-cards">${cards.map((card) => `<button class="zone-card" type="button" data-zone-card="${escapeHtml(card.instance_id)}" title="Ver detalles de ${escapeHtml(card.name)}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></button>`).join("")}</div>`
+      ? `<div class="zone-cards">${cards.map((card) => {
+        const target = { kind: "graveyard-card", seat, instanceId: card.instance_id } as const;
+        const targetable = zone === "graveyard" && pendingTargetIncludes(target);
+        return `<button class="zone-card${targetable ? " targetable" : ""}" type="button" data-zone-card="${escapeHtml(card.instance_id)}" data-zone-seat="${seat}" data-zone-kind="${zone}" title="${targetable ? "Elegir como objetivo" : `Ver detalles de ${escapeHtml(card.name)}`} ">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></button>`;
+      }).join("")}</div>`
       : `<p class="zone-private">No hay cartas en esta zona.</p>`));
   document.querySelectorAll<HTMLButtonElement>("[data-zone-card]").forEach((button) => {
-    button.addEventListener("click", () => openCardActionMenu(button.dataset.zoneCard!));
+    button.addEventListener("click", () => {
+      if (button.dataset.zoneKind === "graveyard" && pendingTargetIncludes({ kind: "graveyard-card", seat: Number(button.dataset.zoneSeat), instanceId: button.dataset.zoneCard! })) {
+        chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.zoneSeat), instanceId: button.dataset.zoneCard! });
+        dialog("zone-view")?.close();
+        return;
+      }
+      openCardActionMenu(button.dataset.zoneCard!);
+    });
     button.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       openCardActionMenu(button.dataset.zoneCard!);

@@ -7,7 +7,7 @@ import { dirname } from "node:path";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { GameAction } from "@prossh/rules";
-import { actInMatch, createMatch, gameplayDebugSnapshot, getMatch, listMatches, matchSummary, seatForToken, setAutoPass, undoInMatch, viewMatch, type ImportedDeck } from "./matches.js";
+import { actInMatch, createMatch, gameplayDebugSnapshot, getMatch, listMatches, matchSummary, seatForToken, setAutoPass, setGameplayFailureSink, undoInMatch, viewMatch, type ImportedDeck } from "./matches.js";
 import { readCompletedOracleIds, selectTestedPod } from "./tested-mode.js";
 
 const port = Number(process.env.PORT ?? 8787);
@@ -38,6 +38,10 @@ function appendGameplayDebug(record: Record<string, unknown>): void {
     app.log.warn({ err: loggingError, gameplayDebugLogPath }, "could not persist gameplay debug trace");
   }
 }
+
+setGameplayFailureSink(({ matchId, error, debug }) => {
+  appendGameplayDebug({ kind: "bot-failure", matchId, error, debug });
+});
 
 interface ImportedPod { readonly source: string; readonly synced_at: string; readonly decks: readonly ImportedDeck[] }
 interface ImportedPrecon extends ImportedDeck { readonly set_code: string; readonly released_at: string; readonly cover_art_uri?: string; readonly cover_art_kind: string }

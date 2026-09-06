@@ -45,6 +45,14 @@ export interface CreatedMatch {
   readonly view: GameView;
 }
 
+type GameplayFailure = {
+  readonly matchId: string;
+  readonly error: string;
+  readonly debug: ReturnType<typeof gameplayDebugSnapshot>;
+};
+
+let gameplayFailureSink: ((record: GameplayFailure) => void) | undefined;
+
 const MATCH_TTL_MS = 6 * 60 * 60 * 1000;
 const MAX_MATCHES = 64;
 const DEFAULT_NAMES = ["Tú", "Luna", "Mauro", "Nox", "Iris", "Vega", "Rook", "Sable"];
@@ -52,6 +60,10 @@ const DEFAULT_NAMES = ["Tú", "Luna", "Mauro", "Nox", "Iris", "Vega", "Rook", "S
 const matches = new Map<string, MatchRecord>();
 const catalogPath = process.env.CATALOG_DB_PATH ?? fileURLToPath(new URL("../../../data/catalog/prossh.sqlite", import.meta.url));
 const tokenArtCache = new Map<string, { image_normal?: string; image_art_crop?: string }>();
+
+export function setGameplayFailureSink(sink: ((record: GameplayFailure) => void) | undefined): void {
+  gameplayFailureSink = sink;
+}
 
 function enrichTokenArt(view: GameView): GameView {
   if (!existsSync(catalogPath)) return view;
@@ -111,16 +123,22 @@ export function toDeckInputs(decks: readonly ImportedDeck[], humanSeats: Readonl
 
 /** Advances every bot seat until a human owes the next decision. */
 function driveBots(match: MatchRecord): void {
-  const result = runBots(match.state, (seat) => !match.humanSeats.has(seat));
-  const waiting = pendingSeat(result.state);
-  if (waiting !== null && !match.humanSeats.has(waiting)) {
-    // Never leave the UI silently waiting on a bot. This turns an unsupported
-    // bot choice or a budget exhaustion into an actionable server log with a
-    // bounded public-state snapshot (and the route already records it).
-    throw new Error(`El bot no pudo estabilizar la partida. ${stabilizationDiagnostic(result.state)}`);
+  try {
+    const result = runBots(match.state, (seat) => !match.humanSeats.has(seat));
+    const waiting = pendingSeat(result.state);
+    if (waiting !== null && !match.humanSeats.has(waiting)) {
+      throw new Error(`El bot no pudo estabilizar la partida. ${stabilizationDiagnostic(result.state)}`);
+    }
+    match.state = result.state;
+    match.lastActivityAt = Date.now();
+  } catch (error) {
+    gameplayFailureSink?.({
+      matchId: match.id,
+      error: error instanceof Error ? error.message : "Error desconocido del motor.",
+      debug: gameplayDebugSnapshot(match)
+    });
+    throw error;
   }
-  match.state = result.state;
-  match.lastActivityAt = Date.now();
 }
 
 export function createMatch(decks: readonly ImportedDeck[], options: { seed?: number; source: string; humanSeats?: readonly SeatId[] }): CreatedMatch {
