@@ -312,6 +312,7 @@ function returnToMain(): void {
   view = null;
   window.sessionStorage.removeItem("prossh.match");
   ui.pendingTarget = null;
+  ui.stopMenu = null;
   ui.notice = "";
   render();
 }
@@ -382,6 +383,7 @@ function applyView(next: GameView): void {
   ui.abilityMenu = null;
   ui.cardActionMenu = null;
   ui.contextMenu = null;
+  ui.stopMenu = null;
   ui.stackDetail = next.stack.some((object) => object.id === ui.stackDetail) ? ui.stackDetail : null;
   ui.showFullLibrary = false;
   if (!next.combat.awaitingAttackers) ui.attackers.clear();
