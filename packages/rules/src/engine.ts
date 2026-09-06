@@ -875,6 +875,12 @@ function attachedAuras(state: GameState, permanent: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === permanent.instance_id
     && hasSubtype(cardProfile(candidate.card), "Aura"));
 }
+function auraLandManaBonusTypes(state: GameState, land: Permanent): readonly ManaType[] {
+  return attachedAuras(state, land).flatMap((aura) => {
+    const bonus = cardProfile(aura.card).auraLandManaBonus;
+    return bonus ? Array.from({ length: bonus.amount }, () => bonus.mana) : [];
+  });
+}
 function auraCharacteristicSetting(state: GameState, permanent: Permanent): NonNullable<EquipmentModification["characteristicSetting"]> | undefined {
   return attachedAuras(state, permanent)
     .map((aura) => cardProfile(aura.card).auraModification?.characteristicSetting)
@@ -1040,6 +1046,8 @@ export interface ManaSource {
   readonly fixedProduces?: readonly ManaType[];
   /** Extra type choice from a controlled static mana replacement effect. */
   readonly bonusOptions?: readonly ManaType[];
+  /** Fixed extra mana granted by attached Auras such as Wild Growth. */
+  readonly bonusTypes?: readonly ManaType[];
   readonly lifeCost: number;
   readonly requiresTap: boolean;
   readonly commanderMana?: boolean;
@@ -1177,6 +1185,8 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
       const bonus = landBonuses.find((entry) =>
         isLand(profile) && hasSubtype(profile, entry.subtype)
         && (options as readonly string[]).includes(entry.mana));
+      const bonusTypes = state && isLand(profile) ? auraLandManaBonusTypes(state, permanent) : [];
+      const bonusOptions = doublesLandMana && isLand(profile) ? [...new Set(options)] : [];
       sources.push({
         permanentId: permanent.instance_id,
         abilityIndex: ability.index,
@@ -1184,7 +1194,8 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
         options,
         amount: ability.amount + (bonus ? 1 : 0),
         ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
-        ...(doublesLandMana && isLand(profile) ? { bonusOptions: options } : {}),
+        ...(bonusTypes.length ? { bonusTypes } : {}),
+        ...(bonusOptions.length ? { bonusOptions } : {}),
         ...(ability.removeCounters ? { removeCounters: ability.removeCounters } : {}),
         ...(ability.commanderEntryCounters ? { commanderMana: true } : {}),
         ...(ability.manaRestriction ? { restriction: ability.manaRestriction } : {}),
@@ -1200,7 +1211,8 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
 function manaSourceCapacity(sources: readonly ManaSource[]): number {
   const byPermanent = new Map<string, number>();
   for (const source of sources) {
-    byPermanent.set(source.permanentId, Math.max(byPermanent.get(source.permanentId) ?? 0, source.amount + (source.bonusOptions?.length ? 1 : 0)));
+    byPermanent.set(source.permanentId, Math.max(byPermanent.get(source.permanentId) ?? 0,
+      source.amount + (source.bonusTypes?.length ?? 0) + (source.bonusOptions?.length ? 1 : 0)));
   }
   return [...byPermanent.values()].reduce((total, amount) => total + amount, 0);
 }
@@ -1219,6 +1231,7 @@ export interface ManaPlan {
     readonly lifeCost: number;
     readonly requiresTap: boolean;
     readonly bonusType?: ManaType;
+    readonly bonusTypes?: readonly ManaType[];
     readonly commanderMana?: boolean;
     readonly removeCounters?: readonly CounterCost[];
     readonly fixedProduces?: readonly ManaType[];
@@ -1251,7 +1264,7 @@ function coloredRequirements(cost: ManaCost): ManaType[][] {
 
 function sourceSignature(source: ManaSource): string {
   const counters = (source.removeCounters ?? []).map((cost) => `${cost.amount}:${cost.kind}`).join(",");
-  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${[...(source.bonusOptions ?? [])].join("")}|${source.lifeCost}|${counters}|${source.restriction?.kind ?? ""}`;
+  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${[...(source.bonusTypes ?? [])].join("")}|${[...(source.bonusOptions ?? [])].join("")}|${source.lifeCost}|${counters}|${source.restriction?.kind ?? ""}`;
 }
 
 function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Tap {
@@ -1265,6 +1278,7 @@ function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Ta
     ...(source.removeCounters ? { removeCounters: source.removeCounters } : {}),
     ...(source.commanderMana ? { commanderMana: true } : {}),
     ...(source.fixedProduces ? { fixedProduces: source.fixedProduces } : {}),
+    ...(source.bonusTypes?.length ? { bonusTypes: source.bonusTypes } : {}),
     ...(source.restriction ? { restriction: source.restriction } : {}),
     ...(bonusType ? { bonusType } : {})
   };
@@ -1274,14 +1288,15 @@ function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType, b
   const base = !source.fixedProduces
     ? addMana(pool, chosen, source.amount)
     : source.fixedProduces.reduce((current, mana) => addMana(current, mana, 1), pool);
-  return bonusType ? addMana(base, bonusType, 1) : base;
+  const withFixed = (source.bonusTypes ?? []).reduce((current, mana) => addMana(current, mana, 1), base);
+  return bonusType ? addMana(withFixed, bonusType, 1) : withFixed;
 }
 
 function outputTypesForTap(tap: Tap): readonly ManaType[] {
   const base = tap.fixedProduces
     ? [...tap.fixedProduces]
     : Array.from({ length: tap.amount }, () => tap.type);
-  return tap.bonusType ? [...base, tap.bonusType] : base;
+  return [...base, ...(tap.bonusTypes ?? []), ...(tap.bonusType ? [tap.bonusType] : [])];
 }
 
 /** The plan solver uses one aggregate pool, then restores restriction tags before state mutation. */
@@ -1353,7 +1368,8 @@ export function planManaPayment(
   const ordered = [...sources].sort((left, right) =>
     left.options.length - right.options.length ||
     left.lifeCost - right.lifeCost ||
-    (right.amount + (right.bonusOptions?.length ? 1 : 0)) - (left.amount + (left.bonusOptions?.length ? 1 : 0)) ||
+    (right.amount + (right.bonusTypes?.length ?? 0) + (right.bonusOptions?.length ? 1 : 0))
+      - (left.amount + (left.bonusTypes?.length ?? 0) + (left.bonusOptions?.length ? 1 : 0)) ||
     left.permanentId.localeCompare(right.permanentId));
   const wanted = new Set(coloredRequirements(cost).flat());
   let budget = 40_000;
@@ -1365,7 +1381,9 @@ export function planManaPayment(
     let currentLife = lifeSpent;
     const spare = ordered
       .filter((source) => !used.has(source.permanentId))
-      .sort((left, right) => (right.amount + (right.bonusOptions?.length ? 1 : 0)) - (left.amount + (left.bonusOptions?.length ? 1 : 0)) || left.lifeCost - right.lifeCost || left.permanentId.localeCompare(right.permanentId));
+      .sort((left, right) => (right.amount + (right.bonusTypes?.length ?? 0) + (right.bonusOptions?.length ? 1 : 0))
+        - (left.amount + (left.bonusTypes?.length ?? 0) + (left.bonusOptions?.length ? 1 : 0))
+        || left.lifeCost - right.lifeCost || left.permanentId.localeCompare(right.permanentId));
     let index = 0;
     for (;;) {
       const payment = payCost(cost, currentPool, payOptions(currentLife));
@@ -7310,11 +7328,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
       const activations = ability.fixedProduces ? [ability.fixedProduces[0]!] : options;
       for (const mana of activations) {
+        const auraBonusTypes = isLand(profile) ? auraLandManaBonusTypes(state, permanent) : [];
         const bonusOptions = isLand(profile) && allPermanents(state).some((candidate) => candidate.controller === seat
           && cardProfile(candidate.card).doublesLandMana) ? [...new Set(options)] : [undefined];
         for (const manaBonus of bonusOptions) {
           const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: ability.amount }, () => mana);
-          const produced = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((type) => `{${type}}`).join("");
+          const produced = [...outputTypes, ...auraBonusTypes, ...(manaBonus ? [manaBonus] : [])].map((type) => `{${type}}`).join("");
           actions.push({
             action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana, ...(manaBonus ? { manaBonus } : {}) },
             label: `${permanent.card.name}: Add ${produced}`,
@@ -7720,7 +7739,10 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
   const amount = ability.amountFromSacrifice ? sacrificedCount : ability.amount;
   const lifeGain = ability.gainLifeFromAmount ? sacrificedCount : (ability.gainLife ?? 0);
-  const outputTypes = ability.fixedProduces ? ability.fixedProduces : Array.from({ length: amount + landBonus }, () => action.mana);
+  const auraBonusTypes = isLand(sourceProfile) ? auraLandManaBonusTypes(activationState, currentSource) : [];
+  const outputTypes = ability.fixedProduces
+    ? [...ability.fixedProduces, ...auraBonusTypes]
+    : [...Array.from({ length: amount + landBonus }, () => action.mana), ...auraBonusTypes];
   const restrictedOutput = ability.manaRestriction
     ? outputTypes.map((type) => ({ type, restriction: ability.manaRestriction! }))
     : [];
@@ -7730,9 +7752,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     commanderMana: current.commanderMana + (ability.commanderEntryCounters ? ability.amount : 0),
     manaPool: restrictedOutput.length
       ? current.manaPool
-      : (ability.fixedProduces
-        ? ability.fixedProduces.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool)
-        : addMana(current.manaPool, action.mana, amount + landBonus)),
+      : outputTypes.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool),
     ...(restrictedOutput.length ? { restrictedMana: [...(current.restrictedMana ?? []), ...restrictedOutput] } : {}),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
