@@ -5605,7 +5605,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const stat = effect.statsFromAmount ? amount : null;
       let next = state;
       for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
-        const token: GameCard = {
+        const token: GameCard = uniqueTokenCard(next, {
           scryfall_id: `token:${object.id}:${index}`,
           instance_id: `token:${object.id}:${index}`,
           owner: controller,
@@ -5620,7 +5620,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           colors: effect.token.colors,
           keywords: effect.token.keywords,
           token_source_set_code: object.card.set_code
-        };
+        });
         next = putOntoBattlefield(next, controller, token, false, effect.token.tapped);
       }
       return logged(next, controller, `${playerAt(next, controller).name} crea ${amount} ${effect.token.name}${amount === 1 ? "" : "s"}.`);
@@ -5633,7 +5633,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const stat = effect.statsFromAmount ? amount : null;
       let next = state;
       for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
-        const token: GameCard = {
+        const token: GameCard = uniqueTokenCard(next, {
           scryfall_id: `token:${object.id}:${index}`,
           instance_id: `token:${object.id}:${index}`,
           owner: recipient,
@@ -5648,7 +5648,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           colors: effect.token.colors,
           keywords: effect.token.keywords,
           token_source_set_code: object.card.set_code
-        };
+        });
         next = putOntoBattlefield(next, recipient, token, false, effect.token.tapped);
       }
       return logged(next, controller, `${playerAt(next, recipient).name} crea ${amount} ${effect.token.name}${amount === 1 ? "" : "s"}.`);
