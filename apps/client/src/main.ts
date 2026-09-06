@@ -1034,6 +1034,9 @@ function logDrawerHtml(): string {
 /** The stack rides just above the hand so it is impossible to miss mid-combat. */
 function stackStripHtml(): string {
   if (!view) return "";
+  // Centered decisions own the attention surface; keep the stack available
+  // once priority resumes, but do not let it compete with search/scry/payment.
+  if (view.librarySearch || view.scry || view.topSelection || view.reorderTop || view.viewedHand || ui.pendingTarget) return "";
   const passed = view.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`);
   const priority = view.priorityOpen ? seatOf(view.prioritySeat)?.name : undefined;
   const status = priority
