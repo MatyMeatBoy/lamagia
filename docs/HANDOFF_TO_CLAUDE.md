@@ -3906,3 +3906,9 @@ damage-plus-life primitive to a creature-only target; the target restriction
 is preserved while the gain-life half resolves normally (CR 609.3, 118.3).
 Current validation: **724 rules tests**, `npm run check`, and `git diff --check`
 pass.
+
+The source rescan also closed Red Dragon: arbitrary ability-word labels are
+now stripped before the shared trigger grammar, so `Fire Breath — When ~
+enters` reuses the normal ETB damage-to-each-opponent primitive (CR 603.1,
+603.2). Current validation: **725 rules tests**, `npm run check`, and `git
+diff --check` pass.

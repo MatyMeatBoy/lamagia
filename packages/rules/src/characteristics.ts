@@ -2647,7 +2647,11 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
 function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { effectText: string }) | null {
   // Landfall is a keyword ability word; its rules-bearing trigger follows the
   // dash and uses the same enters-battlefield event (CR 603.1, 603.2).
-  const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "").replace(/^morbid\s+[—–-]\s*/i, "");
+  const normalized = line
+    .replace(/^(?:landfall|morbid)\s+[—–-]\s*/i, "")
+    // Ability words are labels, not rules text; keep the same grammar usable
+    // for named labels such as "Fire Breath — When ~ enters" (CR 603.1).
+    .replace(/^[A-Za-z][A-Za-z'’ -]*\s+[—–-]\s+(?=(?:when|whenever|at)\b)/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
     if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}), ...(template.spellSubtype ? { spellSubtype: template.spellSubtype } : {}), ...(template.nontoken ? { nontoken: true } : {}), ...(template.discardedCardType ? { discardedCardType: template.discardedCardType } : {}), ...(template.condition ? { condition: template.condition } : {}) };
