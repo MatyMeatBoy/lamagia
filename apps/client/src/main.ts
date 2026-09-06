@@ -115,6 +115,10 @@ function persistStops(): void {
   window.localStorage.setItem("prossh.stops", JSON.stringify([...ui.stops]));
 }
 
+function autoPassForPhase(): boolean {
+  return ui.autoPass && !ui.stops.has(view?.step ?? "cleanup");
+}
+
 function phaseRailHtml(): string {
   const currentIndex = STEP_ORDER.indexOf(view!.step);
   return `<nav class="phase-rail mtgo-phase-rail" aria-label="Fases del turno">
@@ -285,7 +289,7 @@ async function startMatch(mode: "cedh" | "precon" | "tested", deckId?: string): 
     window.sessionStorage.setItem("prossh.match", JSON.stringify(session));
     ui.notice = "";
     applyView(created.view);
-    if (ui.autoPass) {
+    if (autoPassForPhase()) {
       try {
         const settled = await api<GameView>(`/api/matches/${session.matchId}/settings`, {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -1267,7 +1271,7 @@ function render(): void {
             ${ui.pendingTarget ? `<button id="cancel-target" class="text-button">Cancelar objetivo</button>` : ""}
             ${view.undoAvailable ? `<button id="undo" class="text-button" title="Deshacer la última activación de maná">Deshacer</button>` : ""}
             <button id="pass" class="primary-button" ${pass ? "" : "disabled"}>${escapeHtml(pass?.label ?? "Sin prioridad")}<kbd>Espacio</kbd></button>
-            <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar</label>
+    <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar</label>
           </div>
         </div>
       </section>
