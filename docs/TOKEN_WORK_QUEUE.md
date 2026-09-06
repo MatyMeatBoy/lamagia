@@ -1,10 +1,10 @@
 # Generated token worker queue
 
-Generated: `2026-09-06T08:48:24.398514+00:00`
+Generated: `2026-09-06T09:17:20.246104+00:00`
 
 Unique definitions: **809** · printings: **2,834**
 
-Artwork: **809** definitions have an image; **0** need catalog/artwork review.
+Artwork: **809** definitions have an image; **0** need catalog/artwork review; **0** printings lack an image.
 
 ## `token-activated` (39)
 

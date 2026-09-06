@@ -12,9 +12,16 @@ import argparse
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 MAX_TOTAL_DELETIONS = 600
 MAX_RULE_FILE_DELETIONS = 300
+MAX_ORACLE_IDS = 20
+
+
+def oracle_ids_from_diff(diff: str) -> set[str]:
+    """Collect stable IDs from added/modified worker fixtures, not card names."""
+    return set(re.findall(r"[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", diff, re.I))
 
 
 def git(*args: str) -> str:
@@ -29,10 +36,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True, help="Published integration SHA")
     parser.add_argument("--commit", required=True, help="Worker commit SHA")
+    parser.add_argument("--report", help="Optional Markdown path for a compact audit record")
     args = parser.parse_args()
 
     files = [line for line in git("diff", "--name-only", f"{args.base}..{args.commit}").splitlines() if line]
     diff = git("diff", "--unified=0", f"{args.base}..{args.commit}", "--")
+    oracle_ids = oracle_ids_from_diff(diff)
     added = [line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++")]
     union_additions = [line for line in added if "| { readonly kind:" in line]
     duplicate_union_additions = []
@@ -74,13 +83,23 @@ def main() -> int:
         failures.append(f"scope gate exceeded: {total_deletions} total deletions (max {MAX_TOTAL_DELETIONS})")
     if rule_file_deletions > MAX_RULE_FILE_DELETIONS:
         failures.append(f"rules rewrite gate exceeded: {rule_file_deletions} deletions under packages/rules (max {MAX_RULE_FILE_DELETIONS})")
+    if len(oracle_ids) > MAX_ORACLE_IDS:
+        failures.append(f"oracle_id gate exceeded: {len(oracle_ids)} IDs (max {MAX_ORACLE_IDS})")
 
     status = "REJECT" if failures else "PASS"
-    print(f"{status} {args.commit} files={len(files)} union_additions={len(union_additions)} deletions={total_deletions} rule_deletions={rule_file_deletions} engine={has_engine} scenario={has_scenario}")
+    print(f"{status} {args.commit} files={len(files)} oracle_ids={len(oracle_ids)} union_additions={len(union_additions)} deletions={total_deletions} rule_deletions={rule_file_deletions} engine={has_engine} scenario={has_scenario}")
     for failure in failures:
         print(f"- {failure}")
     if failures:
         print("- A type-only or parser-only patch is not a completed card; return it for correction.")
+    if args.report:
+        report = Path(args.report)
+        report.parent.mkdir(parents=True, exist_ok=True)
+        outcome = "REJECT" if failures else "PASS"
+        lines = [f"## {outcome} `{args.commit[:12]}`", "", f"- Base: `{args.base}`", f"- Files: {len(files)}", f"- Oracle IDs: {len(oracle_ids)} / {MAX_ORACLE_IDS}", f"- Deletions: {total_deletions} total, {rule_file_deletions} rules", f"- Engine path: `{has_engine}`", f"- Scenario test: `{has_scenario}`"]
+        if failures:
+            lines.extend(["", "### Reasons", "", *[f"- {failure}" for failure in failures]])
+        report.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return 1 if failures else 0
 
 

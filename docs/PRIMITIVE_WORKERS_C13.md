@@ -147,7 +147,7 @@ Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, zone:hand, zo
 
 Cards: Jar of Eyeballs [3075dadd-240f-4455-9286-9f1d48f53a3f]
 
-| needs-review | `c13-oracle-other-static-spell-2` | activated | 1 | 1 | 1 | 1 | 1 | 1 | 5 |
+| needs-review | `c13-oracle-other-static-spell-2` | activated | 1 | 1 | 1 | 0 | 1 | 1 | 5 |
 Reusable atoms: `amount:parameter, kind:static-or-spell, op:other, target:player, zone:battlefield`
 
 Cards: Sudden Spoiling [dce202c7-fe8e-462a-858e-7a5a69bd5b6b]

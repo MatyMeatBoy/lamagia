@@ -5,18 +5,16 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **C13**
-- One-line cards: **2**
-- Cards with a reusable existing primitive hint: **2**
+- One-line cards: **0**
+- Cards with a reusable existing primitive hint: **0**
 - Cards needing new primitive review: **0**
-- Templates: **2**
+- Templates: **0**
 
 ## Worker rule
 
 Fix the shared primitive, not the first card name. Preserve type, zone, target, quantity, cost, and optionality as structured operands. Do not report a card complete until the next engine export says `fullyImplemented: true`.
 
-## Queue (first 2 cards; full machine-readable list is generated JSON)
+## Queue (first 0 cards; full machine-readable list is generated JSON)
 
 | Priority | Card | Oracle ID | Family | Reuse hint | Missing line |
 | --- | --- | --- | --- | --- | --- |
-| reuse-existing | Sudden Spoiling | `dce202c7-fe8e-462a-858e-7a5a69bd5b6b` | static-continuous | static / continuous | Until end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2. |
-| reuse-existing | Curse of Inertia | `0bbeb0ee-647b-43d3-91b3-6869d5ccb8b8` | activated | trigger / ETB | Whenever a player attacks enchanted player with one or more creatures, that attacking player may tap or untap target permanent of their choice. |

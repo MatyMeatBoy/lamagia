@@ -769,7 +769,7 @@ export type GameAction =
   | { readonly type: "toggle-trigger-yield"; readonly sourceId: string; readonly abilityIndex?: number; readonly enabled: boolean }
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number; readonly discardCardId?: string }
-  | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
+  | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor; readonly amount?: number }
   | { readonly type: "reorder-top"; readonly sourceId: string; readonly order: readonly string[] }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
@@ -5410,6 +5410,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }, state);
     }
     case "add-mana-any-color": {
+      if (effect.splitAmount && !object.chosenColor) {
+        const amount = effect.splitAmount === "creatures-you-control"
+          ? playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
+          : 1;
+        return {
+          ...state,
+          pendingChoice: {
+            type: "choose-color", seat: controller, sourceId: object.sourcePermanentId ?? object.id, sourceCard: object.card,
+            effect, variableValue: amount, exileSourceAfterResolution: false, sendSourceToGraveyard: false
+          }
+        };
+      }
       if (object.chosenColor) {
         const amount = effect.amount === "creatures-you-control"
           ? playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
@@ -9352,6 +9364,14 @@ function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAc
     ? choice.effect.colors
     : ["W", "U", "B", "R", "G"];
   if (!colors.includes(action.color)) throw new Error("Choose one of Magic's five colors.");
+  if (choice.effect.kind === "add-mana-any-color" && choice.effect.splitAmount) {
+    const amount = choice.variableValue ?? 0;
+    const next = withPlayer({ ...state, pendingChoice: null }, seat, (player) => ({
+      ...player,
+      manaPool: addMana(player.manaPool, action.color, action.amount ?? amount)
+    }));
+    return logged(next, seat, `${playerAt(next, seat).name} agrega ${action.amount ?? amount} maná ${action.color}.`);
+  }
   const source: StackObject = {
     id: choice.sourceId,
     controller: choice.seat,
