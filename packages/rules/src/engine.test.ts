@@ -7358,6 +7358,21 @@ describe("triggered abilities", () => {
     expect(powerOf(withBigGuy.players[0]!.battlefield.find((permanent) => permanent.instance_id === rubyWithBigGuy.instance_id)!, withBigGuy)).toBe(3);
   });
 
+  it("exiles every creature on both sides when False Prophet dies", () => {
+    const falseProphet = make({ name: "False Prophet", type_line: "Creature — Human Cleric", mana_cost: "{2}{W}{W}", cmc: 4, power: "3", toughness: "5", oracle_text: "When this creature dies, exile all creatures." });
+    const profile = profileOf(falseProphet);
+    expect(profile.triggers[0]).toMatchObject({ event: "dies", subject: "self", effect: { kind: "exile-all-creatures" } });
+    let game = readyToCast([], [GOBLIN_BOMBARDMENT(), falseProphet, BEAR()], [DEATHTOUCHER()]);
+    const bombardment = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Bombardment")!;
+    const prophet = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "False Prophet")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: bombardment.instance_id, abilityIndex: 0, sacrificeId: prophet.instance_id, targets: [{ kind: "player", seat: 1 }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Tiny Viper")).toBe(false);
+    expect(game.players[1]!.exile.some((card) => card.name === "Tiny Viper")).toBe(true);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({

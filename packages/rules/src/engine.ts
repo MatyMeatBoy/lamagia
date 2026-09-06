@@ -5178,6 +5178,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return logged(next, controller, `${sourceName} destruye ${effect.tappedOnly ? "las criaturas giradas" : effect.flyingOnly ? "las criaturas voladoras" : "todas las criaturas"}.`);
     }
+    case "exile-all-creatures": {
+      let next = state;
+      for (const permanent of allPermanents(state)) {
+        if (!isCreature(cardProfile(permanent.card))) continue;
+        const current = findPermanent(next, permanent.instance_id);
+        if (current) next = movePermanentToZone(next, current, "exile");
+      }
+      return logged(next, controller, `${sourceName} exilia todas las criaturas.`);
+    }
     case "kirtars-wrath": {
       // Threshold is checked before this spell leaves the stack (CR 702.34a),
       // so the resolving Wrath itself is not counted in the graveyard.

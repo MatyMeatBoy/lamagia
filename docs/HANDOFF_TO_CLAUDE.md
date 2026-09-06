@@ -5989,6 +5989,29 @@ the trigger rather than being ignored. Validation: full **903** rules
 tests green (1 new), `npm run check` across all four workspaces,
 200/200 simulated games.
 
+## False Prophet: exile-all-creatures, the exile sibling of destroy-all (2026-09-06)
+
+"When ~ dies, exile all creatures" needed only an EXILE variant of
+the existing `destroy-all-creatures` effect — the same iterate-every-
+creature shape, but calling `movePermanentToZone(..., "exile")`
+directly instead of `destroyPermanent` (which would incorrectly
+respect indestructible and regeneration shields; exile ignores both,
+CR 701.32a doesn't check either). Added `SpellEffect` kind
+`exile-all-creatures` (no modifiers — no card in the catalog needs a
+tapped/flying-only exile-all variant yet, so kept it minimal rather
+than copying `destroy-all-creatures`'s full flag set speculatively)
+and its executor, re-fetching each permanent via `findPermanent`
+inside the loop (mirroring the defensive re-fetch `destroyPermanent`
+already does internally, since `movePermanentToZone` itself assumes
+a current reference and does not re-fetch). Verified **+2** in the
+export count (10,935 → 10,937) and set coverage holds at 33.2%.
+Scenario-tested: sacrificing False Prophet (via Goblin Bombardment)
+while a Grizzly Bears and an opponent's Tiny Viper are also on the
+battlefield exiles both of them (not just False Prophet's own
+controller's side), landing in each owner's exile zone rather than
+their graveyard. Validation: full **904** rules tests green (1 new),
+`npm run check` across all four workspaces, 200/200 simulated games.
+
 Eldrazi Displacer ("{2}{C}: Exile another target creature, then
 return it to the battlefield tapped under its owner's control.")
 reuses the existing `blink-target-creature` effect (Conjurer's

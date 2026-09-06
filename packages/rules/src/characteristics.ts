@@ -758,6 +758,8 @@ export type SpellEffect =
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean; readonly flyingOnly?: boolean; readonly xThreshold?: number; readonly excludeSource?: boolean }
+  /** False Prophet: exile, not destroy, so indestructible and regeneration shields don't apply. */
+  | { readonly kind: "exile-all-creatures" }
   /** Kirtar's Wrath: threshold chooses the token-producing replacement mode (CR 702.34, 608.2h). */
   | { readonly kind: "kirtars-wrath"; readonly threshold: number; readonly token: TokenDefinition }
   | { readonly kind: "destroy-creatures-power-greater-than-target" }
@@ -4390,6 +4392,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
   }
   if (/^Destroy all creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures" }, target: "none" };
+  if (/^Exile all creatures$/i.test(text)) return { effect: { kind: "exile-all-creatures" }, target: "none" };
   if (/^Destroy all tapped creatures$/i.test(text)) return { effect: { kind: "destroy-all-creatures", tappedOnly: true }, target: "none" };
   if (/^Destroy all artifacts, creatures, and enchantments$/i.test(text)) {
     return { effect: { kind: "destroy-all-artifacts-creatures-enchantments" }, target: "none" };
