@@ -539,3 +539,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-destroy-static-spell` | Reusable thresholded source-counter sacrifice and nonland-permanent sweep for Plague Boiler (CR 121.1, 704.5f, 701.7) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-other-static-spell-2` | Reusable copy-target-instant-or-sorcery primitive for C13 copy cards, preserving the original spell's targets when no retarget choice is made (CR 707.10, 707.12) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-counter-static-spell-4` | Reusable replacement that doubles +1/+1 counters placed on creatures when Primal Vigor applies (CR 614.1, 121.6) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-other-static-spell-4` | Reusable replacement that doubles token creation when Primal Vigor applies (CR 614.1, 111.10) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

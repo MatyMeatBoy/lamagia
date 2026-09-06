@@ -3133,13 +3133,17 @@ describe("casting", () => {
   });
 
   it("doubles creature counters through C13 Primal Vigor's replacement primitive", () => {
-    expect(profileOf(C13_PRIMAL_VIGOR())).toMatchObject({ doublesCreatureCounters: true });
+    expect(profileOf(C13_PRIMAL_VIGOR()).fullyImplemented).toBe(true);
+    expect(profileOf(C13_PRIMAL_VIGOR())).toMatchObject({ doublesCreatureCounters: true, doublesTokens: true });
     const bear = BEAR();
     let game = readyToCast([GROWTH_SPELL()], [C13_PRIMAL_VIGOR(), bear, FOREST(), FOREST()]);
     const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
     const boosted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
     expect(boosted.counters["+1/+1"]).toBe(2);
+    let tokens = readyToCast([FEAR_TOKEN_SPELL()], [C13_PRIMAL_VIGOR(), FOREST(), FOREST(), FOREST(), SWAMP()]);
+    tokens = applyAction(tokens, 0, { type: "cast", cardId: "hand-0" });
+    expect(tokens.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Horror")).toHaveLength(2);
   });
 
   it("resolves Oloro's optional life-gain draw and opponent life loss", () => {

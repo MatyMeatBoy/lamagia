@@ -1877,6 +1877,14 @@ function creatureCounterAmount(state: GameState, permanent: Permanent, counter: 
   return doubled ? amount * 2 : amount;
 }
 
+/** Applies active Doubling Season/Primal Vigor-style token replacement. */
+function tokenAmount(state: GameState, amount: number): number {
+  if (amount <= 0) return amount;
+  const doubled = allPermanents(state).some((source) => !permanentLosesAbilities(state, source)
+    && cardProfile(source.card).doublesTokens);
+  return doubled ? amount * 2 : amount;
+}
+
 function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = [], additionalCounters: readonly CounterCost[] = []): GameState {
   const enteringCard = uniqueTokenCard(state, card);
   const profile = cardProfile(enteringCard);
@@ -5329,7 +5337,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         `${player.name} revela ${revealed.map((card) => card.name).join(", ")} y las pone en su mano.`);
     }
     case "create-token": {
-      const amount = effect.amount === "lands-you-control"
+      const baseAmount = effect.amount === "lands-you-control"
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
         : effect.amount === "creatures-you-control"
           ? playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
@@ -5342,6 +5350,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         : effect.amount === "opponents-with-4-plus-cards"
           ? state.players.filter((player) => player.seat !== controller && !player.lost && player.hand.length >= 4).length
         : effectAmount(effect.amount, object);
+      const amount = tokenAmount(state, baseAmount);
       const stat = effect.statsFromAmount ? amount : null;
       let next = state;
       for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
@@ -5368,7 +5377,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
       const recipient = target.seat;
-      const amount = effectAmount(effect.amount, object);
+      const amount = tokenAmount(state, effectAmount(effect.amount, object));
       const stat = effect.statsFromAmount ? amount : null;
       let next = state;
       for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
