@@ -775,7 +775,7 @@ export type GameAction =
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly exileId?: string }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number; readonly manaAlreadyPaid?: boolean }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly tapIds?: readonly string[]; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number; readonly manaAlreadyPaid?: boolean }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
   | { readonly type: "choose-mana-source"; readonly sourceId: string; readonly manaSourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType }
@@ -8216,7 +8216,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           ...(ability.manaCost?.hasVariable ? { variableValue } : {}),
           ...(sacrificeSet.length === 1 ? { sacrificeId: sacrificeSet[0]!.instance_id } : {}),
           ...(sacrificeSet.length > 1 ? { sacrificeIds: sacrificeSet.map((candidate) => candidate.instance_id) } : {}),
-          ...(tapCreature ? { tapId: tapCreature.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}),
+          ...(tapCreature ? { tapId: tapCreature.instance_id } : {}),
+          ...(ability.tapCost ? { tapIds: crewCostCandidates(state, seat, permanent, ability.tapCost.amount).slice(0, ability.tapCost.amount).map((candidate) => candidate.instance_id) } : {}),
+          ...(discard ? { discardCardId: discard.instance_id } : {}),
           ...(exileSet.length === 1 ? { exileCardId: exileSet[0]!.instance_id } : {}),
           ...(exileSet.length > 1 ? { exileCardIds: exileSet.map((card) => card.instance_id) } : {}) },
         label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exileSet.length ? ` — Exile ${exileSet.map((card) => card.name).join(", ")}` : ""}`,
@@ -9002,8 +9004,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     tapCreature = action.tapId ? candidates.find((candidate) => candidate.instance_id === action.tapId) : candidates[0];
     if (!tapCreature) throw new Error("Debes elegir una criatura enderezada válida para girar.");
   }
-  const crewCandidates = ability.tapCost ? crewCostCandidates(state, seat, source, ability.tapCost.amount as number) : [];
-  const crewSelection = ability.tapCost ? crewCandidates.slice(0, ability.tapCost.amount as number) : [];
+  const crewCandidates = ability.tapCost ? crewCostCandidates(state, seat, source, ability.tapCost.amount) : [];
+  const selectedCrewIds = action.tapIds ?? [];
+  const crewSelection = ability.tapCost
+    ? (selectedCrewIds.length ? selectedCrewIds.map((id) => crewCandidates.find((candidate) => candidate.instance_id === id)).filter((candidate): candidate is Permanent => Boolean(candidate)) : crewCandidates.slice(0, ability.tapCost.amount))
+    : [];
+  if (ability.tapCost && (selectedCrewIds.length && new Set(selectedCrewIds).size !== selectedCrewIds.length)) throw new Error("No puedes elegir la misma criatura dos veces para tripular.");
   if (ability.tapCost && crewSelection.length !== ability.tapCost.amount) throw new Error(`Debes girar ${ability.tapCost.amount} criaturas para tripular.`);
   let discard: GameCard | undefined;
   if (ability.discardsCard || ability.discardsCreatureCard) {
