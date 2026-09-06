@@ -87,6 +87,9 @@ interface UiState {
   stackDetail: string | null;
   /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
   layout: "auto" | "mobile";
+  /** MTGO-style phase stops for the local seat. */
+  stops: Set<TurnStep>;
+  stopMenu: { x: number; y: number; step: TurnStep } | null;
 }
 
 let session: MatchSession | null = null;
@@ -104,7 +107,23 @@ const ui: UiState = {
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
   actionsOpen: false,
   layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
+  ,stops: new Set<TurnStep>(JSON.parse(window.localStorage.getItem("prossh.stops") ?? "null") ?? ["upkeep", "draw", "precombat-main", "declare-attackers", "declare-blockers", "combat-damage", "end", "cleanup"]),
+  stopMenu: null
 };
+
+function persistStops(): void {
+  window.localStorage.setItem("prossh.stops", JSON.stringify([...ui.stops]));
+}
+
+function phaseRailHtml(): string {
+  const currentIndex = STEP_ORDER.indexOf(view!.step);
+  return `<nav class="phase-rail mtgo-phase-rail" aria-label="Fases del turno">
+    <span class="phase-turn">Turno ${view!.turn}</span>
+    ${STEP_ORDER.map((step, index) => `<button class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}${ui.stops.has(step) ? " stopped" : ""}" type="button" data-phase-stop="${step}" title="${ui.stops.has(step) ? "Quitar stopper" : "Añadir stopper"}: ${STEP_LABELS[step]}"><i aria-hidden="true"></i>${escapeHtml(STEP_LABELS[step])}</button>`).join("")}
+    <span class="spacer"></span>
+    <span class="priority-readout"><span class="pulse${view!.waitingOn === view!.viewerSeat ? "" : " muted"}"></span>Decide: <b style="color: var(--seat-${view!.waitingOn ?? 0})">${escapeHtml(seatOf(view!.waitingOn ?? -1)?.name ?? "nadie")}</b></span>
+  </nav>`;
+}
 
 interface CardDragState {
   readonly cardId: string;
@@ -1216,11 +1235,7 @@ function render(): void {
       </span>
     </header>
 
-    <nav class="phase-rail" aria-label="Fases del turno">
-      ${STEP_ORDER.map((step, index) => `<span class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}
-      <span class="spacer"></span>
-      <span class="priority-readout"><span class="pulse${myTurn ? "" : " muted"}"></span>Decide: <b style="color: var(--seat-${view.waitingOn ?? 0})">${escapeHtml(seatOf(view.waitingOn ?? -1)?.name ?? "nadie")}</b></span>
-    </nav>
+    ${phaseRailHtml()}
 
     <div class="table">
       <p class="rotate-hint">Gira el dispositivo: la mesa está pensada para horizontal.</p>
@@ -1270,6 +1285,9 @@ function render(): void {
   ${stackDetailHtml()}
   ${ui.contextMenu && view.undoAvailable ? `<div class="context-menu" style="left:${ui.contextMenu.x}px;top:${ui.contextMenu.y}px" role="menu">
     <button id="context-undo" type="button">Deshacer última acción de maná</button>
+  </div>` : ""}
+  ${ui.stopMenu ? `<div class="context-menu phase-stop-menu" style="left:${ui.stopMenu.x}px;top:${ui.stopMenu.y}px" role="menu">
+    <button id="toggle-phase-stop" type="button">${ui.stops.has(ui.stopMenu.step) ? "Quitar stopper" : "Añadir stopper"}: ${escapeHtml(STEP_LABELS[ui.stopMenu.step])}</button>
   </div>` : ""}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
@@ -1343,6 +1361,27 @@ function wireBoard(): void {
   });
   on("#undo", () => void undoLatestMana());
   on("#context-undo", () => { ui.contextMenu = null; void undoLatestMana(); });
+  on("#toggle-phase-stop", () => {
+    const step = ui.stopMenu?.step;
+    if (!step) return;
+    if (ui.stops.has(step)) ui.stops.delete(step); else ui.stops.add(step);
+    persistStops();
+    ui.stopMenu = null;
+    render();
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-phase-stop]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const step = button.dataset.phaseStop as TurnStep;
+      if (ui.stops.has(step)) ui.stops.delete(step); else ui.stops.add(step);
+      persistStops();
+      render();
+    });
+    button.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      ui.stopMenu = { x: Math.min(event.clientX, Math.max(8, window.innerWidth - 250)), y: Math.min(event.clientY, Math.max(8, window.innerHeight - 58)), step: button.dataset.phaseStop as TurnStep };
+      render();
+    });
+  });
   document.querySelector<HTMLElement>(".table")?.addEventListener("contextmenu", (event) => {
     if (event.target instanceof Element && event.target.closest("[data-hand], [data-permanent], [data-zone-card]")) return;
     if (!view?.undoAvailable) return;
@@ -1354,7 +1393,7 @@ function wireBoard(): void {
     render();
   });
   document.querySelector<HTMLElement>(".table")?.addEventListener("click", () => {
-    if (ui.contextMenu) { ui.contextMenu = null; render(); }
+    if (ui.contextMenu || ui.stopMenu) { ui.contextMenu = null; ui.stopMenu = null; render(); }
   });
   document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
     button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
