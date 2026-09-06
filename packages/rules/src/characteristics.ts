@@ -916,6 +916,7 @@ export type TargetKind =
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
   | "creature-power-at-most-4"
+  | "creature-power-toughness-total-at-most-5"
   | "creature-toughness-at-most-4"
   | "creature-with-defender"
   | "creature-with-deathtouch"
@@ -3464,6 +3465,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Exile target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Exile target creature with mana value less than or equal to the number of Plains you control\.?$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-mana-value-up-to-plains" };
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };
+  if (/^Destroy target creature with total power and toughness 5 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-toughness-total-at-most-5" };
   if (/^Destroy target creature with toughness 4 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-least-4" };
   if (/^Destroy target creature with toughness 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-most-4" };
   if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };

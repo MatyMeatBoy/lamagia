@@ -373,7 +373,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     "any", "player", "creature", "spell", "creature-spell", "noncreature-spell", "permanent", "artifact-or-enchantment", "creature-with-defender", "creature-with-deathtouch", "creature-with-lifelink", "creature-with-menace", "creature-with-haste", "creature-with-first-strike", "creature-with-double-strike", "creature-with-trample", "creature-with-vigilance", "creature-with-indestructible", "creature-with-hexproof", "creature-with-shroud", "creature-with-reach", "creature-power-at-least-5", "creature-power-at-most-4", "creature-toughness-at-least-4", "creature-toughness-at-most-4",
     "artifact-creature-or-planeswalker", "artifact-enchantment-or-land", "artifact",
     "nonland", "nonartifact-creature", "non-demon-creature", "creature-you-control", "land-you-control", "enchantment", "land",
-    "attacking-or-blocking-creature",
+    "attacking-or-blocking-creature", "creature-power-toughness-total-at-most-5",
     "player-or-planeswalker", "card-in-your-graveyard", "card-in-a-graveyard", "creature-card-in-your-graveyard", "creature-card-in-a-graveyard", "artifact-card-in-your-graveyard", "artifact-card-in-a-graveyard", "enchantment-card-in-your-graveyard", "enchantment-card-in-a-graveyard", "land-card-in-a-graveyard",
     ...viewerActions.flatMap((action) => action.requiresTarget ? [action.requiresTarget] : [])
   ]);

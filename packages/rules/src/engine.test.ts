@@ -348,6 +348,7 @@ const WONDER = () => make({ name: "Wonder", type_line: "Creature — Incarnation
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
 const TOUGH_CREATURE_REMOVAL = () => make({ name: "Tough Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with toughness 4 or greater." });
 const SMALL_CREATURE_REMOVAL = () => make({ name: "Small Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 4 or less." });
+const CUT_DOWN = () => make({ name: "Cut Down", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Destroy target creature with total power and toughness 5 or less.", oracle_id: "1b30210d-10e9-4703-8967-032063bb4f26", scryfall_id: "1b30210d-10e9-4703-8967-032063bb4f26" });
 const TOUGHNESS_REMOVAL = () => make({ name: "Fragile Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with toughness 4 or less." });
 const DEFENDER_REMOVAL = () => make({ name: "Wall Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with defender." });
 const DEATHTOUCH_REMOVAL = () => make({ name: "Viper Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with deathtouch." });
@@ -4607,6 +4608,17 @@ describe("casting", () => {
     const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(false);
+  });
+
+  it("filters Cut Down by the creature's total power and toughness", () => {
+    const profile = profileOf(CUT_DOWN());
+    expect(profile).toMatchObject({ targetKind: "creature-power-toughness-total-at-most-5", fullyImplemented: true });
+    let game = readyToCast([CUT_DOWN()], [SWAMP()], [], [TRAMPLER(), BEAR()]);
+    const targets = legalTargets(game, 0, "creature-power-toughness-total-at-most-5");
+    expect(targets).toHaveLength(1);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
   });
 
   it("reuses typed artifact-or-creature targeting for Mortify", () => {
