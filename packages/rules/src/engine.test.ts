@@ -10123,6 +10123,298 @@ describe("Ogre Battledriver pumps and hastes another entering creature", () => {
   });
 });
 
+describe("Reflecting Pool's board-dependent 'any type' mana", () => {
+  const REFLECTING_POOL = () => make({ name: "Reflecting Pool", type_line: "Land", oracle_text: "{T}: Add one mana of any type that a land you control could produce." });
+
+  it("recognizes 'any type' the same way as the existing 'any color' Fellwar Stone template", () => {
+    const profile = profileOf(REFLECTING_POOL());
+    expect(profile.manaAbilities[0]).toMatchObject({ anyColorFromLandsControlledBy: "you" });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("computes its options from the controller's own other lands, including a colorless one", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [REFLECTING_POOL(), MOUNTAIN(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const pool = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Reflecting Pool")!;
+    const options = manaSources(game.players[0]!, game).find((source) => source.permanentId === pool.instance_id)!.options;
+    expect([...options].sort()).toEqual(["G", "R"]);
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: pool.instance_id, abilityIndex: 0, mana: "G" });
+    expect(game.players[0]!.manaPool.G).toBe(1);
+  });
+});
+
+describe("Vexing Shusher makes a target spell uncounterable", () => {
+  const VEXING_SHUSHER = () => make({ name: "Vexing Shusher", type_line: "Creature — Goblin Shaman", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "{R/G}: Target spell can't be countered." });
+
+  it("recognizes the activated ability targeting a spell on the stack", () => {
+    const profile = profileOf(VEXING_SHUSHER());
+    expect(profile.activatedAbilities[0]).toMatchObject({ effect: { kind: "make-target-spell-uncounterable" }, targetKind: "spell" });
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("protects a spell already on the stack from being countered", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 1, () => ({ hand: toHand(1, [BOLT()], "shusher-bolt"), autoPass: false }));
+    game = putOnBattlefield(game, 1, [MOUNTAIN()]);
+    game = putOnBattlefield(game, 0, [VEXING_SHUSHER(), MOUNTAIN(), FOREST()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 1 && state.prioritySeat === 1);
+    game = applyAction(game, 1, { type: "cast", cardId: "shusher-bolt-0", targets: [{ kind: "player", seat: 0 }] });
+    game = applyAction(game, 1, { type: "pass" });
+
+    const shusher = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Vexing Shusher")!;
+    const bolt = game.stack.find((entry) => entry.card.name === "Lightning Bolt")!;
+    expect(canCounterSpell(bolt, game)).toBe(true);
+    game = applyAction(game, 0, { type: "activate", sourceId: shusher.instance_id, abilityIndex: 0, targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = passUntil(game, (state) => state.stack.length === 1 || state.stack.length === 0);
+
+    const protectedBolt = game.stack.find((entry) => entry.card.name === "Lightning Bolt")!;
+    expect(protectedBolt.cantBeCountered).toBe(true);
+    expect(canCounterSpell(protectedBolt, game)).toBe(false);
+  });
+});
+
+describe("Garruk Wildspeaker's '+1: Untap two target lands'", () => {
+  const GARRUK_WILDSPEAKER = () => make({
+    name: "Garruk Wildspeaker", type_line: "Legendary Planeswalker — Garruk", mana_cost: "{2}{G}{G}", cmc: 4, loyalty: "3",
+    oracle_text: "+1: Untap two target lands.\n−1: Create a 3/3 green Beast creature token.\n−4: Creatures you control get +3/+3 and gain trample until end of turn."
+  });
+
+  it("recognizes the +1 ability as a distinct two-land target", () => {
+    const profile = profileOf(GARRUK_WILDSPEAKER());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({ loyaltyCost: 1, targetKind: "land", targetKinds: ["land", "land"], effect: { kind: "untap-target-permanent" } });
+  });
+
+  it("untaps exactly the two chosen lands and gains a loyalty counter", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GARRUK_WILDSPEAKER(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Forest"
+        ? { ...permanent, tapped: true }
+        : permanent.card.name === "Garruk Wildspeaker" ? { ...permanent, counters: { loyalty: 3 } } : permanent),
+      autoPass: false
+    }));
+    const garruk = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Garruk Wildspeaker")!;
+    const forests = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Forest");
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: garruk.instance_id, abilityIndex: 0,
+      targets: [{ kind: "permanent", instanceId: forests[0]!.instance_id }, { kind: "permanent", instanceId: forests[1]!.instance_id }]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    const updated = game.players[0]!.battlefield;
+    expect(updated.find((permanent) => permanent.instance_id === forests[0]!.instance_id)?.tapped).toBe(false);
+    expect(updated.find((permanent) => permanent.instance_id === forests[1]!.instance_id)?.tapped).toBe(false);
+    expect(updated.find((permanent) => permanent.instance_id === forests[2]!.instance_id)?.tapped).toBe(true);
+    expect(updated.find((permanent) => permanent.instance_id === garruk.instance_id)?.counters.loyalty).toBe(4);
+  });
+
+  it("rejects choosing the same land for both target slots", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GARRUK_WILDSPEAKER(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const garruk = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Garruk Wildspeaker")!;
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    expect(() => applyAction(game, 0, {
+      type: "activate", sourceId: garruk.instance_id, abilityIndex: 0,
+      targets: [{ kind: "permanent", instanceId: forest.instance_id }, { kind: "permanent", instanceId: forest.instance_id }]
+    })).toThrow();
+  });
+
+  it("is not activatable with fewer than two lands in play", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GARRUK_WILDSPEAKER(), FOREST()]);
+    const garruk = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Garruk Wildspeaker")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === garruk.instance_id && entry.action.abilityIndex === 0)).toBe(false);
+  });
+});
+
+describe("Sensei's Divining Top's reorder-top and draw-then-return abilities", () => {
+  const SENSEIS_TOP = () => make({
+    name: "Sensei's Divining Top", type_line: "Artifact", mana_cost: "{1}",
+    oracle_text: "{1}: Look at the top three cards of your library, then put them back in any order.\n{T}: Draw a card, then put this artifact on top of its owner's library."
+  });
+
+  it("recognizes both abilities", () => {
+    const profile = profileOf(SENSEIS_TOP());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({ effect: { kind: "look-top-reorder", amount: 3 } });
+    expect(profile.activatedAbilities[1]).toMatchObject({ effect: { kind: "draw-then-source-to-library-top" }, requiresTap: true });
+  });
+
+  it("opens a private reorder choice over the top three cards and applies a submitted order", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SENSEIS_TOP(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      library: [...toHand(0, [BEAR(), SOL_RING(), ISLAND()], "top-reorder"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const top = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sensei's Divining Top")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: top.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "reorder-top" || state.stack.length === 0);
+
+    const choice = game.pendingChoice;
+    expect(choice?.type).toBe("reorder-top");
+    if (choice?.type !== "reorder-top") throw new Error("expected a pending reorder-top choice");
+    expect(choice.cards.map((card) => card.name)).toEqual(["Grizzly Bears", "Sol Ring", "Island"]);
+
+    const [bear, solRing, island] = choice.cards;
+    game = applyAction(game, 0, { type: "reorder-top", sourceId: choice.sourceId, order: [island!.instance_id, bear!.instance_id, solRing!.instance_id] });
+    expect(game.players[0]!.library.slice(0, 3).map((card) => card.name)).toEqual(["Island", "Grizzly Bears", "Sol Ring"]);
+  });
+
+  it("rejects a submitted order that omits or repeats a card", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SENSEIS_TOP(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      library: [...toHand(0, [BEAR(), SOL_RING(), ISLAND()], "top-reorder-bad"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const top = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sensei's Divining Top")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: top.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "reorder-top" || state.stack.length === 0);
+    const choice = game.pendingChoice;
+    if (choice?.type !== "reorder-top") throw new Error("expected a pending reorder-top choice");
+    const ids = choice.cards.map((card) => card.instance_id);
+    expect(() => applyAction(game, 0, { type: "reorder-top", sourceId: choice.sourceId, order: [ids[0]!, ids[0]!] })).toThrow();
+  });
+
+  it("draws a card, then returns itself to the top of its owner's library", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SENSEIS_TOP()]);
+    game = stage(game, 0, (player) => ({
+      library: [...toHand(0, [BEAR()], "top-return"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const top = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sensei's Divining Top")!;
+    const handSizeBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "activate", sourceId: top.instance_id, abilityIndex: 1 });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    expect(game.players[0]!.hand).toHaveLength(handSizeBefore + 1);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Sensei's Divining Top")).toBe(false);
+    expect(game.players[0]!.library[0]?.name).toBe("Sensei's Divining Top");
+  });
+});
+
+describe("Atarka, World Render's tribal double-strike attack trigger", () => {
+  const ATARKA = () => make({
+    name: "Atarka, World Render", type_line: "Legendary Creature — Dragon", mana_cost: "{4}{R}{R}{G}{G}", cmc: 8, power: "6", toughness: "6",
+    keywords: ["flying", "trample"],
+    oracle_text: "Flying, trample\nWhenever a Dragon you control attacks, it gains double strike until end of turn."
+  });
+  const SMALL_DRAGON = () => make({ name: "Small Dragon", type_line: "Creature — Dragon", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2" });
+
+  it("recognizes the tribal attack trigger with a requireSubtype filter", () => {
+    expect(profileOf(ATARKA())).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{
+        event: "attacks", subject: "creature-you-control", requireSubtype: "Dragon",
+        effect: { kind: "modify-event-creature-and-grant-keyword", power: 0, toughness: 0, keyword: "double strike" }
+      }]
+    });
+  });
+
+  it("grants double strike to attacking Dragons but not a non-Dragon attacker", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ATARKA(), SMALL_DRAGON(), BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const atarka = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Atarka, World Render")!;
+    const dragon = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Small Dragon")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, {
+      type: "declare-attackers",
+      attackers: [
+        { instanceId: atarka.instance_id, defender: 1 },
+        { instanceId: dragon.instance_id, defender: 1 },
+        { instanceId: bear.instance_id, defender: 1 }
+      ]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    const updated = game.players[0]!.battlefield;
+    expect(updated.find((permanent) => permanent.instance_id === atarka.instance_id)?.temporaryKeywords).toContain("double strike");
+    expect(updated.find((permanent) => permanent.instance_id === dragon.instance_id)?.temporaryKeywords).toContain("double strike");
+    expect(updated.find((permanent) => permanent.instance_id === bear.instance_id)?.temporaryKeywords ?? []).not.toContain("double strike");
+    expect([powerOf(updated.find((permanent) => permanent.instance_id === atarka.instance_id)!, game), toughnessOf(updated.find((permanent) => permanent.instance_id === atarka.instance_id)!, game)]).toEqual([6, 6]);
+  });
+});
+
+describe("Beastmaster Ascension's quest-counter anthem", () => {
+  const BEASTMASTER_ASCENSION = () => make({
+    name: "Beastmaster Ascension", type_line: "Enchantment", mana_cost: "{3}{G}", cmc: 4,
+    oracle_text: "Whenever a creature you control attacks, you may put a quest counter on this enchantment.\nAs long as this enchantment has seven or more quest counters on it, creatures you control get +5/+5."
+  });
+
+  it("recognizes the trigger and the counter-gated anthem", () => {
+    const profile = profileOf(BEASTMASTER_ASCENSION());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({ event: "attacks", subject: "creature-you-control", optional: true, effect: { kind: "add-counter-source", counter: "quest", amount: 1 } });
+    expect(profile.staticPowerToughnessGrants).toMatchObject([{ scope: "creatures-you-control-source-counter-threshold", power: 5, toughness: 5, threshold: 7, counterName: "quest" }]);
+  });
+
+  it("grants no bonus below seven quest counters and +5/+5 to every controlled creature at seven or more", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEASTMASTER_ASCENSION(), BEAR(), BEAR()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Beastmaster Ascension" ? { ...permanent, counters: { quest: 6 } } : permanent)
+    }));
+    const bears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    for (const bear of bears) expect([powerOf(bear, game), toughnessOf(bear, game)]).toEqual([2, 2]);
+
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Beastmaster Ascension" ? { ...permanent, counters: { quest: 7 } } : permanent)
+    }));
+    const updatedBears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    for (const bear of updatedBears) expect([powerOf(bear, game), toughnessOf(bear, game)]).toEqual([7, 7]);
+  });
+});
+
+describe("Forbidden Orchard's mana-tap gift to an opponent", () => {
+  const FORBIDDEN_ORCHARD = () => make({
+    name: "Forbidden Orchard", type_line: "Land",
+    oracle_text: "{T}: Add one mana of any color.\nWhenever you tap this land for mana, target opponent creates a 1/1 colorless Spirit creature token."
+  });
+
+  it("recognizes the mana-tap trigger, targeting the opponent for a colorless Spirit token", () => {
+    const profile = profileOf(FORBIDDEN_ORCHARD());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "taps-for-mana", subject: "self", targetKind: "opponent",
+      effect: { kind: "create-token-for-target-player", token: { name: "Spirit", typeLine: "Creature — Spirit", colors: [] } }
+    });
+  });
+
+  it("gives the opponent a 1/1 Spirit token when tapped for mana, but not on a non-mana tap", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [FORBIDDEN_ORCHARD()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const orchard = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forbidden Orchard")!;
+
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: orchard.instance_id, abilityIndex: 0, mana: "G" });
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.pendingChoice === null && state.stack.length === 0);
+
+    expect(game.players[0]!.manaPool.G).toBe(1);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Spirit")).toBe(true);
+  });
+
+  it("does not trigger from a plain non-mana tap", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [FORBIDDEN_ORCHARD()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Forbidden Orchard" ? { ...permanent, tapped: true } : permanent)
+    }));
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Spirit")).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

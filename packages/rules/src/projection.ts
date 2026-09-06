@@ -138,6 +138,13 @@ export interface TopSelectionView {
   readonly selectedCardId?: string;
 }
 
+/** Cards disclosed only to the player reordering the top of their own library (Ponder, Sensei's Divining Top). Every card stays on top — the current order is the default submission. */
+export interface ReorderTopView {
+  readonly sourceId: string;
+  readonly sourceName: string;
+  readonly cards: readonly CardView[];
+}
+
 /**
  * Another player's hand, disclosed only to the one viewer entitled to see it
  * right now (Gitaxian Probe, CR 701.20) — the sole place this engine ever
@@ -173,6 +180,8 @@ export interface GameView {
   readonly scry: ScryView | null;
   /** Present only for the player currently resolving a top-card selection. */
   readonly topSelection: TopSelectionView | null;
+  /** Present only for the player currently reordering the top of their own library. */
+  readonly reorderTop: ReorderTopView | null;
   /** Present only for the player currently entitled to look at another player's hand. */
   readonly viewedHand: ViewedHandView | null;
   readonly combat: {
@@ -371,6 +380,13 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     eligibleTypes: pendingTopSelection.types,
     ...(pendingTopSelection.selectedCardId ? { selectedCardId: pendingTopSelection.selectedCardId } : {})
   } : null;
+  const pendingReorderTop = state.pendingChoice?.type === "reorder-top" && state.pendingChoice.seat === viewerSeat
+    ? state.pendingChoice : null;
+  const reorderTop: ReorderTopView | null = pendingReorderTop ? {
+    sourceId: pendingReorderTop.sourceId,
+    sourceName: pendingReorderTop.sourceCard.name,
+    cards: pendingReorderTop.cards.map(cardView)
+  } : null;
   // Gitaxian Probe: the target's hand is included ONLY when THIS viewer is
   // the one entitled to see it (`choice.seat`), never for the target
   // themselves or any other seat — the projection for every other viewer
@@ -431,6 +447,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     librarySearch,
     scry,
     topSelection,
+    reorderTop,
     viewedHand,
     combat: {
       attackers: state.combat.attackers.map((entry) => ({ instanceId: entry.instanceId, name: nameOf(state, entry.instanceId), defender: entry.defender })),

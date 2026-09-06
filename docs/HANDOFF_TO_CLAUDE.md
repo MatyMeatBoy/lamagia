@@ -4013,6 +4013,223 @@ profiles.
 Prossh decklist status after this pass: **64 of 97 unique cards fully
 implemented (66.0%)**.
 
+Reflecting Pool ("{T}: Add one mana of any type that a land you control
+could produce.") is functionally identical to the existing Fellwar
+Stone/Harvester Druid "any COLOR that a land you/an opponent controls
+could produce" board-dependent mana template — the underlying
+`ManaAbility.anyColorFromLandsControlledBy` mechanism and
+`colorsFromLandsControlledBy` already union every `ManaType` (including
+`C`) a controlled land's own mana abilities produce, so "type" was never
+a real semantic difference, only a wording one the parser rejected
+outright. Widened both the ability-construction regex and its matching
+`unimplementedText` coverage check to accept "color" or "type"
+interchangeably rather than adding a second parallel code path. Verified
+**+1** in the export count and confirmed the mana options returned by
+`manaSources` are exactly the colors the controller's OTHER lands (not
+Reflecting Pool itself) could produce.
+
+Vexing Shusher ("{R/G}: Target spell can't be countered.") needed a new
+`make-target-spell-uncounterable` effect kind: `StackObject` already
+carries a `cantBeCountered?: boolean` flag set at cast time (Delighted
+Halfling's legendary-spell mana), and `canCounterSpell` already checks
+it — the only missing piece was an ability that mutates that flag on an
+EXISTING stack entry, targeted the same way `counter-target-spell`
+already targets one (`target.kind === "spell"`, matched by
+`target.stackId`). Added the sentence-grammar branch ("Target spell
+can't be countered" → `targetKind: "spell"`) to the SHARED
+`recognizeSentence` grammar rather than a Vexing-Shusher-specific parser
+branch, so any future card with an identically-worded activated or
+triggered ability inherits it for free through the same generic
+activated-ability fallback every other targeted activation already uses.
+Verified **+2** combined in the export count (10,073 → 10,076, Reflecting
+Pool + Vexing Shusher) and set coverage holds at 30.5%. Scenario-tested:
+Reflecting Pool with a Mountain and a Forest in play offers exactly
+`{R, G}`, never colors from lands it doesn't see; casting a Lightning
+Bolt while Vexing Shusher is in play, THEN activating Vexing Shusher
+targeting that spell on the stack, flips `cantBeCountered` on that exact
+stack entry and `canCounterSpell` flips from true to false for it.
+Validation: **737 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,076 global profiles.
+
+Prossh decklist status after this pass: **66 of 97 unique cards fully
+implemented (68.0%)**.
+
+Garruk Wildspeaker's "+1: Untap two target lands" was the one missing
+line on an otherwise-complete planeswalker (its −1 token and −4 anthem
+abilities were already covered). Reused the existing single-target
+`untap-target-permanent` effect kind rather than adding a new one — it
+only read `object.targets[0]`, so generalized it to fold over every
+`"permanent"` target in `object.targets`, which changes nothing for
+every existing single-target user of that kind. Parsing "two target
+lands" surfaced a real, previously-unnoticed bug: `recognizeSentence`
+already supports returning `targetKinds` for multi-target abilities, but
+`parseActivatedAbility`'s LOYALTY-ability branch (planeswalker `+N`/`−N`
+costs) had its own separate return statement that never forwarded
+`recognized.targetKinds` — so any planeswalker ability needing more than
+one target of the same kind would have silently lost every target past
+the first. Fixed by forwarding it the same way the ordinary
+mana-cost-ability path already does. Separately, the shared
+`targetKinds` validation had no distinctness check at all (CR 601.2c:
+the same object can't be chosen twice for one instance of "target"), so
+also added: a legality-time check that repeated same-kind slots have
+enough DISTINCT legal candidates (not just a non-empty list per slot),
+and an execution-time rejection if the same target is chosen for two
+slots. Verified **+11** in the export count (10,076 → 10,087, spanning
+Garruk's own multiple printings plus the loyalty-targetKinds fix
+unblocking any other affected planeswalker) and set coverage 30.5% →
+30.6%. Scenario-tested: activating +1 with two named lands untaps
+exactly those two, leaves a third tapped land untouched, and adds a
+loyalty counter; choosing the SAME land for both target slots throws;
+the ability is not offered at all with only one land in play (a known,
+documented boundary — the exact-count multi-target model here does not
+yet support "up to N, minimum 1", so a single-land board under-offers
+rather than mis-targeting). Validation: **743 rules tests**, `npm run
+check`, `npm run simulate:engine` 200/200, 10,087 global profiles.
+
+Prossh decklist status after this pass: **67 of 97 unique cards fully
+implemented (69.1%)**.
+
+Whole-mechanic gap closed: "Look at the top N cards of your library,
+then put them back in any order" (Ponder's first line, Sensei's Divining
+Top, Sage Owl, Halimar Depths, Mirri's Guile, 21 catalog cards total)
+had zero support — unlike Scry/Surveil, no card ever LEAVES the top
+group, only the sequence changes, so neither existing choice shape
+fit. Added a new `look-top-reorder` `SpellEffect`, a new `reorder-top`
+`PendingChoice` (the revealed cards, private to the choosing seat via a
+new `ReorderTopView` in `projection.ts`, mirroring `ScryView`), and a new
+`reorder-top` `GameAction` that submits a full permutation of the
+revealed cards' instance ids in one action (validated as a true
+permutation: same length, same set, no repeats) rather than the
+per-card sequential decisions Scry uses — reordering has no "send this
+one to the bottom" branch point to hang a step on. `legalActions` offers
+one representative action (keep the current order, itself a fully legal
+choice per the Oracle text) so bots always have something to take;
+human clients may submit any explicit order directly. Implemented as a
+single `case` in the SHARED `applyEffect` switch, which is what let it
+work identically whether reached through a spell, an activated ability,
+or (Sage Owl, Halimar Depths) a triggered ability, with no per-path
+special-casing. Sensei's Divining Top additionally needed its OWN
+second ability as a new `draw-then-source-to-library-top` effect kind
+("{T}: Draw a card, then put this artifact on top of its owner's
+library") — draws for the controller, then moves the activating
+permanent itself from the battlefield to the top of its owner's
+library, found via the `StackObject.sourcePermanentId` field activated
+abilities already carry. Verified **+13** in the export count (10,087 →
+10,100: Sensei's Divining Top plus every other catalog card sharing the
+reorder-top template) and set coverage holds at 30.6%. Ponder itself
+stays unimplemented — its trailing "You may shuffle" is a distinct,
+not-yet-parsed clause, noted as a deliberate follow-up rather than
+pulled into this pass's scope. Scenario-tested: activating the {1}
+ability opens a private reorder choice over exactly the top three cards
+in their current order; submitting an explicit permutation reorders the
+library to match; submitting a list that repeats or omits a card
+throws; activating the {T} ability draws the named card and leaves the
+Top itself as the new top-of-library card, removed from the
+battlefield. Validation: **747 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,100 global profiles.
+
+Prossh decklist status after this pass: **68 of 97 unique cards fully
+implemented (70.1%)**.
+
+Atarka, World Render ("Whenever a Dragon you control attacks, it gains
+double strike until end of turn.") needed a genuinely new subject-filter
+primitive: every existing `TriggerSubject` is a fixed string, with no
+way to say "the object must ALSO have subtype X" for an "attacks" event
+the way `condition`-kind fields check board-wide counts, not the
+triggering object's own type. Added `TriggerDefinition.requireSubtype`
+as a sibling to the existing `excludeSubtype` field (Requiem Angel's
+"another non-Subtype creature... dies" already proved this
+field-alongside-subject pattern works), checked once in the shared
+subject-matching function right next to `excludeSubtype`. Parsed via its
+own dedicated regex block (mirroring how Requiem Angel's `nonSubtypeDies`
+line is built outside the flat `TRIGGER_TEMPLATES` array), since the
+subtype word itself must flow into the new field rather than only into
+the effect text. "it gains double strike until end of turn" needed one
+more small addition: the general trigger-building path normalizes a
+leading "it" to "~" (self), which would have been wrong here — "it"
+means the ATTACKING creature, not Atarka itself — so this new dedicated
+block passes the effect text to `recognizeSentence` unnormalized, and a
+new "it gains KEYWORD until end of turn" pattern there returns the
+existing `modify-event-creature-and-grant-keyword` kind (added for Ogre
+Battledriver earlier this session) with power/toughness both 0 — a pure
+keyword grant, reusing the kind rather than inventing another one.
+Verified **+10** in the export count (10,100 → 10,110: Atarka plus other
+catalog cards sharing the tribal-attack-trigger or "it gains keyword"
+shapes) and set coverage 30.6% → 30.7%. Scenario-tested: attacking with
+Atarka, a second Dragon, and a Grizzly Bears together grants double
+strike to both Dragons but not the Bear, with power/toughness unchanged
+on all three. Validation: **749 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,110 global profiles.
+
+Prossh decklist status after this pass: **69 of 97 unique cards fully
+implemented (71.1%)**.
+
+Beastmaster Ascension's trigger line ("Whenever a creature you control
+attacks, you may put a quest counter on this enchantment") was already
+covered by the existing generic `add-counter-source` template; only its
+static anthem ("As long as ~ has seven or more quest counters on it,
+creatures you control get +5/+5") was missing. Discovered that
+`StaticPowerToughnessGrant` already had unused `counterName`/`threshold`
+fields — declared on the interface but never read anywhere in
+`engine.ts`, apparently added ahead of a card that needed them and then
+never wired up. Added the missing half: a new
+`creatures-you-control-source-counter-threshold` scope, a parser branch
+in `parseStaticPowerToughnessGrant` (word-number threshold parsing via
+the shared `toNumber`, matching every other counted-quantity pattern),
+and a second pass in `staticPowerToughnessBonus` that checks the
+GRANTING permanent's own counters (not the receiving creature's) before
+adding its bonus to every creature the same controller owns — a
+separate loop from the existing wide "creatures-you-control" filter,
+since that one has no way to gate on the source's own state. Verified
+**+1** in the export count (10,110 → 10,111) and set coverage holds at
+30.7%. Scenario-tested: with six quest counters every controlled Grizzly
+Bears stays 2/2; pushing the same enchantment to seven counters pumps
+both Bears to 7/7 without touching anything else on the board.
+Validation: **751 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,111 global profiles.
+
+Prossh decklist status after this pass: **70 of 97 unique cards fully
+implemented (72.2%)**.
+
+Forbidden Orchard ("Whenever you tap this land for mana, target opponent
+creates a 1/1 colorless Spirit creature token") needed a genuinely new
+trigger event: the existing `becomes-tapped` fires for ANY tap (Icy
+Manipulator-style effects included), which would over-trigger here — CR
+requires this to fire specifically when the land is tapped to activate
+a mana ability. Added `TriggerEvent`/`GameEvent` variant `taps-for-mana`
+(carrying `permanentId`/`controller`/`card` like every other object
+event, so the existing generic `eventObject` helper and `"self"` subject
+match needed no changes) and raised it from `applyActivateMana`
+alongside the existing `raiseTapEvents` call, gated on
+`ability.requiresTap` — an untapped mana ability can't be "tapped for."
+As with the `play-land` event added earlier this session, adding a new
+`TriggerEvent` union member is caught immediately and completely by
+TypeScript's exhaustiveness checking on every `Record<TriggerEvent, ...>`
+map: this pass hit two, both real (a `default:` branch in `engine.ts`'s
+event-to-log-text switch that would have silently produced a nonsense
+message, and the client's `TRIGGER_GLYPHS` map in `abilities.ts`), and
+both had to be filled in before either `npm run check` workspace would
+pass — the exact safety net this pattern is for. Parsing this card also
+surfaced a real, previously-unnoticed and unrelated bug affecting
+roughly 97 catalog cards: the shared token-descriptor parser
+(`parseCreateToken`) recognizes exactly five color words (white, blue,
+black, red, green) to strip from a token's subtype text, but never
+recognized "colorless" — so "a 1/1 colorless Spirit creature token"
+produced a token with the correct EMPTY `colors` array but a wrong
+`typeLine` of "Creature — colorless Spirit" instead of "Creature —
+Spirit". Fixed by adding "colorless" to the same exclusion list as
+"artifact"/"creature"/"and" (grammar words already stripped from the
+subtype, not literal subtype text). Verified **+2** in the export count
+(10,111 → 10,113) and set coverage holds at 30.7%. Scenario-tested:
+tapping Forbidden Orchard for mana gives the OPPONENT (not the
+controller) a 1/1 Spirit with the corrected type line and empty colors;
+a plain non-mana tap (simulated directly on the permanent) raises no
+such token. Validation: **754 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,113 global profiles.
+
+Prossh decklist status after this pass: **71 of 97 unique cards fully
+implemented (73.2%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

@@ -345,7 +345,7 @@ export interface TriggerDoubler {
 export interface StaticPowerToughnessGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
     | "source-opponents-graveyard-creatures" | "source-controller-life-threshold" | "other-subtype-creatures-you-control"
-    | "other-all-creatures";
+    | "other-all-creatures" | "creatures-you-control-source-counter-threshold";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -418,6 +418,10 @@ export type SpellEffect =
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
+  /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
+  | { readonly kind: "look-top-reorder"; readonly amount: number }
+  /** "Draw a card, then put ~ on top of its owner's library" (Sensei's Divining Top's tap ability). */
+  | { readonly kind: "draw-then-source-to-library-top" }
   /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
@@ -665,6 +669,8 @@ export type SpellEffect =
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
+  /** "Target spell can't be countered" (Vexing Shusher): tags the targeted stack object, mirroring the cast-time StackObject.cantBeCountered flag. */
+  | { readonly kind: "make-target-spell-uncounterable" }
   /** Daze: the targeted spell's own controller decides whether to pay (CR 601.2b, 603.3, 118.9). */
   | { readonly kind: "counter-target-spell-unless-pay"; readonly cost: ManaCost }
   | { readonly kind: "counter-target-spell-to-battlefield" }
@@ -755,7 +761,9 @@ export type TriggerEvent =
   | "life-lost"
   | "class-level-up"
   /** The action of playing a land (CR 305.1), distinct from that land's own "enters the battlefield" event (City of Traitors). */
-  | "play-land";
+  | "play-land"
+  /** Specifically a mana ability's activation (Forbidden Orchard), narrower than the general "becomes-tapped" (a non-mana tap effect must not trigger this). */
+  | "taps-for-mana";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -807,7 +815,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "life-lost": "life-loss trigger",
   "class-level-up": "habilidad de nivel de Clase",
   "first-main-phase": "habilidad de la primera fase principal",
-  "play-land": "habilidad de jugar una tierra"
+  "play-land": "habilidad de jugar una tierra",
+  "taps-for-mana": "habilidad de girar por maná"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -884,6 +893,8 @@ export interface TriggerDefinition {
   readonly spellSubtype?: string;
   readonly nontoken?: boolean;
   readonly excludeSubtype?: string;
+  /** Tribal filter on the event object itself (Atarka, World Render's "a Dragon you control attacks"), distinct from a board-count condition. */
+  readonly requireSubtype?: string;
   /** Filters a card-discarded event by the discarded card's own type (Waste Not). */
   readonly discardedCardType?: "creature" | "land" | "noncreature-nonland";
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
@@ -1497,7 +1508,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     }
     // Board-dependent color (Fellwar Stone, Harvester Druid): resolved from
     // the battlefield at activation time, not a fixed color set on the card.
-    const anyColorFromLands = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(an\s+opponent\s+controls|you\s+control)\s+could\s+produce$/i.exec(effectText.trim().replace(/\.$/, ""));
+    const anyColorFromLands = /^add\s+one\s+mana\s+of\s+any\s+(?:color|type)\s+that\s+a\s+land\s+(an\s+opponent\s+controls|you\s+control)\s+could\s+produce$/i.exec(effectText.trim().replace(/\.$/, ""));
     if (anyColorFromLands && !instruction?.produced) {
       abilities.push({
         index: abilities.length, produces: [], amount: 1,
@@ -1889,6 +1900,16 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   if (graveyard) return { scope: "source-opponents-graveyard-creatures", power: Number(graveyard[1]), toughness: Number(graveyard[2]) };
   const life = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(clean);
   if (life) return { scope: "source-controller-life-threshold", power: Number(life[1]), toughness: Number(life[2]), threshold: Number(life[3]) };
+  // "As long as ~ has N or more <name> counters on it, creatures you control get +X/+Y" (Beastmaster Ascension).
+  const counterThreshold = /^as long as ~ has (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more ([a-z][a-z\s-]*?) counters? on it,\s*creatures you control get ([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  if (counterThreshold) {
+    const threshold = toNumber(counterThreshold[1]!);
+    if (threshold !== null) return {
+      scope: "creatures-you-control-source-counter-threshold",
+      power: Number(counterThreshold[3]), toughness: Number(counterThreshold[4]),
+      threshold, counterName: counterThreshold[2]!.trim().toLowerCase()
+    };
+  }
   const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   if (match) {
     return {
@@ -2032,7 +2053,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     return {
       index, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost: null,
       loyaltyCost: magnitude === 0 ? 0 : sign * magnitude, sorcerySpeed: true,
-      effect: recognized.effect, targetKind: recognized.target, text: line.trim()
+      effect: recognized.effect, targetKind: recognized.target,
+      ...(recognized.targetKinds ? { targetKinds: recognized.targetKinds } : {}),
+      text: line.trim()
     };
   }
   // "Activate only if an opponent controls N or more lands" (Tectonic Edge, CR 602.5).
@@ -2355,8 +2378,10 @@ function parseCreateToken(text: string): SpellEffect | null {
   const artifact = /\bartifact\b/i.test(descriptor);
   const creature = /\bcreature\b/i.test(descriptor);
   // Oracle token descriptors commonly join multiple colors with "and";
-  // conjunctions are grammar, not part of the token's subtype/name.
-  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature|and)$/i.test(word)).join(" ");
+  // conjunctions are grammar, not part of the token's subtype/name. "Colorless"
+  // is a real descriptor too (an absent color, not a subtype word) — the
+  // token's empty `colors` array already expresses it correctly.
+  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature|and|colorless)$/i.test(word)).join(" ");
   const name = (match[5]?.trim() || (subtype || (artifact ? "Treasure" : "Token"))).replace(/\s+token$/i, "");
   const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
@@ -2633,7 +2658,10 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i },
 
   // The action of playing a land (CR 305.1), not that land's own ETB (City of Traitors).
-  { event: "play-land", subject: "you", pattern: /^when\s+you\s+play\s+(?:a|another)\s+land,?\s*(.+)$/i }
+  { event: "play-land", subject: "you", pattern: /^when\s+you\s+play\s+(?:a|another)\s+land,?\s*(.+)$/i },
+  // Specifically a mana ability's activation (Forbidden Orchard), narrower than
+  // the general "becomes-tapped" — a non-mana tap effect must not trigger this.
+  { event: "taps-for-mana", subject: "self", pattern: /^whenever\s+you\s+tap\s+~\s+for\s+mana,?\s*(.+)$/i }
 ];
 
 function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { effectText: string }) | null {
@@ -3428,6 +3456,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: "none"
     };
   }
+  // "it gains KEYWORD until end of turn" (Atarka, World Render): the event
+  // object (the attacking creature), not the ability's own source.
+  if ((match = /^it gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text))) {
+    return {
+      effect: { kind: "modify-event-creature-and-grant-keyword", power: 0, toughness: 0, keyword: match[1]!.toLowerCase() as EnforcedKeyword },
+      target: "none"
+    };
+  }
   if (/^~ gets \+X\/\+0 until end of turn, where X is the number of lands defending player controls$/i.test(text)) {
     return { effect: { kind: "modify-triggered-creature-by-defending-lands" }, target: "none" };
   }
@@ -3625,6 +3661,18 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
   if (/^Untap target creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent you control$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent-you-control" };
+  if (/^Untap target land$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "land" };
+  if ((match = /^Look at the top (\w+) cards? of your library, then put (?:it|them) back in any order$/i.exec(text))) {
+    const amount = toNumber(match[1]!);
+    if (amount !== null) return { effect: { kind: "look-top-reorder", amount }, target: "none" };
+  }
+  if (/^Draw a card, then put ~ on top of its owner'?s library$/i.test(text)) {
+    return { effect: { kind: "draw-then-source-to-library-top" }, target: "none" };
+  }
+  // Garruk Wildspeaker's "+1" (CR 601.2c: the same target can't be chosen
+  // twice for one instance of "target", enforced at resolution alongside the
+  // shared multi-slot targetKinds check).
+  if (/^Untap two target lands$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "land", targetKinds: ["land", "land"] };
   if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
     return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
   }
@@ -3651,6 +3699,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^At the beginning of your next main phase, add an amount of \{([WUBRGC])\} equal to that spell's mana value$/i.exec(text))) {
     return { effect: { kind: "delayed-mana-equal-to-target-spell-mana-value", manaType: match[1]!.toUpperCase() as ManaType }, target: "spell" };
   }
+  if (/^Target spell can'?t be countered$/i.test(text)) return { effect: { kind: "make-target-spell-uncounterable" }, target: "spell" };
   const multiBasicSearch = parseMultiBasicSearch(text);
   if (multiBasicSearch) return { effect: multiBasicSearch, target: "none" };
   const token = parseManaSpentToken(text) ?? parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
@@ -4318,7 +4367,7 @@ function recognizeText(text: string): RecognizedText {
         && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(manaLine[1]!);
       // Board-dependent color (Fellwar Stone, Harvester Druid): resolved at
       // activation time by `manaOptionsFor`, not by `parseAddClause`.
-      const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
+      const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+(?:color|type)\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
       const variableSacrificeMana = /(?:\{T\},\s*)?sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s?\s*$/i.test(manaLine[1]!.trim())
         && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
       const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(manaLine[2]!)
@@ -4490,6 +4539,21 @@ function recognizeText(text: string): RecognizedText {
           event: "dies", subject: "another-creature-you-control", effect: rec.effect,
           optional: /^you\s+may\b/i.test(nonSubtypeDies[2]!), targetKind: rec.target, sourceText: line,
           excludeSubtype: nonSubtypeDies[1]!
+        });
+        continue;
+      }
+    }
+    // "Whenever a <Subtype> you control attacks, X" (Atarka, World Render): a
+    // tribal filter on the attacking creature itself, distinct from a
+    // board-count condition.
+    const subtypeAttacks = /^whenever\s+an?\s+([A-Za-z][A-Za-z'’-]*)\s+you\s+control\s+attacks,?\s*(.+)$/i.exec(line);
+    if (subtypeAttacks && !/^(?:creature|permanent|player)$/i.test(subtypeAttacks[1]!)) {
+      const rec = recognizeSentence(subtypeAttacks[2]!);
+      if (rec) {
+        triggers.push({
+          event: "attacks", subject: "creature-you-control", effect: rec.effect,
+          optional: false, targetKind: rec.target, sourceText: line,
+          requireSubtype: subtypeAttacks[1]!
         });
         continue;
       }

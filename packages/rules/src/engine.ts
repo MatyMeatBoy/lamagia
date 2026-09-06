@@ -346,7 +346,8 @@ export type GameEvent =
   | { readonly kind: "class-level-up"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly level: number }
   | { readonly kind: "upkeep" | "draw-step" | "end-step" | "first-main-phase"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number }
-  | { readonly kind: "play-land"; readonly seat: SeatId; readonly card: GameCard };
+  | { readonly kind: "play-land"; readonly seat: SeatId; readonly card: GameCard }
+  | { readonly kind: "taps-for-mana"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
 export interface BlockerDeclaration { readonly instanceId: string; readonly attackerId: string }
@@ -617,6 +618,14 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /** "Look at the top N, then put them back in any order" (Ponder, Sensei's Divining Top): every card stays on top, only the sequence changes. */
+      readonly type: "reorder-top";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly cards: readonly GameCard[];
+    }
+  | {
       /**
        * "Look at target player's hand" (Gitaxian Probe, CR 701.20): a
        * private, self-closing reveal to the caster alone. `projectGame`
@@ -694,6 +703,7 @@ export type GameAction =
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
+  | { readonly type: "reorder-top"; readonly sourceId: string; readonly order: readonly string[] }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
@@ -902,6 +912,20 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
         toughness += grant.toughness * count;
       } else if (grant.scope === "source-controller-life-threshold"
         && playerAt(state, source.controller).life >= (grant.threshold ?? Number.POSITIVE_INFINITY)) {
+        power += grant.power;
+        toughness += grant.toughness;
+      }
+    }
+  }
+  // Counter-gated anthem affecting every creature the source's controller owns
+  // (Beastmaster Ascension), not just the source itself — checked separately
+  // from the wide "creatures-you-control" filter above since it needs the
+  // GRANTING permanent's own counters, not the receiving creature's.
+  for (const source of allPermanents(state)) {
+    if (source.controller !== permanent.controller) continue;
+    for (const grant of cardProfile(source.card).staticPowerToughnessGrants) {
+      if (grant.scope === "creatures-you-control-source-counter-threshold"
+        && (source.counters[grant.counterName!] ?? 0) >= (grant.threshold ?? Number.POSITIVE_INFINITY)) {
         power += grant.power;
         toughness += grant.toughness;
       }
@@ -2111,6 +2135,7 @@ function triggerMatches(
   if (event.kind === "deals-damage-to-player" && event.victim === watcher.controller) return false;
   if (definition.nontoken && object.card.token) return false;
   if (definition.excludeSubtype && cardProfile(object.card).subtypes.some((subtype) => subtype.toLowerCase() === definition.excludeSubtype!.toLowerCase())) return false;
+  if (definition.requireSubtype && !cardProfile(object.card).subtypes.some((subtype) => subtype.toLowerCase() === definition.requireSubtype!.toLowerCase())) return false;
   const isSelf = object.permanentId === watcher.instanceId;
   const objectIsCreature = isCreature(cardProfile(object.card));
   switch (subject) {
@@ -2214,6 +2239,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "class-level-up": return `${object!.card.name} alcanza el nivel ${event.level}`;
     case "first-main-phase": return `comienza la ${STEP_LABELS["precombat-main"]} de ${playerAt(state, event.activeSeat).name}`;
     case "play-land": return `${playerAt(state, event.seat).name} juega ${event.card.name}`;
+    case "taps-for-mana": return `${playerAt(state, event.controller).name} gira ${event.card.name} por maná`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -4653,6 +4679,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
     }
+    case "make-target-spell-uncounterable": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId ? { ...entry, cantBeCountered: true } : entry)) };
+    }
     case "delayed-mana-equal-to-target-spell-mana-value": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
@@ -4916,14 +4947,34 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return { ...state, blockingTaxPerCreature: [...(state.blockingTaxPerCreature ?? []), amount] };
     }
     case "untap-target-permanent": {
-      const target = object.targets[0];
-      if (!target || target.kind !== "permanent") return state;
-      const permanent = findPermanent(state, target.instanceId);
-      if (!permanent) return state;
-      return withPlayer(state, permanent.controller, (player) => ({
+      const instanceIds = object.targets.filter((target) => target.kind === "permanent").map((target) => target.instanceId);
+      return instanceIds.reduce((current, instanceId) => {
+        const permanent = findPermanent(current, instanceId);
+        if (!permanent) return current;
+        return withPlayer(current, permanent.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.map((candidate) => candidate.instance_id === instanceId
+            ? { ...candidate, tapped: false } : candidate)
+        }));
+      }, state);
+    }
+    case "look-top-reorder": {
+      const visible = playerAt(state, controller).library.slice(0, Math.max(0, effect.amount));
+      if (!visible.length) return state;
+      return {
+        ...state,
+        pendingChoice: { type: "reorder-top", seat: controller, sourceId: object.sourcePermanentId ?? object.id, sourceCard: object.card, cards: visible }
+      };
+    }
+    case "draw-then-source-to-library-top": {
+      const sourceId = object.sourcePermanentId;
+      const permanent = sourceId ? findPermanent(state, sourceId) : undefined;
+      let next = drawCards(state, controller, 1);
+      if (!permanent) return next;
+      return withPlayer(next, permanent.controller, (player) => ({
         ...player,
-        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
-          ? { ...candidate, tapped: false } : candidate)
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== sourceId),
+        library: [permanent.card, ...player.library]
       }));
     }
     case "untap-source": {
@@ -6468,6 +6519,14 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
       return actions;
     }
+    if (choice.type === "reorder-top") {
+      actions.push({
+        action: { type: "reorder-top", sourceId: choice.sourceId, order: choice.cards.map((card) => card.instance_id) },
+        label: "Keep the same order",
+        note: `${choice.sourceCard.name}: look at the top ${choice.cards.length} card(s) and keep them in the same order (any explicit order may be submitted directly).`
+      });
+      return actions;
+    }
     if (choice.type === "optional-trigger") {
       const optionalCost = choice.payCost ?? choice.manaCost;
       if (choice.tapCost) {
@@ -7490,8 +7549,11 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   }));
   const withBonus = manaBonus ? withPlayer(next, seat, (current) => ({ ...current, manaPool: addMana(current.manaPool, manaBonus, 1) })) : next;
   const tapped = ability.requiresTap ? raiseTapEvents(withBonus, activationState, [source.instance_id]) : withBonus;
+  const withManaTapEvent = ability.requiresTap
+    ? raiseEvent(tapped, { kind: "taps-for-mana", permanentId: source.instance_id, controller: seat, card: source.card })
+    : tapped;
   const output = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((mana) => `{${mana}}`).join("");
-  return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
+  return logged(withManaTapEvent, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
 }
 
 function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cycle" }>): GameState {
@@ -7713,6 +7775,11 @@ function activatableAbility(
   const sourceProfile = cardProfile(permanent.card);
   if (ability.targetKinds?.length) {
     if (ability.targetKinds.some((kind) => !legalTargets(state, seat, kind, sourceProfile).length)) return { legal: false };
+    // Repeated slots of the same kind (Garruk Wildspeaker's "two target
+    // lands") need that many DISTINCT legal targets — CR 601.2c forbids
+    // choosing the same object twice for one instance of the word "target".
+    if (ability.targetKinds.every((kind) => kind === ability.targetKinds![0])
+      && legalTargets(state, seat, ability.targetKinds[0]!, sourceProfile).length < ability.targetKinds.length) return { legal: false };
     return { legal: true, targetKind, targetKinds: ability.targetKinds };
   }
   if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
@@ -7748,6 +7815,16 @@ function triggerTapCostCandidates(
     if (cost.mode === "another" && candidate.instance_id === sourceId) return false;
     return !cost.subtype || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === cost.subtype!.toLowerCase());
   });
+}
+
+/** Default targets for a multi-slot activated ability with no explicit choice: the first legal candidate per slot, skipping any already used by an earlier slot (CR 601.2c). */
+function distinctDefaultTargets(allowedBySlot: readonly (readonly Target[])[]): Target[] {
+  const chosen: Target[] = [];
+  for (const allowed of allowedBySlot) {
+    const next = allowed.find((candidate) => !chosen.some((used) => JSON.stringify(used) === JSON.stringify(candidate)));
+    if (next) chosen.push(next);
+  }
+  return chosen;
 }
 
 function applyActivate(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate" }>): GameState {
@@ -7834,11 +7911,14 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
 
   if (ability.targetKinds?.length) {
     const allowedBySlot = ability.targetKinds.map((kind) => legalTargets(state, seat, kind, cardProfile(source.card)));
-    const chosen = targets.length ? targets : allowedBySlot.map((allowed) => allowed[0]).filter((target): target is Target => Boolean(target));
+    const chosen = targets.length ? targets : distinctDefaultTargets(allowedBySlot);
     if (chosen.length !== ability.targetKinds.length) throw new Error(`${source.card.name} necesita ${ability.targetKinds.length} objetivos legales.`);
     if (!chosen.every((target, index) => allowedBySlot[index]!.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
       throw new Error(`Objetivo ilegal para ${source.card.name}.`);
     }
+    // CR 601.2c: the same object can't be chosen twice for one instance of "target".
+    const serialized = chosen.map((target) => JSON.stringify(target));
+    if (new Set(serialized).size !== serialized.length) throw new Error(`${source.card.name} no puede elegir el mismo objetivo dos veces.`);
     targets = chosen;
   } else if (check.targetKind) {
     const allowed = legalTargets(state, seat, check.targetKind, cardProfile(source.card));
@@ -8294,6 +8374,23 @@ function applyChooseBasicLandSearch(state: GameState, seat: SeatId, action: Extr
       exileSourceAfterResolution: false
     }
   };
+}
+
+function applyReorderTop(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "reorder-top" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "reorder-top" || choice.seat !== seat) throw new Error("No tienes una reordenación pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa reordenación ya no está pendiente.");
+  const ids = choice.cards.map((card) => card.instance_id);
+  const validPermutation = action.order.length === ids.length
+    && new Set(action.order).size === ids.length
+    && action.order.every((id) => ids.includes(id));
+  if (!validPermutation) throw new Error("Debes reordenar exactamente esas cartas, sin repetir ni omitir ninguna.");
+  const reordered = action.order.map((id) => choice.cards.find((card) => card.instance_id === id)!);
+  const next = withPlayer(state, seat, (player) => ({
+    ...player,
+    library: [...reordered, ...player.library.slice(reordered.length)]
+  }));
+  return logged({ ...next, pendingChoice: null }, seat, `${choice.sourceCard.name}: reordena las cartas de arriba de su biblioteca.`);
 }
 
 function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-color" }>): GameState {
@@ -9311,6 +9408,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-basic-land-search": next = applyChooseBasicLandSearch(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-color": next = applyChooseColor(state, seat, action); break;
+    case "reorder-top": next = applyReorderTop(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-trigger-order": next = applyChooseTriggerOrder(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
