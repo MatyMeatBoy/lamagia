@@ -157,6 +157,8 @@ export interface ActivatedAbility {
   readonly energyCost?: number;
   /** Untap symbol cost `{Q}` (CR 118.1, 602.1). */
   readonly requiresUntap?: boolean;
+  /** "Activate only if you control N or more [type/subtype]" (Metallurgic Summonings). */
+  readonly requiresControlledCount?: { readonly word: string; readonly amount: number };
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
@@ -2324,10 +2326,13 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
   const oncePerTurnOnly = /activate only once each turn\.?$/i.test(effectText);
   const sorcerySpeedOnly = /(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i.test(effectText);
+  const controlledCountGate = /(?:^|[.\s])activate only if you control (\w+) or more ([A-Za-z][A-Za-z'’/-]*?)s?\.?$/i.exec(effectText);
+  const controlledCountAmount = controlledCountGate ? toNumber(controlledCountGate[1]!) : null;
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
     .replace(/(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i, ".")
     .replace(/(?:^|[.\s])activate only once each turn\.?$/i, ".")
+    .replace(/\.?\s*activate only if you control \w+ or more [A-Za-z][A-Za-z'’/-]*?s?\.?\s*$/i, "")
     // Self-references in activated text use the printed object type rather
     // than the parser's normalized source marker (CR 109.5).
     .replace(/\bon this creature\b/gi, "on ~")
@@ -2468,6 +2473,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(oncePerTurnOnly ? { oncePerTurn: true } : {}),
     ...(sorcerySpeedOnly ? { sorcerySpeed: true } : {}),
+    ...(controlledCountGate && controlledCountAmount !== null ? { requiresControlledCount: { word: controlledCountGate[2]!, amount: controlledCountAmount } } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     ...(energyCost ? { energyCost } : {}),
     ...(requiresUntap ? { requiresUntap: true } : {}),

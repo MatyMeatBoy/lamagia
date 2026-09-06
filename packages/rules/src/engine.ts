@@ -8938,6 +8938,15 @@ function activatableAbility(
   if (ability.upkeepOnly && (state.activeSeat !== seat || state.step !== "upkeep")) return { legal: false };
   if (ability.oncePerTurn && (player.oncePerTurnActivations ?? []).includes(activationKey(permanent.instance_id, ability.index))) return { legal: false };
   if (ability.sorcerySpeed && !sorcerySpeed(state, seat)) return { legal: false };
+  if (ability.requiresControlledCount) {
+    const gateWord = ability.requiresControlledCount.word.toLowerCase();
+    const count = player.battlefield.filter((candidate) => {
+      const candidateProfile = cardProfile(candidate.card);
+      return candidateProfile.subtypes.some((subtype) => subtype.toLowerCase() === gateWord)
+        || candidateProfile.types.some((type) => type.toLowerCase() === gateWord);
+    }).length;
+    if (count < ability.requiresControlledCount.amount) return { legal: false };
+  }
   if (ability.loyaltyCost !== undefined) {
     // One loyalty ability per planeswalker per turn (CR 606.3); a minus ability
     // needs enough loyalty to pay it (CR 606.5).

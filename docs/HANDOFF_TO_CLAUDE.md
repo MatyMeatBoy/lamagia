@@ -6389,3 +6389,46 @@ itself (5) and another controlled creature (Grizzly Bears, 2→4),
 proving the fixed condition check is what gates the whole-team pump.
 Validation: full **910** rules tests green (2 new), `npm run check`
 across all four workspaces, 200/200 simulated games.
+
+## Inventors' Fair: an activation-legality count gate for regular activated abilities (2026-09-06)
+
+While chasing the type-vs-subtype `controlled-subtype-at-least`
+TRIGGER-condition bug above, noticed the same "Activate only if you
+control N or more [word]" phrasing also appears as a LEGALITY
+restriction on regular (non-mana) `ActivatedAbility`s (Metallurgic
+Summonings, Kelpie Guide, Inventors' Fair) — a wholly separate code
+path from trigger conditions, with zero prior infrastructure. Added
+`ActivatedAbility.requiresControlledCount?: { word: string; amount:
+number }`, parsed as a trailing-sentence strip in `parseActivatedAbility`
+(mirroring the existing `sorcerySpeedOnly`/`oncePerTurnOnly` trailing-
+restriction pattern already used for "Activate only as a sorcery."),
+and gated in `activatableAbility` (the single site controlling
+"activate" legality) checking BOTH `profile.subtypes` and
+`profile.types` from the start, since the type-vs-subtype confusion
+was already a known trap from the fix above.
+
+Verifying this against real catalog cards surfaced the expected
+mixed result: **Inventors' Fair** ("...Search your library for an
+artifact card... Activate only if you control three or more
+artifacts.") is now fully implemented end-to-end, since its search
+effect was already recognized. **Metallurgic Summonings** and
+**Kelpie Guide** still don't fully parse, but for entirely SEPARATE,
+unrelated reasons confirmed via probe — Metallurgic Summonings'
+"Return all instant and sorcery cards from your graveyard to your
+hand" has no existing effect template at all, and Kelpie Guide's
+"Untap ANOTHER target permanent you control" / "Tap target
+permanent" (a bare, unrestricted-target tap effect) are likewise
+unimplemented — both are legitimately out of scope for this specific
+primitive and left as future candidates. Verified **+1** in the
+export count (11,034 → 11,035; a narrow, low-fanout fix this time —
+`docs/SET_COVERAGE.md` remains at its already-stale 33.2%/true-33.5%
+split, unchanged by this small delta since the cumulative backlog
+from the prior four commits still exceeds the audit's cap on its
+own). Scenario-tested: with only 2 artifacts controlled, Inventors'
+Fair's search is correctly absent from `legalActions`; with 3, it's
+offered, and activating it (paying {4}, tapping, sacrificing the
+land) finds only a staged artifact card in the library, ignoring a
+staged Grizzly Bears, and moves it to hand while the land itself
+leaves the battlefield. Validation: full **911** rules tests green
+(1 new), `npm run check` across all four workspaces, 200/200
+simulated games.

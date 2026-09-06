@@ -7506,6 +7506,38 @@ describe("triggered abilities", () => {
     expect(powerOf(atLands.players[0]!.battlefield.find((permanent) => permanent.instance_id === bearAt.instance_id)!, atLands)).toBe(4);
   });
 
+  it("only offers Inventors' Fair's search once you control three or more artifacts", () => {
+    const fair = make({ name: "Inventors' Fair", type_line: "Legendary Land", mana_cost: "", cmc: 0, oracle_text: "At the beginning of your upkeep, if you control three or more artifacts, you gain 1 life.\n{T}: Add {C}.\n{4}, {T}, Sacrifice Inventors' Fair: Search your library for an artifact card, reveal it, put it into your hand, then shuffle. Activate only if you control three or more artifacts." });
+    const profile = profileOf(fair);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      requiresControlledCount: { word: "artifact", amount: 3 },
+      effect: { kind: "search-library", types: ["Artifact"], destination: "hand" }
+    });
+
+    let under = twoSeatGame([], []);
+    under = putOnBattlefield(under, 0, [fair, TEST_ARTIFACT(), TEST_ARTIFACT(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    const fairUnder = under.players[0]!.battlefield.find((permanent) => permanent.card.name === "Inventors' Fair")!;
+    under = passUntil(under, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    // Only two artifacts controlled - not enough to activate the search.
+    expect(legalActions(under, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === fairUnder.instance_id)).toBe(false);
+
+    let atLeast = twoSeatGame([], []);
+    atLeast = putOnBattlefield(atLeast, 0, [fair, TEST_ARTIFACT(), TEST_ARTIFACT(), TEST_ARTIFACT(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    const fairAtLeast = atLeast.players[0]!.battlefield.find((permanent) => permanent.card.name === "Inventors' Fair")!;
+    atLeast = stage(atLeast, 0, () => ({ library: toHand(0, [TEST_ARTIFACT(), BEAR()], "fair-library") }));
+    atLeast = passUntil(atLeast, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const activation = legalActions(atLeast, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === fairAtLeast.instance_id);
+    expect(activation).toBeDefined();
+    atLeast = applyAction(atLeast, 0, activation!.action);
+    expect(atLeast.pendingChoice).toMatchObject({ type: "search-library" });
+    const choice = atLeast.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    const offered = atLeast.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(offered).toEqual(["Test Relic"]);
+    atLeast = applyAction(atLeast, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Test Relic" });
+    expect(atLeast.players[0]!.hand.some((card) => card.name === "Test Relic")).toBe(true);
+    expect(atLeast.players[0]!.battlefield.some((permanent) => permanent.card.name === "Inventors' Fair")).toBe(false);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({
