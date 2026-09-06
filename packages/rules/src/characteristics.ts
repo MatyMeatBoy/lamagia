@@ -315,6 +315,8 @@ export interface EquipmentModification {
   /** Pacifism / Arrest: the enchanted creature can't attack and/or can't block. */
   readonly cannotAttack?: boolean;
   readonly cannotBlock?: boolean;
+  /** Exhaustion-on-a-stick: the enchanted creature doesn't untap during its controller's untap step. */
+  readonly cannotUntap?: boolean;
   /** Multiplier for a dynamic Aura bonus. */
   readonly scaling?: "other-enchantments-on-battlefield";
   /** Aura characteristic-setting layer (CR 613.1): replaces base values/types and may remove abilities. */
@@ -732,6 +734,8 @@ export type SpellEffect =
   /** Prepared (new mechanic, Naktamun Lorespinner // Wheel of Fortune): marks the source permanent prepared. */
   | { readonly kind: "become-prepared" }
   | { readonly kind: "tap-target-permanent" }
+  /** "When this Aura enters, tap enchanted creature" (Claustrophobia, Sleep Paralysis). */
+  | { readonly kind: "tap-enchanted-creature" }
   /** Taps a creature and suppresses its controller's untap while the source is controlled. */
   | { readonly kind: "tap-target-creature-and-lock" }
   /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
@@ -1784,6 +1788,9 @@ function parseAuraModification(text: string): EquipmentModification | null {
     }
     if (/^enchanted creature can'?t block$/i.test(clean)) {
       return { power: 0, toughness: 0, keywords: [], cannotBlock: true, text: line.trim() };
+    }
+    if (/^enchanted (?:creature|permanent) doesn'?t untap during (?:its controller'?s|your) untap step$/i.test(clean)) {
+      return { power: 0, toughness: 0, keywords: [], cannotUntap: true, text: line.trim() };
     }
     const characteristicSetting = /^enchanted creature is an insect artifact creature with base power and toughness (\d+)\/(\d+) and has (.+), and it loses all other abilities, card types, and creature types$/i.exec(clean);
     if (characteristicSetting) {
@@ -3872,6 +3879,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
+  if (/^Tap enchanted creature$/i.test(text)) return { effect: { kind: "tap-enchanted-creature" }, target: "none" };
   if (/^Tap target permanent an opponent controls$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "permanent-opponent" };
   if (/^Tap or untap target permanent(?: of their choice)?$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };

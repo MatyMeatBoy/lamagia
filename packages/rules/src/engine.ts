@@ -5156,6 +5156,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       return raiseTapEvents(next, state, [permanent.instance_id]);
     }
+    case "tap-enchanted-creature": {
+      const auraId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const aura = auraId ? findPermanent(state, auraId) : undefined;
+      const enchanted = aura?.attachedTo ? findPermanent(state, aura.attachedTo) : undefined;
+      if (!enchanted || enchanted.tapped) return state;
+      const next = withPlayer(state, enchanted.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === enchanted.instance_id
+          ? { ...candidate, tapped: true } : candidate)
+      }));
+      return raiseTapEvents(next, state, [enchanted.instance_id]);
+    }
     case "tap-target-creature-and-lock": {
       const target = object.targets[0];
       const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
@@ -6465,7 +6477,9 @@ function beginStep(state: GameState, step: TurnStep): GameState {
             && permanent.skipUntapWhileSourceController !== undefined
             && findPermanent(next, permanent.skipUntapWhileSourceId)?.controller === permanent.skipUntapWhileSourceController
             ? permanent.tapped
-            : cardProfile(permanent.card).doesNotUntapDuringUntap || allPermanents(next).some((source) => {
+            : cardProfile(permanent.card).doesNotUntapDuringUntap
+              || attachedAuras(next, permanent).some((aura) => cardProfile(aura.card).auraModification?.cannotUntap === true)
+              || allPermanents(next).some((source) => {
               const sourceProfile = cardProfile(source.card);
               const targetProfile = cardProfile(permanent.card);
               return source.controller === permanent.controller && source.controller !== next.activeSeat

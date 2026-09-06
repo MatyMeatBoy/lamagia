@@ -6,6 +6,19 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **Aura "doesn't untap" lock + "tap enchanted creature" ETB** —
+  `EquipmentModification.cannotUntap` (parsed from "Enchanted creature doesn't
+  untap during its controller's untap step") consulted in `beginStep("untap")`
+  via `attachedAuras`; new `tap-enchanted-creature` effect taps the aura's
+  attachment on ETB. Covers Claustrophobia, Sleep Paralysis, Ice Cage, …
+  (+25). Test: `engine.test.ts` › "taps the enchanted creature and keeps it
+  tapped".
+- **Firebreathing-style Aura activated abilities** — "{cost}: Enchanted
+  creature gets +X/+Y until end of turn" → `auraActivatedAbility` with
+  `modify-source-creature`; `activatedAbilitiesFor` already hands it to the
+  enchanted creature (+12). Test: "pumps the enchanted creature from a
+  Firebreathing aura…".
+
 - **Predefined token abilities (Clue, Food) + Investigate** —
   `PREDEFINED_TOKEN_TEXT` gives a created Clue/Food token its real rules text
   (`TokenDefinition.oracleText`), so `cardProfile` grants its
@@ -39,7 +52,7 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
   `engine.test.ts` › "stops an enchanted creature from attacking or blocking".
 
 Session net: engine export **10,197 → 10,500** fully-implemented profiles
-(+354) across the eight primitives below, each with a scenario test; rules
+(+391) across the eight primitives below, each with a scenario test; rules
 suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
 200-game engine matrix **200/200** (unchanged from baseline).
 

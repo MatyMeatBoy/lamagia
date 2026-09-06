@@ -7240,6 +7240,28 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("taps the enchanted creature and keeps it tapped (Claustrophobia)", () => {
+    const claustro = make({
+      name: "Test Claustrophobia", type_line: "Enchantment — Aura", mana_cost: "{2}{U}", cmc: 3,
+      oracle_text: "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature doesn't untap during its controller's untap step."
+    });
+    expect(profileOf(claustro)).toMatchObject({ fullyImplemented: true, triggers: [{ effect: { kind: "tap-enchanted-creature" } }], auraModification: { cannotUntap: true } });
+    let game = createGame([deck("A", COMMANDER("A"), []), deck("B", COMMANDER("B"), [])], { seed: 7, allowPartialDecks: true });
+    game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [claustro], "cast") }));
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = putOnBattlefield(game, 0, [ISLAND(), ISLAND(), ISLAND()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "cast", cardId: "cast-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[1]!.battlefield.find((p) => p.instance_id === bear.instance_id)?.tapped).toBe(true);
+
+    // It stays tapped through seat 1's untap step.
+    game = passUntil(game, (state) => state.activeSeat === 1 && state.step === "precombat-main");
+    expect(game.players[1]!.battlefield.find((p) => p.instance_id === bear.instance_id)?.tapped).toBe(true);
+  });
+
   it("pumps the enchanted creature from a Firebreathing aura's activated ability", () => {
     const firebreathing = make({
       name: "Test Firebreathing", type_line: "Enchantment — Aura", mana_cost: "{R}", cmc: 1,
