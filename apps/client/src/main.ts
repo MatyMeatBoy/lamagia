@@ -646,6 +646,12 @@ function triggerYieldActionsFor(instanceId: string): LegalAction[] {
     entry.action.type === "toggle-trigger-yield" && entry.action.sourceId === instanceId);
 }
 
+function triggerYieldStatusFor(instanceId: string): string | null {
+  const entry = triggerYieldActionsFor(instanceId)[0];
+  if (!entry || entry.action.type !== "toggle-trigger-yield") return null;
+  return entry.action.enabled ? "Los triggers opcionales de esta carta se resolverán normalmente." : "Los triggers opcionales de esta carta se declinan automáticamente.";
+}
+
 function openCardActionMenu(cardId: string): void {
   ui.cardActionMenu = cardId;
   ui.notice = "Elige una acción o consulta la información de la carta.";
@@ -1130,10 +1136,11 @@ function cardActionMenuHtml(): string {
   const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")
     ? `<button class="action-row action-disabled" type="button" disabled><span><b>Lanzar ${escapeHtml(card.name)}</b><small>No disponible ahora; puedes ciclarla.</small></span></button>` : "";
   const context = entries.length ? "Elige una acción o consulta la información de la carta." : "No hay acciones legales ahora; puedes consultar la información.";
+  const yieldStatus = triggerYieldStatusFor(ui.cardActionMenu);
   return `<section class="decision-overlay card-action-overlay" role="dialog" aria-modal="false" aria-label="Acciones de ${escapeHtml(card.name)}">
     <header class="decision-head"><div><b>${escapeHtml(card.name)}</b><span>${context}</span></div>
       <button id="close-card-action-menu" class="icon-button" type="button" aria-label="Cerrar acciones">×</button></header>
-    <div class="decision-list">${unavailableCast}${entries.map((entry) => {
+    <div class="decision-list">${yieldStatus ? `<p class="trigger-yield-status" role="status">${escapeHtml(yieldStatus)}</p>` : ""}${unavailableCast}${entries.map((entry) => {
       const index = view!.legalActions.indexOf(entry);
       const description = entry.action.type === "cycle"
         ? (entry.note ?? "Cicla esta carta, paga su coste y roba una carta.")
