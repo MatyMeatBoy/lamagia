@@ -5819,7 +5819,16 @@ export function maxAttackersForDefender(state: GameState, defenderSeat: SeatId):
 
 /** True while the defending player controls a land matching the attacker's landwalk. */
 function landwalkEvades(state: GameState, attacker: Permanent, defenderSeat: SeatId): boolean {
-  const walks = cardProfile(attacker.card).combatRules.landwalk;
+  const attackerProfile = cardProfile(attacker.card);
+  const walks = [
+    ...attackerProfile.combatRules.landwalk,
+    ...allPermanents(state)
+      .filter((source) => source.controller === attacker.controller)
+      .flatMap((source) => cardProfile(source.card).staticLandwalkGrants
+        .filter((grant) => (grant.scope === "subtype-creatures-you-control" || source.instance_id !== attacker.instance_id)
+          && hasSubtype(attackerProfile, grant.subtype))
+        .map((grant) => grant.landwalk))
+  ];
   if (!walks.length) return false;
   const wanted = new Set(walks.map((subtype) => subtype.toLowerCase()));
   return playerAt(state, defenderSeat).battlefield.some((permanent) => {

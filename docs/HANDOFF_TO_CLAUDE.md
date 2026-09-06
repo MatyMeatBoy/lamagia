@@ -3929,3 +3929,9 @@ The next one-line rescan item, Goblin Chieftain, now uses a shared combined
 tribal grant: matching other creatures receive both the P/T bonus and haste,
 with source exclusion preserved for the lord itself (CR 611.3, 613.4). Current
 validation: **728 rules tests**, `npm run check`, and `git diff --check` pass.
+
+The rescan also closed Elvish Champion's shared tribal landwalk clause. Static
+landwalk now follows the same matching-subtype/source-exclusion model as its
+P/T and haste grants, while combat checks the defending player's land types
+at declaration time (CR 611.3, 702.14). Current validation: **729 rules
+tests**, `npm run check`, and `git diff --check` pass.

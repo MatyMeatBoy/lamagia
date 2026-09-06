@@ -522,3 +522,4 @@ rules citations and the integrator review remain mandatory.
 | `global-creature-graveyard-mana-value-target` | Reusable graveyard target filter for creature cards at or below a printed mana-value bound, including Bishop of Rebirth (CR 109.4, 601.2c) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
 | `global-source-basic-land-subtype-threshold` | Reusable source P/T condition for controlling a basic land subtype, including Loam Lion (CR 604.1, 613.4) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
 | `global-tribal-pump-keyword-grant` | Reusable combined tribal P/T and keyword grant for other matching creatures, including Goblin Chieftain (CR 611.3, 613.4) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
+| `global-tribal-landwalk-grant` | Reusable tribal landwalk grant carried by a static lord, including Elvish Champion (CR 611.3, 702.14) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |

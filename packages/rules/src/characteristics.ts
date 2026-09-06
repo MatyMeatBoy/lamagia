@@ -353,6 +353,13 @@ export interface StaticKeywordGrant {
   readonly requiresControlledLandSubtype?: string;
 }
 
+/** Static landwalk granted to a matching creature group by a permanent. */
+export interface StaticLandwalkGrant {
+  readonly scope: "subtype-creatures-you-control" | "other-subtype-creatures-you-control";
+  readonly subtype: string;
+  readonly landwalk: string;
+}
+
 /** "If a triggered ability of X triggers, that ability triggers an additional time" (CR 603.3f). */
 export interface TriggerDoubler {
   readonly scope: "subtype-you-control" | "equipped-creature" | "equipped-self-and-attached-equipment" | "draw-caused-triggers";
@@ -1019,6 +1026,7 @@ export interface CardProfile {
   /** Activated ability granted by an attached Aura (CR 303.4, 605.1a). */
   readonly auraActivatedAbility: ActivatedAbility | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
+  readonly staticLandwalkGrants: readonly StaticLandwalkGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
   /** Colors of creatures this permanent untaps during each other player's untap step (CR 502.2). */
@@ -1876,6 +1884,23 @@ function parseStaticKeywordGrant(line: string): StaticKeywordGrant[] {
 
 function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
   return text.split("\n").flatMap(parseStaticKeywordGrant);
+}
+
+function parseStaticLandwalkGrant(line: string): StaticLandwalkGrant[] {
+  const clean = line.trim().replace(/\.$/, "");
+  const match = /^(other\s+)?([A-Za-z][A-Za-z'’-]*)\s+creatures\s+(?:you\s+control\s+)?get\s+[+-]\d+\/[+-]\d+\s+and\s+have\s+((?:plains|island|swamp|mountain|forest|desert|legendary)walk)$/i.exec(clean);
+  if (!match) return [];
+  const walk = /^(plains|island|swamp|mountain|forest|desert|legendary)walk$/i.exec(match[3]!);
+  if (!walk) return [];
+  return [{
+    scope: match[1] ? "other-subtype-creatures-you-control" : "subtype-creatures-you-control",
+    subtype: singularSubtype(match[2]!),
+    landwalk: walk[1]!.toLowerCase()
+  }];
+}
+
+function parseStaticLandwalkGrants(text: string): StaticLandwalkGrant[] {
+  return text.split("\n").flatMap(parseStaticLandwalkGrant);
 }
 
 /** "~ has flying during your turn" (Razorkin Needlehead) — self-only, gated on whose turn it is. */
@@ -4303,6 +4328,7 @@ function recognizeText(text: string): RecognizedText {
     // blocking and damage prevention, not stack resolution (CR 702.16).
     if (parseProtectionFromLine(line)) continue;
     if (parseStaticKeywordGrant(line).length) continue;
+    if (parseStaticLandwalkGrant(line).length) continue;
     if (parseKeywordDuringYourTurn(line).length) continue;
     if (parseTriggerDoubler(line)) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
@@ -4966,6 +4992,7 @@ export function cardProfile(card: CardData): CardProfile {
   const auraActivatedAbility = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraGrantedActivatedAbility(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
+  const staticLandwalkGrants = parseStaticLandwalkGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const grantsCreatureActivationHaste = text.split("\n").some((line) =>
     /^you may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line.trim()));
@@ -5081,6 +5108,7 @@ export function cardProfile(card: CardData): CardProfile {
     auraControlTarget,
     auraActivatedAbility,
     staticKeywordGrants,
+    staticLandwalkGrants,
     keywordsDuringYourTurn,
     untapColorsDuringOtherPlayersUntap,
     triggerDoublers,

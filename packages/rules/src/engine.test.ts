@@ -8705,6 +8705,11 @@ describe("combat restrictions and landwalk", () => {
     name: "Bog Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
     oracle_text: "Swampwalk"
   });
+  const ELVISH_CHAMPION = () => make({
+    name: "Elvish Champion", type_line: "Creature — Elf", mana_cost: "{1}{G}{G}", cmc: 3, power: "2", toughness: "2",
+    oracle_text: "Other Elf creatures you control get +1/+1 and have forestwalk.", oracle_id: "7e40f37c-9a0c-40e0-b195-7ea94b12f798", scryfall_id: "7e40f37c-9a0c-40e0-b195-7ea94b12f798"
+  });
+  const ELF = () => make({ name: "Elf Warrior", type_line: "Creature — Elf Warrior", power: "1", toughness: "1" });
   const HORSEMAN = () => make({
     name: "Lu Xun, Scholar General", type_line: "Legendary Creature — Human Soldier", mana_cost: "{3}{U}", cmc: 4,
     power: "2", toughness: "2", keywords: ["Horsemanship"], oracle_text: "Horsemanship"
@@ -8749,6 +8754,22 @@ describe("combat restrictions and landwalk", () => {
     });
     expect(profileOf(EXALTED()).fullyImplemented).toBe(true);
     expect(profileOf(CRAWLSPACE()).fullyImplemented).toBe(true);
+  });
+
+  it("applies tribal landwalk to matching other creatures", () => {
+    expect(profileOf(ELVISH_CHAMPION()).staticLandwalkGrants).toEqual([{
+      scope: "other-subtype-creatures-you-control", subtype: "Elf", landwalk: "forest"
+    }]);
+    expect(profileOf(ELVISH_CHAMPION()).fullyImplemented).toBe(true);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ELVISH_CHAMPION(), ELF()]);
+    game = putOnBattlefield(game, 1, [FOREST(), BEAR()]);
+    const elf = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Elf Warrior")!;
+    const attack = { ...game, combat: { ...game.combat, attackers: [{ instanceId: elf.instance_id, defender: 1 }] } };
+    expect(legalBlockers(attack, 1)).toEqual([]);
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.card.name !== "Forest") }));
+    const attackWithoutForest = { ...game, combat: { ...game.combat, attackers: [{ instanceId: elf.instance_id, defender: 1 }] } };
+    expect(legalBlockers(attackWithoutForest, 1)).toHaveLength(1);
   });
 
   it("enforces a defender-controlled attacker limit", () => {
