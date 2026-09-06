@@ -113,6 +113,7 @@ let totalTurns = 0;
 let totalDecisions = 0;
 const winners = new Map<number, number>();
 const lossReasons = new Map<string, number>();
+const unfinishedReasons = new Map<string, number>();
 const failures: string[] = [];
 
 for (let seed = 1; seed <= games; seed += 1) {
@@ -127,7 +128,19 @@ for (let seed = 1; seed <= games; seed += 1) {
       for (const player of result.state.players) {
         if (player.lossReason) lossReasons.set(player.lossReason, (lossReasons.get(player.lossReason) ?? 0) + 1);
       }
-    } else unfinished += 1;
+    } else {
+      unfinished += 1;
+      const reason = result.state.pendingChoice
+        ? `pending:${result.state.pendingChoice.type}`
+        : result.state.step === "declare-blockers" && !result.state.combat.blockersDeclared
+          ? "declare-blockers"
+          : result.state.step === "declare-attackers" && !result.state.combat.attackersDeclared
+            ? "declare-attackers"
+            : result.state.priorityOpen
+              ? `priority:${result.state.step}`
+              : `closed:${result.state.step}`;
+      unfinishedReasons.set(reason, (unfinishedReasons.get(reason) ?? 0) + 1);
+    }
   } catch (error) {
     failures.push(`${error instanceof Error ? error.message : String(error)}`);
   }
@@ -152,6 +165,7 @@ const report = {
   // Seat win counts detect a seating bias; they are not a statement about deck strength.
   wins_by_seat: Object.fromEntries([...winners.entries()].sort()),
   loss_reasons: Object.fromEntries([...lossReasons.entries()].sort()),
+  unfinished_reasons: Object.fromEntries([...unfinishedReasons.entries()].sort()),
   failures
 };
 
