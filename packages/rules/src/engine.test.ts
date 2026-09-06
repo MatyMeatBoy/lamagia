@@ -7309,6 +7309,32 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Big Guy")).toBe(true);
   });
 
+  it("only fires Renegade Rallier's graveyard return once Revolt is active this turn", () => {
+    const rallier = make({ name: "Renegade Rallier", type_line: "Creature — Human Warrior", mana_cost: "{1}{G}{W}", cmc: 3, power: "3", toughness: "2", oracle_text: "Revolt — When this creature enters, if a permanent left the battlefield under your control this turn, return target permanent card with mana value 2 or less from your graveyard to the battlefield." });
+    const bigGuy = make({ name: "Big Guy", type_line: "Creature — Giant", mana_cost: "{5}", cmc: 5, power: "5", toughness: "5" });
+    const profile = profileOf(rallier);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield", subject: "self", optional: false, condition: { kind: "revolt" },
+      targetKind: "permanent-card-in-your-graveyard-mv-2-or-less",
+      effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }
+    });
+    let game = readyToCast([DESTROY_TARGET_CREATURE(), rallier], [SWAMP(), SWAMP(), FOREST(), FOREST(), PLAINS(), BEAR()]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [SWAMP(), bigGuy], "gy") }));
+    const bearInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    // Before Revolt is active this turn, Renegade Rallier's ETB does nothing.
+    expect(game.revoltSeatsThisTurn).toEqual([]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bearInPlay.instance_id }] });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.revoltSeatsThisTurn).toEqual([0]);
+    const swampInGraveyard = game.players[0]!.graveyard.find((card) => card.name === "Swamp")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-1" });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target" });
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>).sourceId, target: { kind: "graveyard-card", seat: 0, instanceId: swampInGraveyard.instance_id } });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Swamp")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Big Guy")).toBe(true);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({

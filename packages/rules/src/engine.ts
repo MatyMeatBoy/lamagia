@@ -423,6 +423,8 @@ export interface GameState {
   readonly creaturesDiedThisTurn: number;
   /** Keys (`${sourceInstanceId}:${triggerIndex}`) of "once each turn" triggers (CR 603.3) that have already fired this turn. */
   readonly triggeredOncePerTurnKeys: readonly string[];
+  /** Seats that have had a permanent they controlled leave the battlefield this turn — powers Revolt (CR 702.129a). */
+  readonly revoltSeatsThisTurn: readonly SeatId[];
   /** Creature cards that entered their owner's graveyard from the battlefield this turn. */
   readonly creatureCardsDiedThisTurn: readonly GameCard[];
   /** War Cadence-style generic mana taxes, one entry per resolved activation, until cleanup. */
@@ -1887,7 +1889,8 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     pendingChoice: null,
     creaturesDiedThisTurn: 0,
     creatureCardsDiedThisTurn: [],
-    triggeredOncePerTurnKeys: []
+    triggeredOncePerTurnKeys: [],
+    revoltSeatsThisTurn: []
   };
   const opened = logged(base, null, `Partida creada con ${players.length} jugadores · ${startingLife} vidas · mano inicial de ${openingHand}.`);
   return settle(opened);
@@ -2269,6 +2272,7 @@ function triggerMatches(
     if (count < condition.amount) return false;
   }
   if (condition?.kind === "creature-died-this-turn" && state.creaturesDiedThisTurn < 1) return false;
+  if (condition?.kind === "revolt" && !state.revoltSeatsThisTurn.includes(watcher.controller)) return false;
   if (condition?.kind === "second-draw-this-turn" && (event.kind !== "card-drawn" || event.count !== 2)) return false;
   if (condition?.kind === "source-untapped") {
     const source = findPermanent(state, watcher.instanceId);
@@ -2496,6 +2500,11 @@ function raiseEvent(
     .filter((card) => cardProfile(card).triggers.some((definition) => definition.condition?.kind === "source-in-command-zone"))
     .map((card) => castTriggerWatcher(card, player.seat)));
   const watchers = [...allPermanents(state), ...extraWatchers, ...commandZoneWatchers];
+  // Revolt (CR 702.129a): tracked centrally here so every current and future
+  // site that raises "leaves-battlefield" (movePermanentToZone,
+  // returnPermanentToOwnersHand, put-under-library-top, ...) automatically
+  // powers it, rather than needing its own update at each call site.
+  const revoltSeat = event.kind === "leaves-battlefield" && !state.revoltSeatsThisTurn.includes(event.controller) ? event.controller : null;
   const queued: TriggerInstance[] = [];
   const newOncePerTurnKeys: string[] = [];
   // Pontiff of Blight: "Other creatures you control have extort" (CR 702.39, 613).
@@ -2555,11 +2564,12 @@ function raiseEvent(
       }
     }
   }
-  return queued.length || newOncePerTurnKeys.length
+  return queued.length || newOncePerTurnKeys.length || revoltSeat !== null
     ? {
         ...state,
         triggerQueue: [...state.triggerQueue, ...queued],
-        ...(newOncePerTurnKeys.length ? { triggeredOncePerTurnKeys: [...state.triggeredOncePerTurnKeys, ...newOncePerTurnKeys] } : {})
+        ...(newOncePerTurnKeys.length ? { triggeredOncePerTurnKeys: [...state.triggeredOncePerTurnKeys, ...newOncePerTurnKeys] } : {}),
+        ...(revoltSeat !== null ? { revoltSeatsThisTurn: [...state.revoltSeatsThisTurn, revoltSeat] } : {})
       }
     : state;
 }
@@ -7072,7 +7082,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
 
   switch (step) {
     case "untap": {
-      next = { ...next, creaturesDiedThisTurn: 0, creatureCardsDiedThisTurn: [], triggeredOncePerTurnKeys: [] };
+      next = { ...next, creaturesDiedThisTurn: 0, creatureCardsDiedThisTurn: [], triggeredOncePerTurnKeys: [], revoltSeatsThisTurn: [] };
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,

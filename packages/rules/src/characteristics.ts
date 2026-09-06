@@ -1001,6 +1001,8 @@ export interface TriggerDefinition {
     | { readonly kind: "controlled-subtype-at-least"; readonly subtype: string; readonly amount: number }
     | { readonly kind: "entering-power-at-least"; readonly amount: number }
     | { readonly kind: "creature-died-this-turn" }
+    /** Revolt (CR 702.129a): a permanent the controller controlled left the battlefield this turn. */
+    | { readonly kind: "revolt" }
     | { readonly kind: "cast-from-hand" }
     | { readonly kind: "attacking-alone" }
     /** "draws their second card each turn" (Krang, Faerie Mastermind): gated on the per-turn draw count, not just any draw. */
@@ -3130,7 +3132,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
 function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { effectText: string }) | null {
   // Landfall is a keyword ability word; its rules-bearing trigger follows the
   // dash and uses the same enters-battlefield event (CR 603.1, 603.2).
-  const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "").replace(/^morbid\s+[—–-]\s*/i, "");
+  const normalized = line.replace(/^landfall\s+[—–-]\s*/i, "").replace(/^morbid\s+[—–-]\s*/i, "").replace(/^revolt\s+[—–-]\s*/i, "");
   for (const template of TRIGGER_TEMPLATES) {
     const match = template.pattern.exec(normalized);
     if (match) return { event: template.event, subject: template.subject, effectText: match[1]!.trim(), ...(template.spellType ? { spellType: template.spellType } : {}), ...(template.spellColor ? { spellColor: template.spellColor } : {}), ...(template.spellSubtype ? { spellSubtype: template.spellSubtype } : {}), ...(template.nontoken ? { nontoken: true } : {}), ...(template.discardedCardType ? { discardedCardType: template.discardedCardType } : {}), ...(template.condition ? { condition: template.condition } : {}) };
@@ -4309,6 +4311,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Return (?:another )?target permanent card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-your-graveyard" };
   if (/^Return (?:another )?target permanent card from a graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: "permanent-card-in-a-graveyard" };
+  if ((match = /^Return target permanent card with mana value (\d+) or less from your graveyard to the battlefield$/i.exec(text))) {
+    return { effect: { kind: "return-target-permanent-card-from-graveyard-to-battlefield" }, target: `permanent-card-in-your-graveyard-mv-${Number(match[1])}-or-less` };
+  }
   if (/^Return (?:another )?target artifact card from your graveyard to your hand\. You gain life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) return { effect: { kind: "return-target-artifact-and-gain-mana-value" }, target: "artifact-card-in-your-graveyard" };
   if (/^Return (?:another )?target artifact card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "artifact-card-in-your-graveyard" };
   if (/^Return (?:another )?target enchantment card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "enchantment-card-in-your-graveyard" };
@@ -5462,7 +5467,7 @@ function recognizeText(text: string): RecognizedText {
     // Normalize both current and legacy-import separators here as a second
     // boundary so a malformed historical U+FFFD cannot hide a valid trigger.
     const triggerLine = (leavesLine !== line ? leavesLine : line)
-      .replace(/^(?:landfall|morbid)\s+[—–-\uFFFD]\s*/i, "");
+      .replace(/^(?:landfall|morbid|revolt)\s+[—–-\uFFFD]\s*/i, "");
     const triggeredRaw = matchTriggerLine(triggerLine);
     if (triggeredRaw) {
       // "This ability triggers only once each turn." (Bident of Thassa and
@@ -5485,6 +5490,9 @@ function recognizeText(text: string): RecognizedText {
       const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggerEffectText);
       const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
       const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggerEffectText);
+      // Revolt (CR 702.129a): "if a permanent left the battlefield under
+      // your control this turn," gates the rest of the trigger's effect.
+      const revoltCondition = /^if\s+a\s+permanent\s+left\s+the\s+battlefield\s+under\s+your\s+control\s+this\s+turn,\s*(.+)$/i.exec(triggerEffectText);
       const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggerEffectText);
       const commandZoneCondition = /^if\s+.+?\s+is\s+in\s+the\s+command\s+zone,\s*(.+)$/i.exec(triggerEffectText);
       const sourceUntappedCondition = /^if\s+~\s+is\s+untapped,\s*(.+)$/i.exec(triggerEffectText);
@@ -5506,7 +5514,7 @@ function recognizeText(text: string): RecognizedText {
       // since the resolved effect always acts on ITS controller regardless
       // of who is doing the choosing (Pattern of Rebirth).
       const eventControllerEffectText = eventControllerChoice?.[1]?.trim().replace(/\btheir\b/gi, "your");
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerEffectText ?? triggerEffectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? revoltCondition?.[1]?.trim() ?? eventControllerEffectText ?? triggerEffectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
@@ -5568,6 +5576,7 @@ function recognizeText(text: string): RecognizedText {
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),
           ...(diedCondition ? { condition: { kind: "creature-died-this-turn" as const } } : {}),
+          ...(revoltCondition ? { condition: { kind: "revolt" as const } } : {}),
           ...(castFromHandCondition ? { condition: { kind: "cast-from-hand" as const } } : {}),
           ...(sourceUntappedCondition ? { condition: { kind: "source-untapped" as const } } : {}),
           ...(sourceTappedCondition ? { condition: { kind: "source-tapped" as const } } : {}),

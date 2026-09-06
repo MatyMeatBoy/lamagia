@@ -5912,6 +5912,56 @@ in the same combat, Bident of Thassa draws exactly **one** card, not
 two. Validation: full **888** rules tests green (2 new), `npm run
 check` across all four workspaces, 200/200 simulated games.
 
+## Revolt: a new generic trigger condition, plus Renegade Rallier (2026-09-06)
+
+Renegade Rallier ("Revolt — When ~ enters, if a permanent left the
+battlefield under your control this turn, return target permanent
+card with mana value 2 or less from your graveyard to the
+battlefield") needed the mv-cap target from Bishop of Rebirth's
+primitive (this session's immediately prior card) applied to
+`permanent-card-in-your-graveyard` instead of `creature-card-...` —
+trivial, since the mv-cap target kinds are already generic over both
+— but ALSO Revolt itself (CR 702.129a), which had zero prior
+infrastructure. Since `leaves-battlefield` is ALREADY a centrally-
+raised event (only 3 call sites in the whole engine —
+`movePermanentToZone`, `returnPermanentToOwnersHand`, and one
+one-off "put under library top" site), Revolt turned out to be far
+cheaper than initially assumed: added `GameState.revoltSeatsThisTurn:
+readonly SeatId[]`, computed and folded into `raiseEvent`'s own
+return value in ONE place (`event.kind === "leaves-battlefield"` ⇒
+append `event.controller` if not already present) rather than
+touching each of the 3 raise sites individually — meaning any FUTURE
+raise site for that event automatically powers Revolt too, for free.
+Reset at the same per-turn cleanup site as `creaturesDiedThisTurn`/
+`triggeredOncePerTurnKeys`. Added `TriggerDefinition.condition` kind
+`"revolt"`, checked in `triggerMatches` exactly like the existing
+`"creature-died-this-turn"` sibling. Parsing needed two coordinated
+strips: the leading ability-word "Revolt — " prefix (added to the
+same `matchTriggerLine` strip already handling "Landfall — "/
+"Morbid — ", in both places it's applied) AND the embedded "if a
+permanent left the battlefield under your control this turn," rider
+clause inside the trigger's own effect text (added a
+`revoltCondition` capture group folded into the same text-selection
+ternary that already handles the sibling `power`/`subtype`/`unless`
+riders — NOTE: while doing this, spotted that `diedCondition`/
+`countCondition`/`castFromHandCondition` are computed nearby but
+NEVER folded into that same ternary, meaning any card actually using
+those three specific rider shapes would keep the "if ..." clause
+literally in its effect text and almost certainly fail to parse — a
+plausible latent gap, left alone since no currently-queued card
+exercises it and fixing it is out of scope for this pass). Verified
+**+9** in the export count (10,925 → 10,934 — Revolt appears on
+several other catalog cards sharing this exact "if a permanent left
+the battlefield under your control this turn," phrasing) and set
+coverage holds at 33.2%. Scenario-tested: casting Renegade Rallier
+BEFORE anything has left the battlefield this turn leaves
+`revoltSeatsThisTurn` empty; destroying a creature first populates it
+for that seat, and the very next Renegade Rallier cast correctly
+opens a mandatory (non-optional) mv-2-or-less graveyard target
+choice, returning a staged Swamp while a mv-5 Big Guy stays put.
+Validation: full **902** rules tests green (1 new), `npm run check`
+across all four workspaces, 200/200 simulated games.
+
 Eldrazi Displacer ("{2}{C}: Exile another target creature, then
 return it to the battlefield tapped under its owner's control.")
 reuses the existing `blink-target-creature` effect (Conjurer's
