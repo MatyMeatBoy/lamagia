@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,100** · cobertura: **30.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,106** · cobertura: **30.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -122,7 +122,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 194 | 148 | 56.7% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 123 | 168 | 42.3% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 598 | 2091 | 22.2% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 599 | 2090 | 22.3% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
@@ -132,7 +132,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2004-05-22 | Fifth Dawn Promos (`P5DN`) | promos | fifth-dawn | other | 1 | 0 | 1 | 0.0% |
 | 2004-06-04 | Fifth Dawn (`5DN`) | expansion | 2000s | main | 165 | 49 | 116 | 29.7% |
 | 2004-09-18 | Champions of Kamigawa Promos (`PCHK`) | promos | champions-of-kamigawa | other | 1 | 1 | 0 | 100.0% |
-| 2004-10-01 | Champions of Kamigawa (`CHK`) | expansion | kamigawa | main | 291 | 58 | 233 | 19.9% |
+| 2004-10-01 | Champions of Kamigawa (`CHK`) | expansion | kamigawa | main | 291 | 59 | 232 | 20.3% |
 | 2004-11-20 | Unhinged Promos (`PUNH`) | promos | unhinged | other | 1 | 0 | 1 | 0.0% |
 | 2005-01-01 | Arena League 2005 (`PAL05`) | promos | arena-2005 | other | 8 | 6 | 2 | 75.0% |
 | 2005-01-01 | Friday Night Magic 2005 (`F05`) | promos | fnm-2005 | other | 12 | 4 | 8 | 33.3% |
@@ -145,7 +145,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2005-06-03 | Saviors of Kamigawa (`SOK`) | expansion | kamigawa | main | 165 | 13 | 152 | 7.9% |
 | 2005-07-29 | Ninth Edition (`9ED`) | core | 2000s | main | 344 | 198 | 146 | 57.6% |
 | 2005-07-29 | Ninth Edition Promos (`P9ED`) | promos | ninth-edition | other | 2 | 1 | 1 | 50.0% |
-| 2005-08-22 | Salvat 2005 (`PSAL`) | boxed-products | salvat-2005 | other | 285 | 100 | 185 | 35.1% |
+| 2005-08-22 | Salvat 2005 (`PSAL`) | boxed-products | salvat-2005 | other | 285 | 101 | 184 | 35.4% |
 | 2005-09-24 | Ravnica: City of Guilds Promos (`PRAV`) | promos | ravnica-city-of-guilds | other | 2 | 0 | 2 | 0.0% |
 | 2005-10-07 | Magic Premiere Shop 2005 (`PMPS`) | promos | magic-premiere-shop-2005 | other | 5 | 5 | 0 | 100.0% |
 | 2005-10-07 | Ravnica: City of Guilds (`RAV`) | expansion | ravnica | main | 291 | 103 | 188 | 35.4% |
@@ -155,7 +155,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2006-01-01 | Hachette UK (`PHUK`) | boxed-products | hachette-uk | other | 23 | 5 | 18 | 21.7% |
 | 2006-01-01 | Judge Gift Cards 2006 (`G06`) | promos | judge-2006 | other | 4 | 0 | 4 | 0.0% |
 | 2006-01-01 | Junior APAC Series (`PJAS`) | promos | junior-2006 | other | 6 | 4 | 2 | 66.7% |
-| 2006-01-01 | Magic Player Rewards 2006 (`P06`) | promos | player-rewards-2006 | other | 7 | 5 | 2 | 71.4% |
+| 2006-01-01 | Magic Player Rewards 2006 (`P06`) | promos | player-rewards-2006 | other | 7 | 6 | 1 | 85.7% |
 | 2006-01-01 | Magic Premiere Shop 2006 (`PMPS06`) | promos | magic-premiere-shop-2006 | other | 5 | 5 | 0 | 100.0% |
 | 2006-01-21 | Guildpact Promos (`PGPT`) | promos | guildpact | other | 2 | 1 | 1 | 50.0% |
 | 2006-02-03 | Guildpact (`GPT`) | expansion | 2000s | main | 165 | 45 | 120 | 27.3% |
@@ -240,7 +240,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2010-09-03 | Duel Decks: Elspeth vs. Tezzeret (`DDF`) | duel-decks | duel-decks-elspeth-vs-tezzeret | other | 73 | 35 | 38 | 47.9% |
 | 2010-09-30 | Scars of Mirrodin Promos (`PSOM`) | promos | scars-of-mirrodin | other | 4 | 2 | 2 | 50.0% |
 | 2010-10-01 | Scars of Mirrodin (`SOM`) | expansion | mirrodin | main | 234 | 85 | 149 | 36.3% |
-| 2010-11-08 | Magic Online Theme Decks (`TD0`) | deck-products | magic-online-theme-decks | other | 174 | 100 | 74 | 57.5% |
+| 2010-11-08 | Magic Online Theme Decks (`TD0`) | deck-products | magic-online-theme-decks | other | 174 | 101 | 73 | 58.0% |
 | 2010-11-19 | Premium Deck Series: Fire and Lightning (`PD2`) | premium-decks | 2010s | other | 31 | 7 | 24 | 22.6% |
 | 2011-01-01 | Duels of the Planeswalkers 2012 Promos (`PDP12`) | promos | duels-of-the-planeswalkers-2012 | other | 3 | 2 | 1 | 66.7% |
 | 2011-01-01 | Friday Night Magic 2011 (`F11`) | promos | fnm-2011 | other | 12 | 8 | 4 | 66.7% |
@@ -472,7 +472,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2020-07-17 | Jumpstart (`JMP`) | jumpstart | jumpstart | other | 461 | 201 | 260 | 43.6% |
 | 2020-07-17 | Jumpstart Arena Exclusives (`AJMP`) | jumpstart | jumpstart-arena-exclusives | other | 18 | 6 | 12 | 33.3% |
 | 2020-08-01 | 2019 Heroes of the Realm (`PH19`) | funny-special | 2019-heroes-of-the-realm | other | 7 | 0 | 7 | 0.0% |
-| 2020-08-07 | Double Masters (`2XM`) | masters-remastered | double-masters | other | 337 | 104 | 233 | 30.9% |
+| 2020-08-07 | Double Masters (`2XM`) | masters-remastered | double-masters | other | 337 | 105 | 232 | 31.2% |
 | 2020-08-13 | Amonkhet Remastered (`AKR`) | masters-remastered | amonkhet-remastered | other | 309 | 95 | 214 | 30.7% |
 | 2020-08-13 | Arena Beginner Set (`ANB`) | starter | 2020s | other | 120 | 72 | 48 | 60.0% |
 | 2020-09-25 | Zendikar Rising (`ZNR`) | expansion | zendikar | main | 285 | 63 | 222 | 22.1% |
@@ -734,7 +734,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | boxed-products | multiverse-gift-box | 1 | 10 | 3 | 7 | 30.0% |
 | boxed-products | rivals-quick-start-set | 1 | 56 | 30 | 26 | 53.6% |
 | boxed-products | rna-guild-kit | 1 | 128 | 41 | 87 | 32.0% |
-| boxed-products | salvat-2005 | 1 | 285 | 100 | 185 | 35.1% |
+| boxed-products | salvat-2005 | 1 | 285 | 101 | 184 | 35.4% |
 | boxed-products | salvat-2011 | 1 | 209 | 131 | 78 | 62.7% |
 | boxed-products | sega-dreamcast-cards | 1 | 10 | 0 | 10 | 0.0% |
 | boxed-products | the-zeta-set | 1 | 121 | 44 | 77 | 36.4% |
@@ -761,7 +761,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | core | 2010s | 8 | 2011 | 970 | 1041 | 48.2% |
 | core | 2020s | 3 | 1132 | 439 | 693 | 38.8% |
 | deck-products | coldsnap-theme-decks | 1 | 52 | 17 | 35 | 32.7% |
-| deck-products | magic-online-theme-decks | 1 | 174 | 100 | 74 | 57.5% |
+| deck-products | magic-online-theme-decks | 1 | 174 | 101 | 73 | 58.0% |
 | deck-products | modern-event-deck-2014 | 1 | 26 | 11 | 15 | 42.3% |
 | deck-products | pioneer-challenger-decks-2021 | 1 | 10 | 0 | 10 | 0.0% |
 | duel-decks | 2010s | 1 | 40 | 28 | 12 | 70.0% |
@@ -808,7 +808,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | expansion | ixalan | 3 | 771 | 186 | 585 | 24.1% |
 | expansion | kaladesh | 1 | 264 | 66 | 198 | 25.0% |
 | expansion | kaldheim | 1 | 323 | 53 | 270 | 16.4% |
-| expansion | kamigawa | 4 | 925 | 121 | 804 | 13.1% |
+| expansion | kamigawa | 4 | 925 | 122 | 803 | 13.2% |
 | expansion | lorwyn | 2 | 559 | 132 | 427 | 23.6% |
 | expansion | masques | 1 | 335 | 102 | 233 | 30.4% |
 | expansion | mirage | 1 | 335 | 89 | 246 | 26.6% |
@@ -873,7 +873,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | masters-remastered | chronicles-foreign-black-border | 1 | 116 | 28 | 88 | 24.1% |
 | masters-remastered | deckmasters | 1 | 44 | 20 | 24 | 45.5% |
 | masters-remastered | dominaria-remastered | 1 | 266 | 104 | 162 | 39.1% |
-| masters-remastered | double-masters | 1 | 337 | 104 | 233 | 30.9% |
+| masters-remastered | double-masters | 1 | 337 | 105 | 232 | 31.2% |
 | masters-remastered | double-masters-2022 | 1 | 332 | 99 | 233 | 29.8% |
 | masters-remastered | eternal-masters | 1 | 249 | 115 | 134 | 46.2% |
 | masters-remastered | iconic-masters | 1 | 249 | 105 | 144 | 42.2% |
@@ -1072,7 +1072,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | promos | magic-2013 | 1 | 6 | 3 | 3 | 50.0% |
 | promos | magic-2014 | 1 | 6 | 1 | 5 | 16.7% |
 | promos | magic-2015 | 1 | 13 | 2 | 11 | 15.4% |
-| promos | magic-online | 1 | 2689 | 598 | 2091 | 22.2% |
+| promos | magic-online | 1 | 2689 | 599 | 2090 | 22.3% |
 | promos | magic-origins | 1 | 43 | 7 | 36 | 16.3% |
 | promos | magic-premiere-shop-2005 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | magic-premiere-shop-2006 | 1 | 5 | 5 | 0 | 100.0% |
@@ -1116,7 +1116,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | promos | player-rewards-2003 | 1 | 1 | 0 | 1 | 0.0% |
 | promos | player-rewards-2004 | 1 | 1 | 0 | 1 | 0.0% |
 | promos | player-rewards-2005 | 1 | 6 | 3 | 3 | 50.0% |
-| promos | player-rewards-2006 | 1 | 7 | 5 | 2 | 71.4% |
+| promos | player-rewards-2006 | 1 | 7 | 6 | 1 | 85.7% |
 | promos | player-rewards-2007 | 1 | 7 | 7 | 0 | 100.0% |
 | promos | player-rewards-2008 | 1 | 7 | 5 | 2 | 71.4% |
 | promos | player-rewards-2009 | 1 | 13 | 11 | 2 | 84.6% |
@@ -9847,7 +9847,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Hidetsugu Consumes All // Vessel of the All-Consuming — `5b8be856-c08d-4356-925d-fce843565189`
 - [ ] Hidetsugu, Devouring Chaos — `d56f24a1-04dc-4769-9941-05bd99508e40`
 - [ ] Hinata, Dawn-Crowned — `aee473c7-c659-421c-96b5-05f57ca2ed97`
-- [ ] Hinder — `c9db6b94-a7b1-4b93-b454-4dead8f85e34`
 - [ ] History of Benalia — `c15bb7eb-aaaa-4468-9641-8f706d6137e8`
 - [ ] Hiveheart Shaman — `c3780529-d47e-48dc-86f6-c1a282c3b656`
 - [ ] Hixus, Prison Warden — `02bff648-fbad-4d61-ab09-93993a5fda58`
@@ -11467,7 +11466,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Hearth Kami — `2496424b-2312-40d9-acbf-e22272d90bad`
 - [ ] Hideous Laughter — `e9022d1c-2f5c-4a1f-a44e-0e4f9651e729`
 - [ ] Hikari, Twilight Guardian — `98a89d5c-871c-4da6-a502-9fdb7bdfccff`
-- [ ] Hinder — `c9db6b94-a7b1-4b93-b454-4dead8f85e34`
 - [ ] Hisoka's Defiance — `2ac6f1c7-f4c5-4d45-9644-da49d8fe4758`
 - [ ] Hisoka's Guard — `6136f019-da8f-471e-9ac5-41e535aa8a21`
 - [ ] Hisoka, Minamo Sensei — `b69701d6-8e46-4184-991b-9f5e95a5e16d`
@@ -12212,7 +12210,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Heedless One — `c4ec45e9-1a4d-42a0-beca-e4dcdfc88fa3`
 - [ ] Helldozer — `d0b17b41-bf8e-4ffd-9301-8db745b01112`
 - [ ] Higure, the Still Wind — `01197456-62f1-4bc0-9f2f-127f97f9b05d`
-- [ ] Hinder — `c9db6b94-a7b1-4b93-b454-4dead8f85e34`
 - [ ] Horizon Seed — `3970e021-209d-41d3-9466-8b3ef9ab1a4c`
 - [ ] Hunted Wumpus — `698c9882-4117-4919-8a19-b1cbffc16692`
 - [ ] Hunter Sliver — `f28b2ebe-49ef-4585-9bf2-7340abf3f0d3`
@@ -12579,7 +12576,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 
 ### promos / player-rewards-2006 · Magic Player Rewards 2006 (`P06`)
 
-- [ ] Hinder — `c9db6b94-a7b1-4b93-b454-4dead8f85e34`
 - [ ] Hypnotic Specter — `759af941-f6a3-4726-91f2-9b1e4e55ea71`
 
 ### promos / guildpact · Guildpact Promos (`PGPT`)
@@ -16859,7 +16855,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Golgari Thug — `a426a258-fd8b-489c-8642-9868ee47de85`
 - [ ] Grim Harvest — `231ca538-b277-4c12-979f-57640a0e87f0`
 - [ ] Hellspark Elemental — `a7ba88c6-81e7-4ab7-9c9b-308831e56833`
-- [ ] Hinder — `c9db6b94-a7b1-4b93-b454-4dead8f85e34`
 - [ ] Illusionary Mask — `05ac866d-0405-4d25-986a-c10fcfc097e6`
 - [ ] Jötun Grunt — `43fbfeec-bcaf-48b8-befe-b7346fec5a3a`
 - [ ] Karakas — `59119143-c0fa-49dd-adf0-e2fd3029c48b`
@@ -36795,7 +36790,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Heartless Pillage — `8e5e8bca-b52a-4178-ab53-bdd0e0e11dc1`
 - [ ] Heat Shimmer — `5c80d39e-f3af-4d24-bca0-19f0bd0f5082`
 - [ ] Hidden Stockpile — `f5ded323-75c8-471e-a516-238b9d6b06d3`
-- [ ] Hinder — `c9db6b94-a7b1-4b93-b454-4dead8f85e34`
 - [ ] Imperial Recruiter — `4d6a1391-817a-4ddc-840d-886b138eeb3f`
 - [ ] Invigorate — `9264c198-76c7-4ac0-9334-37c691de1b54`
 - [ ] Ion Storm — `448e0cf2-c97c-4dc0-96ef-91f1eb75d97c`

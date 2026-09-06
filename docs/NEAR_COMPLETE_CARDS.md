@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,149**
-- Cards with a reusable existing primitive hint: **11,439**
+- One-line cards: **15,148**
+- Cards with a reusable existing primitive hint: **11,438**
 - Cards needing new primitive review: **3,710**
-- Templates: **11,989**
+- Templates: **11,988**
 
 ## Worker rule
 
@@ -34,7 +34,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Adorned Pouncer | `80b8ee3d-4174-4f47-a533-a3db1e703382` | activated | new primitive review | Eternalize {3}{W}{W} |
 | reuse-existing | Reciprocate | `ebdd29c0-2c33-4410-a05c-80ced58c7b81` | damage | damage / life | Exile target creature that dealt damage to you this turn. |
 | needs-new-primitive | Bituminous Blast | `d291d8f7-bb67-470c-8794-cd553c91e5cc` | activated | new primitive review | Cascade |
-| reuse-existing | Hinder | `c9db6b94-a7b1-4b93-b454-4dead8f85e34` | counters | counter | If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard. |
 | needs-new-primitive | Brave the Elements | `9d73a51a-1c8e-40cd-8124-aeff406a0884` | activated | new primitive review | White creatures you control gain protection from the chosen color until end of turn. |
 | reuse-existing | Strategic Betrayal | `0127c13f-7b0f-44c3-8b35-97f306c5f239` | exile | exile | Target opponent exiles a creature they control and their graveyard. |
 | reuse-existing | Beza, the Bounding Spring | `020de6d7-f5a2-4036-ad25-451e5977b4d4` | token | damage / life | When ~ enters, create a Treasure token if an opponent controls more lands than you. You gain 4 life if an opponent has more life than you. Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you. Draw a card if an opponent has more cards in hand than you. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Champion of the Perished | `f3654fbd-16a5-4953-84ac-534e8421032f` | counters | trigger / ETB | Whenever another Zombie you control enters, put a +1/+1 counter on ~. |
 | reuse-existing | Cultivator Colossus | `4d8505d3-c8a1-4850-95d4-5ddb8ad49770` | draw | trigger / ETB | When ~ enters, you may put a land card from your hand onto the battlefield tapped. If you do, draw a card and repeat this process. |
 | reuse-existing | Headless Rider | `d4fdacd7-3101-44e2-a880-dde7326137a4` | token | trigger / ETB | Whenever ~ or another nontoken Zombie you control dies, create a 2/2 black Zombie creature token. |
+| reuse-existing | Angelfire Ignition | `29e1c6e3-d76e-4388-b4e9-f732fdec4338` | activated | damage / life | It gains vigilance, trample, lifelink, indestructible, and haste until end of turn. |
 
-The JSON contains the remaining 14,649 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,648 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
