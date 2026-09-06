@@ -350,8 +350,11 @@ async function setAutoPass(autoPass: boolean): Promise<void> {
 }
 
 function applyView(next: GameView): void {
+  const sameDecision = view?.version === next.version
+    && view?.prioritySeat === next.prioritySeat
+    && view?.stack.map((object) => object.id).join(",") === next.stack.map((object) => object.id).join(",");
   view = next;
-  ui.pendingTarget = null;
+  if (!sameDecision) ui.pendingTarget = null;
   ui.selectedBlocker = null;
   ui.abilityMenu = null;
   ui.cardActionMenu = null;
