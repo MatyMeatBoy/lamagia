@@ -887,7 +887,7 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
 
   return `<button class="${classes.join(" ")}" type="button" data-permanent="${escapeHtml(permanent.instance_id)}"
     data-preview="${escapeHtml(permanent.instance_id)}" title="${escapeHtml(permanent.name)}">
-    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" data-card-name="${escapeHtml(permanent.name)}" alt="${escapeHtml(permanent.name)}" loading="lazy" decoding="async"/>` : ""}<span class="token-placeholder" aria-hidden="true">${permanent.isToken ? "✦" : ""}</span>
+    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" data-card-name="${escapeHtml(permanent.name)}" alt="${escapeHtml(permanent.name)}" loading="lazy" decoding="async"/>` : permanent.isToken ? `<span class="card-image-fallback token-image-fallback" role="img" aria-label="Ficha: ${escapeHtml(permanent.name)}">${escapeHtml(permanent.name)}</span>` : ""}<span class="token-placeholder" aria-hidden="true">${permanent.isToken ? "✦" : ""}</span>
     <span class="tile-name">${escapeHtml(permanent.name)}</span>${stats}<span class="tile-badges">${badges}</span>${icons}
   </button>`;
 }

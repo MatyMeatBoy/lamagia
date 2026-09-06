@@ -269,6 +269,11 @@ h1, h2, h3 { margin: 0; }
   color: #cdb574; font-size: clamp(1rem, 2vw, 1.6rem); opacity: .7;
   background: radial-gradient(circle, #31523699, transparent 62%);
 }
+.card-tile.token-tile .token-image-fallback {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  padding: 18px 5px 5px; background: radial-gradient(circle at 50% 38%, #315236, #101c15 68%);
+  color: #e9dcae; font-size: .62rem; line-height: 1.15; text-align: center;
+}
 .card-tile .tile-name {
   position: absolute; inset: 0 0 auto; padding: 2px 3px 5px;
   background: linear-gradient(#050a07ed, #050a07a8 62%, transparent);
