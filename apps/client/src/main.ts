@@ -546,6 +546,10 @@ function onCardClick(cardId: string, forcedAction?: LegalAction): void {
   runAction(action, action.label.replace(/^Lanzar /, ""));
 }
 
+function cardActionMenuCard(cardId: string): CardView | undefined {
+  return visibleCards().get(cardId);
+}
+
 function undoPendingTarget(): void {
   const pending = ui.pendingTarget;
   if (!pending || !pending.selectedTargets.length) return;
