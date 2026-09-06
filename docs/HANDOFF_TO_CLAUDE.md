@@ -4131,6 +4131,39 @@ simulate:engine` 200/200, 10,100 global profiles.
 Prossh decklist status after this pass: **68 of 97 unique cards fully
 implemented (70.1%)**.
 
+Atarka, World Render ("Whenever a Dragon you control attacks, it gains
+double strike until end of turn.") needed a genuinely new subject-filter
+primitive: every existing `TriggerSubject` is a fixed string, with no
+way to say "the object must ALSO have subtype X" for an "attacks" event
+the way `condition`-kind fields check board-wide counts, not the
+triggering object's own type. Added `TriggerDefinition.requireSubtype`
+as a sibling to the existing `excludeSubtype` field (Requiem Angel's
+"another non-Subtype creature... dies" already proved this
+field-alongside-subject pattern works), checked once in the shared
+subject-matching function right next to `excludeSubtype`. Parsed via its
+own dedicated regex block (mirroring how Requiem Angel's `nonSubtypeDies`
+line is built outside the flat `TRIGGER_TEMPLATES` array), since the
+subtype word itself must flow into the new field rather than only into
+the effect text. "it gains double strike until end of turn" needed one
+more small addition: the general trigger-building path normalizes a
+leading "it" to "~" (self), which would have been wrong here — "it"
+means the ATTACKING creature, not Atarka itself — so this new dedicated
+block passes the effect text to `recognizeSentence` unnormalized, and a
+new "it gains KEYWORD until end of turn" pattern there returns the
+existing `modify-event-creature-and-grant-keyword` kind (added for Ogre
+Battledriver earlier this session) with power/toughness both 0 — a pure
+keyword grant, reusing the kind rather than inventing another one.
+Verified **+10** in the export count (10,100 → 10,110: Atarka plus other
+catalog cards sharing the tribal-attack-trigger or "it gains keyword"
+shapes) and set coverage 30.6% → 30.7%. Scenario-tested: attacking with
+Atarka, a second Dragon, and a Grizzly Bears together grants double
+strike to both Dragons but not the Bear, with power/toughness unchanged
+on all three. Validation: **749 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,110 global profiles.
+
+Prossh decklist status after this pass: **69 of 97 unique cards fully
+implemented (71.1%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

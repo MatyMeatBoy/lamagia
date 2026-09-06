@@ -890,6 +890,8 @@ export interface TriggerDefinition {
   readonly spellSubtype?: string;
   readonly nontoken?: boolean;
   readonly excludeSubtype?: string;
+  /** Tribal filter on the event object itself (Atarka, World Render's "a Dragon you control attacks"), distinct from a board-count condition. */
+  readonly requireSubtype?: string;
   /** Filters a card-discarded event by the discarded card's own type (Waste Not). */
   readonly discardedCardType?: "creature" | "land" | "noncreature-nonland";
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
@@ -3436,6 +3438,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: "none"
     };
   }
+  // "it gains KEYWORD until end of turn" (Atarka, World Render): the event
+  // object (the attacking creature), not the ability's own source.
+  if ((match = /^it gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text))) {
+    return {
+      effect: { kind: "modify-event-creature-and-grant-keyword", power: 0, toughness: 0, keyword: match[1]!.toLowerCase() as EnforcedKeyword },
+      target: "none"
+    };
+  }
   if (/^~ gets \+X\/\+0 until end of turn, where X is the number of lands defending player controls$/i.test(text)) {
     return { effect: { kind: "modify-triggered-creature-by-defending-lands" }, target: "none" };
   }
@@ -4511,6 +4521,21 @@ function recognizeText(text: string): RecognizedText {
           event: "dies", subject: "another-creature-you-control", effect: rec.effect,
           optional: /^you\s+may\b/i.test(nonSubtypeDies[2]!), targetKind: rec.target, sourceText: line,
           excludeSubtype: nonSubtypeDies[1]!
+        });
+        continue;
+      }
+    }
+    // "Whenever a <Subtype> you control attacks, X" (Atarka, World Render): a
+    // tribal filter on the attacking creature itself, distinct from a
+    // board-count condition.
+    const subtypeAttacks = /^whenever\s+an?\s+([A-Za-z][A-Za-z'’-]*)\s+you\s+control\s+attacks,?\s*(.+)$/i.exec(line);
+    if (subtypeAttacks && !/^(?:creature|permanent|player)$/i.test(subtypeAttacks[1]!)) {
+      const rec = recognizeSentence(subtypeAttacks[2]!);
+      if (rec) {
+        triggers.push({
+          event: "attacks", subject: "creature-you-control", effect: rec.effect,
+          optional: false, targetKind: rec.target, sourceText: line,
+          requireSubtype: subtypeAttacks[1]!
         });
         continue;
       }

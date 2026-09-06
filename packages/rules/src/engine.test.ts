@@ -10303,6 +10303,50 @@ describe("Sensei's Divining Top's reorder-top and draw-then-return abilities", (
   });
 });
 
+describe("Atarka, World Render's tribal double-strike attack trigger", () => {
+  const ATARKA = () => make({
+    name: "Atarka, World Render", type_line: "Legendary Creature — Dragon", mana_cost: "{4}{R}{R}{G}{G}", cmc: 8, power: "6", toughness: "6",
+    keywords: ["flying", "trample"],
+    oracle_text: "Flying, trample\nWhenever a Dragon you control attacks, it gains double strike until end of turn."
+  });
+  const SMALL_DRAGON = () => make({ name: "Small Dragon", type_line: "Creature — Dragon", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2" });
+
+  it("recognizes the tribal attack trigger with a requireSubtype filter", () => {
+    expect(profileOf(ATARKA())).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{
+        event: "attacks", subject: "creature-you-control", requireSubtype: "Dragon",
+        effect: { kind: "modify-event-creature-and-grant-keyword", power: 0, toughness: 0, keyword: "double strike" }
+      }]
+    });
+  });
+
+  it("grants double strike to attacking Dragons but not a non-Dragon attacker", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ATARKA(), SMALL_DRAGON(), BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const atarka = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Atarka, World Render")!;
+    const dragon = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Small Dragon")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, {
+      type: "declare-attackers",
+      attackers: [
+        { instanceId: atarka.instance_id, defender: 1 },
+        { instanceId: dragon.instance_id, defender: 1 },
+        { instanceId: bear.instance_id, defender: 1 }
+      ]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    const updated = game.players[0]!.battlefield;
+    expect(updated.find((permanent) => permanent.instance_id === atarka.instance_id)?.temporaryKeywords).toContain("double strike");
+    expect(updated.find((permanent) => permanent.instance_id === dragon.instance_id)?.temporaryKeywords).toContain("double strike");
+    expect(updated.find((permanent) => permanent.instance_id === bear.instance_id)?.temporaryKeywords ?? []).not.toContain("double strike");
+    expect([powerOf(updated.find((permanent) => permanent.instance_id === atarka.instance_id)!, game), toughnessOf(updated.find((permanent) => permanent.instance_id === atarka.instance_id)!, game)]).toEqual([6, 6]);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

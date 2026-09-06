@@ -2120,6 +2120,7 @@ function triggerMatches(
   if (event.kind === "deals-damage-to-player" && event.victim === watcher.controller) return false;
   if (definition.nontoken && object.card.token) return false;
   if (definition.excludeSubtype && cardProfile(object.card).subtypes.some((subtype) => subtype.toLowerCase() === definition.excludeSubtype!.toLowerCase())) return false;
+  if (definition.requireSubtype && !cardProfile(object.card).subtypes.some((subtype) => subtype.toLowerCase() === definition.requireSubtype!.toLowerCase())) return false;
   const isSelf = object.permanentId === watcher.instanceId;
   const objectIsCreature = isCreature(cardProfile(object.card));
   switch (subject) {
