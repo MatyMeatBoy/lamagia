@@ -29,6 +29,10 @@ export interface CardData {
   readonly keywords?: readonly string[];
   readonly produced_mana?: readonly string[];
   readonly card_faces?: readonly Partial<CardData>[];
+  /** Printing context used to select matching token art; never rules identity. */
+  readonly set_code?: string;
+  readonly token_image_normal?: string;
+  readonly token_image_art_crop?: string;
 }
 
 export type CardType =

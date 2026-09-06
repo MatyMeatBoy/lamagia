@@ -13,6 +13,9 @@ import {
   type CardData, type DeckInput, type GameAction, type GameState, type GameView, type SeatId
 } from "@prossh/rules";
 import { isSafeManaUndo } from "@prossh/rules";
+import { DatabaseSync } from "node:sqlite";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 export interface ImportedDeck {
   readonly id: string;
@@ -47,6 +50,32 @@ const MAX_MATCHES = 64;
 const DEFAULT_NAMES = ["Tú", "Luna", "Mauro", "Nox", "Iris", "Vega", "Rook", "Sable"];
 
 const matches = new Map<string, MatchRecord>();
+const catalogPath = process.env.CATALOG_DB_PATH ?? fileURLToPath(new URL("../../../data/catalog/prossh.sqlite", import.meta.url));
+const tokenArtCache = new Map<string, { image_normal?: string; image_art_crop?: string }>();
+
+function enrichTokenArt(view: GameView): GameView {
+  if (!existsSync(catalogPath)) return view;
+  const database = new DatabaseSync(catalogPath, { readOnly: true });
+  try {
+    const tokenArt = (card: GameView["players"][number]["battlefield"][number]) => {
+      if (!card.isToken || card.image_normal) return card;
+      const sourceSet = card.tokenSourceSetCode?.toLowerCase();
+      const cacheKey = `${card.name.toLowerCase()}|${sourceSet ?? ""}`;
+      const cached = tokenArtCache.get(cacheKey);
+      if (cached) return { ...card, ...(cached.image_normal ? { image_normal: cached.image_normal } : {}), ...(cached.image_art_crop ? { image_art_crop: cached.image_art_crop } : {}) };
+      const query = database.prepare(`SELECT image_normal, image_art_crop FROM cards
+        WHERE (layout IN ('token','double_faced_token') OR set_type = 'token')
+          AND LOWER(name) = LOWER(?) AND LOWER(type_line) LIKE '%token%'
+        ORDER BY CASE WHEN LOWER(set_code) = ? THEN 0 ELSE 1 END,
+                 CASE WHEN set_type IN ('core','expansion') AND COALESCE(promo,0)=0 AND COALESCE(variation,0)=0 THEN 0 ELSE 1 END,
+                 released_at DESC, set_code ASC LIMIT 1`);
+      const image = query.get(card.name, sourceSet ?? "") as { image_normal?: string; image_art_crop?: string } | undefined;
+      if (image?.image_normal) tokenArtCache.set(cacheKey, image);
+      return image?.image_normal ? { ...card, image_normal: image.image_normal, ...(image.image_art_crop ? { image_art_crop: image.image_art_crop } : {}) } : card;
+    };
+    return { ...view, players: view.players.map((player) => ({ ...player, battlefield: player.battlefield.map(tokenArt) })) };
+  } finally { database.close(); }
+}
 
 function evictStaleMatches(): void {
   const cutoff = Date.now() - MATCH_TTL_MS;
@@ -103,7 +132,7 @@ export function createMatch(decks: readonly ImportedDeck[], options: { seed?: nu
   };
   matches.set(id, record);
   driveBots(record);
-  return { matchId: id, seat: 0, token, view: { ...projectGame(record.state, 0), undoAvailable: false } };
+  return { matchId: id, seat: 0, token, view: enrichTokenArt({ ...projectGame(record.state, 0), undoAvailable: false }) };
 }
 
 export function getMatch(matchId: string): MatchRecord {
@@ -122,7 +151,7 @@ export function seatForToken(match: MatchRecord, token: string | undefined): Sea
 export function viewMatch(matchId: string, token: string | undefined): GameView {
   const match = getMatch(matchId);
   const seat = seatForToken(match, token);
-  return { ...projectGame(match.state, seat), undoAvailable: canUndo(match, seat) };
+  return enrichTokenArt({ ...projectGame(match.state, seat), undoAvailable: canUndo(match, seat) });
 }
 
 function canUndo(match: MatchRecord, seat: SeatId): boolean {
@@ -148,7 +177,7 @@ export function actInMatch(matchId: string, token: string | undefined, action: G
   }
   match.state = next;
   driveBots(match);
-  return { ...projectGame(match.state, seat), undoAvailable: canUndo(match, seat) };
+  return enrichTokenArt({ ...projectGame(match.state, seat), undoAvailable: canUndo(match, seat) });
 }
 
 export function setAutoPass(matchId: string, token: string | undefined, autoPass: boolean): GameView {

@@ -77,6 +77,8 @@ export interface GameCard extends CardData {
   readonly instance_id: string;
   readonly owner: SeatId;
   readonly token?: boolean;
+  /** Edition of the card/effect that created this token, for visual matching. */
+  readonly token_source_set_code?: string;
 }
 
 export interface Permanent {
@@ -5503,6 +5505,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           toughness: stat !== null ? String(stat) : effect.token.toughness === null ? null : String(effect.token.toughness),
           colors: effect.token.colors,
           keywords: effect.token.keywords
+          , token_source_set_code: object.card.set_code
         };
         next = putOntoBattlefield(next, controller, token, false, effect.token.tapped);
       }
@@ -5530,6 +5533,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           toughness: stat !== null ? String(stat) : effect.token.toughness === null ? null : String(effect.token.toughness),
           colors: effect.token.colors,
           keywords: effect.token.keywords
+          , token_source_set_code: object.card.set_code
         };
         next = putOntoBattlefield(next, recipient, token, false, effect.token.tapped);
       }

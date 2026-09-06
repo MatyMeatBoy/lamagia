@@ -25,6 +25,7 @@ export interface CardView {
   readonly image_art_crop?: string;
   /** Generated tokens are distinct battlefield objects and use the token frame. */
   readonly isToken: boolean;
+  readonly tokenSourceSetCode?: string;
   readonly power: number | null;
   readonly toughness: number | null;
   readonly keywords: readonly string[];
@@ -221,6 +222,7 @@ function cardView(card: GameCard): CardView {
     ...(card.image_normal ? { image_normal: card.image_normal } : {}),
     ...(card.image_art_crop ? { image_art_crop: card.image_art_crop } : {}),
     isToken: Boolean(card.token),
+    ...(card.token_source_set_code ? { tokenSourceSetCode: card.token_source_set_code } : {}),
     power: profile.power,
     toughness: profile.toughness,
     keywords: profile.keywords,
