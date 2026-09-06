@@ -2635,6 +2635,21 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       count
     };
   }
+  // "up to N ... cards, put them into your graveyard, then shuffle" (Buried Alive).
+  const multiGraveyard = /^Search your library for up to (one|two|three|four|five) (.+?) cards, put (?:them|those cards) into your graveyard, then shuffle\.?$/i.exec(text);
+  if (multiGraveyard) {
+    const count = toNumber(multiGraveyard[1]!) ?? 1;
+    const criterion = searchCriterion(multiGraveyard[2]!);
+    return {
+      kind: "search-library",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
+      destination: "graveyard",
+      reveal: false,
+      count
+    };
+  }
   // "search your library for any number of ... cards with total mana value N
   // or less, put them onto the battlefield, then shuffle" (Protean Hulk): an
   // open-ended pick count capped by the running total of the cards already

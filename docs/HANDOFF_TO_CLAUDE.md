@@ -5780,3 +5780,25 @@ creature; activating it returns the controller's own creature to hand
 while leaving the opponent's untouched. Validation: full **868** rules
 tests green (1 new), `npm run check` across all four workspaces,
 200/200 simulated games.
+
+Buried Alive ("Search your library for up to three creature cards, put
+them into your graveyard, then shuffle.") is the graveyard-destination
+sibling of the existing "up to N ... cards" `search-library` family
+(Burnished Hart's battlefield version, Tooth and Nail's hand version).
+`search-library`'s own type already listed `destination: "graveyard"`
+as valid, and the effect PARSED fine in isolation, but the dedicated
+"up to N: fetch deterministically, skip the interactive choice" fast
+path in `resolveTop` only had branches for `"battlefield"` and
+`"hand"` — a card with `count > 1` and `destination: "graveyard"`
+would have fallen through to the generic single-card
+`search-library` `PendingChoice`, which has no counter field and stops
+after the first pick (the exact bug already fixed for Tooth and
+Nail's hand mode earlier this session, now recurring for a third
+destination). Added the missing `graveyard` branch, mirroring the
+`hand` one exactly except appending to `player.graveyard` instead of
+`player.hand`. Verified **+2** in the export count (10,869 → 10,871);
+set coverage holds at 33.0%. Scenario-tested: with two creature cards
+and one noncreature card in the library, casting it puts both creature
+cards straight into the graveyard and leaves the noncreature card in
+the library. Validation: full **873** rules tests green (2 new),
+`npm run check` across all four workspaces, 200/200 simulated games.

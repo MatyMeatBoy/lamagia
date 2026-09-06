@@ -12383,6 +12383,34 @@ describe("Tooth and Nail's modal tutor-to-hand and hand-to-battlefield modes", (
   });
 });
 
+describe("Buried Alive's up-to-three-to-graveyard search", () => {
+  const BURIED_ALIVE = () => make({ name: "Buried Alive", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Search your library for up to three creature cards, put them into your graveyard, then shuffle." });
+
+  it("recognizes the up-to-three graveyard search", () => {
+    expect(profileOf(BURIED_ALIVE())).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "search-library", types: ["Creature"], destination: "graveyard", reveal: false, count: 3 }]
+    });
+  });
+
+  it("puts exactly the matching creature cards into the graveyard, leaving a noncreature card in the library", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BURIED_ALIVE()], "buried-hand"),
+      library: [...toHand(0, [BEAR(), TRAMPLER(), BOLT()], "buried-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "buried-hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Big Stomper")).toBe(true);
+    expect(game.players[0]!.library.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Buried Alive")).toBe(true);
+  });
+});
+
 describe("Hunting Wilds' kicked-only untap-and-animate-fetched-lands", () => {
   const HUNTING_WILDS = () => make({
     name: "Hunting Wilds", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4,
