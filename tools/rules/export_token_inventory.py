@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 FORMAT = "prossh-token-inventory/v2"
+INVENTORY_SCHEMA = "token-key-v1"
 NON_TRIVIAL = re.compile(r"\b(?:when|whenever|at the beginning|[A-Za-z]+:|flying|haste|deathtouch|lifelink|trample|ward|menace|first strike|double strike|enters|dies|attacks|blocks|sacrifice|draw|add|exile|counter|explore|transform)\b", re.I)
 ABILITY_CLUSTERS = (
     ("token-trigger", re.compile(r"\b(?:when|whenever|at the beginning|at the end)\b", re.I)),
@@ -99,7 +100,7 @@ def build(catalog: Path) -> dict[str, Any]:
             clusters[group["cluster"]].append({"name": group["name"], "tokenKey": group["tokenKey"], "sets": group["sets"], "oracleText": text})
     inventories.sort(key=lambda item: (not item["needsRulesWork"], item["name"].casefold(), item["tokenKey"]))
     missing_art = [item for item in inventories if not item["hasArtwork"]]
-    return {"format": FORMAT, "generatedAt": datetime.now(UTC).isoformat(), "tokenCount": len(inventories),
+    return {"format": FORMAT, "schema": INVENTORY_SCHEMA, "generatedAt": datetime.now(UTC).isoformat(), "tokenCount": len(inventories),
             "printingCount": sum(len(item["printings"]) for item in inventories), "tokens": inventories,
             "artwork": {"definitionsWithArtwork": len(inventories) - len(missing_art), "definitionsMissingArtwork": len(missing_art),
                         "missingTokenKeys": [item["tokenKey"] for item in missing_art]},
