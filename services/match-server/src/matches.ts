@@ -71,11 +71,15 @@ function enrichTokenArt(view: GameView): GameView {
       const query = database.prepare(`SELECT image_normal, image_art_crop FROM cards
         WHERE (layout IN ('token','double_faced_token') OR set_type = 'token')
           AND LOWER(name) = LOWER(?) AND LOWER(type_line) LIKE '%token%'
-          AND (LOWER(type_line) = LOWER(?) OR LOWER(type_line) LIKE '%' || LOWER(?) || '%')
+          AND (
+            LOWER(type_line) = LOWER(?)
+            OR LOWER(type_line) LIKE '%' || LOWER(?) || '%'
+            OR LOWER(?) LIKE '%' || LOWER(type_line) || '%'
+          )
         ORDER BY CASE WHEN LOWER(set_code) = ? THEN 0 ELSE 1 END,
                  CASE WHEN set_type IN ('core','expansion') AND COALESCE(promo,0)=0 AND COALESCE(variation,0)=0 THEN 0 ELSE 1 END,
                  released_at DESC, set_code ASC LIMIT 1`);
-      const image = query.get(card.name, card.type_line, card.type_line, sourceSet ?? "") as { image_normal?: string; image_art_crop?: string } | undefined;
+      const image = query.get(card.name, card.type_line, card.type_line, card.type_line, sourceSet ?? "") as { image_normal?: string; image_art_crop?: string } | undefined;
       if (image?.image_normal) tokenArtCache.set(cacheKey, image);
       return image?.image_normal ? { ...card, image_normal: image.image_normal, ...(image.image_art_crop ? { image_art_crop: image.image_art_crop } : {}) } : card;
     };
