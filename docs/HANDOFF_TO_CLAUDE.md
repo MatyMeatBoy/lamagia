@@ -6562,3 +6562,24 @@ tested: playing a land while Altar of the Brood is in play mills
 exactly one card from the opponent's library. Validation: full
 **915** rules tests green (1 new), `npm run check` across all four
 workspaces, 200/200 simulated games.
+
+## Cast Down: a nonlegendary-creature target restriction (2026-09-06)
+
+Cast Down ("Destroy target nonlegendary creature.") was flagged
+"needs new primitive" by the near-complete scanner, but an almost
+identical restriction already existed: `non-demon-creature` (Destroy
+target non-Demon creature) excludes by SUBTYPE at both of its two
+consumption sites in `engine.ts` (the `legalTargets` filter and the
+runtime match check). Added a sibling `nonlegendary-creature`
+`TargetKind`, checking `profile.supertypes` for "legendary" instead
+of `profile.subtypes` for "demon" — otherwise byte-for-byte the same
+shape, added at both of the same two sites this time (learned from
+this session's repeated "duplicated filter site" lesson, so both were
+updated together rather than one now and one later). Verified **+1**
+in the export count (11,092 → 11,093); `docs/SET_COVERAGE.md` holds
+at its stale 33.2%/true-33.7% split. Scenario-tested: with a Grizzly
+Bears and a legendary Sek'Kuar, Deathkeeper both on the opponent's
+battlefield, `legalTargets` for the new kind offers only the Bear;
+casting Cast Down at it destroys it while Sek'Kuar survives
+untouched. Validation: full **916** rules tests green (1 new), `npm
+run check` across all four workspaces, 200/200 simulated games.

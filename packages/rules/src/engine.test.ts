@@ -8585,6 +8585,20 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.life).toBe(37);
   });
 
+  it("restricts Cast Down to nonlegendary creatures", () => {
+    const castDown = make({ name: "Cast Down", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target nonlegendary creature." });
+    const profile = profileOf(castDown);
+    expect(profile).toMatchObject({ targetKind: "nonlegendary-creature", fullyImplemented: true });
+    let game = readyToCast([castDown], [SWAMP(), SWAMP()], [BEAR(), SEKKUAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const legend = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sek'Kuar, Deathkeeper")!;
+    expect(legalTargets(game, 0, "nonlegendary-creature").map((target) => target.kind === "permanent" ? target.instanceId : null)).toEqual([bear.instance_id]);
+    expect(legend).toBeDefined();
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Sek'Kuar, Deathkeeper")).toBe(true);
+  });
+
   it("pumps Towashi Songshaper when another artifact its controller controls enters", () => {
     const songshaper = make({ name: "Towashi Songshaper", type_line: "Creature — Human Samurai", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever another artifact you control enters, this creature gets +1/+0 until end of turn." });
     const artifact = make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
