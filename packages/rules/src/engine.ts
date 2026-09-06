@@ -692,6 +692,7 @@ export type PendingChoice =
       readonly sourceId: string;
       readonly sourceCard: GameCard;
       readonly types: readonly CardType[];
+      readonly subtypes?: readonly string[];
       readonly lookedCount: number;
       readonly remainingCards: readonly GameCard[];
       readonly bottomCards: readonly GameCard[];
@@ -5906,7 +5907,8 @@ function beginLookTopSelection(
   returnSourceToGraveyard = false,
   exileSourceAfterResolution = false,
   minPower?: number,
-  tapped = false
+  tapped = false,
+  subtypes?: readonly string[]
 ): GameState {
   const visible = playerAt(state, seat).library.slice(0, Math.max(0, amount));
   if (!visible.length) return state;
@@ -5919,6 +5921,7 @@ function beginLookTopSelection(
       sourceId,
       sourceCard,
       types,
+      ...(subtypes?.length ? { subtypes } : {}),
       lookedCount: visible.length,
       remainingCards: visible,
       bottomCards: [],
@@ -5991,7 +5994,7 @@ function resolveTop(state: GameState): GameState {
     const triggerSurveil = object.trigger.definition.effect.kind === "surveil" ? object.trigger.definition.effect : null;
     if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
-    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep, false, false, triggerLookTop.minPower, triggerLookTop.tapped);
+    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep, false, false, triggerLookTop.minPower, triggerLookTop.tapped, triggerLookTop.subtypes);
     // A triggered ability's own search (Pattern of Rebirth's dies-triggered
     // reanimation): the source stays on the battlefield, unlike a resolving
     // spell, so this never moves it to a graveyard or exile.
@@ -6215,7 +6218,7 @@ function resolveTop(state: GameState): GameState {
   }
   const lookTop = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-top-select" }> => effect.kind === "look-top-select");
   if (lookTop) {
-    return beginLookTopSelection(next, object.controller, object.id, object.card, lookTop.amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback), lookTop.minPower, lookTop.tapped);
+    return beginLookTopSelection(next, object.controller, object.id, object.card, lookTop.amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback), lookTop.minPower, lookTop.tapped, lookTop.subtypes);
   }
   const viewHand = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-at-target-players-hand" }> => effect.kind === "look-at-target-players-hand");
   if (viewHand) {
@@ -7700,7 +7703,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       if (choice.stage === "select") {
         choice.remainingCards.forEach((card, ordinal) => {
           const profile = cardProfile(card);
-          if (!choice.types.some((type) => profile.types.includes(type))) return;
+          if (choice.types.length && !choice.types.some((type) => profile.types.includes(type))) return;
+          if (choice.subtypes?.length && !choice.subtypes.some((subtype) => hasSubtype(profile, subtype))) return;
           if (choice.minPower !== undefined && (profile.power === null || profile.power < choice.minPower)) return;
           actions.push({
             action: { type: "choose-look-top", sourceId: choice.sourceId, ordinal },
@@ -10401,8 +10405,9 @@ function applyChooseLookTop(state: GameState, seat: SeatId, action: Extract<Game
   if (choice.sourceId !== action.sourceId || action.ordinal === undefined) throw new Error("Debes elegir una carta visible de la selección superior.");
   const selected = choice.remainingCards[action.ordinal];
   if (!selected) throw new Error("Debes elegir una carta visible de la selección superior.");
-  if (!choice.types.some((type) => cardProfile(selected).types.includes(type))) throw new Error("Esa carta no cumple el tipo requerido.");
   const selectedProfile = cardProfile(selected);
+  if (choice.types.length && !choice.types.some((type) => selectedProfile.types.includes(type))) throw new Error("Esa carta no cumple el tipo requerido.");
+  if (choice.subtypes?.length && !choice.subtypes.some((subtype) => hasSubtype(selectedProfile, subtype))) throw new Error("Esa carta no cumple el tipo requerido.");
   if (choice.minPower !== undefined && (selectedProfile.power === null || selectedProfile.power < choice.minPower)) {
     throw new Error("Esa criatura no cumple el poder mínimo requerido.");
   }

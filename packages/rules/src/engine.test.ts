@@ -3045,6 +3045,28 @@ describe("casting", () => {
     expect(game.players[0]!.library.slice(-3).map((card) => card.name)).toEqual(["Forest", "Grizzly Bears", "Lightning Bolt"]);
   });
 
+  it("filters Harald, King of Skemfar's top-five review by creature subtype, not card type", () => {
+    const harald = make({ name: "Harald, King of Skemfar", type_line: "Legendary Creature — Elf Noble", mana_cost: "{2}{B}{G}", cmc: 4, power: "4", toughness: "4", keywords: ["Menace"], oracle_text: "Menace\nWhen Harald enters, look at the top five cards of your library. You may reveal an Elf, Warrior, or Tyvar card from among them and put it into your hand. Put the rest on the bottom of your library in a random order." });
+    expect(profileOf(harald).triggers[0]).toMatchObject({
+      effect: { kind: "look-top-select", amount: 5, types: [], subtypes: ["Elf", "Warrior", "Tyvar"] }
+    });
+    let game = readyToCast([harald], [SWAMP(), SWAMP(), FOREST(), FOREST()], [], []);
+    game = stage(game, 0, () => ({ library: toHand(0, [FOREST(), PUMP_LORD(), NONCREATURE_CAST_DRAIN(), BOLT(), BEAR()], "harald-library") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice?.type).toBe("look-top-select");
+    // Only the Elf (Pump Lord) and the Warrior (Test Mai) qualify; the Forest,
+    // instant, and unrelated Bear don't, even though a Bear is a creature.
+    expect(legalActions(game, 0).filter((entry) => entry.action.type === "choose-look-top").map((entry) => entry.cardId))
+      .toEqual([game.players[0]!.library.find((card) => card.name === "Pump Lord")!.instance_id, game.players[0]!.library.find((card) => card.name === "Test Mai")!.instance_id]);
+    const sourceId = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "look-top-select" }>).sourceId;
+    const pumpLordOrdinal = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "look-top-select" }>).remainingCards.findIndex((card) => card.name === "Pump Lord");
+    game = applyAction(game, 0, { type: "choose-look-top", sourceId, ordinal: pumpLordOrdinal });
+    while (game.pendingChoice?.type === "look-top-select") {
+      game = applyAction(game, 0, { type: "choose-look-top-bottom", sourceId, ordinal: 0 });
+    }
+    expect(game.players[0]!.hand.some((card) => card.name === "Pump Lord")).toBe(true);
+  });
+
   it("exiles Act of Authority's target and transfers the source to that controller", () => {
     let game = readyToCast([C13_ACT_OF_AUTHORITY()], [PLAINS(), PLAINS(), PLAINS(), PLAINS()], [], [SOL_RING()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });

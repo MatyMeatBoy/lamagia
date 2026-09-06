@@ -465,7 +465,7 @@ export type SpellEffect =
   /** Surveil N (CR 701.42): look at the top N, put any number in the graveyard, the rest on top in any order. */
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
-  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number; readonly tapped?: boolean }
+  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly subtypes?: readonly string[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number; readonly tapped?: boolean }
   /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
   | { readonly kind: "look-top-reorder"; readonly amount: number }
   /** "Draw a card, then put ~ on top of its owner's library" (Sensei's Divining Top's tap ability). */
@@ -2573,7 +2573,11 @@ function searchCriterion(text: string): { types: CardType[]; subtypes: string[];
   // compound descriptions ("land with ...", "card with ...") stay pending.
   const criterion = withoutColor.replace(/\b(?:a|an|up to (?:one|two|three|five))\b/gi, "")
     .replace(/\bcard\b/gi, "").replace(/\s+/g, " ").trim();
-  for (const part of criterion.split(/\s+(?:or|and)\s+/i)) {
+  // A 3-or-more-item Oracle list ("Elf, Warrior, or Tyvar") uses an Oxford
+  // comma before the final "or"/"and"; splitting on the conjunction alone
+  // (as a plain 2-item "X or Y" list would) leaves the comma-joined earlier
+  // items stuck together as one unmatched candidate. Split on either.
+  for (const part of criterion.split(/\s*,\s*(?:or\s+|and\s+)?|\s+(?:or|and)\s+/i)) {
     const candidate = part.trim();
     if (!candidate || /\b(?:with|that|whose|where|named|converted|mana|power|toughness)\b/i.test(candidate)) continue;
     if (/^(?:basic|land|creature|artifact|enchantment|instant|sorcery|planeswalker|battle|kindred)$/i.test(candidate)) continue;
@@ -2833,17 +2837,25 @@ function parseLandScaledToken(text: string): SpellEffect | null {
  * parameter so Augur of Bolas and future look-top templates share one rule.
  */
 function parseLookTopSelection(text: string): SpellEffect | null {
-  const match = /^Look at the top (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) cards? of your library\. You may reveal (?:an? )?(.+?) card from among them and put it into your hand\. Put the rest on the bottom of your library in any order$/i.exec(text.trim().replace(/\.$/, ""));
+  // DOCUMENTED SIMPLIFICATION: "in a random order" (Harald, King of Skemfar)
+  // is modeled the same as "in any order" — the bottom of a library is
+  // hidden from both players either way, matching the same trade-off already
+  // made for parseLookTopBattlefieldTapped's battlefield-destination sibling.
+  const match = /^Look at the top (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) cards? of your library\. You may reveal (?:an? )?(.+?) card from among them and put it into your hand\. Put the rest on the bottom of your library in (?:any|a random) order$/i.exec(text.trim().replace(/\.$/, ""));
   if (!match) return null;
   const amount = toNumber(match[1]);
   if (amount === null || amount < 0) return null;
-  const types = match[2]!
-    .split(/\s+or\s+/i)
-    .map((type) => type.trim())
-    .filter((type): type is CardType => CARD_TYPES.some((cardType) => cardType.toLowerCase() === type.toLowerCase()))
-    .map((type) => CARD_TYPES.find((cardType) => cardType.toLowerCase() === type.toLowerCase())!);
-  if (!types.length) return null;
-  return { kind: "look-top-select", amount, types, destination: "hand" };
+  // Most cards sharing this template restrict by card TYPE ("an artifact,
+  // creature, or land card"), but Harald, King of Skemfar restricts by
+  // creature SUBTYPE instead ("an Elf, Warrior, or Tyvar card") - reuse the
+  // shared search-criterion parser so either shape works.
+  const criterion = searchCriterion(match[2]!);
+  if (!criterion.types.length && !criterion.subtypes.length) return null;
+  return {
+    kind: "look-top-select", amount, types: criterion.types,
+    ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+    destination: "hand"
+  };
 }
 
 /**

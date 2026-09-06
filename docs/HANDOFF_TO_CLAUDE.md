@@ -6218,3 +6218,58 @@ controller-agnostic rather than accidentally reusing Crypt Ghast's
 "you control" scoping. Validation: full **906** rules tests green (1
 new), `npm run check` across all four workspaces, 200/200 simulated
 games.
+
+## Harald, King of Skemfar: subtype-filtered look-top-select, plus a real comma-splitting bug in searchCriterion (2026-09-06)
+
+Harald, King of Skemfar ("When ~ enters, look at the top five cards
+of your library. You may reveal an Elf, Warrior, or Tyvar card from
+among them and put it into your hand. Put the rest on the bottom of
+your library in a random order.") reuses the shared `look-top-select`
+primitive (Augur of Bolas, Aethermage's Touch, Mayael, Elvish
+Rejuvenator), but every prior card sharing it filters by CARD TYPE
+("an artifact, creature, or land card"); Harald filters by CREATURE
+SUBTYPE instead ("Elf, Warrior" — "Tyvar" is a legendary character
+name, not a real subtype, so it's a narrow, documented under-match
+rather than building full named-card matching for one edge case).
+Added `subtypes?: readonly string[]` to the `look-top-select`
+`SpellEffect`/`PendingChoice`, threaded through `beginLookTopSelection`
+(a new trailing parameter, both call sites) and both places that
+filter/validate the offered cards (`legalActions`'s option list AND
+`applyChooseLookTop`'s independent revalidation — the same two-site
+duplication pattern already fixed once this session for
+`search-library`). `parseLookTopSelection` now calls the shared
+`searchCriterion` helper (already used by the battlefield-tapped
+sibling) instead of its own CARD_TYPES-only filter, so it naturally
+falls back to subtypes when no card-type word matches.
+
+That reuse surfaced a genuine, more consequential bug in
+`searchCriterion` itself: its subtype-extraction loop split the
+criterion text ONLY on bare "or"/"and", never on commas. A 2-item
+list ("an instant or sorcery card") works fine, but any 3-OR-MORE-
+ITEM Oracle list with an Oxford comma ("Elf, Warrior, or Tyvar")
+left the comma-joined earlier items stuck together as one unmatched,
+silently-dropped candidate — this is shared infrastructure behind
+MANY `search-library` templates, not just `look-top-select`, so the
+bug affected every multi-item comma list across the whole search/
+look-top system, not just this one card. Fixed by splitting on
+either an optional comma-plus-conjunction OR a bare conjunction:
+`` /\s*,\s*(?:or\s+|and\s+)?|\s+(?:or|and)\s+/i ``. Also needed the
+"in a random order" vs. "in any order" wording gap closed on
+`parseLookTopSelection`'s own regex (Harald's card uses "random," the
+same DOCUMENTED SIMPLIFICATION already applied to the
+battlefield-destination sibling — bottom-of-library order is hidden
+from both players regardless of which word Oracle prints).
+
+Verified **+23** in the export count (10,976 → 10,999 — the
+`searchCriterion` fix alone unblocks many other 3+-item comma-list
+cards across the whole search-library family, not just this one
+template) and `docs/SET_COVERAGE.md` stays at its already-stale
+33.2% for the same oracle_id-cap reason as the two entries above
+(true live figure now reads 33.4%). Scenario-tested: staging a Forest,
+an Elf (Pump Lord), a Warrior (Test Mai), an instant (Lightning
+Bolt), and an unrelated Bear as the top five cards, `legalActions`
+correctly offers ONLY the Elf and the Warrior (not the Bear, despite
+also being a creature) — proving the subtype filter, not a card-type
+filter, is what's actually being checked; choosing the Elf puts it
+into hand. Validation: full **907** rules tests green (1 new), `npm
+run check` across all four workspaces, 200/200 simulated games.
