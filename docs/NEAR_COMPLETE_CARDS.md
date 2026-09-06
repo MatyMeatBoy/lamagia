@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,066**
+- One-line cards: **15,065**
 - Cards with a reusable existing primitive hint: **11,311**
-- Cards needing new primitive review: **3,755**
-- Templates: **12,139**
+- Cards needing new primitive review: **3,754**
+- Templates: **12,138**
 
 ## Worker rule
 
@@ -519,4 +519,4 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Hall of Heliod's Generosity | `2fc070dc-f2f7-4648-8069-31d74790a39c` | activated | activated ability / mana | {1}{W}, {T}: Put target enchantment card from your graveyard on top of your library. |
 | reuse-existing | Spirit-Sister's Call | `83914a83-4de2-4d64-9770-f68a12014167` | exile | sacrifice | At the beginning of your end step, choose target permanent card in your graveyard. You may sacrifice a permanent that shares a card type with the chosen card. If you do, return the chosen card from your graveyard to the battlefield and it gains "If ~ would leave the battlefield, exile it instead of putting it anywhere else." |
 
-The JSON contains the remaining 14,566 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,565 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
