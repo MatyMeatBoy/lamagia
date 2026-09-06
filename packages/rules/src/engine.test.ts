@@ -7538,6 +7538,23 @@ describe("triggered abilities", () => {
     expect(atLeast.players[0]!.battlefield.some((permanent) => permanent.card.name === "Inventors' Fair")).toBe(false);
   });
 
+  it("drains life from Underhanded Designs when an artifact you control enters", () => {
+    const underhanded = make({ name: "Underhanded Designs", type_line: "Enchantment", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Whenever an artifact you control enters, you may pay {1}. If you do, each opponent loses 1 life and you gain 1 life.\n{1}{B}, Sacrifice this enchantment: Destroy target creature. Activate only if you control two or more artifacts." });
+    const artifact = make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
+    const profile = profileOf(underhanded);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield", subject: "artifact-you-control", optional: true, manaCost: { raw: "{1}" },
+      effect: { kind: "compound", effects: [{ kind: "each-opponent-loses-life", amount: 1 }, { kind: "gain-life", amount: 1 }] }
+    });
+    let game = readyToCast([artifact], [underhanded, FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger", sourceCard: { name: "Underhanded Designs" } });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.life).toBe(41);
+    expect(game.players[1]!.life).toBe(39);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({

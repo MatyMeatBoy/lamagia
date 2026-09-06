@@ -3083,8 +3083,10 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "enters-battlefield", subject: "permanent-you-control", pattern: /^whenever\s+a\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },
-  { event: "enters-battlefield", subject: "artifact-you-control", pattern: /^whenever\s+an\s+artifact\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
-  { event: "enters-battlefield", subject: "enchantment-you-control", pattern: /^whenever\s+an\s+enchantment\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
+  // Same "X enters under your control" / "X you control enters" phrasing
+  // duality already handled for lands, generalized here (Underhanded Designs).
+  { event: "enters-battlefield", subject: "artifact-you-control", pattern: /^whenever\s+an\s+artifact(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "enchantment-you-control", pattern: /^whenever\s+an\s+enchantment(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },
   // Errata dropped "under your control" from some printings (e.g. Essence
   // Warden, Soul Warden): the trigger now watches every creature entering,
   // not just the controller's own. Must stay after the "...under your
@@ -3196,6 +3198,21 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const simple = simpleEffectIR(text);
   const simpleResult = simple ? simpleEffectFromIR(simple) : null;
   if (simpleResult) return simpleResult;
+  // Two independently-recognized simpleEffectIR clauses joined by "and"
+  // (Underhanded Designs: "each opponent loses 1 life and you gain 1
+  // life"), a generalization of the drawAndOpponentLoss special case below -
+  // reuses the same draw/mill/discard/gain-life/lose-life grammar rather
+  // than needing a dedicated template per subject/operation pairing.
+  const andSplit = /^(.+?)\s+and\s+(.+)$/i.exec(text);
+  if (andSplit) {
+    const firstIR = simpleEffectIR(andSplit[1]!.trim());
+    const secondIR = simpleEffectIR(andSplit[2]!.trim());
+    const firstHalf = firstIR ? simpleEffectFromIR(firstIR) : null;
+    const secondHalf = secondIR ? simpleEffectFromIR(secondIR) : null;
+    if (firstHalf && secondHalf && firstHalf.target === "none" && secondHalf.target === "none") {
+      return { effect: { kind: "compound", effects: [firstHalf.effect, secondHalf.effect] }, target: "none" };
+    }
+  }
   if (/^Exile another target permanent\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
     return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "permanent" };
   }

@@ -6432,3 +6432,49 @@ staged Grizzly Bears, and moves it to hand while the land itself
 leaves the battlefield. Validation: full **911** rules tests green
 (1 new), `npm run check` across all four workspaces, 200/200
 simulated games.
+
+## Underhanded Designs: a phrasing gap plus a generic "and"-clause combiner (2026-09-06)
+
+Underhanded Designs ("Whenever an artifact you control enters, you
+may pay {1}. If you do, each opponent loses 1 life and you gain 1
+life.") exposed TWO independent gaps, found by probing why its
+activated ability (already working thanks to the new
+`requiresControlledCount` gate) still left the whole card
+`fullyImplemented: false`.
+
+First: the `enters-battlefield` trigger template family has a
+"phrasing duality" — Oracle sometimes writes "an X enters under your
+control" and sometimes "an X you control enters," meaning the SAME
+thing. `land-you-control`'s template already combines both phrasings
+in one regex via alternation, and `creature-you-control` covers both
+via two separate template entries — but `artifact-you-control` and
+`enchantment-you-control` only ever had the "enters under your
+control" form. Widened both to the same alternation `land-you-control`
+already uses, closing the gap for the "X you control enters" phrasing
+across artifacts and enchantments.
+
+Second, and more broadly reusable: "each opponent loses 1 life and
+you gain 1 life" is a single sentence combining TWO clauses each
+independently recognized by the existing `simpleEffectIR` grammar
+(the compositional draw/mill/discard/gain-life/lose-life parser), but
+nothing joined them — only a narrow, ad-hoc `drawAndOpponentLoss`
+special case existed for one specific draw+life-loss pairing. Added a
+GENERIC two-clause "and" combiner in `recognizeSentence`: split on
+"and," run `simpleEffectIR` on each half, and if both recognize AND
+both have `target: "none"` (deliberately excluding "target player"
+subjects, since a compound effect's own single-target model doesn't
+yet support two independently-targeted sub-effects), wrap them as a
+`compound` effect. This is not specific to life gain/loss — it works
+for any two of the five `simpleEffectIR` operations joined by "and",
+so it should reach well beyond this one card.
+
+Verified **+36** in the export count (11,035 → 11,071 — the generic
+combiner likely accounts for most of this, being reusable across the
+whole catalog rather than tied to one phrasing); `docs/SET_COVERAGE.md`
+stays at its already-stale 33.2% (recorded) / 33.7% (true) split for
+the same oracle-id-cap reason as prior entries. Scenario-tested:
+casting an artifact while Underhanded Designs is in play opens its
+optional pay-{1} trigger; accepting it correctly moves the caster's
+life from 40 to 41 and the opponent's from 40 to 39 in the same
+resolution. Validation: full **912** rules tests green (1 new), `npm
+run check` across all four workspaces, 200/200 simulated games.
