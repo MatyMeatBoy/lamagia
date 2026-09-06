@@ -499,6 +499,8 @@ export type SpellEffect =
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   /** Return the creature that caused this dies trigger with a counter. */
   | { readonly kind: "return-triggered-creature-with-counter"; readonly counter: string }
+  /** Modular: move the dead source's +1/+1 counters onto a target artifact creature. */
+  | { readonly kind: "modular-transfer-counters" }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -957,7 +959,7 @@ export type TargetKind =
   | `artifact-or-creature-mana-value-${number}`
   | "creature-mana-value-up-to-plains"
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
-  | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
+  | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
@@ -4903,9 +4905,12 @@ export function cardProfile(card: CardData): CardProfile {
   const uncounterableCreaturePowerMatch = /creature spells you control with power (\d+) or greater can't be countered\.?/i.exec(text);
   const affinityMatch = /^Affinity for (.+)$/im.exec(text);
   const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
+  const modularMatch = /^Modular\s+(\d+)$/im.exec(text);
+  const modularAmount = modularMatch ? Number(modularMatch[1]) : null;
   const recognized = recognizeText(text
     .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
-    .replace(/^Affinity for .+$/gim, ""));
+    .replace(/^Affinity for .+$/gim, "")
+    .replace(/^Modular\s+\d+$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
   const hasExtort = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "extort");
@@ -4917,6 +4922,12 @@ export function cardProfile(card: CardData): CardProfile {
   const lowerKeywords = (card.keywords ?? []).map((keyword) => keyword.toLowerCase());
   if (lowerKeywords.includes("undying")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "+1/+1" }, optional: false, targetKind: "none", sourceText: "Undying" });
   if (lowerKeywords.includes("persist")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "-1/-1" }, optional: false, targetKind: "none", sourceText: "Persist" });
+  // Modular (CR 702.43): the source enters with N +1/+1 counters and its
+  // dies trigger may move all of those counters to a target artifact creature.
+  if (modularAmount !== null) synthesizedTriggers.push({
+    event: "dies", subject: "self", effect: { kind: "modular-transfer-counters" },
+    optional: true, targetKind: "artifact-creature", sourceText: `Modular ${modularAmount}`
+  });
   // Prowess (CR 702.108): a noncreature spell cast by this creature's
   // controller creates a temporary +1/+1 self-trigger. Keep it on the same
   // event/effect path used by ordinary triggered card text.
@@ -5225,6 +5236,7 @@ export function cardProfile(card: CardData): CardProfile {
     entersWithCounters: isPermanent
       ? (() => {
           const counters = parseEntersWithCounters(text);
+          if (modularAmount !== null) counters.push({ kind: "+1/+1", amount: modularAmount });
           if (graftAmount === null) return counters;
           const existing = counters.find((counter) => counter.kind === "+1/+1");
           return existing

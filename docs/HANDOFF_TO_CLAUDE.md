@@ -3888,6 +3888,15 @@ any opponent has 10 or less life, recalculated from live state (CR 604.1,
 613.4). Current validation: **721 rules tests**, `npm run check`, and `git
 diff --check` pass.
 
+The MH2 Arcbound rescan now recognizes the reusable Modular N primitive:
+Arcbound permanents enter with N +1/+1 counters and their dies trigger can
+move those counters to a target artifact creature. Trigger choices retain the
+dies event's last-known counters, including optional-trigger resolution (CR
+702.43, 603.6c, 122.1). Arcbound Mouser and Arcbound Prototype are scenario
+covered; the rescan/worker plan remains at **15,142 near-complete cards** and
+**11,433 reusable** candidates. Current validation: **734 rules tests**,
+`npm run check`, near-complete unit tests, and `git diff --check` pass.
+
 The rescan also closed Chandra's Spitfire with a shared `noncombat-damage`
 trigger condition. It listens only to the noncombat damage event (so combat
 damage does not qualify) and reuses the existing temporary source P/T pump;

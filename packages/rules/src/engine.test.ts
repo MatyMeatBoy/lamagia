@@ -850,6 +850,8 @@ const FLAMETONGUE = () => make({ name: "Flametongue Kavu", type_line: "Creature 
 const WHIPFLARE = () => make({ name: "Whipflare", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Whipflare deals 2 damage to each nonartifact creature." });
 const LEONIN_BLADETRAP = () => make({ name: "Leonin Bladetrap", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "Flash\n{2}, Sacrifice this artifact: It deals 2 damage to each attacking creature without flying." });
 const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature — Bear", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2" });
+const ARCBound_MOUSER = () => make({ name: "Arcbound Mouser", type_line: "Artifact Creature — Cat", mana_cost: "{1}", cmc: 1, power: "0", toughness: "0", keywords: ["Lifelink"], oracle_text: "Lifelink\nModular 1", oracle_id: "5e59199c-facc-46b4-9681-988de0cfaba2" });
+const ARCBound_PROTOTYPE = () => make({ name: "Arcbound Prototype", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "0", toughness: "0", oracle_text: "Modular 2", oracle_id: "ac1003b4-1f7c-4801-9dd3-5cb7d9881af8" });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 const GREEN_COMMANDER = () => make({ name: "Green Commander", type_line: "Legendary Creature — Human", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"], color_identity: ["G"] });
 const COMMAND_TOWER = () => make({ name: "Command Tower", type_line: "Land", oracle_text: "{T}: Add one mana of any color in your commander's color identity.", produced_mana: ["W", "U", "B", "R", "G"] });
@@ -1373,6 +1375,31 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield).toEqual(expect.arrayContaining([
       expect.objectContaining({ card: expect.objectContaining({ name: "Beast", token: true, power: "3", toughness: "3" }) })
     ]));
+  });
+
+  it("reuses Modular for MH2 Arcbound entry counters and dies transfer", () => {
+    expect(profileOf(ARCBound_MOUSER())).toMatchObject({
+      fullyImplemented: true,
+      entersWithCounters: [{ kind: "+1/+1", amount: 1 }],
+      triggers: [{ event: "dies", subject: "self", optional: true, targetKind: "artifact-creature", effect: { kind: "modular-transfer-counters" } }]
+    });
+    expect(profileOf(ARCBound_PROTOTYPE())).toMatchObject({
+      fullyImplemented: true,
+      entersWithCounters: [{ kind: "+1/+1", amount: 2 }],
+      triggers: [{ event: "dies", subject: "self", optional: true, targetKind: "artifact-creature", effect: { kind: "modular-transfer-counters" } }]
+    });
+
+    let game = readyToCast([BOLT()], [ARCBound_MOUSER(), IRON_BEAR(), MOUNTAIN()]);
+    const mouser = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Arcbound Mouser")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Iron Bear")!;
+    expect(mouser.counters["+1/+1"]).toBe(1);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: mouser.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(choice.sourceCard.name).toBe("Arcbound Mouser");
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    game = passUntil(game, (state) => (state.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"] ?? 0) === 1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"]).toBe(1);
   });
 
   it("recognizes and resolves Proliferate for selected permanents and players", () => {

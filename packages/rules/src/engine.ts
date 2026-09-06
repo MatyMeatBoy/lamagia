@@ -286,6 +286,8 @@ export interface TriggerInstance {
   readonly eventPermanentId?: string;
   /** Card object involved in a zone-change event, retained after the permanent leaves. */
   readonly eventCard?: GameCard;
+  /** Last-known counters carried by a dies event, used by Modular. */
+  readonly eventCounters?: Readonly<Record<string, number>>;
   /** Defending player involved in an attack trigger (CR 508.1b). */
   readonly eventDefender?: SeatId;
   /** Amount carried by life-gain/loss events for proportional triggers. */
@@ -344,7 +346,7 @@ export interface DelayedReturn {
 export type GameEvent =
   | { readonly kind: "enters-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "leaves-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly power?: number; readonly hadFlying?: boolean }
+  | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly power?: number; readonly hadFlying?: boolean; readonly counters?: Readonly<Record<string, number>> }
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
@@ -1697,7 +1699,7 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
   if (permanent.card.token) {
     if (destinationZone === "graveyard" && isCreature(cardProfile(permanent.card))) {
       next = { ...next, creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1 };
-      next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state), hadFlying: keywordOf(state, permanent, "flying") }, [permanent]);
+      next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state), hadFlying: keywordOf(state, permanent, "flying"), counters: permanent.counters }, [permanent]);
     }
     return logged(next, permanent.controller, `${permanent.card.name} deja el campo de batalla.`);
   }
@@ -1713,7 +1715,7 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
       creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1,
       creatureCardsDiedThisTurn: [...next.creatureCardsDiedThisTurn, permanent.card]
     };
-    next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state), hadFlying: keywordOf(state, permanent, "flying") }, [permanent]);
+    next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state), hadFlying: keywordOf(state, permanent, "flying"), counters: permanent.counters }, [permanent]);
   }
   return next;
 }
@@ -2258,7 +2260,11 @@ function raiseEvent(
           cause: causeOf(state, event),
           ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : "activeSeat" in event ? { eventController: event.activeSeat } : {}),
           ...(event.kind === "spell-cast" ? { eventSpell: event.spell } : {}),
-         ...("permanentId" in event ? { eventPermanentId: event.permanentId, eventCard: event.card } : {}),
+         ...("permanentId" in event ? {
+           eventPermanentId: event.permanentId,
+           eventCard: event.card,
+           ...(event.kind === "dies" ? { eventCounters: event.counters } : {})
+         } : {}),
           ...(event.kind === "leaves-battlefield" && watcher.exiledWith ? { linkedExiledCard: watcher.exiledWith } : {}),
          ...("amount" in event ? { eventAmount: event.amount } : {}),
           ...(event.kind === "spell-cast" && event.spentMana !== undefined ? { eventManaSpent: event.spentMana } : {}),
@@ -2856,6 +2862,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
       return logged(next, owner.seat, `${card.name} regresa al campo bajo el control de su propietario con un contador ${effect.counter}.`);
+    }
+    case "modular-transfer-counters": {
+      // Modular (CR 702.43): move all +1/+1 counters from the dead source
+      // onto a target artifact creature as the dies trigger resolves.
+      const target = object.targets[0];
+      if (target?.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      const amount = object.trigger?.eventCounters?.["+1/+1"] ?? 0;
+      if (!permanent || amount <= 0) return state;
+      const profile = cardProfile(permanent.card);
+      if (!profile.types.includes("Artifact") || !isCreature(profile)) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, counters: { ...candidate.counters, "+1/+1": (candidate.counters["+1/+1"] ?? 0) + amount } }
+          : candidate)
+      }));
     }
     case "draw-then-discard": {
       let next = drawCards(state, controller, effect.draw);
@@ -7371,10 +7394,11 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "permanent-you-control") return profile.isPermanent && permanent.controller === seat;
     if (kind === "permanent-opponent") return profile.isPermanent && permanent.controller !== seat;
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
-    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind === "creature-power-toughness-total-at-most-5") {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "artifact-creature" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind === "creature-power-toughness-total-at-most-5") {
       if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "creature-opponent" && permanent.controller === seat) return false;
+      if (kind === "artifact-creature" && !profile.types.includes("Artifact")) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
       if (kind === "nonartifact-nonblack-creature" && (profile.types.includes("Artifact") || profile.colors.some((color) => color.toUpperCase() === "B"))) return false;
@@ -8425,6 +8449,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
         flashback: false,
         variableValue: 0,
         countered: false,
+        trigger: choice.trigger,
         sourcePermanentId: choice.sourcePermanentId,
         ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
       };
@@ -8460,6 +8485,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
       flashback: false,
       variableValue: 0,
       countered: false,
+      trigger: choice.trigger,
       sourcePermanentId: choice.sourcePermanentId,
       ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
     };
@@ -8515,7 +8541,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
    flashback: false,
    variableValue: choice.variablePayCostMax === undefined ? tapCount : variableValue,
     countered: false,
-   ...(choice.trigger?.definition.effect.kind === "copy-triggered-spell" ? { trigger: choice.trigger } : {}),
+   trigger: choice.trigger,
    sourcePermanentId: choice.sourcePermanentId,
    ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
  };
