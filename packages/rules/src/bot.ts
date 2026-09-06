@@ -144,10 +144,16 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const chosen = untapped ?? tapped;
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
-  if (state.pendingChoice?.type === "countered-spell-library" && state.pendingChoice.seat === seat) {
-    const bottom = available.find((entry) => entry.action.type === "choose-countered-spell-library" && entry.action.destination === "bottom");
-    const top = available.find((entry) => entry.action.type === "choose-countered-spell-library" && entry.action.destination === "top");
-    const chosen = bottom ?? top;
+  if (state.pendingChoice?.type === "mana-payment" && state.pendingChoice.seat === seat) {
+    const source = available.find((entry) => entry.action.type === "choose-mana-source");
+    const cancel = available.find((entry) => entry.action.type === "cancel-mana-payment");
+    const chosen = source ?? cancel;
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
+  if (state.pendingChoice?.type === "optional-basic-land-search" && state.pendingChoice.seat === seat) {
+    const accept = available.find((entry) => entry.action.type === "choose-basic-land-search" && entry.action.accept);
+    const decline = available.find((entry) => entry.action.type === "choose-basic-land-search" && !entry.action.accept);
+    const chosen = accept ?? decline;
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
   if (state.pendingChoice?.type === "optional-trigger" && state.pendingChoice.seat === seat) {
@@ -351,6 +357,20 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
         : undefined;
       if (targetKinds.length && targets?.length !== targetKinds.length) return passOr(available);
       return { action: targets ? { ...chosen.action, targets } : chosen.action, label: chosen.label };
+    }
+
+    // Use a hand-based mana ability only when it immediately unlocks a real
+    // cast. This lets bots use Simian Spirit Guide without exiling it on an
+    // empty turn or turning fast mana into an infinite priority loop.
+    const handMana = available.filter((entry) => {
+      const action = entry.action;
+      return action.type === "activate-mana"
+        && player.hand.some((card) => card.instance_id === action.sourceId);
+    });
+    for (const mana of handMana) {
+      const funded = applyAction(state, seat, mana.action);
+      const unlocked = legalActions(funded, seat).some((entry) => entry.action.type === "cast");
+      if (unlocked) return { action: mana.action, label: mana.label };
     }
   }
 
