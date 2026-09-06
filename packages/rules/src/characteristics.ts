@@ -1603,7 +1603,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ? [{ kind: counterMatch[1]!.trim().replace(/\s+/g, " ").toLowerCase(), amount: counterAmount }]
       : [];
     // Costs beyond tapping, life, counters on the source, and mana are not
-    // modeled here; sacrifice/discard still stay excluded from mana abilities.
+    // modeled here; self-sacrifice is supported for predefined mana tokens.
     const manaSymbols = (costText.match(/\{[^}]+\}/g) ?? []).filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
     const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
     if (manaSymbols.length && !manaCost) continue;
@@ -1614,6 +1614,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
       .replace(/remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+from\s+~/gi, "")
+      .replace(/sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
       .replace(/[,\s]/g, "");
     if (leftovers.length) continue;
     // Restrictions follow the first sentence in Oracle text. Parse the

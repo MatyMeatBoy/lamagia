@@ -165,7 +165,7 @@ describe("smart counter response and safe mana undo", () => {
     game = putOnBattlefield(game, 0, [make({ name: "Treasure", type_line: "Artifact — Treasure", oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color." })]);
     const treasure = game.players[0]!.battlefield[0]!;
     const action = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana" && entry.cardId === treasure.instance_id);
-    expect(action?.action).toMatchObject({ type: "activate-mana", mana: "G" });
+    expect(action?.action).toMatchObject({ type: "activate-mana" });
     game = applyAction(game, 0, action!.action);
     expect(game.players[0]!.battlefield).toHaveLength(0);
     expect(game.players[0]!.manaPool.G).toBe(1);
