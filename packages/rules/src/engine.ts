@@ -691,6 +691,7 @@ export type PendingChoice =
       readonly bottomCards: readonly GameCard[];
       readonly stage: "select" | "bottom";
       readonly selectedCardId?: string;
+      readonly minPower?: number;
       readonly destination: "hand" | "battlefield";
       readonly returnAtEndStep: boolean;
       readonly returnSourceToGraveyard: boolean;
@@ -1274,6 +1275,7 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
     const profile = cardProfile(permanent.card);
     for (const ability of manaAbilitiesFor(state, permanent)) {
       if (ability.sourceZone === "hand") continue;
+      if (ability.sacrificesSelf) continue;
       if (ability.manaRestriction && !sourceOptions.allowedRestrictions?.includes(ability.manaRestriction.kind)) continue;
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
@@ -5751,7 +5753,8 @@ function beginLookTopSelection(
   destination: "hand" | "battlefield" = "hand",
   returnAtEndStep = false,
   returnSourceToGraveyard = false,
-  exileSourceAfterResolution = false
+  exileSourceAfterResolution = false,
+  minPower?: number
 ): GameState {
   const visible = playerAt(state, seat).library.slice(0, Math.max(0, amount));
   if (!visible.length) return state;
@@ -5771,7 +5774,8 @@ function beginLookTopSelection(
       destination,
       returnAtEndStep,
       returnSourceToGraveyard,
-      exileSourceAfterResolution
+      exileSourceAfterResolution,
+      ...(minPower === undefined ? {} : { minPower })
     }
   };
 }
@@ -5834,7 +5838,7 @@ function resolveTop(state: GameState): GameState {
     const triggerSurveil = object.trigger.definition.effect.kind === "surveil" ? object.trigger.definition.effect : null;
     if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
-    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep);
+    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep, false, false, triggerLookTop.minPower);
     // A triggered ability's own search (Pattern of Rebirth's dies-triggered
     // reanimation): the source stays on the battlefield, unlike a resolving
     // spell, so this never moves it to a graveyard or exile.
@@ -6042,7 +6046,7 @@ function resolveTop(state: GameState): GameState {
   }
   const lookTop = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-top-select" }> => effect.kind === "look-top-select");
   if (lookTop) {
-    return beginLookTopSelection(next, object.controller, object.id, object.card, lookTop.amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback));
+    return beginLookTopSelection(next, object.controller, object.id, object.card, lookTop.amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback), lookTop.minPower);
   }
   const viewHand = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-at-target-players-hand" }> => effect.kind === "look-at-target-players-hand");
   if (viewHand) {
@@ -7508,6 +7512,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         choice.remainingCards.forEach((card, ordinal) => {
           const profile = cardProfile(card);
           if (!choice.types.some((type) => profile.types.includes(type))) return;
+          if (choice.minPower !== undefined && (profile.power === null || profile.power < choice.minPower)) return;
           actions.push({
             action: { type: "choose-look-top", sourceId: choice.sourceId, ordinal },
             label: `Revelar ${card.name} y ponerla en la mano`,
@@ -10024,6 +10029,10 @@ function applyChooseLookTop(state: GameState, seat: SeatId, action: Extract<Game
   const selected = choice.remainingCards[action.ordinal];
   if (!selected) throw new Error("Debes elegir una carta visible de la selección superior.");
   if (!choice.types.some((type) => cardProfile(selected).types.includes(type))) throw new Error("Esa carta no cumple el tipo requerido.");
+  const selectedProfile = cardProfile(selected);
+  if (choice.minPower !== undefined && (selectedProfile.power === null || selectedProfile.power < choice.minPower)) {
+    throw new Error("Esa criatura no cumple el poder mínimo requerido.");
+  }
   const remainingCards = choice.remainingCards.filter((card) => card.instance_id !== selected.instance_id);
   const nextChoice = { ...choice, remainingCards, stage: "bottom" as const, selectedCardId: selected.instance_id };
   if (!remainingCards.length) return finishLookTopSelection({ ...state, pendingChoice: nextChoice }, seat, nextChoice);

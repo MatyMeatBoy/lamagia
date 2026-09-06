@@ -6004,6 +6004,14 @@ describe("casting", () => {
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("filters Mayael's top-five selection by minimum power", () => {
+    const mayael = make({ name: "Mayael, the Anima", type_line: "Legendary Creature — Elf Shaman", oracle_text: "{3}{R}{G}{W}, {T}: Look at the top five cards of your library. You may put a creature card with power 5 or greater from among them onto the battlefield. Put the rest on the bottom of your library in any order.", scryfall_id: "fixture-mayael" });
+    const small = make({ name: "Small Creature", type_line: "Creature — Bear", power: "4", toughness: "4", scryfall_id: "fixture-mayael-small" });
+    const large = make({ name: "Large Creature", type_line: "Creature — Beast", power: "5", toughness: "5", scryfall_id: "fixture-mayael-large" });
+    const profile = profileOf(mayael);
+    expect(profile.activatedAbilities).toContainEqual(expect.objectContaining({ effect: { kind: "look-top-select", amount: 5, types: ["Creature"], destination: "battlefield", minPower: 5 } }));
+  });
+
   it("puts Strategic Planning's unselected top cards into the graveyard", () => {
     const profile = profileOf(C13_STRATEGIC_PLANNING());
     expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "look-put-one-in-hand", amount: 3, restDestination: "graveyard" }] });

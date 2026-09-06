@@ -459,7 +459,7 @@ export type SpellEffect =
   /** Surveil N (CR 701.42): look at the top N, put any number in the graveyard, the rest on top in any order. */
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
-  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
+  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number }
   /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
   | { readonly kind: "look-top-reorder"; readonly amount: number }
   /** "Draw a card, then put ~ on top of its owner's library" (Sensei's Divining Top's tap ability). */
@@ -2283,6 +2283,16 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     // Normalize it to the same source marker used by the shared effect parser.
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
     .trim();
+  const mayaelEffect = parseMayaelLookTop(parsedEffectText);
+  if (mayaelEffect) {
+    const symbols = costText.match(/\{[^}]+\}/g) ?? [];
+    const manaSymbols = symbols.filter((symbol) => !/^\{[TQE]\}$/i.test(symbol));
+    const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
+    if (manaSymbols.length && manaCost) return {
+      index, requiresTap: symbols.some((symbol) => symbol.toUpperCase() === "{T}"), sacrificesSelf: false,
+      lifeCost: 0, manaCost, effect: mayaelEffect, targetKind: "none", text: line.trim()
+    };
+  }
   const selfUntap = /^Untap ~\.?$/i.test(parsedEffectText);
   // Planeswalker loyalty abilities (CR 606): the cost is a signed loyalty change.
   const loyalty = /^\s*([+\u2212\u2013-])?\s*(\d+)\s*$/.exec(costText);
@@ -2753,6 +2763,11 @@ function parseLookTopSelection(text: string): SpellEffect | null {
 function parseAethermagesTouch(text: string): SpellEffect | null {
   if (!/^Reveal the top four cards of your library. You may put a creature card from among them onto the battlefield. It gains "At the beginning of your end step, return (?:this creature|~) to its owner'?s hand." Then put the rest of the cards revealed this way on the bottom of your library in any order.?$/i.test(text.trim())) return null;
   return { kind: "look-top-select", amount: 4, types: ["Creature"], destination: "battlefield", returnAtEndStep: true };
+}
+
+function parseMayaelLookTop(text: string): SpellEffect | null {
+  const match = /Look at the top five cards of your library\. You may put a creature card with power (\d+) or greater from among them onto the battlefield\. Put the rest on the bottom of your library in any order\.?$/i.exec(text.trim());
+  return match ? { kind: "look-top-select", amount: 5, types: ["Creature"], destination: "battlefield", minPower: Number(match[1]) } : null;
 }
 
 function parseExileAndTransferSource(text: string): SpellEffect | null {
@@ -4888,6 +4903,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^~'?s power and toughness are each equal to the number of (?:creature|land|artifact|green permanent)s? you control\.?$/i.test(line)) continue;
     if (/^~'?s power and toughness are each equal to your life total\.?$/i.test(line)) continue;
     if (/^~'?s power and toughness are each equal to the number of cards in your hand\.?$/i.test(line)) continue;
+    if (/^Look at the top five cards of your library\. You may put a creature card with power \d+ or greater from among them onto the battlefield\. Put the rest on the bottom of your library in any order\.?$/i.test(line)) continue;
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
