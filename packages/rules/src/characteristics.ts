@@ -49,6 +49,11 @@ export const ENFORCED_KEYWORDS = [
 ] as const;
 export type EnforcedKeyword = (typeof ENFORCED_KEYWORDS)[number];
 
+function parseCrewLine(line: string): { amount: number } | null {
+  const match = /^crew\s+(\d+)\.?$/i.exec(line.trim());
+  return match ? { amount: Number(match[1]) } : null;
+}
+
 export interface ManaAbility {
   readonly index: number;
   /** Zone from which this mana ability can be activated (battlefield by default). */
@@ -1115,6 +1120,8 @@ export interface CardProfile {
   readonly typedEquipCost: { readonly subtype: string; readonly cost: ManaCost } | null;
   /** "Equip worthy {cost}" (Mjölnir): Equip restricted to a legendary, non-Villain creature that's red and/or white. */
   readonly equipWorthyCost: ManaCost | null;
+  /** Vehicle crew requirement; consumed as a static activation ability. */
+  readonly crewAmount: number | null;
   readonly equipmentModification: EquipmentModification | null;
   /** Static bonuses an Aura grants the permanent it's attached to (CR 303.4.5), e.g. "Enchanted creature gets +2/+2." */
   readonly auraModification: EquipmentModification | null;
@@ -4975,6 +4982,7 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    if (/^crew\s+\d+\.?$/i.test(line)) continue;
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
     if (/^as an additional cost to cast ~, pay (?:X|\d+) life\.?$/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
@@ -5740,6 +5748,8 @@ export function cardProfile(card: CardData): CardProfile {
   const equipCost = parseEquipCost(text);
   const typedEquipCost = parseTypedEquipCost(text);
   const equipWorthyCost = parseEquipWorthyCost(text);
+  const crewLine = text.split("\n").find((line) => /^crew\s+\d+\.?$/i.test(line.trim()));
+  const crewAmount = crewLine ? parseCrewLine(crewLine)?.amount ?? null : null;
   // "~ costs {N} less to cast for each creature on the battlefield" (Blasphemous Act, CR 118.9).
   const boardReduceMatch = /~ costs \{(\d+)\} less to cast for each creature on the battlefield/i.exec(text);
   const costReducesPerBoardCreature = boardReduceMatch ? Number(boardReduceMatch[1]) : 0;
@@ -5923,6 +5933,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipCost,
     typedEquipCost,
     equipWorthyCost,
+    crewAmount,
     equipmentModification,
     auraModification,
     auraLandManaBonus,

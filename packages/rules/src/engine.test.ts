@@ -1536,6 +1536,11 @@ describe("mana payment", () => {
     expect(profileOf(card).activatedAbilities[0]).toMatchObject({ oncePerTurn: true });
   });
 
+  it("recognizes a vehicle crew requirement", () => {
+    const card = make({ name: "Crew Test", type_line: "Artifact — Vehicle", mana_cost: "{3}", cmc: 3, oracle_text: "Crew 2" });
+    expect(profileOf(card)).toMatchObject({ fullyImplemented: true, crewAmount: 2 });
+  });
+
   it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
     const profile = profileOf(PAIN_LAND());
     expect(profile.fullyImplemented).toBe(true);
