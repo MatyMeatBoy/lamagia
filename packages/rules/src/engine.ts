@@ -3081,6 +3081,31 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }
       };
     }
+    case "mill": {
+      return millCards(state, controller, effectAmount(effect.amount, object));
+    }
+    case "each-opponent-discards": {
+      const amount = effectAmount(effect.amount, object);
+      if (amount <= 0) return state;
+      // APNAP order: each opponent of the controller discards, one at a time (CR 101.4, 701.8a).
+      const queue = opponentsOf(state, controller).filter((seat) =>
+        !playerAt(state, seat).lost && playerAt(state, seat).hand.length > 0);
+      if (!queue.length) return state;
+      const [firstSeat, ...restSeats] = queue as [SeatId, ...SeatId[]];
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "discard-cards",
+          seat: firstSeat,
+          sourceId: object.id,
+          sourceCard: object.card,
+          amount,
+          remaining: amount,
+          ...(restSeats.length ? { nextSeats: restSeats } : {})
+        }
+      };
+    }
     case "mill-target-player": {
       const target = object.targets[0];
       return target?.kind === "player" ? millCards(state, target.seat, effectAmount(effect.amount, object)) : state;
@@ -9620,15 +9645,15 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
     pendingChoice: remaining > 0
       ? { ...choice, remaining }
       : nextSeat !== undefined
-      // Each queued seat discards exactly one card (Geier Reach Sanitarium);
-      // this chain has no caller yet that needs a per-seat variable amount.
+      // Each queued seat discards the same amount as the first (1 for Geier
+      // Reach Sanitarium, N for "each opponent discards N cards").
       ? {
           type: "discard-cards",
           seat: nextSeat,
           sourceId: choice.sourceId,
           sourceCard: choice.sourceCard,
-          amount: 1,
-          remaining: 1,
+          amount: choice.amount,
+          remaining: choice.amount,
           ...(followingSeats?.length ? { nextSeats: followingSeats } : {})
         }
       : null

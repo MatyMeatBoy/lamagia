@@ -458,9 +458,13 @@ export type SpellEffect =
   | { readonly kind: "sacrifice-source" }
   /** Each opponent of the spell caster draws, scoped to the triggering event player (Standstill). */
   | { readonly kind: "each-opponent-of-event-player-draws"; readonly amount: number }
+  /** "Mill N cards" with no subject: the controller mills their own library (CR 701.13). */
+  | { readonly kind: "mill"; readonly amount: number | "X" }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
+  /** "Each opponent discards N cards": one card chosen by each opponent, in APNAP order. */
+  | { readonly kind: "each-opponent-discards"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number | "X" }
   /** Activated sacrifice costs may use the sacrificed creature's toughness. */
   | { readonly kind: "gain-life-equal-sacrificed-toughness" }
@@ -1219,13 +1223,14 @@ function simpleEffectFromIR(ir: SimpleEffectIR): { effect: SpellEffect; target: 
     return { effect: { kind, amount: ir.amount } as SpellEffect, target };
   }
   if (ir.operation === "mill") {
-    if (ir.subject === "you") return null;
+    if (ir.subject === "you") return { effect: { kind: "mill", amount: ir.amount }, target: "none" };
     const kind = ir.subject === "target-player" ? "mill-target-player"
       : ir.subject === "each-player" ? "mill-each-player"
         : ir.subject === "each-opponent" ? "mill-each-opponent" : "mill-target-player";
     return { effect: { kind, amount: ir.amount } as SpellEffect, target };
   }
   if (ir.operation === "discard") {
+    if (ir.subject === "each-opponent") return { effect: { kind: "each-opponent-discards", amount: ir.amount }, target: "none" };
     if (ir.subject !== "target-player") return null;
     return { effect: { kind: "discard-target-player", amount: ir.amount }, target: "player" };
   }
@@ -3156,6 +3161,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-opponent-draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-opponent-draw", amount: "X" }, target: "none" };
+  }
+  if ((match = /^Each opponent discards (a|an|one|two|three|\d+) cards?$/i.exec(text))) {
+    const amount = /^(a|an|one)$/i.test(match[1]!) ? 1 : toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "each-opponent-discards", amount }, target: "none" };
   }
   if (/^If the (?:\{[^}]+\})+ cost was paid, an opponent draws a card$/i.test(text)) {
     return { effect: { kind: "opponent-draws-if-cast-via-alternative-cost" }, target: "none" };

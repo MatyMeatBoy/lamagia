@@ -7240,6 +7240,53 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("mills the controller's own library from an ETB 'mill two cards' trigger", () => {
+    const skullkeeper = make({
+      name: "Test Skullkeeper", type_line: "Creature — Human Rogue", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",
+      oracle_text: "When this creature enters, mill two cards."
+    });
+    expect(profileOf(skullkeeper).fullyImplemented).toBe(true);
+    let game = readyToCast([skullkeeper], [SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({ library: toHand(0, [BEAR(), BOLT(), SOL_RING()], "mill-lib") }));
+    const graveBefore = game.players[0]!.graveyard.length;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.library.map((card) => card.name)).toEqual(["Sol Ring"]);
+    expect(game.players[0]!.graveyard.length).toBe(graveBefore + 2);
+    expect(game.players[0]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Grizzly Bears", "Lightning Bolt"]));
+  });
+
+  it("makes every opponent discard once, in APNAP order, from an ETB trigger", () => {
+    const specter = make({
+      name: "Test Specter", type_line: "Creature — Specter", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2",
+      oracle_text: "Flying\nWhen this creature enters, each opponent discards a card."
+    });
+    expect(profileOf(specter).fullyImplemented).toBe(true);
+    let game = createGame(
+      [deck("A", COMMANDER("A"), []), deck("B", COMMANDER("B"), []), deck("C", COMMANDER("C"), [])],
+      { seed: 7, allowPartialDecks: true }
+    );
+    game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [specter], "cast") }));
+    game = stage(game, 1, () => ({ hand: toHand(1, [BEAR(), BOLT()], "b") }));
+    game = stage(game, 2, () => ({ hand: toHand(2, [SOL_RING(), FLIER()], "c") }));
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "cast-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "discard-cards");
+    // Controller's first opponent in turn order goes first.
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 1, remaining: 1 });
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "b-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 2, remaining: 1 });
+    game = applyAction(game, 2, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "c-0" });
+    expect(game.pendingChoice).toBeNull();
+
+    expect(game.players[1]!.graveyard.map((card) => card.name)).toContain("Grizzly Bears");
+    expect(game.players[2]!.graveyard.map((card) => card.name)).toContain("Sol Ring");
+    expect(game.players[0]!.hand).toHaveLength(0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Specter")).toBe(false);
+  });
+
   it("pays Foster and reveals until a creature, sending the rest to the graveyard", () => {
     const first = make({ name: "Revealed Land", type_line: "Land", cmc: 0 });
     const found = make({ name: "Revealed Creature", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });

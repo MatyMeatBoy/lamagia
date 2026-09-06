@@ -4,6 +4,28 @@
 
 Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
+### Card-engine primitives — 2026-09-06
+
+Two reusable one-shot primitives added to `packages/rules`:
+
+- **`mill`** — "Mill N cards" with no subject: the controller mills their own
+  library. `simpleEffectFromIR` (`characteristics.ts`) previously returned
+  `null` for a `you`-subject mill; it now emits `{ kind: "mill" }`, executed
+  via the existing `millCards` helper in `engine.ts`.
+- **`each-opponent-discards`** — "Each opponent discards N cards": one card
+  chosen by each opponent in APNAP order, chained through the existing
+  `discard-cards` pending choice + `nextSeats`. `applyChooseDiscard` now
+  carries the per-seat amount instead of hard-coding 1 (Geier Reach Sanitarium
+  unaffected — its queue amount is 1).
+
+Engine export: **10,197 → 10,238** fully-implemented profiles (+41: ETB
+self-mill creatures like Screeching Skaab / Sultai Skullkeeper, and
+each-opponent discard creatures like Liliana's Specter, Cackling Fiend,
+Elderfang Disciple, Nezumi Informant). Tests: `engine.test.ts` › "mills the
+controller's own library…" and "makes every opponent discard once, in APNAP
+order…". Validation: `npm run test --workspace=@prossh/rules` → 790 passing;
+`npm run check` clean; `npm run rules:test:oracle` OK.
+
 ### Gameplay/UI debugging pass — 2026-09-06 (in progress)
 
 Batch of player-reported gameplay/UX fixes. Landed so far:
