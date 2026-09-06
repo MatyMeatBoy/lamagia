@@ -545,3 +545,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-counter-activated-cost-marath` | Reusable variable-X counter cost and three-mode activation primitives for Marath (CR 602.2b, 107.3, 700.2) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-counter-activated-source-phantom` | Reusable tapped self-counter activation for Phantom Nantuko and equivalent creatures (CR 602.2, 121.1) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-sacrifice-trigger-furnace` | Reusable permanent-sacrificed event and optional mana trigger for Furnace Celebration (CR 603.2, 601.2) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-sacrifice-trigger-thraximundar` | Reuse permanent-sacrificed triggers and defending-player sacrifice resolution for Thraximundar (CR 603.2, 508.1b) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

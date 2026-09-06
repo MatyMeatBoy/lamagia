@@ -5061,6 +5061,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return logged(next, source.controller, `${sourceName} sacrifica ${source.card.name} y destruye todos los permanentes que no sean tierras.`);
     }
+    case "defending-player-sacrifice-creature": {
+      const defender = object.trigger?.eventDefender;
+      if (defender === undefined) return state;
+      const creatures = playerAt(state, defender).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
+      if (!creatures.length) return state;
+      const victim = [...creatures].sort((left, right) =>
+        (powerOf(left, state) + toughnessOf(left, state)) - (powerOf(right, state) + toughnessOf(right, state)))[0]!;
+      return logged(movePermanentToZone(state, victim, "graveyard", true), defender, `${playerAt(state, defender).name} sacrifica ${victim.card.name}.`);
+    }
     case "add-counter-creatures-subtype": {
       const subtype = effect.subtype.toLowerCase();
       return withPlayer(state, controller, (player) => ({

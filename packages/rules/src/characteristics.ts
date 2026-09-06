@@ -650,6 +650,7 @@ export type SpellEffect =
   | { readonly kind: "toggle-source-counter"; readonly counter: string }
   /** Plague Boiler's threshold trigger: sacrifice the source, then destroy nonlands. */
   | { readonly kind: "sacrifice-source-then-destroy-all-nonland" }
+  | { readonly kind: "defending-player-sacrifice-creature" }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
   /** Ajani, the Greathearted: counters on creatures plus loyalty on other planeswalkers. */
@@ -2702,6 +2703,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
   { event: "leaves-battlefield", subject: "self-or-another-creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "permanent-sacrificed", subject: "another-permanent-you-control", pattern: /^whenever\s+you\s+sacrifice\s+another\s+permanent,?\s*(.+)$/i },
+  { event: "permanent-sacrificed", subject: "any-creature", pattern: /^whenever\s+a\s+player\s+sacrifices\s+a\s+creature,?\s*(.+)$/i },
   { event: "leaves-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-attacks-opponent", pattern: /^whenever\s+a\s+creature\s+attacks\s+one\s+of\s+your\s+opponents(?:\s+or\s+a\s+planeswalker\s+an\s+opponent\s+controls)?,?\s*(.+)$/i },
@@ -2795,6 +2797,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
+  if (/^Defending player sacrifices a creature of their choice\.?$/i.test(text)) {
+    return { effect: { kind: "defending-player-sacrifice-creature" }, target: "none" };
+  }
 
   // Investigate (CR 701.21): create one or more Clue artifact tokens. The
   // token carries its own activated draw ability, so every card reuses the
@@ -4917,7 +4922,7 @@ function recognizeText(text: string): RecognizedText {
             // Keep the subject for the compositional draw/life grammar. A
             // blanket removal would turn "you may gain 2 life" into the
             // invalid fragment "gain 2 life" (CR 609.3).
-            ? effectText.replace(/^you\s+may\s+(?=(?:draw|mill|discard|gain|lose)\b)/i, "You ").replace(/^you\s+may\s+/i, "")
+            ? effectText.replace(/^you\s+may\s+(?=(?:draw|mill|discard|gain|lose)\b)/i, "You ").replace(/^you\s+may\s+(?=put\b)/i, "").replace(/^you\s+may\s+/i, "")
             : effectText;
           const normalizedExecutableText = executableText.replace(/^(?:have\s+)?(?:it|~)\s+deal\b/i, "~ deals");
           const lookTop = parseLookTopSelection(normalizedExecutableText);
