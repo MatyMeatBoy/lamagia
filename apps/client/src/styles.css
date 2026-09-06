@@ -315,8 +315,14 @@ h1, h2, h3 { margin: 0; }
   background: linear-gradient(#050a07ed, #050a07a8 62%, transparent);
   color: #f4f0dd; font-size: .58rem; line-height: 1.15; text-align: left;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  display: block;
+  display: block; transition: opacity .12s ease;
 }
+/* Opponent boards get crowded; let the art carry recognition and reveal the
+   name on hover (MTGO-style). The local board keeps names always on. */
+.opponent-row .card-tile:not(.token-tile) .tile-name { opacity: 0; }
+.opponent-row .card-tile:hover .tile-name,
+.opponent-row .card-tile:focus-visible .tile-name,
+.opponent-row .card-tile.targetable .tile-name { opacity: 1; }
 .card-tile:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 18px #000c, 0 0 0 1px var(--gold); z-index: 4; }
 .card-tile.tapped { transform: rotate(90deg) scale(.82); }
 .card-tile.tapped:hover { transform: rotate(90deg) scale(.88); }

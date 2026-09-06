@@ -53,7 +53,18 @@ order…". Validation: `npm run test --workspace=@prossh/rules` → 790 passing;
 
 ### Gameplay/UI debugging pass — 2026-09-06 (in progress)
 
+Full-branch validation after the engine primitives + UI pass: `npm run check`
+clean, rules suite **793 passing**, `npm run rules:test:oracle` OK, and the
+200-game engine matrix passes **200/200** (163 terminal, 37 capped — unchanged
+from baseline).
+
 Batch of player-reported gameplay/UX fixes. Landed so far:
+
+- **Opponent boards de-cluttered.** On the opponents' band the card-tile name
+  overlay is hidden by default (`opacity: 0`) and revealed on hover / focus /
+  while targetable, so a crowded board reads by art like MTGO; the local board
+  keeps names always on. Token tiles keep their label.
+
 
 - **Per-ability trigger yield, right-click only.** `toggle-trigger-yield` now
   carries an optional `abilityIndex`; the yield set stores `id` (whole source)
