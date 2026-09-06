@@ -3955,3 +3955,10 @@ control with a flying counter. The event card is retained as last-known
 information because a permanent ID can differ from its card instance ID after
 the zone change (CR 603.6c, 608.2h). Current validation: **732 rules tests**,
 `npm run check`, and `git diff --check` pass.
+
+The next reusable one-line item, Beast Within, now handles the general
+`destroy target permanent; its controller creates a token` shape instead of
+restricting it to creatures. The token is created for the permanent's live
+controller, including when that controller differs from its owner (CR 701.7,
+111.10). Current validation: **733 rules tests**, `npm run check`, and `git
+diff --check` pass.

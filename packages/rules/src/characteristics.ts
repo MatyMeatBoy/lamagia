@@ -633,6 +633,7 @@ export type SpellEffect =
   | { readonly kind: "destroy-target-creature" }
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-creature-then-controller-token"; readonly token: TokenDefinition }
+  | { readonly kind: "destroy-target-permanent-then-controller-token"; readonly token: TokenDefinition }
   /** Counter target spell, then its (former) controller creates N tokens (An Offer You Can't Refuse). */
   | { readonly kind: "counter-target-spell-then-controller-token"; readonly amount: number; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent" }
@@ -4012,6 +4013,16 @@ function recognizeText(text: string): RecognizedText {
       return {
         effects: [{ kind: "destroy-target-creature-then-controller-token", token: token.token }],
         triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
+      };
+    }
+  }
+  const destroyPermanentThenToken = /^Destroy target permanent\.\s*Its controller creates (.+?)\.?$/i.exec(joined);
+  if (destroyPermanentThenToken) {
+    const token = parseCreateToken(`Create ${destroyPermanentThenToken[1]!}`);
+    if (token?.kind === "create-token") {
+      return {
+        effects: [{ kind: "destroy-target-permanent-then-controller-token", token: token.token }],
+        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "permanent", unimplementedText: [], covered: true
       };
     }
   }

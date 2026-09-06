@@ -4073,6 +4073,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       next = putOntoBattlefield(next, owner, token, false, spec.tapped);
       return logged(next, controller, `${permanent.card.name} es destruida; su controlador crea ${spec.name}.`);
     }
+    case "destroy-target-permanent-then-controller-token": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const beneficiary = permanent.controller;
+      let next = keywordOf(state, permanent, "indestructible") ? state : destroyPermanent(state, permanent);
+      const spec = effect.token;
+      const token: GameCard = {
+        scryfall_id: `token:${object.id}:controller-token`, instance_id: `token:${object.id}:controller-token`, owner: beneficiary, token: true,
+        name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.keywords.join(", "),
+        power: spec.power === null ? null : String(spec.power), toughness: spec.toughness === null ? null : String(spec.toughness),
+        colors: spec.colors, keywords: spec.keywords
+      };
+      next = putOntoBattlefield(next, beneficiary, token, false, spec.tapped);
+      return logged(next, controller, `${permanent.card.name} es destruida; su controlador crea ${spec.name}.`);
+    }
     case "destroy-target-permanent": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "permanent") return state;

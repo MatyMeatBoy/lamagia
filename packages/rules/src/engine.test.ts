@@ -552,6 +552,7 @@ const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost:
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
 const OFFER_YOU_CANT_REFUSE = () => make({ name: "Test An Offer You Can't Refuse", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target noncreature spell. Its controller creates two Treasure tokens." });
+const BEAST_WITHIN = () => make({ name: "Beast Within", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.", oracle_id: "7735eeba-693b-47e2-bd51-414379cf1016", scryfall_id: "44e63c67-f7ae-4481-a27d-648fd4e98560" });
 const TUTOR = () => make({ name: "Enlightened Tutor", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an artifact or enchantment card, reveal it, then shuffle. Put that card on top of your library." });
 const DIABOLIC_INTENT = () => make({ name: "Diabolic Intent", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nSearch your library for a card, put that card into your hand, then shuffle." });
 const DEADLY_ROLLICK = () => make({ name: "Deadly Rollick", type_line: "Instant", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "If you control a commander, you may cast this spell without paying its mana cost.\nExile target creature.", oracle_id: "0456ec64-2c81-4763-a352-8ff64a4c3d6b", scryfall_id: "a30c266d-579e-4757-a4d6-6722fa343a6c" });
@@ -1357,6 +1358,21 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.hand).toHaveLength(0);
+  });
+
+  it("destroys any permanent and gives its controller a Beast", () => {
+    expect(profileOf(BEAST_WITHIN())).toMatchObject({
+      fullyImplemented: true,
+      targetKind: "permanent",
+      effects: [{ kind: "destroy-target-permanent-then-controller-token", token: { name: "Beast", power: 3, toughness: 3 } }]
+    });
+    let game = readyToCast([BEAST_WITHIN()], [FOREST(), FOREST(), FOREST()], [], [BEAR()]);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield).toEqual(expect.arrayContaining([
+      expect.objectContaining({ card: expect.objectContaining({ name: "Beast", token: true, power: "3", toughness: "3" }) })
+    ]));
   });
 
   it("recognizes and resolves Proliferate for selected permanents and players", () => {
