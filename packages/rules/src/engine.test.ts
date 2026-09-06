@@ -3156,6 +3156,32 @@ describe("casting", () => {
     expect(marath.counters["+1/+1"]).toBe(5);
   });
 
+  it("reuses Marath's variable counter cost for its counter and token modes", () => {
+    const cards = [FOREST(), MOUNTAIN(), PLAINS(), FOREST(), FOREST(), FOREST(), FOREST(), BEAR()];
+    let game = readyToCast([C13_MARATH()], cards);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
+    const marath = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Marath, Will of the Wild")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const counterMode = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === marath.instance_id && entry.action.abilityIndex === 0 && entry.action.variableValue === 1)!;
+    if (counterMode.action.type !== "activate") throw new Error("Marath counter mode was not offered.");
+    game = applyAction(game, 0, { ...counterMode.action, targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === marath.instance_id)!.counters["+1/+1"]).toBe(4);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!.counters["+1/+1"]).toBe(1);
+
+    let tokenGame = readyToCast([C13_MARATH()], cards);
+    tokenGame = applyAction(tokenGame, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
+    const tokenMarath = tokenGame.players[0]!.battlefield.find((permanent) => permanent.card.name === "Marath, Will of the Wild")!;
+    const tokenMode = legalActions(tokenGame, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === tokenMarath.instance_id && entry.action.abilityIndex === 2 && entry.action.variableValue === 2)!;
+    if (tokenMode.action.type !== "activate") throw new Error("Marath token mode was not offered.");
+    tokenGame = applyAction(tokenGame, 0, tokenMode.action);
+    tokenGame = passUntil(tokenGame, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(tokenGame.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Elemental")).toHaveLength(1);
+    expect(tokenGame.players[0]!.battlefield.find((permanent) => permanent.card.name === "Elemental")!.card.power).toBe("2");
+  });
+
   it("pays Uyo's two-land return cost before copying a spell", () => {
     const profile = profileOf(C13_UYO());
     expect(profile).toMatchObject({ fullyImplemented: true, activatedAbilities: [expect.objectContaining({ returnLands: 2, targetKind: "instant-or-sorcery-spell" })] });

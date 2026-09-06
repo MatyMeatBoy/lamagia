@@ -129,6 +129,8 @@ export interface ActivatedAbility {
   readonly exilesGraveyardCards?: { readonly amount: number; readonly scope: "single-graveyard" };
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
+  /** Variable-X counter cost removed from the source as an activation cost. */
+  readonly removeVariableCounter?: string;
   /** Lands returned to their owners' hands as an activation cost (Uyo, CR 602.2b). */
   readonly returnLands?: number;
   readonly lifeCost: number;
@@ -640,7 +642,7 @@ export type SpellEffect =
   | { readonly kind: "overwhelming-stampede" }
   | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
-  | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
+  | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number | "X" }
   /** Cradle of Vitality: counters scale with the life-gain event amount. */
   | { readonly kind: "add-counter-target-creature-per-life-gained"; readonly counter: string }
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
@@ -2345,7 +2347,10 @@ function parseEntersWithCounters(text: string): CounterCost[] {
   for (const match of text.matchAll(/(?:~|this [^.]+)\s+enters(?:\s+the\s+battlefield)?(?:\s+tapped)?\s+with\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+([+\-\w/ ]+?)\s+counters?\s+on\s+it/gi)) {
     const amount = toNumber(match[1]);
     const kind = match[2]?.trim().replace(/\s+/g, " ").toLowerCase();
-    if (amount && kind) counters.push({ kind, amount });
+    // Dynamic wording such as "a number of +1/+1 counters" is not a
+    // literal entry-counter instruction; its amount is supplied by the
+    // dedicated variable/entry primitive instead (CR 107.3, 614.1).
+    if (amount && kind && !/^number of\s+/i.test(kind)) counters.push({ kind, amount });
   }
   return counters;
 }
@@ -3935,6 +3940,19 @@ function recognizeText(text: string): RecognizedText {
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
   const decreeJoined = decreeBody.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  if (/^(?:Marath|~) enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast it\.?$/i.test(body[0]!.text)
+    && body.some((entry) => /\{X\},\s*Remove X \+1\/\+1 counters from (?:Marath|~): Choose one/i.test(entry.text))) {
+    const manaCost = parseManaCost("{X}")!;
+    const shared = { index: 0, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost, removeVariableCounter: "+1/+1", text: "{X}, Remove X +1/+1 counters from Marath: Choose one" } as const;
+    return {
+      effects: [], triggers: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true,
+      activatedAbilities: [
+        { ...shared, index: 0, effect: { kind: "add-counter-target-creature", counter: "+1/+1", amount: "X" }, targetKind: "creature", text: `${shared.text} — Put X +1/+1 counters on target creature.` },
+        { ...shared, index: 1, effect: { kind: "damage-any-target", amount: "X" }, targetKind: "any", text: `${shared.text} — Marath deals X damage to any target.` },
+        { ...shared, index: 2, effect: { kind: "create-token", amount: "X", statsFromAmount: true, token: { name: "Elemental", typeLine: "Creature — Elemental", power: null, toughness: null, colors: ["G"], keywords: [], tapped: false } }, targetKind: "none", text: `${shared.text} — Create an X/X green Elemental creature token.` }
+      ]
+    };
+  }
   const aethermagesTouch = parseAethermagesTouch(joined);
   if (aethermagesTouch) {
     return { effects: [aethermagesTouch], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };

@@ -4092,7 +4092,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
               ...candidate,
               counters: {
                 ...candidate.counters,
-                [effect.counter]: (candidate.counters[effect.counter] ?? 0) + creatureCounterAmount(state, candidate, effect.counter, effect.amount)
+                [effect.counter]: (candidate.counters[effect.counter] ?? 0) + creatureCounterAmount(state, candidate, effect.counter, effectAmount(effect.amount, object))
               }
             }
           : candidate)
@@ -8031,6 +8031,9 @@ function activatableAbility(
   if (ability.removeCounters && !ability.removeCounters.every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) {
     return { legal: false };
   }
+  if (ability.removeVariableCounter && (variableValue < 1 || (permanent.counters[ability.removeVariableCounter] ?? 0) < variableValue)) {
+    return { legal: false };
+  }
   if (ability.returnLands !== undefined
     && player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))).length < ability.returnLands) return { legal: false };
   if (ability.manaCost && ability.manaCost.symbols.length) {
@@ -8282,6 +8285,14 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
         for (const cost of ability.removeCounters ?? []) counters[cost.kind] = (counters[cost.kind] ?? 0) - cost.amount;
         return { ...permanent, counters };
       })
+    }));
+  }
+  if (ability.removeVariableCounter) {
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      battlefield: current.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+        ? { ...permanent, counters: { ...permanent.counters, [ability.removeVariableCounter!]: (permanent.counters[ability.removeVariableCounter!] ?? 0) - abilityX } }
+        : permanent)
     }));
   }
 
