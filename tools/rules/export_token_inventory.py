@@ -100,10 +100,15 @@ def build(catalog: Path) -> dict[str, Any]:
             clusters[group["cluster"]].append({"name": group["name"], "tokenKey": group["tokenKey"], "sets": group["sets"], "oracleText": text})
     inventories.sort(key=lambda item: (not item["needsRulesWork"], item["name"].casefold(), item["tokenKey"]))
     missing_art = [item for item in inventories if not item["hasArtwork"]]
+    missing_printing_art = [
+        printing for item in inventories for printing in item["printings"]
+        if not printing.get("imageNormal")
+    ]
     return {"format": FORMAT, "schema": INVENTORY_SCHEMA, "generatedAt": datetime.now(UTC).isoformat(), "tokenCount": len(inventories),
             "printingCount": sum(len(item["printings"]) for item in inventories), "tokens": inventories,
             "artwork": {"definitionsWithArtwork": len(inventories) - len(missing_art), "definitionsMissingArtwork": len(missing_art),
-                        "missingTokenKeys": [item["tokenKey"] for item in missing_art]},
+                        "missingTokenKeys": [item["tokenKey"] for item in missing_art],
+                        "printingsMissingArtwork": len(missing_printing_art)},
             "clusters": {name: sorted(items, key=lambda item: item["name"].casefold()) for name, items in clusters.items()}}
 
 
@@ -119,7 +124,7 @@ def main() -> None:
     if args.markdown_output:
         lines = ["# Generated token worker queue", "", f"Generated: `{inventory['generatedAt']}`", "",
                  f"Unique definitions: **{inventory['tokenCount']:,}** · printings: **{inventory['printingCount']:,}**", "",
-                 f"Artwork: **{inventory['artwork']['definitionsWithArtwork']:,}** definitions have an image; **{inventory['artwork']['definitionsMissingArtwork']:,}** need catalog/artwork review.", ""]
+                 f"Artwork: **{inventory['artwork']['definitionsWithArtwork']:,}** definitions have an image; **{inventory['artwork']['definitionsMissingArtwork']:,}** need catalog/artwork review; **{inventory['artwork']['printingsMissingArtwork']:,}** printings lack an image.", ""]
         for cluster, items in sorted(inventory["clusters"].items()):
             lines.extend([f"## `{cluster}` ({len(items)})", "", "Claim one token key or a disjoint batch before editing.", ""])
             for item in items:
