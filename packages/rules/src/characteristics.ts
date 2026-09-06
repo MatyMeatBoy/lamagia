@@ -4503,7 +4503,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^~ enters prepared\.?$/i.test(line)) continue;
     if (/^you\s+may\s+play\s+(?:a|an|one|two|three)\s+additional\s+lands?\s+on\s+each\s+of\s+your\s+turns\.?$/i.test(line)) continue;
     if (/^if an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card\.?$/i.test(line)) continue;
-    if (/^if one or more \+1\/\+1 counters would be put on a creature, twice that many \+1\/\+1 counters are put on it instead\.?$/i.test(line)) continue;
+    if (/^if one or more \+1\/\+1 counters would be put on a creature, twice that many \+1\/\+1 counters are put on (?:it|that creature) instead\.?$/i.test(line)) continue;
     if (/^if one or more tokens would be created, twice that many of those tokens are created instead\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
@@ -5202,7 +5202,7 @@ export function cardProfile(card: CardData): CardProfile {
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
   const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
-  const doublesCreatureCounters = text.split("\n").some((line) => /^If one or more \+1\/\+1 counters would be put on a creature, twice that many \+1\/\+1 counters are put on it instead\.?$/i.test(line.trim()));
+  const doublesCreatureCounters = text.split("\n").some((line) => /^If one or more \+1\/\+1 counters would be put on a creature, twice that many \+1\/\+1 counters are put on (?:it|that creature) instead\.?$/i.test(line.trim()));
   const doublesTokens = text.split("\n").some((line) => /^If one or more tokens would be created, twice that many of those tokens are created instead\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
