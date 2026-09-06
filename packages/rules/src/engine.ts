@@ -695,6 +695,7 @@ export type PendingChoice =
       readonly selectedCardId?: string;
       readonly minPower?: number;
       readonly destination: "hand" | "battlefield";
+      readonly tapped?: boolean;
       readonly returnAtEndStep: boolean;
       readonly returnSourceToGraveyard: boolean;
       readonly exileSourceAfterResolution: boolean;
@@ -5812,7 +5813,8 @@ function beginLookTopSelection(
   returnAtEndStep = false,
   returnSourceToGraveyard = false,
   exileSourceAfterResolution = false,
-  minPower?: number
+  minPower?: number,
+  tapped = false
 ): GameState {
   const visible = playerAt(state, seat).library.slice(0, Math.max(0, amount));
   if (!visible.length) return state;
@@ -5830,6 +5832,7 @@ function beginLookTopSelection(
       bottomCards: [],
       stage: "select",
       destination,
+      ...(tapped ? { tapped: true } : {}),
       returnAtEndStep,
       returnSourceToGraveyard,
       exileSourceAfterResolution,
@@ -5896,7 +5899,7 @@ function resolveTop(state: GameState): GameState {
     const triggerSurveil = object.trigger.definition.effect.kind === "surveil" ? object.trigger.definition.effect : null;
     if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
-    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep, false, false, triggerLookTop.minPower);
+    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep, false, false, triggerLookTop.minPower, triggerLookTop.tapped);
     // A triggered ability's own search (Pattern of Rebirth's dies-triggered
     // reanimation): the source stays on the battlefield, unlike a resolving
     // spell, so this never moves it to a graveyard or exile.
@@ -6120,7 +6123,7 @@ function resolveTop(state: GameState): GameState {
   }
   const lookTop = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-top-select" }> => effect.kind === "look-top-select");
   if (lookTop) {
-    return beginLookTopSelection(next, object.controller, object.id, object.card, lookTop.amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback), lookTop.minPower);
+    return beginLookTopSelection(next, object.controller, object.id, object.card, lookTop.amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback), lookTop.minPower, lookTop.tapped);
   }
   const viewHand = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-at-target-players-hand" }> => effect.kind === "look-at-target-players-hand");
   if (viewHand) {
@@ -10183,7 +10186,7 @@ function finishLookTopSelection(
     ...(selected && choice.destination === "hand" ? { hand: [...current.hand, selected] } : {})
   }));
   if (selected && choice.destination === "battlefield") {
-    next = putOntoBattlefield(next, seat, selected, false);
+    next = putOntoBattlefield(next, seat, selected, false, choice.tapped === true);
     if (choice.returnAtEndStep && !selected.token) {
       const triggerAtTurn = next.step === "end" ? next.turn + 1 : next.turn;
       next = {

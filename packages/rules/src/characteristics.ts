@@ -459,7 +459,7 @@ export type SpellEffect =
   /** Surveil N (CR 701.42): look at the top N, put any number in the graveyard, the rest on top in any order. */
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
-  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number }
+  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number; readonly tapped?: boolean }
   /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
   | { readonly kind: "look-top-reorder"; readonly amount: number }
   /** "Draw a card, then put ~ on top of its owner's library" (Sensei's Divining Top's tap ability). */
@@ -2817,6 +2817,28 @@ function parseLookTopSelection(text: string): SpellEffect | null {
     .map((type) => CARD_TYPES.find((cardType) => cardType.toLowerCase() === type.toLowerCase())!);
   if (!types.length) return null;
   return { kind: "look-top-select", amount, types, destination: "hand" };
+}
+
+/**
+ * "Look at the top five cards of your library. You may put a land card from
+ * among them onto the battlefield tapped. Put the rest on the bottom of your
+ * library in a random order." (Elvish Rejuvenator): the same shared
+ * top-of-library primitive as Augur of Bolas, with a tapped battlefield
+ * destination. DOCUMENTED SIMPLIFICATION: "in a random order" is modeled as
+ * the same player-ordered bottom placement every other card sharing this
+ * choice infrastructure already uses ("in any order"), rather than true
+ * randomization — the bottom of a library is hidden from both players either
+ * way, so this only matters to a rare future effect that inspects bottom
+ * order specifically.
+ */
+function parseLookTopBattlefieldTapped(text: string): SpellEffect | null {
+  const match = /^Look at the top (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) cards? of your library\. You may put (?:an? )?(.+?) card from among them onto the battlefield tapped\. Put the rest on the bottom of your library in a random order$/i.exec(text.trim().replace(/\.$/, ""));
+  if (!match) return null;
+  const amount = toNumber(match[1]);
+  if (amount === null || amount < 0) return null;
+  const criterion = searchCriterion(match[2]!);
+  if (!criterion.types.length) return null;
+  return { kind: "look-top-select", amount, types: criterion.types, destination: "battlefield", tapped: true };
 }
 
 function parseAethermagesTouch(text: string): SpellEffect | null {
@@ -5401,7 +5423,7 @@ function recognizeText(text: string): RecognizedText {
             ? effectText.replace(/^you\s+may\s+(?=(?:draw|mill|discard|gain|lose)\b)/i, "You ").replace(/^you\s+may\s+/i, "")
             : effectText;
           const normalizedExecutableText = executableText.replace(/^(?:have\s+)?(?:it|~)\s+deal\b/i, "~ deals");
-          const lookTop = parseLookTopSelection(normalizedExecutableText);
+          const lookTop = parseLookTopSelection(normalizedExecutableText) ?? parseLookTopBattlefieldTapped(normalizedExecutableText);
           const manaSpentToken = parseManaSpentToken(normalizedExecutableText);
           return manaSpentToken ? { effect: manaSpentToken, target: "none" as TargetKind }
             : lookTop ? { effect: lookTop, target: "none" as TargetKind } : recognizeSentence(normalizedExecutableText);

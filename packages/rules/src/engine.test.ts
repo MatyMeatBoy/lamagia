@@ -6151,6 +6151,27 @@ describe("casting", () => {
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("puts Elvish Rejuvenator's chosen land onto the battlefield tapped", () => {
+    const rejuvenator = make({ name: "Elvish Rejuvenator", type_line: "Creature — Elf Druid", power: "2", toughness: "1", mana_cost: "{1}{G}", cmc: 2, oracle_text: "When Elvish Rejuvenator enters, look at the top five cards of your library. You may put a land card from among them onto the battlefield tapped. Put the rest on the bottom of your library in a random order." });
+    expect(profileOf(rejuvenator)).toMatchObject({
+      fullyImplemented: true,
+      triggers: [expect.objectContaining({ effect: { kind: "look-top-select", amount: 5, types: ["Land"], destination: "battlefield", tapped: true } })]
+    });
+    let game = readyToCast([rejuvenator], [FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [BEAR(), MOUNTAIN(), BOLT(), TRAMPLER(), SOL_RING()], "rejuvenator-library"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "look-top-select", stage: "select", destination: "battlefield" });
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "choose-look-top", sourceId, ordinal: 1 });
+    while (game.pendingChoice?.type === "look-top-select" && game.pendingChoice.stage === "bottom") {
+      game = applyAction(game, 0, { type: "choose-look-top-bottom", sourceId, ordinal: 0 });
+    }
+    expect(game.pendingChoice).toBeNull();
+    const mountain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mountain");
+    expect(mountain?.tapped).toBe(true);
+    expect(game.players[0]!.library.filter((card) => ["Grizzly Bears", "Lightning Bolt", "Big Stomper", "Sol Ring"].includes(card.name))).toHaveLength(4);
+  });
+
   it("filters Mayael's top-five selection by minimum power", () => {
     const mayael = make({ name: "Mayael, the Anima", type_line: "Legendary Creature — Elf Shaman", oracle_text: "{3}{R}{G}{W}, {T}: Look at the top five cards of your library. You may put a creature card with power 5 or greater from among them onto the battlefield. Put the rest on the bottom of your library in any order.", scryfall_id: "fixture-mayael" });
     const small = make({ name: "Small Creature", type_line: "Creature — Bear", power: "4", toughness: "4", scryfall_id: "fixture-mayael-small" });

@@ -5860,3 +5860,28 @@ leaves the graveyard and hand untouched with the choice cleanly
 closed. Validation: full **884** rules tests green (3 new), `npm run
 check` across all four workspaces, `npx vitest run
 services/match-server/src` (6 passed), 200/200 simulated games.
+
+Elvish Rejuvenator ("Look at the top five cards of your library. You
+may put a land card from among them onto the battlefield tapped. Put
+the rest on the bottom of your library in a random order.") reuses
+the existing shared `look-top-select` primitive (Augur of Bolas,
+Aethermage's Touch, Mayael) almost entirely, but that primitive had no
+way to place the chosen card TAPPED — every prior card sharing it puts
+its pick onto the battlefield untapped. Added `tapped?: boolean` to
+the `look-top-select` `SpellEffect`/`PendingChoice` and threaded it
+through both call sites (the triggered-ability path and the
+spell/activated-ability path) down to the existing `putOntoBattlefield`
+call's already-present `forceTapped` parameter — a single boolean
+plumbed through, no new mechanic. DOCUMENTED SIMPLIFICATION: "in a
+random order" is modeled as the same player-ordered bottom placement
+every other card sharing this choice already uses for "in any order"
+(Augur of Bolas, Mayael) rather than true randomization — the bottom
+of a library is hidden from both players regardless, so this only
+matters to a rare future effect that specifically inspects bottom
+order. Verified **+1** in the export count (10,877 → 10,878); set
+coverage holds at 33.0%. Scenario-tested: looking at five staged cards
+and choosing the one Mountain among them puts it onto the battlefield
+TAPPED, leaving the other four cards (two nonland, one differently
+named land, one artifact) to be bottomed. Validation: full **886**
+rules tests green (1 new), `npm run check` across all four workspaces,
+200/200 simulated games.
