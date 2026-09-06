@@ -4485,3 +4485,32 @@ check`, `npm run simulate:engine` 200/200, 10,206 global profiles.
 
 Prossh decklist status after this pass: **74 of 97 unique cards fully
 implemented (76.3%)**.
+
+Survival of the Fittest ("{G}, Discard a creature card: Search your
+library for a creature card...") needed a new `discardsCreatureCard`
+cost flag, a sibling of the existing type-unrestricted `discardsCard` —
+threaded through the same four sites `discardsCard` already touches
+(`legalActions`' per-card action enumeration, `activatableAbility`'s
+legality gate, and BOTH of `applyActivate`'s discard-resolution blocks,
+one for cost announcement and one for actual payment) so a non-creature
+card can never satisfy this specific cost. The real find here was a
+one-line, previously-invisible bug: `parseActivatedAbility`'s FINAL
+"leftovers" validation — the check that every word of a cost has been
+accounted for before accepting the ability — already stripped "discard
+a card"/"discard one card" but had no pattern for "discard A CREATURE
+card", so the whole ability was silently rejected as unrecognized even
+though its cost fields and its effect (`search-library`) were BOTH
+already parsing correctly in isolation; the two pieces just never
+reached the same return statement. Fixed with one more `.replace()`
+in that same leftovers chain. Verified **+7** in the export count
+(10,206 → 10,213: Survival of the Fittest plus any other catalog card
+using this same "discard a creature card" cost phrasing) and set
+coverage holds at 31.2%. Scenario-tested: activating with a chosen
+Grizzly Bears as the discard puts it in the graveyard and opens a
+search offering only creature cards; the SAME ability is correctly
+NOT offered as a legal action when the specified discard target is a
+non-creature card (a Sol Ring) already in hand. Validation: **785 rules
+tests**, `npm run check`, 10,213 global profiles.
+
+Prossh decklist status after this pass: **75 of 97 unique cards fully
+implemented (77.3%)**.

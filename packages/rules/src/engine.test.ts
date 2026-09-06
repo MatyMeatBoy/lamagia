@@ -10957,6 +10957,47 @@ describe("Pattern of Rebirth's dies-triggered reanimation tutor", () => {
   });
 });
 
+describe("Survival of the Fittest's creature-only discard-tutor", () => {
+  const SURVIVAL_OF_THE_FITTEST = () => make({
+    name: "Survival of the Fittest", type_line: "Enchantment", mana_cost: "{1}{G}", cmc: 2,
+    oracle_text: "{G}, Discard a creature card: Search your library for a creature card, reveal that card, put it into your hand, then shuffle."
+  });
+
+  it("recognizes the creature-only discard cost and the search effect", () => {
+    const profile = profileOf(SURVIVAL_OF_THE_FITTEST());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      discardsCreatureCard: true,
+      effect: { kind: "search-library", types: ["Creature"], destination: "hand", reveal: true }
+    });
+  });
+
+  it("discards a creature card and tutors a different creature into hand, refusing a non-creature discard", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SURVIVAL_OF_THE_FITTEST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BEAR(), SOL_RING()], "survival-hand"),
+      library: [...toHand(0, [TRAMPLER()], "survival-library"), ...player.library],
+      autoPass: false
+    }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Survival of the Fittest")!;
+
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id && entry.action.discardCardId === "survival-hand-1")).toBe(false);
+
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0, discardCardId: "survival-hand-0" });
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library" }>;
+    const legalNames = game.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(legalNames).toEqual(["Big Stomper"]);
+
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Big Stomper" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Big Stomper")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

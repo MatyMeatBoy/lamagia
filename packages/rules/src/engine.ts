@@ -7423,7 +7423,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const sacrificeSets: readonly (readonly Permanent[])[] = ability.sacrificesCreatures
         ? combinations(sacrificeCandidates, ability.sacrificesCreatures!.amount)
         : hasSacrificeCost ? sacrificeCandidates.map((candidate) => [candidate]) : [[]];
-      const discards = ability.discardsCard ? player.hand : [undefined];
+      const discards = ability.discardsCard
+        ? player.hand
+        : ability.discardsCreatureCard ? player.hand.filter((card) => isCreature(cardProfile(card))) : [undefined];
       const exileSets: readonly (readonly GameCard[])[] = ability.exilesGraveyardCards
         ? state.players.flatMap((candidate) => combinations(candidate.graveyard.filter((card) => isCreature(cardProfile(card))), ability.exilesGraveyardCards!.amount))
         : ability.exilesGraveyardCard ? player.graveyard.map((card) => [card]) : [[]];
@@ -8019,6 +8021,7 @@ function activatableAbility(
   }
   if (ability.tapsCreature && !tapCostCandidates(state, seat, permanent, ability).length) return { legal: false };
   if (ability.discardsCard && !player.hand.length) return { legal: false };
+  if (ability.discardsCreatureCard && !player.hand.some((card) => isCreature(cardProfile(card)))) return { legal: false };
   if (ability.exilesGraveyardCard && !player.graveyard.length) return { legal: false };
   if (ability.exilesGraveyardCards && !state.players.some((candidate) => candidate.graveyard.filter((card) => isCreature(cardProfile(card))).length >= ability.exilesGraveyardCards!.amount)) {
     return { legal: false };
@@ -8160,8 +8163,11 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     if (!tapCreature) throw new Error("Debes elegir una criatura enderezada válida para girar.");
   }
   let discard: GameCard | undefined;
-  if (ability.discardsCard) {
-    discard = action.discardCardId ? playerAt(state, seat).hand.find((card) => card.instance_id === action.discardCardId) : playerAt(state, seat).hand[0];
+  if (ability.discardsCard || ability.discardsCreatureCard) {
+    const eligible = ability.discardsCreatureCard
+      ? playerAt(state, seat).hand.filter((card) => isCreature(cardProfile(card)))
+      : playerAt(state, seat).hand;
+    discard = action.discardCardId ? eligible.find((card) => card.instance_id === action.discardCardId) : eligible[0];
     if (!discard) throw new Error("Debes elegir una carta para descartar.");
   }
   let exiles: GameCard[] = [];
@@ -8305,8 +8311,10 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
-  if (ability.discardsCard) {
-    const hand = playerAt(next, seat).hand;
+  if (ability.discardsCard || ability.discardsCreatureCard) {
+    const hand = ability.discardsCreatureCard
+      ? playerAt(next, seat).hand.filter((card) => isCreature(cardProfile(card)))
+      : playerAt(next, seat).hand;
     const discarded = hand.find((card) => card.instance_id === action.discardCardId)
       ?? [...hand].sort((left, right) => (cardProfile(right).cost?.symbols.length ?? 0) - (cardProfile(left).cost?.symbols.length ?? 0))[0];
     if (!discarded) throw new Error("No tienes una carta para descartar.");
