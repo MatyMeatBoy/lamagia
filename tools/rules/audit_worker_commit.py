@@ -13,6 +13,9 @@ import re
 import subprocess
 import sys
 
+MAX_TOTAL_DELETIONS = 600
+MAX_RULE_FILE_DELETIONS = 300
+
 
 def git(*args: str) -> str:
     result = subprocess.run(
@@ -44,6 +47,17 @@ def main() -> int:
         ["git", "diff", "--check", f"{args.base}..{args.commit}"],
         capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
+    numstat = git("diff", "--numstat", f"{args.base}..{args.commit}").splitlines()
+    total_deletions = 0
+    rule_file_deletions = 0
+    for row in numstat:
+        fields = row.split("\t")
+        if len(fields) != 3 or not fields[1].isdigit():
+            continue
+        deleted = int(fields[1])
+        total_deletions += deleted
+        if fields[2].startswith("packages/rules/"):
+            rule_file_deletions += deleted
 
     failures: list[str] = []
     if duplicate_union_additions:
@@ -56,9 +70,13 @@ def main() -> int:
         failures.append("engine change has no scenario test")
     if check.returncode:
         failures.append("git diff --check failed")
+    if total_deletions > MAX_TOTAL_DELETIONS:
+        failures.append(f"scope gate exceeded: {total_deletions} total deletions (max {MAX_TOTAL_DELETIONS})")
+    if rule_file_deletions > MAX_RULE_FILE_DELETIONS:
+        failures.append(f"rules rewrite gate exceeded: {rule_file_deletions} deletions under packages/rules (max {MAX_RULE_FILE_DELETIONS})")
 
     status = "REJECT" if failures else "PASS"
-    print(f"{status} {args.commit} files={len(files)} union_additions={len(union_additions)} engine={has_engine} scenario={has_scenario}")
+    print(f"{status} {args.commit} files={len(files)} union_additions={len(union_additions)} deletions={total_deletions} rule_deletions={rule_file_deletions} engine={has_engine} scenario={has_scenario}")
     for failure in failures:
         print(f"- {failure}")
     if failures:
