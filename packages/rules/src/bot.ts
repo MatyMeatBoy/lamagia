@@ -144,6 +144,12 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const chosen = untapped ?? tapped;
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
+  if (state.pendingChoice?.type === "countered-spell-library" && state.pendingChoice.seat === seat) {
+    const bottom = available.find((entry) => entry.action.type === "choose-countered-spell-library" && entry.action.destination === "bottom");
+    const top = available.find((entry) => entry.action.type === "choose-countered-spell-library" && entry.action.destination === "top");
+    const chosen = bottom ?? top;
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "optional-trigger" && state.pendingChoice.seat === seat) {
     const accept = available.find((entry) => entry.action.type === "choose-trigger" && entry.action.accept);
     const decline = available.find((entry) => entry.action.type === "choose-trigger" && !entry.action.accept);

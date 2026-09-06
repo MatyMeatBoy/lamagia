@@ -665,6 +665,8 @@ export type SpellEffect =
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
+  /** Hinder: the countered spell's owner chooses a library destination replacement (CR 701.18, 608.2b). */
+  | { readonly kind: "counter-target-spell-to-library" }
   /** Daze: the targeted spell's own controller decides whether to pay (CR 601.2b, 603.3, 118.9). */
   | { readonly kind: "counter-target-spell-unless-pay"; readonly cost: ManaCost }
   | { readonly kind: "counter-target-spell-to-battlefield" }
@@ -3713,6 +3715,12 @@ function recognizeText(text: string): RecognizedText {
   if (/^Counter target spell\. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard\.?$/i.test(joined)) {
     return {
       effects: [{ kind: "counter-target-spell-to-battlefield" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Counter target spell\. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "counter-target-spell-to-library" }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell", unimplementedText: [], covered: true
     };
   }

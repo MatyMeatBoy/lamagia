@@ -233,6 +233,8 @@ export interface StackObject {
   readonly cantBeCountered?: boolean;
   /** Seat that countered this spell with a replacement-to-battlefield effect. */
   readonly counteredToBattlefieldController?: SeatId;
+  /** Hinder-style destination chosen for a countered spell (CR 701.18). */
+  readonly counteredToLibrary?: "top" | "bottom";
   /** The spell was cast for its kicker cost (CR 702.33). */
   readonly kicked?: boolean;
   readonly evoked?: boolean;
@@ -413,6 +415,15 @@ export interface GameState {
 }
 
 export type PendingChoice =
+  | {
+      /** Hinder-style choice after countering a spell (CR 701.18, 608.2b). */
+      readonly type: "countered-spell-library";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly targetStackId: string;
+      readonly targetCard: GameCard;
+    }
   | {
       /** Shock-land replacement choice (CR 614.1c, 614.12). */
       readonly type: "land-entry";
@@ -664,6 +675,7 @@ export type GameAction =
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
+  | { readonly type: "choose-countered-spell-library"; readonly sourceId: string; readonly destination: "top" | "bottom" }
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
@@ -4560,6 +4572,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
     }
+    case "counter-target-spell-to-library": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      const targetSpell = state.stack.find((entry) => entry.id === target.stackId);
+      if (!targetSpell || !canCounterSpell(targetSpell, state)) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        stack: state.stack.map((entry) => entry.id === target.stackId ? { ...entry, countered: true } : entry),
+        pendingChoice: {
+          type: "countered-spell-library",
+          seat: controller,
+          sourceId: object.id,
+          sourceCard: object.card,
+          targetStackId: target.stackId,
+          targetCard: targetSpell.card
+        }
+      };
+    }
     case "delayed-mana-equal-to-target-spell-mana-value": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
@@ -5150,6 +5181,13 @@ function resolveTop(state: GameState): GameState {
       return logged(entered, object.counteredToBattlefieldController, `${object.card.name} entra al campo de batalla bajo su control.`);
     }
     if (object.fromCopy) return logged(next, object.controller, `La copia de ${object.card.name} es contrarrestada.`);
+    if (object.counteredToLibrary) {
+      const destination = object.counteredToLibrary === "top"
+        ? [object.card, ...playerAt(next, object.card.owner).library]
+        : [...playerAt(next, object.card.owner).library, object.card];
+      const placed = withPlayer(next, object.card.owner, (player) => ({ ...player, library: destination }));
+      return logged(placed, object.controller, `${object.card.name} es contrarrestado y va a la ${object.counteredToLibrary === "top" ? "parte superior" : "parte inferior"} de la biblioteca.`);
+    }
     next = sendSpellToOwnerZone(next, object);
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
   }
@@ -6319,6 +6357,21 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   if (state.pendingChoice) {
     if (state.pendingChoice.seat !== seat) return actions;
     const choice = state.pendingChoice;
+    if (choice.type === "countered-spell-library") {
+      actions.push(
+        {
+          action: { type: "choose-countered-spell-library", sourceId: choice.sourceId, destination: "top" },
+          label: `Put ${choice.targetCard.name} on top of its owner's library`,
+          note: `${choice.sourceCard.name}: choose the top-library replacement.`
+        },
+        {
+          action: { type: "choose-countered-spell-library", sourceId: choice.sourceId, destination: "bottom" },
+          label: `Put ${choice.targetCard.name} on bottom of its owner's library`,
+          note: `${choice.sourceCard.name}: choose the bottom-library replacement.`
+        }
+      );
+      return actions;
+    }
     if (choice.type === "land-entry") {
       if (player.life >= choice.life) {
         actions.push({
@@ -8012,6 +8065,26 @@ function applyPlayLand(state: GameState, seat: SeatId, cardId: string): GameStat
   return next;
 }
 
+function applyChooseCounteredSpellLibrary(
+  state: GameState,
+  seat: SeatId,
+  action: Extract<GameAction, { type: "choose-countered-spell-library" }>
+): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "countered-spell-library" || choice.seat !== seat || choice.sourceId !== action.sourceId) {
+    throw new Error("No countered-spell library choice is pending.");
+  }
+  const target = state.stack.find((entry) => entry.id === choice.targetStackId);
+  if (!target || !target.countered) throw new Error("The countered spell is no longer on the stack.");
+  return logged({
+    ...state,
+    pendingChoice: null,
+    stack: state.stack.map((entry) => entry.id === choice.targetStackId
+      ? { ...entry, counteredToLibrary: action.destination }
+      : entry)
+  }, seat, `${choice.targetCard.name}: ${action.destination === "top" ? "top" : "bottom"} of its owner's library.`);
+}
+
 function applyChooseReveal(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-reveal" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "reveal-card" || choice.seat !== seat) throw new Error("No tienes una decisión de revelación pendiente.");
@@ -9068,6 +9141,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "equip": next = applyEquip(state, seat, action); break;
     case "activate-mana": next = applyActivateMana(state, seat, action); break;
     case "activate": next = applyActivate(state, seat, action); break;
+    case "choose-countered-spell-library": next = applyChooseCounteredSpellLibrary(state, seat, action); break;
     case "choose-reveal": next = applyChooseReveal(state, seat, action); break;
     case "choose-land-entry": next = applyChooseLandEntry(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
@@ -9169,7 +9243,7 @@ export function canCounterSpell(spell: StackObject, state?: GameState): boolean 
 }
 
 function isCounterOnlyEffect(effect: SpellEffect): boolean {
-  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-to-battlefield"
+  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-to-library" || effect.kind === "counter-target-spell-to-battlefield"
     || (effect.kind === "compound" && effect.effects.length > 0 && effect.effects.every(isCounterOnlyEffect));
 }
 
