@@ -718,6 +718,15 @@ export type PendingChoice =
       readonly optionIds: readonly string[];
     }
   | {
+      /** "You may put a[n] [subtype] creature card from your hand onto the battlefield tapped and attacking" (Kaalia of the Vast, CR 508.3f). */
+      readonly type: "hand-creature-attacking-choice";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+      readonly defender: SeatId;
+    }
+  | {
       /** Proliferate (CR 701.27): add one counter to any number of eligible objects. */
       readonly type: "proliferate";
       readonly seat: SeatId;
@@ -784,6 +793,7 @@ export type GameAction =
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number; readonly discardCardId?: string }
   | { readonly type: "choose-graveyard-card"; readonly sourceId: string; readonly accept: boolean; readonly cardId?: string }
+  | { readonly type: "choose-hand-attacking-creature"; readonly sourceId: string; readonly accept: boolean; readonly cardId?: string }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor; readonly amount?: number }
   | { readonly type: "reorder-top"; readonly sourceId: string; readonly order: readonly string[] }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -3313,6 +3323,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return {
         ...state,
         pendingChoice: { type: "graveyard-card-choice", seat: controller, sourceId: object.sourcePermanentId ?? object.id, sourceCard: object.card, optionIds }
+      };
+    }
+    case "put-hand-creature-onto-battlefield-attacking": {
+      const defender = object.trigger?.eventPlayer;
+      if (defender === undefined) return state;
+      const optionIds = playerAt(state, controller).hand
+        .filter((card) => {
+          const candidate = cardProfile(card);
+          return isCreature(candidate) && effect.subtypes.some((subtype) => hasSubtype(candidate, subtype));
+        })
+        .map((card) => card.instance_id);
+      if (!optionIds.length) return state;
+      return {
+        ...state,
+        pendingChoice: { type: "hand-creature-attacking-choice", seat: controller, sourceId: object.sourcePermanentId ?? object.id, sourceCard: object.card, optionIds, defender }
       };
     }
     case "delayed-draw": {
@@ -7707,6 +7732,24 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
       return actions;
     }
+    if (choice.type === "hand-creature-attacking-choice") {
+      for (const cardId of choice.optionIds) {
+        const card = player.hand.find((candidate) => candidate.instance_id === cardId);
+        if (!card) continue;
+        actions.push({
+          action: { type: "choose-hand-attacking-creature", sourceId: choice.sourceId, accept: true, cardId },
+          label: `Poner a ${card.name} en el campo de batalla, atacando`,
+          cardId: card.instance_id,
+          note: `${choice.sourceCard.name}: puedes poner esta criatura en el campo de batalla, girada y atacando.`
+        });
+      }
+      actions.push({
+        action: { type: "choose-hand-attacking-creature", sourceId: choice.sourceId, accept: false },
+        label: "No poner ninguna criatura",
+        note: `${choice.sourceCard.name}: puedes declinar.`
+      });
+      return actions;
+    }
     if (choice.type === "exploit") {
       actions.push({
         action: { type: "choose-exploit", sourceId: choice.sourceId },
@@ -9651,6 +9694,24 @@ function applyChooseGraveyardCard(state: GameState, seat: SeatId, action: Extrac
   return logged(next, seat, `${player.name} devuelve ${selected.name} de su cementerio a su mano.`);
 }
 
+function applyChooseHandAttackingCreature(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-hand-attacking-creature" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "hand-creature-attacking-choice" || choice.seat !== seat) throw new Error("No tienes una elección de ataque pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa elección ya no está pendiente.");
+  const player = playerAt(state, seat);
+  if (!action.accept) return logged({ ...state, pendingChoice: null }, seat, `${player.name} no pone ninguna criatura en el campo de batalla.`);
+  const selected = player.hand.find((card) => card.instance_id === action.cardId && choice.optionIds.includes(card.instance_id));
+  if (!selected) throw new Error("Esa carta ya no está disponible en tu mano.");
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    hand: current.hand.filter((card) => card.instance_id !== selected.instance_id)
+  }));
+  next = putOntoBattlefield(next, seat, selected, false, true);
+  next = { ...next, combat: { ...next.combat, attackers: [...next.combat.attackers, { instanceId: selected.instance_id, defender: choice.defender }] } };
+  next = raiseEvent(next, { kind: "attacks", permanentId: selected.instance_id, controller: seat, card: selected, defender: choice.defender });
+  return logged(next, seat, `${player.name} pone a ${selected.name} en el campo de batalla, girada y atacando.`);
+}
+
 function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-color" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "choose-color" || choice.seat !== seat) throw new Error("You do not have a color choice pending.");
@@ -9714,6 +9775,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
         flashback: false,
         variableValue: 0,
         countered: false,
+        ...(choice.trigger ? { trigger: choice.trigger } : {}),
         sourcePermanentId: choice.sourcePermanentId,
         ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
       };
@@ -9758,6 +9820,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
       flashback: false,
       variableValue: 0,
       countered: false,
+      ...(choice.trigger ? { trigger: choice.trigger } : {}),
       sourcePermanentId: choice.sourcePermanentId,
       ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
     };
@@ -9783,6 +9846,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
       flashback: false,
       variableValue: 0,
       countered: false,
+      ...(choice.trigger ? { trigger: choice.trigger } : {}),
       sourcePermanentId: choice.sourcePermanentId,
       ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
     };
@@ -9839,7 +9903,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
    flashback: false,
    variableValue: choice.variablePayCostMax === undefined ? tapCount : variableValue,
     countered: false,
-   ...(choice.trigger?.definition.effect.kind === "copy-triggered-spell" ? { trigger: choice.trigger } : {}),
+   ...(choice.trigger ? { trigger: choice.trigger } : {}),
    sourcePermanentId: choice.sourcePermanentId,
    ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
  };
@@ -10896,6 +10960,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-basic-land-search": next = applyChooseBasicLandSearch(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-graveyard-card": next = applyChooseGraveyardCard(state, seat, action); break;
+    case "choose-hand-attacking-creature": next = applyChooseHandAttackingCreature(state, seat, action); break;
     case "choose-color": next = applyChooseColor(state, seat, action); break;
     case "reorder-top": next = applyReorderTop(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;

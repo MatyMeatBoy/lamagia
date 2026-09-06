@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,160** · cobertura: **33.1%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,162** · cobertura: **33.1%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -191,7 +191,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | 2008-01-01 | Magic Player Rewards 2008 (`P08`) | promos | player-rewards-2008 | other | 7 | 5 | 2 | 71.4% |
 | 2008-01-01 | Magic Premiere Shop 2008 (`PMPS08`) | promos | magic-premiere-shop-2008 | other | 6 | 5 | 1 | 83.3% |
 | 2008-01-19 | Morningtide Promos (`PMOR`) | promos | morningtide | other | 2 | 0 | 2 | 0.0% |
-| 2008-02-01 | Morningtide (`MOR`) | expansion | 2000s | main | 150 | 35 | 115 | 23.3% |
+| 2008-02-01 | Morningtide (`MOR`) | expansion | 2000s | main | 150 | 36 | 114 | 24.0% |
 | 2008-04-01 | 15th Anniversary Cards (`P15A`) | promos | 15th-anniversary-cards | other | 2 | 2 | 0 | 100.0% |
 | 2008-04-19 | Shadowmoor Promos (`PSHM`) | promos | shadowmoor | other | 2 | 1 | 1 | 50.0% |
 | 2008-05-02 | Shadowmoor (`SHM`) | expansion | 2000s | main | 286 | 76 | 210 | 26.6% |
@@ -314,7 +314,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | 2014-07-08 | San Diego Comic-Con 2014 (`PS14`) | promos | comic-con-2014 | other | 6 | 0 | 6 | 0.0% |
 | 2014-07-09 | Duels of the Planeswalkers 2015 Promos (`PDP15`) | promos | duels-of-the-planeswalkers-2015 | other | 2 | 0 | 2 | 0.0% |
 | 2014-07-17 | Magic 2015 Promos (`PM15`) | promos | magic-2015 | other | 13 | 2 | 11 | 15.4% |
-| 2014-07-18 | Magic 2015 (`M15`) | core | 2010s | main | 269 | 113 | 156 | 42.0% |
+| 2014-07-18 | Magic 2015 (`M15`) | core | 2010s | main | 269 | 114 | 155 | 42.4% |
 | 2014-07-18 | Magic 2015 Clash Pack (`CP1`) | starter | 2010s | other | 6 | 2 | 4 | 33.3% |
 | 2014-08-22 | From the Vault: Annihilation (`V14`) | from-the-vault | 2010s | other | 15 | 2 | 13 | 13.3% |
 | 2014-09-05 | Duel Decks: Speed vs. Cunning (`DDN`) | duel-decks | duel-decks-speed-vs-cunning | other | 71 | 33 | 38 | 46.5% |
@@ -758,7 +758,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 73 | 148 | 33.0% |
 | core | 1990s | 10 | 3267 | 1387 | 1880 | 42.5% |
 | core | 2000s | 4 | 1389 | 810 | 579 | 58.3% |
-| core | 2010s | 8 | 2011 | 1028 | 983 | 51.1% |
+| core | 2010s | 8 | 2011 | 1029 | 982 | 51.2% |
 | core | 2020s | 3 | 1132 | 469 | 663 | 41.4% |
 | deck-products | coldsnap-theme-decks | 1 | 52 | 17 | 35 | 32.7% |
 | deck-products | magic-online-theme-decks | 1 | 174 | 103 | 71 | 59.2% |
@@ -793,7 +793,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 153 | 384 | 28.5% |
 | expansion | 1990s | 11 | 1573 | 398 | 1175 | 25.3% |
-| expansion | 2000s | 19 | 3082 | 773 | 2309 | 25.1% |
+| expansion | 2000s | 19 | 3082 | 774 | 2308 | 25.1% |
 | expansion | 2010s | 14 | 2735 | 817 | 1918 | 29.9% |
 | expansion | 2020s | 17 | 3739 | 730 | 3009 | 19.5% |
 | expansion | alara | 2 | 379 | 165 | 214 | 43.5% |
@@ -14014,7 +14014,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 - [ ] Oona's Blackguard — `b72cedc2-73b3-4e7f-8b58-8db532a69f6e`
 - [ ] Orchard Warden — `8afc6147-80b4-4296-a5aa-ce892cefb1a7`
 - [ ] Pack's Disdain — `8b5659bd-a272-44cd-811f-9feec7d9825f`
-- [ ] Preeminent Captain — `b6801429-3995-4571-92f9-ef211675c5d5`
 - [ ] Primal Beyond — `541744d9-449d-420a-a5a1-2fffba18450f`
 - [ ] Pulling Teeth — `9c966ba3-3408-4bdd-a4cf-97c9183e1115`
 - [ ] Pyroclast Consul — `095ec64c-390a-4d21-a29c-590e0147938e`
@@ -20044,7 +20043,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 - [ ] Phyrexian Revoker — `786b3657-b595-4b38-83f2-d40915e51e2b`
 - [ ] Phytotitan — `2541e0cd-2cc1-4e47-94e3-030c1cb1a6bd`
 - [ ] Polymorphist's Jest — `5bc66b2d-a93c-449d-a090-b61e1613aa15`
-- [ ] Preeminent Captain — `b6801429-3995-4571-92f9-ef211675c5d5`
 - [ ] Profane Memento — `c81d1890-e741-49ec-a6ce-86c27fd4d502`
 - [ ] Quickling — `109899e1-abd7-4582-8b67-b0852755bf75`
 - [ ] Ranger's Guile — `694cb93a-bcc5-44b0-a76c-19ae4a4e5e0f`

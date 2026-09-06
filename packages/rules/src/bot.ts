@@ -248,6 +248,14 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const chosen = choose ?? decline;
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
+  if (state.pendingChoice?.type === "hand-creature-attacking-choice" && state.pendingChoice.seat === seat) {
+    // Putting a creature onto the battlefield attacking for free is a
+    // strong upside; take the first offered card rather than declining.
+    const choose = available.find((entry) => entry.action.type === "choose-hand-attacking-creature" && entry.action.accept);
+    const decline = available.find((entry) => entry.action.type === "choose-hand-attacking-creature" && !entry.action.accept);
+    const chosen = choose ?? decline;
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "proliferate" && state.pendingChoice.seat === seat) {
     const target = available.find((entry) => entry.action.type === "choose-proliferate-target");
     if (target) return { action: target.action, label: target.label };

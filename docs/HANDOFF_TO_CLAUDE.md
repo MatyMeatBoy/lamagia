@@ -5934,3 +5934,47 @@ OPPONENT's Grizzly Bears leaves it under the OPPONENT's control (not
 stolen by the activator), tapped, and summoning-sick. Validation: full
 **891** rules tests green (1 new), `npm run check` across all four
 workspaces, 200/200 simulated games.
+
+Kaalia of the Vast ("Whenever ~ attacks, you may put an Angel, Demon,
+or Dragon creature card from your hand onto the battlefield tapped and
+attacking.") needed a genuinely new primitive: no existing effect put
+a hand card onto the battlefield AS AN ATTACKER mid-combat (CR
+508.3f). Added a `put-hand-creature-onto-battlefield-attacking`
+`SpellEffect` (subtype-filtered), a new `hand-creature-attacking-choice`
+`PendingChoice`/`choose-hand-attacking-creature` `GameAction` pair
+(mirroring the `graveyard-card-choice` shape), and execution that
+creates the permanent tapped, appends it to `state.combat.attackers`
+with the SAME defender the trigger source itself is attacking (read
+from `object.trigger?.eventPlayer`, an existing field already used by
+one other effect), and raises its own "attacks" event (CR 508.3f: the
+entering creature's own attack triggers still fire). Added a
+proactive `bot.ts` handler.
+
+Building the scenario test surfaced a REAL, previously-latent bug,
+independent of this card: `applyChooseTrigger`'s generic "accept an
+optional trigger" path reconstructs a fresh `StackObject` to resolve
+the trigger's effect, but only copied the original `TriggerInstance`
+(`choice.trigger`, carrying `eventPlayer`/`eventCard`/etc.) onto that
+new object for ONE specific effect kind (`copy-triggered-spell`) —
+any OTHER optional trigger whose effect needs trigger-instance data
+(like Kaalia's own `eventPlayer`) silently got `undefined` instead, at
+all FOUR places in that function that rebuild the `StackObject` (the
+two "decline" early-return branches for payment/discard-unless
+triggers, and both the "unless" and the fully-generic accept paths).
+This never surfaced before because `pump-source-by-defending-lands`
+(the only prior consumer of `eventPlayer`) happens to come from a
+non-optional trigger, which resolves through a completely different,
+correctly-populated code path — nobody had exercised an OPTIONAL
+trigger needing this field until now. Widened all four sites to carry
+`trigger: choice.trigger` unconditionally instead of gating on one
+effect kind. Verified **+1** in the export count (10,918 → 10,919);
+set coverage holds at 33.1%. Scenario-tested: attacking with Kaalia
+opens the standard optional-trigger accept dialog, then (once
+accepted) a hand-creature choice correctly scoped to the SAME defender
+Kaalia is attacking; choosing a Dragon puts it onto the battlefield
+tapped, and — critically — auto-passing through the rest of combat
+shows the defending player losing exactly 8 life (Kaalia's 3 plus the
+Dragon's 5), proving the entering creature genuinely attacks rather
+than just entering the battlefield inertly. Validation: full **899**
+rules tests green (1 new), `npm run check` across all four workspaces,
+200/200 simulated games.

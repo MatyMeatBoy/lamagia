@@ -7227,6 +7227,34 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.hand.length).toBe(handBefore + 1);
   });
 
+  it("puts a Dragon from Kaalia's hand onto the battlefield tapped and attacking the same defender", () => {
+    const kaalia = make({ name: "Kaalia of the Vast", type_line: "Legendary Creature — Human Cleric", power: "3", toughness: "3", mana_cost: "{1}{R}{W}{B}", cmc: 4, keywords: ["Flying"], oracle_text: "Flying\nWhenever Kaalia of the Vast attacks, you may put an Angel, Demon, or Dragon creature card from your hand onto the battlefield tapped and attacking." });
+    const dragon = make({ name: "Test Dragon", type_line: "Creature — Dragon", mana_cost: "{4}{R}{R}", cmc: 6, power: "5", toughness: "5" });
+    const profile = profileOf(kaalia);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "attacks", subject: "self", optional: true,
+      effect: { kind: "put-hand-creature-onto-battlefield-attacking", subtypes: ["Angel", "Demon", "Dragon"] }
+    });
+    let game = readyToCast([dragon], [kaalia]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const kaaliaInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Kaalia of the Vast")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: kaaliaInPlay.instance_id, defender: 1 }] });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger" });
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: true });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "hand-creature-attacking-choice");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "hand-creature-attacking-choice" }>;
+    expect(choice.defender).toBe(1);
+    game = applyAction(game, 0, { type: "choose-hand-attacking-creature", sourceId: choice.sourceId, accept: true, cardId: "hand-0" });
+    const dragonInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Dragon");
+    expect(dragonInPlay).toBeDefined();
+    expect(dragonInPlay!.tapped).toBe(true);
+    expect(game.players[0]!.hand.some((card) => card.name === "Test Dragon")).toBe(false);
+    // By this point auto-pass has driven combat all the way through; verify
+    // the newly-entered Dragon actually dealt combat damage alongside Kaalia
+    // (3 + 5 = 8) rather than just sitting on the battlefield unattacking.
+    expect(game.players[1]!.life).toBe(32);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({

@@ -536,6 +536,8 @@ export type SpellEffect =
   | { readonly kind: "exile-source-permanent" }
   /** "Put up to N creature cards from your hand onto the battlefield" (Tooth and Nail). */
   | { readonly kind: "put-hand-creatures-onto-battlefield"; readonly amount: number }
+  /** "You may put a[n] [subtype] creature card from your hand onto the battlefield tapped and attacking" (Kaalia of the Vast, CR 508.3f): enters attacking the same player/planeswalker the trigger source itself is attacking. */
+  | { readonly kind: "put-hand-creature-onto-battlefield-attacking"; readonly subtypes: readonly string[] }
   /** Kicked-only follow-up (Hunting Wilds): untap and animate the lands the base search JUST fetched onto the battlefield, not every matching land the controller owns. */
   | { readonly kind: "untap-and-animate-fetched-lands"; readonly subtype: string; readonly power: number; readonly toughness: number; readonly color: MagicColor }
   /** "Exile the top N cards of your library. You may put any number of creature and/or land cards from among them onto the battlefield" (Xenagos, the Reveler). */
@@ -4260,6 +4262,16 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Put up to (\w+) creature cards from your hand onto the battlefield$/i.exec(text))) {
     const amount = toNumber(match[1]!);
     if (amount !== null) return { effect: { kind: "put-hand-creatures-onto-battlefield", amount }, target: "none" };
+  }
+  // "You may put a[n] [subtype[, subtype[, or subtype]]] creature card from
+  // your hand onto the battlefield tapped and attacking" (Kaalia of the
+  // Vast): enters attacking the same player/planeswalker the source is
+  // already attacking (CR 508.3f), read from the "attacks" trigger's own
+  // eventPlayer at resolution — not a new target.
+  const kaaliaStyle = /^put\s+an?\s+(.+?)\s+creature\s+card\s+from\s+your\s+hand\s+onto\s+the\s+battlefield\s+tapped\s+and\s+attacking$/i.exec(text);
+  if (kaaliaStyle) {
+    const subtypes = kaaliaStyle[1]!.split(/,\s*(?:or\s+)?|\s+or\s+/i).map((word) => word.trim()).filter(Boolean);
+    if (subtypes.length) return { effect: { kind: "put-hand-creature-onto-battlefield-attacking", subtypes }, target: "none" };
   }
   if ((match = /^Exile the top (\w+) cards? of your library\.\s*You may put any number of creature and\/or land cards from among them onto the battlefield$/i.exec(text))) {
     const amount = toNumber(match[1]!);
