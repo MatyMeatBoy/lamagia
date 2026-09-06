@@ -6459,12 +6459,14 @@ function applyStateBasedActions(state: GameState): GameState {
       changed = true;
     }
 
-    // Legend rule: a player keeps only the first copy of a legendary permanent.
+    // Legend rule (CR 704.5j): compare current copiable names, never printing
+    // or instance identity. Different cards with the same name are one legend
+    // group; different names may coexist even when their art/set matches.
     for (const player of next.players) {
       const seen = new Set<string>();
       for (const permanent of player.battlefield) {
         const profile = cardProfile(permanent.card);
-        if (!profile.supertypes.includes("Legendary")) continue;
+        if (!profile.supertypes.some((value) => value.toLowerCase() === "legendary")) continue;
         if (seen.has(permanent.card.name)) {
           next = movePermanentToZone(next, permanent, "graveyard");
           next = logged(next, player.seat, `Regla de legendarios: ${permanent.card.name} va al cementerio.`);
