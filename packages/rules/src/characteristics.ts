@@ -417,6 +417,8 @@ export interface TokenDefinition {
   readonly colors: readonly string[];
   readonly keywords: readonly EnforcedKeyword[];
   readonly tapped: boolean;
+  /** Executable token rules text, e.g. a Clue's draw ability (CR 111.10). */
+  readonly oracleText?: string;
 }
 
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
@@ -2724,6 +2726,27 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
 
+  // Investigate (CR 701.21): create one or more Clue artifact tokens. The
+  // token carries its own activated draw ability, so every card reuses the
+  // same token and sacrifice/draw machinery.
+  const investigate = /^Investigate(?:\s+(once|twice|three times|\d+ times?))?$/i.exec(text);
+  if (investigate) {
+    const amount = investigate[1]?.toLowerCase() === "twice" ? 2
+      : investigate[1]?.toLowerCase() === "once" ? 1
+      : investigate[1] ? Number(investigate[1].match(/\d+/)?.[0] ?? 1) : 1;
+    return {
+      effect: {
+        kind: "create-token", amount,
+        token: {
+          name: "Clue", typeLine: "Artifact — Clue", power: null, toughness: null,
+          colors: [], keywords: [], tapped: false,
+          oracleText: "{2}, Sacrifice this artifact: Draw a card."
+        }
+      },
+      target: "none"
+    };
+  }
+
   // "X. Then amass [Type] N" (Orcish Bowmasters, CR 701.44): the amass always
   // trails another effect, so recognize the lead effect and append amass.
   const thenAmass = /^(.+?)\.\s*Then amass ([A-Za-z]+) (\d+)$/i.exec(text);
@@ -4722,7 +4745,7 @@ function recognizeText(text: string): RecognizedText {
       const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? eventPlayerHandCondition?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? eventPlayerHandCondition?.[2]?.trim() ?? diedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");

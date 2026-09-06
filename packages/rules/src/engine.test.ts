@@ -852,6 +852,10 @@ const LEONIN_BLADETRAP = () => make({ name: "Leonin Bladetrap", type_line: "Arti
 const IRON_BEAR = () => make({ name: "Iron Bear", type_line: "Artifact Creature — Bear", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2" });
 const ARCBound_MOUSER = () => make({ name: "Arcbound Mouser", type_line: "Artifact Creature — Cat", mana_cost: "{1}", cmc: 1, power: "0", toughness: "0", keywords: ["Lifelink"], oracle_text: "Lifelink\nModular 1", oracle_id: "5e59199c-facc-46b4-9681-988de0cfaba2" });
 const ARCBound_PROTOTYPE = () => make({ name: "Arcbound Prototype", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "0", toughness: "0", oracle_text: "Modular 2", oracle_id: "ac1003b4-1f7c-4801-9dd3-5cb7d9881af8" });
+const HARD_EVIDENCE = () => make({ name: "Hard Evidence", type_line: "Sorcery", mana_cost: "{U}", cmc: 1, oracle_text: "Create a 0/3 blue Crab creature token.\nInvestigate.", oracle_id: "0728b195-2dfe-4d73-91ae-e658a97b0b9a" });
+const WAVESIFTER = () => make({ name: "Wavesifter", type_line: "Creature — Elemental", mana_cost: "{2}{G}{U}", cmc: 4, power: "3", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, investigate twice.\nEvoke {G}{U}", oracle_id: "d1ec1e4e-faa6-4afc-9e00-a3327105c11b" });
+const FLOODHOUND = () => make({ name: "Floodhound", type_line: "Creature — Dog", mana_cost: "{U}", cmc: 1, power: "1", toughness: "1", oracle_text: "{3}, {T}: Investigate.", oracle_id: "6dd8ba09-f117-4514-9e09-f9f9f5fb5025" });
+const FUNNEL_WEB_RECLUSE = () => make({ name: "Funnel-Web Recluse", type_line: "Creature — Spider", mana_cost: "{3}{G}", cmc: 4, power: "3", toughness: "3", keywords: ["Reach"], oracle_text: "Reach\nMorbid — When this creature enters, if a creature died this turn, investigate.", oracle_id: "6148fcf5-466a-43aa-a0f3-d3d9fae4d883" });
 const COMMANDER = (name = "Test Commander") => make({ name, type_line: "Legendary Creature — Human Soldier", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
 const GREEN_COMMANDER = () => make({ name: "Green Commander", type_line: "Legendary Creature — Human", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3", colors: ["G"], color_identity: ["G"] });
 const COMMAND_TOWER = () => make({ name: "Command Tower", type_line: "Land", oracle_text: "{T}: Add one mana of any color in your commander's color identity.", produced_mana: ["W", "U", "B", "R", "G"] });
@@ -1400,6 +1404,39 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     game = passUntil(game, (state) => (state.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"] ?? 0) === 1);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.counters["+1/+1"]).toBe(1);
+  });
+
+  it("reuses Investigate for MH2 Clue creation, ETB, and activated abilities", () => {
+    const wavesifterProfile = profileOf(WAVESIFTER());
+    expect(wavesifterProfile).toMatchObject({ fullyImplemented: true, evokeCost: { raw: "{G}{U}" } });
+    expect(wavesifterProfile.triggers[0]).toMatchObject({
+      event: "enters-battlefield", effect: { kind: "create-token", amount: 2, token: { name: "Clue", typeLine: "Artifact — Clue" } }
+    });
+    expect(profileOf(FLOODHOUND())).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ requiresTap: true, manaCost: { raw: "{3}" }, effect: { kind: "create-token", amount: 1, token: { name: "Clue" } } }]
+    });
+    expect(profileOf(FUNNEL_WEB_RECLUSE())).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{ condition: { kind: "creature-died-this-turn" }, effect: { kind: "create-token", token: { name: "Clue" } } }]
+    });
+
+    let game = readyToCast([HARD_EVIDENCE()], [ISLAND()]);
+    expect(profileOf(HARD_EVIDENCE())).toMatchObject({
+      fullyImplemented: true,
+      effects: [
+        { kind: "create-token", token: { name: "Crab" } },
+        { kind: "create-token", amount: 1, token: { name: "Clue", oracleText: "{2}, Sacrifice this artifact: Draw a card." } }
+      ]
+    });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const clue = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Clue");
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Crab")).toBe(true);
+    expect(clue).toBeDefined();
+    expect(cardProfile(clue!.card)).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ sacrificesSelf: true, effect: { kind: "draw", amount: 1 }, targetKind: "none" }]
+    });
   });
 
   it("recognizes and resolves Proliferate for selected permanents and players", () => {

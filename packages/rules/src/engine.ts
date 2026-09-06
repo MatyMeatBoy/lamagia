@@ -4089,7 +4089,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const spec = effect.token;
       const token: GameCard = {
         scryfall_id: `token:${object.id}:pongify`, instance_id: `token:${object.id}:pongify`, owner, token: true,
-        name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.keywords.join(", "),
+        name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.oracleText ?? spec.keywords.join(", "),
         power: spec.power === null ? null : String(spec.power), toughness: spec.toughness === null ? null : String(spec.toughness),
         colors: spec.colors, keywords: spec.keywords
       };
@@ -4106,7 +4106,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const spec = effect.token;
       const token: GameCard = {
         scryfall_id: `token:${object.id}:controller-token`, instance_id: `token:${object.id}:controller-token`, owner: beneficiary, token: true,
-        name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.keywords.join(", "),
+        name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.oracleText ?? spec.keywords.join(", "),
         power: spec.power === null ? null : String(spec.power), toughness: spec.toughness === null ? null : String(spec.toughness),
         colors: spec.colors, keywords: spec.keywords
       };
@@ -4834,7 +4834,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       for (let index = 0; index < effect.amount; index += 1) {
         const token: GameCard = {
           scryfall_id: `token:${object.id}:offer:${index}`, instance_id: `token:${object.id}:offer:${index}`, owner, token: true,
-          name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.keywords.join(", "),
+          name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.oracleText ?? spec.keywords.join(", "),
           power: spec.power === null ? null : String(spec.power), toughness: spec.toughness === null ? null : String(spec.toughness),
           colors: spec.colors, keywords: spec.keywords
         };
@@ -5197,15 +5197,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
         const token: GameCard = {
-          scryfall_id: `token:${object.id}:${index}`,
-          instance_id: `token:${object.id}:${index}`,
+          scryfall_id: `token:${object.id}:${effect.token.name}:${index}`,
+          instance_id: `token:${object.id}:${effect.token.name}:${index}`,
           owner: controller,
           token: true,
           name: effect.token.name,
           type_line: effect.token.typeLine,
           mana_cost: "",
           cmc: 0,
-          oracle_text: effect.token.keywords.join(", "),
+          oracle_text: effect.token.oracleText ?? effect.token.keywords.join(", "),
           power: stat !== null ? String(stat) : effect.token.power === null ? null : String(effect.token.power),
           toughness: stat !== null ? String(stat) : effect.token.toughness === null ? null : String(effect.token.toughness),
           colors: effect.token.colors,
@@ -5224,15 +5224,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       let next = state;
       for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
         const token: GameCard = {
-          scryfall_id: `token:${object.id}:${index}`,
-          instance_id: `token:${object.id}:${index}`,
+          scryfall_id: `token:${object.id}:${effect.token.name}:${index}`,
+          instance_id: `token:${object.id}:${effect.token.name}:${index}`,
           owner: recipient,
           token: true,
           name: effect.token.name,
           type_line: effect.token.typeLine,
           mana_cost: "",
           cmc: 0,
-          oracle_text: effect.token.keywords.join(", "),
+          oracle_text: effect.token.oracleText ?? effect.token.keywords.join(", "),
           power: stat !== null ? String(stat) : effect.token.power === null ? null : String(effect.token.power),
           toughness: stat !== null ? String(stat) : effect.token.toughness === null ? null : String(effect.token.toughness),
           colors: effect.token.colors,

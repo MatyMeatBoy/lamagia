@@ -3888,6 +3888,16 @@ any opponent has 10 or less life, recalculated from live state (CR 604.1,
 613.4). Current validation: **721 rules tests**, `npm run check`, and `git
 diff --check` pass.
 
+The next MH2 cluster, Investigate, now lowers `Investigate`, `Investigate
+twice`, and Morbid Investigate into the shared token primitive. Clue tokens
+carry their executable `{2}, Sacrifice this artifact: Draw a card.` ability,
+so the same parser works for ETB triggers and activated abilities (CR 701.21,
+111.10). Token identities now include their token name to prevent two token
+types created by one spell from sharing a profile cache key. Scenario coverage
+includes Hard Evidence, Wavesifter, Floodhound, and Funnel-Web Recluse.
+Current validation: **735 rules tests**, `npm run check`, near-complete unit
+tests, and `git diff --check` pass.
+
 The MH2 Arcbound rescan now recognizes the reusable Modular N primitive:
 Arcbound permanents enter with N +1/+1 counters and their dies trigger can
 move those counters to a target artifact creature. Trigger choices retain the
