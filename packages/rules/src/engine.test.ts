@@ -143,6 +143,7 @@ const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature �
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
 const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — Snake", mana_cost: "{B}", cmc: 1, power: "1", toughness: "1", keywords: ["Deathtouch"], oracle_text: "Deathtouch" });
 const VRASKA_SWARMS_EMINENCE = () => make({ name: "Vraska, Swarm's Eminence", type_line: "Legendary Planeswalker — Vraska", mana_cost: "{2}{B}{G}", cmc: 4, loyalty: "4", oracle_text: "Whenever a creature you control with deathtouch deals damage to a player or planeswalker, put a +1/+1 counter on that creature.", oracle_id: "cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb" });
+const AJANI_THE_GREATHEARTED = () => make({ name: "Ajani, the Greathearted", type_line: "Legendary Planeswalker — Ajani", mana_cost: "{2}{G}{W}", cmc: 4, loyalty: "5", oracle_text: "−2: Put a +1/+1 counter on each creature you control and a loyalty counter on each other planeswalker you control.", oracle_id: "f5d9be71-91d0-4166-ba58-cbbf5d490c40" });
 const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
 const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Bat", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", colors: ["B"] });
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
@@ -8116,6 +8117,31 @@ describe("activated abilities", () => {
     // The modifier is removed during the cleanup step (CR 514.2).
     game = passUntil(game, (state) => state.turn > 1);
     expect(powerOf(permanentNamed(game, 0, "Firecoil Drake")!, game)).toBe(2);
+  });
+
+  it("puts counters on creatures and loyalty on other planeswalkers", () => {
+    const profile = profileOf(AJANI_THE_GREATHEARTED());
+    expect(profile.activatedAbilities[0]!.effect).toEqual({
+      kind: "add-counter-creatures-and-other-planeswalkers", counter: "+1/+1", amount: 1, planeswalkerAmount: 1
+    });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyOnBoard([AJANI_THE_GREATHEARTED(), BEAR(), VRASKA_SWARMS_EMINENCE()], { hold: true });
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => ({
+        ...permanent,
+        counters: permanent.card.name === "Ajani, the Greathearted" || permanent.card.name === "Vraska, Swarm's Eminence"
+          ? { ...permanent.counters, loyalty: 5 }
+          : permanent.counters
+      }))
+    }));
+    const ajani = permanentNamed(game, 0, "Ajani, the Greathearted")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: ajani.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    expect(permanentNamed(game, 0, "Grizzly Bears")?.counters["+1/+1"]).toBe(1);
+    expect(permanentNamed(game, 0, "Vraska, Swarm's Eminence")?.counters.loyalty).toBe(6);
+    expect(permanentNamed(game, 0, "Ajani, the Greathearted")?.counters.loyalty).toBe(3);
   });
 
   it("tracks a characteristic-defining power/toughness live off the controller's hand size", () => {

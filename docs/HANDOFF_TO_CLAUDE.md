@@ -3840,3 +3840,15 @@ preserved, zero-valued keys are removed, and the normal state-based-action
 loop reevaluates the creature after the change. This is shared by undying,
 persist, graft, level and ordinary counter effects rather than a card branch;
 the regression suite covers both the stored counters and live P/T result.
+
+## Near-complete rescan and Ajani counter primitive (2026-09-05)
+
+The current source rescan found the next reusable one-line gap in Ajani, the
+Greathearted: `Put a +1/+1 counter on each creature you control and a loyalty
+counter on each other planeswalker you control.` The new
+`add-counter-creatures-and-other-planeswalkers` effect applies both counter
+groups atomically, excludes the activating planeswalker, and is covered by an
+end-to-end scenario (CR 122.1, 606.3). The generated global near-complete
+snapshot still reports Fae/Vraska and the same 15,142-card queue because this
+worktree has no `data/catalog/prossh.sqlite`; rerun `rules:engine:export` and
+`rules:near-complete` in the integrator checkout after restoring the catalog.
