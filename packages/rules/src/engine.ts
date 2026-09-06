@@ -508,6 +508,8 @@ export type PendingChoice =
       readonly tapCost?: TriggerDefinition["tapCost"];
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
+      /** Remaining Ward permanents that still need a payment decision for the same spell. */
+      readonly remainingWardTargets?: readonly string[];
       readonly unlessPayCost?: ManaCost;
       /** For "exile ~ unless you discard a creature card": declining the discard applies the effect. */
       readonly unlessDiscardCreatureCard?: boolean;
@@ -9103,6 +9105,9 @@ function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAc
     if (!chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
       throw new Error(`Objetivo ilegal para ${card.name}.`);
     }
+    if (new Set(chosen.map((target) => JSON.stringify(target))).size !== chosen.length) {
+      throw new Error(`${card.name} no puede elegir el mismo objetivo dos veces.`);
+    }
   }
   let next = withPlayer(state, seat, (current) => ({
     ...current,
@@ -9282,14 +9287,18 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}${targetsText(next, action.targets ?? [])}.`);
 }
 
-function queueWardPayment(state: GameState, object: StackObject): GameState {
-  const wardTarget = object.targets.find((target) => target.kind === "permanent" && (() => {
-    const permanent = findPermanent(state, target.instanceId);
+function queueWardPayment(state: GameState, object: StackObject, remainingWardTargets?: readonly string[]): GameState {
+  const candidates = remainingWardTargets ?? object.targets
+    .filter((target): target is Extract<Target, { kind: "permanent" }> => target.kind === "permanent")
+    .map((target) => target.instanceId);
+  const wardId = candidates.find((instanceId) => {
+    const permanent = findPermanent(state, instanceId);
     return Boolean(permanent && permanent.controller !== object.controller && cardProfile(permanent.card).wardCost);
-  })());
-  if (!wardTarget || wardTarget.kind !== "permanent") return state;
-  const permanent = findPermanent(state, wardTarget.instanceId)!;
+  });
+  if (!wardId) return state;
+  const permanent = findPermanent(state, wardId)!;
   const cost = cardProfile(permanent.card).wardCost!;
+  const remaining = candidates.filter((instanceId) => instanceId !== wardId);
   return {
     ...state,
     priorityOpen: false,
@@ -9304,7 +9313,8 @@ function queueWardPayment(state: GameState, object: StackObject): GameState {
       paymentBy: "opponent",
       payCost: cost,
       manaCost: cost,
-      sourcePermanentId: permanent.instance_id
+      sourcePermanentId: permanent.instance_id,
+      remainingWardTargets: remaining
     }
   };
 }
@@ -9555,6 +9565,10 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
         ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
       };
       next = applyEffect(next, source, choice.triggerEffect);
+      const wardTarget = choice.targets?.[0];
+      const wardStackId = wardTarget?.kind === "spell" ? wardTarget.stackId : undefined;
+      const wardSpell = wardStackId ? next.stack.find((entry) => entry.id === wardStackId) : undefined;
+      if (wardSpell && choice.remainingWardTargets?.length) next = queueWardPayment(next, wardSpell, choice.remainingWardTargets);
       return logged(next, source.controller, choice.sourceCard.name + " resuelve su habilidad porque el oponente no paga.");
     }
     if (!choice.manaCost) throw new Error("La habilidad de pago no tiene coste.");
@@ -9564,6 +9578,10 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     const payment = payCost(choice.manaCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
     if (!payment) throw new Error("No se pudo pagar el coste de la habilidad.");
     next = withPlayer(next, seat, (current) => consumeManaPayment(current, payment));
+    const wardTarget = choice.targets?.[0];
+    const wardStackId = wardTarget?.kind === "spell" ? wardTarget.stackId : undefined;
+    const wardSpell = wardStackId ? next.stack.find((entry) => entry.id === wardStackId) : undefined;
+    if (wardSpell && choice.remainingWardTargets?.length) next = queueWardPayment(next, wardSpell, choice.remainingWardTargets);
     return logged(next, seat, playerAt(next, seat).name + " paga " + choice.manaCost.raw + " para evitar la habilidad.");
   }
   if (choice.unlessPayCost) {

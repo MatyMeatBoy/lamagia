@@ -1648,6 +1648,31 @@ describe("casting", () => {
     expect(game.stack.at(-1)?.countered).toBe(false);
     expect(game.players[0]!.manaPool.C).toBe(0);
   });
+
+  it("chains Ward payments for multiple Ward permanents targeted by one spell", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [WARD_BOLT()]), manaPool: { W: 0, U: 0, B: 0, R: 1, G: 0, C: 4 }, autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 1, [WARD_SENTINEL(), WARD_SENTINEL()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const wards = game.players[1]!.battlefield;
+    game = applyAction(game, 0, {
+      type: "cast",
+      cardId: game.players[0]!.hand[0]!.instance_id,
+      targets: wards.map((ward) => ({ kind: "permanent", instanceId: ward.instance_id }))
+    });
+    expect(game.pendingChoice?.type).toBe("optional-trigger");
+    const first = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(first.remainingWardTargets).toHaveLength(1);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: first.sourceId, accept: true });
+    expect(game.pendingChoice?.type).toBe("optional-trigger");
+    const second = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(second.sourceId).not.toBe(first.sourceId);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: second.sourceId, accept: true });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.stack.at(-1)?.countered).toBe(false);
+    expect(game.players[0]!.manaPool.C).toBe(0);
+  });
   function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[], opponentHand: readonly CardData[] = [], opponentBoard: readonly CardData[] = []) {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ hand: toHand(0, cards) }));
