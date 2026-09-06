@@ -4967,6 +4967,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^activate only as a sorcery(?:\s+and\s+only\s+(?:once|one)\s+each\s+turn)?\.?$/i.test(line)) continue;
+    if (/^activate only as a sorcery\.?$/i.test(line)) continue;
     if (/^activate only once each turn\.?$/i.test(line)) {
       const previous = activatedAbilities[activatedAbilities.length - 1];
       if (previous) {
