@@ -9536,7 +9536,12 @@ export function hasRealChoice(state: GameState, seat: SeatId): boolean {
         if (action.kicked) effects = [...effects, ...sourceProfile.kickedEffects];
       }
     } else if (action.type === "activate") {
-      const source = findPermanent(state, action.sourceId);
+      const source = findPermanent(state, action.sourceId)
+        ?? (() => {
+          const card = playerAt(state, seat).hand.find((candidate) => candidate.instance_id === action.sourceId)
+            ?? playerAt(state, seat).graveyard.find((candidate) => candidate.instance_id === action.sourceId);
+          return card ? handActivationSource(card, seat) : undefined;
+        })();
       if (source) { sourceProfile = cardProfile(source.card); const ability = sourceProfile.activatedAbilities[action.abilityIndex]; if (ability) effects = [ability.effect]; }
     }
     if (effects?.length && effects.every(isCounterOnlyEffect) && entry.requiresTarget) {
