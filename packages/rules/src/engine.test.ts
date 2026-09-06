@@ -1662,11 +1662,11 @@ describe("casting", () => {
       targets: wards.map((ward) => ({ kind: "permanent", instanceId: ward.instance_id }))
     });
     expect(game.pendingChoice?.type).toBe("optional-trigger");
-    const first = game.pendingChoice!;
+    const first = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
     expect(first.remainingWardTargets).toHaveLength(1);
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: first.sourceId, accept: true });
     expect(game.pendingChoice?.type).toBe("optional-trigger");
-    const second = game.pendingChoice!;
+    const second = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
     expect(second.sourceId).not.toBe(first.sourceId);
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: second.sourceId, accept: true });
     expect(game.pendingChoice).toBeNull();

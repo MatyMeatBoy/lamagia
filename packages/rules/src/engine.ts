@@ -9094,6 +9094,9 @@ function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAc
     if (!chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
       throw new Error(`Objetivo ilegal para ${card.name}.`);
     }
+    if (new Set(chosen.map((target) => JSON.stringify(target))).size !== chosen.length) {
+      throw new Error(`${card.name} no puede elegir el mismo objetivo dos veces.`);
+    }
   }
   let next = withPlayer(state, seat, (current) => ({
     ...current,
