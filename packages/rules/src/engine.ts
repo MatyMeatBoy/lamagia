@@ -799,6 +799,12 @@ function targetsText(state: GameState, targets: readonly Target[]): string {
   return targets.length ? `; objetivo: ${targets.map((target) => targetLabel(state, target)).join(", ")}` : "";
 }
 
+function stackObjectLabel(state: GameState, object: StackObject): string {
+  const kind = object.trigger ? "habilidad disparada" : object.activated ? "habilidad activada" : "hechizo";
+  const labels = object.targets.map((target, index) => object.targetLabels?.[index] ?? targetLabel(state, target));
+  return `${object.card.name} (${kind})${labels.length ? `; objetivo: ${labels.join(", ")}` : ""}`;
+}
+
 function livingSeats(state: GameState): SeatId[] {
   return state.players.filter((player) => !player.lost).map((player) => player.seat);
 }
@@ -5512,7 +5518,7 @@ function resolveTop(state: GameState): GameState {
     if (object.activated) return logged(next, object.controller, `La habilidad activada de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
     if (object.fromCopy) return logged(next, object.controller, `La copia de ${object.card.name} no se resuelve: sus objetivos ya no son legales.`);
     next = sendSpellToOwnerZone(next, object);
-    return logged(next, object.controller, `${object.card.name} se contrarresta: sus objetivos ya no son legales.`);
+    return logged(next, object.controller, `${stackObjectLabel(state, object)} se contrarresta: sus objetivos ya no son legales.`);
   }
 
   if (object.trigger) {

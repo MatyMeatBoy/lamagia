@@ -6280,6 +6280,15 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
   });
 
+  it("logs the public target when a stack spell fizzles", () => {
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [BOLT()], [MOUNTAIN(), BEAR()]);
+    const bearId = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.instance_id;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bearId }] });
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== bearId) }));
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.log.at(-1)?.text).toContain("objetivo: Grizzly Bears");
+  });
+
   it("resolves the legal half of a multi-target spell when another target leaves", () => {
     let game = readyToCast([FISSURE_VENT()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [SOL_RING(), COMMAND_TOWER()]);
     const artifact = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
