@@ -177,11 +177,12 @@ describe("smart counter response and safe mana undo", () => {
       fromCommandZone: false, variableValue: 0, countered: false,
       trigger: {
         id: "trigger-subject", controller: 1 as SeatId, sourcePermanentId: source.players[1]!.battlefield[0]!.instance_id,
-        sourceCard: triggerCard, definition: { event: "life-gain" as const, subject: "you" as const, effect: { kind: "draw", amount: 1 } as const, targetKind: "none" as const, sourceText: "Whenever you gain life, draw a card." }, cause: "test"
+        sourceCard: triggerCard, definition: { event: "life-gain" as const, subject: "you" as const, effect: { kind: "draw", amount: 1 } as const, targetKind: "none" as const, optional: false, sourceText: "Whenever you gain life, draw a card." }, cause: "test"
       }
     };
     const activated = { ...trigger, id: "activated-subject", label: "Trigger Source · activated", trigger: undefined,
-      activated: { index: 0, text: "{T}: Draw a card.", cost: { manaValue: 0, raw: "{T}", symbols: [], hasVariable: false }, effect: { kind: "draw", amount: 1 } as const, sourceZone: "battlefield" as const, targetKind: "none" as const } };
+      activated: { index: 0, text: "{T}: Draw a card.", cost: { manaValue: 0, raw: "{T}", symbols: [], hasVariable: false }, effect: { kind: "draw", amount: 1 } as const, sourceZone: "battlefield" as const, targetKind: "none" as const,
+        requiresTap: true, sacrificesSelf: false, lifeCost: 0, manaCost: undefined } };
     expect(hasRealChoice({ ...source, stack: [trigger] }, 0)).toBe(false);
     expect(hasRealChoice({ ...source, stack: [activated] }, 0)).toBe(false);
   });
