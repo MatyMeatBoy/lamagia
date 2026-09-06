@@ -693,6 +693,8 @@ export type SpellEffect =
   /** "Your opponents can't cast spells this turn." (Silence, CR 116.3). */
   | { readonly kind: "opponents-cant-cast-spells-this-turn" }
   | { readonly kind: "add-mana"; readonly pool: Readonly<Record<string, number>> }
+  /** "Add one mana of any color" as a one-shot resolution, not a mana ability (Lotus Cobra's Landfall): the color is chosen when the effect resolves. */
+  | { readonly kind: "add-mana-any-color" }
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "untap-source" }
@@ -2725,6 +2727,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
           : null;
     if (pool) return { effect: { kind: "add-mana", pool }, target: "none" };
   }
+  // "Add one mana of any color" as a triggered/activated ability's own
+  // resolution (Lotus Cobra's Landfall), not a mana ability: the caster picks
+  // the color as part of resolving the effect, mirroring the existing
+  // choose-color infrastructure for spell effects.
+  if (/^Add one mana of any color$/i.test(text)) return { effect: { kind: "add-mana-any-color" }, target: "none" };
   const targetOpponentToken = /^Target opponent creates (.+)$/i.exec(text)
     ?? /^Create (.+) under target opponent'?s control$/i.exec(text);
   if (targetOpponentToken) {
