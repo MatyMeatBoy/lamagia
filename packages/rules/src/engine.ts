@@ -9759,9 +9759,11 @@ export function hasRealChoice(state: GameState, seat: SeatId): boolean {
         })();
       if (source) { sourceProfile = cardProfile(source.card); const ability = sourceProfile.activatedAbilities[action.abilityIndex]; if (ability) effects = [ability.effect]; }
     }
-    if (effects?.length && effects.every(isCounterOnlyEffect) && entry.requiresTarget) {
-      return legalTargets(state, seat, entry.requiresTarget, sourceProfile).some(target => target.kind === "spell"
-        && state.stack.some(spell => spell.id === target.stackId && canCounterSpell(spell, state)));
+    if (effects?.length && effects.every(isCounterOnlyEffect)) {
+      const targetKinds = entry.requiresTargets ?? (entry.requiresTarget ? [entry.requiresTarget] : []);
+      if (!targetKinds.length) return true;
+      return targetKinds.some((targetKind) => legalTargets(state, seat, targetKind, sourceProfile).some(target => target.kind === "spell"
+        && state.stack.some(spell => spell.id === target.stackId && canCounterSpell(spell, state))));
     }
     return true;
   });
