@@ -48,3 +48,32 @@ describe("authoritative mana undo", () => {
     }
   });
 });
+
+describe("token projection", () => {
+  it("keeps generated token metadata in every public projection path", () => {
+    const { matchId: id, token } = fixture();
+    const match = getMatch(id);
+    const tokenCard: CardData & { instance_id: string; owner: 0; token: true; token_source_set_code: string } = {
+      scryfall_id: "token:test",
+      instance_id: "token:test",
+      owner: 0,
+      token: true,
+      token_source_set_code: "tst",
+      name: "Soldier",
+      type_line: "Token Creature — Soldier",
+      mana_cost: "",
+      oracle_text: "Vigilance",
+      power: "1",
+      toughness: "1"
+    };
+    match.state = {
+      ...match.state,
+      players: match.state.players.map((player) => player.seat === 0
+        ? { ...player, battlefield: [{ instance_id: tokenCard.instance_id, card: tokenCard, controller: 0, tapped: false, summoningSick: false, enteredThisTurn: false, damage: 0, deathtouched: false, counters: {}, powerModifier: 0, toughnessModifier: 0, isCommander: false }] }
+        : player)
+    };
+    expect(viewMatch(id, token).players[0]!.battlefield[0]!.tokenSourceSetCode).toBe("tst");
+    expect(setAutoPass(id, token, false).players[0]!.battlefield[0]!.tokenSourceSetCode).toBe("tst");
+    expect(() => undoInMatch(id, token, match.state.version)).toThrow();
+  });
+});

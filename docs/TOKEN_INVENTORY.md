@@ -25,9 +25,10 @@ prefer that edition's matching token printing; otherwise use the newest regular
 paper token with the same normalized definition.
 
 Current generated inventory: **809** normalized token definitions and **2,834**
-printings. The queue is split into 39 activated, 207 keyword, 98 triggered,
-and 2 zone-effect definitions; regenerate it after catalog changes rather than
-copying its timestamp or assigning printings as separate rules cards.
+printings. All 809 definitions currently have at least one normal image in the
+catalog. The exporter records per-definition image counts and missing sets so a
+future catalog refresh turns artwork gaps into explicit work items rather than
+silent broken frames.
 
 The rules engine carries the creating card's `set_code` through every generated
 token, including copy, amass, replacement, and targeted-player effects. The
