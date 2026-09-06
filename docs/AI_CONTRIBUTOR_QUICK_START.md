@@ -27,6 +27,12 @@ For deck-generation work, use [the Commander generator contract](DECK_GENERATOR.
 keep source adapters reusable, use stable `oracle_id` identity, preserve
 per-card provenance, and keep network disabled in tests.
 
+For token work, read [`TOKEN_INVENTORY.md`](TOKEN_INVENTORY.md) and
+`data/rules/token-inventory.json`. Claim the exact token cluster
+(`token-trigger`, `token-activated`, `token-keyword`, or `token-zone-effect`)
+and preserve the set/printing mapping; do not implement the same token
+definition once per artwork.
+
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
