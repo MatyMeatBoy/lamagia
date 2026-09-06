@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,012** · cobertura: **33.0%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,017** · cobertura: **33.0%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -132,7 +132,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 | 2004-05-22 | Fifth Dawn Promos (`P5DN`) | promos | fifth-dawn | other | 1 | 0 | 1 | 0.0% |
 | 2004-06-04 | Fifth Dawn (`5DN`) | expansion | 2000s | main | 165 | 54 | 111 | 32.7% |
 | 2004-09-18 | Champions of Kamigawa Promos (`PCHK`) | promos | champions-of-kamigawa | other | 1 | 1 | 0 | 100.0% |
-| 2004-10-01 | Champions of Kamigawa (`CHK`) | expansion | kamigawa | main | 291 | 65 | 226 | 22.3% |
+| 2004-10-01 | Champions of Kamigawa (`CHK`) | expansion | kamigawa | main | 291 | 66 | 225 | 22.7% |
 | 2004-11-20 | Unhinged Promos (`PUNH`) | promos | unhinged | other | 1 | 0 | 1 | 0.0% |
 | 2005-01-01 | Arena League 2005 (`PAL05`) | promos | arena-2005 | other | 8 | 6 | 2 | 75.0% |
 | 2005-01-01 | Friday Night Magic 2005 (`F05`) | promos | fnm-2005 | other | 12 | 4 | 8 | 33.3% |
@@ -363,7 +363,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 | 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | 2010s | other | 15 | 1 | 14 | 6.7% |
 | 2016-08-26 | Conspiracy: Take the Crown (`CN2`) | conspiracy | conspiracy-take-the-crown | other | 221 | 72 | 149 | 32.6% |
 | 2016-09-02 | Duel Decks: Nissa vs. Ob Nixilis (`DDR`) | duel-decks | duel-decks-nissa-vs-ob-nixilis | other | 62 | 31 | 31 | 50.0% |
-| 2016-09-30 | Kaladesh (`KLD`) | expansion | kaladesh | main | 264 | 96 | 168 | 36.4% |
+| 2016-09-30 | Kaladesh (`KLD`) | expansion | kaladesh | main | 264 | 97 | 167 | 36.7% |
 | 2016-09-30 | Kaladesh Inventions (`MPS`) | masterpieces | kaladesh-inventions | other | 54 | 15 | 39 | 27.8% |
 | 2016-09-30 | Kaladesh Promos (`PKLD`) | promos | kaladesh | other | 70 | 10 | 60 | 14.3% |
 | 2016-10-01 | San Diego Comic-Con 2016 (`PS16`) | promos | comic-con-2016 | other | 5 | 0 | 5 | 0.0% |
@@ -479,7 +479,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 | 2020-09-25 | Zendikar Rising Commander (`ZNC`) | commander | 2020 | commander | 140 | 51 | 89 | 36.4% |
 | 2020-09-25 | Zendikar Rising Expeditions (`ZNE`) | masterpieces | zendikar-rising-expeditions | other | 30 | 25 | 5 | 83.3% |
 | 2020-09-25 | Zendikar Rising Promos (`PZNR`) | promos | zendikar-rising | other | 84 | 12 | 72 | 14.3% |
-| 2020-11-12 | Kaladesh Remastered (`KLR`) | masters-remastered | kaladesh-remastered | other | 292 | 92 | 200 | 31.5% |
+| 2020-11-12 | Kaladesh Remastered (`KLR`) | masters-remastered | kaladesh-remastered | other | 292 | 93 | 199 | 31.8% |
 | 2020-11-20 | Commander Legends (`CMR`) | commander | 2020 | other | 531 | 192 | 339 | 36.2% |
 | 2020-12-04 | Commander Collection: Green (`CC1`) | commander | 2020 | other | 8 | 5 | 3 | 62.5% |
 | 2021-01-01 | Judge Gift Cards 2021 (`PJ21`) | promos | judge-2021 | other | 10 | 0 | 10 | 0.0% |
@@ -614,7 +614,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 | 2024-04-19 | The Big Score (`BIG`) | expansion | 2020s | main | 30 | 3 | 27 | 10.0% |
 | 2024-06-14 | Modern Horizons 2 Timeshifts (`H2R`) | supplemental | modern-horizons-2-timeshifts | other | 16 | 4 | 12 | 25.0% |
 | 2024-06-14 | Modern Horizons 3 (`MH3`) | supplemental | modern-horizons-3 | other | 313 | 63 | 250 | 20.1% |
-| 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 2024 | commander | 320 | 119 | 201 | 37.2% |
+| 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 2024 | commander | 320 | 120 | 200 | 37.5% |
 | 2024-06-14 | Modern Horizons 3 Promos (`PMH3`) | promos | modern-horizons-3 | other | 81 | 6 | 75 | 7.4% |
 | 2024-07-05 | Assassin's Creed (`ACR`) | supplemental | assassin-s-creed | other | 138 | 23 | 115 | 16.7% |
 | 2024-08-02 | Bloomburrow (`BLB`) | expansion | bloomburrow | main | 280 | 50 | 230 | 17.9% |
@@ -637,7 +637,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 | 2025-01-24 | Innistrad Remastered (`INR`) | masters-remastered | innistrad-remastered | other | 300 | 77 | 223 | 25.7% |
 | 2025-02-09 | Japan Standard Cup (`PJSC`) | promos | japan-standard-cup | other | 4 | 0 | 4 | 0.0% |
 | 2025-02-14 | Aetherdrift (`DFT`) | expansion | 2020s | main | 276 | 46 | 230 | 16.7% |
-| 2025-02-14 | Aetherdrift Commander (`DRC`) | commander | 2025 | commander | 163 | 70 | 93 | 42.9% |
+| 2025-02-14 | Aetherdrift Commander (`DRC`) | commander | 2025 | commander | 163 | 71 | 92 | 43.6% |
 | 2025-02-14 | Aetherdrift Promos (`PDFT`) | promos | aetherdrift | other | 80 | 1 | 79 | 1.2% |
 | 2025-02-14 | Year of the Snake 2025 (`PL25`) | promos | year-of-the-snake-2025 | other | 5 | 3 | 2 | 60.0% |
 | 2025-04-11 | Love Your LGS 2025 (`PLG25`) | promos | lgs-2025 | other | 2 | 2 | 0 | 100.0% |
@@ -751,8 +751,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 | commander | 2021 | 5 | 1022 | 373 | 649 | 36.5% |
 | commander | 2022 | 7 | 1802 | 555 | 1247 | 30.8% |
 | commander | 2023 | 6 | 1597 | 553 | 1044 | 34.6% |
-| commander | 2024 | 7 | 1887 | 708 | 1179 | 37.5% |
-| commander | 2025 | 4 | 1046 | 427 | 619 | 40.8% |
+| commander | 2024 | 7 | 1887 | 709 | 1178 | 37.6% |
+| commander | 2025 | 4 | 1046 | 428 | 618 | 40.9% |
 | commander | 2026 | 6 | 1265 | 377 | 888 | 29.8% |
 | conspiracy | conspiracy | 2 | 211 | 57 | 154 | 27.0% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 72 | 149 | 32.6% |
@@ -806,9 +806,9 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 | expansion | innistrad | 4 | 1103 | 288 | 815 | 26.1% |
 | expansion | invasion | 1 | 335 | 136 | 199 | 40.6% |
 | expansion | ixalan | 3 | 771 | 202 | 569 | 26.2% |
-| expansion | kaladesh | 1 | 264 | 96 | 168 | 36.4% |
+| expansion | kaladesh | 1 | 264 | 97 | 167 | 36.7% |
 | expansion | kaldheim | 1 | 323 | 58 | 265 | 18.0% |
-| expansion | kamigawa | 4 | 925 | 133 | 792 | 14.4% |
+| expansion | kamigawa | 4 | 925 | 134 | 791 | 14.5% |
 | expansion | lorwyn | 2 | 559 | 134 | 425 | 24.0% |
 | expansion | masques | 1 | 335 | 107 | 228 | 31.9% |
 | expansion | mirage | 1 | 335 | 97 | 238 | 29.0% |
@@ -878,7 +878,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 | masters-remastered | eternal-masters | 1 | 249 | 126 | 123 | 50.6% |
 | masters-remastered | iconic-masters | 1 | 249 | 112 | 137 | 45.0% |
 | masters-remastered | innistrad-remastered | 1 | 300 | 77 | 223 | 25.7% |
-| masters-remastered | kaladesh-remastered | 1 | 292 | 92 | 200 | 31.5% |
+| masters-remastered | kaladesh-remastered | 1 | 292 | 93 | 199 | 31.8% |
 | masters-remastered | magic-duel-masters | 1 | 4 | 3 | 1 | 75.0% |
 | masters-remastered | masters-25 | 1 | 249 | 111 | 138 | 44.6% |
 | masters-remastered | masters-edition | 1 | 185 | 55 | 130 | 29.7% |
@@ -11172,7 +11172,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 - [ ] Kami of the Painted Road — `1335c655-35f5-4561-8e12-d79124e52ce6`
 - [ ] Kami of the Palace Fields — `e8d44867-9519-41f2-aa0f-4079444aeef9`
 - [ ] Kami of the Waning Moon — `c42e3df9-b9e1-4b36-bc9d-05351f87d707`
-- [ ] Kami of Twisted Reflection — `f23bc7a3-325b-4b37-a4d8-19f3b260ca3d`
 - [ ] Kashi-Tribe Reaver — `e602f06e-64ff-4d1b-813c-6612ee514ea6`
 - [ ] Kashi-Tribe Warriors — `4920492e-c210-4d99-ace9-184d65e697f5`
 - [ ] Keiga, the Tide Star — `521b1598-58c6-47a0-a7b3-021d70bf2b05`
@@ -23310,7 +23309,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 - [ ] Cultivator of Blades — `ca4c0945-7035-47dc-aba8-fbda351d9b7b`
 - [ ] Cultivator's Caravan — `c1eb530c-dd36-40ae-8617-6bb6969565e1`
 - [ ] Deadlock Trap — `726c911d-6543-4400-a8fa-b8a5c9f0c15d`
-- [ ] Decoction Module — `1daba4f6-2a7d-426a-97d1-0298a7100c45`
 - [ ] Demolish — `08c6d2fd-d9ae-4f95-bb9d-7e16b1039814`
 - [ ] Demolition Stomper — `282e5e5f-365a-4e11-aeac-ead71d1cf68a`
 - [ ] Demon of Dark Schemes — `2b2f2abd-6c0f-49a5-a44b-f366614c944d`
@@ -36383,7 +36381,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 - [ ] Daredevil Dragster — `6aa96a6e-9a88-4662-aa26-b4c16c0ef650`
 - [ ] Daring Demolition — `8c8a3962-42a5-4070-8719-00d7483c7dbe`
 - [ ] Dark Intimations — `228cb63f-0b93-4be5-94e5-4eaae9112eeb`
-- [ ] Decoction Module — `1daba4f6-2a7d-426a-97d1-0298a7100c45`
 - [ ] Defiant Salvager — `2a8c9ef7-8171-4f6f-bf39-4a08d127e729`
 - [ ] Demolition Stomper — `282e5e5f-365a-4e11-aeac-ead71d1cf68a`
 - [ ] Demon of Dark Schemes — `2b2f2abd-6c0f-49a5-a44b-f366614c944d`
@@ -51462,7 +51459,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 - [ ] Dark Depths — `c9b82110-7dfd-4617-9399-9510be449043`
 - [ ] Deadbridge Chant — `506667b1-7922-4959-a5b3-0f8abe8c3615`
 - [ ] Deathreap Ritual — `b26e3596-5b28-4eb6-b3e2-03f63d8c6d49`
-- [ ] Decoction Module — `1daba4f6-2a7d-426a-97d1-0298a7100c45`
 - [ ] Deepfathom Skulker — `a09a4556-8913-495c-8768-e05413c48f0b`
 - [ ] Demolition Field — `93953926-a644-49bb-9b5a-4c8f19114c7e`
 - [ ] Desert Warfare — `de301ef8-8ba0-423d-9117-a8492a58d01b`
@@ -54822,7 +54818,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,01
 - [ ] Cryptbreaker — `16f75a65-d067-4f79-81b9-833c373cf4d2`
 - [ ] Cultivator's Caravan — `c1eb530c-dd36-40ae-8617-6bb6969565e1`
 - [ ] Damn — `b01d61cc-9844-4191-86a0-f2db6d42d6e5`
-- [ ] Decoction Module — `1daba4f6-2a7d-426a-97d1-0298a7100c45`
 - [ ] Despark — `bd16434d-55ea-4c5a-a9ef-752971a4af16`
 - [ ] Disallow — `88b51e15-6630-4e14-a6b8-db0aa12e34ef`
 - [ ] Dread Summons — `642fa01d-025e-44dd-8360-5325e5a28282`
