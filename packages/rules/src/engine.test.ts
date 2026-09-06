@@ -1525,7 +1525,7 @@ describe("mana payment", () => {
   });
 
   it("recognizes sorcery-speed activation without requiring a preceding period", () => {
-    const card = make({ name: "Sorcery Speed Test", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}: Draw a card Activate only as a sorcery." });
+    const card = make({ name: "Sorcery Speed Test", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}: Draw a card Activate only as a sorcery and only once each turn." });
     expect(profileOf(card)).toMatchObject({ fullyImplemented: true });
     expect(profileOf(card).activatedAbilities[0]).toMatchObject({ sorcerySpeed: true });
   });

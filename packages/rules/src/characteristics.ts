@@ -2300,10 +2300,10 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const isLoyaltyCost = /^\s*([+−–-])?\s*(\d+)\s*$/.test(costText);
   if (!isLoyaltyCost && /^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
-  const sorcerySpeedOnly = /(?:^|[.\s])activate only as a sorcery\.?$/i.test(effectText);
+  const sorcerySpeedOnly = /(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i.test(effectText);
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
-    .replace(/(?:^|[.\s])activate only as a sorcery\.?$/i, ".")
+    .replace(/(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i, ".")
     // Self-references in activated text use the printed object type rather
     // than the parser's normalized source marker (CR 109.5).
     .replace(/\bon this creature\b/gi, "on ~")
