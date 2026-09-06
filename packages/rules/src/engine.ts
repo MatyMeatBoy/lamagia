@@ -1593,9 +1593,14 @@ function shouldPromptManaPayment(
   // colour choice). It is still a real player decision; grouping only by
   // source signature would otherwise silently choose the first ability.
   const choices = usable.map((source) => `${source.permanentId}:${source.abilityIndex}:${sourceSignature(source)}`);
-  return new Set(choices).size > 1 && usable.some((source) => source.options.length > 1 || source.bonusOptions?.length || source.lifeCost > 0)
-    ? true
-    : new Set(usable.map(sourceSignature)).size > 1;
+  // A source with multiple abilities is a real choice even when the resulting
+  // mana signatures currently coincide: activating a different ability can
+  // carry distinct rules meaning (costs, restrictions, triggers, or future
+  // replacement effects). Never silently pick one by source signature alone.
+  if (new Set(choices).size > 1 && usable.some((source) => source.options.length > 1
+    || source.bonusOptions?.length || source.lifeCost > 0
+    || source.restriction || source.removeCounters?.length || source.commanderMana)) return true;
+  return new Set(usable.map(sourceSignature)).size > 1;
 }
 
 function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan | null {
@@ -10804,6 +10809,9 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
  * 602.1), while mana is still produced by the payment solver when needed.
  */
 export function hasRealChoice(state: GameState, seat: SeatId): boolean {
+  // A pending choice is already a hard stop. Do not let auto-pass inspect the
+  // surrounding priority window and skip an explicit decision (CR 117.1b).
+  if (state.pendingChoice?.seat === seat) return true;
   return legalActions(state, seat).some((entry) => {
     if (entry.action.type === "pass" || entry.action.type === "concede") return false;
     if (entry.action.type === "activate-mana") return false;
