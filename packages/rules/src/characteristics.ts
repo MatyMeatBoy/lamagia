@@ -888,6 +888,8 @@ export interface TriggerDefinition {
     | { readonly kind: "class-level-reached"; readonly level: number }
     /** "If a player has N or fewer cards in hand" (Naktamun Lorespinner's Prepared trigger): true if ANY player qualifies. */
     | { readonly kind: "any-player-hand-at-most"; readonly amount: number }
+    /** "If that player has N or fewer cards in hand" (Davriel-style upkeep trigger). */
+    | { readonly kind: "event-player-hand-at-most"; readonly amount: number }
     | { readonly kind: "entering-power-at-most"; readonly amount: number }
     /** Commander-only trigger that functions while the source remains in the command zone. */
     | { readonly kind: "source-in-command-zone" };
@@ -4586,6 +4588,8 @@ function recognizeText(text: string): RecognizedText {
       const powerCondition = /^(?:if|while)\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
       const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggered.effectText);
       const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
+      const eventPlayerHandCondition = /^if\s+that\s+player\s+has\s+(\w+)\s+or\s+fewer\s+cards?\s+in\s+hand,\s*(.+)$/i.exec(triggered.effectText);
+      const eventPlayerHandAmount = eventPlayerHandCondition ? toNumber(eventPlayerHandCondition[1]!) : null;
       const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggered.effectText);
       const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggered.effectText);
       const commandZoneCondition = /^if\s+.+?\s+is\s+in\s+the\s+command\s+zone,\s*(.+)$/i.exec(triggered.effectText);
@@ -4598,7 +4602,7 @@ function recognizeText(text: string): RecognizedText {
       const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? eventPlayerHandCondition?.[2]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
@@ -4656,6 +4660,7 @@ function recognizeText(text: string): RecognizedText {
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),
+          ...(eventPlayerHandCondition && eventPlayerHandAmount !== null ? { condition: { kind: "event-player-hand-at-most" as const, amount: eventPlayerHandAmount } } : {}),
           ...(diedCondition ? { condition: { kind: "creature-died-this-turn" as const } } : {}),
           ...(castFromHandCondition ? { condition: { kind: "cast-from-hand" as const } } : {}),
           ...(sourceUntappedCondition ? { condition: { kind: "source-untapped" as const } } : {}),

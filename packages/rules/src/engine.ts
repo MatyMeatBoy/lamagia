@@ -1966,6 +1966,8 @@ function triggerMatches(
     && !playerAt(state, watcher.controller).commandZone.some((card) => card.instance_id === watcher.instanceId)) return false;
   if (condition?.kind === "class-level-reached" && (event.kind !== "class-level-up" || event.level !== condition.level)) return false;
   if (condition?.kind === "any-player-hand-at-most" && !state.players.some((player) => player.hand.length <= condition.amount)) return false;
+  if (condition?.kind === "event-player-hand-at-most"
+    && (!("activeSeat" in event) || playerAt(state, event.activeSeat).hand.length > condition.amount)) return false;
   if (condition?.kind === "not-first-draw-step-draw") {
     if (event.kind !== "card-drawn") return false;
     if (state.step === "draw" && event.drawStepCount === 1) return false;
@@ -2120,6 +2122,8 @@ function interveningIfStillTrue(state: GameState, trigger: TriggerInstance): boo
     }
     case "any-player-hand-at-most":
       return state.players.some((player) => player.hand.length <= condition.amount);
+    case "event-player-hand-at-most":
+      return trigger.eventController !== undefined && playerAt(state, trigger.eventController).hand.length <= condition.amount;
     default:
       // These conditions describe the event that already happened (for
       // example "draws their second card" or "was cast from hand").
@@ -2211,7 +2215,7 @@ function raiseEvent(
           sourceCard: watcher.card,
           definition,
           cause: causeOf(state, event),
-          ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : {}),
+          ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : "activeSeat" in event ? { eventController: event.activeSeat } : {}),
           ...(event.kind === "spell-cast" ? { eventSpell: event.spell } : {}),
          ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
           ...(event.kind === "leaves-battlefield" && watcher.exiledWith ? { linkedExiledCard: watcher.exiledWith } : {}),

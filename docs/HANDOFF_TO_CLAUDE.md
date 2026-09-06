@@ -3860,3 +3860,10 @@ actions, payment planning, activation validation, undo checks, and projection;
 the per-state grant cache avoids rescanning the entire battlefield for every
 mana source. Validation after this addition: **717 rules tests**, `npm run
 check` and `git diff --check` pass.
+
+The same rescan also closed Davriel, Rogue Shadowmage's one-line upkeep
+condition: `event-player-hand-at-most` binds "that player" to the active
+opponent, is checked when the trigger is created and again before resolution,
+and reuses the existing event-player damage primitive (CR 603.4, 603.6).
+Current validation: **718 rules tests**, `npm run check`, and `git diff --check`
+pass.
