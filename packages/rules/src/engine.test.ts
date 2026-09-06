@@ -1486,6 +1486,19 @@ describe("mana payment", () => {
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.cardId === temple.instance_id)).toBe(true);
   });
 
+  it("gives Gauntlet of Might's bonus to a Mountain the Gauntlet's controller doesn't control", () => {
+    const gauntlet = make({ name: "Gauntlet of Might", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Red creatures get +1/+1.\nWhenever a Mountain is tapped for mana, its controller adds an additional {R}." });
+    const profile = profileOf(gauntlet);
+    expect(profile.globalLandManaBonus).toEqual({ subtype: "Mountain", mana: "R" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [gauntlet]);
+    game = putOnBattlefield(game, 1, [MOUNTAIN()]);
+    game = passUntil(game, (state) => state.priorityOpen && state.prioritySeat === 1);
+    const mountain = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 1, { type: "activate-mana", sourceId: mountain.instance_id, abilityIndex: 0, mana: "R" });
+    expect(game.players[1]!.manaPool.R).toBe(2);
+  });
+
   it("filters Cut Down by current total power and toughness", () => {
     const cutDown = make({ name: "Cut Down", type_line: "Instant", mana_cost: "{B}", cmc: 1, oracle_text: "Destroy target creature with total power and toughness 5 or less." });
     expect(profileOf(cutDown)).toMatchObject({ fullyImplemented: true, targetKind: "creature-power-toughness-sum-at-most-5" });

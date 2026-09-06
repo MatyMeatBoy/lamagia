@@ -6182,3 +6182,39 @@ new), `npm run check` across all four workspaces, 200/200 simulated
 games.
 
 **NOTE on `docs/SET_COVERAGE.md` staleness**: `tools/rules/audit_worker_commit.py` caps a single commit's diff at 20 distinct oracle_ids (a scope gate against sweeping, hard-to-review claims). `docs/SET_COVERAGE.md`'s own "Pendientes por edición" section lists each not-yet-implemented card with its oracle_id, so regenerating it after THIS fix's +37 jump alone exceeds that cap — the regenerated file was reverted out of this commit to keep it auditable, so the checked-in copy still reads 33.2% (stale) even though the true, live-regenerated figure is 33.3%. It will catch up naturally the next time someone regenerates and commits it (ideally bundled with a small enough number of newly-completed cards that the cumulative backlog stays under the cap, or accepted as an explicit exception).
+
+## Gauntlet of Might: a mana bonus that ignores who controls the source (2026-09-06)
+
+"Whenever a Mountain is tapped for mana, its controller adds an
+additional {R}" looks superficially like the already-implemented
+Crypt Ghast template ("Swamps you control produce an additional
+{B}"), but the two differ in one crucial way: Crypt Ghast's bonus is
+"you control" restricted (only applies while the SAME player
+controls both the bonus-granting permanent and the land), while
+Gauntlet of Might has no such restriction — ANY player's Mountain
+gets the bonus, regardless of who controls the Gauntlet. The existing
+`staticLandManaBonus` field and its two consumption sites
+(`manaSources`'s automatic-payment planning, `applyActivateMana`'s
+authoritative execution) were both scoped to `player.battlefield` /
+`currentPlayer.battlefield` specifically. Added a sibling
+`globalLandManaBonus` field, parsed from the "Whenever a [land type]
+is tapped for mana, its controller adds an additional {X}" template,
+and wired it into the SAME two consumption sites but scanning
+`allPermanents(state)` instead of one player's own battlefield —
+Gauntlet of Might's bonus now applies no matter who taps the matching
+land. (A third site, `legalActions`'s mana-ability label generation,
+already didn't reflect Crypt Ghast's bonus in its UI labels either —
+a pre-existing, unrelated gap left alone since fixing it wasn't
+needed to make either card's ACTUAL mana production correct, only
+its displayed label text.) Verified **+2** in the export count
+(10,974 → 10,976); `docs/SET_COVERAGE.md` stays at its already-stale
+33.2% for the same oracle_id-cap reason as the entry above (true live
+figure would read 33.4%, catching up both this fix and Icatian
+Javelineers' backlog at once). Scenario-tested: with Gauntlet of
+Might under seat 0's control and a bare Mountain under the
+OPPONENT's (seat 1's) control, tapping that Mountain for {R} adds 2
+red mana to seat 1's pool, not 1 — proving the bonus is genuinely
+controller-agnostic rather than accidentally reusing Crypt Ghast's
+"you control" scoping. Validation: full **906** rules tests green (1
+new), `npm run check` across all four workspaces, 200/200 simulated
+games.

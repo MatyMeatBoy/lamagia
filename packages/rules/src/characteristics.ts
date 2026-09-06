@@ -1251,6 +1251,8 @@ export interface CardProfile {
   } | null;
   /** "<Basic type>s you control produce an additional {C}" (Crypt Ghast, CR 605). */
   readonly staticLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
+  /** "Whenever a <land type> is tapped for mana, its controller adds an additional {C}" (Gauntlet of Might, CR 605): unlike staticLandManaBonus, applies to every matching land regardless of who controls it. */
+  readonly globalLandManaBonus: { readonly subtype: string; readonly mana: string } | null;
   /** Characteristic-defining P/T "equal to the number of X you control" (CR 604.3). */
   readonly cdaPowerToughness: "creatures-you-control" | "lands-you-control" | "artifacts-you-control" | "green-permanents-you-control" | "your-life-total" | "cards-in-your-hand" | null;
   /** Lieutenant (Commander 2014): commander-conditional static bonuses. */
@@ -5147,6 +5149,7 @@ function recognizeText(text: string): RecognizedText {
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
+    if (/^Whenever an? (?:Plains|Island|Swamp|Mountain|Forest) is tapped for mana, its controller adds an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever enchanted land is tapped for mana, its controller adds an additional \{[WUBRGC]\}\.?$/i.test(line)) continue;
     if (/^~ doesn[’']t untap during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
@@ -5864,6 +5867,12 @@ export function cardProfile(card: CardData): CardProfile {
   const staticLandManaBonus = landBonusMatch
     ? { subtype: landBonusMatch[1]!.replace(/s$/i, "").replace(/^./, (c) => c.toUpperCase()), mana: landBonusMatch[2]!.toUpperCase() }
     : null;
+  // Gauntlet of Might: unlike Crypt Ghast's "you control" restriction, this
+  // applies to every matching land regardless of controller.
+  const globalLandBonusMatch = /whenever an? (Plains|Island|Swamp|Mountain|Forest) is tapped for mana, its controller adds an additional \{([WUBRG])\}/i.exec(text);
+  const globalLandManaBonus = globalLandBonusMatch
+    ? { subtype: globalLandBonusMatch[1]!.replace(/^./, (c) => c.toUpperCase()), mana: globalLandBonusMatch[2]!.toUpperCase() }
+    : null;
   const multiColorGrantMatch = /^((?:(?:white|blue|black|red|green)\s+spells)(?:\s+and\s+(?:white|blue|black|red|green)\s+spells)+) you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
   const grantMatch = /^(?:(white|blue|black|red|green) )?(artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
   const colorPairGrantMatch = /^(blue|red) spells and (blue|red) spells you cast cost \{(\d+)\} less to cast\.?$/im.exec(text);
@@ -6109,6 +6118,7 @@ export function cardProfile(card: CardData): CardProfile {
     affinityFor,
     spellCostReductionGrant,
     staticLandManaBonus,
+    globalLandManaBonus,
     cdaPowerToughness,
     lieutenant,
     combatRules,

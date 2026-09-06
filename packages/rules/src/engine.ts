@@ -1308,6 +1308,12 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
   const landBonuses = player.battlefield
     .map((permanent) => cardProfile(permanent.card).staticLandManaBonus)
     .filter((bonus): bonus is { subtype: string; mana: string } => Boolean(bonus));
+  // Gauntlet of Might: unlike staticLandManaBonus, applies regardless of who
+  // controls the Gauntlet, so it's read from every permanent on the
+  // battlefield rather than just this player's own.
+  const globalLandBonuses = state ? allPermanents(state)
+    .map((permanent) => cardProfile(permanent.card).globalLandManaBonus)
+    .filter((bonus): bonus is { subtype: string; mana: string } => Boolean(bonus)) : [];
   const doublesLandMana = state ? allPermanents(state).some((permanent) => permanent.controller === player.seat
     && cardProfile(permanent.card).doublesLandMana) : false;
   for (const permanent of player.battlefield) {
@@ -1324,7 +1330,7 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
       if (!options.length) continue;
       // "<Basic type>s you control produce an additional {C}" (Crypt Ghast):
       // a matching land's ability produces one extra of the granted colour.
-      const bonus = landBonuses.find((entry) =>
+      const bonus = [...landBonuses, ...globalLandBonuses].find((entry) =>
         isLand(profile) && hasSubtype(profile, entry.subtype)
         && (options as readonly string[]).includes(entry.mana));
       const bonusTypes = state && isLand(profile) ? auraLandManaBonusTypes(state, permanent) : [];
@@ -8689,6 +8695,12 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     const grant = cardProfile(permanent.card).staticLandManaBonus;
     return grant && grant.mana === action.mana && sourceProfile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype.toLowerCase());
   }) ? 1 : 0;
+  // Gauntlet of Might: unlike staticLandManaBonus, applies regardless of who
+  // controls the Gauntlet.
+  const globalLandBonus = allPermanents(activationState).some((permanent) => {
+    const grant = cardProfile(permanent.card).globalLandManaBonus;
+    return grant && grant.mana === action.mana && sourceProfile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype.toLowerCase());
+  }) ? 1 : 0;
   const manaBonusOptions = isLand(cardProfile(source.card)) && allPermanents(activationState).some((candidate) => candidate.controller === seat
     && cardProfile(candidate.card).doublesLandMana) ? options : [];
   const manaBonus = action.manaBonus ?? (manaBonusOptions[0]);
@@ -8701,7 +8713,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   const auraBonusTypes = isLand(sourceProfile) ? auraLandManaBonusTypes(activationState, currentSource) : [];
   const outputTypes = ability.fixedProduces
     ? [...ability.fixedProduces, ...auraBonusTypes]
-    : [...Array.from({ length: amount + landBonus }, () => action.mana), ...auraBonusTypes];
+    : [...Array.from({ length: amount + landBonus + globalLandBonus }, () => action.mana), ...auraBonusTypes];
   const restrictedOutput = ability.manaRestriction
     ? outputTypes.map((type) => ({ type, restriction: ability.manaRestriction! }))
     : [];
