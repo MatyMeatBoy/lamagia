@@ -51,7 +51,10 @@ must be implemented globally and their regressions checked across all sets.
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
-queue, choose one unclaimed generated cluster at random, then claim it:
+queue, choose one unclaimed generated cluster at random, then claim it. The
+current explicit completion push is Commander 2013: after checking claims,
+workers should keep drawing unclaimed C13 card clusters until the set is
+closed, while still extracting reusable primitives for every other set:
 
 ```text
 npm run rules:engine:export
