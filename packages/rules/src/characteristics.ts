@@ -3897,6 +3897,21 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   const temporaryKeyword = /^Target creature gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };
+  // Trigger follow-up wording reuses the creature named by the preceding
+  // clause (CR 109.5), e.g. "Untap that creature. It gains haste until end
+  // of turn." Keep both instructions in one effect so the trigger retains a
+  // single target slot and resolves against that same permanent.
+  const untapAndHaste = /^Untap that creature\.\s*It gains haste until end of turn$/i.test(text);
+  if (untapAndHaste) {
+    return {
+      effect: { kind: "compound", effects: [
+        { kind: "untap-target-permanent" },
+        { kind: "grant-target-creature-keyword", keyword: "haste" }
+      ] },
+      target: "creature"
+    };
+  }
+  if (/^Untap that creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };
   if (/^Target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value until end of turn$/i.test(text)) {
     return { effect: { kind: "animate-target-artifact-mana-value" }, target: "noncreature-artifact" };
   }
@@ -5338,8 +5353,11 @@ function recognizeText(text: string): RecognizedText {
     if (subtypeAttacks && !/^(?:creature|permanent|player)$/i.test(subtypeAttacks[1]!)) {
       const rec = recognizeSentence(subtypeAttacks[2]!);
       if (rec) {
+        const effect = rec.effect.kind === "grant-target-creature-keyword"
+          ? { kind: "modify-event-creature-and-grant-keyword" as const, power: 0, toughness: 0, keyword: rec.effect.keyword }
+          : rec.effect;
         triggers.push({
-          event: "attacks", subject: "creature-you-control", effect: rec.effect,
+          event: "attacks", subject: "creature-you-control", effect,
           optional: false, targetKind: rec.target, sourceText: line,
           requireSubtype: subtypeAttacks[1]!
         });
@@ -5448,24 +5466,30 @@ function recognizeText(text: string): RecognizedText {
       const oncePerTurnMatch = /^(.+?)\.\s*This ability triggers only once each turn\.?$/i.exec(triggeredRaw.effectText);
       const oncePerTurn = Boolean(oncePerTurnMatch);
       const triggered = oncePerTurnMatch ? { ...triggeredRaw, effectText: oncePerTurnMatch[1]! } : triggeredRaw;
-      const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
-      const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
-      const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggered.effectText);
+      // Oracle often prints a trigger's dependent instructions as separate
+      // sentences. Join the common "that creature" rider before parsing so
+      // target identity is preserved through the whole resolution (CR 109.5).
+      const dependentRider = line.split(SENTENCE_SPLIT).slice(1).join(" ").trim();
+      const dependentEffect = /^(.+?)\s+(Untap that creature\.\s*It gains haste until end of turn\.?|Untap that creature\.?|It gains (?:flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn\.?)$/i.exec(triggered.effectText);
+      const triggerEffectText = dependentEffect ? `${dependentEffect[1]}. ${dependentEffect[2]}` : triggered.effectText;
+      const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggerEffectText);
+      const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggerEffectText);
+      const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggerEffectText);
       const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
-      const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggered.effectText);
-      const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggered.effectText);
-      const commandZoneCondition = /^if\s+.+?\s+is\s+in\s+the\s+command\s+zone,\s*(.+)$/i.exec(triggered.effectText);
-      const sourceUntappedCondition = /^if\s+~\s+is\s+untapped,\s*(.+)$/i.exec(triggered.effectText);
-      const sourceTappedCondition = /^if\s+~\s+is\s+tapped,\s*(.+)$/i.exec(triggered.effectText);
-      const eventControllerChoice = /^that\s+(?:creature[’']s\s+controller|attacking\s+player)\s+may\s+(.+)$/i.exec(triggered.effectText);
-      const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
-       const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
-       const sacrificeUnlessSpent = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+\{([WUBRGC])\}\s+was\s+spent\s+to\s+cast\s+it\.?$/i.exec(triggered.effectText);
+      const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggerEffectText);
+      const castFromHandCondition = /^if\s+you\s+cast\s+it\s+from\s+your\s+hand,\s*(.+)$/i.exec(triggerEffectText);
+      const commandZoneCondition = /^if\s+.+?\s+is\s+in\s+the\s+command\s+zone,\s*(.+)$/i.exec(triggerEffectText);
+      const sourceUntappedCondition = /^if\s+~\s+is\s+untapped,\s*(.+)$/i.exec(triggerEffectText);
+      const sourceTappedCondition = /^if\s+~\s+is\s+tapped,\s*(.+)$/i.exec(triggerEffectText);
+      const eventControllerChoice = /^that\s+(?:creature[’']s\s+controller|attacking\s+player)\s+may\s+(.+)$/i.exec(triggerEffectText);
+      const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggerEffectText);
+       const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggerEffectText);
+       const sacrificeUnlessSpent = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+\{([WUBRGC])\}\s+was\s+spent\s+to\s+cast\s+it\.?$/i.exec(triggerEffectText);
        // "Exile ~ unless you discard a creature card" (Body Snatcher, CR 603.6c):
        // the same "unless" shape as sacrificeUnlessPayment, but the cost is a
        // discard, not mana, and the applied effect is exile, not sacrifice.
-       const exileUnlessDiscardCreature = /^exile\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+discard\s+a\s+creature\s+card\.?$/i.exec(triggered.effectText);
-      const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
+      const exileUnlessDiscardCreature = /^exile\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+discard\s+a\s+creature\s+card\.?$/i.exec(triggerEffectText);
+      const mayHave = /^you\s+may\s+have\b/i.test(triggerEffectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
       // The event-controller's own actions are phrased in the third person
@@ -5474,7 +5498,7 @@ function recognizeText(text: string): RecognizedText {
       // since the resolved effect always acts on ITS controller regardless
       // of who is doing the choosing (Pattern of Rebirth).
       const eventControllerEffectText = eventControllerChoice?.[1]?.trim().replace(/\btheir\b/gi, "your");
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerEffectText ?? triggered.effectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerEffectText ?? triggerEffectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
