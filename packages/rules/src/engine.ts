@@ -673,7 +673,7 @@ export type GameAction =
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly discardCardIds?: readonly string[]; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-countered-spell-library"; readonly sourceId: string; readonly destination: "top" | "bottom" }
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
@@ -2670,6 +2670,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return logged(next, object.controller, `${sourceCard.name} revela ${revealed.map((card) => card.name).join(", ")} y entra con ${amount} contadores +1/+1.`);
     }
     case "return-source-to-hand": {
+      if (object.activated && object.sourcePermanentId) {
+        const permanent = findPermanent(state, object.sourcePermanentId);
+        if (permanent) return returnPermanentToOwnersHand(state, permanent);
+      }
       // "When ~ is put into a graveyard from the battlefield, return it to its
       // owner's hand" (Fool's Demise, Spine of Ish Sah). By the time this
       // resolves the card is already in the graveyard.
@@ -7050,20 +7054,24 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const sacrificeSets: readonly (readonly Permanent[])[] = ability.sacrificesCreatures
         ? combinations(sacrificeCandidates, ability.sacrificesCreatures!.amount)
         : hasSacrificeCost ? sacrificeCandidates.map((candidate) => [candidate]) : [[]];
-      const discards = ability.discardsCard ? player.hand : [undefined];
+      const discardSets: readonly (readonly GameCard[])[] = ability.discardsCards
+        ? combinations(player.hand, ability.discardsCards.amount)
+        : ability.discardsCard ? player.hand.map((card) => [card]) : [[]];
       const exileSets: readonly (readonly GameCard[])[] = ability.exilesGraveyardCards
         ? state.players.flatMap((candidate) => combinations(candidate.graveyard.filter((card) => isCreature(cardProfile(card))), ability.exilesGraveyardCards!.amount))
         : ability.exilesGraveyardCard ? player.graveyard.map((card) => [card]) : [[]];
       const tapCreatures = ability.tapsCreature ? tapCostCandidates(state, seat, permanent, ability) : [undefined];
-      for (const sacrificeSet of sacrificeSets) for (const tapCreature of tapCreatures) for (const discard of discards) for (const exileSet of exileSets) actions.push({
+      for (const sacrificeSet of sacrificeSets) for (const tapCreature of tapCreatures) for (const discardSet of discardSets) for (const exileSet of exileSets) actions.push({
         action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index,
           ...(ability.manaCost?.hasVariable ? { variableValue } : {}),
           ...(sacrificeSet.length === 1 ? { sacrificeId: sacrificeSet[0]!.instance_id } : {}),
           ...(sacrificeSet.length > 1 ? { sacrificeIds: sacrificeSet.map((candidate) => candidate.instance_id) } : {}),
-          ...(tapCreature ? { tapId: tapCreature.instance_id } : {}), ...(discard ? { discardCardId: discard.instance_id } : {}),
+          ...(tapCreature ? { tapId: tapCreature.instance_id } : {}),
+          ...(discardSet.length === 1 ? { discardCardId: discardSet[0]!.instance_id } : {}),
+          ...(discardSet.length > 1 ? { discardCardIds: discardSet.map((card) => card.instance_id) } : {}),
           ...(exileSet.length === 1 ? { exileCardId: exileSet[0]!.instance_id } : {}),
           ...(exileSet.length > 1 ? { exileCardIds: exileSet.map((card) => card.instance_id) } : {}) },
-        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discard ? ` — Discard ${discard.name}` : ""}${exileSet.length ? ` — Exile ${exileSet.map((card) => card.name).join(", ")}` : ""}`,
+        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discardSet.length ? ` — Discard ${discardSet.map((card) => card.name).join(", ")}` : ""}${exileSet.length ? ` — Exile ${exileSet.map((card) => card.name).join(", ")}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
@@ -7598,6 +7606,7 @@ function activatableAbility(
   }
   if (ability.tapsCreature && !tapCostCandidates(state, seat, permanent, ability).length) return { legal: false };
   if (ability.discardsCard && !player.hand.length) return { legal: false };
+  if (ability.discardsCards && player.hand.length < ability.discardsCards.amount) return { legal: false };
   if (ability.exilesGraveyardCard && !player.graveyard.length) return { legal: false };
   if (ability.exilesGraveyardCards && !state.players.some((candidate) => candidate.graveyard.filter((card) => isCreature(cardProfile(card))).length >= ability.exilesGraveyardCards!.amount)) {
     return { legal: false };
@@ -7731,9 +7740,19 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     if (!tapCreature) throw new Error("Debes elegir una criatura enderezada válida para girar.");
   }
   let discard: GameCard | undefined;
+  let discardCards: GameCard[] = [];
   if (ability.discardsCard) {
     discard = action.discardCardId ? playerAt(state, seat).hand.find((card) => card.instance_id === action.discardCardId) : playerAt(state, seat).hand[0];
     if (!discard) throw new Error("Debes elegir una carta para descartar.");
+  }
+  if (ability.discardsCards) {
+    const ids = action.discardCardIds ?? [];
+    const hand = playerAt(state, seat).hand;
+    if (ids.length !== ability.discardsCards.amount || new Set(ids).size !== ids.length) {
+      throw new Error(`Debes elegir ${ability.discardsCards.amount} cartas para descartar.`);
+    }
+    discardCards = ids.map((id) => hand.find((card) => card.instance_id === id)).filter((card): card is GameCard => Boolean(card));
+    if (discardCards.length !== ability.discardsCards.amount) throw new Error("Debes elegir cartas disponibles para descartar.");
   }
   let exiles: GameCard[] = [];
   if (ability.exilesGraveyardCards) {
@@ -7860,6 +7879,17 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     if (!discarded) throw new Error("No tienes una carta para descartar.");
     next = discardCard(next, seat, discarded);
     next = logged(next, seat, `${player.name} descarta ${discarded.name}.`);
+  }
+  if (ability.discardsCards) {
+    const hand = playerAt(next, seat).hand;
+    const ids = action.discardCardIds ?? [];
+    if (ids.length !== ability.discardsCards.amount || new Set(ids).size !== ids.length) {
+      throw new Error(`Debes elegir ${ability.discardsCards.amount} cartas para descartar.`);
+    }
+    const selected = ids.map((id) => hand.find((card) => card.instance_id === id)).filter((card): card is GameCard => Boolean(card));
+    if (selected.length !== ability.discardsCards.amount) throw new Error("Debes elegir cartas disponibles para descartar.");
+    for (const card of selected) next = discardCard(next, seat, card);
+    next = logged(next, seat, `${player.name} descarta ${selected.map((card) => card.name).join(", ")}.`);
   }
   if (ability.sacrificesLand) {
     const lands = playerAt(next, seat).battlefield.filter((permanent) => isLand(cardProfile(permanent.card)));

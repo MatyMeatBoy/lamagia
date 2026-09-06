@@ -300,6 +300,7 @@ const LAND_SAC_ALTAR = () => make({ name: "Land Memory", type_line: "Land", orac
 const ANOTHER_ARTIFACT_SAC = () => make({ name: "Another Artifact Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice another artifact: Draw a card." });
 const NONCREATURE_SAC = () => make({ name: "Noncreature Memory", type_line: "Creature — Shaman", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2", oracle_text: "Sacrifice a noncreature permanent: Draw a card." });
 const DISCARD_ACTIVATION = () => make({ name: "Discard Memory", type_line: "Creature — Wizard", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "{T}, Discard a card: Draw a card." });
+const FAE_OF_WISHES = () => make({ name: "Fae of Wishes", type_line: "Creature — Faerie Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "4", oracle_text: "{1}{U}, Discard two cards: Return ~ to its owner's hand.", oracle_id: "c0abbed2-d213-47ef-8d6c-4a21efb9a55f" });
 const TOKEN_SAC_ACTIVATION = () => make({ name: "Token Memory", type_line: "Creature — Shaman", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Sacrifice a token: Draw a card." });
 const GRAVEYARD_EXILE_ACTIVATION = () => make({ name: "Grave Memory", type_line: "Creature — Wizard", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "Exile a card from your graveyard: Draw a card." });
 const COMBINED_COST_ACTIVATION = () => make({ name: "Combined Memory", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Sacrifice an artifact, Discard a card: Draw a card." });
@@ -3192,6 +3193,28 @@ describe("casting", () => {
     game = applyAction(game, 0, activation.action);
     expect(game.players[0]!.graveyard.some((card) => card.instance_id === selected.instance_id)).toBe(true);
     expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+
+  it("offers and pays an exact two-card discard activation", () => {
+    const sourceCard = FAE_OF_WISHES();
+    expect(profileOf(sourceCard).activatedAbilities[0]).toMatchObject({
+      discardsCards: { amount: 2 },
+      manaCost: { raw: "{1}{U}" },
+      effect: { kind: "return-source-to-hand" }
+    });
+    let game = readyToCast([BEAR(), SOL_RING()], [sourceCard, ISLAND(), SOL_RING()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sourceCard.name)!;
+    const handIds = game.players[0]!.hand.map((card) => card.instance_id);
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id
+      && entry.action.discardCardIds?.length === 2)!;
+    expect(activation).toBeDefined();
+    expect(new Set(activation.action.type === "activate" ? activation.action.discardCardIds : []).size).toBe(2);
+    game = applyAction(game, 0, activation.action);
+    expect(game.players[0]!.graveyard.map((card) => card.instance_id)).toEqual(expect.arrayContaining(handIds));
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand.some((card) => card.name === sourceCard.name)).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === sourceCard.name)).toBe(false);
   });
 
   it("rejects an activation that names a card outside the available cost choices", () => {

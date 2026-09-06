@@ -117,6 +117,8 @@ export interface ActivatedAbility {
   readonly sacrificesPermanent?: { readonly type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token" | "Permanent"; readonly mode: "any" | "another"; readonly nontoken?: boolean };
   /** One card chosen from the controller's hand as an activation cost. */
   readonly discardsCard?: boolean;
+  /** Multiple cards chosen from the controller's hand as one activation cost. */
+  readonly discardsCards?: { readonly amount: number };
   /** One card chosen from the controller's graveyard and exiled as a cost. */
   readonly exilesGraveyardCard?: boolean;
   /** Multiple creature cards chosen from one graveyard and exiled as a cost. */
@@ -2072,7 +2074,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     : null;
   const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
   const nontokenArtifact = Boolean(sacrificePermanent && /^nontoken\s+artifact$/i.test(sacrificePermanent[2]!));
-  const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
+  const discardsCardsMatch = /discard\s+(two|three|four|five|\d+)\s+cards?\b/i.exec(costText);
+  const discardsCard = !discardsCardsMatch && /discard\s+(?:a|one)\s+card\b/i.test(costText);
   // "{cost}, Discard this card: ..." (Mjölnir): the source pays its own cost by
   // leaving hand for the graveyard, so the ability can only be offered there.
   const discardsSelf = /discard\s+(?:~|this\s+card)/i.test(costText);
@@ -2097,6 +2100,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?[A-Za-z][A-Za-z'’-]*\b/gi, (match) => typedCreature ? "" : match)
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
+    .replace(/discard\s+(?:two|three|four|five|\d+)\s+cards?\b/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
     .replace(/discard\s+(?:~|this\s+card)/gi, "")
     .replace(/exile\s+(?:two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/gi, "")
@@ -2114,6 +2118,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(typedCreature ? { sacrificesCreatureSubtype: { subtype: typedCreature[2]!, mode: typedCreature[1] ? "another" as const : "any" as const } } : {}),
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: nontokenArtifact ? "Artifact" as const : /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]![1]! ? sacrificePermanent[2]!.slice(1).toLowerCase() : ""}` as "Artifact" | "Enchantment" | "Land", ...(nontokenArtifact ? { nontoken: true } : {}) } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
+    ...(discardsCardsMatch ? { discardsCards: { amount: toNumber(discardsCardsMatch[1])! } } : {}),
     ...(discardsSelf ? { discardsSelf: true, sourceZone: "hand" as const } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
