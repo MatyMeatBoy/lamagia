@@ -628,6 +628,8 @@ export type SpellEffect =
   | { readonly kind: "set-target-player-creatures-base-pt-remove-abilities"; readonly power: number; readonly toughness: number }
   /** Temporary characteristic-setting animation for artifact manlands (CR 613.6). */
   | { readonly kind: "animate-source"; readonly power: number; readonly toughness: number; readonly colors: readonly string[]; readonly subtypes: readonly string[]; readonly keywords: readonly EnforcedKeyword[]; readonly types?: readonly CardType[] }
+  /** Sydri: animate a target noncreature artifact using its mana value (CR 613.6). */
+  | { readonly kind: "animate-target-artifact-mana-value" }
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
@@ -1000,7 +1002,7 @@ export type TargetKind =
   | `artifact-or-creature-mana-value-${number}`
   | "creature-mana-value-up-to-plains"
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
-  | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
+  | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "noncreature-artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
@@ -3540,6 +3542,21 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   const temporaryKeyword = /^Target creature gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
   if (temporaryKeyword) return { effect: { kind: "grant-target-creature-keyword", keyword: temporaryKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "creature" };
+  if (/^Target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value until end of turn$/i.test(text)) {
+    return { effect: { kind: "animate-target-artifact-mana-value" }, target: "noncreature-artifact" };
+  }
+  if (/^Target artifact creature gains deathtouch and lifelink until end of turn$/i.test(text)) {
+    return {
+      effect: {
+        kind: "compound",
+        effects: [
+          { kind: "grant-target-creature-keyword", keyword: "deathtouch" },
+          { kind: "grant-target-creature-keyword", keyword: "lifelink" }
+        ]
+      },
+      target: "artifact-creature"
+    };
+  }
   const evasionExceptKeyword = /^~ can't be blocked this turn except by creatures with (flying|reach|haste|menace|trample|vigilance|lifelink|deathtouch|first strike|double strike)$/i.exec(text);
   if (evasionExceptKeyword) return { effect: { kind: "grant-source-cannot-be-blocked-except-keyword", keyword: evasionExceptKeyword[1]!.toLowerCase() as EnforcedKeyword }, target: "none" };
   const thresholdKeyword = /^Target creature with power 5 or greater gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
