@@ -5895,7 +5895,14 @@ function resolveTop(state: GameState): GameState {
             ? true
             : triggerSearch.maxManaValue === "lands-you-control"
               ? candidateProfile.manaValue <= playerAt(next, object.controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
-              : false;
+              : triggerSearch.maxManaValue === "X"
+                ? candidateProfile.manaValue <= (object.variableValue ?? 0)
+                : triggerSearch.maxManaValue === "sacrificed-creature-value"
+                  ? (() => {
+                      const base = (triggerSearch.manaValueOffset ?? 0) + (object.sacrificedManaValue ?? object.variableValue ?? 0);
+                      return triggerSearch.exactManaValue ? candidateProfile.manaValue === base : candidateProfile.manaValue <= base;
+                    })()
+                  : true;
           const toughnessMatches = triggerSearch.maxToughness === undefined
             || (Number.isFinite(Number(candidateProfile.toughness)) && Number(candidateProfile.toughness) <= triggerSearch.maxToughness);
           return typeMatches && subtypeMatches && colorMatches && manaValueMatches && toughnessMatches;
