@@ -8916,7 +8916,7 @@ function tapCostCandidates(
 
 function crewCostCandidates(state: GameState, seat: SeatId, source: Permanent, amount: number): Permanent[] {
   return playerAt(state, seat).battlefield.filter((candidate) =>
-    candidate.instance_id !== source.instance_id && !candidate.tapped && isCreature(cardProfile(candidate.card)));
+    candidate.instance_id !== source.instance_id && !candidate.tapped && isCreaturePermanent(candidate));
 }
 
 /** Returns the exact untapped typed permanents that may be chosen for a trigger tap cost. */
