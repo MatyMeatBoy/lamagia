@@ -434,7 +434,7 @@ export type PendingChoice =
       readonly allowLegendaryMana: boolean;
       readonly excludePermanentId?: string;
       readonly selected: readonly ManaPaymentSelection[];
-      readonly continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "equip" }>;
+      readonly continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "activate" | "equip" }>;
     }
   | {
       /** Ghost Quarter's optional search belongs to the destroyed land's controller. */
@@ -694,7 +694,7 @@ export type GameAction =
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number; readonly manaAlreadyPaid?: boolean }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
   | { readonly type: "choose-mana-source"; readonly sourceId: string; readonly manaSourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType }
@@ -1301,6 +1301,7 @@ export function planManaPayment(
     readonly additionalGeneric?: number;
     readonly state?: GameState;
     readonly lifeCost?: number;
+    readonly excludePermanentId?: string;
     /** Allows mana restricted to legendary spells during this payment plan. */
     readonly allowLegendaryMana?: boolean;
   } = {}
@@ -1309,7 +1310,15 @@ export function planManaPayment(
     ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
     : [];
   const startingPool = existingRestricted.reduce((pool, mana) => addMana(pool, mana.type, 1), player.manaPool);
-  const sources = manaSources(player, options.state, { allowLegendaryMana: options.allowLegendaryMana });
+  const sources = manaSources(
+    options.excludePermanentId
+      ? { ...player, battlefield: player.battlefield.map((permanent) => permanent.instance_id === options.excludePermanentId
+        ? { ...permanent, tapped: true }
+        : permanent) }
+      : player,
+    options.state,
+    { allowLegendaryMana: options.allowLegendaryMana }
+  );
   const variableValue = options.variableValue ?? 0;
   const additionalGeneric = options.additionalGeneric ?? 0;
   const externalLifeCost = options.lifeCost ?? 0;
@@ -1423,6 +1432,7 @@ function shouldPromptManaPayment(
   const payer = paymentPlayer(state, seat, options.excludePermanentId);
   const plan = planManaPayment(cost, payer, {
     state,
+    excludePermanentId: options.excludePermanentId,
     additionalGeneric: options.additionalGeneric,
     variableValue: options.variableValue,
     allowLegendaryMana: options.allowLegendaryMana
@@ -1431,7 +1441,8 @@ function shouldPromptManaPayment(
   const sources = manaSources(payer, state, { allowLegendaryMana: options.allowLegendaryMana });
   // Preserve the fast path when every available source is interchangeable:
   // two Mountains paying generic one do not need a dialog.
-  return new Set(sources.map(sourceSignature)).size > 1;
+  const usable = sources.filter((source) => !options.excludePermanentId || source.permanentId !== options.excludePermanentId);
+  return new Set(usable.map(sourceSignature)).size > 1;
 }
 
 function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan | null {
@@ -1472,7 +1483,7 @@ function beginManaPayment(
   seat: SeatId,
   sourceCard: GameCard,
   cost: ManaCost,
-  continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "equip" }>,
+  continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "activate" | "equip" }>,
   options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly lifeCost?: number; readonly allowLegendaryMana?: boolean; readonly excludePermanentId?: string }
 ): GameState | null {
   if (!shouldPromptManaPayment(state, seat, cost, options)) return null;
@@ -7930,6 +7941,23 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   }
 
   // Costs are paid in one lump: tap, life, mana, loyalty, then the sacrifice.
+  // CR 602.2b/601.2f: announce targets and choices first, then pay costs.  If
+  // the UI needs a source choice, suspend before mutating any cost so that a
+  // resumed activation cannot double-pay life, taps, or sacrifices.
+  const abilityX = ability.manaCost?.hasVariable ? Math.max(0, action.variableValue ?? 0) : 0;
+  if (ability.manaCost && ability.manaCost.symbols.length && !action.manaAlreadyPaid) {
+    const plan = planManaPayment(ability.manaCost, playerAt(state, seat), {
+      state,
+      variableValue: abilityX,
+      excludePermanentId: ability.requiresTap ? source.instance_id : undefined
+    });
+    if (!plan) throw new Error(`No tienes maná suficiente para la habilidad de ${source.card.name}.`);
+    const manual = beginManaPayment(state, seat, source.card, ability.manaCost, action, {
+      variableValue: abilityX,
+      excludePermanentId: ability.requiresTap ? source.instance_id : undefined
+    });
+    if (manual) return manual;
+  }
   let next = withPlayer(state, seat, (current) => ({
     ...current,
     life: current.life - ability.lifeCost,
@@ -7955,11 +7983,14 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (ability.requiresTap) next = raiseTapEvents(next, state, [source.instance_id]);
   if (ability.lifeCost) next = logged(next, seat, `${player.name} paga ${ability.lifeCost} de vida por ${source.card.name}.`);
 
-  const abilityX = ability.manaCost?.hasVariable ? Math.max(0, action.variableValue ?? 0) : 0;
   if (ability.manaCost && ability.manaCost.symbols.length) {
-    const plan = planManaPayment(ability.manaCost, playerAt(next, seat), { state: next, variableValue: abilityX });
-    if (!plan) throw new Error(`No tienes maná suficiente para la habilidad de ${source.card.name}.`);
-    next = applyManaPlan(next, seat, plan);
+    const plan = action.manaAlreadyPaid ? null : planManaPayment(ability.manaCost, playerAt(next, seat), {
+      state: next,
+      variableValue: abilityX,
+      excludePermanentId: ability.requiresTap ? source.instance_id : undefined
+    });
+    if (!action.manaAlreadyPaid && !plan) throw new Error(`No tienes maná suficiente para la habilidad de ${source.card.name}.`);
+    next = action.manaAlreadyPaid ? next : applyManaPlan(next, seat, plan!);
     const payment = payCost(ability.manaCost, playerAt(next, seat).manaPool, { variableValue: abilityX, availableLife: playerAt(next, seat).life });
     if (!payment) throw new Error(`No se pudo pagar el coste de la habilidad de ${source.card.name}.`);
     next = withPlayer(next, seat, (current) => ({
@@ -8327,7 +8358,9 @@ function applyChooseManaSource(state: GameState, seat: SeatId, action: Extract<G
     ? applyCast(next, seat, continuation, true)
     : continuation.type === "activate-mana"
       ? applyActivateMana(next, seat, continuation, true)
-      : applyEquip(next, seat, continuation, true);
+      : continuation.type === "activate"
+        ? applyActivate(next, seat, { ...continuation, manaAlreadyPaid: true })
+        : applyEquip(next, seat, continuation, true);
   return next;
 }
 

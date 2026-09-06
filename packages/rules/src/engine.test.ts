@@ -3081,6 +3081,27 @@ describe("casting", () => {
     expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === unavailable.instance_id)).toBe(false);
   });
 
+  it("opens explicit mana-source selection for activated abilities with non-interchangeable sources", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ autoPass: false, kind: "human", hand: [] }));
+    game = putOnBattlefield(game, 0, [SIGNAL_PEST(), ISLAND(), MOUNTAIN()], { entered: false });
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null };
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Well of Lore")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)!;
+    game = applyAction(game, 0, activation.action);
+    expect(game.pendingChoice).toMatchObject({ type: "mana-payment", continuation: { type: "activate", sourceId: source.instance_id } });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Island")!.tapped).toBe(false);
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "mana-payment" }>;
+    const blue = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.mana === "U");
+    expect(blue).toBeDefined();
+    game = applyAction(game, 0, blue!.action);
+    const generic = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId !== choice.selected[0]?.sourceId);
+    expect(generic).toBeDefined();
+    game = applyAction(game, 0, generic!.action);
+    expect(game.pendingChoice).toBeNull();
+    expect(game.stack.at(-1)?.activated).toBeDefined();
+  });
+
   it("resolves energy production into public player counters", () => {
     const energyBurst = make({
       name: "Energy Burst", type_line: "Instant", mana_cost: "{1}{G}", cmc: 2,
