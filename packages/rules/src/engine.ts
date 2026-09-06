@@ -1485,7 +1485,13 @@ function shouldPromptManaPayment(
   // Preserve the fast path when every available source is interchangeable:
   // two Mountains paying generic one do not need a dialog.
   const usable = sources.filter((source) => !options.excludePermanentId || source.permanentId !== options.excludePermanentId);
-  return new Set(usable.map(sourceSignature)).size > 1;
+  // A single permanent can expose several distinct abilities (or a variable
+  // colour choice). It is still a real player decision; grouping only by
+  // source signature would otherwise silently choose the first ability.
+  const choices = usable.map((source) => `${source.permanentId}:${source.abilityIndex}:${sourceSignature(source)}`);
+  return new Set(choices).size > 1 && usable.some((source) => source.options.length > 1 || source.bonusOptions?.length || source.lifeCost > 0)
+    ? true
+    : new Set(usable.map(sourceSignature)).size > 1;
 }
 
 function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan | null {
