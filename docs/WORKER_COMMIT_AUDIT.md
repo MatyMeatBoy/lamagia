@@ -1,5 +1,17 @@
 # Worker commit audit
 
+Run the read-only gate from the repository root:
+
+```text
+python tools/rules/audit_worker_commit.py --base <published-sha> --commit <worker-sha> --report docs/worker-audit/<worker-sha>.md
+```
+
+`REJECT` means the worker must resubmit a focused commit. In particular, a
+large deletion count or more than 20 stable `oracle_id` values usually means
+the branch was based on stale/re-written history; rescue a small diff instead
+of cherry-picking it. A rejected audit is evidence for the integrator, not a
+rules implementation.
+
 Current intake gate: `audit_worker_commit.py` rejects more than 600 total
 deletions or 300 deletions under `packages/rules`. This protects the published
 gameplay tree from stale worker rebases; a passing rules scenario alone does
