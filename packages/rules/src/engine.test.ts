@@ -325,6 +325,8 @@ const ANOTHER_PERMANENT_ETB_DRAWER = () => make({ name: "Another Archivist", typ
 const ANY_SPELL_TRIGGER = () => make({ name: "Spell Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever a player casts a spell, draw a card." });
 const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Optional Archivist enters the battlefield, you may draw a card." });
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
+const WARD_SENTINEL = () => make({ name: "Ward Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward {2}" });
+const WARD_BOLT = () => make({ name: "Ward Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Destroy target creature." });
 const SERENE_MASTER = () => make({ name: "Serene Master", type_line: "Creature — Human Monk", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "2", oracle_text: "Whenever this creature blocks, exchange its power and the power of target creature it's blocking until end of combat.", oracle_id: "2ce0d583-81ca-4dca-bde0-52f86b683afd", scryfall_id: "06223a09-a32c-4c60-86a1-f8f7bf5a7cdd" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
 const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature — Jellyfish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", keywords: ["Defender", "Flying"], oracle_text: "Defender, flying\nPrevent all combat damage that would be dealt to this creature." });
@@ -1618,6 +1620,35 @@ describe("mana payment", () => {
 });
 
 describe("casting", () => {
+  it("asks the spell controller to pay Ward and counters when unpaid", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [WARD_BOLT()]), manaPool: { W: 0, U: 0, B: 0, R: 1, G: 0, C: 0 }, autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 1, [WARD_SENTINEL()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const ward = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: ward.instance_id }] });
+    expect(game.pendingChoice?.type).toBe("optional-trigger");
+    expect(game.pendingChoice?.seat).toBe(0);
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
+    expect(game.stack.at(-1)?.countered).toBe(true);
+  });
+
+  it("keeps a spell targeting Ward when its controller pays the tax", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [WARD_BOLT()]), manaPool: { W: 0, U: 0, B: 0, R: 1, G: 0, C: 2 }, autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 1, [WARD_SENTINEL()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const ward = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: ward.instance_id }] });
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.stack.at(-1)?.countered).toBe(false);
+    expect(game.players[0]!.manaPool.C).toBe(0);
+  });
   function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[], opponentHand: readonly CardData[] = [], opponentBoard: readonly CardData[] = []) {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ hand: toHand(0, cards) }));

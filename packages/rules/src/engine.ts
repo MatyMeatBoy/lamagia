@@ -5134,6 +5134,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
     }
+    case "counter-target-object": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      return { ...state, stack: state.stack.map((entry) => entry.id === target.stackId ? { ...entry, countered: true } : entry) };
+    }
     case "make-target-spell-uncounterable": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
@@ -9254,11 +9259,39 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
     paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)), sacrificedPower, sacrificedManaValue);
+  next = queueWardPayment(next, next.stack.at(-1)!);
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: paymentSpentTotal },
     selfCastTriggers ? [castTriggerWatcher(card, seat)] : []);
   return logged(next, seat, `${player.name} lanza ${card.name}${additionalGeneric ? ` pagando ${additionalGeneric} de impuesto de comandante` : ""}${targetsText(next, action.targets ?? [])}.`);
+}
+
+function queueWardPayment(state: GameState, object: StackObject): GameState {
+  const wardTarget = object.targets.find((target) => target.kind === "permanent" && (() => {
+    const permanent = findPermanent(state, target.instanceId);
+    return Boolean(permanent && permanent.controller !== object.controller && cardProfile(permanent.card).wardCost);
+  })());
+  if (!wardTarget || wardTarget.kind !== "permanent") return state;
+  const permanent = findPermanent(state, wardTarget.instanceId)!;
+  const cost = cardProfile(permanent.card).wardCost!;
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "optional-trigger",
+      seat: object.controller,
+      sourceId: `ward:${object.id}:${permanent.instance_id}`,
+      sourceCard: permanent.card,
+      triggerEffect: { kind: "counter-target-object" },
+      targets: [{ kind: "spell", stackId: object.id }],
+      sourceController: permanent.controller,
+      paymentBy: "opponent",
+      payCost: cost,
+      manaCost: cost,
+      sourcePermanentId: permanent.instance_id
+    }
+  };
 }
 
 function applyPlayLand(state: GameState, seat: SeatId, cardId: string): GameState {
