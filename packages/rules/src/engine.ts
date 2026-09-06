@@ -9892,7 +9892,11 @@ export function settle(state: GameState): GameState {
     if (next.step === "declare-blockers" && !next.combat.blockersDeclared) {
       const waiting = defendersAwaitingBlocks(next);
       if (!waiting.length) {
-        next = { ...next, combat: { ...next.combat, blockersDeclared: true }, passedSeats: [], prioritySeat: next.activeSeat };
+        // All defending players have submitted a declaration. Mark the
+        // combat step complete and reopen priority exactly once; without the
+        // explicit `priorityOpen` transition a stale closed-priority state can
+        // repeatedly re-enter this branch after multi-player attacks.
+        next = { ...next, combat: { ...next.combat, blockersDeclared: true }, passedSeats: [], prioritySeat: next.activeSeat, priorityOpen: true };
         continue;
       }
       const idle = waiting.find((seat) => !legalBlockers(next, seat).length);
