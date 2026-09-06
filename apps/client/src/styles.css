@@ -994,6 +994,11 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
   .decision-overlay { top: 46%; width: min(440px, calc(100vw - 18px)); }
   .decision-head { padding: 10px 11px; }
   .decision-list .action-row { padding: 9px 10px; }
+  .stack-strip { gap: 5px; padding: 6px 2px; }
+  .stack-strip > b { flex: 0 0 auto; }
+  .stack-order-hint { max-width: 130px; }
+  .stack-chip { min-width: 150px; max-width: 210px; }
+  .stack-chip .stack-label { -webkit-line-clamp: 1; }
 }
 .rotate-hint {
   display: none; align-items: center; gap: 8px;
