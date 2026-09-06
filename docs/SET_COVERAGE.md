@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,106** · cobertura: **30.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,109** · cobertura: **30.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -537,7 +537,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2022-08-01 | Summer Vacation Promos 2022 (`PSVC`) | promos | summer-vacation-2022 | other | 3 | 2 | 1 | 66.7% |
 | 2022-09-02 | 30th Anniversary Misc Promos (`P30M`) | promos | 30th-anniversary-misc | other | 3 | 2 | 1 | 66.7% |
 | 2022-09-02 | 30th Anniversary Play Promos (`P30A`) | promos | 30th-anniversary-play | other | 30 | 14 | 16 | 46.7% |
-| 2022-09-09 | Dominaria United (`DMU`) | expansion | dominaria | main | 288 | 79 | 209 | 27.4% |
+| 2022-09-09 | Dominaria United (`DMU`) | expansion | dominaria | main | 288 | 80 | 208 | 27.8% |
 | 2022-09-09 | Dominaria United Commander (`DMC`) | commander | 2022 | commander | 192 | 71 | 121 | 37.0% |
 | 2022-09-09 | Dominaria United Promos (`PDMU`) | promos | dominaria-united | other | 81 | 12 | 69 | 14.8% |
 | 2022-10-01 | Regional Championship Qualifiers 2022 (`PRCQ`) | promos | regional-2022 | other | 3 | 1 | 2 | 33.3% |
@@ -607,7 +607,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2024-02-23 | Ravnica: Clue Edition (`CLU`) | supplemental | ravnica-clue-edition | other | 268 | 111 | 157 | 41.4% |
 | 2024-03-08 | Fallout (`PIP`) | commander | 2024 | commander | 336 | 112 | 224 | 33.3% |
 | 2024-04-19 | Breaking News (`OTP`) | masterpieces | breaking-news | other | 65 | 12 | 53 | 18.5% |
-| 2024-04-19 | Love Your LGS 2024 (`PLG24`) | promos | lgs-2024 | other | 5 | 3 | 2 | 60.0% |
+| 2024-04-19 | Love Your LGS 2024 (`PLG24`) | promos | lgs-2024 | other | 5 | 4 | 1 | 80.0% |
 | 2024-04-19 | Outlaws of Thunder Junction (`OTJ`) | expansion | thunder-junction | main | 276 | 33 | 243 | 12.0% |
 | 2024-04-19 | Outlaws of Thunder Junction Commander (`OTC`) | commander | 2024 | commander | 306 | 111 | 195 | 36.3% |
 | 2024-04-19 | Outlaws of Thunder Junction Promos (`POTJ`) | promos | outlaws-of-thunder-junction | other | 80 | 5 | 75 | 6.2% |
@@ -688,7 +688,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 153 | 463 | 24.8% |
 | 2026-08-14 | The Hobbit (`HOB`) | expansion | 2020s | main | 193 | 37 | 156 | 19.2% |
 | 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | 2020s | other | 117 | 27 | 90 | 23.1% |
-| 2026-09-02 | The Zeta Set (`SLZ`) | boxed-products | the-zeta-set | other | 121 | 44 | 77 | 36.4% |
+| 2026-09-02 | The Zeta Set (`SLZ`) | boxed-products | the-zeta-set | other | 121 | 45 | 76 | 37.2% |
 | 2026-10-02 | Reality Fracture (`FRA`) | expansion | 2020s | main | 23 | 4 | 19 | 17.4% |
 | 2026-10-02 | Reality Fracture Commander (`FRC`) | commander | 2026 | commander | 1 | 0 | 1 | 0.0% |
 | 2026-11-09 | Mystery Booster Commander Edition (`MBC`) | commander | 2026 | other | 80 | 7 | 73 | 8.8% |
@@ -737,7 +737,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | boxed-products | salvat-2005 | 1 | 285 | 101 | 184 | 35.4% |
 | boxed-products | salvat-2011 | 1 | 209 | 131 | 78 | 62.7% |
 | boxed-products | sega-dreamcast-cards | 1 | 10 | 0 | 10 | 0.0% |
-| boxed-products | the-zeta-set | 1 | 121 | 44 | 77 | 36.4% |
+| boxed-products | the-zeta-set | 1 | 121 | 45 | 76 | 37.2% |
 | commander | 2011 | 1 | 303 | 141 | 162 | 46.5% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
 | commander | 2013 | 1 | 341 | 292 | 49 | 85.6% |
@@ -800,7 +800,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | expansion | amonkhet | 1 | 272 | 100 | 172 | 36.8% |
 | expansion | bloomburrow | 1 | 280 | 43 | 237 | 15.4% |
 | expansion | capenna | 1 | 310 | 51 | 259 | 16.5% |
-| expansion | dominaria | 2 | 553 | 163 | 390 | 29.5% |
+| expansion | dominaria | 2 | 553 | 164 | 389 | 29.7% |
 | expansion | eldraine | 2 | 567 | 127 | 440 | 22.4% |
 | expansion | ice-age | 1 | 373 | 76 | 297 | 20.4% |
 | expansion | innistrad | 4 | 1103 | 259 | 844 | 23.5% |
@@ -1061,7 +1061,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | promos | lgs-2020 | 1 | 2 | 2 | 0 | 100.0% |
 | promos | lgs-2021 | 1 | 9 | 0 | 9 | 0.0% |
 | promos | lgs-2022 | 1 | 2 | 2 | 0 | 100.0% |
-| promos | lgs-2024 | 1 | 5 | 3 | 2 | 60.0% |
+| promos | lgs-2024 | 1 | 5 | 4 | 1 | 80.0% |
 | promos | lgs-2025 | 1 | 2 | 1 | 1 | 50.0% |
 | promos | lorwyn | 1 | 3 | 1 | 2 | 33.3% |
 | promos | lorwyn-eclipsed | 1 | 80 | 6 | 74 | 7.5% |
@@ -44320,7 +44320,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Coral Colony — `5e186931-992b-491c-bffc-6877a613d5c3`
 - [ ] Cosmic Epiphany — `fad32e19-2eda-46b7-8d3c-b95a7dbeabc2`
 - [ ] Cult Conscript — `e5762815-5fc3-4ae7-abee-69f27c5e4e90`
-- [ ] Cut Down — `1b30210d-10e9-4703-8967-032063bb4f26`
 - [ ] Danitha, Benalia's Hope — `43b5dbe9-41f7-4082-944b-ea9d6292c6fd`
 - [ ] Defiler of Dreams — `9d4ec5e5-5520-45c3-8071-53191811117d`
 - [ ] Defiler of Faith — `88ac2d09-7993-4bce-8aae-b2683c5c25a5`
@@ -52252,7 +52251,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 
 ### promos / lgs-2024 · Love Your LGS 2024 (`PLG24`)
 
-- [ ] Cut Down — `1b30210d-10e9-4703-8967-032063bb4f26`
 - [ ] Sheoldred's Edict — `217062f5-96f1-454c-9507-17f34ef37070`
 
 ### expansion / thunder-junction · Outlaws of Thunder Junction (`OTJ`)
@@ -61793,7 +61791,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Clown Car — `e0a6947f-3d52-45e0-8fd7-0bc07cc8c784`
 - [ ] Copper Tablet — `16d1023b-2162-4010-8bf4-218dbe7c99a0`
 - [ ] Cruel Reality — `2e3cc9b6-7849-4385-a487-c8f5364174e7`
-- [ ] Cut Down — `1b30210d-10e9-4703-8967-032063bb4f26`
 - [ ] Darksteel Monolith — `fdd3482d-7bce-411b-80c4-956a12fc143d`
 - [ ] Dig Through Time — `f8b17b89-26ce-4208-874a-9e1d66514640`
 - [ ] Disintegrate — `92d6af2f-728e-4e41-87cb-5c90878a2f2f`

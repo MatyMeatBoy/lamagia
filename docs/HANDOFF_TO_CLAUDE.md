@@ -15,14 +15,15 @@ and kicker damage-replacement, mana-ability counter-rider, temporary creature-ty
 and you-cast-noncreature trigger, delayed creature-return, keyword-counter,
 multi-land alternative-cost, dynamic Plains-count target, target-controller
 rider, and opponent-life-gain-prevention
-primitives, Ruby's reusable attack-power threshold, and Hinder's countered-spell
-library placement; verify the Pages run before reporting
+primitives, Ruby's reusable attack-power threshold, Hinder's countered-spell
+library placement, and Cut Down's total-power/toughness target filter; verify the
+Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 10,121 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 10,122 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 26,106 / 84,990 implemented (30.7%) across 685
+- **Edition memberships:** 26,109 / 84,990 implemented (30.7%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
@@ -36,13 +37,14 @@ catalog and the current rules tree. The refreshed artifacts are
 `data/rules/engine-card-profiles.json`, `data/rules/set-coverage.json`,
 `site/coverage.json`, `docs/SET_COVERAGE.md`, the C13 roadmap/dictionary/worker
 plan, and both near-complete queues. C13 is now **292/341 (85.6%)**, with
-one one-line candidate: Sudden Spoiling. The global queue is now 15,148
+one one-line candidate: Sudden Spoiling. The global queue is now 15,147
 one-line profiles, 11,438 of them reusable, after the Fling, Incinerate, Voltaic
 Key, Lava Coil, kicker damage-replacement, mana-ability counter-rider, temporary
 creature-type removal, you-cast-noncreature trigger, delayed creature-return,
 keyword-counter, multi-land alternative-cost, dynamic Plains-count target,
 target-controller-rider, opponent-life-gain-prevention, attack-power-threshold,
-and countered-spell-library-placement primitives were added;
+countered-spell-library-placement, and total-power-toughness-target primitives
+were added;
 the C13
 dictionary remains 341 profiles with 292 complete.
 
