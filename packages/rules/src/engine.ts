@@ -2172,6 +2172,13 @@ function triggerDoublerCount(state: GameState, watcher: Permanent, event: GameEv
     if (source.controller !== watcher.controller) continue;
     for (const doubler of cardProfile(source.card).triggerDoublers) {
       if (doubler.scope === "equipped-creature" && source.attachedTo === watcher.instance_id) extra += 1;
+      if (doubler.scope === "equipped-self-and-attached-equipment") {
+        const sourceIsEquipped = allPermanents(state).some((permanent) => permanent.attachedTo === source.instance_id
+          && hasSubtype(cardProfile(permanent.card), "Equipment"));
+        const watcherIsSourceOrAttachedEquipment = watcher.instance_id === source.instance_id
+          || (watcher.attachedTo === source.instance_id && hasSubtype(cardProfile(watcher.card), "Equipment"));
+        if (sourceIsEquipped && watcherIsSourceOrAttachedEquipment) extra += 1;
+      }
       if (doubler.scope === "subtype-you-control" && doubler.subtypes?.some((subtype) => hasSubtype(cardProfile(watcher.card), subtype))) extra += 1;
       if (doubler.scope === "draw-caused-triggers" && event.kind === "card-drawn") extra += 1;
     }

@@ -336,7 +336,7 @@ export interface StaticKeywordGrant {
 
 /** "If a triggered ability of X triggers, that ability triggers an additional time" (CR 603.3f). */
 export interface TriggerDoubler {
-  readonly scope: "subtype-you-control" | "equipped-creature" | "draw-caused-triggers";
+  readonly scope: "subtype-you-control" | "equipped-creature" | "equipped-self-and-attached-equipment" | "draw-caused-triggers";
   readonly subtypes?: readonly string[];
 }
 
@@ -1817,6 +1817,9 @@ function parseKeywordsDuringYourTurn(text: string): EnforcedKeyword[] {
 /** Harmonic Prodigy / Wizard's Staff style trigger-doubling clauses. */
 function parseTriggerDoubler(line: string): TriggerDoubler | null {
   const clean = line.trim().replace(/\.$/, "");
+  if (/^(?:As long as ~ is equipped,\s*)?If a triggered ability of ~ or an Equipment attached to it triggers,\s*that ability triggers an additional time$/i.test(clean)) {
+    return { scope: "equipped-self-and-attached-equipment" };
+  }
   if (/^If a triggered ability of equipped creature triggers,\s*that ability triggers an additional time$/i.test(clean)) {
     return { scope: "equipped-creature" };
   }

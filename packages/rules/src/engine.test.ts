@@ -606,6 +606,7 @@ const GIANT = () => make({ name: "Hill Giant", type_line: "Creature — Giant", 
 const EQUIPMENT = () => make({ name: "Test Equipment", type_line: "Artifact — Equipment", mana_cost: "{1}", cmc: 1 });
 const BEHEMOTH_SLEDGE = () => make({ name: "Behemoth Sledge", type_line: "Artifact — Equipment", mana_cost: "{3}", cmc: 3, oracle_text: "Equipped creature gets +2/+2 and has trample and lifelink.\nEquip {3}" });
 const TYPED_EQUIP_ITEM = () => make({ name: "Test Wizard's Staff", type_line: "Artifact — Equipment", mana_cost: "{2}", cmc: 2, oracle_text: "Equipped creature has prowess.\nIf a triggered ability of equipped creature triggers, that ability triggers an additional time.\nEquip Wizard {1}\nEquip {3}" });
+const CLOUD_MIDGAR_MERCENARY = () => make({ name: "Cloud, Midgar Mercenary", type_line: "Legendary Creature — Human Soldier Mercenary", mana_cost: "{W}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Cloud enters, search your library for an Equipment card, reveal it, put it into your hand, then shuffle.\nAs long as Cloud is equipped, if a triggered ability of Cloud or an Equipment attached to it triggers, that ability triggers an additional time.", oracle_id: "33d2584b-bf29-4c3e-881e-940e9fce7f57", scryfall_id: "32e03ed1-6d1e-4303-b67c-4a5a4f825e9c" });
 const WIZARD_CREATURE = () => make({ name: "Test Wizard", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "1" });
 const SWIFTFOOT_BOOTS = () => make({ name: "Swiftfoot Boots", type_line: "Artifact — Equipment", mana_cost: "{2}", cmc: 2, oracle_text: "Equipped creature has hexproof and haste.\nEquip {1}" });
 const SWORD_OF_THE_PARUNS = () => make({ name: "Sword of the Paruns", type_line: "Artifact — Equipment", mana_cost: "{4}", cmc: 4, oracle_text: "Equipped creature gets +2/+0.\n{3}: Untap equipped creature.\n{3}: Untap all other creatures you control.\nEquip {3}" });
@@ -8192,6 +8193,27 @@ describe("activated abilities", () => {
     expect(game.stack.at(-1)?.activated?.text).toBe("Equip {3}");
     game = applyAction(game, 0, { type: "pass" });
     expect(permanentNamed(game, 0, "Test Wizard's Staff")?.attachedTo).toBe(bear.instance_id);
+  });
+
+  it("doubles Cloud's own triggers while it is equipped", () => {
+    const profile = profileOf(CLOUD_MIDGAR_MERCENARY());
+    expect(profile.triggerDoublers).toEqual([{ scope: "equipped-self-and-attached-equipment" }]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyOnBoard([CLOUD_MIDGAR_MERCENARY(), EQUIPMENT()], { hold: true });
+    const cloud = permanentNamed(game, 0, "Cloud, Midgar Mercenary")!;
+    const equipment = permanentNamed(game, 0, "Test Equipment")!;
+    game = stage(game, 0, (player) => ({
+      library: toHand(0, [BEAR(), FOREST()], "cloud-library"),
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === cloud.instance_id
+        ? { ...permanent, temporaryTriggers: [{ event: "attacks", subject: "self", effect: { kind: "draw", amount: 1 }, optional: false, targetKind: "none", sourceText: "Test attack trigger" }] }
+        : permanent.instance_id === equipment.instance_id
+          ? { ...permanent, attachedTo: cloud.instance_id }
+          : permanent)
+    }));
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })), step: "declare-attackers", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], combat: { ...game.combat, attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: cloud.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.hand).toHaveLength(2);
   });
 
   it("reuses Equip for Swiftfoot Boots and Sword of the Paruns", () => {
