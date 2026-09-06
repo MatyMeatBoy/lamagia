@@ -3873,3 +3873,11 @@ replacement applies an additional +1/+1 counter to matching Wolf/Werewolf
 creatures as they enter, before the ETB event is raised (CR 614.1c, 122.1).
 Current validation: **719 rules tests**, `npm run check`, and `git diff --check`
 pass.
+
+The next source-based near-complete rescan closed Chandra's Outrage: the
+reusable `damage-target-creature-and-controller` primitive keeps the target
+creature's controller as a last-known seat even when the first damage is
+lethal, then applies the second damage to that player (CR 608.2b, 609.3).
+The scenario verifies both the creature leaving the battlefield and the
+controller losing 2 life. Current validation: **720 rules tests**, `npm run
+check`, and `git diff --check` pass.

@@ -528,6 +528,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X"; readonly kickedAmount?: number | "X" }
+  /** Chandra's Outrage: damage a target creature and that creature's controller. */
+  | { readonly kind: "damage-target-creature-and-controller"; readonly creatureAmount: number | "X"; readonly controllerAmount: number | "X" }
   /** Incinerate-style damage rider that disables regeneration for the damaged creature (CR 615.1, 701.19). */
   | { readonly kind: "damage-any-target-prevents-regeneration"; readonly amount: number | "X" }
   /** Lava Coil-style damage rider that exiles the damaged creature if it would die this turn (CR 614.1). */
@@ -2875,6 +2877,17 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       return {
         effect: { kind: "compound", effects: [{ kind: "damage-any-target", amount: damage }, { kind: "damage-controller", amount: selfDamage }] },
         target: "any"
+      };
+    }
+  }
+  const damageCreatureAndController = /^~ deals (\w+) damage to target creature and (\w+) damage to that creature's controller$/i.exec(text);
+  if (damageCreatureAndController) {
+    const creatureAmount = damageCreatureAndController[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageCreatureAndController[1]!);
+    const controllerAmount = damageCreatureAndController[2]!.toUpperCase() === "X" ? "X" as const : toNumber(damageCreatureAndController[2]!);
+    if (creatureAmount !== null && controllerAmount !== null) {
+      return {
+        effect: { kind: "damage-target-creature-and-controller", creatureAmount, controllerAmount },
+        target: "creature"
       };
     }
   }
