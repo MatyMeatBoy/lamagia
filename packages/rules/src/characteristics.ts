@@ -3007,6 +3007,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
   }
+  // "~ deals N damage to target opponent" (painful ETB taplands, direct burn):
+  // the damage executor already handles a player target; only the target kind
+  // narrows to opponents.
+  if ((match = /^~ deals (\w+) damage to target (opponent|player)$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    const target = match[2]!.toLowerCase() === "opponent" ? "opponent" as const : "player" as const;
+    if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target };
+  }
   if (/^~ deals damage equal to the sacrificed creature's power to any target$/i.test(text)) {
     return { effect: { kind: "damage-any-target-equal-sacrificed-creature-power" }, target: "any" };
   }

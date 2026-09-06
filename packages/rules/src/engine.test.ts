@@ -7240,6 +7240,25 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("pings a chosen opponent from an ETB 'deals 1 damage to target opponent' land", () => {
+    const painLand = make({
+      name: "Test Painland", type_line: "Land", mana_cost: "", cmc: 0,
+      oracle_text: "This land enters tapped.\nWhen this land enters, it deals 1 damage to target opponent.\n{T}: Add {B} or {G}."
+    });
+    expect(profileOf(painLand).triggers[0]).toMatchObject({ event: "enters-battlefield", targetKind: "opponent", effect: { kind: "damage-any-target", amount: 1 } });
+    let game = readyToCast([], []);
+    game = stage(game, 0, () => ({ autoPass: false, hand: [{ ...painLand, instance_id: "pl-0", owner: 0 } as GameCard] }));
+
+    game = applyAction(game, 0, { type: "play-land", cardId: "pl-0" });
+    game = passUntil(game, (state) => state.pendingChoice !== null || state.stack.length > 0);
+    // The trigger targets an opponent; with one opponent it is auto-aimed.
+    const trigger = legalActions(game, 0).find((entry) => entry.action.type === "choose-trigger-target" || entry.action.type === "pass");
+    game = applyAction(game, 0, trigger!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[1]!.life).toBe(39);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Painland" && permanent.tapped)).toBe(true);
+  });
+
   it("adds energy counters from an ETB 'you get {E}' trigger (reminder text stripped)", () => {
     const leopard = make({
       name: "Test Leopard", type_line: "Creature — Cat", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2",

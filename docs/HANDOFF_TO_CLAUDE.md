@@ -6,6 +6,13 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **"deals N damage to target opponent"** — the `damage-any-target` executor
+  already handles a player target; `recognizeSentence` now narrows the target
+  kind to `opponent` (or `player`) for this wording. Covers the ETB painful
+  tapland cycle (Lush Oasis, Festering Gulch, Abraded Bluffs, …) and direct
+  burn. Export **10,437 → 10,454** (+17). Test: `engine.test.ts` › "pings a
+  chosen opponent from an ETB…".
+
 - **Stripped-reminder trailing whitespace** — `recognizeSentence` normalised a
   sentence with `.replace(/\.$/, "")`, which left `"you get {E} "` (trailing
   space) after reminder text like `"(an energy counter)"` was blanked mid-
