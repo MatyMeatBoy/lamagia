@@ -54,7 +54,7 @@ guessed card totals, and malformed parser fragments do not.
 Required direct-commit report (one cluster, at most 20 `oracle_id`s):
 
 ```text
-CLAIM: c13-<primitive>
+CLAIM: <set-or-shared-scope>-<primitive>
 BASE: <sha>
 COMMIT: <sha>
 CARDS: <name> | <oracle_id>; ...
@@ -92,9 +92,8 @@ frequency, separating implemented, partial, and backlog work. Use
 [KEYWORD_COVERAGE.md](KEYWORD_COVERAGE.md) to choose a reusable primitive
 instead of reimplementing a keyword per card.
 
-For the current C13 sprint, use `npm run rules:oracle:c13` to generate the same
-queue from only the 356 cards in that set, then
-`npm run rules:oracle:plan:c13` to assign five disjoint primitive clusters.
+For a focused set sprint, use the parameterized compiler/planner with the
+desired set code; C13 is only one optional example, never a global filter.
 For compact, reusable worker context, run `npm run rules:oracle:compact` (or
 the `:c13` variant) after compiling the Oracle IR. It interns only review
 symbols; it never replaces the authoritative raw text or rules engine.
