@@ -530,3 +530,4 @@ rules citations and the integrator review remain mandatory.
 | `mh2-arcbound-modular` | Reusable Modular N entry counters and dies transfer to a target artifact creature for the Arcbound cluster (CR 702.43, 122.1) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
 | `mh2-investigate-clue` | Reusable Investigate N primitive that creates Clue artifact tokens with their draw ability (CR 701.21, 111.10) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `mh2-protection-artifact` | Reusable Protection from artifacts parsing and targeting enforcement for MH2 artifact-protection cards (CR 702.16) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `mh2-treasure-token` | Reusable Treasure token definition and sacrifice-for-any-color mana ability (CR 111.10, 605.3b) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

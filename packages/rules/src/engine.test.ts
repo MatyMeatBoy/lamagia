@@ -139,6 +139,10 @@ const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: 
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
 const SERENE_MASTER = () => make({ name: "Serene Master", type_line: "Creature — Human Monk", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "2", oracle_text: "Whenever this creature blocks, exchange its power and the power of target creature it's blocking until end of combat.", oracle_id: "2ce0d583-81ca-4dca-bde0-52f86b683afd", scryfall_id: "06223a09-a32c-4c60-86a1-f8f7bf5a7cdd" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
+const TREASURE_TOKEN = () => make({
+  name: "Treasure", type_line: "Artifact — Treasure", token: true,
+  oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color."
+});
 const ANGELIC_CURATOR = () => make({
   name: "Angelic Curator", type_line: "Creature — Angel Spirit", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "3",
   keywords: ["Flying"], oracle_text: "Flying, protection from artifacts", oracle_id: "cca29a9b-794f-4712-8e6c-36ce3da9cb8b", scryfall_id: "332352c2-98f2-4eb8-b49a-026a39df227b"
@@ -1173,6 +1177,24 @@ describe("playing lands", () => {
 });
 
 describe("mana payment", () => {
+  it("executes the Treasure token mana primitive and sacrifices its source", () => {
+    const profile = profileOf(TREASURE_TOKEN());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      manaAbilities: [{ requiresTap: true, sacrificesSelf: true, amount: 1 }]
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [TREASURE_TOKEN()]);
+    const treasure = game.players[0]!.battlefield[0]!;
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana" && entry.cardId === treasure.instance_id);
+    expect(action?.action.type).toBe("activate-mana");
+    if (!action || action.action.type !== "activate-mana") throw new Error("Treasure mana action missing");
+    game = applyAction(game, 0, { ...action.action, mana: "G" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === treasure.instance_id)).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.instance_id === treasure.card.instance_id)).toBe(false);
+    expect(game.players[0]!.manaPool.G).toBe(1);
+  });
+
   it("keeps five independent primitives executable in the same card batch", () => {
     expect(profileOf(PRISTINE_TALISMAN()).fullyImplemented).toBe(true);
     expect(profileOf(PRISTINE_TALISMAN()).manaAbilities[0]).toMatchObject({ gainLife: 1 });
@@ -6155,7 +6177,9 @@ describe("casting", () => {
     const profile = profileOf(OFFER_YOU_CANT_REFUSE());
     expect(profile).toMatchObject({
       targetKind: "noncreature-spell",
-      effects: [{ kind: "counter-target-spell-then-controller-token", amount: 2, token: { name: "Treasure" } }]
+      effects: [{ kind: "counter-target-spell-then-controller-token", amount: 2, token: {
+        name: "Treasure", oracleText: "{T}, Sacrifice this artifact: Add one mana of any color."
+      } }]
     });
     expect(profile.fullyImplemented).toBe(true);
 

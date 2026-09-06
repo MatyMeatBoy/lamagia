@@ -3993,3 +3993,12 @@ regenerate `engine-card-profiles.json`; run `npm run rules:engine:export` in the
 integrator checkout before trusting refreshed counts. Current validation:
 **736 rules tests**, `npm run check`, near-complete unit tests, and
 `git diff --check` pass.
+
+The next MH2 primitive closes Treasure end to end: generated Treasure tokens
+now carry their official `{T}, Sacrifice this artifact: Add one mana of any
+color.` text, expose a real mana ability, and leave the battlefield as a
+cost. Coverage verifies both token generation metadata and activation (CR
+111.10, 605.3b). The rescan baseline remains **15,142 near-complete cards**
+and **11,433 reusable** until the integrator regenerates profiles from the
+catalog database. Current validation: **737 rules tests**, `npm run check`,
+near-complete unit tests, and `git diff --check` pass.

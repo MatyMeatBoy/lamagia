@@ -28,6 +28,8 @@ export interface CardData {
   readonly color_identity?: readonly string[];
   readonly keywords?: readonly string[];
   readonly produced_mana?: readonly string[];
+  /** True for generated tokens; omitted for catalog cards. */
+  readonly token?: boolean;
   readonly card_faces?: readonly Partial<CardData>[];
 }
 
@@ -75,6 +77,8 @@ export interface ManaAbility {
   readonly variableAmountCounter?: string;
   /** A variable number of typed creatures is paid as an activation cost. */
   readonly sacrificesCreatures?: { readonly amount: number | "X"; readonly subtype?: string };
+  /** Treasure-style mana abilities sacrifice their own source as a cost (CR 605.3b). */
+  readonly sacrificesSelf?: boolean;
   /** The amount of mana/life is the number of creatures sacrificed. */
   readonly amountFromSacrifice?: boolean;
   readonly gainLifeFromAmount?: boolean;
@@ -1476,6 +1480,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const sourceCounterRider = parseManaSourceCounterRider(effectText);
     const productionText = sourceCounterRider?.production ?? effectText;
     const requiresTap = /\{T\}/.test(costText);
+    const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText);
     const variableSacrifice = /^(?:\{T\},\s*)?sacrifice\s+X\s+([A-Za-z][A-Za-z'’-]*)s?$/i.exec(costText.trim().replace(/,\s*$/, ""));
     if (variableSacrifice && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(effectText.trim())) {
       abilities.push({
@@ -1516,6 +1521,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
       .replace(/remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+from\s+~/gi, "")
+      .replace(/sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
       .replace(/[,\s]/g, "");
     if (leftovers.length) continue;
     // Restrictions follow the first sentence in Oracle text. Parse the
@@ -1581,6 +1587,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
       ...(instruction.activationRestriction === undefined ? {} : { activationRestriction: instruction.activationRestriction }),
       ...(manaCost ? { manaCost } : {}),
+      ...(sacrificesSelf ? { sacrificesSelf: true } : {}),
       requiresTap, lifeCost: lifeCost + (instruction.painDamage ?? 0), text: line.trim()
     });
   }
@@ -2414,10 +2421,13 @@ function parseCreateToken(text: string): SpellEffect | null {
   const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
   const typeLine = subtype ? `${artifact ? "Artifact " : ""}${creature ? "Creature" : "Artifact"} — ${subtype}` : `${artifact ? "Artifact" : "Creature"}`;
+  const oracleText = /^treasure$/i.test(name)
+    ? "{T}, Sacrifice this artifact: Add one mana of any color."
+    : undefined;
   return {
     kind: "create-token",
     amount,
-    token: { name, typeLine, power, toughness, colors, keywords, tapped: /\btapped\b/i.test(match[4]!) }
+    token: { name, typeLine, power, toughness, colors, keywords, tapped: /\btapped\b/i.test(match[4]!), ...(oracleText ? { oracleText } : {}) }
   };
 }
 

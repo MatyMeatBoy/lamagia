@@ -7233,7 +7233,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           const produced = [...outputTypes, ...auraBonusTypes, ...(manaBonus ? [manaBonus] : [])].map((type) => `{${type}}`).join("");
           actions.push({
             action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana, ...(manaBonus ? { manaBonus } : {}) },
-            label: `${permanent.card.name}: Add ${produced}`,
+            label: `${permanent.card.name}: Add ${produced}${ability.sacrificesSelf ? " — Sacrifice" : ""}`,
             cardId: permanent.instance_id,
             ...(ability.lifeCost ? { note: `Cuesta ${ability.lifeCost} de vida.` } : {})
           });
@@ -7628,8 +7628,12 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   }));
   const withBonus = manaBonus ? withPlayer(next, seat, (current) => ({ ...current, manaPool: addMana(current.manaPool, manaBonus, 1) })) : next;
   const tapped = ability.requiresTap ? raiseTapEvents(withBonus, activationState, [source.instance_id]) : withBonus;
+  const paidSource = ability.sacrificesSelf
+    ? playerAt(tapped, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id)
+    : undefined;
+  const sacrificed = paidSource ? movePermanentToZone(tapped, paidSource, "graveyard") : tapped;
   const output = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((mana) => `{${mana}}`).join("");
-  return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
+  return logged(sacrificed, seat, `${player.name} activa ${source.card.name}${ability.sacrificesSelf ? " y la sacrifica" : ""}, agrega ${output}.`);
 }
 
 function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cycle" }>): GameState {
