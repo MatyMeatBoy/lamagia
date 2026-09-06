@@ -49,6 +49,11 @@ Coverage numbers have two deliberate units:
 - **Commander 2013:** 269 / 341 unique cards (78.9%), 72 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
+The next one-line cluster adds `global-deathtouch-damage-counter-trigger`:
+generic damage-to-player triggers now include combat damage without double
+firing, and the existing triggered-creature counter effect is executable.
+The Vraska scenario uses `cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb`.
+
 The static P/T vocabulary now also covers source-relative conditions such as
 life thresholds and opponent graveyard creature counts. These are parameterized
 primitives, so reprints reuse the same profile rather than adding card-specific

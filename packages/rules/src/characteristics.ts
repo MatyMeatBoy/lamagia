@@ -799,6 +799,7 @@ export type TriggerSubject =
   | "another-creature-you-control"
   | "creature-you-control"
   | "artifact-creature-you-control"
+  | "creature-with-deathtouch-you-control"
   | "another-permanent-you-control"
   | "permanent-you-control"
   | "land-you-control"
@@ -2662,11 +2663,13 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "attacks", subject: "creature-attacks-enchanted-player", pattern: /^whenever\s+a\s+creature\s+attacks\s+enchanted\s+player,?\s*(.+)$/i },
   { event: "attacks", subject: "player-attacks-enchanted-player", pattern: /^whenever\s+a\s+player\s+attacks\s+enchanted\s+player\s+with\s+one\s+or\s+more\s+creatures,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", pattern: /^whenever\s+an\s+artifact\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
+  { event: "deals-combat-damage-to-player", subject: "creature-with-deathtouch-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+with\s+deathtouch\s+deals\s+combat\s+damage\s+to\s+a\s+player(?:\s+or\s+(?:a\s+)?planeswalker)?,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+one\s+of\s+your\s+opponents,?\s*(.+)$/i },
   // This event is raised for both combat and noncombat damage from a
   // permanent, unlike the combat-only templates above (CR 603.2).
+  { event: "deals-damage-to-player", subject: "creature-with-deathtouch-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+with\s+deathtouch\s+deals\s+damage\s+to\s+a\s+player(?:\s+or\s+(?:a\s+)?planeswalker)?,?\s*(.+)$/i },
   { event: "deals-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+damage\s+to\s+an?\s+opponent,?\s*(.+)$/i },
 
   // A player is the subject.
@@ -2982,7 +2985,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^~ deals damage equal to its power to target player or planeswalker$/i.test(text)) {
     return { effect: { kind: "damage-triggered-creature-power" }, target: "player-or-planeswalker" };
   }
-  if (/^put a \+1\/\+1 counter on it\.?$/i.test(text)) {
+  if (/^put a \+1\/\+1 counter on (?:it|that creature)\.?$/i.test(text)) {
     return { effect: { kind: "add-counter-triggered-creature", counter: "+1/+1", amount: 1 }, target: "none" };
   }
   if (/^its controller gains (\w+) life\.?$/i.test(text)) {
