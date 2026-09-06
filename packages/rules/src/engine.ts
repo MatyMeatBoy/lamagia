@@ -799,10 +799,14 @@ function targetsText(state: GameState, targets: readonly Target[]): string {
   return targets.length ? `; objetivo: ${targets.map((target) => targetLabel(state, target)).join(", ")}` : "";
 }
 
+function stackObjectTargetsText(state: GameState, object: StackObject): string {
+  const labels = object.targets.map((target, index) => object.targetLabels?.[index] ?? targetLabel(state, target));
+  return labels.length ? `; objetivo: ${labels.join(", ")}` : "";
+}
+
 function stackObjectLabel(state: GameState, object: StackObject): string {
   const kind = object.trigger ? "habilidad disparada" : object.activated ? "habilidad activada" : "hechizo";
-  const labels = object.targets.map((target, index) => object.targetLabels?.[index] ?? targetLabel(state, target));
-  return `${object.card.name} (${kind})${labels.length ? `; objetivo: ${labels.join(", ")}` : ""}`;
+  return `${object.card.name} (${kind})${stackObjectTargetsText(state, object)}`;
 }
 
 function livingSeats(state: GameState): SeatId[] {
@@ -5574,7 +5578,7 @@ function resolveTop(state: GameState): GameState {
     }
     const nextEffect = applyEffect(next, object, object.trigger.definition.effect);
     return logged(nextEffect, object.controller,
-      `Se resuelve la ${TRIGGER_EVENT_LABELS[object.trigger.definition.event]} de ${object.card.name}.`);
+      `Se resuelve la ${TRIGGER_EVENT_LABELS[object.trigger.definition.event]} de ${object.card.name}${stackObjectTargetsText(next, object)}.`);
   }
 
   const colorEffect = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "return-all-permanents-of-color" | "damage-all-creatures-of-color" }> =>
@@ -5723,7 +5727,8 @@ function resolveTop(state: GameState): GameState {
 
   if (activatedEffect) {
     const resolved = applyEffect(next, object, activatedEffect);
-    return logged(resolved, object.controller, `Se resuelve la habilidad activada de ${object.card.name}.`);
+    return logged(resolved, object.controller,
+      `Se resuelve la habilidad activada de ${object.card.name}${stackObjectTargetsText(resolved, object)}.`);
   }
 
   if (selectedEffect) {
