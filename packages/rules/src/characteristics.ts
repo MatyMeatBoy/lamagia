@@ -519,6 +519,7 @@ export type SpellEffect =
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
+  | { readonly kind: "each-other-player-sacrifice"; readonly permanentType: "Creature" | "Artifact" | "Enchantment" }
   | { readonly kind: "syphon-mind" }
   | { readonly kind: "xathrid-upkeep"; readonly fallbackLife: number }
   | { readonly kind: "disciple-of-bolas" }
@@ -3499,6 +3500,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
+  }
+  const eachOtherSacrifice = /^Each other player sacrifices (?:a|an) (creature|artifact|enchantment)\.?$/i.exec(text);
+  if (eachOtherSacrifice) {
+    const permanentType = `${eachOtherSacrifice[1]![0]!.toUpperCase()}${eachOtherSacrifice[1]!.slice(1).toLowerCase()}` as "Creature" | "Artifact" | "Enchantment";
+    return { effect: { kind: "each-other-player-sacrifice", permanentType }, target: "none" };
   }
   if (/^Create a token that's a copy of target creature you control$/i.test(text)) {
     return { effect: { kind: "create-copy-token", amount: 1 }, target: "creature-you-control" };

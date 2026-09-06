@@ -3274,6 +3274,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "each-other-player-sacrifice": {
+      let next = state;
+      for (const player of state.players) {
+        if (player.seat === controller || player.lost) continue;
+        const candidates = playerAt(next, player.seat).battlefield.filter((permanent) =>
+          cardProfile(permanent.card).types.includes(effect.permanentType));
+        if (!candidates.length) continue;
+        const victim = [...candidates].sort((left, right) => {
+          const leftValue = isCreature(cardProfile(left.card)) ? powerOf(left, next) + toughnessOf(left, next) : cardProfile(left.card).manaValue;
+          const rightValue = isCreature(cardProfile(right.card)) ? powerOf(right, next) + toughnessOf(right, next) : cardProfile(right.card).manaValue;
+          return leftValue - rightValue;
+        })[0]!;
+        next = movePermanentToZone(next, victim, "graveyard", true);
+        next = logged(next, player.seat, `${player.name} sacrifica ${victim.card.name}.`);
+      }
+      return next;
+    }
     case "bottom-attacker-controller-gains-toughness": {
       const target = object.targets[0];
       if (target?.kind !== "permanent") return state;
