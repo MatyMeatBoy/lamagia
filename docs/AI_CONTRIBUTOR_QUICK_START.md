@@ -33,6 +33,17 @@ For token work, read [`TOKEN_INVENTORY.md`](TOKEN_INVENTORY.md) and
 and preserve the set/printing mapping; do not implement the same token
 definition once per artwork.
 
+Regenerate the token queue from the catalog before assigning a large batch:
+
+```text
+python tools/rules/export_token_inventory.py --catalog data/catalog/prossh.sqlite --output data/rules/token-inventory.json --markdown-output docs/TOKEN_WORK_QUEUE.md
+```
+
+Workers may process up to 20 new `oracle_id` values per focused commit, but
+token printings are batched by `tokenKey` and must not be counted as separate
+rules implementations. Include the exact token keys, sets, images, tests, and
+limits in the worker report.
+
 Commander 2013 is a priority queue, not a global scope restriction. Continue
 with its remaining unclaimed clusters when assigned, but reusable primitives
 must be implemented globally and their regressions checked across all sets.
