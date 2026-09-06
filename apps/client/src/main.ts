@@ -1855,6 +1855,11 @@ function showZone(seat: number, zone: "library" | "hand" | "graveyard" | "exile"
     });
     button.addEventListener("contextmenu", (event) => {
       event.preventDefault();
+      if (button.dataset.zoneKind === "graveyard" && pendingTargetIncludes({ kind: "graveyard-card", seat: Number(button.dataset.zoneSeat), instanceId: button.dataset.zoneCard! })) {
+        chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.zoneSeat), instanceId: button.dataset.zoneCard! });
+        dialog("zone-view")?.close();
+        return;
+      }
       openCardActionMenu(button.dataset.zoneCard!);
     });
   });
