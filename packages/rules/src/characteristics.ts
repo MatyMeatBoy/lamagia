@@ -548,6 +548,8 @@ export type SpellEffect =
   | { readonly kind: "put-event-player-hand-card-on-library-top" }
   /** Copy the instant or sorcery spell that caused this trigger (CR 707.10). */
   | { readonly kind: "copy-triggered-spell" }
+  /** Copy a targeted instant or sorcery spell on the stack (CR 707.10, 707.12). */
+  | { readonly kind: "copy-target-spell"; readonly copies: number }
   /** Swap a blocking source's power with the creature it blocked until combat ends (CR 701.10). */
   | { readonly kind: "exchange-source-power-with-blocking-creature" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
@@ -3146,6 +3148,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Copy that spell\. You may choose new targets for the copy$/i.test(text)) {
     return { effect: { kind: "copy-triggered-spell" }, target: "none" };
   }
+  if (/^Copy target instant or sorcery spell(?: you control)?(?: twice)?\.?\s*(?:You may choose new targets for the cop(?:y|ies))?$/i.test(text)) {
+    return { effect: { kind: "copy-target-spell", copies: /twice/i.test(text) ? 2 : 1 }, target: "instant-or-sorcery-spell" };
+  }
   if (/^Exchange its power and the power of target creature it's blocking until end of combat$/i.test(text)) {
     return { effect: { kind: "exchange-source-power-with-blocking-creature" }, target: "blocked-creature" };
   }
@@ -3976,6 +3981,12 @@ function recognizeText(text: string): RecognizedText {
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell", unimplementedText: [], covered: true
     };
   }
+  if (/^You may choose new targets for target instant or sorcery spell\. Then copy that spell\. You may choose new targets for the copy\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "copy-target-spell", copies: 1 }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "instant-or-sorcery-spell", unimplementedText: [], covered: true
+    };
+  }
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library\.$/i.test(joined)) {
     return {
       effects: [{ kind: "search-library", types: ["Artifact", "Enchantment"], destination: "top", reveal: true }],
@@ -4137,6 +4148,8 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    if (/^You may choose new targets for the cop(?:y|ies)\.?$/i.test(line)
+      && /copy target instant or sorcery spell/i.test(body[lineIndex - 1]?.text ?? "")) continue;
     // Sun Droplet's two abilities are a reusable counter-bank shape: damage
     // supplies the event amount, while the upkeep trigger removes one counter
     // only if one is still present (CR 603.2, 603.4, 121.1).

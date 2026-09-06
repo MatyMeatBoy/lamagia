@@ -2676,6 +2676,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       };
       return { ...state, stack: [...state.stack, copy] };
     }
+    case "copy-target-spell": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      const original = state.stack.find((entry) => entry.id === target.stackId);
+      if (!original || !cardProfile(original.card).types.some((type) => type === "Instant" || type === "Sorcery")) return state;
+      const copies: StackObject[] = Array.from({ length: effect.copies }, (_, index) => ({
+        ...original,
+        id: `copy:${object.id}:${index}`,
+        controller,
+        card: { ...original.card, instance_id: `copy:${object.id}:${index}` },
+        label: `${original.card.name} (copy)`,
+        fromCopy: true,
+        trigger: undefined,
+        activated: undefined,
+        sourcePermanentId: undefined,
+        triggeredPermanentId: undefined
+      }));
+      return { ...state, stack: [...state.stack, ...copies] };
+    }
     case "exchange-source-power-with-blocking-creature": {
       const blockerId = object.trigger?.eventPermanentId;
       if (!blockerId) return state;
