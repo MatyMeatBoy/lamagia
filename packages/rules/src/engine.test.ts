@@ -164,12 +164,15 @@ describe("smart counter response and safe mana undo", () => {
     let game = twoSeatGame([], []);
     game = putOnBattlefield(game, 0, [make({ name: "Treasure", type_line: "Artifact — Treasure", oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color.", scryfall_id: "fixture-treasure-mana" })]);
     const treasure = game.players[0]!.battlefield[0]!;
-    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana" && entry.cardId === treasure.instance_id);
-    expect(action?.action).toMatchObject({ type: "activate-mana" });
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.cardId === treasure.instance_id && entry.action.mana === "G");
+    expect(action?.action).toMatchObject({ type: "activate-mana", mana: "G" });
     game = applyAction(game, 0, action!.action);
     expect(game.players[0]!.battlefield).toHaveLength(0);
-    expect(Object.values(game.players[0]!.manaPool).reduce((sum, amount) => sum + amount, 0)).toBe(1);
-  });  it("keeps `this card` fast mana and casting as separate legal hand actions", () => {
+    expect(game.players[0]!.manaPool.G).toBe(1);
+  });
+
+  it("keeps `this card` fast mana and casting as separate legal hand actions", () => {
     let game = twoSeatGame([], []);
     const guide = make({
       name: "Simian Spirit Guide", type_line: "Creature — Ape Spirit", mana_cost: "{2}{R}", cmc: 3,
@@ -353,6 +356,9 @@ const COLORLESS_PERMANENT = () => make({ name: "Colorless Permanent", type_line:
 const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
+const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcery", mana_cost: "{R}{G}{W}", cmc: 3, oracle_text: "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.", oracle_id: "333809cb-e196-45f2-8a67-31374438e56e", scryfall_id: "ab5056f0-8297-4b83-9655-7ff385e309a8" });
+const C13_SUDDEN_SPOILING = () => make({ name: "Sudden Spoiling", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nUntil end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2.", oracle_id: "dce202c7-fe8e-462a-858e-7a5a69bd5b6b", scryfall_id: "14d8bf94-ba55-437f-ac69-ece24049944d" });
+const C13_PHANTOM_NANTUKO = () => make({ name: "Phantom Nantuko", type_line: "Creature — Insect", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", keywords: ["Trample"], oracle_text: "Trample\nThis creature enters with two +1/+1 counters on it.\nIf damage would be dealt to this creature, prevent that damage. Remove a +1/+1 counter from this creature.\n{T}: Put a +1/+1 counter on this creature.", oracle_id: "0951b529-646c-4dfd-88ad-84ee117ce722", scryfall_id: "0951b529-646c-4dfd-88ad-84ee117ce722" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
 const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "You may activate abilities of creatures you control as though those creatures had haste.\n{1}, {T}: Untap target creature.", oracle_id: "4dc5726e-2f7e-4c2b-9616-c3301d212f78" });
@@ -523,6 +529,7 @@ const BURST_LIGHTNING = () => make({ name: "Burst Lightning", type_line: "Instan
 const FLING = () => make({ name: "Fling", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nFling deals damage equal to the sacrificed creature's power to any target.", oracle_id: "24227761-b50e-4b9e-93a2-e82d053b3e3d", scryfall_id: "050eb421-a446-4d84-b331-a267b02dc9f5" });
 const TREASURE_HUNT = () => make({ name: "Treasure Hunt", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand.", oracle_id: "05079479-86a6-4041-a395-83d325b6ddb7", scryfall_id: "53af54e3-412f-4bc4-8a3a-911eaa62be27" });
 const PSIONIC_BLAST = () => make({ name: "Psionic Blast", type_line: "Instant", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Psionic Blast deals 4 damage to any target and 2 damage to you.", oracle_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad", scryfall_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad" });
+const CHANDRAS_OUTRAGE = () => make({ name: "Chandra's Outrage", type_line: "Instant", mana_cost: "{2}{R}{R}", cmc: 4, oracle_text: "Chandra's Outrage deals 4 damage to target creature and 2 damage to that creature's controller." });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
 const WONDER = () => make({ name: "Wonder", type_line: "Creature — Incarnation", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Flying\nAs long as this card is in your graveyard and you control an Island, creatures you control have flying.", scryfall_id: "232284f7-c623-4895-9ab9-8b1a39926830" });
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
@@ -3073,6 +3080,34 @@ describe("casting", () => {
     game = applyAction(game, 0, xTwo!.action);
     expect(game.players[0]!.hand).toHaveLength(2);
     expect(game.players[0]!.life).toBe(42);
+  });
+
+  it("reuses the tapped self-counter primitive for Phantom Nantuko", () => {
+    const profile = profileOf(C13_PHANTOM_NANTUKO());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      preventsDamageByRemovingCounter: "+1/+1",
+      activatedAbilities: [expect.objectContaining({ requiresTap: true, effect: { kind: "add-counter-source", counter: "+1/+1", amount: 1 } })]
+    });
+    let game = readyToCast([C13_PHANTOM_NANTUKO()], [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => ({ ...permanent, summoningSick: false })) }));
+    const phantom = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Phantom Nantuko")!;
+    expect(phantom.counters["+1/+1"]).toBe(2);
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === phantom.instance_id && entry.action.abilityIndex === 0)!;
+    if (activation.action.type !== "activate") throw new Error("Phantom Nantuko counter activation was not offered.");
+    game = applyAction(game, 0, activation.action);
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === phantom.instance_id)!.counters["+1/+1"]).toBe(3);
+
+    let damageGame = readyToCast([CHANDRAS_OUTRAGE()], [C13_PHANTOM_NANTUKO(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    const damageTarget = damageGame.players[0]!.battlefield.find((permanent) => permanent.card.name === "Phantom Nantuko")!;
+    damageGame = applyAction(damageGame, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: damageTarget.instance_id }] });
+    damageGame = passUntil(damageGame, (state) => state.pendingChoice === null && state.stack.length === 0);
+    const damagedPhantom = damageGame.players[0]!.battlefield.find((permanent) => permanent.instance_id === damageTarget.instance_id)!;
+    expect(damagedPhantom.counters["+1/+1"]).toBe(1);
+    expect(damagedPhantom.damage).toBe(0);
   });
 
   it("resolves Oloro's optional life-gain draw and opponent life loss", () => {
@@ -11160,6 +11195,37 @@ describe("Oracle of Mul Daya's top-of-library land drop and public reveal", () =
     let game = twoSeatGame([], []);
     game = stage(game, 0, (player) => ({ library: [...toHand(0, [MOUNTAIN()], "no-reveal"), ...player.library] }));
     expect(projectGame(game, 1).players[0]!.revealedTopLibraryCard).toBeUndefined();
+  });
+});
+
+describe("Ramunap Excavator's graveyard land drop", () => {
+  const RAMUNAP_EXCAVATOR = () => make({ name: "Ramunap Excavator", type_line: "Creature — Snake Cleric", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "3", oracle_text: "You may play lands from your graveyard." });
+
+  it("recognizes the static permission", () => {
+    expect(profileOf(RAMUNAP_EXCAVATOR())).toMatchObject({ fullyImplemented: true, playLandsFromGraveyard: true });
+  });
+
+  it("offers and resolves playing a land straight from the graveyard", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [RAMUNAP_EXCAVATOR()]);
+    game = stage(game, 0, (player) => ({ graveyard: [...toHand(0, [MOUNTAIN()], "excavator-yard"), ...player.graveyard] }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const actions = legalActions(game, 0);
+    expect(actions.some((entry) => entry.action.type === "play-land" && entry.action.cardId === "excavator-yard-0")).toBe(true);
+
+    const graveyardSizeBefore = game.players[0]!.graveyard.length;
+    game = applyAction(game, 0, { type: "play-land", cardId: "excavator-yard-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Mountain")).toBe(true);
+    expect(game.players[0]!.graveyard).toHaveLength(graveyardSizeBefore - 1);
+  });
+
+  it("does not offer a graveyard land drop without the static permission", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ graveyard: [...toHand(0, [MOUNTAIN()], "no-excavator-yard"), ...player.graveyard] }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const actions = legalActions(game, 0);
+    expect(actions.some((entry) => entry.action.type === "play-land" && entry.action.cardId === "no-excavator-yard-0")).toBe(false);
   });
 });
 

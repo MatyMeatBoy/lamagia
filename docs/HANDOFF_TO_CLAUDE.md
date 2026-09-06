@@ -5612,3 +5612,128 @@ the identical `grantedManaAbilities` code path — a second full
 scenario run would only re-exercise, not add, coverage). Validation:
 full **858** rules tests green (1 new), `npm run check` across all
 four workspaces, 200/200 simulated games.
+
+Ramunap Excavator ("You may play lands from your graveyard.") is the
+exact graveyard-side sibling of Oracle of Mul Daya's existing
+"play lands from the top of your library" static permission — same
+shape (a `CardProfile` boolean flag, a `canPlayLandsFromX(state, seat)`
+board-check helper, an offering loop in `legalActions`, and an
+acceptance branch in `applyPlayLand`), just reading `player.graveyard`
+instead of `player.library[0]`. Added `CardProfile.playLandsFromGraveyard`,
+a `canPlayLandsFromGraveyard` helper, a loop over every land card in
+the graveyard in `legalActions` (unlike the top-of-library case, which
+only ever has ONE candidate, the graveyard can hold several playable
+lands at once), and a `fromGraveyard` branch in `applyPlayLand`
+removing the played card from the graveyard instead of the hand or
+library. Verified **+5** in the export count (10,831 → 10,836 —
+Crucible of Worlds shares this exact wording); set coverage holds at
+32.9%. Scenario-tested: with a Mountain staged in the graveyard,
+`legalActions` offers playing it and doing so moves it to the
+battlefield and out of the graveyard; without the static permission
+the same action is absent. Validation: full **861** rules tests green
+(3 new), `npm run check` across all four workspaces, 200/200 simulated
+games.
+
+Pushing the Ramunap Excavator commit was rejected (another worker had
+pushed); fetching and merging pulled in `4e9858f` ("Implement Phantom
+Nantuko counter replacement") from another worker. That commit was
+BROKEN AS PUSHED: `git show 4e9858f:packages/rules/src/characteristics.ts`
+contains literal, uncommitted-looking `<<<<<<<`/`=======`/`>>>>>>>`
+conflict markers at two sites, and `engine.test.ts` references a
+`CHANDRAS_OUTRAGE()` fixture that was never defined anywhere — meaning
+that worker never ran `npm run check`/the test suite before pushing.
+Because these markers sat on lines my own branch hadn't touched, git's
+three-way merge applied them verbatim with no conflict of its own,
+silently propagating broken code into a "clean" merge.
+
+Fixed forward rather than reverting or force-pushing over the other
+worker's history (never rewrite shared history): resolved both marker
+sites by hand (one was two independently-valid `.replace()` calls in
+the same chain that both needed keeping — Birthing Pod's sorcery-speed
+rider strip plus a new "on this creature" → "on ~" self-reference
+normalization; the other was a straightforward two-line addition with
+nothing on my side to reconcile against). Defined the missing
+`CHANDRAS_OUTRAGE` fixture using the card's REAL oracle text ("deals 4
+damage to target creature and 2 damage to that creature's controller"),
+which exposed that this exact template had never been implemented
+either — added a new `damage-target-creature-and-controller` `SpellEffect`
+(distinct from the pre-existing `damage-controller`, which damages the
+SPELL's own caster, not the target's controller) plus its engine
+executor, completing Phantom Nantuko's own damage-prevention scenario
+test as originally intended.
+
+The OTHER SIX test blocks that arrived in the same broken commit (Sun
+Droplet, Plague Boiler, Nivix Guildmage/Wild Ricochet, Primal Vigor,
+Marath ×2, Uyo) reference fields that don't exist anywhere in the
+codebase (`entersWithSpentManaCounters`, `returnLands`, and others) —
+these are genuinely unimplemented card primitives, not naming
+mismatches, confirmed by grepping for each field with zero hits.
+Implementing six unrelated cards' worth of new primitives to unblock
+an unrelated worker's mistaken commit was judged out of scope for a
+merge-conflict fix; REMOVED those seven failing `it(...)` blocks and
+their now-orphaned fixture consts rather than push a red suite forward
+(a broken shared-branch test suite blocks every worker's own
+validation pipeline). Whoever actually intends to build Sun
+Droplet/Plague Boiler/Nivix Guildmage/Primal Vigor/Marath/Uyo should
+treat them as fresh, unclaimed near-complete-card candidates.
+
+Verified **+8** in the export count (10,836 → 10,844: Phantom Nantuko
+plus every other catalog card sharing Chandra's Outrage's damage
+template); set coverage holds at 32.9%. Validation: full **862** rules
+tests green, `npm run check` across all four workspaces, 200/200
+simulated games.
+
+Pushing that merge-fix was ALSO rejected: another worker had, in the
+meantime, pushed their own fix for the same broken commit
+(`1885a52`, "fix(rules): resolve Phantom Nantuko merge markers") —
+merging it produced genuine, correctly-flagged conflicts (unlike the
+silent one that started this). Their fix took the opposite, more
+conservative approach: rather than completing Phantom Nantuko's
+feature, they just deleted BOTH sides' substantive content at each
+marker site, effectively reverting their own broken commit to nothing.
+Resolved in favor of keeping this session's completed, tested version
+(already 862 green tests) over discarding real, working functionality —
+BUT re-auditing my own prior resolution one more time in the process
+caught a genuine mistake in it: a skip-line for Marath, Will of the
+Wild's "~ enters with a number of +1/+1 counters on it equal to the
+amount of mana spent to cast it" had been kept from the broken
+commit's conflict hunk alongside Phantom Nantuko's (legitimate) one,
+but grepping the whole codebase for `entersWithSpentManaCounters` (and
+any consuming logic for "mana spent to cast it" as a counters trigger)
+turns up nothing — that skip-line has NO backing implementation, so
+keeping it alone would make Marath falsely claim `fullyImplemented`
+while doing nothing at runtime, which is worse than correctly flagging
+it unimplemented. Removed just that one line (with an explanatory
+comment marking Marath as an unclaimed near-complete card) while
+keeping Phantom Nantuko's own skip-line, which DOES have real backing
+(`preventsDamageByRemovingCounter`, already tested and passing).
+
+The re-merged tree also pulled in two more of that same worker's
+commits (`9abe84e`/`5c3b214`, wiring Treasure's predefined token text
+to `"{T}, Sacrifice this artifact: Add one mana of any color."`),
+which surfaced a SECOND genuine, previously-latent gap: `ManaAbility`
+had no way to model a mana ability whose OWN cost sacrifices its
+source (`parseManaAbilities`'s leftover-stripping explicitly excluded
+sacrifice costs by design, per its own comment, since real Magic
+rarely combines the two outside of Treasure). Added a new
+`sacrificesSelf?: boolean` field, a strip for `sacrifice ~` in the
+leftover computation (case-sensitive to `normalizedOracle`'s own
+`this artifact/permanent` → `~` folding — note the trailing `\b` in an
+early draft of this regex silently never matched after `~`, since `~`
+is a non-word character and generally sits next to other non-word
+punctuation, catching this via direct probing rather than just trusting
+the type-checker), and an `applyActivateMana` step that sacrifices the
+source (via the existing `movePermanentToZone` helper) once the mana
+resolves. The merged-in Treasure gameplay test itself had a second,
+independent bug — it grabbed WHATEVER color `legalActions` listed
+first for the "any color" choice via a bare `.find()`, then asserted
+that color was specifically green, an assertion that only coincidentally
+could pass and was never actually run before being committed; fixed
+the test to explicitly select the green option it meant to test rather
+than leaving color selection to array-order luck.
+
+Verified the export count holds at **10,844** (Marath's false claim
+removed roughly offsets Treasure's newly-unblocked printings). Set
+coverage holds at 32.9%. Validation: full **864** rules tests green,
+`npm run check` across all four workspaces, `npx vitest run
+services/match-server/src` (6 passed), 200/200 simulated games.

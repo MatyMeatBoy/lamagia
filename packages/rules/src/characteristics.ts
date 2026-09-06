@@ -55,7 +55,7 @@ export interface ManaAbility {
   readonly sourceZone?: "battlefield" | "hand";
   /** Exile the source card as part of a hand-based mana cost (e.g. Simian Spirit Guide). */
   readonly exilesSelf?: boolean;
-  /** Sacrifice the source as part of the mana ability's activation cost (e.g. Treasure). */
+  /** Sacrifice the source permanent as part of this mana ability's own cost (Treasure, CR 111.10). */
   readonly sacrificesSelf?: boolean;
   /** The mana types the controller may choose between for each mana produced. */
   readonly produces: readonly ManaType[];
@@ -583,6 +583,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X"; readonly kickedAmount?: number | "X" }
+  /** "~ deals N damage to target creature and M damage to that creature's controller" (Chandra's Outrage). */
+  | { readonly kind: "damage-target-creature-and-controller"; readonly amount: number; readonly controllerAmount: number }
   /** Incinerate-style damage rider that disables regeneration for the damaged creature (CR 615.1, 701.19). */
   | { readonly kind: "damage-any-target-prevents-regeneration"; readonly amount: number | "X" }
   /** Lava Coil-style damage rider that exiles the damaged creature if it would die this turn (CR 614.1). */
@@ -1166,6 +1168,8 @@ export interface CardProfile {
   readonly extraLandDropsPerTurn: number;
   /** "You may play lands from the top of your library" (Oracle of Mul Daya, CR 305.1). */
   readonly playLandsFromTopOfLibrary: boolean;
+  /** "You may play lands from your graveyard" (Ramunap Excavator, CR 305.1). */
+  readonly playLandsFromGraveyard: boolean;
   /** "Play with the top card of your library revealed" (Oracle of Mul Daya): public information, not merely visible to its controller. */
   readonly revealsTopOfLibrary: boolean;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
@@ -1551,6 +1555,12 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
     const requiresTap = /\{T\}/.test(costText);
+    // "{T}, Sacrifice this artifact: Add one mana of any color." (Treasure,
+    // CR 111.10): the only common mana ability whose cost includes
+    // sacrificing its own source. `normalizedOracle` already folds "this
+    // artifact"/"this permanent" (and the other self-nouns matched here) into
+    // `~` before this text is ever seen, so `~` alone would cover Treasure,
+    // but the fuller alternation stays as defense in depth.
     const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText);
     // Modern Oracle uses either the printed name, `~`, or `this card` here.
     // All three mean the same hand-based mana ability (CR 605.1a); do not let
@@ -1605,19 +1615,20 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const removeCounters = counterMatch && counterAmount
       ? [{ kind: counterMatch[1]!.trim().replace(/\s+/g, " ").toLowerCase(), amount: counterAmount }]
       : [];
-    // Costs beyond tapping, life, counters on the source, and mana are not
-    // modeled here; self-sacrifice is supported for predefined mana tokens.
+    // Costs beyond tapping, life, counters on the source, mana, and
+    // sacrificing the source itself are not modeled here; discard still
+    // stays excluded from mana abilities.
     const manaSymbols = (costText.match(/\{[^}]+\}/g) ?? []).filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
     const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
     if (manaSymbols.length && !manaCost) continue;
     const leftovers = costText
       .replace(/exile\s+(?:~|this\s+card)\s+from\s+your\s+hand/gi, "")
       .replace(new RegExp(`exile\\s+(?:${escapedSelfNames.join("|")})\\s+from\\s+your\\s+hand`, "gi"), "")
+      .replace(/sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
       .replace(/\{T\}/g, "")
       .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
       .replace(/remove\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+from\s+~/gi, "")
-      .replace(/sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
       .replace(/[,\s]/g, "");
     if (leftovers.length) continue;
     // Restrictions follow the first sentence in Oracle text. Parse the
@@ -1674,6 +1685,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
       ...(exilesSelfFromHand ? { sourceZone: "hand" as const, exilesSelf: true } : {}),
+      ...(sacrificesSelf ? { sacrificesSelf: true } : {}),
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
       ...(produced.commanderIdentity ? { commanderIdentity: true } : {}),
       ...(instruction.commanderEntryCounters ? { commanderEntryCounters: true } : {}),
@@ -1683,7 +1695,6 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
       ...(instruction.activationRestriction === undefined ? {} : { activationRestriction: instruction.activationRestriction }),
       ...(manaCost ? { manaCost } : {}),
-      ...(sacrificesSelf ? { sacrificesSelf: true } : {}),
       requiresTap, lifeCost: lifeCost + (instruction.painDamage ?? 0), text: line.trim()
     });
   }
@@ -2279,6 +2290,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
     .replace(/\.\s*Activate only as a sorcery\.?$/i, ".")
+    // Self-references in activated text use the printed object type rather
+    // than the parser's normalized source marker (CR 109.5).
+    .replace(/\bon this creature\b/gi, "on ~")
     // Oracle often uses “it” after naming the source in the cost/effect line.
     // Normalize it to the same source marker used by the shared effect parser.
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
@@ -3293,6 +3307,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
         effect: { kind: "compound", effects: [{ kind: "damage-any-target", amount: damage }, { kind: "damage-controller", amount: selfDamage }] },
         target: "any"
       };
+    }
+  }
+  const damageCreatureAndController = /^~ deals (\d+) damage to target creature and (\d+) damage to that creature'?s controller$/i.exec(text);
+  if (damageCreatureAndController) {
+    const amount = toNumber(damageCreatureAndController[1]!);
+    const controllerAmount = toNumber(damageCreatureAndController[2]!);
+    if (amount !== null && controllerAmount !== null) {
+      return { effect: { kind: "damage-target-creature-and-controller", amount, controllerAmount }, target: "creature" };
     }
   }
   if ((match = /^~ deals (\w+) damage to any target$/i.exec(text))) {
@@ -4787,6 +4809,15 @@ function recognizeText(text: string): RecognizedText {
     // unconsumed and still reported as unimplemented.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+x\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
+    // NOTE: a sibling skip-line for "~ enters with a number of +1/+1
+    // counters on it equal to the amount of mana spent to cast it" (Marath,
+    // Will of the Wild) was deliberately NOT restored here — grepping this
+    // codebase for `entersWithSpentManaCounters` and "mana spent to cast it"
+    // (as a counters trigger) turns up no consuming field or engine logic
+    // anywhere, so that skip-line alone would make Marath falsely report
+    // fullyImplemented while doing nothing at runtime. See the merge-fix
+    // commit for the full story; Marath is an unclaimed near-complete card.
+    if (/^if damage would be dealt to (?:this creature|~), prevent that damage\. remove a (?:[+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter from (?:this creature|~)\.?$/i.test(line)) continue;
     // Shock lands ("As ~ enters, you may pay 2 life. If you don't, it enters
     // tapped.") and reveal lands ("...you may reveal a <type> card from your
     // hand. If you don't, ~ enters tapped.") print the same replacement as
@@ -4856,6 +4887,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^you\s+may\s+play\s+(?:a|an|one|two|three)\s+additional\s+lands?\s+on\s+each\s+of\s+your\s+turns\.?$/i.test(line)) continue;
     // Oracle of Mul Daya (CR 305.1): consumed into CardProfile.playLandsFromTopOfLibrary.
     if (/^you\s+may\s+play\s+lands\s+from\s+the\s+top\s+of\s+your\s+library\.?$/i.test(line)) continue;
+    // Ramunap Excavator (CR 305.1): consumed into CardProfile.playLandsFromGraveyard.
+    if (/^you\s+may\s+play\s+lands\s+from\s+your\s+graveyard\.?$/i.test(line)) continue;
     // Consumed into CardProfile.revealsTopOfLibrary; the engine exposes the top
     // card as public information in the projection rather than a one-shot effect.
     if (/^play\s+with\s+the\s+top\s+card\s+of\s+your\s+library\s+revealed\.?$/i.test(line)) continue;
@@ -5657,6 +5690,7 @@ export function cardProfile(card: CardData): CardProfile {
     .find((match): match is RegExpExecArray => match !== null);
   const extraLandDropsPerTurn = extraLandDropsMatch ? toNumber(extraLandDropsMatch[1]) ?? 1 : 0;
   const playLandsFromTopOfLibrary = text.split("\n").some((line) => /^you may play lands from the top of your library$/i.test(line.trim().replace(/\.$/, "")));
+  const playLandsFromGraveyard = text.split("\n").some((line) => /^you may play lands from your graveyard$/i.test(line.trim().replace(/\.$/, "")));
   const revealsTopOfLibrary = text.split("\n").some((line) => /^play with the top card of your library revealed$/i.test(line.trim().replace(/\.$/, "")));
   const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
@@ -5798,6 +5832,7 @@ export function cardProfile(card: CardData): CardProfile {
     entersPrepared,
     extraLandDropsPerTurn,
     playLandsFromTopOfLibrary,
+    playLandsFromGraveyard,
     revealsTopOfLibrary,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
