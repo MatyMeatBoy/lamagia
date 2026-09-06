@@ -1013,7 +1013,11 @@ function cardActionMenuHtml(): string {
       const index = view!.legalActions.indexOf(entry);
       const description = entry.action.type === "cycle"
         ? (entry.note ?? "Cicla esta carta, paga su coste y roba una carta.")
-        : entry.note ?? entry.label;
+        : entry.action.type === "activate-mana"
+          ? (entry.note ?? "Activa esta habilidad de maná; la carta se mueve al exilio como coste.")
+          : entry.action.type === "toggle-trigger-yield"
+            ? (entry.note ?? "Declina automáticamente los triggers opcionales de esta carta; no afecta triggers de otros permanentes.")
+            : entry.note ?? entry.label;
       const choiceClass = entry.action.type === "toggle-trigger-yield" ? "choice-action trigger-yield-action" : "choice-action";
       return `<button class="action-row ${choiceClass}" type="button" data-action-index="${index}" title="${escapeHtml(description)}">
         <span><b>${escapeHtml(entry.label)}</b><small>${escapeHtml(description)}</small></span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
