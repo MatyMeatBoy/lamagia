@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,090**
-- Cards with a reusable existing primitive hint: **11,320**
-- Cards needing new primitive review: **3,770**
-- Templates: **12,146**
+- One-line cards: **15,066**
+- Cards with a reusable existing primitive hint: **11,311**
+- Cards needing new primitive review: **3,755**
+- Templates: **12,139**
 
 ## Worker rule
 
@@ -64,6 +64,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Kaya, Bane of the Dead | `29d58aa4-9a7e-4052-9b0d-fc282f1be40e` | activated | new primitive review | Your opponents and permanents your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof. |
 | needs-new-primitive | Angrath, Captain of Chaos | `de08f5d4-8868-4d0f-8c0e-d0d3a2105581` | activated | new primitive review | −2: Amass Zombies 2. |
 | reuse-existing | Arlinn, Voice of the Pack | `a15b83df-91b7-49f0-9bec-5776a3dac8bd` | counters | trigger / ETB | Each creature you control that's a Wolf or a Werewolf enters with an additional +1/+1 counter on it. |
+| reuse-existing | The Wanderer | `4c2196e5-6ed7-4cd2-b8e7-f01aff236569` | damage | damage / life | Prevent all noncombat damage that would be dealt to you and other permanents you control. |
 | reuse-existing | Samut, Tyrant Smasher | `80405d7a-f533-44bd-ac85-890476cf2b78` | static-continuous | static / continuous | −1: Target creature gets +2/+1 and gains haste until end of turn. |
 | needs-new-primitive | Saheeli, Sublime Artificer | `ab655810-f67e-4576-9174-35b16f5e3235` | activated | new primitive review | −2: Target artifact you control becomes a copy of another target artifact or creature you control until end of turn, except it's an artifact in addition to its other types. |
 | reuse-existing | Davriel, Rogue Shadowmage | `1bd5e51f-f9a5-4eb7-bda2-957310602c20` | damage | damage / life | At the beginning of each opponent's upkeep, if that player has one or fewer cards in hand, ~ deals 2 damage to them. |
@@ -270,7 +271,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Chief Engineer | `02dbb6f8-ef84-4156-87dc-34033e64fdb7` | activated | new primitive review | Artifact spells you cast have convoke. |
 | needs-new-primitive | Ainok Tracker | `bf84a598-12d3-406d-8eeb-40592e782b87` | activated | new primitive review | Morph {4}{R} |
 | reuse-existing | Altar of the Brood | `c3aafcdd-c890-4971-b8a9-5bfcad794c0b` | mill | trigger / ETB | Whenever another permanent you control enters, each opponent mills a card. |
-| needs-new-primitive | Smite the Monstrous | `649512ed-4908-450a-9652-b2c80df5e24d` | destroy | new primitive review | Destroy target creature with power 4 or greater. |
 | needs-new-primitive | Grim Haruspex | `72aef1d8-11df-4bc2-af83-907b05df73a8` | activated | new primitive review | Morph {B} |
 | reuse-existing | Resolute Archangel | `0d6dc95d-55ce-4ef8-b065-d7203f5bf642` | activated | damage / life | When ~ enters, if your life total is less than your starting life total, it becomes equal to your starting life total. |
 | reuse-existing | Dragonscale Boon | `629b3aee-b8fd-495a-a988-815a0aaf3e82` | counters | counter | Put two +1/+1 counters on target creature and untap it. |
@@ -519,4 +519,4 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Hall of Heliod's Generosity | `2fc070dc-f2f7-4648-8069-31d74790a39c` | activated | activated ability / mana | {1}{W}, {T}: Put target enchantment card from your graveyard on top of your library. |
 | reuse-existing | Spirit-Sister's Call | `83914a83-4de2-4d64-9770-f68a12014167` | exile | sacrifice | At the beginning of your end step, choose target permanent card in your graveyard. You may sacrifice a permanent that shares a card type with the chosen card. If you do, return the chosen card from your graveyard to the battlefield and it gains "If ~ would leave the battlefield, exile it instead of putting it anywhere else." |
 
-The JSON contains the remaining 14,590 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,566 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
