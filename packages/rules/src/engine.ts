@@ -3401,14 +3401,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const total = (object.kicked && effect.kickedAmount) ? effect.kickedAmount : effect.amount;
       let next = state;
       for (let index = 0; index < total; index += 1) {
-        const copy: GameCard = {
+        const copy: GameCard = uniqueTokenCard(next, {
           ...original.card,
           scryfall_id: `copytoken:${object.id}:${index}`,
           instance_id: `copytoken:${object.id}:${index}`,
           owner: controller,
           token: true,
           token_source_set_code: original.card.set_code
-        };
+        });
         next = putOntoBattlefield(next, controller, copy, false);
       }
       return logged(next, controller, `${sourceName} crea ${total} copia(s) de ${original.card.name}.`);
@@ -3911,7 +3911,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }));
         return logged(next, controller, `${playerAt(next, controller).name} amasa ${effect.amount} en ${existingArmy.card.name}.`);
       }
-      const token: GameCard = {
+      const token: GameCard = uniqueTokenCard(state, {
         scryfall_id: `token:${object.id}:amass`,
         instance_id: `token:${object.id}:amass`,
         owner: controller,
@@ -3926,7 +3926,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         colors: ["B"],
         keywords: [],
         token_source_set_code: object.card.set_code
-      };
+      });
       const next = putOntoBattlefield(state, controller, token, false, false, false, false, false, 0, [], [{ kind: "+1/+1", amount: effect.amount }]);
       return logged(next, controller, `${playerAt(next, controller).name} amasa ${effect.amount} (crea un token de Army).`);
     }
@@ -4419,13 +4419,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const owner = permanent.controller;
       let next = keywordOf(state, permanent, "indestructible") ? state : movePermanentToZone(state, permanent, "graveyard");
       const spec = effect.token;
-      const token: GameCard = {
+      const token: GameCard = uniqueTokenCard(next, {
         scryfall_id: `token:${object.id}:pongify`, instance_id: `token:${object.id}:pongify`, owner, token: true,
         name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.keywords.join(", "),
         power: spec.power === null ? null : String(spec.power), toughness: spec.toughness === null ? null : String(spec.toughness),
         colors: spec.colors, keywords: spec.keywords,
         token_source_set_code: object.card.set_code
-      };
+      });
       next = putOntoBattlefield(next, owner, token, false, spec.tapped);
       return logged(next, controller, `${permanent.card.name} es destruida; su controlador crea ${spec.name}.`);
     }
@@ -5192,13 +5192,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const owner = targetSpell.controller;
       const spec = effect.token;
       for (let index = 0; index < effect.amount; index += 1) {
-        const token: GameCard = {
+        const token: GameCard = uniqueTokenCard(next, {
           scryfall_id: `token:${object.id}:offer:${index}`, instance_id: `token:${object.id}:offer:${index}`, owner, token: true,
           name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.keywords.join(", "),
           power: spec.power === null ? null : String(spec.power), toughness: spec.toughness === null ? null : String(spec.toughness),
           colors: spec.colors, keywords: spec.keywords,
           token_source_set_code: object.card.set_code
-        };
+        });
         next = putOntoBattlefield(next, owner, token, false, spec.tapped);
       }
       return logged(next, controller, `${targetSpell.card.name} se contrarresta; su controlador crea ${effect.amount} ${spec.name}.`);
