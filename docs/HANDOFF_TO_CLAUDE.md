@@ -4191,6 +4191,45 @@ simulate:engine` 200/200, 10,111 global profiles.
 Prossh decklist status after this pass: **70 of 97 unique cards fully
 implemented (72.2%)**.
 
+Forbidden Orchard ("Whenever you tap this land for mana, target opponent
+creates a 1/1 colorless Spirit creature token") needed a genuinely new
+trigger event: the existing `becomes-tapped` fires for ANY tap (Icy
+Manipulator-style effects included), which would over-trigger here — CR
+requires this to fire specifically when the land is tapped to activate
+a mana ability. Added `TriggerEvent`/`GameEvent` variant `taps-for-mana`
+(carrying `permanentId`/`controller`/`card` like every other object
+event, so the existing generic `eventObject` helper and `"self"` subject
+match needed no changes) and raised it from `applyActivateMana`
+alongside the existing `raiseTapEvents` call, gated on
+`ability.requiresTap` — an untapped mana ability can't be "tapped for."
+As with the `play-land` event added earlier this session, adding a new
+`TriggerEvent` union member is caught immediately and completely by
+TypeScript's exhaustiveness checking on every `Record<TriggerEvent, ...>`
+map: this pass hit two, both real (a `default:` branch in `engine.ts`'s
+event-to-log-text switch that would have silently produced a nonsense
+message, and the client's `TRIGGER_GLYPHS` map in `abilities.ts`), and
+both had to be filled in before either `npm run check` workspace would
+pass — the exact safety net this pattern is for. Parsing this card also
+surfaced a real, previously-unnoticed and unrelated bug affecting
+roughly 97 catalog cards: the shared token-descriptor parser
+(`parseCreateToken`) recognizes exactly five color words (white, blue,
+black, red, green) to strip from a token's subtype text, but never
+recognized "colorless" — so "a 1/1 colorless Spirit creature token"
+produced a token with the correct EMPTY `colors` array but a wrong
+`typeLine` of "Creature — colorless Spirit" instead of "Creature —
+Spirit". Fixed by adding "colorless" to the same exclusion list as
+"artifact"/"creature"/"and" (grammar words already stripped from the
+subtype, not literal subtype text). Verified **+2** in the export count
+(10,111 → 10,113) and set coverage holds at 30.7%. Scenario-tested:
+tapping Forbidden Orchard for mana gives the OPPONENT (not the
+controller) a 1/1 Spirit with the corrected type line and empty colors;
+a plain non-mana tap (simulated directly on the permanent) raises no
+such token. Validation: **754 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,113 global profiles.
+
+Prossh decklist status after this pass: **71 of 97 unique cards fully
+implemented (73.2%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

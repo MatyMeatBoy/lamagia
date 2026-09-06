@@ -761,7 +761,9 @@ export type TriggerEvent =
   | "life-lost"
   | "class-level-up"
   /** The action of playing a land (CR 305.1), distinct from that land's own "enters the battlefield" event (City of Traitors). */
-  | "play-land";
+  | "play-land"
+  /** Specifically a mana ability's activation (Forbidden Orchard), narrower than the general "becomes-tapped" (a non-mana tap effect must not trigger this). */
+  | "taps-for-mana";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -813,7 +815,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "life-lost": "life-loss trigger",
   "class-level-up": "habilidad de nivel de Clase",
   "first-main-phase": "habilidad de la primera fase principal",
-  "play-land": "habilidad de jugar una tierra"
+  "play-land": "habilidad de jugar una tierra",
+  "taps-for-mana": "habilidad de girar por maná"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -2375,8 +2378,10 @@ function parseCreateToken(text: string): SpellEffect | null {
   const artifact = /\bartifact\b/i.test(descriptor);
   const creature = /\bcreature\b/i.test(descriptor);
   // Oracle token descriptors commonly join multiple colors with "and";
-  // conjunctions are grammar, not part of the token's subtype/name.
-  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature|and)$/i.test(word)).join(" ");
+  // conjunctions are grammar, not part of the token's subtype/name. "Colorless"
+  // is a real descriptor too (an absent color, not a subtype word) — the
+  // token's empty `colors` array already expresses it correctly.
+  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature|and|colorless)$/i.test(word)).join(" ");
   const name = (match[5]?.trim() || (subtype || (artifact ? "Treasure" : "Token"))).replace(/\s+token$/i, "");
   const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
@@ -2653,7 +2658,10 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i },
 
   // The action of playing a land (CR 305.1), not that land's own ETB (City of Traitors).
-  { event: "play-land", subject: "you", pattern: /^when\s+you\s+play\s+(?:a|another)\s+land,?\s*(.+)$/i }
+  { event: "play-land", subject: "you", pattern: /^when\s+you\s+play\s+(?:a|another)\s+land,?\s*(.+)$/i },
+  // Specifically a mana ability's activation (Forbidden Orchard), narrower than
+  // the general "becomes-tapped" — a non-mana tap effect must not trigger this.
+  { event: "taps-for-mana", subject: "self", pattern: /^whenever\s+you\s+tap\s+~\s+for\s+mana,?\s*(.+)$/i }
 ];
 
 function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { effectText: string }) | null {

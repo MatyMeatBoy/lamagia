@@ -263,6 +263,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     rule: "Se dispara cuando el jugador indicado juega una tierra.",
     enforced: "Se registra en el momento de jugar la tierra, no en su propia entrada al campo de batalla.",
     path: "M4 20h16M4 20V10l8-6 8 6v10"
+  },
+  "taps-for-mana": {
+    label: "Al girar por maná",
+    rule: "Se dispara cuando este permanente se gira para activar una habilidad de maná.",
+    enforced: "Más específico que un giro cualquiera: un giro sin producir maná no lo activa.",
+    path: "M12 2.5 20 7v10l-8 4.5L4 17V7l8-4.5zM12 8v4l3 2"
   }
 };
 

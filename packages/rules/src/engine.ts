@@ -346,7 +346,8 @@ export type GameEvent =
   | { readonly kind: "class-level-up"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly level: number }
   | { readonly kind: "upkeep" | "draw-step" | "end-step" | "first-main-phase"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number }
-  | { readonly kind: "play-land"; readonly seat: SeatId; readonly card: GameCard };
+  | { readonly kind: "play-land"; readonly seat: SeatId; readonly card: GameCard }
+  | { readonly kind: "taps-for-mana"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
 export interface BlockerDeclaration { readonly instanceId: string; readonly attackerId: string }
@@ -2238,6 +2239,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "class-level-up": return `${object!.card.name} alcanza el nivel ${event.level}`;
     case "first-main-phase": return `comienza la ${STEP_LABELS["precombat-main"]} de ${playerAt(state, event.activeSeat).name}`;
     case "play-land": return `${playerAt(state, event.seat).name} juega ${event.card.name}`;
+    case "taps-for-mana": return `${playerAt(state, event.controller).name} gira ${event.card.name} por maná`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -7547,8 +7549,11 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   }));
   const withBonus = manaBonus ? withPlayer(next, seat, (current) => ({ ...current, manaPool: addMana(current.manaPool, manaBonus, 1) })) : next;
   const tapped = ability.requiresTap ? raiseTapEvents(withBonus, activationState, [source.instance_id]) : withBonus;
+  const withManaTapEvent = ability.requiresTap
+    ? raiseEvent(tapped, { kind: "taps-for-mana", permanentId: source.instance_id, controller: seat, card: source.card })
+    : tapped;
   const output = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((mana) => `{${mana}}`).join("");
-  return logged(tapped, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
+  return logged(withManaTapEvent, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
 }
 
 function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cycle" }>): GameState {

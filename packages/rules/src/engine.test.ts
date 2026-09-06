@@ -10377,6 +10377,44 @@ describe("Beastmaster Ascension's quest-counter anthem", () => {
   });
 });
 
+describe("Forbidden Orchard's mana-tap gift to an opponent", () => {
+  const FORBIDDEN_ORCHARD = () => make({
+    name: "Forbidden Orchard", type_line: "Land",
+    oracle_text: "{T}: Add one mana of any color.\nWhenever you tap this land for mana, target opponent creates a 1/1 colorless Spirit creature token."
+  });
+
+  it("recognizes the mana-tap trigger, targeting the opponent for a colorless Spirit token", () => {
+    const profile = profileOf(FORBIDDEN_ORCHARD());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "taps-for-mana", subject: "self", targetKind: "opponent",
+      effect: { kind: "create-token-for-target-player", token: { name: "Spirit", typeLine: "Creature — Spirit", colors: [] } }
+    });
+  });
+
+  it("gives the opponent a 1/1 Spirit token when tapped for mana, but not on a non-mana tap", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [FORBIDDEN_ORCHARD()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const orchard = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forbidden Orchard")!;
+
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: orchard.instance_id, abilityIndex: 0, mana: "G" });
+    game = passUntil(game, (state) => state.triggerQueue.length === 0 && state.pendingChoice === null && state.stack.length === 0);
+
+    expect(game.players[0]!.manaPool.G).toBe(1);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Spirit")).toBe(true);
+  });
+
+  it("does not trigger from a plain non-mana tap", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [FORBIDDEN_ORCHARD()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Forbidden Orchard" ? { ...permanent, tapped: true } : permanent)
+    }));
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Spirit")).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
