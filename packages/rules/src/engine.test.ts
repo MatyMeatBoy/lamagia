@@ -2379,6 +2379,16 @@ describe("casting", () => {
     expect(legalActions(mainPhase, 0).some((entry) => entry.action.type === "activate" && entry.cardId === "hand-0")).toBe(false);
   });
 
+  it("keeps a real hand activation visible to smart priority", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ hand: toHand(0, [C13_SKYSCRIBING()]), autoPass: true }));
+    game = stage(game, 1, (player) => ({ autoPass: true }));
+    game = putOnBattlefield(game, 0, [ISLAND(), ISLAND(), ISLAND()]);
+    game = { ...game, step: "upkeep", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null };
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.cardId === "hand-0")).toBe(true);
+    expect(hasRealChoice(game, 0)).toBe(true);
+  });
+
   it("activates Eternal Dragon from the graveyard only during upkeep", () => {
     const dragon = C13_ETERNAL_DRAGON();
     expect(profileOf(dragon).activatedAbilities[0]).toMatchObject({
