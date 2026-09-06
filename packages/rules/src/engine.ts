@@ -9852,6 +9852,9 @@ export function settle(state: GameState): GameState {
         && choice.trigger?.definition.optional === true
         && sourceId !== undefined
         && sourceController === choice.seat
+        // Yield is a controller preference only. It must never suppress a
+        // payment choice belonging to another player (e.g. Kavu/Rhystic-style
+        // triggers), nor a trigger controlled by an opponent.
         && (playerAt(next, sourceController).yieldedTriggerSources?.includes(sourceId) ?? false);
       if (yielded) {
         next = applyChooseTrigger(next, choice.seat, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
