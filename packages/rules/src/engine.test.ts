@@ -8585,6 +8585,20 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.life).toBe(37);
   });
 
+  it("pumps Towashi Songshaper when another artifact its controller controls enters", () => {
+    const songshaper = make({ name: "Towashi Songshaper", type_line: "Creature — Human Samurai", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever another artifact you control enters, this creature gets +1/+0 until end of turn." });
+    const artifact = make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
+    const profile = profileOf(songshaper);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield", subject: "another-artifact-you-control",
+      effect: { kind: "modify-source-creature", power: 1, toughness: 0 }
+    });
+    let game = readyToCast([artifact], [songshaper, FOREST(), FOREST()]);
+    const songshaperInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Towashi Songshaper")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(powerOf(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === songshaperInPlay.instance_id)!, game)).toBe(3);
+  });
+
   it("lets the target player both draw and pay the life for a Sign in Blood effect", () => {
     const profile = profileOf(SIGN_IN_BLOOD());
     expect(profile.effects[0]).toMatchObject({

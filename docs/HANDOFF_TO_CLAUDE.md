@@ -6514,3 +6514,32 @@ it moves the caster from 40 to 43 life and the target from 40 to 37
 in the same resolution. Validation: full **913** rules tests green (1
 new), `npm run check` across all four workspaces, 200/200 simulated
 games.
+
+## another-artifact-you-control: closing the last "another X you control" gap (2026-09-06)
+
+While auditing the `artifact-you-control`/`enchantment-you-control`
+"enters under your control" vs "you control enters" phrasing duality
+fixed for Underhanded Designs above, noticed a SIBLING gap: unlike
+`creature-you-control` (which has a matching `another-creature-you-
+control` subject, both templates AND its runtime `triggerMatches`
+case), `artifact-you-control` had no `another-artifact-you-control`
+counterpart at all — zero trigger template, zero `TriggerSubject`
+union member, zero runtime case. A catalog search found 7 distinct
+cards using "Whenever another artifact you control enters," (CR
+109.5's "another" excluding the source itself). Added the missing
+`another-artifact-you-control` subject (mirroring
+`another-creature-you-control`'s exact runtime shape: `!isSelf &&
+<type check> && object.controller === watcher.controller`) and its
+trigger template (with the same enters-under-your-control /
+you-control-enters phrasing duality already built for the bare
+`artifact-you-control` sibling). Verified **+6** in the export count
+(11,085 → 11,091 — Towashi Songshaper, Mechan Assembler, and
+Oreplate Pangolin all confirmed fully implemented via direct probe,
+each needing zero additional effect work since their resolved
+effects — a self-pump, a once-per-turn token creation, and a
+pay-then-counter — were all already fully supported); `docs/
+SET_COVERAGE.md` holds at its stale 33.2%/true-33.7% split.
+Scenario-tested: Towashi Songshaper (power 2) correctly reaches power
+3 the instant a second artifact it controls resolves onto the
+battlefield. Validation: full **914** rules tests green (1 new), `npm
+run check` across all four workspaces, 200/200 simulated games.

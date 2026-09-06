@@ -915,6 +915,7 @@ export type TriggerSubject =
   | "land-you-control"
   | "artifact-you-control"
   | "enchantment-you-control"
+  | "another-artifact-you-control"
   | "another-creature"
   | "self-or-another-creature-you-control"
   | "any-creature"
@@ -3086,6 +3087,9 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // Same "X enters under your control" / "X you control enters" phrasing
   // duality already handled for lands, generalized here (Underhanded Designs).
   { event: "enters-battlefield", subject: "artifact-you-control", pattern: /^whenever\s+an\s+artifact(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },
+  // "another" must exclude the source itself (CR 109.5), same duality of
+  // phrasing already handled for the bare "an artifact..." template above.
+  { event: "enters-battlefield", subject: "another-artifact-you-control", pattern: /^whenever\s+another\s+artifact(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "enchantment-you-control", pattern: /^whenever\s+an\s+enchantment(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },
   // Errata dropped "under your control" from some printings (e.g. Essence
   // Warden, Soul Warden): the trigger now watches every creature entering,
