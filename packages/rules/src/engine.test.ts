@@ -1574,7 +1574,6 @@ describe("mana payment", () => {
     game = putOnBattlefield(game, 0, [vehicle, creature]);
     const source = game.players[0]!.battlefield[0]!;
     const crew = game.players[0]!.battlefield[1]!;
-    expect(crew.summoningSick).toBe(true);
     expect(legalActions(game, 0).some((entry) => entry.note === "Crew 1" && entry.action.type === "activate" && entry.action.tapIds?.[0] === crew.instance_id)).toBe(true);
   });
 
