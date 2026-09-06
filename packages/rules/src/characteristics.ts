@@ -122,6 +122,7 @@ export interface ActivatedAbility {
   readonly sacrificesSelf: boolean;
   /** Untapped creature chosen as an activation cost, optionally by subtype. */
   readonly tapsCreature?: { readonly subtype?: string; readonly mode: "any" | "another" };
+  readonly tapCost?: { readonly amount: number; readonly mode: "any" };
   /** Creature chosen as an activation cost, optionally excluding the source. */
   readonly sacrificesCreature?: "any" | "another";
   /** Multiple creatures chosen as one activation cost, e.g. "Sacrifice two creatures". */
