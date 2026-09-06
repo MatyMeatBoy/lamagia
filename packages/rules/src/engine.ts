@@ -5060,6 +5060,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : candidate)
       }));
     }
+    case "vanishing": {
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!source) return state;
+      const remaining = source.counters.time ?? 0;
+      const next = withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, time: Math.max(0, remaining - 1) } }
+          : permanent)
+      }));
+      if (remaining <= 1) {
+        const updated = findPermanent(next, source.instance_id);
+        return updated ? movePermanentToZone(next, updated, "graveyard", true) : next;
+      }
+      return next;
+    }
     case "grant-source-cannot-be-blocked-except-keyword": {
       const sourceId = object.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;

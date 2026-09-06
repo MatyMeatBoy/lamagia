@@ -630,6 +630,8 @@ export type SpellEffect =
   | { readonly kind: "animate-source"; readonly power: number; readonly toughness: number; readonly colors: readonly string[]; readonly subtypes: readonly string[]; readonly keywords: readonly EnforcedKeyword[]; readonly types?: readonly CardType[] }
   /** Sydri: animate a target noncreature artifact using its mana value (CR 613.6). */
   | { readonly kind: "animate-target-artifact-mana-value" }
+  /** Vanishing: remove a time counter at upkeep and sacrifice after the last is removed (CR 702.63). */
+  | { readonly kind: "vanishing" }
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
@@ -1203,6 +1205,8 @@ export interface CardProfile {
   readonly preventsDamageByRemovingCounter: string | null;
   /** Counters with which this permanent enters the battlefield. */
   readonly entersWithCounters: readonly CounterCost[];
+  /** Vanishing N supplies N time counters and an upkeep sacrifice trigger (CR 702.63). */
+  readonly vanishingAmount: number | null;
   /** "~ enters with X <kind> counters on it" (Walking Ballista, Hangarback Walker): X is the value paid for the spell's own {X} in its cost. */
   readonly entersWithVariableCounters: { readonly kind: string } | null;
   /** "~ enters with ... counters ... equal to the amount of mana spent to cast it" (CR 614.1c). */
@@ -4556,6 +4560,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+x\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
     if (/^~\s+enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast it\.?$/i.test(line)) continue;
+    if (/^vanishing\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/i.test(line)) continue;
     if (/^if damage would be dealt to (?:this creature|~), prevent that damage\. remove a (?:[+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter from (?:this creature|~)\.?$/i.test(line)) continue;
     // Shock lands ("As ~ enters, you may pay 2 life. If you don't, it enters
     // tapped.") and reveal lands ("...you may reveal a <type> card from your
@@ -4965,6 +4970,16 @@ function recognizeText(text: string): RecognizedText {
     }
     const triggerLine = line
       .replace(/^(?:landfall|morbid)\s+[—–-\uFFFD]\s*/i, "");
+    const entersOrLeaves = /^(?:when|whenever)\s+(?:~|this creature)\s+enters(?:\s+the\s+battlefield)?\s+or\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(triggerLine);
+    if (entersOrLeaves) {
+      const recognized = recognizeSentence(entersOrLeaves[1]!);
+      if (recognized) {
+        for (const event of ["enters-battlefield", "leaves-battlefield"] as const) {
+          triggers.push({ event, subject: "self", effect: recognized.effect, optional: false, targetKind: recognized.target, sourceText: line });
+        }
+        continue;
+      }
+    }
     const triggered = matchTriggerLine(triggerLine);
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
@@ -5218,6 +5233,11 @@ export function cardProfile(card: CardData): CardProfile {
     event: "enters-battlefield", subject: "another-creature",
     effect: { kind: "move-counter-from-source-to-triggered-creature", counter: "+1/+1" },
     optional: true, targetKind: "none", sourceText: `Graft ${graftAmount}`
+  });
+  const vanishingMatch = /(?:^|\n)vanishing\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/i.exec(text);
+  const vanishingAmount = vanishingMatch ? toNumber(vanishingMatch[1]!) : null;
+  if (vanishingAmount !== null) synthesizedTriggers.push({
+    event: "upkeep", subject: "you", effect: { kind: "vanishing" }, optional: false, targetKind: "none", sourceText: `Vanishing ${vanishingAmount}`
   });
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const staticManaAbilityGrants = isPermanent ? parseStaticManaAbilityGrants(text) : [];
@@ -5513,6 +5533,7 @@ export function cardProfile(card: CardData): CardProfile {
     entersWithCounters: isPermanent
       ? (() => {
           const counters = parseEntersWithCounters(text);
+          if (vanishingAmount !== null) counters.push({ kind: "time", amount: vanishingAmount });
           if (modularAmount !== null) counters.push({ kind: "+1/+1", amount: modularAmount });
           if (graftAmount === null) return counters;
           const existing = counters.find((counter) => counter.kind === "+1/+1");
@@ -5521,6 +5542,7 @@ export function cardProfile(card: CardData): CardProfile {
             : [...counters, { kind: "+1/+1", amount: graftAmount }];
         })()
       : [],
+    vanishingAmount,
     entersWithVariableCounters: isPermanent ? parseEntersWithVariableCounters(text) : null,
     entersWithSpentManaCounters: isPermanent && /^~ enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast it\.?$/im.test(text),
     isPermanent,
