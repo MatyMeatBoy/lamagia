@@ -10656,6 +10656,26 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
   });
 
+  it("keeps chained control Auras on one battlefield and restores the owner after both leave", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [CONTROL_MAGIC(), CONTROL_MAGIC()]) }));
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = putOnBattlefield(game, 0, [ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id));
+    const firstAura = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Control Magic")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-1", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.battlefield.filter((permanent) => permanent.instance_id === bear.instance_id).length === 1);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.instance_id === bear.instance_id)).toHaveLength(1);
+    const secondAura = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Control Magic" && permanent.instance_id !== firstAura.instance_id)!;
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== firstAura.instance_id && permanent.instance_id !== secondAura.instance_id) }));
+    game = settle(game);
+    expect(game.players[1]!.battlefield.filter((permanent) => permanent.instance_id === bear.instance_id)).toHaveLength(1);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.controller).toBe(1);
+  });
+
   it("parses Aura-granted activated abilities as reusable primitives", () => {
     for (const aura of [LEAFDRAKE_ROOST(), PRESENCE_OF_GOND(), SPAWNING_GROUNDS()]) {
       expect(profileOf(aura)).toMatchObject({ fullyImplemented: true, auraActivatedAbility: { requiresTap: true, effect: { kind: "create-token" } } });
