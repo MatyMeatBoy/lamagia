@@ -1189,6 +1189,8 @@ export interface CardProfile {
   readonly doesNotUntapDuringUntap: boolean;
   /** Printed attack/block restrictions and landwalk evasion. */
   readonly combatRules: CombatRules;
+  /** Prevents damage to this permanent by removing one matching counter (CR 614.1). */
+  readonly preventsDamageByRemovingCounter: string | null;
   /** Counters with which this permanent enters the battlefield. */
   readonly entersWithCounters: readonly CounterCost[];
   /** "~ enters with X <kind> counters on it" (Walking Ballista, Hangarback Walker): X is the value paid for the spell's own {X} in its cost. */
@@ -2141,6 +2143,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
+    // Self-references in activated text use the printed object type rather
+    // than the parser's normalized source marker (CR 109.5).
+    .replace(/\bon this creature\b/gi, "on ~")
     // Oracle often uses “it” after naming the source in the cost/effect line.
     // Normalize it to the same source marker used by the shared effect parser.
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
@@ -4472,6 +4477,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+x\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
     if (/^~\s+enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast it\.?$/i.test(line)) continue;
+    if (/^if damage would be dealt to (?:this creature|~), prevent that damage\. remove a (?:[+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter from (?:this creature|~)\.?$/i.test(line)) continue;
     // Shock lands ("As ~ enters, you may pay 2 life. If you don't, it enters
     // tapped.") and reveal lands ("...you may reveal a <type> card from your
     // hand. If you don't, ~ enters tapped.") print the same replacement as
@@ -5241,6 +5247,7 @@ export function cardProfile(card: CardData): CardProfile {
   const levelDefinitions = parseLevelDefinitions(text);
   const protectionFrom = text.split(/\r?\n/).flatMap((line) => parseProtectionFromLine(line) ?? []);
   const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
+  const damageCounterMatch = /if damage would be dealt to (?:this creature|~), prevent that damage\. remove a ([+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter from (?:this creature|~)\.?/i.exec(text.replace(/\s+/g, " "));
   // A Class's second/third ability block is inactive until its level is
   // reached (CR 702.134d); `recognizeText` parses the whole card body without
   // knowing about card type, so the level floor for each printed line is
@@ -5394,6 +5401,7 @@ export function cardProfile(card: CardData): CardProfile {
     cdaPowerToughness,
     lieutenant,
     combatRules,
+    preventsDamageByRemovingCounter: damageCounterMatch?.[1]?.trim().replace(/\s+/g, " ").toLowerCase() ?? null,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     doesNotUntapDuringUntap,
     entersWithCounters: isPermanent
