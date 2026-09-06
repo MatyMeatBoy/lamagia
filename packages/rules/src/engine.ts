@@ -1603,6 +1603,11 @@ function shouldPromptManaPayment(
   return new Set(usable.map(sourceSignature)).size > 1;
 }
 
+/** Stable user-facing card-name matching for search dialogs. */
+function normalizeCardName(value: string): string {
+  return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
 function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan | null {
   const player = playerAt(state, choice.seat);
   const payer = paymentPlayer(state, choice.seat, choice.excludePermanentId);
@@ -6465,12 +6470,14 @@ function applyStateBasedActions(state: GameState): GameState {
       changed = true;
     }
 
-    // Legend rule: a player keeps only the first copy of a legendary permanent.
+    // Legend rule (CR 704.5j): compare current copiable names, never printing
+    // or instance identity. Different cards with the same name are one legend
+    // group; different names may coexist even when their art/set matches.
     for (const player of next.players) {
       const seen = new Set<string>();
       for (const permanent of player.battlefield) {
         const profile = cardProfile(permanent.card);
-        if (!profile.supertypes.includes("Legendary")) continue;
+        if (!profile.supertypes.some((value) => value.toLowerCase() === "legendary")) continue;
         if (seen.has(permanent.card.name)) {
           next = movePermanentToZone(next, permanent, "graveyard");
           next = logged(next, player.seat, `Regla de legendarios: ${permanent.card.name} va al cementerio.`);
@@ -9705,10 +9712,10 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
   if (choice.type === "search-library-multi") return applyChooseMultiLibraryCard(state, seat, action, choice);
   if (choice.sourceId !== action.sourceId) throw new Error("Debes elegir una carta de la búsqueda pendiente.");
   const player = playerAt(state, seat);
-  const query = action.query.trim().toLocaleLowerCase();
+  const query = normalizeCardName(action.query);
   if (!query) throw new Error("Escribe el nombre de la carta que quieres buscar.");
   const candidates = player.library.filter((card) => choice.optionIds.includes(card.instance_id));
-  const matches = candidates.filter((card) => card.name.trim().toLocaleLowerCase() === query);
+  const matches = candidates.filter((card) => normalizeCardName(card.name) === query);
   // Copies with the same name are interchangeable for a name-based search;
   // choose the first stable library entry without exposing its instance id.
   const selected = matches[0];
@@ -9821,11 +9828,11 @@ function applyChooseMultiLibraryCard(
   choice: Extract<PendingChoice, { type: "search-library-multi" }>
 ): GameState {
   if (choice.sourceId !== action.sourceId) throw new Error("Debes elegir una carta de la búsqueda pendiente.");
-  const query = action.query.trim().toLocaleLowerCase();
+  const query = normalizeCardName(action.query);
   if (!query) throw new Error("Escribe el nombre de la carta que quieres buscar.");
   const selectedSet = new Set(choice.selectedIds);
   const selected = playerAt(state, seat).library.find((card) => choice.optionIds.includes(card.instance_id)
-    && !selectedSet.has(card.instance_id) && card.name.trim().toLocaleLowerCase() === query);
+    && !selectedSet.has(card.instance_id) && normalizeCardName(card.name) === query);
   if (!selected) throw new Error("La carta elegida ya no está en la biblioteca o ya fue elegida.");
   if (choice.search.maxTotalManaValue !== undefined) {
     const alreadySelected = playerAt(state, seat).library.filter((card) => selectedSet.has(card.instance_id));
@@ -10066,7 +10073,7 @@ function applyChooseScry(state: GameState, seat: SeatId, action: Extract<GameAct
   const player = playerAt(state, seat);
   const selected = action.ordinal !== undefined
     ? choice.remainingCards[action.ordinal]
-    : choice.remainingCards.find((card) => card.name.trim().toLocaleLowerCase() === action.query.trim().toLocaleLowerCase());
+    : choice.remainingCards.find((card) => normalizeCardName(card.name) === normalizeCardName(action.query));
   if (!selected) throw new Error("Debes elegir una carta visible de la selección de adivinar.");
   const remainingCards = choice.remainingCards.filter((card) => card.instance_id !== selected.instance_id);
   const topCards = action.bottom ? choice.topCards : [selected, ...choice.topCards];
