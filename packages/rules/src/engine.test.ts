@@ -1524,6 +1524,12 @@ describe("mana payment", () => {
     expect(targets[0]).toMatchObject({ instanceId: game.players[1]!.battlefield[0]!.instance_id });
   });
 
+  it("recognizes sorcery-speed activation without requiring a preceding period", () => {
+    const card = make({ name: "Sorcery Speed Test", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}: Draw a card Activate only as a sorcery." });
+    expect(profileOf(card)).toMatchObject({ fullyImplemented: true });
+    expect(profileOf(card).activatedAbilities[0]).toMatchObject({ sorcerySpeed: true });
+  });
+
   it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
     const profile = profileOf(PAIN_LAND());
     expect(profile.fullyImplemented).toBe(true);
