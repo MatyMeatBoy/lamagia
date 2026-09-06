@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **14,988**
-- Cards with a reusable existing primitive hint: **11,212**
-- Cards needing new primitive review: **3,776**
-- Templates: **12,049**
+- One-line cards: **15,006**
+- Cards with a reusable existing primitive hint: **11,226**
+- Cards needing new primitive review: **3,780**
+- Templates: **12,065**
 
 ## Worker rule
 
@@ -293,7 +293,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Karametra's Acolyte | `e8cf80a1-6908-4adb-88e7-2015672d4905` | activated | activated ability / mana | {T}: Add an amount of {G} equal to your devotion to green. |
 | needs-new-primitive | Hand of Justice | `af8eb20a-dfa2-49a4-892b-26d7e276fcd2` | destroy | new primitive review | {T}, Tap three untapped white creatures you control: Destroy target creature. |
 | reuse-existing | Curse of the Bloody Tome | `5480f855-80b7-45c7-94a9-071c7b5d5ccf` | mill | trigger / ETB | At the beginning of enchanted player's upkeep, that player mills two cards. |
-| reuse-existing | Survival of the Fittest | `119d719d-e965-45b4-9bc9-ac03211b10c2` | library-look | draw / discard | {G}, Discard a creature card: Search your library for a creature card, reveal that card, put it into your hand, then shuffle. |
 | needs-new-primitive | Elite Inquisitor | `4f7e865b-6ab0-4361-b864-63c38cdb2fed` | activated | new primitive review | Protection from Vampires, from Werewolves, and from Zombies |
 | needs-new-primitive | Show and Tell | `b83a3ba0-249e-4c39-bbf0-cb005413f7d2` | activated | new primitive review | Each player may put an artifact, creature, enchantment, or land card from their hand onto the battlefield. |
 | reuse-existing | Carnophage | `9ac77cfd-7d78-4c8a-bffc-17649a852114` | activated | damage / life | At the beginning of your upkeep, tap ~ unless you pay 1 life. |
@@ -495,6 +494,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Sandbar Crocodile | `e11926bf-ca14-4e1e-aca5-9ffedb91868c` | activated | new primitive review | Phasing |
 | needs-new-primitive | Zhalfirin Knight | `a534f06e-dae4-4d1a-96e9-7693bbb21e12` | activated | new primitive review | Flanking |
 | needs-new-primitive | Phyrexian Mite | `2667d723-01c8-4ea3-ac17-cedb3b842c3b` | activated | new primitive review | Toxic 1 |
+| reuse-existing | Gwenna, Eyes of Gaea | `7d95e72a-461e-4993-a190-847466a4b17c` | counters | trigger / ETB | Whenever you cast a creature spell with power 5 or greater, put a +1/+1 counter on ~ and untap it. |
 | reuse-existing | Guardian of Faith | `8e04a5e0-e22c-430b-a39a-c9f38e16ea86` | static-continuous | trigger / ETB | When ~ enters, any number of other target creatures you control phase out. |
 | needs-new-primitive | Changeling Outcast | `a61ef0cc-1da9-49f9-b0dc-01cf9f6205be` | combat-restriction | new primitive review | ~ can't block and can't be blocked. |
 | needs-new-primitive | Yavimaya, Cradle of Growth | `8dd5f5af-d2d8-4356-8617-8381081b930c` | activated | new primitive review | Each land is a Forest in addition to its other land types. |
@@ -513,10 +513,10 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Unnatural Growth | `7324abaa-48da-439d-9339-b0ea5eea612e` | activated | trigger / ETB | At the beginning of each combat, double the power and toughness of each creature you control until end of turn. |
 | reuse-existing | Wedding Announcement // Wedding Festivity | `259ac30c-cc05-4c04-9b23-71283f84b808` | token | trigger / ETB | At the beginning of your end step, put an invitation counter on ~. If you attacked with two or more creatures this turn, draw a card. Otherwise, create a 1/1 white Human creature token. Then if ~ has three or more invitation counters on it, transform it. |
 | reuse-existing | Necroduality | `d36acdfe-2b1b-4c19-8b81-0b3127e480fe` | token | trigger / ETB | Whenever a nontoken Zombie you control enters, create a token that's a copy of that creature. |
+| reuse-existing | Overcharged Amalgam | `d4838305-5392-42b2-81d1-9b9da71b20b1` | counters | activated ability / mana | When ~ exploits a creature, counter target spell, activated ability, or triggered ability. |
 | reuse-existing | Sanctum Weaver | `acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47` | activated | activated ability / mana | {T}: Add X mana of any one color, where X is the number of enchantments you control. |
 | reuse-existing | Briarbridge Tracker | `8fe6e954-f19b-4d11-83d3-74c634d51bad` | pump | create / token | As long as you control a token, ~ gets +2/+0. |
 | reuse-existing | Somberwald Beastmaster | `df35bf19-4cbf-4624-925d-ceca6bff596e` | activated | create / token | Creature tokens you control have deathtouch. |
 | reuse-existing | Quirion Beastcaller | `d777e428-cc50-40b1-a241-41576d2575d1` | counters | counter | When ~ dies, distribute X +1/+1 counters among any number of target creatures you control, where X is the number of +1/+1 counters on ~. |
-| reuse-existing | Extravagant Replication | `3a646245-b8b7-4f91-a312-d5eea9a9e49a` | token | trigger / ETB | At the beginning of your upkeep, create a token that's a copy of another target nonland permanent you control. |
 
-The JSON contains the remaining 14,488 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,506 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

@@ -69,6 +69,9 @@ exactly one unresolved engine line. Prefer its `reuse-existing` hints and fix
 the shared primitive; never add a card-name branch just to close one card.
 The machine-readable queue is `data/rules/near-complete-cards.json`; refresh it
 after every accepted batch so workers do not chase stale candidates.
+The generated Markdown is intentionally capped for readability; use the JSON
+for assignment and include the exact `oracle_id` list in the claim. Never treat
+the queue's display order as a card implementation order.
 Use [the compact Oracle IR](ORACLE_COMPACT_IR.md) to reuse operation symbols
 and operands across cards. The Python artifact is a context/scheduling aid;
 the TypeScript parser also lowers exact simple `draw`/`mill`/life clauses to
@@ -196,4 +199,7 @@ commit. Claim a new cluster with a new `BASE` for the next batch. The
 integrator reviews commits in order, normally accumulates 11 or more incoming
 commits, runs the full validation once, updates coverage, and marks merged
 claims. A conflict or safety issue is the only reason to integrate earlier.
+
+When a worker finishes early, it must not retake an existing claim: refresh the
+roadmap, draw another unclaimed cluster, and publish a separate focused commit.
 
