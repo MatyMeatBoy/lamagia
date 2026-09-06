@@ -536,3 +536,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-gain-life-static` | Reusable opponent-only target filter for printed life-gain effects, including Fiery Justice (CR 609.3, 119.3) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-other-static-spell` | Reusable target-player creature layer that removes abilities and sets base power/toughness until cleanup, including Sudden Spoiling (CR 613.1, 611.3) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-counter-triggered-shape-2` | Reusable damage-received counter bank plus upkeep removal/gain-life trigger for Sun Droplet (CR 603.2, 122.1) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-destroy-static-spell` | Reusable thresholded source-counter sacrifice and nonland-permanent sweep for Plague Boiler (CR 121.1, 704.5f, 701.7) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

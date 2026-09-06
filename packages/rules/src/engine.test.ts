@@ -272,6 +272,7 @@ const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcer
 const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcery", mana_cost: "{R}{G}{W}", cmc: 3, oracle_text: "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.", oracle_id: "333809cb-e196-45f2-8a67-31374438e56e", scryfall_id: "ab5056f0-8297-4b83-9655-7ff385e309a8" });
 const C13_SUDDEN_SPOILING = () => make({ name: "Sudden Spoiling", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nUntil end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2.", oracle_id: "dce202c7-fe8e-462a-858e-7a5a69bd5b6b", scryfall_id: "14d8bf94-ba55-437f-ac69-ece24049944d" });
 const C13_SUN_DROPLET = () => make({ name: "Sun Droplet", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Whenever you're dealt damage, put that many charge counters on this artifact.\nAt the beginning of each upkeep, you may remove a charge counter from this artifact. If you do, you gain 1 life.", oracle_id: "1820af5c-9cc2-4b77-b4ca-86084442f087", scryfall_id: "1820af5c-9cc2-4b77-b4ca-86084442f087" });
+const C13_PLAGUE_BOILER = () => make({ name: "Plague Boiler", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "At the beginning of your upkeep, put a plague counter on this artifact.\n{1}{B}{G}: Put a plague counter on this artifact or remove a plague counter from it.\nWhen this artifact has three or more plague counters on it, sacrifice it. If you do, destroy all nonland permanents.", oracle_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a", scryfall_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
 const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "You may activate abilities of creatures you control as though those creatures had haste.\n{1}, {T}: Untap target creature.", oracle_id: "4dc5726e-2f7e-4c2b-9616-c3301d212f78" });
@@ -3080,6 +3081,28 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     expect(game.players[0]!.life).toBe(lifeBefore + 1);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === droplet.instance_id)?.counters.charge).toBe(1);
+  });
+
+  it("reuses source-counter thresholds for C13 Plague Boiler", () => {
+    const profile = profileOf(C13_PLAGUE_BOILER());
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      manaCost: { raw: "{1}{B}{G}" }, effect: { kind: "toggle-source-counter", counter: "plague" }
+    });
+    expect(profile.triggers).toContainEqual(expect.objectContaining({
+      event: "source-counter-threshold", subject: "self", effect: { kind: "sacrifice-source-then-destroy-all-nonland" }
+    }));
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [C13_PLAGUE_BOILER(), MOUNTAIN(), SWAMP(), FOREST()], [], [BEAR()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Plague Boiler"
+        ? { ...permanent, counters: { plague: 2 } } : permanent)
+    }));
+    const boiler = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Plague Boiler")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: boiler.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => !state.players[0]!.battlefield.some((permanent) => permanent.instance_id === boiler.instance_id));
+    expect(game.players[0]!.battlefield.filter((permanent) => !profileOf(permanent.card).types.includes("Land"))).toHaveLength(0);
+    expect(game.players[1]!.battlefield.filter((permanent) => !profileOf(permanent.card).types.includes("Land"))).toHaveLength(0);
   });
 
   it("resolves Oloro's optional life-gain draw and opponent life loss", () => {

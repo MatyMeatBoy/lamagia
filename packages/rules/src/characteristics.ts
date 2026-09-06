@@ -640,6 +640,10 @@ export type SpellEffect =
   /** Cradle of Vitality: counters scale with the life-gain event amount. */
   | { readonly kind: "add-counter-target-creature-per-life-gained"; readonly counter: string }
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
+  /** A source chooses whether to add or remove one of its counters. */
+  | { readonly kind: "toggle-source-counter"; readonly counter: string }
+  /** Plague Boiler's threshold trigger: sacrifice the source, then destroy nonlands. */
+  | { readonly kind: "sacrifice-source-then-destroy-all-nonland" }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
   /** Ajani, the Greathearted: counters on creatures plus loyalty on other planeswalkers. */
@@ -801,6 +805,7 @@ export type TriggerEvent =
   | "deals-combat-damage-to-player"
   | "deals-damage-to-player"
   | "damage-received"
+  | "source-counter-threshold"
   | "becomes-tapped"
   | "spell-cast"
   | "card-cycled"
@@ -858,6 +863,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "deals-combat-damage-to-player": "habilidad de daño de combate",
   "deals-damage-to-player": "habilidad de daño a un jugador",
   "damage-received": "habilidad de daño recibido",
+  "source-counter-threshold": "habilidad de umbral de contador",
   "becomes-tapped": "habilidad de giro",
   "spell-cast": "habilidad de lanzamiento",
   "card-cycled": "habilidad de cycling",
@@ -2128,6 +2134,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
     .trim();
   const selfUntap = /^Untap ~\.?$/i.test(parsedEffectText);
+  const toggleSourceCounter = /^Put a plague counter on ~ or remove a plague counter from it\.?$/i.test(parsedEffectText);
   // Planeswalker loyalty abilities (CR 606): the cost is a signed loyalty change.
   const loyalty = /^\s*([+\u2212\u2013-])?\s*(\d+)\s*$/.exec(costText);
   if (loyalty) {
@@ -2157,6 +2164,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sacrificedToughnessLife = /^You gain life equal to the sacrificed creature's toughness\.?$/i.test(parsedEffectText);
   const recognized = selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
+    : toggleSourceCounter
+    ? { effect: { kind: "toggle-source-counter", counter: "plague" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
     ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
     : revealTopConditional
@@ -4145,6 +4154,14 @@ function recognizeText(text: string): RecognizedText {
         event: "upkeep", subject: "each-player", effect: { kind: "remove-source-counter-gain-life", counter: "charge", amount: 1 },
         optional: true, targetKind: "none", sourceText: line,
         condition: { kind: "source-has-counter-at-least", counter: "charge", amount: 1 }
+      });
+      continue;
+    }
+    const plagueThreshold = /^when\s+(?:this\s+artifact|~)\s+has\s+three\s+or\s+more\s+plague\s+counters?\s+on\s+it,\s+sacrifice\s+(?:it|~)\.\s*if\s+you\s+do,\s+destroy\s+all\s+nonland\s+permanents\.?$/i.test(line);
+    if (plagueThreshold) {
+      triggers.push({
+        event: "source-counter-threshold", subject: "self", effect: { kind: "sacrifice-source-then-destroy-all-nonland" },
+        optional: false, targetKind: "none", sourceText: line
       });
       continue;
     }
