@@ -399,6 +399,11 @@ function cardActionMenuEntries(cardId: string): LegalAction[] {
   return [...entries, ...yieldEntries];
 }
 
+function cardHasAlternateHandAction(cardId: string): boolean {
+  return cardActionEntriesForCard(cardId).some((entry) =>
+    entry.action.type === "activate-mana" || entry.action.type === "cycle" || entry.action.type === "toggle-trigger-yield");
+}
+
 function cardActionsForCard(cardId: string): LegalAction[] {
   return cardActionEntriesForCard(cardId);
 }
@@ -893,6 +898,10 @@ function handHtml(player: PlayerView): string {
     const isRevealOption = action?.action.type === "choose-reveal";
     const revealOptions = view?.legalActions.some((entry) => entry.action.type === "choose-reveal" && Boolean(entry.cardId));
     if (action && !isRevealOption) classes.push("playable");
+    // A hand card with more than one mode must always open the general menu.
+    // This prevents fast-mana cards such as Simian Spirit Guide from being
+    // interpreted as a cast on an ordinary click (CR 117.1b, 605.1a).
+    if (cardHasAlternateHandAction(card.instance_id)) classes.push("has-action-menu");
     if (isRevealOption) classes.push("choice-option");
     if (revealOptions && !isRevealOption) classes.push("choice-muted");
     if (!card.fullyImplemented) classes.push("partial");

@@ -7118,6 +7118,20 @@ describe("triggered abilities", () => {
     expect(game.log.some((entry) => entry.text.includes("no realiza la habilidad opcional de Fecundity"))).toBe(true);
   });
 
+  it("never yields a mandatory trigger from a source marked for optional yields", () => {
+    const sourceCard = make({
+      name: "Mandatory Trigger Source", type_line: "Creature — Human", mana_cost: "{1}{G}", cmc: 2,
+      power: "2", toughness: "2", oracle_text: "Whenever you gain life, draw a card."
+    });
+    let game = readyToCast([LIFE_SPELL()], [sourceCard, FOREST(), FOREST()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sourceCard.name)!;
+    game = applyAction(game, 0, { type: "toggle-trigger-yield", sourceId: source.instance_id, enabled: true });
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.hand.length).toBeGreaterThan(0);
+    expect(game.players[0]!.yieldedTriggerSources).toContain(source.instance_id);
+  });
+
   it("pays Foster and reveals until a creature, sending the rest to the graveyard", () => {
     const first = make({ name: "Revealed Land", type_line: "Land", cmc: 0 });
     const found = make({ name: "Revealed Creature", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "3", toughness: "3" });
