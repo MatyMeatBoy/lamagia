@@ -551,6 +551,12 @@ function onCardClick(cardId: string, forcedAction?: LegalAction): void {
   runAction(action, action.label.replace(/^Lanzar /, ""));
 }
 
+function targetSelectionHintHtml(): string {
+  if (!ui.pendingTarget) return "";
+  const remaining = ui.pendingTarget.targetKinds.length - ui.pendingTarget.targetIndex;
+  return `<div class="target-selection-hint" role="status"><b>Selecciona un objetivo</b><span>${remaining > 1 ? `Faltan ${remaining} objetivos.` : "Los objetivos legales están resaltados en la mesa y en la pila."}</span></div>`;
+}
+
 function cardActionMenuCard(cardId: string): CardView | undefined {
   return visibleCards().get(cardId);
 }
@@ -1254,7 +1260,8 @@ function render(): void {
       </section>
     </div>
   </main>
-    ${librarySearchHtml()}
+  ${librarySearchHtml()}
+  ${targetSelectionHintHtml()}
     ${scryHtml()}
     ${abilityMenuHtml()}
   ${cardActionMenuHtml()}
