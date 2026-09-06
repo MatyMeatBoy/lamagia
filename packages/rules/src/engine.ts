@@ -2244,6 +2244,11 @@ function triggerMatches(
     // The watcher is the Equipment; the event object must be the creature it is
     // attached to (Skullclamp, Argentum Armor).
     case "equipped-creature": return findPermanent(state, watcher.instanceId)?.attachedTo === object.permanentId;
+    // Same shape for an Aura (Pattern of Rebirth): the watcher is the Aura,
+    // the event object is the creature it enchants. SBAs haven't removed the
+    // Aura yet at the moment its host's "dies" event is raised, so the
+    // attachment link is still readable here.
+    case "enchanted-creature": return findPermanent(state, watcher.instanceId)?.attachedTo === object.permanentId;
     default: return false;
   }
 }
@@ -5522,6 +5527,40 @@ function resolveTop(state: GameState): GameState {
     if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
     if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep);
+    // A triggered ability's own search (Pattern of Rebirth's dies-triggered
+    // reanimation): the source stays on the battlefield, unlike a resolving
+    // spell, so this never moves it to a graveyard or exile.
+    const triggerSearch = object.trigger.definition.effect.kind === "search-library" ? object.trigger.definition.effect : null;
+    if (triggerSearch) {
+      const searchOptions = playerAt(next, object.controller).library
+        .filter((card) => {
+          const candidateProfile = cardProfile(card);
+          const typeMatches = !triggerSearch.types.length || triggerSearch.types.some((type) => candidateProfile.types.includes(type));
+          const subtypeMatches = !triggerSearch.subtypes?.length || triggerSearch.subtypes.some((subtype) =>
+            subtype.toLowerCase() === "basic" ? candidateProfile.supertypes.some((value) => value.toLowerCase() === "basic")
+              : hasSubtype(candidateProfile, subtype));
+          const colorMatches = !triggerSearch.colors?.length || triggerSearch.colors.some((color) => candidateProfile.colors.some((candidate) => candidate.toUpperCase() === color));
+          return typeMatches && subtypeMatches && colorMatches;
+        })
+        .map((card) => card.instance_id);
+      if (!searchOptions.length) {
+        return logged(shuffleLibrary(next, object.controller, playerAt(next, object.controller).library), object.controller,
+          `${object.trigger.sourceCard.name}: no hay una carta válida en la biblioteca.`);
+      }
+      return {
+        ...next,
+        pendingChoice: {
+          type: "search-library",
+          seat: object.controller,
+          sourceId: object.trigger.id,
+          optionIds: searchOptions,
+          sourceCard: object.trigger.sourceCard,
+          search: triggerSearch,
+          returnSourceToGraveyard: false,
+          exileSourceAfterResolution: false
+        }
+      };
+    }
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,

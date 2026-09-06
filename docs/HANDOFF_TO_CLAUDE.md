@@ -4437,3 +4437,51 @@ per-effect-kind "skip this specific target slot" behavior within a
 compound, that check belongs inside the specific `case` that owns a real
 target dependency (as `damage-divided-targets` already does), not as a
 blanket precondition on every `applyEffect` call.
+
+## Pattern of Rebirth: enchanted-creature subject and triggered search (2026-09-06)
+
+Two genuinely new primitives, both reusable well beyond this one card.
+First, a `TriggerSubject` for Auras: `"enchanted-creature"`, a direct
+parallel to the existing `"equipped-creature"` subject built earlier this
+session for Skullclamp — same shape (`findPermanent(state,
+watcher.instanceId)?.attachedTo === object.permanentId`), same timing
+guarantee (state-based actions haven't removed the Aura yet when its
+host's "dies" event is raised, so the attachment link is still readable).
+Second, and the more consequential of the two: `search-library` as a
+TRIGGERED ability's effect had never actually worked, despite `search-
+library` being one of the most reused effect kinds in the whole engine.
+The interactive choice that opens it lives entirely in `resolveTop`,
+specially checked only for a resolving SPELL (`profile.effects.find`) or
+an ACTIVATED ability (`activatedEffect`/`selectedEffect`) — the shared
+`applyEffect` switch itself has `case "search-library": return state;`,
+a deliberate no-op with a comment pointing at that special-cased pre-
+check. The `if (object.trigger) {...}` branch already special-cases
+`scry`/`surveil`/`look-top-select`/`drawUpTo` the same way, but never
+`search-library`, so a card whose OWN trigger needs to search (as
+opposed to search resolving from a spell or an equip-style ability)
+silently did nothing. Added a matching `triggerSearch` branch there,
+scoped to what a triggered search actually needs (type/subtype/color
+filtering, empty-library shuffle) without the spell/activated path's
+"up to N" auto-fetch or `maxManaValue` handling, which no triggered
+search in the catalog needs today — extend it there if one ever does,
+following the exact filter fields `search-library` already carries.
+Also fixed a genuine gap in the pre-existing `eventControllerChoice`
+machinery ("that creature's controller may ..."): the captured clause is
+naturally phrased in the third person ("search THEIR library"), but
+every shared effect template hard-codes first person ("Search YOUR
+library..."), so the clause never matched anything. Normalized with a
+targeted `.replace(/\btheir\b/gi, "your")` on just this captured text,
+since the resolved effect always acts on ITS OWN controller (the
+DIED creature's owner, in this case) regardless of who is doing the
+choosing. Verified **+9** in the export count (10,197 → 10,206:
+Pattern of Rebirth plus other catalog cards sharing the enchanted-
+creature-dies shape or the third-person `eventControllerChoice` fix)
+and set coverage holds at 31.2%. Scenario-tested: enchanting a Grizzly
+Bears with Pattern of Rebirth, then killing it with a Lightning Bolt,
+opens a library search offering only creature cards (a Sol Ring in the
+same library is correctly excluded); choosing the creature card puts it
+directly onto the battlefield. Validation: **781 rules tests**, `npm run
+check`, `npm run simulate:engine` 200/200, 10,206 global profiles.
+
+Prossh decklist status after this pass: **74 of 97 unique cards fully
+implemented (76.3%)**.

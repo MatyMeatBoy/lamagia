@@ -813,6 +813,7 @@ export type TriggerSubject =
   | "self-or-another-creature-you-control"
   | "any-creature"
   | "equipped-creature"
+  | "enchanted-creature"
   | "creature-attacks-opponent"
   | "creature-attacks-enchanted-player"
   | "player-attacks-enchanted-player"
@@ -2648,6 +2649,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // static P/T-doubler grant, wired here for the first time as a real event.
   { event: "dies", subject: "equipped-creature", pattern: /^whenever\s+equipped\s+creature\s+dies,?\s*(.+)$/i },
   { event: "attacks", subject: "equipped-creature", pattern: /^whenever\s+equipped\s+creature\s+attacks,?\s*(.+)$/i },
+  { event: "dies", subject: "enchanted-creature", pattern: /^when(?:ever)?\s+enchanted\s+creature\s+dies,?\s*(.+)$/i },
 
   // Another object triggers it. `another` excludes the source itself (CR 109.5).
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
@@ -4796,7 +4798,13 @@ function recognizeText(text: string): RecognizedText {
       const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
+      // The event-controller's own actions are phrased in the third person
+      // ("search THEIR library", not "search your library"); normalize to
+      // the first-person grammar the shared effect templates already expect,
+      // since the resolved effect always acts on ITS controller regardless
+      // of who is doing the choosing (Pattern of Rebirth).
+      const eventControllerEffectText = eventControllerChoice?.[1]?.trim().replace(/\btheir\b/gi, "your");
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerEffectText ?? triggered.effectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");

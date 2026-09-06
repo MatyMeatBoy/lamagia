@@ -10891,6 +10891,50 @@ describe("Mana Crypt's upkeep coin flip", () => {
   });
 });
 
+describe("Pattern of Rebirth's dies-triggered reanimation tutor", () => {
+  const PATTERN_OF_REBIRTH = () => make({
+    name: "Pattern of Rebirth", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3,
+    oracle_text: "Enchant creature\nWhen enchanted creature dies, that creature's controller may search their library for a creature card, put that card onto the battlefield, then shuffle."
+  });
+
+  it("wires 'enchanted creature dies' to a new enchanted-creature trigger subject", () => {
+    const profile = profileOf(PATTERN_OF_REBIRTH());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "dies", subject: "enchanted-creature", optional: true, choiceBy: "event-controller",
+      effect: { kind: "search-library", types: ["Creature"], destination: "battlefield" }
+    });
+  });
+
+  it("lets the fallen creature's controller tutor a replacement onto the battlefield", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEAR(), FOREST(), FOREST(), FOREST(), MOUNTAIN()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [PATTERN_OF_REBIRTH(), BOLT()], "pattern-hand"),
+      library: [...toHand(0, [SOL_RING(), TRAMPLER()], "pattern-library"), ...player.library]
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "cast", cardId: "pattern-hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Pattern of Rebirth")?.attachedTo).toBe(bear.instance_id);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "pattern-hand-1", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library" }>;
+    const legalNames = game.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(legalNames).toContain("Big Stomper");
+    expect(legalNames).not.toContain("Sol Ring");
+
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Big Stomper" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
