@@ -2419,7 +2419,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
   const exilesGraveyardCardsMatch = /exile\s+(two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/i.exec(costText);
   const removedCounters: CounterCost[] = [];
-  for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+~/gi)) {
+  for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+(?:~|this\s+(?:creature|permanent|artifact))/gi)) {
     const amount = toNumber(match[1]);
     const kind = match[2]?.trim().replace(/\s+/g, " ").toLowerCase();
     if (amount !== null && kind) removedCounters.push({ kind, amount });
@@ -2442,7 +2442,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/discard\s+(?:~|this\s+card)/gi, "")
     .replace(/exile\s+(?:two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
-    .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+[+\-]\d+\/[+\-]\d+\s+counters?\s+from\s+~/gi, "")
+    .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+(?:[+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*?)\s+counters?\s+from\s+(?:~|this\s+(?:creature|permanent|artifact))/gi, "")
     .replace(/[,\s]/g, "");
   if (leftovers.length) return null;
   return {

@@ -6142,3 +6142,43 @@ attacking, accepting the optional trigger, and targeting the Bear
 returns it to the battlefield while the Big Guy stays in the
 graveyard. Validation: full **901** rules tests green (1 new), `npm
 run check` across all four workspaces, 200/200 simulated games.
+
+## Icatian Javelineers: a real bug in the remove-counter cost regex (2026-09-06)
+
+Icatian Javelineers ("This creature enters with a javelin counter on
+it. {T}, Remove a javelin counter from this creature: It deals 1
+damage to any target.") looked, from the near-complete queue's own
+heuristic, like it should already work — a probe confirmed the ETB
+counter parsed fine, but the activated ability came back completely
+unrecognized (`activatedAbilities: []`). Root cause: the
+`removeCounters` activation-COST regex (used by every regular, non-
+mana `ActivatedAbility` with a "Remove a [counter] counter from ~:"
+cost — already extensively wired end-to-end at runtime, proven by an
+existing test for Deathbringer Thoctar's `+1/+1`-counter removal
+cost) required the self-reference to be the literal `~` marker.
+Wizards' modern Oracle template instead prints "from THIS CREATURE"
+for a bare removal cost, and — unlike many other self-reference
+sites in this parser — nothing upstream folds "this creature" into
+`~` before this specific regex runs. Widened both the cost-parsing
+regex AND its sibling leftover-stripping regex (which marks a cost
+clause as "consumed" so the rest of the ability doesn't get flagged
+unrecognized) to accept `(?:~|this\s+(?:creature|permanent|artifact))`
+in the same position, mirroring the `(?:this creature|~)`
+alternation pattern already used at several OTHER self-reference
+sites in this file. This is a genuine regex bug, not a missing
+feature — the runtime side, the ETB-counter side, and even NAMED
+(non-+1/+1) counter kinds were already fully supported; only the
+"this creature" phrasing variant of the cost fell through. Verified
+**+37** in the export count (10,937 → 10,974 — this exact cost
+phrasing appears on many other catalog cards using named "remove a
+counter" costs, e.g. charge/nest/etc.) and set coverage advanced
+33.2% → 33.3%, by far the largest single-line jump of this MH3-pivot
+window. Scenario-tested: a fixture Icatian Javelineers enters with
+one javelin counter (via the existing `entersWithCounters`
+mechanism); activating its ability deals 1 damage to the opponent and
+removes the counter; with the counter gone, the ability is correctly
+no longer offered. Validation: full **905** rules tests green (1
+new), `npm run check` across all four workspaces, 200/200 simulated
+games.
+
+**NOTE on `docs/SET_COVERAGE.md` staleness**: `tools/rules/audit_worker_commit.py` caps a single commit's diff at 20 distinct oracle_ids (a scope gate against sweeping, hard-to-review claims). `docs/SET_COVERAGE.md`'s own "Pendientes por edición" section lists each not-yet-implemented card with its oracle_id, so regenerating it after THIS fix's +37 jump alone exceeds that cap — the regenerated file was reverted out of this commit to keep it auditable, so the checked-in copy still reads 33.2% (stale) even though the true, live-regenerated figure is 33.3%. It will catch up naturally the next time someone regenerates and commits it (ideally bundled with a small enough number of newly-completed cards that the cumulative backlog stays under the cap, or accepted as an explicit exception).

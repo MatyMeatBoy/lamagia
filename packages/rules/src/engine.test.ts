@@ -3960,6 +3960,30 @@ describe("casting", () => {
     expect(updated.counters["+1/+1"]).toBe(0);
   });
 
+  it("recognizes a named (non +1/+1) counter as a removal cost on Icatian Javelineers", () => {
+    const javelineers = make({ name: "Icatian Javelineers", type_line: "Creature — Human Soldier", mana_cost: "{W}", cmc: 1, power: "1", toughness: "1", oracle_text: "This creature enters with a javelin counter on it.\n{T}, Remove a javelin counter from this creature: It deals 1 damage to any target." });
+    const profile = profileOf(javelineers);
+    expect(profile.entersWithCounters).toEqual([{ kind: "javelin", amount: 1 }]);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      requiresTap: true,
+      removeCounters: [{ kind: "javelin", amount: 1 }],
+      effect: { kind: "damage-any-target", amount: 1 },
+      targetKind: "any"
+    });
+    let game = readyToCast([], [javelineers], [], [BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Icatian Javelineers")!;
+    expect(source.counters["javelin"]).toBe(1);
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    if (!activation || activation.action.type !== "activate") throw new Error("Expected the javelin-counter activation.");
+    game = applyAction(game, 0, { ...activation.action, targets: [{ kind: "player", seat: 1 }] });
+    const updated = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!;
+    expect(updated.counters["javelin"]).toBe(0);
+    expect(game.players[1]!.life).toBe(39);
+    // No javelin counters left, so the ability is no longer offered.
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)).toBe(false);
+  });
+
   it("enforces a creature's cannot-be-blocked restriction", () => {
     const profile = profileOf(UNBLOCKABLE());
     expect(profile.combatRules.cannotBeBlocked).toBe(true);
