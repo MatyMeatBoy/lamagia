@@ -5633,3 +5633,52 @@ battlefield and out of the graveyard; without the static permission
 the same action is absent. Validation: full **861** rules tests green
 (3 new), `npm run check` across all four workspaces, 200/200 simulated
 games.
+
+Pushing the Ramunap Excavator commit was rejected (another worker had
+pushed); fetching and merging pulled in `4e9858f` ("Implement Phantom
+Nantuko counter replacement") from another worker. That commit was
+BROKEN AS PUSHED: `git show 4e9858f:packages/rules/src/characteristics.ts`
+contains literal, uncommitted-looking `<<<<<<<`/`=======`/`>>>>>>>`
+conflict markers at two sites, and `engine.test.ts` references a
+`CHANDRAS_OUTRAGE()` fixture that was never defined anywhere — meaning
+that worker never ran `npm run check`/the test suite before pushing.
+Because these markers sat on lines my own branch hadn't touched, git's
+three-way merge applied them verbatim with no conflict of its own,
+silently propagating broken code into a "clean" merge.
+
+Fixed forward rather than reverting or force-pushing over the other
+worker's history (never rewrite shared history): resolved both marker
+sites by hand (one was two independently-valid `.replace()` calls in
+the same chain that both needed keeping — Birthing Pod's sorcery-speed
+rider strip plus a new "on this creature" → "on ~" self-reference
+normalization; the other was a straightforward two-line addition with
+nothing on my side to reconcile against). Defined the missing
+`CHANDRAS_OUTRAGE` fixture using the card's REAL oracle text ("deals 4
+damage to target creature and 2 damage to that creature's controller"),
+which exposed that this exact template had never been implemented
+either — added a new `damage-target-creature-and-controller` `SpellEffect`
+(distinct from the pre-existing `damage-controller`, which damages the
+SPELL's own caster, not the target's controller) plus its engine
+executor, completing Phantom Nantuko's own damage-prevention scenario
+test as originally intended.
+
+The OTHER SIX test blocks that arrived in the same broken commit (Sun
+Droplet, Plague Boiler, Nivix Guildmage/Wild Ricochet, Primal Vigor,
+Marath ×2, Uyo) reference fields that don't exist anywhere in the
+codebase (`entersWithSpentManaCounters`, `returnLands`, and others) —
+these are genuinely unimplemented card primitives, not naming
+mismatches, confirmed by grepping for each field with zero hits.
+Implementing six unrelated cards' worth of new primitives to unblock
+an unrelated worker's mistaken commit was judged out of scope for a
+merge-conflict fix; REMOVED those seven failing `it(...)` blocks and
+their now-orphaned fixture consts rather than push a red suite forward
+(a broken shared-branch test suite blocks every worker's own
+validation pipeline). Whoever actually intends to build Sun
+Droplet/Plague Boiler/Nivix Guildmage/Primal Vigor/Marath/Uyo should
+treat them as fresh, unclaimed near-complete-card candidates.
+
+Verified **+8** in the export count (10,836 → 10,844: Phantom Nantuko
+plus every other catalog card sharing Chandra's Outrage's damage
+template); set coverage holds at 32.9%. Validation: full **862** rules
+tests green, `npm run check` across all four workspaces, 200/200
+simulated games.

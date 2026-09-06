@@ -580,6 +580,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X"; readonly kickedAmount?: number | "X" }
+  /** "~ deals N damage to target creature and M damage to that creature's controller" (Chandra's Outrage). */
+  | { readonly kind: "damage-target-creature-and-controller"; readonly amount: number; readonly controllerAmount: number }
   /** Incinerate-style damage rider that disables regeneration for the damaged creature (CR 615.1, 701.19). */
   | { readonly kind: "damage-any-target-prevents-regeneration"; readonly amount: number | "X" }
   /** Lava Coil-style damage rider that exiles the damaged creature if it would die this turn (CR 614.1). */
@@ -2274,13 +2276,10 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sorcerySpeedOnly = /\.\s*Activate only as a sorcery\.?$/i.test(effectText);
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
-<<<<<<< HEAD
     .replace(/\.\s*Activate only as a sorcery\.?$/i, ".")
-=======
     // Self-references in activated text use the printed object type rather
     // than the parser's normalized source marker (CR 109.5).
     .replace(/\bon this creature\b/gi, "on ~")
->>>>>>> 1c74346b (Implement Phantom Nantuko counter replacement)
     // Oracle often uses “it” after naming the source in the cost/effect line.
     // Normalize it to the same source marker used by the shared effect parser.
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
@@ -3280,6 +3279,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
         effect: { kind: "compound", effects: [{ kind: "damage-any-target", amount: damage }, { kind: "damage-controller", amount: selfDamage }] },
         target: "any"
       };
+    }
+  }
+  const damageCreatureAndController = /^~ deals (\d+) damage to target creature and (\d+) damage to that creature'?s controller$/i.exec(text);
+  if (damageCreatureAndController) {
+    const amount = toNumber(damageCreatureAndController[1]!);
+    const controllerAmount = toNumber(damageCreatureAndController[2]!);
+    if (amount !== null && controllerAmount !== null) {
+      return { effect: { kind: "damage-target-creature-and-controller", amount, controllerAmount }, target: "creature" };
     }
   }
   if ((match = /^~ deals (\w+) damage to any target$/i.exec(text))) {
@@ -4774,11 +4781,8 @@ function recognizeText(text: string): RecognizedText {
     // unconsumed and still reported as unimplemented.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+x\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
-<<<<<<< HEAD
-=======
     if (/^~\s+enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast it\.?$/i.test(line)) continue;
     if (/^if damage would be dealt to (?:this creature|~), prevent that damage\. remove a (?:[+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter from (?:this creature|~)\.?$/i.test(line)) continue;
->>>>>>> 1c74346b (Implement Phantom Nantuko counter replacement)
     // Shock lands ("As ~ enters, you may pay 2 life. If you don't, it enters
     // tapped.") and reveal lands ("...you may reveal a <type> card from your
     // hand. If you don't, ~ enters tapped.") print the same replacement as

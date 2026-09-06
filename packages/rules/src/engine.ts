@@ -3848,6 +3848,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       return state;
     }
+    case "damage-target-creature-and-controller": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const next = dealDamageToPermanent(state, target.instanceId, effect.amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+      return dealDamageFromObject(next, permanent.controller, effect.controllerAmount, sourceName, object);
+    }
     case "damage-any-target-prevents-regeneration": {
       const target = object.targets[0];
       if (!target) return state;
