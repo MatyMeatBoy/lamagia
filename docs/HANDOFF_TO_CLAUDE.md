@@ -4,6 +4,244 @@
 
 Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
+### Card-engine primitives — 2026-09-06
+
+- **"At the beginning of the end step, sacrifice ~"** — the `end-step` trigger
+  table gained an `each|the` alternation (Ball Lightning, Spark Elemental,
+  Hunted-token cycle). **"~ deals N damage to target creature and you gain N
+  life"** — the `damageAndLife` regex now also matches `target creature` /
+  `target creature or planeswalker` (Firebolt, Barbed Lightning). **Threshold
+  static P/T** — new `source-controller-graveyard-threshold` scope. Combined
+  export **10,664 → 10,703** (+39).
+- **"Whenever you cast a noncreature spell" / "you draw your second card each
+  turn" triggers** — added the `subject: "you"` (and matching `opponent`)
+  trigger patterns; the `spellType: "noncreature"` filter and
+  `second-draw-this-turn` condition already existed. Big spellslinger cluster
+  (Wee Dragonauts, Docent of Perfection, Kiln Fiend, …). Export **10,603 →
+  10,664** (+61). Test: `engine.test.ts` › "triggers 'whenever you cast a
+  noncreature spell' on the source".
+- **"discard a card" / "sacrifice an artifact" additional cast costs** —
+  follows the existing `additionalCostSacrifice*` pattern (+15).
+- **Aura "doesn't untap" lock + "tap enchanted creature" ETB** —
+  `EquipmentModification.cannotUntap` (parsed from "Enchanted creature doesn't
+  untap during its controller's untap step") consulted in `beginStep("untap")`
+  via `attachedAuras`; new `tap-enchanted-creature` effect taps the aura's
+  attachment on ETB. Covers Claustrophobia, Sleep Paralysis, Ice Cage, …
+  (+25). Test: `engine.test.ts` › "taps the enchanted creature and keeps it
+  tapped".
+- **Firebreathing-style Aura activated abilities** — "{cost}: Enchanted
+  creature gets +X/+Y until end of turn" → `auraActivatedAbility` with
+  `modify-source-creature`; `activatedAbilitiesFor` already hands it to the
+  enchanted creature (+12). Test: "pumps the enchanted creature from a
+  Firebreathing aura…".
+
+- **Predefined token abilities (Clue, Food) + Investigate** —
+  `PREDEFINED_TOKEN_TEXT` gives a created Clue/Food token its real rules text
+  (`TokenDefinition.oracleText`), so `cardProfile` grants its
+  `{2}, Sacrifice: Draw a card` / `{2},{T},Sacrifice: gain 3 life` ability;
+  `recognizeSentence` parses the `Investigate` / `Investigate twice` keyword
+  action into `create-token` Clue. Treasure/Gold are deliberately excluded —
+  their sacrifice-cost *mana* ability is not yet in the mana planner. Export
+  **10,521 → 10,551**. Test: `engine.test.ts` › "investigates into a working
+  Clue token".
+
+- **`kickedEntersWithCounters`** — "If ~ was kicked, it enters with N <kind>
+  counters on it". The `If ~ was kicked, …` sentence handler now recognises the
+  ETB-counter clause via the existing `parseEntersWithCounters`;
+  `putOntoBattlefield` applies them only on a kicked cast. Export **10,500 →
+  10,521**. Test: `engine.test.ts` › "gives a kicked creature its 'enters with
+  +1/+1 counters' only when kicked".
+
+- **`delayed-draw`** — "Draw a card at the beginning of the next turn's upkeep"
+  as a spell rider (Lightning Blow, Fevered Strength, …). Parsed in
+  `recognizeSentence`, scheduled via the existing `state.delayedDraws` /
+  `queueDelayedDraws` machinery. Export **10,482 → 10,500**. Test:
+  `engine.test.ts` › "schedules a cantrip's 'draw at the next turn's upkeep'
+  rider".
+
+- **Pacifism-style Aura combat lock** — `EquipmentModification` gains
+  `cannotAttack` / `cannotBlock`; `parseAuraModification` matches "Enchanted
+  creature can't attack or block" (also "can't attack" / "can't block" alone),
+  and `canAttack` / `canBlock` consult `attachedAuras`. Arrest's extra
+  ability-lock clause is deliberately left unmatched. Export **10,471 →
+  10,482** (Pacifism, Bound in Silence, Chains of Faith, …). Test:
+  `engine.test.ts` › "stops an enchanted creature from attacking or blocking".
+
+Session net: engine export **10,197 → 10,500** fully-implemented profiles
+(+506) across the eight primitives below, each with a scenario test; rules
+suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
+200-game engine matrix **200/200** (unchanged from baseline).
+
+- **"target creature an opponent controls gets ±X/±Y until end of turn"** —
+  reuses `modify-target-creature` with the `creature-opponent` target kind.
+  Covers ETB/attack-trigger shrinkers (Eyeblight Assassin, Orc Sureshot, …).
+  Export **10,454 → 10,471** (+17). Test: `engine.test.ts` › "shrinks an
+  opponent's creature…".
+
+- **"deals N damage to target opponent"** — the `damage-any-target` executor
+  already handles a player target; `recognizeSentence` now narrows the target
+  kind to `opponent` (or `player`) for this wording. Covers the ETB painful
+  tapland cycle (Lush Oasis, Festering Gulch, Abraded Bluffs, …) and direct
+  burn. Export **10,437 → 10,454** (+17). Test: `engine.test.ts` › "pings a
+  chosen opponent from an ETB…".
+
+- **Stripped-reminder trailing whitespace** — `recognizeSentence` normalised a
+  sentence with `.replace(/\.$/, "")`, which left `"you get {E} "` (trailing
+  space) after reminder text like `"(an energy counter)"` was blanked mid-
+  sentence, so `^You get ({E})+$` never matched. Now `\s*\.\s*$` + `trim()`.
+  Export **10,398 → 10,437** (+39: energy ETB/activated cards — Aether Hub,
+  Aetherstream Leopard, Thriving Turtle, Consulate Turret, …). Test:
+  `engine.test.ts` › "adds energy counters from an ETB 'you get {E}' trigger…".
+
+- **`discard-then-draw` (rummage)** — "discard a card. If you do, draw a card"
+  (Reckless Racer, Hazoret's Monument, Spider-Gwen, …). Parsed in
+  `recognizeSentence` (the trigger parser already strips the optional
+  "you may" and flags the trigger `optional`), executed by opening a
+  `discard-cards` choice with `thenDrawSame`. Export **10,379 → 10,398**
+  (+19). Test: `engine.test.ts` › "rummages (discard then draw)…".
+
+- **Unrestricted graveyard recursion** — `{cost}: Return ~ from your graveyard
+  to your hand` without the Eternal Dragon upkeep restriction (Sanitarium
+  Skeleton, Firewing Phoenix, Clay Revenant, Jungle Creeper, …). The parser at
+  `characteristics.ts` ~L4142 only built the `sourceZone: "graveyard"`
+  activated ability when an "Activate only during your upkeep" line followed;
+  it now builds it either way, keeping `upkeepOnly` only when present. Export
+  **10,362 → 10,379** (+17). Test: `engine.test.ts` › "recurs a creature from
+  the graveyard…".
+
+- **`grant-source-keyword`** — `{cost}: ~ gains KEYWORD until end of turn`, a
+  self-targeting keyword pump. Parsed in `recognizeSentence`
+  (`characteristics.ts`), executed in `engine.ts` by adding the keyword to the
+  source's `temporaryKeywords` (already cleared at cleanup). Covers the whole
+  "{U}: gains flying / {B}: gains deathtouch / {2}{W}: gains first strike"
+  family. Export **10,238 → 10,362** (+124: Skyship Stalker, Reaper of the
+  Wilds, Clickslither, Knight of Stromgald, Order of the White Shield, …).
+  Test: `engine.test.ts` › "grants the source a keyword until end of turn…".
+
+Two reusable one-shot primitives added to `packages/rules`:
+
+- **`mill`** — "Mill N cards" with no subject: the controller mills their own
+  library. `simpleEffectFromIR` (`characteristics.ts`) previously returned
+  `null` for a `you`-subject mill; it now emits `{ kind: "mill" }`, executed
+  via the existing `millCards` helper in `engine.ts`.
+- **`each-opponent-discards`** — "Each opponent discards N cards": one card
+  chosen by each opponent in APNAP order, chained through the existing
+  `discard-cards` pending choice + `nextSeats`. `applyChooseDiscard` now
+  carries the per-seat amount instead of hard-coding 1 (Geier Reach Sanitarium
+  unaffected — its queue amount is 1).
+
+Engine export: **10,197 → 10,238** fully-implemented profiles (+41: ETB
+self-mill creatures like Screeching Skaab / Sultai Skullkeeper, and
+each-opponent discard creatures like Liliana's Specter, Cackling Fiend,
+Elderfang Disciple, Nezumi Informant). Tests: `engine.test.ts` › "mills the
+controller's own library…" and "makes every opponent discard once, in APNAP
+order…". Validation: `npm run test --workspace=@prossh/rules` → 790 passing;
+`npm run check` clean; `npm run rules:test:oracle` OK.
+
+### Gameplay/UI debugging pass — 2026-09-06 (in progress)
+
+Full-branch validation after the engine primitives + UI pass: `npm run check`
+clean, rules suite **793 passing**, `npm run rules:test:oracle` OK, and the
+200-game engine matrix passes **200/200** (163 terminal, 37 capped — unchanged
+from baseline).
+
+Batch of player-reported gameplay/UX fixes. Landed so far:
+
+- **Opponent boards de-cluttered.** On the opponents' band the card-tile name
+  overlay is hidden by default (`opacity: 0`) and revealed on hover / focus /
+  while targetable, so a crowded board reads by art like MTGO; the local board
+  keeps names always on. Token tiles keep their label.
+
+
+- **Per-ability trigger yield, right-click only.** `toggle-trigger-yield` now
+  carries an optional `abilityIndex`; the yield set stores `id` (whole source)
+  or `id:n` (one ability), and resolution (`resolveTopOfStack` gate) checks
+  both. The engine emits one toggle per *optional* trigger, each labelled with
+  that ability's Oracle text when a card has more than one. Client: a left
+  click on a card now runs its primary play action and never opens the yield
+  menu; yield toggles live only in the right-click / long-press menu. Tests:
+  `engine.test.ts` › "yields one optional trigger of a multi-trigger card…"
+  plus the updated Fecundity/mandatory cases. `npm run check` clean, rules
+  suite 788 passing.
+
+
+- **MTGO-style priority bar.** New `priorityBarHtml()` renders a centred bar
+  between the opponents' band and the local board (inside `.table`, after the
+  combat bar). It carries the Auto-pasar toggle (moved out of the dock) and a
+  phase track with **two rows of stop triangles** — pointing up toward the
+  opponents (a stop on their turns) and down toward the local player (a stop on
+  your turns). `ui.stops` is now `{ mine, opponents }` (localStorage
+  `prossh.stops.v2`, migrating the old single list); `autoPassForPhase` selects
+  the set by `view.activeSeat === view.viewerSeat`. Defaults match MTGO
+  factory settings (`DEFAULT_STOPS`). The old per-phase-button stop toggles and
+  right-click stop menu on the top rail are gone; the top rail is now a plain
+  phase indicator. Verified in the running client: bar sits between the pods,
+  triangles toggle and persist, the active-turn row is emphasised.
+
+
+- **Zone chips use TCG icons.** `apps/client/src/zones.ts` holds five original
+  24×24 stroke glyphs (deck, fanned hand, headstone, exile rift, crown) drawn
+  in the same discipline as `abilities.ts`. `zoneChipHtml()` renders icon +
+  count on opponent panels (label hidden, kept as `aria-label`/`title`) and
+  icon + written label + count in the local dock.
+
+
+- **Floating stack + non-modal decision windows (MTGO-style).** New
+  `makeDraggable(panel, handleSelector, key)` in `apps/client/src/main.ts`
+  drives both. `stackStripHtml` → `stackPanelHtml`: the stack is now a
+  `position: fixed` panel on the right edge, drag by its header, position
+  persisted in `localStorage["prossh.panel.stack"]`, and it renders nothing at
+  all when the stack is empty (previously an always-present "Vacía" strip above
+  the hand). `.decision-overlay` lost its full-screen scrim + `backdrop-filter`
+  blur and moved off-centre to the left edge; it is draggable by
+  `.decision-head` (close/action buttons excluded from the drag). The board
+  stays fully lit and clickable behind both. Verified in the running client:
+  drag + persistence across re-render, board hit-testable at screen centre.
+- **Mana symbols in action labels** — engine labels like
+  `Girar Starting Town · agregar {C}` and stack-object text now render `{..}`
+  tokens as coloured pips (`oracleHtml`) instead of literal braces.
+
+
+- **Per-player turn counter.** The global `turn` increments once per seat, so
+  "Turno 13" in a 4-player pod is really a player's 3rd–4th turn. `PlayerState`
+  now carries `turnsTaken` (seat 0 starts at 1; `advanceStep` bumps the seat
+  whose turn is beginning), exposed as `PlayerView.turnsTaken` in
+  `projection.ts`. The client phase rail (`phaseRailHtml`) now reads
+  "Turno N de <activo> · global M" in the active seat's colour. Robust to
+  future extra-turn effects and eliminations. Test:
+  `engine.test.ts` › "tracks each player's personal turn count…".
+
+
+- **Mana-payment "Cancelar" left the cast stuck.** The engine already returns a
+  clean, recastable state on `cancel-mana-payment` (spell stays in hand, no
+  sources tapped, no floating mana, priority retained) — covered by a new
+  `engine.test.ts` case. The bug was client-only: the decision overlay's `×`
+  button (`#close-decision-overlay`) just removed the DOM node without telling
+  the server, so a player who closed the "Elegir fuentes de maná" panel with
+  `×` instead of the "Cancelar pago" row left the server holding a pending
+  `mana-payment` choice. `apps/client/src/main.ts` `decisionOverlayHtml` now:
+  routes `×` to submit `cancel-mana-payment` when a payment is pending; hides
+  `×` for truly mandatory choices (trigger targets, modal choices); and for a
+  "you may respond" prompt, `×` hides it only until the game state next changes
+  (`ui.dismissedDecisionVersion`). Validation: `npm run check --workspace=@prossh/client`
+  clean; `npm run test --workspace=@prossh/rules` → 786 passing.
+
+
+- **Fetch land "fail to find" wording.** An off-colour fetch (e.g. Flooded
+  Strand in a mono-black deck) correctly finds nothing and shuffles, but the
+  log read `… se resuelve: no hay una carta válida en la biblioteca.`, which
+  looked like an engine failure. Reworded in
+  `packages/rules/src/engine.ts` (`resolveTopOfStack`, the `search-library` and
+  `search-library-multi` empty-options branches) to
+  `… la búsqueda no encuentra ninguna carta … baraja su biblioteca.` The
+  activated-ability subtype search itself was verified correct: with a legal
+  Plains/Island card in the library the search choice opens normally.
+  `apps/client/src/main.ts` (`applyView`) now flashes that resolution as a
+  `ui.notice` so a no-op search is not silent. Regression tests:
+  `packages/rules/src/engine.test.ts` › "fetch land (subtype search from an
+  activated ability)" (4 cases). Validation: `npm run test --workspace=@prossh/rules`
+  → 785 passing; `npm run check --workspace=@prossh/client` clean.
+
 ### Gameplay hardening checkpoint — 2026-09-05
 
 The graphical stack projects each spell, activated ability, and trigger as an

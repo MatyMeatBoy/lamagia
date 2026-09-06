@@ -1230,6 +1230,19 @@ describe("turn structure", () => {
     const secondTurn = passUntil(game, (state) => state.activeSeat === 1 && state.step === "precombat-main");
     expect(secondTurn.players[1]!.hand).toHaveLength(8);
   });
+
+  it("tracks each player's personal turn count independent of the global turn", () => {
+    let game = twoSeatGame([], []);
+    expect(game.players.map((player) => player.turnsTaken)).toEqual([1, 0]);
+    expect(projectGame(game, 0).players.map((player) => player.turnsTaken)).toEqual([1, 0]);
+
+    game = passUntil(game, (state) => state.activeSeat === 1 && state.step === "precombat-main");
+    expect(game.players.map((player) => player.turnsTaken)).toEqual([1, 1]);
+
+    game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 0 && state.step === "precombat-main");
+    expect(game.players.map((player) => player.turnsTaken)).toEqual([2, 1]);
+    expect(projectGame(game, 0).players[0]!.turnsTaken).toBe(2);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -1353,6 +1366,44 @@ describe("mana payment", () => {
     game = applyAction(game, 0, generic.action);
     expect(game.pendingChoice).toBeNull();
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Red Test Spell")).toBe(true);
+  });
+
+  it("returns to a clean, recastable state when the mana payment is cancelled", () => {
+    const spell = make({ name: "Red Test Spell", type_line: "Creature — Goblin", mana_cost: "{1}{R}", power: "2", toughness: "2" });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ kind: "human" }));
+    game = stage(game, 0, () => ({ hand: toHand(0, [spell], "manual-cast") }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "manual-cast-0")!;
+    game = applyAction(game, 0, cast.action);
+    expect(game.pendingChoice?.type).toBe("mana-payment");
+
+    // Select one source, then bail out of the whole payment.
+    const mountain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mountain")!;
+    const red = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === mountain.instance_id && entry.action.mana === "R")!;
+    game = applyAction(game, 0, red.action);
+    game = applyAction(game, 0, { type: "cancel-mana-payment", sourceId: game.pendingChoice!.sourceId });
+
+    // Clean state: no pending choice, spell still in hand, nothing tapped, no
+    // floating mana, priority still with the caster, and the cast is offered again.
+    expect(game.pendingChoice).toBeNull();
+    expect(game.stack).toHaveLength(0);
+    expect(game.players[0]!.hand.some((card) => card.instance_id === "manual-cast-0")).toBe(true);
+    expect(game.players[0]!.battlefield.every((permanent) => !permanent.tapped)).toBe(true);
+    expect(game.players[0]!.manaPool).toMatchObject({ W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 });
+    expect(game.priorityOpen).toBe(true);
+    expect(game.prioritySeat).toBe(0);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "manual-cast-0")).toBe(true);
+
+    // And it can actually be recast to completion.
+    game = applyAction(game, 0, cast.action);
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    game = applyAction(game, 0, legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === mountain.instance_id && entry.action.mana === "R")!.action);
+    game = applyAction(game, 0, legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === forest.instance_id)!.action);
+    expect(game.pendingChoice).toBeNull();
+    expect(game.stack.some((object) => object.card.name === "Red Test Spell") || game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Red Test Spell")).toBe(true);
   });
 
   it("keeps five independent primitives executable in the same card batch", () => {
@@ -7148,10 +7199,10 @@ describe("triggered abilities", () => {
     let game = readyToCast([BOLT()], [FECUNDITY(), MOUNTAIN(), BEAR()]);
     const fecundity = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Fecundity")!;
     const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
-    game = applyAction(game, 0, { type: "toggle-trigger-yield", sourceId: fecundity.instance_id, enabled: true });
+    game = applyAction(game, 0, { type: "toggle-trigger-yield", sourceId: fecundity.instance_id, abilityIndex: 0, enabled: true });
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
     game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
-    expect(game.players[0]!.yieldedTriggerSources).toContain(fecundity.instance_id);
+    expect(game.players[0]!.yieldedTriggerSources).toContain(`${fecundity.instance_id}:0`);
     expect(game.log.some((entry) => entry.text.includes("no realiza la habilidad opcional de Fecundity"))).toBe(true);
   });
 
@@ -7167,6 +7218,429 @@ describe("triggered abilities", () => {
     game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
     expect(game.players[0]!.hand.length).toBeGreaterThan(0);
     expect(game.players[0]!.yieldedTriggerSources).toContain(source.instance_id);
+  });
+
+  it("yields one optional trigger of a multi-trigger card and keeps the other live", () => {
+    const twoTrigger = make({
+      name: "Twin Beacon", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3,
+      oracle_text: "Whenever you draw a card, you may gain 1 life.\nWhenever you gain life, you may draw a card."
+    });
+    let game = readyToCast([], [twoTrigger]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Twin Beacon")!;
+    const toggles = legalActions(game, 0).filter((entry) => entry.action.type === "toggle-trigger-yield" && entry.action.sourceId === source.instance_id);
+    expect(toggles).toHaveLength(2);
+    expect(toggles.every((entry) => entry.action.type === "toggle-trigger-yield" && entry.action.abilityIndex !== undefined)).toBe(true);
+    // Each toggle names the specific ability it silences.
+    expect(new Set(toggles.map((entry) => entry.label)).size).toBe(2);
+
+    const drawYield = toggles.find((entry) => entry.label.includes("draw a card") || entry.label.includes("gain 1 life"))!;
+    game = applyAction(game, 0, drawYield.action);
+    expect(game.players[0]!.yieldedTriggerSources).toHaveLength(1);
+    expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
+  });
+
+  it("sacrifices a Ball Lightning-style creature at the end step", () => {
+    const ballLightning = make({
+      name: "Test Ball Lightning", type_line: "Creature — Elemental", mana_cost: "{R}{R}{R}", cmc: 3, power: "6", toughness: "1",
+      oracle_text: "Trample, haste\nAt the beginning of the end step, sacrifice this creature."
+    });
+    expect(profileOf(ballLightning).triggers[0]).toMatchObject({ event: "end-step", effect: { kind: "sacrifice-source" } });
+    let game = readyToCast([], [ballLightning]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Ball Lightning")).toBe(true);
+    game = passUntil(game, (state) => state.turn === 2 && state.step === "precombat-main");
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Ball Lightning")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Ball Lightning")).toBe(true);
+  });
+
+  it("deals damage to a creature and gains life on the same spell (Firebolt-style)", () => {
+    const firebolt = make({
+      name: "Test Firebolt", type_line: "Instant", mana_cost: "{R}", cmc: 1,
+      oracle_text: "This spell deals 3 damage to target creature and you gain 3 life."
+    });
+    expect(profileOf(firebolt)).toMatchObject({ fullyImplemented: true, targetKind: "creature" });
+    let game = readyToCast([firebolt], [MOUNTAIN()], [make({ name: "Chump", type_line: "Creature — Goblin", mana_cost: "{R}", power: "2", toughness: "3" })]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const foe = game.players[1]!.battlefield[0]!;
+    const lifeBefore = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: foe.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.life).toBe(lifeBefore + 3);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === foe.instance_id)).toBe(false);
+  });
+
+  it("applies a Threshold static +X/+Y once seven cards are in the graveyard", () => {
+    const mongoose = make({
+      name: "Test Mongoose", type_line: "Creature — Mongoose", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1",
+      oracle_text: "Threshold — This creature gets +2/+2 as long as there are seven or more cards in your graveyard."
+    });
+    expect(profileOf(mongoose).staticPowerToughnessGrants[0]).toMatchObject({ scope: "source-controller-graveyard-threshold", power: 2, toughness: 2, threshold: 7 });
+    let game = readyToCast([], [FOREST()]);
+    game = putOnBattlefield(game, 0, [mongoose]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Mongoose")!;
+    expect(powerOf(source, game)).toBe(1);
+
+    game = stage(game, 0, (player) => ({ graveyard: [...Array(6)].map((_, i) => ({ ...BOLT(), instance_id: `gy-${i}`, owner: 0 } as GameCard)) }));
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)!, game)).toBe(1);
+    game = stage(game, 0, (player) => ({ graveyard: [...player.graveyard, { ...BOLT(), instance_id: "gy-6", owner: 0 } as GameCard] }));
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)!, game)).toBe(3);
+    expect(toughnessOf(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)!, game)).toBe(3);
+  });
+
+  it("triggers 'whenever you cast a noncreature spell' on the source", () => {
+    const docent = make({
+      name: "Test Spellweaver", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2",
+      oracle_text: "Whenever you cast a noncreature spell, put a +1/+1 counter on this creature."
+    });
+    expect(profileOf(docent).triggers[0]).toMatchObject({ event: "spell-cast", effect: { kind: "add-counter-source", counter: "+1/+1", amount: 1 } });
+    let game = readyToCast([BOLT(), BEAR()], [MOUNTAIN(), FOREST(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 0, [docent]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Spellweaver")!;
+    expect(source.counters["+1/+1"] ?? 0).toBe(0);
+
+    // Casting an instant (noncreature) adds a counter.
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand.find((card) => card.name === "Lightning Bolt")!.instance_id, targets: [{ kind: "player", seat: 1 }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)?.counters["+1/+1"]).toBe(1);
+
+    // Casting a creature does not.
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)?.counters["+1/+1"]).toBe(1);
+  });
+
+  it("pays 'discard a card' / 'sacrifice an artifact' additional cast costs", () => {
+    const looter = make({
+      name: "Test Loot Spell", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2,
+      oracle_text: "As an additional cost to cast this spell, discard a card.\nDraw two cards."
+    });
+    expect(profileOf(looter)).toMatchObject({ fullyImplemented: true, additionalCostDiscardCard: true });
+    let game = readyToCast([looter, BEAR(), BOLT()], [ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, library: toHand(0, [FLIER(), FOREST(), SOL_RING()], "lib") }));
+    const bear = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand.find((card) => card.name === "Test Loot Spell")!.instance_id, discardCardId: bear.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    // Discarded one, drew two → net +1 from a two-card hand minus the spell.
+    expect(game.players[0]!.hand.filter((card) => ["Storm Crow", "Forest"].includes(card.name)).length).toBe(2);
+
+    const shatter = make({
+      name: "Test Shatter Spree", type_line: "Instant", mana_cost: "{R}", cmc: 1,
+      oracle_text: "As an additional cost to cast this spell, sacrifice an artifact.\nDestroy target artifact."
+    });
+    let g2 = readyToCast([shatter], [MOUNTAIN()]);
+    // No artifact to sacrifice → illegal.
+    expect(legalActions(g2, 0).some((entry) => entry.action.type === "cast" && entry.cardId === g2.players[0]!.hand[0]!.instance_id)).toBe(false);
+    g2 = putOnBattlefield(g2, 0, [SOL_RING()]);
+    expect(legalActions(g2, 0).some((entry) => entry.action.type === "cast" && entry.cardId === g2.players[0]!.hand[0]!.instance_id)).toBe(true);
+  });
+
+  it("taps the enchanted creature and keeps it tapped (Claustrophobia)", () => {
+    const claustro = make({
+      name: "Test Claustrophobia", type_line: "Enchantment — Aura", mana_cost: "{2}{U}", cmc: 3,
+      oracle_text: "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature doesn't untap during its controller's untap step."
+    });
+    expect(profileOf(claustro)).toMatchObject({ fullyImplemented: true, triggers: [{ effect: { kind: "tap-enchanted-creature" } }], auraModification: { cannotUntap: true } });
+    let game = createGame([deck("A", COMMANDER("A"), []), deck("B", COMMANDER("B"), [])], { seed: 7, allowPartialDecks: true });
+    game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [claustro], "cast") }));
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = putOnBattlefield(game, 0, [ISLAND(), ISLAND(), ISLAND()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "cast", cardId: "cast-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[1]!.battlefield.find((p) => p.instance_id === bear.instance_id)?.tapped).toBe(true);
+
+    // It stays tapped through seat 1's untap step.
+    game = passUntil(game, (state) => state.activeSeat === 1 && state.step === "precombat-main");
+    expect(game.players[1]!.battlefield.find((p) => p.instance_id === bear.instance_id)?.tapped).toBe(true);
+  });
+
+  it("pumps the enchanted creature from a Firebreathing aura's activated ability", () => {
+    const firebreathing = make({
+      name: "Test Firebreathing", type_line: "Enchantment — Aura", mana_cost: "{R}", cmc: 1,
+      oracle_text: "Enchant creature\n{R}: Enchanted creature gets +1/+0 until end of turn."
+    });
+    expect(profileOf(firebreathing)).toMatchObject({ fullyImplemented: true, auraActivatedAbility: { effect: { kind: "modify-source-creature", power: 1, toughness: 0 } } });
+    let game = readyToCast([firebreathing], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [BEAR()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === bear.instance_id)!, game)).toBe(2);
+
+    // The enchanted creature now has the {R}: +1/+0 activation.
+    const mountain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mountain" && !permanent.tapped)!;
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: mountain.instance_id, abilityIndex: 0, mana: "R" });
+    const pump = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === bear.instance_id);
+    expect(pump).toBeDefined();
+    game = applyAction(game, 0, pump!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === bear.instance_id)!, game)).toBe(3);
+
+    // Cleared at cleanup.
+    game = passUntil(game, (state) => state.turn === 3);
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === bear.instance_id)!, game)).toBe(2);
+  });
+
+  it("investigates into a working Clue token", () => {
+    const inspector = make({
+      name: "Test Inspector", type_line: "Creature — Human Soldier", mana_cost: "{W}", cmc: 1, power: "1", toughness: "2",
+      oracle_text: "When this creature enters, investigate."
+    });
+    expect(profileOf(inspector).triggers[0]).toMatchObject({ effect: { kind: "create-token", amount: 1, token: { name: "Clue" } } });
+    let game = readyToCast([inspector], [PLAINS(), PLAINS(), PLAINS()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, library: toHand(0, [BEAR(), BOLT()], "lib") }));
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+
+    const clue = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Clue");
+    expect(clue).toBeDefined();
+    const activate = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === clue!.instance_id);
+    expect(activate).toBeDefined();
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, activate!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null && state.triggerQueue.length === 0);
+    expect(game.players[0]!.hand.length).toBe(handBefore + 1);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Clue")).toBe(false);
+  });
+
+  it("gives a kicked creature its 'enters with +1/+1 counters' only when kicked", () => {
+    const boa = make({
+      name: "Test Kicker Boa", type_line: "Creature — Snake", mana_cost: "{1}{G}", cmc: 2, power: "1", toughness: "1",
+      oracle_text: "Kicker {2}\nIf this creature was kicked, it enters with two +1/+1 counters on it."
+    });
+    expect(profileOf(boa)).toMatchObject({ fullyImplemented: true, kickedEntersWithCounters: [{ kind: "+1/+1", amount: 2 }] });
+
+    // Unkicked: no counters.
+    let plain = readyToCast([boa], [FOREST(), FOREST()]);
+    plain = applyAction(plain, 0, { type: "cast", cardId: plain.players[0]!.hand[0]!.instance_id });
+    plain = passUntil(plain, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(plain.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Kicker Boa")?.counters["+1/+1"] ?? 0).toBe(0);
+
+    // Kicked: two +1/+1 counters.
+    let kicked = readyToCast([boa], [FOREST(), FOREST(), FOREST(), FOREST()]);
+    const cast = legalActions(kicked, 0).find((entry) => entry.action.type === "cast" && entry.action.kicked === true);
+    expect(cast).toBeDefined();
+    kicked = applyAction(kicked, 0, cast!.action);
+    kicked = passUntil(kicked, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(kicked.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Kicker Boa")?.counters["+1/+1"]).toBe(2);
+  });
+
+  it("schedules a cantrip's 'draw at the next turn's upkeep' rider", () => {
+    const blow = make({
+      name: "Test Cantrip", type_line: "Instant", mana_cost: "{W}", cmc: 1,
+      oracle_text: "Target creature gains first strike until end of turn.\nDraw a card at the beginning of the next turn's upkeep."
+    });
+    expect(profileOf(blow).fullyImplemented).toBe(true);
+    let game = readyToCast([blow], [PLAINS()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, library: toHand(0, [BEAR(), BOLT()], "lib") }));
+    game = putOnBattlefield(game, 0, [BEAR()]);
+    const own = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears" && !permanent.summoningSick)
+      ?? game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand.find((card) => card.name === "Test Cantrip")!.instance_id, targets: [{ kind: "permanent", instanceId: own.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    // No immediate draw; the delayed draw is queued.
+    expect(game.players[0]!.hand.length).toBe(handBefore - 1);
+    expect(game.delayedDraws.some((delayed) => delayed.seat === 0 && delayed.amount === 1)).toBe(true);
+
+    // It fires at the very next upkeep.
+    const castTurn = game.turn;
+    const graveBefore = game.players[0]!.graveyard.length;
+    game = passUntil(game, (state) => state.turn === castTurn + 1 && state.step === "precombat-main");
+    expect(game.delayedDraws.length).toBe(0);
+    expect(game.players[0]!.graveyard.length).toBeGreaterThanOrEqual(graveBefore);
+  });
+
+  it("stops an enchanted creature from attacking or blocking (Pacifism)", () => {
+    const pacifism = make({
+      name: "Test Pacifism", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2,
+      oracle_text: "Enchant creature\nEnchanted creature can't attack or block."
+    });
+    expect(profileOf(pacifism)).toMatchObject({ fullyImplemented: true, auraModification: { cannotAttack: true, cannotBlock: true } });
+    let game = readyToCast([pacifism], [PLAINS(), PLAINS()], [BEAR()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const foe = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    expect(legalAttackers(game, 1).some((permanent) => permanent.instance_id === foe.instance_id)).toBe(true);
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: foe.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Pacifism" && permanent.attachedTo === foe.instance_id)).toBe(true);
+
+    // The enchanted Bears can no longer be declared as an attacker.
+    expect(legalAttackers(game, 1).some((permanent) => permanent.instance_id === foe.instance_id)).toBe(false);
+    // ...nor as a blocker: put a seat-0 attacker into combat targeting seat 1.
+    const attackerId = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.instance_id
+      ?? (game = putOnBattlefield(game, 0, [BEAR()]), game.players[0]!.battlefield.at(-1)!.instance_id);
+    const combatGame = { ...game, step: "declare-blockers" as const, combat: { ...game.combat, attackers: [{ instanceId: attackerId, defender: 1 as SeatId }], attackersDeclared: true } };
+    expect(legalBlockers(combatGame, 1).some((permanent) => permanent.instance_id === foe.instance_id)).toBe(false);
+  });
+
+  it("shrinks an opponent's creature with an ETB '-1/-1 to target creature an opponent controls'", () => {
+    const assassin = make({
+      name: "Test Eyeblight", type_line: "Creature — Elf Warrior", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
+      oracle_text: "When this creature enters, target creature an opponent controls gets -1/-1 until end of turn."
+    });
+    expect(profileOf(assassin).triggers[0]).toMatchObject({ targetKind: "creature-opponent", effect: { kind: "modify-target-creature", power: -1, toughness: -1 } });
+    const oneOne = make({ name: "Little Guy", type_line: "Creature — Bird", mana_cost: "{U}", cmc: 1, power: "1", toughness: "1" });
+    let game = readyToCast([assassin], [SWAMP(), SWAMP(), SWAMP()], [oneOne]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Little Guy")).toBe(true);
+
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    // The 1/1 dropped to 0/0 and was swept by the state-based action.
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Little Guy")).toBe(false);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Little Guy")).toBe(true);
+  });
+
+  it("pings a chosen opponent from an ETB 'deals 1 damage to target opponent' land", () => {
+    const painLand = make({
+      name: "Test Painland", type_line: "Land", mana_cost: "", cmc: 0,
+      oracle_text: "This land enters tapped.\nWhen this land enters, it deals 1 damage to target opponent.\n{T}: Add {B} or {G}."
+    });
+    expect(profileOf(painLand).triggers[0]).toMatchObject({ event: "enters-battlefield", targetKind: "opponent", effect: { kind: "damage-any-target", amount: 1 } });
+    let game = readyToCast([], []);
+    game = stage(game, 0, () => ({ autoPass: false, hand: [{ ...painLand, instance_id: "pl-0", owner: 0 } as GameCard] }));
+
+    game = applyAction(game, 0, { type: "play-land", cardId: "pl-0" });
+    game = passUntil(game, (state) => state.pendingChoice !== null || state.stack.length > 0);
+    // The trigger targets an opponent; with one opponent it is auto-aimed.
+    const trigger = legalActions(game, 0).find((entry) => entry.action.type === "choose-trigger-target" || entry.action.type === "pass");
+    game = applyAction(game, 0, trigger!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[1]!.life).toBe(39);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Painland" && permanent.tapped)).toBe(true);
+  });
+
+  it("adds energy counters from an ETB 'you get {E}' trigger (reminder text stripped)", () => {
+    const leopard = make({
+      name: "Test Leopard", type_line: "Creature — Cat", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2",
+      oracle_text: "Trample\nWhen this creature enters, you get {E}{E} (two energy counters)."
+    });
+    expect(profileOf(leopard).triggers[0]).toMatchObject({ event: "enters-battlefield", effect: { kind: "add-player-counter", counter: "energy", amount: 2 } });
+    let game = readyToCast([leopard], [FOREST(), FOREST()]);
+    expect(game.players[0]!.counters.energy ?? 0).toBe(0);
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.counters.energy).toBe(2);
+  });
+
+  it("rummages (discard then draw) from an optional trigger", () => {
+    const racer = make({
+      name: "Test Racer", type_line: "Creature — Human", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2",
+      oracle_text: "Whenever this creature becomes tapped, you may discard a card. If you do, draw a card."
+    });
+    expect(profileOf(racer).triggers[0]).toMatchObject({ event: "becomes-tapped", optional: true, effect: { kind: "discard-then-draw", amount: 1 } });
+    let game = readyToCast([], [racer, make({ name: "Tap Engine", type_line: "Artifact", oracle_text: "{T}: Add {C}." })]);
+    game = stage(game, 0, (player) => ({ autoPass: false, hand: toHand(0, [BEAR(), BOLT(), SOL_RING()], "h"), library: toHand(0, [FLIER(), FOREST()], "lib") }));
+    // Tap the creature for mana... it has no mana ability; instead attack to tap it.
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && !state.combat.attackersDeclared);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Racer")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: source.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger" || state.pendingChoice?.type === "discard-cards");
+    if (game.pendingChoice?.type === "optional-trigger") {
+      game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice.sourceId, accept: true });
+    }
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 0, remaining: 1, thenDrawSame: true });
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "h-0" });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    // Net card count unchanged (pitched one, drew one); Grizzly Bears in graveyard.
+    expect(game.players[0]!.hand).toHaveLength(handBefore);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("recurs a creature from the graveyard with an unrestricted '{cost}: Return this card' ability", () => {
+    const skeleton = make({
+      name: "Test Skeleton", type_line: "Creature — Skeleton", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",
+      oracle_text: "{2}{B}: Return this card from your graveyard to your hand."
+    });
+    expect(profileOf(skeleton).activatedAbilities[0]).toMatchObject({ sourceZone: "graveyard", effect: { kind: "return-source-to-hand" } });
+    let game = readyToCast([], [SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, graveyard: [{ ...skeleton, instance_id: "gy-skel", owner: 0 } as GameCard] }));
+
+    const activate = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === "gy-skel");
+    expect(activate).toBeDefined();
+    game = applyAction(game, 0, activate!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.hand.some((card) => card.instance_id === "gy-skel")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.instance_id === "gy-skel")).toBe(false);
+  });
+
+  it("grants the source a keyword until end of turn from its own activated ability", () => {
+    const kestrel = make({
+      name: "Test Kestrel", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2",
+      oracle_text: "{U}: This creature gains flying until end of turn."
+    });
+    expect(profileOf(kestrel).activatedAbilities[0]).toMatchObject({ effect: { kind: "grant-source-keyword", keyword: "flying" } });
+    let game = readyToCast([], [kestrel, ISLAND()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Kestrel")!;
+    const island = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Island")!;
+    expect(projectGame(game, 0).players[0]!.battlefield.find((p) => p.name === "Test Kestrel")?.keywords).not.toContain("flying");
+
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: island.instance_id, abilityIndex: 0, mana: "U" });
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(projectGame(game, 0).players[0]!.battlefield.find((p) => p.name === "Test Kestrel")?.keywords).toContain("flying");
+
+    // Cleared at cleanup.
+    game = passUntil(game, (state) => state.turn === 3);
+    expect(projectGame(game, 0).players[0]!.battlefield.find((p) => p.name === "Test Kestrel")?.keywords).not.toContain("flying");
+  });
+
+  it("mills the controller's own library from an ETB 'mill two cards' trigger", () => {
+    const skullkeeper = make({
+      name: "Test Skullkeeper", type_line: "Creature — Human Rogue", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",
+      oracle_text: "When this creature enters, mill two cards."
+    });
+    expect(profileOf(skullkeeper).fullyImplemented).toBe(true);
+    let game = readyToCast([skullkeeper], [SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({ library: toHand(0, [BEAR(), BOLT(), SOL_RING()], "mill-lib") }));
+    const graveBefore = game.players[0]!.graveyard.length;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.library.map((card) => card.name)).toEqual(["Sol Ring"]);
+    expect(game.players[0]!.graveyard.length).toBe(graveBefore + 2);
+    expect(game.players[0]!.graveyard.map((card) => card.name)).toEqual(expect.arrayContaining(["Grizzly Bears", "Lightning Bolt"]));
+  });
+
+  it("makes every opponent discard once, in APNAP order, from an ETB trigger", () => {
+    const specter = make({
+      name: "Test Specter", type_line: "Creature — Specter", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "2",
+      oracle_text: "Flying\nWhen this creature enters, each opponent discards a card."
+    });
+    expect(profileOf(specter).fullyImplemented).toBe(true);
+    let game = createGame(
+      [deck("A", COMMANDER("A"), []), deck("B", COMMANDER("B"), []), deck("C", COMMANDER("C"), [])],
+      { seed: 7, allowPartialDecks: true }
+    );
+    game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [specter], "cast") }));
+    game = stage(game, 1, () => ({ hand: toHand(1, [BEAR(), BOLT()], "b") }));
+    game = stage(game, 2, () => ({ hand: toHand(2, [SOL_RING(), FLIER()], "c") }));
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "cast-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "discard-cards");
+    // Controller's first opponent in turn order goes first.
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 1, remaining: 1 });
+    game = applyAction(game, 1, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "b-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 2, remaining: 1 });
+    game = applyAction(game, 2, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "c-0" });
+    expect(game.pendingChoice).toBeNull();
+
+    expect(game.players[1]!.graveyard.map((card) => card.name)).toContain("Grizzly Bears");
+    expect(game.players[2]!.graveyard.map((card) => card.name)).toContain("Sol Ring");
+    expect(game.players[0]!.hand).toHaveLength(0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Specter")).toBe(false);
   });
 
   it("pays Foster and reveals until a creature, sending the rest to the graveyard", () => {
@@ -8511,6 +8985,45 @@ describe("activated abilities", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Sol Ring")).toBe(true);
     expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Mountain"]);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Storm Crow")).toBe(true);
+  });
+
+  describe("fetch land (subtype search from an activated ability)", () => {
+    const FLOODED_STRAND = () => make({
+      name: "Flooded Strand", type_line: "Land",
+      oracle_text: "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle."
+    });
+    const GODLESS_SHRINE = () => make({ name: "Godless Shrine", type_line: "Land — Plains Swamp", produced_mana: ["W", "B"] });
+
+    it("parses the crack into a Plains/Island battlefield search", () => {
+      expect(profileOf(FLOODED_STRAND()).activatedAbilities[0]).toMatchObject({
+        sacrificesSelf: true, lifeCost: 1, requiresTap: true,
+        effect: { kind: "search-library", types: [], subtypes: ["Plains", "Island"], destination: "battlefield" }
+      });
+    });
+
+    it("finds a nonbasic land with the Plains subtype and offers it as a choice", () => {
+      let game = readyOnBoard([FLOODED_STRAND()], { library: [GODLESS_SHRINE()], hold: true });
+      const source = permanentNamed(game, 0, "Flooded Strand")!;
+      game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+      game = applyAction(game, 0, { type: "pass" });
+      game = passUntil(game, (state) => state.stack.length === 0);
+      expect(game.pendingChoice).toMatchObject({ type: "search-library", seat: 0 });
+      expect((game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library" }>).optionIds).toHaveLength(1);
+    });
+
+    it("fails to find and shuffles when the library holds no legal target, with an unambiguous log", () => {
+      let game = readyOnBoard([FLOODED_STRAND()], { library: [SWAMP(), MOUNTAIN(), FOREST()], hold: true });
+      const source = permanentNamed(game, 0, "Flooded Strand")!;
+      game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+      game = applyAction(game, 0, { type: "pass" });
+      game = passUntil(game, (state) => state.stack.length === 0);
+      expect(game.pendingChoice).toBeNull();
+      expect(game.players[0]!.graveyard.some((card) => card.name === "Flooded Strand")).toBe(true);
+      const last = game.log.at(-1)!.text;
+      expect(last).toContain("Flooded Strand");
+      expect(last).toMatch(/no encuentra ninguna carta|baraja su biblioteca/);
+      expect(last).not.toContain("no hay una carta válida");
+    });
   });
 });
 

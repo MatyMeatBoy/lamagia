@@ -25,6 +25,7 @@ export interface CardView {
   readonly image_art_crop?: string;
   /** Generated tokens are distinct battlefield objects and use the token frame. */
   readonly isToken: boolean;
+  readonly tokenSourceSetCode?: string;
   readonly power: number | null;
   readonly toughness: number | null;
   readonly keywords: readonly string[];
@@ -84,6 +85,8 @@ export interface PlayerView {
   /** Player counters are public game information (poison, energy, experience, etc.). */
   readonly counters: Readonly<Record<string, number>>;
   readonly landsPlayedThisTurn: number;
+  /** This player's personal turn count (how many turns they have begun), independent of the global `turn`. */
+  readonly turnsTaken: number;
   readonly manaPool: ManaPool;
   /** Restricted mana is exposed only to its controller, with its colour tags. */
   readonly restrictedMana: readonly ManaType[];
@@ -219,6 +222,7 @@ function cardView(card: GameCard): CardView {
     ...(card.image_normal ? { image_normal: card.image_normal } : {}),
     ...(card.image_art_crop ? { image_art_crop: card.image_art_crop } : {}),
     isToken: Boolean(card.token),
+    ...(card.token_source_set_code ? { tokenSourceSetCode: card.token_source_set_code } : {}),
     power: profile.power,
     toughness: profile.toughness,
     keywords: profile.keywords,
@@ -342,6 +346,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     commanderDamage: player.commanderDamage,
     counters: player.counters,
     landsPlayedThisTurn: player.landsPlayedThisTurn,
+    turnsTaken: player.turnsTaken,
     manaPool: player.seat === viewerSeat ? player.manaPool : emptyPool(),
     restrictedMana: player.seat === viewerSeat ? (player.restrictedMana ?? []).map((mana) => mana.type) : [],
     availableMana: player.seat === viewerSeat ? manaSourcePotential(player) : 0

@@ -16,6 +16,7 @@ import { ACTIVATION_GLYPHS, KEYWORD_GLYPHS, TRIGGER_GLYPHS, glyphSvg, keywordGly
 import "./styles.css";
 import { manaImageUrl, recoverManaImage } from "./mana-images.js";
 import { hasCreatureStats } from "./card-stats.js";
+import { zoneIconSvg, type ZoneId } from "./zones.js";
 
 declare global {
   interface Window { __PROSSH_API_BASE__?: string; }
@@ -87,9 +88,32 @@ interface UiState {
   stackDetail: string | null;
   /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
   layout: "auto" | "mobile";
-  /** MTGO-style phase stops for the local seat. */
-  stops: Set<TurnStep>;
-  stopMenu: { x: number; y: number; step: TurnStep } | null;
+  /** MTGO-style phase stops, kept separately for the local seat's turns and for opponents' turns. */
+  stops: { mine: Set<TurnStep>; opponents: Set<TurnStep> };
+  /** Version at which the player dismissed the non-mandatory decision overlay. */
+  dismissedDecisionVersion: number | null;
+}
+
+type StopScope = "mine" | "opponents";
+
+/** MTGO factory-default stops. */
+const DEFAULT_STOPS: Record<StopScope, TurnStep[]> = {
+  mine: ["precombat-main", "begin-combat", "declare-attackers", "declare-blockers", "postcombat-main", "end"],
+  opponents: ["upkeep", "declare-attackers", "declare-blockers", "end"]
+};
+
+function loadStops(): { mine: Set<TurnStep>; opponents: Set<TurnStep> } {
+  try {
+    const v2 = window.localStorage.getItem("prossh.stops.v2");
+    if (v2) {
+      const parsed = JSON.parse(v2) as { mine: TurnStep[]; opponents: TurnStep[] };
+      return { mine: new Set(parsed.mine ?? DEFAULT_STOPS.mine), opponents: new Set(parsed.opponents ?? DEFAULT_STOPS.opponents) };
+    }
+    // Migrate the single legacy list into both scopes.
+    const legacy = JSON.parse(window.localStorage.getItem("prossh.stops") ?? "null") as TurnStep[] | null;
+    if (legacy) return { mine: new Set(legacy), opponents: new Set(legacy) };
+  } catch { /* fall through to defaults */ }
+  return { mine: new Set(DEFAULT_STOPS.mine), opponents: new Set(DEFAULT_STOPS.opponents) };
 }
 
 let session: MatchSession | null = null;
@@ -107,16 +131,25 @@ const ui: UiState = {
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
   actionsOpen: false,
   layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
-  ,stops: new Set<TurnStep>(JSON.parse(window.localStorage.getItem("prossh.stops") ?? "null") ?? ["upkeep", "draw", "precombat-main", "declare-attackers", "declare-blockers", "combat-damage", "end", "cleanup"]),
-  stopMenu: null
+  ,stops: loadStops(),
+  dismissedDecisionVersion: null
 };
 
 function persistStops(): void {
-  window.localStorage.setItem("prossh.stops", JSON.stringify([...ui.stops]));
+  window.localStorage.setItem("prossh.stops.v2", JSON.stringify({ mine: [...ui.stops.mine], opponents: [...ui.stops.opponents] }));
+}
+
+function toggleStop(scope: StopScope, step: TurnStep): void {
+  const set = ui.stops[scope];
+  if (set.has(step)) set.delete(step); else set.add(step);
+  persistStops();
+  render();
 }
 
 function autoPassForPhase(): boolean {
-  if (!ui.autoPass || ui.stops.has(view?.step ?? "cleanup") || !view) return false;
+  if (!ui.autoPass || !view) return false;
+  const scope: StopScope = view.activeSeat === view.viewerSeat ? "mine" : "opponents";
+  if (ui.stops[scope].has(view.step)) return false;
   // Smart pass is only a priority convenience. Any player-owned decision,
   // target selection, combat declaration, or legal response must keep the
   // decision surface under human control (MTGO-style yield semantics).
@@ -137,12 +170,43 @@ function phaseRailHtml(): string {
   const priorityReadout = view!.finished
     ? `<span class="priority-readout"><span class="pulse muted"></span>Partida terminada</span>`
     : `<span class="priority-readout"><span class="pulse${view!.waitingOn === view!.viewerSeat ? "" : " muted"}"></span>${view!.waitingOn === view!.viewerSeat ? "Decide tú" : "Decide"}: <b style="color: var(--seat-${view!.waitingOn ?? 0})">${escapeHtml(seatOf(view!.waitingOn ?? -1)?.name ?? "nadie")}</b></span>`;
+  const active = seatOf(view!.activeSeat);
+  const activeIsViewer = view!.activeSeat === view!.viewerSeat;
+  const turnReadout = active
+    ? `<span class="phase-turn" title="Turno global ${view!.turn}"><b>Turno ${active.turnsTaken}</b> de <span class="who" style="color: var(--seat-${active.seat})">${activeIsViewer ? "ti" : escapeHtml(active.name)}</span><small>global ${view!.turn}</small></span>`
+    : `<span class="phase-turn"><b>Turno ${view!.turn}</b></span>`;
   return `<nav class="phase-rail mtgo-phase-rail" aria-label="Fases del turno">
-    <span class="phase-turn">Turno ${view!.turn}</span>
-    ${STEP_ORDER.map((step, index) => `<button class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}${ui.stops.has(step) ? " stopped" : ""}" type="button" data-phase-stop="${step}" title="${ui.stops.has(step) ? "Quitar stopper" : "Añadir stopper"}: ${STEP_LABELS[step]}"${view!.finished ? " disabled" : ""}><i aria-hidden="true"></i>${escapeHtml(STEP_LABELS[step])}</button>`).join("")}
+    ${turnReadout}
+    ${STEP_ORDER.map((step, index) => `<span class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}
     <span class="spacer"></span>
     ${priorityReadout}
   </nav>`;
+}
+
+/**
+ * MTGO-style priority bar between the opponents' band and the local board.
+ * Each phase carries two stop triangles: one pointing up toward the opponents
+ * (a stop on their turns) and one pointing down toward the local player (a stop
+ * on your turns). The row that applies to the current turn is emphasised.
+ */
+function priorityBarHtml(): string {
+  if (!view || view.finished) return "";
+  const activeScope: StopScope = view.activeSeat === view.viewerSeat ? "mine" : "opponents";
+  const cell = (step: TurnStep, scope: StopScope): string => {
+    const on = ui.stops[scope].has(step);
+    const dirLabel = scope === "opponents" ? "turnos rivales" : "tu turno";
+    return `<button class="stop-tri stop-${scope}${on ? " on" : ""}${scope === activeScope ? " live" : ""}" type="button"
+      data-stop-scope="${scope}" data-stop-step="${step}"
+      aria-pressed="${on}" title="${on ? "Quitar parada" : "Parar"} en ${STEP_LABELS[step]} · ${dirLabel}"></button>`;
+  };
+  return `<div class="priority-bar" role="group" aria-label="Paradas de fase">
+    <label class="priority-autopass"><input id="auto-pass-bar" type="checkbox" ${ui.autoPass ? "checked" : ""}/><span>Auto-pasar</span></label>
+    <div class="priority-phases">
+      <div class="stop-row stop-row-opponents${activeScope === "opponents" ? " live" : ""}" aria-label="Paradas en turnos rivales">${STEP_ORDER.map((step) => cell(step, "opponents")).join("")}</div>
+      <div class="phase-track">${STEP_ORDER.map((step) => `<span class="phase-cell${step === view!.step ? " current" : ""}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}</div>
+      <div class="stop-row stop-row-mine${activeScope === "mine" ? " live" : ""}" aria-label="Paradas en tu turno">${STEP_ORDER.map((step) => cell(step, "mine")).join("")}</div>
+    </div>
+  </div>`;
 }
 
 interface CardDragState {
@@ -232,7 +296,11 @@ function manaReserveHtml(pool: Readonly<Record<string, number>>, restricted: rea
   return `${entries.map((symbol) => `<span class="mana-reserve-item">${manaSymbolHtml(symbol)}<b>${pool[symbol] ?? 0}</b></span>`).join("")}${restrictedEntries.map(({ symbol, count }) => `<span class="mana-reserve-item restricted" title="Solo para hechizos legendarios">${manaSymbolHtml(symbol)}<b>${count}</b></span>`).join("")}`;
 }
 
-/** Replaces Oracle mana tokens while keeping the rules text and line breaks. */
+/**
+ * Renders `{W}{U}{B}…` mana tokens inside free text as coloured symbols and
+ * escapes everything else. Used for Oracle rules text and for engine-built
+ * action labels ("Girar Starting Town · agregar {C}").
+ */
 function oracleHtml(text: string): string {
   let html = "";
   let last = 0;
@@ -334,7 +402,6 @@ function returnToMain(): void {
   view = null;
   window.sessionStorage.removeItem("prossh.match");
   ui.pendingTarget = null;
-  ui.stopMenu = null;
   ui.notice = "";
   render();
 }
@@ -408,17 +475,32 @@ async function setAutoPass(autoPass: boolean): Promise<void> {
   } catch (error) { ui.notice = error instanceof Error ? error.message : "No se pudo cambiar la preferencia."; render(); }
 }
 
+/** Resolutions that produce no visible effect and would otherwise read as a silent bug. */
+const QUIET_RESOLUTION = /no encuentra ninguna carta que cumpla|no hay tierras básicas que buscar/;
+
 function applyView(next: GameView): void {
   const sameDecision = view?.version === next.version
     && view?.prioritySeat === next.prioritySeat
     && view?.stack.map((object) => object.id).join(",") === next.stack.map((object) => object.id).join(",");
+  const previousLastLog = view?.log.at(-1)?.text;
   view = next;
+  // Flash "fizzle / fail to find" style resolutions so the player is not left
+  // wondering why an action seemed to do nothing (e.g. an off-colour fetch land).
+  let resumeFrom = 0;
+  if (previousLastLog) {
+    for (let index = next.log.length - 1; index >= 0; index -= 1) {
+      if (next.log[index]!.text === previousLastLog) { resumeFrom = index + 1; break; }
+    }
+  }
+  const quiet = next.log.slice(resumeFrom).find((entry) =>
+    entry.seat === next.viewerSeat && QUIET_RESOLUTION.test(entry.text));
+  if (quiet) ui.notice = quiet.text;
   if (!sameDecision) ui.pendingTarget = null;
+  ui.dismissedDecisionVersion = null;
   ui.selectedBlocker = null;
   ui.abilityMenu = null;
   ui.cardActionMenu = null;
   ui.contextMenu = null;
-  ui.stopMenu = null;
   ui.stackDetail = next.stack.some((object) => object.id === ui.stackDetail) ? ui.stackDetail : null;
   ui.showFullLibrary = false;
   if (!next.combat.awaitingAttackers) ui.attackers.clear();
@@ -461,7 +543,7 @@ function cardActionMenuEntries(cardId: string): LegalAction[] {
 
 function cardHasAlternateHandAction(cardId: string): boolean {
   return cardActionEntriesForCard(cardId).some((entry) =>
-    entry.action.type === "activate-mana" || entry.action.type === "cycle" || entry.action.type === "toggle-trigger-yield");
+    entry.action.type === "activate-mana" || entry.action.type === "cycle");
 }
 
 function cardActionsForCard(cardId: string): LegalAction[] {
@@ -586,15 +668,17 @@ function runAction(entry: LegalAction, subject: string): void {
 }
 
 function onCardClick(cardId: string, forcedAction?: LegalAction): void {
-  const choices = cardActionMenuEntries(cardId);
+  // A left click is for playing the card. Trigger-yield preferences are a
+  // right-click/long-press concern only, so they never open the menu here and
+  // never count toward "this card is ambiguous".
+  const choices = cardActionEntriesForCard(cardId).filter((entry) => entry.action.type !== "toggle-trigger-yield");
   const card = seatOf(view?.viewerSeat ?? -1)?.hand?.find((candidate) => candidate.instance_id === cardId);
   const hasCycleOnly = choices.some((entry) => entry.action.type === "cycle") && !choices.some((entry) => entry.action.type === "cast");
   const hasManaAbility = choices.some((entry) => entry.action.type === "activate-mana");
-  const hasYieldToggle = choices.some((entry) => entry.action.type === "toggle-trigger-yield");
   // Never guess between printed modes. This is especially important for
   // hand-based mana abilities (e.g. Simian Spirit Guide): a normal click must
   // open the general menu, where casting and exiling for mana are separate.
-  if (!forcedAction && (choices.length > 1 || hasManaAbility || hasYieldToggle || (hasCycleOnly && Boolean(card)))) {
+  if (!forcedAction && (choices.length > 1 || hasManaAbility || (hasCycleOnly && Boolean(card)))) {
     ui.cardActionMenu = ui.cardActionMenu === cardId ? null : cardId;
     ui.notice = "Elige qué hacer con esta carta.";
     render();
@@ -647,9 +731,13 @@ function triggerYieldActionsFor(instanceId: string): LegalAction[] {
 }
 
 function triggerYieldStatusFor(instanceId: string): string | null {
-  const entry = triggerYieldActionsFor(instanceId)[0];
-  if (!entry || entry.action.type !== "toggle-trigger-yield") return null;
-  return entry.action.enabled ? "Los triggers opcionales de esta carta se resolverán normalmente." : "Los triggers opcionales de esta carta se declinan automáticamente.";
+  const entries = triggerYieldActionsFor(instanceId);
+  if (!entries.length) return null;
+  // `enabled: true` on the action means "turn yielding ON" — i.e. it is off now.
+  const yielded = entries.filter((entry) => entry.action.type === "toggle-trigger-yield" && !entry.action.enabled).length;
+  if (!yielded) return "Los triggers opcionales de esta carta se resolverán normalmente.";
+  if (yielded === entries.length) return "Todos los triggers opcionales de esta carta se declinan automáticamente.";
+  return `Se declina ${yielded} de ${entries.length} triggers opcionales de esta carta.`;
 }
 
 function openCardActionMenu(cardId: string): void {
@@ -931,6 +1019,17 @@ function boardHtml(player: PlayerView, own: boolean): string {
   return `${nonlandRow}${landRow}`;
 }
 
+const ZONE_LABELS: Record<ZoneId, string> = {
+  library: "Biblioteca", hand: "Mano", graveyard: "Cementerio", exile: "Exilio", command: "Zona de mando"
+};
+
+/** One zone chip: a TCG icon + count, with the Spanish zone name kept for a11y. */
+function zoneChipHtml(zone: ZoneId, seat: number, count: number, withLabel = false): string {
+  const label = ZONE_LABELS[zone];
+  return `<button class="zone-chip" type="button" data-zone="${zone === "command" ? "command" : zone}" data-seat="${seat}" title="${label}" aria-label="${label}: ${count}">
+    <span class="zone-ico" aria-hidden="true">${zoneIconSvg(zone)}</span>${withLabel ? `<i>${label}</i>` : ""}<b>${count}</b></button>`;
+}
+
 function seatPanelHtml(player: PlayerView): string {
   const acting = view?.waitingOn === player.seat;
   const classes = ["seat-panel"];
@@ -953,10 +1052,10 @@ function seatPanelHtml(player: PlayerView): string {
       ${commander ? `<span class="thumb"${commander.image_art_crop ? ` style="background-image:url('${escapeHtml(commander.image_art_crop)}')"` : ""}></span>
         <span class="meta"><b>${escapeHtml(commander.name)}</b><span>Zona de mando</span></span>` : `<span class="meta"><b>—</b><span>Comandante en juego</span></span>`}
       <span class="zone-chips">
-        <button class="zone-chip" type="button" data-zone="library" data-seat="${player.seat}" title="Biblioteca">Bib <b>${player.libraryCount}</b></button>
-        <button class="zone-chip" type="button" data-zone="hand" data-seat="${player.seat}" title="Mano">Mano <b>${player.handCount}</b></button>
-        <button class="zone-chip" type="button" data-zone="graveyard" data-seat="${player.seat}" title="Cementerio">Cem <b>${player.graveyard.length}</b></button>
-        <button class="zone-chip" type="button" data-zone="exile" data-seat="${player.seat}" title="Exilio">Exi <b>${player.exile.length}</b></button>
+        ${zoneChipHtml("library", player.seat, player.libraryCount)}
+        ${zoneChipHtml("hand", player.seat, player.handCount)}
+        ${zoneChipHtml("graveyard", player.seat, player.graveyard.length)}
+        ${zoneChipHtml("exile", player.seat, player.exile.length)}
       </span>
       ${cmdDamage.length ? `<span class="cmd-damage" title="Daño de comandante recibido">CMD ${cmdDamage.join("/")}</span>` : ""}
     </footer>
@@ -968,7 +1067,7 @@ function handHtml(player: PlayerView): string {
   if (!cards.length) return `<p class="hand-empty">Mano vacía</p>`;
   const ordered = [...cards].sort((left, right) =>
     Number(isLandCard(left)) - Number(isLandCard(right)) || left.manaValue - right.manaValue || left.name.localeCompare(right.name));
-  return ordered.map((card) => {
+  return ordered.map((card, index) => {
     const action = actionForCard(card.instance_id);
     const classes = ["hand-card"];
     const isRevealOption = action?.action.type === "choose-reveal";
@@ -982,7 +1081,7 @@ function handHtml(player: PlayerView): string {
     if (revealOptions && !isRevealOption) classes.push("choice-muted");
     if (!card.fullyImplemented) classes.push("partial");
     return `<button class="${classes.join(" ")}" type="button" data-hand="${escapeHtml(card.instance_id)}"
-      data-preview="${escapeHtml(card.instance_id)}" title="${escapeHtml(card.name)}">
+      data-preview="${escapeHtml(card.instance_id)}" title="${escapeHtml(card.name)}" style="z-index:${ordered.length - index}">
       ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}" draggable="false" loading="lazy" decoding="async"/>` : ""}
       ${card.mana_cost ? `<span class="hand-cost" aria-label="Coste de maná">${manaHtml(card.mana_cost)}</span>` : ""}
       <span class="tile-name">${escapeHtml(card.name)}</span>
@@ -1050,30 +1149,30 @@ function logDrawerHtml(): string {
   </aside>`;
 }
 
-/** The stack rides just above the hand so it is impossible to miss mid-combat. */
-function stackStripHtml(): string {
-  if (!view) return "";
-  // Centered decisions own the attention surface; keep the stack available
-  // once priority resumes, but do not let it compete with search/scry/payment.
-  if (view.librarySearch || view.scry || view.topSelection || view.reorderTop || view.viewedHand || ui.pendingTarget) return "";
+/**
+ * The stack is a floating, draggable panel (MTGO-style). It only exists while
+ * something is on the stack, so an empty stack costs no screen space.
+ */
+function stackPanelHtml(): string {
+  if (!view || !view.stack.length) return "";
   const passed = view.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`);
   const priority = view.priorityOpen ? seatOf(view.prioritySeat)?.name : undefined;
   const status = priority
     ? `Prioridad: ${priority}${passed.length ? ` · ${passed.length} pasó${passed.length === 1 ? "" : "aron"}` : ""}`
     : "Sin prioridad abierta";
-  const statusDetail = priority
-    ? `${status}${passed.length ? ` · Pasaron: ${passed.join(", ")}` : ""}`
-    : status;
-  const objects = view.stack.length ? [...view.stack].reverse().map((object, index) => {
+  const chips = [...view.stack].reverse().map((object, index) => {
     const stackPosition = view!.stack.length - index;
     const kind = object.kind === "trigger" ? "habilidad disparada" : object.kind === "activated" ? "habilidad activada" : "hechizo";
     return `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}${object.resolvesNext ? " resolves-next" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este objeto como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Inspeccionar objeto de la pila")}" aria-current="${object.resolvesNext ? "step" : "false"}" aria-label="Pila ${stackPosition} desde abajo, ${escapeHtml(kind)} ${escapeHtml(object.name)}${object.resolvesNext ? ", próximo en resolver" : ""}">
       <strong class="stack-order" title="${object.resolvesNext ? "Próximo en resolver" : `Posición ${stackPosition} desde abajo`}">${object.resolvesNext ? "↑" : stackPosition}</strong>
       ${cardImageHtml(object.image_normal, object.name)}
-      <span><small class="stack-kind">${escapeHtml(kind)}${object.countered ? " · Contrarrestado" : ""}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
+      <span><small class="stack-kind">${escapeHtml(kind)}${object.countered ? " · Contrarrestado" : ""}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${oracleHtml(object.label)}${object.text && object.text !== object.label ? ` · ${oracleHtml(object.text)}` : ""}</small></span>
     </button>`;
-  }).join("") : `<span class="stack-empty">Vacía · ${escapeHtml(status)}</span>`;
-  return `<div class="stack-strip${view.stack.length ? "" : " empty"}" aria-label="Pila de hechizos y habilidades" title="${escapeHtml(statusDetail)}"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)}</small>${objects}</div>`;
+  }).join("");
+  return `<section class="stack-panel floating-panel" data-panel="stack" aria-label="Pila de hechizos y habilidades">
+    <header class="floating-panel-head"><b>Pila · ${view.stack.length}</b><small>Arriba resuelve primero · ${escapeHtml(status)}</small></header>
+    <div class="stack-panel-body">${chips}</div>
+  </section>`;
 }
 
 function stackDetailHtml(): string {
@@ -1086,7 +1185,7 @@ function stackDetailHtml(): string {
       <button id="close-stack-detail" class="icon-button" type="button" aria-label="Cerrar detalle de la pila">×</button></header>
     <div class="stack-detail-body">
       ${cardImageHtml(object.image_normal, object.name)}
-      <div><b>${escapeHtml(object.label)}</b><p>${escapeHtml(object.text ?? "Sin texto adicional.")}</p>
+      <div><b>${oracleHtml(object.label)}</b><p>${oracleHtml(object.text ?? "Sin texto adicional.")}</p>
         <small>${object.targets.length ? `Objetivos: ${escapeHtml(object.targets.join(", "))}` : "Sin objetivos"}${object.countered ? " · Contrarrestado" : ""}</small>
         <small class="stack-detail-priority">${object.resolvesNext ? "Próximo en resolver" : `Posición ${object.position} desde abajo`} · ${view?.priorityOpen ? `Prioridad: ${escapeHtml(seatOf(view.prioritySeat)?.name ?? "")}` : "Prioridad cerrada"}${object.passedSeats?.length ? ` · Pasaron: ${escapeHtml(object.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`).join(", "))}` : ""}</small>
         <span class="stack-detail-hint">Cierra este panel para responder; los objetivos resaltados siguen seleccionables.</span></div>
@@ -1121,7 +1220,7 @@ function actionMenuHtml(): string {
     </form>` : ""}${rows.map((entry) => {
       const index = actions.indexOf(entry);
       return `<button class="action-row${entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger" ? " choice-action" : ""}" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
-      <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
+      <span>${oracleHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
     }).join("")}</div>
   </details>`;
 }
@@ -1151,7 +1250,7 @@ function cardActionMenuHtml(): string {
             : entry.note ?? entry.label;
       const choiceClass = entry.action.type === "toggle-trigger-yield" ? "choice-action trigger-yield-action" : "choice-action";
       return `<button class="action-row ${choiceClass}" type="button" data-action-index="${index}" title="${escapeHtml(description)}">
-        <span><b>${escapeHtml(entry.label)}</b><small>${escapeHtml(description)}</small></span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
+        <span><b>${oracleHtml(entry.label)}</b><small>${oracleHtml(description)}</small></span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
     }).join("")}<button id="card-action-info" class="action-row" type="button"><span><b>Ver información</b><small>Texto de reglas, tipo, coste y rulings.</small></span></button></div>
   </section>`;
 }
@@ -1172,8 +1271,13 @@ function decisionOverlayHtml(): string {
       && (respondingToStack || !["cast", "activate", "equip"].includes(entry.action.type)));
   if (!choices.length) return "";
   const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
+  const cancelEntry = actions.find((entry) => entry.action.type === "cancel-mana-payment");
   const manaPayment = choices.some((entry) => entry.action.type === "choose-mana-source" || entry.action.type === "cancel-mana-payment");
   const triggerTargetChoice = choices.some((entry) => entry.action.type === "choose-trigger-target");
+  // A required choice with no cancel path cannot be skipped; a "you may respond"
+  // prompt can be dismissed until the game state next changes.
+  const mandatory = triggerTargetChoice || (hasPendingChoice && !cancelEntry);
+  if (!mandatory && ui.dismissedDecisionVersion === view?.version) return "";
   const title = manaPayment ? "Elegir fuentes de maná" : triggerTargetChoice ? "Elegir objetivo" : hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
   const subtitle = triggerTargetChoice
     ? "Selecciona el permanente, jugador o hechizo marcado en la mesa."
@@ -1182,13 +1286,18 @@ function decisionOverlayHtml(): string {
     : view?.stack.length
       ? "Puedes responder ahora o pasar prioridad."
       : "Estas son las acciones disponibles en este momento.";
+  const closeButton = cancelEntry
+    ? `<button id="cancel-decision-overlay" data-action-index="${actions.indexOf(cancelEntry)}" class="icon-button" type="button" aria-label="Cancelar el pago y volver">×</button>`
+    : mandatory
+      ? ""
+      : `<button id="close-decision-overlay" class="icon-button" type="button" aria-label="Ocultar acciones">×</button>`;
   return `<section class="decision-overlay" role="dialog" aria-modal="false" aria-label="${escapeHtml(title)}">
     <header class="decision-head"><div><b>${escapeHtml(title)}</b><span>${escapeHtml(subtitle)}</span></div>
-      <button id="close-decision-overlay" class="icon-button" type="button" aria-label="Cerrar acciones">×</button></header>
+      ${closeButton}</header>
     <div class="decision-list">${choices.map((entry) => {
       const index = actions.indexOf(entry);
       return `<button class="action-row${entry.action.type.startsWith("choose-") ? " choice-action" : ""}" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
-        <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
+        <span>${oracleHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
     }).join("")}${ui.pendingTarget?.selectedTargets.length ? `<button id="undo-pending-target" class="action-row secondary-action" type="button"><span><b>Volver al objetivo anterior</b><small>Cambiar la última selección</small></span></button>` : ""}</div>
   </section>`;
 }
@@ -1223,7 +1332,7 @@ function scryHtml(): string {
     </article>`).join("")}</div>
     <div class="scry-actions">${actions.map((entry) => {
       const index = view!.legalActions.indexOf(entry);
-      return `<button class="action-row choice-action" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">${escapeHtml(entry.label)}</button>`;
+      return `<button class="action-row choice-action" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">${oracleHtml(entry.label)}</button>`;
     }).join("")}</div>
   </section>`;
 }
@@ -1294,6 +1403,7 @@ function render(): void {
       <p class="rotate-hint">Gira el dispositivo: la mesa está pensada para horizontal.</p>
       <section class="opponent-row seats-${opponents.length}" aria-label="Campos de los oponentes">${opponents.map(seatPanelHtml).join("")}</section>
       ${combatBarHtml()}
+      ${priorityBarHtml()}
       <section class="self-area" aria-label="Tu campo de batalla">
         <div class="self-board">${boardHtml(me, true)}</div>
         <div class="self-dock">
@@ -1306,14 +1416,13 @@ function render(): void {
               <span class="mana-reserve" title="Reserva de maná"><small>Reserva</small>${manaReserveHtml(me.manaPool, me.restrictedMana)}</span>
             </div>
             <div class="self-zones">
-              <button class="zone-chip" type="button" data-zone="library" data-seat="${me.seat}"><i>Biblioteca</i><b>${me.libraryCount}</b></button>
-              <button class="zone-chip" type="button" data-zone="graveyard" data-seat="${me.seat}"><i>Cementerio</i><b>${me.graveyard.length}</b></button>
-              <button class="zone-chip" type="button" data-zone="exile" data-seat="${me.seat}"><i>Exilio</i><b>${me.exile.length}</b></button>
-              <button class="zone-chip" type="button" data-zone="command" data-seat="${me.seat}"><i>Mando</i><b>${me.commandZone.length}</b></button>
+              ${zoneChipHtml("library", me.seat, me.libraryCount, true)}
+              ${zoneChipHtml("graveyard", me.seat, me.graveyard.length, true)}
+              ${zoneChipHtml("exile", me.seat, me.exile.length, true)}
+              ${zoneChipHtml("command", me.seat, me.commandZone.length, true)}
             </div>
           </div>
           <div class="hand-wrap">
-            ${stackStripHtml()}
             <div class="hand-label"><b>Tu mano · ${me.handCount}</b><span class="hint">${escapeHtml(ui.notice || handHint)}</span></div>
             <div class="hand">${handHtml(me)}</div>
           </div>
@@ -1323,7 +1432,6 @@ function render(): void {
             ${ui.pendingTarget ? `<button id="cancel-target" class="text-button">Cancelar objetivo</button>` : ""}
             ${view.undoAvailable ? `<button id="undo" class="text-button" title="Deshacer la última activación de maná">Deshacer</button>` : ""}
             <button id="pass" class="primary-button" ${pass ? "" : "disabled"}>${escapeHtml(pass?.label ?? "Sin prioridad")}<kbd>Espacio</kbd></button>
-    <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar</label>
           </div>
         </div>
       </section>
@@ -1336,11 +1444,9 @@ function render(): void {
   ${cardActionMenuHtml()}
   ${decisionOverlayHtml()}
   ${stackDetailHtml()}
+  ${stackPanelHtml()}
   ${ui.contextMenu && view.undoAvailable ? `<div class="context-menu" style="left:${ui.contextMenu.x}px;top:${ui.contextMenu.y}px" role="menu">
     <button id="context-undo" type="button">Deshacer última acción de maná</button>
-  </div>` : ""}
-  ${ui.stopMenu ? `<div class="context-menu phase-stop-menu" style="left:${ui.stopMenu.x}px;top:${ui.stopMenu.y}px" role="menu">
-    <button id="toggle-phase-stop" type="button">${ui.stops.has(ui.stopMenu.step) ? "Quitar stopper" : "Añadir stopper"}: ${escapeHtml(STEP_LABELS[ui.stopMenu.step])}</button>
   </div>` : ""}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
@@ -1351,7 +1457,31 @@ function render(): void {
     <button id="rematch" class="primary-button">Jugar otra</button></div></div>` : ""}`;
 
   wireBoard();
+  layoutHand();
 }
+
+/**
+ * Fans the hand so every card's mana cost stays visible. Cards keep their full
+ * width; when the row would overflow, they overlap left-over-right (the left
+ * card paints on top) just enough to fit, never hiding more than the left
+ * portion of a covered card.
+ */
+function layoutHand(): void {
+  const hand = root!.querySelector<HTMLElement>(".hand");
+  if (!hand) return;
+  const cards = [...hand.querySelectorAll<HTMLElement>(".hand-card")];
+  if (cards.length < 2) { hand.style.setProperty("--hand-overlap", "0px"); return; }
+  const cardWidth = cards[0]!.offsetWidth;
+  const available = hand.clientWidth - 24;
+  const natural = cardWidth * cards.length;
+  if (natural <= available) { hand.style.setProperty("--hand-overlap", "0px"); return; }
+  // Keep at least the cost strip + right border of every covered card visible.
+  const maxOverlap = Math.max(0, cardWidth - 62);
+  const needed = (natural - available) / (cards.length - 1);
+  hand.style.setProperty("--hand-overlap", `-${Math.min(maxOverlap, needed)}px`);
+}
+
+window.addEventListener("resize", () => layoutHand());
 
 // ---------------------------------------------------------------------------
 // Detail preview
@@ -1402,7 +1532,7 @@ function wireBoard(): void {
   on("#coverage", () => openCoverage());
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
-  on("#close-decision-overlay", () => document.querySelector(".decision-overlay")?.remove());
+  on("#close-decision-overlay", () => { ui.dismissedDecisionVersion = view?.version ?? null; render(); });
   on("#undo-pending-target", undoPendingTarget);
   on("#close-card-action-menu", () => { ui.cardActionMenu = null; ui.notice = ""; render(); });
   on("#close-stack-detail", () => { ui.stackDetail = null; render(); });
@@ -1414,29 +1544,10 @@ function wireBoard(): void {
   });
   on("#undo", () => void undoLatestMana());
   on("#context-undo", () => { ui.contextMenu = null; void undoLatestMana(); });
-  on("#toggle-phase-stop", () => {
-    const step = ui.stopMenu?.step;
-    if (!step) return;
-    if (ui.stops.has(step)) ui.stops.delete(step); else ui.stops.add(step);
-    persistStops();
-    ui.stopMenu = null;
-    render();
-  });
-  document.querySelectorAll<HTMLButtonElement>("[data-phase-stop]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (button.disabled) return;
-      const step = button.dataset.phaseStop as TurnStep;
-      if (ui.stops.has(step)) ui.stops.delete(step); else ui.stops.add(step);
-      persistStops();
-      render();
-    });
-    button.addEventListener("contextmenu", (event) => {
-      if (button.disabled) return;
-      event.preventDefault();
-      ui.stopMenu = { x: Math.min(event.clientX, Math.max(8, window.innerWidth - 250)), y: Math.min(event.clientY, Math.max(8, window.innerHeight - 58)), step: button.dataset.phaseStop as TurnStep };
-      render();
-    });
-  });
+  document.querySelectorAll<HTMLButtonElement>("[data-stop-scope]").forEach((button) =>
+    button.addEventListener("click", () => toggleStop(button.dataset.stopScope as StopScope, button.dataset.stopStep as TurnStep)));
+  document.querySelector<HTMLInputElement>("#auto-pass-bar")?.addEventListener("change", (event) =>
+    void setAutoPass((event.target as HTMLInputElement).checked));
   document.querySelector<HTMLElement>(".table")?.addEventListener("contextmenu", (event) => {
     if (event.target instanceof Element && event.target.closest("[data-hand], [data-permanent], [data-zone-card]")) return;
     if (!view?.undoAvailable) return;
@@ -1448,7 +1559,7 @@ function wireBoard(): void {
     render();
   });
   document.querySelector<HTMLElement>(".table")?.addEventListener("click", () => {
-    if (ui.contextMenu || ui.stopMenu) { ui.contextMenu = null; ui.stopMenu = null; render(); }
+    if (ui.contextMenu) { ui.contextMenu = null; render(); }
   });
   document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
     button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
@@ -1490,9 +1601,6 @@ function wireBoard(): void {
   on("#close-log", () => { ui.logOpen = false; window.localStorage.setItem("prossh.log", "0"); render(); });
   on("#confirm-attack", () => void submit({ type: "declare-attackers", attackers: [...ui.attackers.entries()].map(([instanceId, defender]) => ({ instanceId, defender })) }));
   on("#confirm-block", () => void submit({ type: "declare-blockers", blockers: [...ui.blockers.entries()].map(([instanceId, attackerId]) => ({ instanceId, attackerId })) }));
-
-  document.querySelector<HTMLInputElement>("#auto-pass")?.addEventListener("change", (event) =>
-    void setAutoPass((event.target as HTMLInputElement).checked));
 
   document.querySelectorAll<HTMLButtonElement>("[data-hand]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1548,6 +1656,68 @@ function wireBoard(): void {
       if (card) showPreview(card, element);
     });
     element.addEventListener("mouseleave", hidePreview);
+  });
+
+  document.querySelectorAll<HTMLElement>(".floating-panel").forEach((panel) => {
+    makeDraggable(panel, ".floating-panel-head", panel.dataset.panel ?? "panel");
+  });
+  document.querySelectorAll<HTMLElement>(".decision-overlay").forEach((panel) => {
+    makeDraggable(panel, ".decision-head", "decision");
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Draggable floating panels (stack, decision windows) — MTGO-style, non-modal
+// ---------------------------------------------------------------------------
+
+const clampNum = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+function loadPanelPos(key: string): { x: number; y: number } | null {
+  try {
+    const raw = window.localStorage.getItem(`prossh.panel.${key}`);
+    const parsed = raw ? (JSON.parse(raw) as { x: number; y: number }) : null;
+    return parsed && Number.isFinite(parsed.x) && Number.isFinite(parsed.y) ? parsed : null;
+  } catch { return null; }
+}
+
+function applyPanelPos(panel: HTMLElement, pos: { x: number; y: number }): void {
+  const width = panel.offsetWidth || 320;
+  const height = panel.offsetHeight || 200;
+  panel.style.left = `${clampNum(pos.x, 4, window.innerWidth - width - 4)}px`;
+  panel.style.top = `${clampNum(pos.y, 4, window.innerHeight - height - 4)}px`;
+  panel.style.right = "auto";
+  panel.style.transform = "none";
+}
+
+/** Makes `panel` draggable by `handleSelector`, persisting its position under `key`. */
+function makeDraggable(panel: HTMLElement, handleSelector: string, key: string): void {
+  const handle = panel.querySelector<HTMLElement>(handleSelector) ?? panel;
+  const saved = loadPanelPos(key);
+  if (saved) applyPanelPos(panel, saved);
+  handle.style.cursor = "grab";
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    if ((event.target as HTMLElement).closest("button, a, input, select, textarea")) return;
+    const rect = panel.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+    handle.style.cursor = "grabbing";
+    panel.style.transition = "none";
+    const move = (moveEvent: PointerEvent) => {
+      applyPanelPos(panel, { x: moveEvent.clientX - offsetX, y: moveEvent.clientY - offsetY });
+    };
+    const up = () => {
+      handle.style.cursor = "grab";
+      panel.style.transition = "";
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      try {
+        window.localStorage.setItem(`prossh.panel.${key}`, JSON.stringify({ x: parseFloat(panel.style.left), y: parseFloat(panel.style.top) }));
+      } catch { /* storage unavailable */ }
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    event.preventDefault();
   });
 }
 
@@ -1996,8 +2166,8 @@ document.querySelector<HTMLInputElement>("#card-query")?.addEventListener("input
 window.addEventListener("keydown", (event) => {
   if (event.target instanceof HTMLInputElement) return;
   if (event.code === "Space") { event.preventDefault(); document.querySelector<HTMLButtonElement>("#pass")?.click(); }
-  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.stopMenu || ui.glyphHelp || ui.stackDetail)) {
-    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.stopMenu = null; ui.glyphHelp = null; ui.stackDetail = null; ui.notice = ""; render();
+  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.glyphHelp || ui.stackDetail)) {
+    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.glyphHelp = null; ui.stackDetail = null; ui.notice = ""; render();
   }
   if (event.code === "KeyL") { ui.logOpen = !ui.logOpen; render(); }
 });

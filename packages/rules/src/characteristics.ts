@@ -29,6 +29,10 @@ export interface CardData {
   readonly keywords?: readonly string[];
   readonly produced_mana?: readonly string[];
   readonly card_faces?: readonly Partial<CardData>[];
+  /** Printing context used to select matching token art; never rules identity. */
+  readonly set_code?: string;
+  readonly token_image_normal?: string;
+  readonly token_image_art_crop?: string;
 }
 
 export type CardType =
@@ -318,6 +322,11 @@ export interface EquipmentModification {
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
+  /** Pacifism / Arrest: the enchanted creature can't attack and/or can't block. */
+  readonly cannotAttack?: boolean;
+  readonly cannotBlock?: boolean;
+  /** Exhaustion-on-a-stick: the enchanted creature doesn't untap during its controller's untap step. */
+  readonly cannotUntap?: boolean;
   /** Multiplier for a dynamic Aura bonus. */
   readonly scaling?: "other-enchantments-on-battlefield";
   /** Aura characteristic-setting layer (CR 613.1): replaces base values/types and may remove abilities. */
@@ -362,7 +371,7 @@ export interface TriggerDoubler {
 export interface StaticPowerToughnessGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
     | "source-opponents-graveyard-creatures" | "source-controller-life-threshold" | "other-subtype-creatures-you-control"
-    | "other-all-creatures" | "creatures-you-control-source-counter-threshold";
+    | "other-all-creatures" | "creatures-you-control-source-counter-threshold" | "source-controller-graveyard-threshold";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -405,7 +414,20 @@ export interface TokenDefinition {
   readonly colors: readonly string[];
   readonly keywords: readonly EnforcedKeyword[];
   readonly tapped: boolean;
+  /** Rules text for predefined tokens (Treasure, Clue, Food, Gold) so the engine grants their built-in abilities. */
+  readonly oracleText?: string;
 }
+
+/**
+ * CR 111.10: predefined tokens print no rules text on the card, only in the
+ * rules. Treasure/Gold need sacrifice-cost mana abilities (not yet supported in
+ * the mana planner), so only the ones whose ability is a plain activated
+ * ability are wired here.
+ */
+export const PREDEFINED_TOKEN_TEXT: Readonly<Record<string, string>> = {
+  clue: "{2}, Sacrifice this artifact: Draw a card.",
+  food: "{2}, {T}, Sacrifice this artifact: You gain 3 life."
+};
 
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
@@ -457,6 +479,8 @@ export type SpellEffect =
   /** Curse of Chaos: the attacking player may discard one, then draws one. */
   | { readonly kind: "discard-event-controller-then-draw"; readonly amount: number }
   | { readonly kind: "draw-then-discard"; readonly draw: number; readonly discard: number }
+  /** "Discard a card. If you do, draw a card" — a rummage; the controller chooses what to pitch. */
+  | { readonly kind: "discard-then-draw"; readonly amount: number }
   | { readonly kind: "draw-then-put-back-on-top"; readonly draw: number; readonly putBack: number }
   | { readonly kind: "exile-self" }
   | { readonly kind: "shuffle-self-into-library" }
@@ -464,9 +488,13 @@ export type SpellEffect =
   | { readonly kind: "sacrifice-source" }
   /** Each opponent of the spell caster draws, scoped to the triggering event player (Standstill). */
   | { readonly kind: "each-opponent-of-event-player-draws"; readonly amount: number }
+  /** "Mill N cards" with no subject: the controller mills their own library (CR 701.13). */
+  | { readonly kind: "mill"; readonly amount: number | "X" }
   | { readonly kind: "mill-target-player"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-opponent"; readonly amount: number | "X" }
   | { readonly kind: "mill-each-player"; readonly amount: number | "X" }
+  /** "Each opponent discards N cards": one card chosen by each opponent, in APNAP order. */
+  | { readonly kind: "each-opponent-discards"; readonly amount: number | "X" }
   | { readonly kind: "gain-life"; readonly amount: number | "X" }
   /** Activated sacrifice costs may use the sacrificed creature's toughness. */
   | { readonly kind: "gain-life-equal-sacrificed-toughness" }
@@ -600,6 +628,8 @@ export type SpellEffect =
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
+  /** "{cost}: ~ gains KEYWORD until end of turn" — a self-targeting keyword pump (CR 613). */
+  | { readonly kind: "grant-source-keyword"; readonly keyword: EnforcedKeyword }
   /** Mirror Entity: set base P/T and grant every creature type until cleanup. */
   | { readonly kind: "set-creatures-you-control-base-pt-all-types"; readonly power: number | "X"; readonly toughness: number | "X" }
   /** Temporary characteristic-setting animation for artifact manlands (CR 613.6). */
@@ -719,6 +749,8 @@ export type SpellEffect =
   | { readonly kind: "counter-target-spell-to-battlefield" }
   /** Counter a spell and schedule the Arcane Denial-style upkeep draws (CR 603.7). */
   | { readonly kind: "counter-target-spell-with-delayed-draw"; readonly targetAmount: number; readonly casterAmount: number }
+  /** "Draw a card at the beginning of the next turn's upkeep" — a cantrip rider (Barbed Sextant, Lightning Blow). CR 603.7. */
+  | { readonly kind: "delayed-draw"; readonly amount: number }
   /** Mana Drain: paired with the separate "Counter target spell" sentence, reads the same shared target at resolution (CR 603.7, 605.3a). */
   | { readonly kind: "delayed-mana-equal-to-target-spell-mana-value"; readonly manaType: ManaType }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
@@ -728,6 +760,8 @@ export type SpellEffect =
   /** Prepared (new mechanic, Naktamun Lorespinner // Wheel of Fortune): marks the source permanent prepared. */
   | { readonly kind: "become-prepared" }
   | { readonly kind: "tap-target-permanent" }
+  /** "When this Aura enters, tap enchanted creature" (Claustrophobia, Sleep Paralysis). */
+  | { readonly kind: "tap-enchanted-creature" }
   /** Taps a creature and suppresses its controller's untap while the source is controlled. */
   | { readonly kind: "tap-target-creature-and-lock" }
   /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
@@ -1105,6 +1139,8 @@ export interface CardProfile {
   /** Entwine additional cost for selecting every modal branch (CR 702.42). */
   readonly entwineCost: ManaCost | null;
   readonly kickedEffects: readonly SpellEffect[];
+  /** "If ~ was kicked, it enters with N <kind> counters on it" — applied only on a kicked cast. */
+  readonly kickedEntersWithCounters: readonly CounterCost[];
   /** Keywords granted only when the spell is kicked (CR 702.33e). */
   readonly kickedKeywords: readonly EnforcedKeyword[];
   /** Evoke alternative cost (CR 702.34), null when absent. */
@@ -1129,6 +1165,10 @@ export interface CardProfile {
   readonly additionalCostSacrificeLand: boolean;
   /** "As an additional cost to cast ~, sacrifice a creature" (Diabolic Intent, CR 601.2b). */
   readonly additionalCostSacrificeCreature: boolean;
+  /** "As an additional cost to cast ~, sacrifice an artifact" (CR 601.2b). */
+  readonly additionalCostSacrificeArtifact: boolean;
+  /** "As an additional cost to cast ~, discard a card" (CR 601.2b). */
+  readonly additionalCostDiscardCard: boolean;
   /** "As an additional cost to cast ~, sacrifice a green creature" (Natural Order, CR 601.2b): the color-restricted sibling. */
   readonly additionalCostSacrificeCreatureColor: string | null;
   /** "If you control a commander, you may cast ~ without paying its mana cost" (Deadly Rollick, CR 601.2b, 118.9). */
@@ -1261,13 +1301,14 @@ function simpleEffectFromIR(ir: SimpleEffectIR): { effect: SpellEffect; target: 
     return { effect: { kind, amount: ir.amount } as SpellEffect, target };
   }
   if (ir.operation === "mill") {
-    if (ir.subject === "you") return null;
+    if (ir.subject === "you") return { effect: { kind: "mill", amount: ir.amount }, target: "none" };
     const kind = ir.subject === "target-player" ? "mill-target-player"
       : ir.subject === "each-player" ? "mill-each-player"
         : ir.subject === "each-opponent" ? "mill-each-opponent" : "mill-target-player";
     return { effect: { kind, amount: ir.amount } as SpellEffect, target };
   }
   if (ir.operation === "discard") {
+    if (ir.subject === "each-opponent") return { effect: { kind: "each-opponent-discards", amount: ir.amount }, target: "none" };
     if (ir.subject !== "target-player") return null;
     return { effect: { kind: "discard-target-player", amount: ir.amount }, target: "player" };
   }
@@ -1801,6 +1842,21 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
 function parseAuraModification(text: string): EquipmentModification | null {
   for (const line of text.split("\n")) {
     const clean = line.trim().replace(/\.$/, "");
+    // Pacifism / Bound in Silence / Kasmina's Transmutation-style locks. Arrest
+    // ("...and its activated abilities can't be activated") is deliberately not
+    // matched here — that extra clause is not yet enforced.
+    if (/^enchanted creature can'?t attack or block$/i.test(clean)) {
+      return { power: 0, toughness: 0, keywords: [], cannotAttack: true, cannotBlock: true, text: line.trim() };
+    }
+    if (/^enchanted creature can'?t attack$/i.test(clean)) {
+      return { power: 0, toughness: 0, keywords: [], cannotAttack: true, text: line.trim() };
+    }
+    if (/^enchanted creature can'?t block$/i.test(clean)) {
+      return { power: 0, toughness: 0, keywords: [], cannotBlock: true, text: line.trim() };
+    }
+    if (/^enchanted (?:creature|permanent) doesn'?t untap during (?:its controller'?s|your) untap step$/i.test(clean)) {
+      return { power: 0, toughness: 0, keywords: [], cannotUntap: true, text: line.trim() };
+    }
     const characteristicSetting = /^enchanted creature is an insect artifact creature with base power and toughness (\d+)\/(\d+) and has (.+), and it loses all other abilities, card types, and creature types$/i.exec(clean);
     if (characteristicSetting) {
       const keywords = characteristicSetting[3]!.split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
@@ -1853,10 +1909,27 @@ function parseAuraControlTarget(text: string): "creature" | "land" | "permanent"
 /** Parses the closed Oracle template used by Auras that grant an activated ability. */
 function parseAuraGrantedActivatedAbility(text: string): ActivatedAbility | null {
   for (const line of text.split("\n")) {
-    const match = /^enchanted (?:creature|land) has "(.+)"\.?$/i.exec(line.trim());
-    if (!match) continue;
-    const ability = parseActivatedAbility(match[1]!, 0);
-    if (ability) return ability;
+    const clean = line.trim().replace(/\.$/, "");
+    const quoted = /^enchanted (?:creature|land) has "(.+)"$/i.exec(clean);
+    if (quoted) {
+      const ability = parseActivatedAbility(quoted[1]!, 0);
+      if (ability) return ability;
+      continue;
+    }
+    // Firebreathing family: "{cost}: Enchanted creature gets +X/+Y until end of
+    // turn". `activatedAbilitiesFor` hands this to the enchanted creature, so a
+    // self-modify effect pumps the right permanent (CR 613, 605.1b).
+    const firebreath = /^((?:\{[^}]+\})+): Enchanted creature gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(clean);
+    if (firebreath) {
+      const manaCost = parseManaCost(firebreath[1]!);
+      if (manaCost) {
+        return {
+          index: 0, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost,
+          effect: { kind: "modify-source-creature", power: Number(firebreath[2]), toughness: Number(firebreath[3]) },
+          targetKind: "none", text: line.trim()
+        };
+      }
+    }
   }
   return null;
 }
@@ -2020,6 +2093,12 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   if (graveyard) return { scope: "source-opponents-graveyard-creatures", power: Number(graveyard[1]), toughness: Number(graveyard[2]) };
   const life = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(clean);
   if (life) return { scope: "source-controller-life-threshold", power: Number(life[1]), toughness: Number(life[2]), threshold: Number(life[3]) };
+  // Threshold (CR 702.19): "~ gets +X/+Y as long as there are seven or more cards in your graveyard".
+  const graveyardThreshold = /^(?:Threshold\s*[—–-]\s*)?~ gets ([+-]\d+)\/([+-]\d+) as long as (?:there are (\w+) or more cards? in your graveyard|(\w+) or more cards? are in your graveyard|you have (\w+) or more cards? in your graveyard)$/i.exec(clean);
+  if (graveyardThreshold) {
+    const threshold = toNumber(graveyardThreshold[3] ?? graveyardThreshold[4] ?? graveyardThreshold[5]);
+    if (threshold !== null) return { scope: "source-controller-graveyard-threshold", power: Number(graveyardThreshold[1]), toughness: Number(graveyardThreshold[2]), threshold };
+  }
   // "As long as ~ has N or more <name> counters on it, creatures you control get +X/+Y" (Beastmaster Ascension).
   const counterThreshold = /^as long as ~ has (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more ([a-z][a-z\s-]*?) counters? on it,\s*creatures you control get ([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   if (counterThreshold) {
@@ -2354,6 +2433,7 @@ interface RecognizedText {
   graftAmount?: number | null;
   kickedEffects?: SpellEffect[];
   kickedKeywords?: EnforcedKeyword[];
+  kickedEntersWithCounters?: CounterCost[];
   echoCost?: ManaCost | null;
   evokeCost?: ManaCost | null;
   flashbackCost?: ManaCost | null;
@@ -2595,10 +2675,14 @@ function parseCreateToken(text: string): SpellEffect | null {
   const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
   const typeLine = subtype ? `${artifact ? "Artifact " : ""}${creature ? "Creature" : "Artifact"} — ${subtype}` : `${artifact ? "Artifact" : "Creature"}`;
+  const predefinedText = PREDEFINED_TOKEN_TEXT[name.toLowerCase()];
   return {
     kind: "create-token",
     amount,
-    token: { name, typeLine, power, toughness, colors, keywords, tapped: /\btapped\b/i.test(match[4]!) }
+    token: {
+      name, typeLine, power, toughness, colors, keywords, tapped: /\btapped\b/i.test(match[4]!),
+      ...(predefinedText && power === null ? { oracleText: predefinedText } : {})
+    }
   };
 }
 
@@ -2846,6 +2930,8 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "instant-or-sorcery", pattern: /^whenever\s+you\s+cast\s+an?\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "you", spellType: "noncreature", pattern: /^whenever\s+you\s+cast\s+a\s+noncreature\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "opponent", spellType: "noncreature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+noncreature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", pattern: /^(?:when|whenever)\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellType: "noncreature", pattern: /^whenever\s+a\s+player\s+casts\s+a\s+noncreature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", spellType: "instant-or-sorcery", pattern: /^whenever\s+a\s+player\s+casts\s+an?\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
@@ -2857,6 +2943,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "card-drawn", subject: "you", pattern: /^whenever\s+you\s+draw\s+a\s+card,?\s*(.+)$/i },
   { event: "card-drawn", subject: "each-player", condition: { kind: "second-draw-this-turn" }, pattern: /^whenever\s+a\s+player\s+draws\s+their\s+second\s+card\s+each\s+turn,?\s*(.+)$/i },
   { event: "card-drawn", subject: "opponent", condition: { kind: "second-draw-this-turn" }, pattern: /^whenever\s+an\s+opponent\s+draws\s+their\s+second\s+card\s+each\s+turn,?\s*(.+)$/i },
+  { event: "card-drawn", subject: "you", condition: { kind: "second-draw-this-turn" }, pattern: /^whenever\s+you\s+draw\s+your\s+second\s+card\s+each\s+turn,?\s*(.+)$/i },
   { event: "card-discarded", subject: "each-player", pattern: /^whenever\s+a\s+player\s+discards\s+a\s+card,?\s*(.+)$/i },
   { event: "card-discarded", subject: "opponent", pattern: /^whenever\s+an\s+opponent\s+discards\s+a\s+card,?\s*(.+)$/i },
   { event: "card-discarded", subject: "you", pattern: /^whenever\s+you\s+discard\s+a\s+card,?\s*(.+)$/i },
@@ -2871,7 +2958,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "draw-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+draw\s+step,?\s*(.+)$/i },
   { event: "draw-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+player[’']s\s+draw\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+end\s+step,?\s*(.+)$/i },
-  { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+end\s+step,?\s*(.+)$/i },
+  { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+(?:each|the)\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+player[’']s\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i },
 
@@ -2905,7 +2992,9 @@ function singularSubtype(word: string): string {
 
 /** Matches one sentence against the closed effect templates. */
 function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind; targetKinds?: readonly Exclude<TargetKind, "none">[] } | null {
-  const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
+  // Trailing whitespace before the full stop appears when reminder text such as
+  // "(an energy counter)" is stripped mid-sentence; drop it with the period.
+  const text = sentence.trim().replace(/\s+/g, " ").replace(/\s*\.\s*$/, "").trim();
   let match: RegExpExecArray | null;
 
   const simple = simpleEffectIR(text);
@@ -3060,6 +3149,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw", amount: "X" }, target: "none" };
   }
+  if ((match = /^(?:You )?[Dd]raw (\w+) cards? at the beginning of the next turn'?s upkeep$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null && amount > 0) return { effect: { kind: "delayed-draw", amount }, target: "none" };
+  }
   if ((match = /^Then if you have more life than an opponent, draw (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "draw-if-life-more-than-opponent", amount }, target: "none" };
@@ -3127,14 +3220,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "lose-life-event-player", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "lose-life-event-player", amount: "X" }, target: "none" };
   }
-  const damageAndLife = /^~ deals (\w+) damage to any target and you gain (\w+) life$/i.exec(text);
+  const damageAndLife = /^~ deals (\w+) damage to (any target|target creature|target creature or planeswalker) and you gain (\w+) life$/i.exec(text);
   if (damageAndLife) {
     const damage = damageAndLife[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[1]!);
-    const life = damageAndLife[2]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[2]!);
+    const life = damageAndLife[3]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[3]!);
+    const scope = damageAndLife[2]!.toLowerCase();
     if (damage !== null && life !== null) {
       return {
         effect: { kind: "compound", effects: [{ kind: "damage-any-target", amount: damage }, { kind: "gain-life", amount: life }] },
-        target: "any"
+        target: scope === "any target" ? "any" : scope === "target creature or planeswalker" ? "creature-or-planeswalker" : "creature"
       };
     }
   }
@@ -3153,6 +3247,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
+  }
+  // "~ deals N damage to target opponent" (painful ETB taplands, direct burn):
+  // the damage executor already handles a player target; only the target kind
+  // narrows to opponents.
+  if ((match = /^~ deals (\w+) damage to target (opponent|player)$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    const target = match[2]!.toLowerCase() === "opponent" ? "opponent" as const : "player" as const;
+    if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target };
   }
   if (/^~ deals damage equal to the sacrificed creature's power to any target$/i.test(text)) {
     return { effect: { kind: "damage-any-target-equal-sacrificed-creature-power" }, target: "any" };
@@ -3315,6 +3418,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "each-opponent-draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-opponent-draw", amount: "X" }, target: "none" };
   }
+  if ((match = /^Each opponent discards (a|an|one|two|three|\d+) cards?$/i.exec(text))) {
+    const amount = /^(a|an|one)$/i.test(match[1]!) ? 1 : toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "each-opponent-discards", amount }, target: "none" };
+  }
   if (/^If the (?:\{[^}]+\})+ cost was paid, an opponent draws a card$/i.test(text)) {
     return { effect: { kind: "opponent-draws-if-cast-via-alternative-cost" }, target: "none" };
   }
@@ -3388,6 +3495,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const discard = toNumber(match[2]);
     if (draw !== null && draw > 0 && discard !== null && discard > 0) return { effect: { kind: "draw-then-discard", draw, discard }, target: "none" };
   }
+  // Rummage: "discard a card. If you do, draw a card" (also "discard N cards, then draw N cards").
+  // The optional "you may" is stripped by the trigger parser before this point.
+  if ((match = /^(?:You )?discard (a|an|one|two|three|\d+) cards?(?:\.\s*If you do,|,\s*then) draw (a|an|one|two|three|\d+) cards?$/i.exec(text))) {
+    const discard = /^(a|an|one)$/i.test(match[1]!) ? 1 : toNumber(match[1]);
+    const draw = /^(a|an|one)$/i.test(match[2]!) ? 1 : toNumber(match[2]);
+    if (discard !== null && draw !== null && discard > 0 && discard === draw) {
+      return { effect: { kind: "discard-then-draw", amount: discard }, target: "none" };
+    }
+  }
   if ((match = /^Draw (\w+) cards?\.\s*If you do, discard (\w+) cards?$/i.exec(text))) {
     const draw = toNumber(match[1]);
     const discard = toNumber(match[2]);
@@ -3445,6 +3561,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       effect: { kind, power, toughness } as SpellEffect,
       target: kind === "modify-target-creature" ? "creature" : "none"
     };
+  }
+  // "Target creature an opponent controls gets -1/-1 until end of turn" (Eyeblight
+  // Assassin, Orc Sureshot): same modifier, but the target kind narrows.
+  if ((match = /^Target creature an opponent controls gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
+    return { effect: { kind: "modify-target-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "creature-opponent" };
   }
   if ((match = /^Until end of turn, creatures you control have base power and toughness (X|\d+)\/(X|\d+) and gain all creature types\.?$/i.exec(text))) {
     const power = match[1]!.toUpperCase() === "X" ? "X" as const : Number(match[1]);
@@ -3609,6 +3730,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       toughness: Number(triggeredCombined[2]),
       keyword: triggeredCombined[3]!.toLowerCase() as EnforcedKeyword
     },
+    target: "none"
+  };
+  const selfKeyword = /^~ gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
+  if (selfKeyword) return {
+    effect: { kind: "grant-source-keyword", keyword: selfKeyword[1]!.toLowerCase() as EnforcedKeyword },
     target: "none"
   };
   const triggeredSelfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text);
@@ -3952,6 +4078,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
+  if (/^Tap enchanted creature$/i.test(text)) return { effect: { kind: "tap-enchanted-creature" }, target: "none" };
   if (/^Tap target permanent an opponent controls$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "permanent-opponent" };
   if (/^Tap or untap target permanent(?: of their choice)?$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
@@ -4012,6 +4139,25 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (multiBasicSearch) return { effect: multiBasicSearch, target: "none" };
   const token = parseManaSpentToken(text) ?? parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
+  // Investigate (CR 701.42): create a Clue token, optionally several.
+  if ((match = /^Investigate(?:\s+(twice|\w+ times?))?$/i.exec(text))) {
+    const amount = !match[1] ? 1
+      : /^twice$/i.test(match[1]) ? 2
+      : toNumber(match[1].replace(/\s+times?$/i, ""));
+    if (amount !== null && amount > 0) {
+      return {
+        effect: {
+          kind: "create-token",
+          amount,
+          token: {
+            name: "Clue", typeLine: "Artifact — Clue", power: null, toughness: null, colors: [], keywords: [], tapped: false,
+            oracleText: PREDEFINED_TOKEN_TEXT.clue
+          }
+        },
+        target: "none"
+      };
+    }
+  }
   const genericSearch = parseLibrarySearch(text);
   if (genericSearch) return { effect: genericSearch, target: "none" };
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library$/i.test(text)) {
@@ -4295,6 +4441,7 @@ function recognizeText(text: string): RecognizedText {
   let miracleCost: ManaCost | null = null;
   const kickedEffects: SpellEffect[] = [];
   const kickedKeywords: EnforcedKeyword[] = [];
+  const kickedEntersWithCounters: CounterCost[] = [];
 
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
@@ -4303,18 +4450,21 @@ function recognizeText(text: string): RecognizedText {
     // applies this as a characteristic of the controller's battlefield, not
     // as a triggered or activated ability of the artifact.
     if (/^You may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line)) continue;
-    // Eternal Dragon-style graveyard activation (CR 602.1, 602.5).
+    // Graveyard recursion: "{cost}: Return ~ from your graveyard to your hand"
+    // (Sanitarium Skeleton, Firewing Phoenix; Eternal Dragon adds an upkeep-only
+    // restriction). CR 602.1, 602.5.
     const graveyardReturn = /^((?:\{[^}]+\})+):\s*Return (?:~|this card) from your graveyard to your hand\.?/i.exec(line);
     const upkeepRestrictionOnNextLine = /^Activate only during your upkeep\.?$/i.test(body[lineIndex + 1]?.text ?? "");
     const upkeepRestrictionInline = /Activate only during your upkeep\.?$/i.test(line);
-    if (graveyardReturn && (upkeepRestrictionInline || upkeepRestrictionOnNextLine)) {
+    if (graveyardReturn) {
       const manaCost = parseManaCost(graveyardReturn[1]!);
+      const upkeepOnly = upkeepRestrictionInline || upkeepRestrictionOnNextLine;
       if (manaCost) {
         activatedAbilities.push({
           index: activatedAbilities.length, requiresTap: false, sacrificesSelf: false, lifeCost: 0,
-          manaCost, sourceZone: "graveyard", upkeepOnly: true,
+          manaCost, sourceZone: "graveyard", ...(upkeepOnly ? { upkeepOnly: true } : {}),
           effect: { kind: "return-source-to-hand" }, targetKind: "none",
-          text: upkeepRestrictionInline ? line : `${line} ${body[lineIndex + 1]!.text}`
+          text: upkeepRestrictionOnNextLine ? `${line} ${body[lineIndex + 1]!.text}` : line
         });
         if (upkeepRestrictionOnNextLine) lineIndex += 1;
         continue;
@@ -4577,6 +4727,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^level\s+\d+(?:-\d+|\+)?$/i.test(line) || /^\d+\/\d+$/.test(line)) continue;
     if (parseEquipmentModification(line)) continue;
     if (parseAuraModification(line)) continue;
+    if (parseAuraGrantedActivatedAbility(line)) continue;
     if (/^Enchanted creature gets \+\d+\/\+\d+ for each other enchantment on the battlefield\.?$/i.test(line)) continue;
     if (parseAuraControlTarget(line)) continue;
     // "Enchant creature/land/permanent/creature you control" (CR 303.4.5) is
@@ -4610,6 +4761,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice a creature\.?$/i.test(line)) continue;
+    if (/^as an additional cost to cast ~, sacrifice an artifact\.?$/i.test(line)) continue;
+    if (/^as an additional cost to cast ~, discard a card\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice an? (?:white|blue|black|red|green) creature\.?$/i.test(line)) continue;
     if (/^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line)) continue;
     if (/^if you control an? [A-Za-z][A-Za-z'’-]*, you may pay \d+ life rather than pay ~'s mana cost\.?$/i.test(line)) continue;
@@ -5104,6 +5257,11 @@ function recognizeText(text: string): RecognizedText {
           .replace(/^instead\s+/i, "")
           .replace(/^it\b/i, "~")
           .replace(/\s+instead\.?$/i, "");
+        // "If ~ was kicked, it enters with N +1/+1 counters on it" (Marsh Boa,
+        // Woodland Wanderer-adjacent kicker creatures): a conditional ETB
+        // replacement, applied by putOntoBattlefield when the cast was kicked.
+        const kickedCounters = parseEntersWithCounters(kickedText);
+        if (kickedCounters.length) { kickedEntersWithCounters.push(...kickedCounters); continue; }
         // Kicker replacement clauses commonly omit the already-established
         // target ("If kicked, it deals 4 damage instead"). Infer the same
         // any-target damage primitive and retain the base sentence's target.
@@ -5197,7 +5355,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5359,6 +5517,8 @@ export function cardProfile(card: CardData): CardProfile {
   const hasRebound = /(?:^|\n)rebound\.?(?:$|\n)/i.test(text);
   const additionalCostSacrificeLand = /as an additional cost to cast ~, sacrifice a land\.?/i.test(text);
   const additionalCostSacrificeCreature = /as an additional cost to cast ~, sacrifice a creature\.?/i.test(text);
+  const additionalCostSacrificeArtifact = /as an additional cost to cast (?:this spell|~), sacrifice an artifact\.?/i.test(text);
+  const additionalCostDiscardCard = /as an additional cost to cast (?:this spell|~), discard a card\.?/i.test(text);
   const additionalCostSacrificeCreatureColorMatch = /as an additional cost to cast ~, sacrifice an? (white|blue|black|red|green) creature\.?/i.exec(text);
   const additionalCostSacrificeCreatureColor = additionalCostSacrificeCreatureColorMatch ? DAMAGE_AMPLIFY_COLOR_LETTER[additionalCostSacrificeCreatureColorMatch[1]!.toLowerCase()]! : null;
   const freeCastIfCommander = text.split("\n").some((line) => /^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line.trim()));
@@ -5523,10 +5683,13 @@ export function cardProfile(card: CardData): CardProfile {
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
     kickedKeywords: recognized.kickedKeywords ?? [],
+    kickedEntersWithCounters: recognized.kickedEntersWithCounters ?? [],
     additionalCostExileGraveyardX,
     hasRebound,
     additionalCostSacrificeLand,
     additionalCostSacrificeCreature,
+    additionalCostSacrificeArtifact,
+    additionalCostDiscardCard,
     additionalCostSacrificeCreatureColor,
     freeCastIfCommander,
     payLifeInsteadOfManaCost,

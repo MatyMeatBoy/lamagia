@@ -5,16 +5,16 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,176**
-- Cards with a reusable existing primitive hint: **11,471**
-- Cards needing new primitive review: **3,705**
-- Templates: **11,994**
+- One-line cards: **15,006**
+- Cards with a reusable existing primitive hint: **11,226**
+- Cards needing new primitive review: **3,780**
+- Templates: **12,065**
 
 ## Worker rule
 
 Fix the shared primitive, not the first card name. Preserve type, zone, target, quantity, cost, and optionality as structured operands. Do not report a card complete until the next engine export says `fullyImplemented: true`.
 
-## Queue (first 200 cards; full machine-readable list is generated JSON)
+## Queue (first 500 cards; full machine-readable list is generated JSON)
 
 | Priority | Card | Oracle ID | Family | Reuse hint | Missing line |
 | --- | --- | --- | --- | --- | --- |
@@ -25,31 +25,28 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Lydari Druid | `e4afa53e-435e-4d0f-918b-e7b603c52f9c` | activated | trigger / ETB | When ~ enters, for each land on the battlefield, choose a basic land type at random. Those lands become the land types chosen this way. |
 | reuse-existing | Arden Angel | `82d51c8a-d42b-48b3-a726-3a8d28d057e5` | return | trigger / ETB | At the beginning of your upkeep, if ~ is in your graveyard, roll a four-sided die. If the result is 1, return ~ from your graveyard to the battlefield. |
 | needs-new-primitive | Hapato's Might | `b819990c-802c-4847-9857-756dd66ec74a` | pump | new primitive review | Target creature gets +X/+0 until end of turn, where X is a number from 0 to 6 chosen at random. |
-| reuse-existing | Fling | `24227761-b50e-4b9e-93a2-e82d053b3e3d` | damage | sacrifice | ~ deals damage equal to the sacrificed creature's power to any target. |
 | reuse-existing | Laquatus's Champion | `693ddb18-00d2-4784-90a0-701a64195034` | gain-life | damage / life | When ~ leaves the battlefield, that player gains 6 life. |
 | reuse-existing | Cloud, Midgar Mercenary | `33d2584b-bf29-4c22-bd45-14ba2fb98c0e` | static-continuous | activated ability / mana | As long as ~ is equipped, if a triggered ability of ~ or an Equipment attached to it triggers, that ability triggers an additional time. |
 | reuse-existing | Yidaro, Wandering Monster | `6c0e22f2-f0f3-43e6-87c5-c543032112d8` | activated | search / library | When you cycle ~, shuffle it into your library from your graveyard. If you've cycled a card named ~ four or more times this game, put it onto the battlefield from your graveyard instead. |
 | reuse-existing | Luminous Broodmoth | `28c7c816-07e7-42fb-923c-bf149ba28b38` | counters | trigger / ETB | Whenever a creature you control without flying dies, return it to the battlefield under its owner's control with a flying counter on it. |
 | reuse-existing | Mysterious Egg | `d3b62851-6013-49e5-8808-fa61b1bdfe98` | counters | trigger / ETB | Whenever ~ mutates, put a +1/+1 counter on it. |
-| reuse-existing | Sprite Dragon | `a9d8ab76-70a4-475e-b87e-4737c090553a` | counters | trigger / ETB | Whenever you cast a noncreature spell, put a +1/+1 counter on ~. |
 | reuse-existing | Titanoth Rex | `8656a32b-eb95-402b-9daf-0b6d876b4b13` | counters | counter | When you cycle ~, put a trample counter on target creature you control. |
 | reuse-existing | Void Beckoner | `7185e345-d8a1-4dd3-a071-f90f265634b4` | counters | counter | When you cycle ~, put a deathtouch counter on target creature you control. |
 | needs-new-primitive | Boros Challenger | `bc6b40b1-0d17-4dd2-bec9-f1653611dba3` | activated | new primitive review | Mentor |
 | needs-new-primitive | Adorned Pouncer | `80b8ee3d-4174-4f47-a533-a3db1e703382` | activated | new primitive review | Eternalize {3}{W}{W} |
-| reuse-existing | Burst Lightning | `ac2086fe-98ee-4280-9c7c-c5c2d6548a8b` | damage | damage / life | If ~ was kicked, it deals 4 damage instead. |
 | reuse-existing | Reciprocate | `ebdd29c0-2c33-4410-a05c-80ced58c7b81` | damage | damage / life | Exile target creature that dealt damage to you this turn. |
 | needs-new-primitive | Nameless Inversion | `d6911456-42cb-4b23-a560-dc98784530f5` | pump | new primitive review | Target creature gets +3/-3 and loses all creature types until end of turn. |
 | needs-new-primitive | Bituminous Blast | `d291d8f7-bb67-470c-8794-cd553c91e5cc` | activated | new primitive review | Cascade |
 | reuse-existing | Hinder | `c9db6b94-a7b1-4b93-b454-4dead8f85e34` | counters | counter | If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard. |
-| reuse-existing | Incinerate | `d8fd7a34-8418-4e98-b79b-119c4348c667` | damage | damage / life | A creature dealt damage this way can't be regenerated this turn. |
+| needs-new-primitive | Ponder | `02090581-61aa-4348-ad57-451be8ee91c2` | activated | new primitive review | You may shuffle. |
 | needs-new-primitive | Brave the Elements | `9d73a51a-1c8e-40cd-8124-aeff406a0884` | activated | new primitive review | White creatures you control gain protection from the chosen color until end of turn. |
 | reuse-existing | Strategic Betrayal | `0127c13f-7b0f-44c3-8b35-97f306c5f239` | exile | exile | Target opponent exiles a creature they control and their graveyard. |
 | reuse-existing | Twitching Doll | `fd6e1967-237a-41f6-bbf4-2c869f9447c8` | counters | activated ability / mana | {T}: Add one mana of any color. Put a nest counter on ~. |
 | reuse-existing | Beza, the Bounding Spring | `020de6d7-f5a2-4036-ad25-451e5977b4d4` | token | damage / life | When ~ enters, create a Treasure token if an opponent controls more lands than you. You gain 4 life if an opponent has more life than you. Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you. Draw a card if an opponent has more cards in hand than you. |
+| needs-new-primitive | Slickshot Show-Off | `74c7a029-59aa-4511-8e4c-f8f167cda4e2` | activated | new primitive review | Plot {1}{R} |
 | reuse-existing | Monstrous Rage | `646a2371-54c0-4492-ac2f-20f109d6108c` | token | create / token | Create a Monster Role token attached to it. |
 | reuse-existing | Nissa, Resurgent Animist | `c1fc5923-c3cd-448a-98d1-c154661c2812` | activated | activated ability / mana | Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second time this ability has resolved this turn, reveal cards from the top of your library until you reveal an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in a random order. |
 | reuse-existing | Tishana's Tidebinder | `2993dc7d-723d-4a9b-94bd-4bb02a9f7243` | counters | activated ability / mana | When ~ enters, counter up to one target activated or triggered ability. If an ability of an artifact, creature, or planeswalker is countered this way, that permanent loses all abilities for as long as ~ remains on the battlefield. |
-| reuse-existing | Ancestral Mask | `db5380ed-ba28-4ea2-abc3-4998e2022903` | static-continuous | static / continuous | Enchanted creature gets +2/+2 for each other enchantment on the battlefield. |
 | reuse-existing | Gush | `16d8ee99-8ec8-429f-9ba7-818a74b6f910` | return | activated ability / mana | You may return two Islands you control to their owner's hand rather than pay ~'s mana cost. |
 | needs-new-primitive | Cut Down | `1b30210d-10e9-4703-8967-032063bb4f26` | destroy | new primitive review | Destroy target creature with total power and toughness 5 or less. |
 | reuse-existing | Ruby, Daring Tracker | `5d1b0eee-3a7a-4f22-a40d-7658a368962a` | pump | trigger / ETB | Whenever ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn. |
@@ -58,22 +55,19 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Gingerbrute | `10b8d4c7-7553-4d76-b643-d98b80701e13` | activated | new primitive review | {1}: ~ can't be blocked this turn except by creatures with haste. |
 | needs-new-primitive | Frantic Search | `16e015b2-f8a3-4b1a-80be-58a8f5fb5e8c` | activated | new primitive review | Untap up to three lands. |
 | reuse-existing | Usher of the Fallen | `a6eb06dc-a62d-4fdb-b336-e304d8d68c92` | token | create / token | Boast — {1}{W}: Create a 1/1 white Human Warrior creature token. |
-| reuse-existing | Wild Growth | `706ae742-1807-44b7-a4fa-f2e26f61519a` | activated | activated ability / mana | Whenever enchanted land is tapped for mana, its controller adds an additional {G}. |
 | needs-new-primitive | Saw It Coming | `90edaf33-d0ab-47e0-8f6a-6fba38286e6e` | activated | new primitive review | Foretell {1}{U} |
 | reuse-existing | Harald, King of Skemfar | `0089b07c-7f47-4a9a-9fb7-cc38ec9d7bcd` | library-look | trigger / ETB | When ~ enters, look at the top five cards of your library. You may reveal an Elf, Warrior, or Tyvar card from among them and put it into your hand. Put the rest on the bottom of your library in a random order. |
+| reuse-existing | Seasoned Hallowblade | `d03dbb60-e32b-4b74-ae8a-73d428d344cd` | discard | draw / discard | Discard a card: Tap ~. |
 | needs-new-primitive | Mystical Dispute | `48390b8d-db41-48a5-9bac-316660ab7252` | activated | new primitive review | ~ costs {2} less to cast if it targets a blue spell. |
 | reuse-existing | Fae of Wishes // Granted | `c0abbed2-d213-47ef-8d6c-4a21efb9a55f` | discard | draw / discard | {1}{U}, Discard two cards: Return ~ to its owner's hand. |
-| reuse-existing | Voltaic Key | `09aeea91-b1dc-443f-a509-4758f052c0a7` | activated | activated ability / mana | {1}, {T}: Untap target artifact. |
-| reuse-existing | Lava Coil | `fa71db44-5181-4c51-8b24-7fbedf36e3ca` | exile | exile | If that creature would die this turn, exile it instead. |
 | reuse-existing | Tibalt, Rakish Instigator | `0b768f8f-2213-45b9-bced-8fb1bbb441c3` | gain-life | damage / life | Your opponents can't gain life. |
 | reuse-existing | Jiang Yanggu, Wildcrafter | `04f2c320-dfcc-440a-9e24-3c2083d74e7c` | counters | activated ability / mana | Each creature you control with a +1/+1 counter on it has "{T}: Add one mana of any color." |
 | needs-new-primitive | Kaya, Bane of the Dead | `29d58aa4-9a7e-4052-9b0d-fc282f1be40e` | activated | new primitive review | Your opponents and permanents your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof. |
-| reuse-existing | Ajani, the Greathearted | `f5d9be71-91d0-4166-ba58-cbbf5d490c40` | counters | counter | −2: Put a +1/+1 counter on each creature you control and a loyalty counter on each other planeswalker you control. |
 | needs-new-primitive | Angrath, Captain of Chaos | `de08f5d4-8868-4d0f-8c0e-d0d3a2105581` | activated | new primitive review | −2: Amass Zombies 2. |
 | reuse-existing | Arlinn, Voice of the Pack | `a15b83df-91b7-49f0-9bec-5776a3dac8bd` | counters | trigger / ETB | Each creature you control that's a Wolf or a Werewolf enters with an additional +1/+1 counter on it. |
 | reuse-existing | Samut, Tyrant Smasher | `80405d7a-f533-44bd-ac85-890476cf2b78` | static-continuous | static / continuous | −1: Target creature gets +2/+1 and gains haste until end of turn. |
+| needs-new-primitive | Saheeli, Sublime Artificer | `ab655810-f67e-4576-9174-35b16f5e3235` | activated | new primitive review | −2: Target artifact you control becomes a copy of another target artifact or creature you control until end of turn, except it's an artifact in addition to its other types. |
 | reuse-existing | Davriel, Rogue Shadowmage | `1bd5e51f-f9a5-4eb7-bda2-957310602c20` | damage | damage / life | At the beginning of each opponent's upkeep, if that player has one or fewer cards in hand, ~ deals 2 damage to them. |
-| reuse-existing | Vraska, Swarm's Eminence | `cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb` | damage | damage / life | Whenever a creature you control with deathtouch deals damage to a player or planeswalker, put a +1/+1 counter on that creature. |
 | needs-new-primitive | Teyo, the Shieldmage | `cda93cf5-da51-4117-b461-f4448aa2d16c` | activated | new primitive review | You have hexproof. |
 | needs-new-primitive | Cast Down | `cdaab6b0-1a2d-4809-8e6b-56013acd8f78` | destroy | new primitive review | Destroy target nonlegendary creature. |
 | reuse-existing | Phantasmal Dragon | `7f32c581-4d4a-4873-8e4b-b95e13790481` | sacrifice | sacrifice | When ~ becomes the target of a spell or ability, sacrifice it. |
@@ -93,9 +87,9 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Esika, God of the Tree // The Prismatic Bridge | `92023a5d-a143-4950-a71b-d736e6b8e959` | static-continuous | activated ability / mana | Other legendary creatures you control have vigilance and "{T}: Add one mana of any color." |
 | reuse-existing | Rakdos Firewheeler | `f81327c2-a0e4-475d-bb89-8a42b1ddc93c` | damage | damage / life | When ~ enters, it deals 2 damage to target opponent and 2 damage to up to one target creature or planeswalker. |
 | reuse-existing | Nicol Bolas | `e26bf6a9-b31c-4bc0-b55b-c01f2f69be6b` | damage | damage / life | Whenever ~ deals damage to an opponent, that player discards their hand. |
-| reuse-existing | Beast Within | `7735eeba-693b-47e2-bd51-414379cf1016` | token | create / token | Its controller creates a 3/3 green Beast creature token. |
 | needs-new-primitive | Norn's Annex | `9a1fbe72-4a17-42be-8e23-d7d30a5e59c1` | combat-restriction | new primitive review | Creatures can't attack you or planeswalkers you control unless their controller pays {W/P} for each of those creatures. |
 | reuse-existing | Kalonian Hydra | `7bd36106-04fe-481f-b16e-e076dcbb183b` | counters | trigger / ETB | Whenever ~ attacks, double the number of +1/+1 counters on each creature you control. |
+| needs-new-primitive | Chord of Calling | `6789a170-f2c5-4fc0-8a45-2b2361e67410` | activated | new primitive review | Convoke |
 | reuse-existing | Ephemerate | `0fd57894-b917-41c8-a394-360d1d31b236` | exile | exile | Exile target creature you control, then return it to the battlefield under its owner's control. |
 | reuse-existing | Fiendish Duo | `ab0dfae5-b9d4-417b-8a0d-2525ae3a73b9` | damage | damage / life | If a source would deal damage to an opponent, it deals double that damage to that player instead. |
 | reuse-existing | Burning Sun's Avatar | `248d7759-aa73-4430-aa86-d45dc607944b` | damage | damage / life | When ~ enters, it deals 3 damage to target opponent or planeswalker and 3 damage to up to one target creature. |
@@ -114,12 +108,10 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Reverse Engineer | `f56596be-e12f-4ab6-af61-3ef8dc87134c` | activated | new primitive review | Improvise |
 | needs-new-primitive | Capture of Jingzhou | `89aa65d9-2502-40b0-90b6-b25a8e9f6155` | activated | new primitive review | Take an extra turn after this one. |
 | reuse-existing | Archfiend of Ifnir | `535e2af0-7b08-4026-b1bf-87626407dd42` | counters | trigger / ETB | Whenever you cycle or discard another card, put a -1/-1 counter on each creature your opponents control. |
-| reuse-existing | Aether Hub | `61c89b11-65c9-4fda-bbcd-d84de25df801` | activated | trigger / ETB | When ~ enters, you get {E} . |
 | reuse-existing | Unlicensed Disintegration | `eaa2ff39-c3cf-428b-a2f1-a6a99a2c806b` | damage | damage / life | If you control an artifact, ~ deals 3 damage to that creature's controller. |
 | needs-new-primitive | Avacyn, Angel of Hope | `216cb26e-8da9-478b-bfbc-8030f7adee72` | static-continuous | new primitive review | Other permanents you control have indestructible. |
 | reuse-existing | Gaea's Cradle | `7c427c3d-ecd8-45ef-bebd-8f10f4a311db` | activated | activated ability / mana | {T}: Add {G} for each creature you control. |
 | reuse-existing | Decree of Justice | `67a98359-6f02-4556-ad47-c01b643686d6` | activated | create / token | When you cycle ~, you may pay {X}. If you do, create X 1/1 white Soldier creature tokens. |
-| reuse-existing | Mana Crypt | `2c63e4e1-89d2-4bc6-a232-94e75c4b1c8a` | damage | damage / life | At the beginning of your upkeep, flip a coin. If you lose the flip, ~ deals 3 damage to you. |
 | reuse-existing | Accumulated Knowledge | `1ca25379-d194-4670-a7bf-525ad11cf436` | draw | draw / discard | Draw a card, then draw cards equal to the number of cards named ~ in all graveyards. |
 | reuse-existing | Sylvan Library | `92eed395-62ca-4293-882b-8565c40daab5` | draw | damage / life | At the beginning of your draw step, you may draw two additional cards. If you do, choose two cards in your hand drawn this turn. For each of those cards, pay 4 life or put the card on top of your library. |
 | reuse-existing | Fireblast | `9dd7f27a-e862-47d7-9158-034cf4d353b8` | sacrifice | sacrifice | You may sacrifice two Mountains rather than pay ~'s mana cost. |
@@ -134,13 +126,12 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Sword of Feast and Famine | `d0901053-6de0-46d0-9ee3-8d40510236c1` | damage | damage / life | Whenever equipped creature deals combat damage to a player, that player discards a card and you untap all lands you control. |
 | needs-new-primitive | Fiery Temper | `f07bd49d-8e71-4d56-be2a-638514011318` | activated | new primitive review | Madness {R} |
 | needs-new-primitive | Goblin Warchief | `39882df0-c20f-469d-94ba-1617224e71a1` | activated | new primitive review | Goblins you control have haste. |
-| reuse-existing | Seeker of the Way | `e206842f-139b-490d-bc10-d365705ac720` | activated | damage / life | Whenever you cast a noncreature spell, ~ gains lifelink until end of turn. |
 | reuse-existing | Dread Return | `352b64d2-2ae5-44ee-a64f-94932ef545d3` | sacrifice | sacrifice | Flashback—Sacrifice three creatures. |
 | reuse-existing | Exquisite Firecraft | `e83c617f-1e07-40db-9b12-ae01122a3e24` | counters | counter | Spell mastery — If there are two or more instant and/or sorcery cards in your graveyard, ~ can't be countered. |
 | reuse-existing | Hixus, Prison Warden | `02bff648-fbad-4d61-ab09-93993a5fda58` | damage | damage / life | Whenever a creature deals combat damage to you, if ~ entered this turn, exile that creature until ~ leaves the battlefield. |
-| reuse-existing | Siege Rhino | `e1087ce2-e3c2-4ab1-bd08-1dc9ab70f12f` | gain-life | damage / life | When ~ enters, each opponent loses 3 life and you gain 3 life. |
 | reuse-existing | Xathrid Necromancer | `a6b38874-c8be-47f7-a656-ba49ec9e967f` | token | trigger / ETB | Whenever ~ or another Human creature you control dies, create a tapped 2/2 black Zombie creature token. |
 | needs-new-primitive | Thalia, Heretic Cathar | `13be47e4-9da2-4f9e-baf0-db96f7777ccb` | activated | new primitive review | Creatures and nonbasic lands your opponents control enter tapped. |
+| reuse-existing | Mindwrack Demon | `3dda8d3d-89e2-4600-be8d-9b76b4f36e33` | lose-life | damage / life | Delirium — At the beginning of your upkeep, you lose 4 life unless there are four or more card types among cards in your graveyard. |
 | reuse-existing | Wheel and Deal | `a7c6f07c-3cc3-4271-bbc7-9f7d5bbed3e8` | draw | draw / discard | Any number of target opponents each discard their hands, then draw seven cards. |
 | reuse-existing | Undiscovered Paradise | `76c33d54-ce55-400e-bec5-79d33a5a20fb` | return | activated ability / mana | {T}: Add one mana of any color. During your next untap step, as you untap your permanents, return ~ to its owner's hand. |
 | needs-new-primitive | Incorrigible Youths | `9c239027-c5cb-43c6-b4f3-93c269a1d853` | activated | new primitive review | Madness {2}{R} |
@@ -159,7 +150,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Quicksmith Rebel | `d69594fc-9250-41e7-a170-d4705615312c` | damage | activated ability / mana | When ~ enters, target artifact you control gains "{T}: ~ deals 2 damage to any target" for as long as you control ~. |
 | reuse-existing | Kothophed, Soul Hoarder | `85e1791f-f9a0-4e82-baf6-33cff2dcf60b` | draw | damage / life | Whenever a permanent owned by another player is put into a graveyard from the battlefield, you draw a card and you lose 1 life. |
 | needs-new-primitive | Shardless Agent | `2afbaa9a-c171-4a8b-90f3-5250d8498356` | activated | new primitive review | Cascade |
-| reuse-existing | Essence Extraction | `14363df6-ac0f-476a-bbd8-ce351de0babf` | damage | damage / life | ~ deals 3 damage to target creature and you gain 3 life. |
 | reuse-existing | Soul of Theros | `d820b920-191c-43e3-ba6a-4cdceab1c06d` | pump | damage / life | {4}{W}{W}, Exile ~ from your graveyard: Creatures you control get +2/+2 and gain first strike and lifelink until end of turn. |
 | reuse-existing | Ulvenwald Observer | `dff3cfff-69f9-4afd-af28-b75504d30ffa` | draw | trigger / ETB | Whenever a creature you control with toughness 4 or greater dies, draw a card. |
 | reuse-existing | Soul Swallower | `6cc99047-91dc-4ef2-99f3-65932b82ca31` | counters | trigger / ETB | Delirium — At the beginning of your upkeep, if there are four or more card types among cards in your graveyard, put three +1/+1 counters on ~. |
@@ -196,7 +186,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Gorilla Shaman | `9f53b691-da24-4264-a2a0-d0b95a385963` | destroy | activated ability / mana | {X}{X}{1}: Destroy target noncreature artifact with mana value X. |
 | reuse-existing | Erratic Portal | `4a85cd7e-625b-4043-b7f1-999def26eb36` | return | activated ability / mana | {1}, {T}: Return target creature to its owner's hand unless its controller pays {1}. |
 | reuse-existing | Abbot of Keral Keep | `09be0f69-9c7f-491f-964d-bfbbc2d4251f` | exile | trigger / ETB | When ~ enters, exile the top card of your library. Until end of turn, you may play that card. |
-| reuse-existing | Forbidden Orchard | `cfd60d1f-9832-4408-b84e-0fd3018b015b` | token | activated ability / mana | Whenever you tap ~ for mana, target opponent creates a 1/1 colorless Spirit creature token. |
 | reuse-existing | Nissa, Voice of Zendikar | `b0f36bf7-bdde-4576-9eca-ec02d41326ab` | draw | damage / life | −7: You gain X life and draw X cards, where X is the number of lands you control. |
 | needs-new-primitive | Decimate | `a4e5693f-12a0-451e-818d-d6efc7b4ed25` | destroy | new primitive review | Destroy target artifact, target creature, target enchantment, and target land. |
 | needs-new-primitive | Rout | `d69aa624-23d1-406a-b7e0-9140a6f57929` | activated | new primitive review | You may cast ~ as though it had flash if you pay {2} more to cast it. |
@@ -208,7 +197,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Wave of Reckoning | `24f7143c-d43a-4120-baa0-0235b15d8186` | damage | damage / life | Each creature deals damage to itself equal to its power. |
 | reuse-existing | Stoneforge Mystic | `358789f9-7d87-411d-919e-d597da665cbd` | activated | activated ability / mana | {1}{W}, {T}: You may put an Equipment card from your hand onto the battlefield. |
 | needs-new-primitive | Snap | `ac914d98-221e-426c-8a50-342896b15f9e` | activated | new primitive review | Untap up to two lands. |
-| reuse-existing | Reflecting Pool | `67f43ac6-2a58-4b53-b5d7-0330e2a252e2` | activated | activated ability / mana | {T}: Add one mana of any type that a land you control could produce. |
 | reuse-existing | Ob Nixilis Reignited | `65481ae1-54b2-44d2-91e1-20cd486386da` | draw | damage / life | −8: Target opponent gets an emblem with "Whenever a player draws a card, you lose 2 life." |
 | reuse-existing | Candelabra of Tawnos | `c7c7bffa-442d-4ba5-b778-ad394c192f27` | activated | activated ability / mana | {X}, {T}: Untap X target lands. |
 | needs-new-primitive | Temporal Manipulation | `6b6ac99a-7548-4cad-9fe5-ea611618ab9e` | activated | new primitive review | Take an extra turn after this one. |
@@ -218,5 +206,317 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Rise from the Tides | `390b862a-2a85-44bd-832c-f5bbd3eb4ea0` | token | create / token | Create a tapped 2/2 black Zombie creature token for each instant and sorcery card in your graveyard. |
 | reuse-existing | Rishadan Port | `f3e8dc56-2810-474e-a6a7-9c3555f94ae9` | activated | activated ability / mana | {1}, {T}: Tap target land. |
 | reuse-existing | Identity Thief | `a200daec-983c-4ea6-ae98-1c963b50fbb1` | exile | trigger / ETB | Whenever ~ attacks, you may exile another target nontoken creature. If you do, ~ becomes a copy of that creature until end of turn. Return the exiled card to the battlefield under its owner's control at the beginning of the next end step. |
+| reuse-existing | Heron's Grace Champion | `86b5a853-9035-4490-9d0f-7c719bedfd58` | pump | damage / life | When ~ enters, other Humans you control get +1/+1 and gain lifelink until end of turn. |
+| reuse-existing | Unsubstantiate | `c387f46f-ad91-4964-8dc6-acefe537fe3c` | return | return / graveyard | Return target spell or creature to its owner's hand. |
+| reuse-existing | Goblin Dark-Dwellers | `bab0ab8d-74d2-49a3-b258-b93d19925d99` | exile | activated ability / mana | When ~ enters, you may cast target instant or sorcery card with mana value 3 or less from your graveyard without paying its mana cost. If that spell would be put into your graveyard, exile it instead. |
+| reuse-existing | Angel of Deliverance | `f888f3ba-8316-4c10-bf97-873731f7d364` | damage | damage / life | Delirium — Whenever ~ deals damage, if there are four or more card types among cards in your graveyard, exile target creature an opponent controls. |
+| reuse-existing | Snapcaster Mage | `2bb2eda7-3b38-4c56-870f-c3218a1056f5` | activated | activated ability / mana | When ~ enters, target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost. |
+| reuse-existing | Arcanis the Omnipotent | `8a7183cc-161c-444d-a889-a17519c8061b` | return | return / graveyard | {2}{U}{U}: Return Arcanis to its owner's hand. |
+| reuse-existing | Smash to Smithereens | `e0583f29-c344-4b56-b0dc-bef1089a95c7` | damage | damage / life | ~ deals 3 damage to that artifact's controller. |
+| reuse-existing | Jori En, Ruin Diver | `4cd9b48e-5774-4a1c-857f-9f4a92db9b41` | draw | trigger / ETB | Whenever you cast your second spell each turn, draw a card. |
+| needs-new-primitive | Immolating Glare | `046b6989-5b56-4b52-a655-109b1eb26a93` | destroy | new primitive review | Destroy target attacking creature. |
+| reuse-existing | Path to Exile | `d683d985-9888-4d21-8b5f-69e69ce4a03b` | activated | search / library | Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle. |
+| reuse-existing | Necromaster Dragon | `b03fc155-2a70-4106-853c-33bdc88d548c` | token | damage / life | Whenever ~ deals combat damage to a player, you may pay {2}. If you do, create a 2/2 black Zombie creature token and each opponent mills two cards. |
+| needs-new-primitive | Carnival Hellsteed | `34ae5b49-f8bf-4aa8-bb62-92d6d3118b26` | activated | new primitive review | Unleash |
+| reuse-existing | Rubblehulk | `063960e0-3f9c-4697-ba5e-81c56ac1b5d2` | discard | draw / discard | Bloodrush — {1}{R}{G}, Discard ~: Target attacking creature gets +X/+X until end of turn, where X is the number of lands you control. |
+| reuse-existing | Grove of the Guardian | `f746612a-fbed-44ca-b2cc-5928e10cf4bb` | token | sacrifice | {3}{G}{W}, {T}, Tap two untapped creatures you control, Sacrifice ~: Create an 8/8 green and white Elemental creature token with vigilance. |
+| reuse-existing | Spawn of Thraxes | `52289774-d292-4028-91fb-8826fa004dc8` | damage | damage / life | When ~ enters, it deals damage to any target equal to the number of Mountains you control. |
+| reuse-existing | Oran-Rief Hydra | `1b065a17-14a4-433f-a6c8-2c8212f505c7` | counters | trigger / ETB | Landfall — Whenever a land you control enters, put a +1/+1 counter on ~. If that land is a Forest, put two +1/+1 counters on ~ instead. |
+| reuse-existing | Hero of Goma Fada | `f15908ea-2be0-4035-933d-4412fe032164` | activated | trigger / ETB | Rally — Whenever ~ or another Ally you control enters, creatures you control gain indestructible until end of turn. |
+| reuse-existing | Avalanche Tusker | `ccad8b03-5ff1-4895-94e0-0c96883cb875` | activated | trigger / ETB | Whenever ~ attacks, target creature defending player controls blocks it this combat if able. |
+| reuse-existing | Harbinger of the Hunt | `3256029f-6558-4fcc-9fa1-74ceba3e5c92` | damage | damage / life | {2}{G}: ~ deals 1 damage to each other creature with flying. |
+| reuse-existing | Pristine Skywise | `de80c742-4da0-4d67-9711-2b4e6452e2d0` | activated | trigger / ETB | Whenever you cast a noncreature spell, untap ~. It gains protection from the color of your choice until end of turn. |
+| reuse-existing | Doomwake Giant | `ba069664-9f92-47c7-b556-9e5143a22579` | pump | trigger / ETB | Constellation — Whenever ~ or another enchantment you control enters, creatures your opponents control get -1/-1 until end of turn. |
+| reuse-existing | Scourge of Fleets | `57308fc8-8915-4211-a5fd-9363caea9ab9` | return | trigger / ETB | When ~ enters, return each creature your opponents control with toughness X or less to its owner's hand, where X is the number of Islands you control. |
+| reuse-existing | Dawnbringer Charioteers | `29263d48-cb28-478b-a99e-5a18dbc924f0` | counters | trigger / ETB | Heroic — Whenever you cast a spell that targets ~, put a +1/+1 counter on ~. |
+| reuse-existing | Dragonscale General | `9fc6e1db-cf09-4b8c-be4f-bb02ffe7a188` | activated | trigger / ETB | At the beginning of your end step, bolster X, where X is the number of tapped creatures you control. |
+| reuse-existing | Foundry Champion | `d1c44856-ca53-4b6e-902e-8d9c6fe1f61c` | damage | damage / life | When ~ enters, it deals damage to any target equal to the number of creatures you control. |
+| needs-new-primitive | Hypersonic Dragon | `e1bf20b0-2bd7-4a0f-9a02-41e43bd44641` | activated | new primitive review | You may cast sorcery spells as though they had flash. |
+| needs-new-primitive | Celestial Archon | `d2b29bb0-9fb5-46cd-a546-fa6c4ff6113c` | activated | new primitive review | Bestow {5}{W}{W} |
+| reuse-existing | Corpsejack Menace | `ca0cc02b-b106-4eca-9388-d4b48dd3be49` | counters | counter | If one or more +1/+1 counters would be put on a creature you control, twice that many +1/+1 counters are put on it instead. |
+| reuse-existing | Supplant Form | `7e49f689-996a-477e-a327-32b69fbc0d85` | token | create / token | You create a token that's a copy of that creature. |
+| reuse-existing | Arashin Sovereign | `cb58055f-8190-4bc7-ad32-844ca66fd2b0` | activated | search / library | When ~ dies, you may put it on your choice of the top or bottom of its owner's library. |
+| reuse-existing | Ankle Shanker | `22052572-0b7d-4dd8-84a8-e2658f77b85e` | activated | trigger / ETB | Whenever ~ attacks, creatures you control gain first strike and deathtouch until end of turn. |
+| reuse-existing | Treasury Thrull | `34161ec4-5d99-45e6-b43c-c8d28958660a` | return | trigger / ETB | Whenever ~ attacks, you may return target artifact, creature, or enchantment card from your graveyard to your hand. |
+| reuse-existing | Archon of the Triumvirate | `27ecb717-6251-4066-b57e-7070e9e44bbf` | activated | trigger / ETB | Whenever ~ attacks, detain up to two target nonland permanents your opponents control. |
+| reuse-existing | Sage-Eye Avengers | `97a1b49e-d6bc-46ba-88c1-991057e64170` | return | trigger / ETB | Whenever ~ attacks, you may return target creature to its owner's hand if its power is less than ~'s power. |
+| reuse-existing | Thunderbreak Regent | `bb04f927-0348-4a14-9e74-381f18083f6a` | damage | activated ability / mana | Whenever a Dragon you control becomes the target of a spell or ability an opponent controls, ~ deals 3 damage to that player. |
+| reuse-existing | Abhorrent Overlord | `13f63240-a6bb-4333-a3dd-818725c6fb73` | sacrifice | sacrifice | At the beginning of your upkeep, sacrifice a creature. |
+| reuse-existing | Ivorytusk Fortress | `10ae7744-5f98-4d6f-993a-ffb2a34b23e7` | counters | counter | Untap each creature you control with a +1/+1 counter on it during each other player's untap step. |
+| reuse-existing | Heroes' Bane | `bccd722a-b610-4017-93bd-313f08448f5e` | counters | counter | {2}{G}{G}: Put X +1/+1 counters on ~, where X is its power. |
+| reuse-existing | Stasis Snare | `6a83768e-672e-4fec-8931-853f5e96d43d` | exile | trigger / ETB | When ~ enters, exile target creature an opponent controls until ~ leaves the battlefield. |
+| reuse-existing | Roast | `b5e60a85-2f31-47ec-a95b-2e69b2d2c00e` | damage | damage / life | ~ deals 5 damage to target creature without flying. |
+| needs-new-primitive | Ultimate Price | `d740453b-d8f8-48d0-8c50-72a7cdb791b5` | destroy | new primitive review | Destroy target monocolored creature. |
+| reuse-existing | Mizzium Meddler | `48a909b6-e6ee-4148-8b50-b35f11bc065f` | activated | activated ability / mana | When ~ enters, you may change a target of target spell or ability to ~. |
+| needs-new-primitive | Thalia, Guardian of Thraben | `9b7f1d05-707c-4ed3-9f0e-8ced1232c2ee` | activated | new primitive review | Noncreature spells cost {1} more to cast. |
+| reuse-existing | Sunscorch Regent | `c8ff464f-0059-4055-a2f2-556fe6db8fbf` | counters | damage / life | Whenever an opponent casts a spell, put a +1/+1 counter on ~ and you gain 1 life. |
+| reuse-existing | Frost Walker | `54a22814-c0d5-4637-9aa9-a6bc96401914` | sacrifice | sacrifice | When ~ becomes the target of a spell or ability, sacrifice it. |
+| reuse-existing | Abzan Beastmaster | `aab463bb-e790-403b-a88d-06ef81c7302b` | draw | trigger / ETB | At the beginning of your upkeep, draw a card if you control the creature with the greatest toughness or tied for the greatest toughness. |
+| reuse-existing | Repeal | `b1f2b26c-91b2-4f3c-9f48-6429ec3fde48` | return | activated ability / mana | Return target nonland permanent with mana value X to its owner's hand. |
+| needs-new-primitive | Elesh Norn, Grand Cenobite | `958d71ff-c9f7-46f0-96ca-79e7f4d65a16` | pump | new primitive review | Creatures your opponents control get -2/-2. |
+| reuse-existing | Suspension Field | `baf8310f-5baf-459e-95ae-6b43a1d47e24` | exile | trigger / ETB | When ~ enters, you may exile target creature with toughness 3 or greater until ~ leaves the battlefield. |
+| reuse-existing | Ugin's Construct | `6b87a933-b0d2-4120-b4a0-65ab0f3dbe48` | sacrifice | sacrifice | When ~ enters, sacrifice a permanent that's one or more colors. |
+| reuse-existing | Briber's Purse | `bb2cc0f4-6abd-48d6-b442-76eafbfd2309` | counters | counter | {1}, {T}, Remove a gem counter from ~: Target creature can't attack or block this turn. |
+| reuse-existing | Wildcall | `d96ac790-428b-4a64-8dbd-6baa73eb6210` | counters | counter | Manifest the top card of your library, then put X +1/+1 counters on it. |
+| reuse-existing | Phytotitan | `2541e0cd-2cc1-4e47-94e3-030c1cb1a6bd` | return | trigger / ETB | When ~ dies, return it to the battlefield tapped under its owner's control at the beginning of their next upkeep. |
+| needs-new-primitive | Stoke the Flames | `2249001c-08d5-4c0a-86f8-d97519a39f37` | activated | new primitive review | Convoke |
+| reuse-existing | Heir of the Wilds | `35cb88aa-6ed9-4a2d-9bbc-5937e1df4f4a` | pump | trigger / ETB | Ferocious — Whenever ~ attacks, if you control a creature with power 4 or greater, ~ gets +1/+1 until end of turn. |
+| reuse-existing | Fierce Invocation | `4e75fc29-68e3-41a9-9f59-adb4460663b2` | counters | counter | Manifest the top card of your library, then put two +1/+1 counters on it. |
+| reuse-existing | Mercurial Pretender | `07d0bd24-7731-4abb-9dc6-912aa17943f2` | return | return / graveyard | You may have ~ enter as a copy of a creature you control, except it has "{2}{U}{U}: Return ~ to its owner's hand." |
+| reuse-existing | Sultai Emissary | `0274f286-46a1-4028-878a-88c2146a895c` | activated | search / library | When ~ dies, manifest the top card of your library. |
+| reuse-existing | Soul Summons | `0f5b79ca-9f80-420b-a6c5-bb2a9a95c7e7` | activated | search / library | Manifest the top card of your library. |
+| reuse-existing | Disdainful Stroke | `11e02134-7b1a-46a4-a89e-7539dd1efada` | counters | activated ability / mana | Counter target spell with mana value 4 or greater. |
+| reuse-existing | Formless Nurturing | `ddbe6d9b-ea69-449c-a765-b3c16ff60c08` | counters | counter | Manifest the top card of your library, then put a +1/+1 counter on it. |
+| needs-new-primitive | Chief Engineer | `02dbb6f8-ef84-4156-87dc-34033e64fdb7` | activated | new primitive review | Artifact spells you cast have convoke. |
+| needs-new-primitive | Ainok Tracker | `bf84a598-12d3-406d-8eeb-40592e782b87` | activated | new primitive review | Morph {4}{R} |
+| reuse-existing | Altar of the Brood | `c3aafcdd-c890-4971-b8a9-5bfcad794c0b` | mill | trigger / ETB | Whenever another permanent you control enters, each opponent mills a card. |
+| needs-new-primitive | Smite the Monstrous | `649512ed-4908-450a-9652-b2c80df5e24d` | destroy | new primitive review | Destroy target creature with power 4 or greater. |
+| needs-new-primitive | Grim Haruspex | `72aef1d8-11df-4bc2-af83-907b05df73a8` | activated | new primitive review | Morph {B} |
+| reuse-existing | Resolute Archangel | `0d6dc95d-55ce-4ef8-b065-d7203f5bf642` | activated | damage / life | When ~ enters, if your life total is less than your starting life total, it becomes equal to your starting life total. |
+| reuse-existing | Dragonscale Boon | `629b3aee-b8fd-495a-a988-815a0aaf3e82` | counters | counter | Put two +1/+1 counters on target creature and untap it. |
+| reuse-existing | Reality Shift | `70dc830e-d05b-4fc7-88dd-879e140b3fbf` | activated | search / library | Its controller manifests the top card of their library. |
+| reuse-existing | Rakshasa Vizier | `9bdef081-1408-4125-82c3-04296dee05d5` | counters | trigger / ETB | Whenever one or more cards are put into exile from your graveyard, put that many +1/+1 counters on ~. |
+| reuse-existing | Arashin War Beast | `75c81ce4-ca1d-464a-bb39-e568f8ebf71f` | damage | damage / life | Whenever ~ deals combat damage to one or more blocking creatures, manifest the top card of your library. |
+| needs-new-primitive | Mardu Shadowspear | `b6e972ae-cc2d-4c7e-9f49-c0616dc82064` | activated | new primitive review | Dash {1}{B} |
+| needs-new-primitive | Hewed Stone Retainers | `a27938d2-9a15-4a87-9e77-dea37347cf62` | activated | new primitive review | Cast ~ only if you've cast another spell this turn. |
+| needs-new-primitive | Mystic of the Hidden Way | `530853b4-68a0-4814-b0aa-ffeb5585cd43` | activated | new primitive review | Morph {2}{U} |
+| reuse-existing | Indulgent Tormentor | `8b202c63-c961-4590-958f-d17e76610ab5` | draw | sacrifice | At the beginning of your upkeep, draw a card unless target opponent sacrifices a creature of their choice or pays 3 life. |
+| reuse-existing | Brain Maggot | `419b5b4f-cac7-44bf-b1e2-655b5a5d37b1` | exile | trigger / ETB | When ~ enters, target opponent reveals their hand and you choose a nonland card from it. Exile that card until ~ leaves the battlefield. |
+| reuse-existing | Ghostfire Blade | `093b1d8d-c836-4e9b-855b-4020361aa6ac` | activated | activated ability / mana | ~'s equip ability costs {2} less to activate if it targets a colorless creature. |
+| needs-new-primitive | In Garruk's Wake | `a6899b94-427d-4851-a474-4087e0a0918a` | destroy | new primitive review | Destroy all creatures you don't control and all planeswalkers you don't control. |
+| needs-new-primitive | Bile Blight | `0dd95516-893d-477e-a38c-3cc37c6e7ae0` | pump | new primitive review | Target creature and all other creatures with the same name as that creature get -3/-3 until end of turn. |
+| reuse-existing | Banishing Light | `f28b21a6-f7ce-437a-8c5b-0423cb55cefb` | exile | trigger / ETB | When ~ enters, exile target nonland permanent an opponent controls until ~ leaves the battlefield. |
+| reuse-existing | Baron Sengir | `fc728cd7-2b5b-45f3-896a-a45648bcb61d` | damage | damage / life | Whenever a creature dealt damage by ~ this turn dies, put a +2/+2 counter on ~. |
+| reuse-existing | Living Death | `9e6a3df4-67a3-452e-a6ef-f04dbadb21ef` | exile | sacrifice | Each player exiles all creature cards from their graveyard, then sacrifices all creatures they control, then puts all cards they exiled this way onto the battlefield. |
+| needs-new-primitive | Burning Wish | `13a884b5-8970-4d71-9082-a8b6c8db9a01` | activated | new primitive review | You may reveal a sorcery card you own from outside the game and put it into your hand. |
+| needs-new-primitive | Wren's Run Vanquisher | `fe9cdd15-a390-4a1e-bae9-474ce8d355b8` | activated | new primitive review | As an additional cost to cast ~, reveal an Elf card from your hand or pay {3}. |
+| reuse-existing | Karametra's Acolyte | `e8cf80a1-6908-4adb-88e7-2015672d4905` | activated | activated ability / mana | {T}: Add an amount of {G} equal to your devotion to green. |
+| needs-new-primitive | Hand of Justice | `af8eb20a-dfa2-49a4-892b-26d7e276fcd2` | destroy | new primitive review | {T}, Tap three untapped white creatures you control: Destroy target creature. |
+| reuse-existing | Curse of the Bloody Tome | `5480f855-80b7-45c7-94a9-071c7b5d5ccf` | mill | trigger / ETB | At the beginning of enchanted player's upkeep, that player mills two cards. |
+| needs-new-primitive | Elite Inquisitor | `4f7e865b-6ab0-4361-b864-63c38cdb2fed` | activated | new primitive review | Protection from Vampires, from Werewolves, and from Zombies |
+| needs-new-primitive | Show and Tell | `b83a3ba0-249e-4c39-bbf0-cb005413f7d2` | activated | new primitive review | Each player may put an artifact, creature, enchantment, or land card from their hand onto the battlefield. |
+| reuse-existing | Carnophage | `9ac77cfd-7d78-4c8a-bffc-17649a852114` | activated | damage / life | At the beginning of your upkeep, tap ~ unless you pay 1 life. |
+| reuse-existing | Overbeing of Myth | `5391f601-b778-413f-a31f-9f8b23b40f5c` | draw | trigger / ETB | At the beginning of your draw step, draw an additional card. |
+| needs-new-primitive | Reckless Wurm | `c9159396-81d3-4f81-88b4-dda163ff4b74` | activated | new primitive review | Madness {2}{R} |
+| needs-new-primitive | Hellspark Elemental | `a7ba88c6-81e7-4ab7-9c9b-308831e56833` | activated | new primitive review | Unearth {1}{R} |
+| needs-new-primitive | Okina Nightwatch | `d1c222fe-0ca7-415b-a28a-3b704df53d66` | pump | new primitive review | As long as you have more cards in hand than each opponent, ~ gets +3/+3. |
+| reuse-existing | Force of Nature | `e3c4c27d-f263-4c69-a4fe-2928136ff68b` | damage | damage / life | At the beginning of your upkeep, ~ deals 8 damage to you unless you pay {G}{G}{G}{G}. |
+| reuse-existing | Treva, the Renewer | `72524f3c-674b-4ebf-9526-18737b354010` | damage | damage / life | Whenever ~ deals combat damage to a player, you may pay {2}{W}. If you do, choose a color, then you gain 1 life for each permanent of that color. |
+| reuse-existing | Balduvian Horde | `fd2a94d3-901d-4b46-aa9b-a30ed6dea6bd` | discard | sacrifice | When ~ enters, sacrifice it unless you discard a card at random. |
+| reuse-existing | Brion Stoutarm | `b816b3cc-ae4b-4fb7-8b1a-e01ab83459a3` | damage | sacrifice | {R}, {T}, Sacrifice another creature: ~ deals damage equal to the sacrificed creature's power to target player or planeswalker. |
+| needs-new-primitive | Moat | `42208fea-8c24-451f-861d-6d70c0a7a502` | combat-restriction | new primitive review | Creatures without flying can't attack. |
+| reuse-existing | Fungal Shambler | `9991941e-436f-42d4-8b0c-1ee84234774b` | damage | damage / life | Whenever ~ deals damage to an opponent, you draw a card and that opponent discards a card. |
+| reuse-existing | Tradewind Rider | `d0314da0-da24-4f6e-b1f6-0d50617bcaaa` | return | return / graveyard | {T}, Tap two untapped creatures you control: Return target permanent to its owner's hand. |
+| needs-new-primitive | Rise from the Grave | `4e769107-0f32-4181-9e57-ffebc2228d3a` | activated | new primitive review | That creature is a black Zombie in addition to its other colors and types. |
+| reuse-existing | Powder Keg | `ca1144c2-49a3-49b4-9085-3094141769ea` | counters | sacrifice | {T}, Sacrifice ~: Destroy each artifact and creature with mana value equal to the number of fuse counters on ~. |
+| reuse-existing | Skittering Skirge | `fae1d5d9-a50e-423e-8692-3e41f39df081` | sacrifice | sacrifice | When you cast a creature spell, sacrifice ~. |
+| reuse-existing | Vengevine | `7ed52301-81ea-4e7f-b985-cfab0593cae4` | return | trigger / ETB | Whenever you cast a spell, if it's the second creature spell you cast this turn, you may return ~ from your graveyard to the battlefield. |
+| reuse-existing | Golem's Heart | `650890bc-aba6-45fb-8096-3a36b0a015b3` | gain-life | damage / life | Whenever a player casts an artifact spell, you may gain 1 life. |
+| reuse-existing | Argothian Enchantress | `11f17f85-ca97-4551-838f-7cb32f0e5f10` | draw | trigger / ETB | Whenever you cast an enchantment spell, draw a card. |
+| reuse-existing | Memory Lapse | `bbfb3e4a-b389-4391-8141-13b68c0ef2e0` | counters | counter | If that spell is countered this way, put it on top of its owner's library instead of into that player's graveyard. |
+| reuse-existing | Mwonvuli Beast Tracker | `b6265654-84c3-469b-9afa-f752fd64abe0` | library-look | trigger / ETB | When ~ enters, search your library for a creature card with deathtouch, hexproof, reach, or trample and reveal it. Shuffle and put that card on top. |
+| needs-new-primitive | Aura of Silence | `e7faf8eb-e829-4109-8dfe-42865a23ba86` | activated | new primitive review | Artifact and enchantment spells your opponents cast cost {2} more to cast. |
+| reuse-existing | Future Sight | `93a0e938-b916-47ec-9803-369e885e253c` | activated | search / library | You may play lands and cast spells from the top of your library. |
+| reuse-existing | Nissa's Chosen | `d14c9d2b-41c7-4c9a-a66a-cda34d29c7ba` | replacement | search / library | If ~ would die, put it on the bottom of its owner's library instead. |
+| reuse-existing | Orcish Lumberjack | `383e3fe4-8558-4561-8632-6eadb5d5963c` | sacrifice | sacrifice | {T}, Sacrifice a Forest: Add three mana in any combination of {R} and/or {G}. |
+| needs-new-primitive | Hedge Troll | `500663c1-390c-4598-b614-4168c4f7debe` | pump | new primitive review | ~ gets +1/+1 as long as you control a Plains. |
+| reuse-existing | Icy Manipulator | `3608f1f7-8dc5-4dd1-ae91-c830e1de9529` | activated | activated ability / mana | {1}, {T}: Tap target artifact, creature, or land. |
+| reuse-existing | Zombie Apocalypse | `8241277d-654f-4985-9d49-a22c1e59eec2` | destroy | return / graveyard | Return all Zombie creature cards from your graveyard to the battlefield tapped, then destroy all Humans. |
+| reuse-existing | Ancient Ziggurat | `0baabe39-72ae-47bd-a095-cbf7eb8a6361` | activated | activated ability / mana | {T}: Add one mana of any color. Spend this mana only to cast a creature spell. |
+| reuse-existing | Boneyard Wurm | `6e5f908a-f4f1-4718-ac39-34176e401756` | activated | return / graveyard | ~'s power and toughness are each equal to the number of creature cards in your graveyard. |
+| reuse-existing | The Abyss | `a02a7816-c967-4503-bb08-f8db44915250` | destroy | trigger / ETB | At the beginning of each player's upkeep, destroy target nonartifact creature that player controls of their choice. |
+| reuse-existing | Hada Freeblade | `e9ad9df4-2fd6-4a22-b861-0a8d28f2fe10` | counters | trigger / ETB | Whenever ~ or another Ally you control enters, you may put a +1/+1 counter on ~. |
+| needs-new-primitive | Crystalline Sliver | `ba3aa1eb-722a-47d3-83be-96daddb50265` | activated | new primitive review | All Slivers have shroud. |
+| needs-new-primitive | Whipcorder | `4a4c187e-e10b-4fd2-b70b-6401bb0595c5` | activated | new primitive review | Morph {W} |
+| reuse-existing | Gather the Townsfolk | `ff45677d-977e-4ef5-859c-52393ed71a6c` | replacement | damage / life | Fateful hour — If you have 5 or less life, create five of those tokens instead. |
+| needs-new-primitive | Voidmage Prodigy | `7e2cacae-2934-4ff5-81c6-dfce7a2820ef` | activated | new primitive review | Morph {U} |
+| reuse-existing | Pendelhaven | `f70e72e1-9abe-485b-9fea-e8b35352f5b3` | pump | activated ability / mana | {T}: Target 1/1 creature gets +1/+2 until end of turn. |
+| reuse-existing | Timetwister | `c823e687-6311-4c99-974b-fd77d204141a` | draw | draw / discard | Each player shuffles their hand and graveyard into their library, then draws seven cards. |
+| needs-new-primitive | Plague Stinger | `047e761e-7bbe-403b-86d7-cb9fb0b20b21` | activated | new primitive review | Infect |
+| reuse-existing | Gemstone Mine | `0c828f10-4775-492f-9224-1e2814ad2cad` | counters | sacrifice | {T}, Remove a mining counter from ~: Add one mana of any color. If there are no mining counters on ~, sacrifice it. |
+| needs-new-primitive | Time Walk | `d0209d3f-3f7e-4fd5-bce5-10bce6f29c86` | activated | new primitive review | Take an extra turn after this one. |
+| needs-new-primitive | Tormented Soul | `ee334bd7-d344-4684-85c8-d0464bbaf2b4` | combat-restriction | new primitive review | ~ can't block and can't be blocked. |
+| needs-new-primitive | Deranged Hermit | `b9cd714b-2ad8-4fdb-a8aa-82b17730e071` | pump | new primitive review | Squirrel creatures get +1/+1. |
+| reuse-existing | Naya Sojourners | `703215df-dee2-4b82-9f32-256e1410543c` | counters | counter | When you cycle ~ and when ~ dies, you may put a +1/+1 counter on target creature. |
+| reuse-existing | Nether Void | `53bab610-1d27-4897-a4ad-cfecca82b811` | counters | trigger / ETB | Whenever a player casts a spell, counter it unless that player pays {3}. |
+| reuse-existing | Kor Firewalker | `fb37ff1c-7461-4a16-b27f-6eef0db937fe` | gain-life | damage / life | Whenever a player casts a red spell, you may gain 1 life. |
+| reuse-existing | Empyrial Armor | `ec9e8611-e785-4d5d-b6e1-bf63daf408df` | static-continuous | static / continuous | Enchanted creature gets +1/+1 for each card in your hand. |
+| needs-new-primitive | Juggernaut | `4ac9116f-36bc-4d71-b696-d6ee064e1d58` | activated | new primitive review | ~ can't be blocked by Walls. |
+| reuse-existing | Retaliator Griffin | `dd4b9e5a-b3ab-4b70-b200-228c8add9f52` | damage | damage / life | Whenever a source an opponent controls deals damage to you, you may put that many +1/+1 counters on ~. |
+| needs-new-primitive | Render Silent | `3966bd03-a98e-43b6-a0c0-10d4d81c173c` | activated | new primitive review | Its controller can't cast spells this turn. |
+| reuse-existing | Sparksmith | `b27bc09a-ebea-498c-87f2-753852569a73` | damage | activated ability / mana | {T}: ~ deals X damage to target creature and X damage to you, where X is the number of Goblins on the battlefield. |
+| reuse-existing | Killing Wave | `69d6b906-5461-4eba-8667-dbb8c0ce3fcb` | sacrifice | sacrifice | For each creature, its controller sacrifices it unless they pay X life. |
+| needs-new-primitive | Arrogant Wurm | `dc7f0c33-80ea-453e-a237-473f077f038e` | activated | new primitive review | Madness {2}{G} |
+| reuse-existing | Karakas | `59119143-c0fa-49dd-adf0-e2fd3029c48b` | return | activated ability / mana | {T}: Return target legendary creature to its owner's hand. |
+| reuse-existing | Mishra's Workshop | `ba284fe6-bb29-455c-8321-9714a0cdc05e` | activated | activated ability / mana | {T}: Add {C}{C}{C}. Spend this mana only to cast artifact spells. |
+| reuse-existing | Ophidian | `953bdefa-4639-4524-af5c-5055d1289f40` | damage | damage / life | Whenever ~ attacks and isn't blocked, you may draw a card. If you do, ~ assigns no combat damage this turn. |
+| reuse-existing | Phyrexian Negator | `f22fcd17-bc24-41df-81ce-6d11208861b9` | damage | sacrifice | Whenever ~ is dealt damage, sacrifice that many permanents. |
+| reuse-existing | Stupor | `c19e3560-d304-4d91-aa2a-463d7dbb35bb` | discard | draw / discard | Target opponent discards a card at random, then discards a card. |
+| reuse-existing | Phalanx Leader | `857db7e0-254a-4920-a71d-9bab6555342f` | counters | trigger / ETB | Heroic — Whenever you cast a spell that targets ~, put a +1/+1 counter on each creature you control. |
+| reuse-existing | Mycoid Shepherd | `c4a4e607-7f37-4dc6-8fc0-f77bdafeb919` | gain-life | damage / life | Whenever ~ or another creature you control with power 5 or greater dies, you may gain 5 life. |
+| needs-new-primitive | Chill | `70a93d0f-9a02-4e60-a2b8-827fd2410604` | activated | new primitive review | Red spells cost {2} more to cast. |
+| needs-new-primitive | Winter Orb | `1dcbd583-3388-4b34-a7cd-131648aa6abd` | static-continuous | new primitive review | As long as ~ is untapped, players can't untap more than one land during their untap steps. |
+| reuse-existing | Eidolon of Blossoms | `77ccbea1-70af-4194-adad-39a904221c75` | draw | trigger / ETB | Constellation — Whenever ~ or another enchantment you control enters, draw a card. |
+| needs-new-primitive | Squelching Leeches | `662a2158-4176-4b4a-be6a-13f4501d22f9` | activated | new primitive review | ~'s power and toughness are each equal to the number of Swamps you control. |
+| reuse-existing | Kiora's Follower | `22c044ad-77d7-4c93-953d-e2daa9686ff7` | activated | activated ability / mana | {T}: Untap another target permanent. |
+| needs-new-primitive | Batterskull | `d12e5ce0-5705-4c35-9a93-b883db52c80c` | activated | new primitive review | Living weapon |
+| reuse-existing | Lion's Eye Diamond | `ee6099b0-fb1f-42f1-b862-7708c6e36d05` | discard | sacrifice | Discard your hand, Sacrifice ~: Add three mana of any one color. Activate only as an instant. |
+| reuse-existing | Banisher Priest | `9f560b83-32d4-4bb4-a956-8f5db18599db` | exile | trigger / ETB | When ~ enters, exile target creature an opponent controls until ~ leaves the battlefield. |
+| reuse-existing | Demigod of Revenge | `602ce676-380d-4c3c-b97a-9234ccdc2904` | return | return / graveyard | When you cast ~, return all cards named ~ from your graveyard to the battlefield. |
+| reuse-existing | Riku of Two Reflections | `f697c78d-7e4f-4320-bfc6-2a25e6d7dc94` | token | trigger / ETB | Whenever another nontoken creature you control enters, you may pay {G}{U}. If you do, create a token that's a copy of that creature. |
+| reuse-existing | Crucible of Worlds | `33c722cf-b4bf-431f-aefd-ee96241a7fbf` | activated | return / graveyard | You may play lands from your graveyard. |
+| reuse-existing | Greater Good | `dc0593c2-ccb4-4648-a592-c5bcd121dc72` | draw | sacrifice | Sacrifice a creature: Draw cards equal to the sacrificed creature's power, then discard three cards. |
+| reuse-existing | Bident of Thassa | `e1afaef7-9fa3-4662-a95f-adfb0da9fd11` | activated | activated ability / mana | {1}{U}, {T}: Creatures your opponents control attack this turn if able. |
+| reuse-existing | Ghor-Clan Rampager | `ec7a9e7f-742b-4344-983e-73372c6a1760` | pump | draw / discard | Bloodrush — {R}{G}, Discard ~: Target attacking creature gets +4/+4 and gains trample until end of turn. |
+| reuse-existing | Goblin Diplomats | `84b55e6b-5ce3-49af-95fe-46c029e0260c` | activated | activated ability / mana | {T}: Each creature attacks this turn if able. |
+| reuse-existing | Sin Collector | `6bef2904-1ebe-4e7e-879a-79f4968174fb` | exile | trigger / ETB | When ~ enters, target opponent reveals their hand. You choose an instant or sorcery card from it and exile that card. |
+| reuse-existing | Colossal Whale | `cd04b735-125f-47b5-a68e-ab2a008100b9` | exile | trigger / ETB | Whenever ~ attacks, you may exile target creature defending player controls until ~ leaves the battlefield. |
+| reuse-existing | Ratchet Bomb | `255d752a-8251-4e4c-99d6-4a1648de1474` | counters | sacrifice | {T}, Sacrifice ~: Destroy each nonland permanent with mana value equal to the number of charge counters on ~. |
+| needs-new-primitive | Experiment One | `8520ee67-439b-4f15-838b-420bacbb8b13` | activated | new primitive review | Evolve |
+| needs-new-primitive | Rakdos Cackler | `763a2d27-52a8-43d9-b649-0f6c0cf87a07` | activated | new primitive review | Unleash |
+| needs-new-primitive | Megantic Sliver | `52e8ec03-23ed-43a0-bce2-ad0cd5c4d737` | pump | new primitive review | Sliver creatures you control get +3/+3. |
+| needs-new-primitive | Breaking // Entering | `043370fd-9cfe-47ce-8019-e915cee1ae95` | activated | new primitive review | Fuse |
+| reuse-existing | Firemane Avenger | `7ea71a36-8fa8-4ba3-9cb1-7fc6917c3ddd` | damage | damage / life | Battalion — Whenever ~ and at least two other creatures attack, ~ deals 3 damage to any target and you gain 3 life. |
+| reuse-existing | Desertion | `ee3d1f44-e0ca-4ce9-be76-4b675a115156` | counters | counter | If an artifact or creature spell is countered this way, put that card onto the battlefield under your control instead of into its owner's graveyard. |
+| reuse-existing | Skarrg Goliath | `72350461-8231-4737-a57f-f20fb5d179a3` | pump | draw / discard | Bloodrush — {5}{G}{G}, Discard ~: Target attacking creature gets +9/+9 and gains trample until end of turn. |
+| needs-new-primitive | Pillage | `0b137853-7cb9-424b-8285-12938991eafb` | destroy | new primitive review | Destroy target artifact or land. |
+| needs-new-primitive | Glacial Ray | `e65a8ab8-84a7-4fe2-b009-ceb87bec6b4e` | activated | new primitive review | Splice onto Arcane {1}{R} |
+| reuse-existing | Armadillo Cloak | `15397a59-70a8-441f-abf7-230405a1602b` | damage | damage / life | Whenever enchanted creature deals damage, you gain that much life. |
+| reuse-existing | Wall of Roots | `3a21a6ae-b2f2-4f0c-acfd-5f3e8d63fd2f` | counters | activated ability / mana | Put a -0/-1 counter on ~: Add {G}. Activate only once each turn. |
+| reuse-existing | Circle of Flame | `c31801e6-2444-4158-8e19-2afe751d7cff` | damage | damage / life | Whenever a creature without flying attacks you or a planeswalker you control, ~ deals 1 damage to that creature. |
+| reuse-existing | Squadron Hawk | `00ab9841-934f-4a66-a98d-68d01661b1c9` | library-look | trigger / ETB | When ~ enters, you may search your library for up to three cards named ~, reveal them, put them into your hand, then shuffle. |
+| needs-new-primitive | Boggart Ram-Gang | `30d2437a-87c9-4f88-8fb8-b686d6522677` | activated | new primitive review | Wither |
+| reuse-existing | Yixlid Jailer | `1f55303e-1369-4e42-9ed4-36609887c7c1` | static-continuous | static / continuous | Cards in graveyards lose all abilities. |
+| needs-new-primitive | Glistener Elf | `9d95d173-5c7f-4e0c-bcdc-9b90fcd7339b` | activated | new primitive review | Infect |
+| reuse-existing | Ghost-Lit Raider | `3d772c44-a756-406d-a83f-f671a81513b0` | damage | damage / life | Channel — {3}{R}, Discard ~: It deals 4 damage to target creature. |
+| needs-new-primitive | Blastoderm | `d6ee8bd6-0207-46ee-9892-c1d1b23b934e` | activated | new primitive review | Fading 3 |
+| reuse-existing | Electrolyze | `07b222d7-24f2-4994-9004-ff6672ebe161` | damage | damage / life | ~ deals 2 damage divided as you choose among one or two targets. |
+| reuse-existing | Coiling Oracle | `69fd4ddf-9ed8-4c56-bef3-9944daf05e4f` | activated | trigger / ETB | When ~ enters, reveal the top card of your library. If it's a land card, put it onto the battlefield. Otherwise, put that card into your hand. |
+| needs-new-primitive | Kor Duelist | `758dd2fd-d3ec-4782-9a60-12b0d79719da` | static-continuous | new primitive review | As long as ~ is equipped, it has double strike. |
+| reuse-existing | Jackal Pup | `993e41e6-0643-4a1f-8ada-b7a4aae486d9` | damage | damage / life | Whenever ~ is dealt damage, it deals that much damage to you. |
+| reuse-existing | Goblin Ringleader | `4100e486-0d27-436c-8429-76bc2c1a26ab` | activated | trigger / ETB | When ~ enters, reveal the top four cards of your library. Put all Goblin cards revealed this way into your hand and the rest on the bottom of your library in any order. |
+| needs-new-primitive | Kird Ape | `fbbc3acb-c917-44ff-ac6f-9dd6ebe3f4ad` | pump | new primitive review | ~ gets +1/+2 as long as you control a Forest. |
+| reuse-existing | Cloudpost | `f705c0eb-9c6c-4315-a860-208ed0c5d93e` | activated | activated ability / mana | {T}: Add {C} for each Locus on the battlefield. |
+| needs-new-primitive | Muscle Sliver | `06e0459f-d691-4470-884a-27c09b6612d2` | pump | new primitive review | All Sliver creatures get +1/+1. |
+| reuse-existing | Fire // Ice | `ae92942b-919c-4ea9-b693-85fcef765d5a` | damage | damage / life | ~ deals 2 damage divided as you choose among one or two targets. |
+| reuse-existing | Pierce Strider | `e2bbf963-794d-4600-bb92-cb9d1d00205a` | lose-life | damage / life | When ~ enters, target opponent loses 3 life. |
+| reuse-existing | Thirst for Knowledge | `939e6f71-185e-41f2-9d54-72cce06f1dce` | discard | draw / discard | Then discard two cards unless you discard an artifact card. |
+| reuse-existing | Land Tax | `d2d9ecea-7925-420e-98b9-2f87f41f387c` | library-look | trigger / ETB | At the beginning of your upkeep, if an opponent controls more lands than you, you may search your library for up to three basic land cards, reveal them, put them into your hand, then shuffle. |
+| reuse-existing | Khabál Ghoul | `cb558dda-0c05-426d-aedc-bc07cc54db76` | counters | trigger / ETB | At the beginning of each end step, put a +1/+1 counter on ~ for each creature that died this turn. |
+| reuse-existing | Treasure Mage | `0848bb49-5758-41d6-a3e8-0c62e1768f52` | library-look | activated ability / mana | When ~ enters, you may search your library for an artifact card with mana value 6 or greater, reveal it, put it into your hand, then shuffle. |
+| reuse-existing | Goblin Legionnaire | `582fdfbe-c5fe-45d0-b3ff-e66db5183725` | damage | sacrifice | {W}, Sacrifice ~: Prevent the next 2 damage that would be dealt to any target this turn. |
+| reuse-existing | Curse of Thirst | `ffe3ad06-50d8-4ca3-a1f7-aa31dc2c486e` | damage | damage / life | At the beginning of enchanted player's upkeep, ~ deals damage to that player equal to the number of Curses attached to them. |
+| needs-new-primitive | Rift Bolt | `2b8afa9f-4236-4c02-a8d5-3c145caecfd6` | activated | new primitive review | Suspend 1—{R} |
+| needs-new-primitive | Zoetic Cavern | `3763de30-28e1-4689-a71c-07d2fea3a466` | activated | new primitive review | Morph {2} |
+| reuse-existing | Cabal Coffers | `7358e164-5704-4e78-9b21-6a9bf2a968ce` | activated | activated ability / mana | {2}, {T}: Add {B} for each Swamp you control. |
+| reuse-existing | Spellstutter Sprite | `32e60fb4-e841-4f82-9c83-5e63766e8e6f` | counters | activated ability / mana | When ~ enters, counter target spell with mana value X or less, where X is the number of Faeries you control. |
+| needs-new-primitive | Artisan of Kozilek | `19409704-09c4-4a4b-a5a7-f95120b425db` | activated | new primitive review | Annihilator 2 |
+| reuse-existing | Dissipate | `4b2e9aa9-6f91-41de-84b6-e9a89be06a53` | counters | counter | If that spell is countered this way, exile it instead of putting it into its owner's graveyard. |
+| reuse-existing | Remand | `d71cd08e-3e84-41ff-b9db-9e343c0af6b4` | counters | counter | If that spell is countered this way, put it into its owner's hand instead of into that player's graveyard. |
+| reuse-existing | Pillar of Flame | `468cfc88-a493-44dc-9d0a-63d9cc89c114` | damage | damage / life | If a creature dealt damage this way would die this turn, exile it instead. |
+| reuse-existing | Forbid | `6e26a525-2584-490d-b106-621c1a30e1fd` | discard | draw / discard | Buyback—Discard two cards. |
+| reuse-existing | Hymn to Tourach | `992d9a72-d34d-47d7-96fb-37f0efb515ef` | discard | draw / discard | Target player discards two cards at random. |
+| reuse-existing | Cryptborn Horror | `f5d62baa-648d-4030-87f9-e795ed665084` | counters | damage / life | ~ enters with X +1/+1 counters on it, where X is the total life lost by your opponents this turn. |
+| needs-new-primitive | Lotus Bloom | `04cf02dc-f053-414e-87d8-1537f25bcbf4` | activated | new primitive review | Suspend 3—{0} |
+| reuse-existing | Circle of Protection: Red | `df2738fe-9cd1-4347-8808-105fcfde1190` | damage | damage / life | {1}: The next time a red source of your choice would deal damage to you this turn, prevent that damage. |
+| needs-new-primitive | Rewind | `bb27bfdf-fe8d-45bd-ad62-8118dce06eda` | activated | new primitive review | Untap up to four lands. |
+| reuse-existing | Oblivion Ring | `bd9b9772-f5f9-4c6b-913e-7193bea5d0a7` | exile | trigger / ETB | When ~ enters, exile another target nonland permanent. |
+| needs-new-primitive | Bloodbraid Elf | `3f0c9466-5ab9-4205-a84f-b4b27b5a678e` | activated | new primitive review | Cascade |
+| reuse-existing | Wild Mongrel | `e9441ab3-7a17-4f9b-a873-e5e82f6e9690` | pump | draw / discard | Discard a card: ~ gets +1/+1 and becomes the color of your choice until end of turn. |
+| reuse-existing | Force of Will | `956381ba-6d37-4a8a-846c-bad79222dbee` | exile | activated ability / mana | You may pay 1 life and exile a blue card from your hand rather than pay ~'s mana cost. |
+| reuse-existing | Azorius Guildmage | `16f61f69-cdde-4b6c-b855-c74db9038ceb` | counters | activated ability / mana | {2}{U}: Counter target activated ability. |
+| reuse-existing | Priest of Titania | `3a198a16-17b9-481e-b516-5bc945c7e247` | activated | activated ability / mana | {T}: Add {G} for each Elf on the battlefield. |
+| needs-new-primitive | Capsize | `77637eff-2963-4402-88f3-ca346f762fc8` | activated | new primitive review | Buyback {3} |
+| reuse-existing | Psychatog | `d7c4da85-d1a5-4a27-812d-65d8ee1494dd` | pump | exile | Exile two cards from your graveyard: ~ gets +1/+1 until end of turn. |
+| reuse-existing | Kor Skyfisher | `054a0193-861e-4644-ab0a-8aa33407abc8` | return | trigger / ETB | When ~ enters, return a permanent you control to its owner's hand. |
+| needs-new-primitive | Surging Flame | `3c51b991-f6fa-44d2-81a3-0894939f3c22` | activated | new primitive review | Ripple 4 |
+| needs-new-primitive | Calciderm | `329d53eb-d443-4376-ae5a-4be7dfb1fc91` | activated | new primitive review | Vanishing 4 |
+| reuse-existing | Merrow Reejerey | `6b7e6ae4-2ee1-44bf-ac93-79fc87494515` | activated | trigger / ETB | Whenever you cast a Merfolk spell, you may tap or untap target permanent. |
+| reuse-existing | Suture Priest | `c4d36522-3ace-4bfb-bf2d-1a366f458698` | lose-life | damage / life | Whenever a creature an opponent controls enters, you may have that player lose 1 life. |
+| reuse-existing | Gerrard's Verdict | `670b5dfb-ffdf-43ed-acc3-855006e352fc` | discard | damage / life | You gain 3 life for each land card discarded this way. |
+| reuse-existing | Smother | `acdf9fb0-96eb-4520-bd4b-b6480c7c9b29` | destroy | activated ability / mana | Destroy target creature with mana value 3 or less. |
+| reuse-existing | Forked Lightning | `66107cfd-4bdb-4266-a650-940743555ea4` | damage | damage / life | ~ deals 4 damage divided as you choose among one, two, or three target creatures. |
+| needs-new-primitive | Plague Myr | `2f328e05-5edf-4b21-9c2a-50dcf1e7b3ec` | activated | new primitive review | Infect |
+| needs-new-primitive | Lord of Atlantis | `cc7f290f-ca00-4285-9bdb-4b4402444f30` | pump | new primitive review | Other Merfolk get +1/+1 and have islandwalk. |
+| reuse-existing | Goblin Guide | `51d9564b-44fc-4de1-9119-09d7b4089378` | activated | trigger / ETB | Whenever ~ attacks, defending player reveals the top card of their library. If it's a land card, that player puts it into their hand. |
+| needs-new-primitive | Deadbridge Goliath | `1498f5a1-6df7-4f80-9470-c93528b64a9c` | activated | new primitive review | Scavenge {4}{G}{G} |
+| needs-new-primitive | Lu Bu, Master-at-Arms | `ff959f1f-0982-4761-a6b0-3044dff1d617` | activated | new primitive review | Haste; horsemanship |
+| reuse-existing | Gravecrawler | `09ff28b1-b6c9-48e6-b12e-2f0e644f709f` | static-continuous | return / graveyard | You may cast ~ from your graveyard as long as you control a Zombie. |
+| needs-new-primitive | Honor of the Pure | `eb4188bb-62df-4309-bde1-f66318fe2f05` | pump | new primitive review | White creatures you control get +1/+1. |
+| reuse-existing | Stifle | `b3b00911-ece7-4484-bc36-f211ce72b6cc` | counters | activated ability / mana | Counter target activated or triggered ability. |
+| reuse-existing | Restoration Angel | `dfbd3afc-9905-4cff-a4f4-df08a4d0a7fa` | exile | trigger / ETB | When ~ enters, you may exile target non-Angel creature you control, then return that card to the battlefield under your control. |
+| needs-new-primitive | Serra Avenger | `b91b65b3-b35c-460e-a49b-333000a9a519` | activated | new primitive review | You can't cast ~ during your first, second, or third turns of the game. |
+| reuse-existing | Hypnotic Specter | `759af941-f6a3-4726-91f2-9b1e4e55ea71` | damage | damage / life | Whenever ~ deals damage to an opponent, that player discards a card at random. |
+| reuse-existing | Phyrexian Dreadnought | `a7950edb-5670-46fd-a30e-0fe888a5a32b` | sacrifice | sacrifice | When ~ enters, sacrifice it unless you sacrifice any number of creatures with total power 12 or greater. |
+| reuse-existing | Sword of Fire and Ice | `2ccdc60a-49a9-44b9-a7af-0ebf18b26785` | damage | damage / life | Whenever equipped creature deals combat damage to a player, ~ deals 2 damage to any target and you draw a card. |
+| needs-new-primitive | Living Wish | `b9d186f5-1c92-4539-a5b5-e7fbd4b726fe` | activated | new primitive review | You may reveal a creature or land card you own from outside the game and put it into your hand. |
+| reuse-existing | Mondronen Shaman // Tovolar's Magehunter | `f94cb722-7e46-4569-b474-9654ecf7ec14` | transform | trigger / ETB | At the beginning of each upkeep, if no spells were cast last turn, transform ~. |
+| reuse-existing | Chandra's Phoenix | `65ddd04c-7207-4f6c-ae1b-c5e02a520a51` | damage | damage / life | Whenever an opponent is dealt damage by a red instant or sorcery spell you control or by a red planeswalker you control, return ~ from your graveyard to your hand. |
+| reuse-existing | Myr Superion | `43dac6fa-4cdf-49ec-9e11-2e5e8f9f928b` | activated | activated ability / mana | Spend only mana produced by creatures to cast ~. |
+| needs-new-primitive | Dungrove Elder | `32083c9f-04c6-4b6f-9e24-cc8f3cae3e3e` | activated | new primitive review | ~'s power and toughness are each equal to the number of Forests you control. |
+| reuse-existing | Mayor of Avabruck // Howlpack Alpha | `6e638587-30b3-4c4b-b463-fb415ea048f7` | transform | trigger / ETB | At the beginning of each upkeep, if no spells were cast last turn, transform ~. |
+| needs-new-primitive | Tempered Steel | `e220138c-5fc6-487d-9fa9-f21b2fb1f12c` | pump | new primitive review | Artifact creatures you control get +2/+2. |
+| reuse-existing | Garruk's Horde | `b9da511e-a57f-43c2-aa97-902f3b4c55fb` | activated | search / library | You may cast creature spells from the top of your library. |
+| reuse-existing | Vendilion Clique | `244d4807-0802-41bc-9460-55ac38a28a72` | draw | trigger / ETB | When ~ enters, look at target player's hand. You may choose a nonland card from it. If you do, that player reveals the chosen card, puts it on the bottom of their library, then draws a card. |
+| needs-new-primitive | Phyrexian Metamorph | `340bbe8b-e987-4c3e-ab4e-9dee63e57d4f` | activated | new primitive review | You may have ~ enter as a copy of any artifact or creature on the battlefield, except it's an artifact in addition to its other types. |
+| reuse-existing | Bitterblossom | `fb868840-09fa-49b1-85cb-b08ad065e972` | token | damage / life | At the beginning of your upkeep, you lose 1 life and create a 1/1 black Faerie Rogue creature token with flying. |
+| needs-new-primitive | Maelstrom Pulse | `95ce305f-34bc-4d6d-b7ba-ffd4b2a25336` | destroy | new primitive review | Destroy target nonland permanent and all other permanents with the same name as that permanent. |
+| reuse-existing | Sheoldred, Whispering One | `9218b56d-aaec-482f-99e9-d95d227bfe25` | sacrifice | sacrifice | At the beginning of each opponent's upkeep, that player sacrifices a creature of their choice. |
+| reuse-existing | Thopter Assembly | `007c110d-4364-41e5-a8bc-6ac05ecbbd00` | return | trigger / ETB | At the beginning of your upkeep, if you control no Thopters other than ~, return ~ to its owner's hand and create five 1/1 colorless Thopter artifact creature tokens with flying. |
+| reuse-existing | Glissa, the Traitor | `cafacba9-195c-44ea-ba80-3e489274759c` | return | trigger / ETB | Whenever a creature an opponent controls dies, you may return target artifact card from your graveyard to your hand. |
+| needs-new-primitive | Two-Headed Giant of Foriys | `38aa31bd-7145-43b9-9409-463d9ad6cd69` | activated | new primitive review | ~ can block an additional creature each combat. |
+| reuse-existing | Pernicious Deed | `62e44e0d-eda0-4275-8367-49dab9a087c3` | destroy | sacrifice | {X}, Sacrifice ~: Destroy each artifact, creature, and enchantment with mana value X or less. |
+| reuse-existing | Mitotic Slime | `1162c7ff-c0cb-469a-ad3c-322b0981ae1d` | activated | create / token | When ~ dies, create two 2/2 green Ooze creature tokens. They have "When ~ dies, create two 1/1 green Ooze creature tokens." |
+| needs-new-primitive | Time Warp | `dbd6a94b-62ff-4a10-9d52-bdd90b26e425` | activated | new primitive review | Target player takes an extra turn after this one. |
+| reuse-existing | Sun Titan | `b2e950fb-cb7e-40a0-a311-5bbdd0477b29` | return | activated ability / mana | Whenever ~ enters or attacks, you may return target permanent card with mana value 3 or less from your graveyard to the battlefield. |
+| reuse-existing | Revenant | `05fc62d3-9b3c-409a-a623-9f81f395a5a0` | activated | return / graveyard | ~'s power and toughness are each equal to the number of creature cards in your graveyard. |
+| reuse-existing | Dirtcowl Wurm | `608293f1-34aa-4e55-8389-73f975858de6` | counters | trigger / ETB | Whenever an opponent plays a land, put a +1/+1 counter on ~. |
+| reuse-existing | Lord of Shatterskull Pass | `d369a02b-c282-454a-9f89-480f4f5d838c` | damage | damage / life | Whenever ~ attacks, it deals 6 damage to each creature defending player controls. |
+| needs-new-primitive | Knight of New Alara | `170856f4-7c9d-494b-9bae-20e4d9eba0da` | pump | new primitive review | Each other multicolored creature you control gets +1/+1 for each of its colors. |
+| reuse-existing | Voidslime | `c4851768-e210-4aaf-935e-715942e198f9` | counters | activated ability / mana | Counter target spell, activated ability, or triggered ability. |
+| reuse-existing | Oros, the Avenger | `454b898f-b134-4d63-ae7b-1e736964cd48` | damage | damage / life | Whenever ~ deals combat damage to a player, you may pay {2}{W}. If you do, ~ deals 3 damage to each nonwhite creature. |
+| needs-new-primitive | Cunning Wish | `bdf80a55-b524-4d17-9be8-a0005403a0e7` | activated | new primitive review | You may reveal an instant card you own from outside the game and put it into your hand. |
+| reuse-existing | Goblin Piledriver | `4d74d12b-1ffb-482f-8bac-635a8d4d32e9` | pump | trigger / ETB | Whenever ~ attacks, it gets +2/+0 until end of turn for each other attacking Goblin. |
+| reuse-existing | Valakut, the Molten Pinnacle | `1bc44216-4e06-4f66-89b7-5c327004604e` | damage | damage / life | Whenever a Mountain you control enters, if you control at least five other Mountains, you may have ~ deal 3 damage to any target. |
+| reuse-existing | Malfegor | `52e1546a-63eb-48d7-acc4-81b912aabc90` | discard | sacrifice | When ~ enters, discard your hand. Each opponent sacrifices a creature of their choice for each card discarded this way. |
+| reuse-existing | Vampire Nocturnus | `2109c49e-dc81-4a10-8265-3cf8c90db523` | pump | search / library | As long as the top card of your library is black, ~ and other Vampire creatures you control get +2/+1 and have flying. |
+| reuse-existing | Grim Lavamancer | `37445e06-88a1-4e2e-a432-383736c9b977` | damage | damage / life | {R}, {T}, Exile two cards from your graveyard: ~ deals 2 damage to any target. |
+| reuse-existing | Avatar of Discord | `3f806353-592e-431c-a7dd-a4c64034f94d` | discard | sacrifice | When ~ enters, sacrifice it unless you discard two cards. |
+| needs-new-primitive | Shield of Kaldra | `4fdd570f-dbe0-486f-9843-f77f80956307` | activated | new primitive review | Equipment named Sword of Kaldra, ~, and Helm of Kaldra have indestructible. |
+| reuse-existing | Sword of Kaldra | `35f63c60-b0a1-459d-bf51-a8549fb06930` | damage | damage / life | Whenever equipped creature deals damage to a creature, exile that creature. |
+| needs-new-primitive | Armageddon | `c9ed8b01-959a-47d6-891e-0abbdccf6e4f` | destroy | new primitive review | Destroy all lands. |
+| needs-new-primitive | Sedge Troll | `a6a43190-cca2-4f07-afe9-8af681d777da` | pump | new primitive review | ~ gets +1/+1 as long as you control a Swamp. |
+| reuse-existing | Gleancrawler | `bb7389fa-ab01-4ca2-bd18-03cf5b4cedf6` | return | trigger / ETB | At the beginning of your end step, return to your hand all creature cards in your graveyard that were put there from the battlefield this turn. |
+| needs-new-primitive | Gleemox | `645f7a40-304d-4a7c-ab22-5043f5904716` | activated | new primitive review | ~ is banned. |
+| needs-new-primitive | Beast of Burden | `67389ccc-dacc-4ce3-a9a2-f551a0d6e9d3` | activated | new primitive review | ~'s power and toughness are each equal to the number of creatures on the battlefield. |
+| needs-new-primitive | Ascendant Evincar | `e32c0de7-132d-4a39-85fb-da0ed1132878` | pump | new primitive review | Nonblack creatures get -1/-1. |
+| reuse-existing | Talruum Champion | `9352e742-9a22-4463-b41f-3117ff1540ed` | activated | trigger / ETB | Whenever ~ blocks or becomes blocked by a creature, that creature loses first strike until end of turn. |
+| needs-new-primitive | Sandbar Crocodile | `e11926bf-ca14-4e1e-aca5-9ffedb91868c` | activated | new primitive review | Phasing |
+| needs-new-primitive | Zhalfirin Knight | `a534f06e-dae4-4d1a-96e9-7693bbb21e12` | activated | new primitive review | Flanking |
+| needs-new-primitive | Phyrexian Mite | `2667d723-01c8-4ea3-ac17-cedb3b842c3b` | activated | new primitive review | Toxic 1 |
+| reuse-existing | Gwenna, Eyes of Gaea | `7d95e72a-461e-4993-a190-847466a4b17c` | counters | trigger / ETB | Whenever you cast a creature spell with power 5 or greater, put a +1/+1 counter on ~ and untap it. |
+| reuse-existing | Guardian of Faith | `8e04a5e0-e22c-430b-a39a-c9f38e16ea86` | static-continuous | trigger / ETB | When ~ enters, any number of other target creatures you control phase out. |
+| needs-new-primitive | Changeling Outcast | `a61ef0cc-1da9-49f9-b0dc-01cf9f6205be` | combat-restriction | new primitive review | ~ can't block and can't be blocked. |
+| needs-new-primitive | Yavimaya, Cradle of Growth | `8dd5f5af-d2d8-4356-8617-8381081b930c` | activated | new primitive review | Each land is a Forest in addition to its other land types. |
+| reuse-existing | Sword of Truth and Justice | `7a8baaf9-e21f-41a0-9f15-80764f6e5e68` | damage | damage / life | Whenever equipped creature deals combat damage to a player, put a +1/+1 counter on a creature you control, then proliferate. |
+| reuse-existing | Splendid Reclamation | `13fe5e46-77a6-45d8-ac0b-c3d740eccf86` | return | return / graveyard | Return all land cards from your graveyard to the battlefield tapped. |
+| needs-new-primitive | Universal Surveillance | `c5a5c17d-d1e4-4d23-9d2b-1c2febdcb0e7` | activated | new primitive review | Improvise |
+| reuse-existing | Augur of Autumn | `9e774188-caa1-4b62-b9cc-547f8e444b7f` | static-continuous | search / library | Coven — As long as you control three or more creatures with different powers, you may cast creature spells from the top of your library. |
+| reuse-existing | Cleaver Skaab | `9fa66e03-7b20-43f6-8c53-1ce18169c382` | sacrifice | sacrifice | {3}, {T}, Sacrifice another Zombie: Create two tokens that are copies of the sacrificed creature. |
+| reuse-existing | Lord of the Forsaken | `3a25d1e2-63d8-4a93-b0ce-f9307736b3f9` | activated | activated ability / mana | Pay 1 life: Add {C}. Spend this mana only to cast a spell from your graveyard. |
+| reuse-existing | Undead Augur | `c26887e1-27f4-4550-921b-53460e43c079` | draw | damage / life | Whenever ~ or another Zombie you control dies, you draw a card and you lose 1 life. |
+| needs-new-primitive | Timeless Dragon | `a5ae93e9-0385-47fd-9d8f-306e9a6b7fe6` | activated | new primitive review | Eternalize {2}{W}{W} |
+| reuse-existing | Champion of the Perished | `f3654fbd-16a5-4953-84ac-534e8421032f` | counters | trigger / ETB | Whenever another Zombie you control enters, put a +1/+1 counter on ~. |
+| reuse-existing | Cultivator Colossus | `4d8505d3-c8a1-4850-95d4-5ddb8ad49770` | draw | trigger / ETB | When ~ enters, you may put a land card from your hand onto the battlefield tapped. If you do, draw a card and repeat this process. |
+| reuse-existing | Headless Rider | `d4fdacd7-3101-44e2-a880-dde7326137a4` | token | trigger / ETB | Whenever ~ or another nontoken Zombie you control dies, create a 2/2 black Zombie creature token. |
+| reuse-existing | Angelfire Ignition | `29e1c6e3-d76e-4388-b4e9-f732fdec4338` | activated | damage / life | It gains vigilance, trample, lifelink, indestructible, and haste until end of turn. |
+| reuse-existing | Unnatural Growth | `7324abaa-48da-439d-9339-b0ea5eea612e` | activated | trigger / ETB | At the beginning of each combat, double the power and toughness of each creature you control until end of turn. |
+| reuse-existing | Wedding Announcement // Wedding Festivity | `259ac30c-cc05-4c04-9b23-71283f84b808` | token | trigger / ETB | At the beginning of your end step, put an invitation counter on ~. If you attacked with two or more creatures this turn, draw a card. Otherwise, create a 1/1 white Human creature token. Then if ~ has three or more invitation counters on it, transform it. |
+| reuse-existing | Necroduality | `d36acdfe-2b1b-4c19-8b81-0b3127e480fe` | token | trigger / ETB | Whenever a nontoken Zombie you control enters, create a token that's a copy of that creature. |
+| reuse-existing | Overcharged Amalgam | `d4838305-5392-42b2-81d1-9b9da71b20b1` | counters | activated ability / mana | When ~ exploits a creature, counter target spell, activated ability, or triggered ability. |
+| reuse-existing | Sanctum Weaver | `acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47` | activated | activated ability / mana | {T}: Add X mana of any one color, where X is the number of enchantments you control. |
+| reuse-existing | Briarbridge Tracker | `8fe6e954-f19b-4d11-83d3-74c634d51bad` | pump | create / token | As long as you control a token, ~ gets +2/+0. |
+| reuse-existing | Somberwald Beastmaster | `df35bf19-4cbf-4624-925d-ceca6bff596e` | activated | create / token | Creature tokens you control have deathtouch. |
+| reuse-existing | Quirion Beastcaller | `d777e428-cc50-40b1-a241-41576d2575d1` | counters | counter | When ~ dies, distribute X +1/+1 counters among any number of target creatures you control, where X is the number of +1/+1 counters on ~. |
 
-The JSON contains the remaining 14,976 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,506 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
