@@ -40,6 +40,21 @@ describe("smart counter response and safe mana undo", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "stack-card-0", targets: [{ kind: "player", seat: 1 }] });
     expect(projectGame(game, 1).stack[0]).toMatchObject({ kind: "spell", name: "Lightning Bolt", label: "Lightning Bolt", text: "Lightning Bolt deals 3 damage to any target." });
   });
+  it("keeps a public last-known target label after the target leaves", () => {
+    let game = twoSeatGame([], []);
+    const target = BEAR();
+    game = stage(game, 0, () => ({ autoPass: false, hand: toHand(0, [BOLT()], "label-bolt") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 1, [target]);
+    game = putOnBattlefield(game, 0, [MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "label-bolt-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = stage(game, 1, (player) => ({ battlefield: [] }));
+    const projected = projectGame(game, 1);
+    expect(projected.stack[0]!.targets).toEqual(["Grizzly Bears"]);
+    expect(projected.players[0]!.hand).toBeUndefined();
+  });
   it("projects the public priority pass cycle for the graphical stack", () => {
     let game = twoSeatGame([], []);
     game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], players: game.players.map((player) => ({ ...player, autoPass: false })) };

@@ -474,6 +474,8 @@ button.chip:hover { border-color: var(--gold); }
 .hand-card:nth-child(6) { transform: rotate(4deg) translateY(2px); }
 .hand-card:nth-child(7) { transform: rotate(7deg) translateY(7px); }
 .shell:not([data-layout="mobile"]) .hand-card:nth-child(n) { transform: none; }
+.shell[data-layout="auto"] .hand-card:nth-child(n),
+.shell[data-layout="desktop"] .hand-card:nth-child(n) { transform: none; }
 .hand-card:first-child { margin-left: 0; }
 .hand-card:last-child { margin-right: 0; }
 .hand-card img {
