@@ -81,6 +81,10 @@ export interface ManaAbility {
   readonly sacrificesCreatures?: { readonly amount: number | "X"; readonly subtype?: string };
   /** The amount of mana/life is the number of creatures sacrificed. */
   readonly amountFromSacrifice?: boolean;
+  /** A single creature you control exiled as this ability's activation cost (Food Chain). */
+  readonly exilesCreature?: boolean;
+  /** The amount of mana is 1 plus the exiled creature's own mana value. */
+  readonly amountFromExiledManaValuePlusOne?: boolean;
   readonly gainLifeFromAmount?: boolean;
   /** Some mana abilities have a small immediate side effect (CR 605). */
   readonly gainLife?: number;
@@ -119,6 +123,8 @@ export interface ActivatedAbility {
   readonly sacrificesPermanent?: { readonly type: "Artifact" | "Enchantment" | "Land" | "Noncreature" | "Token" | "Permanent"; readonly mode: "any" | "another"; readonly nontoken?: boolean };
   /** One card chosen from the controller's hand as an activation cost. */
   readonly discardsCard?: boolean;
+  /** "Discard a creature card:" (Survival of the Fittest): the discard cost is restricted to creature cards. */
+  readonly discardsCreatureCard?: boolean;
   /** One card chosen from the controller's graveyard and exiled as a cost. */
   readonly exilesGraveyardCard?: boolean;
   /** Multiple creature cards chosen from one graveyard and exiled as a cost. */
@@ -505,6 +511,20 @@ export type SpellEffect =
   | { readonly kind: "return-creatures-died-this-turn-to-hand" }
   | { readonly kind: "look-put-one-in-hand"; readonly amount: number; readonly restDestination?: "bottom" | "graveyard" }
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
+  /** Exploit's own ETB effect (CR 702.126a): the controller may sacrifice any creature they control, including this one, opening a dedicated choice. */
+  | { readonly kind: "exploit" }
+  /** "Exile that card from your graveyard" (Necropotence): the card involved in the triggering event, wherever it now sits. */
+  | { readonly kind: "exile-event-card-from-graveyard" }
+  /** "Exile the top card of your library face down. Put that card into your hand at the beginning of your next end step." (Necropotence). */
+  | { readonly kind: "exile-top-card-then-hand-next-end-step" }
+  /** "Exile it" on a dies trigger (Body Snatcher): the source card itself, now sitting in the graveyard. */
+  | { readonly kind: "exile-source-from-graveyard" }
+  /** "Exile ~ unless you discard a creature card" (Body Snatcher): the source permanent, still on the battlefield. */
+  | { readonly kind: "exile-source-permanent" }
+  /** "Put up to N creature cards from your hand onto the battlefield" (Tooth and Nail). */
+  | { readonly kind: "put-hand-creatures-onto-battlefield"; readonly amount: number }
+  /** Kicked-only follow-up (Hunting Wilds): untap and animate the lands the base search JUST fetched onto the battlefield, not every matching land the controller owns. */
+  | { readonly kind: "untap-and-animate-fetched-lands"; readonly subtype: string; readonly power: number; readonly toughness: number; readonly color: MagicColor }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -768,8 +788,12 @@ export type SpellEffect =
       readonly subtypes?: readonly string[];
       /** "a green creature card" (Natural Order): restricts by color, not just type/subtype. */
       readonly colors?: readonly string[];
-      /** "...card with mana value X or less" (Green Sun's Zenith): X is the spell's own paid {X}. */
-      readonly maxManaValue?: "X";
+      /** "...card with mana value X or less" (Green Sun's Zenith): X is the spell's own paid {X}. "lands-you-control" (Beseech the Queen): the cap is the searcher's own land count at resolution. "sacrificed-creature-value" (Eldritch Evolution): the cap is `manaValueOffset` plus the mana value of the creature paid as this spell's additional cost. */
+      readonly maxManaValue?: "X" | "lands-you-control" | "sacrificed-creature-value";
+      /** Added to the computed cap when `maxManaValue` is "sacrificed-creature-value". */
+      readonly manaValueOffset?: number;
+      /** "...mana value equal to..." (Birthing Pod): match exactly instead of "or less". */
+      readonly exactManaValue?: boolean;
       readonly destination: "top" | "hand" | "graveyard" | "battlefield";
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
@@ -780,8 +804,10 @@ export type SpellEffect =
       readonly kind: "search-library-multi";
       readonly types: readonly CardType[];
       readonly subtypes?: readonly string[];
-      readonly destinations: readonly ("hand" | "battlefield-tapped")[];
+      readonly destinations: readonly ("hand" | "battlefield-tapped" | "battlefield")[];
       readonly reveal: boolean;
+      /** "any number of ... cards with total mana value N or less" (Protean Hulk): the pick count is open-ended, capped by the running total instead of `destinations.length`. */
+      readonly maxTotalManaValue?: number;
     }
   /** Partner with <name> (CR 702.124f): a deterministic, name-exact search — no candidate choice, unlike `search-library`. */
   | { readonly kind: "partner-with-search"; readonly cardName: string }
@@ -820,7 +846,9 @@ export type TriggerEvent =
   /** The action of playing a land (CR 305.1), distinct from that land's own "enters the battlefield" event (City of Traitors). */
   | "play-land"
   /** Specifically a mana ability's activation (Forbidden Orchard), narrower than the general "becomes-tapped" (a non-mana tap effect must not trigger this). */
-  | "taps-for-mana";
+  | "taps-for-mana"
+  /** This permanent's own Exploit ability actually sacrificed a creature (CR 702.126b), narrower than any sacrifice. */
+  | "exploits";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -843,6 +871,7 @@ export type TriggerSubject =
   | "self-or-another-creature-you-control"
   | "any-creature"
   | "equipped-creature"
+  | "enchanted-creature"
   | "creature-attacks-opponent"
   | "creature-attacks-enchanted-player"
   | "player-attacks-enchanted-player"
@@ -874,7 +903,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "class-level-up": "habilidad de nivel de Clase",
   "first-main-phase": "habilidad de la primera fase principal",
   "play-land": "habilidad de jugar una tierra",
-  "taps-for-mana": "habilidad de girar por maná"
+  "taps-for-mana": "habilidad de girar por maná",
+  exploits: "habilidad de explotar"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -967,6 +997,8 @@ export interface TriggerDefinition {
   readonly tapCost?: { readonly amount: number | "any"; readonly subtype?: string; readonly mode: "any" | "another" };
   /** For "sacrifice ~ unless you pay {cost}", declining the payment applies the effect. */
   readonly unlessPayCost?: ManaCost;
+  /** For "exile ~ unless you discard a creature card" (Body Snatcher): declining the discard applies the effect. */
+  readonly unlessDiscardCreatureCard?: boolean;
   /** Trigger target selection excludes the source permanent ("another"). */
   readonly excludesSourceFromTargets?: boolean;
 }
@@ -1075,6 +1107,8 @@ export interface CardProfile {
   readonly copiesImprintedCreatureStats: boolean;
   /** Static replacement effect that adds one mana when a controlled land produces mana. */
   readonly doublesLandMana: boolean;
+  /** "Skip your draw step." (Necropotence): the controller's own mandatory turn draw never happens. */
+  readonly staticSkipsDrawStep: boolean;
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
   readonly levelDefinitions: readonly LevelDefinition[];
@@ -1509,6 +1543,19 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       });
       continue;
     }
+    // "Exile a creature you control: Add X mana of any one color, where X is
+    // 1 plus the exiled creature's mana value" (Food Chain): the amount is
+    // read from the exiled permanent's own characteristics at activation
+    // time, not chosen by the player or fixed on the card.
+    const exilesCreatureCost = /^exile\s+a\s+creature\s+you\s+control$/i.test(costText.trim().replace(/,\s*$/, ""));
+    if (exilesCreatureCost && /^add\s+X\s+mana\s+of\s+any\s+one\s+color,\s*where\s+X\s+is\s+1\s+plus\s+the\s+exiled\s+creature['’]s\s+mana\s+value\.?\s*Spend\s+this\s+mana\s+only\s+to\s+cast\s+creature\s+spells\.?$/i.test(effectText.trim())) {
+      abilities.push({
+        index: abilities.length, produces: [...MANA_COLORS], amount: 0, requiresTap: false, lifeCost: 0,
+        exilesCreature: true, amountFromExiledManaValuePlusOne: true,
+        manaRestriction: { kind: "creature-spell" }, text: line.trim()
+      });
+      continue;
+    }
     const variableStorage = /^add\s+X\s+mana\s+in\s+any\s+combination\s+of\s+(\{[WUBRGC]\})(?:\s+and\/or\s+(\{[WUBRGC]\}))?\.?$/i.exec(effectText.trim());
     if (variableStorage && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(costText)) {
       const manaSymbols = costText.match(/\{[^}]+\}/g) ?? [];
@@ -1592,6 +1639,8 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
           kind: "legendary-spell",
           ...( /that\s+spell\s+can't\s+be\s+countered/i.test(effectText) ? { makesSpellUncounterable: true } : {})
         }
+      : /spend\s+this\s+mana\s+only\s+to\s+cast\s+creature\s+spells/i.test(effectText)
+      ? { kind: "creature-spell" }
       : undefined;
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
@@ -2174,8 +2223,10 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // Mana abilities have their own immediate-resolution path (CR 605.1a).
   if (/^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
+  const sorcerySpeedOnly = /\.\s*Activate only as a sorcery\.?$/i.test(effectText);
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
+    .replace(/\.\s*Activate only as a sorcery\.?$/i, ".")
     // Oracle often uses “it” after naming the source in the cost/effect line.
     // Normalize it to the same source marker used by the shared effect parser.
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
@@ -2253,6 +2304,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sacrificePermanent = /sacrifice\s+(another\s+)?(?:a\s+|an\s+)?(nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/i.exec(costText);
   const nontokenArtifact = Boolean(sacrificePermanent && /^nontoken\s+artifact$/i.test(sacrificePermanent[2]!));
   const discardsCard = /discard\s+(?:a|one)\s+card\b/i.test(costText);
+  const discardsCreatureCard = /discard\s+a\s+creature\s+card\b/i.test(costText);
   // "{cost}, Discard this card: ..." (Mjölnir): the source pays its own cost by
   // leaving hand for the graveyard, so the ability can only be offered there.
   const discardsSelf = /discard\s+(?:~|this\s+card)/i.test(costText);
@@ -2278,6 +2330,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
+    .replace(/discard\s+a\s+creature\s+card\b/gi, "")
     .replace(/discard\s+(?:~|this\s+card)/gi, "")
     .replace(/exile\s+(?:two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
@@ -2294,10 +2347,12 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(typedCreature ? { sacrificesCreatureSubtype: { subtype: typedCreature[2]!, mode: typedCreature[1] ? "another" as const : "any" as const } } : {}),
     ...(sacrificePermanent ? { sacrificesPermanent: { mode: sacrificePermanent[1] ? "another" as const : "any" as const, type: nontokenArtifact ? "Artifact" as const : /^noncreature/i.test(sacrificePermanent[2]!) ? "Noncreature" as const : /^token$/i.test(sacrificePermanent[2]!) ? "Token" as const : /^permanent$/i.test(sacrificePermanent[2]!) ? "Permanent" as const : `${sacrificePermanent[2]![0]!.toUpperCase()}${sacrificePermanent[2]![1]! ? sacrificePermanent[2]!.slice(1).toLowerCase() : ""}` as "Artifact" | "Enchantment" | "Land", ...(nontokenArtifact ? { nontoken: true } : {}) } } : {}),
     ...(discardsCard ? { discardsCard: true } : {}),
+    ...(discardsCreatureCard ? { discardsCreatureCard: true } : {}),
     ...(discardsSelf ? { discardsSelf: true, sourceZone: "hand" as const } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
+    ...(sorcerySpeedOnly ? { sorcerySpeed: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     ...(energyCost ? { energyCost } : {}),
     ...(requiresUntap ? { requiresUntap: true } : {}),
@@ -2417,6 +2472,45 @@ function searchCriterion(text: string): { types: CardType[]; subtypes: string[];
 }
 
 function parseLibrarySearch(text: string): SpellEffect | null {
+  // "...card with mana value X or less, where X is N plus the sacrificed
+  // creature's mana value" (Eldritch Evolution): unlike every other search
+  // template here, the destination clause is its own trailing sentence
+  // ("Put that card onto the battlefield, then shuffle."), not embedded in
+  // this one. The caller (the per-sentence loop in `recognizeText`) only
+  // folds this effect in after confirming that next sentence says so.
+  const sacrificedManaValue = /^Search your library for (?:a |an )?(.+?) card with mana value X or less, where X is (\d+) plus the sacrificed creature['’]s mana value\.?$/i.exec(text.trim());
+  if (sacrificedManaValue) {
+    const criterion = searchCriterion(sacrificedManaValue[1]!);
+    return {
+      kind: "search-library",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
+      maxManaValue: "sacrificed-creature-value",
+      manaValueOffset: Number(sacrificedManaValue[2]),
+      destination: "battlefield",
+      reveal: false
+    };
+  }
+  // "...card with mana value equal to N plus the sacrificed creature's mana
+  // value, put that card onto the battlefield, then shuffle" (Birthing Pod):
+  // unlike Eldritch Evolution above, this one keeps the destination clause in
+  // the same sentence, and the cap is an exact match rather than a ceiling.
+  const exactSacrificedManaValue = /^Search your library for (?:a |an )?(.+?) card with mana value equal to (\d+) plus the sacrificed creature['’]s mana value, put that card onto the battlefield, then shuffle\.?$/i.exec(text.trim());
+  if (exactSacrificedManaValue) {
+    const criterion = searchCriterion(exactSacrificedManaValue[1]!);
+    return {
+      kind: "search-library",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
+      maxManaValue: "sacrificed-creature-value",
+      manaValueOffset: Number(exactSacrificedManaValue[2]),
+      exactManaValue: true,
+      destination: "battlefield",
+      reveal: false
+    };
+  }
   const single = /^Search your library for (?:a |an |up to (?:one|two|three|five) )?(.+?) card, (.+)$/i.exec(text);
   const namedBasic = /^Search your library for a ((?:Plains|Island|Swamp|Mountain|Forest)(?:,\s*(?:Plains|Island|Swamp|Mountain|Forest))*?(?:,?\s+or\s+(?:Plains|Island|Swamp|Mountain|Forest))?) card and put that card onto the battlefield\.?$/i.exec(text.trim());
   if (namedBasic) {
@@ -2459,6 +2553,23 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       count
     };
   }
+  // "search your library for any number of ... cards with total mana value N
+  // or less, put them onto the battlefield, then shuffle" (Protean Hulk): an
+  // open-ended pick count capped by the running total of the cards already
+  // chosen, not a fixed slot count like the other `search-library-multi`
+  // templates (which all come from a fixed "up to N" or per-slot shape).
+  const anyNumberTotalMv = /^Search your library for any number of (.+?) cards with total mana value (\d+) or less, put them onto the battlefield, then shuffle\.?$/i.exec(text);
+  if (anyNumberTotalMv) {
+    const criterion = searchCriterion(anyNumberTotalMv[1]!);
+    return {
+      kind: "search-library-multi",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      destinations: ["battlefield"],
+      reveal: false,
+      maxTotalManaValue: Number(anyNumberTotalMv[2])
+    };
+  }
   // "...card with mana value X or less, put it onto the battlefield, then
   // shuffle" (Green Sun's Zenith, Chord of Calling): X is the spell's own
   // paid {X}, read from the stack object at resolution.
@@ -2474,6 +2585,29 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       destination: "battlefield",
       reveal: false
     };
+  }
+  // "...card with mana value less than or equal to the number of lands you
+  // control..." (Beseech the Queen): the cap is a live board count, not a
+  // paid {X}, read at resolution the same way `landsYouControl` scaling
+  // already works for other board-dependent effects.
+  const manaValueLands = /^Search your library for (?:a |an )?(.+?) card with mana value less than or equal to the number of lands you control, (.+)$/i.exec(text);
+  if (manaValueLands) {
+    const criterion = searchCriterion(manaValueLands[1]!);
+    const instructions = manaValueLands[2]!;
+    const selected = "(?:(?:that|the) card|it)";
+    const destination = new RegExp(`put ${selected} into your hand`, "i").test(instructions) ? "hand"
+      : new RegExp(`put ${selected} onto the battlefield`, "i").test(instructions) ? "battlefield" : null;
+    if (destination) {
+      return {
+        kind: "search-library",
+        types: criterion.types,
+        ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+        ...(criterion.colors.length ? { colors: criterion.colors } : {}),
+        maxManaValue: "lands-you-control",
+        destination,
+        reveal: /reveal/i.test(instructions)
+      };
+    }
   }
   if (!single) return null;
   const criterion = searchCriterion(single[1]!);
@@ -2728,6 +2862,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // static P/T-doubler grant, wired here for the first time as a real event.
   { event: "dies", subject: "equipped-creature", pattern: /^whenever\s+equipped\s+creature\s+dies,?\s*(.+)$/i },
   { event: "attacks", subject: "equipped-creature", pattern: /^whenever\s+equipped\s+creature\s+attacks,?\s*(.+)$/i },
+  { event: "dies", subject: "enchanted-creature", pattern: /^when(?:ever)?\s+enchanted\s+creature\s+dies,?\s*(.+)$/i },
 
   // Another object triggers it. `another` excludes the source itself (CR 109.5).
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
@@ -2815,7 +2950,10 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "play-land", subject: "you", pattern: /^when\s+you\s+play\s+(?:a|another)\s+land,?\s*(.+)$/i },
   // Specifically a mana ability's activation (Forbidden Orchard), narrower than
   // the general "becomes-tapped" — a non-mana tap effect must not trigger this.
-  { event: "taps-for-mana", subject: "self", pattern: /^whenever\s+you\s+tap\s+~\s+for\s+mana,?\s*(.+)$/i }
+  { event: "taps-for-mana", subject: "self", pattern: /^whenever\s+you\s+tap\s+~\s+for\s+mana,?\s*(.+)$/i },
+  // Exploit's own follow-up (CR 702.126b): fires only when ~ itself actually
+  // sacrificed a creature via its Exploit ability, not any sacrifice.
+  { event: "exploits", subject: "self", pattern: /^when\s+~\s+exploits\s+a\s+creature,?\s*(.+)$/i }
 ];
 
 function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { effectText: string }) | null {
@@ -3353,6 +3491,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (draw !== null && draw > 0 && putBack !== null && putBack > 0) return { effect: { kind: "draw-then-put-back-on-top", draw, putBack }, target: "none" };
   }
   if (/^Exile ~$/i.test(text)) return { effect: { kind: "exile-self" }, target: "none" };
+  // "Whenever you discard a card, exile that card from your graveyard." (Necropotence):
+  // the card is read from the triggering event, not targeted or the source itself.
+  if (/^Exile that card from your graveyard$/i.test(text)) return { effect: { kind: "exile-event-card-from-graveyard" }, target: "none" };
+  if (/^Exile the top card of your library face down\.\s*Put that card into your hand at the beginning of your next end step$/i.test(text)) {
+    return { effect: { kind: "exile-top-card-then-hand-next-end-step" }, target: "none" };
+  }
   if (/^Return (?:it|~) to its owner's hand$/i.test(text)) return { effect: { kind: "return-source-to-hand" }, target: "none" };
   if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-self-into-library" }, target: "none" };
   if ((match = /^Target player mills (\w+) cards?$/i.exec(text))) {
@@ -3846,6 +3990,19 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // chooses this target as it is put on the stack (CR 603.3d).
   if (/^Return target instant or sorcery card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "instant-or-sorcery-card-in-your-graveyard" };
   if (/^Return (?:another )?target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
+  // "When ~ dies, exile it and return target creature card from your
+  // graveyard to the battlefield" (Body Snatcher): "it" is the dying
+  // permanent's own card, read from `object.trigger.sourceCard`, not a target.
+  if (/^Exile it and return target creature card from your graveyard to the battlefield$/i.test(text)) {
+    return {
+      effect: { kind: "compound", effects: [{ kind: "exile-source-from-graveyard" }, { kind: "return-target-creature-card-from-graveyard-to-battlefield" }] },
+      target: "creature-card-in-your-graveyard"
+    };
+  }
+  if ((match = /^Put up to (\w+) creature cards from your hand onto the battlefield$/i.exec(text))) {
+    const amount = toNumber(match[1]!);
+    if (amount !== null) return { effect: { kind: "put-hand-creatures-onto-battlefield", amount }, target: "none" };
+  }
   if (/^Return target creature card from your graveyard to the battlefield\. You lose life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) {
     return { effect: { kind: "reanimate-target-creature-lose-mana-value-life" }, target: "creature-card-in-your-graveyard" };
   }
@@ -4604,6 +4761,8 @@ function recognizeText(text: string): RecognizedText {
     // Undying / Persist (CR 702.93/702.92) are synthesised from the keyword below.
     if (/^undying\.?$/i.test(line)) continue;
     if (/^persist\.?$/i.test(line)) continue;
+    // Exploit (CR 702.126) is synthesised from the keyword below.
+    if (/^exploit\.?$/i.test(line)) continue;
     // Changeling is represented by `profile.changeling` and enforced by
     // `hasSubtype` in every zone (CR 702.73a); consume the keyword line only
     // after that semantic representation has been built.
@@ -4633,6 +4792,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^Whenever enchanted land is tapped for mana, its controller adds an additional \{[WUBRGC]\}\.?$/i.test(line)) continue;
     if (/^~ doesn[’']t untap during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
+    if (/^Skip your draw step\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -4648,9 +4808,13 @@ function recognizeText(text: string): RecognizedText {
       const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+(?:color|type)\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
       const variableSacrificeMana = /(?:\{T\},\s*)?sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s?\s*$/i.test(manaLine[1]!.trim())
         && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
-      const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(manaLine[2]!)
+      const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+(?:a\s+legendary\s+spell|creature\s+spells)/i.test(manaLine[2]!)
         && Boolean(parseAddClause(manaLine[2]!.split(/[.!?]/, 1)[0] ?? ""));
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine) unimplementedText.push(line);
+      // Food Chain: the amount is read from the exiled creature at
+      // activation time, so it never matches `parseAddClause`'s fixed shapes.
+      const exiledManaValueLine = /^exile\s+a\s+creature\s+you\s+control$/i.test(manaLine[1]!.trim())
+        && /^add\s+X\s+mana\s+of\s+any\s+one\s+color,\s*where\s+X\s+is\s+1\s+plus\s+the\s+exiled\s+creature['’]s\s+mana\s+value\.?\s*Spend\s+this\s+mana\s+only\s+to\s+cast\s+creature\s+spells\.?$/i.test(manaLine[2]!.trim());
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine && !exiledManaValueLine) unimplementedText.push(line);
       continue;
     }
 
@@ -4942,10 +5106,20 @@ function recognizeText(text: string): RecognizedText {
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
        const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
        const sacrificeUnlessSpent = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+\{([WUBRGC])\}\s+was\s+spent\s+to\s+cast\s+it\.?$/i.exec(triggered.effectText);
+       // "Exile ~ unless you discard a creature card" (Body Snatcher, CR 603.6c):
+       // the same "unless" shape as sacrificeUnlessPayment, but the cost is a
+       // discard, not mana, and the applied effect is exile, not sacrifice.
+       const exileUnlessDiscardCreature = /^exile\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+discard\s+a\s+creature\s+card\.?$/i.exec(triggered.effectText);
       const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerChoice?.[1]?.trim() ?? triggered.effectText)
+      // The event-controller's own actions are phrased in the third person
+      // ("search THEIR library", not "search your library"); normalize to
+      // the first-person grammar the shared effect templates already expect,
+      // since the resolved effect always acts on ITS controller regardless
+      // of who is doing the choosing (Pattern of Rebirth).
+      const eventControllerEffectText = eventControllerChoice?.[1]?.trim().replace(/\btheir\b/gi, "your");
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? eventControllerEffectText ?? triggered.effectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
@@ -4962,10 +5136,12 @@ function recognizeText(text: string): RecognizedText {
       const payGate = variableLifePay ? null : /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-       const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice || mayHave ? true : /^you\s+may\b/i.test(effectText);
+       const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || exileUnlessDiscardCreature || eventControllerChoice || mayHave ? true : /^you\s+may\b/i.test(effectText);
       const recognized = (payCost && payCost.hasVariable && !variableLifePay) ? null
          : sacrificeUnlessPayment || sacrificeUnlessSpent
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
+        : exileUnlessDiscardCreature
+        ? { effect: { kind: "exile-source-permanent" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
           // Normalize cycling's optional targeted keyword wording to the
           // existing temporary-keyword primitive (CR 603.1, 603.2).
@@ -5017,7 +5193,8 @@ function recognizeText(text: string): RecognizedText {
           ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment && !variableLifePay ? { payCost, manaCost: payCost } : {}),
           ...(variableLifePay ? { payCost: parseManaCost("{X}")!, variablePayCost: "event-amount" as const } : {}),
            ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {}),
-           ...(sacrificeUnlessSpent ? { requiresManaTypeNotSpent: sacrificeUnlessSpent[1]!.toUpperCase() as ManaType } : {})
+           ...(sacrificeUnlessSpent ? { requiresManaTypeNotSpent: sacrificeUnlessSpent[1]!.toUpperCase() as ManaType } : {}),
+           ...(exileUnlessDiscardCreature ? { unlessDiscardCreatureCard: true as const } : {})
         });
       } else {
         unimplementedText.push(line);
@@ -5058,8 +5235,30 @@ function recognizeText(text: string): RecognizedText {
         // any-target damage primitive and retain the base sentence's target.
         const damageOnly = /^~ deals (\w+) damage$/i.exec(kickedText);
         const damageAmount = damageOnly ? (damageOnly[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageOnly[1]!)) : null;
+        // "Untap all Forests put onto the battlefield this way. They become
+        // 3/3 green creatures with haste that are still lands" (Hunting
+        // Wilds): "this way" refers to the base search this same spell just
+        // resolved, not every matching land the controller owns. The two
+        // sentences are already split apart by the outer per-sentence loop
+        // by the time this text is seen, so the second is read via the same
+        // lookahead-and-consume pattern used elsewhere in this loop.
+        const untapFetchedOnly = /^Untap all ([A-Za-z][A-Za-z'’-]*?)s? put onto the battlefield this way\.?$/i.exec(kickedText);
+        const animateRider = untapFetchedOnly ? sentences[sentenceIndex + 1]?.trim() : undefined;
+        const UNTAP_ANIMATE_COLOR: Record<string, MagicColor> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
+        const animateMatch = animateRider
+          ? /^They become (\w+)\/(\w+) ([A-Za-z]+) creatures? with haste that are still lands\.?$/i.exec(animateRider)
+          : null;
+        const untapAnimatePower = animateMatch ? toNumber(animateMatch[1]!) : null;
+        const untapAnimateToughness = animateMatch ? toNumber(animateMatch[2]!) : null;
+        const untapAnimateColor = animateMatch ? UNTAP_ANIMATE_COLOR[animateMatch[3]!.toLowerCase()] : undefined;
+        const untapAnimateFetched = untapFetchedOnly && animateMatch && untapAnimatePower !== null && untapAnimateToughness !== null && untapAnimateColor
+          ? { subtype: untapFetchedOnly[1]!, power: untapAnimatePower, toughness: untapAnimateToughness, color: untapAnimateColor }
+          : null;
+        if (untapAnimateFetched) sentenceIndex += 1;
         const rk = recognizeSentence(kickedText) ?? (damageAmount !== null
           ? { effect: { kind: "damage-any-target", amount: damageAmount } as SpellEffect, target: "none" as TargetKind }
+          : untapAnimateFetched
+          ? { effect: { kind: "untap-and-animate-fetched-lands", ...untapAnimateFetched } as SpellEffect, target: "none" as TargetKind }
           : null);
         if (rk && /\binstead\b/i.test(ifKicked[1]!)) {
           const base = effects[effects.length - 1];
@@ -5095,6 +5294,21 @@ function recognizeText(text: string): RecognizedText {
         effects.push({ kind: "damage-any-target-exiles-if-dies", amount: recognized.effect.amount });
         if (recognized.target !== "none") targetKind = recognized.target;
         sentenceIndex += 1;
+        continue;
+      }
+      // Eldritch Evolution: the destination clause for a `sacrificed-creature-
+      // value` search lives in its own trailing sentence rather than being
+      // embedded in the search sentence itself. Only claim the effect once
+      // that next sentence confirms the expected destination and shuffle.
+      if (recognized.effect.kind === "search-library" && recognized.effect.maxManaValue === "sacrificed-creature-value") {
+        const destinationRider = sentences[sentenceIndex + 1]?.trim();
+        if (/^Put (?:that|the) card onto the battlefield, then shuffle\.?$/i.test(destinationRider ?? "")) {
+          effects.push(recognized.effect);
+          if (recognized.target !== "none") targetKind = recognized.target;
+          sentenceIndex += 1;
+          continue;
+        }
+        unimplementedText.push(sentence.trim());
         continue;
       }
       effects.push(recognized.effect);
@@ -5146,6 +5360,12 @@ export function cardProfile(card: CardData): CardProfile {
   const lowerKeywords = (card.keywords ?? []).map((keyword) => keyword.toLowerCase());
   if (lowerKeywords.includes("undying")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "+1/+1" }, optional: false, targetKind: "none", sourceText: "Undying" });
   if (lowerKeywords.includes("persist")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "-1/-1" }, optional: false, targetKind: "none", sourceText: "Persist" });
+  // Exploit (CR 702.126): "When this creature enters, you may sacrifice a
+  // creature." The trigger itself always fires; the sacrifice it offers is
+  // the effect's own internal "may" choice (a dedicated PendingChoice),
+  // distinct from the accept/decline flow `optional: true` gives a whole
+  // trigger, so this stays `optional: false`.
+  if (lowerKeywords.includes("exploit")) synthesizedTriggers.push({ event: "enters-battlefield", subject: "self", effect: { kind: "exploit" }, optional: false, targetKind: "none", sourceText: "Exploit" });
   // Prowess (CR 702.108): a noncreature spell cast by this creature's
   // controller creates a temporary +1/+1 self-trigger. Keep it on the same
   // event/effect path used by ordinary triggered card text.
@@ -5296,6 +5516,7 @@ export function cardProfile(card: CardData): CardProfile {
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
   const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
+  const staticSkipsDrawStep = text.split("\n").some((line) => /^Skip your draw step\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
   const protectionFrom = text.split(/\r?\n/).flatMap((line) => parseProtectionFromLine(line) ?? []);
@@ -5379,6 +5600,7 @@ export function cardProfile(card: CardData): CardProfile {
    staticPowerToughnessGrants,
     copiesImprintedCreatureStats,
     doublesLandMana,
+    staticSkipsDrawStep,
     levelUpCost,
     levelDefinitions,
     classLevels,

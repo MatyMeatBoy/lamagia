@@ -16,7 +16,7 @@ import {
   backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type EquipmentModification, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
-  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaType, type RestrictedMana
+  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaRestrictionKind, type ManaType, type RestrictedMana
 } from "./mana.js";
 
 /** {W/B} — the extort payment (CR 702.39a), reused when the ability is granted. */
@@ -266,6 +266,8 @@ export interface StackObject {
   readonly chosenColor?: MagicColor;
   /** Last-known power of a creature sacrificed as this spell's additional cost (CR 608.2h). */
   readonly sacrificedPower?: number;
+  /** Mana value of a creature sacrificed as this spell's additional cost (Eldritch Evolution, CR 608.2h). */
+  readonly sacrificedManaValue?: number;
 }
 
 export interface TriggerInstance {
@@ -296,6 +298,8 @@ export interface TriggerInstance {
   readonly eventPower?: number;
   /** Player damaged by a damage event, for effects referring to "that player". */
   readonly eventPlayer?: SeatId;
+  /** Card involved in a card-based event (discarded, drawn, ...), for effects referring to "that card" (Necropotence). */
+  readonly eventCard?: GameCard;
 }
 
 /** A delayed trigger created by a resolving spell (CR 603.7). */
@@ -357,7 +361,9 @@ export type GameEvent =
   | { readonly kind: "upkeep" | "draw-step" | "end-step" | "first-main-phase"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number }
   | { readonly kind: "play-land"; readonly seat: SeatId; readonly card: GameCard }
-  | { readonly kind: "taps-for-mana"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard };
+  | { readonly kind: "taps-for-mana"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  /** This permanent's own Exploit ability actually sacrificed a creature (CR 702.126b). */
+  | { readonly kind: "exploits"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly exploitedCard: GameCard };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
 export interface BlockerDeclaration { readonly instanceId: string; readonly attackerId: string }
@@ -441,7 +447,7 @@ export type PendingChoice =
       readonly additionalGeneric: number;
       readonly variableValue: number;
       readonly lifeCost: number;
-      readonly allowLegendaryMana: boolean;
+      readonly allowedRestrictions: readonly ManaRestrictionKind[];
       readonly excludePermanentId?: string;
       readonly selected: readonly ManaPaymentSelection[];
       readonly continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "activate" | "equip" }>;
@@ -497,6 +503,8 @@ export type PendingChoice =
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       readonly unlessPayCost?: ManaCost;
+      /** For "exile ~ unless you discard a creature card": declining the discard applies the effect. */
+      readonly unlessDiscardCreatureCard?: boolean;
     }
   | {
       /**
@@ -697,6 +705,27 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       readonly options: readonly Target[];
       readonly selectedTargets: readonly Target[];
+    }
+  | {
+      /** Exploit's own "you may sacrifice a creature" choice (CR 702.126a), including the exploiter itself. */
+      readonly type: "exploit";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly sourcePermanentId: string;
+      readonly candidateIds: readonly string[];
+    }
+  | {
+      /** "Put up to N creature cards from your hand onto the battlefield" (Tooth and Nail). */
+      readonly type: "hand-to-battlefield-multi";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+      readonly selectedIds: readonly string[];
+      readonly maxCount: number;
+      readonly returnSourceToGraveyard: boolean;
+      readonly exileSourceAfterResolution: boolean;
     };
 
 export type GameAction =
@@ -705,7 +734,7 @@ export type GameAction =
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string; readonly discardCardId?: string }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
-  | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
+  | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly exileId?: string }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number; readonly manaAlreadyPaid?: boolean }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
@@ -713,7 +742,7 @@ export type GameAction =
   | { readonly type: "cancel-mana-payment"; readonly sourceId: string }
   | { readonly type: "toggle-trigger-yield"; readonly sourceId: string; readonly abilityIndex?: number; readonly enabled: boolean }
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
-  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
+  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number; readonly discardCardId?: string }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
   | { readonly type: "reorder-top"; readonly sourceId: string; readonly order: readonly string[] }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -739,6 +768,9 @@ export type GameAction =
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "choose-proliferate-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-proliferate"; readonly sourceId: string }
+  | { readonly type: "choose-exploit"; readonly sourceId: string; readonly sacrificeId?: string }
+  | { readonly type: "choose-hand-battlefield-card"; readonly sourceId: string; readonly cardId: string }
+  | { readonly type: "finish-hand-to-battlefield"; readonly sourceId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -1089,6 +1121,11 @@ function manaSacrificeCandidates(player: PlayerState, source: Permanent, ability
     && candidate.instance_id !== source.instance_id);
 }
 
+/** Creatures that can be paid for an "exile a creature you control" mana-ability cost (Food Chain). */
+function exileCreatureCandidates(player: PlayerState, source: Permanent): Permanent[] {
+  return player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card)) && candidate.instance_id !== source.instance_id);
+}
+
 function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: ManaAbility, state?: GameState): boolean {
   if (ability.requiresTap && permanent.tapped) return false;
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return false;
@@ -1106,6 +1143,7 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
     const available = manaSacrificeCandidates(player, permanent, ability).length;
     if (available < (ability.sacrificesCreatures.amount === "X" ? 1 : ability.sacrificesCreatures.amount)) return false;
   }
+  if (ability.exilesCreature && !exileCreatureCandidates(player, permanent).length) return false;
   if (ability.manaCost && !planManaPayment(ability.manaCost, player, { state })) return false;
   return true;
 }
@@ -1179,8 +1217,16 @@ function manaAbilitiesFor(state: GameState | undefined, permanent: Permanent): r
   const granted = grantedManaAbilities(state, permanent);
   return granted.length ? [...profile.manaAbilities, ...granted] : profile.manaAbilities;
 }
+/** Which restricted-mana pools a spell of this profile may draw from (CR 106.7). */
+function allowedManaRestrictions(profile: CardProfile): ManaRestrictionKind[] {
+  const restrictions: ManaRestrictionKind[] = [];
+  if (profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary")) restrictions.push("legendary-spell");
+  if (isCreature(profile)) restrictions.push("creature-spell");
+  return restrictions;
+}
+
 /** Untapped permanents this player can currently tap for mana. */
-export function manaSources(player: PlayerState, state?: GameState, sourceOptions: { readonly allowLegendaryMana?: boolean } = {}): ManaSource[] {
+export function manaSources(player: PlayerState, state?: GameState, sourceOptions: { readonly allowedRestrictions?: readonly ManaRestrictionKind[] } = {}): ManaSource[] {
   const sources: ManaSource[] = [];
   const landBonuses = player.battlefield
     .map((permanent) => cardProfile(permanent.card).staticLandManaBonus)
@@ -1191,10 +1237,10 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
     const profile = cardProfile(permanent.card);
     for (const ability of manaAbilitiesFor(state, permanent)) {
       if (ability.sourceZone === "hand") continue;
-      if (ability.manaRestriction && !sourceOptions.allowLegendaryMana) continue;
+      if (ability.manaRestriction && !sourceOptions.allowedRestrictions?.includes(ability.manaRestriction.kind)) continue;
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
-      if (ability.variableAmountCounter || ability.manaCost || ability.sacrificesCreatures) continue;
+      if (ability.variableAmountCounter || ability.manaCost || ability.sacrificesCreatures || ability.exilesCreature) continue;
       if (!canUseManaAbility(player, permanent, ability)) continue;
       const options = manaOptionsFor(player, ability, state);
       if (!options.length) continue;
@@ -1358,12 +1404,12 @@ export function planManaPayment(
     readonly state?: GameState;
     readonly lifeCost?: number;
     readonly excludePermanentId?: string;
-    /** Allows mana restricted to legendary spells during this payment plan. */
-    readonly allowLegendaryMana?: boolean;
+    /** Allows mana restricted to these spell kinds during this payment plan. */
+    readonly allowedRestrictions?: readonly ManaRestrictionKind[];
   } = {}
 ): ManaPlan | null {
-  const existingRestricted = options.allowLegendaryMana
-    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+  const existingRestricted = options.allowedRestrictions?.length
+    ? (player.restrictedMana ?? []).filter((mana) => options.allowedRestrictions!.includes(mana.restriction.kind))
     : [];
   const startingPool = existingRestricted.reduce((pool, mana) => addMana(pool, mana.type, 1), player.manaPool);
   const sources = manaSources(
@@ -1373,7 +1419,7 @@ export function planManaPayment(
         : permanent) }
       : player,
     options.state,
-    { allowLegendaryMana: options.allowLegendaryMana }
+    { allowedRestrictions: options.allowedRestrictions }
   );
   const variableValue = options.variableValue ?? 0;
   const additionalGeneric = options.additionalGeneric ?? 0;
@@ -1483,7 +1529,7 @@ function shouldPromptManaPayment(
   state: GameState,
   seat: SeatId,
   cost: ManaCost,
-  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly allowLegendaryMana?: boolean; readonly excludePermanentId?: string }
+  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly excludePermanentId?: string }
 ): boolean {
   // Manual source selection is a player-facing decision. Bots keep the
   // deterministic planner so AI turns do not stall on a UI-only choice.
@@ -1494,10 +1540,10 @@ function shouldPromptManaPayment(
     excludePermanentId: options.excludePermanentId,
     additionalGeneric: options.additionalGeneric,
     variableValue: options.variableValue,
-    allowLegendaryMana: options.allowLegendaryMana
+    allowedRestrictions: options.allowedRestrictions
   });
   if (!plan?.taps.length) return false;
-  const sources = manaSources(payer, state, { allowLegendaryMana: options.allowLegendaryMana });
+  const sources = manaSources(payer, state, { allowedRestrictions: options.allowedRestrictions });
   // Preserve the fast path when every available source is interchangeable:
   // two Mountains paying generic one do not need a dialog.
   const usable = sources.filter((source) => !options.excludePermanentId || source.permanentId !== options.excludePermanentId);
@@ -1513,9 +1559,9 @@ function shouldPromptManaPayment(
 function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan | null {
   const player = playerAt(state, choice.seat);
   const payer = paymentPlayer(state, choice.seat, choice.excludePermanentId);
-  const sources = manaSources(payer, state, { allowLegendaryMana: choice.allowLegendaryMana });
-  const existingRestricted = choice.allowLegendaryMana
-    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+  const sources = manaSources(payer, state, { allowedRestrictions: choice.allowedRestrictions });
+  const existingRestricted = choice.allowedRestrictions.length
+    ? (player.restrictedMana ?? []).filter((mana) => choice.allowedRestrictions.includes(mana.restriction.kind))
     : [];
   let pool = existingRestricted.reduce((current, mana) => addMana(current, mana.type, 1), player.manaPool);
   const taps: Tap[] = [];
@@ -1538,7 +1584,7 @@ function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan |
     additionalGeneric: choice.additionalGeneric,
     variableValue: choice.variableValue,
     availableLife: player.life - lifeCost
-  }, choice.allowLegendaryMana);
+  }, choice.allowedRestrictions);
   if (!payment) return null;
   return finalizeManaPlan(pool, taps, existingRestricted, player.restrictedMana ?? [], lifeCost);
 }
@@ -1549,7 +1595,7 @@ function beginManaPayment(
   sourceCard: GameCard,
   cost: ManaCost,
   continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "activate" | "equip" }>,
-  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly lifeCost?: number; readonly allowLegendaryMana?: boolean; readonly excludePermanentId?: string }
+  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly lifeCost?: number; readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly excludePermanentId?: string }
 ): GameState | null {
   if (!shouldPromptManaPayment(state, seat, cost, options)) return null;
   return {
@@ -1563,7 +1609,7 @@ function beginManaPayment(
       additionalGeneric: options.additionalGeneric ?? 0,
       variableValue: options.variableValue ?? 0,
       lifeCost: options.lifeCost ?? 0,
-      allowLegendaryMana: options.allowLegendaryMana ?? false,
+      allowedRestrictions: options.allowedRestrictions ?? [],
       ...(options.excludePermanentId ? { excludePermanentId: options.excludePermanentId } : {}),
       selected: [],
       continuation
@@ -1600,10 +1646,10 @@ function payPlayerCost(
   cost: ManaCost,
   player: PlayerState,
   options: Parameters<typeof payCost>[2] = {},
-  allowLegendaryMana = false
+  allowedRestrictions: readonly ManaRestrictionKind[] = []
 ): PlayerPayment | null {
-  const restricted = allowLegendaryMana
-    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+  const restricted = allowedRestrictions.length
+    ? (player.restrictedMana ?? []).filter((mana) => allowedRestrictions.includes(mana.restriction.kind))
     : [];
   const normal = payCost(cost, player.manaPool, options);
   if (normal) return { ...normal, spentRestricted: [], remainingRestricted: player.restrictedMana ?? [] };
@@ -2266,6 +2312,11 @@ function triggerMatches(
     // The watcher is the Equipment; the event object must be the creature it is
     // attached to (Skullclamp, Argentum Armor).
     case "equipped-creature": return findPermanent(state, watcher.instanceId)?.attachedTo === object.permanentId;
+    // Same shape for an Aura (Pattern of Rebirth): the watcher is the Aura,
+    // the event object is the creature it enchants. SBAs haven't removed the
+    // Aura yet at the moment its host's "dies" event is raised, so the
+    // attachment link is still readable here.
+    case "enchanted-creature": return findPermanent(state, watcher.instanceId)?.attachedTo === object.permanentId;
     default: return false;
   }
 }
@@ -2332,6 +2383,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "first-main-phase": return `comienza la ${STEP_LABELS["precombat-main"]} de ${playerAt(state, event.activeSeat).name}`;
     case "play-land": return `${playerAt(state, event.seat).name} juega ${event.card.name}`;
     case "taps-for-mana": return `${playerAt(state, event.controller).name} gira ${event.card.name} por maná`;
+    case "exploits": return `${event.card.name} explota a ${event.exploitedCard.name}`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -2402,7 +2454,8 @@ function raiseEvent(
          ...("amount" in event ? { eventAmount: event.amount } : {}),
           ...(event.kind === "spell-cast" && event.spentMana !== undefined ? { eventManaSpent: event.spentMana } : {}),
           ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
-          ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {})
+          ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {}),
+          ...(event.kind === "card-discarded" ? { eventCard: event.card } : {})
         });
       }
     }
@@ -2866,6 +2919,58 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, sourceId);
       if (!permanent) return state;
       return logged(movePermanentToZone(state, permanent, "graveyard"), permanent.controller, `${permanent.card.name} es sacrificado.`);
+    }
+    case "exile-source-permanent": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const permanent = findPermanent(state, sourceId);
+      if (!permanent) return state;
+      return logged(movePermanentToZone(state, permanent, "exile"), permanent.controller, `${permanent.card.name} se exilia.`);
+    }
+    case "exile-source-from-graveyard": {
+      const sourceCard = object.trigger?.sourceCard ?? object.card;
+      const owner = sourceCard.owner;
+      if (!playerAt(state, owner).graveyard.some((candidate) => candidate.instance_id === sourceCard.instance_id)) return state;
+      const next = withPlayer(state, owner, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((candidate) => candidate.instance_id !== sourceCard.instance_id),
+        exile: [...player.exile, sourceCard]
+      }));
+      return logged(next, controller, `${sourceCard.name} se exilia de su cementerio.`);
+    }
+    case "exile-event-card-from-graveyard": {
+      const eventCard = object.trigger?.eventCard;
+      if (!eventCard) return state;
+      const owner = eventCard.owner;
+      if (!playerAt(state, owner).graveyard.some((candidate) => candidate.instance_id === eventCard.instance_id)) return state;
+      const next = withPlayer(state, owner, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((candidate) => candidate.instance_id !== eventCard.instance_id),
+        exile: [...player.exile, eventCard]
+      }));
+      return logged(next, controller, `${eventCard.name} se exilia de su cementerio.`);
+    }
+    case "exile-top-card-then-hand-next-end-step": {
+      const topCard = playerAt(state, controller).library[0];
+      if (!topCard) return state;
+      let next = withPlayer(state, controller, (player) => ({
+        ...player,
+        library: player.library.slice(1),
+        exile: [...player.exile, topCard]
+      }));
+      const triggerAtTurn = next.step === "end" ? next.turn + 1 : next.turn;
+      next = {
+        ...next,
+        delayedReturns: [...next.delayedReturns, {
+          id: `${object.id}:${next.version}:necro`,
+          triggerAtTurn,
+          sourceCard: object.card,
+          card: topCard,
+          owner: controller,
+          destination: "hand" as const,
+          sourceText: `${object.card.name}: pone la carta exiliada boca abajo en su mano al comienzo del próximo paso final.`
+        }]
+      };
+      return logged(next, controller, `${object.card.name}: exilia ${topCard.name} boca abajo.`);
     }
     case "each-opponent-of-event-player-draws": {
       const eventPlayer = object.trigger?.eventController;
@@ -4368,12 +4473,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!delayed) return state;
       if (delayed.destination === "hand") {
         const permanent = findPermanent(state, delayed.card.instance_id);
-        if (!permanent) return state;
-        const removed = withPlayer(state, permanent.controller, (player) => ({
+        if (permanent) {
+          const removed = withPlayer(state, permanent.controller, (player) => ({
+            ...player,
+            battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+          }));
+          return withPlayer(removed, delayed.owner, (player) => ({ ...player, hand: [...player.hand, delayed.card] }));
+        }
+        // The delayed card may instead be sitting in exile, never having
+        // touched the battlefield (Necropotence's "exile face down, then
+        // put into hand at the next end step").
+        const exiledCard = playerAt(state, delayed.owner).exile.find((card) => card.instance_id === delayed.card.instance_id);
+        if (!exiledCard) return state;
+        return withPlayer(state, delayed.owner, (player) => ({
           ...player,
-          battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+          exile: player.exile.filter((card) => card.instance_id !== exiledCard.instance_id),
+          hand: [...player.hand, exiledCard]
         }));
-        return withPlayer(removed, delayed.owner, (player) => ({ ...player, hand: [...player.hand, delayed.card] }));
       }
       const exiled = playerAt(state, delayed.owner).exile.find((card) => card.instance_id === delayed.card.instance_id);
       if (!exiled) return state;
@@ -5425,6 +5541,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "search-library-multi":
       // Multi-card searches are completed through the explicit choice action below.
       return state;
+    case "put-hand-creatures-onto-battlefield":
+      // Resolved through the explicit hand-to-battlefield choice action below.
+      return state;
     case "scry":
       // Scry is completed through the private top-card choice below.
       return state;
@@ -5480,7 +5599,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
 // ---------------------------------------------------------------------------
 
 function sendSpellToOwnerZone(state: GameState, object: StackObject): GameState {
-  return withPlayer(state, object.card.owner, (player) => object.flashback
+  const exiles = object.flashback || cardProfile(object.card).effects.some((effect) => effect.kind === "exile-self");
+  return withPlayer(state, object.card.owner, (player) => exiles
     ? { ...player, exile: [...player.exile, object.card] }
     : { ...player, graveyard: [...player.graveyard, object.card] });
 }
@@ -5623,6 +5743,97 @@ function resolveTop(state: GameState): GameState {
     if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
     if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep);
+    // A triggered ability's own search (Pattern of Rebirth's dies-triggered
+    // reanimation): the source stays on the battlefield, unlike a resolving
+    // spell, so this never moves it to a graveyard or exile.
+    const triggerSearch = object.trigger.definition.effect.kind === "search-library" ? object.trigger.definition.effect : null;
+    if (triggerSearch) {
+      const searchOptions = playerAt(next, object.controller).library
+        .filter((card) => {
+          const candidateProfile = cardProfile(card);
+          const typeMatches = !triggerSearch.types.length || triggerSearch.types.some((type) => candidateProfile.types.includes(type));
+          const subtypeMatches = !triggerSearch.subtypes?.length || triggerSearch.subtypes.some((subtype) =>
+            subtype.toLowerCase() === "basic" ? candidateProfile.supertypes.some((value) => value.toLowerCase() === "basic")
+              : hasSubtype(candidateProfile, subtype));
+          const colorMatches = !triggerSearch.colors?.length || triggerSearch.colors.some((color) => candidateProfile.colors.some((candidate) => candidate.toUpperCase() === color));
+          return typeMatches && subtypeMatches && colorMatches;
+        })
+        .map((card) => card.instance_id);
+      if (!searchOptions.length) {
+        return logged(shuffleLibrary(next, object.controller, playerAt(next, object.controller).library), object.controller,
+          `${object.trigger.sourceCard.name}: no hay una carta válida en la biblioteca.`);
+      }
+      return {
+        ...next,
+        pendingChoice: {
+          type: "search-library",
+          seat: object.controller,
+          sourceId: object.trigger.id,
+          optionIds: searchOptions,
+          sourceCard: object.trigger.sourceCard,
+          search: triggerSearch,
+          returnSourceToGraveyard: false,
+          exileSourceAfterResolution: false
+        }
+      };
+    }
+    // Same reuse for a triggered multi-card search (Protean Hulk's
+    // dies-triggered "any number of creature cards, total mana value N").
+    const triggerSearchMulti = object.trigger.definition.effect.kind === "search-library-multi" ? object.trigger.definition.effect : null;
+    if (triggerSearchMulti) {
+      const multiOptions = playerAt(next, object.controller).library
+        .filter((card) => {
+          const candidateProfile = cardProfile(card);
+          const typeMatches = triggerSearchMulti.types.some((type) => candidateProfile.types.includes(type));
+          const subtypeMatches = triggerSearchMulti.subtypes?.every((subtype) => subtype.toLowerCase() === "basic"
+            ? candidateProfile.supertypes.some((value) => value.toLowerCase() === "basic")
+            : candidateProfile.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase())) ?? true;
+          return typeMatches && subtypeMatches;
+        })
+        .map((card) => card.instance_id);
+      if (!multiOptions.length) {
+        return logged(shuffleLibrary(next, object.controller, playerAt(next, object.controller).library), object.controller,
+          `${object.trigger.sourceCard.name}: no hay una carta válida en la biblioteca.`);
+      }
+      return {
+        ...next,
+        pendingChoice: {
+          type: "search-library-multi",
+          seat: object.controller,
+          sourceId: object.trigger.id,
+          optionIds: multiOptions,
+          selectedIds: [],
+          sourceCard: object.trigger.sourceCard,
+          search: triggerSearchMulti,
+          returnSourceToGraveyard: false,
+          exileSourceAfterResolution: false
+        }
+      };
+    }
+    // Exploit's own ETB effect (CR 702.126a): the sacrifice it offers is a
+    // real player decision (which creature, or none), not a plain optional
+    // accept/decline, so it gets its own dedicated PendingChoice here.
+    const triggerExploit = object.trigger.definition.effect.kind === "exploit" ? object.trigger.definition.effect : null;
+    if (triggerExploit) {
+      const sourcePermanentId = object.trigger.sourcePermanentId;
+      const candidateIds = playerAt(next, object.controller).battlefield
+        .filter((candidate) => isCreature(cardProfile(candidate.card)))
+        .map((candidate) => candidate.instance_id);
+      if (!candidateIds.length) {
+        return logged(next, object.controller, `${object.trigger.sourceCard.name}: no hay ninguna criatura para explotar.`);
+      }
+      return {
+        ...next,
+        pendingChoice: {
+          type: "exploit",
+          seat: object.controller,
+          sourceId: object.trigger.id,
+          sourceCard: object.trigger.sourceCard,
+          sourcePermanentId,
+          candidateIds
+        }
+      };
+    }
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,
@@ -5657,6 +5868,7 @@ function resolveTop(state: GameState): GameState {
           ...(object.trigger.definition.payCost ? { payCost: object.trigger.definition.payCost } : {}),
           ...(object.trigger.definition.variablePayCost ? { variablePayCostMax: object.trigger.eventAmount ?? 0 } : {}),
           ...(object.trigger.definition.unlessPayCost ? { payCost: object.trigger.definition.unlessPayCost, unlessPayCost: object.trigger.definition.unlessPayCost } : {}),
+          ...(object.trigger.definition.unlessDiscardCreatureCard ? { unlessDiscardCreatureCard: true } : {}),
           targets: object.targets,
           sourcePermanentId: object.trigger.sourcePermanentId,
           ...(object.trigger.eventPermanentId ? { triggeredPermanentId: object.trigger.eventPermanentId } : {}),
@@ -5747,7 +5959,19 @@ function resolveTop(state: GameState): GameState {
           subtype.toLowerCase() === "basic" ? profile.supertypes.some((value) => value.toLowerCase() === "basic")
             : hasSubtype(profile, subtype));
         const colorMatches = !search.colors?.length || search.colors.some((color) => profile.colors.some((candidate) => candidate.toUpperCase() === color));
-        const manaValueMatches = search.maxManaValue !== "X" || profile.manaValue <= object.variableValue;
+        const manaValueMatches = search.maxManaValue === "X" ? profile.manaValue <= object.variableValue
+          : search.maxManaValue === "lands-you-control"
+            ? profile.manaValue <= playerAt(next, object.controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
+            : search.maxManaValue === "sacrificed-creature-value"
+              ? (() => {
+                  // An activated ability (Birthing Pod) has no dedicated
+                  // `sacrificedManaValue` field; it reuses the generic
+                  // `variableValue` channel other sacrifice-scaled activated
+                  // abilities already use (`sacrificedPower`, artifact mv, ...).
+                  const base = (search.manaValueOffset ?? 0) + (object.sacrificedManaValue ?? object.variableValue);
+                  return search.exactManaValue ? profile.manaValue === base : profile.manaValue <= base;
+                })()
+              : true;
         return typeMatches && subtypeMatches && colorMatches && manaValueMatches;
       })
       .map((card) => card.instance_id);
@@ -5762,9 +5986,49 @@ function resolveTop(state: GameState): GameState {
       const pickedSet = new Set(picked);
       const fetched = playerAt(next, object.controller).library.filter((card) => pickedSet.has(card.instance_id));
       next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)));
+      const fetchedIds = new Set(fetched.map((card) => card.instance_id));
       for (const card of fetched) next = putOntoBattlefield(next, object.controller, card, false, search.tapped === true);
       if (!object.activated) next = retire(next);
-      return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en el campo${search.tapped ? " giradas" : ""}.`);
+      // Kicked-only follow-up (Hunting Wilds): untap and animate exactly the
+      // lands THIS search just placed, not every matching land the
+      // controller already owns. Animation is modeled as a temporary,
+      // cleanup-cleared override rather than a true continuous effect — a
+      // deliberate simplification (see `temporaryAnimation`'s own CR 613.6
+      // scope) that still delivers this turn's practical payoff (haste to
+      // attack immediately) without a durable state-dependent creature-type
+      // change touching every `isCreature` call site.
+      const untapAnimate = object.kicked
+        ? profile.kickedEffects.find((effect): effect is Extract<SpellEffect, { kind: "untap-and-animate-fetched-lands" }> => effect.kind === "untap-and-animate-fetched-lands")
+        : undefined;
+      if (untapAnimate) {
+        next = withPlayer(next, object.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => fetchedIds.has(permanent.card.instance_id)
+            ? {
+                ...permanent,
+                tapped: false,
+                temporaryAnimation: {
+                  power: untapAnimate.power, toughness: untapAnimate.toughness, colors: [untapAnimate.color],
+                  types: ["Land", "Creature"], subtypes: cardProfile(permanent.card).subtypes, keywords: ["haste"]
+                },
+                temporaryKeywords: [...new Set([...(permanent.temporaryKeywords ?? []), "haste" as const])]
+              }
+            : permanent)
+        }));
+      }
+      return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en el campo${search.tapped ? " giradas" : ""}${untapAnimate ? "; si fue evocado con kicker, se enderezan y se animan" : ""}.`);
+    }
+    // Same deterministic policy for "up to N ... cards ... into your hand"
+    // (Tooth and Nail): the single-card `search-library` PendingChoice below
+    // has no counter field, so it would otherwise stop after the first pick.
+    if (search.count && search.count > 1 && search.destination === "hand") {
+      const picked = options.slice(0, search.count);
+      const pickedSet = new Set(picked);
+      const fetched = playerAt(next, object.controller).library.filter((card) => pickedSet.has(card.instance_id));
+      next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)));
+      next = withPlayer(next, object.controller, (player) => ({ ...player, hand: [...player.hand, ...fetched] }));
+      if (!object.activated) next = sendSpellToOwnerZone(next, object);
+      return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en su mano.`);
     }
     return {
       ...next,
@@ -5776,7 +6040,7 @@ function resolveTop(state: GameState): GameState {
         sourceCard: object.card,
         search,
         returnSourceToGraveyard: !object.activated && !object.fromCopy,
-        exileSourceAfterResolution: Boolean(object.flashback)
+        exileSourceAfterResolution: Boolean(object.flashback) || profile.effects.some((effect) => effect.kind === "exile-self")
       }
     };
   }
@@ -5812,6 +6076,35 @@ function resolveTop(state: GameState): GameState {
         search: multiSearch,
         returnSourceToGraveyard: !object.activated && !object.fromCopy,
         exileSourceAfterResolution: Boolean(object.flashback)
+      }
+    };
+  }
+
+  const handToBattlefield = activatedEffect?.kind === "put-hand-creatures-onto-battlefield"
+    ? activatedEffect
+    : selectedEffect?.kind === "put-hand-creatures-onto-battlefield"
+      ? selectedEffect
+      : profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "put-hand-creatures-onto-battlefield" }> => effect.kind === "put-hand-creatures-onto-battlefield");
+  if (handToBattlefield) {
+    const options = playerAt(next, object.controller).hand
+      .filter((card) => isCreature(cardProfile(card)))
+      .map((card) => card.instance_id);
+    if (!options.length) {
+      if (!object.activated) next = sendSpellToOwnerZone(next, object);
+      return logged(next, object.controller, `${object.card.name} se resuelve: no hay criaturas en la mano.`);
+    }
+    return {
+      ...next,
+      pendingChoice: {
+        type: "hand-to-battlefield-multi",
+        seat: object.controller,
+        sourceId: object.id,
+        sourceCard: object.card,
+        optionIds: options,
+        selectedIds: [],
+        maxCount: handToBattlefield.amount,
+        returnSourceToGraveyard: !object.activated && !object.fromCopy,
+        exileSourceAfterResolution: Boolean(object.flashback) || profile.effects.some((effect) => effect.kind === "exile-self")
       }
     };
   }
@@ -6509,7 +6802,8 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       next = withPlayer(next, next.activeSeat, (player) => ({ ...player, drawsThisDrawStep: 0 }));
       // The starting player skips only the very first draw step of the game.
       const isOpeningDraw = next.turn === 1 && next.activeSeat === next.startingSeat;
-      if (!isOpeningDraw) next = drawCards(next, next.activeSeat, 1);
+      const skipsDraw = playerAt(next, next.activeSeat).battlefield.some((permanent) => cardProfile(permanent.card).staticSkipsDrawStep);
+      if (!isOpeningDraw && !skipsDraw) next = drawCards(next, next.activeSeat, 1);
       break;
     }
     case "combat-damage": {
@@ -6758,8 +7052,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
-  const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowLegendaryMana });
+  const allowedRestrictions = allowedManaRestrictions(profile);
+  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowedRestrictions });
   if (!plan) return { legal: false };
   const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -6804,7 +7098,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (choice.type === "mana-payment") {
       const selected = new Set(choice.selected.map((entry) => entry.sourceId));
       const payer = paymentPlayer(state, seat, choice.excludePermanentId);
-      const sources = manaSources(payer, state, { allowLegendaryMana: choice.allowLegendaryMana });
+      const sources = manaSources(payer, state, { allowedRestrictions: choice.allowedRestrictions });
       for (const source of sources) {
         if (selected.has(source.permanentId)) continue;
         const bonusOptions = source.bonusOptions?.length ? source.bonusOptions : [undefined];
@@ -6858,6 +7152,22 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
     if (choice.type === "optional-trigger") {
       const optionalCost = choice.payCost ?? choice.manaCost;
+      if (choice.unlessDiscardCreatureCard) {
+        for (const card of player.hand.filter((candidate) => isCreature(cardProfile(candidate)))) {
+          actions.push({
+            action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true, discardCardId: card.instance_id },
+            label: `Descartar ${card.name} para conservar ${choice.sourceCard.name}`,
+            cardId: card.instance_id,
+            note: `${choice.sourceCard.name}: descarta una carta de criatura para evitar que se exilie.`
+          });
+        }
+        actions.push({
+          action: { type: "choose-trigger", sourceId: choice.sourceId, accept: false },
+          label: "No descartar una criatura",
+          note: `${choice.sourceCard.name} se exiliará.`
+        });
+        return actions;
+      }
       if (choice.tapCost) {
         const candidates = triggerTapCostCandidates(state, seat, choice.sourcePermanentId, choice.tapCost);
         const combinationsToOffer = choice.tapCost.amount === "any"
@@ -7091,6 +7401,43 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         action: { type: "finish-proliferate", sourceId: choice.sourceId },
         label: choice.selectedTargets.length ? "Terminar proliferación" : "No proliferar",
         note: "Puedes elegir cualquier cantidad de jugadores y permanentes elegibles."
+      });
+      return actions;
+    }
+    if (choice.type === "exploit") {
+      actions.push({
+        action: { type: "choose-exploit", sourceId: choice.sourceId },
+        label: "No sacrificar ninguna criatura",
+        note: `${choice.sourceCard.name}: puedes declinar el sacrificio de Exploit.`
+      });
+      for (const candidateId of choice.candidateIds) {
+        const candidate = findPermanent(state, candidateId);
+        if (!candidate) continue;
+        actions.push({
+          action: { type: "choose-exploit", sourceId: choice.sourceId, sacrificeId: candidateId },
+          label: `Explotar ${candidate.card.name}`,
+          cardId: candidateId,
+          note: `${choice.sourceCard.name}: sacrifica ${candidate.card.name} para Exploit.`
+        });
+      }
+      return actions;
+    }
+    if (choice.type === "hand-to-battlefield-multi") {
+      for (const candidateId of choice.optionIds) {
+        if (choice.selectedIds.includes(candidateId)) continue;
+        const card = player.hand.find((candidate) => candidate.instance_id === candidateId);
+        if (!card) continue;
+        actions.push({
+          action: { type: "choose-hand-battlefield-card", sourceId: choice.sourceId, cardId: candidateId },
+          label: `Poner ${card.name} en el campo de batalla`,
+          cardId: candidateId,
+          note: `${choice.sourceCard.name}: elige hasta ${choice.maxCount} criatura(s) de tu mano.`
+        });
+      }
+      actions.push({
+        action: { type: "finish-hand-to-battlefield", sourceId: choice.sourceId },
+        label: choice.selectedIds.length ? "Terminar de elegir criaturas" : "No poner ninguna criatura",
+        note: `${choice.sourceCard.name}: puedes elegir menos de ${choice.maxCount}.`
       });
       return actions;
     }
@@ -7446,6 +7793,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         }
         continue;
       }
+      if (ability.exilesCreature) {
+        for (const candidate of exileCreatureCandidates(player, permanent)) {
+          const amount = 1 + cardProfile(candidate.card).manaValue;
+          for (const mana of options) actions.push({
+            action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana, exileId: candidate.instance_id },
+            label: `${permanent.card.name}: Exile ${candidate.card.name} — Add ${amount} {${mana}}`,
+            cardId: permanent.instance_id
+          });
+        }
+        continue;
+      }
       if (ability.variableAmountCounter) {
         const available = permanent.counters[ability.variableAmountCounter] ?? 0;
         for (let amount = 1; amount <= available; amount += 1) {
@@ -7500,7 +7858,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const sacrificeSets: readonly (readonly Permanent[])[] = ability.sacrificesCreatures
         ? combinations(sacrificeCandidates, ability.sacrificesCreatures!.amount)
         : hasSacrificeCost ? sacrificeCandidates.map((candidate) => [candidate]) : [[]];
-      const discards = ability.discardsCard ? player.hand : [undefined];
+      const discards = ability.discardsCard
+        ? player.hand
+        : ability.discardsCreatureCard ? player.hand.filter((card) => isCreature(cardProfile(card))) : [undefined];
       const exileSets: readonly (readonly GameCard[])[] = ability.exilesGraveyardCards
         ? state.players.flatMap((candidate) => combinations(candidate.graveyard.filter((card) => isCreature(cardProfile(card))), ability.exilesGraveyardCards!.amount))
         : ability.exilesGraveyardCard ? player.graveyard.map((card) => [card]) : [[]];
@@ -7713,7 +8073,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false, sacrificedPower?: number): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false, sacrificedPower?: number, sacrificedManaValue?: number): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -7734,7 +8094,8 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     ...(evoked ? { evoked: true } : {}),
     ...(flashback ? { fromFlashback: true } : {}),
     ...(castViaAlternativeCost ? { castViaAlternativeCost: true } : {}),
-    ...(sacrificedPower === undefined ? {} : { sacrificedPower })
+    ...(sacrificedPower === undefined ? {} : { sacrificedPower }),
+    ...(sacrificedManaValue === undefined ? {} : { sacrificedManaValue })
   };
   // After putting an object on the stack its controller receives priority again (rule 117.3c).
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
@@ -7864,6 +8225,18 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     currentSource = currentPlayer.battlefield.find((permanent) => permanent.instance_id === source.instance_id);
     if (!currentSource) throw new Error("Ese permanente ya no está bajo tu control.");
   }
+  let exiledManaValue = 0;
+  if (ability.exilesCreature) {
+    const candidates = exileCreatureCandidates(currentPlayer, currentSource);
+    const chosen = candidates.find((candidate) => candidate.instance_id === action.exileId);
+    if (!chosen) throw new Error("Debes elegir una criatura válida para exiliar.");
+    exiledManaValue = cardProfile(chosen.card).manaValue;
+    activationState = movePermanentToZone(activationState, chosen, "exile");
+    activationState = logged(activationState, seat, `${player.name} exilia ${chosen.card.name}.`);
+    currentPlayer = playerAt(activationState, seat);
+    currentSource = currentPlayer.battlefield.find((permanent) => permanent.instance_id === source.instance_id);
+    if (!currentSource) throw new Error("Ese permanente ya no está bajo tu control.");
+  }
   const sourceProfile = cardProfile(currentSource.card);
   const landBonus = currentPlayer.battlefield.some((permanent) => {
     const grant = cardProfile(permanent.card).staticLandManaBonus;
@@ -7873,7 +8246,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     && cardProfile(candidate.card).doublesLandMana) ? options : [];
   const manaBonus = action.manaBonus ?? (manaBonusOptions[0]);
   if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
-  const amount = ability.amountFromSacrifice ? sacrificedCount : ability.amount;
+  const amount = ability.amountFromSacrifice ? sacrificedCount : ability.amountFromExiledManaValuePlusOne ? 1 + exiledManaValue : ability.amount;
   const lifeGain = ability.gainLifeFromAmount ? sacrificedCount : (ability.gainLife ?? 0);
   const auraBonusTypes = isLand(sourceProfile) ? auraLandManaBonusTypes(activationState, currentSource) : [];
   const outputTypes = ability.fixedProduces
@@ -7943,6 +8316,10 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     toughnessModifier: 0,
     isCommander: false
   };
+  // Cycling's cost is defined as discarding the card (CR 702.29a), so any
+  // "whenever you discard a card" watcher must see it too, not just cards
+  // discarded some other way.
+  next = raiseEvent(next, { kind: "card-discarded", seat, card: cycledCard });
   next = raiseEvent(next, { kind: "card-cycled", controller: seat, card: cycledCard }, [cycledWatcher]);
   if (!searchAbility) return logged(drawCards(next, seat, 1), seat, `${player.name} cicla ${card.name}.`);
 
@@ -8096,6 +8473,7 @@ function activatableAbility(
   }
   if (ability.tapsCreature && !tapCostCandidates(state, seat, permanent, ability).length) return { legal: false };
   if (ability.discardsCard && !player.hand.length) return { legal: false };
+  if (ability.discardsCreatureCard && !player.hand.some((card) => isCreature(cardProfile(card)))) return { legal: false };
   if (ability.exilesGraveyardCard && !player.graveyard.length) return { legal: false };
   if (ability.exilesGraveyardCards && !state.players.some((candidate) => candidate.graveyard.filter((card) => isCreature(cardProfile(card))).length >= ability.exilesGraveyardCards!.amount)) {
     return { legal: false };
@@ -8237,8 +8615,11 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     if (!tapCreature) throw new Error("Debes elegir una criatura enderezada válida para girar.");
   }
   let discard: GameCard | undefined;
-  if (ability.discardsCard) {
-    discard = action.discardCardId ? playerAt(state, seat).hand.find((card) => card.instance_id === action.discardCardId) : playerAt(state, seat).hand[0];
+  if (ability.discardsCard || ability.discardsCreatureCard) {
+    const eligible = ability.discardsCreatureCard
+      ? playerAt(state, seat).hand.filter((card) => isCreature(cardProfile(card)))
+      : playerAt(state, seat).hand;
+    discard = action.discardCardId ? eligible.find((card) => card.instance_id === action.discardCardId) : eligible[0];
     if (!discard) throw new Error("Debes elegir una carta para descartar.");
   }
   let exiles: GameCard[] = [];
@@ -8382,8 +8763,10 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
-  if (ability.discardsCard) {
-    const hand = playerAt(next, seat).hand;
+  if (ability.discardsCard || ability.discardsCreatureCard) {
+    const hand = ability.discardsCreatureCard
+      ? playerAt(next, seat).hand.filter((card) => isCreature(cardProfile(card)))
+      : playerAt(next, seat).hand;
     const discarded = hand.find((card) => card.instance_id === action.discardCardId)
       ?? [...hand].sort((left, right) => (cardProfile(right).cost?.symbols.length ?? 0) - (cardProfile(left).cost?.symbols.length ?? 0))[0];
     if (!discarded) throw new Error("No tienes una carta para descartar.");
@@ -8399,11 +8782,13 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   }
   let sacrificedPower = 0;
   let sacrificedToughness = 0;
+  let sacrificedManaValue = 0;
   for (const sacrifice of sacrifices) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);
     if (!paid) throw new Error("La criatura elegida para sacrificar ya no está en el campo.");
     sacrificedPower = Math.max(0, powerOf(paid, next));
     sacrificedToughness = Math.max(0, toughnessOf(paid, next));
+    sacrificedManaValue = cardProfile(paid.card).manaValue;
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
@@ -8425,6 +8810,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
 
   const effectVariable = ability.manaCost?.hasVariable ? abilityX
     : ability.effect.kind === "gain-life-equal-sacrificed-toughness" ? sacrificedToughness
+    : ability.effect.kind === "search-library" && ability.effect.maxManaValue === "sacrificed-creature-value" ? sacrificedManaValue
     : sacrificedPower || sacrificedArtifactMv;
   const counterValue = ability.effect.kind === "destroy-n-creatures" && ability.effect.counter
     ? source.counters[ability.effect.counter] ?? 0
@@ -8491,8 +8877,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
-  const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
-  const plan = (freeCast || payLifeCost || returnPermanentId || manaAlreadyPaid) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
+  const allowedRestrictions = allowedManaRestrictions(profile);
+  const plan = (freeCast || payLifeCost || returnPermanentId || manaAlreadyPaid) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowedRestrictions });
   if (!freeCast && !payLifeCost && !returnPermanentId && !manaAlreadyPaid && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
@@ -8514,7 +8900,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   }
 
   if (!freeCast && !payLifeCost && !returnPermanentId && !manaAlreadyPaid) {
-    const manual = beginManaPayment(state, seat, card, spellCost, action, { additionalGeneric, variableValue: action.variableValue ?? 0, lifeCost, allowLegendaryMana });
+    const manual = beginManaPayment(state, seat, card, spellCost, action, { additionalGeneric, variableValue: action.variableValue ?? 0, lifeCost, allowedRestrictions });
     if (manual) return manual;
   }
 
@@ -8525,7 +8911,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     ? { spent: emptyPool(), lifePaid: profile.payLifeInsteadOfManaCost!.life, remaining: playerAt(next, seat).manaPool }
     : returnPermanentId
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
-    : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowLegendaryMana);
+    : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowedRestrictions);
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
   if (returnPermanentId) {
     const returned = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
@@ -8572,6 +8958,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     next = logged(next, seat, `${player.name} descarta ${chosen.name} por ${card.name}.`);
   }
   let sacrificedPower: number | undefined;
+  let sacrificedManaValue: number | undefined;
   if (profile.additionalCostSacrificeCreature) {
     const creatures = playerAt(next, seat).battlefield.filter((p) => isCreature(cardProfile(p.card)));
     if (!creatures.length) throw new Error(`No tienes una criatura para sacrificar por ${card.name}.`);
@@ -8579,9 +8966,10 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
       ? creatures.find((permanent) => permanent.instance_id === action.sacrificeId)
       : creatures[0];
     if (!sacrificed) throw new Error(`Debes elegir una criatura que controles para sacrificar por ${card.name}.`);
-    // Snapshot power before moving the permanent: the spell needs its last-known
-    // information when it resolves (CR 608.2h).
+    // Snapshot power and mana value before moving the permanent: the spell
+    // needs its last-known information when it resolves (CR 608.2h).
     sacrificedPower = Math.max(0, powerOf(sacrificed, next));
+    sacrificedManaValue = cardProfile(sacrificed.card).manaValue;
     next = movePermanentToZone(next, sacrificed, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${sacrificed.card.name} por ${card.name}.`);
   }
@@ -8612,7 +9000,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
-    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)), sacrificedPower);
+    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)), sacrificedPower, sacrificedManaValue);
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: paymentSpentTotal },
@@ -8884,6 +9272,31 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     next = applyEffect(next, source, choice.triggerEffect);
     return logged(next, source.controller, `${choice.sourceCard.name} se sacrifica al no pagar ${choice.unlessPayCost.raw}.`);
   }
+  if (choice.unlessDiscardCreatureCard) {
+    if (action.accept) {
+      const candidates = playerAt(next, seat).hand.filter((card) => isCreature(cardProfile(card)));
+      const discarded = action.discardCardId ? candidates.find((card) => card.instance_id === action.discardCardId) : candidates[0];
+      if (!discarded) throw new Error(`Debes elegir una carta de criatura para descartar por ${choice.sourceCard.name}.`);
+      next = discardCard(next, seat, discarded);
+      return logged(next, seat, `${playerAt(next, seat).name} descarta ${discarded.name} para conservar ${choice.sourceCard.name}.`);
+    }
+    const source: StackObject = {
+      id: choice.sourceId,
+      controller: choice.sourceController ?? seat,
+      card: choice.sourceCard,
+      label: `${choice.sourceCard.name} · habilidad opcional`,
+      targets: choice.targets ?? [],
+      targetLabels: (choice.targets ?? []).map((target) => targetLabel(next, target)),
+      fromCommandZone: false,
+      flashback: false,
+      variableValue: 0,
+      countered: false,
+      sourcePermanentId: choice.sourcePermanentId,
+      ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
+    };
+    next = applyEffect(next, source, choice.triggerEffect);
+    return logged(next, source.controller, `${choice.sourceCard.name} se exilia al no descartar una criatura.`);
+  }
   if (!action.accept) return logged(next, seat, `${playerAt(state, seat).name} no realiza la habilidad opcional de ${choice.sourceCard.name}.`);
   const variableValue = choice.variablePayCostMax === undefined ? 0 : action.variableValue ?? 0;
   if (choice.variablePayCostMax !== undefined && (!Number.isInteger(variableValue) || variableValue < 0 || variableValue > choice.variablePayCostMax)) {
@@ -8967,7 +9380,7 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
     graveyard: [
       ...current.graveyard,
       ...(choice.search.destination === "graveyard" ? [selected] : []),
-      ...(choice.returnSourceToGraveyard ? [choice.sourceCard] : [])
+      ...(choice.returnSourceToGraveyard && !choice.exileSourceAfterResolution ? [choice.sourceCard] : [])
     ],
     exile: choice.exileSourceAfterResolution ? [...current.exile, choice.sourceCard] : current.exile
   }));
@@ -9031,7 +9444,11 @@ function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extrac
   const selectedSet = new Set(selected.map((card) => card.instance_id));
   let next = shuffleLibrary({ ...state, pendingChoice: null }, seat, player.library.filter((card) => !selectedSet.has(card.instance_id)));
   const shuffledLibrary = playerAt(next, seat).library;
-  const handCards = selected.filter((_, index) => choice.search.destinations[index] === "hand");
+  // "Any number, total mana value" (Protean Hulk): every selected card goes
+  // to the battlefield untapped, unlike the fixed per-slot destinations
+  // array every other `search-library-multi` template uses.
+  const anyTotal = choice.search.maxTotalManaValue !== undefined;
+  const handCards = anyTotal ? [] : selected.filter((_, index) => choice.search.destinations[index] === "hand");
   next = withPlayer(next, seat, (current) => ({
     ...current,
     library: shuffledLibrary,
@@ -9042,8 +9459,12 @@ function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extrac
     ],
     exile: choice.exileSourceAfterResolution ? [...current.exile, choice.sourceCard] : current.exile
   }));
-  for (const [index, card] of selected.entries()) {
-    if (choice.search.destinations[index] === "battlefield-tapped") next = putOntoBattlefield(next, seat, card, false, true);
+  if (anyTotal) {
+    for (const card of selected) next = putOntoBattlefield(next, seat, card, false, false);
+  } else {
+    for (const [index, card] of selected.entries()) {
+      if (choice.search.destinations[index] === "battlefield-tapped") next = putOntoBattlefield(next, seat, card, false, true);
+    }
   }
   const names = selected.map((card) => card.name).join(", ");
   return logged(next, seat, `${player.name} ${selected.length ? `elige ${names} y baraja su biblioteca` : "termina la búsqueda y baraja su biblioteca"}.`);
@@ -9062,6 +9483,15 @@ function applyChooseMultiLibraryCard(
   const selected = playerAt(state, seat).library.find((card) => choice.optionIds.includes(card.instance_id)
     && !selectedSet.has(card.instance_id) && card.name.trim().toLocaleLowerCase() === query);
   if (!selected) throw new Error("La carta elegida ya no está en la biblioteca o ya fue elegida.");
+  if (choice.search.maxTotalManaValue !== undefined) {
+    const alreadySelected = playerAt(state, seat).library.filter((card) => selectedSet.has(card.instance_id));
+    const runningTotal = alreadySelected.reduce((sum, card) => sum + cardProfile(card).manaValue, 0);
+    if (runningTotal + cardProfile(selected).manaValue > choice.search.maxTotalManaValue) {
+      throw new Error(`Elegir ${selected.name} superaría el valor de maná total permitido.`);
+    }
+    const selectedIds = [...choice.selectedIds, selected.instance_id];
+    return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${selected.name}.`);
+  }
   const selectedIds = [...choice.selectedIds, selected.instance_id];
   if (selectedIds.length >= choice.search.destinations.length) return finishMultiLibrarySearch(state, seat, choice, selectedIds);
   return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${selected.name}.`);
@@ -9072,6 +9502,50 @@ function applyFinishLibrarySearch(state: GameState, seat: SeatId, action: Extrac
   if (!choice || choice.type !== "search-library-multi" || choice.seat !== seat) throw new Error("No tienes una búsqueda múltiple pendiente.");
   if (choice.sourceId !== action.sourceId) throw new Error("Debes terminar la búsqueda pendiente.");
   return finishMultiLibrarySearch(state, seat, choice, choice.selectedIds);
+}
+
+function finishHandToBattlefield(
+  state: GameState,
+  seat: SeatId,
+  choice: Extract<PendingChoice, { type: "hand-to-battlefield-multi" }>,
+  selectedIds: readonly string[]
+): GameState {
+  const player = playerAt(state, seat);
+  const selected = selectedIds
+    .map((id) => player.hand.find((card) => card.instance_id === id))
+    .filter((card): card is GameCard => Boolean(card));
+  const selectedSet = new Set(selected.map((card) => card.instance_id));
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    hand: current.hand.filter((card) => !selectedSet.has(card.instance_id)),
+    graveyard: [
+      ...current.graveyard,
+      ...(choice.returnSourceToGraveyard && !choice.exileSourceAfterResolution ? [choice.sourceCard] : [])
+    ],
+    exile: choice.exileSourceAfterResolution ? [...current.exile, choice.sourceCard] : current.exile
+  }));
+  for (const card of selected) next = putOntoBattlefield(next, seat, card, false, false);
+  const names = selected.map((card) => card.name).join(", ");
+  return logged(next, seat, `${player.name} ${selected.length ? `pone ${names} en el campo de batalla` : "no pone ninguna criatura en el campo de batalla"}.`);
+}
+
+function applyChooseHandBattlefieldCard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-hand-battlefield-card" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "hand-to-battlefield-multi" || choice.seat !== seat) throw new Error("No tienes una elección de mano pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes elegir una carta de la elección pendiente.");
+  if (choice.selectedIds.includes(action.cardId)) throw new Error("Esa carta ya fue elegida.");
+  if (!choice.optionIds.includes(action.cardId)) throw new Error("Esa carta no está disponible para esta elección.");
+  const selectedIds = [...choice.selectedIds, action.cardId];
+  if (selectedIds.length >= choice.maxCount) return finishHandToBattlefield(state, seat, choice, selectedIds);
+  const card = playerAt(state, seat).hand.find((candidate) => candidate.instance_id === action.cardId)!;
+  return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${card.name}.`);
+}
+
+function applyFinishHandToBattlefield(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-hand-to-battlefield" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "hand-to-battlefield-multi" || choice.seat !== seat) throw new Error("No tienes una elección de mano pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes terminar la elección pendiente.");
+  return finishHandToBattlefield(state, seat, choice, choice.selectedIds);
 }
 
 /** Closes the private "look at target player's hand" view (Gitaxian Probe, CR 701.20). */
@@ -9798,6 +10272,27 @@ function applyFinishProliferate(state: GameState, seat: SeatId, action: Extract<
     : `${playerAt(next, seat).name} no prolifera ningún objetivo.`);
 }
 
+/** Resolves Exploit's own "you may sacrifice a creature" choice (CR 702.126a). */
+function applyChooseExploit(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-exploit" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "exploit" || choice.seat !== seat) throw new Error("No tienes una explotación pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa explotación ya no corresponde a la partida.");
+  let next: GameState = { ...state, pendingChoice: null };
+  if (!action.sacrificeId) {
+    return logged(next, seat, `${playerAt(next, seat).name} no sacrifica ninguna criatura para explotar.`);
+  }
+  if (!choice.candidateIds.includes(action.sacrificeId)) throw new Error("Esa criatura no es válida para explotar.");
+  const sacrificed = findPermanent(next, action.sacrificeId);
+  if (!sacrificed) throw new Error("Esa criatura ya no está en el campo de batalla.");
+  const sacrificedCard = sacrificed.card;
+  next = movePermanentToZone(next, sacrificed, "graveyard");
+  next = logged(next, seat, `${playerAt(next, seat).name} sacrifica ${sacrificedCard.name} para explotar.`);
+  // The exploited card and the exploiter's own last-known identity are read
+  // from the pending choice, not re-found on the battlefield: Exploit
+  // permits sacrificing the exploiter itself (CR 702.126a).
+  return raiseEvent(next, { kind: "exploits", permanentId: choice.sourcePermanentId, controller: seat, card: choice.sourceCard, exploitedCard: sacrificedCard });
+}
+
 /** Applies one action for one seat, then settles the game to its next decision point. */
 export function applyAction(state: GameState, seat: SeatId, action: GameAction): GameState {
   if (state.finished) throw new Error("La partida ya terminó.");
@@ -9843,6 +10338,9 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "choose-proliferate-target": next = applyChooseProliferateTarget(state, seat, action); break;
     case "finish-proliferate": next = applyFinishProliferate(state, seat, action); break;
+    case "choose-exploit": next = applyChooseExploit(state, seat, action); break;
+    case "choose-hand-battlefield-card": next = applyChooseHandBattlefieldCard(state, seat, action); break;
+    case "finish-hand-to-battlefield": next = applyFinishHandToBattlefield(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {

@@ -11426,6 +11426,628 @@ describe("Mana Crypt's upkeep coin flip", () => {
   });
 });
 
+describe("Pattern of Rebirth's dies-triggered reanimation tutor", () => {
+  const PATTERN_OF_REBIRTH = () => make({
+    name: "Pattern of Rebirth", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3,
+    oracle_text: "Enchant creature\nWhen enchanted creature dies, that creature's controller may search their library for a creature card, put that card onto the battlefield, then shuffle."
+  });
+
+  it("wires 'enchanted creature dies' to a new enchanted-creature trigger subject", () => {
+    const profile = profileOf(PATTERN_OF_REBIRTH());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "dies", subject: "enchanted-creature", optional: true, choiceBy: "event-controller",
+      effect: { kind: "search-library", types: ["Creature"], destination: "battlefield" }
+    });
+  });
+
+  it("lets the fallen creature's controller tutor a replacement onto the battlefield", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEAR(), FOREST(), FOREST(), FOREST(), MOUNTAIN()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [PATTERN_OF_REBIRTH(), BOLT()], "pattern-hand"),
+      library: [...toHand(0, [SOL_RING(), TRAMPLER()], "pattern-library"), ...player.library]
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "cast", cardId: "pattern-hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Pattern of Rebirth")?.attachedTo).toBe(bear.instance_id);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "pattern-hand-1", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library" }>;
+    const legalNames = game.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(legalNames).toContain("Big Stomper");
+    expect(legalNames).not.toContain("Sol Ring");
+
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Big Stomper" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(true);
+  });
+});
+
+describe("Survival of the Fittest's creature-only discard-tutor", () => {
+  const SURVIVAL_OF_THE_FITTEST = () => make({
+    name: "Survival of the Fittest", type_line: "Enchantment", mana_cost: "{1}{G}", cmc: 2,
+    oracle_text: "{G}, Discard a creature card: Search your library for a creature card, reveal that card, put it into your hand, then shuffle."
+  });
+
+  it("recognizes the creature-only discard cost and the search effect", () => {
+    const profile = profileOf(SURVIVAL_OF_THE_FITTEST());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      discardsCreatureCard: true,
+      effect: { kind: "search-library", types: ["Creature"], destination: "hand", reveal: true }
+    });
+  });
+
+  it("discards a creature card and tutors a different creature into hand, refusing a non-creature discard", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SURVIVAL_OF_THE_FITTEST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BEAR(), SOL_RING()], "survival-hand"),
+      library: [...toHand(0, [TRAMPLER()], "survival-library"), ...player.library],
+      autoPass: false
+    }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Survival of the Fittest")!;
+
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === source.instance_id && entry.action.discardCardId === "survival-hand-1")).toBe(false);
+
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0, discardCardId: "survival-hand-0" });
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library" }>;
+    const legalNames = game.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(legalNames).toEqual(["Big Stomper"]);
+
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Big Stomper" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Big Stomper")).toBe(true);
+  });
+});
+
+describe("Beseech the Queen's land-count-capped tutor", () => {
+  const BESEECH_THE_QUEEN = () => make({
+    name: "Beseech the Queen", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3,
+    oracle_text: "Search your library for a card with mana value less than or equal to the number of lands you control, reveal it, put it into your hand, then shuffle."
+  });
+
+  it("recognizes the land-count cap as a search-library restriction", () => {
+    const profile = profileOf(BESEECH_THE_QUEEN());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.effects[0]).toMatchObject({ kind: "search-library", types: [], maxManaValue: "lands-you-control", destination: "hand", reveal: true });
+  });
+
+  it("offers only cards at or under the controller's land count", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BESEECH_THE_QUEEN()], "beseech-hand"),
+      library: [...toHand(0, [SOL_RING(), BEAR(), TRAMPLER()], "beseech-library"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "beseech-hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library" }>;
+    const legalNames = game.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(legalNames).toContain("Grizzly Bears");
+    expect(legalNames).toContain("Sol Ring");
+    expect(legalNames).not.toContain("Big Stomper");
+
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Sol Ring" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+});
+
+describe("Protean Hulk's any-number total-mana-value reanimation", () => {
+  const PROTEAN_HULK = () => make({
+    name: "Protean Hulk", type_line: "Creature — Shapeshifter", mana_cost: "{4}{G}{G}", cmc: 6, power: "6", toughness: "1",
+    oracle_text: "When this creature dies, search your library for any number of creature cards with total mana value 6 or less, put them onto the battlefield, then shuffle."
+  });
+
+  it("recognizes the dies trigger as an open-ended total-mana-value search", () => {
+    const profile = profileOf(PROTEAN_HULK());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "dies", subject: "self",
+      effect: { kind: "search-library-multi", types: ["Creature"], destinations: ["battlefield"], maxTotalManaValue: 6 }
+    });
+  });
+
+  it("lets the controller pick multiple creatures under the budget, rejects exceeding it, and battlefields them untapped", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [PROTEAN_HULK(), MOUNTAIN()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BOLT()], "hulk-hand"),
+      library: [...toHand(0, [BEAR(), BEAR(), TRAMPLER()], "hulk-library"), ...player.library],
+      autoPass: false
+    }));
+    const hulk = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Protean Hulk")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hulk-hand-0", targets: [{ kind: "permanent", instanceId: hulk.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library-multi");
+
+    let choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library-multi" }>;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Grizzly Bears" });
+    choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library-multi" }>;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Grizzly Bears" });
+
+    expect(() => applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Big Stomper" })).toThrow();
+
+    game = applyAction(game, 0, { type: "finish-library-search", sourceId: choice.sourceId });
+    const bears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    expect(bears).toHaveLength(2);
+    expect(bears.every((bear) => !bear.tapped)).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(false);
+  });
+});
+
+describe("Somberwald Sage's creature-spell-restricted triple mana", () => {
+  const SOMBERWALD_SAGE = () => make({
+    name: "Somberwald Sage", type_line: "Creature — Human Druid", mana_cost: "{2}{G}", cmc: 3, power: "1", toughness: "1",
+    oracle_text: "{T}: Add three mana of any one color. Spend this mana only to cast creature spells.",
+    produced_mana: ["B", "C", "G", "R", "U", "W"]
+  });
+
+  it("recognizes the tap ability with a creature-spell mana restriction", () => {
+    const profile = profileOf(SOMBERWALD_SAGE());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.manaAbilities[0]).toMatchObject({
+      produces: ["W", "U", "B", "R", "G"], amount: 3, manaRestriction: { kind: "creature-spell" }
+    });
+  });
+
+  it("blocks a noncreature spell but allows a creature spell to spend the restricted mana", () => {
+    const noncreatureSpell = make({ name: "Ordinary Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1 });
+    const creatureSpell = make({ name: "Ordinary Bear", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
+
+    let blocked = twoSeatGame([], []);
+    blocked = stage(blocked, 0, () => ({ hand: toHand(0, [noncreatureSpell]), autoPass: false }));
+    blocked = putOnBattlefield(blocked, 0, [SOMBERWALD_SAGE()]);
+    blocked = passUntil(blocked, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const source = blocked.players[0]!.battlefield.find((permanent) => permanent.card.name === "Somberwald Sage")!;
+    const activate = legalActions(blocked, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === source.instance_id && entry.action.mana === "R")!;
+    blocked = applyAction(blocked, 0, activate.action);
+    expect(blocked.players[0]!.restrictedMana).toMatchObject([
+      { type: "R", restriction: { kind: "creature-spell" } },
+      { type: "R", restriction: { kind: "creature-spell" } },
+      { type: "R", restriction: { kind: "creature-spell" } }
+    ]);
+    expect(legalActions(blocked, 0).some((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")).toBe(false);
+
+    let allowed = twoSeatGame([], []);
+    allowed = stage(allowed, 0, () => ({ hand: toHand(0, [creatureSpell]), autoPass: false }));
+    allowed = putOnBattlefield(allowed, 0, [SOMBERWALD_SAGE()]);
+    allowed = passUntil(allowed, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const allowedSource = allowed.players[0]!.battlefield.find((permanent) => permanent.card.name === "Somberwald Sage")!;
+    const allowedActivate = legalActions(allowed, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === allowedSource.instance_id && entry.action.mana === "G")!;
+    allowed = applyAction(allowed, 0, allowedActivate.action);
+    const cast = legalActions(allowed, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")!;
+    expect(cast).toBeDefined();
+    allowed = applyAction(allowed, 0, cast.action);
+    expect(allowed.stack.some((entry) => entry.card.name === "Ordinary Bear")).toBe(true);
+  });
+});
+
+describe("Food Chain's exile-a-creature mana ability", () => {
+  const FOOD_CHAIN = () => make({
+    name: "Food Chain", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3,
+    oracle_text: "Exile a creature you control: Add X mana of any one color, where X is 1 plus the exiled creature's mana value. Spend this mana only to cast creature spells.",
+    produced_mana: ["B", "C", "G", "R", "U", "W"]
+  });
+
+  it("recognizes the exile-a-creature ability with a mana-value-derived amount and creature-spell restriction", () => {
+    const profile = profileOf(FOOD_CHAIN());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.manaAbilities[0]).toMatchObject({
+      produces: ["W", "U", "B", "R", "G"], exilesCreature: true, amountFromExiledManaValuePlusOne: true,
+      manaRestriction: { kind: "creature-spell" }
+    });
+  });
+
+  it("exiles the chosen creature, adds mana equal to 1 plus its mana value, and only creature spells may spend it", () => {
+    const noncreatureSpell = make({ name: "Ordinary Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1 });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [noncreatureSpell]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [FOOD_CHAIN(), BEAR()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Food Chain")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const activate = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === source.instance_id && entry.action.exileId === bear.instance_id && entry.action.mana === "R")!;
+    expect(activate).toBeDefined();
+    game = applyAction(game, 0, activate.action);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.restrictedMana).toMatchObject([
+      { type: "R", restriction: { kind: "creature-spell" } },
+      { type: "R", restriction: { kind: "creature-spell" } },
+      { type: "R", restriction: { kind: "creature-spell" } }
+    ]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")).toBe(false);
+
+    let allowed = twoSeatGame([], []);
+    const creatureSpell = make({ name: "Ordinary Elf", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2" });
+    allowed = stage(allowed, 0, () => ({ hand: toHand(0, [creatureSpell]), autoPass: false }));
+    allowed = putOnBattlefield(allowed, 0, [FOOD_CHAIN(), BEAR()]);
+    allowed = passUntil(allowed, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const allowedSource = allowed.players[0]!.battlefield.find((permanent) => permanent.card.name === "Food Chain")!;
+    const allowedBear = allowed.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const allowedActivate = legalActions(allowed, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === allowedSource.instance_id && entry.action.exileId === allowedBear.instance_id && entry.action.mana === "G")!;
+    allowed = applyAction(allowed, 0, allowedActivate.action);
+    expect(allowed.players[0]!.manaPool.G).toBe(0);
+    const cast = legalActions(allowed, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")!;
+    expect(cast).toBeDefined();
+    allowed = applyAction(allowed, 0, cast.action);
+    expect(allowed.stack.some((entry) => entry.card.name === "Ordinary Elf")).toBe(true);
+  });
+});
+
+describe("Eldritch Evolution's sacrifice-scaled creature tutor", () => {
+  const ELDRITCH_EVOLUTION = () => make({
+    name: "Eldritch Evolution", type_line: "Sorcery", mana_cost: "{1}{G}{G}", cmc: 3,
+    oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nSearch your library for a creature card with mana value X or less, where X is 2 plus the sacrificed creature's mana value. Put that card onto the battlefield, then shuffle. Exile Eldritch Evolution."
+  });
+
+  it("recognizes the sacrifice-scaled search and the self-exile rider", () => {
+    const profile = profileOf(ELDRITCH_EVOLUTION());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.additionalCostSacrificeCreature).toBe(true);
+    expect(profile.effects).toEqual([
+      { kind: "search-library", types: ["Creature"], maxManaValue: "sacrificed-creature-value", manaValueOffset: 2, destination: "battlefield", reveal: false },
+      { kind: "exile-self" }
+    ]);
+  });
+
+  it("caps the search at 2 plus the sacrificed creature's mana value and exiles itself instead of the graveyard", () => {
+    const fourDrop = make({ name: "Test Four Drop", type_line: "Creature — Giant", mana_cost: "{4}", cmc: 4, power: "4", toughness: "4" });
+    const fiveDrop = make({ name: "Test Five Drop", type_line: "Creature — Giant", mana_cost: "{5}", cmc: 5, power: "5", toughness: "5" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEAR(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [ELDRITCH_EVOLUTION()]),
+      library: [...toHand(0, [fiveDrop, fourDrop], "library"), ...player.library]
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0" && entry.action.sacrificeId === bear.instance_id)!;
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, cast.action);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.pendingChoice).toMatchObject({ type: "search-library" });
+    expect(() => applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Five Drop" })).toThrow();
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Four Drop" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Four Drop")).toBe(true);
+    expect(game.players[0]!.exile.some((card) => card.name === "Eldritch Evolution")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Eldritch Evolution")).toBe(false);
+  });
+});
+
+describe("Birthing Pod's sacrifice-scaled creature tutor", () => {
+  const BIRTHING_POD = () => make({
+    name: "Birthing Pod", type_line: "Artifact", mana_cost: "{3}{G/P}", cmc: 4,
+    oracle_text: "({G/P} can be paid with either {G} or 2 life.)\n{1}{G/P}, {T}, Sacrifice a creature: Search your library for a creature card with mana value equal to 1 plus the sacrificed creature's mana value, put that card onto the battlefield, then shuffle. Activate only as a sorcery."
+  });
+
+  it("recognizes the sacrifice-scaled activated ability with a sorcery-speed restriction", () => {
+    const profile = profileOf(BIRTHING_POD());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      requiresTap: true, sacrificesCreature: "any", sorcerySpeed: true,
+      effect: { kind: "search-library", types: ["Creature"], maxManaValue: "sacrificed-creature-value", manaValueOffset: 1, exactManaValue: true, destination: "battlefield" }
+    });
+  });
+
+  it("finds a creature with mana value exactly one more than the sacrificed creature and stays on the battlefield", () => {
+    const threeDrop = make({ name: "Test Three Drop", type_line: "Creature — Giant", mana_cost: "{3}", cmc: 3, power: "3", toughness: "3" });
+    const fourDrop = make({ name: "Test Four Drop", type_line: "Creature — Giant", mana_cost: "{4}", cmc: 4, power: "4", toughness: "4" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BIRTHING_POD(), BEAR(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      library: [...toHand(0, [fourDrop, threeDrop], "library"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const pod = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Birthing Pod")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === pod.instance_id && entry.action.sacrificeId === bear.instance_id)!;
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation.action);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+    expect(game.pendingChoice).toMatchObject({ type: "search-library" });
+    expect(() => applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Four Drop" })).toThrow();
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Three Drop" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Three Drop")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Birthing Pod")).toBe(true);
+  });
+});
+
+describe("Sidisi, Undead Vizier's Exploit ETB and its own exploited-creature trigger", () => {
+  const SIDISI = () => make({
+    name: "Sidisi, Undead Vizier", type_line: "Legendary Creature — Zombie Snake", mana_cost: "{3}{B}{B}", cmc: 5, power: "4", toughness: "5",
+    keywords: ["Deathtouch", "Exploit"],
+    oracle_text: "Deathtouch\nExploit (When this creature enters, you may sacrifice a creature.)\nWhen Sidisi exploits a creature, you may search your library for a card, put it into your hand, then shuffle."
+  });
+
+  it("recognizes both the synthesized Exploit ETB and its own exploited-creature search trigger", () => {
+    const profile = profileOf(SIDISI());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.keywords).toContain("deathtouch");
+    expect(profile.triggers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ event: "enters-battlefield", subject: "self", effect: { kind: "exploit" } }),
+      expect.objectContaining({ event: "exploits", subject: "self", effect: { kind: "search-library", types: [], destination: "hand", reveal: false } })
+    ]));
+  });
+
+  it("lets the controller decline the sacrifice, offering no search", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [SIDISI()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [BEAR(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "exploit");
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-exploit", sourceId: choice.sourceId });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.pendingChoice).toBeNull();
+  });
+
+  it("exploiting a creature raises the search for Sidisi's own exploited-creature trigger", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [SIDISI()], "sidisi-hand"),
+      library: [...toHand(0, [SOL_RING()], "sidisi-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [BEAR(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "sidisi-hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "exploit");
+    const exploitChoice = game.pendingChoice!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-exploit", sourceId: exploitChoice.sourceId, sacrificeId: bear.instance_id });
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+    const searchChoice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: searchChoice.sourceId, query: "Sol Ring" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+});
+
+describe("Necropotence's skipped draw, discard-exile trigger, and delayed-hand exile ability", () => {
+  const NECROPOTENCE = () => make({
+    name: "Necropotence", type_line: "Enchantment", mana_cost: "{B}{B}{B}", cmc: 3,
+    oracle_text: "Skip your draw step.\nWhenever you discard a card, exile that card from your graveyard.\nPay 1 life: Exile the top card of your library face down. Put that card into your hand at the beginning of your next end step."
+  });
+  const PLAIN_CYCLER = () => make({ name: "Test Cycler", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Cycling {1}" });
+
+  it("recognizes all three lines: skip draw, discard-exile trigger, and the delayed pay-life ability", () => {
+    const profile = profileOf(NECROPOTENCE());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.staticSkipsDrawStep).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({ event: "card-discarded", subject: "you", effect: { kind: "exile-event-card-from-graveyard" } });
+    expect(profile.activatedAbilities[0]).toMatchObject({ lifeCost: 1, manaCost: null, effect: { kind: "exile-top-card-then-hand-next-end-step" } });
+  });
+
+  it("skips the controller's mandatory draw for the turn", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [NECROPOTENCE()]);
+    const before = game.players[0]!.library.length;
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(game.players[0]!.library.length).toBe(before);
+  });
+
+  it("exiles a discarded card straight out of the graveyard", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [PLAIN_CYCLER()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [NECROPOTENCE(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cycle", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Cycler")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Test Cycler")).toBe(true);
+  });
+
+  it("exiles the top card face down and delivers it to hand at the next end step", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [NECROPOTENCE()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Necropotence")!;
+    const topCard = game.players[0]!.library[0]!;
+    const life = game.players[0]!.life;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)!;
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(life - 1);
+    expect(game.players[0]!.exile.some((card) => card.instance_id === topCard.instance_id)).toBe(true);
+    expect(game.players[0]!.hand.some((card) => card.instance_id === topCard.instance_id)).toBe(false);
+    game = passUntil(game, (state) => state.players[0]!.hand.some((card) => card.instance_id === topCard.instance_id));
+    expect(game.players[0]!.exile.some((card) => card.instance_id === topCard.instance_id)).toBe(false);
+  });
+});
+
+describe("Body Snatcher's discard-or-exile ETB and its dies-triggered reanimation", () => {
+  const BODY_SNATCHER = () => make({
+    name: "Body Snatcher", type_line: "Creature — Phyrexian Minion", mana_cost: "{2}{B}{B}", cmc: 4, power: "3", toughness: "2",
+    oracle_text: "When this creature enters, exile it unless you discard a creature card.\nWhen this creature dies, exile it and return target creature card from your graveyard to the battlefield."
+  });
+
+  it("recognizes both the discard-or-exile ETB and the dies-triggered reanimation", () => {
+    const profile = profileOf(BODY_SNATCHER());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "self", effect: { kind: "exile-source-permanent" }, unlessDiscardCreatureCard: true });
+    expect(profile.triggers[1]).toMatchObject({
+      event: "dies", subject: "self", targetKind: "creature-card-in-your-graveyard",
+      effect: { kind: "compound", effects: [{ kind: "exile-source-from-graveyard" }, { kind: "return-target-creature-card-from-graveyard-to-battlefield" }] }
+    });
+  });
+
+  it("exiles itself when the controller declines to discard a creature card", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BODY_SNATCHER()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Body Snatcher")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Body Snatcher")).toBe(true);
+  });
+
+  it("stays on the battlefield when the controller discards a creature card instead", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BODY_SNATCHER(), BEAR()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice!;
+    const bear = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true, discardCardId: bear.instance_id });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Body Snatcher")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.exile.some((card) => card.name === "Body Snatcher")).toBe(false);
+  });
+
+  it("exiles itself and reanimates a target creature card from the graveyard when it dies", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BOLT()], "bs-hand"),
+      graveyard: [...toHand(0, [TRAMPLER()], "bs-graveyard"), ...player.graveyard],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [BODY_SNATCHER(), MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const snatcher = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Body Snatcher")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "bs-hand-0", targets: [{ kind: "permanent", instanceId: snatcher.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const targetChoice = game.pendingChoice!;
+    const stomper = game.players[0]!.graveyard.find((card) => card.name === "Big Stomper")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "graveyard-card", seat: 0, instanceId: stomper.instance_id } });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.exile.some((card) => card.name === "Body Snatcher")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Body Snatcher")).toBe(false);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(true);
+  });
+});
+
+describe("Tooth and Nail's modal tutor-to-hand and hand-to-battlefield modes", () => {
+  const TOOTH_AND_NAIL = () => make({
+    name: "Tooth and Nail", type_line: "Sorcery", mana_cost: "{5}{G}{G}", cmc: 7,
+    oracle_text: "Choose one —\n• Search your library for up to two creature cards, reveal them, put them into your hand, then shuffle.\n• Put up to two creature cards from your hand onto the battlefield.\nEntwine {2} (Choose both if you pay the entwine cost.)"
+  });
+
+  it("recognizes both modes and the entwine cost", () => {
+    const profile = profileOf(TOOTH_AND_NAIL());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.modalChoices[0]).toMatchObject({ effect: { kind: "search-library", types: ["Creature"], destination: "hand", count: 2 } });
+    expect(profile.modalChoices[1]).toMatchObject({ effect: { kind: "put-hand-creatures-onto-battlefield", amount: 2 } });
+    expect(profile.entwineCost).toMatchObject({ raw: "{2}" });
+  });
+
+  it("puts up to two chosen creature cards from hand onto the battlefield with mode 2", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({
+      hand: toHand(0, [TOOTH_AND_NAIL(), BEAR(), TRAMPLER()], "tn-hand"),
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "tn-hand-0", mode: 1 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "hand-to-battlefield-multi");
+    let choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "hand-to-battlefield-multi" }>;
+    const bear = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-hand-battlefield-card", sourceId: choice.sourceId, cardId: bear.instance_id });
+    choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "hand-to-battlefield-multi" }>;
+    const stomper = game.players[0]!.hand.find((card) => card.name === "Big Stomper")!;
+    game = applyAction(game, 0, { type: "choose-hand-battlefield-card", sourceId: choice.sourceId, cardId: stomper.instance_id });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Tooth and Nail")).toBe(true);
+  });
+
+  it("searches for up to two creature cards to hand with mode 1", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [TOOTH_AND_NAIL()], "tn-hand"),
+      library: [...toHand(0, [BEAR(), TRAMPLER()], "tn-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "tn-hand-0", mode: 0 });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.hand.some((card) => card.name === "Big Stomper")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Tooth and Nail")).toBe(true);
+  });
+});
+
+describe("Hunting Wilds' kicked-only untap-and-animate-fetched-lands", () => {
+  const HUNTING_WILDS = () => make({
+    name: "Hunting Wilds", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4,
+    oracle_text: "Kicker {3}{G} (You may pay an additional {3}{G} as you cast this spell.)\nSearch your library for up to two Forest cards, put them onto the battlefield tapped, then shuffle.\nIf this spell was kicked, untap all Forests put onto the battlefield this way. They become 3/3 green creatures with haste that are still lands."
+  });
+
+  it("recognizes the base search and the kicked-only animate follow-up", () => {
+    const profile = profileOf(HUNTING_WILDS());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.effects[0]).toMatchObject({ kind: "search-library", subtypes: ["Forest"], destination: "battlefield", tapped: true, count: 2 });
+    expect(profile.kickedEffects[0]).toMatchObject({ kind: "untap-and-animate-fetched-lands", subtype: "Forest", power: 3, toughness: 3, color: "G" });
+  });
+
+  it("fetches Forests tapped and inanimate when cast unkicked", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [HUNTING_WILDS()], "hw-hand"),
+      library: [...toHand(0, [FOREST(), FOREST()], "hw-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hw-hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    const fetched = game.players[0]!.battlefield.filter((permanent) => permanent.card.instance_id.startsWith("hw-library"));
+    expect(fetched).toHaveLength(2);
+    expect(fetched.every((permanent) => permanent.tapped)).toBe(true);
+    expect(fetched.every((permanent) => !permanent.temporaryAnimation)).toBe(true);
+  });
+
+  it("fetches Forests untapped and animated as 3/3 haste creatures when kicked", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [HUNTING_WILDS()], "hw-hand"),
+      library: [...toHand(0, [FOREST(), FOREST()], "hw-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hw-hand-0", kicked: true });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    const fetched = game.players[0]!.battlefield.filter((permanent) => permanent.card.instance_id.startsWith("hw-library"));
+    expect(fetched).toHaveLength(2);
+    expect(fetched.every((permanent) => !permanent.tapped)).toBe(true);
+    expect(fetched.every((permanent) => permanent.temporaryAnimation?.power === 3 && permanent.temporaryAnimation?.toughness === 3)).toBe(true);
+    expect(fetched.every((permanent) => permanent.temporaryKeywords?.includes("haste"))).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

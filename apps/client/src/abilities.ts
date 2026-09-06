@@ -269,6 +269,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     rule: "Se dispara cuando este permanente se gira para activar una habilidad de maná.",
     enforced: "Más específico que un giro cualquiera: un giro sin producir maná no lo activa.",
     path: "M12 2.5 20 7v10l-8 4.5L4 17V7l8-4.5zM12 8v4l3 2"
+  },
+  exploits: {
+    label: "Al explotar una criatura",
+    rule: "Se dispara cuando este permanente sacrifica una criatura mediante su propia habilidad Exploit.",
+    enforced: "Más específico que cualquier sacrificio: solo se activa con el propio sacrificio de Exploit de este permanente.",
+    path: "M12 2l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6L3 9l6-1 3-6z"
   }
 };
 

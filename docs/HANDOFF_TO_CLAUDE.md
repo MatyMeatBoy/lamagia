@@ -4675,3 +4675,650 @@ per-effect-kind "skip this specific target slot" behavior within a
 compound, that check belongs inside the specific `case` that owns a real
 target dependency (as `damage-divided-targets` already does), not as a
 blanket precondition on every `applyEffect` call.
+
+## Pattern of Rebirth: enchanted-creature subject and triggered search (2026-09-06)
+
+Two genuinely new primitives, both reusable well beyond this one card.
+First, a `TriggerSubject` for Auras: `"enchanted-creature"`, a direct
+parallel to the existing `"equipped-creature"` subject built earlier this
+session for Skullclamp — same shape (`findPermanent(state,
+watcher.instanceId)?.attachedTo === object.permanentId`), same timing
+guarantee (state-based actions haven't removed the Aura yet when its
+host's "dies" event is raised, so the attachment link is still readable).
+Second, and the more consequential of the two: `search-library` as a
+TRIGGERED ability's effect had never actually worked, despite `search-
+library` being one of the most reused effect kinds in the whole engine.
+The interactive choice that opens it lives entirely in `resolveTop`,
+specially checked only for a resolving SPELL (`profile.effects.find`) or
+an ACTIVATED ability (`activatedEffect`/`selectedEffect`) — the shared
+`applyEffect` switch itself has `case "search-library": return state;`,
+a deliberate no-op with a comment pointing at that special-cased pre-
+check. The `if (object.trigger) {...}` branch already special-cases
+`scry`/`surveil`/`look-top-select`/`drawUpTo` the same way, but never
+`search-library`, so a card whose OWN trigger needs to search (as
+opposed to search resolving from a spell or an equip-style ability)
+silently did nothing. Added a matching `triggerSearch` branch there,
+scoped to what a triggered search actually needs (type/subtype/color
+filtering, empty-library shuffle) without the spell/activated path's
+"up to N" auto-fetch or `maxManaValue` handling, which no triggered
+search in the catalog needs today — extend it there if one ever does,
+following the exact filter fields `search-library` already carries.
+Also fixed a genuine gap in the pre-existing `eventControllerChoice`
+machinery ("that creature's controller may ..."): the captured clause is
+naturally phrased in the third person ("search THEIR library"), but
+every shared effect template hard-codes first person ("Search YOUR
+library..."), so the clause never matched anything. Normalized with a
+targeted `.replace(/\btheir\b/gi, "your")` on just this captured text,
+since the resolved effect always acts on ITS OWN controller (the
+DIED creature's owner, in this case) regardless of who is doing the
+choosing. Verified **+9** in the export count (10,197 → 10,206:
+Pattern of Rebirth plus other catalog cards sharing the enchanted-
+creature-dies shape or the third-person `eventControllerChoice` fix)
+and set coverage holds at 31.2%. Scenario-tested: enchanting a Grizzly
+Bears with Pattern of Rebirth, then killing it with a Lightning Bolt,
+opens a library search offering only creature cards (a Sol Ring in the
+same library is correctly excluded); choosing the creature card puts it
+directly onto the battlefield. Validation: **781 rules tests**, `npm run
+check`, `npm run simulate:engine` 200/200, 10,206 global profiles.
+
+Prossh decklist status after this pass: **74 of 97 unique cards fully
+implemented (76.3%)**.
+
+Survival of the Fittest ("{G}, Discard a creature card: Search your
+library for a creature card...") needed a new `discardsCreatureCard`
+cost flag, a sibling of the existing type-unrestricted `discardsCard` —
+threaded through the same four sites `discardsCard` already touches
+(`legalActions`' per-card action enumeration, `activatableAbility`'s
+legality gate, and BOTH of `applyActivate`'s discard-resolution blocks,
+one for cost announcement and one for actual payment) so a non-creature
+card can never satisfy this specific cost. The real find here was a
+one-line, previously-invisible bug: `parseActivatedAbility`'s FINAL
+"leftovers" validation — the check that every word of a cost has been
+accounted for before accepting the ability — already stripped "discard
+a card"/"discard one card" but had no pattern for "discard A CREATURE
+card", so the whole ability was silently rejected as unrecognized even
+though its cost fields and its effect (`search-library`) were BOTH
+already parsing correctly in isolation; the two pieces just never
+reached the same return statement. Fixed with one more `.replace()`
+in that same leftovers chain. Verified **+7** in the export count
+(10,206 → 10,213: Survival of the Fittest plus any other catalog card
+using this same "discard a creature card" cost phrasing) and set
+coverage holds at 31.2%. Scenario-tested: activating with a chosen
+Grizzly Bears as the discard puts it in the graveyard and opens a
+search offering only creature cards; the SAME ability is correctly
+NOT offered as a legal action when the specified discard target is a
+non-creature card (a Sol Ring) already in hand. Validation: **785 rules
+tests**, `npm run check`, 10,213 global profiles.
+
+Prossh decklist status after this pass: **75 of 97 unique cards fully
+implemented (77.3%)**.
+
+Beseech the Queen ("Search your library for a card with mana value less
+than or equal to the number of lands you control...") widens the
+existing `search-library` `maxManaValue` field from a bare `"X"`
+discriminant (Green Sun's Zenith's paid `{X}`) to `"X" |
+"lands-you-control"` — a board-dependent cap read live at resolution
+rather than a value paid at cast time, computed the same way every
+other "number of lands you control" scaling already reads the board
+(`battlefield.filter(isLand).length`). Found via
+`tools/rules/identify_near_complete_cards.py`, which correctly flagged
+this as `priority: "reuse-existing"` against the `search-library`
+family rather than a new primitive. Verified **+1** in the export count
+(10,213 → 10,214) and set coverage holds at 31.2%. Scenario-tested:
+with three lands in play, a search offers a 2-mana-value creature and a
+1-mana-value artifact but excludes a 4-mana-value creature in the same
+library.
+
+Prossh decklist status after this pass: **76 of 97 unique cards fully
+implemented (78.4%)**.
+
+Protean Hulk ("When this creature dies, search your library for any
+number of creature cards with total mana value 6 or less, put them onto
+the battlefield, then shuffle.") needed an open-ended sibling of the
+existing `search-library-multi` family: every prior template there
+picks a FIXED count (`destinations: readonly (...)[]` sized to the
+exact number of slots, auto-finishing once `selectedIds.length`
+reaches `destinations.length`). This card's pick count is unbounded,
+capped only by a running mana-value BUDGET, so it needed a new
+`maxTotalManaValue?: number` field and a different stopping rule: the
+player accepts or rejects each pick against the remaining budget and
+explicitly calls the ALREADY-GENERIC `finish-library-search` action
+when satisfied (that action already existed for cutting a multi-search
+short, so no new action type was needed, only a new field-driven
+branch in `applyChooseMultiLibraryCard` and `finishMultiLibrarySearch`
+to skip the per-slot `destinations[index]` bookkeeping and put every
+selected card onto the battlefield untapped). Also extends the
+Pattern-of-Rebirth-era triggered-search wiring in `resolveTop`
+(`triggerSearch`) with a sibling `triggerSearchMulti` branch, since this
+is ALSO a dies-triggered search, not a spell/activated one. Found via
+`tools/rules/identify_near_complete_cards.py`'s "reuse-existing"
+flag against the same `search-library-multi` family. Verified **+1**
+in the export count (10,214 → 10,215) and set coverage 31.2% → 31.3%.
+Scenario-tested: killing Protean Hulk with two 2-mana-value creatures
+and one 4-mana-value creature in the library lets the controller pick
+BOTH 2-drops (running total 4, under budget), throws when a THIRD pick
+would push the total over 6, and puts exactly the two picked creatures
+onto the battlefield untapped once the search is explicitly finished.
+Validation: **789 rules tests**, `npm run check`, 10,215 global
+profiles.
+
+Prossh decklist status after this pass: **77 of 97 unique cards fully
+implemented (79.4%)**.
+
+Somberwald Sage ("{T}: Add three mana of any one color. Spend this
+mana only to cast creature spells.") needed the `ManaRestriction`
+primitive (previously Delighted Halfling-only, `kind:
+"legendary-spell"`) generalized to a second kind. Widened
+`ManaRestrictionKind` in `packages/rules/src/mana.ts` to `"legendary-
+spell" | "creature-spell"`, then renamed the boolean `allowLegendaryMana`
+plumbing throughout `engine.ts` (~20 call sites: `manaSources`,
+`planManaPayment`, `shouldPromptManaPayment`, `manualManaPlan`,
+`beginManaPayment`, the `mana-payment` `PendingChoice`'s field,
+`payPlayerCost`, and the `legalActions`/`applyCast` cast-computation
+sites) to a generalized `allowedRestrictions?: readonly
+ManaRestrictionKind[]`, so every `mana.restriction.kind ===
+"legendary-spell"` check became `allowedRestrictions?.includes(mana
+.restriction.kind)`. Added a small `allowedManaRestrictions(profile)`
+helper (in `engine.ts`, beside `manaSources`) that computes the array
+once per cast from the spell's own characteristics — `"legendary-
+spell"` when a supertype is Legendary, `"creature-spell"` when
+`isCreature(profile)` — replacing the two near-duplicate
+`profile.supertypes.some(...)` one-liners that used to compute the
+single legendary-only boolean at each cast site. In
+`characteristics.ts`, extended the `manaRestriction` parser at the
+mana-ability-building step (~line 1558) with a second branch matching
+"Spend this mana only to cast creature spells." (`kind:
+"creature-spell"`, no rider), and separately widened the
+`restrictedManaLine` coverage-recognition check inside `recognizeText`
+(~line 4553, the "is this printed line consumed" gate a card's
+`fullyImplemented` status depends on) to also match the creature-spell
+wording — this second, easy-to-miss site is why Delighted Halfling
+(legendary-only wording) was already `fullyImplemented: true` before
+this pass while a naive fix to only the ability-builder regex would
+have left Somberwald Sage's `unimplementedText` non-empty despite its
+mana ability parsing correctly. Somberwald Sage's own mana-production
+clause ("three mana of any one color") needed no new parsing: it is
+the same choice-of-one-color-times-N shape already covered by
+Springjack Pasture's "Add X mana of any one color" test, confirmed via
+a throwaway probe script that both Somberwald Sage's `fullyImplemented`
+flips to `true` and Delighted Halfling's existing behavior (including
+its `makesSpellUncounterable` rider) is unchanged by the generalization.
+Scenario-tested: activating the tap ability for {R} tags three red
+mana with `restriction.kind: "creature-spell"`, an instant in hand
+cannot be cast with it (absent from `legalActions`), while a same-cost
+creature spell can legally spend it and resolves onto the stack.
+Verified **+1** in the export count (10,215 → 10,216); set coverage
+stayed 31.3% (one card out of 38,712 catalog entries does not move the
+rounded percentage). Food Chain, the other card `identify_near_
+complete_cards.py` flagged as sharing this same restriction, turned out
+to need a genuinely separate primitive on top of the restriction (an
+"exile a creature you control" mana-ability cost — distinct from the
+existing `sacrificesCreatures` cost model, which only supports
+sacrifice — plus a dynamic mana amount of "1 + the exiled creature's
+own mana value", not a fixed or externally-supplied count); it is
+deferred to a later pass rather than folded into this one.
+Validation: **791 rules tests** (2 new: a `recognizes...` profile-shape
+test plus the blocked/allowed scenario test above), `npm run check`
+across all four workspaces, `npx vitest run services/match-server/src`
+(5 passed), 10,216 global profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **78 of 97 unique cards fully
+implemented (80.4%)**.
+
+Food Chain ("Exile a creature you control: Add X mana of any one
+color, where X is 1 plus the exiled creature's mana value. Spend this
+mana only to cast creature spells.") is the second, genuinely-separate
+primitive that same restriction generalization was blocking. Added two
+new `ManaAbility` fields — `exilesCreature?: boolean` (the activation
+cost: exile a single creature you control, no subtype restriction) and
+`amountFromExiledManaValuePlusOne?: boolean` (the produced amount is
+read from the EXILED permanent's own `manaValue` at activation time,
+not chosen by the player or fixed on the card) — mirroring the shape of
+the pre-existing `sacrificesCreatures`/`amountFromSacrifice` pair
+(Springjack Pasture) as closely as the mechanic allows, but exiling
+exactly one unrestricted creature rather than a variable count of a
+matching subtype. Added a matching `exilesCreatureCost` branch to
+`parseManaAbilities` in `characteristics.ts` and, separately, an
+`exiledManaValueLine` branch to the `restrictedManaLine`-style
+coverage-recognition check inside `recognizeText` (the same two-site
+pattern the Somberwald Sage pass above needed — missing the second
+site again would have left the card correctly playable but flagged as
+not fully implemented). In `engine.ts`: a new `exileCreatureCandidates`
+helper (parallel to `manaSacrificeCandidates` but with no subtype
+filter and using the exile zone), a `canUseManaAbility` gate requiring
+at least one legal exile candidate, a `legalActions` branch enumerating
+one action per (candidate creature × mana color choice) — the amount
+is not a player choice, so unlike the Springjack `sacrificesCreatures`
+"X" case there is no outer amount loop, just one action per creature
+per color — a new `exileId?: string` field on the `activate-mana`
+action, and `applyActivateMana` reading `cardProfile(chosen.card)
+.manaValue` from the chosen creature BEFORE moving it to exile (a
+card's mana value is a printed characteristic, unaffected by which
+zone holds it, so computing it after the move would have worked too,
+but before matches the order every other cost-then-effect ability in
+this function already uses) and threading that through the existing
+`amount`/`restrictedOutput` computation via the new
+`amountFromExiledManaValuePlusOne` branch. Also excluded
+`exilesCreature` abilities from the "automatic tap source" list in
+`manaSources` (same reasoning as `sacrificesCreatures`: choosing WHICH
+creature to exile is a real player decision that cannot be silently
+resolved while paying an unrelated cost). Verified **+1** in the export
+count (10,216 → 10,217); set coverage holds at 31.3%. Scenario-tested:
+exiling a 2-mana-value Grizzly Bears adds exactly 3 mana of the chosen
+color as `creature-spell`-restricted, removes the Bears from the
+battlefield into exile (not the graveyard), an instant in hand cannot
+be cast with that mana, and a same-cost creature spell can and resolves
+onto the stack. Validation: **793 rules tests** (2 new), `npm run check`
+across all four workspaces, `npx vitest run services/match-server/src`
+(5 passed), 10,217 global profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **79 of 97 unique cards fully
+implemented (81.4%)**.
+
+Eldritch Evolution ("As an additional cost to cast this spell,
+sacrifice a creature. Search your library for a creature card with
+mana value X or less, where X is 2 plus the sacrificed creature's mana
+value. Put that card onto the battlefield, then shuffle. Exile
+Eldritch Evolution.") turned out to be almost entirely reusable: the
+"sacrifice a creature" additional cost was ALREADY modeled as
+`profile.additionalCostSacrificeCreature` (a pre-existing, unrestricted
+sibling of the green-only `additionalCostSacrificeCreatureColor` used
+by Natural Order), complete with its own `legalActions` enumeration
+(one `cast` action per candidate creature via `sacrificeId`) and a
+`sacrificedPower` snapshot already threaded onto the `StackObject` for
+some other card's power-scaling effect. The only genuinely new piece
+was the search's dynamic cap. Widened `search-library`'s `maxManaValue`
+with a third discriminant, `"sacrificed-creature-value"`, plus a new
+`manaValueOffset?: number` field for the "+2" part, and added a sibling
+`sacrificedManaValue?: number` `StackObject` field computed at the exact
+same site and moment as `sacrificedPower` (before the creature moves to
+the graveyard, since CR 608.2h needs its last-known information). The
+harder part was structural, not conceptual: Oracle text usually keeps a
+search's destination clause in the SAME sentence as the search itself
+("...mana value X or less, put it onto the battlefield..."), which is
+how every prior `maxManaValue` template works — but this card splits
+them into two separate period-terminated sentences ("...mana value.
+Put that card onto the battlefield, then shuffle."), so neither the
+existing `parseLibrarySearch` embedded-destination regexes nor a
+lone-sentence match without one would resolve it. Fixed with the same
+lookahead-and-consume pattern `recognizeText`'s per-sentence loop
+already used for Incinerate-style damage/regeneration riders: a new
+`parseLibrarySearch` branch recognizes the search sentence alone
+(defaulting to `destination: "battlefield"`), and the caller only
+commits to that effect once it confirms the VERY NEXT sentence reads
+"Put that card onto the battlefield, then shuffle." — advancing past it
+so it is not separately flagged as unimplemented. Fixing this also
+surfaced and fixed a real, previously-latent bug unrelated to this
+card: `applyChooseLibraryCard` (the single-target `search-library`
+completion handler) unconditionally pushed the source spell into the
+graveyard whenever `returnSourceToGraveyard` was set, WITHOUT the
+`&& !exileSourceAfterResolution` guard its three sibling completion
+handlers (multi-search, view-hand, scry/surveil, look-top-select) all
+already had — meaning any flashback spell using a single-target
+`search-library` effect that actually found a card would have been
+double-booked into BOTH the graveyard and exile simultaneously. Found
+by this card's own test (Eldritch Evolution's `exile-self` effect
+exposed the same code path from a non-flashback angle) and fixed by
+adding the missing guard to match the other three handlers. Also
+generalized `sendSpellToOwnerZone` (used by every early-return
+resolution branch, including "no valid search result") and the
+search-library pendingChoice's `exileSourceAfterResolution` field to
+check for a profile-level `exile-self` effect, not just `object
+.flashback` — `applyEffect`'s own `case "exile-self"` was already a
+deliberate no-op with a comment saying "the card's own move is handled
+by resolveTop after other effects run," and the GENERIC end-of-
+resolution fallthrough already had this exact check; only the
+early-return branches were missing it. Verified **+1** in the export
+count (10,217 → 10,218); set coverage holds at 31.3%. Scenario-tested:
+sacrificing a 2-mana-value Grizzly Bears caps the search at mana value
+4, so a 5-mana-value creature in the library cannot be chosen (throws)
+while a 4-mana-value creature can and enters the battlefield, and the
+spell itself ends up in exile, not the graveyard. Validation: **795
+rules tests** (2 new), `npm run check` across all four workspaces,
+`npx vitest run services/match-server/src` (5 passed), 10,218 global
+profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **80 of 97 unique cards fully
+implemented (82.5%)**.
+
+Birthing Pod ("{1}{G/P}, {T}, Sacrifice a creature: Search your
+library for a creature card with mana value equal to 1 plus the
+sacrificed creature's mana value, put that card onto the battlefield,
+then shuffle. Activate only as a sorcery.") is the activated-ability
+sibling of the search machinery Eldritch Evolution and Food Chain built
+this session, with two new pieces. First, an EXACT match instead of a
+ceiling: added `search-library.exactManaValue?: boolean`, checked in
+`resolveTop`'s `manaValueMatches` alongside the existing
+`sacrificed-creature-value` branch (`profile.manaValue === base`
+instead of `<= base`). Second, and more interesting: `ActivatedAbility`
+already had a `sorcerySpeed?: boolean` field ("Level up is an activated
+ability with a sorcery-speed restriction," per its own doc comment)
+and `activatableAbility`'s legality gate already enforced it — so
+"Activate only as a sorcery." only needed a `parseActivatedAbility`
+rider strip (parallel to the existing "before attackers are declared"
+strip) setting that SAME pre-existing flag; no new engine.ts gate was
+needed at all. Threading the sacrificed creature's mana value into the
+activated ability's effect reuses the EXISTING `effectVariable`
+computation in `applyActivate` (already the generic channel other
+sacrifice-scaled activated abilities read their derived number from —
+`sacrificedPower`, `sacrificedArtifactMv`), rather than adding a new
+StackObject field: a new `sacrificedManaValue` local, computed
+alongside the existing `sacrificedPower`/`sacrificedToughness` in the
+same sacrifice loop, feeds `effectVariable` when the ability's effect
+is a `search-library` with the `sacrificed-creature-value` discriminant.
+`resolveTop`'s matching branch reads `object.sacrificedManaValue ??
+object.variableValue` so the ONE `manaValueMatches` branch serves both
+spells (Eldritch Evolution, which has the dedicated field) and
+activated abilities (Birthing Pod, which reuses the generic
+`variableValue` channel) without duplicating the comparison logic. The
+"Activate only as a sorcery." rider strip turned out to be far more
+consequential than this one card: since `sorcerySpeed` was already a
+correctly-enforced, pre-existing field with no prior text recognizer
+for this exact common phrase, stripping it retroactively unlocked
+**every other catalog card** blocked SOLELY by that one unrecognized
+trailing sentence — the export jumped by **+47** in one pass (10,218 →
+10,265) rather than the usual +1, and set coverage moved 31.3% → 31.4%.
+Verified via `npm run rules:engine:export`/`rules:set:coverage`, not
+hand-audited card-by-card, since the jump is a direct, mechanical
+consequence of a single well-scoped, pre-existing-field-reusing regex
+change rather than a new bespoke primitive. Scenario-tested: sacrificing
+a 2-mana-value Grizzly Bears to Birthing Pod requires a mana value of
+EXACTLY 3 to find a card — a 4-mana-value creature in the library
+throws, a 3-mana-value creature is legal and battlefields — and
+Birthing Pod itself (the ability's own permanent source, untouched by
+the sacrifice) remains on the battlefield afterward. Validation: **797
+rules tests** (2 new), `npm run check` across all four workspaces,
+`npx vitest run services/match-server/src` (one `tested-mode.test.ts`
+timeout confirmed as this session's usual machine-contention flake by
+an isolated re-run — 3/3 passed alone, unrelated to this change since
+it touches no `services/match-server` code), 10,265 global profiles,
+200/200 simulated games.
+
+Prossh decklist status after this pass: **81 of 97 unique cards fully
+implemented (83.5%)**.
+
+Sidisi, Undead Vizier ("Deathtouch\nExploit (When this creature
+enters, you may sacrifice a creature.)\nWhen Sidisi exploits a
+creature, you may search your library for a card, put it into your
+hand, then shuffle.") required implementing Exploit (CR 702.126) as a
+genuinely new keyword mechanic — the first new keyword this session,
+after four passes of reusing existing infrastructure. Modeled it the
+same way Undying/Persist/Prowess/Exalted/Graft are already
+"synthesised from the keyword" in `characteristics.ts` (a bare
+`if (lowerKeywords.includes(...)) synthesizedTriggers.push({...})`
+entry, since the printed line is just the keyword name plus reminder
+text, not a spelled-out trigger) rather than trying to parse the
+reminder text: `exploit` in a card's keyword list synthesizes an
+`enters-battlefield`/`self` trigger with a new `{kind: "exploit"}`
+effect. Deliberately kept this trigger's own `optional: false`, even
+though the ability offers a "may": CR 702.126a's "you may sacrifice a
+creature" is the EFFECT's own internal choice (which creature, or
+none), not the accept/decline flow the engine's `optional: true`
+already means for a whole trigger — conflating the two would have
+lost the "which creature" decision entirely. That effect resolves via
+a brand new `PendingChoice` type, `"exploit"` (offering "sacrifice
+none" plus one action per creature the controller controls, INCLUDING
+the exploiter itself — CR 702.126a explicitly allows exploiting
+itself), added as its own special-cased branch in `resolveTop`'s
+`if (object.trigger)` block, positioned the same way the existing
+`triggerScry`/`triggerSearch`/`triggerSearchMulti` special cases
+already are, ahead of the generic `optional` branch check. A new
+`applyChooseExploit` handler sacrifices the chosen creature (or does
+nothing when declined) and then raises a brand new `"exploits"`
+`TriggerEvent`/`GameEvent` — CR 702.126b's second half needs a
+narrower signal than any sacrifice: "When Sidisi exploits a creature"
+must fire only from ITS OWN Exploit sacrifice, not any creature dying
+to any cause. Followed the exact `"taps-for-mana"` playbook from
+earlier this session for wiring a new `TriggerEvent` through: the
+`TriggerEvent` union, `TRIGGER_EVENT_LABELS`, a new `TRIGGER_TEMPLATES`
+entry matching `"When ~ exploits a creature, ..."`, the `GameEvent`
+union, and `apps/client/src/abilities.ts`'s exhaustive `TRIGGER_GLYPHS`
+map — confirmed once again that `matchesSubject`'s generic
+`eventObject()` extraction (anything with a `permanentId` field)
+needed no extra code for `subject: "self"` to just work. The
+`exploits` event carries the exploiter's identity from the
+`PendingChoice` itself rather than re-finding the permanent on the
+battlefield afterward, specifically so a card that exploits (sacrifices)
+ITSELF still correctly fires its own second trigger with last-known
+information (CR 608.2h), matching this codebase's established pattern
+for `sacrificedPower`/`sacrificedManaValue`. Two smaller but necessary
+additions: `bot.ts` needed an explicit handler for the new `"exploit"`
+`PendingChoice` (a conservative "always decline" default) because its
+final fallback only ever looks for a `"pass"` action, which this choice
+type never offers — without it, a bot-controlled Exploit creature
+would have stalled `runBots`/the 200-game simulator outright. Verified
+**+11** in the export count (10,265 → 10,276, since Exploit is printed
+on several catalog cards beyond Sidisi) and set coverage holds at
+31.4%. Scenario-tested: declining the sacrifice leaves the creature on
+the battlefield and closes the choice with no further effect;
+sacrificing a chosen creature moves it to the graveyard and opens
+Sidisi's own search (for literally "a card," no type restriction,
+unlike every other tutor built this session) which finds and hands
+back the chosen card. Validation: **800 rules tests** (3 new), `npm
+run check` across all four workspaces (including `apps/client`, which
+depends on the new exhaustive `TRIGGER_GLYPHS` entry), `npx vitest run
+services/match-server/src` (5 passed), 10,276 global profiles, 200/200
+simulated games.
+
+Prossh decklist status after this pass: **82 of 97 unique cards fully
+implemented (84.5%)**.
+
+Necropotence ("Skip your draw step.\nWhenever you discard a card,
+exile that card from your graveyard.\nPay 1 life: Exile the top card
+of your library face down. Put that card into your hand at the
+beginning of your next end step.") bundles three independent, smaller
+primitives rather than one cohesive mechanic, but each turned out to
+be a single well-isolated site rather than the wide-blast-radius
+changes this deck's harder remaining cards usually need. (1) "Skip
+your draw step" is a new `CardProfile.staticSkipsDrawStep` boolean,
+following the exact `doublesLandMana`-style two-site pattern (a bare
+line-skip in `recognizeText` plus a separately-computed boolean folded
+into the profile) — checked at the SINGLE site in `engine.ts` that
+performs the turn's mandatory draw (the `case "draw":` step handler,
+right next to the pre-existing `isOpeningDraw` check), not a
+turn-structure refactor. (2) The discard trigger reuses the
+already-registered `{ event: "card-discarded", subject: "you" }`
+template outright; the only new piece is a `{kind:
+"exile-event-card-from-graveyard"}` effect that reads the discarded
+card from a new `TriggerInstance.eventCard` field (threaded through
+the same `"X" in event`-style spread used for `eventPermanentId`/
+`eventPower`/etc., populated only for `card-discarded` for now) rather
+than a target — CR necessitates reacting to "that card" specifically,
+not a targeted or self-referential one. (3) The pay-life ability
+("Exile the top card... face down. Put that card into your hand at
+the beginning of your next end step.") reuses the EXISTING
+`DelayedReturn`/`queueDelayedReturns` machinery (already generic
+enough to support a `"hand"` destination, built for a different card
+entirely) with a fresh `{kind: "exile-top-card-then-hand-next-end-step"}`
+effect, following the exact `triggerAtTurn = state.step === "end" ?
+state.turn + 1 : state.turn` timing formula already used by
+`look-top-select`'s own delayed-return path — the two-sentence effect
+text parses as ONE `recognizeSentence` match since `parseActivatedAbility`
+never splits a line's effect text into separate sentences the way the
+outer `recognizeText` line loop does, so this needed no lookahead-
+consume trick unlike Eldritch Evolution's version of the same problem.
+Testing piece (3) surfaced a real, previously-latent bug in the
+GENERIC `"return-delayed-permanent"` effect handler: its `"hand"`
+destination branch unconditionally assumed the delayed card was
+CURRENTLY ON THE BATTLEFIELD as a permanent (`findPermanent(...)`) and
+silently no-op'd — losing the card outright — whenever that assumed
+permanent didn't exist, which is exactly Necropotence's case (the card
+sits in EXILE, having never touched the battlefield). Fixed by falling
+back to checking the owner's exile zone when no matching permanent is
+found, before giving up. Testing piece (2) surfaced a second real gap:
+`applyCycle` raised only a `"card-cycled"` event, never `"card-discarded"`,
+despite cycling being DEFINED as discarding the card as its cost (CR
+702.29a) — meaning every already-implemented "whenever you discard a
+card" effect in the catalog was silently missing cycling as a trigger
+source until now. Fixed by raising both events from the same site.
+Verified **+2** in the export count (10,276 → 10,278: Necropotence
+plus one other catalog card sharing matching wording); set coverage
+holds at 31.4%. Scenario-tested: the controller's mandatory draw is
+skipped for the turn; cycling a card (which now correctly counts as a
+discard) exiles it straight out of the graveyard once its trigger
+resolves; activating the pay-life ability exiles the (tracked) top
+card and costs exactly 1 life, and by the next end step that same
+card has moved from exile into hand. Validation: **804 rules tests**
+(4 new), `npm run check` across all four workspaces, `npx vitest run
+services/match-server/src` (5 passed), 10,278 global profiles, 200/200
+simulated games.
+
+Prossh decklist status after this pass: **83 of 97 unique cards fully
+implemented (85.6%)**.
+
+Body Snatcher ("When this creature enters, exile it unless you discard
+a creature card.\nWhen this creature dies, exile it and return target
+creature card from your graveyard to the battlefield.") bundles two
+independent triggers, each a genuinely new but self-contained
+primitive. The dies half reuses more than it builds: "return target
+creature card from your graveyard to the battlefield" was ALREADY a
+fully-supported effect; the only new piece is `{kind: "exile-source-
+from-graveyard"}` (the dying permanent's own card, now sitting in the
+graveyard, read from a new `TriggerInstance`-adjacent lookup at
+`object.trigger.sourceCard` rather than a target) combined with the
+existing effect via the ALREADY-GENERIC `"compound"` effect kind — no
+new compound machinery needed, since `compound` already applies every
+child effect against the same single target index by default. The ETB
+half is the genuinely new mechanism: CR 603.6c's "exile ~ unless you
+discard a creature card" is the exact same shape as the pre-existing
+`sacrificeUnlessPayment` ("sacrifice ~ unless you pay {cost}") — an
+`optional: true` trigger whose ACCEPT branch means "pay the cost to
+avoid the bad effect," not the effect itself — but with a discard cost
+instead of a mana cost, and exile instead of sacrifice as the fallback.
+Added a parallel `TriggerDefinition.unlessDiscardCreatureCard` field,
+a matching `PendingChoice["optional-trigger"].unlessDiscardCreatureCard`
+field, a new `discardCardId?: string` on the `choose-trigger` action,
+a `legalActions` branch offering one accept-and-discard action per
+creature card in hand plus one decline action, and an
+`applyChooseTrigger` branch mirroring `unlessPayCost`'s accept/decline
+handling exactly, just discarding a chosen card instead of paying mana
+on accept. Also added a plain `{kind: "exile-source-permanent"}` effect
+(the `sacrifice-source` pattern, with `movePermanentToZone(...,
+"exile")` instead of `"graveyard"`) for the decline branch. No `bot.ts`
+change was needed this time (unlike Exploit): the existing generic
+`"optional-trigger"` bot handler already picks the first available
+`accept` action when one exists, which correctly covers this new
+choice shape for free. Verified **+1** in the export count (10,278 →
+10,279); set coverage holds at 31.4%. Scenario-tested: declining the
+discard exiles Body Snatcher itself; discarding a chosen creature card
+keeps it on the battlefield; killing it with 3 damage (toughness 2)
+after choosing a target creature card in the graveyard exiles Body
+Snatcher (not to the graveyard) and reanimates the chosen card onto
+the battlefield. Validation: **808 rules tests** (4 new), `npm run
+check` across all four workspaces, `npx vitest run
+services/match-server/src` (5 passed), 10,279 global profiles, 200/200
+simulated games.
+
+Prossh decklist status after this pass: **84 of 97 unique cards fully
+implemented (86.6%)**.
+
+Tooth and Nail ("Choose one — Search your library for up to two
+creature cards, reveal them, put them into your hand, then shuffle. /
+Put up to two creature cards from your hand onto the battlefield.
+Entwine {2}.") needed exactly one new primitive: mode 1 (the search)
+and Entwine itself were both already fully supported by the existing
+modal/entwine machinery, confirmed by the probe showing mode 1's
+bullet text never appearing in `unimplementedText`. Added `{kind:
+"put-hand-creatures-onto-battlefield", amount}` for mode 2, resolved
+via a brand new `"hand-to-battlefield-multi"` `PendingChoice` modeled
+directly on `search-library-multi`'s shape (`optionIds`/`selectedIds`/
+a `finish` action) but simpler — no shuffle, no name-based query
+matching, since a controller's own hand is never hidden from them, so
+cards are chosen directly by `instance_id`. Wired the same way every
+interactive modal effect this session has been: a special-cased check
+in `resolveTop` (against `activatedEffect`, `selectedEffect`, or a
+bare `profile.effects` entry, exactly mirroring `multiSearch`'s three-
+way lookup) positioned before the generic `if (selectedEffect)`
+fallback that would otherwise resolve the effect as an inert no-op
+value with `applyEffect`'s deliberate `case "put-hand-creatures-onto-
+battlefield": return state;` and immediately retire the spell. Added a
+`bot.ts` handler up front this time (unlike Body Snatcher, learning
+from the Exploit lesson): a brand-new choice type never fits an
+existing generic bot fallback, so a stall was avoided proactively
+rather than discovered via a failing simulation. Testing this surfaced
+a THIRD real, previously-latent bug this session: the existing
+"up to N ... cards ... into your hand" search template (parsed via the
+already-existing `multiHand` regex, producing `kind: "search-library"`
+with `count > 1` and `destination: "hand"`) has been silently broken
+since before this session touched it — `applyChooseLibraryCard`, the
+completion handler for the single-slot `search-library` `PendingChoice`,
+has no counter field and always closes the choice after the FIRST
+pick regardless of `count`, so any "search for up to two X cards, put
+them into your hand" card only ever delivered one. Fixed by extending
+the pre-existing "up to N: fetch deterministically, skip the
+interactive choice" fast path (previously `battlefield`-only) to also
+cover `destination: "hand"`, matching the exact same non-interactive,
+first-N-matching-options policy already used for the battlefield case
+— consistent with this codebase's established simplification for
+"up to N" auto-fetches elsewhere. Verified **+1** in the export count
+(10,279 → 10,280); set coverage holds at 31.4%. NOTE: Entwine
+(choosing BOTH modes together) still inherits a pre-existing,
+independent limitation this session did not create or fix — an
+entwined pair's combined effect is wrapped as `{kind: "compound",
+effects: [mode1, mode2]}`, and EVERY interactive-choice special case in
+`resolveTop` (search-library, search-library-multi, and now this one)
+is matched by exact `kind`, never by unwrapping a `compound`, so an
+interactive mode entwined with anything silently no-ops when actually
+entwined. This affects any already-implemented entwined modal card
+with an interactive mode, not just this one; out of scope for this
+pass. Scenario-tested: casting with mode 2 lets the controller choose
+two named creature cards from hand to battlefield and sends Tooth and
+Nail to the graveyard; casting with mode 1 delivers both matching
+library cards to hand deterministically without an interactive prompt
+and does not put them on the battlefield. Validation: **811 rules
+tests** (3 new), `npm run check` across all four workspaces, `npx
+vitest run services/match-server/src` (5 passed), 10,280 global
+profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **85 of 97 unique cards fully
+implemented (87.6%)**.
+
+Hunting Wilds ("Kicker {3}{G}. Search your library for up to two
+Forest cards, put them onto the battlefield tapped, then shuffle. If
+this spell was kicked, untap all Forests put onto the battlefield this
+way. They become 3/3 green creatures with haste that are still
+lands.") needed exactly one new primitive: the base search was already
+fully supported (and, thanks to this session's own Tooth-and-Nail-era
+fix, now correctly delivers BOTH Forests instead of stopping after the
+first). The kicked-only follow-up is genuinely new but deliberately
+narrow in scope: a new `{kind: "untap-and-animate-fetched-lands",
+subtype, power, toughness, color}` `kickedEffect`, applied not to every
+matching land the controller owns but specifically to the exact
+permanents THIS search just placed — captured as a `Set` of their
+`card.instance_id`s right where the existing "up to N: fetch
+deterministically" battlefield fast path already loops over them, then
+consulted immediately after via `object.kicked &&
+profile.kickedEffects.find(...)`. Modeled the animation using the
+EXISTING `temporaryAnimation` field (`power`/`toughness`/`colors`/
+`types`/`subtypes`/`keywords`, cleared at cleanup per CR 613.6) rather
+than building a true continuous, permanent creature-type change — a
+DELIBERATE simplification, since a durable version would need
+`isCreaturePermanent` (and every P/T/combat-legality call site that
+already treats its bare presence as "is this a creature") to become
+state-aware of live devotion-style conditions, the exact wide-blast-
+radius risk this session has been avoiding for Purphoros/Xenagos God
+of Revels. This still delivers the card's practical payoff (attacking
+with hasty 3/3s the turn they're fetched) at a fraction of the risk;
+the fetched lands correctly revert to plain (untapped) lands at
+cleanup rather than staying 3/3 creatures into future turns, a known,
+acceptable gap. The Oracle text itself needed the SAME two-sentence
+lookahead-and-consume trick used for Eldritch Evolution and
+Necropotence earlier this session: "untap all Forests..." and "They
+become 3/3..." are two separate sentences by the time they reach the
+per-sentence loop (the naive first attempt tried to match them as one
+combined string captured directly from the `ifKicked` regex, which
+doesn't work — that regex only ever sees ONE sentence at a time, since
+the OUTER per-sentence splitter runs first). Fixed the same way: match
+the first sentence alone, then confirm and consume
+`sentences[sentenceIndex + 1]` before committing to the combined
+effect. Verified **+1** in the export count (10,280 → 10,281); set
+coverage holds at 31.4%. Scenario-tested: casting unkicked with two
+Forests in the library fetches both, tapped, with no `temporaryAnimation`;
+casting kicked (paying both the base and kicker costs) fetches both
+untapped, each carrying a 3/3 `temporaryAnimation` and the `haste`
+keyword. Validation: **814 rules tests** (3 new), `npm run check`
+across all four workspaces, `npx vitest run services/match-server/src`
+(5 passed), 10,281 global profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **86 of 97 unique cards fully
+implemented (88.7%)**.
