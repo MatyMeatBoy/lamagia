@@ -38,7 +38,7 @@ describe("smart counter response and safe mana undo", () => {
     game = putOnBattlefield(game, 0, [MOUNTAIN()]);
     game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
     game = applyAction(game, 0, { type: "cast", cardId: "stack-card-0", targets: [{ kind: "player", seat: 1 }] });
-    expect(projectGame(game, 1).stack[0]).toMatchObject({ kind: "spell", name: "Lightning Bolt", label: "Lightning Bolt", text: "Lightning Bolt deals 3 damage to any target." });
+    expect(projectGame(game, 1).stack[0]).toMatchObject({ kind: "spell", name: "Lightning Bolt", label: "Lightning Bolt", text: "Lightning Bolt deals 3 damage to any target.", targets: ["B"] });
   });
   it("keeps a public last-known target label after the target leaves", () => {
     let game = twoSeatGame([], []);
