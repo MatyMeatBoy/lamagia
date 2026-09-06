@@ -2440,6 +2440,7 @@ interface RecognizedText {
   entwineCost?: ManaCost | null;
   graftAmount?: number | null;
   devourAmount?: number | null;
+  hasUpkeepSacrificeDraw?: boolean;
   kickedEffects?: SpellEffect[];
   kickedKeywords?: EnforcedKeyword[];
   kickedEntersWithCounters?: CounterCost[];
@@ -4237,6 +4238,18 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  // "At the beginning of your upkeep, sacrifice a creature. Whenever you
+  // sacrifice a creature, draw a card." (Smothering Abomination): modeled as
+  // ONE synthesized upkeep trigger reusing the existing deterministic
+  // `sacrifice-own-creature-then-draw` effect, rather than two truly separate
+  // triggers linked by a generic "whenever you sacrifice a creature" event —
+  // that event would need raising from every cost-driven sacrifice site
+  // across the engine (activated costs, Exploit, Devour, ...), a far larger
+  // and riskier change than this card alone justifies. The trade-off: only
+  // THIS card's own upkeep sacrifice feeds its own draw; a sacrifice made
+  // some other way (an activated cost, Exploit, Devour) would not also
+  // trigger this draw, unlike the literal, fully generic printed wording.
+  const hasUpkeepSacrificeDraw = /at the beginning of your upkeep, sacrifice a creature\.\s*whenever you sacrifice a creature, draw a card\.?/i.test(joined);
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
   const decreeJoined = decreeBody.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   const aethermagesTouch = parseAethermagesTouch(joined);
@@ -4820,6 +4833,14 @@ function recognizeText(text: string): RecognizedText {
     if (/^changeling\.?$/i.test(line)) continue;
     // Storm remains a keyword-only marker until copy-count tracking is added.
     if (/^storm\.?$/i.test(line)) continue;
+    // Devoid (CR 702.135a) only strips color; `profile.colors` is already
+    // read from the card's own printed colors, unaffected by oracle text.
+    if (/^devoid\.?$/i.test(line)) continue;
+    // Smothering Abomination's two-line upkeep-sacrifice-then-draw pair is
+    // synthesized as one trigger below (see `hasUpkeepSacrificeDraw`); both
+    // printed lines are consumed here rather than parsed independently.
+    if (hasUpkeepSacrificeDraw && /^At the beginning of your upkeep, sacrifice a creature\.?$/i.test(line)) continue;
+    if (hasUpkeepSacrificeDraw && /^Whenever you sacrifice a creature, draw a card\.?$/i.test(line)) continue;
     // A deck-construction rule (CR 903.3), not an in-game effect.
     if (/^~ can be your commander\.?$/i.test(line)) continue;
     // Looking at your own top card any time changes no outcome the engine tracks.
@@ -5378,7 +5399,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, devourAmount, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5447,6 +5468,12 @@ export function cardProfile(card: CardData): CardProfile {
     event: "enters-battlefield", subject: "self",
     effect: { kind: "devour", multiplier: devourAmount },
     optional: false, targetKind: "none", sourceText: `Devour ${devourAmount}`
+  });
+  if (recognized.hasUpkeepSacrificeDraw) synthesizedTriggers.push({
+    event: "upkeep", subject: "you",
+    effect: { kind: "sacrifice-own-creature-then-draw", amount: 1 },
+    optional: false, targetKind: "none",
+    sourceText: "At the beginning of your upkeep, sacrifice a creature. Whenever you sacrifice a creature, draw a card."
   });
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);

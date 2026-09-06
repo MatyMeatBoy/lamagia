@@ -12182,6 +12182,35 @@ describe("Skullmulcher's Devour and the linked devoured-count draw", () => {
   });
 });
 
+describe("Smothering Abomination's upkeep sacrifice-then-draw", () => {
+  const SMOTHERING_ABOMINATION = () => make({
+    name: "Smothering Abomination", type_line: "Creature — Eldrazi", mana_cost: "{2}{B}{B}", cmc: 4, power: "3", toughness: "3",
+    keywords: ["Devoid", "Flying"],
+    oracle_text: "Devoid (This card has no color.)\nFlying\nAt the beginning of your upkeep, sacrifice a creature.\nWhenever you sacrifice a creature, draw a card."
+  });
+
+  it("recognizes the synthesized upkeep sacrifice-then-draw trigger and keeps Flying enforced", () => {
+    const profile = profileOf(SMOTHERING_ABOMINATION());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.keywords).toContain("flying");
+    expect(profile.triggers[0]).toMatchObject({ event: "upkeep", subject: "you", effect: { kind: "sacrifice-own-creature-then-draw", amount: 1 } });
+  });
+
+  it("sacrifices the least valuable creature and draws a card at the controller's own upkeep", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SMOTHERING_ABOMINATION(), BEAR()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const before = game.players[0]!.hand.length;
+    game = passUntil(game, (state) => state.activeSeat === 0 && state.step === "precombat-main" && state.turn > 1);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Smothering Abomination")).toBe(true);
+    // +1 from the ability's own draw, +1 from the normal draw step reached
+    // along the way to this turn's precombat main.
+    expect(game.players[0]!.hand.length).toBe(before + 2);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

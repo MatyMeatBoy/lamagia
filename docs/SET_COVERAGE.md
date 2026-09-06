@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,849** · cobertura: **32.8%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,871** · cobertura: **32.8%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -343,15 +343,15 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | 2015-07-17 | Magic Origins Promos (`PORI`) | promos | magic-origins | other | 43 | 8 | 35 | 18.6% |
 | 2015-08-21 | From the Vault: Angels (`V15`) | from-the-vault | 2010s | other | 15 | 5 | 10 | 33.3% |
 | 2015-08-28 | Duel Decks: Zendikar vs. Eldrazi (`DDP`) | duel-decks | duel-decks-zendikar-vs-eldrazi | other | 67 | 35 | 32 | 52.2% |
-| 2015-10-02 | Battle for Zendikar (`BFZ`) | expansion | zendikar | main | 254 | 87 | 167 | 34.3% |
-| 2015-10-02 | Battle for Zendikar Promos (`PBFZ`) | promos | battle-for-zendikar | other | 70 | 11 | 59 | 15.7% |
+| 2015-10-02 | Battle for Zendikar (`BFZ`) | expansion | zendikar | main | 254 | 91 | 163 | 35.8% |
+| 2015-10-02 | Battle for Zendikar Promos (`PBFZ`) | promos | battle-for-zendikar | other | 70 | 12 | 58 | 17.1% |
 | 2015-10-02 | BFZ Standard Series (`PSS1`) | promos | bfz-standard-series | other | 5 | 5 | 0 | 100.0% |
 | 2015-10-02 | Zendikar Expeditions (`EXP`) | masterpieces | zendikar-expeditions | other | 45 | 42 | 3 | 93.3% |
 | 2015-11-13 | Commander 2015 (`C15`) | commander | 2015 | commander | 327 | 149 | 178 | 45.6% |
 | 2015-11-18 | Legendary Cube Prize Pack (`PZ1`) | treasure-chest | 2010s | other | 149 | 62 | 87 | 41.6% |
 | 2016-01-01 | Friday Night Magic 2016 (`F16`) | promos | fnm-2016 | other | 12 | 6 | 6 | 50.0% |
 | 2016-01-01 | Judge Gift Cards 2016 (`J16`) | promos | judge-2016 | other | 8 | 3 | 5 | 37.5% |
-| 2016-01-22 | Oath of the Gatewatch (`OGW`) | expansion | 2010s | main | 183 | 39 | 144 | 21.3% |
+| 2016-01-22 | Oath of the Gatewatch (`OGW`) | expansion | 2010s | main | 183 | 48 | 135 | 26.2% |
 | 2016-01-22 | Oath of the Gatewatch Promos (`POGW`) | promos | oath-of-the-gatewatch | other | 55 | 2 | 53 | 3.6% |
 | 2016-02-26 | Duel Decks: Blessed vs. Cursed (`DDQ`) | duel-decks | duel-decks-blessed-vs-cursed | other | 67 | 23 | 44 | 34.3% |
 | 2016-04-08 | Shadows over Innistrad (`SOI`) | expansion | innistrad | main | 287 | 77 | 210 | 26.8% |
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 10 | 58 | 14.7% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1704 | 3517 | 32.6% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1707 | 3514 | 32.7% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 22 | 37 | 37.3% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 14 | 6 | 70.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 452 | 1244 | 26.7% |
@@ -613,7 +613,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | 2024-04-19 | Outlaws of Thunder Junction Promos (`POTJ`) | promos | outlaws-of-thunder-junction | other | 80 | 5 | 75 | 6.2% |
 | 2024-04-19 | The Big Score (`BIG`) | expansion | 2020s | main | 30 | 3 | 27 | 10.0% |
 | 2024-06-14 | Modern Horizons 2 Timeshifts (`H2R`) | supplemental | modern-horizons-2-timeshifts | other | 16 | 4 | 12 | 25.0% |
-| 2024-06-14 | Modern Horizons 3 (`MH3`) | supplemental | modern-horizons-3 | other | 313 | 58 | 255 | 18.5% |
+| 2024-06-14 | Modern Horizons 3 (`MH3`) | supplemental | modern-horizons-3 | other | 313 | 62 | 251 | 19.8% |
 | 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 2024 | commander | 320 | 115 | 205 | 35.9% |
 | 2024-06-14 | Modern Horizons 3 Promos (`PMH3`) | promos | modern-horizons-3 | other | 81 | 6 | 75 | 7.4% |
 | 2024-07-05 | Assassin's Creed (`ACR`) | supplemental | assassin-s-creed | other | 138 | 23 | 115 | 16.7% |
@@ -681,7 +681,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | teenage-mutant-ninja-turtles-source-material | other | 20 | 2 | 18 | 10.0% |
 | 2026-04-13 | MagicFest 2026 (`PF26`) | promos | magicfest-2026 | other | 13 | 8 | 5 | 61.5% |
 | 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 68 | 203 | 25.1% |
-| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 126 | 249 | 33.6% |
+| 2026-04-24 | Secrets of Strixhaven Commander (`SOC`) | commander | 2026 | commander | 375 | 127 | 248 | 33.9% |
 | 2026-04-24 | Secrets of Strixhaven Mystical Archive (`SOA`) | masterpieces | secrets-of-strixhaven-mystical-archive | other | 65 | 22 | 43 | 33.8% |
 | 2026-04-24 | Secrets of Strixhaven Promos (`PSOS`) | promos | secrets-of-strixhaven | other | 80 | 12 | 68 | 15.0% |
 | 2026-06-26 | Marvel Super Heroes (`MSH`) | expansion | 2020s | main | 281 | 54 | 227 | 19.2% |
@@ -753,7 +753,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | commander | 2023 | 6 | 1597 | 548 | 1049 | 34.3% |
 | commander | 2024 | 7 | 1887 | 701 | 1186 | 37.1% |
 | commander | 2025 | 4 | 1046 | 426 | 620 | 40.7% |
-| commander | 2026 | 6 | 1265 | 376 | 889 | 29.7% |
+| commander | 2026 | 6 | 1265 | 377 | 888 | 29.8% |
 | conspiracy | conspiracy | 2 | 211 | 57 | 154 | 27.0% |
 | conspiracy | conspiracy-take-the-crown | 1 | 221 | 72 | 149 | 32.6% |
 | core | 1990s | 10 | 3267 | 1386 | 1881 | 42.4% |
@@ -794,7 +794,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | eternal | 2020s | 6 | 537 | 152 | 385 | 28.3% |
 | expansion | 1990s | 11 | 1573 | 399 | 1174 | 25.4% |
 | expansion | 2000s | 19 | 3082 | 763 | 2319 | 24.8% |
-| expansion | 2010s | 14 | 2735 | 803 | 1932 | 29.4% |
+| expansion | 2010s | 14 | 2735 | 812 | 1923 | 29.7% |
 | expansion | 2020s | 17 | 3739 | 697 | 3042 | 18.6% |
 | expansion | alara | 2 | 379 | 165 | 214 | 43.5% |
 | expansion | amonkhet | 1 | 272 | 108 | 164 | 39.7% |
@@ -824,7 +824,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | expansion | thunder-junction | 1 | 276 | 48 | 228 | 17.4% |
 | expansion | time-spiral | 2 | 407 | 109 | 298 | 26.8% |
 | expansion | urza | 3 | 621 | 258 | 363 | 41.5% |
-| expansion | zendikar | 3 | 773 | 257 | 516 | 33.2% |
+| expansion | zendikar | 3 | 773 | 261 | 512 | 33.8% |
 | from-the-vault | 2000s | 2 | 30 | 13 | 17 | 43.3% |
 | from-the-vault | 2010s | 8 | 126 | 32 | 94 | 25.4% |
 | funny-special | 2016-heroes-of-the-realm | 1 | 3 | 0 | 3 | 0.0% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | masters-remastered | shadows-of-the-past | 1 | 76 | 30 | 46 | 39.5% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 69 | 215 | 24.3% |
 | masters-remastered | tempest-remastered | 1 | 254 | 110 | 144 | 43.3% |
-| masters-remastered | the-list | 1 | 5221 | 1704 | 3517 | 32.6% |
+| masters-remastered | the-list | 1 | 5221 | 1707 | 3514 | 32.7% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 119 | 294 | 28.8% |
 | masters-remastered | ultimate-masters | 1 | 254 | 99 | 155 | 39.0% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -933,7 +933,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | promos | avacyn-restored | 1 | 6 | 2 | 4 | 33.3% |
 | promos | avatar-the-last-airbender | 1 | 80 | 5 | 75 | 6.2% |
 | promos | battle-for-baldur-s-gate | 1 | 99 | 7 | 92 | 7.1% |
-| promos | battle-for-zendikar | 1 | 70 | 11 | 59 | 15.7% |
+| promos | battle-for-zendikar | 1 | 70 | 12 | 58 | 17.1% |
 | promos | battlebond | 1 | 22 | 5 | 17 | 22.7% |
 | promos | betrayers-of-kamigawa | 1 | 2 | 0 | 2 | 0.0% |
 | promos | bfz-standard-series | 1 | 5 | 5 | 0 | 100.0% |
@@ -1212,7 +1212,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 | supplemental | modern-horizons-1-timeshifts | 1 | 40 | 13 | 27 | 32.5% |
 | supplemental | modern-horizons-2 | 1 | 310 | 90 | 220 | 29.0% |
 | supplemental | modern-horizons-2-timeshifts | 1 | 16 | 4 | 12 | 25.0% |
-| supplemental | modern-horizons-3 | 1 | 313 | 58 | 255 | 18.5% |
+| supplemental | modern-horizons-3 | 1 | 313 | 62 | 251 | 19.8% |
 | supplemental | ravnica-clue-edition | 1 | 268 | 130 | 138 | 48.5% |
 | supplemental | the-lord-of-the-rings-tales-of-middle-earth | 1 | 291 | 34 | 257 | 11.7% |
 | treasure-chest | 2010s | 2 | 419 | 109 | 310 | 26.0% |
@@ -21783,7 +21783,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Guul Draz Overseer — `9eff1ce5-41e4-4ae6-9480-2b549c8546bd`
 - [ ] Halimar Tidecaller — `3aa709b5-0465-4103-aea1-8cfb15086f76`
 - [ ] Hedron Blade — `cf7ca005-410d-40c8-aae4-89f41f81848b`
-- [ ] Herald of Kozilek — `e1890cbc-b15b-44bc-b1c0-ca3d9fd6028a`
 - [ ] Hero of Goma Fada — `f15908ea-2be0-4035-933d-4412fe032164`
 - [ ] Horribly Awry — `9cac23a1-a0b3-490c-aea2-dc2928f6dc9e`
 - [ ] Incubator Drone — `088d63ec-bd5e-4e80-acf9-2af270a9b395`
@@ -21855,7 +21854,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Slab Hammer — `f353948c-b5f9-4840-a89a-19206dde9d47`
 - [ ] Sludge Crawler — `dd05294b-2c5b-48c2-a9f6-8a528baa3dff`
 - [ ] Smite the Monstrous — `649512ed-4908-450a-9652-b2c80df5e24d`
-- [ ] Smothering Abomination — `c3db28e5-6162-4642-a1c9-a7ace0737950`
 - [ ] Spawning Bed — `49e43de3-460b-4562-aef6-da43bd56debc`
 - [ ] Spell Shrivel — `bfaf376f-90f9-45d9-bfbe-dd84a2a4688b`
 - [ ] Stasis Snare — `6a83768e-672e-4fec-8931-853f5e96d43d`
@@ -21866,7 +21864,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Tajuru Stalwart — `ac87cc33-4a71-471b-917d-6a92721ea0b9`
 - [ ] Tajuru Warcaller — `8b89c6f1-8c9e-43ef-ad6b-11424de090e4`
 - [ ] Tandem Tactics — `e42cd4da-f049-4304-a16f-911769985e6c`
-- [ ] Tide Drifter — `428c18aa-b195-4cf2-a1a9-09723b26eb0a`
 - [ ] Tightening Coils — `71af7e54-e22d-4354-a35c-80e4e5f4031c`
 - [ ] Titan's Presence — `b011d6b2-8930-4192-aa94-82869faa991b`
 - [ ] Touch of the Void — `6b530534-5c02-4874-9256-501102ef8a5f`
@@ -21881,7 +21878,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Unified Front — `1f514b02-7827-4087-a6b7-bd6a3f520a64`
 - [ ] Unnatural Aggression — `597d1dce-67e8-4c37-9781-eeaeb7c2d7b7`
 - [ ] Vampiric Rites — `660de988-b6fb-4f36-8006-42af3e7f908d`
-- [ ] Vestige of Emrakul — `55187899-c445-48e9-80b9-235eaf42f803`
 - [ ] Veteran Warleader — `784bda96-5bc1-47bc-a69e-e38b047ed914`
 - [ ] Vile Aggregate — `4a6b254e-76fb-4712-ac34-5e26c311b2e4`
 - [ ] Void Attendant — `34f3ec68-871f-4b94-b497-04f71aea88c9`
@@ -21941,7 +21937,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Shambling Vent — `4725abd4-06bc-464a-bc5b-c9e0f71ec079`
 - [ ] Shrine of the Forsaken Gods — `8ea46945-d5ab-4209-b473-4769e7b8b962`
 - [ ] Sire of Stagnation — `ed6607f4-20ab-4d3f-a8af-bcc148423336`
-- [ ] Smothering Abomination — `c3db28e5-6162-4642-a1c9-a7ace0737950`
 - [ ] Stasis Snare — `6a83768e-672e-4fec-8931-853f5e96d43d`
 - [ ] Ugin's Insight — `ad7b9db0-e061-4360-9b81-0408d18d971d`
 - [ ] Ulamog, the Ceaseless Hunger — `0bfa4512-e35a-4c93-b324-80ec659f5a97`
@@ -22255,7 +22250,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Baloth Pup — `cb06cf58-3cc6-429a-9bb0-be4b1c53de30`
 - [ ] Bearer of Silence — `d69c8c55-6433-4cc5-bdc7-9722f121b8e2`
 - [ ] Birthing Hulk — `33899675-0de2-4adb-bf3f-55e18b493015`
-- [ ] Blinding Drone — `c924e240-02a0-46b5-b004-d5c42db277ec`
 - [ ] Bonds of Mortality — `d93ba2f2-bf9b-444b-adbb-3835662734e7`
 - [ ] Boulder Salvo — `16df20e2-5228-4543-84b7-74a3170d9d31`
 - [ ] Captain's Claws — `4cacd7de-83ac-4767-b6f2-f5a89f04a0b9`
@@ -22297,7 +22291,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Gravity Negator — `18dcf3db-d6c6-4780-a931-546e71a3ae3f`
 - [ ] Grip of the Roil — `c3c87292-2fc8-4759-b7b6-18a8b539b5d1`
 - [ ] Harvester Troll — `28c44f88-1d47-4894-86ce-4089bd761360`
-- [ ] Havoc Sower — `098e6926-4a6a-4bbb-96bc-1f35cc7982ae`
 - [ ] Hedron Alignment — `7cdc9df9-ac6c-49c7-a521-921588696b17`
 - [ ] Hissing Quagmire — `7fff5224-c002-4a32-86fe-9a4b18d78b50`
 - [ ] Immobilizer Eldrazi — `416f9656-9247-4ef2-971b-1515fc8e031b`
@@ -22313,14 +22306,12 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Kor Scythemaster — `21083222-12b6-4892-8078-1859140b7cc3`
 - [ ] Kozilek's Pathfinder — `de5a8edb-c41a-4f3a-9231-c54486ba7739`
 - [ ] Kozilek's Return — `6caafe5a-884d-49e8-a62a-7bf609f0ce53`
-- [ ] Kozilek's Shrieker — `b2b5683b-f8ea-4af6-b847-953ab4a267c4`
 - [ ] Kozilek's Translator — `6766c5e4-baa7-4db4-a900-c08fbcd98f5d`
 - [ ] Kozilek, the Great Distortion — `4c1c1537-e519-4e2f-9bc2-d34b289d4487`
 - [ ] Lead by Example — `9a50418c-3cdc-4e3e-b02c-6da646093120`
 - [ ] Linvala, the Preserver — `64f5689d-504d-40e9-bdb5-36dcefd257e2`
 - [ ] Malakir Soothsayer — `6ebfce76-82a2-4168-bd64-99cf16882dee`
 - [ ] Matter Reshaper — `38538aff-b6f9-4c30-992e-7fd78da3c44a`
-- [ ] Maw of Kozilek — `11b529f0-e365-4500-b54a-44e2ac6e709f`
 - [ ] Mina and Denn, Wildborn — `e091718c-0c26-46d9-b694-f95effbac3e5`
 - [ ] Mindmelter — `dbcceed6-51a9-4ab4-b9a8-d65140661195`
 - [ ] Mirrorpool — `57b86d5c-3269-44bc-a838-3c5439d820d9`
@@ -22335,14 +22326,11 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Oath of Gideon — `ea168acc-22a1-4ba5-affd-fb813b93535a`
 - [ ] Oath of Jace — `dc92b420-8ac7-4478-a287-3d897357be08`
 - [ ] Oath of Nissa — `c4efdbab-711d-4269-9b24-b05d36f7e5c7`
-- [ ] Oblivion Strike — `ad3564f5-11f7-456b-8881-4db00a18a2ed`
 - [ ] Ondu War Cleric — `d011153e-d12a-4eb1-b105-64729e37be12`
 - [ ] Overwhelming Denial — `45aa8bdb-54da-4069-bd6c-c63396154464`
 - [ ] Press into Service — `a729a684-9171-4ca9-83ad-1d199afad7bb`
-- [ ] Prophet of Distortion — `6bc82093-0246-4c60-bf30-0b605bef01cd`
 - [ ] Pulse of Murasa — `d5b446a4-a761-42f0-acf0-ea0a1a9538d6`
 - [ ] Pyromancer's Assault — `87038d1b-0fa9-4604-b119-1de56db30144`
-- [ ] Reality Hemorrhage — `21465dcd-c93a-4a2c-ae10-e22ebd5cae2f`
 - [ ] Reality Smasher — `17c651c7-da4e-45e9-9a64-fad3e873123d`
 - [ ] Reaver Drone — `6dd887be-484b-4ecc-8c02-8cce7e43ec89`
 - [ ] Reckless Bushwhacker — `4fb83127-00cf-4ce7-aedf-cb0b2740c66f`
@@ -22360,7 +22348,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Shoulder to Shoulder — `4ffa7cc8-4774-430d-b898-5bd26366e124`
 - [ ] Sifter of Skulls — `688e5e19-8f28-45c4-ace4-a38144f494f1`
 - [ ] Sky Scourer — `d816df03-c79b-4c63-913f-41b38afc173c`
-- [ ] Slaughter Drone — `047e09c0-cbd9-45ba-9729-bf35ebe24e69`
 - [ ] Slip Through Space — `2516949d-75bb-4aea-a41d-0298bb129471`
 - [ ] Sparkmage's Gambit — `c8df3d1f-130e-4391-9bec-3f2d345a13fb`
 - [ ] Spawnbinder Mage — `2d49c50b-3e2d-4e74-9b8a-c2f9a495e470`
@@ -22377,7 +22364,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Thought-Knot Seer — `cef7396d-2168-4282-bf38-670ca9eebd91`
 - [ ] Tyrant of Valakut — `a4ddd9e2-ea59-4bba-bb2f-a655cabbb65c`
 - [ ] Unity of Purpose — `9fbcae6e-5523-47a3-b0ff-ab7a8bb72822`
-- [ ] Unnatural Endurance — `63701aa6-d3b8-4af2-96a4-2dec27d6a661`
 - [ ] Vile Redeemer — `a7a88bcc-eac2-4f74-804f-b49d16560184`
 - [ ] Vines of the Recluse — `5372445b-5f67-435e-a736-61c6cb4f9c6e`
 - [ ] Visions of Brutality — `66553485-4e9d-4049-9e80-3ac903f8127a`
@@ -30473,7 +30459,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Empyrean Eagle — `270d14b2-07bc-46bc-918f-658102265ccf`
 - [ ] Empyrial Armor — `ec9e8611-e785-4d5d-b6e1-bf63daf408df`
 - [ ] Emrakul's Hatcher — `1ee811fb-c25d-4cf5-b396-539c36e8f90f`
-- [ ] Emrakul's Messenger — `f1409c9e-f0d9-49e1-b02e-d0f04a658331`
 - [ ] Emrakul, the Aeons Torn — `900ca697-ad38-4b2b-bc74-2ff7eb6ea951`
 - [ ] Enchanted Carriage — `4f4a3c9e-80c4-4fa1-940d-2c57065901a3`
 - [ ] Enchanted Evening — `c56ea5ce-c8de-46c2-a8dd-bdd41467a28c`
@@ -31639,7 +31624,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Obelisk Spider — `f7289e62-ce5e-4f11-8d64-9fb62531b578`
 - [ ] Obliterate — `47496941-8007-45a0-a981-76c683cbddc1`
 - [ ] Oblivion Ring — `bd9b9772-f5f9-4c6b-913e-7193bea5d0a7`
-- [ ] Oblivion Strike — `ad3564f5-11f7-456b-8881-4db00a18a2ed`
 - [ ] Ochran Assassin — `ef6ecb67-7e49-4d40-84f2-1e7c02960a0d`
 - [ ] Octopus Umbra — `6d2ce0ba-f2ff-4c2b-ba85-f6c011ebda6c`
 - [ ] Odds // Ends — `82922f3a-a444-49cf-b136-f30a3c85f791`
@@ -31938,7 +31922,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Ravnica at War — `0012bc78-e69d-4a67-a302-e5fe0dfd4407`
 - [ ] Rayne, Academy Chancellor — `6933a7bf-10ed-46c8-a49c-ce200bce3eea`
 - [ ] Read the Runes — `74316be1-041f-4a2e-a296-0b496f90ca25`
-- [ ] Reality Hemorrhage — `21465dcd-c93a-4a2c-ae10-e22ebd5cae2f`
 - [ ] Reality Scramble — `afad2e76-4b53-4884-8f96-ba68b0808990`
 - [ ] Reality Shift — `70dc830e-d05b-4fc7-88dd-879e140b3fbf`
 - [ ] Realmbreaker, the Invasion Tree — `77398866-eebb-4091-b566-7726f8194a59`
@@ -51370,7 +51353,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Electrozoa — `202091b2-9e08-47c1-9099-628b21d8ac12`
 - [ ] Emissary of Soulfire — `bdacd7a4-3d14-45eb-85a6-33ee711b34af`
 - [ ] Emperor of Bones — `cb70a360-898e-443a-b053-38e35ea2baa2`
-- [ ] Emrakul's Messenger — `f1409c9e-f0d9-49e1-b02e-d0f04a658331`
 - [ ] Emrakul, the World Anew — `33300e69-29f6-41e4-92ab-82d8b018b217`
 - [ ] Envoy of the Ancestors — `678ef5e4-800d-4d3a-8761-2abaad70e0c9`
 - [ ] Essence Reliquary — `528039f3-e8e6-499d-add4-43cf2d731b65`
@@ -51502,11 +51484,9 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Skittering Precursor — `7b1519b1-665c-47b8-8f96-0027410ed81c`
 - [ ] Skoa, Embermage — `0e49ee63-a293-4b33-98cc-ebdcc2c64e82`
 - [ ] Smelted Chargebug — `8bc30bd5-554e-4fcf-9dec-c7634921858a`
-- [ ] Snapping Voidcraw — `e495033b-f727-41e3-b7fc-7f5fa8abdd87`
 - [ ] Sneaky Snacker — `f255492e-4e12-48b4-9c19-8a2a2780a1b7`
 - [ ] Sorin of House Markov // Sorin, Ravenous Neonate — `84e84532-498b-40ea-9510-46fb2403939b`
 - [ ] Sowing Mycospawn — `63a19c7c-49d7-4b75-aac8-d0ff36c45fb8`
-- [ ] Spawn-Gang Commander — `3641ceef-4f26-4647-ac12-c958524d68ca`
 - [ ] Springheart Nantuko — `8a3ad2ef-8bcb-40c0-85de-f03328c2b644`
 - [ ] Spymaster's Vault — `69ddca4b-5cc0-45f3-b2e6-a047c8d601be`
 - [ ] Static Prison — `b1bc8e58-ea4f-46a9-b833-d780cf6758b3`
@@ -51538,7 +51518,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Utter Insignificance — `44074791-da32-498b-879f-22192b94a9b0`
 - [ ] Vexing Bauble — `4514777d-0589-4631-978b-ff244167c176`
 - [ ] Victimize — `240e85d3-e495-4877-8609-4b4056c402f7`
-- [ ] Voidpouncer — `bb4ebe30-2501-48aa-879a-2402a9eb1be7`
 - [ ] Volatile Stormdrake — `08d64b16-9221-4532-890c-d5cdbf181e28`
 - [ ] Voltstorm Angel — `836609f7-48b8-47b0-9af6-94150b048251`
 - [ ] Warped Tusker — `0a994401-d37c-4e30-9410-422e7ae5a715`
@@ -58944,7 +58923,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **27,84
 - [ ] Shielded by Faith — `79085dea-8daa-41c0-a975-61e3e6da2e26`
 - [ ] Silkguard — `6dbeeb49-55c6-4ceb-94dd-3e4110dff8c0`
 - [ ] Skyclave Apparition — `d90af00a-d322-4265-9954-7b1e80702e18`
-- [ ] Smothering Abomination — `c3db28e5-6162-4642-a1c9-a7ace0737950`
 - [ ] Songbirds' Blessing — `2598294c-a9a7-4bef-a562-23f297a80536`
 - [ ] Spirit of Resilience — `ddc85b23-113a-46e9-ab09-fae9312c72fa`
 - [ ] Springbloom Druid — `788a4896-3414-40bf-b391-d2efea2fb5f9`

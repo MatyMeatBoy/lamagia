@@ -5433,3 +5433,66 @@ passed), 10,797 global profiles, 200/200 simulated games.
 
 Prossh decklist status after this pass: **88 of 97 unique cards fully
 implemented (90.7%)**.
+
+[Merge note: this session's branch merged `origin/feat/activated-abilities-and-triggers` twice more at this point (resolving one real conflict in `Permanent`'s interface — kept both `devouredCount` and another worker's `temporaryAbilitiesRemoved` field side by side — plus trivial generated-file conflicts in `docs/SET_COVERAGE.md` each time, regenerated afterward). The export count moved from 10,797 to 10,798 as part of that merge tail, not from any primitive built here — the delta below (10,798 → 10,815) is this session's own work again.]
+
+Smothering Abomination ("Devoid (This card has no color.)\nFlying\nAt
+the beginning of your upkeep, sacrifice a creature.\nWhenever you
+sacrifice a creature, draw a card.") was re-examined with fresh eyes
+after Exploit and Devour both turned out more tractable than their
+initial "needs generic infrastructure" assessment — and, like those
+two, a genuinely well-contained design was found. The card's SECOND
+line ("whenever you sacrifice a creature, draw a card") is, taken
+completely literally, a truly generic event that would need raising
+from every cost-driven sacrifice call site in the engine — a grep for
+"sacrifica" across `engine.ts` turned up 38 occurrences, an order of
+magnitude past the "7+ raise sites" that already ruled out a similar
+generic event for Eternal Scourge earlier this session. Rather than
+building that, the two printed lines were fused into ONE synthesized
+`upkeep`/`you` trigger reusing the EXISTING, already-deterministic
+`{kind: "sacrifice-own-creature-then-draw", amount}` effect (previously
+only used wrapped inside `you-and-opponent-each` for a symmetric
+spell) — a card-specific compound rather than a true generic event,
+matching this session's established practice (Body Snatcher's
+compound dies-effect, Devour's two-trigger design) of finding the
+narrowest change that delivers the CARD's own correct behavior.
+DOCUMENTED TRADE-OFF: only this card's own upkeep sacrifice feeds its
+own draw; a creature sacrificed some OTHER way (an activated cost,
+Exploit, Devour) would not also trigger this specific draw, unlike the
+fully literal, generic printed wording — judged an acceptable,
+narrow gap against building the 38-site generic event. The two-line
+fusion needed a NEW recognition mechanism, since the existing per-
+SENTENCE lookahead (Eldritch Evolution, Necropotence, Hunting Wilds)
+only spans two sentences on the SAME printed line — here the split is
+across two separate NEWLINE-delimited LINES with two different trigger
+CONDITIONS ("at the beginning of your upkeep" vs. "whenever you
+sacrifice"), which the sentence-level mechanism can't reach at all.
+Instead, reused the EXISTING `joined` variable (the whole card's
+oracle text with every line concatenated into one string, already used
+for several other whole-card special-case patterns like Kirtar's Wrath
+and Kaho-style decree checks) to detect the pairing with one boundary-
+free `.test()` check, then skip BOTH individual lines in the normal
+per-line loop (guarded by that same boolean, so a card printing "sacrifice
+a creature" WITHOUT the matching draw line is never silently
+misclaimed) and synthesize the combined trigger separately — the exact
+two-site pattern (line-skip plus an outer synthesis step reading a
+returned flag) already used for Graft/Devour, just keyed off a
+sentence-pair match instead of a numbered keyword line. Also added a
+bare "Devoid" keyword-line skip (CR 702.135a: Devoid only strips
+color, and `profile.colors` is already read from the card's own
+printed colors independent of oracle-text parsing, so nothing else
+was needed) — this ONE skip line unexpectedly accounted for MOST of
+this pass's export jump, since it was blocking every other Devoid card
+in the catalog whose remaining text was otherwise already fully
+supported. Verified **+17** in the export count (10,798 → 10,815); set
+coverage holds at 32.8%. Scenario-tested: the synthesized trigger and
+`flying` keyword both parse correctly; at the controller's own upkeep,
+the worse of two creatures (a plain Grizzly Bears, versus Smothering
+Abomination's own 3/3) is sacrificed and a card is drawn, while
+Smothering Abomination itself survives. Validation: **849 rules
+tests** (2 new), `npm run check` across all four workspaces, `npx
+vitest run services/match-server/src` (6 passed), 10,815 global
+profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **89 of 97 unique cards fully
+implemented (91.8%)**.
