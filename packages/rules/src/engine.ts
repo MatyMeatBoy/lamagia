@@ -1869,6 +1869,14 @@ function staticEntryCountersFor(state: GameState, seat: SeatId, profile: CardPro
     .map((grant) => ({ kind: grant.counter, amount: grant.amount }));
 }
 
+/** Applies active Primal Vigor-style replacement effects to creature counters. */
+function creatureCounterAmount(state: GameState, permanent: Permanent, counter: string, amount: number): number {
+  if (amount <= 0 || counter !== "+1/+1" || !isCreature(cardProfile(permanent.card))) return amount;
+  const doubled = allPermanents(state).some((source) => !permanentLosesAbilities(state, source)
+    && cardProfile(source.card).doublesCreatureCounters);
+  return doubled ? amount * 2 : amount;
+}
+
 function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = [], additionalCounters: readonly CounterCost[] = []): GameState {
   const enteringCard = uniqueTokenCard(state, card);
   const profile = cardProfile(enteringCard);
@@ -1879,7 +1887,12 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
   const enters = forceTapped ? { tapped: true, lifeCost: 0 } : printed;
   const counters: Record<string, number> = Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount]));
   if (isCommander && commanderEntryCounters > 0) counters["+1/+1"] = commanderEntryCounters;
-  for (const counter of entryAdditionalCounters) counters[counter.kind] = (counters[counter.kind] ?? 0) + counter.amount;
+  const doublesEntryCounters = isCreature(profile) && allPermanents(state).some((source) => !permanentLosesAbilities(state, source)
+    && cardProfile(source.card).doublesCreatureCounters);
+  for (const counter of entryAdditionalCounters) {
+    const amount = doublesEntryCounters && counter.kind === "+1/+1" ? counter.amount * 2 : counter.amount;
+    counters[counter.kind] = (counters[counter.kind] ?? 0) + amount;
+  }
   const permanent: Permanent = {
     instance_id: enteringCard.instance_id,
     card: enteringCard,
@@ -4051,7 +4064,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return withPlayer(state, permanent.controller, (player) => ({
         ...player,
         battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
-          ? { ...candidate, counters: { ...candidate.counters, [effect.counter]: (candidate.counters[effect.counter] ?? 0) + count } }
+          ? { ...candidate, counters: { ...candidate.counters, [effect.counter]: (candidate.counters[effect.counter] ?? 0) + creatureCounterAmount(state, candidate, effect.counter, count) } }
           : candidate)
       }));
     }
@@ -4067,7 +4080,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
               ...candidate,
               counters: {
                 ...candidate.counters,
-                [effect.counter]: (candidate.counters[effect.counter] ?? 0) + effect.amount
+                [effect.counter]: (candidate.counters[effect.counter] ?? 0) + creatureCounterAmount(state, candidate, effect.counter, effect.amount)
               }
             }
           : candidate)
