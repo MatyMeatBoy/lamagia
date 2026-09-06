@@ -97,18 +97,42 @@ h1, h2, h3 { margin: 0; }
 }
 .phase-rail::-webkit-scrollbar { display: none; }
 .phase-step {
-  position: relative; flex: 0 0 auto; padding: 3px 9px; border-radius: 99px;
-  background: transparent; border: 1px solid transparent;
+  flex: 0 0 auto; padding: 3px 9px; border-radius: 99px;
   color: var(--text-faint); font-size: .62rem; white-space: nowrap;
-  cursor: pointer;
 }
-.phase-step i { position: absolute; top: -3px; left: 50%; width: 0; height: 0; transform: translateX(-50%); border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #050906; filter: drop-shadow(0 0 1px #6b7b70); }
-.phase-step.stopped i { border-top-color: #f5f5f5; filter: drop-shadow(0 0 1px #fff); }
-.phase-step:hover { color: var(--text); border-color: var(--line-soft); }
-.phase-step:disabled { cursor: default; }
-.phase-step.done { color: var(--text-faint); opacity: .55; }
-.phase-step.current { border-color: var(--gold-dim); background: #3a2f13; color: var(--gold); font-weight: 700; }
+.phase-step.done { opacity: .55; }
+.phase-step.current { background: #3a2f13; color: var(--gold); font-weight: 700; }
 .phase-rail .spacer { flex: 1; }
+
+/* Priority bar (MTGO-style phase stops), centred between the pods -------- */
+.priority-bar {
+  --stop-off: #47564c; --stop-on: #f2f2f2;
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  padding: 2px 12px 3px;
+  background: #060f0ae8; border-block: 1px solid var(--line-soft);
+}
+.priority-autopass { display: flex; align-items: center; gap: 5px; color: var(--text-dim); font-size: .62rem; white-space: nowrap; }
+.priority-phases { display: grid; gap: 0; width: min(760px, 72vw); }
+.priority-phases .stop-row,
+.priority-phases .phase-track { display: grid; grid-template-columns: repeat(12, 1fr); }
+.phase-cell {
+  text-align: center; font-size: .5rem; line-height: 1.1; color: var(--text-faint);
+  padding: 1px 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.phase-cell.current { color: var(--gold); font-weight: 700; }
+.stop-tri { position: relative; height: 10px; padding: 0; border: 0; background: none; cursor: pointer; }
+.stop-tri::after {
+  content: ""; position: absolute; left: 50%; transform: translateX(-50%);
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+}
+.stop-tri.stop-opponents::after { bottom: 0; border-bottom: 7px solid var(--stop-off); }
+.stop-tri.stop-mine::after { top: 0; border-top: 7px solid var(--stop-off); }
+.stop-tri.on.stop-opponents::after { border-bottom-color: var(--stop-on); }
+.stop-tri.on.stop-mine::after { border-top-color: var(--stop-on); }
+.stop-tri:hover::after { filter: brightness(1.5); }
+.stop-row.live .stop-tri.on::after { filter: drop-shadow(0 0 3px #ffffffaa); }
+.stop-row:not(.live) { opacity: .62; }
 .phase-turn {
   flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 4px;
   padding-right: 8px; margin-right: 4px; border-right: 1px solid var(--line-soft);

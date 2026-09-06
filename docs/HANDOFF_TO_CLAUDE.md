@@ -8,6 +8,20 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 Batch of player-reported gameplay/UX fixes. Landed so far:
 
+- **MTGO-style priority bar.** New `priorityBarHtml()` renders a centred bar
+  between the opponents' band and the local board (inside `.table`, after the
+  combat bar). It carries the Auto-pasar toggle (moved out of the dock) and a
+  phase track with **two rows of stop triangles** — pointing up toward the
+  opponents (a stop on their turns) and down toward the local player (a stop on
+  your turns). `ui.stops` is now `{ mine, opponents }` (localStorage
+  `prossh.stops.v2`, migrating the old single list); `autoPassForPhase` selects
+  the set by `view.activeSeat === view.viewerSeat`. Defaults match MTGO
+  factory settings (`DEFAULT_STOPS`). The old per-phase-button stop toggles and
+  right-click stop menu on the top rail are gone; the top rail is now a plain
+  phase indicator. Verified in the running client: bar sits between the pods,
+  triangles toggle and persist, the active-turn row is emphasised.
+
+
 - **Zone chips use TCG icons.** `apps/client/src/zones.ts` holds five original
   24×24 stroke glyphs (deck, fanned hand, headstone, exile rift, crown) drawn
   in the same discipline as `abilities.ts`. `zoneChipHtml()` renders icon +

@@ -88,11 +88,32 @@ interface UiState {
   stackDetail: string | null;
   /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
   layout: "auto" | "mobile";
-  /** MTGO-style phase stops for the local seat. */
-  stops: Set<TurnStep>;
-  stopMenu: { x: number; y: number; step: TurnStep } | null;
+  /** MTGO-style phase stops, kept separately for the local seat's turns and for opponents' turns. */
+  stops: { mine: Set<TurnStep>; opponents: Set<TurnStep> };
   /** Version at which the player dismissed the non-mandatory decision overlay. */
   dismissedDecisionVersion: number | null;
+}
+
+type StopScope = "mine" | "opponents";
+
+/** MTGO factory-default stops. */
+const DEFAULT_STOPS: Record<StopScope, TurnStep[]> = {
+  mine: ["precombat-main", "begin-combat", "declare-attackers", "declare-blockers", "postcombat-main", "end"],
+  opponents: ["upkeep", "declare-attackers", "declare-blockers", "end"]
+};
+
+function loadStops(): { mine: Set<TurnStep>; opponents: Set<TurnStep> } {
+  try {
+    const v2 = window.localStorage.getItem("prossh.stops.v2");
+    if (v2) {
+      const parsed = JSON.parse(v2) as { mine: TurnStep[]; opponents: TurnStep[] };
+      return { mine: new Set(parsed.mine ?? DEFAULT_STOPS.mine), opponents: new Set(parsed.opponents ?? DEFAULT_STOPS.opponents) };
+    }
+    // Migrate the single legacy list into both scopes.
+    const legacy = JSON.parse(window.localStorage.getItem("prossh.stops") ?? "null") as TurnStep[] | null;
+    if (legacy) return { mine: new Set(legacy), opponents: new Set(legacy) };
+  } catch { /* fall through to defaults */ }
+  return { mine: new Set(DEFAULT_STOPS.mine), opponents: new Set(DEFAULT_STOPS.opponents) };
 }
 
 let session: MatchSession | null = null;
@@ -110,17 +131,25 @@ const ui: UiState = {
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
   actionsOpen: false,
   layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
-  ,stops: new Set<TurnStep>(JSON.parse(window.localStorage.getItem("prossh.stops") ?? "null") ?? ["upkeep", "draw", "precombat-main", "declare-attackers", "declare-blockers", "combat-damage", "end", "cleanup"]),
-  stopMenu: null,
+  ,stops: loadStops(),
   dismissedDecisionVersion: null
 };
 
 function persistStops(): void {
-  window.localStorage.setItem("prossh.stops", JSON.stringify([...ui.stops]));
+  window.localStorage.setItem("prossh.stops.v2", JSON.stringify({ mine: [...ui.stops.mine], opponents: [...ui.stops.opponents] }));
+}
+
+function toggleStop(scope: StopScope, step: TurnStep): void {
+  const set = ui.stops[scope];
+  if (set.has(step)) set.delete(step); else set.add(step);
+  persistStops();
+  render();
 }
 
 function autoPassForPhase(): boolean {
-  if (!ui.autoPass || ui.stops.has(view?.step ?? "cleanup") || !view) return false;
+  if (!ui.autoPass || !view) return false;
+  const scope: StopScope = view.activeSeat === view.viewerSeat ? "mine" : "opponents";
+  if (ui.stops[scope].has(view.step)) return false;
   // Smart pass is only a priority convenience. Any player-owned decision,
   // target selection, combat declaration, or legal response must keep the
   // decision surface under human control (MTGO-style yield semantics).
@@ -148,10 +177,36 @@ function phaseRailHtml(): string {
     : `<span class="phase-turn"><b>Turno ${view!.turn}</b></span>`;
   return `<nav class="phase-rail mtgo-phase-rail" aria-label="Fases del turno">
     ${turnReadout}
-    ${STEP_ORDER.map((step, index) => `<button class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}${ui.stops.has(step) ? " stopped" : ""}" type="button" data-phase-stop="${step}" title="${ui.stops.has(step) ? "Quitar stopper" : "Añadir stopper"}: ${STEP_LABELS[step]}"${view!.finished ? " disabled" : ""}><i aria-hidden="true"></i>${escapeHtml(STEP_LABELS[step])}</button>`).join("")}
+    ${STEP_ORDER.map((step, index) => `<span class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}
     <span class="spacer"></span>
     ${priorityReadout}
   </nav>`;
+}
+
+/**
+ * MTGO-style priority bar between the opponents' band and the local board.
+ * Each phase carries two stop triangles: one pointing up toward the opponents
+ * (a stop on their turns) and one pointing down toward the local player (a stop
+ * on your turns). The row that applies to the current turn is emphasised.
+ */
+function priorityBarHtml(): string {
+  if (!view || view.finished) return "";
+  const activeScope: StopScope = view.activeSeat === view.viewerSeat ? "mine" : "opponents";
+  const cell = (step: TurnStep, scope: StopScope): string => {
+    const on = ui.stops[scope].has(step);
+    const dirLabel = scope === "opponents" ? "turnos rivales" : "tu turno";
+    return `<button class="stop-tri stop-${scope}${on ? " on" : ""}${scope === activeScope ? " live" : ""}" type="button"
+      data-stop-scope="${scope}" data-stop-step="${step}"
+      aria-pressed="${on}" title="${on ? "Quitar parada" : "Parar"} en ${STEP_LABELS[step]} · ${dirLabel}"></button>`;
+  };
+  return `<div class="priority-bar" role="group" aria-label="Paradas de fase">
+    <label class="priority-autopass"><input id="auto-pass-bar" type="checkbox" ${ui.autoPass ? "checked" : ""}/><span>Auto-pasar</span></label>
+    <div class="priority-phases">
+      <div class="stop-row stop-row-opponents${activeScope === "opponents" ? " live" : ""}" aria-label="Paradas en turnos rivales">${STEP_ORDER.map((step) => cell(step, "opponents")).join("")}</div>
+      <div class="phase-track">${STEP_ORDER.map((step) => `<span class="phase-cell${step === view!.step ? " current" : ""}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}</div>
+      <div class="stop-row stop-row-mine${activeScope === "mine" ? " live" : ""}" aria-label="Paradas en tu turno">${STEP_ORDER.map((step) => cell(step, "mine")).join("")}</div>
+    </div>
+  </div>`;
 }
 
 interface CardDragState {
@@ -347,7 +402,6 @@ function returnToMain(): void {
   view = null;
   window.sessionStorage.removeItem("prossh.match");
   ui.pendingTarget = null;
-  ui.stopMenu = null;
   ui.notice = "";
   render();
 }
@@ -447,7 +501,6 @@ function applyView(next: GameView): void {
   ui.abilityMenu = null;
   ui.cardActionMenu = null;
   ui.contextMenu = null;
-  ui.stopMenu = null;
   ui.stackDetail = next.stack.some((object) => object.id === ui.stackDetail) ? ui.stackDetail : null;
   ui.showFullLibrary = false;
   if (!next.combat.awaitingAttackers) ui.attackers.clear();
@@ -1344,6 +1397,7 @@ function render(): void {
       <p class="rotate-hint">Gira el dispositivo: la mesa está pensada para horizontal.</p>
       <section class="opponent-row seats-${opponents.length}" aria-label="Campos de los oponentes">${opponents.map(seatPanelHtml).join("")}</section>
       ${combatBarHtml()}
+      ${priorityBarHtml()}
       <section class="self-area" aria-label="Tu campo de batalla">
         <div class="self-board">${boardHtml(me, true)}</div>
         <div class="self-dock">
@@ -1372,7 +1426,6 @@ function render(): void {
             ${ui.pendingTarget ? `<button id="cancel-target" class="text-button">Cancelar objetivo</button>` : ""}
             ${view.undoAvailable ? `<button id="undo" class="text-button" title="Deshacer la última activación de maná">Deshacer</button>` : ""}
             <button id="pass" class="primary-button" ${pass ? "" : "disabled"}>${escapeHtml(pass?.label ?? "Sin prioridad")}<kbd>Espacio</kbd></button>
-    <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar</label>
           </div>
         </div>
       </section>
@@ -1388,9 +1441,6 @@ function render(): void {
   ${stackPanelHtml()}
   ${ui.contextMenu && view.undoAvailable ? `<div class="context-menu" style="left:${ui.contextMenu.x}px;top:${ui.contextMenu.y}px" role="menu">
     <button id="context-undo" type="button">Deshacer última acción de maná</button>
-  </div>` : ""}
-  ${ui.stopMenu ? `<div class="context-menu phase-stop-menu" style="left:${ui.stopMenu.x}px;top:${ui.stopMenu.y}px" role="menu">
-    <button id="toggle-phase-stop" type="button">${ui.stops.has(ui.stopMenu.step) ? "Quitar stopper" : "Añadir stopper"}: ${escapeHtml(STEP_LABELS[ui.stopMenu.step])}</button>
   </div>` : ""}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
@@ -1488,29 +1538,10 @@ function wireBoard(): void {
   });
   on("#undo", () => void undoLatestMana());
   on("#context-undo", () => { ui.contextMenu = null; void undoLatestMana(); });
-  on("#toggle-phase-stop", () => {
-    const step = ui.stopMenu?.step;
-    if (!step) return;
-    if (ui.stops.has(step)) ui.stops.delete(step); else ui.stops.add(step);
-    persistStops();
-    ui.stopMenu = null;
-    render();
-  });
-  document.querySelectorAll<HTMLButtonElement>("[data-phase-stop]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (button.disabled) return;
-      const step = button.dataset.phaseStop as TurnStep;
-      if (ui.stops.has(step)) ui.stops.delete(step); else ui.stops.add(step);
-      persistStops();
-      render();
-    });
-    button.addEventListener("contextmenu", (event) => {
-      if (button.disabled) return;
-      event.preventDefault();
-      ui.stopMenu = { x: Math.min(event.clientX, Math.max(8, window.innerWidth - 250)), y: Math.min(event.clientY, Math.max(8, window.innerHeight - 58)), step: button.dataset.phaseStop as TurnStep };
-      render();
-    });
-  });
+  document.querySelectorAll<HTMLButtonElement>("[data-stop-scope]").forEach((button) =>
+    button.addEventListener("click", () => toggleStop(button.dataset.stopScope as StopScope, button.dataset.stopStep as TurnStep)));
+  document.querySelector<HTMLInputElement>("#auto-pass-bar")?.addEventListener("change", (event) =>
+    void setAutoPass((event.target as HTMLInputElement).checked));
   document.querySelector<HTMLElement>(".table")?.addEventListener("contextmenu", (event) => {
     if (event.target instanceof Element && event.target.closest("[data-hand], [data-permanent], [data-zone-card]")) return;
     if (!view?.undoAvailable) return;
@@ -1522,7 +1553,7 @@ function wireBoard(): void {
     render();
   });
   document.querySelector<HTMLElement>(".table")?.addEventListener("click", () => {
-    if (ui.contextMenu || ui.stopMenu) { ui.contextMenu = null; ui.stopMenu = null; render(); }
+    if (ui.contextMenu) { ui.contextMenu = null; render(); }
   });
   document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
     button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
@@ -1564,9 +1595,6 @@ function wireBoard(): void {
   on("#close-log", () => { ui.logOpen = false; window.localStorage.setItem("prossh.log", "0"); render(); });
   on("#confirm-attack", () => void submit({ type: "declare-attackers", attackers: [...ui.attackers.entries()].map(([instanceId, defender]) => ({ instanceId, defender })) }));
   on("#confirm-block", () => void submit({ type: "declare-blockers", blockers: [...ui.blockers.entries()].map(([instanceId, attackerId]) => ({ instanceId, attackerId })) }));
-
-  document.querySelector<HTMLInputElement>("#auto-pass")?.addEventListener("change", (event) =>
-    void setAutoPass((event.target as HTMLInputElement).checked));
 
   document.querySelectorAll<HTMLButtonElement>("[data-hand]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -2132,8 +2160,8 @@ document.querySelector<HTMLInputElement>("#card-query")?.addEventListener("input
 window.addEventListener("keydown", (event) => {
   if (event.target instanceof HTMLInputElement) return;
   if (event.code === "Space") { event.preventDefault(); document.querySelector<HTMLButtonElement>("#pass")?.click(); }
-  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.stopMenu || ui.glyphHelp || ui.stackDetail)) {
-    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.stopMenu = null; ui.glyphHelp = null; ui.stackDetail = null; ui.notice = ""; render();
+  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.glyphHelp || ui.stackDetail)) {
+    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.glyphHelp = null; ui.stackDetail = null; ui.notice = ""; render();
   }
   if (event.code === "KeyL") { ui.logOpen = !ui.logOpen; render(); }
 });
