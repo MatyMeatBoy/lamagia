@@ -1374,12 +1374,14 @@ function wireBoard(): void {
   });
   document.querySelectorAll<HTMLButtonElement>("[data-phase-stop]").forEach((button) => {
     button.addEventListener("click", () => {
+      if (button.disabled) return;
       const step = button.dataset.phaseStop as TurnStep;
       if (ui.stops.has(step)) ui.stops.delete(step); else ui.stops.add(step);
       persistStops();
       render();
     });
     button.addEventListener("contextmenu", (event) => {
+      if (button.disabled) return;
       event.preventDefault();
       ui.stopMenu = { x: Math.min(event.clientX, Math.max(8, window.innerWidth - 250)), y: Math.min(event.clientY, Math.max(8, window.innerHeight - 58)), step: button.dataset.phaseStop as TurnStep };
       render();
