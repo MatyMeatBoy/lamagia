@@ -9845,6 +9845,9 @@ export function settle(state: GameState): GameState {
         && choice.trigger?.definition.optional === true
         && sourceId !== undefined
         && sourceController === choice.seat
+        // Yield is a controller preference only. It must never suppress a
+        // payment choice belonging to another player (e.g. Kavu/Rhystic-style
+        // triggers), nor a trigger controlled by an opponent.
         && (playerAt(next, sourceController).yieldedTriggerSources?.includes(sourceId) ?? false);
       if (yielded) {
         next = applyChooseTrigger(next, choice.seat, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
@@ -9882,7 +9885,11 @@ export function settle(state: GameState): GameState {
     if (next.step === "declare-blockers" && !next.combat.blockersDeclared) {
       const waiting = defendersAwaitingBlocks(next);
       if (!waiting.length) {
-        next = { ...next, combat: { ...next.combat, blockersDeclared: true }, passedSeats: [], prioritySeat: next.activeSeat };
+        // All defending players have submitted a declaration. Mark the
+        // combat step complete and reopen priority exactly once; without the
+        // explicit `priorityOpen` transition a stale closed-priority state can
+        // repeatedly re-enter this branch after multi-player attacks.
+        next = { ...next, combat: { ...next.combat, blockersDeclared: true }, passedSeats: [], prioritySeat: next.activeSeat, priorityOpen: true };
         continue;
       }
       const idle = waiting.find((seat) => !legalBlockers(next, seat).length);

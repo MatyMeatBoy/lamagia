@@ -999,9 +999,16 @@ function stackDetailHtml(): string {
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
       <div><b>${escapeHtml(object.label)}</b><p>${escapeHtml(object.text ?? "Sin texto adicional.")}</p>
         <small>${object.targets.length ? `Objetivos: ${escapeHtml(object.targets.join(", "))}` : "Sin objetivos"}${object.countered ? " · Contrarrestado" : ""}</small>
+        <small class="stack-detail-priority">${object.resolvesNext ? "Próximo en resolver" : `Posición ${object.position} desde abajo`} · ${view?.priorityOpen ? `Prioridad: ${escapeHtml(seatOf(view.prioritySeat)?.name ?? "")}` : "Prioridad cerrada"}</small>
         <span class="stack-detail-hint">Cierra este panel para responder; los objetivos resaltados siguen seleccionables.</span></div>
     </div>
   </section>`;
+}
+
+function closeStackDetailOnBackdrop(event: MouseEvent): void {
+  if (!(event.target instanceof HTMLElement) || !event.target.classList.contains("stack-detail-overlay")) return;
+  ui.stackDetail = null;
+  render();
 }
 
 /**
@@ -1311,6 +1318,7 @@ function wireBoard(): void {
   on("#undo-pending-target", undoPendingTarget);
   on("#close-card-action-menu", () => { ui.cardActionMenu = null; ui.notice = ""; render(); });
   on("#close-stack-detail", () => { ui.stackDetail = null; render(); });
+  document.querySelector<HTMLElement>(".stack-detail-overlay")?.addEventListener("click", closeStackDetailOnBackdrop);
   on("#card-action-info", () => {
     const cardId = ui.cardActionMenu;
     ui.cardActionMenu = null;
