@@ -489,6 +489,10 @@ export type SpellEffect =
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
   /** Exploit's own ETB effect (CR 702.126a): the controller may sacrifice any creature they control, including this one, opening a dedicated choice. */
   | { readonly kind: "exploit" }
+  /** "Exile that card from your graveyard" (Necropotence): the card involved in the triggering event, wherever it now sits. */
+  | { readonly kind: "exile-event-card-from-graveyard" }
+  /** "Exile the top card of your library face down. Put that card into your hand at the beginning of your next end step." (Necropotence). */
+  | { readonly kind: "exile-top-card-then-hand-next-end-step" }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -1063,6 +1067,8 @@ export interface CardProfile {
   readonly copiesImprintedCreatureStats: boolean;
   /** Static replacement effect that adds one mana when a controlled land produces mana. */
   readonly doublesLandMana: boolean;
+  /** "Skip your draw step." (Necropotence): the controller's own mandatory turn draw never happens. */
+  readonly staticSkipsDrawStep: boolean;
   /** Printed Level up cost and level bands, when present. */
   readonly levelUpCost: ManaCost | null;
   readonly levelDefinitions: readonly LevelDefinition[];
@@ -3363,6 +3369,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (draw !== null && draw > 0 && putBack !== null && putBack > 0) return { effect: { kind: "draw-then-put-back-on-top", draw, putBack }, target: "none" };
   }
   if (/^Exile ~$/i.test(text)) return { effect: { kind: "exile-self" }, target: "none" };
+  // "Whenever you discard a card, exile that card from your graveyard." (Necropotence):
+  // the card is read from the triggering event, not targeted or the source itself.
+  if (/^Exile that card from your graveyard$/i.test(text)) return { effect: { kind: "exile-event-card-from-graveyard" }, target: "none" };
+  if (/^Exile the top card of your library face down\.\s*Put that card into your hand at the beginning of your next end step$/i.test(text)) {
+    return { effect: { kind: "exile-top-card-then-hand-next-end-step" }, target: "none" };
+  }
   if (/^Return (?:it|~) to its owner's hand$/i.test(text)) return { effect: { kind: "return-source-to-hand" }, target: "none" };
   if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-self-into-library" }, target: "none" };
   if ((match = /^Target player mills (\w+) cards?$/i.exec(text))) {
@@ -4608,6 +4620,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^Whenever enchanted land is tapped for mana, its controller adds an additional \{[WUBRGC]\}\.?$/i.test(line)) continue;
     if (/^~ doesn[’']t untap during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
+    if (/^Skip your draw step\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -5295,6 +5308,7 @@ export function cardProfile(card: CardData): CardProfile {
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
   const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
+  const staticSkipsDrawStep = text.split("\n").some((line) => /^Skip your draw step\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
   const protectionFrom = text.split(/\r?\n/).flatMap((line) => parseProtectionFromLine(line) ?? []);
@@ -5378,6 +5392,7 @@ export function cardProfile(card: CardData): CardProfile {
    staticPowerToughnessGrants,
     copiesImprintedCreatureStats,
     doublesLandMana,
+    staticSkipsDrawStep,
     levelUpCost,
     levelDefinitions,
     classLevels,

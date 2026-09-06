@@ -296,6 +296,8 @@ export interface TriggerInstance {
   readonly eventPower?: number;
   /** Player damaged by a damage event, for effects referring to "that player". */
   readonly eventPlayer?: SeatId;
+  /** Card involved in a card-based event (discarded, drawn, ...), for effects referring to "that card" (Necropotence). */
+  readonly eventCard?: GameCard;
 }
 
 /** A delayed trigger created by a resolving spell (CR 603.7). */
@@ -2424,7 +2426,8 @@ function raiseEvent(
          ...("amount" in event ? { eventAmount: event.amount } : {}),
           ...(event.kind === "spell-cast" && event.spentMana !== undefined ? { eventManaSpent: event.spentMana } : {}),
           ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
-          ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {})
+          ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {}),
+          ...(event.kind === "card-discarded" ? { eventCard: event.card } : {})
         });
       }
     }
@@ -2888,6 +2891,41 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, sourceId);
       if (!permanent) return state;
       return logged(movePermanentToZone(state, permanent, "graveyard"), permanent.controller, `${permanent.card.name} es sacrificado.`);
+    }
+    case "exile-event-card-from-graveyard": {
+      const eventCard = object.trigger?.eventCard;
+      if (!eventCard) return state;
+      const owner = eventCard.owner;
+      if (!playerAt(state, owner).graveyard.some((candidate) => candidate.instance_id === eventCard.instance_id)) return state;
+      const next = withPlayer(state, owner, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((candidate) => candidate.instance_id !== eventCard.instance_id),
+        exile: [...player.exile, eventCard]
+      }));
+      return logged(next, controller, `${eventCard.name} se exilia de su cementerio.`);
+    }
+    case "exile-top-card-then-hand-next-end-step": {
+      const topCard = playerAt(state, controller).library[0];
+      if (!topCard) return state;
+      let next = withPlayer(state, controller, (player) => ({
+        ...player,
+        library: player.library.slice(1),
+        exile: [...player.exile, topCard]
+      }));
+      const triggerAtTurn = next.step === "end" ? next.turn + 1 : next.turn;
+      next = {
+        ...next,
+        delayedReturns: [...next.delayedReturns, {
+          id: `${object.id}:${next.version}:necro`,
+          triggerAtTurn,
+          sourceCard: object.card,
+          card: topCard,
+          owner: controller,
+          destination: "hand" as const,
+          sourceText: `${object.card.name}: pone la carta exiliada boca abajo en su mano al comienzo del próximo paso final.`
+        }]
+      };
+      return logged(next, controller, `${object.card.name}: exilia ${topCard.name} boca abajo.`);
     }
     case "each-opponent-of-event-player-draws": {
       const eventPlayer = object.trigger?.eventController;
@@ -4323,12 +4361,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!delayed) return state;
       if (delayed.destination === "hand") {
         const permanent = findPermanent(state, delayed.card.instance_id);
-        if (!permanent) return state;
-        const removed = withPlayer(state, permanent.controller, (player) => ({
+        if (permanent) {
+          const removed = withPlayer(state, permanent.controller, (player) => ({
+            ...player,
+            battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+          }));
+          return withPlayer(removed, delayed.owner, (player) => ({ ...player, hand: [...player.hand, delayed.card] }));
+        }
+        // The delayed card may instead be sitting in exile, never having
+        // touched the battlefield (Necropotence's "exile face down, then
+        // put into hand at the next end step").
+        const exiledCard = playerAt(state, delayed.owner).exile.find((card) => card.instance_id === delayed.card.instance_id);
+        if (!exiledCard) return state;
+        return withPlayer(state, delayed.owner, (player) => ({
           ...player,
-          battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== permanent.instance_id)
+          exile: player.exile.filter((card) => card.instance_id !== exiledCard.instance_id),
+          hand: [...player.hand, exiledCard]
         }));
-        return withPlayer(removed, delayed.owner, (player) => ({ ...player, hand: [...player.hand, delayed.card] }));
       }
       const exiled = playerAt(state, delayed.owner).exile.find((card) => card.instance_id === delayed.card.instance_id);
       if (!exiled) return state;
@@ -6547,7 +6596,8 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       next = withPlayer(next, next.activeSeat, (player) => ({ ...player, drawsThisDrawStep: 0 }));
       // The starting player skips only the very first draw step of the game.
       const isOpeningDraw = next.turn === 1 && next.activeSeat === next.startingSeat;
-      if (!isOpeningDraw) next = drawCards(next, next.activeSeat, 1);
+      const skipsDraw = playerAt(next, next.activeSeat).battlefield.some((permanent) => cardProfile(permanent.card).staticSkipsDrawStep);
+      if (!isOpeningDraw && !skipsDraw) next = drawCards(next, next.activeSeat, 1);
       break;
     }
     case "combat-damage": {
@@ -8009,6 +8059,10 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     toughnessModifier: 0,
     isCommander: false
   };
+  // Cycling's cost is defined as discarding the card (CR 702.29a), so any
+  // "whenever you discard a card" watcher must see it too, not just cards
+  // discarded some other way.
+  next = raiseEvent(next, { kind: "card-discarded", seat, card: cycledCard });
   next = raiseEvent(next, { kind: "card-cycled", controller: seat, card: cycledCard }, [cycledWatcher]);
   if (!searchAbility) return logged(drawCards(next, seat, 1), seat, `${player.name} cicla ${card.name}.`);
 

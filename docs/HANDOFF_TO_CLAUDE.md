@@ -4864,3 +4864,66 @@ simulated games.
 
 Prossh decklist status after this pass: **82 of 97 unique cards fully
 implemented (84.5%)**.
+
+Necropotence ("Skip your draw step.\nWhenever you discard a card,
+exile that card from your graveyard.\nPay 1 life: Exile the top card
+of your library face down. Put that card into your hand at the
+beginning of your next end step.") bundles three independent, smaller
+primitives rather than one cohesive mechanic, but each turned out to
+be a single well-isolated site rather than the wide-blast-radius
+changes this deck's harder remaining cards usually need. (1) "Skip
+your draw step" is a new `CardProfile.staticSkipsDrawStep` boolean,
+following the exact `doublesLandMana`-style two-site pattern (a bare
+line-skip in `recognizeText` plus a separately-computed boolean folded
+into the profile) — checked at the SINGLE site in `engine.ts` that
+performs the turn's mandatory draw (the `case "draw":` step handler,
+right next to the pre-existing `isOpeningDraw` check), not a
+turn-structure refactor. (2) The discard trigger reuses the
+already-registered `{ event: "card-discarded", subject: "you" }`
+template outright; the only new piece is a `{kind:
+"exile-event-card-from-graveyard"}` effect that reads the discarded
+card from a new `TriggerInstance.eventCard` field (threaded through
+the same `"X" in event`-style spread used for `eventPermanentId`/
+`eventPower`/etc., populated only for `card-discarded` for now) rather
+than a target — CR necessitates reacting to "that card" specifically,
+not a targeted or self-referential one. (3) The pay-life ability
+("Exile the top card... face down. Put that card into your hand at
+the beginning of your next end step.") reuses the EXISTING
+`DelayedReturn`/`queueDelayedReturns` machinery (already generic
+enough to support a `"hand"` destination, built for a different card
+entirely) with a fresh `{kind: "exile-top-card-then-hand-next-end-step"}`
+effect, following the exact `triggerAtTurn = state.step === "end" ?
+state.turn + 1 : state.turn` timing formula already used by
+`look-top-select`'s own delayed-return path — the two-sentence effect
+text parses as ONE `recognizeSentence` match since `parseActivatedAbility`
+never splits a line's effect text into separate sentences the way the
+outer `recognizeText` line loop does, so this needed no lookahead-
+consume trick unlike Eldritch Evolution's version of the same problem.
+Testing piece (3) surfaced a real, previously-latent bug in the
+GENERIC `"return-delayed-permanent"` effect handler: its `"hand"`
+destination branch unconditionally assumed the delayed card was
+CURRENTLY ON THE BATTLEFIELD as a permanent (`findPermanent(...)`) and
+silently no-op'd — losing the card outright — whenever that assumed
+permanent didn't exist, which is exactly Necropotence's case (the card
+sits in EXILE, having never touched the battlefield). Fixed by falling
+back to checking the owner's exile zone when no matching permanent is
+found, before giving up. Testing piece (2) surfaced a second real gap:
+`applyCycle` raised only a `"card-cycled"` event, never `"card-discarded"`,
+despite cycling being DEFINED as discarding the card as its cost (CR
+702.29a) — meaning every already-implemented "whenever you discard a
+card" effect in the catalog was silently missing cycling as a trigger
+source until now. Fixed by raising both events from the same site.
+Verified **+2** in the export count (10,276 → 10,278: Necropotence
+plus one other catalog card sharing matching wording); set coverage
+holds at 31.4%. Scenario-tested: the controller's mandatory draw is
+skipped for the turn; cycling a card (which now correctly counts as a
+discard) exiles it straight out of the graveyard once its trigger
+resolves; activating the pay-life ability exiles the (tracked) top
+card and costs exactly 1 life, and by the next end step that same
+card has moved from exile into hand. Validation: **804 rules tests**
+(4 new), `npm run check` across all four workspaces, `npx vitest run
+services/match-server/src` (5 passed), 10,278 global profiles, 200/200
+simulated games.
+
+Prossh decklist status after this pass: **83 of 97 unique cards fully
+implemented (85.6%)**.

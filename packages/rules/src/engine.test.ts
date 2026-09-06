@@ -11313,6 +11313,60 @@ describe("Sidisi, Undead Vizier's Exploit ETB and its own exploited-creature tri
   });
 });
 
+describe("Necropotence's skipped draw, discard-exile trigger, and delayed-hand exile ability", () => {
+  const NECROPOTENCE = () => make({
+    name: "Necropotence", type_line: "Enchantment", mana_cost: "{B}{B}{B}", cmc: 3,
+    oracle_text: "Skip your draw step.\nWhenever you discard a card, exile that card from your graveyard.\nPay 1 life: Exile the top card of your library face down. Put that card into your hand at the beginning of your next end step."
+  });
+  const PLAIN_CYCLER = () => make({ name: "Test Cycler", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Cycling {1}" });
+
+  it("recognizes all three lines: skip draw, discard-exile trigger, and the delayed pay-life ability", () => {
+    const profile = profileOf(NECROPOTENCE());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.staticSkipsDrawStep).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({ event: "card-discarded", subject: "you", effect: { kind: "exile-event-card-from-graveyard" } });
+    expect(profile.activatedAbilities[0]).toMatchObject({ lifeCost: 1, manaCost: null, effect: { kind: "exile-top-card-then-hand-next-end-step" } });
+  });
+
+  it("skips the controller's mandatory draw for the turn", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [NECROPOTENCE()]);
+    const before = game.players[0]!.library.length;
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(game.players[0]!.library.length).toBe(before);
+  });
+
+  it("exiles a discarded card straight out of the graveyard", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [PLAIN_CYCLER()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [NECROPOTENCE(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cycle", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Cycler")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Test Cycler")).toBe(true);
+  });
+
+  it("exiles the top card face down and delivers it to hand at the next end step", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [NECROPOTENCE()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Necropotence")!;
+    const topCard = game.players[0]!.library[0]!;
+    const life = game.players[0]!.life;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)!;
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation.action);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(life - 1);
+    expect(game.players[0]!.exile.some((card) => card.instance_id === topCard.instance_id)).toBe(true);
+    expect(game.players[0]!.hand.some((card) => card.instance_id === topCard.instance_id)).toBe(false);
+    game = passUntil(game, (state) => state.players[0]!.hand.some((card) => card.instance_id === topCard.instance_id));
+    expect(game.players[0]!.exile.some((card) => card.instance_id === topCard.instance_id)).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
