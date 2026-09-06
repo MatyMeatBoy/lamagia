@@ -12101,6 +12101,62 @@ describe("Xenagos, the Reveler's creature-scaled mana and exile-batch loyalty ab
   });
 });
 
+describe("Skullmulcher's Devour and the linked devoured-count draw", () => {
+  const SKULLMULCHER = () => make({
+    name: "Skullmulcher", type_line: "Creature — Elemental", mana_cost: "{4}{G}", cmc: 5, power: "3", toughness: "3",
+    keywords: ["Devour"],
+    oracle_text: "Devour 1 (As this creature enters, you may sacrifice any number of creatures. It enters with that many +1/+1 counters on it.)\nWhen this creature enters, draw a card for each creature it devoured."
+  });
+
+  it("recognizes the synthesized Devour entry ability and the linked draw trigger", () => {
+    const profile = profileOf(SKULLMULCHER());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.devourAmount).toBe(1);
+    expect(profile.triggers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ event: "enters-battlefield", subject: "self", effect: { kind: "devour", multiplier: 1 } }),
+      expect.objectContaining({ event: "enters-battlefield", subject: "self", effect: { kind: "draw-per-devoured" } })
+    ]));
+  });
+
+  it("with no other creature to devour, enters with no counters and draws no cards", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [SKULLMULCHER()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const handBefore = game.players[0]!.hand.length - 1;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    // No other creature is on the battlefield, so Devour's own PendingChoice
+    // never opens at all (there is nothing to offer); it auto-resolves with 0.
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    const skull = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Skullmulcher")!;
+    expect(skull.counters["+1/+1"] ?? 0).toBe(0);
+    expect(game.players[0]!.hand.length).toBe(handBefore);
+  });
+
+  it("devouring two creatures enters with 2 +1/+1 counters and draws 2 cards", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [SKULLMULCHER()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [BEAR(), TRAMPLER(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const handBefore = game.players[0]!.hand.length - 1;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "devour");
+    let choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "devour" }>;
+    expect(choice.candidateIds).toHaveLength(2);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const trampler = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    game = applyAction(game, 0, { type: "choose-devour-creature", sourceId: choice.sourceId, cardId: bear.instance_id });
+    choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "devour" }>;
+    game = applyAction(game, 0, { type: "choose-devour-creature", sourceId: choice.sourceId, cardId: trampler.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    const skull = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Skullmulcher")!;
+    expect(skull.counters["+1/+1"]).toBe(2);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Big Stomper")).toBe(true);
+    expect(game.players[0]!.hand.length).toBe(handBefore + 2);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

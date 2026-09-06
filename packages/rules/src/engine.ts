@@ -134,6 +134,8 @@ export interface Permanent {
   readonly temporaryBasePowerToughness?: { readonly power: number; readonly toughness: number };
   /** The permanent has every creature subtype until cleanup (CR 205.3m). */
   readonly temporaryAllCreatureTypes?: boolean;
+  /** Number of creatures Devour (CR 702.79) sacrificed as this permanent entered, for a separate "draw a card for each creature it devoured" trigger to read (Skullmulcher). */
+  readonly devouredCount?: number;
   /** One-shot destruction-replacement shields created by Regenerate (CR 701.19). */
   readonly regenerationShields?: number;
   /** This creature cannot use regeneration shields until cleanup (CR 701.19). */
@@ -737,6 +739,17 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       readonly optionIds: readonly string[];
       readonly selectedIds: readonly string[];
+    }
+  | {
+      /** Devour's own "you may sacrifice any number of other creatures" choice (CR 702.79a). */
+      readonly type: "devour";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly sourcePermanentId: string;
+      readonly candidateIds: readonly string[];
+      readonly selectedIds: readonly string[];
+      readonly multiplier: number;
     };
 
 export type GameAction =
@@ -784,6 +797,8 @@ export type GameAction =
   | { readonly type: "finish-hand-to-battlefield"; readonly sourceId: string }
   | { readonly type: "choose-exile-batch-card"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "finish-exile-batch"; readonly sourceId: string }
+  | { readonly type: "choose-devour-creature"; readonly sourceId: string; readonly cardId: string }
+  | { readonly type: "finish-devour"; readonly sourceId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -2938,6 +2953,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, sourceId);
       if (!permanent) return state;
       return logged(movePermanentToZone(state, permanent, "exile"), permanent.controller, `${permanent.card.name} se exilia.`);
+    }
+    case "draw-per-devoured": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const amount = findPermanent(state, sourceId)?.devouredCount ?? 0;
+      if (amount <= 0) return state;
+      return logged(drawCards(state, controller, amount), controller, `${object.card.name}: roba ${amount} carta(s) por criaturas devoradas.`);
     }
     case "exile-source-from-graveyard": {
       const sourceCard = object.trigger?.sourceCard ?? object.card;
@@ -5861,6 +5882,33 @@ function resolveTop(state: GameState): GameState {
         }
       };
     }
+    // Devour's own entry effect (CR 702.79a-c): sacrifice any number of
+    // OTHER creatures the controller controls (unlike Exploit, the devouring
+    // creature itself is never a candidate), then this permanent enters with
+    // `multiplier` +1/+1 counters per creature sacrificed this way.
+    const triggerDevour = object.trigger.definition.effect.kind === "devour" ? object.trigger.definition.effect : null;
+    if (triggerDevour) {
+      const sourcePermanentId = object.trigger.sourcePermanentId;
+      const candidateIds = playerAt(next, object.controller).battlefield
+        .filter((candidate) => isCreature(cardProfile(candidate.card)) && candidate.instance_id !== sourcePermanentId)
+        .map((candidate) => candidate.instance_id);
+      if (!candidateIds.length) {
+        return logged(next, object.controller, `${object.trigger.sourceCard.name}: no hay otras criaturas para devorar.`);
+      }
+      return {
+        ...next,
+        pendingChoice: {
+          type: "devour",
+          seat: object.controller,
+          sourceId: object.trigger.id,
+          sourceCard: object.trigger.sourceCard,
+          sourcePermanentId,
+          candidateIds,
+          selectedIds: [],
+          multiplier: triggerDevour.multiplier
+        }
+      };
+    }
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,
@@ -7515,6 +7563,25 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         action: { type: "finish-exile-batch", sourceId: choice.sourceId },
         label: choice.selectedIds.length ? "Terminar de elegir cartas" : "No poner ninguna carta",
         note: `${choice.sourceCard.name}: el resto de las cartas exiliadas se quedan exiliadas.`
+      });
+      return actions;
+    }
+    if (choice.type === "devour") {
+      for (const candidateId of choice.candidateIds) {
+        if (choice.selectedIds.includes(candidateId)) continue;
+        const candidate = findPermanent(state, candidateId);
+        if (!candidate) continue;
+        actions.push({
+          action: { type: "choose-devour-creature", sourceId: choice.sourceId, cardId: candidateId },
+          label: `Sacrificar ${candidate.card.name} para Devour`,
+          cardId: candidateId,
+          note: `${choice.sourceCard.name}: puedes sacrificar cualquier cantidad de otras criaturas.`
+        });
+      }
+      actions.push({
+        action: { type: "finish-devour", sourceId: choice.sourceId },
+        label: choice.selectedIds.length ? "Terminar de elegir criaturas" : "No sacrificar ninguna criatura",
+        note: `${choice.sourceCard.name}: entra con ${choice.multiplier} contador(es) +1/+1 por cada criatura sacrificada.`
       });
       return actions;
     }
@@ -9666,6 +9733,53 @@ function applyFinishExileBatch(state: GameState, seat: SeatId, action: Extract<G
   return finishExileBatch(state, seat, choice, choice.selectedIds);
 }
 
+function finishDevour(
+  state: GameState,
+  seat: SeatId,
+  choice: Extract<PendingChoice, { type: "devour" }>,
+  selectedIds: readonly string[]
+): GameState {
+  const player = playerAt(state, seat);
+  const selected = selectedIds
+    .map((id) => player.battlefield.find((permanent) => permanent.instance_id === id))
+    .filter((permanent): permanent is Permanent => Boolean(permanent));
+  let next: GameState = { ...state, pendingChoice: null };
+  for (const permanent of selected) {
+    next = movePermanentToZone(next, permanent, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${permanent.card.name} para Devour.`);
+  }
+  const devouredCount = selected.length;
+  const addedCounters = devouredCount * choice.multiplier;
+  next = withPlayer(next, seat, (current) => ({
+    ...current,
+    battlefield: current.battlefield.map((permanent) => permanent.instance_id === choice.sourcePermanentId
+      ? { ...permanent, devouredCount, counters: { ...permanent.counters, "+1/+1": (permanent.counters["+1/+1"] ?? 0) + addedCounters } }
+      : permanent)
+  }));
+  return logged(next, seat, devouredCount
+    ? `${choice.sourceCard.name} devora ${devouredCount} criatura(s) y entra con ${addedCounters} contador(es) +1/+1.`
+    : `${choice.sourceCard.name} no devora ninguna criatura.`);
+}
+
+function applyChooseDevourCreature(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-devour-creature" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "devour" || choice.seat !== seat) throw new Error("No tienes una elección de Devour pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes elegir una carta de la elección pendiente.");
+  if (choice.selectedIds.includes(action.cardId)) throw new Error("Esa criatura ya fue elegida.");
+  if (!choice.candidateIds.includes(action.cardId)) throw new Error("Esa criatura no está disponible para Devour.");
+  const selectedIds = [...choice.selectedIds, action.cardId];
+  if (selectedIds.length >= choice.candidateIds.length) return finishDevour(state, seat, choice, selectedIds);
+  const permanent = playerAt(state, seat).battlefield.find((candidate) => candidate.instance_id === action.cardId)!;
+  return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${permanent.card.name} para Devour.`);
+}
+
+function applyFinishDevour(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-devour" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "devour" || choice.seat !== seat) throw new Error("No tienes una elección de Devour pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes terminar la elección pendiente.");
+  return finishDevour(state, seat, choice, choice.selectedIds);
+}
+
 /** Closes the private "look at target player's hand" view (Gitaxian Probe, CR 701.20). */
 function applyAcknowledgeViewHand(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "acknowledge-view-hand" }>): GameState {
   const choice = state.pendingChoice;
@@ -10461,6 +10575,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "finish-hand-to-battlefield": next = applyFinishHandToBattlefield(state, seat, action); break;
     case "choose-exile-batch-card": next = applyChooseExileBatchCard(state, seat, action); break;
     case "finish-exile-batch": next = applyFinishExileBatch(state, seat, action); break;
+    case "choose-devour-creature": next = applyChooseDevourCreature(state, seat, action); break;
+    case "finish-devour": next = applyFinishDevour(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {

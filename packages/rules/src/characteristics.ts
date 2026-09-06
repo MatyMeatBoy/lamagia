@@ -531,6 +531,10 @@ export type SpellEffect =
   | { readonly kind: "untap-and-animate-fetched-lands"; readonly subtype: string; readonly power: number; readonly toughness: number; readonly color: MagicColor }
   /** "Exile the top N cards of your library. You may put any number of creature and/or land cards from among them onto the battlefield" (Xenagos, the Reveler). */
   | { readonly kind: "exile-top-then-choose-creatures-lands-to-battlefield"; readonly amount: number }
+  /** Devour N's own entry effect (CR 702.79a-c): the controller may sacrifice any number of OTHER creatures they control; this permanent enters with `multiplier` +1/+1 counters for each one sacrificed this way. */
+  | { readonly kind: "devour"; readonly multiplier: number }
+  /** "Draw a card for each creature it devoured" (Skullmulcher): reads the count Devour's own resolution left on the same permanent. */
+  | { readonly kind: "draw-per-devoured" }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -1227,6 +1231,8 @@ export interface CardProfile {
   readonly entersWithVariableCounters: { readonly kind: string } | null;
   /** Graft number, when this permanent has the Graft keyword. */
   readonly graftAmount: number | null;
+  /** Devour number, when this permanent has the Devour keyword. */
+  readonly devourAmount: number | null;
   readonly isPermanent: boolean;
   readonly castableFromHand: boolean;
   /** True when every printed instruction is covered by the engine. */
@@ -2431,6 +2437,7 @@ interface RecognizedText {
   kickerCost?: ManaCost | null;
   entwineCost?: ManaCost | null;
   graftAmount?: number | null;
+  devourAmount?: number | null;
   kickedEffects?: SpellEffect[];
   kickedKeywords?: EnforcedKeyword[];
   kickedEntersWithCounters?: CounterCost[];
@@ -4031,6 +4038,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]!);
     if (amount !== null) return { effect: { kind: "exile-top-then-choose-creatures-lands-to-battlefield", amount }, target: "none" };
   }
+  // "Draw a card for each creature it devoured" (Skullmulcher): a separate,
+  // explicit "When ~ enters" trigger reading the count Devour's own
+  // synthesized entry ability already left on the permanent.
+  if (/^Draw a card for each creature it devoured$/i.test(text)) return { effect: { kind: "draw-per-devoured" }, target: "none" };
   if (/^Return target creature card from your graveyard to the battlefield\. You lose life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) {
     return { effect: { kind: "reanimate-target-creature-lose-mana-value-life" }, target: "creature-card-in-your-graveyard" };
   }
@@ -4435,6 +4446,7 @@ function recognizeText(text: string): RecognizedText {
   let kickerCost: ManaCost | null = null;
   let entwineCost: ManaCost | null = null;
   let graftAmount: number | null = null;
+  let devourAmount: number | null = null;
   let echoCost: ManaCost | null = null;
   let evokeCost: ManaCost | null = null;
   let flashbackCost: ManaCost | null = null;
@@ -4518,6 +4530,12 @@ function recognizeText(text: string): RecognizedText {
     // (CR 702.58a-b); cardProfile synthesizes the trigger from this value.
     const graft = /^Graft\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (graft) { graftAmount = toNumber(graft[1]); continue; }
+    // Devour N (CR 702.79a-c): an entry replacement plus, on some cards, a
+    // separate explicit "draw a card for each creature it devoured" trigger
+    // reading the same count; cardProfile synthesizes the entry ability from
+    // this value below.
+    const devour = /^Devour\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (devour) { devourAmount = toNumber(devour[1]); continue; }
     // Flashback: cast from the graveyard for this cost, then exile (CR 702.34 → 702.34a numbering aside, 702.33 family).
     const flashback = /^Flashback\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (flashback) { flashbackCost = parseManaCost(flashback[1]!); continue; }
@@ -5355,7 +5373,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, devourAmount, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5418,6 +5436,12 @@ export function cardProfile(card: CardData): CardProfile {
     event: "enters-battlefield", subject: "another-creature",
     effect: { kind: "move-counter-from-source-to-triggered-creature", counter: "+1/+1" },
     optional: true, targetKind: "none", sourceText: `Graft ${graftAmount}`
+  });
+  const devourAmount = recognized.devourAmount ?? null;
+  if (devourAmount !== null) synthesizedTriggers.push({
+    event: "enters-battlefield", subject: "self",
+    effect: { kind: "devour", multiplier: devourAmount },
+    optional: false, targetKind: "none", sourceText: `Devour ${devourAmount}`
   });
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
@@ -5673,6 +5697,7 @@ export function cardProfile(card: CardData): CardProfile {
     kickerCost: recognized.kickerCost ?? null,
     entwineCost: recognized.entwineCost ?? null,
     graftAmount,
+    devourAmount,
     evokeCost: recognized.evokeCost ?? null,
     miracleCost: recognized.miracleCost ?? null,
     preparedCast,

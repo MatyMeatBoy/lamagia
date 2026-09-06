@@ -234,6 +234,12 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const chosen = choose ?? finish;
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
+  if (state.pendingChoice?.type === "devour" && state.pendingChoice.seat === seat) {
+    // Conservative default: never sacrifice creatures the bot doesn't
+    // understand the value of losing (declining is always legal).
+    const finish = available.find((entry) => entry.action.type === "finish-devour");
+    if (finish) return { action: finish.action, label: finish.label };
+  }
   if (state.pendingChoice?.type === "proliferate" && state.pendingChoice.seat === seat) {
     const target = available.find((entry) => entry.action.type === "choose-proliferate-target");
     if (target) return { action: target.action, label: target.label };

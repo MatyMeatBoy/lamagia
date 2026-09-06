@@ -5376,3 +5376,60 @@ across all four workspaces, `npx vitest run services/match-server/src`
 
 Prossh decklist status after this pass: **87 of 97 unique cards fully
 implemented (89.7%)**.
+
+[Merge note: this session's branch merged `origin/feat/activated-abilities-and-triggers` at this point, pulling in a large batch of other workers' token-inventory and client work. The export count jumped from 10,282 to 10,790 as part of that merge, not from any primitive built here — the delta attributable to this session's own work resumes from 10,790 below.]
+
+Skullmulcher ("Devour 1 (As this creature enters, you may sacrifice
+any number of creatures. It enters with that many +1/+1 counters on
+it.)\nWhen this creature enters, draw a card for each creature it
+devoured.") is this session's SECOND genuinely new keyword mechanic
+(after Exploit), and deliberately mirrors that same playbook: Devour
+is synthesized from the keyword's own numbered line (`"Devour N"`,
+consumed exactly like the pre-existing `"Graft N"` two-site pattern —
+a line-skip during `recognizeText`'s loop plus a separately-threaded
+`devourAmount` field returned all the way out to `CardProfile`) rather
+than parsed from its reminder text, since the printed line is just the
+keyword name and number plus reminder text in parentheses. Synthesizes
+one `enters-battlefield`/`self` trigger with a new `{kind: "devour",
+multiplier}` effect, kept `optional: false` for the exact same reason
+Exploit's trigger is: CR 702.79a's "may sacrifice any number" is the
+EFFECT's own internal choice, not the engine's `optional: true`
+accept/decline flow for a whole trigger. Added a new `"devour"`
+`PendingChoice` (multi-select of OTHER creatures the controller
+controls — CR 702.79a explicitly excludes the devouring creature
+itself, unlike Exploit which explicitly ALLOWS it — plus a decline/
+finish action), special-cased in `resolveTop`'s trigger block the same
+way `triggerExploit` already is. A new `Permanent.devouredCount` field
+records how many were actually sacrificed once the choice resolves,
+letting Skullmulcher's SEPARATE, EXPLICIT "When ~ enters, draw a card
+for each creature it devoured" trigger — a genuinely different
+`enters-battlefield`/`self` trigger, not a synthesized one — read that
+count off the SAME permanent via a new `{kind: "draw-per-devoured"}`
+effect. This two-separate-triggers design (rather than one merged
+compound effect) is a deliberate, documented simplification: real
+Devour is technically a replacement effect resolved as the permanent
+enters, before any triggers exist, so the "how many were devoured"
+fact is fixed before EITHER trigger is even created — modeling it as
+two independent stack-based triggers means a human player could, in
+principle, choose to resolve "draw" before "devour" (both trigger from
+the same event) and see 0 cards instead of the correct count. This is
+a narrow edge case that only ever disadvantages the player who
+deliberately chooses it, judged acceptable against the alternative of
+hooking a new interactive choice directly into `putOntoBattlefield`
+itself. Added a `bot.ts` handler proactively (an always-decline
+default, matching Exploit's conservative policy) since a brand-new
+choice type never fits an existing generic bot fallback. Verified
+**+7** in the export count (10,790 → 10,797, since Devour prints on
+several catalog cards beyond Skullmulcher) and set coverage moved
+32.7% → 32.8%. Scenario-tested: with no other creature on the
+battlefield, Devour's own `PendingChoice` never opens at all (nothing
+to offer) and Skullmulcher enters with 0 counters, drawing 0 cards;
+devouring two creatures sacrifices both, enters with exactly 2 +1/+1
+counters (multiplier 1), and draws exactly 2 cards — confirming the
+two-trigger design resolves in the correct order in practice.
+Validation: **845 rules tests** (3 new), `npm run check` across all
+four workspaces, `npx vitest run services/match-server/src` (6
+passed), 10,797 global profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **88 of 97 unique cards fully
+implemented (90.7%)**.
