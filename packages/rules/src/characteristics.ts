@@ -2034,7 +2034,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     return {
       index, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost: null,
       loyaltyCost: magnitude === 0 ? 0 : sign * magnitude, sorcerySpeed: true,
-      effect: recognized.effect, targetKind: recognized.target, text: line.trim()
+      effect: recognized.effect, targetKind: recognized.target,
+      ...(recognized.targetKinds ? { targetKinds: recognized.targetKinds } : {}),
+      text: line.trim()
     };
   }
   // "Activate only if an opponent controls N or more lands" (Tectonic Edge, CR 602.5).
@@ -3627,6 +3629,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
   if (/^Untap target creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent you control$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent-you-control" };
+  if (/^Untap target land$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "land" };
+  // Garruk Wildspeaker's "+1" (CR 601.2c: the same target can't be chosen
+  // twice for one instance of "target", enforced at resolution alongside the
+  // shared multi-slot targetKinds check).
+  if (/^Untap two target lands$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "land", targetKinds: ["land", "land"] };
   if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
     return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
   }

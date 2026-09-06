@@ -4054,6 +4054,41 @@ simulate:engine` 200/200, 10,076 global profiles.
 Prossh decklist status after this pass: **66 of 97 unique cards fully
 implemented (68.0%)**.
 
+Garruk Wildspeaker's "+1: Untap two target lands" was the one missing
+line on an otherwise-complete planeswalker (its −1 token and −4 anthem
+abilities were already covered). Reused the existing single-target
+`untap-target-permanent` effect kind rather than adding a new one — it
+only read `object.targets[0]`, so generalized it to fold over every
+`"permanent"` target in `object.targets`, which changes nothing for
+every existing single-target user of that kind. Parsing "two target
+lands" surfaced a real, previously-unnoticed bug: `recognizeSentence`
+already supports returning `targetKinds` for multi-target abilities, but
+`parseActivatedAbility`'s LOYALTY-ability branch (planeswalker `+N`/`−N`
+costs) had its own separate return statement that never forwarded
+`recognized.targetKinds` — so any planeswalker ability needing more than
+one target of the same kind would have silently lost every target past
+the first. Fixed by forwarding it the same way the ordinary
+mana-cost-ability path already does. Separately, the shared
+`targetKinds` validation had no distinctness check at all (CR 601.2c:
+the same object can't be chosen twice for one instance of "target"), so
+also added: a legality-time check that repeated same-kind slots have
+enough DISTINCT legal candidates (not just a non-empty list per slot),
+and an execution-time rejection if the same target is chosen for two
+slots. Verified **+11** in the export count (10,076 → 10,087, spanning
+Garruk's own multiple printings plus the loyalty-targetKinds fix
+unblocking any other affected planeswalker) and set coverage 30.5% →
+30.6%. Scenario-tested: activating +1 with two named lands untaps
+exactly those two, leaves a third tapped land untouched, and adds a
+loyalty counter; choosing the SAME land for both target slots throws;
+the ability is not offered at all with only one land in play (a known,
+documented boundary — the exact-count multi-target model here does not
+yet support "up to N, minimum 1", so a single-land board under-offers
+rather than mis-targeting). Validation: **743 rules tests**, `npm run
+check`, `npm run simulate:engine` 200/200, 10,087 global profiles.
+
+Prossh decklist status after this pass: **67 of 97 unique cards fully
+implemented (69.1%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

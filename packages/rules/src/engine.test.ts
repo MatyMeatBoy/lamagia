@@ -10175,6 +10175,62 @@ describe("Vexing Shusher makes a target spell uncounterable", () => {
   });
 });
 
+describe("Garruk Wildspeaker's '+1: Untap two target lands'", () => {
+  const GARRUK_WILDSPEAKER = () => make({
+    name: "Garruk Wildspeaker", type_line: "Legendary Planeswalker — Garruk", mana_cost: "{2}{G}{G}", cmc: 4, loyalty: "3",
+    oracle_text: "+1: Untap two target lands.\n−1: Create a 3/3 green Beast creature token.\n−4: Creatures you control get +3/+3 and gain trample until end of turn."
+  });
+
+  it("recognizes the +1 ability as a distinct two-land target", () => {
+    const profile = profileOf(GARRUK_WILDSPEAKER());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({ loyaltyCost: 1, targetKind: "land", targetKinds: ["land", "land"], effect: { kind: "untap-target-permanent" } });
+  });
+
+  it("untaps exactly the two chosen lands and gains a loyalty counter", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GARRUK_WILDSPEAKER(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Forest"
+        ? { ...permanent, tapped: true }
+        : permanent.card.name === "Garruk Wildspeaker" ? { ...permanent, counters: { loyalty: 3 } } : permanent),
+      autoPass: false
+    }));
+    const garruk = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Garruk Wildspeaker")!;
+    const forests = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Forest");
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: garruk.instance_id, abilityIndex: 0,
+      targets: [{ kind: "permanent", instanceId: forests[0]!.instance_id }, { kind: "permanent", instanceId: forests[1]!.instance_id }]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    const updated = game.players[0]!.battlefield;
+    expect(updated.find((permanent) => permanent.instance_id === forests[0]!.instance_id)?.tapped).toBe(false);
+    expect(updated.find((permanent) => permanent.instance_id === forests[1]!.instance_id)?.tapped).toBe(false);
+    expect(updated.find((permanent) => permanent.instance_id === forests[2]!.instance_id)?.tapped).toBe(true);
+    expect(updated.find((permanent) => permanent.instance_id === garruk.instance_id)?.counters.loyalty).toBe(4);
+  });
+
+  it("rejects choosing the same land for both target slots", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GARRUK_WILDSPEAKER(), FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const garruk = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Garruk Wildspeaker")!;
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    expect(() => applyAction(game, 0, {
+      type: "activate", sourceId: garruk.instance_id, abilityIndex: 0,
+      targets: [{ kind: "permanent", instanceId: forest.instance_id }, { kind: "permanent", instanceId: forest.instance_id }]
+    })).toThrow();
+  });
+
+  it("is not activatable with fewer than two lands in play", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GARRUK_WILDSPEAKER(), FOREST()]);
+    const garruk = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Garruk Wildspeaker")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === garruk.instance_id && entry.action.abilityIndex === 0)).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

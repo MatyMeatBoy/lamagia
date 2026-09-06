@@ -4921,15 +4921,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return { ...state, blockingTaxPerCreature: [...(state.blockingTaxPerCreature ?? []), amount] };
     }
     case "untap-target-permanent": {
-      const target = object.targets[0];
-      if (!target || target.kind !== "permanent") return state;
-      const permanent = findPermanent(state, target.instanceId);
-      if (!permanent) return state;
-      return withPlayer(state, permanent.controller, (player) => ({
-        ...player,
-        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
-          ? { ...candidate, tapped: false } : candidate)
-      }));
+      const instanceIds = object.targets.filter((target) => target.kind === "permanent").map((target) => target.instanceId);
+      return instanceIds.reduce((current, instanceId) => {
+        const permanent = findPermanent(current, instanceId);
+        if (!permanent) return current;
+        return withPlayer(current, permanent.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.map((candidate) => candidate.instance_id === instanceId
+            ? { ...candidate, tapped: false } : candidate)
+        }));
+      }, state);
     }
     case "untap-source": {
       const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
@@ -7718,6 +7719,11 @@ function activatableAbility(
   const sourceProfile = cardProfile(permanent.card);
   if (ability.targetKinds?.length) {
     if (ability.targetKinds.some((kind) => !legalTargets(state, seat, kind, sourceProfile).length)) return { legal: false };
+    // Repeated slots of the same kind (Garruk Wildspeaker's "two target
+    // lands") need that many DISTINCT legal targets — CR 601.2c forbids
+    // choosing the same object twice for one instance of the word "target".
+    if (ability.targetKinds.every((kind) => kind === ability.targetKinds![0])
+      && legalTargets(state, seat, ability.targetKinds[0]!, sourceProfile).length < ability.targetKinds.length) return { legal: false };
     return { legal: true, targetKind, targetKinds: ability.targetKinds };
   }
   if ((targetKind === "spell" || targetKind === "creature-spell" || targetKind === "noncreature-spell") && !legalTargets(state, seat, targetKind, sourceProfile).length) return { legal: false };
@@ -7753,6 +7759,16 @@ function triggerTapCostCandidates(
     if (cost.mode === "another" && candidate.instance_id === sourceId) return false;
     return !cost.subtype || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === cost.subtype!.toLowerCase());
   });
+}
+
+/** Default targets for a multi-slot activated ability with no explicit choice: the first legal candidate per slot, skipping any already used by an earlier slot (CR 601.2c). */
+function distinctDefaultTargets(allowedBySlot: readonly (readonly Target[])[]): Target[] {
+  const chosen: Target[] = [];
+  for (const allowed of allowedBySlot) {
+    const next = allowed.find((candidate) => !chosen.some((used) => JSON.stringify(used) === JSON.stringify(candidate)));
+    if (next) chosen.push(next);
+  }
+  return chosen;
 }
 
 function applyActivate(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate" }>): GameState {
@@ -7839,11 +7855,14 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
 
   if (ability.targetKinds?.length) {
     const allowedBySlot = ability.targetKinds.map((kind) => legalTargets(state, seat, kind, cardProfile(source.card)));
-    const chosen = targets.length ? targets : allowedBySlot.map((allowed) => allowed[0]).filter((target): target is Target => Boolean(target));
+    const chosen = targets.length ? targets : distinctDefaultTargets(allowedBySlot);
     if (chosen.length !== ability.targetKinds.length) throw new Error(`${source.card.name} necesita ${ability.targetKinds.length} objetivos legales.`);
     if (!chosen.every((target, index) => allowedBySlot[index]!.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
       throw new Error(`Objetivo ilegal para ${source.card.name}.`);
     }
+    // CR 601.2c: the same object can't be chosen twice for one instance of "target".
+    const serialized = chosen.map((target) => JSON.stringify(target));
+    if (new Set(serialized).size !== serialized.length) throw new Error(`${source.card.name} no puede elegir el mismo objetivo dos veces.`);
     targets = chosen;
   } else if (check.targetKind) {
     const allowed = legalTargets(state, seat, check.targetKind, cardProfile(source.card));
