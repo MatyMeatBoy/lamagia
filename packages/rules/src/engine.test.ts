@@ -11535,6 +11535,59 @@ describe("Hunting Wilds' kicked-only untap-and-animate-fetched-lands", () => {
   });
 });
 
+describe("Xenagos, the Reveler's creature-scaled mana and exile-batch loyalty abilities", () => {
+  const XENAGOS = () => make({
+    name: "Xenagos, the Reveler", type_line: "Legendary Planeswalker — Xenagos", mana_cost: "{2}{R}{G}", cmc: 4, loyalty: "3",
+    oracle_text: "+1: Add X mana in any combination of {R} and/or {G}, where X is the number of creatures you control.\n0: Create a 2/2 red and green Satyr creature token with haste.\n−6: Exile the top seven cards of your library. You may put any number of creature and/or land cards from among them onto the battlefield."
+  });
+
+  it("recognizes all three loyalty abilities", () => {
+    const profile = profileOf(XENAGOS());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({ loyaltyCost: 1, effect: { kind: "add-mana-any-color", colors: ["R", "G"], amount: "creatures-you-control" } });
+    expect(profile.activatedAbilities[2]).toMatchObject({ loyaltyCost: -6, effect: { kind: "exile-top-then-choose-creatures-lands-to-battlefield", amount: 7 } });
+  });
+
+  it("adds mana equal to the number of creatures controlled, in one chosen color from the restricted pair", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [XENAGOS(), BEAR(), TRAMPLER()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const xenagos = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Xenagos, the Reveler")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: xenagos.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "choose-color");
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "choose-color" }>;
+    expect(() => applyAction(game, 0, { type: "choose-color", sourceId: choice.sourceId, color: "W" })).toThrow();
+    game = applyAction(game, 0, { type: "choose-color", sourceId: choice.sourceId, color: "R" });
+    expect(game.players[0]!.manaPool.R).toBe(2);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === xenagos.instance_id)?.counters.loyalty).toBe(1);
+  });
+
+  it("exiles the top seven and lets the controller put any number of creature/land cards onto the battlefield", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      library: [...toHand(0, [BEAR(), BOLT(), FOREST(), TRAMPLER(), SOL_RING(), MOUNTAIN(), SWAMP()], "xen-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [XENAGOS()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Xenagos, the Reveler" ? { ...permanent, counters: { loyalty: 6 } } : permanent)
+    }));
+    const xenagos = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Xenagos, the Reveler")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: xenagos.instance_id, abilityIndex: 2 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "exile-batch-multi");
+    let choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "exile-batch-multi" }>;
+    expect(choice.optionIds).toHaveLength(5); // Bear, Forest, Trampler, Mountain, Swamp (creatures/lands); Bolt and Sol Ring excluded.
+    const bear = game.players[0]!.exile.find((card) => card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-exile-batch-card", sourceId: choice.sourceId, cardId: bear.instance_id });
+    choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "exile-batch-multi" }>;
+    game = applyAction(game, 0, { type: "finish-exile-batch", sourceId: choice.sourceId });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Big Stomper")).toBe(true);
+    expect(game.players[0]!.exile.some((card) => card.name === "Lightning Bolt")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

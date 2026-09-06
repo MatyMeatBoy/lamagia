@@ -724,6 +724,15 @@ export type PendingChoice =
       readonly maxCount: number;
       readonly returnSourceToGraveyard: boolean;
       readonly exileSourceAfterResolution: boolean;
+    }
+  | {
+      /** "Exile the top N cards of your library. You may put any number of creature and/or land cards from among them onto the battlefield" (Xenagos, the Reveler). Cards not chosen stay in exile. */
+      readonly type: "exile-batch-multi";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+      readonly selectedIds: readonly string[];
     };
 
 export type GameAction =
@@ -769,6 +778,8 @@ export type GameAction =
   | { readonly type: "choose-exploit"; readonly sourceId: string; readonly sacrificeId?: string }
   | { readonly type: "choose-hand-battlefield-card"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "finish-hand-to-battlefield"; readonly sourceId: string }
+  | { readonly type: "choose-exile-batch-card"; readonly sourceId: string; readonly cardId: string }
+  | { readonly type: "finish-exile-batch"; readonly sourceId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -5268,7 +5279,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }, state);
     }
     case "add-mana-any-color": {
-      if (object.chosenColor) return withPlayer(state, controller, (player) => ({ ...player, manaPool: addMana(player.manaPool, object.chosenColor!, 1) }));
+      if (object.chosenColor) {
+        const amount = effect.amount === "creatures-you-control"
+          ? playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
+          : 1;
+        return withPlayer(state, controller, (player) => ({ ...player, manaPool: addMana(player.manaPool, object.chosenColor!, amount) }));
+      }
       return {
         ...state,
         pendingChoice: {
@@ -5452,6 +5468,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return state;
     case "put-hand-creatures-onto-battlefield":
       // Resolved through the explicit hand-to-battlefield choice action below.
+      return state;
+    case "exile-top-then-choose-creatures-lands-to-battlefield":
+      // Resolved through the explicit exile-batch choice action below.
       return state;
     case "scry":
       // Scry is completed through the private top-card choice below.
@@ -6014,6 +6033,34 @@ function resolveTop(state: GameState): GameState {
         maxCount: handToBattlefield.amount,
         returnSourceToGraveyard: !object.activated && !object.fromCopy,
         exileSourceAfterResolution: Boolean(object.flashback) || profile.effects.some((effect) => effect.kind === "exile-self")
+      }
+    };
+  }
+
+  const exileBatch = activatedEffect?.kind === "exile-top-then-choose-creatures-lands-to-battlefield" ? activatedEffect : undefined;
+  if (exileBatch) {
+    const player = playerAt(next, object.controller);
+    const revealed = player.library.slice(0, exileBatch.amount);
+    next = withPlayer(next, object.controller, (current) => ({
+      ...current,
+      library: current.library.slice(revealed.length),
+      exile: [...current.exile, ...revealed]
+    }));
+    const eligible = revealed
+      .filter((card) => { const revealedProfile = cardProfile(card); return isCreature(revealedProfile) || isLand(revealedProfile); })
+      .map((card) => card.instance_id);
+    if (!eligible.length) {
+      return logged(next, object.controller, `${object.card.name}: exilia ${revealed.length} carta(s); ninguna es una criatura o tierra.`);
+    }
+    return {
+      ...next,
+      pendingChoice: {
+        type: "exile-batch-multi",
+        seat: object.controller,
+        sourceId: object.id,
+        sourceCard: object.card,
+        optionIds: eligible,
+        selectedIds: []
       }
     };
   }
@@ -7025,7 +7072,10 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
     if (choice.type === "choose-color") {
       const names: Readonly<Record<MagicColor, string>> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
-      for (const color of Object.keys(names) as MagicColor[]) {
+      const offeredColors = choice.effect.kind === "add-mana-any-color" && choice.effect.colors
+        ? choice.effect.colors
+        : (Object.keys(names) as MagicColor[]);
+      for (const color of offeredColors) {
         actions.push({
           action: { type: "choose-color", sourceId: choice.sourceId, color },
           label: `Choose ${names[color]}`,
@@ -7330,6 +7380,25 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         action: { type: "finish-hand-to-battlefield", sourceId: choice.sourceId },
         label: choice.selectedIds.length ? "Terminar de elegir criaturas" : "No poner ninguna criatura",
         note: `${choice.sourceCard.name}: puedes elegir menos de ${choice.maxCount}.`
+      });
+      return actions;
+    }
+    if (choice.type === "exile-batch-multi") {
+      for (const candidateId of choice.optionIds) {
+        if (choice.selectedIds.includes(candidateId)) continue;
+        const card = player.exile.find((candidate) => candidate.instance_id === candidateId);
+        if (!card) continue;
+        actions.push({
+          action: { type: "choose-exile-batch-card", sourceId: choice.sourceId, cardId: candidateId },
+          label: `Poner ${card.name} en el campo de batalla`,
+          cardId: candidateId,
+          note: `${choice.sourceCard.name}: puedes elegir cualquier cantidad de criaturas y/o tierras exiliadas.`
+        });
+      }
+      actions.push({
+        action: { type: "finish-exile-batch", sourceId: choice.sourceId },
+        label: choice.selectedIds.length ? "Terminar de elegir cartas" : "No poner ninguna carta",
+        note: `${choice.sourceCard.name}: el resto de las cartas exiliadas se quedan exiliadas.`
       });
       return actions;
     }
@@ -9049,7 +9118,9 @@ function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAc
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "choose-color" || choice.seat !== seat) throw new Error("You do not have a color choice pending.");
   if (choice.sourceId !== action.sourceId) throw new Error("That color choice is no longer pending.");
-  const colors: readonly MagicColor[] = ["W", "U", "B", "R", "G"];
+  const colors: readonly MagicColor[] = choice.effect.kind === "add-mana-any-color" && choice.effect.colors
+    ? choice.effect.colors
+    : ["W", "U", "B", "R", "G"];
   if (!colors.includes(action.color)) throw new Error("Choose one of Magic's five colors.");
   const source: StackObject = {
     id: choice.sourceId,
@@ -9407,6 +9478,45 @@ function applyFinishHandToBattlefield(state: GameState, seat: SeatId, action: Ex
   if (!choice || choice.type !== "hand-to-battlefield-multi" || choice.seat !== seat) throw new Error("No tienes una elección de mano pendiente.");
   if (choice.sourceId !== action.sourceId) throw new Error("Debes terminar la elección pendiente.");
   return finishHandToBattlefield(state, seat, choice, choice.selectedIds);
+}
+
+function finishExileBatch(
+  state: GameState,
+  seat: SeatId,
+  choice: Extract<PendingChoice, { type: "exile-batch-multi" }>,
+  selectedIds: readonly string[]
+): GameState {
+  const player = playerAt(state, seat);
+  const selected = selectedIds
+    .map((id) => player.exile.find((card) => card.instance_id === id))
+    .filter((card): card is GameCard => Boolean(card));
+  const selectedSet = new Set(selected.map((card) => card.instance_id));
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    exile: current.exile.filter((card) => !selectedSet.has(card.instance_id))
+  }));
+  for (const card of selected) next = putOntoBattlefield(next, seat, card, false, false);
+  const names = selected.map((card) => card.name).join(", ");
+  return logged(next, seat, `${player.name} ${selected.length ? `pone ${names} en el campo de batalla` : "no pone ninguna carta en el campo de batalla"}.`);
+}
+
+function applyChooseExileBatchCard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-exile-batch-card" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "exile-batch-multi" || choice.seat !== seat) throw new Error("No tienes una elección de exilio pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes elegir una carta de la elección pendiente.");
+  if (choice.selectedIds.includes(action.cardId)) throw new Error("Esa carta ya fue elegida.");
+  if (!choice.optionIds.includes(action.cardId)) throw new Error("Esa carta no está disponible para esta elección.");
+  const selectedIds = [...choice.selectedIds, action.cardId];
+  if (selectedIds.length >= choice.optionIds.length) return finishExileBatch(state, seat, choice, selectedIds);
+  const card = playerAt(state, seat).exile.find((candidate) => candidate.instance_id === action.cardId)!;
+  return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${card.name}.`);
+}
+
+function applyFinishExileBatch(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-exile-batch" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "exile-batch-multi" || choice.seat !== seat) throw new Error("No tienes una elección de exilio pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes terminar la elección pendiente.");
+  return finishExileBatch(state, seat, choice, choice.selectedIds);
 }
 
 /** Closes the private "look at target player's hand" view (Gitaxian Probe, CR 701.20). */
@@ -10202,6 +10312,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-exploit": next = applyChooseExploit(state, seat, action); break;
     case "choose-hand-battlefield-card": next = applyChooseHandBattlefieldCard(state, seat, action); break;
     case "finish-hand-to-battlefield": next = applyFinishHandToBattlefield(state, seat, action); break;
+    case "choose-exile-batch-card": next = applyChooseExileBatchCard(state, seat, action); break;
+    case "finish-exile-batch": next = applyFinishExileBatch(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {

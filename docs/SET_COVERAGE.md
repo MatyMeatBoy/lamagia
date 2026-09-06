@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,716** · cobertura: **31.4%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,719** · cobertura: **31.4%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -298,7 +298,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | 2013-08-23 | From the Vault: Twenty (`V13`) | from-the-vault | 2010s | other | 20 | 11 | 9 | 55.0% |
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 33 | 35 | 48.5% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
-| 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 77 | 157 | 32.9% |
+| 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 78 | 156 | 33.3% |
 | 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 289 | 52 | 84.8% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 5 | 7 | 41.7% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 7 | 7 | 50.0% |
@@ -528,7 +528,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | 2022-04-29 | Streets of New Capenna (`SNC`) | expansion | capenna | main | 310 | 52 | 258 | 16.8% |
 | 2022-04-29 | Streets of New Capenna Promos (`PSNC`) | promos | streets-of-new-capenna | other | 80 | 7 | 73 | 8.8% |
 | 2022-06-10 | Battle for Baldur's Gate Promos (`PCLB`) | promos | battle-for-baldur-s-gate | other | 99 | 7 | 92 | 7.1% |
-| 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | commander | 2022 | other | 651 | 138 | 513 | 21.2% |
+| 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | commander | 2022 | other | 651 | 139 | 512 | 21.4% |
 | 2022-07-01 | Love Your LGS 2022 (`PLG22`) | promos | lgs-2022 | other | 2 | 2 | 0 | 100.0% |
 | 2022-07-08 | Double Masters 2022 (`2X2`) | masters-remastered | double-masters-2022 | other | 332 | 101 | 231 | 30.4% |
 | 2022-07-09 | Store Championships (`SCH`) | promos | store-championships | other | 50 | 10 | 40 | 20.0% |
@@ -630,7 +630,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | 2024-11-15 | Foundations Commander (`FDC`) | commander | 2024 | commander | 3 | 3 | 0 | 100.0% |
 | 2024-11-15 | Foundations Jumpstart (`J25`) | jumpstart | foundations-jumpstart | other | 768 | 275 | 493 | 35.8% |
 | 2024-11-15 | Foundations Promos (`PFDN`) | promos | foundations | other | 81 | 11 | 70 | 13.6% |
-| 2024-12-10 | Pioneer Masters (`PIO`) | masters-remastered | pioneer-masters | other | 398 | 87 | 311 | 21.9% |
+| 2024-12-10 | Pioneer Masters (`PIO`) | masters-remastered | pioneer-masters | other | 398 | 88 | 310 | 22.1% |
 | 2025-01-01 | MagicFest 2025 (`PF25`) | promos | magicfest-2025 | other | 19 | 5 | 14 | 26.3% |
 | 2025-01-01 | Wizards Play Network 2025 (`PW25`) | promos | wpn-2025 | other | 16 | 4 | 12 | 25.0% |
 | 2025-01-03 | Spotlight Series (`PSPL`) | promos | spotlight-series | other | 13 | 1 | 12 | 7.7% |
@@ -749,7 +749,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | commander | 2019 | 1 | 292 | 110 | 182 | 37.7% |
 | commander | 2020 | 4 | 1001 | 372 | 629 | 37.2% |
 | commander | 2021 | 5 | 1022 | 371 | 651 | 36.3% |
-| commander | 2022 | 7 | 1802 | 547 | 1255 | 30.4% |
+| commander | 2022 | 7 | 1802 | 548 | 1254 | 30.4% |
 | commander | 2023 | 6 | 1597 | 543 | 1054 | 34.0% |
 | commander | 2024 | 7 | 1887 | 685 | 1202 | 36.3% |
 | commander | 2025 | 4 | 1046 | 416 | 630 | 39.8% |
@@ -820,7 +820,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | expansion | strixhaven | 2 | 561 | 127 | 434 | 22.6% |
 | expansion | tarkir | 3 | 785 | 203 | 582 | 25.9% |
 | expansion | tempest | 1 | 335 | 119 | 216 | 35.5% |
-| expansion | theros | 2 | 507 | 140 | 367 | 27.6% |
+| expansion | theros | 2 | 507 | 141 | 366 | 27.8% |
 | expansion | thunder-junction | 1 | 276 | 35 | 241 | 12.7% |
 | expansion | time-spiral | 2 | 407 | 106 | 301 | 26.0% |
 | expansion | urza | 3 | 621 | 244 | 377 | 39.3% |
@@ -889,7 +889,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | masters-remastered | modern-masters-2015 | 1 | 249 | 94 | 155 | 37.8% |
 | masters-remastered | modern-masters-2017 | 1 | 249 | 116 | 133 | 46.6% |
 | masters-remastered | mystery-booster-2 | 1 | 384 | 80 | 304 | 20.8% |
-| masters-remastered | pioneer-masters | 1 | 398 | 87 | 311 | 21.9% |
+| masters-remastered | pioneer-masters | 1 | 398 | 88 | 310 | 22.1% |
 | masters-remastered | ravnica-remastered | 1 | 313 | 94 | 219 | 30.0% |
 | masters-remastered | renaissance | 1 | 122 | 37 | 85 | 30.3% |
 | masters-remastered | rinascimento | 1 | 60 | 12 | 48 | 20.0% |
@@ -19600,7 +19600,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 - [ ] Whip of Erebos — `53987a39-c18c-4c13-b1ea-fd1b2a369f9e`
 - [ ] Wingsteed Rider — `9c46adaa-ab39-4c0a-99bd-935b6c4f732f`
 - [ ] Witches' Eye — `c8d479b8-b96c-4382-97d3-68d85cf371ba`
-- [ ] Xenagos, the Reveler — `942a318e-90eb-4f10-bb30-2e10f5cc922a`
 
 ### commander / 2013 · Commander 2013 (`C13`)
 
@@ -43496,7 +43495,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 - [ ] Wyll's Reversal — `8d35cef8-a52d-45fb-8f5f-cccea26826d0`
 - [ ] Wyll, Blade of Frontiers — `4fb254cf-b60c-4a3e-b753-4213cb572837`
 - [ ] Wyrm's Crossing Patrol — `fad2d14f-8825-4b08-8804-010d9659f6dc`
-- [ ] Xenagos, the Reveler — `942a318e-90eb-4f10-bb30-2e10f5cc922a`
 - [ ] You Look Upon the Tarrasque — `231a6f8a-624a-4bff-8648-0b4ef910a6aa`
 - [ ] You Meet in a Tavern — `c735077a-fae8-4c5f-a5bf-35969696460c`
 - [ ] You're Confronted by Robbers — `7d10ad59-e90d-4726-bd55-5680d7c21638`
@@ -55505,7 +55503,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 - [ ] Worst Fears — `face0a43-6604-4508-b511-81ab0bef7b18`
 - [ ] Xathrid Necromancer — `a6b38874-c8be-47f7-a656-ba49ec9e967f`
 - [ ] Xenagos, God of Revels — `cb15a8dd-57fe-466f-847e-66476b690a1f`
-- [ ] Xenagos, the Reveler — `942a318e-90eb-4f10-bb30-2e10f5cc922a`
 - [ ] Zendikar Incarnate — `ecd307e6-9096-401f-bd82-ad190532d389`
 - [ ] Zephyr Winder — `13c4437e-48a9-4c51-9b76-9e83e3ec362f`
 - [ ] Zurgo Bellstriker — `46808926-d95b-4313-89d1-6bdfe13fcb77`

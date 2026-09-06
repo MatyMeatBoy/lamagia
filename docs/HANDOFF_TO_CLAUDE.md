@@ -5084,3 +5084,57 @@ across all four workspaces, `npx vitest run services/match-server/src`
 
 Prossh decklist status after this pass: **86 of 97 unique cards fully
 implemented (88.7%)**.
+
+Xenagos, the Reveler ("+1: Add X mana in any combination of {R} and/or
+{G}, where X is the number of creatures you control. / 0: Create a
+2/2 red and green Satyr creature token with haste. / −6: Exile the top
+seven cards of your library. You may put any number of creature
+and/or land cards from among them onto the battlefield.") needed two
+new primitives for its +1 and −6; the 0 ability already worked. The
+−6 got a new `{kind: "exile-top-then-choose-creatures-lands-to-
+battlefield", amount}` effect resolved via a new `"exile-batch-multi"`
+`PendingChoice` — structurally the THIRD multi-select-to-battlefield
+choice this session (after `search-library-multi` and Tooth and Nail's
+`hand-to-battlefield-multi`), sourced from a batch of cards the
+ability itself just moved to exile rather than from hand or library,
+with "any number" (not a fixed cap) implemented simply by letting
+`finish-exile-batch` end the choice at any point and auto-finishing
+only once every option is exhausted. The +1 needed generalizing the
+pre-existing `add-mana-any-color` effect (Lotus Cobra) with an optional
+`colors?: readonly MagicColor[]` restriction and `amount?: "creatures-
+you-control"` scaling — modeled as "choose ONE of the offered colors
+for all X mana" rather than true free splitting across both, the same
+single-color simplification `add-mana-any-color` already made for a
+single mana. Finding a home for the +1's parser was the harder half:
+`parseActivatedAbility` had a blanket `if (/^add\b/i.test(effectText))
+return null;` guard sending anything starting with "Add" down the
+dedicated mana-ability path (CR 605.1a) — correct for a real mana
+ability, but WRONG for a loyalty ability whose own effect happens to
+add mana, since CR 605.1a explicitly excludes loyalty abilities from
+ever being mana abilities. A SECOND, separate copy of the same
+mistake lived one level up: `recognizeText`'s own `manaLine` line-gate
+(`/^([^:]{1,80}):\s*(add\b.*)$/i`) diverted ANY `cost: Add ...` line
+into the mana-instruction parser before `parseActivatedAbility` was
+ever reached at all, regardless of whether the "cost" was actually a
+loyalty change. Fixed both sites the same way: detect a loyalty-shaped
+cost (`/^\s*([+−–-])?\s*(\d+)\s*$/` against the cost text) and skip
+the "this looks like mana ability" guard whenever it matches, letting
+the line fall through to the normal loyalty-ability path instead. This
+is a genuine, previously-latent bug affecting ANY planeswalker with a
+mana-producing loyalty ability, not just Xenagos, confirmed safe via a
+Delighted Halfling regression check (a real mana ability, unaffected).
+Verified **+1** in the export count (10,281 → 10,282; evidently very
+few other catalog planeswalkers combine this exact shape) and set
+coverage holds at 31.4%. Scenario-tested: activating +1 with two other
+creatures on the battlefield opens a restricted W/U/B-excluded color
+choice (only R or G offered; choosing an excluded color throws) and
+adds 2 mana in the chosen color; activating −6 (loyalty boosted to 6
+for the test) exiles the top seven cards, offers exactly the
+creature/land cards among them (5 of 7 in the fixture), and choosing
+one puts it on the battlefield while the rest remain in exile
+permanently. Validation: **817 rules tests** (3 new), `npm run check`
+across all four workspaces, `npx vitest run services/match-server/src`
+(5 passed), 10,282 global profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **87 of 97 unique cards fully
+implemented (89.7%)**.
