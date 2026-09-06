@@ -6,6 +6,16 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **Predefined token abilities (Clue, Food) + Investigate** —
+  `PREDEFINED_TOKEN_TEXT` gives a created Clue/Food token its real rules text
+  (`TokenDefinition.oracleText`), so `cardProfile` grants its
+  `{2}, Sacrifice: Draw a card` / `{2},{T},Sacrifice: gain 3 life` ability;
+  `recognizeSentence` parses the `Investigate` / `Investigate twice` keyword
+  action into `create-token` Clue. Treasure/Gold are deliberately excluded —
+  their sacrifice-cost *mana* ability is not yet in the mana planner. Export
+  **10,521 → 10,551**. Test: `engine.test.ts` › "investigates into a working
+  Clue token".
+
 - **`kickedEntersWithCounters`** — "If ~ was kicked, it enters with N <kind>
   counters on it". The `If ~ was kicked, …` sentence handler now recognises the
   ETB-counter clause via the existing `parseEntersWithCounters`;
@@ -29,7 +39,7 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
   `engine.test.ts` › "stops an enchanted creature from attacking or blocking".
 
 Session net: engine export **10,197 → 10,500** fully-implemented profiles
-(+324) across the eight primitives below, each with a scenario test; rules
+(+354) across the eight primitives below, each with a scenario test; rules
 suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
 200-game engine matrix **200/200** (unchanged from baseline).
 

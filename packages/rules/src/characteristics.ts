@@ -402,7 +402,20 @@ export interface TokenDefinition {
   readonly colors: readonly string[];
   readonly keywords: readonly EnforcedKeyword[];
   readonly tapped: boolean;
+  /** Rules text for predefined tokens (Treasure, Clue, Food, Gold) so the engine grants their built-in abilities. */
+  readonly oracleText?: string;
 }
+
+/**
+ * CR 111.10: predefined tokens print no rules text on the card, only in the
+ * rules. Treasure/Gold need sacrifice-cost mana abilities (not yet supported in
+ * the mana planner), so only the ones whose ability is a plain activated
+ * ability are wired here.
+ */
+export const PREDEFINED_TOKEN_TEXT: Readonly<Record<string, string>> = {
+  clue: "{2}, Sacrifice this artifact: Draw a card.",
+  food: "{2}, {T}, Sacrifice this artifact: You gain 3 life."
+};
 
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
 export type SpellEffect =
@@ -2478,10 +2491,14 @@ function parseCreateToken(text: string): SpellEffect | null {
   const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
   const typeLine = subtype ? `${artifact ? "Artifact " : ""}${creature ? "Creature" : "Artifact"} — ${subtype}` : `${artifact ? "Artifact" : "Creature"}`;
+  const predefinedText = PREDEFINED_TOKEN_TEXT[name.toLowerCase()];
   return {
     kind: "create-token",
     amount,
-    token: { name, typeLine, power, toughness, colors, keywords, tapped: /\btapped\b/i.test(match[4]!) }
+    token: {
+      name, typeLine, power, toughness, colors, keywords, tapped: /\btapped\b/i.test(match[4]!),
+      ...(predefinedText && power === null ? { oracleText: predefinedText } : {})
+    }
   };
 }
 
@@ -3898,6 +3915,25 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (multiBasicSearch) return { effect: multiBasicSearch, target: "none" };
   const token = parseManaSpentToken(text) ?? parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
   if (token) return { effect: token, target: "none" };
+  // Investigate (CR 701.42): create a Clue token, optionally several.
+  if ((match = /^Investigate(?:\s+(twice|\w+ times?))?$/i.exec(text))) {
+    const amount = !match[1] ? 1
+      : /^twice$/i.test(match[1]) ? 2
+      : toNumber(match[1].replace(/\s+times?$/i, ""));
+    if (amount !== null && amount > 0) {
+      return {
+        effect: {
+          kind: "create-token",
+          amount,
+          token: {
+            name: "Clue", typeLine: "Artifact — Clue", power: null, toughness: null, colors: [], keywords: [], tapped: false,
+            oracleText: PREDEFINED_TOKEN_TEXT.clue
+          }
+        },
+        target: "none"
+      };
+    }
+  }
   const genericSearch = parseLibrarySearch(text);
   if (genericSearch) return { effect: genericSearch, target: "none" };
   if (/^Search your library for an artifact or enchantment card, reveal it, then shuffle\. Put that card on top of your library$/i.test(text)) {

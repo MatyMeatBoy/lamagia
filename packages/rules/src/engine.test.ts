@@ -7240,6 +7240,28 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("investigates into a working Clue token", () => {
+    const inspector = make({
+      name: "Test Inspector", type_line: "Creature — Human Soldier", mana_cost: "{W}", cmc: 1, power: "1", toughness: "2",
+      oracle_text: "When this creature enters, investigate."
+    });
+    expect(profileOf(inspector).triggers[0]).toMatchObject({ effect: { kind: "create-token", amount: 1, token: { name: "Clue" } } });
+    let game = readyToCast([inspector], [PLAINS(), PLAINS(), PLAINS()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, library: toHand(0, [BEAR(), BOLT()], "lib") }));
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+
+    const clue = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Clue");
+    expect(clue).toBeDefined();
+    const activate = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === clue!.instance_id);
+    expect(activate).toBeDefined();
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, activate!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null && state.triggerQueue.length === 0);
+    expect(game.players[0]!.hand.length).toBe(handBefore + 1);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Clue")).toBe(false);
+  });
+
   it("gives a kicked creature its 'enters with +1/+1 counters' only when kicked", () => {
     const boa = make({
       name: "Test Kicker Boa", type_line: "Creature — Snake", mana_cost: "{1}{G}", cmc: 2, power: "1", toughness: "1",
