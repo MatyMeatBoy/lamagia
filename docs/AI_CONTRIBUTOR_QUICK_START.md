@@ -33,6 +33,10 @@ For token work, read [`TOKEN_INVENTORY.md`](TOKEN_INVENTORY.md) and
 and preserve the set/printing mapping; do not implement the same token
 definition once per artwork.
 
+Commander 2013 is a priority queue, not a global scope restriction. Continue
+with its remaining unclaimed clusters when assigned, but reusable primitives
+must be implemented globally and their regressions checked across all sets.
+
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
