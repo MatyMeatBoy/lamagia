@@ -1405,6 +1405,22 @@ describe("mana payment", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Red Test Spell")).toBe(true);
   });
 
+  it("rejects reusing one mana source during a pending payment", () => {
+    const spell = make({ name: "Two Mana Test Spell", type_line: "Creature — Goblin", mana_cost: "{1}{R}", power: "2", toughness: "2" });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ kind: "human", hand: toHand(0, [spell], "duplicate-payment") }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "duplicate-payment-0")!;
+    game = applyAction(game, 0, cast.action);
+    const mountain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mountain")!;
+    const red = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === mountain.instance_id && entry.action.mana === "R")!;
+    game = applyAction(game, 0, red.action);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === mountain.instance_id)).toBe(false);
+    expect(game.pendingChoice?.type).toBe("mana-payment");
+    expect(game.players[0]!.battlefield.every((permanent) => !permanent.tapped)).toBe(true);
+  });
+
   it("returns to a clean, recastable state when the mana payment is cancelled", () => {
     const spell = make({ name: "Red Test Spell", type_line: "Creature — Goblin", mana_cost: "{1}{R}", power: "2", toughness: "2" });
     let game = twoSeatGame([], []);
