@@ -390,6 +390,12 @@ function cardActionEntriesForCard(cardId: string): LegalAction[] {
     .sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0));
 }
 
+function cardActionMenuEntries(cardId: string): LegalAction[] {
+  const entries = cardActionEntriesForCard(cardId);
+  const yieldEntries = triggerYieldActionsFor(cardId);
+  return [...entries, ...yieldEntries];
+}
+
 function cardActionsForCard(cardId: string): LegalAction[] {
   return cardActionEntriesForCard(cardId);
 }
@@ -502,13 +508,15 @@ function runAction(entry: LegalAction, subject: string): void {
 }
 
 function onCardClick(cardId: string, forcedAction?: LegalAction): void {
-  const choices = cardActionsForCard(cardId);
+  const choices = cardActionMenuEntries(cardId);
   const card = seatOf(view?.viewerSeat ?? -1)?.hand?.find((candidate) => candidate.instance_id === cardId);
   const hasCycleOnly = choices.some((entry) => entry.action.type === "cycle") && !choices.some((entry) => entry.action.type === "cast");
+  const hasManaAbility = choices.some((entry) => entry.action.type === "activate-mana");
+  const hasYieldToggle = choices.some((entry) => entry.action.type === "toggle-trigger-yield");
   // Never guess between printed modes. This is especially important for
   // hand-based mana abilities (e.g. Simian Spirit Guide): a normal click must
   // open the general menu, where casting and exiling for mana are separate.
-  if (!forcedAction && (choices.length > 1 || (hasCycleOnly && Boolean(card)))) {
+  if (!forcedAction && (choices.length > 1 || hasManaAbility || hasYieldToggle || (hasCycleOnly && Boolean(card)))) {
     ui.cardActionMenu = ui.cardActionMenu === cardId ? null : cardId;
     ui.notice = "Elige qué hacer con esta carta.";
     render();
@@ -822,10 +830,10 @@ function seatPanelHtml(player: PlayerView): string {
   const cmdDamage = Object.values(player.commanderDamage).filter((amount) => amount > 0);
   const counters = Object.entries(player.counters).filter(([, amount]) => amount > 0);
   return `<article class="${classes.join(" ")}" style="--accent: var(--seat-${player.seat})" aria-label="Campo de ${escapeHtml(player.name)}">
-    <header class="seat-head" data-target-player="${player.seat}">
+    <header class="seat-head${isPlayerTargetable(player.seat) ? " targetable-player" : ""}" data-target-player="${player.seat}">
       <span class="seat-avatar"${commander?.image_art_crop ? ` style="background-image:url('${escapeHtml(commander.image_art_crop)}')"` : ""}>${escapeHtml(player.name.slice(0, 1))}</span>
       <span class="seat-name"><b>${escapeHtml(player.name)}${view?.activeSeat === player.seat ? `<i class="active-dot" title="Jugador activo"></i>` : ""}</b><span>${escapeHtml(player.deckName)}</span></span>
-      <button class="life-chip${player.life <= 10 ? " low" : ""}" type="button"
+      <button class="life-chip${player.life <= 10 ? " low" : ""}" type="button" data-target-player="${player.seat}"
         title="${player.lost ? escapeHtml(player.lossReason ?? "Eliminado") : "Vidas"}"><b>${player.lost ? "✕" : player.life}</b><small>vidas</small></button>
       ${counters.map(([kind, amount]) => `<span class="counter-chip" title="Contador ${escapeHtml(kind)}"><b>${amount}</b><small>${escapeHtml(kind)}</small></span>`).join("")}
     </header>
@@ -939,8 +947,8 @@ function stackStripHtml(): string {
     ? `${status}${passed.length ? ` · Pasaron: ${passed.join(", ")}` : ""}`
     : status;
   return `<div class="stack-strip" aria-label="Pila de hechizos y habilidades" title="${escapeHtml(statusDetail)}"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)}</small>${[...view.stack].reverse().map((object, index) =>
-    `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este hechizo como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}">
-      <strong class="stack-order">${index + 1}</strong>
+    `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este hechizo como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}" aria-label="Pila ${index + 1}, ${escapeHtml(object.kind === "trigger" ? "habilidad disparada" : object.kind === "activated" ? "habilidad activada" : "hechizo")}: ${escapeHtml(object.name)}">
+      <strong class="stack-order">${index === 0 ? "↑" : index + 1}</strong>
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
       <span><small class="stack-kind">${object.kind === "trigger" ? "Triggered" : object.kind === "activated" ? "Activated" : "Spell"}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
     </button>`).join("")}</div>`;
@@ -992,7 +1000,7 @@ function actionMenuHtml(): string {
 function cardActionMenuHtml(): string {
   if (!ui.cardActionMenu) return "";
   const card = visibleCards().get(ui.cardActionMenu);
-  const entries = cardActionEntriesForCard(ui.cardActionMenu);
+  const entries = cardActionMenuEntries(ui.cardActionMenu);
   if (!card) return "";
   const hasCast = entries.some((entry) => entry.action.type === "cast");
   const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")
@@ -1005,7 +1013,8 @@ function cardActionMenuHtml(): string {
       const description = entry.action.type === "cycle"
         ? (entry.note ?? "Cicla esta carta, paga su coste y roba una carta.")
         : entry.note ?? entry.label;
-      return `<button class="action-row choice-action" type="button" data-action-index="${index}" title="${escapeHtml(description)}">
+      const choiceClass = entry.action.type === "toggle-trigger-yield" ? "choice-action trigger-yield-action" : "choice-action";
+      return `<button class="action-row ${choiceClass}" type="button" data-action-index="${index}" title="${escapeHtml(description)}">
         <span><b>${escapeHtml(entry.label)}</b><small>${escapeHtml(description)}</small></span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
     }).join("")}<button id="card-action-info" class="action-row" type="button"><span><b>Ver información</b><small>Texto de reglas, tipo, coste y rulings.</small></span></button></div>
   </section>`;
@@ -1026,8 +1035,11 @@ function decisionOverlayHtml(): string {
   if (!choices.length) return "";
   const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
   const manaPayment = choices.some((entry) => entry.action.type === "choose-mana-source" || entry.action.type === "cancel-mana-payment");
-  const title = manaPayment ? "Elegir fuentes de maná" : hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
-  const subtitle = hasPendingChoice
+  const triggerTargetChoice = choices.some((entry) => entry.action.type === "choose-trigger-target");
+  const title = manaPayment ? "Elegir fuentes de maná" : triggerTargetChoice ? "Elegir objetivo" : hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
+  const subtitle = triggerTargetChoice
+    ? "Selecciona el permanente, jugador o hechizo marcado en la mesa."
+    : hasPendingChoice
     ? (manaPayment ? "Elige qué fuentes girar para pagar; puedes cancelar el lanzamiento." : "Elige una opción para continuar la partida.")
     : view?.stack.length
       ? "Puedes responder ahora o pasar prioridad."
