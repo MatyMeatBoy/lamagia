@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,706** · cobertura: **31.4%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,709** · cobertura: **31.4%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -66,7 +66,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | 1999-04-29 | Portal Three Kingdoms Promos (`PPTK`) | promos | portal-three-kingdoms | other | 1 | 0 | 1 | 0.0% |
 | 1999-05-01 | Portal Three Kingdoms (`PTK`) | starter | 1990s | other | 170 | 95 | 75 | 55.9% |
 | 1999-05-29 | Urza's Destiny Promos (`PUDS`) | promos | urza-s-destiny | other | 1 | 0 | 1 | 0.0% |
-| 1999-06-07 | Urza's Destiny (`UDS`) | expansion | urza | main | 143 | 57 | 86 | 39.9% |
+| 1999-06-07 | Urza's Destiny (`UDS`) | expansion | urza | main | 143 | 58 | 85 | 40.6% |
 | 1999-07-01 | Starter 1999 (`S99`) | starter | 1990s | other | 158 | 120 | 38 | 75.9% |
 | 1999-07-12 | Guru (`PGRU`) | promos | guru-1999 | other | 5 | 5 | 0 | 100.0% |
 | 1999-08-04 | World Championship Promos (`PWOR`) | promos | championship-1999 | other | 2 | 0 | 2 | 0.0% |
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1623 | 3598 | 31.1% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1624 | 3597 | 31.1% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 14 | 6 | 70.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 446 | 1250 | 26.3% |
@@ -558,7 +558,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | 2023-01-01 | Judge Gift Cards 2023 (`P23`) | promos | judge-2023 | other | 10 | 6 | 4 | 60.0% |
 | 2023-01-01 | Wizards Play Network 2023 (`PW23`) | promos | wpn-2023 | other | 11 | 4 | 7 | 36.4% |
 | 2023-01-07 | Regional Championship Qualifiers 2023 (`PR23`) | promos | regional-2023 | other | 3 | 0 | 3 | 0.0% |
-| 2023-01-13 | Dominaria Remastered (`DMR`) | masters-remastered | dominaria-remastered | other | 266 | 107 | 159 | 40.2% |
+| 2023-01-13 | Dominaria Remastered (`DMR`) | masters-remastered | dominaria-remastered | other | 266 | 108 | 158 | 40.6% |
 | 2023-02-03 | Phyrexia: All Will Be One (`ONE`) | expansion | phyrexia | main | 271 | 42 | 229 | 15.5% |
 | 2023-02-10 | Phyrexia: All Will Be One Commander (`ONC`) | commander | 2023 | commander | 144 | 60 | 84 | 41.7% |
 | 2023-02-10 | Phyrexia: All Will Be One Promos (`PONE`) | promos | phyrexia-all-will-be-one | other | 80 | 8 | 72 | 10.0% |
@@ -823,7 +823,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | expansion | theros | 2 | 507 | 140 | 367 | 27.6% |
 | expansion | thunder-junction | 1 | 276 | 35 | 241 | 12.7% |
 | expansion | time-spiral | 2 | 407 | 106 | 301 | 26.0% |
-| expansion | urza | 3 | 621 | 243 | 378 | 39.1% |
+| expansion | urza | 3 | 621 | 244 | 377 | 39.3% |
 | expansion | zendikar | 3 | 773 | 243 | 530 | 31.4% |
 | from-the-vault | 2000s | 2 | 30 | 12 | 18 | 40.0% |
 | from-the-vault | 2010s | 8 | 126 | 32 | 94 | 25.4% |
@@ -872,7 +872,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | masters-remastered | chronicles | 1 | 116 | 28 | 88 | 24.1% |
 | masters-remastered | chronicles-foreign-black-border | 1 | 116 | 28 | 88 | 24.1% |
 | masters-remastered | deckmasters | 1 | 44 | 21 | 23 | 47.7% |
-| masters-remastered | dominaria-remastered | 1 | 266 | 107 | 159 | 40.2% |
+| masters-remastered | dominaria-remastered | 1 | 266 | 108 | 158 | 40.6% |
 | masters-remastered | double-masters | 1 | 337 | 107 | 230 | 31.8% |
 | masters-remastered | double-masters-2022 | 1 | 332 | 101 | 231 | 30.4% |
 | masters-remastered | eternal-masters | 1 | 249 | 122 | 127 | 49.0% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | masters-remastered | shadows-of-the-past | 1 | 76 | 30 | 46 | 39.5% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 59 | 225 | 20.8% |
 | masters-remastered | tempest-remastered | 1 | 254 | 105 | 149 | 41.3% |
-| masters-remastered | the-list | 1 | 5221 | 1623 | 3598 | 31.1% |
+| masters-remastered | the-list | 1 | 5221 | 1624 | 3597 | 31.1% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 115 | 298 | 27.8% |
 | masters-remastered | ultimate-masters | 1 | 254 | 95 | 159 | 37.4% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -6247,7 +6247,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 - [ ] Apprentice Necromancer — `d1a6aa5f-2ad6-4bc7-82f0-4262f66af730`
 - [ ] Archery Training — `acab4fa9-d9ab-4a89-a50f-0cee9d7ca0c3`
 - [ ] Aura Thief — `cf0936ea-2741-43a4-ad6a-a1258b54945b`
-- [ ] Body Snatcher — `e04688e0-672b-407f-a2c9-fd7292926483`
 - [ ] Brine Seer — `64c88c94-3a9d-4fd4-b58c-4d2167c2b8d5`
 - [ ] Bubbling Beebles — `75903c3b-2dbe-4662-b6a8-39599e49adde`
 - [ ] Bubbling Muck — `3c7f2b29-9f42-41ab-a2d4-7a450fb0242d`
@@ -30470,7 +30469,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 - [ ] Blur of Blades — `65410f7a-c749-4b23-ad61-8a7136efcad2`
 - [ ] Boarding Party — `ef69ce86-48ae-4d90-8e29-051583671321`
 - [ ] Body Double — `895527a6-e3b2-454d-a3be-c0036630ec73`
-- [ ] Body Snatcher — `e04688e0-672b-407f-a2c9-fd7292926483`
 - [ ] Bog Down — `8574f57a-768d-42a0-ac8c-cc0a1de181e0`
 - [ ] Bogbrew Witch — `ad138184-ab2d-407a-9f9c-94b0675be19d`
 - [ ] Boggart Arsonists — `54831951-2cd3-41bb-8326-6cfce48feb34`
@@ -45963,7 +45961,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 - [ ] Avarax — `2e1deb7e-d40d-437e-b817-b66132d2d1d6`
 - [ ] Battle Screech — `e73131cd-b454-405b-9539-9d777e232b9e`
 - [ ] Battlefield Scrounger — `92ac7531-10bb-47a2-9dd0-378d547b4ed6`
-- [ ] Body Snatcher — `e04688e0-672b-407f-a2c9-fd7292926483`
 - [ ] Cackling Fiend — `2029954b-6fa7-40d7-bb19-d7534c62be5d`
 - [ ] Chain Lightning — `8785f42f-87b9-4a0a-89ce-ea423649ba9c`
 - [ ] Chainer, Dementia Master — `cb905eb0-bb20-41c0-9695-0f5c71972561`

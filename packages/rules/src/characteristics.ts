@@ -493,6 +493,10 @@ export type SpellEffect =
   | { readonly kind: "exile-event-card-from-graveyard" }
   /** "Exile the top card of your library face down. Put that card into your hand at the beginning of your next end step." (Necropotence). */
   | { readonly kind: "exile-top-card-then-hand-next-end-step" }
+  /** "Exile it" on a dies trigger (Body Snatcher): the source card itself, now sitting in the graveyard. */
+  | { readonly kind: "exile-source-from-graveyard" }
+  /** "Exile ~ unless you discard a creature card" (Body Snatcher): the source permanent, still on the battlefield. */
+  | { readonly kind: "exile-source-permanent" }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -959,6 +963,8 @@ export interface TriggerDefinition {
   readonly tapCost?: { readonly amount: number | "any"; readonly subtype?: string; readonly mode: "any" | "another" };
   /** For "sacrifice ~ unless you pay {cost}", declining the payment applies the effect. */
   readonly unlessPayCost?: ManaCost;
+  /** For "exile ~ unless you discard a creature card" (Body Snatcher): declining the discard applies the effect. */
+  readonly unlessDiscardCreatureCard?: boolean;
   /** Trigger target selection excludes the source permanent ("another"). */
   readonly excludesSourceFromTargets?: boolean;
 }
@@ -3858,6 +3864,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // chooses this target as it is put on the stack (CR 603.3d).
   if (/^Return target instant or sorcery card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "instant-or-sorcery-card-in-your-graveyard" };
   if (/^Return (?:another )?target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
+  // "When ~ dies, exile it and return target creature card from your
+  // graveyard to the battlefield" (Body Snatcher): "it" is the dying
+  // permanent's own card, read from `object.trigger.sourceCard`, not a target.
+  if (/^Exile it and return target creature card from your graveyard to the battlefield$/i.test(text)) {
+    return {
+      effect: { kind: "compound", effects: [{ kind: "exile-source-from-graveyard" }, { kind: "return-target-creature-card-from-graveyard-to-battlefield" }] },
+      target: "creature-card-in-your-graveyard"
+    };
+  }
   if (/^Return target creature card from your graveyard to the battlefield\. You lose life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) {
     return { effect: { kind: "reanimate-target-creature-lose-mana-value-life" }, target: "creature-card-in-your-graveyard" };
   }
@@ -4934,6 +4949,10 @@ function recognizeText(text: string): RecognizedText {
       const unlessPayment = /^you\s+may\s+(.+?)\s+unless\s+that\s+player\s+pays\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
        const sacrificeUnlessPayment = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+pay\s+((?:\{[^}]+\})+)\.?$/i.exec(triggered.effectText);
        const sacrificeUnlessSpent = /^sacrifice\s+(?:~|it|this\s+[^,]+?)\s+unless\s+\{([WUBRGC])\}\s+was\s+spent\s+to\s+cast\s+it\.?$/i.exec(triggered.effectText);
+       // "Exile ~ unless you discard a creature card" (Body Snatcher, CR 603.6c):
+       // the same "unless" shape as sacrificeUnlessPayment, but the cost is a
+       // discard, not mana, and the applied effect is exile, not sacrifice.
+       const exileUnlessDiscardCreature = /^exile\s+(?:~|it|this\s+[^,]+?)\s+unless\s+you\s+discard\s+a\s+creature\s+card\.?$/i.exec(triggered.effectText);
       const mayHave = /^you\s+may\s+have\b/i.test(triggered.effectText);
       // Wizards writes the source as "it" once the trigger clause has already
       // named the permanent (e.g. Flametongue Kavu: "..., it deals 4 damage").
@@ -4960,10 +4979,12 @@ function recognizeText(text: string): RecognizedText {
       const payGate = variableLifePay ? null : /^you may pay ((?:\{[^}]+\})+)\.?\s*(?:if you do,?\s*)?(.+)$/i.exec(effectText);
       const payCost = payGate ? parseManaCost(payGate[1]!) : unlessPayment ? parseManaCost(unlessPayment[2]!) : sacrificeUnlessPayment ? parseManaCost(sacrificeUnlessPayment[1]!) : null;
       if (payGate) effectText = payGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
-       const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || eventControllerChoice || mayHave ? true : /^you\s+may\b/i.test(effectText);
+       const optional = variableLifePay || payGate || unlessPayment || sacrificeUnlessPayment || exileUnlessDiscardCreature || eventControllerChoice || mayHave ? true : /^you\s+may\b/i.test(effectText);
       const recognized = (payCost && payCost.hasVariable && !variableLifePay) ? null
          : sacrificeUnlessPayment || sacrificeUnlessSpent
         ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
+        : exileUnlessDiscardCreature
+        ? { effect: { kind: "exile-source-permanent" } as SpellEffect, target: "none" as TargetKind }
         : (() => {
           // Normalize cycling's optional targeted keyword wording to the
           // existing temporary-keyword primitive (CR 603.1, 603.2).
@@ -5015,7 +5036,8 @@ function recognizeText(text: string): RecognizedText {
           ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment && !variableLifePay ? { payCost, manaCost: payCost } : {}),
           ...(variableLifePay ? { payCost: parseManaCost("{X}")!, variablePayCost: "event-amount" as const } : {}),
            ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {}),
-           ...(sacrificeUnlessSpent ? { requiresManaTypeNotSpent: sacrificeUnlessSpent[1]!.toUpperCase() as ManaType } : {})
+           ...(sacrificeUnlessSpent ? { requiresManaTypeNotSpent: sacrificeUnlessSpent[1]!.toUpperCase() as ManaType } : {}),
+           ...(exileUnlessDiscardCreature ? { unlessDiscardCreatureCard: true as const } : {})
         });
       } else {
         unimplementedText.push(line);

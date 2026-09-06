@@ -501,6 +501,8 @@ export type PendingChoice =
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       readonly unlessPayCost?: ManaCost;
+      /** For "exile ~ unless you discard a creature card": declining the discard applies the effect. */
+      readonly unlessDiscardCreatureCard?: boolean;
     }
   | {
       /**
@@ -726,7 +728,7 @@ export type GameAction =
   | { readonly type: "cancel-mana-payment"; readonly sourceId: string }
   | { readonly type: "toggle-trigger-yield"; readonly sourceId: string; readonly enabled: boolean }
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
-  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
+  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number; readonly discardCardId?: string }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
   | { readonly type: "reorder-top"; readonly sourceId: string; readonly order: readonly string[] }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -2891,6 +2893,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, sourceId);
       if (!permanent) return state;
       return logged(movePermanentToZone(state, permanent, "graveyard"), permanent.controller, `${permanent.card.name} es sacrificado.`);
+    }
+    case "exile-source-permanent": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const permanent = findPermanent(state, sourceId);
+      if (!permanent) return state;
+      return logged(movePermanentToZone(state, permanent, "exile"), permanent.controller, `${permanent.card.name} se exilia.`);
+    }
+    case "exile-source-from-graveyard": {
+      const sourceCard = object.trigger?.sourceCard ?? object.card;
+      const owner = sourceCard.owner;
+      if (!playerAt(state, owner).graveyard.some((candidate) => candidate.instance_id === sourceCard.instance_id)) return state;
+      const next = withPlayer(state, owner, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((candidate) => candidate.instance_id !== sourceCard.instance_id),
+        exile: [...player.exile, sourceCard]
+      }));
+      return logged(next, controller, `${sourceCard.name} se exilia de su cementerio.`);
     }
     case "exile-event-card-from-graveyard": {
       const eventCard = object.trigger?.eventCard;
@@ -5741,6 +5760,7 @@ function resolveTop(state: GameState): GameState {
           ...(object.trigger.definition.payCost ? { payCost: object.trigger.definition.payCost } : {}),
           ...(object.trigger.definition.variablePayCost ? { variablePayCostMax: object.trigger.eventAmount ?? 0 } : {}),
           ...(object.trigger.definition.unlessPayCost ? { payCost: object.trigger.definition.unlessPayCost, unlessPayCost: object.trigger.definition.unlessPayCost } : {}),
+          ...(object.trigger.definition.unlessDiscardCreatureCard ? { unlessDiscardCreatureCard: true } : {}),
           targets: object.targets,
           sourcePermanentId: object.trigger.sourcePermanentId,
           ...(object.trigger.eventPermanentId ? { triggeredPermanentId: object.trigger.eventPermanentId } : {}),
@@ -6938,6 +6958,22 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
     if (choice.type === "optional-trigger") {
       const optionalCost = choice.payCost ?? choice.manaCost;
+      if (choice.unlessDiscardCreatureCard) {
+        for (const card of player.hand.filter((candidate) => isCreature(cardProfile(candidate)))) {
+          actions.push({
+            action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true, discardCardId: card.instance_id },
+            label: `Descartar ${card.name} para conservar ${choice.sourceCard.name}`,
+            cardId: card.instance_id,
+            note: `${choice.sourceCard.name}: descarta una carta de criatura para evitar que se exilie.`
+          });
+        }
+        actions.push({
+          action: { type: "choose-trigger", sourceId: choice.sourceId, accept: false },
+          label: "No descartar una criatura",
+          note: `${choice.sourceCard.name} se exiliará.`
+        });
+        return actions;
+      }
       if (choice.tapCost) {
         const candidates = triggerTapCostCandidates(state, seat, choice.sourcePermanentId, choice.tapCost);
         const combinationsToOffer = choice.tapCost.amount === "any"
@@ -8991,6 +9027,31 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     };
     next = applyEffect(next, source, choice.triggerEffect);
     return logged(next, source.controller, `${choice.sourceCard.name} se sacrifica al no pagar ${choice.unlessPayCost.raw}.`);
+  }
+  if (choice.unlessDiscardCreatureCard) {
+    if (action.accept) {
+      const candidates = playerAt(next, seat).hand.filter((card) => isCreature(cardProfile(card)));
+      const discarded = action.discardCardId ? candidates.find((card) => card.instance_id === action.discardCardId) : candidates[0];
+      if (!discarded) throw new Error(`Debes elegir una carta de criatura para descartar por ${choice.sourceCard.name}.`);
+      next = discardCard(next, seat, discarded);
+      return logged(next, seat, `${playerAt(next, seat).name} descarta ${discarded.name} para conservar ${choice.sourceCard.name}.`);
+    }
+    const source: StackObject = {
+      id: choice.sourceId,
+      controller: choice.sourceController ?? seat,
+      card: choice.sourceCard,
+      label: `${choice.sourceCard.name} · habilidad opcional`,
+      targets: choice.targets ?? [],
+      targetLabels: (choice.targets ?? []).map((target) => targetLabel(next, target)),
+      fromCommandZone: false,
+      flashback: false,
+      variableValue: 0,
+      countered: false,
+      sourcePermanentId: choice.sourcePermanentId,
+      ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
+    };
+    next = applyEffect(next, source, choice.triggerEffect);
+    return logged(next, source.controller, `${choice.sourceCard.name} se exilia al no descartar una criatura.`);
   }
   if (!action.accept) return logged(next, seat, `${playerAt(state, seat).name} no realiza la habilidad opcional de ${choice.sourceCard.name}.`);
   const variableValue = choice.variablePayCostMax === undefined ? 0 : action.variableValue ?? 0;

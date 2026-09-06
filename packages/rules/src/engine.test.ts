@@ -11367,6 +11367,72 @@ describe("Necropotence's skipped draw, discard-exile trigger, and delayed-hand e
   });
 });
 
+describe("Body Snatcher's discard-or-exile ETB and its dies-triggered reanimation", () => {
+  const BODY_SNATCHER = () => make({
+    name: "Body Snatcher", type_line: "Creature — Phyrexian Minion", mana_cost: "{2}{B}{B}", cmc: 4, power: "3", toughness: "2",
+    oracle_text: "When this creature enters, exile it unless you discard a creature card.\nWhen this creature dies, exile it and return target creature card from your graveyard to the battlefield."
+  });
+
+  it("recognizes both the discard-or-exile ETB and the dies-triggered reanimation", () => {
+    const profile = profileOf(BODY_SNATCHER());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "self", effect: { kind: "exile-source-permanent" }, unlessDiscardCreatureCard: true });
+    expect(profile.triggers[1]).toMatchObject({
+      event: "dies", subject: "self", targetKind: "creature-card-in-your-graveyard",
+      effect: { kind: "compound", effects: [{ kind: "exile-source-from-graveyard" }, { kind: "return-target-creature-card-from-graveyard-to-battlefield" }] }
+    });
+  });
+
+  it("exiles itself when the controller declines to discard a creature card", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BODY_SNATCHER()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Body Snatcher")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Body Snatcher")).toBe(true);
+  });
+
+  it("stays on the battlefield when the controller discards a creature card instead", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [BODY_SNATCHER(), BEAR()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const choice = game.pendingChoice!;
+    const bear = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true, discardCardId: bear.instance_id });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Body Snatcher")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.exile.some((card) => card.name === "Body Snatcher")).toBe(false);
+  });
+
+  it("exiles itself and reanimates a target creature card from the graveyard when it dies", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BOLT()], "bs-hand"),
+      graveyard: [...toHand(0, [TRAMPLER()], "bs-graveyard"), ...player.graveyard],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [BODY_SNATCHER(), MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const snatcher = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Body Snatcher")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "bs-hand-0", targets: [{ kind: "permanent", instanceId: snatcher.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const targetChoice = game.pendingChoice!;
+    const stomper = game.players[0]!.graveyard.find((card) => card.name === "Big Stomper")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "graveyard-card", seat: 0, instanceId: stomper.instance_id } });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.exile.some((card) => card.name === "Body Snatcher")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Body Snatcher")).toBe(false);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

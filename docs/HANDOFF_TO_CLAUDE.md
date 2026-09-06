@@ -4927,3 +4927,49 @@ simulated games.
 
 Prossh decklist status after this pass: **83 of 97 unique cards fully
 implemented (85.6%)**.
+
+Body Snatcher ("When this creature enters, exile it unless you discard
+a creature card.\nWhen this creature dies, exile it and return target
+creature card from your graveyard to the battlefield.") bundles two
+independent triggers, each a genuinely new but self-contained
+primitive. The dies half reuses more than it builds: "return target
+creature card from your graveyard to the battlefield" was ALREADY a
+fully-supported effect; the only new piece is `{kind: "exile-source-
+from-graveyard"}` (the dying permanent's own card, now sitting in the
+graveyard, read from a new `TriggerInstance`-adjacent lookup at
+`object.trigger.sourceCard` rather than a target) combined with the
+existing effect via the ALREADY-GENERIC `"compound"` effect kind — no
+new compound machinery needed, since `compound` already applies every
+child effect against the same single target index by default. The ETB
+half is the genuinely new mechanism: CR 603.6c's "exile ~ unless you
+discard a creature card" is the exact same shape as the pre-existing
+`sacrificeUnlessPayment` ("sacrifice ~ unless you pay {cost}") — an
+`optional: true` trigger whose ACCEPT branch means "pay the cost to
+avoid the bad effect," not the effect itself — but with a discard cost
+instead of a mana cost, and exile instead of sacrifice as the fallback.
+Added a parallel `TriggerDefinition.unlessDiscardCreatureCard` field,
+a matching `PendingChoice["optional-trigger"].unlessDiscardCreatureCard`
+field, a new `discardCardId?: string` on the `choose-trigger` action,
+a `legalActions` branch offering one accept-and-discard action per
+creature card in hand plus one decline action, and an
+`applyChooseTrigger` branch mirroring `unlessPayCost`'s accept/decline
+handling exactly, just discarding a chosen card instead of paying mana
+on accept. Also added a plain `{kind: "exile-source-permanent"}` effect
+(the `sacrifice-source` pattern, with `movePermanentToZone(...,
+"exile")` instead of `"graveyard"`) for the decline branch. No `bot.ts`
+change was needed this time (unlike Exploit): the existing generic
+`"optional-trigger"` bot handler already picks the first available
+`accept` action when one exists, which correctly covers this new
+choice shape for free. Verified **+1** in the export count (10,278 →
+10,279); set coverage holds at 31.4%. Scenario-tested: declining the
+discard exiles Body Snatcher itself; discarding a chosen creature card
+keeps it on the battlefield; killing it with 3 damage (toughness 2)
+after choosing a target creature card in the graveyard exiles Body
+Snatcher (not to the graveyard) and reanimates the chosen card onto
+the battlefield. Validation: **808 rules tests** (4 new), `npm run
+check` across all four workspaces, `npx vitest run
+services/match-server/src` (5 passed), 10,279 global profiles, 200/200
+simulated games.
+
+Prossh decklist status after this pass: **84 of 97 unique cards fully
+implemented (86.6%)**.
