@@ -399,6 +399,22 @@ declared, it must update the claim before touching the additional files.
 
 Claims coordinate contributors but do not replace review: CI, scenario tests,
 rules citations and the integrator review remain mandatory.
+
+Integration note (2026-09-06): worker-05 currently contains useful rules
+commits based on an incompatible rewritten tree. Do not merge that branch as a
+whole. Resubmit from the published integration SHA with a focused diff; the
+integrator may rescue individual primitives only after the diff gate and
+scenario audit pass.
+
+## Integrator directive (2026-09-06)
+
+Commander 2013 is the current completion push. Workers may continue taking
+unclaimed C13 clusters until its coverage is closed, but must claim a
+disjoint cluster first and must extract reusable primitives instead of adding
+card-specific duplicates. The integrator reviews incoming commits in batches,
+keeps only tested changes, and records every accepted card as `name | oracle_id`.
+No worker may reuse an active claim or treat a C13 claim as permission to edit
+the shared gameplay engine without declaring that primitive explicitly.
 | `c13-aura-control-enchanted-creature` | Control Magic's continuous control effect for its enchanted creature, with restoration when the Aura leaves (CR 110.2, 303.4, 613.7) | `codex/c13-one-line-7bd` | merged (`d1d8e792`) | 2026-09-05 |
 | `c13-aura-granted-activation` | Enchanted creatures or lands receive a reusable quoted activated ability from the Aura (CR 113.6, 303.4, 605.1a) | `codex/c13-aura-granted-activation-7bd` | merged (`53206780`) | 2026-09-05 |
 | `arsenal-edric-combat-draw` | Edric draws optionally when a creature deals combat damage to one of his opponents (CR 603.2, 603.5, 120.3) | `codex/c13-equipment-cluster` | active | 2026-09-04 |

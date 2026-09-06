@@ -11,6 +11,20 @@ import { projectGame } from "./projection.js";
 import { isSafeManaUndo } from "./undo.js";
 
 describe("smart counter response and safe mana undo", () => {
+  it("resolves Sudden Spoiling's target-player layer and clears it at cleanup", () => {
+    const card = make({ name: "Sudden Spoiling", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second\nUntil end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2." });
+    let game = twoSeatGame([], []);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, players: game.players.map(p => ({ ...p, hand: [], autoPass: false })) };
+    game = stage(game, 0, () => ({ hand: toHand(0, [card], "spoiling"), manaPool: { W: 0, U: 0, B: 2, R: 0, G: 0, C: 1 } }));
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "spoiling-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    const affected = game.players[1]!.battlefield[0]!;
+    expect(powerOf(affected, game)).toBe(0);
+    expect(toughnessOf(affected, game)).toBe(2);
+    expect(legalActions(game, 1).some(entry => entry.action.type === "activate" && entry.action.sourceId === affected.instance_id)).toBe(false);
+  });
   it("creates bounded stabilization evidence without hidden zones", () => {
     const game = twoSeatGame([], []);
     const diagnostic = stabilizationDiagnostic({
@@ -5850,6 +5864,17 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.tapped)).toBe(false);
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("does not expose a commander free-cast alternative from the graveyard", () => {
+    let game = readyToCast([], [SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], [BEAR()]);
+    game = putOnBattlefield(game, 0, [COMMANDER("Test Commander")]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map(permanent => permanent.card.name === "Test Commander" ? { ...permanent, isCommander: true } : permanent),
+      graveyard: toHand(0, [DEADLY_ROLLICK()], "graveyard-rollick")
+    }));
+    const options = legalActions(game, 0).filter(entry => entry.action.type === "cast" && entry.cardId === "graveyard-rollick-0");
+    expect(options.some(entry => (entry.action as { freeCast?: boolean }).freeCast)).toBe(false);
   });
 
   it("lets Snuff Out be cast by paying 4 life only while controlling a Swamp", () => {

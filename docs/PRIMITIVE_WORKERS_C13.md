@@ -110,7 +110,7 @@ Reusable atoms: `kind:static-or-spell, op:other, target:creature, type:creature,
 
 Cards: Tempt with Reflections [76c142ef-0f07-4215-8d11-d25f7114c70d]
 
-| needs-review | `c13-oracle-other-static-spell` | activated | 1 | 1 | 1 | 1 | 1 | 1 | 3 |
+| needs-review | `c13-oracle-other-static-spell` | activated | 1 | 1 | 1 | 0 | 1 | 1 | 3 |
 Reusable atoms: `amount:parameter, kind:static-or-spell, op:other`
 
 Cards: Darksteel Mutation [05a4f8ff-49da-42af-add5-6248c4b0644b]

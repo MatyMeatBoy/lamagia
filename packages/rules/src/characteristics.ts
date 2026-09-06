@@ -636,6 +636,8 @@ export type SpellEffect =
   | { readonly kind: "grant-source-keyword"; readonly keyword: EnforcedKeyword }
   /** Mirror Entity: set base P/T and grant every creature type until cleanup. */
   | { readonly kind: "set-creatures-you-control-base-pt-all-types"; readonly power: number | "X"; readonly toughness: number | "X" }
+  /** Sudden Spoiling: target player's creatures lose abilities and become fixed P/T until cleanup. */
+  | { readonly kind: "set-target-player-creatures-base-pt-remove-abilities"; readonly power: number; readonly toughness: number }
   /** Temporary characteristic-setting animation for artifact manlands (CR 613.6). */
   | { readonly kind: "animate-source"; readonly power: number; readonly toughness: number; readonly colors: readonly string[]; readonly subtypes: readonly string[]; readonly keywords: readonly EnforcedKeyword[]; readonly types?: readonly CardType[] }
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
@@ -3578,6 +3580,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const power = match[1]!.toUpperCase() === "X" ? "X" as const : Number(match[1]);
     const toughness = match[2]!.toUpperCase() === "X" ? "X" as const : Number(match[2]);
     return { effect: { kind: "set-creatures-you-control-base-pt-all-types", power, toughness }, target: "none" };
+  }
+  if ((match = /^Until end of turn, creatures target player controls lose all abilities and have base power and toughness (\d+)\/(\d+)\.?$/i.exec(text))) {
+    return { effect: { kind: "set-target-player-creatures-base-pt-remove-abilities", power: Number(match[1]), toughness: Number(match[2]) }, target: "player" };
   }
   // "Creatures you control get +N/+N and gain <keywords> until end of turn" (Overrun).
   if ((match = /^Creatures you control get ([+-]\d+)\/([+-]\d+) and gain ((?:flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear)(?:(?:,| and )(?:flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear))*) until end of turn$/i.exec(text))) {
