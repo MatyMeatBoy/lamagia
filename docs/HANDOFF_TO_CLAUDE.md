@@ -8,6 +8,22 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 Batch of player-reported gameplay/UX fixes. Landed so far:
 
+- **Floating stack + non-modal decision windows (MTGO-style).** New
+  `makeDraggable(panel, handleSelector, key)` in `apps/client/src/main.ts`
+  drives both. `stackStripHtml` → `stackPanelHtml`: the stack is now a
+  `position: fixed` panel on the right edge, drag by its header, position
+  persisted in `localStorage["prossh.panel.stack"]`, and it renders nothing at
+  all when the stack is empty (previously an always-present "Vacía" strip above
+  the hand). `.decision-overlay` lost its full-screen scrim + `backdrop-filter`
+  blur and moved off-centre to the left edge; it is draggable by
+  `.decision-head` (close/action buttons excluded from the drag). The board
+  stays fully lit and clickable behind both. Verified in the running client:
+  drag + persistence across re-render, board hit-testable at screen centre.
+- **Mana symbols in action labels** — engine labels like
+  `Girar Starting Town · agregar {C}` and stack-object text now render `{..}`
+  tokens as coloured pips (`oracleHtml`) instead of literal braces.
+
+
 - **Per-player turn counter.** The global `turn` increments once per seat, so
   "Turno 13" in a 4-player pod is really a player's 3rd–4th turn. `PlayerState`
   now carries `turnsTaken` (seat 0 starts at 1; `advanceStep` bumps the seat

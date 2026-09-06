@@ -593,12 +593,24 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .scry-card small { color: var(--text-faint); font-size: .52rem; }
 .scry-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; }
 
-.stack-strip { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 7px; overflow-x: auto; padding: 7px 0; border-top: 1px solid #b9973e55; border-bottom: 1px solid #b9973e33; }
-.stack-strip.empty { align-items: center; min-height: 30px; opacity: .82; }
-.stack-empty { align-self: center; color: var(--text-faint); font-size: .56rem; }
-.stack-strip > b { color: var(--gold); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; }
-.stack-order-hint { align-self: center; min-width: 0; max-width: min(250px, 32vw); overflow: hidden; color: var(--text-faint); font-size: .54rem; text-overflow: ellipsis; white-space: nowrap; }
-.stack-chip { position: relative; display: flex; align-items: center; gap: 6px; min-width: 170px; max-width: 255px; padding: 5px 8px 5px 5px; border: 1px solid var(--gold-dim); border-radius: 8px; background: linear-gradient(145deg, #1b180d, #0d160f); box-shadow: 0 3px 9px #0008; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+/* Floating, draggable panels (stack, decision windows) ---------------- */
+.floating-panel {
+  position: fixed; z-index: 34;
+  border: 1px solid var(--gold-dim); border-radius: 11px;
+  background: #07120cf6; box-shadow: 0 18px 48px #000c;
+}
+.floating-panel-head {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 7px 11px; border-bottom: 1px solid var(--line-soft);
+  border-radius: 11px 11px 0 0; background: #0c1a12;
+  cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.floating-panel-head b { color: var(--gold); font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; }
+.floating-panel-head small { color: var(--text-faint); font-size: .54rem; }
+
+.stack-panel { right: clamp(12px, 3vw, 40px); top: 50%; transform: translateY(-50%); width: min(280px, 84vw); }
+.stack-panel-body { display: flex; flex-direction: column; gap: 6px; max-height: 62vh; overflow-y: auto; padding: 9px; }
+.stack-chip { position: relative; display: flex; align-items: center; gap: 6px; width: 100%; padding: 5px 8px 5px 5px; border: 1px solid var(--gold-dim); border-radius: 8px; background: linear-gradient(145deg, #1b180d, #0d160f); box-shadow: 0 3px 9px #0008; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .stack-chip:hover, .stack-chip:focus-visible { border-color: var(--gold); outline: 1px solid var(--gold-dim); transform: translateY(-1px); }
 .stack-chip.targetable { border-color: #7fd6a6; box-shadow: 0 0 0 2px #7fd6a666, 0 4px 14px #000b; }
 .stack-chip.resolves-next { border-color: var(--gold); box-shadow: 0 0 0 1px #d9b64b66, 0 4px 12px #000b; }
@@ -693,12 +705,16 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 .action-row.choice-action { color: #b9eaff; border-left: 2px solid #54b8e5; }
 
 /* Main decision surface: fixed so it never reflows the hand or HUD. */
+/* Non-modal: the board stays fully visible and interactive behind it, and the
+   window can be dragged out of the way by its header (see makeDraggable). */
 .decision-overlay {
-  position: fixed; z-index: 30; left: 50%; top: 61%; transform: translate(-50%, -50%);
-  width: min(460px, calc(100vw - 28px)); max-height: min(58vh, 520px); overflow: hidden;
-  border: 1px solid var(--gold-dim); border-radius: 12px; background: #07120cf5;
-  box-shadow: 0 22px 70px #000c, 0 0 0 9999px #02080435; backdrop-filter: blur(7px);
+  position: fixed; z-index: 32; left: 24px; top: 50%; transform: translateY(-50%);
+  width: min(430px, calc(100vw - 28px)); max-height: min(64vh, 560px); overflow: hidden;
+  border: 1px solid var(--gold-dim); border-radius: 12px; background: #07120cf8;
+  box-shadow: 0 18px 48px #000c;
 }
+.decision-head { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.decision-head .icon-button { cursor: pointer; }
 
 .context-menu {
   position: fixed;
@@ -1012,10 +1028,7 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
   .decision-overlay { top: 46%; width: min(440px, calc(100vw - 18px)); }
   .decision-head { padding: 10px 11px; }
   .decision-list .action-row { padding: 9px 10px; }
-  .stack-strip { gap: 5px; padding: 6px 2px; }
-  .stack-strip > b { flex: 0 0 auto; }
-  .stack-order-hint { max-width: 130px; }
-  .stack-chip { min-width: 150px; max-width: 210px; }
+  .stack-panel { width: min(240px, 80vw); right: 8px; }
   .stack-chip .stack-label { -webkit-line-clamp: 1; }
 }
 .rotate-hint {

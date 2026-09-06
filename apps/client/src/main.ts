@@ -1078,21 +1078,18 @@ function logDrawerHtml(): string {
   </aside>`;
 }
 
-/** The stack rides just above the hand so it is impossible to miss mid-combat. */
-function stackStripHtml(): string {
-  if (!view) return "";
-  // Centered decisions own the attention surface; keep the stack available
-  // once priority resumes, but do not let it compete with search/scry/payment.
-  if (view.librarySearch || view.scry || view.topSelection || view.reorderTop || view.viewedHand || ui.pendingTarget) return "";
+/**
+ * The stack is a floating, draggable panel (MTGO-style). It only exists while
+ * something is on the stack, so an empty stack costs no screen space.
+ */
+function stackPanelHtml(): string {
+  if (!view || !view.stack.length) return "";
   const passed = view.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`);
   const priority = view.priorityOpen ? seatOf(view.prioritySeat)?.name : undefined;
   const status = priority
     ? `Prioridad: ${priority}${passed.length ? ` · ${passed.length} pasó${passed.length === 1 ? "" : "aron"}` : ""}`
     : "Sin prioridad abierta";
-  const statusDetail = priority
-    ? `${status}${passed.length ? ` · Pasaron: ${passed.join(", ")}` : ""}`
-    : status;
-  const objects = view.stack.length ? [...view.stack].reverse().map((object, index) => {
+  const chips = [...view.stack].reverse().map((object, index) => {
     const stackPosition = view!.stack.length - index;
     const kind = object.kind === "trigger" ? "habilidad disparada" : object.kind === "activated" ? "habilidad activada" : "hechizo";
     return `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}${object.resolvesNext ? " resolves-next" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este objeto como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Inspeccionar objeto de la pila")}" aria-current="${object.resolvesNext ? "step" : "false"}" aria-label="Pila ${stackPosition} desde abajo, ${escapeHtml(kind)} ${escapeHtml(object.name)}${object.resolvesNext ? ", próximo en resolver" : ""}">
@@ -1100,8 +1097,11 @@ function stackStripHtml(): string {
       ${cardImageHtml(object.image_normal, object.name)}
       <span><small class="stack-kind">${escapeHtml(kind)}${object.countered ? " · Contrarrestado" : ""}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${oracleHtml(object.label)}${object.text && object.text !== object.label ? ` · ${oracleHtml(object.text)}` : ""}</small></span>
     </button>`;
-  }).join("") : `<span class="stack-empty">Vacía · ${escapeHtml(status)}</span>`;
-  return `<div class="stack-strip${view.stack.length ? "" : " empty"}" aria-label="Pila de hechizos y habilidades" title="${escapeHtml(statusDetail)}"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)}</small>${objects}</div>`;
+  }).join("");
+  return `<section class="stack-panel floating-panel" data-panel="stack" aria-label="Pila de hechizos y habilidades">
+    <header class="floating-panel-head"><b>Pila · ${view.stack.length}</b><small>Arriba resuelve primero · ${escapeHtml(status)}</small></header>
+    <div class="stack-panel-body">${chips}</div>
+  </section>`;
 }
 
 function stackDetailHtml(): string {
@@ -1351,7 +1351,6 @@ function render(): void {
             </div>
           </div>
           <div class="hand-wrap">
-            ${stackStripHtml()}
             <div class="hand-label"><b>Tu mano · ${me.handCount}</b><span class="hint">${escapeHtml(ui.notice || handHint)}</span></div>
             <div class="hand">${handHtml(me)}</div>
           </div>
@@ -1374,6 +1373,7 @@ function render(): void {
   ${cardActionMenuHtml()}
   ${decisionOverlayHtml()}
   ${stackDetailHtml()}
+  ${stackPanelHtml()}
   ${ui.contextMenu && view.undoAvailable ? `<div class="context-menu" style="left:${ui.contextMenu.x}px;top:${ui.contextMenu.y}px" role="menu">
     <button id="context-undo" type="button">Deshacer última acción de maná</button>
   </div>` : ""}
@@ -1610,6 +1610,68 @@ function wireBoard(): void {
       if (card) showPreview(card, element);
     });
     element.addEventListener("mouseleave", hidePreview);
+  });
+
+  document.querySelectorAll<HTMLElement>(".floating-panel").forEach((panel) => {
+    makeDraggable(panel, ".floating-panel-head", panel.dataset.panel ?? "panel");
+  });
+  document.querySelectorAll<HTMLElement>(".decision-overlay").forEach((panel) => {
+    makeDraggable(panel, ".decision-head", "decision");
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Draggable floating panels (stack, decision windows) — MTGO-style, non-modal
+// ---------------------------------------------------------------------------
+
+const clampNum = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+function loadPanelPos(key: string): { x: number; y: number } | null {
+  try {
+    const raw = window.localStorage.getItem(`prossh.panel.${key}`);
+    const parsed = raw ? (JSON.parse(raw) as { x: number; y: number }) : null;
+    return parsed && Number.isFinite(parsed.x) && Number.isFinite(parsed.y) ? parsed : null;
+  } catch { return null; }
+}
+
+function applyPanelPos(panel: HTMLElement, pos: { x: number; y: number }): void {
+  const width = panel.offsetWidth || 320;
+  const height = panel.offsetHeight || 200;
+  panel.style.left = `${clampNum(pos.x, 4, window.innerWidth - width - 4)}px`;
+  panel.style.top = `${clampNum(pos.y, 4, window.innerHeight - height - 4)}px`;
+  panel.style.right = "auto";
+  panel.style.transform = "none";
+}
+
+/** Makes `panel` draggable by `handleSelector`, persisting its position under `key`. */
+function makeDraggable(panel: HTMLElement, handleSelector: string, key: string): void {
+  const handle = panel.querySelector<HTMLElement>(handleSelector) ?? panel;
+  const saved = loadPanelPos(key);
+  if (saved) applyPanelPos(panel, saved);
+  handle.style.cursor = "grab";
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    if ((event.target as HTMLElement).closest("button, a, input, select, textarea")) return;
+    const rect = panel.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+    handle.style.cursor = "grabbing";
+    panel.style.transition = "none";
+    const move = (moveEvent: PointerEvent) => {
+      applyPanelPos(panel, { x: moveEvent.clientX - offsetX, y: moveEvent.clientY - offsetY });
+    };
+    const up = () => {
+      handle.style.cursor = "grab";
+      panel.style.transition = "";
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      try {
+        window.localStorage.setItem(`prossh.panel.${key}`, JSON.stringify({ x: parseFloat(panel.style.left), y: parseFloat(panel.style.top) }));
+      } catch { /* storage unavailable */ }
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    event.preventDefault();
   });
 }
 
