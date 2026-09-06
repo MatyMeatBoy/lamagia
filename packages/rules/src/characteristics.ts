@@ -4083,6 +4083,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Exile target player's graveyard$/i.test(text)) return { effect: { kind: "exile-target-graveyard" }, target: "player" };
   if (/^Return target creature to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature" };
+  // Decoction Module's activated ability: the same effect, restricted to a
+  // creature the controller owns/controls.
+  if (/^Return target creature you control to its owner's hand$/i.test(text)) return { effect: { kind: "return-target-creature" }, target: "creature-you-control" };
   const randomSpellReturn = /^(?:Return|Put) (a|an|one|two|three|four|five|\d+) instant or sorcery cards? at random from your graveyard to your hand$/i.exec(text);
   if (randomSpellReturn) {
     const amount = toNumber(randomSpellReturn[1]!);

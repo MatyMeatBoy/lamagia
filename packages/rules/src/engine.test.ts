@@ -7687,6 +7687,37 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.counters.energy).toBe(2);
   });
 
+  it("gets energy on ETB and bounces only the controller's own creature (Decoction Module)", () => {
+    const module = make({
+      name: "Decoction Module", type_line: "Artifact",
+      oracle_text: "Whenever a creature you control enters, you get {E} (an energy counter).\n{4}, {T}: Return target creature you control to its owner's hand."
+    });
+    expect(profileOf(module)).toMatchObject({
+      fullyImplemented: true,
+      triggers: [expect.objectContaining({ event: "enters-battlefield", subject: "creature-you-control", effect: { kind: "add-player-counter", counter: "energy", amount: 1 } })],
+      activatedAbilities: [expect.objectContaining({ targetKind: "creature-you-control", effect: { kind: "return-target-creature" } })]
+    });
+    let game = readyToCast([BEAR()], [module, FOREST(), FOREST()], [BEAR()]);
+    expect(game.players[0]!.counters.energy ?? 0).toBe(0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.counters.energy).toBe(1);
+    expect(game.players[1]!.counters.energy ?? 0).toBe(0);
+
+    const moduleInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Decoction Module")!;
+    const ownBear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const opponentBear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = stage(game, 0, () => ({ manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0, C: 4 } }));
+    const candidates = legalTargets(game, 0, "creature-you-control");
+    expect(candidates.some((target) => target.kind === "permanent" && target.instanceId === ownBear.instance_id)).toBe(true);
+    expect(candidates.some((target) => target.kind === "permanent" && target.instanceId === opponentBear.instance_id)).toBe(false);
+    game = applyAction(game, 0, { type: "activate", sourceId: moduleInPlay.instance_id, abilityIndex: 0, targets: [{ kind: "permanent", instanceId: ownBear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+  });
+
   it("rummages (discard then draw) from an optional trigger", () => {
     const racer = make({
       name: "Test Racer", type_line: "Creature — Human", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2",

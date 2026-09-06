@@ -5760,3 +5760,23 @@ casting it draws 2 cards then opens the existing Proliferate choice,
 which correctly adds a +1/+1 counter to a selected creature. Validation:
 full **865** rules tests green (1 new), `npm run check` across all
 four workspaces, 200/200 simulated games.
+
+Decoction Module ("Whenever a creature you control enters, you get
+{E}... {4}, {T}: Return target creature you control to its owner's
+hand.") had its ETB energy line already fully supported (Energy
+counters are a whole-mechanic primitive already built earlier this
+session); only the bounce activated ability was missing, and only
+because the existing `return-target-creature` effect's parser branch
+matched exclusively "Return target creature to its owner's hand" (any
+creature), with no sibling for the "you control"-restricted phrasing.
+Added that one sibling branch reusing the identical effect kind with
+`target: "creature-you-control"` (an already-existing `TargetKind`
+used elsewhere for Fight and similar controller-restricted targeting) —
+zero new engine code. Verified **+2** in the export count (10,849 →
+10,851); set coverage holds at 33.0%. Scenario-tested: `legalTargets`
+for the ability's `"creature-you-control"` kind includes the
+controller's own Grizzly Bears but excludes an opponent's identical
+creature; activating it returns the controller's own creature to hand
+while leaving the opponent's untouched. Validation: full **868** rules
+tests green (1 new), `npm run check` across all four workspaces,
+200/200 simulated games.
