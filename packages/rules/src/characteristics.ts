@@ -3176,6 +3176,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "gain-life-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "gain-life-target-player", amount: "X" }, target: "player" };
   }
+  if ((match = /^Target opponent gains (\w+) life$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount) return { effect: { kind: "gain-life-target-player", amount }, target: "opponent" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "gain-life-target-player", amount: "X" }, target: "opponent" };
+  }
   if (/^Target opponent loses that much life$/i.test(text)) {
     return { effect: { kind: "lose-life-target-event-amount" }, target: "opponent" };
   }
