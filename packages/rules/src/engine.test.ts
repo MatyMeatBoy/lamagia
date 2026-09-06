@@ -1511,6 +1511,25 @@ describe("mana payment", () => {
     expect(legalTargets(game, 0, "creature-toughness-at-most-4")[0]).toMatchObject({ instanceId: game.players[1]!.battlefield[0]!.instance_id });
   });
 
+  it("filters combined power-or-toughness target restrictions", () => {
+    const removal = make({ name: "Combined Test", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Exile target creature with power or toughness 2 or less." });
+    expect(profileOf(removal)).toMatchObject({ fullyImplemented: true, targetKind: "creature-power-or-toughness-at-most-2" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 1, [
+      make({ name: "Power Three Toughness One", type_line: "Creature — Beast", power: "3", toughness: "1" }),
+      make({ name: "Power Three Toughness Three", type_line: "Creature — Beast", power: "3", toughness: "3" })
+    ]);
+    const targets = legalTargets(game, 0, "creature-power-or-toughness-at-most-2");
+    expect(targets).toHaveLength(1);
+    expect(targets[0]).toMatchObject({ instanceId: game.players[1]!.battlefield[0]!.instance_id });
+  });
+
+  it("recognizes sorcery-speed activation without requiring a preceding period", () => {
+    const card = make({ name: "Sorcery Speed Test", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}: Draw a card Activate only as a sorcery and only once each turn." });
+    expect(profileOf(card)).toMatchObject({ fullyImplemented: true });
+    expect(profileOf(card).activatedAbilities[0]).toMatchObject({ sorcerySpeed: true });
+  });
+
   it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
     const profile = profileOf(PAIN_LAND());
     expect(profile.fullyImplemented).toBe(true);

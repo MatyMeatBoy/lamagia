@@ -1054,6 +1054,7 @@ export type TargetKind =
   | `creature-power-toughness-sum-at-most-${number}`
   | `creature-power-${"at-least" | "at-most"}-${number}`
   | `creature-toughness-${"at-least" | "at-most"}-${number}`
+  | `creature-power-or-toughness-${"at-least" | "at-most"}-${number}`
   | "creature-with-defender"
   | "creature-with-deathtouch"
   | "creature-with-lifelink"
@@ -2299,10 +2300,10 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const isLoyaltyCost = /^\s*([+−–-])?\s*(\d+)\s*$/.test(costText);
   if (!isLoyaltyCost && /^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
-  const sorcerySpeedOnly = /\.\s*Activate only as a sorcery\.?$/i.test(effectText);
+  const sorcerySpeedOnly = /(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i.test(effectText);
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
-    .replace(/\.\s*Activate only as a sorcery\.?$/i, ".")
+    .replace(/(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i, ".")
     // Self-references in activated text use the printed object type rather
     // than the parser's normalized source marker (CR 109.5).
     .replace(/\bon this creature\b/gi, "on ~")
@@ -4154,13 +4155,24 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature with shroud$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-shroud" };
   if (/^Destroy target creature with reach$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-reach" };
   {
-    const threshold = /^(Destroy|Exile) target creature with (power|toughness) (\d+) or (greater|less)$/i.exec(text);
+    const threshold = /^(Destroy|Exile) (?:up to one )?target creature with (power|toughness) (\d+) or (greater|less)$/i.exec(text);
     if (threshold) {
       const axis = threshold[2]!.toLowerCase();
       const direction = threshold[4]!.toLowerCase() === "greater" ? "at-least" : "at-most";
       return {
         effect: { kind: threshold[1]!.toLowerCase() === "destroy" ? "destroy-target-permanent" : "exile-target-permanent" },
         target: `creature-${axis}-${direction}-${Number(threshold[3])}` as TargetKind
+      };
+    }
+  }
+  {
+    const combinedThreshold = /^(Destroy|Exile) (?:up to one )?target creature with power or toughness (\d+) or (greater|less)$/i.exec(text);
+    if (combinedThreshold) {
+      const cap = Number(combinedThreshold[2]);
+      const direction = combinedThreshold[3]!.toLowerCase() === "greater" ? "at-least" : "at-most";
+      return {
+        effect: { kind: combinedThreshold[1]!.toLowerCase() === "destroy" ? "destroy-target-permanent" : "exile-target-permanent" },
+        target: `creature-power-or-toughness-${direction}-${cap}` as TargetKind
       };
     }
   }
@@ -4959,6 +4971,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^As ~ enters, you may reveal an?\s+[A-Za-z][A-Za-z'’ -]*\s+card from your hand\.\s*If you don['’]t, (?:~|it) enters tapped\.?$/i.test(line)) continue;
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
+    if (/^activate only as a sorcery(?:\s+and\s+only\s+(?:once|one)\s+each\s+turn)?\.?$/i.test(line)) continue;
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
     if (/^as an additional cost to cast ~, pay (?:X|\d+) life\.?$/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
