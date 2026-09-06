@@ -39,6 +39,14 @@ def cluster_for(text: str) -> str:
     return "token-rules"
 
 
+def is_token_face(row: sqlite3.Row) -> bool:
+    type_line = str(row["type_line"] or "")
+    name = str(row["name"] or "").casefold()
+    if "emblem" in type_line.casefold() or "dungeon" in type_line.casefold() or """dungeon""" in name:
+        return False
+    return "token" in type_line.casefold() or "token" in name
+
+
 def build(catalog: Path) -> dict[str, Any]:
     db = sqlite3.connect(f"file:{catalog}?mode=ro", uri=True)
     db.row_factory = sqlite3.Row
@@ -55,6 +63,8 @@ def build(catalog: Path) -> dict[str, Any]:
         db.close()
     groups: dict[str, dict[str, Any]] = {}
     for row in rows:
+        if not is_token_face(row):
+            continue
         group = groups.setdefault(key(row), {
             "tokenKey": key(row), "name": row["name"], "typeLine": row["type_line"] or "",
             "oracleText": row["oracle_text"] or "", "power": row["power"], "toughness": row["toughness"],
@@ -87,9 +97,22 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--catalog", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--markdown-output", type=Path)
     args = parser.parse_args()
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(build(args.catalog), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    inventory = build(args.catalog)
+    args.output.write_text(json.dumps(inventory, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if args.markdown_output:
+        lines = ["# Generated token worker queue", "", f"Generated: `{inventory['generatedAt']}`", "",
+                 f"Unique definitions: **{inventory['tokenCount']:,}** · printings: **{inventory['printingCount']:,}**", ""]
+        for cluster, items in sorted(inventory["clusters"].items()):
+            lines.extend([f"## `{cluster}` ({len(items)})", "", "Claim one token key or a disjoint batch before editing.", ""])
+            for item in items:
+                sets = ", ".join(item["sets"]) or "(set unknown)"
+                lines.append(f"- `{cluster}:{item['tokenKey']}` — **{item['name']}** · sets: {sets} · `{item['oracleText']}`")
+            lines.append("")
+        args.markdown_output.parent.mkdir(parents=True, exist_ok=True)
+        args.markdown_output.write_text("\n".join(lines), encoding="utf-8")
 
 
 if __name__ == "__main__":

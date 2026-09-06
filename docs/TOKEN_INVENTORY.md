@@ -7,7 +7,7 @@ the client can choose the token art that matches the originating edition.
 Generate the inventory with:
 
 ```text
-python tools/rules/export_token_inventory.py --catalog data/catalog/prossh.sqlite --output data/rules/token-inventory.json
+python tools/rules/export_token_inventory.py --catalog data/catalog/prossh.sqlite --output data/rules/token-inventory.json --markdown-output docs/TOKEN_WORK_QUEUE.md
 ```
 
 The output has two useful queues:
