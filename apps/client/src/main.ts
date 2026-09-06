@@ -1047,7 +1047,7 @@ function seatPanelHtml(player: PlayerView): string {
         title="${player.lost ? escapeHtml(player.lossReason ?? "Eliminado") : "Vidas"}"><b>${player.lost ? "✕" : player.life}</b><small>vidas</small></button>
       ${counters.map(([kind, amount]) => `<span class="counter-chip" title="Contador ${escapeHtml(kind)}"><b>${amount}</b><small>${escapeHtml(kind)}</small></span>`).join("")}
     </header>
-    <section class="seat-board">${boardHtml(player, false)}</section>
+    <section class="seat-board${isPlayerTargetable(player.seat) ? " targetable-player" : ""}" data-target-player="${player.seat}" aria-label="Objetivo jugador ${escapeHtml(player.name)}">${boardHtml(player, false)}</section>
     <footer class="commander-strip">
       ${commander ? `<span class="thumb"${commander.image_art_crop ? ` style="background-image:url('${escapeHtml(commander.image_art_crop)}')"` : ""}></span>
         <span class="meta"><b>${escapeHtml(commander.name)}</b><span>Zona de mando</span></span>` : `<span class="meta"><b>—</b><span>Comandante en juego</span></span>`}
