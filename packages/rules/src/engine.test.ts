@@ -641,6 +641,7 @@ const VALLEY_RANNET = () => make({
 const UNSUMMON = () => make({ name: "Unsummon", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Return target creature to its owner's hand." });
 const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Fireball deals X damage to any target. It costs {1} more to cast for each target beyond the first." });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
+const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
 const OFFER_YOU_CANT_REFUSE = () => make({ name: "Test An Offer You Can't Refuse", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target noncreature spell. Its controller creates two Treasure tokens." });
 const TUTOR = () => make({ name: "Enlightened Tutor", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an artifact or enchantment card, reveal it, then shuffle. Put that card on top of your library." });
 const DIABOLIC_INTENT = () => make({ name: "Diabolic Intent", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nSearch your library for a card, put that card into your hand, then shuffle." });
@@ -1857,6 +1858,24 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "spell", stackId: "desertion-spell" }] });
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
+  it("offers Hinder's top-or-bottom library replacement for a countered spell", () => {
+    const profile = profileOf(HINDER());
+    expect(profile.effects).toEqual([{ kind: "counter-target-spell-to-library" }]);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([HINDER()], [ISLAND(), ISLAND(), ISLAND()]);
+    game = stage(game, 1, (player) => ({ library: toHand(1, [FOREST(), MOUNTAIN()], "hinder-library") }));
+    const spell = { ...BOLT(), instance_id: "hinder-spell", owner: 1 };
+    game = { ...game, stack: [{ id: "hinder-spell", controller: 1, card: spell, label: spell.name, targets: [], fromCommandZone: false, variableValue: 0, countered: false }] };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "spell", stackId: "hinder-spell" }] });
+    expect(game.pendingChoice).toMatchObject({ type: "countered-spell-library", targetStackId: "hinder-spell" });
+    const choices = legalActions(game, 0).filter((entry) => entry.action.type === "choose-countered-spell-library");
+    expect(choices).toHaveLength(2);
+    const choice = choices.find((entry) => entry.action.type === "choose-countered-spell-library" && entry.action.destination === "bottom")!;
+    game = applyAction(game, 0, choice.action);
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[1]!.library.map((card) => card.name)).toEqual(["Forest", "Mountain", "Lightning Bolt"]);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(false);
   });
   it("counters a spell and schedules Arcane Denial's two next-upkeep draws", () => {
     let game = readyToCast([BOLT()], [MOUNTAIN()], [C13_ARCANE_DENIAL()], [ISLAND(), ISLAND(), ISLAND()]);
