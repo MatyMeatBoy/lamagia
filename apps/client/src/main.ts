@@ -16,6 +16,7 @@ import { ACTIVATION_GLYPHS, KEYWORD_GLYPHS, TRIGGER_GLYPHS, glyphSvg, keywordGly
 import "./styles.css";
 import { manaImageUrl, recoverManaImage } from "./mana-images.js";
 import { hasCreatureStats } from "./card-stats.js";
+import { zoneIconSvg, type ZoneId } from "./zones.js";
 
 declare global {
   interface Window { __PROSSH_API_BASE__?: string; }
@@ -959,6 +960,17 @@ function boardHtml(player: PlayerView, own: boolean): string {
   return `${nonlandRow}${landRow}`;
 }
 
+const ZONE_LABELS: Record<ZoneId, string> = {
+  library: "Biblioteca", hand: "Mano", graveyard: "Cementerio", exile: "Exilio", command: "Zona de mando"
+};
+
+/** One zone chip: a TCG icon + count, with the Spanish zone name kept for a11y. */
+function zoneChipHtml(zone: ZoneId, seat: number, count: number, withLabel = false): string {
+  const label = ZONE_LABELS[zone];
+  return `<button class="zone-chip" type="button" data-zone="${zone === "command" ? "command" : zone}" data-seat="${seat}" title="${label}" aria-label="${label}: ${count}">
+    <span class="zone-ico" aria-hidden="true">${zoneIconSvg(zone)}</span>${withLabel ? `<i>${label}</i>` : ""}<b>${count}</b></button>`;
+}
+
 function seatPanelHtml(player: PlayerView): string {
   const acting = view?.waitingOn === player.seat;
   const classes = ["seat-panel"];
@@ -981,10 +993,10 @@ function seatPanelHtml(player: PlayerView): string {
       ${commander ? `<span class="thumb"${commander.image_art_crop ? ` style="background-image:url('${escapeHtml(commander.image_art_crop)}')"` : ""}></span>
         <span class="meta"><b>${escapeHtml(commander.name)}</b><span>Zona de mando</span></span>` : `<span class="meta"><b>—</b><span>Comandante en juego</span></span>`}
       <span class="zone-chips">
-        <button class="zone-chip" type="button" data-zone="library" data-seat="${player.seat}" title="Biblioteca">Bib <b>${player.libraryCount}</b></button>
-        <button class="zone-chip" type="button" data-zone="hand" data-seat="${player.seat}" title="Mano">Mano <b>${player.handCount}</b></button>
-        <button class="zone-chip" type="button" data-zone="graveyard" data-seat="${player.seat}" title="Cementerio">Cem <b>${player.graveyard.length}</b></button>
-        <button class="zone-chip" type="button" data-zone="exile" data-seat="${player.seat}" title="Exilio">Exi <b>${player.exile.length}</b></button>
+        ${zoneChipHtml("library", player.seat, player.libraryCount)}
+        ${zoneChipHtml("hand", player.seat, player.handCount)}
+        ${zoneChipHtml("graveyard", player.seat, player.graveyard.length)}
+        ${zoneChipHtml("exile", player.seat, player.exile.length)}
       </span>
       ${cmdDamage.length ? `<span class="cmd-damage" title="Daño de comandante recibido">CMD ${cmdDamage.join("/")}</span>` : ""}
     </footer>
@@ -1344,10 +1356,10 @@ function render(): void {
               <span class="mana-reserve" title="Reserva de maná"><small>Reserva</small>${manaReserveHtml(me.manaPool, me.restrictedMana)}</span>
             </div>
             <div class="self-zones">
-              <button class="zone-chip" type="button" data-zone="library" data-seat="${me.seat}"><i>Biblioteca</i><b>${me.libraryCount}</b></button>
-              <button class="zone-chip" type="button" data-zone="graveyard" data-seat="${me.seat}"><i>Cementerio</i><b>${me.graveyard.length}</b></button>
-              <button class="zone-chip" type="button" data-zone="exile" data-seat="${me.seat}"><i>Exilio</i><b>${me.exile.length}</b></button>
-              <button class="zone-chip" type="button" data-zone="command" data-seat="${me.seat}"><i>Mando</i><b>${me.commandZone.length}</b></button>
+              ${zoneChipHtml("library", me.seat, me.libraryCount, true)}
+              ${zoneChipHtml("graveyard", me.seat, me.graveyard.length, true)}
+              ${zoneChipHtml("exile", me.seat, me.exile.length, true)}
+              ${zoneChipHtml("command", me.seat, me.commandZone.length, true)}
             </div>
           </div>
           <div class="hand-wrap">

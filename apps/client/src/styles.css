@@ -195,13 +195,17 @@ h1, h2, h3 { margin: 0; }
 
 .zone-chips { display: flex; gap: 3px; }
 .zone-chip {
-  display: flex; align-items: center; gap: 3px;
+  display: flex; align-items: center; gap: 4px;
   padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px;
   background: #0a140e; color: var(--text-faint); font-size: .56rem;
 }
 .zone-chip b { color: var(--text-dim); font-size: .66rem; }
 .zone-chip:hover { border-color: var(--gold-dim); color: var(--gold); }
 .zone-chip:hover b { color: var(--gold); }
+.zone-ico { display: inline-flex; color: var(--text-dim); }
+.zone-chip:hover .zone-ico { color: var(--gold); }
+/* Opponent panels: icon + count only. The local dock keeps the written label. */
+.zone-chips .zone-chip i { display: none; }
 
 /* Opponents read top-down: their lands hug their own edge, creatures face the middle. */
 .seat-board {
@@ -458,9 +462,10 @@ button.chip:hover { border-color: var(--gold); }
 .counter-chip b { font-size: .85rem; line-height: 1; }
 .counter-chip small { color: #c9a9d3; font-size: .54rem; text-transform: capitalize; }
 .self-zones { display: flex; gap: 4px; }
-.self-zones .zone-chip { flex-direction: column; gap: 0; min-width: 52px; padding: 3px 6px; text-align: center; }
+.self-zones .zone-chip { flex-direction: column; gap: 1px; min-width: 52px; padding: 3px 6px; text-align: center; }
 .self-zones .zone-chip i { font-style: normal; font-size: .52rem; }
 .self-zones .zone-chip b { font-size: .86rem; }
+.self-zones .zone-ico svg { width: 17px; height: 17px; }
 .mana-chip { display: flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid #2f6a49; border-radius: 7px; background: #0a1a12; color: var(--good); font-size: .62rem; }
 .mana-chip b { font-size: .82rem; }
 .mana-reserve { display: inline-flex; align-items: center; gap: 5px; min-height: 26px; padding: 3px 7px; border: 1px solid #7b6432; border-radius: 7px; background: #17170d; color: var(--gold); }

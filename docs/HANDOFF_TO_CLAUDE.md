@@ -8,6 +8,13 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 Batch of player-reported gameplay/UX fixes. Landed so far:
 
+- **Zone chips use TCG icons.** `apps/client/src/zones.ts` holds five original
+  24×24 stroke glyphs (deck, fanned hand, headstone, exile rift, crown) drawn
+  in the same discipline as `abilities.ts`. `zoneChipHtml()` renders icon +
+  count on opponent panels (label hidden, kept as `aria-label`/`title`) and
+  icon + written label + count in the local dock.
+
+
 - **Floating stack + non-modal decision windows (MTGO-style).** New
   `makeDraggable(panel, handleSelector, key)` in `apps/client/src/main.ts`
   drives both. `stackStripHtml` → `stackPanelHtml`: the stack is now a
