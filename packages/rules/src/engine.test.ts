@@ -11180,6 +11180,46 @@ describe("Food Chain's exile-a-creature mana ability", () => {
   });
 });
 
+describe("Eldritch Evolution's sacrifice-scaled creature tutor", () => {
+  const ELDRITCH_EVOLUTION = () => make({
+    name: "Eldritch Evolution", type_line: "Sorcery", mana_cost: "{1}{G}{G}", cmc: 3,
+    oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nSearch your library for a creature card with mana value X or less, where X is 2 plus the sacrificed creature's mana value. Put that card onto the battlefield, then shuffle. Exile Eldritch Evolution."
+  });
+
+  it("recognizes the sacrifice-scaled search and the self-exile rider", () => {
+    const profile = profileOf(ELDRITCH_EVOLUTION());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.additionalCostSacrificeCreature).toBe(true);
+    expect(profile.effects).toEqual([
+      { kind: "search-library", types: ["Creature"], maxManaValue: "sacrificed-creature-value", manaValueOffset: 2, destination: "battlefield", reveal: false },
+      { kind: "exile-self" }
+    ]);
+  });
+
+  it("caps the search at 2 plus the sacrificed creature's mana value and exiles itself instead of the graveyard", () => {
+    const fourDrop = make({ name: "Test Four Drop", type_line: "Creature — Giant", mana_cost: "{4}", cmc: 4, power: "4", toughness: "4" });
+    const fiveDrop = make({ name: "Test Five Drop", type_line: "Creature — Giant", mana_cost: "{5}", cmc: 5, power: "5", toughness: "5" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEAR(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [ELDRITCH_EVOLUTION()]),
+      library: [...toHand(0, [fiveDrop, fourDrop], "library"), ...player.library]
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0" && entry.action.sacrificeId === bear.instance_id)!;
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, cast.action);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.pendingChoice).toMatchObject({ type: "search-library" });
+    expect(() => applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Five Drop" })).toThrow();
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Four Drop" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Four Drop")).toBe(true);
+    expect(game.players[0]!.exile.some((card) => card.name === "Eldritch Evolution")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Eldritch Evolution")).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

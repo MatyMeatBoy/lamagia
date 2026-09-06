@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,572** · cobertura: **31.3%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,579** · cobertura: **31.3%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -358,8 +358,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 | 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | promos | shadows-over-innistrad | other | 79 | 11 | 68 | 13.9% |
 | 2016-04-08 | Welcome Deck 2016 (`W16`) | starter | 2010s | other | 16 | 9 | 7 | 56.2% |
 | 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 121 | 128 | 48.6% |
-| 2016-07-22 | Eldritch Moon (`EMN`) | expansion | 2010s | main | 208 | 42 | 166 | 20.2% |
-| 2016-07-22 | Eldritch Moon Promos (`PEMN`) | promos | eldritch-moon | other | 64 | 3 | 61 | 4.7% |
+| 2016-07-22 | Eldritch Moon (`EMN`) | expansion | 2010s | main | 208 | 43 | 165 | 20.7% |
+| 2016-07-22 | Eldritch Moon Promos (`PEMN`) | promos | eldritch-moon | other | 64 | 4 | 60 | 6.2% |
 | 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | 2010s | other | 15 | 1 | 14 | 6.7% |
 | 2016-08-26 | Conspiracy: Take the Crown (`CN2`) | conspiracy | conspiracy-take-the-crown | other | 221 | 67 | 154 | 30.3% |
 | 2016-09-02 | Duel Decks: Nissa vs. Ob Nixilis (`DDR`) | duel-decks | duel-decks-nissa-vs-ob-nixilis | other | 62 | 30 | 32 | 48.4% |
@@ -451,10 +451,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1611 | 3610 | 30.9% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1612 | 3609 | 30.9% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 14 | 6 | 70.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 444 | 1252 | 26.2% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 445 | 1251 | 26.2% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 63 | 210 | 23.1% |
@@ -564,10 +564,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 | 2023-02-10 | Phyrexia: All Will Be One Promos (`PONE`) | promos | phyrexia-all-will-be-one | other | 80 | 8 | 72 | 10.0% |
 | 2023-02-10 | Year of the Rabbit 2023 (`PL23`) | promos | year-of-the-rabbit-2023 | other | 5 | 1 | 4 | 20.0% |
 | 2023-02-17 | Unknown Event (`UNK`) | funny-special | unknown-event | other | 506 | 21 | 485 | 4.2% |
-| 2023-02-19 | Secret Lair Promo (`SLP`) | secret-lair | secret-lair-promo | secret-lair | 52 | 18 | 34 | 34.6% |
+| 2023-02-19 | Secret Lair Promo (`SLP`) | secret-lair | secret-lair-promo | secret-lair | 52 | 19 | 33 | 36.5% |
 | 2023-03-21 | 30th Anniversary History Promos (`P30H`) | promos | 30th-anniversary-history | other | 5 | 3 | 2 | 60.0% |
 | 2023-03-21 | Shadows of the Past (`SIS`) | masters-remastered | shadows-of-the-past | other | 76 | 30 | 46 | 39.5% |
-| 2023-03-21 | Shadows over Innistrad Remastered (`SIR`) | masters-remastered | shadows-over-innistrad-remastered | other | 284 | 58 | 226 | 20.4% |
+| 2023-03-21 | Shadows over Innistrad Remastered (`SIR`) | masters-remastered | shadows-over-innistrad-remastered | other | 284 | 59 | 225 | 20.8% |
 | 2023-04-21 | March of the Machine (`MOM`) | expansion | phyrexia | main | 296 | 42 | 254 | 14.2% |
 | 2023-04-21 | March of the Machine Commander (`MOC`) | commander | 2023 | commander | 338 | 113 | 225 | 33.4% |
 | 2023-04-21 | March of the Machine Promos (`PMOM`) | promos | march-of-the-machine | other | 80 | 2 | 78 | 2.5% |
@@ -634,7 +634,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 | 2025-01-01 | MagicFest 2025 (`PF25`) | promos | magicfest-2025 | other | 19 | 5 | 14 | 26.3% |
 | 2025-01-01 | Wizards Play Network 2025 (`PW25`) | promos | wpn-2025 | other | 16 | 4 | 12 | 25.0% |
 | 2025-01-03 | Spotlight Series (`PSPL`) | promos | spotlight-series | other | 13 | 1 | 12 | 7.7% |
-| 2025-01-24 | Innistrad Remastered (`INR`) | masters-remastered | innistrad-remastered | other | 300 | 73 | 227 | 24.3% |
+| 2025-01-24 | Innistrad Remastered (`INR`) | masters-remastered | innistrad-remastered | other | 300 | 74 | 226 | 24.7% |
 | 2025-02-09 | Japan Standard Cup (`PJSC`) | promos | japan-standard-cup | other | 4 | 0 | 4 | 0.0% |
 | 2025-02-14 | Aetherdrift (`DFT`) | expansion | 2020s | main | 276 | 44 | 232 | 15.9% |
 | 2025-02-14 | Aetherdrift Commander (`DRC`) | commander | 2025 | commander | 163 | 65 | 98 | 39.9% |
@@ -794,7 +794,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 | eternal | 2020s | 6 | 537 | 148 | 389 | 27.6% |
 | expansion | 1990s | 11 | 1573 | 378 | 1195 | 24.0% |
 | expansion | 2000s | 19 | 3082 | 716 | 2366 | 23.2% |
-| expansion | 2010s | 14 | 2735 | 751 | 1984 | 27.5% |
+| expansion | 2010s | 14 | 2735 | 752 | 1983 | 27.5% |
 | expansion | 2020s | 17 | 3739 | 635 | 3104 | 17.0% |
 | expansion | alara | 2 | 379 | 155 | 224 | 40.9% |
 | expansion | amonkhet | 1 | 272 | 102 | 170 | 37.5% |
@@ -877,7 +877,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 | masters-remastered | double-masters-2022 | 1 | 332 | 101 | 231 | 30.4% |
 | masters-remastered | eternal-masters | 1 | 249 | 121 | 128 | 48.6% |
 | masters-remastered | iconic-masters | 1 | 249 | 104 | 145 | 41.8% |
-| masters-remastered | innistrad-remastered | 1 | 300 | 73 | 227 | 24.3% |
+| masters-remastered | innistrad-remastered | 1 | 300 | 74 | 226 | 24.7% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 61 | 231 | 20.9% |
 | masters-remastered | magic-duel-masters | 1 | 4 | 3 | 1 | 75.0% |
 | masters-remastered | masters-25 | 1 | 249 | 108 | 141 | 43.4% |
@@ -894,9 +894,9 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 | masters-remastered | renaissance | 1 | 122 | 37 | 85 | 30.3% |
 | masters-remastered | rinascimento | 1 | 60 | 12 | 48 | 20.0% |
 | masters-remastered | shadows-of-the-past | 1 | 76 | 30 | 46 | 39.5% |
-| masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 58 | 226 | 20.4% |
+| masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 59 | 225 | 20.8% |
 | masters-remastered | tempest-remastered | 1 | 254 | 104 | 150 | 40.9% |
-| masters-remastered | the-list | 1 | 5221 | 1611 | 3610 | 30.9% |
+| masters-remastered | the-list | 1 | 5221 | 1612 | 3609 | 30.9% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 115 | 298 | 27.8% |
 | masters-remastered | ultimate-masters | 1 | 254 | 94 | 160 | 37.0% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -974,7 +974,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 | promos | duskmourn-house-of-horror | 1 | 80 | 2 | 78 | 2.5% |
 | promos | edge-of-eternities | 1 | 80 | 6 | 74 | 7.5% |
 | promos | eighth-edition | 1 | 1 | 1 | 0 | 100.0% |
-| promos | eldritch-moon | 1 | 64 | 3 | 61 | 4.7% |
+| promos | eldritch-moon | 1 | 64 | 4 | 60 | 6.2% |
 | promos | eternal-weekend | 1 | 10 | 3 | 7 | 30.0% |
 | promos | european-land-program | 1 | 5 | 5 | 0 | 100.0% |
 | promos | eventide | 1 | 2 | 0 | 2 | 0.0% |
@@ -1195,8 +1195,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 11 | 73 | 13.1% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 14 | 44 | 24.1% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 444 | 1252 | 26.2% |
-| secret-lair | secret-lair-promo | 1 | 52 | 18 | 34 | 34.6% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 445 | 1251 | 26.2% |
+| secret-lair | secret-lair-promo | 1 | 52 | 19 | 33 | 36.5% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
 | spellbooks | 2020s | 1 | 8 | 1 | 7 | 12.5% |
@@ -23470,7 +23470,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 - [ ] Drownyard Behemoth — `bfe1a52a-f2f8-4c62-8502-037f2d1395b2`
 - [ ] Dusk Feaster — `3d56d82b-03a6-41cf-9833-c4efd8be6ea7`
 - [ ] Elder Deep-Fiend — `4eafe717-4ba4-4901-8c67-11757230eb54`
-- [ ] Eldritch Evolution — `0f77c0c9-4dc4-489a-b547-e93287c4d1a5`
 - [ ] Emrakul's Evangel — `99eb572b-85b1-4d78-aea8-4400a5b7e508`
 - [ ] Emrakul's Influence — `92eb07ca-ec57-48c3-98ce-9e878bd968c1`
 - [ ] Emrakul, the Promised End — `4e7a8817-1a66-45c3-ade9-eac79b40b89f`
@@ -23609,7 +23608,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 - [ ] Distended Mindbender — `36d32194-d547-4e2d-894f-f4bf13cf7da6`
 - [ ] Docent of Perfection // Final Iteration — `85e797de-da27-4cd5-8fa4-4aef948988b2`
 - [ ] Elder Deep-Fiend — `4eafe717-4ba4-4901-8c67-11757230eb54`
-- [ ] Eldritch Evolution — `0f77c0c9-4dc4-489a-b547-e93287c4d1a5`
 - [ ] Emrakul's Evangel — `99eb572b-85b1-4d78-aea8-4400a5b7e508`
 - [ ] Emrakul, the Promised End — `4e7a8817-1a66-45c3-ade9-eac79b40b89f`
 - [ ] Eternal Scourge — `c8b0436e-16d2-4d48-a894-454d69a3743b`
@@ -31138,7 +31136,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 - [ ] Eldrazi Monument — `c7ee1b21-d02e-49ef-95d6-d6dbf2f886ae`
 - [ ] Eldrazi Skyspawner — `b5661289-a03c-40fc-a1e4-f602adb56f81`
 - [ ] Eldrazi Temple — `7fab8d65-af51-47d3-8f10-2676bf6e8ba3`
-- [ ] Eldritch Evolution — `0f77c0c9-4dc4-489a-b547-e93287c4d1a5`
 - [ ] Electric Revelation — `c92af0f4-e5f1-4731-a781-b2ca360867a7`
 - [ ] Electrickery — `99fd4b51-1698-4168-9366-a6ea2df22361`
 - [ ] Electrostatic Pummeler — `79676f10-9fca-4bca-acc5-6994955142b4`
@@ -34110,7 +34107,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 - [ ] Eladamri's Vineyard — `faa085c3-705f-465d-9290-0e22276ad06d`
 - [ ] Eldrazi Monument — `c7ee1b21-d02e-49ef-95d6-d6dbf2f886ae`
 - [ ] Eldrazi Temple — `7fab8d65-af51-47d3-8f10-2676bf6e8ba3`
-- [ ] Eldritch Evolution — `0f77c0c9-4dc4-489a-b547-e93287c4d1a5`
 - [ ] Elesh Norn, Grand Cenobite — `958d71ff-c9f7-46f0-96ca-79e7f4d65a16`
 - [ ] Elixir of Immortality — `204b71fc-4d5f-40dd-903d-56c733171d84`
 - [ ] Ellie, Brick Master — `299ff264-c6db-4b48-88fb-ca006cb84f88`
@@ -47108,7 +47104,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 - [ ] Ancient Stirrings — `82f18e7d-5c42-47c4-8e74-3fccc9b7b1f0`
 - [ ] Death's Shadow — `e08722b3-0f79-4c82-b298-603e04a37857`
 - [ ] Dragonlord Silumgar — `44581d4f-746b-43b8-a34d-16dc383ab70e`
-- [ ] Eldritch Evolution — `0f77c0c9-4dc4-489a-b547-e93287c4d1a5`
 - [ ] Emberheart Challenger — `5b4b21ed-c24e-4038-83fb-bd7f3c3426cd`
 - [ ] Expressive Iteration — `c7aecca5-2f67-4245-ab2d-e723d8b23a67`
 - [ ] Fatal Push — `16437a83-be52-44cd-a768-a767c9347eb2`
@@ -47262,7 +47257,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 - [ ] Dusk Feaster — `3d56d82b-03a6-41cf-9833-c4efd8be6ea7`
 - [ ] Duskwatch Recruiter // Krallenhorde Howler — `87c43776-dd98-4e12-9b95-82d2b8f4f1ab`
 - [ ] Elder Deep-Fiend — `4eafe717-4ba4-4901-8c67-11757230eb54`
-- [ ] Eldritch Evolution — `0f77c0c9-4dc4-489a-b547-e93287c4d1a5`
 - [ ] Emrakul, the Promised End — `4e7a8817-1a66-45c3-ade9-eac79b40b89f`
 - [ ] Epiphany at the Drownyard — `33befbd6-56ac-45a7-a4d0-448167162707`
 - [ ] Erdwal Illuminator — `5ff4ef34-acb9-46c3-8530-f4b093807066`
@@ -55764,7 +55758,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,57
 - [ ] Edgar Markov — `41e2790d-49f5-4e98-b8d9-04179f47f13a`
 - [ ] Edgar's Awakening — `2c04371a-af69-4e42-8cda-096cf8312b5e`
 - [ ] Elder Deep-Fiend — `4eafe717-4ba4-4901-8c67-11757230eb54`
-- [ ] Eldritch Evolution — `0f77c0c9-4dc4-489a-b547-e93287c4d1a5`
 - [ ] Emrakul, the Promised End — `4e7a8817-1a66-45c3-ade9-eac79b40b89f`
 - [ ] Essence Flux — `64824ae5-efab-4b55-9d3c-b9c690bad857`
 - [ ] Faith Unbroken — `a57fe358-baf3-4eb5-9417-8945b41f84de`

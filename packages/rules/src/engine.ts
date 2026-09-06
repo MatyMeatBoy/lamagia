@@ -264,6 +264,8 @@ export interface StackObject {
   readonly chosenColor?: MagicColor;
   /** Last-known power of a creature sacrificed as this spell's additional cost (CR 608.2h). */
   readonly sacrificedPower?: number;
+  /** Mana value of a creature sacrificed as this spell's additional cost (Eldritch Evolution, CR 608.2h). */
+  readonly sacrificedManaValue?: number;
 }
 
 export interface TriggerInstance {
@@ -5408,7 +5410,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
 // ---------------------------------------------------------------------------
 
 function sendSpellToOwnerZone(state: GameState, object: StackObject): GameState {
-  return withPlayer(state, object.card.owner, (player) => object.flashback
+  const exiles = object.flashback || cardProfile(object.card).effects.some((effect) => effect.kind === "exile-self");
+  return withPlayer(state, object.card.owner, (player) => exiles
     ? { ...player, exile: [...player.exile, object.card] }
     : { ...player, graveyard: [...player.graveyard, object.card] });
 }
@@ -5745,7 +5748,9 @@ function resolveTop(state: GameState): GameState {
         const manaValueMatches = search.maxManaValue === "X" ? profile.manaValue <= object.variableValue
           : search.maxManaValue === "lands-you-control"
             ? profile.manaValue <= playerAt(next, object.controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
-            : true;
+            : search.maxManaValue === "sacrificed-creature-value"
+              ? profile.manaValue <= (search.manaValueOffset ?? 0) + (object.sacrificedManaValue ?? 0)
+              : true;
         return typeMatches && subtypeMatches && colorMatches && manaValueMatches;
       })
       .map((card) => card.instance_id);
@@ -5774,7 +5779,7 @@ function resolveTop(state: GameState): GameState {
         sourceCard: object.card,
         search,
         returnSourceToGraveyard: !object.activated && !object.fromCopy,
-        exileSourceAfterResolution: Boolean(object.flashback)
+        exileSourceAfterResolution: Boolean(object.flashback) || profile.effects.some((effect) => effect.kind === "exile-self")
       }
     };
   }
@@ -7699,7 +7704,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false, sacrificedPower?: number): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false, sacrificedPower?: number, sacrificedManaValue?: number): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -7720,7 +7725,8 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     ...(evoked ? { evoked: true } : {}),
     ...(flashback ? { fromFlashback: true } : {}),
     ...(castViaAlternativeCost ? { castViaAlternativeCost: true } : {}),
-    ...(sacrificedPower === undefined ? {} : { sacrificedPower })
+    ...(sacrificedPower === undefined ? {} : { sacrificedPower }),
+    ...(sacrificedManaValue === undefined ? {} : { sacrificedManaValue })
   };
   // After putting an object on the stack its controller receives priority again (rule 117.3c).
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
@@ -8562,6 +8568,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     next = logged(next, seat, `${player.name} sacrifica ${lands[0]!.card.name} por ${card.name}.`);
   }
   let sacrificedPower: number | undefined;
+  let sacrificedManaValue: number | undefined;
   if (profile.additionalCostSacrificeCreature) {
     const creatures = playerAt(next, seat).battlefield.filter((p) => isCreature(cardProfile(p.card)));
     if (!creatures.length) throw new Error(`No tienes una criatura para sacrificar por ${card.name}.`);
@@ -8569,9 +8576,10 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
       ? creatures.find((permanent) => permanent.instance_id === action.sacrificeId)
       : creatures[0];
     if (!sacrificed) throw new Error(`Debes elegir una criatura que controles para sacrificar por ${card.name}.`);
-    // Snapshot power before moving the permanent: the spell needs its last-known
-    // information when it resolves (CR 608.2h).
+    // Snapshot power and mana value before moving the permanent: the spell
+    // needs its last-known information when it resolves (CR 608.2h).
     sacrificedPower = Math.max(0, powerOf(sacrificed, next));
+    sacrificedManaValue = cardProfile(sacrificed.card).manaValue;
     next = movePermanentToZone(next, sacrificed, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${sacrificed.card.name} por ${card.name}.`);
   }
@@ -8602,7 +8610,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
-    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)), sacrificedPower);
+    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)), sacrificedPower, sacrificedManaValue);
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: paymentSpentTotal },
@@ -8948,7 +8956,7 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
     graveyard: [
       ...current.graveyard,
       ...(choice.search.destination === "graveyard" ? [selected] : []),
-      ...(choice.returnSourceToGraveyard ? [choice.sourceCard] : [])
+      ...(choice.returnSourceToGraveyard && !choice.exileSourceAfterResolution ? [choice.sourceCard] : [])
     ],
     exile: choice.exileSourceAfterResolution ? [...current.exile, choice.sourceCard] : current.exile
   }));

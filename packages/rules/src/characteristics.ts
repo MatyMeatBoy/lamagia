@@ -744,8 +744,10 @@ export type SpellEffect =
       readonly subtypes?: readonly string[];
       /** "a green creature card" (Natural Order): restricts by color, not just type/subtype. */
       readonly colors?: readonly string[];
-      /** "...card with mana value X or less" (Green Sun's Zenith): X is the spell's own paid {X}. "lands-you-control" (Beseech the Queen): the cap is the searcher's own land count at resolution. */
-      readonly maxManaValue?: "X" | "lands-you-control";
+      /** "...card with mana value X or less" (Green Sun's Zenith): X is the spell's own paid {X}. "lands-you-control" (Beseech the Queen): the cap is the searcher's own land count at resolution. "sacrificed-creature-value" (Eldritch Evolution): the cap is `manaValueOffset` plus the mana value of the creature paid as this spell's additional cost. */
+      readonly maxManaValue?: "X" | "lands-you-control" | "sacrificed-creature-value";
+      /** Added to the computed cap when `maxManaValue` is "sacrificed-creature-value". */
+      readonly manaValueOffset?: number;
       readonly destination: "top" | "hand" | "graveyard" | "battlefield";
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
@@ -2368,6 +2370,26 @@ function searchCriterion(text: string): { types: CardType[]; subtypes: string[];
 }
 
 function parseLibrarySearch(text: string): SpellEffect | null {
+  // "...card with mana value X or less, where X is N plus the sacrificed
+  // creature's mana value" (Eldritch Evolution): unlike every other search
+  // template here, the destination clause is its own trailing sentence
+  // ("Put that card onto the battlefield, then shuffle."), not embedded in
+  // this one. The caller (the per-sentence loop in `recognizeText`) only
+  // folds this effect in after confirming that next sentence says so.
+  const sacrificedManaValue = /^Search your library for (?:a |an )?(.+?) card with mana value X or less, where X is (\d+) plus the sacrificed creature['’]s mana value\.?$/i.exec(text.trim());
+  if (sacrificedManaValue) {
+    const criterion = searchCriterion(sacrificedManaValue[1]!);
+    return {
+      kind: "search-library",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
+      maxManaValue: "sacrificed-creature-value",
+      manaValueOffset: Number(sacrificedManaValue[2]),
+      destination: "battlefield",
+      reveal: false
+    };
+  }
   const single = /^Search your library for (?:a |an |up to (?:one|two|three|five) )?(.+?) card, (.+)$/i.exec(text);
   const namedBasic = /^Search your library for a ((?:Plains|Island|Swamp|Mountain|Forest)(?:,\s*(?:Plains|Island|Swamp|Mountain|Forest))*?(?:,?\s+or\s+(?:Plains|Island|Swamp|Mountain|Forest))?) card and put that card onto the battlefield\.?$/i.exec(text.trim());
   if (namedBasic) {
@@ -5019,6 +5041,21 @@ function recognizeText(text: string): RecognizedText {
         effects.push({ kind: "damage-any-target-exiles-if-dies", amount: recognized.effect.amount });
         if (recognized.target !== "none") targetKind = recognized.target;
         sentenceIndex += 1;
+        continue;
+      }
+      // Eldritch Evolution: the destination clause for a `sacrificed-creature-
+      // value` search lives in its own trailing sentence rather than being
+      // embedded in the search sentence itself. Only claim the effect once
+      // that next sentence confirms the expected destination and shuffle.
+      if (recognized.effect.kind === "search-library" && recognized.effect.maxManaValue === "sacrificed-creature-value") {
+        const destinationRider = sentences[sentenceIndex + 1]?.trim();
+        if (/^Put (?:that|the) card onto the battlefield, then shuffle\.?$/i.test(destinationRider ?? "")) {
+          effects.push(recognized.effect);
+          if (recognized.target !== "none") targetKind = recognized.target;
+          sentenceIndex += 1;
+          continue;
+        }
+        unimplementedText.push(sentence.trim());
         continue;
       }
       effects.push(recognized.effect);

@@ -4676,3 +4676,69 @@ across all four workspaces, `npx vitest run services/match-server/src`
 
 Prossh decklist status after this pass: **79 of 97 unique cards fully
 implemented (81.4%)**.
+
+Eldritch Evolution ("As an additional cost to cast this spell,
+sacrifice a creature. Search your library for a creature card with
+mana value X or less, where X is 2 plus the sacrificed creature's mana
+value. Put that card onto the battlefield, then shuffle. Exile
+Eldritch Evolution.") turned out to be almost entirely reusable: the
+"sacrifice a creature" additional cost was ALREADY modeled as
+`profile.additionalCostSacrificeCreature` (a pre-existing, unrestricted
+sibling of the green-only `additionalCostSacrificeCreatureColor` used
+by Natural Order), complete with its own `legalActions` enumeration
+(one `cast` action per candidate creature via `sacrificeId`) and a
+`sacrificedPower` snapshot already threaded onto the `StackObject` for
+some other card's power-scaling effect. The only genuinely new piece
+was the search's dynamic cap. Widened `search-library`'s `maxManaValue`
+with a third discriminant, `"sacrificed-creature-value"`, plus a new
+`manaValueOffset?: number` field for the "+2" part, and added a sibling
+`sacrificedManaValue?: number` `StackObject` field computed at the exact
+same site and moment as `sacrificedPower` (before the creature moves to
+the graveyard, since CR 608.2h needs its last-known information). The
+harder part was structural, not conceptual: Oracle text usually keeps a
+search's destination clause in the SAME sentence as the search itself
+("...mana value X or less, put it onto the battlefield..."), which is
+how every prior `maxManaValue` template works — but this card splits
+them into two separate period-terminated sentences ("...mana value.
+Put that card onto the battlefield, then shuffle."), so neither the
+existing `parseLibrarySearch` embedded-destination regexes nor a
+lone-sentence match without one would resolve it. Fixed with the same
+lookahead-and-consume pattern `recognizeText`'s per-sentence loop
+already used for Incinerate-style damage/regeneration riders: a new
+`parseLibrarySearch` branch recognizes the search sentence alone
+(defaulting to `destination: "battlefield"`), and the caller only
+commits to that effect once it confirms the VERY NEXT sentence reads
+"Put that card onto the battlefield, then shuffle." — advancing past it
+so it is not separately flagged as unimplemented. Fixing this also
+surfaced and fixed a real, previously-latent bug unrelated to this
+card: `applyChooseLibraryCard` (the single-target `search-library`
+completion handler) unconditionally pushed the source spell into the
+graveyard whenever `returnSourceToGraveyard` was set, WITHOUT the
+`&& !exileSourceAfterResolution` guard its three sibling completion
+handlers (multi-search, view-hand, scry/surveil, look-top-select) all
+already had — meaning any flashback spell using a single-target
+`search-library` effect that actually found a card would have been
+double-booked into BOTH the graveyard and exile simultaneously. Found
+by this card's own test (Eldritch Evolution's `exile-self` effect
+exposed the same code path from a non-flashback angle) and fixed by
+adding the missing guard to match the other three handlers. Also
+generalized `sendSpellToOwnerZone` (used by every early-return
+resolution branch, including "no valid search result") and the
+search-library pendingChoice's `exileSourceAfterResolution` field to
+check for a profile-level `exile-self` effect, not just `object
+.flashback` — `applyEffect`'s own `case "exile-self"` was already a
+deliberate no-op with a comment saying "the card's own move is handled
+by resolveTop after other effects run," and the GENERIC end-of-
+resolution fallthrough already had this exact check; only the
+early-return branches were missing it. Verified **+1** in the export
+count (10,217 → 10,218); set coverage holds at 31.3%. Scenario-tested:
+sacrificing a 2-mana-value Grizzly Bears caps the search at mana value
+4, so a 5-mana-value creature in the library cannot be chosen (throws)
+while a 4-mana-value creature can and enters the battlefield, and the
+spell itself ends up in exile, not the graveyard. Validation: **795
+rules tests** (2 new), `npm run check` across all four workspaces,
+`npx vitest run services/match-server/src` (5 passed), 10,218 global
+profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **80 of 97 unique cards fully
+implemented (82.5%)**.
