@@ -5,6 +5,7 @@ import {
   applyAction, canCounterSpell, createGame, legalActions, legalTargets, legalAttackers, legalBlockers, defendersAwaitingBlocks, manaSources, planManaPayment, powerOf, toughnessOf,
   hasRealChoice, profileOf, settle, stabilizationDiagnostic, TURN_STEPS, type DeckInput, type GameCard, type GameState, type SeatId, type TriggerInstance, type TurnStep
 } from "./engine.js";
+import { parseManaCost } from "./mana.js";
 import { botAction, pendingSeat, playBotGame } from "./bot.js";
 import { projectGame } from "./projection.js";
 import { isSafeManaUndo } from "./undo.js";
@@ -9692,6 +9693,26 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: forest.instance_id }] });
     const aura = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Wild Growth")!;
     expect(aura.attachedTo).toBe(forest.instance_id);
+  });
+
+  it("adds Wild Growth's fixed mana to both manual and automatic land activation", () => {
+    const profile = profileOf(WILD_GROWTH());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      auraLandManaBonus: { mana: "G", amount: 1 }
+    });
+    let game = readyToCast([WILD_GROWTH()], [FOREST(), FOREST()]);
+    const forests = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Forest");
+    const forest = forests[1]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: forest.instance_id }] });
+    const source = manaSources(game.players[0]!, game).find((entry) => entry.permanentId === forest.instance_id)!;
+    expect(source).toMatchObject({ amount: 1, bonusTypes: ["G"] });
+    const plan = planManaPayment(parseManaCost("{G}{G}")!, game.players[0]!, { state: game });
+    expect(plan?.taps).toMatchObject([{ permanentId: forest.instance_id, bonusTypes: ["G"] }]);
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana" && entry.cardId === forest.instance_id)!;
+    expect(activation.label).toContain("{G}{G}");
+    game = applyAction(game, 0, activation.action);
+    expect(game.players[0]!.manaPool.G).toBe(2);
   });
 
   it("continuously controls the enchanted creature and restores its prior controller when the Aura leaves", () => {
