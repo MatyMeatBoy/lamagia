@@ -1530,6 +1530,12 @@ describe("mana payment", () => {
     expect(profileOf(card).activatedAbilities[0]).toMatchObject({ sorcerySpeed: true });
   });
 
+  it("recognizes standalone once-per-turn activation restrictions", () => {
+    const card = make({ name: "Once Test", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{1}: Draw a card\nActivate only once each turn." });
+    expect(profileOf(card)).toMatchObject({ fullyImplemented: true });
+    expect(profileOf(card).activatedAbilities[0]).toMatchObject({ oncePerTurn: true });
+  });
+
   it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
     const profile = profileOf(PAIN_LAND());
     expect(profile.fullyImplemented).toBe(true);
