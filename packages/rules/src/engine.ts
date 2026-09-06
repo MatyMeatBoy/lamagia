@@ -5891,9 +5891,14 @@ function resolveTop(state: GameState): GameState {
             subtype.toLowerCase() === "basic" ? candidateProfile.supertypes.some((value) => value.toLowerCase() === "basic")
               : hasSubtype(candidateProfile, subtype));
           const colorMatches = !triggerSearch.colors?.length || triggerSearch.colors.some((color) => candidateProfile.colors.some((candidate) => candidate.toUpperCase() === color));
+          const manaValueMatches = triggerSearch.maxManaValue === undefined
+            ? true
+            : triggerSearch.maxManaValue === "lands-you-control"
+              ? candidateProfile.manaValue <= playerAt(next, object.controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
+              : false;
           const toughnessMatches = triggerSearch.maxToughness === undefined
             || (Number.isFinite(Number(candidateProfile.toughness)) && Number(candidateProfile.toughness) <= triggerSearch.maxToughness);
-          return typeMatches && subtypeMatches && colorMatches && toughnessMatches;
+          return typeMatches && subtypeMatches && colorMatches && manaValueMatches && toughnessMatches;
         })
         .map((card) => card.instance_id);
       if (!searchOptions.length) {
