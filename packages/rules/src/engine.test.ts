@@ -12394,6 +12394,35 @@ describe("Buried Alive's up-to-three-to-graveyard search", () => {
   });
 });
 
+describe("Recruiter of the Guard's toughness-capped tutor", () => {
+  const RECRUITER_OF_THE_GUARD = () => make({ name: "Recruiter of the Guard", type_line: "Creature — Human Soldier", power: "1", toughness: "2", mana_cost: "{2}{W}", cmc: 3, oracle_text: "When Recruiter of the Guard enters, you may search your library for a creature card with toughness 2 or less, reveal it, put it into your hand, then shuffle." });
+
+  it("recognizes the toughness-capped hand tutor", () => {
+    expect(profileOf(RECRUITER_OF_THE_GUARD()).triggers[0]).toMatchObject({
+      event: "enters-battlefield", subject: "self", optional: true,
+      effect: { kind: "search-library", types: ["Creature"], maxToughness: 2, destination: "hand", reveal: true }
+    });
+  });
+
+  it("offers only creatures with toughness 2 or less, excluding a bigger creature", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [RECRUITER_OF_THE_GUARD()], "recruiter-hand"),
+      library: [...toHand(0, [BEAR(), TRAMPLER()], "recruiter-library"), ...player.library]
+    }));
+    game = putOnBattlefield(game, 0, [PLAINS(), PLAINS(), PLAINS()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "recruiter-hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library" }>;
+    const legalNames = game.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(legalNames).toContain("Grizzly Bears");
+    expect(legalNames).not.toContain("Big Stomper");
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Grizzly Bears" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+});
+
 describe("Hunting Wilds' kicked-only untap-and-animate-fetched-lands", () => {
   const HUNTING_WILDS = () => make({
     name: "Hunting Wilds", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4,

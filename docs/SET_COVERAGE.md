@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,049** · cobertura: **33.0%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,053** · cobertura: **33.0%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -361,14 +361,14 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 | 2016-07-22 | Eldritch Moon (`EMN`) | expansion | 2010s | main | 208 | 46 | 162 | 22.1% |
 | 2016-07-22 | Eldritch Moon Promos (`PEMN`) | promos | eldritch-moon | other | 64 | 4 | 60 | 6.2% |
 | 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | 2010s | other | 15 | 1 | 14 | 6.7% |
-| 2016-08-26 | Conspiracy: Take the Crown (`CN2`) | conspiracy | conspiracy-take-the-crown | other | 221 | 72 | 149 | 32.6% |
+| 2016-08-26 | Conspiracy: Take the Crown (`CN2`) | conspiracy | conspiracy-take-the-crown | other | 221 | 73 | 148 | 33.0% |
 | 2016-09-02 | Duel Decks: Nissa vs. Ob Nixilis (`DDR`) | duel-decks | duel-decks-nissa-vs-ob-nixilis | other | 62 | 31 | 31 | 50.0% |
 | 2016-09-30 | Kaladesh (`KLD`) | expansion | kaladesh | main | 264 | 97 | 167 | 36.7% |
 | 2016-09-30 | Kaladesh Inventions (`MPS`) | masterpieces | kaladesh-inventions | other | 54 | 15 | 39 | 27.8% |
 | 2016-09-30 | Kaladesh Promos (`PKLD`) | promos | kaladesh | other | 70 | 10 | 60 | 14.3% |
 | 2016-10-01 | San Diego Comic-Con 2016 (`PS16`) | promos | comic-con-2016 | other | 5 | 0 | 5 | 0.0% |
 | 2016-11-11 | Commander 2016 (`C16`) | commander | 2016 | commander | 341 | 147 | 194 | 43.1% |
-| 2016-11-16 | Treasure Chest (`PZ2`) | treasure-chest | 2010s | other | 270 | 47 | 223 | 17.4% |
+| 2016-11-16 | Treasure Chest (`PZ2`) | treasure-chest | 2010s | other | 270 | 48 | 222 | 17.8% |
 | 2016-11-25 | Planechase Anthology (`PCA`) | planechase | planechase-anthology | other | 136 | 58 | 78 | 42.6% |
 | 2017-01-01 | Friday Night Magic 2017 (`F17`) | promos | fnm-2017 | other | 9 | 3 | 6 | 33.3% |
 | 2017-01-01 | Judge Gift Cards 2017 (`J17`) | promos | judge-2017 | other | 9 | 1 | 8 | 11.1% |
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 10 | 58 | 14.7% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1717 | 3504 | 32.9% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1718 | 3503 | 32.9% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 22 | 37 | 37.3% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 14 | 6 | 70.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 456 | 1240 | 26.9% |
@@ -613,7 +613,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 | 2024-04-19 | Outlaws of Thunder Junction Promos (`POTJ`) | promos | outlaws-of-thunder-junction | other | 80 | 5 | 75 | 6.2% |
 | 2024-04-19 | The Big Score (`BIG`) | expansion | 2020s | main | 30 | 3 | 27 | 10.0% |
 | 2024-06-14 | Modern Horizons 2 Timeshifts (`H2R`) | supplemental | modern-horizons-2-timeshifts | other | 16 | 4 | 12 | 25.0% |
-| 2024-06-14 | Modern Horizons 3 (`MH3`) | supplemental | modern-horizons-3 | other | 313 | 64 | 249 | 20.4% |
+| 2024-06-14 | Modern Horizons 3 (`MH3`) | supplemental | modern-horizons-3 | other | 313 | 65 | 248 | 20.8% |
 | 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 2024 | commander | 320 | 120 | 200 | 37.5% |
 | 2024-06-14 | Modern Horizons 3 Promos (`PMH3`) | promos | modern-horizons-3 | other | 81 | 6 | 75 | 7.4% |
 | 2024-07-05 | Assassin's Creed (`ACR`) | supplemental | assassin-s-creed | other | 138 | 23 | 115 | 16.7% |
@@ -755,7 +755,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 | commander | 2025 | 4 | 1046 | 428 | 618 | 40.9% |
 | commander | 2026 | 6 | 1265 | 381 | 884 | 30.1% |
 | conspiracy | conspiracy | 2 | 211 | 57 | 154 | 27.0% |
-| conspiracy | conspiracy-take-the-crown | 1 | 221 | 72 | 149 | 32.6% |
+| conspiracy | conspiracy-take-the-crown | 1 | 221 | 73 | 148 | 33.0% |
 | core | 1990s | 10 | 3267 | 1386 | 1881 | 42.4% |
 | core | 2000s | 4 | 1389 | 807 | 582 | 58.1% |
 | core | 2010s | 8 | 2011 | 1023 | 988 | 50.9% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 | masters-remastered | shadows-of-the-past | 1 | 76 | 30 | 46 | 39.5% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 69 | 215 | 24.3% |
 | masters-remastered | tempest-remastered | 1 | 254 | 110 | 144 | 43.3% |
-| masters-remastered | the-list | 1 | 5221 | 1717 | 3504 | 32.9% |
+| masters-remastered | the-list | 1 | 5221 | 1718 | 3503 | 32.9% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 121 | 292 | 29.3% |
 | masters-remastered | ultimate-masters | 1 | 254 | 101 | 153 | 39.8% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -1212,10 +1212,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 | supplemental | modern-horizons-1-timeshifts | 1 | 40 | 13 | 27 | 32.5% |
 | supplemental | modern-horizons-2 | 1 | 310 | 92 | 218 | 29.7% |
 | supplemental | modern-horizons-2-timeshifts | 1 | 16 | 4 | 12 | 25.0% |
-| supplemental | modern-horizons-3 | 1 | 313 | 64 | 249 | 20.4% |
+| supplemental | modern-horizons-3 | 1 | 313 | 65 | 248 | 20.8% |
 | supplemental | ravnica-clue-edition | 1 | 268 | 130 | 138 | 48.5% |
 | supplemental | the-lord-of-the-rings-tales-of-middle-earth | 1 | 291 | 34 | 257 | 11.7% |
-| treasure-chest | 2010s | 2 | 419 | 109 | 310 | 26.0% |
+| treasure-chest | 2010s | 2 | 419 | 110 | 309 | 26.3% |
 
 ## Pendientes por edición
 
@@ -23188,7 +23188,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 - [ ] Pyretic Hunter — `6ea507d3-2b8d-4f08-824c-0de0ae214da5`
 - [ ] Queen Marchesa — `d7ac4be1-dcca-49b6-8ddb-d1b0e6cf2dcf`
 - [ ] Ravenous Leucrocota — `dcc5ca3f-5309-4833-bee4-f2508382ea06`
-- [ ] Recruiter of the Guard — `d521a329-a53a-4962-810a-2abed80df260`
 - [ ] Regal Behemoth — `797c2b1c-c373-4735-b397-f561559c7c61`
 - [ ] Regicide — `db8e3c05-12d6-41f6-8cc7-e64c863fca58`
 - [ ] Rogue's Passage — `f29dc596-2121-4421-8463-15f6c2e8b9b3`
@@ -23903,7 +23902,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 - [ ] Rampaging Brontodon — `bfea2229-a1ca-40c1-aaad-5f97add3f079`
 - [ ] Ravenous Slime — `4696decb-7bff-4c6b-8a7b-9ec324faefde`
 - [ ] Reality Scramble — `afad2e76-4b53-4884-8f96-ba68b0808990`
-- [ ] Recruiter of the Guard — `d521a329-a53a-4962-810a-2abed80df260`
 - [ ] Reyhan, Last of the Abzan — `3e7df01c-75af-440d-97fd-1b1b794281b9`
 - [ ] Rhythmic Water Vortex — `373c6cd0-0bf7-4dab-bc18-7ecf5f015e10`
 - [ ] Rot Hulk — `36117e99-a2bc-46f9-8e17-bd2e2a9c31f4`
@@ -31844,7 +31842,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 - [ ] Reconstruct History — `97fad58a-8ee4-4f01-a47a-5ddc9ed845af`
 - [ ] Recoup — `f80d151c-7489-4189-8c5b-6d2a730d238e`
 - [ ] Recross the Paths — `2c132e6f-2e9e-4b39-81a8-f88c32173cd5`
-- [ ] Recruiter of the Guard — `d521a329-a53a-4962-810a-2abed80df260`
 - [ ] Redcap Gutter-Dweller — `ada48353-4c86-44d6-83a5-e7e3c703b948`
 - [ ] Reduce to Memory — `661736eb-97d7-4b3c-ab18-708479a5fb29`
 - [ ] Referee Squad — `e14532e9-ecc2-4028-b99e-3629533962bc`
@@ -51312,7 +51309,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,04
 - [ ] Ral and the Implicit Maze — `3affd37a-d4f6-488a-b30f-8e824b640687`
 - [ ] Ral, Monsoon Mage // Ral, Leyline Prodigy — `16d40f56-691b-42a7-a5ab-157568921e03`
 - [ ] Reckless Pyrosurfer — `65c35934-796c-4495-a6b5-eea654dfcd55`
-- [ ] Recruiter of the Guard — `d521a329-a53a-4962-810a-2abed80df260`
 - [ ] Refurbished Familiar — `009e1638-9055-4872-93e1-85841bce4648`
 - [ ] Reiterating Bolt — `371da0d8-3845-458e-9b0a-6477017b890e`
 - [ ] Retrofitted Transmogrant — `058dae67-807e-4542-ae51-f2b1216ffaed`

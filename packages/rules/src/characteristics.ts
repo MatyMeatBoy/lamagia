@@ -822,6 +822,8 @@ export type SpellEffect =
       readonly manaValueOffset?: number;
       /** "...mana value equal to..." (Birthing Pod): match exactly instead of "or less". */
       readonly exactManaValue?: boolean;
+      /** "...creature card with toughness N or less" (Recruiter of the Guard): a printed-toughness cap, unrelated to mana value. */
+      readonly maxToughness?: number;
       readonly destination: "top" | "hand" | "graveyard" | "battlefield";
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
@@ -2701,6 +2703,28 @@ function parseLibrarySearch(text: string): SpellEffect | null {
         ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
         ...(criterion.colors.length ? { colors: criterion.colors } : {}),
         maxManaValue: "lands-you-control",
+        destination,
+        reveal: /reveal/i.test(instructions)
+      };
+    }
+  }
+  // "...creature card with toughness N or less, reveal it, put it into your
+  // hand, then shuffle" (Recruiter of the Guard): a printed-toughness cap,
+  // unrelated to mana value, checked against the library card directly.
+  const toughnessCap = /^Search your library for (?:a |an )?(.+?) card with toughness (\d+) or less, (.+)$/i.exec(text);
+  if (toughnessCap) {
+    const criterion = searchCriterion(toughnessCap[1]!);
+    const instructions = toughnessCap[3]!;
+    const selected = "(?:(?:that|the) card|it)";
+    const destination = new RegExp(`put ${selected} into your hand`, "i").test(instructions) ? "hand"
+      : new RegExp(`put ${selected} onto the battlefield`, "i").test(instructions) ? "battlefield" : null;
+    if (destination) {
+      return {
+        kind: "search-library",
+        types: criterion.types,
+        ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+        ...(criterion.colors.length ? { colors: criterion.colors } : {}),
+        maxToughness: Number(toughnessCap[2]),
         destination,
         reveal: /reveal/i.test(instructions)
       };

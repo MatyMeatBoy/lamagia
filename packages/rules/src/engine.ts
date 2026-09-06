@@ -5891,7 +5891,9 @@ function resolveTop(state: GameState): GameState {
             subtype.toLowerCase() === "basic" ? candidateProfile.supertypes.some((value) => value.toLowerCase() === "basic")
               : hasSubtype(candidateProfile, subtype));
           const colorMatches = !triggerSearch.colors?.length || triggerSearch.colors.some((color) => candidateProfile.colors.some((candidate) => candidate.toUpperCase() === color));
-          return typeMatches && subtypeMatches && colorMatches;
+          const toughnessMatches = triggerSearch.maxToughness === undefined
+            || (Number.isFinite(Number(candidateProfile.toughness)) && Number(candidateProfile.toughness) <= triggerSearch.maxToughness);
+          return typeMatches && subtypeMatches && colorMatches && toughnessMatches;
         })
         .map((card) => card.instance_id);
       if (!searchOptions.length) {
@@ -6134,7 +6136,9 @@ function resolveTop(state: GameState): GameState {
                   return search.exactManaValue ? profile.manaValue === base : profile.manaValue <= base;
                 })()
               : true;
-        return typeMatches && subtypeMatches && colorMatches && manaValueMatches;
+        const toughnessMatches = search.maxToughness === undefined
+          || (Number.isFinite(Number(profile.toughness)) && Number(profile.toughness) <= search.maxToughness);
+        return typeMatches && subtypeMatches && colorMatches && manaValueMatches && toughnessMatches;
       })
       .map((card) => card.instance_id);
     if (!options.length) {

@@ -5802,3 +5802,31 @@ and one noncreature card in the library, casting it puts both creature
 cards straight into the graveyard and leaves the noncreature card in
 the library. Validation: full **873** rules tests green (2 new),
 `npm run check` across all four workspaces, 200/200 simulated games.
+
+Recruiter of the Guard ("When ~ enters, you may search your library
+for a creature card with toughness 2 or less, reveal it, put it into
+your hand, then shuffle.") needed a genuinely new `search-library`
+restriction: a printed-toughness cap, unrelated to mana value. Added
+`maxToughness?: number` to the effect and a dedicated parser branch
+mirroring the existing mana-value-capped ones. Wiring the RUNTIME
+filter surfaced a real, previously-latent structural duplication:
+`resolveTop` has TWO separate `search-library` option-filtering
+blocks — one for a resolving SPELL/activated ability (reading
+`activatedEffect`/`selectedEffect`/`profile.effects`), and a wholly
+separate one for a TRIGGERED ability's own search (reading
+`object.trigger.definition.effect`, since the source permanent stays
+on the battlefield rather than moving to a graveyard/exile like a
+resolving spell). Only the first already implemented `maxManaValue`;
+the triggered-search copy had type/subtype/color filters but no mana
+value or (now) toughness check at all. Added `toughnessMatches` to
+BOTH copies. NOTED FOR A FUTURE PASS: the triggered-search copy is
+still missing `maxManaValue` entirely — no catalog card in this
+session's queue currently combines a triggered search with a mana
+value cap, so it was left as a known, narrow gap rather than fixed
+speculatively; whoever hits a triggered "search for a creature with
+mana value N or less" card next should add it there too. Verified
+**+1** in the export count (10,871 → 10,872); set coverage holds at
+33.0%. Scenario-tested: with a Grizzly Bears (toughness 2) and a Big
+Stomper (toughness 6) in the library, the search offers only the Bear.
+Validation: full **879** rules tests green (2 new), `npm run check`
+across all four workspaces, 200/200 simulated games.
