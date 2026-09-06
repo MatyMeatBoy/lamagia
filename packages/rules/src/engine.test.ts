@@ -11876,6 +11876,21 @@ describe("Pattern of Rebirth's dies-triggered reanimation tutor", () => {
   });
 });
 
+describe("triggered tutors preserve mana-value caps", () => {
+  const TRIGGERED_MANA_CAP_TUTOR = () => make({
+    name: "Triggered Mana Cap Tutor", type_line: "Creature — Human", mana_cost: "{2}{G}", cmc: 3,
+    power: "2", toughness: "2",
+    oracle_text: "When Triggered Mana Cap Tutor enters, you may search your library for a creature card with mana value X or less, put it onto the battlefield, then shuffle."
+  });
+
+  it("filters the triggered search options by the printed mana-value cap", () => {
+    const profile = profileOf(TRIGGERED_MANA_CAP_TUTOR());
+    expect(profile.triggers[0]).toMatchObject({
+      effect: { kind: "search-library", types: ["Creature"], maxManaValue: "X", destination: "battlefield" }
+    });
+  });
+});
+
 describe("Survival of the Fittest's creature-only discard-tutor", () => {
   const SURVIVAL_OF_THE_FITTEST = () => make({
     name: "Survival of the Fittest", type_line: "Enchantment", mana_cost: "{1}{G}", cmc: 2,

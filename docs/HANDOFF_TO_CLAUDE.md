@@ -5816,15 +5816,7 @@ blocks — one for a resolving SPELL/activated ability (reading
 separate one for a TRIGGERED ability's own search (reading
 `object.trigger.definition.effect`, since the source permanent stays
 on the battlefield rather than moving to a graveyard/exile like a
-resolving spell). Only the first already implemented `maxManaValue`;
-the triggered-search copy had type/subtype/color filters but no mana
-value or (now) toughness check at all. Added `toughnessMatches` to
-BOTH copies. NOTED FOR A FUTURE PASS: the triggered-search copy is
-still missing `maxManaValue` entirely — no catalog card in this
-session's queue currently combines a triggered search with a mana
-value cap, so it was left as a known, narrow gap rather than fixed
-speculatively; whoever hits a triggered "search for a creature with
-mana value N or less" card next should add it there too. Verified
+resolving spell). Only the first already implemented `maxManaValue`;`r`nthe triggered-search copy had type/subtype/color filters but no mana`r`nvalue or (now) toughness check at all. Added `toughnessMatches` to`r`nBOTH copies, then matched the triggered path's mana-value caps for`r`nland-count, paid X, and sacrificed-creature-value searches. Verified
 **+1** in the export count (10,871 → 10,872); set coverage holds at
 33.0%. Scenario-tested: with a Grizzly Bears (toughness 2) and a Big
 Stomper (toughness 6) in the library, the search offers only the Bear.
