@@ -51,6 +51,22 @@ describe("smart counter response and safe mana undo", () => {
     expect(second.passedSeats).toEqual([0]);
     expect(projectGame(game, 0).passedSeats).toEqual([0]);
   });
+  it("cycles priority through living players and resets the pass cycle after a response", () => {
+    let game = threeSeatGame();
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.prioritySeat).toBe(1);
+    expect(game.passedSeats).toEqual([0]);
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.prioritySeat).toBe(2);
+    expect(game.passedSeats).toEqual([0, 1]);
+    const boltCard = toHand(0, [BOLT()], "three-bolt")[0]!;
+    const bolt = { id: "three-bolt", controller: 0 as SeatId, card: boltCard, label: boltCard.name, targets: [{ kind: "player", seat: 1 } as const], fromCommandZone: false, variableValue: 0, countered: false };
+    game = { ...game, stack: [bolt], prioritySeat: 2, passedSeats: [0, 1] };
+    game = applyAction(game, 2, { type: "pass" });
+    expect(game.stack).toHaveLength(0);
+    expect(game.passedSeats).toEqual([]);
+  });
   it("projects stack spells as public targets and resolves the top object first", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, (player) => ({ autoPass: false, hand: toHand(0, [BOLT()], "stack-bolt") }));
@@ -426,11 +442,15 @@ const AERIE_MYSTICS = () => make({ name: "Aerie Mystics", type_line: "Creature �
 const RAKECLAW_GARGANTUAN = () => make({ name: "Rakeclaw Gargantuan", type_line: "Creature — Beast", mana_cost: "{2}{R}{G}{W}", cmc: 5, power: "5", toughness: "3", oracle_text: "{1}: Target creature with power 5 or greater gains first strike until end of turn.", scryfall_id: "8dbb4a8f-78e9-4ceb-824d-bb67bdf939db" });
 const HOMEWARD_PATH = () => make({ name: "Homeward Path", type_line: "Land", oracle_text: "{T}: Add {C}.\n{T}: Each player gains control of all creatures they own.", scryfall_id: "cb8ec2e4-8223-4172-8f2c-37c918a573fa" });
 const AZORIUS_KEYRUNE = () => make({ name: "Azorius Keyrune", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{T}: Add {W} or {U}.\n{W}{U}: This artifact becomes a 2/2 white and blue Bird artifact creature with flying until end of turn.", scryfall_id: "7266b491-54e6-4393-a448-d5ae99d965c6" });
+const VOLTAIC_KEY = () => make({ name: "Voltaic Key", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "{1}, {T}: Untap target artifact.", oracle_id: "09aeea91-b1dc-443f-a509-4758f052c0a7", scryfall_id: "09aeea91-b1dc-443f-a509-4758f052c0a7" });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
 const LIGHTNING_HELIX = () => make({ name: "Lightning Helix", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Lightning Helix deals 3 damage to any target and you gain 3 life.", oracle_id: "800c258a-cfc4-4a54-a667-065ea8dea69e", scryfall_id: "800c258a-cfc4-4a54-a667-065ea8dea69e" });
+const INCINERATE = () => make({ name: "Incinerate", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Incinerate deals 3 damage to any target. A creature dealt damage this way can't be regenerated this turn.", oracle_id: "d8fd7a34-8418-4e98-b79b-119c4348c667", scryfall_id: "d8fd7a34-8418-4e98-b79b-119c4348c667" });
+const LAVA_COIL = () => make({ name: "Lava Coil", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Lava Coil deals 4 damage to target creature. If that creature would die this turn, exile it instead.", oracle_id: "fa71db44-5181-4c51-8b24-7fbedf36e3ca", scryfall_id: "e165d16a-06c7-4373-9c36-89e127e669dd" });
+const BURST_LIGHTNING = () => make({ name: "Burst Lightning", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Kicker {4} (You may pay an additional {4} as you cast this spell.)\nBurst Lightning deals 2 damage to any target. If this spell was kicked, it deals 4 damage instead.", oracle_id: "ac2086fe-98ee-4280-9c7c-c5c2d6548a8b", scryfall_id: "0f350255-930a-41da-a58b-55beb66da7bd" });
 const FLING = () => make({ name: "Fling", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "As an additional cost to cast this spell, sacrifice a creature.\nFling deals damage equal to the sacrificed creature's power to any target.", oracle_id: "24227761-b50e-4b9e-93a2-e82d053b3e3d", scryfall_id: "050eb421-a446-4d84-b331-a267b02dc9f5" });
 const TREASURE_HUNT = () => make({ name: "Treasure Hunt", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand.", oracle_id: "05079479-86a6-4041-a395-83d325b6ddb7", scryfall_id: "53af54e3-412f-4bc4-8a3a-911eaa62be27" });
 const PSIONIC_BLAST = () => make({ name: "Psionic Blast", type_line: "Instant", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Psionic Blast deals 4 damage to any target and 2 damage to you.", oracle_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad", scryfall_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad" });
@@ -4355,6 +4375,27 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.tapped).toBe(true);
   });
 
+  it("reuses the untap primitive for Voltaic Key's artifact-only activation", () => {
+    // CR 602.1, 701.21: the target restriction is part of the activation,
+    // while the existing untap executor performs the resolution.
+    const key = VOLTAIC_KEY();
+    expect(profileOf(key)).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ manaCost: { raw: "{1}" }, requiresTap: true, effect: { kind: "untap-target-permanent" }, targetKind: "artifact" }]
+    });
+    let game = readyToCast([], [MOUNTAIN(), key, TEST_ARTIFACT()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Voltaic Key")!;
+    const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Relic")!;
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+      ? { ...permanent, tapped: true } : permanent) }));
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)!;
+    expect(action.requiresTarget).toBe("artifact");
+    if (action.action.type !== "activate") throw new Error("Voltaic Key activation missing.");
+    game = applyAction(game, 0, { ...action.action, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!.tapped).toBe(false);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)!.tapped).toBe(true);
+  });
+
   it("resolves the optional ETB only after the controller accepts it", () => {
     let game = readyToCast([OPTIONAL_ETB_DRAWER()], [FOREST(), FOREST()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
@@ -5545,6 +5586,75 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Large Sacrifice")).toBe(true);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === smallPermanent.instance_id)).toBe(true);
     expect(game.players[1]!.life).toBe(35);
+  });
+
+  it("keeps Incinerate from being regenerated after it deals damage", () => {
+    // CR 615.1, 701.19: the rider applies only to a creature actually dealt
+    // damage and lasts through the current cleanup step.
+    const incinerate = INCINERATE();
+    expect(profileOf(incinerate)).toMatchObject({
+      targetKind: "any",
+      effects: [{ kind: "damage-any-target-prevents-regeneration", amount: 3 }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([incinerate], [MOUNTAIN(), MOUNTAIN()], [], [make({ name: "Regeneration Test", type_line: "Creature — Beast", mana_cost: "{4}{G}", cmc: 5, power: "5", toughness: "5" })]);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Regeneration Test")!;
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+      ? { ...permanent, regenerationShields: 1 } : permanent) }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    const damaged = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
+    expect(damaged).toMatchObject({ damage: 3, regenerationShields: 1, cantRegenerateUntilEndOfTurn: true });
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+      ? { ...permanent, damage: 5 } : permanent) }));
+    game = applyAction(game, pendingSeat(game)!, { type: "pass" });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Regeneration Test")).toBe(true);
+  });
+
+  it("exiles a creature marked by Lava Coil instead of putting it in a graveyard", () => {
+    // CR 614.1, 700.4: the rider creates a replacement effect for this turn;
+    // the creature's battlefield-to-graveyard move is replaced by exile.
+    const lavaCoil = LAVA_COIL();
+    expect(profileOf(lavaCoil)).toMatchObject({
+      targetKind: "creature",
+      effects: [{ kind: "damage-any-target-exiles-if-dies", amount: 4 }],
+      fullyImplemented: true
+    });
+    const targetCard = make({ name: "Lava Coil Target", type_line: "Creature — Beast", mana_cost: "{4}{G}", cmc: 5, power: "5", toughness: "5" });
+    let game = readyToCast([lavaCoil], [MOUNTAIN(), MOUNTAIN()], [], [targetCard]);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Lava Coil Target")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    const damaged = game.players[1]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
+    expect(damaged).toMatchObject({ damage: 4, exileIfWouldDieUntilEndOfTurn: true });
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+      ? { ...permanent, damage: 5 } : permanent) }));
+    game = applyAction(game, pendingSeat(game)!, { type: "pass" });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Lava Coil Target")).toBe(false);
+    expect(game.players[1]!.exile.some((card) => card.name === "Lava Coil Target")).toBe(true);
+  });
+
+  it("uses the kicked damage amount for Burst Lightning without changing its target restriction", () => {
+    // CR 702.33e, 614.1: the kicked clause replaces the base damage amount;
+    // it does not create a second damage event or widen the target set.
+    const burst = BURST_LIGHTNING();
+    expect(profileOf(burst)).toMatchObject({
+      kickerCost: { raw: "{4}" },
+      targetKind: "any",
+      effects: [{ kind: "damage-any-target", amount: 2, kickedAmount: 4 }],
+      kickedEffects: [],
+      fullyImplemented: true
+    });
+    let game = readyToCast([burst], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.life).toBe(38);
+
+    game = readyToCast([BURST_LIGHTNING()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    const kickedAction = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0" && entry.action.kicked);
+    expect(kickedAction).toBeDefined();
+    if (!kickedAction || kickedAction.action.type !== "cast") throw new Error("Burst Lightning kicker action missing.");
+    game = applyAction(game, 0, { ...kickedAction.action, targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.life).toBe(36);
   });
 
   it("can't cast Diabolic Intent with no creature to sacrifice", () => {

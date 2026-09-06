@@ -523,7 +523,11 @@ export type SpellEffect =
   /** Noncombat damage to the controller of the permanent source. */
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
-  | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  | { readonly kind: "damage-any-target"; readonly amount: number | "X"; readonly kickedAmount?: number | "X" }
+  /** Incinerate-style damage rider that disables regeneration for the damaged creature (CR 615.1, 701.19). */
+  | { readonly kind: "damage-any-target-prevents-regeneration"; readonly amount: number | "X" }
+  /** Lava Coil-style damage rider that exiles the damaged creature if it would die this turn (CR 614.1). */
+  | { readonly kind: "damage-any-target-exiles-if-dies"; readonly amount: number | "X" }
   /** Damage equal to the power of the creature paid for this spell's additional cost (CR 608.2h). */
   | { readonly kind: "damage-any-target-equal-sacrificed-creature-power" }
   /** Amass N (CR 701.44): put N +1/+1 counters on an Army you control, or create a 0/0 black [tokenType] Army token with them if you control none. */
@@ -3751,6 +3755,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "coin-flip-self-damage-if-lost", amount: Number(match[1]) }, target: "none" };
   }
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
+  if (/^Untap target artifact$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "artifact" };
   if (/^Untap target creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent you control$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent-you-control" };
   if (/^Untap target land$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "land" };
@@ -4849,14 +4854,35 @@ function recognizeText(text: string): RecognizedText {
       continue;
     }
 
-    for (const sentence of line.split(SENTENCE_SPLIT)) {
+    const sentences = line.split(SENTENCE_SPLIT);
+    for (let sentenceIndex = 0; sentenceIndex < sentences.length; sentenceIndex += 1) {
+      const sentence = sentences[sentenceIndex]!;
       if (!sentence.trim()) continue;
       // "If ~ was kicked, X" — X applies only on a kicked cast (CR 702.33e).
       const ifKicked = /^If (?:~|this spell|this creature) was kicked(?:\s+\d+ times?)?,\s*(.+)$/i.exec(sentence.trim());
       if (ifKicked) {
         const keyword = /^it has (split second)\.?$/i.exec(ifKicked[1]!.trim());
         if (keyword) { kickedKeywords.push(keyword[1]!.toLowerCase() as EnforcedKeyword); continue; }
-        const rk = recognizeSentence(ifKicked[1]!);
+        const kickedText = ifKicked[1]!
+          .replace(/^instead\s+/i, "")
+          .replace(/^it\b/i, "~")
+          .replace(/\s+instead\.?$/i, "");
+        // Kicker replacement clauses commonly omit the already-established
+        // target ("If kicked, it deals 4 damage instead"). Infer the same
+        // any-target damage primitive and retain the base sentence's target.
+        const damageOnly = /^~ deals (\w+) damage$/i.exec(kickedText);
+        const damageAmount = damageOnly ? (damageOnly[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageOnly[1]!)) : null;
+        const rk = recognizeSentence(kickedText) ?? (damageAmount !== null
+          ? { effect: { kind: "damage-any-target", amount: damageAmount } as SpellEffect, target: "none" as TargetKind }
+          : null);
+        if (rk && /\binstead\b/i.test(ifKicked[1]!)) {
+          const base = effects[effects.length - 1];
+          if (base?.kind === "damage-any-target" && rk.effect.kind === "damage-any-target") {
+            effects[effects.length - 1] = { ...base, kickedAmount: rk.effect.amount };
+            if (rk.target !== "none") targetKind = rk.target;
+            continue;
+          }
+        }
         if (rk) { kickedEffects.push(rk.effect); if (rk.target !== "none") targetKind = rk.target; }
         else unimplementedText.push(sentence.trim());
         continue;
@@ -4864,6 +4890,25 @@ function recognizeText(text: string): RecognizedText {
       const recognized = recognizeSentence(sentence);
       if (!recognized) {
         if (!isIgnorableSentence(sentence, /chosen color/i.test(joined))) unimplementedText.push(sentence.trim());
+        continue;
+      }
+      // Incinerate and the same reusable wording carry the regeneration rider
+      // in the sentence immediately following their damage instruction.
+      // Fold both clauses into one executable effect so the rider only applies
+      // to a creature that actually received this damage (CR 615.1, 701.19).
+      const noRegenerationRider = sentences[sentenceIndex + 1]?.trim();
+      if (recognized.effect.kind === "damage-any-target"
+        && /^a creature dealt damage this way can(?:not|'t) be regenerated this turn\.?$/i.test(noRegenerationRider ?? "")) {
+        effects.push({ kind: "damage-any-target-prevents-regeneration", amount: recognized.effect.amount });
+        if (recognized.target !== "none") targetKind = recognized.target;
+        sentenceIndex += 1;
+        continue;
+      }
+      if (recognized.effect.kind === "damage-any-target"
+        && /^if that creature would die this turn, exile it instead\.?$/i.test(noRegenerationRider ?? "")) {
+        effects.push({ kind: "damage-any-target-exiles-if-dies", amount: recognized.effect.amount });
+        if (recognized.target !== "none") targetKind = recognized.target;
+        sentenceIndex += 1;
         continue;
       }
       effects.push(recognized.effect);
