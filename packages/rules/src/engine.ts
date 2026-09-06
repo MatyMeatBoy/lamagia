@@ -2600,6 +2600,17 @@ function modifyCreatures(
 function applyEffect(state: GameState, object: StackObject, effect: SpellEffect, targetIndex = 0): GameState {
   const controller = object.controller;
   const sourceName = object.card.name;
+  const target = object.targets[targetIndex];
+  const targetIsLegal = (candidate: Target | undefined): boolean => {
+    if (!candidate) return false;
+    if (candidate.kind === "permanent") return Boolean(findPermanent(state, candidate.instanceId));
+    if (candidate.kind === "graveyard-card") return playerAt(state, candidate.seat).graveyard.some((card) => card.instance_id === candidate.instanceId);
+    if (candidate.kind === "spell") return state.stack.some((entry) => entry.id === candidate.stackId);
+    return !playerAt(state, candidate.seat).lost;
+  };
+  // A compound effect may have independent target slots.  CR 608.2b says an
+  // illegal slot does nothing while other legal slots still resolve.
+  if (targetIndex >= 0 && object.targets.length && !targetIsLegal(target)) return state;
   switch (effect.kind) {
     case "compound": {
       let next = state;
@@ -5460,13 +5471,16 @@ function resolveTop(state: GameState): GameState {
       `La habilidad disparada de ${object.card.name} no se resuelve: ya no se cumple su condición.`);
   }
 
-  // A target that left the battlefield makes the spell fizzle (rule 608.2b).
-  const targetsGone = object.targets.some((target) =>
+  // CR 608.2b: a spell or ability is countered only when all of its targets
+  // are illegal.  Effects must receive the original target list so they can
+  // skip only the targets that are no longer legal and resolve the rest.
+  const targetIsIllegal = (target: Target): boolean =>
     (target.kind === "permanent" && !findPermanent(next, target.instanceId)) ||
     (target.kind === "graveyard-card" && !playerAt(next, target.seat).graveyard.some((card) => card.instance_id === target.instanceId)) ||
     (target.kind === "spell" && !next.stack.some((entry) => entry.id === target.stackId)) ||
-    (target.kind === "player" && playerAt(next, target.seat).lost));
-  if (object.targets.length && targetsGone) {
+    (target.kind === "player" && playerAt(next, target.seat).lost);
+  const legalTargetCount = object.targets.filter((target) => !targetIsIllegal(target)).length;
+  if (object.targets.length && legalTargetCount === 0) {
     if (object.trigger) return logged(next, object.controller, `La habilidad de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
     if (object.activated) return logged(next, object.controller, `La habilidad activada de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
     if (object.fromCopy) return logged(next, object.controller, `La copia de ${object.card.name} no se resuelve: sus objetivos ya no son legales.`);

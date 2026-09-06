@@ -6249,6 +6249,24 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
   });
 
+  it("resolves the legal half of a multi-target spell when another target leaves", () => {
+    let game = readyToCast([FISSURE_VENT()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [SOL_RING(), COMMAND_TOWER()]);
+    const artifact = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Sol Ring")!;
+    const land = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Command Tower")!;
+    game = applyAction(game, 0, {
+      type: "cast", cardId: "hand-0", mode: 2,
+      targets: [{ kind: "permanent", instanceId: artifact.instance_id }, { kind: "permanent", instanceId: land.instance_id }]
+    });
+    game = stage(game, 1, (player) => ({
+      battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== artifact.instance_id)
+    }));
+    game = { ...game, prioritySeat: 1, priorityOpen: true, passedSeats: [] };
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === land.instance_id)).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Fissure Vent")).toBe(true);
+    expect(game.log.some((entry) => entry.text.includes("sus objetivos ya no son legales"))).toBe(false);
+  });
+
   it("filters creature and noncreature counterspell targets by the spell on the stack", () => {
     const game = readyToCast([CREATURE_COUNTER(), NONCREATURE_COUNTER()], [ISLAND(), ISLAND()]);
     const creatureCard = { ...BEAR(), instance_id: "stack-creature", owner: 1 };
