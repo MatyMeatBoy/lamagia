@@ -198,6 +198,37 @@ describe("Commander 2013 opponent life-gain target", () => {
     const game = twoSeatGame([], []);
     expect(legalTargets(game, 0, "opponent", profile)).toEqual([{ kind: "player", seat: 1 }]);
   });
+
+  it("applies Sudden Spoiling's target-player layer until cleanup", () => {
+    const profile = cardProfile(C13_SUDDEN_SPOILING());
+    expect(profile.keywords).toContain("split second");
+    expect(profile.effects).toContainEqual({ kind: "set-target-player-creatures-base-pt-remove-abilities", power: 0, toughness: 2 });
+    expect(profile.targetKind).toBe("player");
+    let game = twoSeatGame([], []);
+    game = {
+      ...game,
+      step: "precombat-main",
+      activeSeat: 0,
+      prioritySeat: 0,
+      priorityOpen: true,
+      stack: [],
+      triggerQueue: [],
+      pendingChoice: null,
+      players: game.players.map((player) => ({ ...player, autoPass: false, hand: [], commandZone: [] }))
+    };
+    game = stage(game, 0, () => ({
+      hand: toHand(0, [C13_SUDDEN_SPOILING()]),
+      manaPool: { W: 0, U: 0, B: 2, R: 0, G: 0, C: 1 }
+    }));
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    const creature = game.players[1]!.battlefield[0]!;
+    expect(powerOf(creature, game)).toBe(0);
+    expect(toughnessOf(creature, game)).toBe(2);
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "activate" && entry.action.sourceId === creature.instance_id)).toBe(false);
+  });
 });
 const ANGELIC_CURATOR = () => make({
   name: "Angelic Curator", type_line: "Creature — Angel Spirit", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "3",
@@ -239,6 +270,7 @@ const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", ty
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcery", mana_cost: "{R}{G}{W}", cmc: 3, oracle_text: "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.", oracle_id: "333809cb-e196-45f2-8a67-31374438e56e", scryfall_id: "ab5056f0-8297-4b83-9655-7ff385e309a8" });
+const C13_SUDDEN_SPOILING = () => make({ name: "Sudden Spoiling", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nUntil end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2.", oracle_id: "dce202c7-fe8e-462a-858e-7a5a69bd5b6b", scryfall_id: "14d8bf94-ba55-437f-ac69-ece24049944d" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
 const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "You may activate abilities of creatures you control as though those creatures had haste.\n{1}, {T}: Untap target creature.", oracle_id: "4dc5726e-2f7e-4c2b-9616-c3301d212f78" });

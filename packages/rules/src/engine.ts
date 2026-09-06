@@ -136,6 +136,8 @@ export interface Permanent {
   readonly temporaryAllCreatureTypes?: boolean;
   /** Temporary layer-4 removal of all creature subtypes (CR 205.3a, 613.1d). */
   readonly temporaryNoCreatureTypes?: boolean;
+  /** Temporary layer-6 removal of all abilities until cleanup (CR 613.1f). */
+  readonly temporaryAbilitiesRemoved?: boolean;
   /** One-shot destruction-replacement shields created by Regenerate (CR 701.19). */
   readonly regenerationShields?: number;
   /** This creature cannot use regeneration shields until cleanup (CR 701.19). */
@@ -862,7 +864,7 @@ function auraCharacteristicSetting(state: GameState, permanent: Permanent): NonN
     .find((setting): setting is NonNullable<EquipmentModification["characteristicSetting"]> => setting !== undefined);
 }
 function permanentLosesAbilities(state: GameState, permanent: Permanent): boolean {
-  return auraCharacteristicSetting(state, permanent)?.removeAbilities === true;
+  return permanent.temporaryAbilitiesRemoved === true || auraCharacteristicSetting(state, permanent)?.removeAbilities === true;
 }
 /** Printed plus Aura-granted activations available from this permanent. */
 function activatedAbilitiesFor(state: GameState, permanent: Permanent): ActivatedAbility[] {
@@ -3789,6 +3791,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       return logged(next, controller, `${sourceName} fija tus criaturas en ${power}/${toughness} y les da todos los tipos de criatura hasta el final del turno.`);
     }
+    case "set-target-player-creatures-base-pt-remove-abilities": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const next = withPlayer(state, target.seat, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
+          ? {
+              ...permanent,
+              temporaryBasePowerToughness: { power: effect.power, toughness: effect.toughness },
+              temporaryAbilitiesRemoved: true
+            }
+          : permanent)
+      }));
+      return logged(next, controller, `${sourceName} fija las criaturas de ${playerAt(next, target.seat).name} en ${effect.power}/${effect.toughness} y les quita sus habilidades hasta el final del turno.`);
+    }
     case "modify-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -6407,7 +6424,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         players: next.players.map((current) => ({
           ...current,
           cantCastSpellsUntilEndOfTurn: false,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false, temporaryCannotBeBlockedExcept: undefined }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, temporaryAbilitiesRemoved: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false, temporaryCannotBeBlockedExcept: undefined }))
         }))
       };
       break;
