@@ -87,6 +87,9 @@ interface UiState {
   stackDetail: string | null;
   /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
   layout: "auto" | "mobile";
+  /** MTGO-style phase stops for the local seat. */
+  stops: Set<TurnStep>;
+  stopMenu: { x: number; y: number; step: TurnStep } | null;
 }
 
 let session: MatchSession | null = null;
@@ -104,7 +107,30 @@ const ui: UiState = {
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
   actionsOpen: false,
   layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
+  ,stops: new Set<TurnStep>(JSON.parse(window.localStorage.getItem("prossh.stops") ?? "null") ?? ["upkeep", "draw", "precombat-main", "declare-attackers", "declare-blockers", "combat-damage", "end", "cleanup"]),
+  stopMenu: null
 };
+
+function persistStops(): void {
+  window.localStorage.setItem("prossh.stops", JSON.stringify([...ui.stops]));
+}
+
+function autoPassForPhase(): boolean {
+  return ui.autoPass && !ui.stops.has(view?.step ?? "cleanup");
+}
+
+function phaseRailHtml(): string {
+  const currentIndex = STEP_ORDER.indexOf(view!.step);
+  const priorityReadout = view!.finished
+    ? `<span class="priority-readout"><span class="pulse muted"></span>Partida terminada</span>`
+    : `<span class="priority-readout"><span class="pulse${view!.waitingOn === view!.viewerSeat ? "" : " muted"}"></span>${view!.waitingOn === view!.viewerSeat ? "Decide tú" : "Decide"}: <b style="color: var(--seat-${view!.waitingOn ?? 0})">${escapeHtml(seatOf(view!.waitingOn ?? -1)?.name ?? "nadie")}</b></span>`;
+  return `<nav class="phase-rail mtgo-phase-rail" aria-label="Fases del turno">
+    <span class="phase-turn">Turno ${view!.turn}</span>
+    ${STEP_ORDER.map((step, index) => `<button class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}${ui.stops.has(step) ? " stopped" : ""}" type="button" data-phase-stop="${step}" title="${ui.stops.has(step) ? "Quitar stopper" : "Añadir stopper"}: ${STEP_LABELS[step]}"${view!.finished ? " disabled" : ""}><i aria-hidden="true"></i>${escapeHtml(STEP_LABELS[step])}</button>`).join("")}
+    <span class="spacer"></span>
+    ${priorityReadout}
+  </nav>`;
+}
 
 interface CardDragState {
   readonly cardId: string;
@@ -246,6 +272,12 @@ function recoverCardImage(image: HTMLImageElement): void {
   image.replaceWith(fallback);
 }
 
+function cardImageHtml(image: string | undefined, name: string, className = ""): string {
+  return image
+    ? `<img class="${escapeHtml(className)}" src="${escapeHtml(image)}" data-card-name="${escapeHtml(name)}" alt="${escapeHtml(name)}" loading="lazy" decoding="async"/>`
+    : `<span class="card-image-fallback ${escapeHtml(className)}" role="img" aria-label="Carta: ${escapeHtml(name)}">${escapeHtml(name)}</span>`;
+}
+
 document.addEventListener("error", (event) => {
   const image = event.target;
   if (!(image instanceof HTMLImageElement)) return;
@@ -266,7 +298,7 @@ async function startMatch(mode: "cedh" | "precon" | "tested", deckId?: string): 
     window.sessionStorage.setItem("prossh.match", JSON.stringify(session));
     ui.notice = "";
     applyView(created.view);
-    if (ui.autoPass) {
+    if (autoPassForPhase()) {
       try {
         const settled = await api<GameView>(`/api/matches/${session.matchId}/settings`, {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -289,13 +321,27 @@ function returnToMain(): void {
   view = null;
   window.sessionStorage.removeItem("prossh.match");
   ui.pendingTarget = null;
+  ui.stopMenu = null;
   ui.notice = "";
   render();
 }
 
 async function refresh(): Promise<void> {
   if (!session) return;
-  try { applyView(await api<GameView>(`/api/matches/${session.matchId}?token=${encodeURIComponent(session.token)}`)); }
+  try {
+    const next = await api<GameView>(`/api/matches/${session.matchId}?token=${encodeURIComponent(session.token)}`);
+    applyView(next);
+    // A phase stopper is a local presentation preference. Re-apply the
+    // authoritative auto-pass setting only when this phase is not stopped;
+    // never overwrite a server response merely because the client refreshed.
+    if (!next.finished && autoPassForPhase() && next.waitingOn === next.viewerSeat && !next.priorityOpen) {
+      const settled = await api<GameView>(`/api/matches/${session.matchId}/settings`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: session.token, autoPass: true })
+      });
+      applyView(settled);
+    }
+  }
   catch { session = null; window.sessionStorage.removeItem("prossh.match"); render(); }
 }
 
@@ -359,6 +405,7 @@ function applyView(next: GameView): void {
   ui.abilityMenu = null;
   ui.cardActionMenu = null;
   ui.contextMenu = null;
+  ui.stopMenu = null;
   ui.stackDetail = next.stack.some((object) => object.id === ui.stackDetail) ? ui.stackDetail : null;
   ui.showFullLibrary = false;
   if (!next.combat.awaitingAttackers) ui.attackers.clear();
@@ -442,6 +489,10 @@ function isStackTargetable(stackId: string): boolean {
   if (triggerTargetActions().some((entry) =>
     entry.action.type === "choose-trigger-target" && entry.action.target.kind === "spell" && entry.action.target.stackId === stackId)) return true;
   return Boolean(ui.pendingTarget?.options.some((target) => target.kind === "spell" && target.stackId === stackId));
+}
+
+function pendingTargetIncludes(target: Target): boolean {
+  return Boolean(ui.pendingTarget?.options.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
 }
 
 /** Every card the viewer can currently see, for preview lookups and log linking. */
@@ -995,8 +1046,8 @@ function stackStripHtml(): string {
     const stackPosition = view!.stack.length - index;
     const kind = object.kind === "trigger" ? "habilidad disparada" : object.kind === "activated" ? "habilidad activada" : "hechizo";
     return `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}${object.resolvesNext ? " resolves-next" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este objeto como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Inspeccionar objeto de la pila")}" aria-label="Pila ${stackPosition} desde abajo, ${escapeHtml(kind)} ${escapeHtml(object.name)}${object.resolvesNext ? ", próximo en resolver" : ""}">
-      <strong class="stack-order" title="${object.resolvesNext ? "Próximo en resolver" : `Posición ${index + 1} desde arriba`}">${object.resolvesNext ? "↑" : index + 1}</strong>
-      ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
+      <strong class="stack-order" title="${object.resolvesNext ? "Próximo en resolver" : `Posición ${stackPosition} desde abajo`}">${object.resolvesNext ? "↑" : stackPosition}</strong>
+      ${cardImageHtml(object.image_normal, object.name)}
       <span><small class="stack-kind">${escapeHtml(kind)}${object.countered ? " · Contrarrestado" : ""}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
     </button>`;
   }).join("")}</div>`;
@@ -1011,7 +1062,7 @@ function stackDetailHtml(): string {
     <header class="decision-head"><div><b>${escapeHtml(object.name)}</b><span>${kind} · ${escapeHtml(seatOf(object.controller)?.name ?? "")}</span></div>
       <button id="close-stack-detail" class="icon-button" type="button" aria-label="Cerrar detalle de la pila">×</button></header>
     <div class="stack-detail-body">
-      ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
+      ${cardImageHtml(object.image_normal, object.name)}
       <div><b>${escapeHtml(object.label)}</b><p>${escapeHtml(object.text ?? "Sin texto adicional.")}</p>
         <small>${object.targets.length ? `Objetivos: ${escapeHtml(object.targets.join(", "))}` : "Sin objetivos"}${object.countered ? " · Contrarrestado" : ""}</small>
         <small class="stack-detail-priority">${object.resolvesNext ? "Próximo en resolver" : `Posición ${object.position} desde abajo`} · ${view?.priorityOpen ? `Prioridad: ${escapeHtml(seatOf(view.prioritySeat)?.name ?? "")}` : "Prioridad cerrada"}${object.passedSeats?.length ? ` · Pasaron: ${escapeHtml(object.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`).join(", "))}` : ""}</small>
@@ -1061,8 +1112,9 @@ function cardActionMenuHtml(): string {
   const hasCast = entries.some((entry) => entry.action.type === "cast");
   const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")
     ? `<button class="action-row action-disabled" type="button" disabled><span><b>Lanzar ${escapeHtml(card.name)}</b><small>No disponible ahora; puedes ciclarla.</small></span></button>` : "";
+  const context = entries.length ? "Elige una acción o consulta la información de la carta." : "No hay acciones legales ahora; puedes consultar la información.";
   return `<section class="decision-overlay card-action-overlay" role="dialog" aria-modal="false" aria-label="Acciones de ${escapeHtml(card.name)}">
-    <header class="decision-head"><div><b>${escapeHtml(card.name)}</b><span>Elige una acción</span></div>
+    <header class="decision-head"><div><b>${escapeHtml(card.name)}</b><span>${context}</span></div>
       <button id="close-card-action-menu" class="icon-button" type="button" aria-label="Cerrar acciones">×</button></header>
     <div class="decision-list">${unavailableCast}${entries.map((entry) => {
       const index = view!.legalActions.indexOf(entry);
@@ -1199,9 +1251,6 @@ function render(): void {
   root!.innerHTML = `<main class="shell${ui.busy ? " busy" : ""}" data-layout="${ui.layout}">
     <header class="topbar">
       <a class="brand" href="#">LAMAGIA</a>
-      <span class="turn-readout"><span class="badge-pill">Turno <b>${view.turn}</b></span>
-        <span class="badge-pill accent">${escapeHtml(view.stepLabel)}</span>
-        <span>Activo: <b style="color: var(--seat-${view.activeSeat})">${escapeHtml(seatOf(view.activeSeat)?.name ?? "")}</b></span></span>
       <span class="topbar-right">
         <button id="main-menu" class="text-button">Inicio</button>
         <button id="play-tested" class="text-button">Pod jugable</button>
@@ -1215,11 +1264,7 @@ function render(): void {
       </span>
     </header>
 
-    <nav class="phase-rail" aria-label="Fases del turno">
-      ${STEP_ORDER.map((step, index) => `<span class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}
-      <span class="spacer"></span>
-      <span class="priority-readout"><span class="pulse${myTurn ? "" : " muted"}"></span>Decide: <b style="color: var(--seat-${view.waitingOn ?? 0})">${escapeHtml(seatOf(view.waitingOn ?? -1)?.name ?? "nadie")}</b></span>
-    </nav>
+    ${phaseRailHtml()}
 
     <div class="table">
       <p class="rotate-hint">Gira el dispositivo: la mesa está pensada para horizontal.</p>
@@ -1254,7 +1299,7 @@ function render(): void {
             ${ui.pendingTarget ? `<button id="cancel-target" class="text-button">Cancelar objetivo</button>` : ""}
             ${view.undoAvailable ? `<button id="undo" class="text-button" title="Deshacer la última activación de maná">Deshacer</button>` : ""}
             <button id="pass" class="primary-button" ${pass ? "" : "disabled"}>${escapeHtml(pass?.label ?? "Sin prioridad")}<kbd>Espacio</kbd></button>
-            <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar</label>
+    <label class="toggle"><input id="auto-pass" type="checkbox" ${ui.autoPass ? "checked" : ""}/> Auto-pasar</label>
           </div>
         </div>
       </section>
@@ -1269,6 +1314,9 @@ function render(): void {
   ${stackDetailHtml()}
   ${ui.contextMenu && view.undoAvailable ? `<div class="context-menu" style="left:${ui.contextMenu.x}px;top:${ui.contextMenu.y}px" role="menu">
     <button id="context-undo" type="button">Deshacer última acción de maná</button>
+  </div>` : ""}
+  ${ui.stopMenu ? `<div class="context-menu phase-stop-menu" style="left:${ui.stopMenu.x}px;top:${ui.stopMenu.y}px" role="menu">
+    <button id="toggle-phase-stop" type="button">${ui.stops.has(ui.stopMenu.step) ? "Quitar stopper" : "Añadir stopper"}: ${escapeHtml(STEP_LABELS[ui.stopMenu.step])}</button>
   </div>` : ""}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
@@ -1342,6 +1390,29 @@ function wireBoard(): void {
   });
   on("#undo", () => void undoLatestMana());
   on("#context-undo", () => { ui.contextMenu = null; void undoLatestMana(); });
+  on("#toggle-phase-stop", () => {
+    const step = ui.stopMenu?.step;
+    if (!step) return;
+    if (ui.stops.has(step)) ui.stops.delete(step); else ui.stops.add(step);
+    persistStops();
+    ui.stopMenu = null;
+    render();
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-phase-stop]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.disabled) return;
+      const step = button.dataset.phaseStop as TurnStep;
+      if (ui.stops.has(step)) ui.stops.delete(step); else ui.stops.add(step);
+      persistStops();
+      render();
+    });
+    button.addEventListener("contextmenu", (event) => {
+      if (button.disabled) return;
+      event.preventDefault();
+      ui.stopMenu = { x: Math.min(event.clientX, Math.max(8, window.innerWidth - 250)), y: Math.min(event.clientY, Math.max(8, window.innerHeight - 58)), step: button.dataset.phaseStop as TurnStep };
+      render();
+    });
+  });
   document.querySelector<HTMLElement>(".table")?.addEventListener("contextmenu", (event) => {
     if (event.target instanceof Element && event.target.closest("[data-hand], [data-permanent], [data-zone-card]")) return;
     if (!view?.undoAvailable) return;
@@ -1353,7 +1424,7 @@ function wireBoard(): void {
     render();
   });
   document.querySelector<HTMLElement>(".table")?.addEventListener("click", () => {
-    if (ui.contextMenu) { ui.contextMenu = null; render(); }
+    if (ui.contextMenu || ui.stopMenu) { ui.contextMenu = null; ui.stopMenu = null; render(); }
   });
   document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
     button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
@@ -1430,7 +1501,8 @@ function wireBoard(): void {
   document.querySelectorAll<HTMLButtonElement>("[data-stack-id]").forEach((button) =>
     button.addEventListener("click", () => {
       const stackId = button.dataset.stackId!;
-      if (isStackTargetable(stackId)) chooseTarget({ kind: "spell", stackId });
+      const target = { kind: "spell", stackId } as const;
+      if (pendingTargetIncludes(target) || isStackTargetable(stackId)) chooseTarget(target);
       else { ui.stackDetail = stackId; render(); }
     }));
   document.querySelectorAll<HTMLButtonElement>("[data-zone]").forEach((button) =>
@@ -1557,7 +1629,7 @@ function showZone(seat: number, zone: "library" | "hand" | "graveyard" | "exile"
       ? `<div class="zone-cards">${cards.map((card) => `<button class="zone-card" type="button" data-zone-card="${escapeHtml(card.instance_id)}" title="Ver detalles de ${escapeHtml(card.name)}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></button>`).join("")}</div>`
       : `<p class="zone-private">No hay cartas en esta zona.</p>`));
   document.querySelectorAll<HTMLButtonElement>("[data-zone-card]").forEach((button) => {
-    button.addEventListener("click", () => showCardDetail(button.dataset.zoneCard!));
+    button.addEventListener("click", () => openCardActionMenu(button.dataset.zoneCard!));
     button.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       openCardActionMenu(button.dataset.zoneCard!);
@@ -1900,8 +1972,8 @@ document.querySelector<HTMLInputElement>("#card-query")?.addEventListener("input
 window.addEventListener("keydown", (event) => {
   if (event.target instanceof HTMLInputElement) return;
   if (event.code === "Space") { event.preventDefault(); document.querySelector<HTMLButtonElement>("#pass")?.click(); }
-  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.glyphHelp || ui.stackDetail)) {
-    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.glyphHelp = null; ui.stackDetail = null; ui.notice = ""; render();
+  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.stopMenu || ui.glyphHelp || ui.stackDetail)) {
+    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.stopMenu = null; ui.glyphHelp = null; ui.stackDetail = null; ui.notice = ""; render();
   }
   if (event.code === "KeyL") { ui.logOpen = !ui.logOpen; render(); }
 });

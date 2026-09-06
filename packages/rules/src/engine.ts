@@ -799,6 +799,16 @@ function targetsText(state: GameState, targets: readonly Target[]): string {
   return targets.length ? `; objetivo: ${targets.map((target) => targetLabel(state, target)).join(", ")}` : "";
 }
 
+function stackObjectTargetsText(state: GameState, object: StackObject): string {
+  const labels = object.targets.map((target, index) => object.targetLabels?.[index] ?? targetLabel(state, target));
+  return labels.length ? `; objetivo: ${labels.join(", ")}` : "";
+}
+
+function stackObjectLabel(state: GameState, object: StackObject): string {
+  const kind = object.trigger ? "habilidad disparada" : object.activated ? "habilidad activada" : "hechizo";
+  return `${object.card.name} (${kind})${stackObjectTargetsText(state, object)}`;
+}
+
 function livingSeats(state: GameState): SeatId[] {
   return state.players.filter((player) => !player.lost).map((player) => player.seat);
 }
@@ -5517,7 +5527,7 @@ function resolveTop(state: GameState): GameState {
     if (object.activated) return logged(next, object.controller, `La habilidad activada de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
     if (object.fromCopy) return logged(next, object.controller, `La copia de ${object.card.name} no se resuelve: sus objetivos ya no son legales.`);
     next = sendSpellToOwnerZone(next, object);
-    return logged(next, object.controller, `${object.card.name} se contrarresta: sus objetivos ya no son legales.`);
+    return logged(next, object.controller, `${stackObjectLabel(state, object)} se contrarresta: sus objetivos ya no son legales.`);
   }
 
   if (object.trigger) {
@@ -5607,7 +5617,7 @@ function resolveTop(state: GameState): GameState {
     }
     const nextEffect = applyEffect(next, object, object.trigger.definition.effect);
     return logged(nextEffect, object.controller,
-      `Se resuelve la ${TRIGGER_EVENT_LABELS[object.trigger.definition.event]} de ${object.card.name}.`);
+      `Se resuelve la ${TRIGGER_EVENT_LABELS[object.trigger.definition.event]} de ${object.card.name}${stackObjectTargetsText(next, object)}.`);
   }
 
   const colorEffect = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "return-all-permanents-of-color" | "damage-all-creatures-of-color" }> =>
@@ -5756,7 +5766,8 @@ function resolveTop(state: GameState): GameState {
 
   if (activatedEffect) {
     const resolved = applyEffect(next, object, activatedEffect);
-    return logged(resolved, object.controller, `Se resuelve la habilidad activada de ${object.card.name}.`);
+    return logged(resolved, object.controller,
+      `Se resuelve la habilidad activada de ${object.card.name}${stackObjectTargetsText(resolved, object)}.`);
   }
 
   if (selectedEffect) {
@@ -6860,8 +6871,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       for (const option of choice.options) {
         actions.push({
           action: { type: "choose-trigger-order", sourceId: choice.sourceId, triggerId: option.id },
-          label: `Poner primero: ${option.sourceCard.name}`,
-          note: option.definition.sourceText
+          label: `Poner ahora en la pila: ${option.sourceCard.name}`,
+          note: `${option.definition.sourceText} · Se coloca ahora; las siguientes quedarán debajo y resolverán después.`
         });
       }
       return actions;
@@ -9787,9 +9798,11 @@ export function hasRealChoice(state: GameState, seat: SeatId): boolean {
         })();
       if (source) { sourceProfile = cardProfile(source.card); const ability = sourceProfile.activatedAbilities[action.abilityIndex]; if (ability) effects = [ability.effect]; }
     }
-    if (effects?.length && effects.every(isCounterOnlyEffect) && entry.requiresTarget) {
-      return legalTargets(state, seat, entry.requiresTarget, sourceProfile).some(target => target.kind === "spell"
-        && state.stack.some(spell => spell.id === target.stackId && canCounterSpell(spell, state)));
+    if (effects?.length && effects.every(isCounterOnlyEffect)) {
+      const targetKinds = entry.requiresTargets ?? (entry.requiresTarget ? [entry.requiresTarget] : []);
+      if (!targetKinds.length) return true;
+      return targetKinds.some((targetKind) => legalTargets(state, seat, targetKind, sourceProfile).some(target => target.kind === "spell"
+        && state.stack.some(spell => spell.id === target.stackId && canCounterSpell(spell, state))));
     }
     return true;
   });

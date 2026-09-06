@@ -38,7 +38,7 @@ describe("smart counter response and safe mana undo", () => {
     game = putOnBattlefield(game, 0, [MOUNTAIN()]);
     game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
     game = applyAction(game, 0, { type: "cast", cardId: "stack-card-0", targets: [{ kind: "player", seat: 1 }] });
-    expect(projectGame(game, 1).stack[0]).toMatchObject({ kind: "spell", name: "Lightning Bolt", label: "Lightning Bolt", text: "Lightning Bolt deals 3 damage to any target." });
+    expect(projectGame(game, 1).stack[0]).toMatchObject({ kind: "spell", name: "Lightning Bolt", label: "Lightning Bolt", text: "Lightning Bolt deals 3 damage to any target.", targets: ["B"] });
   });
   it("keeps a public last-known target label after the target leaves", () => {
     let game = twoSeatGame([], []);
@@ -232,6 +232,19 @@ describe("smart counter response and safe mana undo", () => {
         requiresTap: true, sacrificesSelf: false, lifeCost: 0, manaCost: null } };
     expect(hasRealChoice({ ...source, stack: [trigger] }, 0)).toBe(false);
     expect(hasRealChoice({ ...source, stack: [activated] }, 0)).toBe(false);
+  });
+  it("projects only spells as counter targets when the stack mixes object kinds", () => {
+    const counter = board("Counter target spell.");
+    const source = putOnBattlefield(counter, 1, [make({ name: "Trigger Source", type_line: "Creature", power: "1", toughness: "1", oracle_text: "Whenever you gain life, draw a card." })]);
+    const card = source.players[1]!.battlefield[0]!.card;
+    const spell = { ...BOLT(), instance_id: "mixed-spell", owner: 1 };
+    const trigger = { id: "mixed-trigger", controller: 1 as SeatId, card, label: "Trigger Source · life gained", targets: [], fromCommandZone: false, variableValue: 0, countered: false,
+      trigger: { id: "mixed-trigger", controller: 1 as SeatId, sourcePermanentId: source.players[1]!.battlefield[0]!.instance_id, sourceCard: card,
+        definition: { event: "life-gained" as const, subject: "you" as const, effect: { kind: "draw", amount: 1 } as const, targetKind: "none" as const, optional: false, sourceText: "Whenever you gain life, draw a card." }, cause: "test" } };
+    const activated = { ...trigger, id: "mixed-activated", label: "Trigger Source · activated", trigger: undefined,
+      activated: { index: 0, text: "{T}: Draw a card.", cost: { manaValue: 0, raw: "{T}", symbols: [], hasVariable: false }, effect: { kind: "draw", amount: 1 } as const, targetKind: "none" as const, requiresTap: true, sacrificesSelf: false, lifeCost: 0, manaCost: null } };
+    const projected = projectGame({ ...source, stack: [trigger, activated, { id: "mixed-spell", controller: 1 as SeatId, card: spell, label: spell.name, targets: [], fromCommandZone: false, variableValue: 0, countered: false }] }, 0);
+    expect(projected.targetOptions.spell).toEqual([{ kind: "spell", stackId: "mixed-spell" }]);
   });
   it("allows only unchanged-state mana/tap deltas and rejects City of Brass triggers", () => {
     const game = board();
@@ -6278,6 +6291,15 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.log.some((entry) => entry.text.includes("sus objetivos ya no son legales"))).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+  });
+
+  it("logs the public target when a stack spell fizzles", () => {
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [BOLT()], [MOUNTAIN(), BEAR()]);
+    const bearId = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.instance_id;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bearId }] });
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.instance_id !== bearId) }));
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.log.at(-1)?.text).toContain("objetivo: Grizzly Bears");
   });
 
   it("resolves the legal half of a multi-target spell when another target leaves", () => {

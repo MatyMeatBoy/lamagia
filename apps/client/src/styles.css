@@ -97,10 +97,15 @@ h1, h2, h3 { margin: 0; }
 }
 .phase-rail::-webkit-scrollbar { display: none; }
 .phase-step {
-  flex: 0 0 auto; padding: 3px 9px; border-radius: 99px;
+  position: relative; flex: 0 0 auto; padding: 3px 9px; border-radius: 99px;
   background: transparent; border: 1px solid transparent;
   color: var(--text-faint); font-size: .62rem; white-space: nowrap;
+  cursor: pointer;
 }
+.phase-step i { position: absolute; top: -3px; left: 50%; width: 0; height: 0; transform: translateX(-50%); border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #050906; filter: drop-shadow(0 0 1px #6b7b70); }
+.phase-step.stopped i { border-top-color: #f5f5f5; filter: drop-shadow(0 0 1px #fff); }
+.phase-step:hover { color: var(--text); border-color: var(--line-soft); }
+.phase-step:disabled { cursor: default; }
 .phase-step.done { color: var(--text-faint); opacity: .55; }
 .phase-step.current { border-color: var(--gold-dim); background: #3a2f13; color: var(--gold); font-weight: 700; }
 .phase-rail .spacer { flex: 1; }
@@ -581,6 +586,7 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .stack-order { display: grid; place-items: center; width: 18px; height: 18px; flex: 0 0 18px; border: 1px solid var(--gold-dim); border-radius: 50%; color: var(--gold); font-size: .58rem; }
 .stack-chip img { width: 32px; height: 44px; object-fit: cover; border-radius: 4px; }
 .stack-chip > .card-image-fallback { width: 32px; height: 44px; min-height: 0; flex: 0 0 32px; padding: 2px; font-size: .4rem; }
+.stack-chip > .card-image-fallback { display: grid; place-items: center; overflow: hidden; color: var(--text); background: linear-gradient(145deg, #253a2c, #0c1710); text-align: center; overflow-wrap: anywhere; }
 .stack-chip span { display: grid; line-height: 1.15; }
 .stack-chip .stack-kind { color: var(--gold); font-size: .48rem; letter-spacing: .08em; text-transform: uppercase; }
 .stack-chip b { color: var(--text); font-size: .62rem; }
@@ -945,7 +951,6 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
   .topbar { height: 38px; }
   .phase-rail { height: 26px; padding-block: 2px; }
   .phase-step { font-size: .56rem; padding: 2px 7px; }
-  .turn-readout .badge-pill:not(.accent) { display: none; }
   .commander-strip { padding: 2px 6px; }
   .commander-strip .thumb { height: 18px; }
   .hand-label { display: none; }
