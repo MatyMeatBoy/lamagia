@@ -37,6 +37,11 @@ submits actions already exposed as legal.
 - The graphical stack shows one card-like item per spell, activated ability, or
   trigger, with top-first resolution order, controller, targets, and rules
   text. Priority remains authoritative in `packages/rules`.
+- The central phase rail is the MTGO-style stopper surface. White triangles
+  mark local phase stops; dark/hollow triangles are disabled. Left-click toggles
+  a phase stop and right-click opens the same toggle as a context menu. Stops
+  persist in local storage and prevent the client from enabling smart auto-pass
+  at that phase; they do not invent server priority or alter turn rules.
 - Stabilization failures are logged server-side with a bounded public-state
   diagnostic: turn, step, priority, stack summary, pending choice, combat
   declarations, and recent log entries. Hidden hands and libraries are omitted.
