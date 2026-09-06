@@ -16,7 +16,7 @@ import {
   backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type EquipmentModification, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
-  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaType, type RestrictedMana
+  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaRestrictionKind, type ManaType, type RestrictedMana
 } from "./mana.js";
 
 /** {W/B} — the extort payment (CR 702.39a), reused when the ability is granted. */
@@ -439,7 +439,7 @@ export type PendingChoice =
       readonly additionalGeneric: number;
       readonly variableValue: number;
       readonly lifeCost: number;
-      readonly allowLegendaryMana: boolean;
+      readonly allowedRestrictions: readonly ManaRestrictionKind[];
       readonly excludePermanentId?: string;
       readonly selected: readonly ManaPaymentSelection[];
       readonly continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "activate" | "equip" }>;
@@ -1173,8 +1173,16 @@ function manaAbilitiesFor(state: GameState | undefined, permanent: Permanent): r
   const granted = grantedManaAbilities(state, permanent);
   return granted.length ? [...profile.manaAbilities, ...granted] : profile.manaAbilities;
 }
+/** Which restricted-mana pools a spell of this profile may draw from (CR 106.7). */
+function allowedManaRestrictions(profile: CardProfile): ManaRestrictionKind[] {
+  const restrictions: ManaRestrictionKind[] = [];
+  if (profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary")) restrictions.push("legendary-spell");
+  if (isCreature(profile)) restrictions.push("creature-spell");
+  return restrictions;
+}
+
 /** Untapped permanents this player can currently tap for mana. */
-export function manaSources(player: PlayerState, state?: GameState, sourceOptions: { readonly allowLegendaryMana?: boolean } = {}): ManaSource[] {
+export function manaSources(player: PlayerState, state?: GameState, sourceOptions: { readonly allowedRestrictions?: readonly ManaRestrictionKind[] } = {}): ManaSource[] {
   const sources: ManaSource[] = [];
   const landBonuses = player.battlefield
     .map((permanent) => cardProfile(permanent.card).staticLandManaBonus)
@@ -1185,7 +1193,7 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
     const profile = cardProfile(permanent.card);
     for (const ability of manaAbilitiesFor(state, permanent)) {
       if (ability.sourceZone === "hand") continue;
-      if (ability.manaRestriction && !sourceOptions.allowLegendaryMana) continue;
+      if (ability.manaRestriction && !sourceOptions.allowedRestrictions?.includes(ability.manaRestriction.kind)) continue;
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
       if (ability.variableAmountCounter || ability.manaCost || ability.sacrificesCreatures) continue;
@@ -1352,12 +1360,12 @@ export function planManaPayment(
     readonly state?: GameState;
     readonly lifeCost?: number;
     readonly excludePermanentId?: string;
-    /** Allows mana restricted to legendary spells during this payment plan. */
-    readonly allowLegendaryMana?: boolean;
+    /** Allows mana restricted to these spell kinds during this payment plan. */
+    readonly allowedRestrictions?: readonly ManaRestrictionKind[];
   } = {}
 ): ManaPlan | null {
-  const existingRestricted = options.allowLegendaryMana
-    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+  const existingRestricted = options.allowedRestrictions?.length
+    ? (player.restrictedMana ?? []).filter((mana) => options.allowedRestrictions!.includes(mana.restriction.kind))
     : [];
   const startingPool = existingRestricted.reduce((pool, mana) => addMana(pool, mana.type, 1), player.manaPool);
   const sources = manaSources(
@@ -1367,7 +1375,7 @@ export function planManaPayment(
         : permanent) }
       : player,
     options.state,
-    { allowLegendaryMana: options.allowLegendaryMana }
+    { allowedRestrictions: options.allowedRestrictions }
   );
   const variableValue = options.variableValue ?? 0;
   const additionalGeneric = options.additionalGeneric ?? 0;
@@ -1477,7 +1485,7 @@ function shouldPromptManaPayment(
   state: GameState,
   seat: SeatId,
   cost: ManaCost,
-  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly allowLegendaryMana?: boolean; readonly excludePermanentId?: string }
+  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly excludePermanentId?: string }
 ): boolean {
   // Manual source selection is a player-facing decision. Bots keep the
   // deterministic planner so AI turns do not stall on a UI-only choice.
@@ -1488,10 +1496,10 @@ function shouldPromptManaPayment(
     excludePermanentId: options.excludePermanentId,
     additionalGeneric: options.additionalGeneric,
     variableValue: options.variableValue,
-    allowLegendaryMana: options.allowLegendaryMana
+    allowedRestrictions: options.allowedRestrictions
   });
   if (!plan?.taps.length) return false;
-  const sources = manaSources(payer, state, { allowLegendaryMana: options.allowLegendaryMana });
+  const sources = manaSources(payer, state, { allowedRestrictions: options.allowedRestrictions });
   // Preserve the fast path when every available source is interchangeable:
   // two Mountains paying generic one do not need a dialog.
   const usable = sources.filter((source) => !options.excludePermanentId || source.permanentId !== options.excludePermanentId);
@@ -1507,9 +1515,9 @@ function shouldPromptManaPayment(
 function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan | null {
   const player = playerAt(state, choice.seat);
   const payer = paymentPlayer(state, choice.seat, choice.excludePermanentId);
-  const sources = manaSources(payer, state, { allowLegendaryMana: choice.allowLegendaryMana });
-  const existingRestricted = choice.allowLegendaryMana
-    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+  const sources = manaSources(payer, state, { allowedRestrictions: choice.allowedRestrictions });
+  const existingRestricted = choice.allowedRestrictions.length
+    ? (player.restrictedMana ?? []).filter((mana) => choice.allowedRestrictions.includes(mana.restriction.kind))
     : [];
   let pool = existingRestricted.reduce((current, mana) => addMana(current, mana.type, 1), player.manaPool);
   const taps: Tap[] = [];
@@ -1532,7 +1540,7 @@ function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan |
     additionalGeneric: choice.additionalGeneric,
     variableValue: choice.variableValue,
     availableLife: player.life - lifeCost
-  }, choice.allowLegendaryMana);
+  }, choice.allowedRestrictions);
   if (!payment) return null;
   return finalizeManaPlan(pool, taps, existingRestricted, player.restrictedMana ?? [], lifeCost);
 }
@@ -1543,7 +1551,7 @@ function beginManaPayment(
   sourceCard: GameCard,
   cost: ManaCost,
   continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "activate" | "equip" }>,
-  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly lifeCost?: number; readonly allowLegendaryMana?: boolean; readonly excludePermanentId?: string }
+  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly lifeCost?: number; readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly excludePermanentId?: string }
 ): GameState | null {
   if (!shouldPromptManaPayment(state, seat, cost, options)) return null;
   return {
@@ -1557,7 +1565,7 @@ function beginManaPayment(
       additionalGeneric: options.additionalGeneric ?? 0,
       variableValue: options.variableValue ?? 0,
       lifeCost: options.lifeCost ?? 0,
-      allowLegendaryMana: options.allowLegendaryMana ?? false,
+      allowedRestrictions: options.allowedRestrictions ?? [],
       ...(options.excludePermanentId ? { excludePermanentId: options.excludePermanentId } : {}),
       selected: [],
       continuation
@@ -1594,10 +1602,10 @@ function payPlayerCost(
   cost: ManaCost,
   player: PlayerState,
   options: Parameters<typeof payCost>[2] = {},
-  allowLegendaryMana = false
+  allowedRestrictions: readonly ManaRestrictionKind[] = []
 ): PlayerPayment | null {
-  const restricted = allowLegendaryMana
-    ? (player.restrictedMana ?? []).filter((mana) => mana.restriction.kind === "legendary-spell")
+  const restricted = allowedRestrictions.length
+    ? (player.restrictedMana ?? []).filter((mana) => allowedRestrictions.includes(mana.restriction.kind))
     : [];
   const normal = payCost(cost, player.manaPool, options);
   if (normal) return { ...normal, spentRestricted: [], remainingRestricted: player.restrictedMana ?? [] };
@@ -6725,8 +6733,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
-  const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowLegendaryMana });
+  const allowedRestrictions = allowedManaRestrictions(profile);
+  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowedRestrictions });
   if (!plan) return { legal: false };
   const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -6771,7 +6779,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (choice.type === "mana-payment") {
       const selected = new Set(choice.selected.map((entry) => entry.sourceId));
       const payer = paymentPlayer(state, seat, choice.excludePermanentId);
-      const sources = manaSources(payer, state, { allowLegendaryMana: choice.allowLegendaryMana });
+      const sources = manaSources(payer, state, { allowedRestrictions: choice.allowedRestrictions });
       for (const source of sources) {
         if (selected.has(source.permanentId)) continue;
         const bonusOptions = source.bonusOptions?.length ? source.bonusOptions : [undefined];
@@ -8458,8 +8466,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
-  const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
-  const plan = (freeCast || payLifeCost || returnPermanentId || manaAlreadyPaid) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
+  const allowedRestrictions = allowedManaRestrictions(profile);
+  const plan = (freeCast || payLifeCost || returnPermanentId || manaAlreadyPaid) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowedRestrictions });
   if (!freeCast && !payLifeCost && !returnPermanentId && !manaAlreadyPaid && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   const requested = action.targets ?? [];
@@ -8481,7 +8489,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   }
 
   if (!freeCast && !payLifeCost && !returnPermanentId && !manaAlreadyPaid) {
-    const manual = beginManaPayment(state, seat, card, spellCost, action, { additionalGeneric, variableValue: action.variableValue ?? 0, lifeCost, allowLegendaryMana });
+    const manual = beginManaPayment(state, seat, card, spellCost, action, { additionalGeneric, variableValue: action.variableValue ?? 0, lifeCost, allowedRestrictions });
     if (manual) return manual;
   }
 
@@ -8492,7 +8500,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     ? { spent: emptyPool(), lifePaid: profile.payLifeInsteadOfManaCost!.life, remaining: playerAt(next, seat).manaPool }
     : returnPermanentId
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
-    : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowLegendaryMana);
+    : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowedRestrictions);
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
   if (returnPermanentId) {
     const returned = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === returnPermanentId);

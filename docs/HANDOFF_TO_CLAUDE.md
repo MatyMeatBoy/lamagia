@@ -4566,3 +4566,63 @@ profiles.
 
 Prossh decklist status after this pass: **77 of 97 unique cards fully
 implemented (79.4%)**.
+
+Somberwald Sage ("{T}: Add three mana of any one color. Spend this
+mana only to cast creature spells.") needed the `ManaRestriction`
+primitive (previously Delighted Halfling-only, `kind:
+"legendary-spell"`) generalized to a second kind. Widened
+`ManaRestrictionKind` in `packages/rules/src/mana.ts` to `"legendary-
+spell" | "creature-spell"`, then renamed the boolean `allowLegendaryMana`
+plumbing throughout `engine.ts` (~20 call sites: `manaSources`,
+`planManaPayment`, `shouldPromptManaPayment`, `manualManaPlan`,
+`beginManaPayment`, the `mana-payment` `PendingChoice`'s field,
+`payPlayerCost`, and the `legalActions`/`applyCast` cast-computation
+sites) to a generalized `allowedRestrictions?: readonly
+ManaRestrictionKind[]`, so every `mana.restriction.kind ===
+"legendary-spell"` check became `allowedRestrictions?.includes(mana
+.restriction.kind)`. Added a small `allowedManaRestrictions(profile)`
+helper (in `engine.ts`, beside `manaSources`) that computes the array
+once per cast from the spell's own characteristics — `"legendary-
+spell"` when a supertype is Legendary, `"creature-spell"` when
+`isCreature(profile)` — replacing the two near-duplicate
+`profile.supertypes.some(...)` one-liners that used to compute the
+single legendary-only boolean at each cast site. In
+`characteristics.ts`, extended the `manaRestriction` parser at the
+mana-ability-building step (~line 1558) with a second branch matching
+"Spend this mana only to cast creature spells." (`kind:
+"creature-spell"`, no rider), and separately widened the
+`restrictedManaLine` coverage-recognition check inside `recognizeText`
+(~line 4553, the "is this printed line consumed" gate a card's
+`fullyImplemented` status depends on) to also match the creature-spell
+wording — this second, easy-to-miss site is why Delighted Halfling
+(legendary-only wording) was already `fullyImplemented: true` before
+this pass while a naive fix to only the ability-builder regex would
+have left Somberwald Sage's `unimplementedText` non-empty despite its
+mana ability parsing correctly. Somberwald Sage's own mana-production
+clause ("three mana of any one color") needed no new parsing: it is
+the same choice-of-one-color-times-N shape already covered by
+Springjack Pasture's "Add X mana of any one color" test, confirmed via
+a throwaway probe script that both Somberwald Sage's `fullyImplemented`
+flips to `true` and Delighted Halfling's existing behavior (including
+its `makesSpellUncounterable` rider) is unchanged by the generalization.
+Scenario-tested: activating the tap ability for {R} tags three red
+mana with `restriction.kind: "creature-spell"`, an instant in hand
+cannot be cast with it (absent from `legalActions`), while a same-cost
+creature spell can legally spend it and resolves onto the stack.
+Verified **+1** in the export count (10,215 → 10,216); set coverage
+stayed 31.3% (one card out of 38,712 catalog entries does not move the
+rounded percentage). Food Chain, the other card `identify_near_
+complete_cards.py` flagged as sharing this same restriction, turned out
+to need a genuinely separate primitive on top of the restriction (an
+"exile a creature you control" mana-ability cost — distinct from the
+existing `sacrificesCreatures` cost model, which only supports
+sacrifice — plus a dynamic mana amount of "1 + the exiled creature's
+own mana value", not a fixed or externally-supplied count); it is
+deferred to a later pass rather than folded into this one.
+Validation: **791 rules tests** (2 new: a `recognizes...` profile-shape
+test plus the blocked/allowed scenario test above), `npm run check`
+across all four workspaces, `npx vitest run services/match-server/src`
+(5 passed), 10,216 global profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **78 of 97 unique cards fully
+implemented (80.4%)**.

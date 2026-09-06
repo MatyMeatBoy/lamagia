@@ -11076,6 +11076,55 @@ describe("Protean Hulk's any-number total-mana-value reanimation", () => {
   });
 });
 
+describe("Somberwald Sage's creature-spell-restricted triple mana", () => {
+  const SOMBERWALD_SAGE = () => make({
+    name: "Somberwald Sage", type_line: "Creature — Human Druid", mana_cost: "{2}{G}", cmc: 3, power: "1", toughness: "1",
+    oracle_text: "{T}: Add three mana of any one color. Spend this mana only to cast creature spells.",
+    produced_mana: ["B", "C", "G", "R", "U", "W"]
+  });
+
+  it("recognizes the tap ability with a creature-spell mana restriction", () => {
+    const profile = profileOf(SOMBERWALD_SAGE());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.manaAbilities[0]).toMatchObject({
+      produces: ["W", "U", "B", "R", "G"], amount: 3, manaRestriction: { kind: "creature-spell" }
+    });
+  });
+
+  it("blocks a noncreature spell but allows a creature spell to spend the restricted mana", () => {
+    const noncreatureSpell = make({ name: "Ordinary Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1 });
+    const creatureSpell = make({ name: "Ordinary Bear", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
+
+    let blocked = twoSeatGame([], []);
+    blocked = stage(blocked, 0, () => ({ hand: toHand(0, [noncreatureSpell]), autoPass: false }));
+    blocked = putOnBattlefield(blocked, 0, [SOMBERWALD_SAGE()]);
+    blocked = passUntil(blocked, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const source = blocked.players[0]!.battlefield.find((permanent) => permanent.card.name === "Somberwald Sage")!;
+    const activate = legalActions(blocked, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === source.instance_id && entry.action.mana === "R")!;
+    blocked = applyAction(blocked, 0, activate.action);
+    expect(blocked.players[0]!.restrictedMana).toMatchObject([
+      { type: "R", restriction: { kind: "creature-spell" } },
+      { type: "R", restriction: { kind: "creature-spell" } },
+      { type: "R", restriction: { kind: "creature-spell" } }
+    ]);
+    expect(legalActions(blocked, 0).some((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")).toBe(false);
+
+    let allowed = twoSeatGame([], []);
+    allowed = stage(allowed, 0, () => ({ hand: toHand(0, [creatureSpell]), autoPass: false }));
+    allowed = putOnBattlefield(allowed, 0, [SOMBERWALD_SAGE()]);
+    allowed = passUntil(allowed, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const allowedSource = allowed.players[0]!.battlefield.find((permanent) => permanent.card.name === "Somberwald Sage")!;
+    const allowedActivate = legalActions(allowed, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === allowedSource.instance_id && entry.action.mana === "G")!;
+    allowed = applyAction(allowed, 0, allowedActivate.action);
+    const cast = legalActions(allowed, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")!;
+    expect(cast).toBeDefined();
+    allowed = applyAction(allowed, 0, cast.action);
+    expect(allowed.stack.some((entry) => entry.card.name === "Ordinary Bear")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

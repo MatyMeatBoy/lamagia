@@ -1560,6 +1560,8 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
           kind: "legendary-spell",
           ...( /that\s+spell\s+can't\s+be\s+countered/i.test(effectText) ? { makesSpellUncounterable: true } : {})
         }
+      : /spend\s+this\s+mana\s+only\s+to\s+cast\s+creature\s+spells/i.test(effectText)
+      ? { kind: "creature-spell" }
       : undefined;
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
@@ -4548,7 +4550,7 @@ function recognizeText(text: string): RecognizedText {
       const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+(?:color|type)\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
       const variableSacrificeMana = /(?:\{T\},\s*)?sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s?\s*$/i.test(manaLine[1]!.trim())
         && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
-      const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(manaLine[2]!)
+      const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+(?:a\s+legendary\s+spell|creature\s+spells)/i.test(manaLine[2]!)
         && Boolean(parseAddClause(manaLine[2]!.split(/[.!?]/, 1)[0] ?? ""));
       if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine) unimplementedText.push(line);
       continue;

@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,561** · cobertura: **31.3%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,565** · cobertura: **31.3%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -273,7 +273,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 2012-02-03 | Dark Ascension (`DKA`) | expansion | 2010s | main | 158 | 58 | 100 | 36.7% |
 | 2012-03-30 | Duel Decks: Venser vs. Koth (`DDI`) | duel-decks | duel-decks-venser-vs-koth | other | 70 | 36 | 34 | 51.4% |
 | 2012-04-28 | Avacyn Restored Promos (`PAVR`) | promos | avacyn-restored | other | 6 | 2 | 4 | 33.3% |
-| 2012-05-04 | Avacyn Restored (`AVR`) | expansion | 2010s | main | 234 | 77 | 157 | 32.9% |
+| 2012-05-04 | Avacyn Restored (`AVR`) | expansion | 2010s | main | 234 | 78 | 156 | 33.3% |
 | 2012-06-01 | Planechase 2012 (`PC2`) | planechase | planechase-2012 | other | 136 | 53 | 83 | 39.0% |
 | 2012-07-12 | Magic 2013 Promos (`PM13`) | promos | magic-2013 | other | 6 | 3 | 3 | 50.0% |
 | 2012-07-13 | Magic 2013 (`M13`) | core | 2010s | main | 234 | 129 | 105 | 55.1% |
@@ -507,7 +507,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 2021-08-26 | Jumpstart: Historic Horizons (`J21`) | jumpstart | jumpstart-historic-horizons | other | 389 | 109 | 280 | 28.0% |
 | 2021-09-24 | Innistrad: Midnight Hunt (`MID`) | expansion | innistrad | main | 279 | 57 | 222 | 20.4% |
 | 2021-09-24 | Innistrad: Midnight Hunt Promos (`PMID`) | promos | innistrad-midnight-hunt | other | 84 | 8 | 76 | 9.5% |
-| 2021-09-24 | Midnight Hunt Commander (`MIC`) | commander | 2021 | commander | 149 | 41 | 108 | 27.5% |
+| 2021-09-24 | Midnight Hunt Commander (`MIC`) | commander | 2021 | commander | 149 | 42 | 107 | 28.2% |
 | 2021-10-15 | Pioneer Challenger Decks 2021 (`Q06`) | deck-products | pioneer-challenger-decks-2021 | other | 10 | 0 | 10 | 0.0% |
 | 2021-11-19 | Crimson Vow Commander (`VOC`) | commander | 2021 | commander | 150 | 56 | 94 | 37.3% |
 | 2021-11-19 | Innistrad: Crimson Vow (`VOW`) | expansion | innistrad | main | 283 | 35 | 248 | 12.4% |
@@ -566,7 +566,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 2023-02-17 | Unknown Event (`UNK`) | funny-special | unknown-event | other | 506 | 21 | 485 | 4.2% |
 | 2023-02-19 | Secret Lair Promo (`SLP`) | secret-lair | secret-lair-promo | secret-lair | 52 | 18 | 34 | 34.6% |
 | 2023-03-21 | 30th Anniversary History Promos (`P30H`) | promos | 30th-anniversary-history | other | 5 | 3 | 2 | 60.0% |
-| 2023-03-21 | Shadows of the Past (`SIS`) | masters-remastered | shadows-of-the-past | other | 76 | 29 | 47 | 38.2% |
+| 2023-03-21 | Shadows of the Past (`SIS`) | masters-remastered | shadows-of-the-past | other | 76 | 30 | 46 | 39.5% |
 | 2023-03-21 | Shadows over Innistrad Remastered (`SIR`) | masters-remastered | shadows-over-innistrad-remastered | other | 284 | 58 | 226 | 20.4% |
 | 2023-04-21 | March of the Machine (`MOM`) | expansion | phyrexia | main | 296 | 42 | 254 | 14.2% |
 | 2023-04-21 | March of the Machine Commander (`MOC`) | commander | 2023 | commander | 338 | 113 | 225 | 33.4% |
@@ -634,7 +634,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 2025-01-01 | MagicFest 2025 (`PF25`) | promos | magicfest-2025 | other | 19 | 5 | 14 | 26.3% |
 | 2025-01-01 | Wizards Play Network 2025 (`PW25`) | promos | wpn-2025 | other | 16 | 4 | 12 | 25.0% |
 | 2025-01-03 | Spotlight Series (`PSPL`) | promos | spotlight-series | other | 13 | 1 | 12 | 7.7% |
-| 2025-01-24 | Innistrad Remastered (`INR`) | masters-remastered | innistrad-remastered | other | 300 | 72 | 228 | 24.0% |
+| 2025-01-24 | Innistrad Remastered (`INR`) | masters-remastered | innistrad-remastered | other | 300 | 73 | 227 | 24.3% |
 | 2025-02-09 | Japan Standard Cup (`PJSC`) | promos | japan-standard-cup | other | 4 | 0 | 4 | 0.0% |
 | 2025-02-14 | Aetherdrift (`DFT`) | expansion | 2020s | main | 276 | 44 | 232 | 15.9% |
 | 2025-02-14 | Aetherdrift Commander (`DRC`) | commander | 2025 | commander | 163 | 65 | 98 | 39.9% |
@@ -748,7 +748,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | commander | 2018 | 1 | 297 | 138 | 159 | 46.5% |
 | commander | 2019 | 1 | 292 | 110 | 182 | 37.7% |
 | commander | 2020 | 4 | 1001 | 372 | 629 | 37.2% |
-| commander | 2021 | 5 | 1022 | 370 | 652 | 36.2% |
+| commander | 2021 | 5 | 1022 | 371 | 651 | 36.3% |
 | commander | 2022 | 7 | 1802 | 544 | 1258 | 30.2% |
 | commander | 2023 | 6 | 1597 | 543 | 1054 | 34.0% |
 | commander | 2024 | 7 | 1887 | 681 | 1206 | 36.1% |
@@ -794,7 +794,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | eternal | 2020s | 6 | 537 | 147 | 390 | 27.4% |
 | expansion | 1990s | 11 | 1573 | 378 | 1195 | 24.0% |
 | expansion | 2000s | 19 | 3082 | 716 | 2366 | 23.2% |
-| expansion | 2010s | 14 | 2735 | 750 | 1985 | 27.4% |
+| expansion | 2010s | 14 | 2735 | 751 | 1984 | 27.5% |
 | expansion | 2020s | 17 | 3739 | 635 | 3104 | 17.0% |
 | expansion | alara | 2 | 379 | 155 | 224 | 40.9% |
 | expansion | amonkhet | 1 | 272 | 102 | 170 | 37.5% |
@@ -877,7 +877,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | masters-remastered | double-masters-2022 | 1 | 332 | 100 | 232 | 30.1% |
 | masters-remastered | eternal-masters | 1 | 249 | 121 | 128 | 48.6% |
 | masters-remastered | iconic-masters | 1 | 249 | 104 | 145 | 41.8% |
-| masters-remastered | innistrad-remastered | 1 | 300 | 72 | 228 | 24.0% |
+| masters-remastered | innistrad-remastered | 1 | 300 | 73 | 227 | 24.3% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 61 | 231 | 20.9% |
 | masters-remastered | magic-duel-masters | 1 | 4 | 3 | 1 | 75.0% |
 | masters-remastered | masters-25 | 1 | 249 | 108 | 141 | 43.4% |
@@ -893,7 +893,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | masters-remastered | ravnica-remastered | 1 | 313 | 93 | 220 | 29.7% |
 | masters-remastered | renaissance | 1 | 122 | 37 | 85 | 30.3% |
 | masters-remastered | rinascimento | 1 | 60 | 12 | 48 | 20.0% |
-| masters-remastered | shadows-of-the-past | 1 | 76 | 29 | 47 | 38.2% |
+| masters-remastered | shadows-of-the-past | 1 | 76 | 30 | 46 | 39.5% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 58 | 226 | 20.4% |
 | masters-remastered | tempest-remastered | 1 | 254 | 104 | 150 | 40.9% |
 | masters-remastered | the-list | 1 | 5221 | 1610 | 3611 | 30.8% |
@@ -18251,7 +18251,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Sigarda, Host of Herons — `e55104e2-4900-48de-b288-d3e6abd5e09e`
 - [ ] Silverblade Paladin — `ded0316f-5eed-4a80-91ad-ca236fd16f01`
 - [ ] Slayers' Stronghold — `2de7367b-a5a4-43f4-8f8f-b931ea28150d`
-- [ ] Somberwald Sage — `f249db15-09fa-4a1c-9461-9ae803c219b6`
 - [ ] Somberwald Vigilante — `31c77036-8627-476a-996b-2a6b005c9e12`
 - [ ] Spectral Gateguards — `334f7cd5-6c7b-4592-b564-8a0edac4a1b4`
 - [ ] Spectral Prison — `b5991a13-5fcd-4d2d-9db2-d3d5af7259f5`
@@ -40898,7 +40897,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Sigarda, Heron's Grace — `79b56cf8-d573-40cf-b797-6b4eef2bed23`
 - [ ] Sigardian Zealot — `30aecffc-bbbf-44d0-8002-0ee5982f27b9`
 - [ ] Somberwald Beastmaster — `df35bf19-4cbf-4624-925d-ceca6bff596e`
-- [ ] Somberwald Sage — `f249db15-09fa-4a1c-9461-9ae803c219b6`
 - [ ] Spark Reaper — `894176e3-af9c-41ef-9f35-59dfdda3c17f`
 - [ ] Stalwart Pathlighter — `88ba283d-2d03-4455-a4a3-a2a5622209bd`
 - [ ] Stitcher Geralf — `da394a25-79c9-4b75-9ce6-741f64ae6913`
@@ -47193,7 +47191,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Sigarda, Host of Herons — `e55104e2-4900-48de-b288-d3e6abd5e09e`
 - [ ] Skirsdag High Priest — `c6064c08-e4e0-49f4-9f0b-55cdecf443af`
 - [ ] Snapcaster Mage — `2bb2eda7-3b38-4c56-870f-c3218a1056f5`
-- [ ] Somberwald Sage — `f249db15-09fa-4a1c-9461-9ae803c219b6`
 - [ ] Stitcher's Apprentice — `14bf3049-faa3-4c1f-a613-603e977a50a4`
 - [ ] Stromkirk Captain — `599c3fd6-3309-4b5d-adec-9c4062848ad5`
 - [ ] Séance — `a375b935-c02b-44bc-a942-37c5de58b1e4`
@@ -55877,7 +55874,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Slayer of the Wicked — `d93299d4-3aaf-48fb-8227-26203963c8b9`
 - [ ] Smoldering Werewolf // Erupting Dreadwolf — `372a01f7-6e58-4424-9405-0ee4acbb9346`
 - [ ] Snapcaster Mage — `2bb2eda7-3b38-4c56-870f-c3218a1056f5`
-- [ ] Somberwald Sage — `f249db15-09fa-4a1c-9461-9ae803c219b6`
 - [ ] Sorin, Imperious Bloodlord — `fee680c6-afe2-4321-9d8a-8f81a612a53b`
 - [ ] Soul Separator — `f1da52a4-08a0-4427-a461-a1dc6627b98e`
 - [ ] Soul-Guide Gryff — `e26a08de-6108-4051-9c42-b5ce9dd8b533`
