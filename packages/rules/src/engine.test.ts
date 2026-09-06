@@ -7253,6 +7253,23 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Mountain" && permanent.tapped)).toHaveLength(2);
   });
 
+  it("charges Propaganda taxes independently for each attacked defender", () => {
+    let game = threeSeatGame();
+    game = stage(game, 0, () => ({ autoPass: false, hand: toHand(0, [BEAR(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], "multi-tax") }));
+    game = putOnBattlefield(game, 0, [BEAR(), BEAR(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 1, [PROPAGANDA()]);
+    game = putOnBattlefield(game, 2, [PROPAGANDA()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [
+      { instanceId: bears[0]!.instance_id, defender: 1 },
+      { instanceId: bears[1]!.instance_id, defender: 2 }
+    ] });
+    expect(game.combat.attackers).toHaveLength(2);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Mountain" && permanent.tapped)).toHaveLength(4);
+    expect(game.log.filter((entry) => entry.text.includes("impuesto de ataque"))).toHaveLength(2);
+  });
+
   it("deals damage and amasses Orcs when Orcish Bowmasters enters", () => {
     const profile = profileOf(ORCISH_BOWMASTERS());
     expect(profile.fullyImplemented).toBe(true);
