@@ -1050,6 +1050,8 @@ export type TargetKind =
   | "creature-power-at-most-4"
   | "creature-toughness-at-most-4"
   | `creature-power-toughness-sum-at-most-${number}`
+  | `creature-power-${"at-least" | "at-most"}-${number}`
+  | `creature-toughness-${"at-least" | "at-most"}-${number}`
   | "creature-with-defender"
   | "creature-with-deathtouch"
   | "creature-with-lifelink"
@@ -4141,6 +4143,17 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature with hexproof$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-hexproof" };
   if (/^Destroy target creature with shroud$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-shroud" };
   if (/^Destroy target creature with reach$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-reach" };
+  {
+    const threshold = /^(Destroy|Exile) target creature with (power|toughness) (\d+) or (greater|less)$/i.exec(text);
+    if (threshold) {
+      const axis = threshold[2]!.toLowerCase();
+      const direction = threshold[4]!.toLowerCase() === "greater" ? "at-least" : "at-most";
+      return {
+        effect: { kind: threshold[1]!.toLowerCase() === "destroy" ? "destroy-target-permanent" : "exile-target-permanent" },
+        target: `creature-${axis}-${direction}-${Number(threshold[3])}` as TargetKind
+      };
+    }
+  }
   if (/^Destroy target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Exile target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };

@@ -8319,7 +8319,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "permanent-you-control") return profile.isPermanent && permanent.controller === seat;
     if (kind === "permanent-opponent") return profile.isPermanent && permanent.controller !== seat;
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
-    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind.startsWith("creature-power-toughness-sum-at-most-")) {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind.startsWith("creature-power-toughness-sum-at-most-") || kind.startsWith("creature-power-at-") || kind.startsWith("creature-toughness-at-")) {
       if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "creature-opponent" && permanent.controller === seat) return false;
@@ -8347,6 +8347,10 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       if (kind === "creature-toughness-at-most-4" && toughnessOf(permanent, state) > 4) return false;
       const sumCap = /^creature-power-toughness-sum-at-most-(\d+)$/.exec(kind);
       if (sumCap && powerOf(permanent, state) + toughnessOf(permanent, state) > Number(sumCap[1])) return false;
+      const powerCap = /^creature-power-(at-least|at-most)-(\d+)$/.exec(kind);
+      if (powerCap && (powerCap[1] === "at-least" ? powerOf(permanent, state) < Number(powerCap[2]) : powerOf(permanent, state) > Number(powerCap[2]))) return false;
+      const toughnessCap = /^creature-toughness-(at-least|at-most)-(\d+)$/.exec(kind);
+      if (toughnessCap && (toughnessCap[1] === "at-least" ? toughnessOf(permanent, state) < Number(toughnessCap[2]) : toughnessOf(permanent, state) > Number(toughnessCap[2]))) return false;
       return true;
     }
     if (kind === "land-you-control") return isLand(profile) && permanent.controller === seat;

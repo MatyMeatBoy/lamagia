@@ -1495,6 +1495,18 @@ describe("mana payment", () => {
     expect(targets[0]).toMatchObject({ kind: "permanent", instanceId: game.players[1]!.battlefield[0]!.instance_id });
   });
 
+  it("reuses numeric power and toughness target restrictions", () => {
+    const powerRemoval = make({ name: "Smite Test", type_line: "Instant", mana_cost: "{3}{W}", cmc: 4, oracle_text: "Destroy target creature with power 4 or greater." });
+    const toughnessRemoval = make({ name: "Toughness Test", type_line: "Instant", mana_cost: "{2}{W}", cmc: 3, oracle_text: "Exile target creature with toughness 4 or less." });
+    expect(profileOf(powerRemoval)).toMatchObject({ fullyImplemented: true, targetKind: "creature-power-at-least-4" });
+    expect(profileOf(toughnessRemoval)).toMatchObject({ fullyImplemented: true, targetKind: "creature-toughness-at-most-4" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 1, [make({ name: "Small Test Creature", type_line: "Creature — Beast", power: "3", toughness: "2" }), make({ name: "Large Test Creature", type_line: "Creature — Beast", power: "4", toughness: "5" })]);
+    expect(legalTargets(game, 0, "creature-power-at-least-4")).toHaveLength(1);
+    expect(legalTargets(game, 0, "creature-toughness-at-most-4")).toHaveLength(1);
+    expect(legalTargets(game, 0, "creature-toughness-at-most-4")[0]).toMatchObject({ instanceId: game.players[1]!.battlefield[0]!.instance_id });
+  });
+
   it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
     const profile = profileOf(PAIN_LAND());
     expect(profile.fullyImplemented).toBe(true);
