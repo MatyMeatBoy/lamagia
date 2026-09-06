@@ -312,6 +312,15 @@ export interface EquipmentModification {
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
+  /** Aura characteristic-setting layer (CR 613.1): replaces base values/types and may remove abilities. */
+  readonly characteristicSetting?: {
+    readonly basePower: number;
+    readonly baseToughness: number;
+    readonly types: readonly CardType[];
+    readonly subtypes: readonly string[];
+    readonly keywords: readonly EnforcedKeyword[];
+    readonly removeAbilities: boolean;
+  };
   readonly text: string;
 }
 
@@ -707,6 +716,8 @@ export type SpellEffect =
   | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }
   /** Reveals until a card type is found, then sends the rest to a zone. */
   | { readonly kind: "reveal-until-type-to-hand"; readonly type: CardType; readonly restDestination: "graveyard" }
+  /** Reveals through the first nonland, then moves every revealed card to hand. */
+  | { readonly kind: "reveal-until-nonland-to-hand" }
   | { readonly kind: "reveal-top-card-conditional"; readonly creatureToken: TokenDefinition; readonly landDestination: "battlefield"; readonly fallbackLife: number }
   | { readonly kind: "reveal-top-card-land-or-hand" }
   | {
@@ -922,7 +933,7 @@ export type MagicColor = "W" | "U" | "B" | "R" | "G";
 export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
-  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature"
+  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment"
   | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
@@ -1718,6 +1729,25 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
 function parseAuraModification(text: string): EquipmentModification | null {
   for (const line of text.split("\n")) {
     const clean = line.trim().replace(/\.$/, "");
+    const characteristicSetting = /^enchanted creature is an insect artifact creature with base power and toughness (\d+)\/(\d+) and has (.+), and it loses all other abilities, card types, and creature types$/i.exec(clean);
+    if (characteristicSetting) {
+      const keywords = characteristicSetting[3]!.split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
+        .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
+      return {
+        power: 0,
+        toughness: 0,
+        keywords,
+        characteristicSetting: {
+          basePower: Number(characteristicSetting[1]),
+          baseToughness: Number(characteristicSetting[2]),
+          types: ["Artifact", "Creature"],
+          subtypes: ["Insect"],
+          keywords,
+          removeAbilities: true
+        },
+        text: line.trim()
+      };
+    }
     let match = /^enchanted creature gets ([+-]\d+)\/([+-]\d+)(?:\s+and\s+has\s+(.+))?$/i.exec(clean);
     if (match) {
       const keywords = (match[3] ?? "").split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
@@ -2538,6 +2568,12 @@ function parseRevealUntilTypeToHand(text: string): SpellEffect | null {
   };
 }
 
+function parseRevealUntilNonlandToHand(text: string): SpellEffect | null {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!/^Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand\.?$/i.test(normalized)) return null;
+  return { kind: "reveal-until-nonland-to-hand" };
+}
+
 /**
  * Recognises the trigger condition of one printed line.
  *
@@ -2902,6 +2938,28 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "lose-life-event-player", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "lose-life-event-player", amount: "X" }, target: "none" };
   }
+  const damageAndLife = /^~ deals (\w+) damage to any target and you gain (\w+) life$/i.exec(text);
+  if (damageAndLife) {
+    const damage = damageAndLife[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[1]!);
+    const life = damageAndLife[2]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[2]!);
+    if (damage !== null && life !== null) {
+      return {
+        effect: { kind: "compound", effects: [{ kind: "damage-any-target", amount: damage }, { kind: "gain-life", amount: life }] },
+        target: "any"
+      };
+    }
+  }
+  const damageAndSelf = /^~ deals (\w+) damage to any target and (\w+) damage to you$/i.exec(text);
+  if (damageAndSelf) {
+    const damage = damageAndSelf[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndSelf[1]!);
+    const selfDamage = damageAndSelf[2]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndSelf[2]!);
+    if (damage !== null && selfDamage !== null) {
+      return {
+        effect: { kind: "compound", effects: [{ kind: "damage-any-target", amount: damage }, { kind: "damage-controller", amount: selfDamage }] },
+        target: "any"
+      };
+    }
+  }
   if ((match = /^~ deals (\w+) damage to any target$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
@@ -3039,6 +3097,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   const revealUntil = parseRevealUntilTypeToHand(text);
   if (revealUntil) return { effect: revealUntil, target: "none" };
+  const revealUntilNonland = parseRevealUntilNonlandToHand(text);
+  if (revealUntilNonland) return { effect: revealUntilNonland, target: "none" };
   if (/^Draw a card for each tapped creature target opponent controls$/i.test(text)) {
     return { effect: { kind: "draw-equal-tapped-creatures" }, target: "opponent" };
   }
@@ -3511,6 +3571,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "blink-target-creature" }, target: "creature-you-control" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
+  if (/^Destroy target creature or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-or-enchantment" };
+  if (/^Destroy target artifact or creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-creature" };
   if (/^Destroy up to X target nonblack creatures, where X is the number of verse counters on (?:~|this enchantment)\.?\s*(?:They can'?t be regenerated\.?)?$/i.test(text)) {
     return { effect: { kind: "destroy-n-creatures", count: "X", nonblack: true, counter: "verse" }, target: "nonblack-creature" };
   }

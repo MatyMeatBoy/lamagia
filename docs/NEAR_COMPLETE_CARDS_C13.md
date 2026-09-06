@@ -5,18 +5,17 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **C13**
-- One-line cards: **2**
-- Cards with a reusable existing primitive hint: **2**
+- One-line cards: **1**
+- Cards with a reusable existing primitive hint: **1**
 - Cards needing new primitive review: **0**
-- Templates: **2**
+- Templates: **1**
 
 ## Worker rule
 
 Fix the shared primitive, not the first card name. Preserve type, zone, target, quantity, cost, and optionality as structured operands. Do not report a card complete until the next engine export says `fullyImplemented: true`.
 
-## Queue (first 2 cards; full machine-readable list is generated JSON)
+## Queue (first 1 cards; full machine-readable list is generated JSON)
 
 | Priority | Card | Oracle ID | Family | Reuse hint | Missing line |
 | --- | --- | --- | --- | --- | --- |
-| reuse-existing | Darksteel Mutation | `05a4f8ff-49da-42af-add5-6248c4b0644b` | static-continuous | static / continuous | Enchanted creature is an Insect artifact creature with base power and toughness 0/1 and has indestructible, and it loses all other abilities, card types, and creature types. |
 | reuse-existing | Sudden Spoiling | `dce202c7-fe8e-462a-858e-7a5a69bd5b6b` | static-continuous | static / continuous | Until end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2. |

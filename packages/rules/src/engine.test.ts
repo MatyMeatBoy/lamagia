@@ -429,6 +429,9 @@ const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_c
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
+const LIGHTNING_HELIX = () => make({ name: "Lightning Helix", type_line: "Instant", mana_cost: "{R}{W}", cmc: 2, oracle_text: "Lightning Helix deals 3 damage to any target and you gain 3 life.", oracle_id: "800c258a-cfc4-4a54-a667-065ea8dea69e", scryfall_id: "800c258a-cfc4-4a54-a667-065ea8dea69e" });
+const TREASURE_HUNT = () => make({ name: "Treasure Hunt", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand.", oracle_id: "05079479-86a6-4041-a395-83d325b6ddb7", scryfall_id: "53af54e3-412f-4bc4-8a3a-911eaa62be27" });
+const PSIONIC_BLAST = () => make({ name: "Psionic Blast", type_line: "Instant", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Psionic Blast deals 4 damage to any target and 2 damage to you.", oracle_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad", scryfall_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad" });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
 const WONDER = () => make({ name: "Wonder", type_line: "Creature — Incarnation", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Flying\nAs long as this card is in your graveyard and you control an Island, creatures you control have flying.", scryfall_id: "232284f7-c623-4895-9ab9-8b1a39926830" });
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
@@ -450,6 +453,7 @@ const SHROUD_REMOVAL = () => make({ name: "Shroud Bane", type_line: "Instant", m
 const REACH_REMOVAL = () => make({ name: "Reach Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with reach." });
 const NONBASIC_REMOVAL = () => make({ name: "Land Bane", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target nonbasic land." });
 const BEDEVIL = () => make({ name: "Bedevil", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Destroy target artifact, creature, or planeswalker." });
+const MORTIFY = () => make({ name: "Mortify", type_line: "Instant", mana_cost: "{1}{W}{B}", cmc: 3, oracle_text: "Destroy target creature or enchantment.", oracle_id: "faa01ed1-ccfa-4e58-951f-cd81f9068027", scryfall_id: "faa01ed1-ccfa-4e58-951f-cd81f9068027" });
 const ARTIFACT_REMOVAL = () => make({ name: "Shatter", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Destroy target artifact." });
 const ENCHANTMENT_REMOVAL = () => make({ name: "Demolish Enchantment", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Destroy target enchantment." });
 const LAND_REMOVAL = () => make({ name: "Stone Rain", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "Destroy target land." });
@@ -4635,6 +4639,11 @@ describe("casting", () => {
     expect(profileOf(ANNIHILATE()).fullyImplemented).toBe(true);
     expect(profileOf(FAMINE()).fullyImplemented).toBe(true);
     expect(profileOf(DEATH_GRASP()).fullyImplemented).toBe(true);
+    expect(profileOf(LIGHTNING_HELIX())).toMatchObject({
+      targetKind: "any",
+      effects: [{ kind: "compound", effects: [{ kind: "damage-any-target", amount: 3 }, { kind: "gain-life", amount: 3 }] }],
+      fullyImplemented: true
+    });
     expect(profileOf(FLYING_REMOVAL()).fullyImplemented).toBe(true);
     expect(profileOf(NONBASIC_REMOVAL()).fullyImplemented).toBe(true);
 
@@ -4647,6 +4656,32 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.life).toBe(38);
     expect(game.players[0]!.life).toBe(42);
+
+    game = readyToCast([LIGHTNING_HELIX()], [MOUNTAIN(), PLAINS()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.life).toBe(37);
+    expect(game.players[0]!.life).toBe(43);
+
+    expect(profileOf(TREASURE_HUNT())).toMatchObject({
+      targetKind: "none",
+      effects: [{ kind: "reveal-until-nonland-to-hand" }],
+      fullyImplemented: true
+    });
+    game = readyToCast([TREASURE_HUNT()], [ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({ library: toHand(0, [FOREST(), ISLAND(), BEAR()], "treasure-library") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Forest", "Island", "Grizzly Bears"]);
+    expect(game.players[0]!.library).toHaveLength(0);
+
+    expect(profileOf(PSIONIC_BLAST())).toMatchObject({
+      targetKind: "any",
+      effects: [{ kind: "compound", effects: [{ kind: "damage-any-target", amount: 4 }, { kind: "damage-controller", amount: 2 }] }],
+      fullyImplemented: true
+    });
+    game = readyToCast([PSIONIC_BLAST()], [ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[1]!.life).toBe(36);
+    expect(game.players[0]!.life).toBe(38);
   });
 
   it("filters power-threshold creature targets before resolution", () => {
@@ -4657,6 +4692,16 @@ describe("casting", () => {
     const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(false);
+  });
+
+  it("reuses typed artifact-or-creature targeting for Mortify", () => {
+    expect(profileOf(MORTIFY())).toMatchObject({ targetKind: "creature-or-enchantment", fullyImplemented: true });
+    const enchantment = make({ name: "Test Enchantment", type_line: "Enchantment" });
+    let game = readyToCast([MORTIFY()], [PLAINS(), SWAMP(), SWAMP()], [], [enchantment, BEAR()]);
+    expect(legalTargets(game, 0, "creature-or-enchantment")).toHaveLength(2);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Test Enchantment")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(false);
   });
 
   it("uses continuous flying grants when filtering flying targets", () => {
@@ -9447,6 +9492,7 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   const CONTROL_MAGIC = () => make({ name: "Control Magic", type_line: "Enchantment — Aura", mana_cost: "{2}{U}{U}", cmc: 4, oracle_text: "Enchant creature\nYou control enchanted creature.", oracle_id: "cd0d7141-46d2-4aa3-bc77-6b3b4513803e", scryfall_id: "7b52f459-c703-4a0b-9114-ff69eec61287" });
   const HARDENED_SCALE_ARMOR = () => make({ name: "Hardened-Scale Armor", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature gets +3/+3.", oracle_id: "9eb58db8-7934-485c-8606-fb1a6cc60d42", scryfall_id: "54c4cb29-3eb9-4a24-a91a-896802c78aef" });
   const DEBILITATING_INJURY = () => make({ name: "Debilitating Injury", type_line: "Enchantment — Aura", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature gets -2/-2.", oracle_id: "52eab77d-9a07-4e14-8872-72681d3b3d0e", scryfall_id: "cf2d01e2-9f9f-4674-b8ab-b783d3faef03" });
+  const DARKSTEEL_MUTATION = () => make({ name: "Darksteel Mutation", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature is an Insect artifact creature with base power and toughness 0/1 and has indestructible, and it loses all other abilities, card types, and creature types.", oracle_id: "05a4f8ff-49da-42af-add5-6248c4b0644b", scryfall_id: "05a4f8ff-49da-42af-add5-6248c4b0644b" });
   const WILD_GROWTH = () => make({ name: "Wild Growth", type_line: "Enchantment — Aura", mana_cost: "{G}", cmc: 1, oracle_text: "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.", oracle_id: "706ae742-1807-44b7-a4fa-f2e26f61519a", scryfall_id: "b87f2d2c-d6ad-4639-b8c3-e75569c5373f" });
   const LEAFDRAKE_ROOST = () => make({ name: "Leafdrake Roost", type_line: "Enchantment — Aura", mana_cost: "{3}{G}{U}", cmc: 5, oracle_text: "Enchant land\nEnchanted land has \"{G}{U}, {T}: Create a 2/2 green and blue Drake creature token with flying.\"", oracle_id: "b5ff42a1-1ac4-472b-8479-5e3749845305" });
   const PRESENCE_OF_GOND = () => make({ name: "Presence of Gond", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature has \"{T}: Create a 1/1 green Elf Warrior creature token.\"", oracle_id: "ab42398c-f0a1-4b94-ac5f-b8768e1b4e05" });
@@ -9464,6 +9510,35 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     expect(profile.targetKind).toBe("creature");
     expect(profile.auraModification).toMatchObject({ power: 3, toughness: 3 });
     expect(profile.fullyImplemented).toBe(true);
+  });
+
+  // CR 303.4h (attachment), 613.1/613.6 (continuous effects), and 613.7 (base P/T).
+  it("applies Darksteel Mutation's layer-setting Aura and removes the enchanted creature's abilities", () => {
+    const mutation = DARKSTEEL_MUTATION();
+    expect(profileOf(mutation)).toMatchObject({
+      targetKind: "creature",
+      fullyImplemented: true,
+      auraModification: {
+        characteristicSetting: {
+          basePower: 0,
+          baseToughness: 1,
+          types: ["Artifact", "Creature"],
+          subtypes: ["Insect"],
+          keywords: ["indestructible"],
+          removeAbilities: true
+        }
+      }
+    });
+    let game = readyToCast([mutation], [SICK_TAPPER(), PLAINS(), PLAINS()]);
+    const creature = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sick Tapper")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: creature.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Darksteel Mutation")?.attachedTo).toBe(creature.instance_id);
+    const enchanted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === creature.instance_id)!;
+    expect(powerOf(enchanted, game)).toBe(0);
+    expect(toughnessOf(enchanted, game)).toBe(1);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === creature.instance_id)).toBe(false);
+    expect(enchanted.card.name).toBe("Sick Tapper");
   });
 
   it("attaches to its target creature on resolution and applies the static bonus", () => {
