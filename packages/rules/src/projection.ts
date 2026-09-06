@@ -304,6 +304,14 @@ function nameOf(state: GameState, instanceId: string): string {
   return "criatura";
 }
 
+function findPublicPermanentName(state: GameState, instanceId: string): string | undefined {
+  for (const player of state.players) {
+    const permanent = player.battlefield.find((candidate) => candidate.instance_id === instanceId);
+    if (permanent) return permanent.card.name;
+  }
+  return undefined;
+}
+
 /** Builds the filtered view one seat is allowed to receive. */
 export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
   if (viewerSeat < 0 || viewerSeat >= state.players.length) throw new Error("Ese asiento no participa en esta partida.");
@@ -443,11 +451,13 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
         ? { text: object.trigger?.definition.sourceText ?? object.activated?.text ?? object.card.oracle_text ?? undefined }
         : {}),
       ...(object.card.image_normal ? { image_normal: object.card.image_normal } : {}),
-      targets: object.targets.map((target, index) =>
-        target.kind === "player" ? state.players[target.seat]!.name
-          : target.kind === "permanent" ? nameOf(state, target.instanceId)
-            : target.kind === "graveyard-card" ? state.players[target.seat]!.graveyard.find((card) => card.instance_id === target.instanceId)?.name ?? "carta del cementerio"
-            : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? object.targetLabels?.[index] ?? "hechizo"),
+      targets: object.targets.map((target, index) => {
+        const lastKnown = object.targetLabels?.[index];
+        if (target.kind === "player") return state.players[target.seat]?.name ?? lastKnown ?? "jugador";
+        if (target.kind === "permanent") return findPublicPermanentName(state, target.instanceId) ?? lastKnown ?? "permanente";
+        if (target.kind === "graveyard-card") return state.players[target.seat]?.graveyard.find((card) => card.instance_id === target.instanceId)?.name ?? lastKnown ?? "carta del cementerio";
+        return state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? lastKnown ?? "hechizo";
+      }),
       countered: object.countered
     })),
     librarySearch,
