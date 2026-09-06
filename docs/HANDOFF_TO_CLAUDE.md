@@ -19,6 +19,8 @@ primitives, Ruby's reusable attack-power threshold, Hinder's countered-spell
 library placement, Cut Down's total-power/toughness target filter, and Cloud's
 equipped self-and-attached-Equipment trigger doubler, event-controller life-gain
 trigger, Aura-enchanted-land mana bonus, and counted-enchantment Aura scaling;
+The current source also includes the reusable multi-card discard activation
+cost primitive with exact hand-card combinations and battlefield-source return.
 verify the
 Pages run before reporting
 a new client asset as live.
@@ -53,6 +55,11 @@ primitives
 were added;
 the C13
 dictionary remains 341 profiles with 292 complete.
+
+Commit `2d45d2ad` adds the `global-multi-card-discard-cost` primitive and a
+Fae of Wishes scenario (`c0abbed2-d213-47ef-8d6c-4a21efb9a55f`). The source
+and rules tests are current; the numeric export remains at the checkpoint
+above until the integrator reruns it with the local catalog database.
 
 The static P/T vocabulary now also covers source-relative conditions such as
 life thresholds and opponent graveyard creature counts. These are parameterized
