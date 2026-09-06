@@ -543,7 +543,7 @@ function cardActionMenuEntries(cardId: string): LegalAction[] {
 
 function cardHasAlternateHandAction(cardId: string): boolean {
   return cardActionEntriesForCard(cardId).some((entry) =>
-    entry.action.type === "activate-mana" || entry.action.type === "cycle" || entry.action.type === "toggle-trigger-yield");
+    entry.action.type === "activate-mana" || entry.action.type === "cycle");
 }
 
 function cardActionsForCard(cardId: string): LegalAction[] {
@@ -668,15 +668,17 @@ function runAction(entry: LegalAction, subject: string): void {
 }
 
 function onCardClick(cardId: string, forcedAction?: LegalAction): void {
-  const choices = cardActionMenuEntries(cardId);
+  // A left click is for playing the card. Trigger-yield preferences are a
+  // right-click/long-press concern only, so they never open the menu here and
+  // never count toward "this card is ambiguous".
+  const choices = cardActionEntriesForCard(cardId).filter((entry) => entry.action.type !== "toggle-trigger-yield");
   const card = seatOf(view?.viewerSeat ?? -1)?.hand?.find((candidate) => candidate.instance_id === cardId);
   const hasCycleOnly = choices.some((entry) => entry.action.type === "cycle") && !choices.some((entry) => entry.action.type === "cast");
   const hasManaAbility = choices.some((entry) => entry.action.type === "activate-mana");
-  const hasYieldToggle = choices.some((entry) => entry.action.type === "toggle-trigger-yield");
   // Never guess between printed modes. This is especially important for
   // hand-based mana abilities (e.g. Simian Spirit Guide): a normal click must
   // open the general menu, where casting and exiling for mana are separate.
-  if (!forcedAction && (choices.length > 1 || hasManaAbility || hasYieldToggle || (hasCycleOnly && Boolean(card)))) {
+  if (!forcedAction && (choices.length > 1 || hasManaAbility || (hasCycleOnly && Boolean(card)))) {
     ui.cardActionMenu = ui.cardActionMenu === cardId ? null : cardId;
     ui.notice = "Elige qué hacer con esta carta.";
     render();
@@ -729,9 +731,13 @@ function triggerYieldActionsFor(instanceId: string): LegalAction[] {
 }
 
 function triggerYieldStatusFor(instanceId: string): string | null {
-  const entry = triggerYieldActionsFor(instanceId)[0];
-  if (!entry || entry.action.type !== "toggle-trigger-yield") return null;
-  return entry.action.enabled ? "Los triggers opcionales de esta carta se resolverán normalmente." : "Los triggers opcionales de esta carta se declinan automáticamente.";
+  const entries = triggerYieldActionsFor(instanceId);
+  if (!entries.length) return null;
+  // `enabled: true` on the action means "turn yielding ON" — i.e. it is off now.
+  const yielded = entries.filter((entry) => entry.action.type === "toggle-trigger-yield" && !entry.action.enabled).length;
+  if (!yielded) return "Los triggers opcionales de esta carta se resolverán normalmente.";
+  if (yielded === entries.length) return "Todos los triggers opcionales de esta carta se declinan automáticamente.";
+  return `Se declina ${yielded} de ${entries.length} triggers opcionales de esta carta.`;
 }
 
 function openCardActionMenu(cardId: string): void {

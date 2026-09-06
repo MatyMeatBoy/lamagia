@@ -7199,10 +7199,10 @@ describe("triggered abilities", () => {
     let game = readyToCast([BOLT()], [FECUNDITY(), MOUNTAIN(), BEAR()]);
     const fecundity = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Fecundity")!;
     const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
-    game = applyAction(game, 0, { type: "toggle-trigger-yield", sourceId: fecundity.instance_id, enabled: true });
+    game = applyAction(game, 0, { type: "toggle-trigger-yield", sourceId: fecundity.instance_id, abilityIndex: 0, enabled: true });
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
     game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
-    expect(game.players[0]!.yieldedTriggerSources).toContain(fecundity.instance_id);
+    expect(game.players[0]!.yieldedTriggerSources).toContain(`${fecundity.instance_id}:0`);
     expect(game.log.some((entry) => entry.text.includes("no realiza la habilidad opcional de Fecundity"))).toBe(true);
   });
 
@@ -7218,6 +7218,26 @@ describe("triggered abilities", () => {
     game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
     expect(game.players[0]!.hand.length).toBeGreaterThan(0);
     expect(game.players[0]!.yieldedTriggerSources).toContain(source.instance_id);
+  });
+
+  it("yields one optional trigger of a multi-trigger card and keeps the other live", () => {
+    const twoTrigger = make({
+      name: "Twin Beacon", type_line: "Enchantment", mana_cost: "{2}{U}", cmc: 3,
+      oracle_text: "Whenever you draw a card, you may gain 1 life.\nWhenever you gain life, you may draw a card."
+    });
+    let game = readyToCast([], [twoTrigger]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Twin Beacon")!;
+    const toggles = legalActions(game, 0).filter((entry) => entry.action.type === "toggle-trigger-yield" && entry.action.sourceId === source.instance_id);
+    expect(toggles).toHaveLength(2);
+    expect(toggles.every((entry) => entry.action.type === "toggle-trigger-yield" && entry.action.abilityIndex !== undefined)).toBe(true);
+    // Each toggle names the specific ability it silences.
+    expect(new Set(toggles.map((entry) => entry.label)).size).toBe(2);
+
+    const drawYield = toggles.find((entry) => entry.label.includes("draw a card") || entry.label.includes("gain 1 life"))!;
+    game = applyAction(game, 0, drawYield.action);
+    expect(game.players[0]!.yieldedTriggerSources).toHaveLength(1);
+    expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
   it("pays Foster and reveals until a creature, sending the rest to the graveyard", () => {

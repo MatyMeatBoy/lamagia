@@ -711,7 +711,7 @@ export type GameAction =
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
   | { readonly type: "choose-mana-source"; readonly sourceId: string; readonly manaSourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType }
   | { readonly type: "cancel-mana-payment"; readonly sourceId: string }
-  | { readonly type: "toggle-trigger-yield"; readonly sourceId: string; readonly enabled: boolean }
+  | { readonly type: "toggle-trigger-yield"; readonly sourceId: string; readonly abilityIndex?: number; readonly enabled: boolean }
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
@@ -7308,17 +7308,25 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   // Abilities of permanents this seat controls. Mana abilities resolve
   // immediately and never use the stack (rule 605.3a); everything else is
   // announced like a spell and waits for priority to pass.
+  const yieldSet = new Set(player.yieldedTriggerSources ?? []);
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
-    if (profile.triggers.length) {
-      const yielded = player.yieldedTriggerSources?.includes(permanent.instance_id) ?? false;
+    // One toggle per *optional* triggered ability, so a card with several
+    // triggers is disambiguated instead of one blanket switch.
+    const optionalTriggers = profile.triggers
+      .map((trigger, abilityIndex) => ({ trigger, abilityIndex }))
+      .filter((entry) => entry.trigger.optional);
+    const multiple = optionalTriggers.length > 1;
+    for (const { trigger, abilityIndex } of optionalTriggers) {
+      const yielded = yieldSet.has(permanent.instance_id) || yieldSet.has(`${permanent.instance_id}:${abilityIndex}`);
+      const which = multiple ? `«${trigger.sourceText}»` : `de ${permanent.card.name}`;
       actions.push({
-        action: { type: "toggle-trigger-yield", sourceId: permanent.instance_id, enabled: !yielded },
-        label: yielded ? `Reactivar triggers de ${permanent.card.name}` : `Ignorar triggers de ${permanent.card.name}`,
+        action: { type: "toggle-trigger-yield", sourceId: permanent.instance_id, abilityIndex, enabled: !yielded },
+        label: yielded ? `Reactivar trigger ${which}` : `Ignorar trigger ${which}`,
         cardId: permanent.instance_id,
         note: yielded
-          ? "Volver a mostrar las decisiones opcionales de esta carta."
-          : "Las habilidades opcionales de esta carta se declinan automáticamente; las habilidades obligatorias siguen entrando en la pila."
+          ? `Volver a mostrar esta habilidad opcional${multiple ? ` de ${permanent.card.name}` : ""}.`
+          : `Se declina automáticamente esta habilidad opcional${multiple ? ` de ${permanent.card.name}` : ""}; las obligatorias y las del oponente siguen entrando en la pila.`
       });
     }
     for (const ability of manaAbilitiesFor(state, permanent)) {
@@ -8612,17 +8620,26 @@ function applyCancelManaPayment(state: GameState, seat: SeatId, action: Extract<
   return logged({ ...state, pendingChoice: null }, seat, `${playerAt(state, seat).name} cancela el pago de ${choice.sourceCard.name}.`);
 }
 
+/** Yield-set key: bare id yields every optional trigger on the source; `id:n` yields only trigger n. */
+function triggerYieldKey(sourceId: string, abilityIndex?: number): string {
+  return abilityIndex === undefined ? sourceId : `${sourceId}:${abilityIndex}`;
+}
+
 function applyToggleTriggerYield(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "toggle-trigger-yield" }>): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para cambiar esta preferencia.");
   const source = playerAt(state, seat).battlefield.find((permanent) => permanent.instance_id === action.sourceId);
-  if (!source || !cardProfile(source.card).triggers.length) throw new Error("Esa carta no tiene triggers configurables.");
+  const triggers = source ? cardProfile(source.card).triggers : [];
+  if (!source || !triggers.length) throw new Error("Esa carta no tiene triggers configurables.");
+  if (action.abilityIndex !== undefined && !triggers[action.abilityIndex]) throw new Error("Esa habilidad disparada no existe.");
+  const key = triggerYieldKey(action.sourceId, action.abilityIndex);
+  const abilityText = action.abilityIndex !== undefined ? triggers[action.abilityIndex]!.sourceText : null;
   return logged(withPlayer(state, seat, (player) => {
     const current = new Set(player.yieldedTriggerSources ?? []);
-    if (action.enabled) current.add(action.sourceId); else current.delete(action.sourceId);
+    if (action.enabled) current.add(key); else current.delete(key);
     return { ...player, yieldedTriggerSources: [...current] };
   }), seat, action.enabled
-    ? `${source.card.name}: se omiten sus triggers opcionales; los obligatorios y los del oponente siguen activos.`
-    : `${source.card.name}: vuelven a mostrarse sus triggers opcionales.`);
+    ? `${source.card.name}: se omite ${abilityText ? `«${abilityText}»` : "su trigger opcional"}; los obligatorios y los del oponente siguen activos.`
+    : `${source.card.name}: vuelve a mostrarse ${abilityText ? `«${abilityText}»` : "su trigger opcional"}.`);
 }
 
 function applyChooseBasicLandSearch(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-basic-land-search" }>): GameState {
@@ -9864,14 +9881,20 @@ export function settle(state: GameState): GameState {
       const sourceController = choice.type === "optional-trigger"
         ? (choice.sourceController ?? choice.trigger?.controller ?? choice.seat)
         : undefined;
+      const yieldSet = sourceController !== undefined ? new Set(playerAt(next, sourceController).yieldedTriggerSources ?? []) : null;
+      const yieldedAbilityIndex = choice.type === "optional-trigger" && choice.trigger
+        ? cardProfile(choice.trigger.sourceCard).triggers.findIndex((definition) => definition.sourceText === choice.trigger!.definition.sourceText)
+        : -1;
       const yielded = choice.type === "optional-trigger"
         && choice.trigger?.definition.optional === true
         && sourceId !== undefined
         && sourceController === choice.seat
+        && yieldSet !== null
         // Yield is a controller preference only. It must never suppress a
         // payment choice belonging to another player (e.g. Kavu/Rhystic-style
-        // triggers), nor a trigger controlled by an opponent.
-        && (playerAt(next, sourceController).yieldedTriggerSources?.includes(sourceId) ?? false);
+        // triggers), nor a trigger controlled by an opponent. A bare source id
+        // yields every optional trigger; `id:n` yields only ability n.
+        && (yieldSet.has(sourceId) || (yieldedAbilityIndex >= 0 && yieldSet.has(`${sourceId}:${yieldedAbilityIndex}`)));
       if (yielded) {
         next = applyChooseTrigger(next, choice.seat, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
         continue;

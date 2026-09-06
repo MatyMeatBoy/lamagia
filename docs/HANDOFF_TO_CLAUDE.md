@@ -8,6 +8,18 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 Batch of player-reported gameplay/UX fixes. Landed so far:
 
+- **Per-ability trigger yield, right-click only.** `toggle-trigger-yield` now
+  carries an optional `abilityIndex`; the yield set stores `id` (whole source)
+  or `id:n` (one ability), and resolution (`resolveTopOfStack` gate) checks
+  both. The engine emits one toggle per *optional* trigger, each labelled with
+  that ability's Oracle text when a card has more than one. Client: a left
+  click on a card now runs its primary play action and never opens the yield
+  menu; yield toggles live only in the right-click / long-press menu. Tests:
+  `engine.test.ts` › "yields one optional trigger of a multi-trigger card…"
+  plus the updated Fecundity/mandatory cases. `npm run check` clean, rules
+  suite 788 passing.
+
+
 - **MTGO-style priority bar.** New `priorityBarHtml()` renders a centred bar
   between the opponents' band and the local board (inside `.table`, after the
   combat bar). It carries the Auto-pasar toggle (moved out of the dock) and a
