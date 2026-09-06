@@ -605,6 +605,8 @@ export type SpellEffect =
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
+  /** Ajani, the Greathearted: counters on creatures plus loyalty on other planeswalkers. */
+  | { readonly kind: "add-counter-creatures-and-other-planeswalkers"; readonly counter: string; readonly amount: number; readonly planeswalkerAmount: number }
   | { readonly kind: "add-counter-all-creatures"; readonly counter: string; readonly amount: number | "X" }
   | { readonly kind: "remove-all-counters-target" }
   | { readonly kind: "remove-all-counters-all-and-exile-tokens" }
@@ -799,6 +801,7 @@ export type TriggerSubject =
   | "another-creature-you-control"
   | "creature-you-control"
   | "artifact-creature-you-control"
+  | "creature-with-deathtouch-you-control"
   | "another-permanent-you-control"
   | "permanent-you-control"
   | "land-you-control"
@@ -2662,11 +2665,13 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "attacks", subject: "creature-attacks-enchanted-player", pattern: /^whenever\s+a\s+creature\s+attacks\s+enchanted\s+player,?\s*(.+)$/i },
   { event: "attacks", subject: "player-attacks-enchanted-player", pattern: /^whenever\s+a\s+player\s+attacks\s+enchanted\s+player\s+with\s+one\s+or\s+more\s+creatures,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", pattern: /^whenever\s+an\s+artifact\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
+  { event: "deals-combat-damage-to-player", subject: "creature-with-deathtouch-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+with\s+deathtouch\s+deals\s+combat\s+damage\s+to\s+a\s+player(?:\s+or\s+(?:a\s+)?planeswalker)?,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+one\s+of\s+your\s+opponents,?\s*(.+)$/i },
   // This event is raised for both combat and noncombat damage from a
   // permanent, unlike the combat-only templates above (CR 603.2).
+  { event: "deals-damage-to-player", subject: "creature-with-deathtouch-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+with\s+deathtouch\s+deals\s+damage\s+to\s+a\s+player(?:\s+or\s+(?:a\s+)?planeswalker)?,?\s*(.+)$/i },
   { event: "deals-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+damage\s+to\s+an?\s+opponent,?\s*(.+)$/i },
 
   // A player is the subject.
@@ -2982,7 +2987,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^~ deals damage equal to its power to target player or planeswalker$/i.test(text)) {
     return { effect: { kind: "damage-triggered-creature-power" }, target: "player-or-planeswalker" };
   }
-  if (/^put a \+1\/\+1 counter on it\.?$/i.test(text)) {
+  if (/^put a \+1\/\+1 counter on (?:it|that creature)\.?$/i.test(text)) {
     return { effect: { kind: "add-counter-triggered-creature", counter: "+1/+1", amount: 1 }, target: "none" };
   }
   if (/^its controller gains (\w+) life\.?$/i.test(text)) {
@@ -3468,6 +3473,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on each creature you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-creatures-you-control", counter: match[2]!, amount }, target: "none" };
+  }
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on each creature you control and (?:a|an|one|two|three|four|five|\d+) loyalty counter on each other planeswalker you control$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    const loyaltyAmount = toNumber(text.match(/and (a|an|one|two|three|four|five|\d+) loyalty counter/i)?.[1] ?? "") ?? 1;
+    if (amount !== null) {
+      return { effect: { kind: "add-counter-creatures-and-other-planeswalkers", counter: match[2]!, amount, planeswalkerAmount: loyaltyAmount }, target: "none" };
+    }
   }
   if ((match = /^Put (X|a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counters? on each creature$/i.exec(text))) {
     const amount = /^X$/i.test(match[1]!) ? "X" as const : toNumber(match[1]);

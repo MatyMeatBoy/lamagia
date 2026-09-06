@@ -49,6 +49,11 @@ Coverage numbers have two deliberate units:
 - **Commander 2013:** 269 / 341 unique cards (78.9%), 72 pending.
 - **Commander 2014:** 199 / 322 unique cards (61.8%), 123 pending.
 
+The next one-line cluster adds `global-deathtouch-damage-counter-trigger`:
+generic damage-to-player triggers now include combat damage without double
+firing, and the existing triggered-creature counter effect is executable.
+The Vraska scenario uses `cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb`.
+
 The static P/T vocabulary now also covers source-relative conditions such as
 life thresholds and opponent graveyard creature counts. These are parameterized
 primitives, so reprints reuse the same profile rather than adding card-specific
@@ -4386,3 +4391,15 @@ preserved, zero-valued keys are removed, and the normal state-based-action
 loop reevaluates the creature after the change. This is shared by undying,
 persist, graft, level and ordinary counter effects rather than a card branch;
 the regression suite covers both the stored counters and live P/T result.
+
+## Near-complete rescan and Ajani counter primitive (2026-09-05)
+
+The current source rescan found the next reusable one-line gap in Ajani, the
+Greathearted: `Put a +1/+1 counter on each creature you control and a loyalty
+counter on each other planeswalker you control.` The new
+`add-counter-creatures-and-other-planeswalkers` effect applies both counter
+groups atomically, excludes the activating planeswalker, and is covered by an
+end-to-end scenario (CR 122.1, 606.3). The generated global near-complete
+snapshot still reports Fae/Vraska and the same 15,142-card queue because this
+worktree has no `data/catalog/prossh.sqlite`; rerun `rules:engine:export` and
+`rules:near-complete` in the integrator checkout after restoring the catalog.

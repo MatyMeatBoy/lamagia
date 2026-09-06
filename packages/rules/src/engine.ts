@@ -2059,7 +2059,11 @@ function triggerMatches(
   definition: TriggerDefinition,
   event: GameEvent
 ): boolean {
-  if (definition.event !== event.kind) return false;
+  // A generic "deals damage to a player" trigger includes combat damage;
+  // combat has a more specific event only so cards that explicitly say
+  // "combat damage" can exclude noncombat damage (CR 603.2, 120.2a).
+  if (definition.event !== event.kind
+    && !(definition.event === "deals-damage-to-player" && event.kind === "deals-combat-damage-to-player")) return false;
   if (definition.requiresManaTypeNotSpent) {
     const entering = eventObject(event);
     const permanent = entering && findPermanent(state, entering.permanentId);
@@ -2195,6 +2199,11 @@ function triggerMatches(
     case "another-permanent-you-control": return !isSelf && cardProfile(object.card).isPermanent && object.controller === watcher.controller;
     case "permanent-you-control": return cardProfile(object.card).isPermanent && object.controller === watcher.controller;
     case "creature-you-control": return objectIsCreature && object.controller === watcher.controller;
+    case "creature-with-deathtouch-you-control": {
+      const permanent = findPermanent(state, object.permanentId);
+      return objectIsCreature && object.controller === watcher.controller
+        && Boolean(permanent && keywordOf(state, permanent, "deathtouch"));
+    }
     case "artifact-creature-you-control": {
       const profile = cardProfile(object.card);
       return objectIsCreature && profile.types.includes("Artifact") && object.controller === watcher.controller;
@@ -2472,11 +2481,12 @@ function dealDamageToPlayer(
   seat: SeatId,
   amount: number,
   sourceName: string,
-  source?: DamageSource
+  source?: DamageSource,
+  emitDamageEvent = true
 ): GameState {
   if (amount <= 0) return state;
   let next = loseLife(state, seat, amount);
-  if (source) {
+  if (source && emitDamageEvent) {
     next = raiseEvent(next, {
       kind: "deals-damage-to-player",
       permanentId: source.permanentId,
@@ -4890,6 +4900,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         ? { ...entry, countered: true, counteredToBattlefieldController: controller }
         : entry)) };
     }
+    case "add-counter-triggered-creature": {
+      const targetId = object.trigger?.eventPermanentId ?? object.triggeredPermanentId;
+      const target = targetId ? findPermanent(state, targetId) : undefined;
+      if (!target || !isCreature(cardProfile(target.card))) return state;
+      return withPlayer(state, target.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } }
+          : permanent)
+      }));
+    }
     case "add-counter-source": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
       const source = findPermanent(state, sourceId);
@@ -4918,6 +4939,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         battlefield: player.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
           ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } }
           : permanent)
+      }));
+    }
+    case "add-counter-creatures-and-other-planeswalkers": {
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => {
+          const profile = cardProfile(permanent.card);
+          const isOtherPlaneswalker = profile.types.includes("Planeswalker") && permanent.instance_id !== sourceId;
+          if (!isCreature(profile) && !isOtherPlaneswalker) return permanent;
+          const counters = { ...permanent.counters };
+          if (isCreature(profile)) counters[effect.counter] = (counters[effect.counter] ?? 0) + effect.amount;
+          if (isOtherPlaneswalker) counters.loyalty = (counters.loyalty ?? 0) + effect.planeswalkerAmount;
+          return { ...permanent, counters };
+        })
       }));
     }
     case "add-counter-all-creatures": {
@@ -6139,7 +6175,7 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
     const multiplier = dealer ? equippedCreatureDamageMultiplier(next, dealer.instance_id) : 1;
     next = dealDamageToPlayer(next, hit.seat, hit.amount * multiplier + bonus, hit.sourceName, dealer
       ? { permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card }
-      : undefined);
+      : undefined, false);
     if (dealer && hit.amount > 0) {
       next = raiseEvent(next, {
         kind: "deals-combat-damage-to-player",
