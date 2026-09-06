@@ -529,6 +529,8 @@ export type SpellEffect =
   | { readonly kind: "put-hand-creatures-onto-battlefield"; readonly amount: number }
   /** Kicked-only follow-up (Hunting Wilds): untap and animate the lands the base search JUST fetched onto the battlefield, not every matching land the controller owns. */
   | { readonly kind: "untap-and-animate-fetched-lands"; readonly subtype: string; readonly power: number; readonly toughness: number; readonly color: MagicColor }
+  /** "Exile the top N cards of your library. You may put any number of creature and/or land cards from among them onto the battlefield" (Xenagos, the Reveler). */
+  | { readonly kind: "exile-top-then-choose-creatures-lands-to-battlefield"; readonly amount: number }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -769,7 +771,13 @@ export type SpellEffect =
   | { readonly kind: "opponents-cant-cast-spells-this-turn" }
   | { readonly kind: "add-mana"; readonly pool: Readonly<Record<string, number>> }
   /** "Add one mana of any color" as a one-shot resolution, not a mana ability (Lotus Cobra's Landfall): the color is chosen when the effect resolves. */
-  | { readonly kind: "add-mana-any-color" }
+  | {
+      readonly kind: "add-mana-any-color";
+      /** Restricts the offered choice to a fixed subset instead of all five colors (Xenagos, the Reveler). */
+      readonly colors?: readonly MagicColor[];
+      /** "X mana ..., where X is the number of creatures you control" (Xenagos, the Reveler): otherwise a single mana. */
+      readonly amount?: "creatures-you-control";
+    }
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
   /** "Flip a coin. If you lose the flip, ~ deals N damage to you" (Mana Crypt's upkeep trigger). */
   | { readonly kind: "coin-flip-self-damage-if-lost"; readonly amount: number }
@@ -2224,8 +2232,12 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
       effect: recognized.effect, targetKind: recognized.target, text: line.trim()
     };
   }
-  // Mana abilities have their own immediate-resolution path (CR 605.1a).
-  if (/^add\b/i.test(effectText.trim())) return null;
+  // Mana abilities have their own immediate-resolution path (CR 605.1a); a
+  // loyalty ability is explicitly excluded from being a mana ability by that
+  // same rule even when its own effect happens to add mana (Xenagos, the
+  // Reveler's +1), so this early-exit only applies to a non-loyalty cost.
+  const isLoyaltyCost = /^\s*([+−–-])?\s*(\d+)\s*$/.test(costText);
+  if (!isLoyaltyCost && /^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
   const sorcerySpeedOnly = /\.\s*Activate only as a sorcery\.?$/i.test(effectText);
   const parsedEffectText = effectText
@@ -3028,6 +3040,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // the color as part of resolving the effect, mirroring the existing
   // choose-color infrastructure for spell effects.
   if (/^Add one mana of any color$/i.test(text)) return { effect: { kind: "add-mana-any-color" }, target: "none" };
+  // "Add X mana in any combination of {R} and/or {G}, where X is the number
+  // of creatures you control" (Xenagos, the Reveler): modeled as choosing ONE
+  // of the two colors for all X mana rather than a true free split, the same
+  // simplification `add-mana-any-color` already makes for a single mana.
+  if ((match = /^Add X mana in any combination of (\{[WUBRGC]\})(?:\s+and\/or\s+(\{[WUBRGC]\}))?, where X is the number of creatures you control$/i.exec(text))) {
+    const colors = [match[1], match[2]].filter((symbol): symbol is string => Boolean(symbol)).map((symbol) => symbol.slice(1, -1).toUpperCase() as MagicColor);
+    if (colors.length) return { effect: { kind: "add-mana-any-color", colors, amount: "creatures-you-control" }, target: "none" };
+  }
   const targetOpponentToken = /^Target opponent creates (.+)$/i.exec(text)
     ?? /^Create (.+) under target opponent'?s control$/i.exec(text);
   if (targetOpponentToken) {
@@ -4007,6 +4027,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]!);
     if (amount !== null) return { effect: { kind: "put-hand-creatures-onto-battlefield", amount }, target: "none" };
   }
+  if ((match = /^Exile the top (\w+) cards? of your library\.\s*You may put any number of creature and\/or land cards from among them onto the battlefield$/i.exec(text))) {
+    const amount = toNumber(match[1]!);
+    if (amount !== null) return { effect: { kind: "exile-top-then-choose-creatures-lands-to-battlefield", amount }, target: "none" };
+  }
   if (/^Return target creature card from your graveyard to the battlefield\. You lose life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) {
     return { effect: { kind: "reanimate-target-creature-lose-mana-value-life" }, target: "creature-card-in-your-graveyard" };
   }
@@ -4804,7 +4828,11 @@ function recognizeText(text: string): RecognizedText {
     // recognised. One the parser cannot read still plays through the structured
     // `produced_mana` fallback, but the card must not claim its text is executed.
     const manaLine = /^([^:]{1,80}):\s*(add\b.*)$/i.exec(line);
-    if (manaLine) {
+    // A loyalty ability's cost is never a mana ability (CR 605.1a), even when
+    // its own effect happens to add mana (Xenagos, the Reveler's +1) — let it
+    // fall through to the normal activated-ability path below instead.
+    const isLoyaltyManaLine = Boolean(manaLine && /^\s*([+−–-])?\s*(\d+)\s*$/.test(manaLine[1]!.trim()));
+    if (manaLine && !isLoyaltyManaLine) {
       const variableStorageMana = /^add\s+X\s+mana\s+in\s+any\s+combination\s+of\s+\{[WUBRGC]\}(?:\s+and\/or\s+\{[WUBRGC]\})?\.?$/i.test(manaLine[2]!.trim())
         && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(manaLine[1]!);
       // Board-dependent color (Fellwar Stone, Harvester Druid): resolved at

@@ -228,6 +228,12 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const chosen = choose ?? finish;
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
+  if (state.pendingChoice?.type === "exile-batch-multi" && state.pendingChoice.seat === seat) {
+    const choose = available.find((entry) => entry.action.type === "choose-exile-batch-card");
+    const finish = available.find((entry) => entry.action.type === "finish-exile-batch");
+    const chosen = choose ?? finish;
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "proliferate" && state.pendingChoice.seat === seat) {
     const target = available.find((entry) => entry.action.type === "choose-proliferate-target");
     if (target) return { action: target.action, label: target.label };
