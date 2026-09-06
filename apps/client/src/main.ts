@@ -165,6 +165,22 @@ function autoPassForPhase(): boolean {
   return !playerDecision;
 }
 
+function shouldAutoPassServer(next: GameView): boolean {
+  if (!ui.autoPass) return false;
+  const scope: StopScope = next.activeSeat === next.viewerSeat ? "mine" : "opponents";
+  if (ui.stops[scope].has(next.step)) return false;
+  const playerDecision = Boolean(
+    next.librarySearch || next.scry || next.topSelection || next.reorderTop || next.viewedHand
+      || next.combat.awaitingAttackers || next.combat.awaitingBlockersFrom.includes(next.viewerSeat)
+      || next.legalActions.some((entry) => entry.requiresTarget || entry.requiresTargets?.length
+        || entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger-target"
+        || (entry.action.type !== "pass" && entry.action.type !== "concede"
+          && entry.action.type !== "activate-mana" && entry.action.type !== "toggle-trigger-yield"
+          && entry.action.type !== "cast" && entry.action.type !== "activate"))
+  );
+  return !playerDecision;
+}
+
 function phaseRailHtml(): string {
   const currentIndex = STEP_ORDER.indexOf(view!.step);
   const priorityReadout = view!.finished
@@ -430,7 +446,7 @@ async function refresh(): Promise<void> {
     // A phase stopper is a local presentation preference. Re-apply the
     // authoritative auto-pass setting only when this phase is not stopped;
     // never overwrite a server response merely because the client refreshed.
-    if (!next.finished && autoPassForPhase() && next.waitingOn === next.viewerSeat && !next.priorityOpen) {
+    if (!next.finished && shouldAutoPassServer(next) && next.waitingOn === next.viewerSeat && !next.priorityOpen) {
       const settled = await api<GameView>(`/api/matches/${session.matchId}/settings`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: session.token, autoPass: true })

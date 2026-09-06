@@ -9158,6 +9158,10 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     if (chosen.length !== check.targetKinds.length) throw new Error(`${card.name} necesita ${check.targetKinds.length} objetivos legales.`);
     const valid = chosen.every((target, index) => legalTargets(state, seat, check.targetKinds![index]!, profile).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
     if (!valid) throw new Error(`Objetivo ilegal para ${card.name}.`);
+    // CR 601.2c: one object cannot be chosen twice for a single spell's
+    // target announcement, even when two target slots have the same kind.
+    const serialized = chosen.map((target) => JSON.stringify(target));
+    if (new Set(serialized).size !== serialized.length) throw new Error(`${card.name} no puede elegir el mismo objetivo dos veces.`);
     action = { ...action, targets: chosen };
   } else if (check.targetKind) {
     const allowed = legalTargets(state, seat, check.targetKind, profile);
