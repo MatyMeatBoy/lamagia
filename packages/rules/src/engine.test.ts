@@ -280,6 +280,7 @@ const C13_FURNACE_CELEBRATION = () => make({ name: "Furnace Celebration", type_l
 const C13_THRAXIMUNDAR = () => make({ name: "Thraximundar", type_line: "Legendary Creature — Zombie Assassin", mana_cost: "{4}{U}{B}{R}", cmc: 7, power: "6", toughness: "6", keywords: ["Haste"], oracle_text: "Haste\nWhenever Thraximundar attacks, defending player sacrifices a creature of their choice.\nWhenever a player sacrifices a creature, you may put a +1/+1 counter on Thraximundar.", oracle_id: "9e0e4217-fefe-48dd-9153-032460192b19", scryfall_id: "9e0e4217-fefe-48dd-9153-032460192b19" });
 const C13_JAR_OF_EYEBALLS = () => make({ name: "Jar of Eyeballs", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "Whenever a creature you control dies, put two eyeball counters on this artifact.\n{3}, {T}, Remove all eyeball counters from this artifact: Look at the top X cards of your library, where X is the number of eyeball counters removed this way. Put one of them into your hand and the rest on the bottom of your library in any order.", oracle_id: "3075dadd-240f-4455-9286-9f1d48f53a3f", scryfall_id: "3075dadd-240f-4455-9286-9f1d48f53a3f" });
 const C13_MAYAEL = () => make({ name: "Mayael the Anima", type_line: "Legendary Creature — Elf Shaman", mana_cost: "{3}{R}{G}{W}", cmc: 6, power: "2", toughness: "3", oracle_text: "{3}, {T}: Look at the top five cards of your library. You may put a creature card with power 5 or greater from among them onto the battlefield. Put the rest on the bottom of your library in any order.", oracle_id: "7f546d54-584d-4bec-8fbb-1ea2f8ab277e", scryfall_id: "7f546d54-584d-4bec-8fbb-1ea2f8ab277e" });
+const C13_ENDREK_SAHR = () => make({ name: "Endrek Sahr, Master Breeder", type_line: "Legendary Creature — Human Wizard", mana_cost: "{4}{B}", cmc: 5, power: "2", toughness: "2", oracle_text: "Whenever you cast a creature spell, create X 1/1 black Thrull creature tokens, where X is that spell's mana value.\nWhen you control seven or more Thrulls, sacrifice Endrek Sahr, Master Breeder.", oracle_id: "47a0079f-3544-45bc-a32a-bd93844c8c43", scryfall_id: "47a0079f-3544-45bc-a32a-bd93844c8c43" });
 const C13_UYO = () => make({ name: "Uyo, Silent Prophet", type_line: "Legendary Creature — Moonfolk Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "4", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\n{2}{U}{U}, Return two lands you control to their owner's hand: Copy target instant or sorcery spell. You may choose new targets for the copy.", oracle_id: "93da1e63-54d6-4b05-af91-f13e7e111176", scryfall_id: "93da1e63-54d6-4b05-af91-f13e7e111176" });
 const C13_NIVIX_GUILDMAGE = () => make({ name: "Nivix Guildmage", type_line: "Creature — Human Wizard", mana_cost: "{U}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "{1}{U}{R}: Draw a card, then discard a card.\n{2}{U}{R}: Copy target instant or sorcery spell you control. You may choose new targets for the copy.", oracle_id: "d04356f1-0e1a-4689-8e54-f88c4c6dd936", scryfall_id: "603e7dd3-c361-4e66-9df5-4b24f40734e8" });
 const C13_WILD_RICOCHET = () => make({ name: "Wild Ricochet", type_line: "Instant", mana_cost: "{2}{R}{R}", cmc: 4, oracle_text: "You may choose new targets for target instant or sorcery spell. Then copy that spell. You may choose new targets for the copy.", oracle_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9", scryfall_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9" });
@@ -3324,6 +3325,28 @@ describe("casting", () => {
     }
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Colossal Beast")).toBe(true);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Small Beast")).toBe(false);
+  });
+
+  it("scales Endrek Sahr's Thrulls from the cast spell and sacrifices at seven", () => {
+    const profile = profileOf(C13_ENDREK_SAHR());
+    expect(profile).toMatchObject({ fullyImplemented: true });
+    expect(profile.triggers.find((trigger) => trigger.event === "spell-cast")).toMatchObject({ spellType: "creature", effect: { kind: "create-token", amount: "spell-mana-value" } });
+    expect(profile.triggers.find((trigger) => trigger.event === "state-check")).toMatchObject({ effect: { kind: "sacrifice-source" }, condition: { kind: "controlled-subtype-at-least", subtype: "Thrull", amount: 7 } });
+    const thrull = () => make({ name: "Thrull", type_line: "Token Creature — Thrull", token: true, power: "1", toughness: "1" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [C13_ENDREK_SAHR(), thrull(), thrull(), thrull(), thrull(), thrull(), thrull()]);
+    const endrek = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Endrek Sahr, Master Breeder")!;
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BEAR()], "endrek-hand"),
+      manaPool: { W: 0, U: 0, B: 0, R: 0, G: 1, C: 1 },
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === endrek.instance_id
+        ? { ...permanent, summoningSick: false }
+        : permanent)
+    }));
+    game = applyAction(game, 0, { type: "cast", cardId: "endrek-hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Thrull")).toHaveLength(8);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Endrek Sahr, Master Breeder")).toBe(false);
   });
 
   it("pays Uyo's two-land return cost before copying a spell", () => {

@@ -349,6 +349,7 @@ export type GameEvent =
   | { readonly kind: "enters-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "leaves-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "permanent-sacrificed"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "state-check"; readonly seat: SeatId }
   | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly power?: number; readonly hadFlying?: boolean; readonly counters?: Readonly<Record<string, number>> }
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
@@ -2086,6 +2087,10 @@ function triggerMatches(
     return false;
   }
 
+  if (event.kind === "state-check") {
+    return definition.subject === "you" && event.seat === watcher.controller;
+  }
+
   if (event.kind === "card-cycled") {
     return definition.subject === "self"
       && event.controller === watcher.controller
@@ -2233,6 +2238,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "enters-battlefield": return `${object!.card.name} entra al campo de batalla`;
     case "leaves-battlefield": return `${object!.card.name} deja el campo de batalla`;
     case "permanent-sacrificed": return `${object!.card.name} es sacrificado`;
+    case "state-check": return `se comprueba un estado de juego para ${playerAt(state, event.seat).name}`;
     case "dies": return `${object!.card.name} muere`;
     case "attacks": return `${object!.card.name} ataca`;
     case "blocks": return `${object!.card.name} bloquea`;
@@ -2397,9 +2403,13 @@ function opponentsOf(state: GameState, seat: SeatId): SeatId[] {
   return state.players.filter((player) => player.seat !== seat && !player.lost).map((player) => player.seat);
 }
 
-function effectAmount(amount: number | "X" | "mana-spent", object: StackObject): number {
+function effectAmount(amount: number | "X" | "mana-spent" | "spell-mana-value", object: StackObject): number {
   if (amount === "X") return object.variableValue;
   if (amount === "mana-spent") return object.trigger?.eventManaSpent ?? object.spentMana?.length ?? 0;
+  if (amount === "spell-mana-value") {
+    const spell = object.trigger?.eventSpell;
+    return spell ? cardProfile(spell.card).manaValue : 0;
+  }
   return amount;
 }
 
@@ -5404,6 +5414,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         };
         next = putOntoBattlefield(next, controller, token, false, effect.token.tapped);
       }
+      next = raiseEvent(next, { kind: "state-check", seat: controller });
       return logged(next, controller, `${playerAt(next, controller).name} crea ${amount} ${effect.token.name}${amount === 1 ? "" : "s"}.`);
     }
     case "create-token-for-target-player": {
