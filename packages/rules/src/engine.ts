@@ -989,7 +989,19 @@ function activatedAbilitiesFor(state: GameState, permanent: Permanent): Activate
     if (!ability) return [];
     return [{ ...ability, index: 1000 + auraIndex }];
   });
-  return [...printed, ...granted];
+  const crew = cardProfile(permanent.card).crewAmount;
+  if (crew === null || !cardProfile(permanent.card).types.includes("Artifact") || !cardProfile(permanent.card).subtypes.some((s) => s.toLowerCase() === "vehicle")) return [...printed, ...granted];
+  return [...printed, ...granted, {
+    index: 2000,
+    requiresTap: false,
+    sacrificesSelf: false,
+    lifeCost: 0,
+    manaCost: null,
+    tapCost: { amount: crew, mode: "any" },
+    effect: { kind: "animate-source", power: cardProfile(permanent.card).power ?? 0, toughness: cardProfile(permanent.card).toughness ?? 0, colors: cardProfile(permanent.card).colors, subtypes: cardProfile(permanent.card).subtypes, keywords: [] },
+    targetKind: "none",
+    text: `Crew ${crew}`
+  }];
 }
 function auraBonus(state: GameState | undefined, permanent: Permanent): { power: number; toughness: number } {
   if (!state) return { power: 0, toughness: 0 };
@@ -8841,6 +8853,7 @@ function activatableAbility(
     if (!candidates.length) return { legal: false };
   }
   if (ability.tapsCreature && !tapCostCandidates(state, seat, permanent, ability).length) return { legal: false };
+  if (ability.tapCost && crewCostCandidates(state, seat, permanent, ability.tapCost.amount as number).length < (ability.tapCost.amount as number)) return { legal: false };
   if (ability.discardsCard && !player.hand.length) return { legal: false };
   if (ability.discardsCreatureCard && !player.hand.some((card) => isCreature(cardProfile(card)))) return { legal: false };
   if (ability.exilesGraveyardCard && !player.graveyard.length) return { legal: false };
@@ -8898,6 +8911,11 @@ function tapCostCandidates(
     if (cost.mode === "another" && candidate.instance_id === source.instance_id) return false;
     return !cost.subtype || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === cost.subtype!.toLowerCase());
   });
+}
+
+function crewCostCandidates(state: GameState, seat: SeatId, source: Permanent, amount: number): Permanent[] {
+  return playerAt(state, seat).battlefield.filter((candidate) =>
+    candidate.instance_id !== source.instance_id && !candidate.tapped && isCreature(cardProfile(candidate.card)));
 }
 
 /** Returns the exact untapped typed permanents that may be chosen for a trigger tap cost. */
@@ -8983,6 +9001,9 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     tapCreature = action.tapId ? candidates.find((candidate) => candidate.instance_id === action.tapId) : candidates[0];
     if (!tapCreature) throw new Error("Debes elegir una criatura enderezada válida para girar.");
   }
+  const crewCandidates = ability.tapCost ? crewCostCandidates(state, seat, source, ability.tapCost.amount as number) : [];
+  const crewSelection = ability.tapCost ? crewCandidates.slice(0, ability.tapCost.amount as number) : [];
+  if (ability.tapCost && crewSelection.length !== ability.tapCost.amount) throw new Error(`Debes girar ${ability.tapCost.amount} criaturas para tripular.`);
   let discard: GameCard | undefined;
   if (ability.discardsCard || ability.discardsCreatureCard) {
     const eligible = ability.discardsCreatureCard
@@ -9096,6 +9117,14 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     }));
     next = raiseTapEvents(next, state, [tapCreature.instance_id]);
     next = logged(next, seat, `${player.name} gira ${tapCreature.card.name} como coste.`);
+  }
+  if (crewSelection.length) {
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      battlefield: current.battlefield.map((permanent) => crewSelection.some((candidate) => candidate.instance_id === permanent.instance_id)
+        ? { ...permanent, tapped: true } : permanent)
+    }));
+    next = raiseTapEvents(next, state, crewSelection.map((candidate) => candidate.instance_id));
   }
 
   if (ability.removeCounters?.length) {

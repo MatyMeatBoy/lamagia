@@ -1541,6 +1541,20 @@ describe("mana payment", () => {
     expect(profileOf(card)).toMatchObject({ fullyImplemented: true, crewAmount: 2 });
   });
 
+  it("offers vehicle crew as an activation and taps the chosen creatures", () => {
+    const vehicle = make({ name: "Crew Vehicle", type_line: "Artifact — Vehicle", mana_cost: "{3}", cmc: 3, power: "3", toughness: "3", oracle_text: "Crew 2" });
+    const creatureA = make({ name: "Crew A", type_line: "Creature — Human", mana_cost: "{1}", cmc: 1, power: "1", toughness: "1" });
+    const creatureB = make({ name: "Crew B", type_line: "Creature — Human", mana_cost: "{1}", cmc: 1, power: "1", toughness: "1" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [vehicle, creatureA, creatureB]);
+    const source = game.players[0]!.battlefield[0]!;
+    const actions = legalActions(game, 0).filter((entry) => entry.action.type === "activate" && entry.cardId === source.instance_id);
+    expect(actions.some((entry) => entry.note === "Crew 2")).toBe(true);
+    const action = actions.find((entry) => entry.note === "Crew 2")!.action;
+    game = applyAction(game, 0, action);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
+  });
+
   it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
     const profile = profileOf(PAIN_LAND());
     expect(profile.fullyImplemented).toBe(true);
