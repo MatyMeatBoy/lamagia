@@ -7240,6 +7240,29 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("triggers 'whenever you cast a noncreature spell' on the source", () => {
+    const docent = make({
+      name: "Test Spellweaver", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2",
+      oracle_text: "Whenever you cast a noncreature spell, put a +1/+1 counter on this creature."
+    });
+    expect(profileOf(docent).triggers[0]).toMatchObject({ event: "spell-cast", effect: { kind: "add-counter-source", counter: "+1/+1", amount: 1 } });
+    let game = readyToCast([BOLT(), BEAR()], [MOUNTAIN(), FOREST(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 0, [docent]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Spellweaver")!;
+    expect(source.counters["+1/+1"] ?? 0).toBe(0);
+
+    // Casting an instant (noncreature) adds a counter.
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand.find((card) => card.name === "Lightning Bolt")!.instance_id, targets: [{ kind: "player", seat: 1 }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)?.counters["+1/+1"]).toBe(1);
+
+    // Casting a creature does not.
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)?.counters["+1/+1"]).toBe(1);
+  });
+
   it("pays 'discard a card' / 'sacrifice an artifact' additional cast costs", () => {
     const looter = make({
       name: "Test Loot Spell", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2,

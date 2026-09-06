@@ -6,6 +6,15 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **"Whenever you cast a noncreature spell" / "you draw your second card each
+  turn" triggers** — added the `subject: "you"` (and matching `opponent`)
+  trigger patterns; the `spellType: "noncreature"` filter and
+  `second-draw-this-turn` condition already existed. Big spellslinger cluster
+  (Wee Dragonauts, Docent of Perfection, Kiln Fiend, …). Export **10,603 →
+  10,664** (+61). Test: `engine.test.ts` › "triggers 'whenever you cast a
+  noncreature spell' on the source".
+- **"discard a card" / "sacrifice an artifact" additional cast costs** —
+  follows the existing `additionalCostSacrifice*` pattern (+15).
 - **Aura "doesn't untap" lock + "tap enchanted creature" ETB** —
   `EquipmentModification.cannotUntap` (parsed from "Enchanted creature doesn't
   untap during its controller's untap step") consulted in `beginStep("untap")`
@@ -52,7 +61,7 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
   `engine.test.ts` › "stops an enchanted creature from attacking or blocking".
 
 Session net: engine export **10,197 → 10,500** fully-implemented profiles
-(+406) across the eight primitives below, each with a scenario test; rules
+(+467) across the eight primitives below, each with a scenario test; rules
 suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
 200-game engine matrix **200/200** (unchanged from baseline).
 
