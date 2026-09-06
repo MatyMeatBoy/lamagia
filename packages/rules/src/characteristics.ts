@@ -2300,10 +2300,12 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const isLoyaltyCost = /^\s*([+−–-])?\s*(\d+)\s*$/.test(costText);
   if (!isLoyaltyCost && /^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
+  const oncePerTurnOnly = /activate only once each turn\.?$/i.test(effectText);
   const sorcerySpeedOnly = /(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i.test(effectText);
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
     .replace(/(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i, ".")
+    .replace(/(?:^|[.\s])activate only once each turn\.?$/i, ".")
     // Self-references in activated text use the printed object type rather
     // than the parser's normalized source marker (CR 109.5).
     .replace(/\bon this creature\b/gi, "on ~")
@@ -2442,6 +2444,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
+    ...(oncePerTurnOnly ? { oncePerTurn: true } : {}),
     ...(sorcerySpeedOnly ? { sorcerySpeed: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     ...(energyCost ? { energyCost } : {}),
@@ -4972,6 +4975,13 @@ function recognizeText(text: string): RecognizedText {
     if (/^(?:cycling|[A-Za-z][A-Za-z ]+cycling)\b/i.test(line)) continue;
     if (/^cycling\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
     if (/^activate only as a sorcery(?:\s+and\s+only\s+(?:once|one)\s+each\s+turn)?\.?$/i.test(line)) continue;
+    if (/^activate only once each turn\.?$/i.test(line)) {
+      const previous = activatedAbilities[activatedAbilities.length - 1];
+      if (previous) {
+        activatedAbilities[activatedAbilities.length - 1] = { ...previous, oncePerTurn: true };
+        continue;
+      }
+    }
     if (/^flashback(?:\s+|\s*—\s*)\{[^}]+\}(?:\{[^}]+\})*(?:,\s*pay\s+\d+\s+life)?(?:\.?$)/i.test(line)) continue;
     if (/^as an additional cost to cast ~, pay (?:X|\d+) life\.?$/i.test(line)) continue;
     if (/^equip\s+\{[^}]+\}(?:\{[^}]+\})*(?:\.?$)/i.test(line)) continue;
