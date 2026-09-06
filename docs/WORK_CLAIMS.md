@@ -520,3 +520,4 @@ rules citations and the integrator review remain mandatory.
 | `global-target-creature-damage-life-gain` | Reuse the compound damage-plus-life primitive for a target-creature restriction, including Essence Extraction (CR 609.3, 118.3) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
 | `global-ability-word-trigger-prefix` | Strip arbitrary ability-word labels before shared trigger parsing, including Fire Breath on Red Dragon (CR 603.1, 603.2) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
 | `global-creature-graveyard-mana-value-target` | Reusable graveyard target filter for creature cards at or below a printed mana-value bound, including Bishop of Rebirth (CR 109.4, 601.2c) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
+| `global-source-basic-land-subtype-threshold` | Reusable source P/T condition for controlling a basic land subtype, including Loam Lion (CR 604.1, 613.4) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |

@@ -3918,3 +3918,9 @@ target filter `creature-card-in-your-graveyard-mv-N-or-less`. It preserves the
 printed mana-value bound while using the existing creature-card reanimation
 effect (CR 109.4, 603.3d, 601.2c). Current validation: **726 rules tests**,
 `npm run check`, and `git diff --check` pass.
+
+The rescan then closed Loam Lion with `source-control-land-subtype`: the
+source pump is live only while its controller controls the named basic land
+subtype, so the same parameterized rule can cover Forest/Island/Swamp/etc.
+(CR 604.1, 613.4). Current validation: **727 rules tests**, `npm run check`,
+and `git diff --check` pass.

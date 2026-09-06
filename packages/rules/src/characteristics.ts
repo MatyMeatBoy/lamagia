@@ -361,7 +361,7 @@ export interface TriggerDoubler {
 
 export interface StaticPowerToughnessGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
-    | "source-opponents-graveyard-creatures" | "source-controller-life-threshold" | "source-opponent-life-threshold" | "other-subtype-creatures-you-control"
+    | "source-opponents-graveyard-creatures" | "source-controller-life-threshold" | "source-opponent-life-threshold" | "source-control-land-subtype" | "other-subtype-creatures-you-control"
     | "other-all-creatures";
   readonly power: number;
   readonly toughness: number;
@@ -1927,6 +1927,8 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   if (life) return { scope: "source-controller-life-threshold", power: Number(life[1]), toughness: Number(life[2]), threshold: Number(life[3]) };
   const opponentLife = /^~ gets ([+-]\d+)\/([+-]\d+) as long as an opponent has (\d+) or less life$/i.exec(clean);
   if (opponentLife) return { scope: "source-opponent-life-threshold", power: Number(opponentLife[1]), toughness: Number(opponentLife[2]), threshold: Number(opponentLife[3]) };
+  const controlledLand = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you control (?:a|an) (Plains|Island|Swamp|Mountain|Forest)$/i.exec(clean);
+  if (controlledLand) return { scope: "source-control-land-subtype", power: Number(controlledLand[1]), toughness: Number(controlledLand[2]), subtype: controlledLand[3] };
   const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   if (match) {
     return {

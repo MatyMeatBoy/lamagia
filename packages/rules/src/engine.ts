@@ -907,6 +907,10 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
         && opponentsOf(state, source.controller).some((seat) => playerAt(state, seat).life <= (grant.threshold ?? Number.NEGATIVE_INFINITY))) {
         power += grant.power;
         toughness += grant.toughness;
+      } else if (grant.scope === "source-control-land-subtype"
+        && playerAt(state, source.controller).battlefield.some((candidate) => isLand(cardProfile(candidate.card)) && hasSubtype(cardProfile(candidate.card), grant.subtype ?? ""))) {
+        power += grant.power;
+        toughness += grant.toughness;
       }
     }
   }
