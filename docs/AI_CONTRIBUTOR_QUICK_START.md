@@ -206,3 +206,13 @@ claims. A conflict or safety issue is the only reason to integrate earlier.
 When a worker finishes early, it must not retake an existing claim: refresh the
 roadmap, draw another unclaimed cluster, and publish a separate focused commit.
 
+## Rebase and diff gate
+
+Workers must start from the current published integration SHA. Before pushing,
+run `python tools/rules/audit_worker_commit.py --base <published-sha> --commit HEAD`
+and inspect `git diff --numstat <published-sha> HEAD`. An audit pass does not
+override the scope gate: thousands of deletions, formatting churn, or unrelated
+UI/docs rewrites make a commit non-integrable. Restart from the published SHA
+and publish only the claimed primitive, its scenario tests, and exact card
+mappings.
+

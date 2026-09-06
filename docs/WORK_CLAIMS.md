@@ -400,6 +400,12 @@ declared, it must update the claim before touching the additional files.
 Claims coordinate contributors but do not replace review: CI, scenario tests,
 rules citations and the integrator review remain mandatory.
 
+Integration note (2026-09-06): worker-05 currently contains useful rules
+commits based on an incompatible rewritten tree. Do not merge that branch as a
+whole. Resubmit from the published integration SHA with a focused diff; the
+integrator may rescue individual primitives only after the diff gate and
+scenario audit pass.
+
 ## Integrator directive (2026-09-06)
 
 Commander 2013 is the current completion push. Workers may continue taking
