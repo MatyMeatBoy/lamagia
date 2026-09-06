@@ -5895,9 +5895,37 @@ function resolveTop(state: GameState): GameState {
       const pickedSet = new Set(picked);
       const fetched = playerAt(next, object.controller).library.filter((card) => pickedSet.has(card.instance_id));
       next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)));
+      const fetchedIds = new Set(fetched.map((card) => card.instance_id));
       for (const card of fetched) next = putOntoBattlefield(next, object.controller, card, false, search.tapped === true);
       if (!object.activated) next = retire(next);
-      return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en el campo${search.tapped ? " giradas" : ""}.`);
+      // Kicked-only follow-up (Hunting Wilds): untap and animate exactly the
+      // lands THIS search just placed, not every matching land the
+      // controller already owns. Animation is modeled as a temporary,
+      // cleanup-cleared override rather than a true continuous effect — a
+      // deliberate simplification (see `temporaryAnimation`'s own CR 613.6
+      // scope) that still delivers this turn's practical payoff (haste to
+      // attack immediately) without a durable state-dependent creature-type
+      // change touching every `isCreature` call site.
+      const untapAnimate = object.kicked
+        ? profile.kickedEffects.find((effect): effect is Extract<SpellEffect, { kind: "untap-and-animate-fetched-lands" }> => effect.kind === "untap-and-animate-fetched-lands")
+        : undefined;
+      if (untapAnimate) {
+        next = withPlayer(next, object.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => fetchedIds.has(permanent.card.instance_id)
+            ? {
+                ...permanent,
+                tapped: false,
+                temporaryAnimation: {
+                  power: untapAnimate.power, toughness: untapAnimate.toughness, colors: [untapAnimate.color],
+                  types: ["Land", "Creature"], subtypes: cardProfile(permanent.card).subtypes, keywords: ["haste"]
+                },
+                temporaryKeywords: [...new Set([...(permanent.temporaryKeywords ?? []), "haste" as const])]
+              }
+            : permanent)
+        }));
+      }
+      return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en el campo${search.tapped ? " giradas" : ""}${untapAnimate ? "; si fue evocado con kicker, se enderezan y se animan" : ""}.`);
     }
     // Same deterministic policy for "up to N ... cards ... into your hand"
     // (Tooth and Nail): the single-card `search-library` PendingChoice below

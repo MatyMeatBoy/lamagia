@@ -11486,6 +11486,55 @@ describe("Tooth and Nail's modal tutor-to-hand and hand-to-battlefield modes", (
   });
 });
 
+describe("Hunting Wilds' kicked-only untap-and-animate-fetched-lands", () => {
+  const HUNTING_WILDS = () => make({
+    name: "Hunting Wilds", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4,
+    oracle_text: "Kicker {3}{G} (You may pay an additional {3}{G} as you cast this spell.)\nSearch your library for up to two Forest cards, put them onto the battlefield tapped, then shuffle.\nIf this spell was kicked, untap all Forests put onto the battlefield this way. They become 3/3 green creatures with haste that are still lands."
+  });
+
+  it("recognizes the base search and the kicked-only animate follow-up", () => {
+    const profile = profileOf(HUNTING_WILDS());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.effects[0]).toMatchObject({ kind: "search-library", subtypes: ["Forest"], destination: "battlefield", tapped: true, count: 2 });
+    expect(profile.kickedEffects[0]).toMatchObject({ kind: "untap-and-animate-fetched-lands", subtype: "Forest", power: 3, toughness: 3, color: "G" });
+  });
+
+  it("fetches Forests tapped and inanimate when cast unkicked", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [HUNTING_WILDS()], "hw-hand"),
+      library: [...toHand(0, [FOREST(), FOREST()], "hw-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hw-hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    const fetched = game.players[0]!.battlefield.filter((permanent) => permanent.card.instance_id.startsWith("hw-library"));
+    expect(fetched).toHaveLength(2);
+    expect(fetched.every((permanent) => permanent.tapped)).toBe(true);
+    expect(fetched.every((permanent) => !permanent.temporaryAnimation)).toBe(true);
+  });
+
+  it("fetches Forests untapped and animated as 3/3 haste creatures when kicked", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [HUNTING_WILDS()], "hw-hand"),
+      library: [...toHand(0, [FOREST(), FOREST()], "hw-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hw-hand-0", kicked: true });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    const fetched = game.players[0]!.battlefield.filter((permanent) => permanent.card.instance_id.startsWith("hw-library"));
+    expect(fetched).toHaveLength(2);
+    expect(fetched.every((permanent) => !permanent.tapped)).toBe(true);
+    expect(fetched.every((permanent) => permanent.temporaryAnimation?.power === 3 && permanent.temporaryAnimation?.toughness === 3)).toBe(true);
+    expect(fetched.every((permanent) => permanent.temporaryKeywords?.includes("haste"))).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

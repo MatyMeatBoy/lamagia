@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,714** · cobertura: **31.4%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,716** · cobertura: **31.4%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -176,7 +176,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | 2007-01-01 | Magic Player Rewards 2007 (`P07`) | promos | player-rewards-2007 | other | 7 | 7 | 0 | 100.0% |
 | 2007-01-01 | Magic Premiere Shop 2007 (`PMPS07`) | promos | magic-premiere-shop-2007 | other | 5 | 5 | 0 | 100.0% |
 | 2007-01-20 | Planar Chaos Promos (`PPLC`) | promos | planar-chaos | other | 2 | 0 | 2 | 0.0% |
-| 2007-02-02 | Planar Chaos (`PLC`) | expansion | 2000s | main | 165 | 33 | 132 | 20.0% |
+| 2007-02-02 | Planar Chaos (`PLC`) | expansion | 2000s | main | 165 | 34 | 131 | 20.6% |
 | 2007-02-24 | Grand Prix Promos (`PGPX`) | promos | grand-prix | other | 20 | 9 | 11 | 45.0% |
 | 2007-04-21 | Future Sight Promos (`PFUT`) | promos | future-sight | other | 2 | 0 | 2 | 0.0% |
 | 2007-05-04 | Future Sight (`FUT`) | expansion | 2000s | main | 180 | 28 | 152 | 15.6% |
@@ -419,7 +419,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | 2018-07-14 | MTG Arena Promos (`PANA`) | promos | arena-2018 | other | 23 | 13 | 10 | 56.5% |
 | 2018-07-19 | San Diego Comic-Con 2018 (`PS18`) | promos | comic-con-2018 | other | 5 | 0 | 5 | 0.0% |
 | 2018-08-01 | 2017 Heroes of the Realm (`PH17`) | funny-special | 2017-heroes-of-the-realm | other | 3 | 1 | 2 | 33.3% |
-| 2018-08-10 | Commander 2018 (`C18`) | commander | 2018 | commander | 297 | 138 | 159 | 46.5% |
+| 2018-08-10 | Commander 2018 (`C18`) | commander | 2018 | commander | 297 | 139 | 158 | 46.8% |
 | 2018-10-05 | Guilds of Ravnica (`GRN`) | expansion | ravnica | main | 268 | 96 | 172 | 35.8% |
 | 2018-10-05 | Guilds of Ravnica Promos (`PGRN`) | promos | guilds-of-ravnica | other | 60 | 18 | 42 | 30.0% |
 | 2018-10-05 | Mythic Edition (`MED`) | masterpieces | mythic-edition | other | 24 | 0 | 24 | 0.0% |
@@ -745,7 +745,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | commander | 2015 | 1 | 327 | 148 | 179 | 45.3% |
 | commander | 2016 | 1 | 341 | 144 | 197 | 42.2% |
 | commander | 2017 | 1 | 299 | 140 | 159 | 46.8% |
-| commander | 2018 | 1 | 297 | 138 | 159 | 46.5% |
+| commander | 2018 | 1 | 297 | 139 | 158 | 46.8% |
 | commander | 2019 | 1 | 292 | 110 | 182 | 37.7% |
 | commander | 2020 | 4 | 1001 | 372 | 629 | 37.2% |
 | commander | 2021 | 5 | 1022 | 371 | 651 | 36.3% |
@@ -793,7 +793,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 149 | 388 | 27.7% |
 | expansion | 1990s | 11 | 1573 | 383 | 1190 | 24.3% |
-| expansion | 2000s | 19 | 3082 | 716 | 2366 | 23.2% |
+| expansion | 2000s | 19 | 3082 | 717 | 2365 | 23.3% |
 | expansion | 2010s | 14 | 2735 | 757 | 1978 | 27.7% |
 | expansion | 2020s | 17 | 3739 | 640 | 3099 | 17.1% |
 | expansion | alara | 2 | 379 | 156 | 223 | 41.2% |
@@ -13394,7 +13394,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 - [ ] Healing Leaves — `9c675e7a-1d68-44b2-9c1a-543b73782437`
 - [ ] Hedge Troll — `500663c1-390c-4598-b614-4168c4f7debe`
 - [ ] Heroes Remembered — `2f30ffd2-9910-4fbd-96f9-d66f1da506e9`
-- [ ] Hunting Wilds — `e9bc324e-c200-45ef-8b9b-52a61d0f7374`
 - [ ] Imp's Mischief — `30ec73ad-c7a1-4527-8dc6-44bdd65b9ba6`
 - [ ] Intet, the Dreamer — `9518ffbc-bb3d-4f48-a900-f5bad8302a87`
 - [ ] Jedit Ojanen of Efrava — `c065a7c0-272b-4b7e-a41c-7164352cd189`
@@ -27718,7 +27717,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,71
 - [ ] Hellkite Igniter — `12aba1d4-477f-4d36-96bb-c3c7bbd51b75`
 - [ ] Herald of the Pantheon — `9ef24a79-fade-4c38-b63c-22983206b4ad`
 - [ ] High Priest of Penance — `d8070ee7-dbd1-4d38-9715-ba14e103e379`
-- [ ] Hunting Wilds — `e9bc324e-c200-45ef-8b9b-52a61d0f7374`
 - [ ] Hydra Omnivore — `8f504855-f3df-4284-a189-e799bcddf620`
 - [ ] Isolated Watchtower — `3893f320-47fd-49ec-a78c-80bfb607a279`
 - [ ] Jeskai Infiltrator — `39b359c1-48b8-43a7-b972-54764eadd2c7`

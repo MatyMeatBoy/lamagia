@@ -499,6 +499,8 @@ export type SpellEffect =
   | { readonly kind: "exile-source-permanent" }
   /** "Put up to N creature cards from your hand onto the battlefield" (Tooth and Nail). */
   | { readonly kind: "put-hand-creatures-onto-battlefield"; readonly amount: number }
+  /** Kicked-only follow-up (Hunting Wilds): untap and animate the lands the base search JUST fetched onto the battlefield, not every matching land the controller owns. */
+  | { readonly kind: "untap-and-animate-fetched-lands"; readonly subtype: string; readonly power: number; readonly toughness: number; readonly color: MagicColor }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -5079,8 +5081,30 @@ function recognizeText(text: string): RecognizedText {
         // any-target damage primitive and retain the base sentence's target.
         const damageOnly = /^~ deals (\w+) damage$/i.exec(kickedText);
         const damageAmount = damageOnly ? (damageOnly[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageOnly[1]!)) : null;
+        // "Untap all Forests put onto the battlefield this way. They become
+        // 3/3 green creatures with haste that are still lands" (Hunting
+        // Wilds): "this way" refers to the base search this same spell just
+        // resolved, not every matching land the controller owns. The two
+        // sentences are already split apart by the outer per-sentence loop
+        // by the time this text is seen, so the second is read via the same
+        // lookahead-and-consume pattern used elsewhere in this loop.
+        const untapFetchedOnly = /^Untap all ([A-Za-z][A-Za-z'’-]*?)s? put onto the battlefield this way\.?$/i.exec(kickedText);
+        const animateRider = untapFetchedOnly ? sentences[sentenceIndex + 1]?.trim() : undefined;
+        const UNTAP_ANIMATE_COLOR: Record<string, MagicColor> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
+        const animateMatch = animateRider
+          ? /^They become (\w+)\/(\w+) ([A-Za-z]+) creatures? with haste that are still lands\.?$/i.exec(animateRider)
+          : null;
+        const untapAnimatePower = animateMatch ? toNumber(animateMatch[1]!) : null;
+        const untapAnimateToughness = animateMatch ? toNumber(animateMatch[2]!) : null;
+        const untapAnimateColor = animateMatch ? UNTAP_ANIMATE_COLOR[animateMatch[3]!.toLowerCase()] : undefined;
+        const untapAnimateFetched = untapFetchedOnly && animateMatch && untapAnimatePower !== null && untapAnimateToughness !== null && untapAnimateColor
+          ? { subtype: untapFetchedOnly[1]!, power: untapAnimatePower, toughness: untapAnimateToughness, color: untapAnimateColor }
+          : null;
+        if (untapAnimateFetched) sentenceIndex += 1;
         const rk = recognizeSentence(kickedText) ?? (damageAmount !== null
           ? { effect: { kind: "damage-any-target", amount: damageAmount } as SpellEffect, target: "none" as TargetKind }
+          : untapAnimateFetched
+          ? { effect: { kind: "untap-and-animate-fetched-lands", ...untapAnimateFetched } as SpellEffect, target: "none" as TargetKind }
           : null);
         if (rk && /\binstead\b/i.test(ifKicked[1]!)) {
           const base = effects[effects.length - 1];

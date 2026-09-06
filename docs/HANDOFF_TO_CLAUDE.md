@@ -5034,3 +5034,53 @@ profiles, 200/200 simulated games.
 
 Prossh decklist status after this pass: **85 of 97 unique cards fully
 implemented (87.6%)**.
+
+Hunting Wilds ("Kicker {3}{G}. Search your library for up to two
+Forest cards, put them onto the battlefield tapped, then shuffle. If
+this spell was kicked, untap all Forests put onto the battlefield this
+way. They become 3/3 green creatures with haste that are still
+lands.") needed exactly one new primitive: the base search was already
+fully supported (and, thanks to this session's own Tooth-and-Nail-era
+fix, now correctly delivers BOTH Forests instead of stopping after the
+first). The kicked-only follow-up is genuinely new but deliberately
+narrow in scope: a new `{kind: "untap-and-animate-fetched-lands",
+subtype, power, toughness, color}` `kickedEffect`, applied not to every
+matching land the controller owns but specifically to the exact
+permanents THIS search just placed — captured as a `Set` of their
+`card.instance_id`s right where the existing "up to N: fetch
+deterministically" battlefield fast path already loops over them, then
+consulted immediately after via `object.kicked &&
+profile.kickedEffects.find(...)`. Modeled the animation using the
+EXISTING `temporaryAnimation` field (`power`/`toughness`/`colors`/
+`types`/`subtypes`/`keywords`, cleared at cleanup per CR 613.6) rather
+than building a true continuous, permanent creature-type change — a
+DELIBERATE simplification, since a durable version would need
+`isCreaturePermanent` (and every P/T/combat-legality call site that
+already treats its bare presence as "is this a creature") to become
+state-aware of live devotion-style conditions, the exact wide-blast-
+radius risk this session has been avoiding for Purphoros/Xenagos God
+of Revels. This still delivers the card's practical payoff (attacking
+with hasty 3/3s the turn they're fetched) at a fraction of the risk;
+the fetched lands correctly revert to plain (untapped) lands at
+cleanup rather than staying 3/3 creatures into future turns, a known,
+acceptable gap. The Oracle text itself needed the SAME two-sentence
+lookahead-and-consume trick used for Eldritch Evolution and
+Necropotence earlier this session: "untap all Forests..." and "They
+become 3/3..." are two separate sentences by the time they reach the
+per-sentence loop (the naive first attempt tried to match them as one
+combined string captured directly from the `ifKicked` regex, which
+doesn't work — that regex only ever sees ONE sentence at a time, since
+the OUTER per-sentence splitter runs first). Fixed the same way: match
+the first sentence alone, then confirm and consume
+`sentences[sentenceIndex + 1]` before committing to the combined
+effect. Verified **+1** in the export count (10,280 → 10,281); set
+coverage holds at 31.4%. Scenario-tested: casting unkicked with two
+Forests in the library fetches both, tapped, with no `temporaryAnimation`;
+casting kicked (paying both the base and kicker costs) fetches both
+untapped, each carrying a 3/3 `temporaryAnimation` and the `haste`
+keyword. Validation: **814 rules tests** (3 new), `npm run check`
+across all four workspaces, `npx vitest run services/match-server/src`
+(5 passed), 10,281 global profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **86 of 97 unique cards fully
+implemented (88.7%)**.
