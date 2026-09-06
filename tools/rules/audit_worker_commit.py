@@ -15,6 +15,12 @@ import sys
 
 MAX_TOTAL_DELETIONS = 600
 MAX_RULE_FILE_DELETIONS = 300
+MAX_ORACLE_IDS = 20
+
+
+def oracle_ids_from_diff(diff: str) -> set[str]:
+    """Collect stable IDs from added/modified worker fixtures, not card names."""
+    return set(re.findall(r"[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", diff, re.I))
 
 
 def git(*args: str) -> str:
@@ -33,6 +39,7 @@ def main() -> int:
 
     files = [line for line in git("diff", "--name-only", f"{args.base}..{args.commit}").splitlines() if line]
     diff = git("diff", "--unified=0", f"{args.base}..{args.commit}", "--")
+    oracle_ids = oracle_ids_from_diff(diff)
     added = [line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++")]
     union_additions = [line for line in added if "| { readonly kind:" in line]
     duplicate_union_additions = []
@@ -74,9 +81,11 @@ def main() -> int:
         failures.append(f"scope gate exceeded: {total_deletions} total deletions (max {MAX_TOTAL_DELETIONS})")
     if rule_file_deletions > MAX_RULE_FILE_DELETIONS:
         failures.append(f"rules rewrite gate exceeded: {rule_file_deletions} deletions under packages/rules (max {MAX_RULE_FILE_DELETIONS})")
+    if len(oracle_ids) > MAX_ORACLE_IDS:
+        failures.append(f"oracle_id gate exceeded: {len(oracle_ids)} IDs (max {MAX_ORACLE_IDS})")
 
     status = "REJECT" if failures else "PASS"
-    print(f"{status} {args.commit} files={len(files)} union_additions={len(union_additions)} deletions={total_deletions} rule_deletions={rule_file_deletions} engine={has_engine} scenario={has_scenario}")
+    print(f"{status} {args.commit} files={len(files)} oracle_ids={len(oracle_ids)} union_additions={len(union_additions)} deletions={total_deletions} rule_deletions={rule_file_deletions} engine={has_engine} scenario={has_scenario}")
     for failure in failures:
         print(f"- {failure}")
     if failures:
