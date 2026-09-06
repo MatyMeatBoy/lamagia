@@ -142,6 +142,7 @@ const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", m
 const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature — Jellyfish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", keywords: ["Defender", "Flying"], oracle_text: "Defender, flying\nPrevent all combat damage that would be dealt to this creature." });
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
 const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — Snake", mana_cost: "{B}", cmc: 1, power: "1", toughness: "1", keywords: ["Deathtouch"], oracle_text: "Deathtouch" });
+const VRASKA_SWARMS_EMINENCE = () => make({ name: "Vraska, Swarm's Eminence", type_line: "Legendary Planeswalker — Vraska", mana_cost: "{2}{B}{G}", cmc: 4, loyalty: "4", oracle_text: "Whenever a creature you control with deathtouch deals damage to a player or planeswalker, put a +1/+1 counter on that creature.", oracle_id: "cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb" });
 const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
 const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Bat", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", colors: ["B"] });
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
@@ -6773,6 +6774,23 @@ describe("triggered abilities", () => {
     });
    expect(profileOf(CREATURE_CAST_DRAWER()).triggers[0]).toMatchObject({ event: "spell-cast", subject: "you", spellType: "creature" });
  });
+
+  it("puts a counter on a deathtouch creature after it damages an opponent", () => {
+    const profile = profileOf(VRASKA_SWARMS_EMINENCE());
+    expect(profile.triggers[0]).toMatchObject({
+      event: "deals-damage-to-player",
+      subject: "creature-with-deathtouch-you-control",
+      effect: { kind: "add-counter-triggered-creature", counter: "+1/+1", amount: 1 }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+    let game = readyToCast([], [VRASKA_SWARMS_EMINENCE(), DEATHTOUCHER()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const viper = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Tiny Viper")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: viper.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.find((permanent) => permanent.instance_id === viper.instance_id)?.counters["+1/+1"] === 1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === viper.instance_id)?.counters["+1/+1"]).toBe(1);
+    expect(game.players[1]!.life).toBe(39);
+  });
 
   it("blinks Conjurer's Closet's controlled creature target", () => {
     const profile = profileOf(CONJURERS_CLOSET());

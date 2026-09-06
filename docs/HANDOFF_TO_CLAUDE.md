@@ -61,6 +61,11 @@ Fae of Wishes scenario (`c0abbed2-d213-47ef-8d6c-4a21efb9a55f`). The source
 and rules tests are current; the numeric export remains at the checkpoint
 above until the integrator reruns it with the local catalog database.
 
+The next one-line cluster adds `global-deathtouch-damage-counter-trigger`:
+generic damage-to-player triggers now include combat damage without double
+firing, and the existing triggered-creature counter effect is executable.
+The Vraska scenario uses `cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb`.
+
 The static P/T vocabulary now also covers source-relative conditions such as
 life thresholds and opponent graveyard creature counts. These are parameterized
 primitives, so reprints reuse the same profile rather than adding card-specific
