@@ -7299,6 +7299,20 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.life).toBe(37);
   });
 
+  it("keeps multi-target trigger slots distinct and rejects a duplicate target", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [INFERNO_TITAN()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const titan = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Inferno Titan")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: titan.instance_id, defender: 1 }] });
+    const pending = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const sourceId = pending.sourceId;
+    const target = { kind: "player", seat: 1 } as const;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId, target });
+    expect(() => applyAction(game, 0, { type: "choose-trigger-target", sourceId, target })).toThrow("Objetivo ilegal");
+  });
+
   it("triggers Guttersnipe only from instant and sorcery casts", () => {
     const profile = profileOf(GUTTERSNIPE());
     expect(profile.triggers[0]).toMatchObject({
