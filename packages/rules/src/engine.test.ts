@@ -5784,6 +5784,16 @@ describe("casting", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Enlightened Tutor")).toBe(true);
   });
 
+  it("normalizes whitespace and Unicode compatibility forms in library searches", () => {
+    const tutor = TUTOR();
+    const printed = make({ name: "Apostrophe’s Relic", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "" });
+    let game = readyToCast([tutor], [PLAINS()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [printed], "library"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "  Apostrophe’s   Relic " });
+    expect(game.players[0]!.library[0]!.name).toBe("Apostrophe’s Relic");
+  });
+
   it("pays Diabolic Intent's sacrifice-a-creature additional cost, then tutors a chosen card to hand", () => {
     const intent = DIABOLIC_INTENT();
     expect(profileOf(intent).fullyImplemented).toBe(true);
