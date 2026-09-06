@@ -979,10 +979,18 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
   if (level?.keywords.includes(keyword)) return true;
   if (permanent.temporaryKeywords?.includes(keyword)) return true;
   if (profile.keywordsDuringYourTurn.includes(keyword) && state.activeSeat === permanent.controller) return true;
-  if (isCreaturePermanent(permanent) && allPermanents(state).some((source) => cardProfile(source.card).staticKeywordGrants.some((grant) => grant.keyword === keyword
-      && grant.sourceZone !== "graveyard"
-      && (grant.scope === "all-creatures" || (source.controller === permanent.controller
-        && (grant.scope === "creatures-you-control" || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id))))))) return true;
+  if (isCreaturePermanent(permanent) && allPermanents(state).some((source) => {
+    const matchingGrant = cardProfile(source.card).staticKeywordGrants.find((grant) => grant.keyword === keyword && grant.sourceZone !== "graveyard");
+    if (!matchingGrant) return false;
+    if (matchingGrant.scope === "all-creatures") return true;
+    if (source.controller !== permanent.controller) return false;
+    if (matchingGrant.scope === "creatures-you-control") return true;
+    if (matchingGrant.scope === "other-creatures-you-control") return source.instance_id !== permanent.instance_id;
+    if (matchingGrant.scope === "subtype-creatures-you-control") return hasSubtype(cardProfile(permanent.card), matchingGrant.subtype ?? "");
+    return matchingGrant.scope === "other-subtype-creatures-you-control"
+      && source.instance_id !== permanent.instance_id
+      && hasSubtype(cardProfile(permanent.card), matchingGrant.subtype ?? "");
+  })) return true;
   if (isCreaturePermanent(permanent) && state.players.some((player) => player.seat === permanent.controller
       && player.graveyard.some((card) => cardProfile(card).staticKeywordGrants.some((grant) => grant.sourceZone === "graveyard"
         && grant.keyword === keyword

@@ -3924,3 +3924,8 @@ source pump is live only while its controller controls the named basic land
 subtype, so the same parameterized rule can cover Forest/Island/Swamp/etc.
 (CR 604.1, 613.4). Current validation: **727 rules tests**, `npm run check`,
 and `git diff --check` pass.
+
+The next one-line rescan item, Goblin Chieftain, now uses a shared combined
+tribal grant: matching other creatures receive both the P/T bonus and haste,
+with source exclusion preserved for the lord itself (CR 611.3, 613.4). Current
+validation: **728 rules tests**, `npm run check`, and `git diff --check` pass.

@@ -242,6 +242,8 @@ const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf",
 const C13_DIVINITY_OF_PRIDE = () => make({ name: "Divinity of Pride", type_line: "Creature — Spirit Avatar", mana_cost: "{3}{W}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature gets +4/+4 as long as you have 25 or more life.", scryfall_id: "2c91c236-34d7-4454-a55a-784db7f68bde" });
 const RUTHLESS_CULLBLADE = () => make({ name: "Ruthless Cullblade", type_line: "Creature — Vampire Warrior", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "1", oracle_text: "Ruthless Cullblade gets +2/+1 as long as an opponent has 10 or less life.", oracle_id: "b7748ad6-a8cd-45e7-a4d6-4ee747722657", scryfall_id: "b7748ad6-a8cd-45e7-a4d6-4ee747722657" });
 const LOAM_LION = () => make({ name: "Loam Lion", type_line: "Creature — Cat", mana_cost: "{W}", cmc: 1, power: "1", toughness: "1", oracle_text: "Loam Lion gets +1/+2 as long as you control a Forest.", oracle_id: "18961e25-3feb-4dba-a77f-240a4d664ecb", scryfall_id: "18961e25-3feb-4dba-a77f-240a4d664ecb" });
+const GOBLIN_CHIEFTAIN = () => make({ name: "Goblin Chieftain", type_line: "Creature — Goblin", mana_cost: "{1}{R}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other Goblin creatures you control get +1/+1 and have haste.", oracle_id: "368b4052-174e-4458-a6e6-eaf8093aa0fe", scryfall_id: "368b4052-174e-4458-a6e6-eaf8093aa0fe" });
+const GOBLIN = () => make({ name: "Goblin Token", type_line: "Creature — Goblin", power: "1", toughness: "1" });
 const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "1B", cmc: 2, power: "1", toughness: "1", oracle_text: "This creature gets +1/+1 for each creature card in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
 const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.", scryfall_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e" });
 const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "Legendary Creature — Dragon", mana_cost: "{3}{B}{R}{G}", cmc: 6, power: "5", toughness: "5", oracle_text: "Flying\nWhen you cast this spell, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.", scryfall_id: "868882d2-ed4e-4171-a17c-478a341080fb", oracle_id: "868882d2-ed4e-4171-a17c-478a341080fb" });
@@ -3642,6 +3644,22 @@ describe("casting", () => {
     expect([powerOf(lion, game), toughnessOf(lion, game)]).toEqual([2, 3]);
     game = stage(game, 0, (player) => ({ battlefield: player.battlefield.filter((permanent) => permanent.card.name !== "Forest") }));
     expect([powerOf(lion, game), toughnessOf(lion, game)]).toEqual([1, 1]);
+  });
+
+  it("reuses combined tribal power and keyword grants for other matching creatures", () => {
+    expect(profileOf(GOBLIN_CHIEFTAIN()).staticPowerToughnessGrants).toEqual([
+      { scope: "other-subtype-creatures-you-control", subtype: "Goblin", power: 1, toughness: 1 }
+    ]);
+    expect(profileOf(GOBLIN_CHIEFTAIN()).staticKeywordGrants).toEqual([
+      { scope: "other-subtype-creatures-you-control", keyword: "haste", subtype: "Goblin" }
+    ]);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [GOBLIN_CHIEFTAIN(), GOBLIN()]);
+    const goblin = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Token")!;
+    const chieftain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Goblin Chieftain")!;
+    expect([powerOf(goblin, game), toughnessOf(goblin, game)]).toEqual([2, 2]);
+    expect(legalTargets(game, 0, "creature-with-haste")).toEqual([{ kind: "permanent", instanceId: goblin.instance_id }]);
+    expect([powerOf(chieftain, game), toughnessOf(chieftain, game)]).toEqual([2, 2]);
   });
 
   it("applies Hooded Horror's defending-player creature-count evasion", () => {

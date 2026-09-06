@@ -344,7 +344,7 @@ export interface StaticEntryCounterGrant {
 }
 
 export interface StaticKeywordGrant {
-  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures" | "subtype-creatures-you-control";
+  readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures" | "subtype-creatures-you-control" | "other-subtype-creatures-you-control";
   readonly keyword: EnforcedKeyword;
   readonly subtype?: string;
   /** Zone where the source supplies the static ability (battlefield by default). */
@@ -1865,6 +1865,8 @@ function parseStaticKeywordGrant(line: string): StaticKeywordGrant[] {
   }));
   const all = new RegExp(`^all creatures (?:have|gain) ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
   if (all) return parseKeywordList(all[1]!).map((keyword) => ({ scope: "all-creatures" as const, keyword }));
+  const otherSubtypeCombined = new RegExp(`^other ([A-Za-z][A-Za-z'’-]*) creatures you control get [+-]\\d+/[+-]\\d+ and have ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
+  if (otherSubtypeCombined) return parseKeywordList(otherSubtypeCombined[2]!).map((keyword) => ({ scope: "other-subtype-creatures-you-control" as const, keyword, subtype: otherSubtypeCombined[1]! }));
   const own = new RegExp(`^(other )?creatures you control (?:have|gain) ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
   if (own) return parseKeywordList(own[2]!).map((keyword) => ({ scope: own[1] ? "other-creatures-you-control" as const : "creatures-you-control" as const, keyword }));
   const subtype = new RegExp(`^([A-Za-z][A-Za-z'’-]*) creatures (?:you control )?have ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*)$`, "i").exec(clean);
@@ -1950,7 +1952,7 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   // Goblin creatures you control get +1/+1."). The qualifier is already
   // singular here — some of these are card types ("artifact"/"enchantment"
   // creatures), not creature subtypes, so the engine checks both.
-  const subtypeCreaturesLord = /^other\s+([A-Za-z]+)\s+creatures\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  const subtypeCreaturesLord = /^other\s+([A-Za-z]+)\s+creatures\s+you\s+control\s+get\s+([+-]\d+)\/([+-]\d+)(?:\s+and\s+have\s+.+)?$/i.exec(clean);
   if (subtypeCreaturesLord) {
     return {
       scope: "other-subtype-creatures-you-control",
