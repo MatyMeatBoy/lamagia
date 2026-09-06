@@ -14,6 +14,7 @@ feature name.
 | `global-attack-power-threshold` | `codex/c13-darksteel-mutation` | Reusable attack trigger condition for `if/while you control a creature with power N or greater`, including Ruby, Daring Tracker (CR 603.2, 603.4) | active |
 | `global-countered-spell-library-placement` | `codex/c13-darksteel-mutation` | Reusable counterspell replacement choice to put the countered spell on top or bottom of its owner's library, including Hinder (CR 701.18, 608.2b) | active |
 | `global-creature-total-power-toughness-five` | `codex/c13-darksteel-mutation` | Reusable creature target filter for total power and toughness 5 or less, including Cut Down (CR 608.2b, 613.4) | active |
+| `global-equipped-self-attached-equipment-doubler` | `codex/c13-darksteel-mutation` | Reusable trigger-doubler scope for an equipped source and Equipment attached to it, including Cloud, Midgar Mercenary (CR 603.3f) | active |
 | `c13-linked-exile-return` | `codex/c13-aura-granted-activation-7bd` | Fiend Hunter-style ETB exile of another nontoken creature with a linked leaves-the-battlefield return under its owner's control (CR 603.6c, 400.7) | active |
 | `global-affinity-artifacts` | `feat/activated-abilities-and-triggers` | Reusable Affinity for artifacts cost reduction for artifact spells and affected cards (CR 702.41, 118.9) | active |
 | `c13-aura-control-static` | `codex/c13-aura-granted-activation-7bd` | Reusable static Aura control primitive for `You control enchanted creature/land/permanent` (CR 303.4, 611.3, 613.7) | active |
