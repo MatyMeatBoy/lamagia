@@ -459,7 +459,7 @@ export type SpellEffect =
   /** Surveil N (CR 701.42): look at the top N, put any number in the graveyard, the rest on top in any order. */
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
-  | { readonly kind: "look-top-select"; readonly amount: number | "source-counter"; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
+  | { readonly kind: "look-top-select"; readonly amount: number | "source-counter"; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly minPower?: number; readonly returnAtEndStep?: boolean }
   /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
@@ -2167,6 +2167,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
       returnLands: count, effect: copied.effect, targetKind: copied.target, text: line.trim()
     };
   }
+  // Mayael: the normal top-library review gains a reusable power predicate.
+  const powerLookTop = /^Look at the top five cards of your library\. You may put a creature card with power (\d+) or greater from among them onto the battlefield\. Put the rest on the bottom of your library in any order\.?$/i.exec(parsedEffectText);
   // Jar of Eyeballs: the number reviewed is the counter total removed as a
   // cost, so activation snapshots it before the source is emptied (CR 602.2b,
   // 121.1).  Reuse the normal private top-library selection flow.
@@ -2211,7 +2213,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
   const sacrificedToughnessLife = /^You gain life equal to the sacrificed creature's toughness\.?$/i.test(parsedEffectText);
-  const recognized = selfUntap
+  const recognized = powerLookTop
+    ? { effect: { kind: "look-top-select", amount: 5, types: ["Creature"] as const, destination: "battlefield" as const, minPower: Number(powerLookTop[1]) } as SpellEffect, target: "none" as TargetKind }
+    : selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : toggleSourceCounter
     ? { effect: { kind: "toggle-source-counter", counter: "plague" } as SpellEffect, target: "none" as TargetKind }

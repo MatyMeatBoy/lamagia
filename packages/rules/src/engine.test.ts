@@ -279,6 +279,7 @@ const C13_PHANTOM_NANTUKO = () => make({ name: "Phantom Nantuko", type_line: "Cr
 const C13_FURNACE_CELEBRATION = () => make({ name: "Furnace Celebration", type_line: "Enchantment", mana_cost: "{1}{R}{R}", cmc: 3, oracle_text: "Whenever you sacrifice another permanent, you may pay {2}. If you do, Furnace Celebration deals 2 damage to any target.", oracle_id: "af6d6844-c612-4731-86da-59a8fa02956b", scryfall_id: "af6d6844-c612-4731-86da-59a8fa02956b" });
 const C13_THRAXIMUNDAR = () => make({ name: "Thraximundar", type_line: "Legendary Creature — Zombie Assassin", mana_cost: "{4}{U}{B}{R}", cmc: 7, power: "6", toughness: "6", keywords: ["Haste"], oracle_text: "Haste\nWhenever Thraximundar attacks, defending player sacrifices a creature of their choice.\nWhenever a player sacrifices a creature, you may put a +1/+1 counter on Thraximundar.", oracle_id: "9e0e4217-fefe-48dd-9153-032460192b19", scryfall_id: "9e0e4217-fefe-48dd-9153-032460192b19" });
 const C13_JAR_OF_EYEBALLS = () => make({ name: "Jar of Eyeballs", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "Whenever a creature you control dies, put two eyeball counters on this artifact.\n{3}, {T}, Remove all eyeball counters from this artifact: Look at the top X cards of your library, where X is the number of eyeball counters removed this way. Put one of them into your hand and the rest on the bottom of your library in any order.", oracle_id: "3075dadd-240f-4455-9286-9f1d48f53a3f", scryfall_id: "3075dadd-240f-4455-9286-9f1d48f53a3f" });
+const C13_MAYAEL = () => make({ name: "Mayael the Anima", type_line: "Legendary Creature — Elf Shaman", mana_cost: "{3}{R}{G}{W}", cmc: 6, power: "2", toughness: "3", oracle_text: "{3}, {T}: Look at the top five cards of your library. You may put a creature card with power 5 or greater from among them onto the battlefield. Put the rest on the bottom of your library in any order.", oracle_id: "7f546d54-584d-4bec-8fbb-1ea2f8ab277e", scryfall_id: "7f546d54-584d-4bec-8fbb-1ea2f8ab277e" });
 const C13_UYO = () => make({ name: "Uyo, Silent Prophet", type_line: "Legendary Creature — Moonfolk Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "4", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\n{2}{U}{U}, Return two lands you control to their owner's hand: Copy target instant or sorcery spell. You may choose new targets for the copy.", oracle_id: "93da1e63-54d6-4b05-af91-f13e7e111176", scryfall_id: "93da1e63-54d6-4b05-af91-f13e7e111176" });
 const C13_NIVIX_GUILDMAGE = () => make({ name: "Nivix Guildmage", type_line: "Creature — Human Wizard", mana_cost: "{U}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "{1}{U}{R}: Draw a card, then discard a card.\n{2}{U}{R}: Copy target instant or sorcery spell you control. You may choose new targets for the copy.", oracle_id: "d04356f1-0e1a-4689-8e54-f88c4c6dd936", scryfall_id: "603e7dd3-c361-4e66-9df5-4b24f40734e8" });
 const C13_WILD_RICOCHET = () => make({ name: "Wild Ricochet", type_line: "Instant", mana_cost: "{2}{R}{R}", cmc: 4, oracle_text: "You may choose new targets for target instant or sorcery spell. Then copy that spell. You may choose new targets for the copy.", oracle_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9", scryfall_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9" });
@@ -3290,6 +3291,39 @@ describe("casting", () => {
     }
     expect(game.players[0]!.hand.some((card) => card.name === "Lightning Bolt")).toBe(true);
     expect(game.players[0]!.library.slice(-2).map((card) => card.name)).toEqual(["Forest", "Grizzly Bears"]);
+  });
+
+  it("filters Mayael's top-five review by creature power", () => {
+    const profile = profileOf(C13_MAYAEL());
+    expect(profile).toMatchObject({ fullyImplemented: true });
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      requiresTap: true,
+      effect: { kind: "look-top-select", amount: 5, destination: "battlefield", minPower: 5 }
+    });
+    const giant = make({ name: "Colossal Beast", type_line: "Creature — Beast", power: "6", toughness: "6" });
+    const small = make({ name: "Small Beast", type_line: "Creature — Beast", power: "4", toughness: "4" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [C13_MAYAEL()]);
+    const mayael = game.players[0]!.battlefield[0]!;
+    game = stage(game, 0, (player) => ({
+      manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0, C: 3 },
+      library: toHand(0, [FOREST(), giant, small, BOLT(), ISLAND()], "mayael-library"),
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === mayael.instance_id
+        ? { ...permanent, summoningSick: false }
+        : permanent)
+    }));
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === mayael.instance_id)!;
+    if (activation.action.type !== "activate") throw new Error("Mayael activation was not offered.");
+    game = applyAction(game, 0, activation.action);
+    expect(game.pendingChoice).toMatchObject({ type: "look-top-select", lookedCount: 5, minPower: 5 });
+    const sourceId = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "look-top-select" }>).sourceId;
+    const bigOrdinal = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "look-top-select" }>).remainingCards.findIndex((card) => card.name === "Colossal Beast");
+    game = applyAction(game, 0, { type: "choose-look-top", sourceId, ordinal: bigOrdinal });
+    while (game.pendingChoice?.type === "look-top-select") {
+      game = applyAction(game, 0, { type: "choose-look-top-bottom", sourceId, ordinal: 0 });
+    }
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Colossal Beast")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Small Beast")).toBe(false);
   });
 
   it("pays Uyo's two-land return cost before copying a spell", () => {

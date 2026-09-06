@@ -547,3 +547,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-sacrifice-trigger-furnace` | Reusable permanent-sacrificed event and optional mana trigger for Furnace Celebration (CR 603.2, 601.2) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-sacrifice-trigger-thraximundar` | Reuse permanent-sacrificed triggers and defending-player sacrifice resolution for Thraximundar (CR 603.2, 508.1b) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-counter-library-jar-eyeballs` | Reusable source-counter bank and dynamic top-library selection for Jar of Eyeballs (CR 121.1, 701.20) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-power-filter-mayael` | Extend the private top-library primitive with a minimum creature-power filter for Mayael (CR 701.20, 608.2c) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

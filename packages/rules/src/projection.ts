@@ -127,6 +127,7 @@ export interface TopSelectionView {
   readonly stage: "select" | "bottom";
   readonly cards: readonly CardView[];
   readonly eligibleTypes: readonly string[];
+  readonly minimumPower?: number;
   readonly selectedCardId?: string;
 }
 
@@ -354,6 +355,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     stage: pendingTopSelection.stage,
     cards: pendingTopSelection.remainingCards.map(cardView),
     eligibleTypes: pendingTopSelection.types,
+    ...(pendingTopSelection.minPower !== undefined ? { minimumPower: pendingTopSelection.minPower } : {}),
     ...(pendingTopSelection.selectedCardId ? { selectedCardId: pendingTopSelection.selectedCardId } : {})
   } : null;
   // Gitaxian Probe: the target's hand is included ONLY when THIS viewer is
