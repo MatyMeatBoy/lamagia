@@ -534,15 +534,14 @@ app.post<{ Params: { id: string }; Body: { token?: string; action?: GameAction }
     io.to(`match:${request.params.id}`).emit("match:updated", { matchId: request.params.id, version: view.version });
     return view;
   } catch (error) {
-    if (error instanceof Error && /estabilizar|bucle/i.test(error.message)) {
-      try {
-        const match = getMatch(request.params.id);
-        const debug = gameplayDebugSnapshot(match);
-        appendGameplayDebug({ kind: "failure", matchId: request.params.id, action: request.body?.action, error: error.message, debug });
-        request.log.error({ err: error, action: request.body?.action, debug }, "rules engine stabilization failure");
-      } catch (loggingError) {
-        request.log.error({ err: loggingError, originalError: error.message, matchId: request.params.id }, "rules engine failure could not be fully captured");
-      }
+    try {
+      const match = getMatch(request.params.id);
+      const debug = gameplayDebugSnapshot(match);
+      const message = failure(error, "La acción fue rechazada.");
+      appendGameplayDebug({ kind: "failure", matchId: request.params.id, action: request.body?.action, error: message, debug });
+      request.log.warn({ err: error, action: request.body?.action, debug }, "match action rejected");
+    } catch (loggingError) {
+      request.log.error({ err: loggingError, originalError: failure(error, "unknown"), matchId: request.params.id }, "match action failure could not be captured");
     }
     return reply.code(400).send({ error: failure(error, "La acción fue rechazada.") });
   }
@@ -559,7 +558,15 @@ app.post<{ Params: { id: string }; Body: { token?: string; version?: number } }>
     const view = undoInMatch(request.params.id, request.body?.token, Number(request.body.version));
     io.to(`match:${request.params.id}`).emit("match:updated", { matchId: request.params.id, version: view.version });
     return view;
-  } catch (error) { return reply.code(400).send({ error: failure(error, "La acción ya no se puede deshacer.") }); }
+  } catch (error) {
+    try {
+      const match = getMatch(request.params.id);
+      appendGameplayDebug({ kind: "undo-failure", matchId: request.params.id, version: request.body?.version, error: failure(error, "La acción ya no se puede deshacer."), debug: gameplayDebugSnapshot(match) });
+    } catch (loggingError) {
+      request.log.error({ err: loggingError, originalError: failure(error, "unknown"), matchId: request.params.id }, "undo failure could not be captured");
+    }
+    return reply.code(400).send({ error: failure(error, "La acción ya no se puede deshacer.") });
+  }
 });
 
 app.get<{ Params: { id: string }; Querystring: { token?: string } }>("/api/matches/:id/summary", async (request, reply) => {
