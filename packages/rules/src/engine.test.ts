@@ -984,6 +984,10 @@ const CREATURE_COMBAT_DRAWER = () => make({
   name: "Combat Chronicler", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3",
   oracle_text: "Whenever a creature deals combat damage to a player, draw a card."
 });
+const BIDENT_OF_THASSA = () => make({
+  name: "Bident of Thassa", type_line: "Legendary Enchantment", mana_cost: "{2}{U}", cmc: 3,
+  oracle_text: "Whenever a creature you control deals combat damage to a player, draw a card. This ability triggers only once each turn.\n{1}{U}, {T}: Tap target creature."
+});
 const DIVINER_SPIRIT = () => make({
   name: "Diviner Spirit", type_line: "Creature — Spirit", mana_cost: "{4}{U}", cmc: 5, power: "2", toughness: "4",
   oracle_text: "Whenever this creature deals combat damage to a player, you and that player each draw that many cards.",
@@ -7107,6 +7111,11 @@ describe("triggered abilities", () => {
     expect(profileOf(RAIDER()).triggers[0]).toMatchObject({ event: "attacks", subject: "self", targetKind: "any" });
     expect(profileOf(UPKEEP_SAGE()).triggers[0]).toMatchObject({ event: "upkeep", subject: "you" });
     expect(profileOf(CREATURE_COMBAT_DRAWER()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", effect: { kind: "draw", amount: 1 } });
+    expect(profileOf(BIDENT_OF_THASSA()).triggers[0]).toMatchObject({
+      event: "deals-combat-damage-to-player", subject: "creature-you-control",
+      effect: { kind: "draw", amount: 1 }, condition: { kind: "once-per-turn" }
+    });
+    expect(profileOf(BIDENT_OF_THASSA()).fullyImplemented).toBe(true);
     expect(profileOf(EDRIC()).triggers[0]).toMatchObject({ event: "deals-combat-damage-to-player", subject: "any-creature", optional: true, effect: { kind: "draw", amount: 1 } });
     expect(profileOf(RHYSTIC_STUDY()).triggers[0]).toMatchObject({
       event: "spell-cast", subject: "opponent", optional: true, manaCost: { raw: "{1}" },
@@ -7114,6 +7123,18 @@ describe("triggered abilities", () => {
     });
    expect(profileOf(CREATURE_CAST_DRAWER()).triggers[0]).toMatchObject({ event: "spell-cast", subject: "you", spellType: "creature" });
  });
+
+  it("draws only once per turn from Bident of Thassa even with two attackers dealing combat damage", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BIDENT_OF_THASSA(), BEAR(), TRAMPLER()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const trampler = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }, { instanceId: trampler.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "postcombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(game.players[0]!.hand.length).toBe(handBefore + 1);
+  });
 
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());

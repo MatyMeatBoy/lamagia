@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,083** · cobertura: **33.0%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,084** · cobertura: **33.0%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -692,7 +692,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | 2026-10-02 | Reality Fracture (`FRA`) | expansion | 2020s | main | 24 | 4 | 20 | 16.7% |
 | 2026-10-02 | Reality Fracture Commander (`FRC`) | commander | 2026 | commander | 1 | 0 | 1 | 0.0% |
 | 2026-11-09 | Mystery Booster Commander Edition (`MBC`) | commander | 2026 | other | 80 | 8 | 72 | 10.0% |
-| 2026-11-13 | Star Trek (`TRK`) | expansion | 2020s | main | 91 | 32 | 59 | 35.2% |
+| 2026-11-13 | Star Trek (`TRK`) | expansion | 2020s | main | 91 | 33 | 58 | 36.3% |
 | 2026-11-13 | Star Trek Commander (`TRC`) | commander | 2026 | commander | 40 | 22 | 18 | 55.0% |
 | 2026-11-13 | Stardates (`SDS`) | masterpieces | stardates | other | 1 | 1 | 0 | 100.0% |
 
@@ -795,7 +795,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | expansion | 1990s | 11 | 1573 | 401 | 1172 | 25.5% |
 | expansion | 2000s | 19 | 3082 | 772 | 2310 | 25.0% |
 | expansion | 2010s | 14 | 2735 | 815 | 1920 | 29.8% |
-| expansion | 2020s | 17 | 3739 | 711 | 3028 | 19.0% |
+| expansion | 2020s | 17 | 3739 | 712 | 3027 | 19.0% |
 | expansion | alara | 2 | 379 | 166 | 213 | 43.8% |
 | expansion | amonkhet | 1 | 272 | 108 | 164 | 39.7% |
 | expansion | bloomburrow | 1 | 280 | 50 | 230 | 17.9% |
@@ -59989,7 +59989,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 - [ ] Amok Time — `98a752ff-f041-4032-9f3f-c6c4007f10f1`
 - [ ] Assault Drone — `18832d7a-9a1f-45f1-a0f9-8e768a36af07`
 - [ ] Automated Warfare System — `b28b4fe9-1a35-48c1-8818-f6f786b04e3e`
-- [ ] Battle-Scarred Survivalist — `0e0e15d9-bd29-495a-9975-d1bd2ebb4bff`
 - [ ] Beckett Mariner, Impetuous Ensign — `1033a0cb-1a00-46c4-83d5-68a6eac85feb`
 - [ ] Brad Boimler, Eager Ensign — `10af9cd9-1700-48f9-97e1-61e239536fef`
 - [ ] Cantankerous Captain — `2375e6e4-bea2-4fa2-b0d5-467e3076962c`
