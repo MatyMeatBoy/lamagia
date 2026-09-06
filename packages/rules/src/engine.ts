@@ -284,6 +284,8 @@ export interface TriggerInstance {
   readonly eventSpell?: StackObject;
   /** Permanent involved in the event, used by effects referring to "that creature". */
   readonly eventPermanentId?: string;
+  /** Card object involved in a zone-change event, retained after the permanent leaves. */
+  readonly eventCard?: GameCard;
   /** Defending player involved in an attack trigger (CR 508.1b). */
   readonly eventDefender?: SeatId;
   /** Amount carried by life-gain/loss events for proportional triggers. */
@@ -342,7 +344,7 @@ export interface DelayedReturn {
 export type GameEvent =
   | { readonly kind: "enters-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "leaves-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
-  | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly power?: number }
+  | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly power?: number; readonly hadFlying?: boolean }
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
@@ -1695,7 +1697,7 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
   if (permanent.card.token) {
     if (destinationZone === "graveyard" && isCreature(cardProfile(permanent.card))) {
       next = { ...next, creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1 };
-      next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state) }, [permanent]);
+      next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state), hadFlying: keywordOf(state, permanent, "flying") }, [permanent]);
     }
     return logged(next, permanent.controller, `${permanent.card.name} deja el campo de batalla.`);
   }
@@ -1711,7 +1713,7 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
       creaturesDiedThisTurn: next.creaturesDiedThisTurn + 1,
       creatureCardsDiedThisTurn: [...next.creatureCardsDiedThisTurn, permanent.card]
     };
-    next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state) }, [permanent]);
+    next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state), hadFlying: keywordOf(state, permanent, "flying") }, [permanent]);
   }
   return next;
 }
@@ -2075,6 +2077,9 @@ function triggerMatches(
   if (definition.excludeSubtype && cardProfile(object.card).subtypes.some((subtype) => subtype.toLowerCase() === definition.excludeSubtype!.toLowerCase())) return false;
   const isSelf = object.permanentId === watcher.instanceId;
   const objectIsCreature = isCreature(cardProfile(object.card));
+  const objectHadFlying = event.kind === "dies" && event.hadFlying !== undefined
+    ? event.hadFlying
+    : cardProfile(object.card).keywords.some((keyword) => keyword.toLowerCase() === "flying");
   switch (subject) {
     case "self": return isSelf;
     case "self-or-another-creature-you-control": return objectIsCreature && object.controller === watcher.controller;
@@ -2104,6 +2109,9 @@ function triggerMatches(
       return objectIsCreature && object.controller === watcher.controller
         && Boolean(permanent && keywordOf(state, permanent, "deathtouch"));
     }
+    case "creature-without-flying-you-control":
+      return objectIsCreature && object.controller === watcher.controller
+        && !objectHadFlying;
     case "artifact-creature-you-control": {
       const profile = cardProfile(object.card);
       return objectIsCreature && profile.types.includes("Artifact") && object.controller === watcher.controller;
@@ -2250,7 +2258,7 @@ function raiseEvent(
           cause: causeOf(state, event),
           ...("controller" in event ? { eventController: event.controller } : "seat" in event ? { eventController: event.seat } : "activeSeat" in event ? { eventController: event.activeSeat } : {}),
           ...(event.kind === "spell-cast" ? { eventSpell: event.spell } : {}),
-         ...("permanentId" in event ? { eventPermanentId: event.permanentId } : {}),
+         ...("permanentId" in event ? { eventPermanentId: event.permanentId, eventCard: event.card } : {}),
           ...(event.kind === "leaves-battlefield" && watcher.exiledWith ? { linkedExiledCard: watcher.exiledWith } : {}),
          ...("amount" in event ? { eventAmount: event.amount } : {}),
           ...(event.kind === "spell-cast" && event.spentMana !== undefined ? { eventManaSpent: event.spentMana } : {}),
@@ -2829,6 +2837,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
       return logged(next, owner, `${object.card.name} regresa al campo con un contador ${effect.counter}.`);
+    }
+    case "return-triggered-creature-with-counter": {
+      const cardId = object.trigger?.eventCard?.instance_id;
+      if (!cardId) return state;
+      const owner = state.players.find((player) => player.graveyard.some((card) => card.instance_id === cardId));
+      const card = owner?.graveyard.find((candidate) => candidate.instance_id === cardId);
+      if (!owner || !card || !isCreature(cardProfile(card))) return state;
+      let next = withPlayer(state, owner.seat, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((candidate) => candidate.instance_id !== cardId)
+      }));
+      next = putOntoBattlefield(next, owner.seat, card, playerAt(next, owner.seat).commanderIds.includes(card.instance_id));
+      next = withPlayer(next, owner.seat, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === card.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + 1 } }
+          : permanent)
+      }));
+      return logged(next, owner.seat, `${card.name} regresa al campo bajo el control de su propietario con un contador ${effect.counter}.`);
     }
     case "draw-then-discard": {
       let next = drawCards(state, controller, effect.draw);

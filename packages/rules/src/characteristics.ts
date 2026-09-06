@@ -497,6 +497,8 @@ export type SpellEffect =
   | { readonly kind: "return-creatures-died-this-turn-to-hand" }
   | { readonly kind: "look-put-one-in-hand"; readonly amount: number; readonly restDestination?: "bottom" | "graveyard" }
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
+  /** Return the creature that caused this dies trigger with a counter. */
+  | { readonly kind: "return-triggered-creature-with-counter"; readonly counter: string }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -808,6 +810,7 @@ export type TriggerSubject =
   | "creature-you-control"
   | "artifact-creature-you-control"
   | "creature-with-deathtouch-you-control"
+  | "creature-without-flying-you-control"
   | "another-permanent-you-control"
   | "permanent-you-control"
   | "land-you-control"
@@ -2617,6 +2620,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "dies", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
+  { event: "dies", subject: "creature-without-flying-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+without\s+flying\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+dies,?\s*(.+)$/i },
@@ -3669,6 +3673,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // chooses this target as it is put on the stack (CR 603.3d).
   if (/^Return target instant or sorcery card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "instant-or-sorcery-card-in-your-graveyard" };
   if (/^Return (?:another )?target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
+  if (/^Return it to the battlefield under its owner's control with a flying counter on it\.?$/i.test(text)) {
+    return { effect: { kind: "return-triggered-creature-with-counter", counter: "flying" }, target: "none" };
+  }
   const creatureGraveyardManaValue = /^Return target creature card with mana value (\d+) or less from your graveyard to the battlefield$/i.exec(text);
   if (creatureGraveyardManaValue) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: `creature-card-in-your-graveyard-mv-${Number(creatureGraveyardManaValue[1])}-or-less` };
   if (/^Return target creature card from your graveyard to the battlefield\. You lose life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) {

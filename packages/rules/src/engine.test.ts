@@ -362,6 +362,7 @@ const CHANDRAS_OUTRAGE = () => make({ name: "Chandra's Outrage", type_line: "Ins
 const ESSENCE_EXTRACTION = () => make({ name: "Essence Extraction", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Essence Extraction deals 3 damage to target creature and you gain 3 life.", oracle_id: "14363df6-ac0f-476a-bbd8-ce351de0babf", scryfall_id: "14363df6-ac0f-476a-bbd8-ce351de0babf" });
 const RED_DRAGON = () => make({ name: "Red Dragon", type_line: "Creature — Dragon", mana_cost: "{5}{R}", cmc: 6, power: "4", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\nFire Breath — When ~ enters, it deals 4 damage to each opponent.", oracle_id: "ff6e4346-463c-445d-8f72-11cb35dd99ee", scryfall_id: "ff6e4346-463c-445d-8f72-11cb35dd99ee" });
 const BISHOP_OF_REBIRTH = () => make({ name: "Bishop of Rebirth", type_line: "Creature — Vampire Cleric", mana_cost: "{3}{W}", cmc: 4, power: "3", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink\nWhenever ~ attacks, you may return target creature card with mana value 3 or less from your graveyard to the battlefield.", oracle_id: "05058594-608f-4046-bf44-b736a7072f0a", scryfall_id: "05058594-608f-4046-bf44-b736a7072f0a" });
+const LUMINOUS_BROODMOTH = () => make({ name: "Luminous Broodmoth", type_line: "Creature — Insect", mana_cost: "{2}{W}{W}", cmc: 4, power: "3", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\nWhenever a creature you control without flying dies, return it to the battlefield under its owner's control with a flying counter on it.", oracle_id: "28c7c816-07e7-42fb-923c-bf149ba28b38", scryfall_id: "37357272-01fe-47b0-8043-40e5164e1b45" });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
 const WONDER = () => make({ name: "Wonder", type_line: "Creature — Incarnation", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Flying\nAs long as this card is in your graveyard and you control an Island, creatures you control have flying.", scryfall_id: "232284f7-c623-4895-9ab9-8b1a39926830" });
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
@@ -6818,6 +6819,24 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Graveborn")).toMatchObject({
       card: { type_line: "Creature — Graveborn", power: "3", toughness: "1", colors: ["B", "R"] }
     });
+  });
+
+  it("returns a nonflying creature with a flying counter for Luminous Broodmoth", () => {
+    expect(profileOf(LUMINOUS_BROODMOTH())).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{
+        event: "dies",
+        subject: "creature-without-flying-you-control",
+        targetKind: "none",
+        effect: { kind: "return-triggered-creature-with-counter", counter: "flying" }
+      }]
+    });
+    let game = readyToCast([BOLT()], [LUMINOUS_BROODMOTH(), BEAR(), MOUNTAIN()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears" && permanent.counters.flying === 1));
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.counters.flying).toBe(1);
+    expect(game.players[0]!.graveyard.some((card) => card.instance_id === bear.card.instance_id)).toBe(false);
   });
 
   it("aims Acidic Slime at an artifact, enchantment, or land", () => {

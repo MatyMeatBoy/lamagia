@@ -3948,3 +3948,10 @@ turn, and cleanup removes the restriction. The scenario verifies that a
 haste creature remains legal while a normal creature is excluded (CR 509.1,
 602.2, 702.9). Current validation: **731 rules tests**, `npm run check`, and
 `git diff --check` pass.
+
+The next one-line rescan item, Luminous Broodmoth, now reuses a dies-event
+primitive that returns the triggering nonflying creature under its owner's
+control with a flying counter. The event card is retained as last-known
+information because a permanent ID can differ from its card instance ID after
+the zone change (CR 603.6c, 608.2h). Current validation: **732 rules tests**,
+`npm run check`, and `git diff --check` pass.
