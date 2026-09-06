@@ -426,7 +426,8 @@ export interface TokenDefinition {
  */
 export const PREDEFINED_TOKEN_TEXT: Readonly<Record<string, string>> = {
   clue: "{2}, Sacrifice this artifact: Draw a card.",
-  food: "{2}, {T}, Sacrifice this artifact: You gain 3 life."
+  food: "{2}, {T}, Sacrifice this artifact: You gain 3 life.",
+  treasure: "{T}, Sacrifice this artifact: Add one mana of any color."
 };
 
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
