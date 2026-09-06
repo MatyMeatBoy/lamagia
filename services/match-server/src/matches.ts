@@ -60,16 +60,22 @@ function enrichTokenArt(view: GameView): GameView {
     const tokenArt = (card: GameView["players"][number]["battlefield"][number]) => {
       if (!card.isToken || card.image_normal) return card;
       const sourceSet = card.tokenSourceSetCode?.toLowerCase();
-      const cacheKey = `${card.name.toLowerCase()}|${sourceSet ?? ""}`;
+      // Name alone is not a token identity: the same name can have different
+      // subtypes/rules (for example Soldier or Goblin variants). Keep the
+      // cache scoped to the visible definition and originating edition.
+      const definitionKey = [card.name, card.type_line, card.oracle_text, card.power, card.toughness]
+        .map((value) => String(value ?? "").trim().toLowerCase()).join("|");
+      const cacheKey = `${definitionKey}|${sourceSet ?? ""}`;
       const cached = tokenArtCache.get(cacheKey);
       if (cached) return { ...card, ...(cached.image_normal ? { image_normal: cached.image_normal } : {}), ...(cached.image_art_crop ? { image_art_crop: cached.image_art_crop } : {}) };
       const query = database.prepare(`SELECT image_normal, image_art_crop FROM cards
         WHERE (layout IN ('token','double_faced_token') OR set_type = 'token')
           AND LOWER(name) = LOWER(?) AND LOWER(type_line) LIKE '%token%'
+          AND (LOWER(type_line) = LOWER(?) OR LOWER(type_line) LIKE '%' || LOWER(?) || '%')
         ORDER BY CASE WHEN LOWER(set_code) = ? THEN 0 ELSE 1 END,
                  CASE WHEN set_type IN ('core','expansion') AND COALESCE(promo,0)=0 AND COALESCE(variation,0)=0 THEN 0 ELSE 1 END,
                  released_at DESC, set_code ASC LIMIT 1`);
-      const image = query.get(card.name, sourceSet ?? "") as { image_normal?: string; image_art_crop?: string } | undefined;
+      const image = query.get(card.name, card.type_line, card.type_line, sourceSet ?? "") as { image_normal?: string; image_art_crop?: string } | undefined;
       if (image?.image_normal) tokenArtCache.set(cacheKey, image);
       return image?.image_normal ? { ...card, image_normal: image.image_normal, ...(image.image_art_crop ? { image_art_crop: image.image_art_crop } : {}) } : card;
     };
