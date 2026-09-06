@@ -576,6 +576,8 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .scry-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; }
 
 .stack-strip { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 7px; overflow-x: auto; padding: 7px 0; border-top: 1px solid #b9973e55; border-bottom: 1px solid #b9973e33; }
+.stack-strip.empty { align-items: center; min-height: 30px; opacity: .82; }
+.stack-empty { align-self: center; color: var(--text-faint); font-size: .56rem; }
 .stack-strip > b { color: var(--gold); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; }
 .stack-order-hint { align-self: center; min-width: 0; max-width: min(250px, 32vw); overflow: hidden; color: var(--text-faint); font-size: .54rem; text-overflow: ellipsis; white-space: nowrap; }
 .stack-chip { position: relative; display: flex; align-items: center; gap: 6px; min-width: 170px; max-width: 255px; padding: 5px 8px 5px 5px; border: 1px solid var(--gold-dim); border-radius: 8px; background: linear-gradient(145deg, #1b180d, #0d160f); box-shadow: 0 3px 9px #0008; color: var(--text); font: inherit; text-align: left; cursor: pointer; }

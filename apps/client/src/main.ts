@@ -1033,7 +1033,7 @@ function logDrawerHtml(): string {
 
 /** The stack rides just above the hand so it is impossible to miss mid-combat. */
 function stackStripHtml(): string {
-  if (!view?.stack.length) return "";
+  if (!view) return "";
   const passed = view.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`);
   const priority = view.priorityOpen ? seatOf(view.prioritySeat)?.name : undefined;
   const status = priority
@@ -1042,7 +1042,7 @@ function stackStripHtml(): string {
   const statusDetail = priority
     ? `${status}${passed.length ? ` · Pasaron: ${passed.join(", ")}` : ""}`
     : status;
-  return `<div class="stack-strip" aria-label="Pila de hechizos y habilidades" title="${escapeHtml(statusDetail)}"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)}</small>${[...view.stack].reverse().map((object, index) => {
+  const objects = view.stack.length ? [...view.stack].reverse().map((object, index) => {
     const stackPosition = view!.stack.length - index;
     const kind = object.kind === "trigger" ? "habilidad disparada" : object.kind === "activated" ? "habilidad activada" : "hechizo";
     return `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}${object.resolvesNext ? " resolves-next" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este objeto como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Inspeccionar objeto de la pila")}" aria-label="Pila ${stackPosition} desde abajo, ${escapeHtml(kind)} ${escapeHtml(object.name)}${object.resolvesNext ? ", próximo en resolver" : ""}">
@@ -1050,7 +1050,8 @@ function stackStripHtml(): string {
       ${cardImageHtml(object.image_normal, object.name)}
       <span><small class="stack-kind">${escapeHtml(kind)}${object.countered ? " · Contrarrestado" : ""}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
     </button>`;
-  }).join("")}</div>`;
+  }).join("") : `<span class="stack-empty">Vacía · ${escapeHtml(status)}</span>`;
+  return `<div class="stack-strip${view.stack.length ? "" : " empty"}" aria-label="Pila de hechizos y habilidades" title="${escapeHtml(statusDetail)}"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)}</small>${objects}</div>`;
 }
 
 function stackDetailHtml(): string {
