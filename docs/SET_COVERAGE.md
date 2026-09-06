@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,162** · cobertura: **33.1%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,167** · cobertura: **33.1%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -351,8 +351,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | 2015-11-18 | Legendary Cube Prize Pack (`PZ1`) | treasure-chest | 2010s | other | 149 | 62 | 87 | 41.6% |
 | 2016-01-01 | Friday Night Magic 2016 (`F16`) | promos | fnm-2016 | other | 12 | 6 | 6 | 50.0% |
 | 2016-01-01 | Judge Gift Cards 2016 (`J16`) | promos | judge-2016 | other | 8 | 3 | 5 | 37.5% |
-| 2016-01-22 | Oath of the Gatewatch (`OGW`) | expansion | 2010s | main | 183 | 49 | 134 | 26.8% |
-| 2016-01-22 | Oath of the Gatewatch Promos (`POGW`) | promos | oath-of-the-gatewatch | other | 55 | 2 | 53 | 3.6% |
+| 2016-01-22 | Oath of the Gatewatch (`OGW`) | expansion | 2010s | main | 183 | 50 | 133 | 27.3% |
+| 2016-01-22 | Oath of the Gatewatch Promos (`POGW`) | promos | oath-of-the-gatewatch | other | 55 | 3 | 52 | 5.5% |
 | 2016-02-26 | Duel Decks: Blessed vs. Cursed (`DDQ`) | duel-decks | duel-decks-blessed-vs-cursed | other | 67 | 23 | 44 | 34.3% |
 | 2016-04-08 | Shadows over Innistrad (`SOI`) | expansion | innistrad | main | 287 | 78 | 209 | 27.2% |
 | 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | promos | shadows-over-innistrad | other | 79 | 12 | 67 | 15.2% |
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 10 | 58 | 14.7% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1724 | 3497 | 33.0% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1725 | 3496 | 33.0% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 22 | 37 | 37.3% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 14 | 6 | 70.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 456 | 1240 | 26.9% |
@@ -554,7 +554,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | 2022-11-26 | Eternal Weekend (`PEWK`) | promos | eternal-weekend | other | 10 | 4 | 6 | 40.0% |
 | 2022-12-02 | Jumpstart 2022 (`J22`) | jumpstart | jumpstart-2022 | other | 819 | 313 | 506 | 38.2% |
 | 2022-12-02 | Starter Commander Decks (`SCD`) | starter | 2022 | commander | 337 | 155 | 182 | 46.0% |
-| 2022-12-13 | Explorer Anthology 2 (`EA2`) | anthologies | explorer-anthology-2 | other | 25 | 5 | 20 | 20.0% |
+| 2022-12-13 | Explorer Anthology 2 (`EA2`) | anthologies | explorer-anthology-2 | other | 25 | 6 | 19 | 24.0% |
 | 2023-01-01 | Judge Gift Cards 2023 (`P23`) | promos | judge-2023 | other | 10 | 6 | 4 | 60.0% |
 | 2023-01-01 | Wizards Play Network 2023 (`PW23`) | promos | wpn-2023 | other | 11 | 4 | 7 | 36.4% |
 | 2023-01-07 | Regional Championship Qualifiers 2023 (`PR23`) | promos | regional-2023 | other | 3 | 0 | 3 | 0.0% |
@@ -614,7 +614,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | 2024-04-19 | The Big Score (`BIG`) | expansion | 2020s | main | 30 | 3 | 27 | 10.0% |
 | 2024-06-14 | Modern Horizons 2 Timeshifts (`H2R`) | supplemental | modern-horizons-2-timeshifts | other | 16 | 4 | 12 | 25.0% |
 | 2024-06-14 | Modern Horizons 3 (`MH3`) | supplemental | modern-horizons-3 | other | 313 | 65 | 248 | 20.8% |
-| 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 2024 | commander | 320 | 122 | 198 | 38.1% |
+| 2024-06-14 | Modern Horizons 3 Commander (`M3C`) | commander | 2024 | commander | 320 | 123 | 197 | 38.4% |
 | 2024-06-14 | Modern Horizons 3 Promos (`PMH3`) | promos | modern-horizons-3 | other | 81 | 6 | 75 | 7.4% |
 | 2024-07-05 | Assassin's Creed (`ACR`) | supplemental | assassin-s-creed | other | 138 | 23 | 115 | 16.7% |
 | 2024-08-02 | Bloomburrow (`BLB`) | expansion | bloomburrow | main | 280 | 50 | 230 | 17.9% |
@@ -707,7 +707,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | anthologies | arena-anthology-3 | 1 | 25 | 11 | 14 | 44.0% |
 | anthologies | arena-anthology-4 | 1 | 28 | 15 | 13 | 53.6% |
 | anthologies | explorer-anthology-1 | 1 | 20 | 6 | 14 | 30.0% |
-| anthologies | explorer-anthology-2 | 1 | 25 | 5 | 20 | 20.0% |
+| anthologies | explorer-anthology-2 | 1 | 25 | 6 | 19 | 24.0% |
 | anthologies | explorer-anthology-3 | 1 | 25 | 12 | 13 | 48.0% |
 | anthologies | historic-anthology-1 | 1 | 20 | 14 | 6 | 70.0% |
 | anthologies | historic-anthology-2 | 1 | 25 | 12 | 13 | 48.0% |
@@ -751,7 +751,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | commander | 2021 | 5 | 1022 | 374 | 648 | 36.6% |
 | commander | 2022 | 7 | 1802 | 556 | 1246 | 30.9% |
 | commander | 2023 | 6 | 1597 | 553 | 1044 | 34.6% |
-| commander | 2024 | 7 | 1887 | 714 | 1173 | 37.8% |
+| commander | 2024 | 7 | 1887 | 715 | 1172 | 37.9% |
 | commander | 2025 | 4 | 1046 | 429 | 617 | 41.0% |
 | commander | 2026 | 6 | 1265 | 381 | 884 | 30.1% |
 | conspiracy | conspiracy | 2 | 211 | 57 | 154 | 27.0% |
@@ -794,7 +794,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | eternal | 2020s | 6 | 537 | 154 | 383 | 28.7% |
 | expansion | 1990s | 11 | 1573 | 402 | 1171 | 25.6% |
 | expansion | 2000s | 19 | 3082 | 773 | 2309 | 25.1% |
-| expansion | 2010s | 14 | 2735 | 817 | 1918 | 29.9% |
+| expansion | 2010s | 14 | 2735 | 818 | 1917 | 29.9% |
 | expansion | 2020s | 17 | 3739 | 714 | 3025 | 19.1% |
 | expansion | alara | 2 | 379 | 166 | 213 | 43.8% |
 | expansion | amonkhet | 1 | 272 | 108 | 164 | 39.7% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | masters-remastered | shadows-of-the-past | 1 | 76 | 30 | 46 | 39.5% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 71 | 213 | 25.0% |
 | masters-remastered | tempest-remastered | 1 | 254 | 110 | 144 | 43.3% |
-| masters-remastered | the-list | 1 | 5221 | 1724 | 3497 | 33.0% |
+| masters-remastered | the-list | 1 | 5221 | 1725 | 3496 | 33.0% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 122 | 291 | 29.5% |
 | masters-remastered | ultimate-masters | 1 | 254 | 101 | 153 | 39.8% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -1104,7 +1104,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 | promos | nemesis | 1 | 1 | 0 | 1 | 0.0% |
 | promos | new-phyrexia | 1 | 4 | 1 | 3 | 25.0% |
 | promos | ninth-edition | 1 | 2 | 1 | 1 | 50.0% |
-| promos | oath-of-the-gatewatch | 1 | 55 | 2 | 53 | 3.6% |
+| promos | oath-of-the-gatewatch | 1 | 55 | 3 | 52 | 5.5% |
 | promos | odyssey | 1 | 1 | 0 | 1 | 0.0% |
 | promos | onslaught | 1 | 1 | 0 | 1 | 0.0% |
 | promos | outlaws-of-thunder-junction | 1 | 80 | 5 | 75 | 6.2% |
@@ -22165,7 +22165,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 - [ ] Drana's Chosen — `185b3b9f-f798-4ca4-af99-b17a24fcc1c6`
 - [ ] Dread Defiler — `ebdd0027-3340-459e-a598-dd416e76744f`
 - [ ] Eldrazi Aggressor — `aa0c6fea-c90c-4b65-aa1e-18e5b34ea6e3`
-- [ ] Eldrazi Displacer — `9b1f552a-bddc-4fcb-ac67-b4a65b2f48ba`
 - [ ] Eldrazi Mimic — `cddb3ec4-01a2-4f4d-a690-3486c73c3df8`
 - [ ] Eldrazi Obligator — `d09402cb-cf64-493e-a82d-244b31700710`
 - [ ] Elemental Uprising — `d9d3f6fc-5087-451a-94b1-ffe1a5d30f5e`
@@ -22286,7 +22285,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 - [ ] Dimensional Infiltrator — `b93732e4-7aeb-4c37-a415-2b0ff46e2056`
 - [ ] Drana's Chosen — `185b3b9f-f798-4ca4-af99-b17a24fcc1c6`
 - [ ] Dread Defiler — `ebdd0027-3340-459e-a598-dd416e76744f`
-- [ ] Eldrazi Displacer — `9b1f552a-bddc-4fcb-ac67-b4a65b2f48ba`
 - [ ] Eldrazi Mimic — `cddb3ec4-01a2-4f4d-a690-3486c73c3df8`
 - [ ] Eldrazi Obligator — `d09402cb-cf64-493e-a82d-244b31700710`
 - [ ] Endbringer — `db1ea6e0-4076-49dd-92f7-7e6d7eb65a27`
@@ -30272,7 +30270,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 - [ ] Eiganjo Castle — `895a0e00-20a9-44f8-9215-66edcdf016b7`
 - [ ] Elbrus, the Binding Blade // Withengar Unbound — `da5881ca-b86e-4582-ae0e-1570c59773ae`
 - [ ] Elder Deep-Fiend — `4eafe717-4ba4-4901-8c67-11757230eb54`
-- [ ] Eldrazi Displacer — `9b1f552a-bddc-4fcb-ac67-b4a65b2f48ba`
 - [ ] Eldrazi Monument — `c7ee1b21-d02e-49ef-95d6-d6dbf2f886ae`
 - [ ] Eldrazi Skyspawner — `b5661289-a03c-40fc-a1e4-f602adb56f81`
 - [ ] Eldrazi Temple — `7fab8d65-af51-47d3-8f10-2676bf6e8ba3`
@@ -44754,7 +44751,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 - [ ] Dispel — `6d7be242-a072-40ce-b540-95880506cccd`
 - [ ] Eerie Interlude — `0634091a-a74c-4cea-b6d1-7324a725554a`
 - [ ] Eidolon of the Great Revel — `2fd7018e-1c36-4d7f-8f72-22f2f7f60c60`
-- [ ] Eldrazi Displacer — `9b1f552a-bddc-4fcb-ac67-b4a65b2f48ba`
 - [ ] Ethereal Armor — `dbba75f5-2404-4bd5-982b-f6c4effa5316`
 - [ ] Fiery Impulse — `27c84ad1-1491-459b-bf8a-0146062084dc`
 - [ ] Kozilek, the Great Distortion — `4c1c1537-e519-4e2f-9bc2-d34b289d4487`
@@ -51349,7 +51345,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,16
 - [ ] Dryad of the Ilysian Grove — `bdbde5d0-f5e4-44da-b27c-b4ad6f374cc9`
 - [ ] Elder Deep-Fiend — `4eafe717-4ba4-4901-8c67-11757230eb54`
 - [ ] Eldrazi Confluence — `01160cb5-6d83-4317-9522-74083b3a83bb`
-- [ ] Eldrazi Displacer — `9b1f552a-bddc-4fcb-ac67-b4a65b2f48ba`
 - [ ] Eldrazi Monument — `c7ee1b21-d02e-49ef-95d6-d6dbf2f886ae`
 - [ ] Eldrazi Temple — `7fab8d65-af51-47d3-8f10-2676bf6e8ba3`
 - [ ] Eldritch Immunity — `7dce1e8c-5cfd-4626-9f23-7bb3f1b10c1e`

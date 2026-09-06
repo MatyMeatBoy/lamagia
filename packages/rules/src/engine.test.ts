@@ -7198,6 +7198,28 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!.summoningSick).toBe(true);
   });
 
+  it("blinks Eldrazi Displacer's target on ANY creature, restoring it to its owner not the activator", () => {
+    const displacer = make({ name: "Eldrazi Displacer", type_line: "Creature — Eldrazi", power: "2", toughness: "2", mana_cost: "{2}{C}", cmc: 3, keywords: ["Devoid"], oracle_text: "Devoid (This card has no color.)\n{2}{C}: Exile another target creature, then return it to the battlefield tapped under its owner's control. ({C} represents colorless mana.)" });
+    const profile = profileOf(displacer);
+    expect(profile.activatedAbilities[0]).toMatchObject({ effect: { kind: "blink-target-creature", restoreToOwner: true, tapped: true }, targetKind: "creature" });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([], [displacer, SOL_RING(), MOUNTAIN()], [BEAR()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Eldrazi Displacer" ? { ...permanent, summoningSick: false } : permanent)
+    }));
+    const displacerInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Eldrazi Displacer")!;
+    const opponentBear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: displacerInPlay.instance_id, abilityIndex: 0, targets: [{ kind: "permanent", instanceId: opponentBear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    const returnedBear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears");
+    expect(returnedBear).toBeDefined();
+    expect(returnedBear!.controller).toBe(1);
+    expect(returnedBear!.summoningSick).toBe(true);
+    expect(returnedBear!.tapped).toBe(true);
+  });
+
   it("returns owned nontoken permanents to their owners with Brooding Saurian", () => {
     const profile = profileOf(BROODING_SAURIAN());
     expect(profile.triggers[0]).toMatchObject({

@@ -715,8 +715,8 @@ export type SpellEffect =
   | { readonly kind: "exile-target-nontoken-creature"; readonly returnOnSourceLeave?: boolean }
   /** Return the card linked by a Fiend Hunter-style exile ability (CR 607.1). */
   | { readonly kind: "return-exiled-card" }
-  /** Exile a controlled creature, then return it under its controller's control (CR 400.7). */
-  | { readonly kind: "blink-target-creature" }
+  /** Exile a controlled creature, then return it under its controller's control (CR 400.7). "restoreToOwner" (Eldrazi Displacer, "another target creature... under its owner's control") returns it under the exiled card's OWNER instead — relevant for a stolen creature, and lets the target be any creature, not just one's own. */
+  | { readonly kind: "blink-target-creature"; readonly restoreToOwner?: boolean; readonly tapped?: boolean }
   | { readonly kind: "exile-target-graveyard" }
   | { readonly kind: "return-target-creature" }
   | { readonly kind: "return-target-permanent" }
@@ -4090,6 +4090,14 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Exile target creature you control, then return that card to the battlefield under your control$/i.test(text)) {
     return { effect: { kind: "blink-target-creature" }, target: "creature-you-control" };
+  }
+  // "Exile another target creature, then return it to the battlefield
+  // [tapped] under its owner's control" (Eldrazi Displacer): any creature,
+  // not just one's own, returned to its OWNER (matters for an
+  // already-stolen creature).
+  const displacerBlink = /^Exile another target creature, then return (?:it|that card) to the battlefield (tapped )?under its owner'?s control$/i.exec(text);
+  if (displacerBlink) {
+    return { effect: { kind: "blink-target-creature", restoreToOwner: true, ...(displacerBlink[1] ? { tapped: true } : {}) }, target: "creature" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
   if (/^Destroy target creature or enchantment$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-or-enchantment" };

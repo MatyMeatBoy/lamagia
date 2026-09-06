@@ -5911,3 +5911,26 @@ attacking creatures both dealing combat damage to a defending player
 in the same combat, Bident of Thassa draws exactly **one** card, not
 two. Validation: full **888** rules tests green (2 new), `npm run
 check` across all four workspaces, 200/200 simulated games.
+
+Eldrazi Displacer ("{2}{C}: Exile another target creature, then
+return it to the battlefield tapped under its owner's control.")
+reuses the existing `blink-target-creature` effect (Conjurer's
+Closet's own "exile target creature YOU CONTROL, then return it under
+YOUR control"), but that effect was hardcoded to the caster's own
+creatures and the caster's own control — exactly wrong for this card,
+whose whole point is targeting an OPPONENT's creature and returning it
+to ITS OWNER (relevant if that creature had been stolen by someone
+else). Added `restoreToOwner?: boolean` (drops the "must control the
+target" legality check and returns under `creature.card.owner` instead
+of the activator) and `tapped?: boolean` (a first typo-driven miss:
+the real Oracle text has "tapped" between "battlefield" and "under,"
+caught only by diffing against the catalog's actual text after an
+initial regex written from a paraphrase came up +0 in the export
+count). Both flags plumb straight into the existing
+`putOntoBattlefield` call's already-present parameters — no new
+mechanic. Verified **+1** in the export count (10,910 → 10,911); set
+coverage holds at 33.1%. Scenario-tested: exiling and returning an
+OPPONENT's Grizzly Bears leaves it under the OPPONENT's control (not
+stolen by the activator), tapped, and summoning-sick. Validation: full
+**891** rules tests green (1 new), `npm run check` across all four
+workspaces, 200/200 simulated games.

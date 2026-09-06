@@ -4711,11 +4711,12 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
       const creature = findPermanent(state, target.instanceId);
-      if (!creature || creature.controller !== controller || creature.card.token || !isCreature(cardProfile(creature.card))) return state;
+      if (!creature || creature.card.token || !isCreature(cardProfile(creature.card))) return state;
+      if (!effect.restoreToOwner && creature.controller !== controller) return state;
       // The card changes zones, so it is a new object on the battlefield (CR
       // 400.7), while retaining its stable instance identity for this engine.
       const exiled = movePermanentToZone(state, creature, "exile");
-      return putOntoBattlefield(exiled, controller, creature.card, false);
+      return putOntoBattlefield(exiled, effect.restoreToOwner ? creature.card.owner : controller, creature.card, false, effect.tapped === true);
     }
     case "exile-target-graveyard": {
       const target = object.targets[0];
