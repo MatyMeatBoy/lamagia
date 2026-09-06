@@ -549,3 +549,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-counter-library-jar-eyeballs` | Reusable source-counter bank and dynamic top-library selection for Jar of Eyeballs (CR 121.1, 701.20) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-power-filter-mayael` | Extend the private top-library primitive with a minimum creature-power filter for Mayael (CR 701.20, 608.2c) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-spell-mana-value-tokens-endrek` | Reusable spell-mana-value token scaling and Thrull threshold sacrifice trigger for Endrek Sahr (CR 603.2, 603.8, 111.10) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-fight-choice-magus` | Reusable two-target fight activation for Magus of the Arena, allowing the controller's creature to fight a creature of their choice (CR 602.2, 701.12) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

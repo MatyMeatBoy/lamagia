@@ -556,6 +556,7 @@ const GOBLIN_BOMBARDMENT = () => make({ name: "Goblin Bombardment", type_line: "
 const C13_COMMAND_TOWER = () => ({ ...COMMAND_TOWER(), scryfall_id: "0895c9b7-ae7d-4bb3-af17-3b75deb50a25" });
 const C13_DECREE_OF_PAIN = () => ({ ...DECREE_OF_PAIN(), scryfall_id: "932668fa-d6e3-41c0-ad0c-8e0a00e68d11" });
 const C13_CONTESTED_CLIFFS = () => make({ name: "Contested Cliffs", type_line: "Land", oracle_text: "{T}: Add {C}.\n{R}{G}, {T}: Target Beast creature you control fights target creature an opponent controls.", produced_mana: ["C"], oracle_id: "b891a683-2ebc-4e9c-b402-5dd9c1b42b69" });
+const C13_MAGUS_OF_THE_ARENA = () => make({ name: "Magus of the Arena", type_line: "Creature — Human Wizard", mana_cost: "{4}{R}", cmc: 5, power: "5", toughness: "5", oracle_text: "{3}{R}, {T}: Target creature you control fights another target creature of your choice.", oracle_id: "c13-magus-of-the-arena" });
 const TEST_BEAST = () => make({ name: "Test Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "4", toughness: "4" });
 const C13_WITCH_HUNT = () => make({ name: "Witch Hunt", type_line: "Enchantment", oracle_text: "Players can't gain life.\nAt the beginning of your upkeep, this enchantment deals 4 damage to you.\nAt the beginning of your end step, target opponent chosen at random gains control of this enchantment.", oracle_id: "e86bd38f-7804-449d-af29-21e96a56ab30" });
 const C13_NAYA_SOULBEAST = () => make({ name: "Naya Soulbeast", type_line: "Creature — Beast", mana_cost: "{6}{G}{G}", cmc: 8, power: "0", toughness: "0", oracle_text: "When you cast this spell, each player reveals the top card of their library. This creature enters with X +1/+1 counters on it, where X is the total mana value of all cards revealed this way.\nTrample", oracle_id: "5ea0c608-2c56-4889-a5d3-d435df515950" });
@@ -8353,6 +8354,29 @@ describe("activated abilities", () => {
     game = applyAction(game, 0, {
       ...activation!.action,
       targets: [{ kind: "permanent", instanceId: beast.instance_id }, { kind: "permanent", instanceId: bear.instance_id }]
+    } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Beast")).toBe(true);
+  });
+
+  it("supports Magus of the Arena fighting a creature of its controller's choice", () => {
+    let game = readyOnBoard([C13_MAGUS_OF_THE_ARENA(), TEST_BEAST()], { hold: true });
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    game = stage(game, 0, () => ({ manaPool: { W: 0, U: 0, B: 0, R: 3, G: 0, C: 1 } }));
+    const source = permanentNamed(game, 0, "Magus of the Arena")!;
+    const fighter = permanentNamed(game, 0, "Test Beast")!;
+    const opposingBear = permanentNamed(game, 1, "Grizzly Bears")!;
+    const profile = profileOf(C13_MAGUS_OF_THE_ARENA());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ manaCost: { raw: "{3}{R}" }, requiresTap: true, effect: { kind: "fight" }, targetKinds: ["creature-you-control", "creature"] }]
+    });
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toMatchObject({ requiresTargets: ["creature-you-control", "creature"] });
+    game = applyAction(game, 0, {
+      ...activation!.action,
+      targets: [{ kind: "permanent", instanceId: fighter.instance_id }, { kind: "permanent", instanceId: opposingBear.instance_id }]
     } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
