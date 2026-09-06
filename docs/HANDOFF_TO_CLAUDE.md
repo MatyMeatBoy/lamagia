@@ -4230,6 +4230,40 @@ simulate:engine` 200/200, 10,113 global profiles.
 Prossh decklist status after this pass: **71 of 97 unique cards fully
 implemented (73.2%)**.
 
+Lotus Cobra ("Landfall — Whenever a land you control enters, add one
+mana of any color") needed a new `add-mana-any-color` effect kind — a
+one-shot resolution that requires a runtime color choice, unlike a mana
+ABILITY, which is why the deterministic-ritual "Add {W}{U}{B}{R}{G}"
+pattern deliberately never matches "any color" (its own comment already
+called this out). Reused the existing `choose-color` `PendingChoice`
+infrastructure (built for `return-all-permanents-of-color` /
+`damage-all-creatures-of-color`) rather than inventing a parallel one,
+widening its `effect` type union to also accept the new kind. The two
+existing consumers distinguish "still needs a choice" from "color
+already chosen" via a `color: "chosen"` discriminant field checked
+against `object.chosenColor`; `add-mana-any-color` has no fixed-color
+variant to discriminate against, so it checks `object.chosenColor`
+presence directly instead — absent, open the choice; present, add that
+mana to the pool. Reusing `choose-color` surfaced a real bug the two
+existing consumers never triggered: `applyChooseColor` unconditionally
+moved the choice's `sourceCard` to the graveyard (or exile) after
+resolving, an assumption valid only when the source is a resolving
+SPELL — for a permanent's own triggered ability (Lotus Cobra is already
+on the battlefield when its Landfall trigger fires), that would have
+incorrectly sent the permanent to the graveyard the moment its
+controller chose a color. Added a `sendSourceToGraveyard: boolean` field
+to the choice, `true` for the two existing spell-effect consumers and
+`false` for `add-mana-any-color`, gating that move. Verified **+3** in
+the export count (10,113 → 10,116) and set coverage holds at 30.7%.
+Scenario-tested: playing a land while Lotus Cobra is in play opens a
+color choice; choosing blue adds `{U}` to the pool and leaves Lotus
+Cobra on the battlefield, confirmed absent from the graveyard.
+Validation: **756 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,116 global profiles.
+
+Prossh decklist status after this pass: **72 of 97 unique cards fully
+implemented (74.2%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

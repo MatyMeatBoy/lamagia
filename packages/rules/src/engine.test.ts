@@ -10454,6 +10454,37 @@ describe("Forbidden Orchard's mana-tap gift to an opponent", () => {
   });
 });
 
+describe("Lotus Cobra's Landfall any-color mana", () => {
+  const LOTUS_COBRA = () => make({
+    name: "Lotus Cobra", type_line: "Creature — Snake", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "1",
+    oracle_text: "Landfall — Whenever a land you control enters, add one mana of any color."
+  });
+
+  it("recognizes the landfall trigger as a chosen-color mana add", () => {
+    const profile = profileOf(LOTUS_COBRA());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "land-you-control", effect: { kind: "add-mana-any-color" } });
+  });
+
+  it("opens a color choice on landfall, adds the chosen mana, and leaves Lotus Cobra on the battlefield", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [LOTUS_COBRA()]);
+    game = stage(game, 0, () => ({ hand: toHand(0, [FOREST()], "cobra-land"), autoPass: false }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "play-land", cardId: "cobra-land-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "choose-color");
+    expect(game.pendingChoice?.type).toBe("choose-color");
+    const choice = game.pendingChoice;
+    if (choice?.type !== "choose-color") throw new Error("expected a pending choose-color choice");
+
+    game = applyAction(game, 0, { type: "choose-color", sourceId: choice.sourceId, color: "U" });
+    expect(game.players[0]!.manaPool.U).toBe(1);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Lotus Cobra")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Lotus Cobra")).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

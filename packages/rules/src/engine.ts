@@ -451,10 +451,12 @@ export type PendingChoice =
       readonly seat: SeatId;
       readonly sourceId: string;
       readonly sourceCard: GameCard;
-      readonly effect: Extract<SpellEffect, { kind: "return-all-permanents-of-color" | "damage-all-creatures-of-color" }>;
+      readonly effect: Extract<SpellEffect, { kind: "return-all-permanents-of-color" | "damage-all-creatures-of-color" | "add-mana-any-color" }>;
       /** Preserve X for color-choice spells until the choice resolves. */
       readonly variableValue: number;
       readonly exileSourceAfterResolution: boolean;
+      /** False for a permanent's own triggered/activated ability (Lotus Cobra): the source stays on the battlefield, unlike a resolving spell. */
+      readonly sendSourceToGraveyard: boolean;
     }
   | {
       readonly type: "reveal-card";
@@ -4969,6 +4971,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }));
       }, state);
     }
+    case "add-mana-any-color": {
+      if (object.chosenColor) return withPlayer(state, controller, (player) => ({ ...player, manaPool: addMana(player.manaPool, object.chosenColor!, 1) }));
+      return {
+        ...state,
+        pendingChoice: {
+          type: "choose-color", seat: controller, sourceId: object.sourcePermanentId ?? object.id, sourceCard: object.card,
+          effect, variableValue: object.variableValue, exileSourceAfterResolution: false, sendSourceToGraveyard: false
+        }
+      };
+    }
     case "look-top-reorder": {
       const visible = playerAt(state, controller).library.slice(0, Math.max(0, effect.amount));
       if (!visible.length) return state;
@@ -5385,7 +5397,8 @@ function resolveTop(state: GameState): GameState {
         sourceCard: object.card,
         effect: colorEffect,
         variableValue: object.variableValue,
-        exileSourceAfterResolution: retireZone === "exile"
+        exileSourceAfterResolution: retireZone === "exile",
+        sendSourceToGraveyard: true
       }
     };
   }
@@ -8445,9 +8458,11 @@ function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAc
     chosenColor: action.color
   };
   let next = applyEffect({ ...state, pendingChoice: null }, source, choice.effect);
-  next = withPlayer(next, choice.sourceCard.owner, (player) => choice.exileSourceAfterResolution
-    ? { ...player, exile: [...player.exile, choice.sourceCard] }
-    : { ...player, graveyard: [...player.graveyard, choice.sourceCard] });
+  if (choice.sendSourceToGraveyard) {
+    next = withPlayer(next, choice.sourceCard.owner, (player) => choice.exileSourceAfterResolution
+      ? { ...player, exile: [...player.exile, choice.sourceCard] }
+      : { ...player, graveyard: [...player.graveyard, choice.sourceCard] });
+  }
   return logged(next, seat, `${choice.sourceCard.name}: ${action.color} chosen.`);
 }
 
