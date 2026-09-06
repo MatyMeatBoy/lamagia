@@ -84,6 +84,8 @@ export interface PlayerView {
   /** Player counters are public game information (poison, energy, experience, etc.). */
   readonly counters: Readonly<Record<string, number>>;
   readonly landsPlayedThisTurn: number;
+  /** This player's personal turn count (how many turns they have begun), independent of the global `turn`. */
+  readonly turnsTaken: number;
   readonly manaPool: ManaPool;
   /** Restricted mana is exposed only to its controller, with its colour tags. */
   readonly restrictedMana: readonly ManaType[];
@@ -342,6 +344,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     commanderDamage: player.commanderDamage,
     counters: player.counters,
     landsPlayedThisTurn: player.landsPlayedThisTurn,
+    turnsTaken: player.turnsTaken,
     manaPool: player.seat === viewerSeat ? player.manaPool : emptyPool(),
     restrictedMana: player.seat === viewerSeat ? (player.restrictedMana ?? []).map((mana) => mana.type) : [],
     availableMana: player.seat === viewerSeat ? manaSourcePotential(player) : 0

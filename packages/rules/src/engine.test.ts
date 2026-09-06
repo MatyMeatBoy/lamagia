@@ -1230,6 +1230,19 @@ describe("turn structure", () => {
     const secondTurn = passUntil(game, (state) => state.activeSeat === 1 && state.step === "precombat-main");
     expect(secondTurn.players[1]!.hand).toHaveLength(8);
   });
+
+  it("tracks each player's personal turn count independent of the global turn", () => {
+    let game = twoSeatGame([], []);
+    expect(game.players.map((player) => player.turnsTaken)).toEqual([1, 0]);
+    expect(projectGame(game, 0).players.map((player) => player.turnsTaken)).toEqual([1, 0]);
+
+    game = passUntil(game, (state) => state.activeSeat === 1 && state.step === "precombat-main");
+    expect(game.players.map((player) => player.turnsTaken)).toEqual([1, 1]);
+
+    game = passUntil(game, (state) => state.turn === 3 && state.activeSeat === 0 && state.step === "precombat-main");
+    expect(game.players.map((player) => player.turnsTaken)).toEqual([2, 1]);
+    expect(projectGame(game, 0).players[0]!.turnsTaken).toBe(2);
+  });
 });
 
 // ---------------------------------------------------------------------------

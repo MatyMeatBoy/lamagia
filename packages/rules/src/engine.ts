@@ -208,6 +208,8 @@ export interface PlayerState {
   readonly reboundPending: readonly string[];
   /** Extra land plays granted this turn ("you may play an additional land"), reset each turn (CR 305.2). */
   readonly extraLandDrops: number;
+  /** How many turns this player has begun so far (their personal turn count, independent of the global `turn`). */
+  readonly turnsTaken: number;
 }
 
 export type Target =
@@ -1717,6 +1719,8 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       drewFromEmptyLibrary: false,
       reboundPending: [],
       extraLandDrops: 0,
+      // Seat 0 is already on its first turn when the game opens.
+      turnsTaken: seat === 0 ? 1 : 0,
       autoPass: kind === "bot",
       yieldedTriggerSources: []
     } satisfies PlayerState;
@@ -6488,7 +6492,13 @@ function advanceStep(state: GameState): GameState {
   const isLast = index === TURN_STEPS.length - 1;
   if (!isLast) return beginStep(state, TURN_STEPS[index + 1]!);
   const nextActive = nextLivingSeat(state, state.activeSeat);
-  const wrapped: GameState = { ...state, activeSeat: nextActive, turn: state.turn + 1 };
+  const wrapped: GameState = {
+    ...state,
+    activeSeat: nextActive,
+    turn: state.turn + 1,
+    players: state.players.map((player) =>
+      player.seat === nextActive ? { ...player, turnsTaken: player.turnsTaken + 1 } : player)
+  };
   return beginStep(wrapped, "untap");
 }
 

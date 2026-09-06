@@ -8,6 +8,16 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 Batch of player-reported gameplay/UX fixes. Landed so far:
 
+- **Per-player turn counter.** The global `turn` increments once per seat, so
+  "Turno 13" in a 4-player pod is really a player's 3rd–4th turn. `PlayerState`
+  now carries `turnsTaken` (seat 0 starts at 1; `advanceStep` bumps the seat
+  whose turn is beginning), exposed as `PlayerView.turnsTaken` in
+  `projection.ts`. The client phase rail (`phaseRailHtml`) now reads
+  "Turno N de <activo> · global M" in the active seat's colour. Robust to
+  future extra-turn effects and eliminations. Test:
+  `engine.test.ts` › "tracks each player's personal turn count…".
+
+
 - **Mana-payment "Cancelar" left the cast stuck.** The engine already returns a
   clean, recastable state on `cancel-mana-payment` (spell stays in hand, no
   sources tapped, no floating mana, priority retained) — covered by a new

@@ -140,8 +140,13 @@ function phaseRailHtml(): string {
   const priorityReadout = view!.finished
     ? `<span class="priority-readout"><span class="pulse muted"></span>Partida terminada</span>`
     : `<span class="priority-readout"><span class="pulse${view!.waitingOn === view!.viewerSeat ? "" : " muted"}"></span>${view!.waitingOn === view!.viewerSeat ? "Decide tú" : "Decide"}: <b style="color: var(--seat-${view!.waitingOn ?? 0})">${escapeHtml(seatOf(view!.waitingOn ?? -1)?.name ?? "nadie")}</b></span>`;
+  const active = seatOf(view!.activeSeat);
+  const activeIsViewer = view!.activeSeat === view!.viewerSeat;
+  const turnReadout = active
+    ? `<span class="phase-turn" title="Turno global ${view!.turn}"><b>Turno ${active.turnsTaken}</b> de <span class="who" style="color: var(--seat-${active.seat})">${activeIsViewer ? "ti" : escapeHtml(active.name)}</span><small>global ${view!.turn}</small></span>`
+    : `<span class="phase-turn"><b>Turno ${view!.turn}</b></span>`;
   return `<nav class="phase-rail mtgo-phase-rail" aria-label="Fases del turno">
-    <span class="phase-turn">Turno ${view!.turn}</span>
+    ${turnReadout}
     ${STEP_ORDER.map((step, index) => `<button class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}${ui.stops.has(step) ? " stopped" : ""}" type="button" data-phase-stop="${step}" title="${ui.stops.has(step) ? "Quitar stopper" : "Añadir stopper"}: ${STEP_LABELS[step]}"${view!.finished ? " disabled" : ""}><i aria-hidden="true"></i>${escapeHtml(STEP_LABELS[step])}</button>`).join("")}
     <span class="spacer"></span>
     ${priorityReadout}
