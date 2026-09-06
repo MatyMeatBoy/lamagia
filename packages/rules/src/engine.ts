@@ -2024,6 +2024,10 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     ...(profile.echoCost ? { echoDueTurn: state.turn + 1 } : {}),
     counters: {
       ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
+      ...(kicked ? Object.fromEntries(profile.kickedEntersWithCounters.map((counter) => [
+        counter.kind,
+        (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount
+      ])) : {}),
       ...(isCommander && commanderEntryCounters > 0 ? { "+1/+1": commanderEntryCounters } : {}),
       ...Object.fromEntries(additionalCounters.map((counter) => [counter.kind, (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount])),
       // A planeswalker enters with loyalty counters equal to its printed value (CR 306.5b).

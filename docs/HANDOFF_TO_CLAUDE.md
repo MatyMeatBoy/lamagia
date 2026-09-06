@@ -6,6 +6,13 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **`kickedEntersWithCounters`** — "If ~ was kicked, it enters with N <kind>
+  counters on it". The `If ~ was kicked, …` sentence handler now recognises the
+  ETB-counter clause via the existing `parseEntersWithCounters`;
+  `putOntoBattlefield` applies them only on a kicked cast. Export **10,500 →
+  10,521**. Test: `engine.test.ts` › "gives a kicked creature its 'enters with
+  +1/+1 counters' only when kicked".
+
 - **`delayed-draw`** — "Draw a card at the beginning of the next turn's upkeep"
   as a spell rider (Lightning Blow, Fevered Strength, …). Parsed in
   `recognizeSentence`, scheduled via the existing `state.delayedDraws` /
@@ -22,7 +29,7 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
   `engine.test.ts` › "stops an enchanted creature from attacking or blocking".
 
 Session net: engine export **10,197 → 10,500** fully-implemented profiles
-(+303) across the eight primitives below, each with a scenario test; rules
+(+324) across the eight primitives below, each with a scenario test; rules
 suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
 200-game engine matrix **200/200** (unchanged from baseline).
 

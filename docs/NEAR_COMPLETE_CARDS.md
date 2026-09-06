@@ -5,9 +5,9 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,018**
-- Cards with a reusable existing primitive hint: **11,272**
-- Cards needing new primitive review: **3,746**
+- One-line cards: **15,011**
+- Cards with a reusable existing primitive hint: **11,261**
+- Cards needing new primitive review: **3,750**
 - Templates: **12,000**
 
 ## Worker rule
@@ -519,4 +519,4 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Necroduality | `d36acdfe-2b1b-4c19-8b81-0b3127e480fe` | token | trigger / ETB | Whenever a nontoken Zombie you control enters, create a token that's a copy of that creature. |
 | reuse-existing | Sanctum Weaver | `acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47` | activated | activated ability / mana | {T}: Add X mana of any one color, where X is the number of enchantments you control. |
 
-The JSON contains the remaining 14,518 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,511 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

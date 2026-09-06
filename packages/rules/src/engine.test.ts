@@ -7240,6 +7240,28 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("gives a kicked creature its 'enters with +1/+1 counters' only when kicked", () => {
+    const boa = make({
+      name: "Test Kicker Boa", type_line: "Creature — Snake", mana_cost: "{1}{G}", cmc: 2, power: "1", toughness: "1",
+      oracle_text: "Kicker {2}\nIf this creature was kicked, it enters with two +1/+1 counters on it."
+    });
+    expect(profileOf(boa)).toMatchObject({ fullyImplemented: true, kickedEntersWithCounters: [{ kind: "+1/+1", amount: 2 }] });
+
+    // Unkicked: no counters.
+    let plain = readyToCast([boa], [FOREST(), FOREST()]);
+    plain = applyAction(plain, 0, { type: "cast", cardId: plain.players[0]!.hand[0]!.instance_id });
+    plain = passUntil(plain, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(plain.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Kicker Boa")?.counters["+1/+1"] ?? 0).toBe(0);
+
+    // Kicked: two +1/+1 counters.
+    let kicked = readyToCast([boa], [FOREST(), FOREST(), FOREST(), FOREST()]);
+    const cast = legalActions(kicked, 0).find((entry) => entry.action.type === "cast" && entry.action.kicked === true);
+    expect(cast).toBeDefined();
+    kicked = applyAction(kicked, 0, cast!.action);
+    kicked = passUntil(kicked, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(kicked.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Kicker Boa")?.counters["+1/+1"]).toBe(2);
+  });
+
   it("schedules a cantrip's 'draw at the next turn's upkeep' rider", () => {
     const blow = make({
       name: "Test Cantrip", type_line: "Instant", mana_cost: "{W}", cmc: 1,

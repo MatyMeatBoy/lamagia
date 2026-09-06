@@ -1076,6 +1076,8 @@ export interface CardProfile {
   /** Entwine additional cost for selecting every modal branch (CR 702.42). */
   readonly entwineCost: ManaCost | null;
   readonly kickedEffects: readonly SpellEffect[];
+  /** "If ~ was kicked, it enters with N <kind> counters on it" — applied only on a kicked cast. */
+  readonly kickedEntersWithCounters: readonly CounterCost[];
   /** Keywords granted only when the spell is kicked (CR 702.33e). */
   readonly kickedKeywords: readonly EnforcedKeyword[];
   /** Evoke alternative cost (CR 702.34), null when absent. */
@@ -2313,6 +2315,7 @@ interface RecognizedText {
   graftAmount?: number | null;
   kickedEffects?: SpellEffect[];
   kickedKeywords?: EnforcedKeyword[];
+  kickedEntersWithCounters?: CounterCost[];
   echoCost?: ManaCost | null;
   evokeCost?: ManaCost | null;
   flashbackCost?: ManaCost | null;
@@ -4178,6 +4181,7 @@ function recognizeText(text: string): RecognizedText {
   let miracleCost: ManaCost | null = null;
   const kickedEffects: SpellEffect[] = [];
   const kickedKeywords: EnforcedKeyword[] = [];
+  const kickedEntersWithCounters: CounterCost[] = [];
 
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
@@ -4966,6 +4970,11 @@ function recognizeText(text: string): RecognizedText {
           .replace(/^instead\s+/i, "")
           .replace(/^it\b/i, "~")
           .replace(/\s+instead\.?$/i, "");
+        // "If ~ was kicked, it enters with N +1/+1 counters on it" (Marsh Boa,
+        // Woodland Wanderer-adjacent kicker creatures): a conditional ETB
+        // replacement, applied by putOntoBattlefield when the cast was kicked.
+        const kickedCounters = parseEntersWithCounters(kickedText);
+        if (kickedCounters.length) { kickedEntersWithCounters.push(...kickedCounters); continue; }
         // Kicker replacement clauses commonly omit the already-established
         // target ("If kicked, it deals 4 damage instead"). Infer the same
         // any-target damage primitive and retain the base sentence's target.
@@ -5022,7 +5031,7 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5340,6 +5349,7 @@ export function cardProfile(card: CardData): CardProfile {
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
     kickedKeywords: recognized.kickedKeywords ?? [],
+    kickedEntersWithCounters: recognized.kickedEntersWithCounters ?? [],
     additionalCostExileGraveyardX,
     hasRebound,
     additionalCostSacrificeLand,
