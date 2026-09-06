@@ -707,6 +707,14 @@ export type PendingChoice =
       readonly maxAmount: number;
     }
   | {
+      /** "You may return a [type] card from your graveyard to your hand" (Grapple with the Past), a non-targeted, type-filtered choice from the controller's own graveyard. */
+      readonly type: "graveyard-card-choice";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+    }
+  | {
       /** Proliferate (CR 701.27): add one counter to any number of eligible objects. */
       readonly type: "proliferate";
       readonly seat: SeatId;
@@ -772,6 +780,7 @@ export type GameAction =
   | { readonly type: "toggle-trigger-yield"; readonly sourceId: string; readonly abilityIndex?: number; readonly enabled: boolean }
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number; readonly discardCardId?: string }
+  | { readonly type: "choose-graveyard-card"; readonly sourceId: string; readonly accept: boolean; readonly cardId?: string }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor; readonly amount?: number }
   | { readonly type: "reorder-top"; readonly sourceId: string; readonly order: readonly string[] }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
@@ -3265,6 +3274,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     }
     case "mill": {
       return millCards(state, controller, effectAmount(effect.amount, object));
+    }
+    case "return-graveyard-card-choice": {
+      const optionIds = playerAt(state, controller).graveyard
+        .filter((card) => !effect.types.length || effect.types.some((type) => cardProfile(card).types.includes(type)))
+        .map((card) => card.instance_id);
+      if (!optionIds.length) return state;
+      return {
+        ...state,
+        pendingChoice: { type: "graveyard-card-choice", seat: controller, sourceId: object.sourcePermanentId ?? object.id, sourceCard: object.card, optionIds }
+      };
     }
     case "delayed-draw": {
       return {
@@ -7637,6 +7656,24 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
       return actions;
     }
+    if (choice.type === "graveyard-card-choice") {
+      for (const cardId of choice.optionIds) {
+        const card = player.graveyard.find((candidate) => candidate.instance_id === cardId);
+        if (!card) continue;
+        actions.push({
+          action: { type: "choose-graveyard-card", sourceId: choice.sourceId, accept: true, cardId },
+          label: `Devolver ${card.name} a la mano`,
+          cardId: card.instance_id,
+          note: `${choice.sourceCard.name}: puedes devolver una carta de tu cementerio a tu mano.`
+        });
+      }
+      actions.push({
+        action: { type: "choose-graveyard-card", sourceId: choice.sourceId, accept: false },
+        label: "No devolver ninguna carta",
+        note: `${choice.sourceCard.name}: puedes declinar la devolución.`
+      });
+      return actions;
+    }
     if (choice.type === "exploit") {
       actions.push({
         action: { type: "choose-exploit", sourceId: choice.sourceId },
@@ -9528,6 +9565,22 @@ function applyReorderTop(state: GameState, seat: SeatId, action: Extract<GameAct
   return logged({ ...next, pendingChoice: null }, seat, `${choice.sourceCard.name}: reordena las cartas de arriba de su biblioteca.`);
 }
 
+function applyChooseGraveyardCard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-graveyard-card" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "graveyard-card-choice" || choice.seat !== seat) throw new Error("No tienes una elección de cementerio pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa elección ya no está pendiente.");
+  const player = playerAt(state, seat);
+  if (!action.accept) return logged({ ...state, pendingChoice: null }, seat, `${player.name} no devuelve ninguna carta de su cementerio.`);
+  const selected = player.graveyard.find((card) => card.instance_id === action.cardId && choice.optionIds.includes(card.instance_id));
+  if (!selected) throw new Error("Esa carta ya no está disponible en el cementerio.");
+  const next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    graveyard: current.graveyard.filter((card) => card.instance_id !== selected.instance_id),
+    hand: [...current.hand, selected]
+  }));
+  return logged(next, seat, `${player.name} devuelve ${selected.name} de su cementerio a su mano.`);
+}
+
 function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-color" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "choose-color" || choice.seat !== seat) throw new Error("You do not have a color choice pending.");
@@ -10772,6 +10825,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "toggle-trigger-yield": next = applyToggleTriggerYield(state, seat, action); break;
     case "choose-basic-land-search": next = applyChooseBasicLandSearch(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
+    case "choose-graveyard-card": next = applyChooseGraveyardCard(state, seat, action); break;
     case "choose-color": next = applyChooseColor(state, seat, action); break;
     case "reorder-top": next = applyReorderTop(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;

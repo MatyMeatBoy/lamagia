@@ -12477,6 +12477,58 @@ describe("Recruiter of the Guard's toughness-capped tutor", () => {
   });
 });
 
+describe("Grapple with the Past's mill-then-optional-return", () => {
+  const GRAPPLE_WITH_THE_PAST = () => make({ name: "Grapple with the Past", type_line: "Sorcery", mana_cost: "{1}{G}", cmc: 2, oracle_text: "Mill three cards, then you may return a creature or land card from your graveyard to your hand." });
+
+  it("recognizes the mill-then-return compound as a non-targeted graveyard choice", () => {
+    expect(profileOf(GRAPPLE_WITH_THE_PAST())).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "compound", effects: [{ kind: "mill", amount: 3 }, { kind: "return-graveyard-card-choice", types: expect.arrayContaining(["Creature", "Land"]) }] }]
+    });
+  });
+
+  it("mills three cards then offers only the creature and land among them for return", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [GRAPPLE_WITH_THE_PAST()], "grapple-hand"),
+      library: [...toHand(0, [BEAR(), FOREST(), BOLT()], "grapple-library"), ...player.library]
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "grapple-hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "graveyard-card-choice" || state.stack.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Forest")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "graveyard-card-choice" }>;
+    const legalNames = game.players[0]!.graveyard.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(legalNames).toContain("Grizzly Bears");
+    expect(legalNames).toContain("Forest");
+    expect(legalNames).not.toContain("Lightning Bolt");
+    const bear = game.players[0]!.graveyard.find((card) => card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-graveyard-card", sourceId: choice.sourceId, accept: true, cardId: bear.instance_id });
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it("declines cleanly when the controller chooses not to return a card", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [GRAPPLE_WITH_THE_PAST()], "grapple-hand-2"),
+      library: [...toHand(0, [BEAR(), FOREST(), BOLT()], "grapple-library-2"), ...player.library]
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "grapple-hand-2-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "graveyard-card-choice");
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "graveyard-card-choice" }>;
+    game = applyAction(game, 0, { type: "choose-graveyard-card", sourceId: choice.sourceId, accept: false });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.hand).toHaveLength(0);
+  });
+});
+
 describe("Hunting Wilds' kicked-only untap-and-animate-fetched-lands", () => {
   const HUNTING_WILDS = () => make({
     name: "Hunting Wilds", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4,

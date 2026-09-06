@@ -724,6 +724,8 @@ export type SpellEffect =
   | { readonly kind: "put-target-nonland-permanent-under-top"; readonly count: number | "X" }
   | { readonly kind: "return-target-land" }
   | { readonly kind: "return-target-card-from-graveyard" }
+  /** "You may return a [type] card from your graveyard to your hand" (Grapple with the Past): a non-targeted, type-filtered choice, not the normal target system (the Oracle text carries no "target"). */
+  | { readonly kind: "return-graveyard-card-choice"; readonly types: readonly CardType[] }
   | { readonly kind: "return-target-artifact-and-gain-mana-value" }
   /** Return N random instant/sorcery cards from your graveyard to hand. */
   | { readonly kind: "return-random-instant-or-sorcery-from-graveyard"; readonly amount: number }
@@ -3266,6 +3268,19 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw", amount: "X" }, target: "none" };
+  }
+  // "Mill three cards, then you may return a creature or land card from your
+  // graveyard to your hand." (Grapple with the Past): no "target" in the
+  // Oracle text, so this is a non-targeted, type-filtered choice rather than
+  // the normal target system's per-type graveyard-return kinds.
+  const millThenReturn = /^Mill (\w+) cards?, then you may return an? (.+?) card from your graveyard to your hand\.?$/i.exec(text);
+  if (millThenReturn) {
+    const millAmount = toNumber(millThenReturn[1]);
+    const criterion = searchCriterion(millThenReturn[2]!);
+    if (millAmount !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "mill", amount: millAmount }, { kind: "return-graveyard-card-choice", types: criterion.types }] },
+      target: "none"
+    };
   }
   if ((match = /^(?:You )?[Dd]raw (\w+) cards? at the beginning of the next turn'?s upkeep$/i.exec(text))) {
     const amount = toNumber(match[1]);
