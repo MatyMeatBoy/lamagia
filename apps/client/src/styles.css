@@ -586,6 +586,7 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .stack-order { display: grid; place-items: center; width: 18px; height: 18px; flex: 0 0 18px; border: 1px solid var(--gold-dim); border-radius: 50%; color: var(--gold); font-size: .58rem; }
 .stack-chip img { width: 32px; height: 44px; object-fit: cover; border-radius: 4px; }
 .stack-chip > .card-image-fallback { width: 32px; height: 44px; min-height: 0; flex: 0 0 32px; padding: 2px; font-size: .4rem; }
+.stack-chip > .card-image-fallback { display: grid; place-items: center; overflow: hidden; color: var(--text); background: linear-gradient(145deg, #253a2c, #0c1710); text-align: center; overflow-wrap: anywhere; }
 .stack-chip span { display: grid; line-height: 1.15; }
 .stack-chip .stack-kind { color: var(--gold); font-size: .48rem; letter-spacing: .08em; text-transform: uppercase; }
 .stack-chip b { color: var(--text); font-size: .62rem; }

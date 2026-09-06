@@ -272,6 +272,12 @@ function recoverCardImage(image: HTMLImageElement): void {
   image.replaceWith(fallback);
 }
 
+function cardImageHtml(image: string | undefined, name: string, className = ""): string {
+  return image
+    ? `<img class="${escapeHtml(className)}" src="${escapeHtml(image)}" data-card-name="${escapeHtml(name)}" alt="${escapeHtml(name)}" loading="lazy" decoding="async"/>`
+    : `<span class="card-image-fallback ${escapeHtml(className)}" role="img" aria-label="Carta: ${escapeHtml(name)}">${escapeHtml(name)}</span>`;
+}
+
 document.addEventListener("error", (event) => {
   const image = event.target;
   if (!(image instanceof HTMLImageElement)) return;
@@ -1041,7 +1047,7 @@ function stackStripHtml(): string {
     const kind = object.kind === "trigger" ? "habilidad disparada" : object.kind === "activated" ? "habilidad activada" : "hechizo";
     return `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}${object.resolvesNext ? " resolves-next" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este objeto como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Inspeccionar objeto de la pila")}" aria-label="Pila ${stackPosition} desde abajo, ${escapeHtml(kind)} ${escapeHtml(object.name)}${object.resolvesNext ? ", próximo en resolver" : ""}">
       <strong class="stack-order" title="${object.resolvesNext ? "Próximo en resolver" : `Posición ${stackPosition} desde abajo`}">${object.resolvesNext ? "↑" : stackPosition}</strong>
-      ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
+      ${cardImageHtml(object.image_normal, object.name)}
       <span><small class="stack-kind">${escapeHtml(kind)}${object.countered ? " · Contrarrestado" : ""}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
     </button>`;
   }).join("")}</div>`;
@@ -1056,7 +1062,7 @@ function stackDetailHtml(): string {
     <header class="decision-head"><div><b>${escapeHtml(object.name)}</b><span>${kind} · ${escapeHtml(seatOf(object.controller)?.name ?? "")}</span></div>
       <button id="close-stack-detail" class="icon-button" type="button" aria-label="Cerrar detalle de la pila">×</button></header>
     <div class="stack-detail-body">
-      ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
+      ${cardImageHtml(object.image_normal, object.name)}
       <div><b>${escapeHtml(object.label)}</b><p>${escapeHtml(object.text ?? "Sin texto adicional.")}</p>
         <small>${object.targets.length ? `Objetivos: ${escapeHtml(object.targets.join(", "))}` : "Sin objetivos"}${object.countered ? " · Contrarrestado" : ""}</small>
         <small class="stack-detail-priority">${object.resolvesNext ? "Próximo en resolver" : `Posición ${object.position} desde abajo`} · ${view?.priorityOpen ? `Prioridad: ${escapeHtml(seatOf(view.prioritySeat)?.name ?? "")}` : "Prioridad cerrada"}${object.passedSeats?.length ? ` · Pasaron: ${escapeHtml(object.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`).join(", "))}` : ""}</small>
