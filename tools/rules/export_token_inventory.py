@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-FORMAT = "prossh-token-inventory/v1"
+FORMAT = "prossh-token-inventory/v2"
 NON_TRIVIAL = re.compile(r"\b(?:when|whenever|at the beginning|[A-Za-z]+:|flying|haste|deathtouch|lifelink|trample|ward|menace|first strike|double strike|enters|dies|attacks|blocks|sacrifice|draw|add|exile|counter|explore|transform)\b", re.I)
 ABILITY_CLUSTERS = (
     ("token-trigger", re.compile(r"\b(?:when|whenever|at the beginning|at the end)\b", re.I)),
@@ -81,6 +81,12 @@ def build(catalog: Path) -> dict[str, Any]:
     for group in groups.values():
         group["sets"] = sorted(group["sets"])
         text = str(group["oracleText"])
+        printings = group["printings"]
+        usable_images = [printing for printing in printings if printing.get("imageNormal")]
+        group["printingCount"] = len(printings)
+        group["imageCount"] = len(usable_images)
+        group["missingImageSets"] = sorted({str(printing.get("setCode") or "").lower() for printing in printings if not printing.get("imageNormal")})
+        group["hasArtwork"] = bool(usable_images)
         needs_work = bool(text and NON_TRIVIAL.search(text))
         group["needsRulesWork"] = needs_work
         group["cluster"] = cluster_for(text) if needs_work else "token-frame-only"
@@ -88,8 +94,11 @@ def build(catalog: Path) -> dict[str, Any]:
         if needs_work:
             clusters[group["cluster"]].append({"name": group["name"], "tokenKey": group["tokenKey"], "sets": group["sets"], "oracleText": text})
     inventories.sort(key=lambda item: (not item["needsRulesWork"], item["name"].casefold(), item["tokenKey"]))
+    missing_art = [item for item in inventories if not item["hasArtwork"]]
     return {"format": FORMAT, "generatedAt": datetime.now(UTC).isoformat(), "tokenCount": len(inventories),
             "printingCount": sum(len(item["printings"]) for item in inventories), "tokens": inventories,
+            "artwork": {"definitionsWithArtwork": len(inventories) - len(missing_art), "definitionsMissingArtwork": len(missing_art),
+                        "missingTokenKeys": [item["tokenKey"] for item in missing_art]},
             "clusters": {name: sorted(items, key=lambda item: item["name"].casefold()) for name, items in clusters.items()}}
 
 
@@ -104,7 +113,8 @@ def main() -> None:
     args.output.write_text(json.dumps(inventory, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.markdown_output:
         lines = ["# Generated token worker queue", "", f"Generated: `{inventory['generatedAt']}`", "",
-                 f"Unique definitions: **{inventory['tokenCount']:,}** · printings: **{inventory['printingCount']:,}**", ""]
+                 f"Unique definitions: **{inventory['tokenCount']:,}** · printings: **{inventory['printingCount']:,}**", "",
+                 f"Artwork: **{inventory['artwork']['definitionsWithArtwork']:,}** definitions have an image; **{inventory['artwork']['definitionsMissingArtwork']:,}** need catalog/artwork review.", ""]
         for cluster, items in sorted(inventory["clusters"].items()):
             lines.extend([f"## `{cluster}` ({len(items)})", "", "Claim one token key or a disjoint batch before editing.", ""])
             for item in items:
