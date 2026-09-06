@@ -5866,6 +5866,17 @@ describe("casting", () => {
     expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("does not expose a commander free-cast alternative from the graveyard", () => {
+    let game = readyToCast([], [SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], [BEAR()]);
+    game = putOnBattlefield(game, 0, [COMMANDER("Test Commander")]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map(permanent => permanent.card.name === "Test Commander" ? { ...permanent, isCommander: true } : permanent),
+      graveyard: toHand(0, [DEADLY_ROLLICK()], "graveyard-rollick")
+    }));
+    const options = legalActions(game, 0).filter(entry => entry.action.type === "cast" && entry.cardId === "graveyard-rollick-0");
+    expect(options.some(entry => (entry.action as { freeCast?: boolean }).freeCast)).toBe(false);
+  });
+
   it("lets Snuff Out be cast by paying 4 life only while controlling a Swamp", () => {
     const profile = profileOf(SNUFF_OUT());
     expect(profile.fullyImplemented).toBe(true);
