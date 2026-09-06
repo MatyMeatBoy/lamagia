@@ -535,3 +535,4 @@ rules citations and the integrator review remain mandatory.
 | `global-ward-tax` | Reusable Ward tax choice for opposing spells and abilities targeting a permanent, including multi-target sequencing (CR 702.21) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-gain-life-static` | Reusable opponent-only target filter for printed life-gain effects, including Fiery Justice (CR 609.3, 119.3) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-other-static-spell` | Reusable target-player creature layer that removes abilities and sets base power/toughness until cleanup, including Sudden Spoiling (CR 613.1, 611.3) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-counter-triggered-shape-2` | Reusable damage-received counter bank plus upkeep removal/gain-life trigger for Sun Droplet (CR 603.2, 122.1) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

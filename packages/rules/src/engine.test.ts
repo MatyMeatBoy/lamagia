@@ -271,6 +271,7 @@ const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery"
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcery", mana_cost: "{R}{G}{W}", cmc: 3, oracle_text: "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.", oracle_id: "333809cb-e196-45f2-8a67-31374438e56e", scryfall_id: "ab5056f0-8297-4b83-9655-7ff385e309a8" });
 const C13_SUDDEN_SPOILING = () => make({ name: "Sudden Spoiling", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nUntil end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2.", oracle_id: "dce202c7-fe8e-462a-858e-7a5a69bd5b6b", scryfall_id: "14d8bf94-ba55-437f-ac69-ece24049944d" });
+const C13_SUN_DROPLET = () => make({ name: "Sun Droplet", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Whenever you're dealt damage, put that many charge counters on this artifact.\nAt the beginning of each upkeep, you may remove a charge counter from this artifact. If you do, you gain 1 life.", oracle_id: "1820af5c-9cc2-4b77-b4ca-86084442f087", scryfall_id: "1820af5c-9cc2-4b77-b4ca-86084442f087" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
 const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "You may activate abilities of creatures you control as though those creatures had haste.\n{1}, {T}: Untap target creature.", oracle_id: "4dc5726e-2f7e-4c2b-9616-c3301d212f78" });
@@ -3049,6 +3050,36 @@ describe("casting", () => {
     game = applyAction(game, 0, xTwo!.action);
     expect(game.players[0]!.hand).toHaveLength(2);
     expect(game.players[0]!.life).toBe(42);
+  });
+
+  it("reuses damage-event counters and upkeep counter removal for C13 Sun Droplet", () => {
+    const profile = profileOf(C13_SUN_DROPLET());
+    expect(profile.triggers).toMatchObject([
+      { event: "damage-received", subject: "you", effect: { kind: "add-counter-source-event-amount", counter: "charge" } },
+      { event: "upkeep", subject: "each-player", optional: true, condition: { kind: "source-has-counter-at-least", counter: "charge", amount: 1 }, effect: { kind: "remove-source-counter-gain-life", counter: "charge", amount: 1 } }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([ALL_PLAYER_DAMAGE()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), C13_SUN_DROPLET()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => (state.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sun Droplet")?.counters.charge ?? 0) === 2);
+    const droplet = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sun Droplet")!;
+    expect(droplet.counters.charge).toBe(2);
+    const lifeBefore = game.players[0]!.life;
+    for (let index = 0; index < 200 && game.pendingChoice?.type !== "optional-trigger"; index += 1) {
+      const seat = pendingSeat(game)!;
+      const actions = legalActions(game, seat);
+      const next = actions.find((entry) => entry.action.type === "choose-trigger-order")
+        ?? actions.find((entry) => entry.action.type === "choose-trigger")
+        ?? actions.find((entry) => entry.action.type === "pass");
+      if (!next) throw new Error(`No progression action at ${game.step}.`);
+      game = applyAction(game, seat, next.action);
+    }
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.life).toBe(lifeBefore + 1);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === droplet.instance_id)?.counters.charge).toBe(1);
   });
 
   it("resolves Oloro's optional life-gain draw and opponent life loss", () => {

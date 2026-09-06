@@ -575,6 +575,10 @@ export type SpellEffect =
   | { readonly kind: "add-counter-triggered-creature"; readonly counter: string; readonly amount: number }
   /** Curse of the Forsaken: the attacking creature's controller gains life. */
   | { readonly kind: "gain-life-event-controller"; readonly amount: number }
+  /** Damage received by a player becomes the event amount (Sun Droplet, CR 120.2). */
+  | { readonly kind: "add-counter-source-event-amount"; readonly counter: string }
+  /** Remove one source counter, then gain life (Sun Droplet, CR 121.1, 118.1). */
+  | { readonly kind: "remove-source-counter-gain-life"; readonly counter: string; readonly amount: number }
   /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
   | { readonly kind: "damage-divided-targets"; readonly amount: number }
   /** Damage from the ability source equal to that source's current power. */
@@ -796,6 +800,7 @@ export type TriggerEvent =
   | "blocks"
   | "deals-combat-damage-to-player"
   | "deals-damage-to-player"
+  | "damage-received"
   | "becomes-tapped"
   | "spell-cast"
   | "card-cycled"
@@ -852,6 +857,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   blocks: "habilidad de bloqueo",
   "deals-combat-damage-to-player": "habilidad de daño de combate",
   "deals-damage-to-player": "habilidad de daño a un jugador",
+  "damage-received": "habilidad de daño recibido",
   "becomes-tapped": "habilidad de giro",
   "spell-cast": "habilidad de lanzamiento",
   "card-cycled": "habilidad de cycling",
@@ -938,6 +944,8 @@ export interface TriggerDefinition {
     /** "If that player has N or fewer cards in hand" (Davriel-style upkeep trigger). */
     | { readonly kind: "event-player-hand-at-most"; readonly amount: number }
     | { readonly kind: "entering-power-at-most"; readonly amount: number }
+    /** Intervening condition for optional counter-removal triggers. */
+    | { readonly kind: "source-has-counter-at-least"; readonly counter: string; readonly amount: number }
     /** Commander-only trigger that functions while the source remains in the command zone. */
     | { readonly kind: "source-in-command-zone" };
   /** A Class's second/third-tier ability, inactive until the source reaches this level (CR 702.134d). */
@@ -2608,6 +2616,7 @@ type TriggerTemplate = {
 
 const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "library-shuffled", subject: "shuffle-controller", pattern: /^whenever a spell or ability causes its controller to shuffle their library,?\s*(that player puts a card from their hand on top of their library)\.?$/i },
+  { event: "damage-received", subject: "you", pattern: /^whenever\s+you(?:'re| are)\s+dealt\s+damage,?\s*(.+)$/i },
   { event: "life-gained", subject: "you", pattern: /^whenever\s+you\s+gain\s+life,?\s*(.+)$/i },
   { event: "life-lost", subject: "you", pattern: /^whenever\s+you\s+lose\s+life,?\s*(.+)$/i },
   // The permanent that carries the ability is the object the event is about.
@@ -4119,6 +4128,26 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    // Sun Droplet's two abilities are a reusable counter-bank shape: damage
+    // supplies the event amount, while the upkeep trigger removes one counter
+    // only if one is still present (CR 603.2, 603.4, 121.1).
+    const damageToChargeCounters = /^whenever\s+you(?:'re| are)\s+dealt\s+damage,\s*put\s+that\s+many\s+charge\s+counters\s+on\s+(?:this\s+artifact|~)\.?$/i.test(line);
+    if (damageToChargeCounters) {
+      triggers.push({
+        event: "damage-received", subject: "you", effect: { kind: "add-counter-source-event-amount", counter: "charge" },
+        optional: false, targetKind: "none", sourceText: line
+      });
+      continue;
+    }
+    const upkeepChargeLife = /^at\s+the\s+beginning\s+of\s+each\s+upkeep,\s*you\s+may\s+remove\s+a\s+charge\s+counter\s+from\s+(?:this\s+artifact|~)\.?\s*if\s+you\s+do,\s+you\s+gain\s+1\s+life\.?$/i.test(line);
+    if (upkeepChargeLife) {
+      triggers.push({
+        event: "upkeep", subject: "each-player", effect: { kind: "remove-source-counter-gain-life", counter: "charge", amount: 1 },
+        optional: true, targetKind: "none", sourceText: line,
+        condition: { kind: "source-has-counter-at-least", counter: "charge", amount: 1 }
+      });
+      continue;
+    }
     // Thousand-Year Elixir-style static permission (CR 302.6). The engine
     // applies this as a characteristic of the controller's battlefield, not
     // as a triggered or activated ability of the artifact.
