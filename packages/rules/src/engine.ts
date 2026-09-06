@@ -10221,21 +10221,19 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
   // Attack tax (Propaganda, CR 508.1a): pay {N} per attacking creature for
   // each taxing permanent the defender controls, or the attack is illegal.
   let next: GameState = state;
-  let totalTax = 0;
   for (const [defender, count] of byDefender) {
     const taxPerCreature = playerAt(next, defender).battlefield
       .reduce((sum, permanent) => sum + (cardProfile(permanent.card).attackTaxPerCreature ?? 0), 0);
-    totalTax += taxPerCreature * count;
-  }
-  if (totalTax > 0) {
-    const taxCost = parseManaCost(`{${totalTax}}`)!;
+    const tax = taxPerCreature * count;
+    if (tax <= 0) continue;
+    const taxCost = parseManaCost(`{${tax}}`)!;
     const plan = planManaPayment(taxCost, playerAt(next, seat), { state: next });
-    if (!plan) throw new Error(`No tienes maná suficiente para pagar el impuesto de ataque de {${totalTax}}.`);
+    if (!plan) throw new Error(`No tienes maná suficiente para pagar el impuesto de ataque de {${tax}}.`);
     next = applyManaPlan(next, seat, plan);
     const payment = payCost(taxCost, playerAt(next, seat).manaPool, {});
     if (!payment) throw new Error("No se pudo pagar el impuesto de ataque.");
     next = withPlayer(next, seat, (current) => consumeManaPayment(current, payment));
-    next = logged(next, seat, `${playerAt(next, seat).name} paga {${totalTax}} de impuesto de ataque.`);
+    next = logged(next, seat, `${playerAt(next, seat).name} paga {${tax}} de impuesto de ataque contra ${playerAt(next, defender).name}.`);
   }
   next = { ...next, combat: { ...next.combat, attackers: [...attackers], attackersDeclared: true } };
   next = tapAttackers(next, attackers);

@@ -7253,6 +7253,23 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Mountain" && permanent.tapped)).toHaveLength(2);
   });
 
+  it("charges Propaganda taxes independently for each attacked defender", () => {
+    let game = threeSeatGame();
+    game = stage(game, 0, () => ({ autoPass: false, hand: toHand(0, [BEAR(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], "multi-tax") }));
+    game = putOnBattlefield(game, 0, [BEAR(), BEAR(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 1, [PROPAGANDA()]);
+    game = putOnBattlefield(game, 2, [PROPAGANDA()]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const bears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [
+      { instanceId: bears[0]!.instance_id, defender: 1 },
+      { instanceId: bears[1]!.instance_id, defender: 2 }
+    ] });
+    expect(game.combat.attackers).toHaveLength(2);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Mountain" && permanent.tapped)).toHaveLength(4);
+    expect(game.log.filter((entry) => entry.text.includes("impuesto de ataque"))).toHaveLength(2);
+  });
+
   it("deals damage and amasses Orcs when Orcish Bowmasters enters", () => {
     const profile = profileOf(ORCISH_BOWMASTERS());
     expect(profile.fullyImplemented).toBe(true);
@@ -9109,6 +9126,28 @@ describe("activated abilities", () => {
     expect(game.stack.at(-1)?.activated?.text).toBe("Equip {3}");
     game = applyAction(game, 0, { type: "pass" });
     expect(permanentNamed(game, 0, "Test Wizard's Staff")?.attachedTo).toBe(bear.instance_id);
+  });
+
+  it("preserves explicit mana-source selection while equipping", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ kind: "human" }));
+    game = putOnBattlefield(game, 0, [BEHEMOTH_SLEDGE(), BEAR(), MOUNTAIN(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const equipment = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Behemoth Sledge")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const equip = legalActions(game, 0).find((entry) => entry.action.type === "equip" && entry.cardId === equipment.instance_id)!;
+    game = applyAction(game, 0, { type: "equip", sourceId: equipment.instance_id, targetId: bear.instance_id });
+    expect(game.pendingChoice?.type).toBe("mana-payment");
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    const source = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === forest.instance_id)!;
+    game = applyAction(game, 0, source.action);
+    const secondSource = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId !== forest.instance_id)!;
+    game = applyAction(game, 0, secondSource.action);
+    const thirdSource = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId !== forest.instance_id)!;
+    game = applyAction(game, 0, thirdSource.action);
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === equipment.instance_id)?.attachedTo).toBe(bear.instance_id);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === forest.instance_id)?.tapped).toBe(true);
   });
 
   it("reuses Equip for Swiftfoot Boots and Sword of the Paruns", () => {
