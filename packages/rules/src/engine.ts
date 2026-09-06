@@ -7267,7 +7267,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (state.pendingChoice.seat !== seat) return actions;
     const choice = state.pendingChoice;
     if (choice.type === "land-entry") {
-      if (player.life >= choice.life) {
+      if (player.life > choice.life) {
         actions.push({
           action: { type: "choose-land-entry", sourceId: choice.sourceId, payLife: true },
           label: `Pay ${choice.life} life — enter untapped`,

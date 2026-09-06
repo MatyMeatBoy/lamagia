@@ -1250,7 +1250,6 @@ describe("turn structure", () => {
     poor = applyAction(poor, 0, { type: "play-land", cardId: "shock-poor-0" });
     const poorLand = poor.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
     expect(legalActions(poor, 0).map((entry) => entry.action)).toEqual([
-      { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: true },
       { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: false }
     ]);
     poor = applyAction(poor, 0, { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: false });
