@@ -7240,6 +7240,35 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("pumps the enchanted creature from a Firebreathing aura's activated ability", () => {
+    const firebreathing = make({
+      name: "Test Firebreathing", type_line: "Enchantment — Aura", mana_cost: "{R}", cmc: 1,
+      oracle_text: "Enchant creature\n{R}: Enchanted creature gets +1/+0 until end of turn."
+    });
+    expect(profileOf(firebreathing)).toMatchObject({ fullyImplemented: true, auraActivatedAbility: { effect: { kind: "modify-source-creature", power: 1, toughness: 0 } } });
+    let game = readyToCast([firebreathing], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [BEAR()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === bear.instance_id)!, game)).toBe(2);
+
+    // The enchanted creature now has the {R}: +1/+0 activation.
+    const mountain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mountain" && !permanent.tapped)!;
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: mountain.instance_id, abilityIndex: 0, mana: "R" });
+    const pump = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === bear.instance_id);
+    expect(pump).toBeDefined();
+    game = applyAction(game, 0, pump!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === bear.instance_id)!, game)).toBe(3);
+
+    // Cleared at cleanup.
+    game = passUntil(game, (state) => state.turn === 3);
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === bear.instance_id)!, game)).toBe(2);
+  });
+
   it("investigates into a working Clue token", () => {
     const inspector = make({
       name: "Test Inspector", type_line: "Creature — Human Soldier", mana_cost: "{W}", cmc: 1, power: "1", toughness: "2",

@@ -1837,10 +1837,27 @@ function parseAuraControlTarget(text: string): "creature" | "land" | "permanent"
 /** Parses the closed Oracle template used by Auras that grant an activated ability. */
 function parseAuraGrantedActivatedAbility(text: string): ActivatedAbility | null {
   for (const line of text.split("\n")) {
-    const match = /^enchanted (?:creature|land) has "(.+)"\.?$/i.exec(line.trim());
-    if (!match) continue;
-    const ability = parseActivatedAbility(match[1]!, 0);
-    if (ability) return ability;
+    const clean = line.trim().replace(/\.$/, "");
+    const quoted = /^enchanted (?:creature|land) has "(.+)"$/i.exec(clean);
+    if (quoted) {
+      const ability = parseActivatedAbility(quoted[1]!, 0);
+      if (ability) return ability;
+      continue;
+    }
+    // Firebreathing family: "{cost}: Enchanted creature gets +X/+Y until end of
+    // turn". `activatedAbilitiesFor` hands this to the enchanted creature, so a
+    // self-modify effect pumps the right permanent (CR 613, 605.1b).
+    const firebreath = /^((?:\{[^}]+\})+): Enchanted creature gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(clean);
+    if (firebreath) {
+      const manaCost = parseManaCost(firebreath[1]!);
+      if (manaCost) {
+        return {
+          index: 0, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost,
+          effect: { kind: "modify-source-creature", power: Number(firebreath[2]), toughness: Number(firebreath[3]) },
+          targetKind: "none", text: line.trim()
+        };
+      }
+    }
   }
   return null;
 }
@@ -4503,6 +4520,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^level\s+\d+(?:-\d+|\+)?$/i.test(line) || /^\d+\/\d+$/.test(line)) continue;
     if (parseEquipmentModification(line)) continue;
     if (parseAuraModification(line)) continue;
+    if (parseAuraGrantedActivatedAbility(line)) continue;
     if (/^Enchanted creature gets \+\d+\/\+\d+ for each other enchantment on the battlefield\.?$/i.test(line)) continue;
     if (parseAuraControlTarget(line)) continue;
     // "Enchant creature/land/permanent/creature you control" (CR 303.4.5) is
