@@ -3315,6 +3315,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: kind === "modify-target-creature" ? "creature" : "none"
     };
   }
+  // "Target creature an opponent controls gets -1/-1 until end of turn" (Eyeblight
+  // Assassin, Orc Sureshot): same modifier, but the target kind narrows.
+  if ((match = /^Target creature an opponent controls gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
+    return { effect: { kind: "modify-target-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "creature-opponent" };
+  }
   if ((match = /^Until end of turn, creatures you control have base power and toughness (X|\d+)\/(X|\d+) and gain all creature types\.?$/i.exec(text))) {
     const power = match[1]!.toUpperCase() === "X" ? "X" as const : Number(match[1]);
     const toughness = match[2]!.toUpperCase() === "X" ? "X" as const : Number(match[2]);

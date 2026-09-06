@@ -6,6 +6,17 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+Session net: engine export **10,197 → 10,471** fully-implemented profiles
+(+274) across the eight primitives below, each with a scenario test; rules
+suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
+200-game engine matrix **200/200** (unchanged from baseline).
+
+- **"target creature an opponent controls gets ±X/±Y until end of turn"** —
+  reuses `modify-target-creature` with the `creature-opponent` target kind.
+  Covers ETB/attack-trigger shrinkers (Eyeblight Assassin, Orc Sureshot, …).
+  Export **10,454 → 10,471** (+17). Test: `engine.test.ts` › "shrinks an
+  opponent's creature…".
+
 - **"deals N damage to target opponent"** — the `damage-any-target` executor
   already handles a player target; `recognizeSentence` now narrows the target
   kind to `opponent` (or `player`) for this wording. Covers the ETB painful

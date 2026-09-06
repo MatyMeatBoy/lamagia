@@ -7240,6 +7240,24 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("shrinks an opponent's creature with an ETB '-1/-1 to target creature an opponent controls'", () => {
+    const assassin = make({
+      name: "Test Eyeblight", type_line: "Creature — Elf Warrior", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
+      oracle_text: "When this creature enters, target creature an opponent controls gets -1/-1 until end of turn."
+    });
+    expect(profileOf(assassin).triggers[0]).toMatchObject({ targetKind: "creature-opponent", effect: { kind: "modify-target-creature", power: -1, toughness: -1 } });
+    const oneOne = make({ name: "Little Guy", type_line: "Creature — Bird", mana_cost: "{U}", cmc: 1, power: "1", toughness: "1" });
+    let game = readyToCast([assassin], [SWAMP(), SWAMP(), SWAMP()], [oneOne]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Little Guy")).toBe(true);
+
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    // The 1/1 dropped to 0/0 and was swept by the state-based action.
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Little Guy")).toBe(false);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Little Guy")).toBe(true);
+  });
+
   it("pings a chosen opponent from an ETB 'deals 1 damage to target opponent' land", () => {
     const painLand = make({
       name: "Test Painland", type_line: "Land", mana_cost: "", cmc: 0,
