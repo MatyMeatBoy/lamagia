@@ -2758,7 +2758,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         trigger: undefined,
         activated: undefined,
         sourcePermanentId: undefined,
-        triggeredPermanentId: undefined
+        triggeredPermanentId: undefined,
+        // Preserve the public last-known target labels when the copied spell
+        // is put on the stack after its original has left a zone.
+        targetLabels: original.targetLabels ?? original.targets.map((target) => targetLabel(state, target))
       };
       return { ...state, stack: [...state.stack, copy] };
     }
@@ -8685,6 +8688,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
         card: choice.sourceCard,
         label: choice.sourceCard.name + " · habilidad opcional",
         targets: choice.targets ?? [],
+        targetLabels: (choice.targets ?? []).map((target) => targetLabel(next, target)),
         fromCommandZone: false,
         flashback: false,
         variableValue: 0,
@@ -8720,6 +8724,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
       card: choice.sourceCard,
       label: `${choice.sourceCard.name} · habilidad opcional`,
       targets: choice.targets ?? [],
+      targetLabels: (choice.targets ?? []).map((target) => targetLabel(next, target)),
       fromCommandZone: false,
       flashback: false,
       variableValue: 0,
@@ -8775,6 +8780,7 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     card: choice.sourceCard,
    label: `${choice.sourceCard.name} · habilidad opcional`,
     targets: choice.targets ?? [],
+   targetLabels: (choice.targets ?? []).map((target) => targetLabel(next, target)),
    fromCommandZone: false,
    flashback: false,
    variableValue: choice.variablePayCostMax === undefined ? tapCount : variableValue,
@@ -9274,19 +9280,14 @@ function targetLabel(state: GameState, target: Target): string {
     : `${stackObject.card.name} (hechizo)`;
 }
 
-function triggerStackObject(trigger: TriggerInstance, targets: readonly Target[]): StackObject {
+function triggerStackObject(state: GameState, trigger: TriggerInstance, targets: readonly Target[]): StackObject {
   return {
     id: trigger.id,
     controller: trigger.controller,
     card: trigger.sourceCard,
     label: `${trigger.sourceCard.name} · ${TRIGGER_EVENT_LABELS[trigger.definition.event]}`,
     targets,
-    targetLabels: targets.map((target) => {
-      if (target.kind === "player") return `Jugador ${target.seat + 1}`;
-      if (target.kind === "permanent") return "Permanente";
-      if (target.kind === "graveyard-card") return "Carta del cementerio";
-      return "Hechizo o habilidad";
-    }),
+    targetLabels: targets.map((target) => targetLabel(state, target)),
     fromCommandZone: false,
     flashback: false,
     variableValue: 0,
@@ -9398,7 +9399,7 @@ function openResolvedTriggerTargetChoice(
 ): GameState {
   const targetKind = trigger.definition.targetKind;
   if (targetKind === "none") {
-    return { ...state, stack: [...state.stack, triggerStackObject(trigger, [])], ...opened };
+    return { ...state, stack: [...state.stack, triggerStackObject(state, trigger, [])], ...opened };
   }
   if (trigger.definition.targetKinds?.length) {
     return openMultiTriggerTargetChoice(state, trigger, [], opened);
@@ -9412,7 +9413,7 @@ function openResolvedTriggerTargetChoice(
       `La habilidad disparada de ${trigger.sourceCard.name} se retira de la pila: no hay objetivo legal.`);
   }
   if (options.length === 1) {
-    return { ...state, stack: [...state.stack, triggerStackObject(trigger, options)], ...opened };
+    return { ...state, stack: [...state.stack, triggerStackObject(state, trigger, options)], ...opened };
   }
   return {
     ...state,
@@ -9454,7 +9455,7 @@ function openMultiTriggerTargetChoice(
     ? legalTargets(state, trigger.controller, nextKind).filter((target) => !selected.has(JSON.stringify(target)))
     : [];
   if (!nextKind || (!options.length && selectedTargets.length >= minimumTargets)) {
-    return { ...state, stack: [...state.stack, triggerStackObject(trigger, selectedTargets)], pendingChoice: null, ...opened };
+    return { ...state, stack: [...state.stack, triggerStackObject(state, trigger, selectedTargets)], pendingChoice: null, ...opened };
   }
   if (!options.length) {
     return logged(state, trigger.controller, `La habilidad disparada de ${trigger.sourceCard.name} se retira: no hay objetivos legales.`);
@@ -9491,7 +9492,7 @@ function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extrac
   const next: GameState = {
     ...state,
     pendingChoice: null,
-    stack: [...state.stack, triggerStackObject(choice.trigger, [action.target])],
+    stack: [...state.stack, triggerStackObject(state, choice.trigger, [action.target])],
     prioritySeat: active,
     priorityOpen: true,
     passedSeats: []
@@ -9519,7 +9520,7 @@ function applyFinishTriggerTargets(state: GameState, seat: SeatId, action: Extra
   const next: GameState = {
     ...state,
     pendingChoice: null,
-    stack: [...state.stack, triggerStackObject(choice.trigger, choice.selectedTargets ?? [])],
+    stack: [...state.stack, triggerStackObject(state, choice.trigger, choice.selectedTargets ?? [])],
     prioritySeat: active,
     priorityOpen: true,
     passedSeats: []
