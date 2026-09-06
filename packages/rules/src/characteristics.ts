@@ -345,7 +345,7 @@ export interface TriggerDoubler {
 export interface StaticPowerToughnessGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
     | "source-opponents-graveyard-creatures" | "source-controller-life-threshold" | "other-subtype-creatures-you-control"
-    | "other-all-creatures";
+    | "other-all-creatures" | "creatures-you-control-source-counter-threshold";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -1897,6 +1897,16 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   if (graveyard) return { scope: "source-opponents-graveyard-creatures", power: Number(graveyard[1]), toughness: Number(graveyard[2]) };
   const life = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(clean);
   if (life) return { scope: "source-controller-life-threshold", power: Number(life[1]), toughness: Number(life[2]), threshold: Number(life[3]) };
+  // "As long as ~ has N or more <name> counters on it, creatures you control get +X/+Y" (Beastmaster Ascension).
+  const counterThreshold = /^as long as ~ has (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more ([a-z][a-z\s-]*?) counters? on it,\s*creatures you control get ([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  if (counterThreshold) {
+    const threshold = toNumber(counterThreshold[1]!);
+    if (threshold !== null) return {
+      scope: "creatures-you-control-source-counter-threshold",
+      power: Number(counterThreshold[3]), toughness: Number(counterThreshold[4]),
+      threshold, counterName: counterThreshold[2]!.trim().toLowerCase()
+    };
+  }
   const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   if (match) {
     return {

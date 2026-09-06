@@ -916,6 +916,20 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
       }
     }
   }
+  // Counter-gated anthem affecting every creature the source's controller owns
+  // (Beastmaster Ascension), not just the source itself — checked separately
+  // from the wide "creatures-you-control" filter above since it needs the
+  // GRANTING permanent's own counters, not the receiving creature's.
+  for (const source of allPermanents(state)) {
+    if (source.controller !== permanent.controller) continue;
+    for (const grant of cardProfile(source.card).staticPowerToughnessGrants) {
+      if (grant.scope === "creatures-you-control-source-counter-threshold"
+        && (source.counters[grant.counterName!] ?? 0) >= (grant.threshold ?? Number.POSITIVE_INFINITY)) {
+        power += grant.power;
+        toughness += grant.toughness;
+      }
+    }
+  }
   return { power, toughness };
 }
 /** Characteristic-defining power/toughness (CR 604.3): computed from live game state, so it's null with no state to read. */

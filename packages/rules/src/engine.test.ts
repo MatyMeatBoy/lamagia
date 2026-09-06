@@ -10347,6 +10347,36 @@ describe("Atarka, World Render's tribal double-strike attack trigger", () => {
   });
 });
 
+describe("Beastmaster Ascension's quest-counter anthem", () => {
+  const BEASTMASTER_ASCENSION = () => make({
+    name: "Beastmaster Ascension", type_line: "Enchantment", mana_cost: "{3}{G}", cmc: 4,
+    oracle_text: "Whenever a creature you control attacks, you may put a quest counter on this enchantment.\nAs long as this enchantment has seven or more quest counters on it, creatures you control get +5/+5."
+  });
+
+  it("recognizes the trigger and the counter-gated anthem", () => {
+    const profile = profileOf(BEASTMASTER_ASCENSION());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({ event: "attacks", subject: "creature-you-control", optional: true, effect: { kind: "add-counter-source", counter: "quest", amount: 1 } });
+    expect(profile.staticPowerToughnessGrants).toMatchObject([{ scope: "creatures-you-control-source-counter-threshold", power: 5, toughness: 5, threshold: 7, counterName: "quest" }]);
+  });
+
+  it("grants no bonus below seven quest counters and +5/+5 to every controlled creature at seven or more", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEASTMASTER_ASCENSION(), BEAR(), BEAR()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Beastmaster Ascension" ? { ...permanent, counters: { quest: 6 } } : permanent)
+    }));
+    const bears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    for (const bear of bears) expect([powerOf(bear, game), toughnessOf(bear, game)]).toEqual([2, 2]);
+
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Beastmaster Ascension" ? { ...permanent, counters: { quest: 7 } } : permanent)
+    }));
+    const updatedBears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    for (const bear of updatedBears) expect([powerOf(bear, game), toughnessOf(bear, game)]).toEqual([7, 7]);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

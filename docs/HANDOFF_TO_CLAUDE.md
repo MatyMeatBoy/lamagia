@@ -4164,6 +4164,33 @@ simulate:engine` 200/200, 10,110 global profiles.
 Prossh decklist status after this pass: **69 of 97 unique cards fully
 implemented (71.1%)**.
 
+Beastmaster Ascension's trigger line ("Whenever a creature you control
+attacks, you may put a quest counter on this enchantment") was already
+covered by the existing generic `add-counter-source` template; only its
+static anthem ("As long as ~ has seven or more quest counters on it,
+creatures you control get +5/+5") was missing. Discovered that
+`StaticPowerToughnessGrant` already had unused `counterName`/`threshold`
+fields — declared on the interface but never read anywhere in
+`engine.ts`, apparently added ahead of a card that needed them and then
+never wired up. Added the missing half: a new
+`creatures-you-control-source-counter-threshold` scope, a parser branch
+in `parseStaticPowerToughnessGrant` (word-number threshold parsing via
+the shared `toNumber`, matching every other counted-quantity pattern),
+and a second pass in `staticPowerToughnessBonus` that checks the
+GRANTING permanent's own counters (not the receiving creature's) before
+adding its bonus to every creature the same controller owns — a
+separate loop from the existing wide "creatures-you-control" filter,
+since that one has no way to gate on the source's own state. Verified
+**+1** in the export count (10,110 → 10,111) and set coverage holds at
+30.7%. Scenario-tested: with six quest counters every controlled Grizzly
+Bears stays 2/2; pushing the same enchantment to seven counters pumps
+both Bears to 7/7 without touching anything else on the board.
+Validation: **751 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,111 global profiles.
+
+Prossh decklist status after this pass: **70 of 97 unique cards fully
+implemented (72.2%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
