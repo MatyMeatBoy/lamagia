@@ -93,6 +93,10 @@ export interface PlayerView {
 
 export interface StackView {
   readonly id: string;
+  /** 1-based position from the bottom of the stack; the highest object resolves first. */
+  readonly position: number;
+  /** Explicit marker for the object that will resolve next (CR 608.2). */
+  readonly resolvesNext: boolean;
   readonly controller: SeatId;
   readonly name: string;
   /** Public category used by the graphical stack: spell, activated ability, or trigger. */
@@ -427,8 +431,10 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     finished: state.finished,
     winnerSeat: state.winnerSeat,
     players,
-    stack: state.stack.map((object) => ({
+    stack: state.stack.map((object, index) => ({
       id: object.id,
+      position: index + 1,
+      resolvesNext: index === state.stack.length - 1,
       controller: object.controller,
       name: object.card.name,
       kind: object.trigger ? "trigger" : object.activated ? "activated" : "spell",
@@ -437,11 +443,11 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
         ? { text: object.trigger?.definition.sourceText ?? object.activated?.text ?? object.card.oracle_text ?? undefined }
         : {}),
       ...(object.card.image_normal ? { image_normal: object.card.image_normal } : {}),
-      targets: object.targets.map((target) =>
+      targets: object.targets.map((target, index) =>
         target.kind === "player" ? state.players[target.seat]!.name
           : target.kind === "permanent" ? nameOf(state, target.instanceId)
             : target.kind === "graveyard-card" ? state.players[target.seat]!.graveyard.find((card) => card.instance_id === target.instanceId)?.name ?? "carta del cementerio"
-            : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo"),
+            : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? object.targetLabels?.[index] ?? "hechizo"),
       countered: object.countered
     })),
     librarySearch,

@@ -1017,6 +1017,8 @@ export interface CardProfile {
   readonly equipmentModification: EquipmentModification | null;
   /** Static bonuses an Aura grants the permanent it's attached to (CR 303.4.5), e.g. "Enchanted creature gets +2/+2." */
   readonly auraModification: EquipmentModification | null;
+  /** Fixed mana added when the enchanted land is tapped for mana (CR 303.4, 605.1a). */
+  readonly auraLandManaBonus: { readonly mana: ManaType; readonly amount: number } | null;
   /** Permanent type continuously controlled by an Aura, e.g. "You control enchanted creature." (CR 611.3, 613.7). */
   readonly auraControlTarget: "creature" | "land" | "permanent" | null;
   /** Activated ability granted by an attached Aura (CR 303.4, 605.1a). */
@@ -1798,6 +1800,15 @@ function parseAuraGrantedActivatedAbility(text: string): ActivatedAbility | null
     if (!match) continue;
     const ability = parseActivatedAbility(match[1]!, 0);
     if (ability) return ability;
+  }
+  return null;
+}
+
+/** Parses Wild Growth-style mana granted to an enchanted land (CR 605.1a). */
+function parseAuraLandManaBonus(text: string): { readonly mana: ManaType; readonly amount: number } | null {
+  for (const line of text.split("\n")) {
+    const match = /^whenever enchanted land is tapped for mana, its controller adds an additional \{([WUBRGC])\}\.?$/i.exec(line.trim());
+    if (match) return { mana: match[1]!.toUpperCase() as ManaType, amount: 1 };
   }
   return null;
 }
@@ -4470,6 +4481,7 @@ function recognizeText(text: string): RecognizedText {
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
+    if (/^Whenever enchanted land is tapped for mana, its controller adds an additional \{[WUBRGC]\}\.?$/i.test(line)) continue;
     if (/^~ doesn[’']t untap during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
@@ -5073,6 +5085,8 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const auraModification = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraModification(text) : null;
+  const auraLandManaBonus = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
+    ? parseAuraLandManaBonus(text) : null;
   const auraControlTarget = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraControlTarget(text) : null;
   const auraActivatedAbility = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
@@ -5189,6 +5203,7 @@ export function cardProfile(card: CardData): CardProfile {
     equipWorthyCost,
     equipmentModification,
     auraModification,
+    auraLandManaBonus,
     auraControlTarget,
     auraActivatedAbility,
     staticKeywordGrants,
