@@ -43,7 +43,7 @@ const CARD_TYPES: readonly CardType[] = ["Land", "Creature", "Artifact", "Enchan
 export const ENFORCED_KEYWORDS = [
   "flying", "reach", "first strike", "double strike", "deathtouch", "trample",
   "vigilance", "lifelink", "menace", "defender", "haste", "indestructible",
-  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "prowess", "shadow", "exalted", "split second"
+  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "prowess", "shadow", "exalted", "split second", "ward"
 ] as const;
 export type EnforcedKeyword = (typeof ENFORCED_KEYWORDS)[number];
 
@@ -718,6 +718,8 @@ export type SpellEffect =
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
+  /** Ward can counter the targeted spell or activated/triggered ability (CR 702.21c). */
+  | { readonly kind: "counter-target-object" }
   /** Hinder: the countered spell's owner chooses a library destination replacement (CR 701.18, 608.2b). */
   | { readonly kind: "counter-target-spell-to-library" }
   /** Daze: the targeted spell's own controller decides whether to pay (CR 601.2b, 603.3, 118.9). */
@@ -1024,6 +1026,8 @@ export interface CardProfile {
   readonly cyclingSearches: readonly CyclingSearchAbility[];
   /** Echo cost paid at the controller's next upkeep (CR 702.30). */
   readonly echoCost: ManaCost | null;
+  /** Ward's mana payment, requested when an opposing spell or ability targets this permanent (CR 702.21). */
+  readonly wardCost: ManaCost | null;
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
   /** Additional life payment bundled into a Flashback cost (CR 118.8). */
@@ -4948,11 +4952,14 @@ export function cardProfile(card: CardData): CardProfile {
   const uncounterableCreaturePowerMatch = /creature spells you control with power (\d+) or greater can't be countered\.?/i.exec(text);
   const affinityMatch = /^Affinity for (.+)$/im.exec(text);
   const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
+  const wardMatch = /^Ward\s+((?:\{[^}]+\})+)\s*$/im.exec(text);
+  const wardCost = wardMatch ? parseManaCost(wardMatch[1]!) : null;
   const modularMatch = /^Modular\s+(\d+)$/im.exec(text);
   const modularAmount = modularMatch ? Number(modularMatch[1]) : null;
   const recognized = recognizeText(text
     .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
     .replace(/^Affinity for .+$/gim, "")
+    .replace(/^Ward\s+(?:\{[^}]+\})+\s*$/gim, "")
     .replace(/^Modular\s+\d+$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
@@ -5177,6 +5184,7 @@ export function cardProfile(card: CardData): CardProfile {
     cyclingCost,
     cyclingSearches,
     echoCost: recognized.echoCost ?? null,
+    wardCost,
     flashbackLifeCost,
     additionalLifeCost,
     additionalLifeCostVariable,

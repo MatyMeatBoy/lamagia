@@ -478,6 +478,9 @@ export type PendingChoice =
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       readonly unlessPayCost?: ManaCost;
+      /** Ward targets still awaiting their individual tax choice (CR 702.21c). */
+      readonly wardTargetIds?: readonly string[];
+      readonly wardIndex?: number;
     }
   | {
       /**
@@ -4784,6 +4787,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
     }
+    case "counter-target-object": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      return { ...state, stack: state.stack.map((entry) => entry.id === target.stackId ? { ...entry, countered: true } : entry) };
+    }
     case "counter-target-spell-to-library": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
@@ -7529,6 +7537,41 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
 }
 
+/** Queues the opponent's payment choice for the next opposing Ward target. */
+function queueWardChoice(state: GameState, stack: StackObject, handledIds: readonly string[] = []): GameState {
+  const wardTargets = stack.targets.flatMap((target) => {
+    if (target.kind !== "permanent") return [];
+    const permanent = findPermanent(state, target.instanceId);
+    const cost = permanent ? cardProfile(permanent.card).wardCost : null;
+    return permanent && cost && permanent.controller !== stack.controller ? [{ permanent, cost }] : [];
+  });
+  const handled = new Set(handledIds);
+  const next = wardTargets.find(({ permanent }) => !handled.has(permanent.instance_id));
+  if (!next) return state;
+  const index = wardTargets.indexOf(next);
+  const target: Target = { kind: "spell", stackId: stack.id };
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "optional-trigger",
+      seat: stack.controller,
+      sourceId: `ward:${stack.id}:${next.permanent.instance_id}`,
+      sourceCard: next.permanent.card,
+      triggerEffect: stack.activated || stack.trigger ? { kind: "counter-target-object" } : { kind: "counter-target-spell" },
+      targets: [target],
+      sourceController: next.permanent.controller,
+      paymentBy: "opponent",
+      payCost: next.cost,
+      manaCost: next.cost,
+      unlessPayCost: next.cost,
+      sourcePermanentId: next.permanent.instance_id,
+      wardTargetIds: wardTargets.map(({ permanent }) => permanent.instance_id),
+      wardIndex: index
+    }
+  };
+}
+
 function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate-mana" }>): GameState {
   if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("No tienes prioridad para activar esa habilidad de maná.");
   const player = playerAt(state, seat);
@@ -8166,6 +8209,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     ? source.counters[ability.effect.counter] ?? 0
     : 0;
   next = pushActivatedOnStack(next, seat, source, ability, targets, effectVariable || counterValue);
+  next = queueWardChoice(next, next.stack.at(-1)!);
   return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}.`);
 }
 
@@ -8192,6 +8236,7 @@ function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAc
   }));
   next = pushOnStack(next, seat, card, chosen, false, action.variableValue ?? 0, undefined, false, false, false);
   next = { ...next, stack: next.stack.map((entry, index) => index === next.stack.length - 1 ? { ...entry, fromRebound: true } : entry) };
+  next = queueWardChoice(next, next.stack.at(-1)!);
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)! });
   return logged(next, seat, `${player.name} relanza ${card.name} desde el exilio (rebote).`);
 }
@@ -8328,6 +8373,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
     paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)), sacrificedPower);
+  next = queueWardChoice(next, next.stack.at(-1)!);
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)!, spentMana: paymentSpentTotal },
@@ -8486,6 +8532,12 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     const payment = payCost(choice.manaCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
     if (!payment) throw new Error("No se pudo pagar el coste de la habilidad.");
     next = withPlayer(next, seat, (current) => consumeManaPayment(current, payment));
+    const wardStack = choice.wardTargetIds
+      ? next.stack.find((entry) => entry.id === (choice.targets?.[0]?.kind === "spell" ? choice.targets[0].stackId : ""))
+      : undefined;
+    if (wardStack && choice.wardTargetIds && choice.wardIndex !== undefined) {
+      next = queueWardChoice(next, wardStack, choice.wardTargetIds.slice(0, choice.wardIndex + 1));
+    }
     return logged(next, seat, playerAt(next, seat).name + " paga " + choice.manaCost.raw + " para evitar la habilidad.");
   }
   if (choice.unlessPayCost) {
@@ -9546,7 +9598,7 @@ export function canCounterSpell(spell: StackObject, state?: GameState): boolean 
 }
 
 function isCounterOnlyEffect(effect: SpellEffect): boolean {
-  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-to-library" || effect.kind === "counter-target-spell-to-battlefield"
+  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-object" || effect.kind === "counter-target-spell-to-library" || effect.kind === "counter-target-spell-to-battlefield"
     || (effect.kind === "compound" && effect.effects.length > 0 && effect.effects.every(isCounterOnlyEffect));
 }
 

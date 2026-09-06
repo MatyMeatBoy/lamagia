@@ -532,3 +532,4 @@ rules citations and the integrator review remain mandatory.
 | `mh2-protection-artifact` | Reusable Protection from artifacts parsing and targeting enforcement for MH2 artifact-protection cards (CR 702.16) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `mh2-treasure-token` | Reusable Treasure token definition and sacrifice-for-any-color mana ability (CR 111.10, 605.3b) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `mh2-discard-then-draw` | Reusable discard-then-draw effect for Faithless Salvaging and Fast // Furious (CR 701.8, 121.1) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `global-ward-tax` | Reusable Ward tax choice for opposing spells and abilities targeting a permanent, including multi-target sequencing (CR 702.21) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

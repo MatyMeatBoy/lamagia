@@ -137,11 +137,57 @@ const ANOTHER_PERMANENT_ETB_DRAWER = () => make({ name: "Another Archivist", typ
 const ANY_SPELL_TRIGGER = () => make({ name: "Spell Archivist", type_line: "Creature — Human", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Whenever a player casts a spell, draw a card." });
 const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Optional Archivist enters the battlefield, you may draw a card." });
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
+const WARD_SENTINEL = () => make({ name: "Ward Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward {2}" });
+const WARD_TARGET_SPELL = () => make({ name: "Ward Test Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Destroy target creature." });
 const SERENE_MASTER = () => make({ name: "Serene Master", type_line: "Creature — Human Monk", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "2", oracle_text: "Whenever this creature blocks, exchange its power and the power of target creature it's blocking until end of combat.", oracle_id: "2ce0d583-81ca-4dca-bde0-52f86b683afd", scryfall_id: "06223a09-a32c-4c60-86a1-f8f7bf5a7cdd" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
 const TREASURE_TOKEN = () => make({
   name: "Treasure", type_line: "Artifact — Treasure", token: true,
   oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color."
+});
+
+describe("Ward keyword", () => {
+  function wardGame(): GameState {
+    let game = twoSeatGame([], []);
+    game = {
+      ...game,
+      step: "precombat-main",
+      activeSeat: 0,
+      prioritySeat: 0,
+      priorityOpen: true,
+      stack: [],
+      triggerQueue: [],
+      pendingChoice: null,
+      players: game.players.map((player) => ({ ...player, autoPass: false, hand: [], commandZone: [] }))
+    };
+    game = stage(game, 0, () => ({
+      hand: toHand(0, [WARD_TARGET_SPELL()]),
+      manaPool: { W: 0, U: 0, B: 0, R: 1, G: 0, C: 2 }
+    }));
+    return putOnBattlefield(game, 1, [WARD_SENTINEL()]);
+  }
+
+  it("recognises the cost and counters an opposing spell when unpaid", () => {
+    expect(cardProfile(WARD_SENTINEL()).wardCost?.raw).toBe("{2}");
+    let game = wardGame();
+    const ward = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: ward.instance_id }] });
+    expect(game.pendingChoice?.type).toBe("optional-trigger");
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: false });
+    expect(game.stack.at(-1)?.countered).toBe(true);
+  });
+
+  it("lets the opposing caster pay Ward and keeps the spell on the stack", () => {
+    let game = wardGame();
+    const ward = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: ward.instance_id }] });
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.stack.at(-1)?.countered).toBe(false);
+    expect(game.players[0]!.manaPool.C).toBe(0);
+  });
 });
 const ANGELIC_CURATOR = () => make({
   name: "Angelic Curator", type_line: "Creature — Angel Spirit", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "3",

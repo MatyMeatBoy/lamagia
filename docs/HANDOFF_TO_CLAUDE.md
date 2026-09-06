@@ -4008,3 +4008,10 @@ Faithless Salvaging and the Fast face shape now queue the discard choice and
 draw the printed amount afterward, preserving the existing hand privacy and
 rebound handling (CR 701.8, 121.1). Current validation: **738 rules tests**,
 `npm run check`, near-complete unit tests, and `git diff --check` pass.
+
+The evergreen keyword audit now includes Ward: `Ward {cost}` is parsed into a
+reusable profile field, and opposing spells or activated/triggered abilities
+targeting the permanent pause for the controller's payment choice. Declining
+counters the targeted stack object; paying advances through multiple Ward
+targets. Coverage includes both branches (CR 702.21). Current validation:
+**629 engine tests**, `npm run check`, and `git diff --check` pass.
