@@ -947,8 +947,8 @@ function stackStripHtml(): string {
     ? `${status}${passed.length ? ` · Pasaron: ${passed.join(", ")}` : ""}`
     : status;
   return `<div class="stack-strip" aria-label="Pila de hechizos y habilidades" title="${escapeHtml(statusDetail)}"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)}</small>${[...view.stack].reverse().map((object, index) =>
-    `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este hechizo como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}">
-      <strong class="stack-order">${index + 1}</strong>
+    `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este hechizo como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Sin objetivos")}" aria-label="Pila ${index + 1}, ${escapeHtml(object.kind === "trigger" ? "habilidad disparada" : object.kind === "activated" ? "habilidad activada" : "hechizo")}: ${escapeHtml(object.name)}">
+      <strong class="stack-order">${index === 0 ? "↑" : index + 1}</strong>
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
       <span><small class="stack-kind">${object.kind === "trigger" ? "Triggered" : object.kind === "activated" ? "Activated" : "Spell"}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
     </button>`).join("")}</div>`;
