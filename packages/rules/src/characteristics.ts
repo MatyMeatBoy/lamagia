@@ -312,6 +312,9 @@ export interface EquipmentModification {
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
+  /** Pacifism / Arrest: the enchanted creature can't attack and/or can't block. */
+  readonly cannotAttack?: boolean;
+  readonly cannotBlock?: boolean;
   /** Multiplier for a dynamic Aura bonus. */
   readonly scaling?: "other-enchantments-on-battlefield";
   /** Aura characteristic-setting layer (CR 613.1): replaces base values/types and may remove abilities. */
@@ -1753,6 +1756,18 @@ function parseEquipmentModification(text: string): EquipmentModification | null 
 function parseAuraModification(text: string): EquipmentModification | null {
   for (const line of text.split("\n")) {
     const clean = line.trim().replace(/\.$/, "");
+    // Pacifism / Bound in Silence / Kasmina's Transmutation-style locks. Arrest
+    // ("...and its activated abilities can't be activated") is deliberately not
+    // matched here — that extra clause is not yet enforced.
+    if (/^enchanted creature can'?t attack or block$/i.test(clean)) {
+      return { power: 0, toughness: 0, keywords: [], cannotAttack: true, cannotBlock: true, text: line.trim() };
+    }
+    if (/^enchanted creature can'?t attack$/i.test(clean)) {
+      return { power: 0, toughness: 0, keywords: [], cannotAttack: true, text: line.trim() };
+    }
+    if (/^enchanted creature can'?t block$/i.test(clean)) {
+      return { power: 0, toughness: 0, keywords: [], cannotBlock: true, text: line.trim() };
+    }
     const characteristicSetting = /^enchanted creature is an insect artifact creature with base power and toughness (\d+)\/(\d+) and has (.+), and it loses all other abilities, card types, and creature types$/i.exec(clean);
     if (characteristicSetting) {
       const keywords = characteristicSetting[3]!.split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())

@@ -7240,6 +7240,30 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("stops an enchanted creature from attacking or blocking (Pacifism)", () => {
+    const pacifism = make({
+      name: "Test Pacifism", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2,
+      oracle_text: "Enchant creature\nEnchanted creature can't attack or block."
+    });
+    expect(profileOf(pacifism)).toMatchObject({ fullyImplemented: true, auraModification: { cannotAttack: true, cannotBlock: true } });
+    let game = readyToCast([pacifism], [PLAINS(), PLAINS()], [BEAR()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const foe = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+
+    expect(legalAttackers(game, 1).some((permanent) => permanent.instance_id === foe.instance_id)).toBe(true);
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: foe.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Pacifism" && permanent.attachedTo === foe.instance_id)).toBe(true);
+
+    // The enchanted Bears can no longer be declared as an attacker.
+    expect(legalAttackers(game, 1).some((permanent) => permanent.instance_id === foe.instance_id)).toBe(false);
+    // ...nor as a blocker: put a seat-0 attacker into combat targeting seat 1.
+    const attackerId = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.instance_id
+      ?? (game = putOnBattlefield(game, 0, [BEAR()]), game.players[0]!.battlefield.at(-1)!.instance_id);
+    const combatGame = { ...game, step: "declare-blockers" as const, combat: { ...game.combat, attackers: [{ instanceId: attackerId, defender: 1 as SeatId }], attackersDeclared: true } };
+    expect(legalBlockers(combatGame, 1).some((permanent) => permanent.instance_id === foe.instance_id)).toBe(false);
+  });
+
   it("shrinks an opponent's creature with an ETB '-1/-1 to target creature an opponent controls'", () => {
     const assassin = make({
       name: "Test Eyeblight", type_line: "Creature — Elf Warrior", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",

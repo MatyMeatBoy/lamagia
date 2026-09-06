@@ -6,8 +6,16 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
-Session net: engine export **10,197 → 10,471** fully-implemented profiles
-(+274) across the eight primitives below, each with a scenario test; rules
+- **Pacifism-style Aura combat lock** — `EquipmentModification` gains
+  `cannotAttack` / `cannotBlock`; `parseAuraModification` matches "Enchanted
+  creature can't attack or block" (also "can't attack" / "can't block" alone),
+  and `canAttack` / `canBlock` consult `attachedAuras`. Arrest's extra
+  ability-lock clause is deliberately left unmatched. Export **10,471 →
+  10,482** (Pacifism, Bound in Silence, Chains of Faith, …). Test:
+  `engine.test.ts` › "stops an enchanted creature from attacking or blocking".
+
+Session net: engine export **10,197 → 10,482** fully-implemented profiles
+(+285) across the eight primitives below, each with a scenario test; rules
 suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
 200-game engine matrix **200/200** (unchanged from baseline).
 

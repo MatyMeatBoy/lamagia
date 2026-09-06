@@ -6003,6 +6003,11 @@ function pruneCombat(state: GameState): GameState {
 // Combat
 // ---------------------------------------------------------------------------
 
+/** Pacifism / Arrest / Bound in Silence: does an attached Aura forbid this? */
+function auraForbidsCombat(state: GameState, permanent: Permanent, which: "cannotAttack" | "cannotBlock"): boolean {
+  return attachedAuras(state, permanent).some((aura) => cardProfile(aura.card).auraModification?.[which] === true);
+}
+
 function canAttack(state: GameState, permanent: Permanent): boolean {
   const profile = cardProfile(permanent.card);
   if (!isCreaturePermanent(permanent)) return false;
@@ -6010,6 +6015,7 @@ function canAttack(state: GameState, permanent: Permanent): boolean {
   if (profile.keywords.includes("defender")) return false;
   // A printed "can't attack" is the same restriction as defender (CR 506.3a).
   if (profile.combatRules.cannotAttack) return false;
+  if (auraForbidsCombat(state, permanent, "cannotAttack")) return false;
   if (permanent.summoningSick && !keywordOf(state, permanent, "haste")) return false;
   return true;
 }
@@ -6055,6 +6061,7 @@ export function canBlock(state: GameState, attacker: Permanent, blocker: Permane
   const blockerProfile = cardProfile(blocker.card);
   if (!isCreaturePermanent(blocker) || blocker.tapped) return false;
   if (blockerProfile.combatRules.cannotBlock || blocker.cantBlockThisTurn) return false;
+  if (auraForbidsCombat(state, blocker, "cannotBlock")) return false;
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
   if (attackerProfile.combatRules.cannotBeBlockedWhenDefenderHasMostCreatures) {
