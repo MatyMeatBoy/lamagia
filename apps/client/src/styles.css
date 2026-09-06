@@ -261,15 +261,15 @@ h1, h2, h3 { margin: 0; }
   color: #e6d9ae; font-size: .62rem; line-height: 1.15; text-align: center;
   overflow-wrap: anywhere;
 }
+/* Tokens read as a headstone: a pronounced arched top over near-straight sides. */
 .card-tile.token-tile {
-  border-color: #a88a51;
-  border-radius: 10px 10px 4px 4px;
-  clip-path: polygon(0 7%, 8% 0, 92% 0, 100% 7%, 100% 91%, 50% 100%, 0 91%);
-  background: radial-gradient(circle at 50% 38%, #304d35, #101c15 68%);
+  border-color: #b7965a;
+  border-radius: 50% 50% 7% 7% / 34% 34% 6% 6%;
+  background: radial-gradient(ellipse 75% 60% at 50% 32%, #35542f, #101c15 72%);
 }
 .card-tile.token-tile::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  border: 1px solid #d1b56d66; clip-path: inherit;
+  border: 1px solid #e4c67f7a; border-radius: inherit;
 }
 .card-tile .token-placeholder { display: none; }
 .card-tile.token-tile .token-placeholder {
@@ -476,17 +476,22 @@ button.chip:hover { border-color: var(--gold); }
 .hand-label b { color: var(--text); }
 .hand-label .hint { color: var(--text-faint); }
 .hand {
+  --hand-overlap: 0px;
   display: flex; justify-content: center; align-items: flex-end;
   min-height: calc(var(--hand-w) * 1.33);
+  max-width: 100%;
   padding: 10px 12px 0;
+  overflow: visible;
   perspective: 900px;
 }
 .hand-card {
   position: relative; flex: 0 0 auto; padding: 0;
   width: var(--hand-w); aspect-ratio: 5 / 7;
-  margin-inline: -14px;
+  /* Left card paints over the next card's LEFT edge, so every card's right side
+     — where the mana cost sits — stays readable while the hand is fanned. */
+  margin-left: var(--hand-overlap);
   overflow: hidden; border: 1px solid #6d5c3a; border-radius: 7px;
-  background: #131c16; box-shadow: 0 4px 12px #000a;
+  background: #131c16; box-shadow: -3px 4px 12px #000a;
   transform-origin: bottom center;
   transition: transform .14s cubic-bezier(.2,.8,.3,1), box-shadow .14s ease, margin .14s ease;
   filter: grayscale(.28) brightness(.86);
@@ -521,7 +526,7 @@ button.chip:hover { border-color: var(--gold); }
 .hand-card.choice-muted { filter: grayscale(.42) brightness(.78); opacity: .88; }
 .hand-card.drag-source { opacity: .22; transform: translateY(12px) scale(.96); }
 .hand-card:active { cursor: grabbing; }
-.hand-card:hover, .hand-card:focus-visible { transform: translateY(-30px) rotate(0deg) scale(1.14); z-index: 6; box-shadow: 0 14px 28px #000d; filter: none; }
+.hand-card:hover, .hand-card:focus-visible { transform: translateY(-30px) rotate(0deg) scale(1.14); z-index: 999; box-shadow: 0 14px 28px #000d; filter: none; overflow: visible; }
 .hand-card.partial::after {
   content: "?"; position: absolute; z-index: 3; top: 2px; right: 3px;
   width: 14px; height: 14px; display: grid; place-items: center; border-radius: 50%;

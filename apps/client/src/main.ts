@@ -996,7 +996,7 @@ function handHtml(player: PlayerView): string {
   if (!cards.length) return `<p class="hand-empty">Mano vacía</p>`;
   const ordered = [...cards].sort((left, right) =>
     Number(isLandCard(left)) - Number(isLandCard(right)) || left.manaValue - right.manaValue || left.name.localeCompare(right.name));
-  return ordered.map((card) => {
+  return ordered.map((card, index) => {
     const action = actionForCard(card.instance_id);
     const classes = ["hand-card"];
     const isRevealOption = action?.action.type === "choose-reveal";
@@ -1010,7 +1010,7 @@ function handHtml(player: PlayerView): string {
     if (revealOptions && !isRevealOption) classes.push("choice-muted");
     if (!card.fullyImplemented) classes.push("partial");
     return `<button class="${classes.join(" ")}" type="button" data-hand="${escapeHtml(card.instance_id)}"
-      data-preview="${escapeHtml(card.instance_id)}" title="${escapeHtml(card.name)}">
+      data-preview="${escapeHtml(card.instance_id)}" title="${escapeHtml(card.name)}" style="z-index:${ordered.length - index}">
       ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}" draggable="false" loading="lazy" decoding="async"/>` : ""}
       ${card.mana_cost ? `<span class="hand-cost" aria-label="Coste de maná">${manaHtml(card.mana_cost)}</span>` : ""}
       <span class="tile-name">${escapeHtml(card.name)}</span>
@@ -1389,7 +1389,31 @@ function render(): void {
     <button id="rematch" class="primary-button">Jugar otra</button></div></div>` : ""}`;
 
   wireBoard();
+  layoutHand();
 }
+
+/**
+ * Fans the hand so every card's mana cost stays visible. Cards keep their full
+ * width; when the row would overflow, they overlap left-over-right (the left
+ * card paints on top) just enough to fit, never hiding more than the left
+ * portion of a covered card.
+ */
+function layoutHand(): void {
+  const hand = root!.querySelector<HTMLElement>(".hand");
+  if (!hand) return;
+  const cards = [...hand.querySelectorAll<HTMLElement>(".hand-card")];
+  if (cards.length < 2) { hand.style.setProperty("--hand-overlap", "0px"); return; }
+  const cardWidth = cards[0]!.offsetWidth;
+  const available = hand.clientWidth - 24;
+  const natural = cardWidth * cards.length;
+  if (natural <= available) { hand.style.setProperty("--hand-overlap", "0px"); return; }
+  // Keep at least the cost strip + right border of every covered card visible.
+  const maxOverlap = Math.max(0, cardWidth - 62);
+  const needed = (natural - available) / (cards.length - 1);
+  hand.style.setProperty("--hand-overlap", `-${Math.min(maxOverlap, needed)}px`);
+}
+
+window.addEventListener("resize", () => layoutHand());
 
 // ---------------------------------------------------------------------------
 // Detail preview
