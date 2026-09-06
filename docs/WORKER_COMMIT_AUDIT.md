@@ -354,3 +354,26 @@ the recovered cards are not in C13, but the primitives are shared globally.
 The follow-up worker commit `faf3ad5` contained only the worker's refreshed
 handoff/coverage files for this same batch; it was pushed and recorded by
 audited merge `f8601bd` while retaining the newer main-branch documentation.
+
+### Branch quarantine — 2026-09-06
+
+The following remote heads were inspected and are not integration queues:
+
+- `origin` / Nemotron history: destructive alternate tree with large deletions,
+  stale generated files, and no safe fast-forward path.
+- `origin/c14-self-pump` and `origin/c14-selfpump-backup`: seven old rule
+  commits that conflict with the current engine/documentation base.
+- `origin/claude/c14-precon-clusters`: contains a broad engine-repair commit
+  and unresolved historical layering; not safe to cherry-pick as a batch.
+- `origin/codex-ready/c14-combat-restrictions`: conflicts across engine,
+  planner, package scripts, and docs; not a focused current-base commit.
+- `origin/codex/c13-equipment-cluster` and
+  `origin/codex/c13-darksteel-mutation`: accumulated historical branches,
+  mostly already represented by accepted commits or duplicate patches.
+
+These branches remain as provenance and must not be reprocessed automatically.
+Future workers must branch from the current published integration SHA, claim a
+disjoint cluster, include executable behavior plus scenario tests, and publish
+a focused commit. A branch with broad deletions, conflict markers, a stale
+base, or no exact card/oracle mapping is rejected before cherry-pick. Set names
+are scope labels only; integration is global and is never filtered to C13.

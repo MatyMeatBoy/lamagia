@@ -55,7 +55,7 @@ El commit debe llegar acompañado de este bloque, sin resumen ambiguo de
 "cartas funcionales":
 
 ```text
-CLAIM: c13-<primitive>
+CLAIM: <set-or-shared-scope>-<primitive>
 BASE: <sha exacto usado antes de editar>
 COMMIT: <sha publicado>
 CARDS:

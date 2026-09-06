@@ -27,6 +27,12 @@ For deck-generation work, use [the Commander generator contract](DECK_GENERATOR.
 keep source adapters reusable, use stable `oracle_id` identity, preserve
 per-card provenance, and keep network disabled in tests.
 
+For token work, read [`TOKEN_INVENTORY.md`](TOKEN_INVENTORY.md) and
+`data/rules/token-inventory.json`. Claim the exact token cluster
+(`token-trigger`, `token-activated`, `token-keyword`, or `token-zone-effect`)
+and preserve the set/printing mapping; do not implement the same token
+definition once per artwork.
+
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
@@ -35,13 +41,12 @@ queue, choose one unclaimed generated cluster at random, then claim it:
 ```text
 npm run rules:engine:export
 npm run rules:near-complete
-npm run rules:roadmap:c13
-npm run rules:oracle:plan:c13
-npm run rules:dictionary:c13
+npm run rules:oracle:compile
+npm run rules:oracle:plan
 ```
 
-Read `docs/PRIMITIVE_ROADMAP_C13.md` and `docs/PRIMITIVE_WORKERS_C13.md`.
-Use `docs/PRIMITIVE_DICTIONARY_C13.md` to link common wording to existing
+Read the generated roadmap and worker files for the selected set or global
+catalog. Use the generated primitive dictionary to link common wording to existing
 parser fields and engine handlers before creating a new primitive; its
 one-line queue is the mass-review starting point, not a substitute for tests.
 Use `docs/NEAR_COMPLETE_CARDS.md` (or the C13 variant) to find cards with
@@ -71,8 +76,9 @@ the clause has dependent text, multiple zones, unusual timing, or unresolved
 choices, keep that clause on the legacy Oracle path and add only the missing
 structured operand. This partial-IR fallback is intentional and prevents
 compression from changing rules semantics.
-For work outside C13, use the same generated index with `npm run
-rules:dictionary`.
+For a specific set, pass its set code to the generator; do not assume C13 or
+any other edition is the project-wide scope. Shared primitives use a neutral
+claim namespace.
 The worker plan is review-first: jobs containing Oracle `needs-review` cards
 are scheduled before broad work, and one-line candidates are preferred inside
 that tier. Pick randomly among the highest-priority unclaimed jobs, then
@@ -159,7 +165,7 @@ Send this exact shape after pushing. Keep output to one block; include details
 only for failures, limits, or decisions requiring review.
 
 ```text
-CLAIM: c13-<primitive>
+CLAIM: <set-or-shared-scope>-<primitive>
 BASE: <exact integration SHA>
 COMMIT: <published SHA>
 CARDS:

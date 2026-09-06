@@ -116,7 +116,20 @@ function persistStops(): void {
 }
 
 function autoPassForPhase(): boolean {
-  return ui.autoPass && !ui.stops.has(view?.step ?? "cleanup");
+  if (!ui.autoPass || ui.stops.has(view?.step ?? "cleanup") || !view) return false;
+  // Smart pass is only a priority convenience. Any player-owned decision,
+  // target selection, combat declaration, or legal response must keep the
+  // decision surface under human control (MTGO-style yield semantics).
+  const playerDecision = Boolean(
+    view.librarySearch || view.scry || view.topSelection || view.reorderTop || view.viewedHand
+      || view.combat.awaitingAttackers || view.combat.awaitingBlockersFrom.includes(view.viewerSeat)
+      || view.legalActions.some((entry) => entry.requiresTarget || entry.requiresTargets?.length
+        || entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger-target"
+        || (entry.action.type !== "pass" && entry.action.type !== "concede"
+          && entry.action.type !== "activate-mana" && entry.action.type !== "toggle-trigger-yield"
+          && entry.action.type !== "cast" && entry.action.type !== "activate"))
+  );
+  return !playerDecision;
 }
 
 function phaseRailHtml(): string {
@@ -633,6 +646,12 @@ function triggerYieldActionsFor(instanceId: string): LegalAction[] {
     entry.action.type === "toggle-trigger-yield" && entry.action.sourceId === instanceId);
 }
 
+function triggerYieldStatusFor(instanceId: string): string | null {
+  const entry = triggerYieldActionsFor(instanceId)[0];
+  if (!entry || entry.action.type !== "toggle-trigger-yield") return null;
+  return entry.action.enabled ? "Los triggers opcionales de esta carta se resolverán normalmente." : "Los triggers opcionales de esta carta se declinan automáticamente.";
+}
+
 function openCardActionMenu(cardId: string): void {
   ui.cardActionMenu = cardId;
   ui.notice = "Elige una acción o consulta la información de la carta.";
@@ -887,7 +906,7 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
 
   return `<button class="${classes.join(" ")}" type="button" data-permanent="${escapeHtml(permanent.instance_id)}"
     data-preview="${escapeHtml(permanent.instance_id)}" title="${escapeHtml(permanent.name)}">
-    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" data-card-name="${escapeHtml(permanent.name)}" alt="${escapeHtml(permanent.name)}" loading="lazy" decoding="async"/>` : ""}<span class="token-placeholder" aria-hidden="true">${permanent.isToken ? "✦" : ""}</span>
+    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" data-card-name="${escapeHtml(permanent.name)}" alt="${escapeHtml(permanent.name)}" loading="lazy" decoding="async"/>` : permanent.isToken ? `<span class="card-image-fallback token-image-fallback" role="img" aria-label="Ficha: ${escapeHtml(permanent.name)}">${escapeHtml(permanent.name)}</span>` : ""}<span class="token-placeholder" aria-hidden="true">${permanent.isToken ? "✦" : ""}</span>
     <span class="tile-name">${escapeHtml(permanent.name)}</span>${stats}<span class="tile-badges">${badges}</span>${icons}
   </button>`;
 }
@@ -1033,7 +1052,10 @@ function logDrawerHtml(): string {
 
 /** The stack rides just above the hand so it is impossible to miss mid-combat. */
 function stackStripHtml(): string {
-  if (!view?.stack.length) return "";
+  if (!view) return "";
+  // Centered decisions own the attention surface; keep the stack available
+  // once priority resumes, but do not let it compete with search/scry/payment.
+  if (view.librarySearch || view.scry || view.topSelection || view.reorderTop || view.viewedHand || ui.pendingTarget) return "";
   const passed = view.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`);
   const priority = view.priorityOpen ? seatOf(view.prioritySeat)?.name : undefined;
   const status = priority
@@ -1042,15 +1064,16 @@ function stackStripHtml(): string {
   const statusDetail = priority
     ? `${status}${passed.length ? ` · Pasaron: ${passed.join(", ")}` : ""}`
     : status;
-  return `<div class="stack-strip" aria-label="Pila de hechizos y habilidades" title="${escapeHtml(statusDetail)}"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)}</small>${[...view.stack].reverse().map((object, index) => {
+  const objects = view.stack.length ? [...view.stack].reverse().map((object, index) => {
     const stackPosition = view!.stack.length - index;
     const kind = object.kind === "trigger" ? "habilidad disparada" : object.kind === "activated" ? "habilidad activada" : "hechizo";
-    return `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}${object.resolvesNext ? " resolves-next" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este objeto como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Inspeccionar objeto de la pila")}" aria-label="Pila ${stackPosition} desde abajo, ${escapeHtml(kind)} ${escapeHtml(object.name)}${object.resolvesNext ? ", próximo en resolver" : ""}">
+    return `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}${object.resolvesNext ? " resolves-next" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este objeto como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Inspeccionar objeto de la pila")}" aria-current="${object.resolvesNext ? "step" : "false"}" aria-label="Pila ${stackPosition} desde abajo, ${escapeHtml(kind)} ${escapeHtml(object.name)}${object.resolvesNext ? ", próximo en resolver" : ""}">
       <strong class="stack-order" title="${object.resolvesNext ? "Próximo en resolver" : `Posición ${stackPosition} desde abajo`}">${object.resolvesNext ? "↑" : stackPosition}</strong>
       ${cardImageHtml(object.image_normal, object.name)}
       <span><small class="stack-kind">${escapeHtml(kind)}${object.countered ? " · Contrarrestado" : ""}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
     </button>`;
-  }).join("")}</div>`;
+  }).join("") : `<span class="stack-empty">Vacía · ${escapeHtml(status)}</span>`;
+  return `<div class="stack-strip${view.stack.length ? "" : " empty"}" aria-label="Pila de hechizos y habilidades" title="${escapeHtml(statusDetail)}"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)}</small>${objects}</div>`;
 }
 
 function stackDetailHtml(): string {
@@ -1113,10 +1136,11 @@ function cardActionMenuHtml(): string {
   const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")
     ? `<button class="action-row action-disabled" type="button" disabled><span><b>Lanzar ${escapeHtml(card.name)}</b><small>No disponible ahora; puedes ciclarla.</small></span></button>` : "";
   const context = entries.length ? "Elige una acción o consulta la información de la carta." : "No hay acciones legales ahora; puedes consultar la información.";
+  const yieldStatus = triggerYieldStatusFor(ui.cardActionMenu);
   return `<section class="decision-overlay card-action-overlay" role="dialog" aria-modal="false" aria-label="Acciones de ${escapeHtml(card.name)}">
     <header class="decision-head"><div><b>${escapeHtml(card.name)}</b><span>${context}</span></div>
       <button id="close-card-action-menu" class="icon-button" type="button" aria-label="Cerrar acciones">×</button></header>
-    <div class="decision-list">${unavailableCast}${entries.map((entry) => {
+    <div class="decision-list">${yieldStatus ? `<p class="trigger-yield-status" role="status">${escapeHtml(yieldStatus)}</p>` : ""}${unavailableCast}${entries.map((entry) => {
       const index = view!.legalActions.indexOf(entry);
       const description = entry.action.type === "cycle"
         ? (entry.note ?? "Cicla esta carta, paga su coste y roba una carta.")
