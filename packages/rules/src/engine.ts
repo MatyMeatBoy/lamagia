@@ -2632,7 +2632,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
   };
   // A compound effect may have independent target slots.  CR 608.2b says an
   // illegal slot does nothing while other legal slots still resolve.
-  if (targetIndex >= 0 && object.targets.length && !targetIsLegal(target)) return state;
+  const effectUsesTarget = effect.kind === "compound"
+    ? effect.effects.some((child) => child.kind !== "draw" && child.kind !== "lose-life" && child.kind !== "gain-life")
+    : /target|fight|damage-divided-targets/.test(effect.kind);
+  if (effectUsesTarget && targetIndex >= 0 && object.targets.length && !targetIsLegal(target)) return state;
   switch (effect.kind) {
     case "compound": {
       let next = state;
