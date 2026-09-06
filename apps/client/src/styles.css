@@ -949,7 +949,6 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
   .topbar { height: 38px; }
   .phase-rail { height: 26px; padding-block: 2px; }
   .phase-step { font-size: .56rem; padding: 2px 7px; }
-  .turn-readout .badge-pill:not(.accent) { display: none; }
   .commander-strip { padding: 2px 6px; }
   .commander-strip .thumb { height: 18px; }
   .hand-label { display: none; }

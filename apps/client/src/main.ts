@@ -1219,9 +1219,6 @@ function render(): void {
   root!.innerHTML = `<main class="shell${ui.busy ? " busy" : ""}" data-layout="${ui.layout}">
     <header class="topbar">
       <a class="brand" href="#">LAMAGIA</a>
-      <span class="turn-readout"><span class="badge-pill">Turno <b>${view.turn}</b></span>
-        <span class="badge-pill accent">${escapeHtml(view.stepLabel)}</span>
-        <span>Activo: <b style="color: var(--seat-${view.activeSeat})">${escapeHtml(seatOf(view.activeSeat)?.name ?? "")}</b></span></span>
       <span class="topbar-right">
         <button id="main-menu" class="text-button">Inicio</button>
         <button id="play-tested" class="text-button">Pod jugable</button>
