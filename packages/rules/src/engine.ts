@@ -8361,6 +8361,16 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       )
       .map((card) => ({ kind: "graveyard-card", seat: player.seat, instanceId: card.instance_id }) as Target));
   }
+  if (kind.startsWith("creature-card-in-your-graveyard-mv-") || kind.startsWith("permanent-card-in-your-graveyard-mv-")) {
+    const isCreatureOnly = kind.startsWith("creature-card-in-your-graveyard-mv-");
+    const cap = Number(kind.slice(kind.indexOf("-mv-") + 4, -"-or-less".length));
+    return playerAt(state, seat).graveyard
+      .filter((card) => {
+        const profile = cardProfile(card);
+        return (isCreatureOnly ? isCreature(profile) : profile.isPermanent) && profile.manaValue <= cap;
+      })
+      .map((card) => ({ kind: "graveyard-card", seat, instanceId: card.instance_id }) as Target);
+  }
   if (kind === "land-card-in-a-graveyard") {
     return state.players.flatMap((player) => player.graveyard
       .filter((card) => isLand(cardProfile(card)))

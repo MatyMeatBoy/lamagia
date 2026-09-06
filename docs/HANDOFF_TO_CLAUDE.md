@@ -6012,3 +6012,33 @@ same resolution — proving the effect iterates every creature you
 control rather than only the trigger's source. Validation: full
 **900** rules tests green (1 new), `npm run check` across all four
 workspaces, 200/200 simulated games.
+
+## Bishop of Rebirth: mana-value-capped graveyard-return target (2026-09-06)
+
+"Whenever ~ attacks, you may return target creature card with mana
+value 3 or less from your graveyard to the battlefield" needed a
+mana-value CAP on a graveyard-card TARGET, which nothing in the
+`TargetKind` union actually implemented — a dead, never-wired stub
+literal `"permanent-card-in-your-graveyard-mv-3-or-less"` already sat
+unused in the type (zero references anywhere else in the codebase),
+suggesting an earlier abandoned attempt. Replaced it with two
+genuinely generic, parameterized template-literal members —
+`` `creature-card-in-your-graveyard-mv-${number}-or-less` `` and
+`` `permanent-card-in-your-graveyard-mv-${number}-or-less` `` — mirroring
+the existing `` `spell-mana-value-${number}` `` pattern's
+parse-the-number-back-out-of-the-string-with-`startsWith` approach in
+`legalTargets`. The RETURN effect itself needed no change at all —
+`return-target-creature-card-from-graveyard-to-battlefield` already
+existed and is blind to why a target was legal, only checking
+`isPermanent` at resolution; the mana-value cap lives entirely in the
+target-legality filter, so every future "with mana value N or less"
+graveyard-return card (any N, creature or broader permanent) reuses
+this with zero new engine code. Verified **+6** in the export count
+(10,919 → 10,925 — several catalog printings share this exact
+template) and set coverage advanced 33.1% → 33.2%. Scenario-tested: a
+Grizzly Bears (mv 2) and a Big Guy (mv 5) sit in the graveyard;
+`legalTargets` for the new mv-3-or-less kind offers only the Bear;
+attacking, accepting the optional trigger, and targeting the Bear
+returns it to the battlefield while the Big Guy stays in the
+graveyard. Validation: full **901** rules tests green (1 new), `npm
+run check` across all four workspaces, 200/200 simulated games.

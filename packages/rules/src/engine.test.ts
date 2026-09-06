@@ -7282,6 +7282,33 @@ describe("triggered abilities", () => {
     expect(bearAfter.counters["+1/+1"]).toBe(4);
   });
 
+  it("returns a mana-value-capped creature from the graveyard when Bishop of Rebirth attacks", () => {
+    const bishop = make({ name: "Bishop of Rebirth", type_line: "Creature — Human Cleric", mana_cost: "{3}{W}", cmc: 4, power: "3", toughness: "3", keywords: ["Vigilance"], oracle_text: "Vigilance\nWhenever this creature attacks, you may return target creature card with mana value 3 or less from your graveyard to the battlefield." });
+    const bigGuy = make({ name: "Big Guy", type_line: "Creature — Giant", mana_cost: "{5}", cmc: 5, power: "5", toughness: "5" });
+    const profile = profileOf(bishop);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "attacks", subject: "self", optional: true, targetKind: "creature-card-in-your-graveyard-mv-3-or-less",
+      effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [bishop]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [BEAR(), bigGuy], "gy") }));
+    const bishopInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Bishop of Rebirth")!;
+    const bearInGraveyard = game.players[0]!.graveyard.find((card) => card.name === "Grizzly Bears")!;
+    expect(legalTargets(game, 0, "creature-card-in-your-graveyard-mv-3-or-less").map((target) => target.kind === "graveyard-card" ? target.instanceId : null)).toEqual([bearInGraveyard.instance_id]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bishopInPlay.instance_id, defender: 1 }] });
+    expect(game.pendingChoice).toMatchObject({ type: "optional-trigger" });
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    if (game.pendingChoice?.type === "trigger-target") {
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "graveyard-card", seat: 0, instanceId: bearInGraveyard.instance_id } });
+    }
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Big Guy")).toBe(true);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({
