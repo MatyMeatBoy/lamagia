@@ -51,6 +51,22 @@ describe("smart counter response and safe mana undo", () => {
     expect(second.passedSeats).toEqual([0]);
     expect(projectGame(game, 0).passedSeats).toEqual([0]);
   });
+  it("cycles priority through living players and resets the pass cycle after a response", () => {
+    let game = threeSeatGame();
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "pass" });
+    expect(game.prioritySeat).toBe(1);
+    expect(game.passedSeats).toEqual([0]);
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.prioritySeat).toBe(2);
+    expect(game.passedSeats).toEqual([0, 1]);
+    const boltCard = toHand(0, [BOLT()], "three-bolt")[0]!;
+    const bolt = { id: "three-bolt", controller: 0 as SeatId, card: boltCard, label: boltCard.name, targets: [{ kind: "player", seat: 1 } as const], fromCommandZone: false, variableValue: 0, countered: false };
+    game = { ...game, stack: [bolt], prioritySeat: 2, passedSeats: [0, 1] };
+    game = applyAction(game, 2, { type: "pass" });
+    expect(game.stack).toHaveLength(0);
+    expect(game.passedSeats).toEqual([]);
+  });
   it("projects stack spells as public targets and resolves the top object first", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, (player) => ({ autoPass: false, hand: toHand(0, [BOLT()], "stack-bolt") }));
