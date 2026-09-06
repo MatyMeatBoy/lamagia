@@ -5,8 +5,8 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,144**
-- Cards with a reusable existing primitive hint: **11,435**
+- One-line cards: **15,143**
+- Cards with a reusable existing primitive hint: **11,434**
 - Cards needing new primitive review: **3,709**
 - Templates: **11,985**
 
@@ -44,7 +44,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Gingerbrute | `10b8d4c7-7553-4d76-b643-d98b80701e13` | activated | new primitive review | {1}: ~ can't be blocked this turn except by creatures with haste. |
 | needs-new-primitive | Frantic Search | `16e015b2-f8a3-4b1a-80be-58a8f5fb5e8c` | activated | new primitive review | Untap up to three lands. |
 | reuse-existing | Usher of the Fallen | `a6eb06dc-a62d-4fdb-b336-e304d8d68c92` | token | create / token | Boast — {1}{W}: Create a 1/1 white Human Warrior creature token. |
-| reuse-existing | Wild Growth | `706ae742-1807-44b7-a4fa-f2e26f61519a` | activated | activated ability / mana | Whenever enchanted land is tapped for mana, its controller adds an additional {G}. |
 | needs-new-primitive | Saw It Coming | `90edaf33-d0ab-47e0-8f6a-6fba38286e6e` | activated | new primitive review | Foretell {1}{U} |
 | reuse-existing | Harald, King of Skemfar | `0089b07c-7f47-4a9a-9fb7-cc38ec9d7bcd` | library-look | trigger / ETB | When ~ enters, look at the top five cards of your library. You may reveal an Elf, Warrior, or Tyvar card from among them and put it into your hand. Put the rest on the bottom of your library in a random order. |
 | needs-new-primitive | Mystical Dispute | `48390b8d-db41-48a5-9bac-316660ab7252` | activated | new primitive review | ~ costs {2} less to cast if it targets a blue spell. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Unnatural Growth | `7324abaa-48da-439d-9339-b0ea5eea612e` | activated | trigger / ETB | At the beginning of each combat, double the power and toughness of each creature you control until end of turn. |
 | reuse-existing | Wedding Announcement // Wedding Festivity | `259ac30c-cc05-4c04-9b23-71283f84b808` | token | trigger / ETB | At the beginning of your end step, put an invitation counter on ~. If you attacked with two or more creatures this turn, draw a card. Otherwise, create a 1/1 white Human creature token. Then if ~ has three or more invitation counters on it, transform it. |
 | reuse-existing | Necroduality | `d36acdfe-2b1b-4c19-8b81-0b3127e480fe` | token | trigger / ETB | Whenever a nontoken Zombie you control enters, create a token that's a copy of that creature. |
+| reuse-existing | Sanctum Weaver | `acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47` | activated | activated ability / mana | {T}: Add X mana of any one color, where X is the number of enchantments you control. |
 
-The JSON contains the remaining 14,644 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,643 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
