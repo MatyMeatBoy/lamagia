@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,829** · cobertura: **32.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,833** · cobertura: **32.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -166,7 +166,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 | 2006-07-21 | Coldsnap (`CSP`) | expansion | 2000s | main | 155 | 38 | 117 | 24.5% |
 | 2006-07-21 | Coldsnap Theme Decks (`CST`) | deck-products | coldsnap-theme-decks | other | 52 | 17 | 35 | 32.7% |
 | 2006-09-23 | Time Spiral Promos (`PTSP`) | promos | time-spiral | other | 3 | 1 | 2 | 33.3% |
-| 2006-10-06 | Time Spiral (`TSP`) | expansion | time-spiral | main | 286 | 70 | 216 | 24.5% |
+| 2006-10-06 | Time Spiral (`TSP`) | expansion | time-spiral | main | 286 | 71 | 215 | 24.8% |
 | 2006-10-06 | Time Spiral Timeshifted (`TSB`) | expansion | time-spiral | main | 121 | 38 | 83 | 31.4% |
 | 2006-10-20 | Pro Tour Promos (`PPRO`) | promos | pro-tour | other | 18 | 4 | 14 | 22.2% |
 | 2006-10-31 | DCI Promos (`DCI`) | promos | dci | other | 67 | 29 | 38 | 43.3% |
@@ -299,7 +299,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 | 2013-09-06 | Duel Decks: Heroes vs. Monsters (`DDL`) | duel-decks | duel-decks-heroes-vs-monsters | other | 68 | 34 | 34 | 50.0% |
 | 2013-09-21 | Theros Promos (`PTHS`) | promos | theros | other | 10 | 1 | 9 | 10.0% |
 | 2013-09-27 | Theros (`THS`) | expansion | theros | main | 234 | 80 | 154 | 34.2% |
-| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 289 | 52 | 84.8% |
+| 2013-11-01 | Commander 2013 (`C13`) | commander | 2013 | commander | 341 | 290 | 51 | 85.0% |
 | 2014-01-01 | Friday Night Magic 2014 (`F14`) | promos | fnm-2014 | other | 12 | 5 | 7 | 41.7% |
 | 2014-01-01 | Judge Gift Cards 2014 (`J14`) | promos | judge-2014 | other | 14 | 7 | 7 | 50.0% |
 | 2014-02-01 | Born of the Gods Promos (`PBNG`) | promos | born-of-the-gods | other | 9 | 2 | 7 | 22.2% |
@@ -320,7 +320,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 | 2014-09-05 | Duel Decks: Speed vs. Cunning (`DDN`) | duel-decks | duel-decks-speed-vs-cunning | other | 71 | 33 | 38 | 46.5% |
 | 2014-09-26 | Khans of Tarkir (`KTK`) | expansion | tarkir | main | 254 | 95 | 159 | 37.4% |
 | 2014-09-26 | Khans of Tarkir Promos (`PKTK`) | promos | khans-of-tarkir | other | 44 | 7 | 37 | 15.9% |
-| 2014-11-07 | Commander 2014 (`C14`) | commander | 2014 | commander | 322 | 208 | 114 | 64.6% |
+| 2014-11-07 | Commander 2014 (`C14`) | commander | 2014 | commander | 322 | 209 | 113 | 64.9% |
 | 2014-12-05 | Duel Decks Anthology: Divine vs. Demonic (`DVD`) | duel-decks | duel-decks-anthology-divine-vs-demonic | other | 56 | 31 | 25 | 55.4% |
 | 2014-12-05 | Duel Decks Anthology: Elves vs. Goblins (`EVG`) | duel-decks | duel-decks-anthology-elves-vs-goblins | other | 56 | 29 | 27 | 51.8% |
 | 2014-12-05 | Duel Decks Anthology: Garruk vs. Liliana (`GVL`) | duel-decks | duel-decks-anthology-garruk-vs-liliana | other | 57 | 32 | 25 | 56.1% |
@@ -489,7 +489,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 | 2021-02-05 | Kaldheim (`KHM`) | expansion | kaldheim | main | 323 | 58 | 265 | 18.0% |
 | 2021-02-05 | Kaldheim Commander (`KHC`) | commander | 2021 | commander | 119 | 47 | 72 | 39.5% |
 | 2021-03-11 | Historic Anthology 4 (`HA4`) | anthologies | historic-anthology-4 | other | 25 | 5 | 20 | 20.0% |
-| 2021-03-19 | Time Spiral Remastered (`TSR`) | masters-remastered | time-spiral-remastered | other | 410 | 118 | 292 | 28.8% |
+| 2021-03-19 | Time Spiral Remastered (`TSR`) | masters-remastered | time-spiral-remastered | other | 410 | 119 | 291 | 29.0% |
 | 2021-04-23 | Commander 2021 (`C21`) | commander | 2021 | commander | 329 | 118 | 211 | 35.9% |
 | 2021-04-23 | Strixhaven Mystical Archive (`STA`) | masterpieces | strixhaven-mystical-archive | other | 63 | 35 | 28 | 55.6% |
 | 2021-04-23 | Strixhaven: School of Mages (`STX`) | expansion | strixhaven | main | 290 | 64 | 226 | 22.1% |
@@ -740,8 +740,8 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 | boxed-products | the-zeta-set | 1 | 121 | 49 | 72 | 40.5% |
 | commander | 2011 | 1 | 303 | 144 | 159 | 47.5% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
-| commander | 2013 | 1 | 341 | 289 | 52 | 84.8% |
-| commander | 2014 | 1 | 322 | 208 | 114 | 64.6% |
+| commander | 2013 | 1 | 341 | 290 | 51 | 85.0% |
+| commander | 2014 | 1 | 322 | 209 | 113 | 64.9% |
 | commander | 2015 | 1 | 327 | 149 | 178 | 45.6% |
 | commander | 2016 | 1 | 341 | 145 | 196 | 42.5% |
 | commander | 2017 | 1 | 299 | 140 | 159 | 46.8% |
@@ -822,7 +822,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 | expansion | tempest | 1 | 335 | 125 | 210 | 37.3% |
 | expansion | theros | 2 | 507 | 147 | 360 | 29.0% |
 | expansion | thunder-junction | 1 | 276 | 48 | 228 | 17.4% |
-| expansion | time-spiral | 2 | 407 | 108 | 299 | 26.5% |
+| expansion | time-spiral | 2 | 407 | 109 | 298 | 26.8% |
 | expansion | urza | 3 | 621 | 258 | 363 | 41.5% |
 | expansion | zendikar | 3 | 773 | 257 | 516 | 33.2% |
 | from-the-vault | 2000s | 2 | 30 | 13 | 17 | 43.3% |
@@ -897,7 +897,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 69 | 215 | 24.3% |
 | masters-remastered | tempest-remastered | 1 | 254 | 110 | 144 | 43.3% |
 | masters-remastered | the-list | 1 | 5221 | 1703 | 3518 | 32.6% |
-| masters-remastered | time-spiral-remastered | 2 | 413 | 118 | 295 | 28.6% |
+| masters-remastered | time-spiral-remastered | 2 | 413 | 119 | 294 | 28.8% |
 | masters-remastered | ultimate-masters | 1 | 254 | 99 | 155 | 39.0% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
 | masters-remastered | vintage-masters | 1 | 325 | 147 | 178 | 45.2% |
@@ -12879,7 +12879,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 - [ ] Stronghold Overseer — `bb77b63f-e679-463c-b983-4f2a4ef7bafe`
 - [ ] Stuffy Doll — `499dceab-1890-49c8-b35d-b059a1dc950f`
 - [ ] Subterranean Shambler — `d06be0a6-0d45-4e95-b132-88ce80dd7cb6`
-- [ ] Sudden Spoiling — `dce202c7-fe8e-462a-858e-7a5a69bd5b6b`
 - [ ] Sulfurous Blast — `f2b4f37b-270b-4746-83b3-51ff88ee3491`
 - [ ] Swarmyard — `4b508087-99da-4eb1-8b12-29162f2ec85d`
 - [ ] Teferi, Mage of Zhalfir — `2b6cbd55-5adc-4a34-ac45-8531705a7ee1`
@@ -19278,7 +19277,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 - [ ] Spinal Embrace — `4cf3fb65-9107-428a-8853-029ec97112b5`
 - [ ] Stormscape Battlemage — `38ee748d-adcd-41df-9b23-d2a34829784c`
 - [ ] Street Spasm — `95385d84-550c-4d6c-a889-62bdbc1d518d`
-- [ ] Sudden Spoiling — `dce202c7-fe8e-462a-858e-7a5a69bd5b6b`
 - [ ] Sun Droplet — `1820af5c-9cc2-4b77-b4ca-86084442f087`
 - [ ] Surveyor's Scope — `9633730d-c41f-4597-b806-55ce2dd848e9`
 - [ ] Sword of the Paruns — `cc33444e-da8c-4af5-b3ed-552e91b0e656`
@@ -20538,7 +20536,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 - [ ] Stitcher Geralf — `da394a25-79c9-4b75-9ce6-741f64ae6913`
 - [ ] Stormsurge Kraken — `72bdc7ba-2906-436d-8405-6a8a3335fdae`
 - [ ] Strata Scythe — `a500b724-bf28-47a3-b434-6efdebbcc04c`
-- [ ] Sudden Spoiling — `dce202c7-fe8e-462a-858e-7a5a69bd5b6b`
 - [ ] Sun Titan — `b2e950fb-cb7e-40a0-a311-5bbdd0477b29`
 - [ ] Sylvan Safekeeper — `bddf8f4a-3149-4dd6-a9e5-7747e7e45a1c`
 - [ ] Tectonic Edge — `4927150d-7ff6-4232-b20e-d2ea245ac710`
@@ -37756,7 +37753,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **27,82
 - [ ] Strength in Numbers — `23195903-04e1-4461-a4ac-f0ce39f21c20`
 - [ ] Stronghold Rats — `e91053ae-682a-4bbe-8394-fd65e626bacc`
 - [ ] Stuffy Doll — `499dceab-1890-49c8-b35d-b059a1dc950f`
-- [ ] Sudden Spoiling — `dce202c7-fe8e-462a-858e-7a5a69bd5b6b`
 - [ ] Summoner's Pact — `782dcbc4-5a11-42f5-b8d9-4572e36d45b3`
 - [ ] Sunlance — `3c8cc7e2-7bff-46e0-bb5b-1e721a56a3ef`
 - [ ] Swarmyard — `4b508087-99da-4eb1-8b12-29162f2ec85d`
