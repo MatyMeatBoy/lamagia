@@ -168,6 +168,24 @@ describe("smart counter response and safe mana undo", () => {
     expect(next.stack.find(s => s.id === "subject")?.countered).toBe(false);
     expect(hasRealChoice(spell(board("Counter target spell. Draw a card."), 1, "This spell can't be countered."), 0)).toBe(true);
   });
+  it("never offers counter-only priority for triggered or activated stack objects", () => {
+    const counter = board("Counter target spell.");
+    const source = putOnBattlefield(counter, 1, [make({ name: "Trigger Source", type_line: "Creature", power: "1", toughness: "1", oracle_text: "Whenever you gain life, draw a card." })]);
+    const triggerCard = source.players[1]!.battlefield[0]!.card;
+    const trigger = {
+      id: "trigger-subject", controller: 1 as SeatId, card: triggerCard, label: "Trigger Source · life gained", targets: [],
+      fromCommandZone: false, variableValue: 0, countered: false,
+      trigger: {
+        id: "trigger-subject", controller: 1 as SeatId, sourcePermanentId: source.players[1]!.battlefield[0]!.instance_id,
+        sourceCard: triggerCard, definition: { event: "life-gained" as const, subject: "you" as const, effect: { kind: "draw", amount: 1 } as const, targetKind: "none" as const, optional: false, sourceText: "Whenever you gain life, draw a card." }, cause: "test"
+      }
+    };
+    const activated = { ...trigger, id: "activated-subject", label: "Trigger Source · activated", trigger: undefined,
+      activated: { index: 0, text: "{T}: Draw a card.", cost: { manaValue: 0, raw: "{T}", symbols: [], hasVariable: false }, effect: { kind: "draw", amount: 1 } as const, targetKind: "none" as const,
+        requiresTap: true, sacrificesSelf: false, lifeCost: 0, manaCost: null } };
+    expect(hasRealChoice({ ...source, stack: [trigger] }, 0)).toBe(false);
+    expect(hasRealChoice({ ...source, stack: [activated] }, 0)).toBe(false);
+  });
   it("allows only unchanged-state mana/tap deltas and rejects City of Brass triggers", () => {
     const game = board();
     const action = legalActions(game, 0).find(a => a.action.type === "activate-mana")!.action;
