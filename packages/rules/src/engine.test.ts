@@ -1664,6 +1664,32 @@ describe("casting", () => {
     expect(game.players[1]!.counters).toEqual({ energy: 3 });
   });
 
+  it("draws two cards then offers Proliferate for Tezzeret's Gambit", () => {
+    const gambit = make({ name: "Tezzeret's Gambit", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Draw two cards, then proliferate." });
+    expect(profileOf(gambit)).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "compound", effects: [{ kind: "draw", amount: 2 }, { kind: "proliferate" }] }]
+    });
+    let game = readyToCast([gambit], [ISLAND(), FOREST(), FOREST()]);
+    game = putOnBattlefield(game, 0, [BEAR()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Grizzly Bears"
+        ? { ...permanent, counters: { "+1/+1": 1 } } : permanent)
+    }));
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[0]!.hand.length).toBe(handBefore - 1 + 2);
+    expect(game.pendingChoice).toMatchObject({ type: "proliferate", seat: 0 });
+    const sourceId = game.pendingChoice!.sourceId;
+    const target = legalActions(game, 0).find((entry) => entry.action.type === "choose-proliferate-target"
+      && entry.action.target.kind === "permanent" && entry.action.target.instanceId === bear.instance_id)!;
+    game = applyAction(game, 0, target.action);
+    game = applyAction(game, 0, { type: "finish-proliferate", sourceId });
+    const boostedBear = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(boostedBear.counters["+1/+1"]).toBe(2);
+  });
+
   it("preserves Azorius Herald when blue mana was spent to cast it", () => {
     const herald = C13_AZORIUS_HERALD();
     let game = readyToCast([herald], [PLAINS(), ISLAND(), ISLAND()]);

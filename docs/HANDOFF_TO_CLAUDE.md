@@ -5737,3 +5737,26 @@ removed roughly offsets Treasure's newly-unblocked printings). Set
 coverage holds at 32.9%. Validation: full **864** rules tests green,
 `npm run check` across all four workspaces, `npx vitest run
 services/match-server/src` (6 passed), 200/200 simulated games.
+
+That same worker independently pushed a THIRD Treasure-related commit
+(`758499a`) while this session's merge-fix was already staged — a
+duplicate `sacrificesSelf` fix (same field name, converged on
+independently), plus a FOURTH (`d183674`) refining the fix's ordering
+to sacrifice before adding mana (CR 605.3b), which is more accurate
+than this session's original tap-then-sacrifice order. Merging both
+produced real conflicts and one silent, non-conflicting duplicate (two
+`const sacrificesSelf` declarations plus a duplicate ability-push
+spread landed on different line numbers, so git merged both without
+complaint — caught immediately by `npm run check`'s "cannot redeclare"
+error, not by the merge itself). Resolved by keeping the other
+worker's more rules-accurate `applyActivateMana` ordering while
+removing the duplicate parsing-side declarations. Tezzeret's Gambit
+("Draw two cards, then proliferate.") was added as a genuinely trivial
+follow-up: a plain sequence of two already-independent, already-tested
+effects (`draw`, `proliferate`) via the pre-existing `compound` effect
+wrapper — no new engine code. Verified **+1** in the export count
+(10,844 → 10,845); set coverage holds at 32.9%. Scenario-tested:
+casting it draws 2 cards then opens the existing Proliferate choice,
+which correctly adds a +1/+1 counter to a selected creature. Validation:
+full **865** rules tests green (1 new), `npm run check` across all
+four workspaces, 200/200 simulated games.
